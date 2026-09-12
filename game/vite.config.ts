@@ -132,6 +132,11 @@ export default defineConfig({
   // lo detecta solo (ver `game/tools/vite-cache-dir.ts`); la variable sigue mandando
   // cuando está puesta, así que quien ya la exporta no se entera del cambio.
   cacheDir: cacheDirDeEsteArbol(),
+  // FORMATO ESM PARA LOS WORKERS: el sintetizador de música corre en un Web Worker
+  // (`src/ui/opl/render-worker.ts`, importado con `?worker`) que importa los módulos
+  // puros del OPL; como módulo ES se empaqueta con su grafo y sin envoltorio `iife`.
+  // No hay ningún otro worker en el proyecto (medido), así que esto no afecta a nada más.
+  worker: { format: "es" },
   plugins: [gameDataAssets(), companionAtlas(), deployArtifacts()],
   test: {
     // e2e/ son specs de Playwright, no de vitest — el patrón *.spec.ts los solaparía.

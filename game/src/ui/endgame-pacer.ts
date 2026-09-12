@@ -44,6 +44,14 @@ export interface EndgamePacerDeps {
   sceneBeatMs: number | null;
   /** Mapa de la sala del trono (endgame.json del extractor), o null sin asset. */
   endgameRoom: number[][] | null;
+  /**
+   * Aviso de cambio de FASE, para quien tenga que acompañarla. Hoy lo usa la música:
+   * ENDGAME.OVL llama al driver TRES veces (la tabla de rango por cuadro @0x0aee, Joyous
+   * Reunion @0x0aff y Rule Britannia @0x0b18), o sea que el cierre cambia de canción
+   * SEGÚN AVANZA — sin este aviso el port sólo podría poner una y dejarla. Opcional: sin
+   * él el pacer se comporta exactamente igual que antes.
+   */
+  onPhase?: (phase: EndgameSceneView["phase"]) => void;
 }
 
 /** ms por unidad de run-n-frames 0x3AE6 (1 tick INT 1Ch ≈ 54.9 ms): convierte
@@ -227,6 +235,7 @@ export class EndgamePacer {
       if (i >= steps.length) return; // el guión SIEMPRE acaba en un beat terminal
       const { beat } = steps[i++]!;
       scene.phase = beat.phase;
+      this.deps.onPhase?.(beat.phase);
       if (beat.sfx) view.emitSfx(beat.sfx);
       switch (beat.phase) {
         case "greenScene":

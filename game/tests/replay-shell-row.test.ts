@@ -19,6 +19,7 @@ function deps(overrides: Partial<ShellDeps> = {}): ShellDeps {
     selectSkin: () => {},
     musicEnabled: () => false,
     setMusicEnabled: () => {},
+    musicStatus: () => ({ estado: "s", pista: "s", via: "s", portada: "s", error: "-", hilo: "-" }),
     musicVolume: () => 0.5,
     setMusicVolume: () => {},
     speakerEnabled: () => true,

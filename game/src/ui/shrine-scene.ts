@@ -35,6 +35,13 @@ export interface ShrineScenePacerDeps {
   applyEvents: (events: ReturnType<Game["move"]>) => void;
   refreshAwaiting: () => void;
   cancelAutoWalk: () => void;
+  /**
+   * La escena se DESMONTA (mitad de salida agotada, explanada vacía). Hoy lo usa la
+   * música: el rito es una de las escenas que en el original se tocan con el selector de
+   * canción FIJA —MAINOUT.OVL 0x0968 pone «Stones» y congela— y devuelve el mando a la
+   * localización justo al volver (su `call 0x0e1d`). Opcional.
+   */
+  onSceneEnd?: () => void;
 }
 
 export class ShrineScenePacer {
@@ -89,7 +96,10 @@ export class ShrineScenePacer {
       // Fin de esta mitad. La de SALIDA acaba con la explanada vacía; desmontar aquí
       // devuelve el viewport al sobremundo (el original restaura g_location en 0x10e7).
       const last = script.beats[script.beats.length - 1];
-      if (!last || last.avatar === null) setScene(null);
+      if (!last || last.avatar === null) {
+        setScene(null);
+        this.deps.onSceneEnd?.();
+      }
       this._active = false;
       applyEvents(rest); // reanuda el turno diferido (kneel + prompt, o nada)
       refreshAwaiting();

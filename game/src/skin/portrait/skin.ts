@@ -75,6 +75,7 @@ import {
   type NativeKeyboardHandle,
 } from "./deck-nativo.js";
 import { cellInWindow, inCellRect, portraitHitTest } from "./hittest.js";
+import { enhancedControlsActivo } from "../../enhanced/mode.js";
 import type { HostableSkin } from "../hostable.js";
 import { esTactilAhora } from "../../ui/regimen-tactil.js";
 
@@ -579,7 +580,18 @@ export class PortraitSkin implements Skin {
     //     (re-flow cuadrado con la botonera canónica) para poder separar las dos causas
     //     en la tabla de área. La instalación dispara el ResizeObserver del deck, que
     //     re-mide `--u5-touch-reserve` y nos manda un `resize`: el relayout va solo.
-    if (isSquareVariant(this.mode)) {
+    // 🔴 …y NO con la chapa Enhanced puesta (fase 1 de la auditoría móvil). Lo que se
+    //    salta es el CSS del DECK (`installWideDeck` inyecta `wideDeckCss()`, con su
+    //    `display:grid !important` sobre `.touch-controls`) y el puente al teclado del
+    //    SISTEMA que viene con esa sub-variante. El RE-FLOW del canvas —que es lo que
+    //    esta piel hace y de donde sale el mapa grande— no se toca: su geometría la
+    //    calcula `squareLayout()` a partir del hueco que deja `--u5-touch-reserve`, y
+    //    esa reserva la sigue midiendo `syncReserve()` sobre el mismo `.touch-controls`
+    //    lleve la chapa que lleve. Con Enhanced el mapa CRECE, porque la chapa mide
+    //    bastante menos que la pared de 25 comandos.
+    //    El texto en Enhanced va por la hoja A–Z propia del deck (`ui/touch.ts`), que
+    //    sigue viva y se sigue alzando sola con `expectInput`.
+    if (isSquareVariant(this.mode) && !enhancedControlsActivo()) {
       const s = this.searchOf();
       const deckMode = wideDeckFlag(s, "bloques");
       installWideDeck(deckMode, deckCapFlag(s), deck3Flag(s), cursoresFlag(s));
@@ -710,6 +722,7 @@ export class PortraitSkin implements Skin {
     delete (globalThis as unknown as { __u5kb?: unknown }).__u5kb;
     uninstallWideDeck();
     document.documentElement.style.removeProperty("--u5-reflow-content");
+    document.documentElement.style.removeProperty("--u5-hud-top");
     const c = this.canvas;
     if (c) {
       if (this.pointerHandler) c.removeEventListener("pointerdown", this.pointerHandler);
@@ -773,6 +786,7 @@ export class PortraitSkin implements Skin {
     if (typeof document !== "undefined") {
       document.documentElement.style.removeProperty("--u5-reflow-content");
       document.documentElement.style.removeProperty("--u5-canvas-w");
+      document.documentElement.style.removeProperty("--u5-hud-top");
     }
   }
 
@@ -865,6 +879,40 @@ export class PortraitSkin implements Skin {
       document.documentElement.style.setProperty("--u5-reflow-content", `${Math.ceil(L.canvasH)}px`);
     } else {
       document.documentElement.style.removeProperty("--u5-reflow-content");
+    }
+    // ── EL SUELO DEL HUD → CSS (carril de ergonomía móvil, 12-09) ─────────────────────
+    // QUÉ ES: la `y` (px de viewport) a partir de la cual empieza lo que NO se puede tapar
+    // mientras el juego pregunta algo — el roster en vídeo inverso y la consola con la
+    // pregunta. Lo consume el selector compacto de miembro (`enhanced/party/css.ts`), que
+    // ancla su borde INFERIOR ahí: así baja a la zona del pulgar sin comerse ni la fila del
+    // cursor del picker del kernel ni el renglón que acaba de imprimir «On who: ».
+    //
+    // POR QUÉ LO PUBLICA ESTA CLASE Y NO EL PANEL: es la misma razón escrita arriba para
+    // `--u5-reflow-content` («quien sabe cuánto mide el canvas es quien lo dimensiona»). El
+    // panel nace y muere con cada prompt; medir desde ahí obligaría a un observador del
+    // canvas, que es lo que se declaró imposible al re-crearse el canvas en cada re-escala.
+    //
+    // LAS DOS RAMAS, y son las dos composiciones verticales que existen:
+    //   · re-flow partido — el HUD es la BANDA de debajo del mapa, o sea `panes.panel.dy`
+    //     (el borde superior del panel de jugadores), en coordenadas del canvas;
+    //   · letterbox clásico — el 320×200 va entero dentro del canvas y el HUD vive DENTRO
+    //     de él, así que lo intocable llega hasta el borde inferior del canvas y el suelo es
+    //     ese borde: debajo sólo hay franja negra, que es exactamente el hueco a aprovechar.
+    //
+    // 🔴 SIN BUCLE, y por la misma construcción de siempre: esto SE LEE, no realimenta. El
+    // único consumidor es un panel `position: fixed` que vive FUERA de `.touch-controls`, así
+    // que no entra en el border box que `syncReserve()` mide y no puede mover la reserva.
+    // El `getBoundingClientRect()` es el precio, y se paga sólo en VERTICAL y sólo en el
+    // `relayout` (un puñado de veces por sesión: rotación, barra del navegador, teclado).
+    if (orient === "portrait") {
+      const top = canvas.getBoundingClientRect().top;
+      const suelo =
+        L.kind === "reflow" ? top + L.panes.panel.dy : top + L.canvasH;
+      document.documentElement.style.setProperty("--u5-hud-top", `${Math.round(suelo)}px`);
+    } else {
+      // APAISADO: el selector tiene sus propias reglas (se aparta del raíl y se acota), así
+      // que aquí la propiedad AUSENTE es el estado correcto y no una degradación.
+      document.documentElement.style.removeProperty("--u5-hud-top");
     }
     // ANCHO EFECTIVO DEL CANVAS → CSS, en APAISADO. Hermano del de arriba y por el mismo
     // motivo: quien sabe cuánto mide el canvas es quien lo dimensiona.

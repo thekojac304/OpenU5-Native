@@ -32,6 +32,7 @@ import {
   utilKeyLocator,
   abrirShellDrawer,
   SHELL_DRAWER,
+  abreCategoriaDeAjustes,
 } from "./deck";
 import {
   SUELO_TACTIL,
@@ -1408,6 +1409,17 @@ test("invariante #147: el panel del shell REABRE tras scrollear su cuerpo y rota
   const cuerpo = drawer.locator(".u5dbg-body");
 
   await abrirShellDrawer(page);
+  /**
+   * 🔴 SE ENTRA EN UNA CATEGORÍA LARGA ANTES DE SCROLLEAR, y no es un adorno del rediseño:
+   * este test EXIGE que el paso 1 mueva el `scrollTop` de verdad («si el cuerpo no
+   * scrollea, este test no está instanciando el escenario»). Con el panel repartido en
+   * categorías, la vista de índice puede caber entera en pantalla y el scroll sería 0 —
+   * el test se pondría rojo por el INSTRUMENTO, no por el defecto que vigila.
+   *
+   * «Comandos (original)» es la categoría con 26 filas de referencia: desborda cualquier
+   * teléfono en las dos orientaciones, que es justo lo que este paso necesita.
+   */
+  await abreCategoriaDeAjustes(page, SHELL_DRAWER, "shell-commands");
 
   // PASO 1 — scroll interno REAL. Se afirma que de verdad movió el cuerpo: sin esto, un
   // panel que dejara de tener scroll convertiría el test en vacuo sin avisar.

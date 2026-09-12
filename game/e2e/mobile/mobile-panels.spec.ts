@@ -34,7 +34,15 @@
  * tiene otro carril). Verificado con `npm run typecheck:e2e`.
  */
 import { test, expect, type Page } from "@playwright/test";
-import { gotoMobile, tapCmd, tapUtil, hayBarraDeModo, SWAP_PAD_SIDE } from "./deck";
+import {
+  gotoMobile,
+  tapCmd,
+  tapUtil,
+  hayBarraDeModo,
+  abreCategoriaDeAjustes,
+  SEC_MANDOS,
+  SWAP_PAD_SIDE,
+} from "./deck";
 import { SUELO_TACTIL } from "./suelo-tactil";
 
 /** LEÍDO del módulo: el suelo vive en `suelo-tactil.ts` y en ningún otro sitio. */
@@ -453,6 +461,8 @@ for (const [caso, vp, papel] of [
     ).toBe(true);
 
     await page.locator(".touch-shellbtn").tap();
+    // Rediseño de ajustes: la fila vive en la sección «Mandos» y hay que abrir su categoría.
+    await abreCategoriaDeAjustes(page, '[data-testid="u5-shell-drawer"]', SEC_MANDOS);
     const fila = page.locator(`[data-testid="u5-shell-drawer"] ${SWAP_PAD_SIDE}`);
     await expect(fila, "la fila «Swap pad side» del drawer SISTEMA").toHaveCount(1);
     await fila.tap();

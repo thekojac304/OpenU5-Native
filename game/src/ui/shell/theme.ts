@@ -125,6 +125,31 @@ const PANEL_HUECO = `
   top: calc(var(--u5-shell-techo, 100vh) / 2);
   max-height: min(86vh, calc(var(--u5-shell-techo, 100vh) - 16px));`;
 
+/**
+ * ANCHO DEL PANEL CON EL NAVEGADOR DE AJUSTES. El tope histórico son 560 px, pensado para
+ * una lista de una columna; el raíl de categorías + el contenido piden más aire.
+ *
+ * 🔴 LA CONDICIÓN MIRA LAS DOS DIMENSIONES, y la segunda no es adorno: un teléfono en
+ * APAISADO tiene 844 px de ancho y 390 de alto, y ensancharlo ahí metería el panel encima
+ * de los raíles laterales del deck — el mismo choque que PANEL_HUECO resuelve por arriba y
+ * por abajo (rect del panel ∩ rect del control que lo cierra = ∅, `mobile-geometry.spec`).
+ * `min-height:560px` deja fuera todo teléfono en las dos orientaciones y deja dentro
+ * cualquier escritorio; por debajo el panel se queda EXACTAMENTE en los 560 px de siempre,
+ * y el navegador se pliega solo a lista → detalle porque mide su propio ancho.
+ *
+ * 🔴 Y FIJA EL `width`, NO SÓLO EL TOPE, porque el panel es `width:auto` (shrink-to-fit):
+ * con sólo `max-width` su ancho lo decide el CONTENIDO, y el contenido del panel ya no es
+ * el mismo en cada categoría — medido en Chromium 1280×800, el drawer salía en 640 px con
+ * «Juego» (dos botones) abierto. El panel CAMBIARÍA DE TAMAÑO al navegar entre categorías,
+ * que es exactamente el tic que hace que una interfaz parezca rota. Con el ancho fijo, la
+ * caja se queda quieta y lo que cambia es sólo su contenido.
+ */
+const PANEL_ANCHO_AJUSTES = `
+@media (min-width: 900px) and (min-height: 560px){
+  ${SH}, ${SHD}{ width: min(760px, calc(100vw - 16px));
+                 max-width: min(760px, calc(100vw - 16px)); }
+}`;
+
 const THEME_CSS = `
 /* ===================== PIEL FIEL — panel de menú EGA (maqueta m1) ===================== */
 /* Panel CENTRADO (no drawer lateral): mundo atenuado detrás, caja de menú del juego. */
@@ -274,4 +299,45 @@ ${SHD} .u5dbg-field input[type=text]{ background:#0b0d1c; color:#eaf0ff; border:
 }
 [data-shell-skin="shader"] .u5skinsw-item:hover,
 [data-shell-skin="shader"] .u5langsw-item:hover{ background:rgba(80,95,235,.4); }
+
+/* ===================== NAVEGADOR DE AJUSTES — cromo por piel ===================== */
+/* La ESTRUCTURA (rejilla, 44 px de diana, envoltura de rótulos) vive en settingsNav.ts;
+   aquí sólo el color, que es lo que cambia con la piel. Mismo ámbito que todo lo de
+   arriba: el testid del drawer del SHELL, para no tocar el drawer QA de debug. */
+
+/* FIEL — el raíl es una lista de menú EGA: blanco sobre negro, y la entrada activa en
+   reverse-video, que es como el juego marca la selección en sus propios menús. */
+${SH} .u5set-cat{ color:#fff; border-radius:0; border-color:transparent; }
+${SH} .u5set-cat:hover{ background:#2a2a2a; }
+${SH} .u5set-cat.on{ background:#fff; color:#000; border-color:#fff; }
+${SH} .u5set-cat:focus-visible{ outline:2px solid #fff; }
+${SH} .u5set-cat.on:focus-visible{ outline-color:#000; }
+${SH} .u5set-rail{ border-right:1px solid ${EGA_BLUE}; padding-right:6px; }
+${SH} .u5set[data-mode="drill"] .u5set-rail{ border-right:0; padding-right:0; }
+${SHD} .u5set[data-mode="drill"] .u5set-rail{ border-right:0; padding-right:0; }
+${SH} .u5set-pane-title{ color:#fff; }
+${SH} .u5set-back{ background:${EGA_BLUE}; color:#fff; border:1px solid #fff; border-radius:0; }
+${SH} .u5set-back:hover, ${SH} .u5set-back:focus-visible{ background:#fff; color:#000; outline:0; }
+/* El pie va PEGAJOSO (settingsNav.ts) y el contenido pasa por debajo: su fondo tiene que
+   ser el del panel de cada piel, o el texto se leeria a traves. */
+${SH} .u5set-footer{ border-top:1px solid ${EGA_BLUE}; background:#000; }
+${SH} .u5set .u5dbg-field{ border-bottom-color:#2a2a2a; }
+/* El rótulo de sección se queda en el REVERSE-VIDEO blanco del resto del menú fiel y NO
+   se re-pinta de azul. Lo destapó una captura: con fondo azul, los glifos 8×8 salían
+   NEGROS (la regla .u5dbg-sec-head .u5px-g{filter:invert(1)} de pixelfont.ts da por supuesto el
+   fondo blanco) y el rótulo quedaba negro sobre azul, ilegible. El estilo de la cabecera
+   y el de su fuente son una sola decisión: cambiar uno sin el otro rompe el contraste. */
+
+/* SHADER — mismo esqueleto, familia vectorial redondeada. */
+${SHD} .u5set-cat{ color:#cdd6ff; }
+${SHD} .u5set-cat:hover{ background:rgba(90,100,220,.22); }
+${SHD} .u5set-cat.on{ background:rgba(80,95,235,.38); border-color:rgba(140,150,255,.55); color:#fff; }
+${SHD} .u5set-cat:focus-visible{ outline:2px solid #aab0ff; }
+${SHD} .u5set-rail{ border-right:1px solid rgba(120,120,255,.28); padding-right:6px; }
+${SHD} .u5set-pane-title{ color:#fff; }
+${SHD} .u5set-back{ background:rgba(70,80,200,.16); border:1px solid rgba(110,120,255,.35); color:#dfe6ff; border-radius:9px; }
+${SHD} .u5set-back:hover, ${SHD} .u5set-back:focus-visible{ background:rgba(80,95,235,.4); outline:0; }
+${SHD} .u5set-footer{ border-top:1px solid rgba(120,120,255,.28); background:#0b0d1c; }
+${SHD} .u5set .u5dbg-field{ border-bottom-color:rgba(120,120,255,.16); }
+${PANEL_ANCHO_AJUSTES}
 `;

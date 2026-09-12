@@ -40,6 +40,7 @@
  * hasta el timeout del TEST, y ese rojo mudo se lee como defecto de producto.
  */
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { abreCategoriaDeAjustes } from "../helpers";
 
 export type DeckMode = "move" | "az" | "num" | "yesno";
 
@@ -259,12 +260,25 @@ export async function utilKeyLocator(
 /** El drawer SISTEMA del shell — el destino del ☰ desde la ficha #154. */
 export const SHELL_DRAWER = '[data-testid="u5-shell-drawer"]';
 
+// Navegación por categorías del panel de ajustes: una sola implementación, compartida con
+// las specs de escritorio (`e2e/helpers.ts`). Se re-exporta para que las specs móviles la
+// tomen de `./deck`, que es de donde ya importan todo lo del drawer.
+export { abreCategoriaDeAjustes };
+
 /**
- * La fila «Swap pad side» del drawer (sección `shell-video`). Por `data-testid` y no por
+ * La fila «Swap pad side» del drawer (sección `shell-controls`). Por `data-testid` y no por
  * texto: ficha #259 — ver el docblock de `swapPadSide()`. Vive aquí para que no vuelva a
  * haber DOS localizadores de la misma fila (los había: éste y una copia en mobile-panels).
+ *
+ * ⚠ CAMBIÓ DE SECCIÓN, no de identidad: el rediseño de ajustes sacó las tres filas
+ * táctiles de «Vídeo» a una sección «Mandos» propia. El `data-testid` es justamente lo que
+ * hace que ese movimiento NO cueste un rojo — pero sí hay que abrir su categoría antes de
+ * tocarla (`abreCategoriaDeAjustes`), porque sólo la abierta tiene caja.
  */
 export const SWAP_PAD_SIDE = '[data-testid="u5-shell-swap-pad-side"]';
+
+/** Sección del drawer donde vive cada fila táctil (para navegar hasta su categoría). */
+export const SEC_MANDOS = "shell-controls";
 
 /**
  * ABRE EL DRAWER SISTEMA POR EL ☰ DEL DECK — **un solo tap** (ficha #154).
@@ -318,10 +332,11 @@ export async function cerrarShellDrawer(page: Page): Promise<void> {
  */
 export async function swapPadSide(page: Page): Promise<void> {
   await abrirShellDrawer(page);
+  await abreCategoriaDeAjustes(page, SHELL_DRAWER, SEC_MANDOS);
   const fila = page.locator(`${SHELL_DRAWER} ${SWAP_PAD_SIDE}`);
   await expect(
     fila,
-    "la fila «Swap pad side» del drawer (sección shell-video). Si el count es 0, mira la " +
+    "la fila «Swap pad side» del drawer (sección shell-controls). Si el count es 0, mira la " +
       "ORIENTACIÓN: `padSideOfrecible()` (ui/touch.ts) sólo la ofrece en APAISADO, mientras " +
       "que el popover ☰ difunto la ofrecía también en vertical y el espejo CSS no depende de " +
       "la orientación. En vertical, ese 0 es un defecto de producto, no de este helper",

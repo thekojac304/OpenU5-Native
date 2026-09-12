@@ -59,6 +59,8 @@ const CENSO: Record<string, { literalesMin: number; sueloReglas: number }> = {
   "game/src/ui/replay-ui.ts": { literalesMin: 1, sueloReglas: 26 },
   // medido: 1 literal (PIXELFONT_CSS), 11 reglas
   "game/src/ui/shell/pixelfont.ts": { literalesMin: 1, sueloReglas: 7 },
+  // medido: 1 literal (SETTINGS_NAV_CSS), 30 reglas — navegador de ajustes (rediseño)
+  "game/src/ui/shell/settingsNav.ts": { literalesMin: 1, sueloReglas: 21 },
   // medido: 1 literal (CSS), 12 reglas
   "game/src/ui/shell/skinSwitcher.ts": { literalesMin: 1, sueloReglas: 8 },
   // medido: 1 literal (CSS), 2 reglas — con n=2 el suelo ES lo medido: menos de 2 = colapso
@@ -74,6 +76,24 @@ const CENSO: Record<string, { literalesMin: number; sueloReglas: number }> = {
   // medido: 4 literales (wideDeckCss, botonesUiCss, layoutOriginalCss, layoutApaisadoCss),
   // 143 reglas en total
   "game/src/skin/portrait/deck-ancho.ts": { literalesMin: 4, sueloReglas: 100 },
+  // medido 2026-09-11 (fase 1 de la auditoría de mandos móviles): 1 literal
+  // (enhancedCss), 42 reglas. La hoja de la chapa Enhanced es hermana de la de
+  // `deck-ancho.ts` y comparte su riesgo: lleva docblocks LARGOS dentro del literal, que
+  // es exactamente donde vive el defecto que esta guarda vigila (un backtick sin escapar
+  // en un comentario cierra la cadena y trunca la hoja).
+  "game/src/enhanced/mobile/css.ts": { literalesMin: 1, sueloReglas: 29 },
+  // medido 2026-09-12 (lista de hechizos, interfaz de lanzamiento «moderna»): 1 literal
+  // (spellPickerCss), 27 reglas. Mismo riesgo que sus dos hermanas de arriba —docblocks
+  // largos DENTRO del literal—, y además ésta es la primera hoja del repo que NO cuelga de
+  // una clase de régimen: sus selectores (`.u5sp-*`) sólo existen mientras el panel está
+  // abierto, así que un truncamiento no se vería en ninguna pantalla del juego.
+  "game/src/enhanced/spells/css.ts": { literalesMin: 1, sueloReglas: 18 },
+  // medido 2026-09-12 (selector compacto de miembro del grupo): 1 literal
+  // (partyPickerCss), 22 reglas. Tercera hermana del mismo patron y con el mismo riesgo
+  // (docblocks largos DENTRO del literal); como la de hechizos, sus selectores solo
+  // existen mientras el panel vive, asi que un truncamiento no se veria en ninguna
+  // pantalla hasta que alguien abriera un prompt de PJ en un telefono.
+  "game/src/enhanced/party/css.ts": { literalesMin: 1, sueloReglas: 16 },
   // medido: 1 literal (CSS), 36 reglas
   "game/src/debug/teleportPicker.ts": { literalesMin: 1, sueloReglas: 25 },
   // medido: 1 literal (CSS), 38 reglas

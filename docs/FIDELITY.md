@@ -295,6 +295,20 @@ DOSBox pendiente (las que el live verifique de verdad suben con su evidencia).
   teclas en DOSBox (test live opt-in) aún no dispara — protocolo del comando Cast
   pendiente de RE. Ver re/verified/magic.md.
 - ⚠️ **In Quas Xen / In Quas Wis**: efecto exacto sin confirmar (confianza baja del scout).
+- ❌ **Interfaz de lanzamiento «Lista de hechizos»** (ajuste *Sistema → Juego → Magia*,
+  `u5.castingUI`, por defecto **Clásico**; `?casting=modern|classic` manda sobre lo
+  guardado). QoL de ENTRADA, no de magia: sustituye ÚNICAMENTE el paso de teclear las
+  iniciales rúnicas por una lista navegable de los 48 lanzables (palabras de poder,
+  descripción del asset, círculo/coste, reactivos, modo de apuntado y cantidad mezclada).
+  **Ni una regla del dispatcher cambia de sitio**: al elegir una fila, el panel arma el
+  getstring rúnico FIEL (`ui/pickers.ts::pickSpellTyped`) y le ESCRIBE las iniciales por el
+  mismo camino de teclado que el jugador (`ui/touch.ts::press` → keydown de `window` →
+  `PromptManager`), así que `matchSpellByInitials` → `castSpell` corren idénticos, con las
+  mismas filas de consola, el mismo consumo, los mismos prompts de objetivo y el mismo RNG
+  — y la repetición graba las mismas teclas. Cancelar es el ESC del getstring («None!»).
+  El modo Clásico queda intacto: con él, el sustituto ES `pickSpellTyped`, sin capa en
+  medio. Capa en `game/src/enhanced/spells/`; candados en `game/tests/hechizos-*.test.ts`
+  (careo clásico↔lista sobre consola, estado y RNG) y `game/e2e/hechizos-lista.spec.ts`.
 
 ## Mazmorras (Task 3.4 — DUNGEON.OVL + DNGLOOK.OVL)
 
@@ -680,8 +694,23 @@ Motores de turno TOWN 0x141E / MAINOUT 0x0A84 — el "corazón del stream". Deri
 
 ## Audio
 
-- ❌ **Música**: el DOS original era mudo; usamos el parche XMI comunitario renderizado con
-  GeneralUser GS (QoL). Mapeo pista→contexto en extractor/src/audio/tracklist.ts (criterio propio).
+- ❌ **Música**: el DOS original era mudo (`re/notes/audio-profile-1988.md`); usamos el parche
+  XMI comunitario (Ultima V Upgrade Patch, de Voyager Dragon) como QoL. Sigue siendo un añadido
+  NO fiel, pero desde 2026-09-11 su PROCEDENCIA es otra: ya no se pre-renderiza con un soundfont
+  ajeno (GeneralUser GS), sino que se SINTETIZA EN VIVO con un emulador de OPL2/OPL3 propio
+  (`game/src/ui/opl/`) alimentado por el banco de timbres del propio parche (`FAT.OPL`) — o sea,
+  los datos del parche sobre el hardware al que apuntaba, en vez de nuestra interpretación de
+  ellos. Y desde 2026-09-12 el MAPEO tampoco es criterio propio: qué canción suena en cada
+  sitio está DERIVADO del driver del parche (`mid.drv` 0x016d, un switch sobre `g_location`,
+  `g_floor`, `g_transport_tile` y `g_cmb_victory_flag` que el driver lee él mismo del segmento
+  de datos del juego). Tabla completa, con el disasm al lado, en
+  `re/notes/music-location-mapping.md`; el port la implementa en `game/src/ui/music.ts`
+  (`songForLocation`). Las escenas guionizadas —portada, cinemática, creación de personaje,
+  santuario, acampada, captura de Blackthorn, muerte y endgame— van por los selectores fijos
+  del driver, cableados en `game/src/main.ts`. Lo que sigue sin derivar, y va rotulado en el
+  código: qué beat del endgame del port equivale a cada cuadro del original (el guión del clon
+  no lleva el contador que indexa la tabla de rango 0x24a), así que ahí se reproduce el ORDEN
+  —tabla de cuadros → Joyous Reunion → Rule Britannia— y no los índices.
 
 ## Assets
 

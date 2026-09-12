@@ -54,6 +54,12 @@ export interface CampSleepDeps {
    * ver `bardEasterEggFires`. Thunk (no valor) porque el usuario lo alterna en caliente.
    */
   soundEnabled: () => boolean;
+  /**
+   * La acampada TERMINA (despertar, o emboscada que la corta). Hoy lo usa la música:
+   * `kernel_camp_holeup` (ULTIMA.EXE 0x3e65) pone «Stones» con canción FIJA, corre la
+   * escena y devuelve el mando a la localización al volver (su `call 0x0e1d`). Opcional.
+   */
+  onEnd?: () => void;
 }
 
 /** Cadencia del tick de 1 h de sueño (Clase C, ver cabecera). */
@@ -195,6 +201,7 @@ export class CampSleep {
     const wake = (): void => {
       this.cancel();
       this._camping = false;
+      this.deps.onEnd?.();
       const events = game.campWake(guardIdx); // cura parcial / aparición / "Party rested!"
       // Si cruza la APARICIÓN (25%), su flash de inversión de paleta debe caer SOBRE la
       // escena (el original la invierte con el party en formación). Mantenemos la escena
@@ -239,6 +246,7 @@ export class CampSleep {
           // flag para no dejarla montada al salir de la arena.
           this.cancel();
           this._camping = false;
+          this.deps.onEnd?.();
           view.setCampScene(false);
           refreshAwaiting();
         }

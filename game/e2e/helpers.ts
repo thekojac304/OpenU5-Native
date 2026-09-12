@@ -309,3 +309,57 @@ export async function consoleText(page: Page): Promise<string> {
   );
   return all.join("\n");
 }
+
+// ─────────────────────────────────────────────────────────────────────────────────────
+// PANEL DE AJUSTES CON CATEGORÍAS (rediseño de ajustes)
+// ─────────────────────────────────────────────────────────────────────────────────────
+
+/** Raíz del navegador de ajustes dentro del drawer SISTEMA. */
+export const SETTINGS_NAV = '[data-testid="u5-settings"]';
+
+/**
+ * Lleva el panel de ajustes a la categoría que CONTIENE una sección, y espera a que su
+ * página esté visible.
+ *
+ * 🔴 POR QUÉ HACE FALTA, Y POR QUÉ EL LOCALIZADOR VA POR `data-owns` Y NO POR RÓTULO. El
+ * drawer dejó de ser una lista única: sus once secciones viven repartidas en categorías y
+ * sólo la abierta tiene caja, así que un `click()` sobre una fila de otra categoría falla
+ * con «element is not visible» — el nodo existe y no se ve, que es el modo de fallo que
+ * las specs móviles ya conocen del marco (#263). Antes de tocar una fila hay que abrir su
+ * categoría.
+ *
+ * El puente es `data-owns` (lista de ids de sección que pinta cada pestaña, emitida por
+ * `ui/shell/settingsNav.ts`) porque los ids NO dependen del idioma y los rótulos SÍ: los
+ * proyectos de Playwright corren EN y ES, y anclar el instrumento a un rótulo es
+ * exactamente lo que costó 26 rojos en la ficha #259.
+ *
+ * Idempotente: si la categoría ya está abierta, el clic es un no-op y la espera pasa.
+ */
+export async function abreCategoriaDeAjustes(
+  page: Page,
+  drawer: string,
+  sectionId: string,
+): Promise<void> {
+  const tab = page.locator(`${drawer} .u5set-cat[data-owns~="${sectionId}"]`);
+  await expect(
+    tab,
+    `ninguna categoría del panel de ajustes declara la sección «${sectionId}» ` +
+      `(¿cambió su id, o se quedó sin group en ui/shell/sections.ts?)`,
+  ).toHaveCount(1);
+  const cat = await tab.getAttribute("data-cat");
+  const pagina = page.locator(`${drawer} .u5set-page[data-cat="${cat}"]`);
+  if (!(await pagina.isVisible())) {
+    /**
+     * 🔴 EN UN TELÉFONO PUEDE HABER QUE SALIR ANTES DE ENTRAR. El panel estrecho es
+     * lista → detalle, y dentro de una categoría la LISTA no está: la pestaña existe en el
+     * DOM y no tiene caja, así que un `click()` directo espera a que se vea hasta el
+     * timeout. Es el mismo camino que haría el usuario —volver al índice y elegir otra— y
+     * es lo que convierte a este helper en reutilizable: sirve igual llamándolo con el
+     * panel recién abierto que con otra categoría ya abierta.
+     */
+    const volver = page.locator(`${drawer} [data-testid="u5-settings-back"]`);
+    if (!(await tab.isVisible()) && (await volver.isVisible())) await volver.click();
+    await tab.click();
+  }
+  await expect(pagina).toBeVisible();
+}

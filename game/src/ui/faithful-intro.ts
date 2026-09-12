@@ -642,6 +642,18 @@ export class FaithfulIntro {
   }
 
   /**
+   * Página de la cinemática «The Summoning» (0-based). Read-only, como
+   * [[currentPhase]] — pero ésta no es sólo para el arnés: la MÚSICA de la intro del
+   * parche se elige por página. `mid.drv` 0x223 (selector 0x06) es una tabla de rango
+   * sobre el contador de página que INTRO.OVL 0x0adc le pasa en BL — 0..7 «Stones»,
+   * 8..14 «Halls of Doom», 15..21 «Greyson's Tale» — o sea que la cinemática cambia de
+   * canción DOS veces mientras corre, y sin este contador el port no puede seguirla.
+   */
+  get currentStoryPage(): number {
+    return this.storyPage;
+  }
+
+  /**
    * Opción RESALTADA del menú de portada (0..5). SÓLO para el hook e2e DEV
    * (`__u5test.introMenuSelected`, ficha #33): el menú se pinta a canvas —el resalte es
    * vídeo inverso sobre una fila de glifos—, así que sin esto el arnés no puede

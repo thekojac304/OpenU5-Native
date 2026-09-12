@@ -28,6 +28,7 @@ function stubDeps(overrides: Partial<ShellDeps> = {}): Stub {
     selectSkin: (id: string) => calls.push(`selectSkin:${id}`),
     musicEnabled: () => false,
     setMusicEnabled: (on: boolean) => calls.push(`setMusicEnabled:${on}`),
+    musicStatus: () => ({ estado: "s", pista: "s", via: "s", portada: "s", error: "-", hilo: "-" }),
     musicVolume: () => 0.55,
     setMusicVolume: (v: number) => calls.push(`setMusicVolume:${v}`),
     speakerEnabled: () => true,
@@ -57,6 +58,12 @@ describe("buildShellSections — menú SISTEMA", () => {
     // ficha #154 (8f3047dd — acción, entre los paneles y las referencias) y `shell-close`
     // es la salida ROTULADA del drawer que #263 puso al retirar el `esc` de la esquina
     // (e3bf247c — el requisito de accesibilidad no podía perderse con el botón).
+    // ★ SIN «shell-controls» Y ESO ES LA MEDIDA, no un olvido: el rediseño de ajustes
+    // sacó de «Vídeo» las tres filas táctiles (layout partido, lado del pad, mandos
+    // Enhanced) a una sección propia, y las tres van con GATE DE DISPONIBILIDAD. Este stub
+    // no cablea ninguna de esas deps —es el censo de ESCRITORIO—, así que la sección se
+    // queda sin campos y no se construye. El caso táctil (con la sección) lo mide
+    // `tests/ajustes-categorias.test.ts`, que arma las deps completas.
     expect(buildShellSections(stubDeps()).map((s) => s.id)).toEqual([
       "shell-panels",
       "shell-video",
@@ -93,6 +100,16 @@ describe("buildShellSections — menú SISTEMA", () => {
     const btn = findField(buildShellSections(deps), "Save / Load (F5)") as ButtonField;
     btn.run();
     expect(deps.calls).toEqual(["close", "openSaves"]);
+  });
+
+  it("con deps táctiles aparece «shell-controls» entre Vídeo y Audio", () => {
+    // La otra mitad del aserto de arriba: el gate abre en las dos direcciones.
+    const secs = buildShellSections(
+      stubDeps({ enhancedControlsDisponible: () => true, enhancedControls: () => false, setEnhancedControls: () => {} }),
+    );
+    expect(secs.map((s) => s.id)).toContain("shell-controls");
+    const mandos = secs.find((s) => s.id === "shell-controls")!;
+    expect((mandos.fields ?? []).map((f) => f.label)).toEqual(["Enhanced controls"]);
   });
 
   it("Video lista una piel user-facing por botón y cablea selectSkin (sin dev)", () => {

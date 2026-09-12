@@ -72,6 +72,18 @@ export interface DebugSection {
   id: string;
   title: string;
   /**
+   * CATEGORÍA a la que pertenece la sección en el panel de ajustes con navegador
+   * (`ui/shell/settingsNav.ts`). Es un dato DECLARATIVO más, como `title`: la sección
+   * dice dónde vive y el navegador la coloca — no hay una segunda lista «categoría →
+   * secciones» que pueda quedar desincronizada con ésta.
+   *
+   * El valor reservado `FOOTER_GROUP` ("footer") manda la sección al PIE fijo, visible
+   * desde cualquier categoría (la salida rotulada del drawer usa esto).
+   *
+   * Ausente ⇒ el drawer QA de debug, que se pinta como acordeón plano y no la mira.
+   */
+  group?: string;
+  /**
    * Renderer a medida (p.ej. el canvas del mapa de teletransporte). Si está
    * presente, se pinta ANTES de los `fields`. Devuelve el elemento a insertar.
    */

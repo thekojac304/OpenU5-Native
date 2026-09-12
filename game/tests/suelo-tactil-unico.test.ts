@@ -32,6 +32,14 @@ const MIDEN_TARGETS = [
   // Botonera de teclas de la intro (ficha #33): mide sus botones contra el suelo porque
   // el renglón del menú de portada (8 px CSS a 390 px de ancho) no puede alcanzarlo.
   "intro-teclas.spec.ts",
+  // Refinamiento UX del 12-09. Los tres miden objetivos táctiles de superficies NUEVAS:
+  //   · la hoja de hechizos (fila y su botón de ficha),
+  //   · el selector compacto de miembro (sus filas y el cancelar),
+  //   · la chapa Enhanced re-compuesta en el layout partido, que es la que USA la
+  //     excepción de la cruceta compacta declarada en `suelo-tactil.ts`.
+  "hechizos-hoja.spec.ts",
+  "selector-pj-compacto.spec.ts",
+  "enhanced-partido-solape.spec.ts",
 ] as const;
 
 const leer = (f: string): string => readFileSync(join(DIR_MOVIL, f), "utf8");

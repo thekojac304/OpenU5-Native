@@ -42,7 +42,7 @@ import { sfxForCombatEvent } from "./core/sfx.js";
 import { CoreViewImpl } from "./skin/coreview.js";
 import { initDebugMenu } from "./debug/index.js";
 import { DebugPanel } from "./debug/panel.js";
-import { buildShellSections } from "./ui/shell/sections.js";
+import { buildShellCategories, buildShellSections } from "./ui/shell/sections.js";
 import { instalaConsentimiento } from "./web/arranque.js";
 import { EV } from "./web/eventos.js";
 import { companionAvailable, probeCompanion } from "./ui/shell/companion.js";
@@ -75,10 +75,46 @@ import {
 import {
   installBotonesUi,
   installLayoutToggleButton,
+  installWideDeck,
+  uninstallBotonesUi,
+  uninstallWideDeck,
 } from "./skin/portrait/deck-ancho.js";
 import { installPortraitDeckDom } from "./skin/portrait/deck-dom.js";
+import {
+  chapaEnhancedViva,
+  enhancedControlsActivo,
+  enhancedControlsDisponible,
+  enhancedControlsGuardado,
+  guardarEnhancedControls,
+} from "./enhanced/mode.js";
+// TAP CONTEXTUAL del mundo (chapa Enhanced): tocar un NPC adyacente y VISIBLE inicia el
+// comando (T)alk hacia él sintetizando las mismas dos teclas que teclea una persona. La
+// lógica vive ENTERA en `enhanced/context/` (fachada de sólo lectura + reglas puras);
+// aquí sólo se cablea al sink de intents, que es el punto más estrecho del flujo de tap.
+import { manejarTapContextual } from "./enhanced/context/actions.js";
+// INTERFAZ DE LANZAMIENTO (Clásico / Lista de hechizos) — capa QoL ADITIVA: la lista
+// sustituye el paso de TECLEAR las iniciales rúnicas y nada más. Toda la mecánica de magia
+// sigue viviendo en `core/magic/` y se alcanza por el MISMO getstring del original.
+import { castingUiGuardado, guardarCastingUi, type CastingUi } from "./enhanced/spells/mode.js";
+import { buildSpellCatalog } from "./enhanced/spells/catalog.js";
+import { makeCastSpellEntry } from "./enhanced/spells/entry.js";
+import { spellPickerOpen } from "./enhanced/spells/panel.js";
+import { closePartyChooser, syncPartyChooser } from "./enhanced/party/panel.js";
+import {
+  mountEnhancedChrome,
+  type EnhancedChromeHandle,
+} from "./enhanced/mobile/chrome.js";
+// ERGONOMÍA DE LOS MANDOS MÓVILES (carril 12-09): dónde cae la cruceta y qué hay en las
+// cuatro acciones rápidas. Los dos son preferencias PURAS con su propia persistencia; aquí
+// sólo se cablean al panel de ajustes, que es la raíz de composición de siempre.
+import { loadPadPos, setPadPos, type PadPos } from "./enhanced/mobile/padpos.js";
+import {
+  loadQuickWorld,
+  quickOptions,
+  setQuickSlot,
+} from "./enhanced/mobile/quickslots.js";
 import { SkinManager, type SkinChoice } from "./skin/manager.js";
-import { MusicPlayer } from "./ui/music.js";
+import { MusicPlayer, introPageContext, type LocationMusicInput } from "./ui/music.js";
 import { SavePanel } from "./ui/savepanel.js";
 import { showEndgameScroll } from "./ui/endgame-overlay.js";
 import { PromptManager } from "./ui/prompt-manager.js";
@@ -157,6 +193,7 @@ import {
   refreshTouchDeck,
   swapPadSide,
   padSideOfrecible,
+  padSideVivo,
   syncShellExpanded,
   type ExpectedInput,
 } from "./ui/touch.js";
@@ -710,7 +747,27 @@ async function boot(): Promise<void> {
     // mismo desde dos sitios; el que manda es el que no se puede olvidar.
     const skipIntro = new URLSearchParams(window.location.search).has("nointro") || embebido;
 
+    // PERFIL DE AUDIO por piel (task #27, `re/notes/audio-profile-1988.md`): la piel fiel
+    // 1988 arranca SIN música de fondo — el DOS original en un PC estándar no tenía música,
+    // sólo PC-speaker (la canción de Iolo, fanfarrias, etc. son SFX de speaker, y ésos SÍ
+    // son fieles y siguen sonando). F7 permite encenderla en la fiel como opt-in EXPLÍCITO,
+    // que persiste y gana al default del perfil.
+    //
+    // 🔴 SE CONSTRUYE AQUÍ, ANTES DE LA INTRO, Y ESO ES EL ARREGLO DE UN HUECO REAL. Vivía
+    // detrás del `await intro.run()` de abajo, que BLOQUEA el arranque mientras dura la
+    // portada: durante toda la cinemática y el menú de «Journey Onward» el reproductor no
+    // existía todavía, así que la pantalla de título no podía sonar y el interruptor de
+    // los ajustes no tenía a quién hablarle. Y el tema de portada (`theme.mid`) sólo se
+    // pedía en UN sitio, el manejador de `game-won` — o sea, la música del título de
+    // Ultima V sólo sonaba si te terminabas el juego. Reportado por el usuario, que tenía
+    // toda la razón: la portada es lo PRIMERO que debería sonar.
+    const music = new MusicPlayer(false);
+
     if (!skipIntro) {
+      // Tema de portada durante la cinemática y el menú (`U5THEME.XMI` → `theme.mid`).
+      // Con la música apagada (default de la piel fiel) esto sólo anota el contexto
+      // pendiente y no suena; al encenderla con F7 arranca sola. Ver `MusicPlayer.play`.
+      music.play("title");
       // Textos EXACTOS del binario (data.json): el menú y "Copyright…" del pool
       // introMenuU4Transfer (0x30f2), los prompts de creación del pool
       // textCreateCharCmdsCrt (0xa020). Se buscan por CONTENIDO (robusto a índices).
@@ -793,10 +850,40 @@ async function boot(): Promise<void> {
         introSwitcher.refresh();
         introLangSwitcher.refresh();
       });
+      // ── MÚSICA DE LA CINEMÁTICA (INTRO.OVL 0x0ad0 / 0x0adc / 0x0aed) ───────────────
+      // La portada NO es una canción sola: el parche engancha TRES selectores distintos en
+      // la intro —0x09 «Ultima V Theme» para el menú, 0x06 (tabla de rango 0x223 por
+      // PÁGINA de The Summoning) para la cinemática, y 0x0c «Amiga Theme» para la creación
+      // de personaje, que su Readme anuncia como característica propia («Amiga music
+      // during Character Creation — not in original!»). Sin esto `AMIGA.XMI` no sonaba en
+      // ningún sitio del port.
+      //
+      // Se SIGUE POR SONDEO y no por callback, que es exactamente lo que hace el original:
+      // el parche no tiene eventos de fase — cuelga su refresco del sondeo de teclado
+      // (`poll_key_blink_cursor` 0x1b5b) y recalcula la canción en cada vuelta. Aquí el
+      // sondeo es de 8/s, sólo vive mientras dura la intro, y `play` de-duplica por
+      // canción: pedir la misma diez veces no la reinicia. Read-only sobre la intro (dos
+      // getters), así que la cinemática sigue siendo byte-idéntica al DOSBox.
+      const introMusicTimer = window.setInterval(() => {
+        switch (intro.currentPhase) {
+          case "story":
+            music.play(introPageContext(intro.currentStoryPage));
+            break;
+          case "name":
+          case "sex":
+          case "cast":
+          case "quiz":
+            music.play("creation");
+            break;
+          default:
+            music.play("title");
+        }
+      }, 125);
       let result;
       try {
         result = await intro.run();
       } finally {
+        window.clearInterval(introMusicTimer);
         offIntroLang();
         introSwitcher.dispose();
         introLangSwitcher.dispose();
@@ -907,16 +994,39 @@ async function boot(): Promise<void> {
     // La API de módulo del deck (`setExpectedInput`, `refreshTouchDeck`) es `active?.…` sobre
     // una instancia que aquí queda a `null`: sin instancia son no-ops, no errores.
     if (!soloUiOriginal) new TouchControls(parent, game);
-    // PERFIL DE AUDIO por piel (task #27, `re/notes/audio-profile-1988.md`): la piel fiel
-    // 1988 arranca SIN música de fondo — el DOS original en un PC estándar no tenía música,
-    // sólo PC-speaker (la canción de Iolo, fanfarrias, etc. son SFX de speaker, y ésos SÍ
-    // son fieles y siguen sonando). La piel dev conserva la música "enhanced" (parche
-    // XMI→OGG), default ON. F7 permite encenderla en la fiel como opt-in EXPLÍCITO, que
-    // persiste y gana al default del perfil. fiel/shader arrancan con enhanced OFF.
-    const music = new MusicPlayer(false);
-    const updateMusic = (): void =>
-      music.play(music.contextFor(game.state.position.location, game.state.position.floor));
-    updateMusic();
+    // `music` se construyó ANTES de la intro (ver allí el porqué): a partir de aquí la
+    // pista la manda la POSICIÓN, y este primer `updateMusic()` releva al tema de portada.
+    //
+    // 🔴 ES EL SELECTOR 0x00 DEL DRIVER, con sus CUATRO entradas — no sólo la localización.
+    // `mid.drv` 0x016d lee `g_location`, `g_floor`, `g_transport_tile` y
+    // `g_cmb_victory_flag`, y en ese orden: navegar en fragata tapa la música del sitio, y
+    // el centinela de combate (0xFF) gana a todo. Pasarle sólo (location, floor) dejaba
+    // mudas dos canciones enteras — el Hornpipe de la fragata y el tema tras «VICTORY!».
+    // Derivación con el disasm al lado en `re/notes/music-location-mapping.md` §1.2.
+    //
+    // El original lo re-evalúa en CADA sondeo de teclado (el parche engancha su refresco
+    // en `poll_key_blink_cursor` 0x1b5b), así que llamar a esto de más es fiel, no
+    // derrochador: `playLocation` de-duplica por canción y no reinicia la pista viva.
+    const musicPos = (): LocationMusicInput => ({
+      location: game.state.position.location,
+      floor: game.state.position.floor,
+      transportTile: game.state.transportTile,
+      inCombat: !!game.combat,
+      combatVictory: game.combat?.victory === true,
+    });
+    const updateMusic = (): void => music.playLocation(musicPos());
+    /**
+     * Devuelve el mando a la localización tras una escena de canción FIJA — el selector
+     * 0x0f del driver, que en el original cierra TODAS: acampada, rito, captura y muerte
+     * llaman a `call 0x0e1d` justo al volver (`re/notes/music-location-mapping.md` §1.4).
+     * Sin esto la escena se quedaría dueña de la música para siempre.
+     */
+    const resumeMusic = (): void => music.resumeLocation(musicPos());
+    // Primer relevo: la PORTADA es una escena de canción fija (se quedó dueña de la música
+    // al pedir «title»), así que aquí hay que devolver el mando, no sólo refrescar. Es el
+    // mismo orden del arranque del parche: cargar driver → correr la intro → selector 0x0f
+    // (ULTIMA.EXE 0x0e36, su tercer `call`).
+    resumeMusic();
 
     // Menú DEBUG/QA (fuera del UI del juego): drawer lateral para fijar cualquier
     // cosa del estado (teleport, party, recursos, reloj, inventario). Se monta sólo
@@ -998,6 +1108,10 @@ async function boot(): Promise<void> {
       // la pausa de 52 redibujos (CMDS.OVL 0x0123/0x0128, ficha #39). THUNK: `speaker`
       // se declara más abajo en este mismo boot() y el usuario lo alterna en caliente.
       soundEnabled: () => speaker.enabled,
+      // Acampada terminada (despertar o emboscada) ⇒ el mando vuelve a la localización,
+      // como el `call 0x0e1d` con que `kernel_camp_holeup` cierra. En la emboscada el
+      // combate ya arrancó y `enterCombatMode` ya descongeló; esto es idempotente.
+      onEnd: () => resumeMusic(),
     });
 
     // Conductor del sueño en CAMA de pueblo (#296) — hermano del de acampada. Antes esto
@@ -1080,6 +1194,14 @@ async function boot(): Promise<void> {
       cancelAutoWalk();
       cancelRefuge();
       refuging = true;
+      // MUERTE DE LA PARTY = SILENCIO, y es una decisión EXPLÍCITA del autor del parche:
+      // «I made sure that Death and the Blackthorn capture sequence were both handled
+      // properly: no music should be playing during these sequences» (History.txt). En el
+      // binario se ve igual — los TRES llamadores de `party_refuge` (TOWN.OVL 0x1862,
+      // MAINOUT.OVL 0x0af0, DUNGEON.OVL 0x1014) paran la música ANTES de entrar y la
+      // reactivan al volver (glue 0x0e26/0x0e7c). El `resumeMusic()` va en el beat final,
+      // con la party ya revivida en el castillo.
+      music.play("silence");
       refreshAwaiting();
       let i = 0;
       const step = (): void => {
@@ -1088,6 +1210,7 @@ async function boot(): Promise<void> {
           refuging = false;
           view.setRefugeScene(null); // desmonta la escena → se revela el castillo
           applyEvents(game.resolveRefuge()); // revive + despertar (map/party-changed)
+          resumeMusic(); // el `call 0x0e1d` de los tres llamadores, ya en el castillo
           refreshAwaiting();
           return;
         }
@@ -1157,6 +1280,9 @@ async function boot(): Promise<void> {
       applyEvents: (e) => applyEvents(e),
       refreshAwaiting: () => refreshAwaiting(),
       cancelAutoWalk,
+      // Fin del rito (mitad de salida agotada) ⇒ vuelve a mandar la localización, como el
+      // `call 0x0e1d` con que MAINOUT.OVL 0x0968 cierra la visita al santuario.
+      onSceneEnd: () => resumeMusic(),
     });
 
     // ── ★ #324 ESCENA DE LA CAPTURA de Blackthorn (BLCKTHRN 0x060e + anim_vm 0x00be) ──
@@ -1171,6 +1297,9 @@ async function boot(): Promise<void> {
       applyEvents: (e) => applyEvents(e),
       refreshAwaiting: () => refreshAwaiting(),
       cancelAutoWalk,
+      // Fin de la captura (depósito en la celda) ⇒ vuelve a mandar la localización, que
+      // en ese punto ya es la celda del palacio (loc 0x12 ⇒ «Lord Blackthorn»).
+      onSceneEnd: () => resumeMusic(),
     });
 
     // ── ★ #294 ESPERAS DE TECLA del rito (CAST2 `call 0x448c` → kernel 0x266c) ─────────
@@ -1217,6 +1346,27 @@ async function boot(): Promise<void> {
       sceneMs,
       sceneBeatMs: SCENE_BEAT_MS,
       endgameRoom,
+      // ── MÚSICA DEL CIERRE (ENDGAME.OVL 0x0aee / 0x0aff / 0x0b18) ──────────────────
+      // El endgame es la ÚNICA escena del parche que cambia de canción tres veces, y la
+      // última es la que cierra el juego: Rule Britannia. Sin esto, `RULEBRIT.XMI` no
+      // sonaba NUNCA (estaba mal cableada como música del castillo de Lord British) y
+      // `REUNION.XMI` tampoco.
+      //
+      // ⚠️ RÓTULO HONESTO — esto es DERIVADO EN FORMA, NO EN ÍNDICE. Lo derivado del
+      // binario es el ORDEN (tabla de cuadros → Joyous Reunion → Rule Britannia) y que el
+      // cierre RULEBRIT es INCONDICIONAL: ENDGAME.OVL 0x0b18 cae fuera del `je 0xb18`, así
+      // que suena tanto en el final bueno como en el VARADO (cuyo bucle de deambular
+      // 0x0b1f→0x0ac9 vuelve a pasar por él en cada vuelta, que es el modismo de «déjala
+      // sonando» del driver). Lo que NO está derivado es qué beat de ESTE port equivale a
+      // cada cuadro del original: el guión del clon no lleva el contador `[bp-6]` que
+      // indexa la tabla 0x24a, así que el reparto por fase es una lectura del orden, no un
+      // calco de índices. Va rotulado aquí y no disfrazado de derivación.
+      onPhase: (phase) => {
+        if (phase === "storyHouse" || phase === "storyDream") music.play("endgame-ladynan");
+        else if (phase === "scroll") music.play("reunion");
+        else if (phase === "terminalFreeze" || phase === "terminalPrison") music.play("finale");
+        else music.play("endgame-stones");
+      },
     });
 
     // Prompt "Klimb-U/D-" pendiente: la celda de mazmorra tiene escalera arriba Y
@@ -1780,7 +1930,20 @@ async function boot(): Promise<void> {
       // reloj/hazards avanzando) durante toda la pelea. El original no tiene nada
       // parecido: el main-loop de combate posee el input entero.
       cancelAutoWalk();
-      music.play("combat");
+      // El combate NO es una escena guionizada: en el original es una LOCALIZACIÓN — el
+      // arnés escribe 0xFF en `g_location` (ULTIMA.EXE 0x5fb4) y el driver bifurca por ese
+      // centinela. Va por `updateMusic()` y no por un `play("combat")` suelto para que la
+      // OTRA rama del centinela también llegue: con el flag de victoria ya puesto suena el
+      // tema de Ultima V, y eso incluye el caso de entrar a una sala SIN enemigos (latch
+      // silencioso de `Combat`, calco de COMBAT.OVL 0x0bb2), donde el original nunca llega
+      // a sonar «Engagement and Melee».
+      //
+      // Y va por `resumeMusic` —no por `updateMusic`— porque el combate puede arrancar
+      // DENTRO de una escena de canción fija: la EMBOSCADA de la acampada. El original
+      // hace exactamente esto y en este mismo punto — el arnés de arena llama al selector
+      // 0x0f (ULTIMA.EXE 0x6069, `call 0x0e49`) JUSTO antes de entrar en
+      // `combat_main_loop`, descongelando el «Stones» del camp para que se oiga la pelea.
+      resumeMusic();
       // El arranque de combate lo anuncia el CORE con la secuencia fiel (lote D):
       //   <pre-línea contextual> → <grupo, monsterNamesUpper> → "*** CONFLICT ***\n" (DS
       //   0xa438) → 1er turno. Pre-línea: enemy-init "Attacked!\n" (0x2882), camp
@@ -1915,7 +2078,37 @@ async function boot(): Promise<void> {
     // `pendingDirCommand` se inicialice (declarado más abajo) — tocarlo ahí es TDZ. En la
     // cola de keydown todo el estado ya existe (mismo motivo que setAwaitingDirection).
     const syncTouchExpect = (): void => {
+      // Con la LISTA DE HECHIZOS abierta no se declara input esperado: el getstring rúnico
+      // que hay debajo lo va a teclear el panel, no el jugador, así que alzar la hoja A–Z
+      // levantaría un teclado encima de la pantalla que existe para no tener que teclear.
+      // (El prompt sigue armado y modal; lo único que se calla es la hoja del deck.)
+      if (spellPickerOpen()) {
+        setExpectedInput(null);
+        closePartyChooser();
+        return;
+      }
       const pp = prompts.current;
+      // ── SELECTOR COMPACTO DE MIEMBRO (auditoría de mandos móviles, 12-09) ──────────
+      // `party-select` sigue siendo un prompt de DÍGITO —sus teclas son '1'..'N'— y por eso
+      // seguía alzando la hoja «123» genérica: la rejilla de diez teclas que existe para las
+      // cantidades de Mix y las donaciones. Medido en un iPhone SE (375×667) con party de 3,
+      // eso inflaba el deck de 274 a 535 px (el 80 % del viewport) para ofrecer siete teclas
+      // sin destino y cero nombres.
+      //
+      // Lo que cambia es LA SUPERFICIE, no el prompt: `syncPartyChooser` pinta una fila por
+      // miembro y cada una SINTETIZA su dígito por el mismo `press()` que usan los botones
+      // del deck. El reductor, el prompt, el cursor del roster y el grabador de repeticiones
+      // no se enteran. Si se hace cargo, el numpad no se alza; si no (escritorio, chapa
+      // clásica, party vacío), se cae a la rama de siempre y el numpad vuelve.
+      // `chapaEnhancedViva()` y no `enhancedControlsActivo()`: esto corre en la cola de
+      // CADA keydown, y hay que creerle al DOM (la clase de la que cuelga el CSS de la
+      // chapa) y no a la preferencia — durante una conmutación en caliente pueden
+      // discrepar un instante, y quien pinta encima del deck no puede adelantarse a él.
+      const conSelectorPj = syncPartyChooser({
+        activo: pp?.type === "party-select",
+        disponible: chapaEnhancedViva(),
+        state: game.state,
+      });
       const awaitingDir =
         pendingDirCommand != null ||
         pendingCastDoor != null ||
@@ -1930,7 +2123,11 @@ async function boot(): Promise<void> {
         // justa es el numpad. Las otras vías del picker no se pierden — las flechas del
         // cursor y el ⏎/Esc de confirmación viven FUERA de las hojas (cruceta y fila útil,
         // ambas permanentes en el portrait del prototipo).
-        pp?.type === "digit" || pp?.type === "number" || pp?.type === "party-select"
+        // ★ 12-09: y sólo cuando el selector compacto NO se ha hecho cargo. Con él vivo,
+        // alzar además el numpad sería ofrecer las dos superficies a la vez para la misma
+        // pregunta — el doble camino (y el doble alto) que esta fase viene a quitar.
+        (pp?.type === "digit" || pp?.type === "number" ||
+          (pp?.type === "party-select" && !conSelectorPj))
           ? "digit"
           : pp?.type === "text" || pp?.type === "rune"
             ? "string"
@@ -2082,6 +2279,12 @@ async function boot(): Promise<void> {
         if (e.kind === "shrine-scene" && e.shrineScene) {
           const shrineScript = e.shrineScene;
           const shrineRest = events.slice(events.indexOf(e) + 1);
+          // «Stones» con canción FIJA durante todo el rito: MAINOUT.OVL 0x0968 lo pone
+          // (glue 0x0e50 = selector 0x12) ANTES de entrar en `shrine_visit` y congela la
+          // música, de modo que la explanada no suena a sobremundo. Lo descongela
+          // `onSceneEnd` del pacer. Se pide en las DOS mitades del guión (entrada y
+          // salida): el de-duplicado va por canción, así que la segunda no la reinicia.
+          music.play("shrine");
           // ★ #371 — el flush va ANTES del aparcamiento: los barridos de la donación y del
           // WELL DONE suenan DENTRO de la inversión (el binario los mete entre el rect XOR
           // y el kernel_flash), y la melodía del ORDAINED tras su último print. La escena
@@ -2110,6 +2313,11 @@ async function boot(): Promise<void> {
         // Bajo automatización (unidad 0) drena síncrono.
         if (e.kind === "blackthorn-scene" && e.blackthornScene) {
           flushEventPrefix(events.indexOf(e)); // #371/#373: cues y fx del prefijo se publican antes del corte
+          // La CAPTURA es la otra secuencia que el parche deja MUDA a propósito (History.txt,
+          // junto con la muerte): TOWN.OVL 0x12ca para la música (glue 0x0e72) antes de
+          // llamar a `blackthorn_capture` y la reactiva al volver. El mando se devuelve en
+          // el `onSceneEnd` del pacer, ya con la party depositada en la celda.
+          music.play("silence");
           blackthornScenePacer.run(e.blackthornScene, events.slice(events.indexOf(e) + 1));
           return;
         }
@@ -2193,7 +2401,6 @@ async function boot(): Promise<void> {
           zodiacActive = true;
         }
         if (e.kind === "game-won") {
-          music.play("title");
           // Fork del endgame (#20 L3/L4): SÓLO la victoria (con la Sandalwood Box) abre
           // el pergamino de cierre (endgame_datestamp 0x0326). El final "varado" (sin la
           // caja) no lo muestra — su diálogo ("pull up a chair…") ya está en el log.
@@ -2204,6 +2411,12 @@ async function boot(): Promise<void> {
           if (e.ending !== "stranded" && !scripted) {
             showEndgameScroll(parent, questScroll(game.state));
           }
+          // Con GUIÓN la música la lleva el pacer fase a fase (ver su `onPhase`); sin él
+          // —fallback DOM, sin `endgame.json`— no hay fases que seguir, así que se pone
+          // directamente el cierre. Antes sonaba aquí el tema de PORTADA, que en el
+          // original no toca el endgame: su última llamada al driver es Rule Britannia
+          // (ENDGAME.OVL 0x0b18), y es incondicional — también en el final varado.
+          if (!scripted) music.play("finale");
         }
         // Prompt Y/N interactivo de salida de pueblo (F1.3 Flow 1). El resolve
         // re-entra en `game` y vuelve a llamar applyEvents (re-entrada segura,
@@ -2687,6 +2900,13 @@ async function boot(): Promise<void> {
       }
       routeCombatSfx(events);
       routeCombatFx(events);
+      // El latch de «VICTORY!» CAMBIA LA MÚSICA SIN SALIR DE LA ARENA, y por eso el
+      // refresco va aquí y no en el teardown: el driver sigue en la rama del centinela
+      // 0xFF y lo único que cambia bajo sus pies es `g_cmb_victory_flag` (0x58A3) — el
+      // combate no termina con la victoria (la party puede seguir dentro, recogiendo). En
+      // el original esto lo destapa el propio sondeo de teclado; aquí, cada tanda de
+      // eventos. De-duplicado por canción ⇒ barato e idempotente, como `notifyDirty`.
+      updateMusic();
       // Repinta las pieles tras la acción: un `moved` puro no empuja línea de
       // consola, así que sin esto la arena no se refrescaría hasta el siguiente
       // tick del reloj F-A. notifyDirty es barato e idempotente.
@@ -2975,7 +3195,7 @@ async function boot(): Promise<void> {
           pumpCombat();
           return;
         }
-        pickSpellTyped(tf("Spell name: "), (initials) => {
+        pickSpellForCast(tf("Spell name: "), (initials) => {
           const cb = game.combat;
           if (!cb) return;
           if (initials === "") { hud.message("None!"); return; } // ESC/vacío: no gasta turno
@@ -3843,6 +4063,46 @@ async function boot(): Promise<void> {
     const reagentNames = (data.reagents as string[] | undefined) ?? [];
     const reagentName = (id: number): string => reagentNames[id] ?? `Reagent ${id}`;
 
+    // ── INTERFAZ DE LANZAMIENTO: «Clásico» / «Lista de hechizos» ─────────────────────
+    // El catálogo son los MISMOS `spellDefs` de arriba (48 lanzables; Nox queda fuera por
+    // incastable) y los MISMOS nombres de reactivo que ya usa el selector de (M)ix. Cero
+    // datos nuevos y cero tablas nuevas: ver `enhanced/spells/catalog.ts`.
+    const spellCatalog = buildSpellCatalog(spellDefs, reagentNames);
+    /**
+     * El sustituto de `pickSpellTyped` para los TRES (C)ast (exterior/pueblo, mazmorra,
+     * arena). En modo Clásico ES `pickSpellTyped` —la misma función, sin envolver—; en
+     * modo Moderno abre la lista y luego TECLEA las iniciales elegidas por ese mismo
+     * getstring rúnico. Toda la derivación, en `enhanced/spells/entry.ts`.
+     *
+     * 🔴 (M)ix NO lo usa y no debe usarlo: mezclar es otro comando con otro prompt.
+     */
+    const pickSpellForCast = makeCastSpellEntry({
+      pickSpellTyped,
+      catalog: () => spellCatalog,
+      quantity: (index) => game.state.spellQuantities[index] ?? 0,
+      // El MISMO reparto que `requiredTimeBit` (CAST:0x0e1a): combate manda sobre todo, y
+      // fuera de él decide `g_location` — con la mazmorra leída de `dungeonState`, que es
+      // donde vive en el port (ver la nota de `doDungeonCast`).
+      place: () => {
+        if (game.combat) return "combat";
+        if (game.dungeonState) return "dungeon";
+        return game.state.position.location === 0 ? "outdoor" : "town";
+      },
+      // El lanzador ya lo resolvió `pickCaster` (o el actor del turno en la arena) ANTES de
+      // llegar aquí: el activo es la mejor aproximación disponible y sólo sirve para
+      // ATENUAR filas, nunca para bloquearlas.
+      caster: () => {
+        const st = game.state;
+        const idx =
+          game.combat?.currentUnit?.charIdx ??
+          (st.activeCharacter !== 0xff && st.activeCharacter < st.partySize
+            ? st.activeCharacter
+            : 0);
+        const c = st.characters[idx];
+        return c ? { name: effectiveName(c.name), mp: c.currentMp, level: c.level } : null;
+      },
+    });
+
     // Vista del selector de reagentes para la piel: REUTILIZA el overlay de lista del
     // comando Ready (`ReadyPickerView`, fase `pick`) — el binario también comparte
     // `render_item_list` entre Ready y otras listas (readyPicker.ts). El marco NO es una
@@ -4076,7 +4336,7 @@ async function boot(): Promise<void> {
         // el original deja teclear CUALQUIER hechizo y luego castSpell aplica el gate
         // "None mixed!" (CAST 0x0ebb). Vacío/ESC → "None!" (DS 0x4611, ret -1); nombre
         // que no es hechizo → "No effect!" (DS 0x4618, ret -2).
-        pickSpellTyped(tf("Spell name: "), (initials) => {
+        pickSpellForCast(tf("Spell name: "), (initials) => {
           if (initials === "") { hud.message("None!"); return; }
           const idx = matchSpellByInitials(spellDefs, initials);
           if (idx < 0) { hud.message("No effect!"); return; }
@@ -4201,7 +4461,7 @@ async function boot(): Promise<void> {
       // pickCaster): jugador activo → directo; si no, auto-único o ►Select:◄.
       pickCaster((charIdx) => {
         const caster = game.state.characters[charIdx]!;
-        pickSpellTyped(tf("Spell name: "), (initials) => {
+        pickSpellForCast(tf("Spell name: "), (initials) => {
           if (initials === "") { hud.message("None!"); return; }
           const idx = matchSpellByInitials(spellDefs, initials);
           if (idx < 0) { hud.message("No effect!"); return; }
@@ -6001,6 +6261,55 @@ async function boot(): Promise<void> {
           view.pushConsole(intent.text, intent.kind ?? "message");
           return;
         }
+        // ── TAP CONTEXTUAL (chapa Enhanced) — la costura, y es DELIBERADAMENTE ESTRECHA ──
+        // Va ANTES de `cancelAutoWalk()` a propósito: si resuelve, esta rama no debe haber
+        // tocado NADA del camino de siempre — la cancelación de la auto-marcha la hace el
+        // propio `handleGameKey` al procesar la 't' (rama `if (key === "t")`), igual que
+        // con un teclado físico. Tocarla aquí sería cancelar dos veces por un camino y una
+        // por el otro, que es justo la clase de divergencia que este carril prohíbe.
+        //
+        // Las TRES conjunciones son el contrato entero:
+        //   · `chapaEnhancedViva()` — se le pregunta al DOM, no a la preferencia (mismo
+        //     criterio que el resto del fichero): con la chapa apagada —o en escritorio,
+        //     donde ni se ofrece— esto es un `classList.contains` y ni se construye el
+        //     snapshot. El modo Clásico no paga ni cambia.
+        //   · `resolverTapContextual` — su propio gate de modales sale de `awaitingInput`,
+        //     que ES `!isModalOpen(...)` (ui/awaiting-gate.ts). No hay lista paralela.
+        //   · `shellSurfaceOpen()` — las superficies DOM del shell capturan el teclado
+        //     antes del bucle (`keyRec.drop()`) y NO entran en `isModalOpen`; con una
+        //     abierta el tap tiene que seguir haciendo lo de siempre.
+        // Con `true` las dos `press()` (`t` + flecha, sobre `document.body`) YA salieron y
+        // desde ahí el flujo es el del teclado, tecla a tecla: eco «Talk-», getdir vivo,
+        // grabador, turno. Con `false` no se ha tocado NADA y sigue el camino de siempre.
+        if (
+          manejarTapContextual(
+            {
+              enhanced: chapaEnhancedViva,
+              mundo: () => {
+                const snap = view.snapshot();
+                const pos = game.state.position;
+                return {
+                  ventana: snap,
+                  modo: snap.mode,
+                  esperandoInput: snap.awaitingInput,
+                  esperandoDireccion: snap.awaitingDirection,
+                  shellAbierto: shellSurfaceOpen(),
+                  // EL MISMO predicado que elige el radio de `snapAttackCell` en el tap de
+                  // COMBATE (más abajo en este mismo sink): la marca que pone el deck.
+                  tactil: document.documentElement.classList.contains("u5-touch"),
+                  // Estado CRUDO, y por eso la fachada sólo lo consulta DESPUÉS de aprobar
+                  // la visibilidad de la celda (world.ts §anti-filtrado).
+                  npcEn: (x, y) =>
+                    game.npcManager?.npcAt(pos.location, pos.floor, x, y) != null,
+                };
+              },
+            },
+            intent.x,
+            intent.y,
+          )
+        ) {
+          return;
+        }
         // tap-tile: QoL click-para-caminar (A*) / atacar en combate.
         cancelAutoWalk();
         if (game.combat) {
@@ -6095,49 +6404,121 @@ async function boot(): Promise<void> {
     const portraitSkin =
       !quiereLayoutPartido ? null
       : new PortraitSkin(reflowMode === "off" ? "cuadrado" : reflowMode, () => toggleLayoutPartido());
-    if (portraitSkin) {
-      // PIEL DE BOTONES y BOTÓN ▤, en los DOS layouts (reporte del usuario 27-07). Los
-      // instalaba el envoltorio, así que vivían SÓLO en el partido: desde el original no
-      // había ▤ con el que volver —la única vuelta estaba enterrada en ☰ → ⚙ → Vídeo— y la
-      // botonera perdía los estilos nuevos. Al sacarlos aquí sobreviven al cambio de
-      // layout, que es lo que pedía «desde cualquier lado se vuelve con un toque».
+    /**
+     * ── LA CHAPA MÓVIL VIVA: clásica ⇄ Enhanced, SIN RECARGAR ────────────────────────
+     *
+     * 🔴 AQUÍ HUBO UNA RECARGA Y ERA LA DECISIÓN EQUIVOCADA. La escribí citando el
+     * precedente de `toggleLayoutPartido` («recarga cuando no hay envoltorio que
+     * conmutar») y midiendo el coste en el sitio erróneo: conté lo que costaba PROGRAMAR
+     * el ir y volver, no lo que le costaba al JUGADOR. Reporte del usuario (13-09):
+     * «enabling enhanced controls resets the game». Una recarga a mitad de partida tira
+     * la sesión, y un ajuste de MANDOS no puede costar la partida. El precedente que cité
+     * tampoco aplicaba: aquél recarga porque le falta un objeto que no existe (el
+     * envoltorio del layout partido); aquí no faltaba nada, sólo había que escribir la
+     * vuelta.
+     *
+     * ★ UNA SOLA RUTA, y es lo que hace esto seguro. El miedo escrito en `ui/touch.ts`
+     * («armar/desarmar obliga a duplicar media `dispose()` — dos rutas de limpieza que
+     * deben coincidir acaban divergiendo») es REAL, y por eso aquí no hay una ruta de
+     * arranque y otra de conmutación: el arranque llama a ESTA MISMA función. Si la
+     * vuelta se rompe, se rompe también el arranque — el camino que pisa todo el mundo.
+     *
+     * Lo que se intercambia son las DOS hojas de mandos, que no pueden convivir (la
+     * clásica pone cuatro `display:grid !important` sobre `.touch-controls`):
+     *   · clásica  → `installBotonesUi` + `installPortraitDeckDom` + el ▤ + el CSS del
+     *                deck ancho cuando el layout partido está montado;
+     *   · Enhanced → `mountEnhancedChrome`, que trae su propio `<style>` y su clase.
+     *
+     * El puente al teclado del SISTEMA (`deck-nativo.ts`) NO entra en el intercambio, a
+     * propósito: lo instala la piel al montarse y es INERTE bajo Enhanced (su botón ⌨ y
+     * su interceptor viven en `.touch-util`, que la chapa oculta), así que sobrevive al
+     * viaje de ida y vuelta sin reconstruirlo. Menos que desmontar es menos que pueda
+     * divergir.
+     */
+    let chapaEnhanced: EnhancedChromeHandle | null = null;
+    let soltarDeckDom: (() => void) | null = null;
+    let soltarBotonLayout: (() => void) | null = null;
+
+    const quitarChapaClasica = (): void => {
+      soltarBotonLayout?.();
+      soltarBotonLayout = null;
+      // Devuelve Enter/Esc/Espacio de las celdas de la cruceta a la fila útil (el propio
+      // instalador recuerda padre y hermano de cada botón y restaura en orden inverso).
+      soltarDeckDom?.();
+      soltarDeckDom = null;
+      uninstallWideDeck();
+      uninstallBotonesUi();
+    };
+
+    const ponerChapaClasica = (): void => {
       installBotonesUi();
-      // MUDANZAS DE DOM del deck en vertical (Enter/Esc/Espacio a la cruceta, ⛶ a la
-      // columna, activador de la hoja A–Z): fuera del envoltorio por el mismo motivo que
-      // la piel de botones y el ▤ — el usuario las quiere en los DOS layouts, y el
-      // envoltorio sólo existe en el partido.
-      // 🔴 …pero SÓLO EN RÉGIMEN TÁCTIL desde #333 (pieza A2): re-ordenan botones
-      // DEL DECK y montan el activador de la hoja A–Z, que son afordancias táctiles.
-      // ~~En escritorio el envoltorio se instancia igual (`layoutPartidoDisponible` no
-      // mira el puntero) y estas mudanzas venían con él~~ — desde A1 (16-08) ya lo mira y
-      // en escritorio este bloque entero no corre; el gate de A2 se queda como segundo
-      // cinturón, y sigue decidiendo si un boot TÁCTIL llega aquí con el 2-en-1 en modo
-      // raro.
-      // 🔴 `installBotonesUi()` NO se gatea, y la asimetría es deliberada: sólo inyecta un
-      // `<style>` y una clase (deck-ancho.ts:1567-1580) — no roba foco ni añade controles.
-      // Y `installLayoutToggleButton` TAMPOCO: el ▤ es la única vuelta VISIBLE al layout
-      // clásico y vive dentro del deck. ~~Ésa es justamente la pieza que espera la
-      // decisión de #333 sobre si el escritorio debe conservar el layout partido~~ — la
-      // decisión llegó (16-08): el escritorio NO lo conserva, así que el ▤ no necesita
-      // re-anclaje fuera del deck; en táctil el deck es visible y el ▤ con él (el
-      // encierro del 27-07 no puede volver por este lado — aserto en
-      // `deck-escritorio-333.test.ts`).
-      if (esPantallaTactil()) installPortraitDeckDom();
-      installLayoutToggleButton(() => {
-        // POR EL LAYOUT VIVO, NO POR LA PREFERENCIA (diagnóstico smooth×portrait, PUNTO
-        // 2). Negar la preferencia funciona sólo mientras nadie la desincronice; cuando
-        // eso pasaba, la 1ª pulsación del ▤ era un no-op de layout que además MATABA la
-        // piel elegida (medido: shader+clásico → ▤ → fiel, mismo layout). Leyendo lo que
-        // hay MONTADO, el toggle no puede gastar un toque aunque la preferencia venga
-        // rancia — y de paso la re-sincroniza.
-        guardarLayoutPartido(skins.currentId !== portraitSkin.id);
-        toggleLayoutPartido();
-      });
+      // El CSS del deck ANCHO sólo tiene sentido con el envoltorio del layout partido
+      // MONTADO: es su sub-variante. Se consulta la piel VIVA y no la preferencia, por el
+      // mismo motivo que el ▤ (una preferencia rancia no puede decidir geometría).
+      if (portraitSkin && skins.currentId === portraitSkin.id) installWideDeck("bloques");
+      if (esPantallaTactil()) soltarDeckDom = installPortraitDeckDom();
+      if (portraitSkin) {
+        soltarBotonLayout = installLayoutToggleButton(() => {
+          // POR EL LAYOUT VIVO, NO POR LA PREFERENCIA (diagnóstico smooth×portrait, PUNTO
+          // 2). Negar la preferencia funciona sólo mientras nadie la desincronice; cuando
+          // eso pasaba, la 1ª pulsación del ▤ era un no-op de layout que además MATABA la
+          // piel elegida (medido: shader+clásico → ▤ → fiel, mismo layout). Leyendo lo que
+          // hay MONTADO, el toggle no puede gastar un toque aunque la preferencia venga
+          // rancia — y de paso la re-sincroniza.
+          guardarLayoutPartido(skins.currentId !== portraitSkin.id);
+          toggleLayoutPartido();
+        });
+      }
+    };
+
+    const aplicarChapaMovil = (enhanced: boolean): void => {
+      if (soloUiOriginal) return; // repetición: no hay deck al que ponerle chapa
+      if (enhanced) {
+        quitarChapaClasica();
+        // EXTRAS de la pestaña «System» del cajón. Hoy uno: el conmutador de LAYOUT.
+        // 🔴 REPARA UNA AFORDANCIA QUE ESTA CHAPA SE LLEVÓ POR DELANTE. El botón ▤ vive
+        // en la fila útil CLÁSICA, que Enhanced oculta, así que encender la chapa dejaba
+        // el layout partido sin vía de un toque — y eso importa MÁS con Enhanced que sin
+        // ella: medido a 390×844, con la chapa puesta el re-flow da un mapa de 390×565 y
+        // el clásico uno de 390×244 (limitado por el ANCHO: el alto que la chapa libera
+        // no se lo puede quedar). O sea que quien acabara en clásico veía el juego
+        // pequeño entre dos franjas negras y sin botón con el que arreglarlo — que es
+        // exactamente lo que el usuario reportó el 13-09.
+        // La casilla del drawer del shell seguía existiendo; lo que faltaba era el atajo.
+        chapaEnhanced ??= mountEnhancedChrome(
+          portraitSkin
+            ? [
+                {
+                  label: "Layout",
+                  title: "Switch between the split and the original portrait layout",
+                  run: () => {
+                    // POR EL LAYOUT VIVO, no por la preferencia: mismo criterio que el ▤.
+                    guardarLayoutPartido(skins.currentId !== portraitSkin.id);
+                    toggleLayoutPartido();
+                  },
+                },
+              ]
+            : [],
+        );
+      } else {
+        chapaEnhanced?.dispose();
+        chapaEnhanced = null;
+        ponerChapaClasica();
+      }
+      // La chapa nueva mide OTRA cosa: hay que re-publicar la reserva para que el canvas
+      // se re-escale al hueco correcto. `refreshTouchDeck` no vale (sólo re-deriva el
+      // contexto); el `resize` es la señal que `syncReserve` ya escucha.
+      window.dispatchEvent(new Event("resize"));
+    };
+
+    if (portraitSkin) {
       skins.register(portraitSkin, {
         userFacing: false,
         label: "Vertical re-flow (prototipo)",
       });
     }
+    // EL ARRANQUE VA POR LA MISMA PUERTA QUE EL CONMUTADOR (ver el docblock de arriba).
+    aplicarChapaMovil(enhancedControlsActivo());
     // ★ #333 A1 × #336: el layout partido SIGUE AL RÉGIMEN en caliente (2-en-1). Sin
     // esto, la pieza B abría un agujero nuevo: al enchufar un ratón (régimen → escritorio)
     // el deck se apaga DE VERDAD —ya no lo resucita ningún `!important`— y el partido se
@@ -6367,7 +6748,50 @@ async function boot(): Promise<void> {
           languages: LANG_SWITCHER_DEPS.choices,
           currentLang: LANG_SWITCHER_DEPS.currentCode,
           selectLang: LANG_SWITCHER_DEPS.selectLang,
+          // ── MANDOS ENHANCED (fase 1 de la auditoría móvil) ────────────────────────
+          // EN CALIENTE: la partida NO se pierde al cambiar de mandos. La ida y la
+          // vuelta las sirve `aplicarChapaMovil`, la MISMA función que usa el arranque
+          // (ver su docblock, y por qué la recarga que había aquí era un error mío).
+          enhancedControlsDisponible,
+          enhancedControls: enhancedControlsGuardado,
+          setEnhancedControls: (on: boolean) => {
+            guardarEnhancedControls(on);
+            aplicarChapaMovil(on);
+          },
+          // ── INTERFAZ DE LANZAMIENTO (Clásico / Lista de hechizos) ─────────────────
+          // EN CALIENTE y sin re-montar nada: `pickSpellForCast` consulta el régimen en
+          // CADA (C)ast, así que el cambio vale para el hechizo siguiente. No hay DOM
+          // instalado que reconstruir (a diferencia de los mandos Enhanced), y por eso
+          // esta fila no avisa de recarga: no la hay.
+          castingUi: castingUiGuardado,
+          setCastingUi: (ui: CastingUi) => guardarCastingUi(ui),
           padSideDisponible: padSideOfrecible,
+          // ── POSICIÓN DE LA CRUCETA (izquierda · centro · derecha) ─────────────────
+          // El gate es la CHAPA VIVA y no la preferencia guardada: `data-u5e-pad` sólo lo
+          // consume el CSS de Enhanced, así que sin chapa montada el selector no movería
+          // nada — y `chapaEnhancedViva()` es el mismo predicado que el resto del fichero
+          // usa para «¿hay chapa?». Con él en `false`, la fila no se pinta y el ⇄ clásico
+          // ocupa su sitio (ver la dep en `shell/sections.ts`).
+          padPosDisponible: () => chapaEnhancedViva() && padSideOfrecible(),
+          padPos: loadPadPos,
+          setPadPos: (pos: PadPos) => {
+            setPadPos(pos);
+            // 🔴 …Y EL LADO CLÁSICO VA DETRÁS, que es lo que hace que esta fila SUSTITUYA al
+            // ⇄ en vez de competir con él: en APAISADO el deck no es una banda inferior sino
+            // una columna pegada a un borde, y ese borde lo sigue diciendo `data-pad-side`.
+            // Sin esta línea, elegir «derecha» en vertical dejaba el raíl apaisado a la
+            // izquierda — dos mandos contradiciéndose, que es el defecto #183 otra vez.
+            // «Centro» NO toca el lado: no hay columna centrada, así que el raíl se queda
+            // donde estuviera (el razonamiento, en `enhanced/mobile/padpos.ts`).
+            if (pos !== "center" && padSideVivo() !== pos) swapPadSide();
+          },
+          // ── LAS CUATRO ACCIONES RÁPIDAS (sólo el juego del MUNDO) ────────────────
+          // Mismo gate. Las OPCIONES salen del censo `WORLD_BUTTONS` tal cual: este
+          // fichero no escribe ni un rótulo ni una tecla de comando.
+          quickSlotsDisponible: () => chapaEnhancedViva(),
+          quickSlotKeys: loadQuickWorld,
+          quickSlotOptions: () => quickOptions().map((d) => ({ label: d.label, key: d.key })),
+          setQuickSlot,
           // ── #183 (REPORTE DEL USUARIO 11-08: «Swap buttons: el cursor no funciona») ──
           // El ⇄ del drawer alternaba SIEMPRE `data-pad-side`, y en el layout PARTIDO
           // VERTICAL —el defecto en táctil desde el 02-08— ese atributo no tiene ningún
@@ -6395,6 +6819,7 @@ async function boot(): Promise<void> {
           },
           musicEnabled: () => music.enabled,
           setMusicEnabled: (on) => music.setEnabled(on),
+          musicStatus: () => music.diagnostico,
           musicVolume: () => music.volumeLevel,
           setMusicVolume: (v) => music.setVolume(v),
           speakerEnabled: () => speaker.enabled,
@@ -6441,6 +6866,15 @@ async function boot(): Promise<void> {
         badge: () => ts("MENU"),
         searchPlaceholder: () => ts("Filter fields…"),
         testId: "u5-shell-drawer",
+        // PANEL DE AJUSTES CON CATEGORÍAS (rediseño de ajustes): el cuerpo deja de ser un
+        // acordeón de once secciones apiladas y pasa a raíl + contenido (escritorio) /
+        // lista → detalle (teléfono). Las tres funciones van como funciones —no como
+        // valores— por la MISMA razón que el título y el badge de arriba: `invalidate()`
+        // las re-resuelve al cambiar de idioma, así que los rótulos del navegador siguen
+        // al idioma vivo igual que los de las filas.
+        categories: buildShellCategories,
+        navBack: () => ts("Back"),
+        navCategories: () => ts("Settings categories"),
         // #263 (directriz del usuario 14-08): sin el `esc` de la esquina. La salida
         // rotulada pasa a la fila «Close menu» del propio drawer, con el mismo testid
         // (ver `DebugPanelOpts.closeButton` y la sección `shell-close`).

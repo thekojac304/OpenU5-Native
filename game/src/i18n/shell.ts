@@ -75,6 +75,20 @@ const ES: Record<string, string> = {
   "Keys": "Teclas",
   "Help": "Ayuda",
   "Debug (QA)": "Debug (QA)",
+  // CHROME DEL PANEL DE AJUSTES CON CATEGORÍAS (rediseño de ajustes). «Language», «More»,
+  // «Video», «Audio», «Help» y «Debug (QA)» ya son keys de esta tabla y se REUTILIZAN como
+  // títulos de categoría — una categoría y su sección dicen lo mismo, y estrenar una clave
+  // paralela («Idioma» dos veces, con dos traducciones que pueden divergir) es el defecto
+  // de #109. Las tres nuevas son las que no tenían casa.
+  "Controls": "Mandos",
+  "Game": "Juego",
+  // Botón de vuelta del modo estrecho. «Go back» ya existe en esta tabla como nombre
+  // ACCESIBLE de una tecla de la intro («Volver atrás»); aquí hace falta la forma CORTA,
+  // que es el rótulo VISIBLE de un botón dentro de una cabecera de 44 px.
+  "Back": "Atrás",
+  // Nombre accesible del raíl (aria-label del tablist): no se pinta, lo lee el lector de
+  // pantalla al entrar en la lista de categorías.
+  "Settings categories": "Categorías de ajustes",
   // Rótulo del modo scrollback de consola (carril log-scroll; overlay QoL de piel)
   "HISTORY": "HISTORIAL",
   // Sección Partidas y paneles
@@ -93,6 +107,121 @@ const ES: Record<string, string> = {
   "Splits the screen in portrait: square map on top, players and log below, buttons at the bottom. Changing it remounts the skin.":
     "Parte la pantalla en vertical: mapa cuadrado arriba, jugadores y log debajo, y los botones al pie. Cambiarlo vuelve a montar la piel.",
   "Layout: split / original": "Layout: partido / original",
+  // MANDOS ENHANCED (fase 1 de la auditoría móvil). Los rótulos de COMANDO del cajón NO
+  // están aquí: salen de las tablas de `ui/touch.ts` y ya los traduce esta misma capa
+  // (entradas «Talk»/«Open»/… más abajo), con su candado en `deck-i18n-coherencia`.
+  // Lo de aquí es sólo el cromo NUEVO: la casilla, la barra y los cajones.
+  "Enhanced controls": "Mandos mejorados",
+  "Compact touch controls: a short action bar plus a drawer with every command. All original commands stay available. Changing it reloads the page.":
+    "Mandos táctiles compactos: una barra de acciones corta más un cajón con todos los comandos. Siguen estando todos los comandos del original. Cambiarlo recarga la página.",
+  // ── INTERFAZ DE LANZAMIENTO (Clásico / Lista de hechizos) ───────────────────────────
+  // Cromo de la sección de ajustes y del panel. Las PALABRAS DE PODER no están aquí y no
+  // lo estarán: «In Mani Corp» es el nombre del hechizo y es latín de fantasía, igual en
+  // las dos lenguas (misma regla que los nombres de piel o que las sílabas rúnicas del
+  // getstring, cuyo t() es la identidad).
+  "Magic": "Magia",
+  "Casting interface": "Interfaz de lanzamiento",
+  "Classic spell entry": "Entrada clásica",
+  "Spell list": "Lista de hechizos",
+  "Classic: type the first letter of each rune, like the original. Spell list: pick from a browsable list, which then enters those same runes for you. Reagents, magic points, level, targeting and failure rules are identical in both.":
+    "Clásica: teclea la inicial de cada runa, como el original. Lista de hechizos: elige de una lista, que después introduce esas mismas runas por ti. Reactivos, puntos mágicos, nivel, apuntado y reglas de fallo son idénticos en las dos.",
+  "Choose a spell": "Elige un hechizo",
+  "Search spells…": "Buscar hechizos…",
+  "Circle": "Círculo",
+  "MP": "PM",
+  "Reagents": "Reactivos",
+  "Targets": "Objetivo",
+  "mixed": "mezclados",
+  "none": "ninguno",
+  "Not here": "Aquí no",
+  "None mixed": "Sin mezclar",
+  "Level too low": "Nivel insuficiente",
+  "M.P. too low": "Puntos mágicos insuficientes",
+  "No spell matches.": "Ningún hechizo coincide.",
+  // Ficha del hechizo (el detalle que la fila por defecto ya no repite, ver panel.ts).
+  "Details": "Ficha",
+  "Unavailable": "No disponible",
+  "Arrows move · Enter casts · Esc cancels": "Flechas mueven · Enter lanza · Esc cancela",
+  // Modos de apuntado (traducción del enum `SpellTargetType` del asset, ver catalog.ts).
+  "no target": "sin objetivo",
+  "a direction": "una dirección",
+  "a party member": "un miembro del grupo",
+  "the caster": "el lanzador",
+  "a creature or object": "una criatura u objeto",
+  "a map square": "una casilla del mapa",
+  "a combat square": "una casilla de combate",
+  // Descripciones de efecto — campo `SimpleDescription` de `MagicDefinitions.json`,
+  // traducido literal. NO son texto del binario (el binario no describe los hechizos en
+  // ninguna parte): son la documentación del asset, y por eso viven en esta capa y no en
+  // `es.json`. Dos hechizos comparten descripción («creates light», «heals») y por eso hay
+  // 46 filas y no 48.
+  "creates light": "crea luz",
+  "minor attack against foe": "ataque menor contra un enemigo",
+  "awaken companion": "despierta a un compañero",
+  "cures poison": "cura el veneno",
+  "heals": "cura heridas",
+  "makes objects vanish": "hace desaparecer objetos",
+  "safely opens trapped chest": "abre sin peligro un cofre con trampa",
+  "dispels undead": "repele a los no muertos",
+  "changes wind direction": "cambia la dirección del viento",
+  "reveals caster's location": "revela la posición del lanzador",
+  "summons animal": "invoca un animal",
+  "creates food": "crea comida",
+  "fireball attack against foe": "bola de fuego contra un enemigo",
+  "creates firey barrier": "crea una barrera de fuego",
+  "creates poisonous barrier": "crea una barrera venenosa",
+  "creates sleep-inducing field": "crea un campo que adormece",
+  "teleports short distance": "teletransporta a corta distancia",
+  "dispels field": "disipa un campo",
+  "protection": "protección",
+  "creates impenetrable field": "crea un campo impenetrable",
+  "ascends 1 dungeon floor": "sube un nivel de mazmorra",
+  "descends 1 dungeon floor": "baja un nivel de mazmorra",
+  "undoes Sanct Lor": "deshace Sanct Lor",
+  "summons insects": "invoca insectos",
+  "applies magic lock": "echa un cerrojo mágico",
+  "unlocks magical locks": "abre cerrojos mágicos",
+  "puts enemies to sleep": "duerme a los enemigos",
+  "quickness": "rapidez",
+  "attacks multiple random foes": "ataca a varios enemigos al azar",
+  "charms multiple enemies": "hechiza a varios enemigos",
+  "negates magic": "anula la magia",
+  "x-ray vision": "visión de rayos X",
+  "charms an enemy": "hechiza a un enemigo",
+  "transforms mage into rat": "convierte al mago en rata",
+  "invisibility": "invisibilidad",
+  "powerful attack against foe": "ataque poderoso contra un enemigo",
+  "clones person": "clona a una persona",
+  "reveals map": "revela el mapa",
+  "blasts foes w/poison": "rocía a los enemigos con veneno",
+  "causes fear": "provoca miedo",
+  "resurrects companion": "resucita a un compañero",
+  "summons daemon": "invoca un demonio",
+  "energy blast against foes": "descarga de energía contra los enemigos",
+  "firey blast against foes": "llamarada contra los enemigos",
+  "teleports through moongate": "teletransporta por una puerta lunar",
+  "stops passage of time": "detiene el paso del tiempo",
+  "Commands": "Comandos",
+  "Show every command": "Mostrar todos los comandos",
+  "All commands": "Todos los comandos",
+  "Game controls": "Mandos del juego",
+  "Movement": "Movimiento",
+  // Cajones del drawer de comandos.
+  "Input": "Entrada",
+  "Interaction": "Interacción",
+  "Items & Magic": "Objetos y magia",
+  "Travel": "Viaje",
+  "Party": "Grupo",
+  // Fila rápida y extras del cajón (fase 1b, 13-09).
+  "Common commands": "Comandos frecuentes",
+  // ACCIONES RÁPIDAS — el nombre accesible de la fila desde el carril de ergonomía del
+  // 12-09, cuando pasó de ser una banda de seis a una rejilla de cuatro al lado de la cruz.
+  // «Acciones» y no «Comandos»: es el vocablo que distingue esta fila de la de SISTEMA y
+  // del cajón, que es justo la distinción que el carril vino a hacer visible.
+  "Quick actions": "Acciones rápidas",
+  "Layout": "Diseño",
+  "Switch between the split and the original portrait layout":
+    "Alterna entre el layout partido y el original en vertical",
   "Stretches 320×200 to 4:3 like a CRT of the era (1:1.2 pixel). Default: square pixel (F-0 decision). Applied live with the 1988 skin mounted.":
     "Estira 320×200 a 4:3 como un CRT de la época (píxel 1:1,2). Default: píxel cuadrado (decisión F-0). Se aplica en vivo con la piel 1988 montada.",
   "Fullscreen": "Pantalla completa",
@@ -107,6 +236,10 @@ const ES: Record<string, string> = {
   "Interactive map of Britannia and the Underworld, interiors, NPCs, game controls and walkthrough. Opens outside the game.":
     "Mapa interactivo de Britannia y el inframundo, interiores, NPCs, controles del juego y walkthrough. Se abre fuera del juego.",
   // Sección Privacidad (carril 1: consentimiento y revocación)
+  // 🔴 «More» llevaba SIN ES desde que nació la sección (#154): el rótulo salía en inglés
+  // dentro de un drawer en castellano. Se destapó al reutilizarlo como título de
+  // categoría, que es donde un rótulo suelto en otra lengua canta.
+  "More": "Más",
   "Privacy": "Privacidad",
   "Privacy & data": "Privacidad y datos",
   "What this site sends and with what permission. Your game files never leave your device. You can withdraw any permission here.":
@@ -185,6 +318,11 @@ const ES: Record<string, string> = {
   // botones clicables). Ver la cabecera de selector.ts. "Speak" es el submit del prompt
   // de texto libre (mantra/deseo/respuesta/creación).
   "Cancel": "Cancelar",
+  // Selector COMPACTO de miembro del grupo (enhanced/party). «HP» es el rótulo del nombre
+  // accesible de cada fila, no texto pintado: el marco EGA lo enseña sin rótulo (una cifra
+  // de 4 celdas), pero un lector de pantalla necesita saber qué es ese número.
+  "Choose party member": "Elige un miembro",
+  "HP": "PV",
   "Speak": "Hablar",
   "(nothing available)": "(nada disponible)",
   // Panel del diario (journal.ts) — estaba HARDCODEADO en español (rompía la
@@ -286,6 +424,27 @@ const ES: Record<string, string> = {
   "Number pad (quantities, donations)": "Numpad (cantidades, donaciones)",
   "Answer a Yes/No prompt": "Responder Sí/No",
   "Swap pad side": "Cambiar el pad de lado",
+  // ── POSICIÓN DE LA CRUCETA (izquierda · centro · derecha) — carril de ergonomía 12-09 ──
+  // «Cruceta» y no «pad»: es el vocablo que el deck ya usa para nombrar el control
+  // (`"Movement pad and world commands"` → «Cruceta y comandos de mundo», arriba), y
+  // mezclar dos nombres para la misma pieza dentro del mismo panel es el tipo de deriva que
+  // el candado de `deck-i18n-coherencia` existe para evitar.
+  "D-pad position": "Posición de la cruceta",
+  "Left": "Izquierda",
+  // «Centro» y no «Centrada»: las tres opciones de un selector tienen que leerse como una
+  // serie, y las otras dos son sustantivos de lugar.
+  "Centre": "Centro",
+  "Right": "Derecha",
+  "Where the D-pad sits in portrait. Left and Right leave room for the quick actions beside it; Centre puts them in a row above. In landscape the controls are a side rail, so the pad follows the rail's side.":
+    "Dónde va la cruceta en vertical. Izquierda y Derecha dejan sitio a las acciones rápidas a su lado; Centro las pone en una fila encima. En apaisado los mandos son un raíl lateral, así que la cruceta va del lado del raíl.",
+  // ── LAS CUATRO RANURAS DE ACCIÓN RÁPIDA ────────────────────────────────────────────
+  // 🔴 EL RÓTULO LLEVA EL NÚMERO FUERA, y por eso aquí sólo está la parte fija: lo compone
+  // `shell/sections.ts` como `${ts("Quick action")} ${i + 1}`. Una entrada por ranura
+  // («Quick action 1»…) sería cuatro claves que dicen lo mismo, y un `{}` de plantilla
+  // sería una plantilla nativa — que es justo lo que `i18n-plantillas-nativas` proscribe.
+  "Quick action": "Acción rápida",
+  "The four buttons beside the D-pad while exploring. Every command stays available in Commands. Dungeons and combat keep their own set.":
+    "Los cuatro botones que van al lado de la cruceta mientras exploras. Todos los comandos siguen estando en Comandos. Las mazmorras y el combate conservan su propio juego.",
   // Fila útil, iteración A2 (27-07): activadores de hoja con icono + texto, y el botón
   // del teclado del sistema («ABC»; el glifo de teclado U+2328 está proscrito por el
   // censo de glifos — se pinta a ~7 px, ilegible).

@@ -422,7 +422,7 @@ export const DPAD_ARIA: Record<string, string> = {
  * body no está dentro de ellos — exactamente igual que antes (path [window] tampoco
  * los incluía): el cambio sólo ordena, no ensancha la audiencia por debajo de body.
  */
-function press(key: string): void {
+export function press(key: string): void {
   document.body.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
 }
 
@@ -635,6 +635,59 @@ export function refreshTouchDeck(): void {
 }
 
 /**
+ * ── LO QUE LA CHAPA ENHANCED NECESITA DEL DECK (fase 1 de la auditoría móvil) ─────────
+ *
+ * La chapa Enhanced (`enhanced/mobile/`) pinta su cajón de comandos desde las MISMAS
+ * tablas censadas que la rejilla clásica, así que necesita saber DOS cosas y ninguna
+ * más: cuál es el contexto vivo (mundo / mazmorra / arena) y cuándo cambia. Ya existía
+ * quien lo sabe —`TouchControls.refresh()`, el único sitio del port que deriva ese
+ * modo— pero lo guardaba para sí.
+ *
+ * SE PUBLICA POR EVENTO Y NO POR SONDEO, a propósito: `refresh()` lo dispara `main.ts`
+ * en cada tecla y en cada intent de tap (`refreshTouchDeck`), que es exactamente el
+ * conjunto de momentos en que el contexto puede haber cambiado. Un `setInterval` en la
+ * chapa sería el polling perpetuo que la auditoría del 25-07 quitó de este fichero.
+ *
+ * Mismo patrón que `onExpectedSheet`: API de MÓDULO contra la instancia viva, no un
+ * global de `window` (eso es el patrón DEV). No-op sin deck (escritorio): la chapa
+ * tampoco existe allí.
+ */
+export type DeckContext = "world" | "dungeon" | "combat";
+export type DeckContextListener = (ctx: DeckContext) => void;
+const deckContextListeners = new Set<DeckContextListener>();
+
+/** Suscribe al CAMBIO de contexto del deck. Devuelve la baja. */
+export function onDeckContext(cb: DeckContextListener): () => void {
+  deckContextListeners.add(cb);
+  return () => {
+    deckContextListeners.delete(cb);
+  };
+}
+
+/** Contexto vivo, o `null` si no hay deck montado (escritorio, o `?replay=` solo-UI). */
+export function currentDeckContext(): DeckContext | null {
+  return active?.contextNow() ?? null;
+}
+
+/**
+ * Conmuta la HOJA del deck (A–Z / 123 / Sí-No / vuelta a Move) desde fuera.
+ *
+ * La chapa Enhanced retira la BARRA DE MODO —cuatro segmentos que ocupan una fila
+ * entera— y sirve esos tres teclados desde su cajón. El auto-alzado por prompt
+ * (`expectInput`) sigue siendo el camino principal y no se toca: esto es la vía MANUAL,
+ * la que el jugador usa para contestar antes de que el prompt aparezca o para recuperar
+ * un teclado que cerró sin querer — justo lo que documentan los `SHEET_ACTIVATORS`.
+ */
+export function setDeckSheet(mode: "move" | "az" | "num" | "yesno"): void {
+  active?.setDeckMode(mode);
+}
+
+/** ¿Qué hoja está alzada? (`null` sin deck). Lo consume el estado visual del cajón. */
+export function currentDeckSheet(): "move" | "az" | "num" | "yesno" | null {
+  return active?.sheetNow() ?? null;
+}
+
+/**
  * ── LO QUE EL DRAWER SISTEMA NECESITA DEL DECK (ficha #154) ─────────────────────────────
  *
  * El ⇄ (lado del pad) y el `aria-expanded` del ☰ vivían DENTRO del popover del deck, que
@@ -653,6 +706,18 @@ export function swapPadSide(): void {
 export function padSideOfrecible(): boolean {
   return active?.padSideOfrecible() ?? false;
 }
+/**
+ * El lado VIVO del pad (`u5.padSide`). Sin deck montado cae a lo GUARDADO y no a un
+ * literal: así el llamador lee lo mismo que leerá el deck en cuanto se monte.
+ *
+ * Lo necesita el selector de posición de la cruceta Enhanced (`shell/sections.ts` vía
+ * `main.ts`), que arrastra este lado al elegir izquierda o derecha. Es un GETTER y no un
+ * setter a propósito: la única vía de MUTACIÓN sigue siendo `swapPadSide()`, así que no
+ * hay un segundo camino que pueda saltarse el `savePadSide` ni el `syncReserve`.
+ */
+export function padSideVivo(): "left" | "right" {
+  return active?.ladoPad() ?? loadPadSide();
+}
 /** Publica en el ☰ del deck si el drawer SISTEMA está abierto (accesibilidad). */
 export function syncShellExpanded(open: boolean): void {
   active?.syncShellExpanded(open);
@@ -670,7 +735,7 @@ export function syncShellExpanded(open: boolean): void {
  * `title` = tooltip; `aria` = nombre accesible (VoiceOver/TalkBack), que para los
  * glifos (▲ ⌫ ⏎ ☰) es la ÚNICA etiqueta que se anuncia.
  */
-function setTsLabel(
+export function setTsLabel(
   el: HTMLElement,
   label?: string,
   title?: string,
@@ -702,7 +767,7 @@ function setTsLabel(
  * el mantener-para-repetir es incompatible con «dispara al soltar»; además la cruceta
  * no vive en ninguna zona scrolleable, que es de donde nace la queja.
  */
-function bindTap(el: HTMLElement, fn: () => void): void {
+export function bindTap(el: HTMLElement, fn: () => void): void {
   const gate = new TapGate();
   el.addEventListener("pointerdown", (ev) => {
     ev.preventDefault();
@@ -1252,6 +1317,11 @@ export class TouchControls {
     this.shellBtn?.setAttribute("aria-expanded", open ? "true" : "false");
   }
 
+  /** El lado vigente. Lo lee `padSideVivo()`; mutar sigue siendo cosa de `togglePadSide`. */
+  ladoPad(): "left" | "right" {
+    return this.padSide;
+  }
+
   /** Alterna el lado del pad (lo consume la fila ⇄ del drawer, vía `swapPadSide()`). */
   togglePadSide(): void {
     this.setPadSide(this.padSide === "left" ? "right" : "left");
@@ -1544,6 +1614,18 @@ export class TouchControls {
     this.hold = null;
   }
 
+  /** Contexto vivo ya derivado (lo lee la chapa Enhanced por `currentDeckContext()`). */
+  contextNow(): DeckContext {
+    return (
+      this.mode ?? (this.game.combat ? "combat" : this.game.dungeonState ? "dungeon" : "world")
+    );
+  }
+
+  /** Hoja alzada ahora (`currentDeckSheet()`). */
+  sheetNow(): DeckMode {
+    return this.deckMode;
+  }
+
   /** Re-deriva el contexto y regenera la rejilla si cambió. PÚBLICA porque main.ts la
    *  dispara por evento (`refreshTouchDeck`) en vez de dejarla a un polling. */
   refresh(): void {
@@ -1581,5 +1663,9 @@ export class TouchControls {
     // y re-evalúa los chevrons (alturas cambian por contexto).
     this.commandsEl.scrollTop = 0;
     this.cmdHint?.refresh();
+    // Aviso a la chapa Enhanced: el contexto cambió DE VERDAD (este punto sólo se
+    // alcanza tras el early-return de arriba), así que su cajón se reconstruye UNA vez
+    // por cambio de contexto y no una vez por tecla.
+    for (const cb of deckContextListeners) cb(mode);
   }
 }

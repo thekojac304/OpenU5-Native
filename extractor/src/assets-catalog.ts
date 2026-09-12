@@ -111,6 +111,31 @@ export const ASSETS_DE_EXTRACCION: readonly AssetDeExtraccion[] = [
   { ruta: "endgame-scenes.json", de: "END1/END2/ENDSC.16", opcional: true },
   { ruta: "intro-pics.png", de: "CREATE/TEXT/STORY*/ULTIMA/STARTSC.16 + *.BIT", opcional: true },
   { ruta: "intro-pics.json", de: "CREATE/TEXT/STORY*/ULTIMA/STARTSC.16 + *.BIT", opcional: true },
+  // 9. MÚSICA DEL PARCHE COMUNITARIO (Ultima V Upgrade Patch). `opcional` de libro y por
+  //    la razón exacta que define el campo: una copia SIN el parche no trae ni los XMI ni
+  //    `FAT.OPL`, y esa ausencia no acusa a una extracción vieja — acusa a que esa copia
+  //    nunca tuvo música. Meterlas en el careo del arranque daría el aviso de «re-extrae»
+  //    a quien no tiene absolutamente nada que arreglar.
+  //    Los nombres van por CANCIÓN y en orden de id del driver (`audio/tracklist.ts`),
+  //    no por contexto: tres de los nombres-por-contexto viejos resultaron falsos al leer
+  //    `mid.drv` (RULEBRIT no es el castillo, HORNPIPE no es la taberna).
+  { ruta: "music/fat.opl", de: "FAT.OPL (banco de timbres AdLib del parche)", opcional: true },
+  { ruta: "music/theme.mid", de: "U5THEME.XMI (parche)", opcional: true },
+  { ruta: "music/britannia.mid", de: "BRITLAND.XMI (parche)", opcional: true },
+  { ruta: "music/hornpipe.mid", de: "HORNPIPE.XMI (parche)", opcional: true },
+  { ruta: "music/engagement.mid", de: "ENGGMNT.XMI (parche)", opcional: true },
+  { ruta: "music/stones.mid", de: "STONES.XMI (parche)", opcional: true },
+  { ruta: "music/greyson.mid", de: "GREYSON.XMI (parche)", opcional: true },
+  { ruta: "music/fanfare.mid", de: "FANFARE.XMI (parche)", opcional: true },
+  { ruta: "music/monarch.mid", de: "MONARCH.XMI (parche)", opcional: true },
+  { ruta: "music/tarantella.mid", de: "TRNTLLA.XMI (parche)", opcional: true },
+  { ruta: "music/halls.mid", de: "HALLS.XMI (parche)", opcional: true },
+  { ruta: "music/worlds-below.mid", de: "WRLDBLW.XMI (parche)", opcional: true },
+  { ruta: "music/blackthorn.mid", de: "BLCKTHRN.XMI (parche)", opcional: true },
+  { ruta: "music/ladynan.mid", de: "LADYNAN.XMI (parche)", opcional: true },
+  { ruta: "music/reunion.mid", de: "REUNION.XMI (parche)", opcional: true },
+  { ruta: "music/rule-britannia.mid", de: "RULEBRIT.XMI (parche)", opcional: true },
+  { ruta: "music/amiga.mid", de: "AMIGA.XMI (parche)", opcional: true },
   { ruta: "proport-font.png", de: "PROPORT.PCS", opcional: true },
   { ruta: "proport-font.json", de: "PROPORT.PCS", opcional: true },
 ];

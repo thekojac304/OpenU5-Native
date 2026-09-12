@@ -96,6 +96,18 @@ function targets(root: HTMLElement): HTMLElement[] {
     ".u5dbg-sec-head > span:last-child",
     ".u5dbg-field button",
     ".u5dbg-field > label",
+    // Navegador de ajustes: el TÍTULO de la categoría abierta y el botón de vuelta.
+    //
+    // 🔴 EL RAÍL DE CATEGORÍAS QUEDA FUERA A PROPÓSITO, y la razón es la aritmética de F5
+    // (ver el bloque de PIXELFONT_CSS abajo): un glifo pixelizado mide UNA CELDA por
+    // carácter, y el raíl tiene 170 px de ancho. «Debug (QA)» son 10 caracteres = 160 px
+    // de tinta sobre ~128 px de hueco útil una vez descontados relleno y chevrón: no cabe
+    // por construcción, en inglés ni en castellano. Los rótulos del raíl se quedan en el
+    // monospace fino, que es la MISMA decisión que ya se tomó para las pistas del drawer
+    // y para los metadatos del panel de partidas. Estos dos sí caben (son cortos y viven
+    // en el pane, que es ancho).
+    ".u5set-pane-title",
+    ".u5set-back",
   ];
   return Array.from(root.querySelectorAll<HTMLElement>(sel.join(",")));
 }
@@ -208,9 +220,17 @@ export const PIXELFONT_CSS = `
 [data-shell-skin="faithful"] [data-testid="u5-shell-drawer"] .u5dbg-field button:hover .u5px-g,
 [data-shell-skin="faithful"] [data-testid="u5-shell-drawer"] .u5dbg-field button:hover .u5px-e,
 [data-shell-skin="faithful"] [data-testid="u5-shell-drawer"] .u5dbg-field button:focus-visible .u5px-g,
-[data-shell-skin="faithful"] [data-testid="u5-shell-drawer"] .u5dbg-field button:focus-visible .u5px-e{
+[data-shell-skin="faithful"] [data-testid="u5-shell-drawer"] .u5dbg-field button:focus-visible .u5px-e,
+[data-shell-skin="faithful"] [data-testid="u5-shell-drawer"] .u5set-back:hover .u5px-g,
+[data-shell-skin="faithful"] [data-testid="u5-shell-drawer"] .u5set-back:hover .u5px-e,
+[data-shell-skin="faithful"] [data-testid="u5-shell-drawer"] .u5set-back:focus-visible .u5px-g,
+[data-shell-skin="faithful"] [data-testid="u5-shell-drawer"] .u5set-back:focus-visible .u5px-e{
   filter:invert(1);
 }
+/* El titulo de categoria y el boton de vuelta pixelizados ENVUELVEN, por la misma razon
+   que los rotulos de fila (F5): una celda por caracter no cabe en una linea de un panel
+   estrecho, y el .u5px-w de cada palabra ya existe para poder partir entre palabras. */
+.u5set-pane-title.u5px,.u5set-back.u5px{ white-space:normal; }
 /* Panel de partidas EGA (maqueta #23): título = barra reverse-video (glifo negro);
    botón en hover = reverse-video (glifo negro). */
 [data-shell-skin="faithful"] .save-title .u5px-g,

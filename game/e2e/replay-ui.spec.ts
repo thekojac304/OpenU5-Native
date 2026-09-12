@@ -10,6 +10,7 @@
  * navegador vivo.
  */
 import { test, expect, type Page } from "@playwright/test";
+import { abreCategoriaDeAjustes } from "./helpers";
 
 const CANVAS = ".faithful-skin canvas";
 /** Como llega el popover de /byo: iframe con `?embed=1&replay=<id>` (popover-replay.ts:74). */
@@ -44,6 +45,9 @@ const fingerprint = (page: Page): Promise<string> =>
 async function openReplayPanel(page: Page): Promise<void> {
   await page.keyboard.press("F10");
   await expect(page.locator(drawer)).toHaveClass(/open/);
+  // El drawer se reparte en categorías (rediseño de ajustes): «Repeticiones» vive en la
+  // sección `shell-panels`, y sólo la categoría abierta tiene caja.
+  await abreCategoriaDeAjustes(page, drawer, "shell-panels");
   await page.locator(`${drawer} button[aria-label="Replays"]`).click();
   await expect(page.locator(panel)).toBeVisible();
 }

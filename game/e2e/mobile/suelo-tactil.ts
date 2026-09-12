@@ -127,6 +127,41 @@ export const EXCEPCIONES: readonly ExcepcionSuelo[] = [
       literal: "/touch-kb|touch-num/",
     },
   },
+  // ── Cruceta Enhanced en la forma BANDA del layout partido (12-09) ──────────────────
+  // Las dos entradas siguientes son la MISMA excepción en sus dos ejes: la celda es
+  // cuadrada, así que relajar sólo uno no significaría nada. Van separadas porque el
+  // ledger exige que una excepción nombre su eje (bajar el alto de algo no autoriza a
+  // bajar su ancho), y `sueloDe()` consulta por eje.
+  ...(["alto", "ancho"] as const).map((eje) => ({
+    clases: ["u5e-dbtn"],
+    eje,
+    // 34, el MISMO valor que el numpad de arriba y por la misma causa raiz. Empezo en 40 y
+    // se bajo al MEDIRLO: a 375x667 el hueco son 123 px y una cruz de 40 pide 130, asi que
+    // los 13 sobrantes salian por arriba y dejaban la flecha de subir cortada. Un objetivo
+    // de 34 ENTERO es mejor que uno de 40 al que le falta un tercio.
+    valor: 34,
+    etiqueta: `cruceta Enhanced compacta (${eje})`,
+    donde:
+      "layout PARTIDO vertical con la chapa Enhanced, y SÓLO cuando el hueco que el " +
+      "re-flow deja no da para 44 (el `clamp` satura en 48 en cuanto cabe)",
+    porQue:
+      "En el partido el mapa NO negocia (ruling del 03-08, `layout-cuadrado.ts`): su " +
+      "escala sale del ANCHO y el alto que sobra para la botonera puede ser muy poco — " +
+      "123 px medidos en un iPhone SE (375×667). Ahí la alternativa a una celda de 40 no " +
+      "es una de 44: es una cruceta que TAPA el roster y la consola, que es exactamente " +
+      "el defecto que este carril vino a cerrar. Un objetivo de 40 px es peor que uno de " +
+      "44 y mucho mejor que uno que no se ve. Es una desviación del MISMO tipo que la del " +
+      "numpad de arriba —el mapa se lleva el alto— y con la misma causa raíz.",
+    queLaCerraria:
+      "(a) que el mapa del layout partido vuelva a negociar el alto (derogar el ruling " +
+      "del 03-08 con su coste medido en LOS DOS EJES, que es lo que aquella tabla no " +
+      "hizo); o (b) que el partido deje de elegirse en viewports donde el hueco no llega " +
+      "a los 154 px que pide la forma banda a 44 px de celda.",
+    fuente: {
+      fichero: "src/enhanced/mobile/css.ts",
+      literal: "--u5e-pad-cell: clamp(34px",
+    },
+  })),
 ] as const;
 
 const aqui = dirname(fileURLToPath(import.meta.url));

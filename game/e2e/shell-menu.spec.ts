@@ -9,7 +9,7 @@
  * textos son ingleses. El último test cubre lang=es (la capa `i18n/shell.ts`).
  */
 import { test, expect } from "@playwright/test";
-import { gotoGame } from "./helpers";
+import { abreCategoriaDeAjustes, gotoGame } from "./helpers";
 
 const drawer = '[data-testid="u5-shell-drawer"]';
 
@@ -23,6 +23,21 @@ async function boot(page: import("@playwright/test").Page): Promise<void> {
 async function openShell(page: import("@playwright/test").Page): Promise<void> {
   await page.keyboard.press("F10");
   await expect(page.locator(drawer)).toHaveClass(/open/);
+}
+
+/**
+ * Abre el drawer Y navega a la categoría que contiene una sección.
+ *
+ * El drawer ya no es una lista única (rediseño de ajustes): sus secciones viven en
+ * categorías y sólo la abierta tiene caja. Todo lo que estos tests hacían con una fila
+ * sigue igual — lo único nuevo es llegar hasta ella.
+ */
+async function openShellAt(
+  page: import("@playwright/test").Page,
+  sectionId: string,
+): Promise<void> {
+  await openShell(page);
+  await abreCategoriaDeAjustes(page, drawer, sectionId);
 }
 
 test("Escape NO abre el menú SISTEMA (ESC es tecla del juego)", async ({ page }) => {
@@ -60,7 +75,7 @@ test("un clic FUERA del drawer abierto lo cierra", async ({ page }) => {
 
 test("Guardar / Cargar abre el panel de saves y cierra el shell", async ({ page }) => {
   await boot(page);
-  await openShell(page);
+  await openShellAt(page, "shell-panels");
   await page.locator(`${drawer} button`, { hasText: "Save / Load" }).click();
   // `.save-panel` es una clase COMPARTIDA (shop/selector/ztats viven siempre en el
   // DOM); discriminamos por el ÚNICO visible.
@@ -76,7 +91,7 @@ test("Guardar / Cargar abre el panel de saves y cierra el shell", async ({ page 
 
 test("un clic FUERA del panel de saves abierto lo cierra", async ({ page }) => {
   await boot(page);
-  await openShell(page);
+  await openShellAt(page, "shell-panels");
   await page.locator(`${drawer} button`, { hasText: "Save / Load" }).click();
   await expect(page.locator(".save-panel:visible")).toHaveCount(1);
   // Clic fuera del panel de saves (esquina sup-izq, sobre el canvas): lo cierra.
@@ -106,6 +121,7 @@ test("Guardar se auto-guarda en mazmorra/combate (botón == tecla F5)", async ({
     await page.mouse.move(200, 200); // actividad de puntero ⇒ ⚙ visible
     await gear.click();
     await expect(page.locator(drawer)).toHaveClass(/open/);
+    await abreCategoriaDeAjustes(page, drawer, "shell-panels");
   };
   // Botón "Save / Load" en mazmorra: NO abre panel (guarda igual que F5). El menú se
   // cierra (deps.close corre antes que el openSaves no-op) — mismo patrón que el Minimapa.
@@ -116,7 +132,7 @@ test("Guardar se auto-guarda en mazmorra/combate (botón == tecla F5)", async ({
 
 test("el volumen editado persiste en u5.musicVolume", async ({ page }) => {
   await boot(page);
-  await openShell(page);
+  await openShellAt(page, "shell-audio");
   const vol = page
     .locator(`${drawer} .u5dbg-field`, { hasText: "Music volume" })
     .locator("input");
@@ -136,7 +152,7 @@ test("el botón ⚙ se hace visible con el puntero y abre el menú SISTEMA", asy
 
 test('"Atlas & guide" abre el companion en una pestaña nueva', async ({ page, context }) => {
   await boot(page);
-  await openShell(page);
+  await openShellAt(page, "shell-help");
   // window.open(..., "noopener") no asocia opener ⇒ escuchamos el evento de página
   // del contexto (no page.popup, que sí exige opener).
   const atlasPromise = context.waitForEvent("page");
@@ -154,7 +170,7 @@ test("los botones de piel de Vídeo saltan directo a la piel elegida (dev jubila
   page,
 }) => {
   await boot(page);
-  await openShell(page);
+  await openShellAt(page, "shell-video");
 
   // "Active skin" es un campo de texto disabled en la sección Video — muestra la
   // ETIQUETA legible de la piel activa (task #79). La etiqueta de piel es nombre

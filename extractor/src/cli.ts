@@ -2,11 +2,14 @@
  * CLI del extractor: convierte los datos originales de Ultima V en los assets
  * digeridos que consume el juego.
  *
- * Uso: npm run extract -- [--src <dir>] [--out <dir>] [--skip-music] [--skip-tiles]
+ * Uso: npm run extract -- [--src <dir>] [--out <dir>] [--skip-tiles]
  *
  * La SECUENCIA de extracción vive en pipeline.ts (compartida con la demo BYO
- * del navegador); este fichero es solo el wrapper Node: fs + pngjs + música
- * (audio/render.ts es Node-only) + manifest.
+ * del navegador); este fichero es solo el wrapper Node: fs + pngjs + manifest.
+ *
+ * La música YA NO está aquí: al dejar de renderizarse a audio (fluidsynth + soundfont)
+ * y pasar a emitirse como datos (MIDI + banco de timbres), dejó de ser Node-only y se
+ * mudó al pipeline compartido — que es lo que le da música a la demo del navegador.
  */
 import { createHash } from "node:crypto";
 import {
@@ -21,14 +24,12 @@ import { fileURLToPath } from "node:url";
 
 import { runPipeline, validateSourceFiles, type PipelineIO } from "./pipeline.js";
 import { writePng } from "./png.js";
-import { renderAllMusic } from "./audio/render.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 interface Args {
   src: string;
   out: string;
-  skipMusic: boolean;
   skipTiles: boolean;
 }
 
@@ -41,7 +42,6 @@ function parseArgs(): Args {
   return {
     src: resolve(get("--src") ?? join(ROOT, "original/u5/ultima5")),
     out: resolve(get("--out") ?? join(ROOT, "game/assets")),
-    skipMusic: argv.includes("--skip-music"),
     skipTiles: argv.includes("--skip-tiles"),
   };
 }
@@ -79,23 +79,6 @@ async function main(): Promise<void> {
   }
 
   await runPipeline(io, { skipTiles: args.skipTiles });
-
-  // 9. Música (Node-only: renderiza el pack XMI del `upgrade/` con el soundfont).
-  // Es QoL (el DOS era mudo): si falta el toolchain externo (fluid-synth/ffmpeg/
-  // soundfont), se OMITE con aviso en vez de romper el flujo del primer clone.
-  if (!args.skipMusic) {
-    console.log("• Música…");
-    try {
-      renderAllMusic(join(args.src, "upgrade"), args.out);
-    } catch (e) {
-      console.log(
-        `  omitida — ${e instanceof Error ? e.message : String(e)}\n` +
-          `  (el juego funciona sin música; usa --skip-music para silenciar este aviso)`,
-      );
-    }
-  } else {
-    console.log("• Música… (omitida)");
-  }
 
   // 10. Manifest
   console.log("• Manifest…");

@@ -2497,6 +2497,34 @@ export class FaithfulSkin implements Skin {
         : faithfulCanvasSize(availW, availH, this.aspectY);
       canvas.style.width = `${size.width}px`;
       canvas.style.height = `${size.height}px`;
+      // ── EL SUELO DEL HUD → CSS (carril de ergonomía móvil, 12-09) ──────────────────
+      // La `y` a partir de la cual empieza lo que NO se puede tapar mientras el juego
+      // pregunta algo. En esta piel el 320×200 va ENTERO dentro del canvas, así que el
+      // roster y la consola viven DENTRO de él: lo intocable llega hasta su borde
+      // inferior, y debajo sólo hay franja negra de letterbox — justo el hueco que el
+      // selector compacto de personaje aprovecha para bajar a la zona del pulgar sin
+      // taparle al jugador la pregunta que está contestando (`enhanced/party/css.ts`).
+      //
+      // 🔴 HERMANO DEL DE `skin/portrait/skin.ts`, Y HACE FALTA EN LAS DOS: la propiedad
+      // la publica QUIEN DIMENSIONA EL CANVAS, y son dos pieles distintas. Con una sola
+      // publicándola, la otra dejaba al panel con su fallback («encima del deck»), que en
+      // esta piel cae sobre la consola. El fallback sigue siendo el correcto cuando no hay
+      // NINGUNA piel montada; lo que no puede es ser el estado normal de una de ellas.
+      //
+      // SÓLO EN VERTICAL: en apaisado el selector tiene sus propias reglas (se aparta del
+      // rail lateral y se acota), así que allí la propiedad AUSENTE es lo correcto.
+      if (typeof document !== "undefined") {
+        const root = document.documentElement;
+        const vertical = root.dataset.orient !== "landscape";
+        if (vertical) {
+          root.style.setProperty(
+            "--u5-hud-top",
+            `${Math.round(canvas.getBoundingClientRect().bottom)}px`,
+          );
+        } else {
+          root.style.removeProperty("--u5-hud-top");
+        }
+      }
     };
     this.resizeHandler();
     window.addEventListener("resize", this.resizeHandler);
@@ -3674,6 +3702,12 @@ export class FaithfulSkin implements Skin {
     if (this.resizeHandler)
       window.removeEventListener("resize", this.resizeHandler);
     this.resizeHandler = null;
+    // El suelo del HUD se va CON la piel: dejarlo puesto le daría al selector de personaje
+    // una medida rancia de un canvas que ya no existe (misma retirada que hace la piel
+    // vertical con `--u5-reflow-content`, y por el mismo motivo).
+    if (typeof document !== "undefined") {
+      document.documentElement.style.removeProperty("--u5-hud-top");
+    }
     if (this.aspectHandler)
       window.removeEventListener(ASPECT_EVENT, this.aspectHandler);
     this.aspectHandler = null;

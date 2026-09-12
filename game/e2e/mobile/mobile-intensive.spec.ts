@@ -54,6 +54,7 @@ import {
   abrirShellDrawer,
   cerrarShellDrawer,
   SHELL_DRAWER,
+  abreCategoriaDeAjustes,
 } from "./deck";
 import { SUELO_TACTIL, sueloDe } from "./suelo-tactil";
 
@@ -1079,6 +1080,9 @@ test.describe("pieles en móvil", () => {
     // (con una tercera, el ciclo desde `faithful` habría dejado otra cosa y el poll de
     // `u5.skin` se habría quedado esperando 10 s a un valor que nunca llega).
     await abrirShellDrawer(page);
+    // …y ahora dentro de su CATEGORÍA: el drawer se reparte en categorías (rediseño de
+    // ajustes) y sólo la abierta tiene caja. La sección sigue siendo `shell-video`.
+    await abreCategoriaDeAjustes(page, SHELL_DRAWER, "shell-video");
     const filaSkin = page.locator(
       `${SHELL_DRAWER} [data-section="shell-video"] button`,
       { hasText: "Skin:" },

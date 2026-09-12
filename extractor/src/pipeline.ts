@@ -39,6 +39,8 @@ import { EGA_PALETTE } from "./parsers/tiles.js";
 import { extractCompressedWords, parseTlkFile } from "./parsers/tlk.js";
 import { parseShoppeDat } from "./parsers/shoppe.js";
 import { verificaCatalogo } from "./assets-catalog.js";
+import { xmiToMidi } from "./audio/xmi2midi.js";
+import { TRACKS } from "./audio/tracklist.js";
 
 /** E/S que aporta cada wrapper (Node o navegador). Rutas relativas al out. */
 export interface PipelineIO {
@@ -227,8 +229,9 @@ function registraEmisiones(io: PipelineIO, emitidos: Set<string>): PipelineIO {
 }
 
 /**
- * Corre la extracción completa (sin música — esa vive en el wrapper Node,
- * audio/render.ts es Node-only y en la demo web se omite como QoL).
+ * Corre la extracción completa, música INCLUIDA. La música dejó de vivir en el wrapper
+ * de Node cuando dejó de renderizarse a audio: ahora son datos (MIDI + banco de timbres)
+ * y los sintetiza el juego, así que corre igual aquí que en el navegador de /byo.
  */
 export async function runPipeline(ioReal: PipelineIO, opts: PipelineOptions = {}): Promise<void> {
   const emitidos = new Set<string>();
@@ -599,6 +602,42 @@ export async function runPipeline(ioReal: PipelineIO, opts: PipelineOptions = {}
     await io.putJson("proport-font.json", { height: font.height, glyphs: font.glyphs });
   } catch {
     io.log("  (PROPORT.PCS ausente, omitida)");
+  }
+
+  // 9. MÚSICA DEL PARCHE (Ultima V Upgrade Patch, de Voyager Dragon) — OPCIONAL.
+  //
+  // NO se renderiza a audio: se copian los DATOS y el juego los sintetiza en vivo con su
+  // emulador de OPL (`game/src/ui/opl/`). Por eso este paso vive en el pipeline COMPARTIDO
+  // y no en el wrapper de Node, que es donde estaba: la vía OGG anterior necesitaba
+  // fluidsynth, ffmpeg y un soundfont, era Node-only, y por eso la demo del navegador no
+  // podía tener música NUNCA. Aquí son dos lecturas y un cambio de formato, en cualquier
+  // sitio donde corra el pipeline.
+  //
+  // 🔴 LOS XMI ESTÁN EN DOS SITIOS SEGÚN LA COPIA: sueltos en el directorio del juego, o
+  // bajo `upgrade/`, según cómo se aplicara el parche. Se prueban los dos — mirar sólo uno
+  // se salda con «no hay música» en la mitad de las instalaciones, sin decir por qué.
+  io.log("• Música…");
+  const leeParche = (nombre: string): Uint8Array | undefined => {
+    for (const ruta of [nombre, `upgrade/${nombre}`]) {
+      if (io.exists(ruta)) return read(ruta);
+    }
+    return undefined;
+  };
+  const bancoOpl = leeParche("FAT.OPL");
+  if (bancoOpl) {
+    await io.putBin("music/fat.opl", bancoOpl);
+    let pistas = 0;
+    for (const track of TRACKS) {
+      const xmi = leeParche(track.xmi);
+      if (!xmi) continue;
+      const midi = xmiToMidi(xmi)[0];
+      if (!midi) continue;
+      await io.putBin(track.out, midi);
+      pistas++;
+    }
+    io.log(`  banco de timbres + ${pistas} pistas`);
+  } else {
+    io.log("  (sin FAT.OPL: esta copia no tiene el parche de música; el juego va igual)");
   }
 
   // ── PUERTA DE VERSIÓN (#293) ───────────────────────────────────────────────────────

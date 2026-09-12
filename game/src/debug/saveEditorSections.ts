@@ -61,7 +61,7 @@ const check = (label: string, get: () => boolean, set: (v: boolean) => void): De
 // ── Party: campo que faltaba ─────────────────────────────────────────────────────
 export function monthsAtInnField(api: DebugApi, selChar: () => number): DebugField {
   return num(
-    "Meses en la posada",
+    "Months at the inn",
     () => api.state().characters[selChar()]?.monthsAtInn,
     (v) => api.setCharacterNumber(selChar(), "monthsAtInn", v),
     0,
@@ -76,22 +76,22 @@ export function worldTimeExtraFields(api: DebugApi): DebugField[] {
   return [
     {
       widget: "select",
-      label: "Efecto temporal (timeSpell)",
+      label: "Temporal effect (timeSpell)",
       options: TIME_SPELL_OPTIONS,
       get: () => api.state().timeSpell ?? "",
       set: (v) => api.setTimeSpell(String(v)),
-      hint: "Efecto global activo: Protection/Quickness/Confusion/Negate/Time-stop. '—' lo limpia.",
+      hint: "Active global effect: Protection/Quickness/Confusion/Negate/Time-stop. '—' clears it.",
     },
-    rnum("Turnos de timeSpell (0xFF=perm)", "timeSpellTurns", 255),
-    rnum("Minutos de luz (lightSpellMins)", "lightSpellMins", 255),
-    // Etiqueta SIN la palabra "hora": el filtro hasText:"Hora" del test de reloj es
-    // por-substring case-insensitive y colisionaría (regresión evitada).
-    rnum("prevHour (snapshot)", "prevHour", 23),
+    rnum("timeSpell turns (0xFF=perm)", "timeSpellTurns", 255),
+    rnum("Light minutes (lightSpellMins)", "lightSpellMins", 255),
+    // Label deliberately avoids the word "Hour": the clock test's hasText:"Hour" filter is
+    // substring/case-insensitive and would collide with it (regression avoided).
+    rnum("Pre-tick clock byte (raw, internal)", "prevHour", 23),
     // ★ #176 — el LATCH de fases lunares. Bytes CRUDOS de la tabla MOON_PHASES: 0x30..0x37
     // ('0'..'7'), no la fase 0..7. Fuera de ese rango cuentan como «sin latchear» y los
     // lectores caen al cálculo por día. Editarlos cambia adónde te manda una moongate.
-    rnum("Fase Felucca latcheada (byte 48-55)", "feluccaPhase", 255),
-    rnum("Fase Trammel latcheada (byte 48-55)", "trammelPhase", 255),
+    rnum("Felucca phase latched (byte 48-55)", "feluccaPhase", 255),
+    rnum("Trammel phase latched (byte 48-55)", "trammelPhase", 255),
   ];
 }
 
@@ -116,7 +116,7 @@ export const STORY_FLAG_FAMILIES = {
 export function historyFlagFields(api: DebugApi): DebugField[] {
   const fields: DebugField[] = [];
   const flag = (key: string, label: string): DebugField =>
-    check(`[HISTORIA] ${label}`, () => api.state().questFlags?.[key] === true, (v) => api.setQuestFlag(key, v));
+    check(`[STORY] ${label}`, () => api.state().questFlags?.[key] === true, (v) => api.setQuestFlag(key, v));
 
   // word-spoken:<loc> por mazmorra (33..40), con nombre.
   for (let loc = FIRST_DUNGEON_LOCATION; loc <= LAST_DUNGEON_LOCATION; loc++) {
@@ -135,7 +135,7 @@ export function historyFlagFields(api: DebugApi): DebugField[] {
   ]);
   for (const key of Object.keys(api.state().questFlags ?? {})) {
     if (known.has(key)) continue;
-    fields.push(flag(key, `${key} — sin derivar`));
+    fields.push(flag(key, `${key} — unmapped`));
   }
   return fields;
 }
@@ -146,24 +146,24 @@ function transportsSection(api: DebugApi): DebugSection {
     num(label, () => api.state()[field], (v) => api.setShipField(field, v), 0, max);
   return {
     id: "transports",
-    title: "Transportes",
+    title: "Transports",
     fields: [
       num(
-        "transportTile (vehículo+facing+vela)",
+        "transportTile (vehicle+facing+sail)",
         () => api.state().transportTile,
         (v) => api.setTransportTile(v),
         0,
         255,
       ),
-      ship("Casco de nave (shipHull, 0..99)", "shipHull", 99),
-      ship("Esquifes a bordo (shipSkiffs)", "shipSkiffs", 99),
-      ship("Rumbo de vela (sailDir 0..4)", "sailDir", 4),
-      ship("Contador de deriva (windDriftCtr)", "windDriftCtr", 255),
+      ship("Ship hull (shipHull, 0..99)", "shipHull", 99),
+      ship("Skiffs aboard (shipSkiffs)", "shipSkiffs", 99),
+      ship("Sail heading (sailDir 0..4)", "sailDir", 4),
+      ship("Drift counter (windDriftCtr)", "windDriftCtr", 255),
       ship("HMS Cape toggle (0/1)", "hmsCapeToggle", 1),
       {
         widget: "button",
-        label: "Vaciar pool de enemigos errantes",
-        hint: "Borra overworldEnemies (QA). Cero-rand.",
+        label: "Clear wandering enemy pool",
+        hint: "Clears overworldEnemies (QA). Zero-rand.",
         run: () => api.clearOverworldEnemies(),
       },
     ],
@@ -182,7 +182,7 @@ function npcSection(api: DebugApi, world: WorldData): DebugSection {
     Array.from({ length: 32 }, (_, npc) => {
       const grid = () => (kind === "dead" ? api.state().npcDead : api.state().npcMet);
       return check(
-        `${kind === "dead" ? "Muerto" : "Conocido"} · NPC ${npc}`,
+        `${kind === "dead" ? "Dead" : "Known"} · NPC ${npc}`,
         () => grid()[selLoc]?.[npc] === true,
         (v) => api.setNpcFlag(kind, selLoc, npc, v),
       );
@@ -193,13 +193,13 @@ function npcSection(api: DebugApi, world: WorldData): DebugSection {
     fields: [
       {
         widget: "select",
-        label: "Localización",
+        label: "Location",
         options: locOptions,
         get: () => selLoc,
         set: (v) => {
           selLoc = Number(v);
         },
-        hint: "Fila = location id − 1. Las 32+32 casillas de abajo apuntan a la loc elegida.",
+        hint: "Row = location id − 1. The 32+32 checkboxes below point to the chosen location.",
       },
       ...npcFields("dead"),
       ...npcFields("met"),
@@ -217,15 +217,15 @@ function dungeonRoomsSection(api: DebugApi): DebugSection {
     return (((bits[i >> 3] ?? 0) >> (i & 7)) & 1) === 1;
   };
   const roomFields: DebugField[] = Array.from({ length: DUNGEON_ROOMS_PER_SLOT }, (_, room) =>
-    check(`Sala ${room} despejada`, () => roomCleared(room), (v) => api.setDungeonRoomCleared(selSlot, room, v)),
+    check(`Room ${room} cleared`, () => roomCleared(room), (v) => api.setDungeonRoomCleared(selSlot, room, v)),
   );
   return {
     id: "dungeon-rooms",
-    title: "Mazmorra · salas despejadas",
+    title: "Dungeon · cleared rooms",
     fields: [
       {
         widget: "select",
-        label: "Mazmorra (slot del bitmap)",
+        label: "Dungeon (bitmap slot)",
         options: Array.from({ length: DUNGEON_CLEARED_SLOTS }, (_, i) => ({
           label: `${i}: ${DUNGEON_SLOT_LABELS[i]}`,
           value: i,
@@ -234,7 +234,7 @@ function dungeonRoomsSection(api: DebugApi): DebugSection {
         set: (v) => {
           selSlot = Number(v);
         },
-        hint: "Bitmap g_dng_room_cleared (14 B). Slot 0 = Deceit≡Despise colapsan (quirk del binario).",
+        hint: "g_dng_room_cleared bitmap (14 B). Slot 0 = Deceit≡Despise collapse together (binary quirk).",
       },
       ...roomFields,
     ],

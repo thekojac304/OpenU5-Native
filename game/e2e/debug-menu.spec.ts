@@ -56,12 +56,12 @@ test("teleport por API fija la posición sin consumir rand", async ({ page }) =>
 
 test("editar Oro y Hora por el DOM del panel escribe el estado vivo", async ({ page }) => {
   await bootWithDebug(page);
-  const goldInput = page.locator(".u5dbg-field", { hasText: "Oro" }).locator("input");
+  const goldInput = page.locator(".u5dbg-field", { hasText: "Gold" }).locator("input");
   await goldInput.fill("8803");
   await goldInput.dispatchEvent("change");
   expect(await readState<number>(page, "gold")).toBe(8803);
 
-  const hourInput = page.locator(".u5dbg-field", { hasText: "Hora" }).locator("input");
+  const hourInput = page.locator(".u5dbg-field", { hasText: "Hour" }).locator("input");
   await hourInput.fill("22");
   await hourInput.dispatchEvent("change");
   expect(await readState<number>(page, "time.hour")).toBe(22);
@@ -78,7 +78,7 @@ test("el juego sigue respondiendo a las teclas con el drawer abierto", async ({ 
 
 test("el botón de mazmorra lleva badge RNG y entra por el flujo real", async ({ page }) => {
   await bootWithDebug(page);
-  const dungeonBtn = page.locator(".u5dbg-field", { hasText: "Entrar mazmorra" }).locator("button");
+  const dungeonBtn = page.locator(".u5dbg-field", { hasText: "Enter dungeon" }).locator("button");
   await expect(dungeonBtn.locator(".u5dbg-danger-badge")).toHaveText("RNG");
   const inDungeonBefore = await page.evaluate(
     () => (window as unknown as Record<string, any>).__u5test.game.dungeonState !== null,
@@ -103,7 +103,7 @@ test("Atajo 'Maximizar todo' sube party + recursos y no mueve la semilla", async
   const seedBefore = await page.evaluate(
     () => (window as unknown as Record<string, any>).__u5debug.liveSeed(),
   );
-  const btn = page.locator(".u5dbg-field", { hasText: "Maximizar todo" }).locator("button");
+  const btn = page.locator(".u5dbg-field", { hasText: "Maximize all" }).locator("button");
   await btn.click();
   expect(await readState<number>(page, "gold")).toBe(9999);
   expect(await readState<number>(page, "characters[0].level")).toBe(8);
@@ -128,7 +128,7 @@ test("Atajo 'Maximizar todo' sube party + recursos y no mueve la semilla", async
 
 test("Atajo 'Mejor equipo para todos' equipa un arma al Avatar", async ({ page }) => {
   await bootWithDebug(page);
-  const btn = page.locator(".u5dbg-field", { hasText: "Mejor equipo para todos" }).locator("button");
+  const btn = page.locator(".u5dbg-field", { hasText: "Best equipment for everyone" }).locator("button");
   await btn.click();
   // Con los datos reales de combate cargados, el mejor arma queda equipado (≠ 0xFF).
   expect(await readState<number>(page, "characters[0].weapon")).not.toBe(0xff);
@@ -136,7 +136,7 @@ test("Atajo 'Mejor equipo para todos' equipa un arma al Avatar", async ({ page }
 
 test("Atajo 'Party completo al máximo' deja a todos los activos a nivel 8", async ({ page }) => {
   await bootWithDebug(page);
-  const btn = page.locator(".u5dbg-field", { hasText: "Party completo al máximo" }).locator("button");
+  const btn = page.locator(".u5dbg-field", { hasText: "Full max party" }).locator("button");
   await btn.click();
   const allMax = await page.evaluate(() => {
     const s = (window as unknown as Record<string, any>).__u5test.state();
@@ -172,7 +172,7 @@ test("Editor de save · Transportes: transportTile por DOM + vaciar pool de enem
   await tt.fill("28");
   await tt.dispatchEvent("change");
   expect(await readState<number>(page, "transportTile")).toBe(28);
-  await page.locator(".u5dbg-field", { hasText: "Vaciar pool de enemigos" }).locator("button").click();
+  await page.locator(".u5dbg-field", { hasText: "Clear wandering enemy pool" }).locator("button").click();
   const enemies = await page.evaluate(
     () => ((window as unknown as Record<string, any>).__u5test.state().overworldEnemies ?? "none"),
   );
@@ -181,10 +181,10 @@ test("Editor de save · Transportes: transportTile por DOM + vaciar pool de enem
 
 test("Editor de save · NPCs: seleccionar loc y marcar 'Muerto · NPC 7' escribe npcDead[loc][7]", async ({ page }) => {
   await bootWithDebug(page);
-  const sel = page.locator(".u5dbg-field", { hasText: "Localización" }).last().locator("select");
+  const sel = page.locator(".u5dbg-field", { hasText: "Location" }).last().locator("select");
   await sel.selectOption("5"); // fila 5 = location id 6
   await sel.dispatchEvent("change");
-  const cb = page.locator(".u5dbg-field", { hasText: "Muerto · NPC 7" }).locator('input[type="checkbox"]');
+  const cb = page.locator(".u5dbg-field", { hasText: "Dead · NPC 7" }).locator('input[type="checkbox"]');
   await cb.check();
   const dead = await page.evaluate(
     () => (window as unknown as Record<string, any>).__u5test.state().npcDead[5]?.[7] ?? false,
@@ -194,10 +194,10 @@ test("Editor de save · NPCs: seleccionar loc y marcar 'Muerto · NPC 7' escribe
 
 test("Editor de save · Mazmorra·salas: marcar 'Sala 9 despejada' del slot 2 escribe el bit", async ({ page }) => {
   await bootWithDebug(page);
-  const sel = page.locator(".u5dbg-field", { hasText: "Mazmorra (slot del bitmap)" }).locator("select");
+  const sel = page.locator(".u5dbg-field", { hasText: "Dungeon (bitmap slot)" }).locator("select");
   await sel.selectOption("2");
   await sel.dispatchEvent("change");
-  await page.locator(".u5dbg-field", { hasText: "Sala 9 despejada" }).locator('input[type="checkbox"]').check();
+  await page.locator(".u5dbg-field", { hasText: "Room 9 cleared" }).locator('input[type="checkbox"]').check();
   // dungIdx 2, room 9 → bit 41 → byte 5, bit 1.
   const set = await page.evaluate(() => {
     const bits = (window as unknown as Record<string, any>).__u5test.state().dungeonRoomsCleared;
@@ -214,11 +214,11 @@ test("Editor de save · Historia: casilla 'Word spoken · Deceit' escribe el que
 
 test("Editor de save · World: 'Meses en la posada' y 'Efecto temporal' escriben el estado", async ({ page }) => {
   await bootWithDebug(page);
-  const inn = page.locator(".u5dbg-field", { hasText: "Meses en la posada" }).locator("input");
+  const inn = page.locator(".u5dbg-field", { hasText: "Months at the inn" }).locator("input");
   await inn.fill("6");
   await inn.dispatchEvent("change");
   expect(await readState<number>(page, "characters[0].monthsAtInn")).toBe(6);
-  const spell = page.locator(".u5dbg-field", { hasText: "Efecto temporal (timeSpell)" }).locator("select");
+  const spell = page.locator(".u5dbg-field", { hasText: "Temporal effect (timeSpell)" }).locator("select");
   await spell.selectOption("Q");
   await spell.dispatchEvent("change");
   expect(await readState<string>(page, "timeSpell")).toBe("Q");

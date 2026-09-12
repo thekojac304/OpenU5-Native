@@ -128,24 +128,24 @@ export function buildRegistry(api: DebugApi, world: WorldData): DebugSection[] {
   // (ver debug/shortcuts.ts para cada fuente), nada cableado a mano.
   const shortcuts: DebugSection = {
     id: "shortcuts",
-    title: "Atajos",
+    title: "Shortcuts",
     fields: [
       {
         widget: "button",
-        label: "Maximizar todo",
-        hint: "Party (HP/MP/stats/nivel/estado) + recursos + inventario a sus topes + TODOS los ítems especiales (garfio, regalía LB, esquirlas, catalejo/sextante/reloj/badge/caja/HMS Cape). Cero-rand.",
+        label: "Maximize all",
+        hint: "Party (HP/MP/stats/level/status) + resources + inventory to their caps + ALL special items (grapple, LB regalia, shards, spyglass/sextant/watch/badge/box/HMS Cape). Zero-rand.",
         run: () => api.maximizeAll(),
       },
       {
         widget: "button",
-        label: "Mejor equipo para todos",
-        hint: "Equipa a cada miembro con el mejor ítem por slot (mayor ataque/defensa de los datos; regla de 2 manos). Cero-rand.",
+        label: "Best equipment for everyone",
+        hint: "Equips each member with the best item per slot (highest attack/defense from the data; 2-hand rule). Zero-rand.",
         run: () => api.bestEquipAll(),
       },
       {
         widget: "button",
-        label: "Party completo al máximo",
-        hint: "Llena el party con miembros reales del roster (hasta 6) y aplica maximizar + mejor equipo. Cero-rand.",
+        label: "Full max party",
+        hint: "Fills the party with real roster members (up to 6) and applies maximize + best equipment. Zero-rand.",
         run: () => api.maxPartyAll(),
       },
     ],
@@ -153,7 +153,7 @@ export function buildRegistry(api: DebugApi, world: WorldData): DebugSection[] {
 
   const teleport: DebugSection = {
     id: "teleport",
-    title: "Teletransporte",
+    title: "Teleport",
     custom: () => buildTeleportMap(api, world),
     fields: [
       {
@@ -167,7 +167,7 @@ export function buildRegistry(api: DebugApi, world: WorldData): DebugSection[] {
       },
       {
         widget: "select",
-        label: "Localización",
+        label: "Location",
         options: locOptions,
         get: () => selLoc,
         set: (v) => {
@@ -177,17 +177,17 @@ export function buildRegistry(api: DebugApi, world: WorldData): DebugSection[] {
       },
       {
         widget: "select",
-        label: "Planta",
+        label: "Floor",
         options: [], // dinámico: se rellena en el panel vía disabled? — usamos get/set
         get: () => selFloor,
         set: (v) => {
           selFloor = Number(v);
         },
-        hint: "Plantas disponibles según la localización elegida.",
+        hint: "Available floors depend on the chosen location.",
       },
       {
         widget: "button",
-        label: "Ir a la localización",
+        label: "Go to location",
         run: () => {
           if (selLoc === -1) api.goToLocation(0, UNDERWORLD_FLOOR);
           else if (selLoc === 0) api.goToLocation(0, 0);
@@ -196,8 +196,8 @@ export function buildRegistry(api: DebugApi, world: WorldData): DebugSection[] {
       },
       {
         widget: "select",
-        label: "Mazmorra",
-        options: dungeonOptions.length ? dungeonOptions : [{ label: "(sin datos)", value: 0, disabled: true }],
+        label: "Dungeon",
+        options: dungeonOptions.length ? dungeonOptions : [{ label: "(no data)", value: 0, disabled: true }],
         get: () => selDungeon,
         set: (v) => {
           selDungeon = Number(v);
@@ -206,9 +206,9 @@ export function buildRegistry(api: DebugApi, world: WorldData): DebugSection[] {
       },
       {
         widget: "button",
-        label: "Entrar mazmorra (flujo real)",
+        label: "Enter dungeon (real flow)",
         danger: true,
-        hint: "Entrada REAL de la mazmorra — puede consumir RNG del stream (no cero-rand).",
+        hint: "REAL dungeon entry — may consume RNG from the stream (not zero-rand).",
         run: () => {
           if (dungeonOptions.length) api.enterDungeon(selDungeon);
         },
@@ -216,7 +216,7 @@ export function buildRegistry(api: DebugApi, world: WorldData): DebugSection[] {
       },
       {
         widget: "text",
-        label: "Posición actual (loc:floor x,y)",
+        label: "Current position (loc:floor x,y)",
         get: () => {
           const p = api.state().position;
           return `${p.location}:${p.floor} ${p.x},${p.y}`;
@@ -242,51 +242,51 @@ export function buildRegistry(api: DebugApi, world: WorldData): DebugSection[] {
     fields: [
       {
         widget: "select",
-        label: "Personaje",
+        label: "Character",
         options: api.state().characters.map((c, i) => ({ label: `${i + 1}: ${c.name}`, value: i })),
         get: () => selChar,
         set: (v) => {
           selChar = Number(v);
         },
       },
-      numField(api, "Tamaño de party", () => api.state().partySize, (v) => api.setResource("partySize", v), 1, 6),
-      numField(api, "Personaje activo (idx)", () => api.state().activeCharacter, (v) => api.setResource("activeCharacter", v), 0, 255),
+      numField(api, "Party size", () => api.state().partySize, (v) => api.setResource("partySize", v), 1, 6),
+      numField(api, "Active character (idx)", () => api.state().activeCharacter, (v) => api.setResource("activeCharacter", v), 0, 255),
       {
         widget: "text",
-        label: "Nombre",
+        label: "Name",
         get: () => char()?.name ?? "",
         set: (v) => api.setCharacterText(selChar, "name", v),
       },
       {
         widget: "select",
-        label: "Género",
+        label: "Gender",
         options: GENDER_OPTIONS,
         get: () => char()?.gender ?? 0x0b,
         set: (v) => api.setCharacterNumber(selChar, "gender", Number(v)),
       },
       {
         widget: "select",
-        label: "Clase",
+        label: "Class",
         options: CLASS_LETTERS.map((l) => ({ label: l, value: l })),
         get: () => char()?.class ?? "A",
         set: (v) => api.setCharacterText(selChar, "class", String(v)),
       },
       {
         widget: "select",
-        label: "Estado",
+        label: "Status",
         options: STATUS_LETTERS,
         get: () => char()?.status ?? "G",
         set: (v) => api.setCharacterText(selChar, "status", String(v)),
       },
       numField(api, "HP", () => char()?.currentHp, (v) => api.setCharacterNumber(selChar, "currentHp", v), 0, 9999),
-      numField(api, "HP máx", () => char()?.maxHp, (v) => api.setCharacterNumber(selChar, "maxHp", v), 0, 9999),
+      numField(api, "Max HP", () => char()?.maxHp, (v) => api.setCharacterNumber(selChar, "maxHp", v), 0, 9999),
       numField(api, "MP", () => char()?.currentMp, (v) => api.setCharacterNumber(selChar, "currentMp", v), 0, 99),
-      numField(api, "Nivel", () => char()?.level, (v) => api.setCharacterNumber(selChar, "level", v), 1, 8),
-      numField(api, "Experiencia", () => char()?.exp, (v) => api.setCharacterNumber(selChar, "exp", v), 0, 9999),
-      numField(api, "Fuerza (máx 30 — >35 wrapea el scheduler, audit-byte-wrap)", () => char()?.strength, (v) => api.setCharacterNumber(selChar, "strength", v), 1, 30),
-      numField(api, "Destreza (máx 30 — >35 wrapea el scheduler, audit-byte-wrap)", () => char()?.dexterity, (v) => api.setCharacterNumber(selChar, "dexterity", v), 1, 30),
-      numField(api, "Inteligencia (máx 30 — >35 wrapea el scheduler, audit-byte-wrap)", () => char()?.intelligence, (v) => api.setCharacterNumber(selChar, "intelligence", v), 1, 30),
-      numField(api, "partyStatus (0=party,0xFF=no unido)", () => char()?.partyStatus, (v) => api.setCharacterNumber(selChar, "partyStatus", v), 0, 255),
+      numField(api, "Level", () => char()?.level, (v) => api.setCharacterNumber(selChar, "level", v), 1, 8),
+      numField(api, "Experience", () => char()?.exp, (v) => api.setCharacterNumber(selChar, "exp", v), 0, 9999),
+      numField(api, "Strength (max 30 — >35 wraps the scheduler, audit-byte-wrap)", () => char()?.strength, (v) => api.setCharacterNumber(selChar, "strength", v), 1, 30),
+      numField(api, "Dexterity (max 30 — >35 wraps the scheduler, audit-byte-wrap)", () => char()?.dexterity, (v) => api.setCharacterNumber(selChar, "dexterity", v), 1, 30),
+      numField(api, "Intelligence (max 30 — >35 wraps the scheduler, audit-byte-wrap)", () => char()?.intelligence, (v) => api.setCharacterNumber(selChar, "intelligence", v), 1, 30),
+      numField(api, "partyStatus (0=party,0xFF=not joined)", () => char()?.partyStatus, (v) => api.setCharacterNumber(selChar, "partyStatus", v), 0, 255),
       monthsAtInnField(api, () => selChar),
       ...equipSlotFields(api, () => selChar),
     ],
@@ -294,19 +294,19 @@ export function buildRegistry(api: DebugApi, world: WorldData): DebugSection[] {
 
   const resources: DebugSection = {
     id: "resources",
-    title: "Recursos",
+    title: "Resources",
     fields: [
-      numField(api, "Oro", () => api.state().gold, (v) => api.setResource("gold", v), 0, 9999),
-      numField(api, "Comida", () => api.state().food, (v) => api.setResource("food", v), 0, 9999),
-      numField(api, "Llaves", () => api.state().keys, (v) => api.setResource("keys", v), 0, 99),
-      numField(api, "Gemas", () => api.state().gems, (v) => api.setResource("gems", v), 0, 99),
-      numField(api, "Antorchas", () => api.state().torches, (v) => api.setResource("torches", v), 0, 99),
+      numField(api, "Gold", () => api.state().gold, (v) => api.setResource("gold", v), 0, 9999),
+      numField(api, "Food", () => api.state().food, (v) => api.setResource("food", v), 0, 9999),
+      numField(api, "Keys", () => api.state().keys, (v) => api.setResource("keys", v), 0, 99),
+      numField(api, "Gems", () => api.state().gems, (v) => api.setResource("gems", v), 0, 99),
+      numField(api, "Torches", () => api.state().torches, (v) => api.setResource("torches", v), 0, 99),
       numField(api, "Skull keys", () => api.state().skullKeys, (v) => api.setResource("skullKeys", v), 0, 99),
-      numField(api, "Alfombras mágicas", () => api.state().magicCarpets, (v) => api.setResource("magicCarpets", v), 0, 99),
+      numField(api, "Magic carpets", () => api.state().magicCarpets, (v) => api.setResource("magicCarpets", v), 0, 99),
       numField(api, "Karma", () => api.state().karma, (v) => api.setResource("karma", v), 0, 99),
       {
         widget: "checkbox",
-        label: "Grapple (gancho)",
+        label: "Grapple (hook)",
         get: () => !!api.state().grapple,
         set: (v) => api.setFlag("grapple", v),
       },
@@ -315,35 +315,35 @@ export function buildRegistry(api: DebugApi, world: WorldData): DebugSection[] {
 
   const worldClock: DebugSection = {
     id: "world",
-    title: "Mundo / Reloj",
+    title: "World / Clock",
     fields: [
-      numField(api, "Año", () => api.state().time.year, (v) => api.setClock("year", v), 0, 999),
+      numField(api, "Year", () => api.state().time.year, (v) => api.setClock("year", v), 0, 999),
       {
         widget: "select",
-        label: "Mes",
+        label: "Month",
         options: MONTHS.map((m, i) => ({ label: `${i}: ${m || "—"}`, value: i })).slice(1),
         get: () => api.state().time.month,
         set: (v) => api.setClock("month", Number(v)),
       },
-      numField(api, "Día", () => api.state().time.day, (v) => api.setClock("day", v), 1, 28),
-      numField(api, "Hora", () => api.state().time.hour, (v) => api.setClock("hour", v), 0, 23),
-      numField(api, "Minuto", () => api.state().time.minute, (v) => api.setClock("minute", v), 0, 59),
+      numField(api, "Day", () => api.state().time.day, (v) => api.setClock("day", v), 1, 28),
+      numField(api, "Hour", () => api.state().time.hour, (v) => api.setClock("hour", v), 0, 23),
+      numField(api, "Minute", () => api.state().time.minute, (v) => api.setClock("minute", v), 0, 59),
       {
         widget: "select",
-        label: "Viento",
+        label: "Wind",
         options: WIND_OPTIONS,
         get: () => api.state().wind ?? 0,
         set: (v) => api.setWind(Number(v)),
       },
       {
         widget: "select",
-        label: "Transporte",
+        label: "Transport",
         options: TRANSPORT_OPTIONS,
         get: () => api.state().transport,
         set: (v) => api.setTransport(v as never),
       },
-      numField(api, "Turnos desde el inicio", () => api.state().turnsSinceStart, (v) => api.setResource("turnsSinceStart", v), 0, 999999),
-      numField(api, "Minutos de antorcha", () => api.state().torchTurns, (v) => api.setResource("torchTurns", v), 0, 999),
+      numField(api, "Turns since start", () => api.state().turnsSinceStart, (v) => api.setResource("turnsSinceStart", v), 0, 999999),
+      numField(api, "Torch minutes", () => api.state().torchTurns, (v) => api.setResource("torchTurns", v), 0, 999),
       ...worldTimeExtraFields(api),
     ],
   };
@@ -353,13 +353,13 @@ export function buildRegistry(api: DebugApi, world: WorldData): DebugSection[] {
   let flagName = "";
   const plot: DebugSection = {
     id: "plot",
-    title: "Trama / Quest",
+    title: "Plot / Quest",
     fields: [
       {
         widget: "button",
         testId: "u5-endgame-kill-sl",
-        label: "Endgame: matar Shadowlords (HISTORIA)",
-        hint: "Marca los 3 questFlags 'shadowlord-dead' (falsehood/hatred/cowardice) = los 3 Shadowlords destruidos. Es PROGRESO DE HISTORIA (separado de 'Maximizar todo'). Con la regalía puesta deja el estado listo para el desenlace de Doom (#179: se dispara por ABSORCIÓN en la celda cm127, no por planta). Cero-rand.",
+        label: "Endgame: kill Shadowlords (STORY)",
+        hint: "Sets the 3 'shadowlord-dead' questFlags (falsehood/hatred/cowardice) = the 3 Shadowlords destroyed. This is STORY PROGRESS (separate from 'Maximize all'). With the regalia worn, this leaves the state ready for the Doom ending (#179: triggered by ABSORPTION on cell cm127, not by floor). Zero-rand.",
         run: () => api.killShadowlords(),
       },
       ...SPECIAL_ITEMS.map(({ key, label }) =>
@@ -381,14 +381,14 @@ export function buildRegistry(api: DebugApi, world: WorldData): DebugSection[] {
       // shadowlord-dead×3, in-doom, game-won) + blackthorn + toda clave viva no cubierta
       // (raw + «sin derivar»). Ver saveEditorSections.historyFlagFields.
       ...historyFlagFields(api),
-      { widget: "text", label: "Bandera (nombre)", get: () => flagName, set: (v: string) => { flagName = v; } },
-      { widget: "button", label: "Marcar bandera TRUE", run: () => { if (flagName) api.setQuestFlag(flagName, true); } },
-      { widget: "button", label: "Marcar bandera FALSE", run: () => { if (flagName) api.setQuestFlag(flagName, false); } },
+      { widget: "text", label: "Flag (name)", get: () => flagName, set: (v: string) => { flagName = v; } },
+      { widget: "button", label: "Set flag TRUE", run: () => { if (flagName) api.setQuestFlag(flagName, true); } },
+      { widget: "button", label: "Set flag FALSE", run: () => { if (flagName) api.setQuestFlag(flagName, false); } },
       {
         widget: "text",
-        label: "Banderas activas",
+        label: "Active flags",
         disabled: () => true,
-        get: () => Object.entries(api.state().questFlags ?? {}).filter(([, v]) => v).map(([k]) => k).join(", ") || "(ninguna)",
+        get: () => Object.entries(api.state().questFlags ?? {}).filter(([, v]) => v).map(([k]) => k).join(", ") || "(none)",
         set: () => {},
       },
     ],
@@ -400,29 +400,29 @@ export function buildRegistry(api: DebugApi, world: WorldData): DebugSection[] {
     fields: (api.state().moonstones ?? []).flatMap((_, i) => [
       numField(api, `#${i} x`, () => api.state().moonstones?.[i]?.x, (v) => api.setMoonstoneField(i, "x", v), 0, 255),
       numField(api, `#${i} y`, () => api.state().moonstones?.[i]?.y, (v) => api.setMoonstoneField(i, "y", v), 0, 255),
-      checkboxField(`#${i} enterrada`, () => !!api.state().moonstones?.[i]?.buried, (v) => api.setMoonstoneField(i, "buried", v)),
+      checkboxField(`#${i} buried`, () => !!api.state().moonstones?.[i]?.buried, (v) => api.setMoonstoneField(i, "buried", v)),
       numField(api, `#${i} z (0=Brit,0xFF=Under)`, () => api.state().moonstones?.[i]?.z, (v) => api.setMoonstoneField(i, "z", v), 0, 255),
     ]),
   };
 
   const invReagents: DebugSection = {
     id: "inv-reagents",
-    title: "Inventario · Reactivos",
+    title: "Inventory · Reagents",
     fields: quantityFields(api, "reagentQuantities", NAMES.Reagent),
   };
   const invEquip: DebugSection = {
     id: "inv-equip",
-    title: "Inventario · Equipo (stock)",
+    title: "Inventory · Equipment (stock)",
     fields: quantityFields(api, "equipmentQuantities", NAMES.Armament.slice(0, 48)),
   };
   const invSpells: DebugSection = {
     id: "inv-spells",
-    title: "Inventario · Hechizos",
+    title: "Inventory · Spells",
     fields: quantityFields(api, "spellQuantities", NAMES.Spell.slice(0, 48)),
   };
   const invConsum: DebugSection = {
     id: "inv-consumables",
-    title: "Inventario · Pociones / Pergaminos",
+    title: "Inventory · Potions / Scrolls",
     fields: [
       ...quantityFields(api, "potionQuantities", potionLabels()),
       ...quantityFields(api, "scrollQuantities", scrollLabels()),
@@ -499,19 +499,19 @@ function numField(
 }
 
 const EQUIP_SLOTS: { slot: EquipSlotField; label: string }[] = [
-  { slot: "helmet", label: "Casco" },
-  { slot: "armor", label: "Armadura" },
-  { slot: "weapon", label: "Arma (mano A)" },
-  { slot: "shield", label: "Escudo (mano B)" },
-  { slot: "ring", label: "Anillo" },
-  { slot: "amulet", label: "Amuleto" },
+  { slot: "helmet", label: "Helmet" },
+  { slot: "armor", label: "Armor" },
+  { slot: "weapon", label: "Weapon (hand A)" },
+  { slot: "shield", label: "Shield (hand B)" },
+  { slot: "ring", label: "Ring" },
+  { slot: "amulet", label: "Amulet" },
 ];
 
 function equipSlotFields(api: DebugApi, selChar: () => number): DebugField[] {
   const options = equipOptions();
   return EQUIP_SLOTS.map(({ slot, label }) => ({
     widget: "select" as const,
-    label: `Equipo · ${label}`,
+    label: `Equipment · ${label}`,
     options,
     get: () => api.state().characters[selChar()]?.[slot] ?? 0xff,
     set: (v: number | string) => api.setEquipSlot(selChar(), slot, Number(v)),

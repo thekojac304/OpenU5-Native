@@ -22,6 +22,7 @@ import {
   hayBarraDeModo,
   hojasDelLayout,
   abrirShellDrawer,
+  abreCategoriaDeAjustes,
   cerrarShellDrawer,
   SHELL_DRAWER,
 } from "./deck";
@@ -43,6 +44,10 @@ import {
  */
 async function seleccionaIdioma(page: Page, code: string): Promise<void> {
   await abrirShellDrawer(page);
+  // El drawer se reparte en categorías (rediseño de ajustes) y sólo la abierta tiene caja:
+  // hay que entrar en la de Idioma antes de tocar su `<select>`. El puente es el id de
+  // SECCIÓN (`data-owns`), que no depende del idioma del proyecto.
+  await abreCategoriaDeAjustes(page, SHELL_DRAWER, "shell-lang");
   const sel = page.locator(`${SHELL_DRAWER} [data-section="shell-lang"] select`);
   await expect(sel, "la sección Idioma del drawer sirve su selector").toHaveCount(1);
   await sel.selectOption(code);
@@ -224,10 +229,27 @@ test("nombre accesible en TODO botón del deck (glifos incluidos)", async ({ pag
     await botonesDrawer.count(),
     "el drawer abierto sirve botones (si esto es 0, el censo de abajo es vacuo)",
   ).toBeGreaterThan(3);
-  expect(
-    await censoAnonimos(`${SHELL_DRAWER} button`),
-    "botones del drawer SISTEMA sin nombre accesible",
-  ).toEqual([]);
+  /**
+   * 🔴 EL CENSO RECORRE TODAS LAS CATEGORÍAS, y eso es lo que impide que el rediseño de
+   * ajustes lo encoja en silencio: `censoAnonimos` salta lo que está `display:none`, y en
+   * el panel nuevo sólo la categoría abierta se pinta. Censar una sola dejaría fuera siete
+   * de las ocho — la misma clase de «verde vacío» que la cabecera de este test denuncia
+   * para el selector que se quedó sin sujeto.
+   */
+  const categorias = page.locator(`${SHELL_DRAWER} .u5set-cat`);
+  const nCat = await categorias.count();
+  expect(nCat, "el panel de ajustes sirve categorías").toBeGreaterThan(3);
+  const anonimos: string[] = [];
+  const volver = page.locator(`${SHELL_DRAWER} [data-testid="u5-settings-back"]`);
+  for (let i = 0; i < nCat; i++) {
+    // En un teléfono el panel entra en la categoría y la LISTA desaparece (modo
+    // lista→detalle), así que hay que volver al índice antes de la siguiente. En
+    // escritorio el botón de vuelta no se pinta y esta rama no corre.
+    if (i > 0 && (await volver.isVisible())) await volver.click();
+    await categorias.nth(i).click();
+    anonimos.push(...(await censoAnonimos(`${SHELL_DRAWER} button`)));
+  }
+  expect(anonimos, "botones del drawer SISTEMA sin nombre accesible").toEqual([]);
   await cerrarShellDrawer(page);
 
   // (e) EL ☰ YA NO ANUNCIA POPOVER. Aquí se exigía `aria-haspopup="true"`, y era CIERTO

@@ -22,8 +22,8 @@
  *    mitades juntas: quitar el botón sin lo segundo dejaría el drawer sin salida
  *    anunciable en un teléfono (ver `DebugPanelOpts.closeButton`).
  */
-import { test, expect } from "@playwright/test";
-import { gotoMobile, abrirShellDrawer, SHELL_DRAWER } from "./deck";
+import { test, expect, type Locator } from "@playwright/test";
+import { gotoMobile, abrirShellDrawer, abreCategoriaDeAjustes, SHELL_DRAWER } from "./deck";
 
 const CERRAR = '[data-testid="u5-shell-drawer-close"]';
 
@@ -104,17 +104,34 @@ test("#263 · el cuerpo del menú tiene ítems VISIBLES dentro del viewport", as
   expect(n, "el drawer se construye con sus secciones").toBeGreaterThan(3);
 
   const vp = page.viewportSize()!;
-  // La PRIMERA sección basta para el defecto que se temía (cuerpo negro = cero filas a la
-  // vista); las de abajo pueden quedar fuera por scroll interno, que es correcto.
-  const primera = secciones.first();
-  await expect(primera).toBeVisible();
-  const b = (await primera.boundingBox())!;
-  expect(b.width, "la primera sección tiene ancho real").toBeGreaterThan(0);
-  expect(b.height, "…y alto real").toBeGreaterThan(0);
-  expect(b.y, "…y su borde superior cae DENTRO del viewport").toBeGreaterThanOrEqual(0);
-  expect(b.y + b.height).toBeLessThanOrEqual(vp.height);
-  expect(b.x).toBeGreaterThanOrEqual(0);
-  expect(b.x + b.width).toBeLessThanOrEqual(vp.width);
+  /** Una caja con tamaño real y ENTERA dentro del viewport (el defecto era «cuerpo negro»). */
+  const dentroDelViewport = async (loc: Locator, quien: string): Promise<void> => {
+    await expect(loc, `${quien}: debe verse`).toBeVisible();
+    const b = (await loc.boundingBox())!;
+    expect(b.width, `${quien}: ancho real`).toBeGreaterThan(0);
+    expect(b.height, `${quien}: alto real`).toBeGreaterThan(0);
+    expect(b.y, `${quien}: borde superior dentro del viewport`).toBeGreaterThanOrEqual(0);
+    expect(b.y + b.height, `${quien}: borde inferior dentro`).toBeLessThanOrEqual(vp.height);
+    expect(b.x, `${quien}: borde izquierdo dentro`).toBeGreaterThanOrEqual(0);
+    expect(b.x + b.width, `${quien}: borde derecho dentro`).toBeLessThanOrEqual(vp.width);
+  };
+
+  /**
+   * DOS VISTAS, DOS MEDIDAS (rediseño de ajustes). El panel nace en el ÍNDICE de
+   * categorías, así que «el cuerpo tiene ítems visibles» hay que preguntárselo primero a
+   * la lista de categorías —que es lo que el jugador ve al abrir— y luego a la sección de
+   * dentro. Medir sólo una de las dos dejaría la mitad del panel sin vigilancia, que es la
+   * forma en que este test se habría quedado vacío sin avisar.
+   */
+  const categorias = page.locator(`${SHELL_DRAWER} .u5set-cat`);
+  expect(await categorias.count(), "el panel sirve categorías").toBeGreaterThan(3);
+  await dentroDelViewport(categorias.first(), "primera categoría");
+
+  await abreCategoriaDeAjustes(page, SHELL_DRAWER, "shell-video");
+  await dentroDelViewport(
+    page.locator(`${SHELL_DRAWER} [data-section="shell-video"]`),
+    "sección Vídeo dentro de su categoría",
+  );
 });
 
 test("#263 · sin `esc` en la esquina, y la salida rotulada del drawer cierra", async ({ page }) => {

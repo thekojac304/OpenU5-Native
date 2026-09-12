@@ -28,6 +28,13 @@ export interface BlackthornScenePacerDeps {
   applyEvents: (events: ReturnType<Game["move"]>) => void;
   refreshAwaiting: () => void;
   cancelAutoWalk: () => void;
+  /**
+   * La escena se DESMONTA (depósito en la celda, 0x08e7). Hoy lo usa la música: la captura
+   * es una de las dos secuencias que el parche deja MUDAS a propósito (History.txt), y
+   * TOWN.OVL 0x12ca devuelve el mando a la localización al volver (`call 0x0e1d`).
+   * Opcional.
+   */
+  onSceneEnd?: () => void;
 }
 
 export class BlackthornScenePacer {
@@ -119,6 +126,7 @@ export class BlackthornScenePacer {
         this.figures = [];
         this.mounted = null;
         setScene(null);
+        this.deps.onSceneEnd?.();
       }
       this._active = false;
       applyEvents(rest); // reanuda el turno diferido (mensajes, esperas, prompt…)

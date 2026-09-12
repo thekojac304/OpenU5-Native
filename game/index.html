@@ -36,6 +36,15 @@
       :root {
         --u5-safe-l: env(safe-area-inset-left, 0px);
         --u5-safe-r: env(safe-area-inset-right, 0px);
+        /* ★ EL DE ARRIBA ENTRA CON LA CHAPA ENHANCED (13-09) y por la MISMA razón escrita
+           arriba para los laterales: Chromium sirve `env(safe-area-inset-*)` SIEMPRE 0, así
+           que un `env()` suelto dentro de una hoja inyectada sería INOBSERVABLE en el arnés
+           — la sonda no puede sobreescribir una función, pero sí una variable, y por la
+           variable recalcula la CASCADA REAL. El consumidor es el tope del cajón de
+           comandos (`enhanced/mobile/css.ts`), que sin esto crecía POR DEBAJO de la barra de
+           estado del iPhone (medido en un 15 Pro: el cajón nacía en y=0, con la hora y la
+           batería encima de la primera fila de botones). */
+        --u5-safe-t: env(safe-area-inset-top, 0px);
       }
       html, body {
         /* ALTO REAL DEL VIEWPORT (auditoría móvil 2026-07-25, ítem «dvh»): en Safari iOS

@@ -778,6 +778,8 @@ export const EXCLUDED_SHELL_FILES = {
   "debug/teleportPicker.ts": "[interna] filas del picker del panel de DEBUG («{} (sub {})», «{} f{} ({},{})») — herramienta de desarrollo, no texto del juego",
   "skin/portrait/deck-ancho.ts": "[interna] hojas CSS en template literals que salen por `return` (el sink return + isProse las ve como prosa); son estilo, no texto del juego",
   "skin/fiel/intro.ts": "[interna] valores de color hex («#ffffff») en DEFAULT_INTRO_COLORS, cuyo campo se llama `text:` y colisiona con el sink homónimo; no es prosa",
+  "enhanced/spells/css.ts": "[interna] hoja CSS de la lista de hechizos en template literal, que sale por `return` (el sink return + isProse la ve como prosa por sus docblocks); es estilo, no texto del juego. El cromo de ESA lista (`enhanced/spells/panel.ts`) sí es texto y va entero por `ts()`, como el resto del shell",
+  "enhanced/party/css.ts": "[interna] hoja CSS del selector compacto de miembro del grupo, gemela de `enhanced/spells/css.ts` y excluida por lo mismo: sale por `return` dentro de un template literal con docblocks largos, que el sink return + isProse leen como prosa. Es estilo, no texto del juego; el cromo del selector (`enhanced/party/panel.ts`) sí es texto y va entero por `ts()`",
 };
 const EXCLUDED_FILE_SET = new Set(Object.keys(EXCLUDED_SHELL_FILES));
 for (const f of SHELL_FILE_RELPATHS) {

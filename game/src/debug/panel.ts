@@ -7,8 +7,17 @@
  * reconstruir el DOM), así el mapa de teletransporte y el foco se preservan.
  */
 import type { DebugField, DebugSection, SelectField } from "./types.js";
+import {
+  SETTINGS_NAV_CSS,
+  buildSettingsNav,
+  type SettingsCategorySpec,
+  type SettingsNavHandle,
+} from "../ui/shell/settingsNav.js";
 
 const STYLE_ID = "u5dbg-style";
+
+/** Contador de ids de control — el `for` del `<label>` necesita uno único por documento. */
+let fieldSeq = 0;
 
 const CSS = `
 .u5dbg-drawer{position:fixed;top:0;right:0;height:100vh;width:360px;max-width:92vw;
@@ -74,7 +83,7 @@ export interface DebugPanelOpts {
   title?: ChromeText;
   /** Texto del badge (default "QA"). Función ⇒ se re-resuelve al invalidar (idioma). */
   badge?: ChromeText;
-  /** Placeholder del buscador (default "Filtrar campos…"). Función ⇒ i18n en caliente. */
+  /** Placeholder del buscador (default "Filter fields…"). Función ⇒ i18n en caliente. */
   searchPlaceholder?: ChromeText;
   /** data-testid del drawer (default "u5-debug-drawer"); el botón de cierre usa `<testId>-close`. */
   testId?: string;
@@ -95,6 +104,22 @@ export interface DebugPanelOpts {
   closeButton?: boolean;
   /** Hook opcional tras (re)construir las secciones — p.ej. pixelizar el texto (fiel). */
   afterBuild?: () => void;
+  /**
+   * PANEL DE AJUSTES CON CATEGORÍAS. Con esta opción el cuerpo NO se pinta como el
+   * acordeón plano de siempre: las secciones se reparten por su `group` en el navegador
+   * de `ui/shell/settingsNav.ts` (raíl + contenido en ancho; lista → detalle en
+   * estrecho). Función ⇒ se re-resuelve al invalidar, igual que el resto del chrome, así
+   * que los títulos de categoría siguen el idioma vivo.
+   *
+   * Ausente ⇒ acordeón plano. El drawer QA de debug se queda exactamente como estaba:
+   * sus 500+ campos son una herramienta de inspección, no un panel de preferencias, y su
+   * buscador es la navegación que de verdad usa.
+   */
+  categories?: () => SettingsCategorySpec[];
+  /** Rótulo del botón «atrás» del navegador (default "Back"). Función ⇒ i18n en caliente. */
+  navBack?: ChromeText;
+  /** Nombre accesible del raíl de categorías (default "Categories"). Función ⇒ i18n. */
+  navCategories?: ChromeText;
 }
 
 export class DebugPanel {
@@ -105,6 +130,24 @@ export class DebugPanel {
   private customRefreshers: (() => void)[] = [];
   private sections: DebugSection[] = [];
   private built = false;
+  /** Navegador de categorías vivo (sólo con `opts.categories`). */
+  private nav: SettingsNavHandle | null = null;
+  /** Sección a la que pertenece cada control — el filtro se lo pasa al navegador. */
+  private ctlSection = new WeakMap<FieldCtl, string>();
+  /**
+   * ¿Se pintan las `hint` como DESCRIPCIÓN VISIBLE bajo la fila? Sólo en modo ajustes.
+   *
+   * 🔴 NO se enciende para el drawer QA a propósito, y la razón es de INSTRUMENTO: sus
+   * e2e localizan filas con `.u5dbg-field` + `hasText:"Oro"` / `"Hora"` / … y `hasText`
+   * casa contra el texto de TODA la fila. Sacar a la vista el texto de ayuda de 500
+   * campos puede hacer que un localizador que hoy devuelve una fila devuelva tres, y el
+   * modo de fallo («strict mode violation») aparecería lejos de aquí. El menú SISTEMA
+   * no tiene ese problema —sus filas se localizan por rótulo exacto o por `testId`— y
+   * ahí la descripción es justo lo que faltaba: hasta hoy la `hint` de «Mandos
+   * mejorados» o la del «Layout partido» sólo existía como `title` de un botón, o sea
+   * invisible para quien no tiene ratón.
+   */
+  private visibleHints = false;
 
   constructor(
     private parent: HTMLElement,
@@ -157,7 +200,7 @@ export class DebugPanel {
   private applyChrome(): void {
     this.root.querySelector(".u5dbg-title")!.textContent = resolveChrome(this.opts.title, "DEBUG");
     this.root.querySelector(".u5dbg-badge")!.textContent = resolveChrome(this.opts.badge, "QA");
-    this.searchInput.placeholder = resolveChrome(this.opts.searchPlaceholder, "Filtrar campos…");
+    this.searchInput.placeholder = resolveChrome(this.opts.searchPlaceholder, "Filter fields…");
   }
 
   /**
@@ -168,16 +211,47 @@ export class DebugPanel {
   invalidate(): void {
     this.applyChrome();
     if (!this.built) return;
+    // Dónde estaba el usuario ANTES de tirar el DOM (ver la re-construcción de abajo).
+    const cat = this.nav?.active() ?? null;
+    const enDetalle = this.nav?.view() === "detail";
+    const abierto = this.isOpen;
+    this.nav?.dispose();
+    this.nav = null;
     this.body.replaceChildren();
     this.ctls = [];
     this.customRefreshers = [];
     this.built = false;
+    if (!abierto) return;
+    /**
+     * 🔴 SI EL PANEL ESTÁ ABIERTO SE RECONSTRUYE AQUÍ MISMO, y esto arregla un defecto que
+     * ya existía: `invalidate()` vacía el cuerpo y deja la reconstrucción para el próximo
+     * `open()` — pero el disparador típico es CAMBIAR DE IDIOMA **desde el propio panel**,
+     * y ahí no hay próximo `open()`: el drawer se queda abierto y HUECO. Medido con el
+     * arnés móvil: tras elegir «es» en la fila de Idioma, el botón de cierre del drawer ya
+     * no existía en el DOM (`locator.tap` esperando `u5-shell-drawer-close` hasta el
+     * timeout) — o sea, un panel abierto, vacío y sin salida rotulada, en un teléfono
+     * donde no hay tecla Escape.
+     *
+     * Y se vuelve a la MISMA categoría: cambiar de idioma no es navegar, así que devolver
+     * al usuario al principio del panel sería perder su sitio por un efecto secundario.
+     * Sin robar el foco (`focus:false`): quien cambió el idioma sigue en su control.
+     */
+    this.open();
+    // Por el getter y no por `this.nav`: el análisis de flujo lo dejó estrechado a `never`
+    // en la asignación de arriba y no sabe que `open()` lo repuebla.
+    const nav = this.settingsNav;
+    if (cat && nav) nav.select(cat, { drill: enDetalle, focus: false });
   }
 
   open(): void {
     if (!this.built) this.build();
     this.refresh();
     this.root.classList.add("open");
+    // El modo del navegador (raíl vs lista→detalle) se decide por el ancho MEDIDO, y
+    // dentro de un drawer cerrado no hay medida que valga. Se re-mide AL ABRIR, que es
+    // el primer instante en que el panel tiene caja; después lo mantiene su
+    // ResizeObserver (rotar el teléfono, redimensionar la ventana).
+    this.nav?.measure();
   }
 
   close(): void {
@@ -202,21 +276,67 @@ export class DebugPanel {
 
   private build(): void {
     this.sections = this.buildSections();
-    for (const section of this.sections) this.body.appendChild(this.buildSection(section));
+    const cats = this.opts.categories?.();
+    if (cats && cats.length > 0) {
+      this.visibleHints = true;
+      this.nav = buildSettingsNav({
+        categories: cats,
+        sections: this.sections,
+        render: (s) => this.buildSection(s, true),
+        labels: {
+          back: resolveChrome(this.opts.navBack, "Back"),
+          categories: resolveChrome(this.opts.navCategories, "Categories"),
+        },
+        // Navegar reescribe el título de la categoría: se avisa al huésped para que
+        // re-aplique lo que cuelgue del texto (la fuente 8×8 de la piel fiel). Es el
+        // MISMO hook que ya corre tras construir, no uno nuevo.
+        onPaint: () => this.opts.afterBuild?.(),
+      });
+      this.body.appendChild(this.nav.root);
+    } else {
+      this.visibleHints = false;
+      for (const section of this.sections) this.body.appendChild(this.buildSection(section, false));
+    }
     this.built = true;
     this.opts.afterBuild?.();
   }
 
-  private buildSection(section: DebugSection): HTMLElement {
+  private buildSection(section: DebugSection, inNav = false): HTMLElement {
     const el = document.createElement("div");
     el.className = "u5dbg-section";
     el.dataset.section = section.id;
     const head = document.createElement("div");
     head.className = "u5dbg-sec-head";
-    head.innerHTML = `<span class="u5dbg-sec-arrow">▾</span><span>${section.title}</span>`;
+    head.innerHTML = `<span class="u5dbg-sec-arrow">▾</span><span></span>`;
+    // El título va por `textContent` y no interpolado en el `innerHTML` de arriba: un
+    // rótulo traducido es dato, no marcado (y hoy el shell ya sirve títulos con `&`).
+    head.querySelector("span:last-child")!.textContent = section.title;
     const bodyEl = document.createElement("div");
     bodyEl.className = "u5dbg-sec-body";
-    head.addEventListener("click", () => el.classList.toggle("collapsed"));
+    if (inNav) {
+      // Dentro del navegador la sección NO se pliega: plegar tenía sentido cuando las
+      // once secciones compartían una lista, y aquí la categoría ya hace ese trabajo —
+      // un acordeón dentro de una pestaña son dos niveles de escondite para tres filas.
+      // El rótulo pasa a ser encabezado (o desaparece, si es el único de la categoría).
+      head.setAttribute("role", "heading");
+      head.setAttribute("aria-level", "3");
+    } else {
+      // Acordeón clásico (drawer QA): la cabecera es un CONTROL, y hasta ahora sólo lo
+      // era para el ratón — ni foco, ni teclado, ni estado anunciado.
+      head.setAttribute("role", "button");
+      head.tabIndex = 0;
+      head.setAttribute("aria-expanded", "true");
+      const toggle = (): void => {
+        const collapsed = el.classList.toggle("collapsed");
+        head.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      };
+      head.addEventListener("click", toggle);
+      head.addEventListener("keydown", (ev: KeyboardEvent) => {
+        if (ev.key !== "Enter" && ev.key !== " ") return;
+        ev.preventDefault();
+        toggle();
+      });
+    }
     el.append(head, bodyEl);
 
     if (section.custom) {
@@ -229,8 +349,18 @@ export class DebugPanel {
       const ctl = this.buildField(field);
       bodyEl.appendChild(ctl.row);
       this.ctls.push(ctl);
+      this.ctlSection.set(ctl, section.id);
     }
     return el;
+  }
+
+  /** Descripción visible bajo la fila (modo ajustes). Idempotente por fila. */
+  private appendHint(row: HTMLElement, field: DebugField): void {
+    if (!this.visibleHints || !field.hint) return;
+    const hint = document.createElement("div");
+    hint.className = "u5dbg-hint";
+    hint.textContent = field.hint;
+    row.appendChild(hint);
   }
 
   private buildField(field: DebugField): FieldCtl {
@@ -261,21 +391,47 @@ export class DebugPanel {
         this.refresh();
       });
       row.appendChild(btn);
+      this.appendHint(row, field);
       return { row, label: field.label, sync: () => setDisabled(btn) };
     }
 
     const label = document.createElement("label");
     label.textContent = field.label;
     row.appendChild(label);
+    /**
+     * ATADURA `label` → CONTROL, que hasta hoy no existía: el `<label>` se pintaba suelto,
+     * así que ni el lector de pantalla anunciaba el rótulo al enfocar la casilla ni tocar
+     * el texto la alternaba. Lo segundo importa MÁS en un teléfono que en un ratón: la
+     * casilla de la piel fiel es un glifo `[X]` de dos caracteres, y el rótulo —que ocupa
+     * la fila entera— pasa a ser parte de su diana.
+     */
+    const bind = (el: HTMLElement): void => {
+      const id = `u5dbg-f${++fieldSeq}`;
+      el.id = id;
+      label.htmlFor = id;
+    };
 
     if (field.widget === "checkbox") {
       const input = document.createElement("input");
       input.type = "checkbox";
+      // `FieldBase.testId` promete «data-testid opcional EN EL CONTROL» (types.ts) y hasta
+      // hoy sólo lo cumplía la rama `button`: en las demás se aceptaba y se TIRABA en
+      // silencio. Lo destapó la primera casilla que lo pidió (la de mandos Enhanced), y el
+      // modo de fallo es el peor de los baratos — el localizador no falla, simplemente no
+      // encuentra nada, y un e2e escrito contra él queda vacuo o se re-apunta al RÓTULO,
+      // que es justo lo que `testId` existe para evitar (los proyectos corren EN y ES).
+      // ✅ RESIDUO SALDADO (rediseño de ajustes): `select`, `number` y `text` también lo
+      // emiten ya — las tres ramas de abajo llaman a `stamp()`. Se cierra aquí porque el
+      // panel de ajustes localiza filas por `testId` justamente para no depender del
+      // rótulo, y dejar tres widgets sin cumplirlo reabría el mismo agujero mudo.
+      if (field.testId) input.setAttribute("data-testid", field.testId);
+      bind(input);
       input.addEventListener("change", () => {
         field.set(input.checked);
         this.refresh();
       });
       row.appendChild(input);
+      this.appendHint(row, field);
       return {
         row,
         label: field.label,
@@ -288,12 +444,15 @@ export class DebugPanel {
 
     if (field.widget === "select") {
       const sel = document.createElement("select");
+      if (field.testId) sel.setAttribute("data-testid", field.testId);
+      bind(sel);
       sel.addEventListener("change", () => {
         const opt = (field as SelectField).options.find((o) => String(o.value) === sel.value);
         field.set(opt ? opt.value : sel.value);
         this.refresh();
       });
       row.appendChild(sel);
+      this.appendHint(row, field);
       return {
         row,
         label: field.label,
@@ -308,6 +467,8 @@ export class DebugPanel {
     // number | text
     const input = document.createElement("input");
     input.type = field.widget === "number" ? "number" : "text";
+    if (field.testId) input.setAttribute("data-testid", field.testId);
+    bind(input);
     if (field.widget === "number") {
       if (field.min !== undefined) input.min = String(field.min);
       if (field.max !== undefined) input.max = String(field.max);
@@ -320,6 +481,7 @@ export class DebugPanel {
     };
     input.addEventListener("change", commit);
     row.appendChild(input);
+    this.appendHint(row, field);
     return {
       row,
       label: field.label,
@@ -332,12 +494,24 @@ export class DebugPanel {
 
   private applyFilter(): void {
     const q = this.searchInput.value.trim().toLowerCase();
+    /** Secciones con al menos un campo aún visible tras el filtro. */
+    const alive = new Set<string>();
     for (const c of this.ctls) {
       const match = !q || c.label.toLowerCase().includes(q);
       c.row.style.display = match ? "" : "none";
+      const sec = this.ctlSection.get(c);
+      if (match && sec) alive.add(sec);
     }
-    // Colapsa/expande secciones según haya coincidencias; con búsqueda vacía deja
-    // el estado del acordeón como estuviera.
+    if (this.nav) {
+      // En modo ajustes la navegación es por CATEGORÍA, así que el filtro tiene que
+      // hablarle a ella: colapsar secciones no serviría de nada cuando la coincidencia
+      // vive en una pestaña que no está abierta — el panel se quedaría en blanco y el
+      // usuario concluiría que no hay resultados.
+      this.nav.applyFilter(q.length > 0, (id) => alive.has(id));
+      return;
+    }
+    // Acordeón clásico: colapsa/expande secciones según haya coincidencias; con búsqueda
+    // vacía deja el estado del acordeón como estuviera.
     for (const secEl of Array.from(this.body.querySelectorAll<HTMLElement>(".u5dbg-section"))) {
       if (!q) continue;
       const anyVisible = Array.from(secEl.querySelectorAll<HTMLElement>(".u5dbg-field")).some(
@@ -345,6 +519,14 @@ export class DebugPanel {
       );
       secEl.classList.toggle("collapsed", !anyVisible);
     }
+  }
+
+  /**
+   * Navegador de ajustes vivo (null en el acordeón clásico). Lo expone para los hooks de
+   * arnés y para quien necesite llevar el panel a la categoría de un ajuste concreto.
+   */
+  get settingsNav(): SettingsNavHandle | null {
+    return this.nav;
   }
 }
 
@@ -376,6 +558,6 @@ function injectStyle(): void {
   if (document.getElementById(STYLE_ID)) return;
   const style = document.createElement("style");
   style.id = STYLE_ID;
-  style.textContent = CSS;
+  style.textContent = CSS + SETTINGS_NAV_CSS;
   document.head.appendChild(style);
 }
