@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "extract": "tsx src/cli.ts",
+    "pack:native": "tsx ../native/tools/u5pack/cli.ts",
     "test": "vitest run"
   },
   "//fflate": [

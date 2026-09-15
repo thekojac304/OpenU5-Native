@@ -346,7 +346,7 @@ void Board::show_diagnostics(bool sd_ok)
     }
     if (fill_rect(0, 0, kDisplayWidth, kDisplayHeight, kBlack) != ESP_OK ||
         draw_text(18, 14, "OpenU5-TDeck", kCyan, 3) != ESP_OK ||
-        draw_text(18, 50, "Milestone 2", kWhite, 2) != ESP_OK ||
+        draw_text(18, 50, "Milestone 3", kWhite, 2) != ESP_OK ||
         draw_text(18, 82, "ESP32-S3", kWhite, 2) != ESP_OK ||
         draw_text(18, 108, "16 MB Flash", kWhite, 2) != ESP_OK ||
         draw_text(18, 134, "8 MB PSRAM", kWhite, 2) != ESP_OK ||

@@ -150,5 +150,6 @@ game/tools/careo-visual/_out
 
 # Generated configuration and build outputs for the isolated ESP-IDF target.
 /native/targets/tdeck/build/
+/native/assets/
 /native/targets/tdeck/sdkconfig
 /native/targets/tdeck/sdkconfig.old

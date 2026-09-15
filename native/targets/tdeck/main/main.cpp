@@ -12,6 +12,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include "asset_pack.h"
 #include "tdeck_board.h"
 
 namespace {
@@ -26,7 +27,7 @@ extern "C" void app_main(void)
     // Allow the USB serial port time to enumerate; never wait for a host forever.
     vTaskDelay(pdMS_TO_TICKS(1500));
     ESP_LOGI(kTag, "========================================");
-    ESP_LOGI(kTag, "OpenU5-TDeck | Milestone 2: display + microSD");
+    ESP_LOGI(kTag, "OpenU5-TDeck | Milestone 3: native asset validation");
     ESP_LOGI(kTag, "LilyGO T-Deck Plus native ESP-IDF target");
     ESP_LOGI(kTag, "========================================");
 
@@ -89,6 +90,14 @@ extern "C" void app_main(void)
                  sd.used_existing_test_file ? "existing file" : "temporary file");
         ESP_LOGI(kTag, "Display/SD shared SPI runtime test: %s",
                  sd.shared_bus_verified ? "PASS" : "FAIL");
+        openu5::AssetPackReport assets{};
+        const esp_err_t asset_result = openu5::validate_asset_pack(openu5::kAssetPackPath, assets);
+        if (asset_result == ESP_ERR_NOT_FOUND) {
+            ESP_LOGW(kTag, "Native assets absent; copy the generated pack to %s",
+                     openu5::kAssetPackPath);
+        } else if (asset_result != ESP_OK) {
+            ESP_LOGE(kTag, "Native asset validation failed; no assets will be used");
+        }
     } else {
         ESP_LOGE(kTag, "SD: FAIL (%s); firmware will remain alive",
                  esp_err_to_name(sd.error));
