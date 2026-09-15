@@ -147,3 +147,8 @@ game/src/i18n/*.claro.json
 # routes-ad/ desde #376. La HERRAMIENTA se commitea; el guion se queda en disco.
 game/tools/careo-visual/compases-*.json
 game/tools/careo-visual/_out
+
+# Generated configuration and build outputs for the isolated ESP-IDF target.
+/native/targets/tdeck/build/
+/native/targets/tdeck/sdkconfig
+/native/targets/tdeck/sdkconfig.old
