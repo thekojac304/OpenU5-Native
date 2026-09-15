@@ -1,4 +1,4 @@
-# Launcher packaging — Milestone 3
+# Launcher packaging — Milestone 4
 
 ## Generate
 
@@ -11,7 +11,7 @@ python package_launcher.py
 
 Output:
 
-`native/targets/tdeck/build/launcher/OpenU5-TDeck-M3-Launcher.bin`
+`native/targets/tdeck/build/launcher/OpenU5-TDeck-M4-Launcher.bin`
 
 The packager uses the existing normal ESP-IDF build, validates its ESP32-S3 app
 header, segment checksum, and appended SHA-256, then copies it byte-for-byte.
@@ -20,10 +20,10 @@ another build directory use `python package_launcher.py --build-dir PATH`.
 
 Current package details:
 
-- Exact size: 303,440 bytes.
-- SHA-256: `f9e7855c7b4b12fd4059cee2b47981813b8bc4c619a814cd99cedc0527e4ecfb`.
+- Exact size: 308,240 bytes.
+- SHA-256: `f236024e3d8e980ae1e78f0ae550feddd7f7f2c85604f3d04756f1f7134b6823`.
 - Minimum aligned Launcher app allocation: 327,680 bytes (320 KiB).
-- Source app image: `build/openu5_tdeck.bin`, also 303,440 bytes.
+- Source app image: `build/openu5_tdeck.bin`, also 308,240 bytes.
 
 ## Format and compatibility
 
@@ -36,12 +36,12 @@ This preserves the packaging model verified for Milestone 1 against
 [bmorcelli Launcher installation documentation](https://github.com/bmorcelli/Launcher/wiki/Obtaining-binaries-to-launch),
 the [SD installer](https://github.com/bmorcelli/Launcher/blob/main/src/sd_functions.cpp),
 and its [partition install layout](https://github.com/bmorcelli/Launcher/blob/main/src/partition_install_layout.cpp).
-Milestone 3 adds no application NVS or data-partition dependency; the asset pack
+Milestone 4 adds no application NVS or data-partition dependency; the asset pack
 remains an ordinary file on the microSD card.
 
 ## Install on T-Deck Plus
 
-Copy `OpenU5-TDeck-M3-Launcher.bin` to a FAT-formatted SD card, insert it, open
+Copy `OpenU5-TDeck-M4-Launcher.bin` to a FAT-formatted SD card, insert it, open
 Launcher, choose **SD**, select the file, and choose **Install**. The package
 requires one available app entry and at least 320 KiB of suitably contiguous
 app space after alignment.
@@ -53,6 +53,7 @@ After testing, reset and enter Launcher again to confirm it remains selectable.
 ## Validation status
 
 Local ESP-IDF v6.1 build, `idf.py size`, package validation, checksum validation,
-and byte-for-byte comparison passed. Milestone 2 display, SD, shared-bus, and
-Launcher return behavior were hardware-verified by the user. Milestone 3 asset
-validation still needs its physical-device check.
+and byte-for-byte comparison passed. Native asset-pack v2 generation, validation,
+and unit tests pass. Milestone 3 display, SD, shared-bus,
+Launcher, and asset validation were hardware-verified by the user. Milestone 4
+color correctness still needs its physical-device check.

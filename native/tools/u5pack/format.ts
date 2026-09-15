@@ -1,15 +1,17 @@
 import { EGA_PALETTE, parseTiles } from "../../../extractor/src/parsers/tiles.js";
 
 export const PACK_MAGIC = "OU5PACK\0";
-export const PACK_VERSION_MAJOR = 1;
+export const PACK_VERSION_MAJOR = 2;
 export const PACK_VERSION_MINOR = 0;
-export const HEADER_SIZE = 128;
+export const HEADER_SIZE = 148;
 export const TILE_COUNT = 512;
 export const TILE_WIDTH = 16;
 export const TILE_HEIGHT = 16;
 export const TILE_BYTES = 128;
 export const WORLD_WIDTH = 256;
 export const WORLD_HEIGHT = 256;
+export const INITIAL_MAP_WIDTH = 32;
+export const INITIAL_MAP_HEIGHT = 32;
 export const TILE_FORMAT_INDEXED4 = 1;
 export const MAP_FORMAT_U8_ROW_MAJOR = 1;
 
@@ -18,6 +20,7 @@ export const enum SectionType {
   TilesIndexed4 = 2,
   BritanniaMap = 3,
   InitialView = 4,
+  InitialLocalMap = 5,
 }
 
 export interface InitialView {
@@ -34,6 +37,8 @@ export interface PackInputs {
   packedTiles: Uint8Array;
   /** Flat, row-major Britannia map (one exact U5 tile ID per byte). */
   world: Uint8Array;
+  /** Exact 32x32 local-map floor selected by the initial location/floor. */
+  initialMap: Uint8Array;
   initial: InitialView;
 }
 
@@ -144,12 +149,16 @@ export function buildAssetPack(inputs: PackInputs): Uint8Array {
   if (inputs.world.length !== WORLD_WIDTH * WORLD_HEIGHT) {
     throw new Error(`Britannia map must be ${WORLD_WIDTH * WORLD_HEIGHT} bytes; got ${inputs.world.length}`);
   }
+  if (inputs.initialMap.length !== INITIAL_MAP_WIDTH * INITIAL_MAP_HEIGHT) {
+    throw new Error(`Initial local map must be ${INITIAL_MAP_WIDTH}x${INITIAL_MAP_HEIGHT} bytes; got ${inputs.initialMap.length}`);
+  }
 
   const payloads: { type: SectionType; bytes: Uint8Array; count: number }[] = [
     { type: SectionType.PaletteRgb565Le, bytes: paletteRgb565Le(), count: 16 },
     { type: SectionType.TilesIndexed4, bytes: inputs.packedTiles, count: TILE_COUNT },
     { type: SectionType.BritanniaMap, bytes: inputs.world, count: inputs.world.length },
     { type: SectionType.InitialView, bytes: encodeInitial(inputs.initial), count: 1 },
+    { type: SectionType.InitialLocalMap, bytes: inputs.initialMap, count: inputs.initialMap.length },
   ];
   const fileSize = HEADER_SIZE + payloads.reduce((sum, item) => sum + item.bytes.length, 0);
   const out = new Uint8Array(fileSize);
@@ -168,6 +177,8 @@ export function buildAssetPack(inputs: PackInputs): Uint8Array {
   writeU16(view, 36, WORLD_WIDTH);
   writeU16(view, 38, WORLD_HEIGHT);
   writeU16(view, 40, MAP_FORMAT_U8_ROW_MAJOR);
+  writeU16(view, 44, INITIAL_MAP_WIDTH);
+  writeU16(view, 46, INITIAL_MAP_HEIGHT);
 
   let dataOffset = HEADER_SIZE;
   payloads.forEach((item, index) => {
@@ -185,7 +196,7 @@ export function buildAssetPack(inputs: PackInputs): Uint8Array {
 }
 
 export function inspectAssetPack(bytes: Uint8Array): PackInfo {
-  if (bytes.length < HEADER_SIZE) throw new Error("Asset pack is shorter than its v1 header");
+  if (bytes.length < HEADER_SIZE) throw new Error("Asset pack is shorter than its v2 header");
   const magic = String.fromCharCode(...bytes.subarray(0, 8));
   if (magic !== PACK_MAGIC) throw new Error(`Bad asset pack magic ${JSON.stringify(magic)}`);
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -198,13 +209,14 @@ export function inspectAssetPack(bytes: Uint8Array): PackInfo {
   const payloadCrc32 = view.getUint32(20, true);
   if (fileSize !== bytes.length) throw new Error(`File size field ${fileSize} does not match ${bytes.length}`);
   if (crc32(bytes.subarray(HEADER_SIZE)) !== payloadCrc32) throw new Error("Payload CRC32 mismatch");
-  if (sectionCount !== 4) throw new Error(`Expected 4 sections; got ${sectionCount}`);
-  if (view.getUint32(24, true) !== 0) throw new Error("Unsupported v1 flags");
+  if (sectionCount !== 5) throw new Error(`Expected 5 sections; got ${sectionCount}`);
+  if (view.getUint32(24, true) !== 0) throw new Error("Unsupported v2 flags");
   if (view.getUint16(28, true) !== TILE_COUNT || view.getUint16(30, true) !== TILE_WIDTH ||
       view.getUint16(32, true) !== TILE_HEIGHT || view.getUint16(34, true) !== TILE_FORMAT_INDEXED4 ||
       view.getUint16(36, true) !== WORLD_WIDTH || view.getUint16(38, true) !== WORLD_HEIGHT ||
-      view.getUint16(40, true) !== MAP_FORMAT_U8_ROW_MAJOR) {
-    throw new Error("Asset pack dimensions or encodings are incompatible with v1");
+      view.getUint16(40, true) !== MAP_FORMAT_U8_ROW_MAJOR ||
+      view.getUint16(44, true) !== INITIAL_MAP_WIDTH || view.getUint16(46, true) !== INITIAL_MAP_HEIGHT) {
+    throw new Error("Asset pack dimensions or encodings are incompatible with v2");
   }
 
   const sections: SectionInfo[] = [];
@@ -236,15 +248,17 @@ export function inspectAssetPack(bytes: Uint8Array): PackInfo {
     [SectionType.TilesIndexed4, { length: TILE_COUNT * TILE_BYTES, count: TILE_COUNT }],
     [SectionType.BritanniaMap, { length: WORLD_WIDTH * WORLD_HEIGHT, count: WORLD_WIDTH * WORLD_HEIGHT }],
     [SectionType.InitialView, { length: 8, count: 1 }],
+    [SectionType.InitialLocalMap, { length: INITIAL_MAP_WIDTH * INITIAL_MAP_HEIGHT,
+      count: INITIAL_MAP_WIDTH * INITIAL_MAP_HEIGHT }],
   ]);
   for (const section of sections) {
     const shape = expected.get(section.type);
     if (!shape || section.length !== shape.length || section.count !== shape.count) {
-      throw new Error(`Missing or invalid v1 section ${section.type}`);
+      throw new Error(`Missing or invalid v2 section ${section.type}`);
     }
     expected.delete(section.type);
   }
-  if (expected.size !== 0) throw new Error("Asset pack is missing a required v1 section");
+  if (expected.size !== 0) throw new Error("Asset pack is missing a required v2 section");
   const initialSection = sections.find((s) => s.type === SectionType.InitialView);
   if (!initialSection || initialSection.length !== 8) throw new Error("Missing or invalid initial-view section");
   const p = initialSection.offset;

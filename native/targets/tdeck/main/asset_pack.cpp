@@ -13,16 +13,17 @@ namespace {
 
 constexpr char kTag[] = "OpenU5Assets";
 constexpr std::array<uint8_t, 8> kMagic{'O', 'U', '5', 'P', 'A', 'C', 'K', 0};
-constexpr uint16_t kVersionMajor = 1;
+constexpr uint16_t kVersionMajor = 2;
 constexpr uint16_t kVersionMinor = 0;
-constexpr uint16_t kHeaderSize = 128;
-constexpr uint16_t kSectionCount = 4;
+constexpr uint16_t kHeaderSize = 148;
+constexpr uint16_t kSectionCount = 5;
 constexpr uint16_t kTileFormatIndexed4 = 1;
 constexpr uint16_t kMapFormatU8RowMajor = 1;
 constexpr uint32_t kPaletteSection = 1;
 constexpr uint32_t kTilesSection = 2;
 constexpr uint32_t kWorldSection = 3;
 constexpr uint32_t kInitialSection = 4;
+constexpr uint32_t kInitialMapSection = 5;
 constexpr size_t kIoBufferSize = 1024;
 
 struct Section {
@@ -96,8 +97,24 @@ esp_err_t invalid(const char *message)
 
 }  // namespace
 
-esp_err_t validate_asset_pack(const char *path, AssetPackReport &report)
+AssetPackReader::~AssetPackReader()
 {
+    close();
+}
+
+void AssetPackReader::close()
+{
+    if (file_ != nullptr) std::fclose(file_);
+    file_ = nullptr;
+    palette_offset_ = 0;
+    tiles_offset_ = 0;
+    world_offset_ = 0;
+    initial_map_offset_ = 0;
+}
+
+esp_err_t AssetPackReader::open(const char *path, AssetPackReport &report)
+{
+    close();
     report = {};
     FILE *file = std::fopen(path, "rb");
     if (file == nullptr) {
@@ -125,19 +142,22 @@ esp_err_t validate_asset_pack(const char *path, AssetPackReport &report)
     report.payload_crc32 = read_u32le(&header[20]);
     if (read_u32le(&header[24]) != 0) {
         std::fclose(file);
-        return invalid("Asset pack uses unsupported v1 flags");
+        return invalid("Asset pack uses unsupported v2 flags");
     }
     report.tile_count = read_u16le(&header[28]);
     report.tile_width = read_u16le(&header[30]);
     report.tile_height = read_u16le(&header[32]);
     report.world_width = read_u16le(&header[36]);
     report.world_height = read_u16le(&header[38]);
+    report.initial_map_width = read_u16le(&header[44]);
+    report.initial_map_height = read_u16le(&header[46]);
     if (report.tile_count != 512 || report.tile_width != 16 || report.tile_height != 16 ||
         read_u16le(&header[34]) != kTileFormatIndexed4 ||
         report.world_width != 256 || report.world_height != 256 ||
-        read_u16le(&header[40]) != kMapFormatU8RowMajor) {
+        read_u16le(&header[40]) != kMapFormatU8RowMajor ||
+        report.initial_map_width != 32 || report.initial_map_height != 32) {
         std::fclose(file);
-        return invalid("Asset pack dimensions or encodings are incompatible with v1");
+        return invalid("Asset pack dimensions or encodings are incompatible with v2");
     }
     if (std::fseek(file, 0, SEEK_END) != 0 || std::ftell(file) != static_cast<long>(report.file_size)) {
         std::fclose(file);
@@ -178,12 +198,15 @@ esp_err_t validate_asset_pack(const char *path, AssetPackReport &report)
     const Section *tiles = find_section(sections, kTilesSection);
     const Section *world = find_section(sections, kWorldSection);
     const Section *initial = find_section(sections, kInitialSection);
+    const Section *initial_map = find_section(sections, kInitialMapSection);
     if (palette == nullptr || palette->length != 32 || palette->count != 16 ||
         tiles == nullptr || tiles->length != 512U * 128U || tiles->count != 512 ||
         world == nullptr || world->length != 256U * 256U || world->count != 256U * 256U ||
-        initial == nullptr || initial->length != 8 || initial->count != 1) {
+        initial == nullptr || initial->length != 8 || initial->count != 1 ||
+        initial_map == nullptr || initial_map->length != 32U * 32U ||
+        initial_map->count != 32U * 32U) {
         std::fclose(file);
-        return invalid("Asset pack is missing a required v1 section or section size");
+        return invalid("Asset pack is missing a required v2 section or section size");
     }
     uint32_t payload_crc = 0;
     if (!crc_range(file, kHeaderSize, report.file_size - kHeaderSize, payload_crc) ||
@@ -205,25 +228,82 @@ esp_err_t validate_asset_pack(const char *path, AssetPackReport &report)
     report.initial_y = initial_bytes[3];
     report.transport_tile = read_u16le(&initial_bytes[4]);
     report.avatar_tile = read_u16le(&initial_bytes[6]);
+    if (report.initial_location != 13 || report.initial_floor != 0) {
+        std::fclose(file);
+        return invalid("Milestone 4 v2 pack does not select Iolo's Hut location 13 floor 0");
+    }
     report.sample_tile_crc32 = crc32_update(0xffffffffU, sample_tile.data(), sample_tile.size()) ^ 0xffffffffU;
-    const uint32_t map_index = static_cast<uint32_t>(report.initial_y) * report.world_width + report.initial_x;
-    if (!read_exact(file, world->offset + map_index, &report.sample_map_tile, 1)) {
+    const uint32_t map_index = static_cast<uint32_t>(report.initial_y) * report.initial_map_width +
+                               report.initial_x;
+    if (!read_exact(file, initial_map->offset + map_index, &report.sample_map_tile, 1)) {
         std::fclose(file);
         return invalid("Could not read the initial-position map tile");
     }
-    std::fclose(file);
+    file_ = file;
+    palette_offset_ = palette->offset;
+    tiles_offset_ = tiles->offset;
+    world_offset_ = world->offset;
+    initial_map_offset_ = initial_map->offset;
     ESP_LOGI(kTag, "Asset pack v%u.%u valid: %lu bytes, payload CRC32=%08lx",
              major, minor, static_cast<unsigned long>(report.file_size),
              static_cast<unsigned long>(report.payload_crc32));
     ESP_LOGI(kTag, "Tiles: %u x %ux%u indexed4; tile[0] CRC32=%08lx",
              report.tile_count, report.tile_width, report.tile_height,
              static_cast<unsigned long>(report.sample_tile_crc32));
-    ESP_LOGI(kTag, "Britannia: %ux%u u8 row-major; map[%u,%u]=0x%02x",
-             report.world_width, report.world_height, report.initial_x, report.initial_y,
-             report.sample_map_tile);
+    ESP_LOGI(kTag, "Britannia: %ux%u u8 row-major", report.world_width, report.world_height);
+    ESP_LOGI(kTag, "Initial map/context: Iolo's Hut location 13 floor 0; %ux%u; map[%u,%u]=0x%02x",
+             report.initial_map_width, report.initial_map_height, report.initial_x,
+             report.initial_y, report.sample_map_tile);
     ESP_LOGI(kTag, "Initial: location=%u floor=0x%02x transport=0x%03x avatar=0x%03x",
              report.initial_location, report.initial_floor, report.transport_tile, report.avatar_tile);
     return ESP_OK;
+}
+
+esp_err_t AssetPackReader::read_palette(uint16_t (&palette)[16])
+{
+    std::array<uint8_t, 32> bytes{};
+    if (file_ == nullptr || !read_exact(file_, palette_offset_, bytes.data(), bytes.size())) {
+        return ESP_FAIL;
+    }
+    for (size_t i = 0; i < 16; ++i) palette[i] = read_u16le(&bytes[i * 2]);
+    return ESP_OK;
+}
+
+esp_err_t AssetPackReader::read_tile(uint16_t tile_id, uint8_t (&indexed4)[128])
+{
+    if (file_ == nullptr || tile_id >= 512 ||
+        !read_exact(file_, tiles_offset_ + static_cast<uint32_t>(tile_id) * 128U,
+                    indexed4, 128)) {
+        return ESP_FAIL;
+    }
+    return ESP_OK;
+}
+
+esp_err_t AssetPackReader::read_world_span(uint8_t y, uint8_t x, uint8_t *tiles,
+                                           size_t count)
+{
+    if (file_ == nullptr || tiles == nullptr || count == 0 || count > 256U - x) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    const uint32_t offset = world_offset_ + static_cast<uint32_t>(y) * 256U + x;
+    return read_exact(file_, offset, tiles, count) ? ESP_OK : ESP_FAIL;
+}
+
+esp_err_t AssetPackReader::read_initial_map_span(uint8_t y, uint8_t x, uint8_t *tiles,
+                                                 size_t count)
+{
+    if (file_ == nullptr || tiles == nullptr || y >= 32 || x >= 32 || count == 0 ||
+        count > 32U - x) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    const uint32_t offset = initial_map_offset_ + static_cast<uint32_t>(y) * 32U + x;
+    return read_exact(file_, offset, tiles, count) ? ESP_OK : ESP_FAIL;
+}
+
+esp_err_t validate_asset_pack(const char *path, AssetPackReport &report)
+{
+    AssetPackReader reader;
+    return reader.open(path, report);
 }
 
 }  // namespace openu5

@@ -1,5 +1,6 @@
 #include <cinttypes>
 #include <cstddef>
+#include <cstdio>
 
 #include "esp_chip_info.h"
 #include "esp_clk_tree.h"
@@ -9,10 +10,12 @@
 #include "esp_log.h"
 #include "esp_psram.h"
 #include "esp_system.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
 #include "asset_pack.h"
+#include "native_renderer.h"
 #include "tdeck_board.h"
 
 namespace {
@@ -27,7 +30,7 @@ extern "C" void app_main(void)
     // Allow the USB serial port time to enumerate; never wait for a host forever.
     vTaskDelay(pdMS_TO_TICKS(1500));
     ESP_LOGI(kTag, "========================================");
-    ESP_LOGI(kTag, "OpenU5-TDeck | Milestone 3: native asset validation");
+    ESP_LOGI(kTag, "OpenU5-TDeck | Milestone 4: corrected initial viewport");
     ESP_LOGI(kTag, "LilyGO T-Deck Plus native ESP-IDF target");
     ESP_LOGI(kTag, "========================================");
 
@@ -91,12 +94,68 @@ extern "C" void app_main(void)
         ESP_LOGI(kTag, "Display/SD shared SPI runtime test: %s",
                  sd.shared_bus_verified ? "PASS" : "FAIL");
         openu5::AssetPackReport assets{};
-        const esp_err_t asset_result = openu5::validate_asset_pack(openu5::kAssetPackPath, assets);
+        openu5::AssetPackReader asset_reader;
+        const esp_err_t asset_result = asset_reader.open(openu5::kAssetPackPath, assets);
         if (asset_result == ESP_ERR_NOT_FOUND) {
             ESP_LOGW(kTag, "Native assets absent; copy the generated pack to %s",
                      openu5::kAssetPackPath);
         } else if (asset_result != ESP_OK) {
             ESP_LOGE(kTag, "Native asset validation failed; no assets will be used");
+        } else {
+            ESP_LOGI(kTag, "Initial coordinates: x=%u y=%u", assets.initial_x, assets.initial_y);
+            ESP_LOGI(kTag, "Initial location/floor: location=%u floor=0x%02x",
+                     assets.initial_location, assets.initial_floor);
+            const size_t internal_before = heap_caps_get_free_size(kInternalCaps);
+            const size_t psram_before = heap_caps_get_free_size(kPsramCaps);
+            auto *viewport = static_cast<uint16_t *>(
+                heap_caps_malloc(openu5::kViewportPixelCount * sizeof(uint16_t),
+                                 MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT));
+            if (viewport == nullptr) {
+                ESP_LOGE(kTag, "Could not allocate %zu-byte RGB565 viewport in PSRAM",
+                         openu5::kViewportPixelCount * sizeof(uint16_t));
+            } else {
+                const int64_t render_start = esp_timer_get_time();
+                openu5::RenderReport render{};
+                const esp_err_t render_result = openu5::render_initial_view(
+                    asset_reader, assets, viewport, openu5::kViewportPixelCount, render);
+                const uint32_t render_ms = static_cast<uint32_t>(
+                    (esp_timer_get_time() - render_start + 999) / 1000);
+                const size_t internal_after = heap_caps_get_free_size(kInternalCaps);
+                const size_t psram_after = heap_caps_get_free_size(kPsramCaps);
+                if (render_result != ESP_OK) {
+                    ESP_LOGE(kTag, "Static Britannia render failed: %s",
+                             esp_err_to_name(render_result));
+                } else {
+                    ESP_LOGI(kTag, "Selected initial map/context: %s", render.map_context);
+                    ESP_LOGI(kTag, "Viewport bounds: left=%d top=%d right=%d bottom=%d",
+                             render.left, render.top, render.right, render.bottom);
+                    ESP_LOGI(kTag, "Center map tile=0x%02x Avatar tile=0x%03x",
+                             render.center_map_tile, render.avatar_tile);
+                    ESP_LOGI(kTag, "Tiles read from SD: %u whole 128-byte records",
+                             render.tile_records_read);
+                    ESP_LOGI(kTag, "Render duration: %" PRIu32 " ms", render_ms);
+                    ESP_LOGI(kTag, "Free internal RAM before/after: %zu / %zu bytes",
+                             internal_before, internal_after);
+                    ESP_LOGI(kTag, "Free PSRAM before/after: %zu / %zu bytes",
+                             psram_before, psram_after);
+                    ESP_LOGI(kTag, "Viewport RGB565-LE CRC32: %08" PRIx32,
+                             render.viewport_crc32);
+                    char coordinates[20]{};
+                    char location[20]{};
+                    std::snprintf(coordinates, sizeof(coordinates), "X:%03u Y:%03u",
+                                  assets.initial_x, assets.initial_y);
+                    std::snprintf(location, sizeof(location), "LOC:%02u F:%02X",
+                                  assets.initial_location, assets.initial_floor);
+                    const esp_err_t draw_result = board.show_initial_view(
+                        viewport, openu5::kViewportPixels, openu5::kViewportPixels,
+                        coordinates, location);
+                    if (draw_result != ESP_OK) {
+                        ESP_LOGE(kTag, "Viewport display transfer failed: %s",
+                                 esp_err_to_name(draw_result));
+                    }
+                }
+                heap_caps_free(viewport);
+            }
         }
     } else {
         ESP_LOGE(kTag, "SD: FAIL (%s); firmware will remain alive",
@@ -104,7 +163,7 @@ extern "C" void app_main(void)
     }
 
     ESP_LOGI(kTag, "Firmware size: run idf.py size and idf.py size-components on the build host.");
-    ESP_LOGI(kTag, "Initialization complete; heartbeat every 5 seconds.");
+    ESP_LOGI(kTag, "Milestone 4 initialization complete; heartbeat every 5 seconds.");
     for (;;) {
         // Yield to idle tasks so watchdogs remain serviced; no busy loop or reboot.
         vTaskDelay(pdMS_TO_TICKS(5000));

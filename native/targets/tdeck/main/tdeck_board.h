@@ -21,6 +21,8 @@ public:
     esp_err_t initialize_display();
     SdStatus initialize_and_test_sd();
     void show_diagnostics(bool sd_ok);
+    esp_err_t show_initial_view(const uint16_t *pixels, int width, int height,
+                                const char *coordinates, const char *location);
 
 private:
     esp_err_t initialize_shared_spi();
@@ -28,6 +30,7 @@ private:
                                     size_t data_length = 0);
     esp_err_t set_display_window(int x, int y, int width, int height);
     esp_err_t fill_rect(int x, int y, int width, int height, uint16_t color);
+    esp_err_t draw_rgb565(int x, int y, int width, int height, const uint16_t *pixels);
     esp_err_t draw_text(int x, int y, const char *text, uint16_t color, int scale);
     esp_err_t draw_shared_bus_marker(int pass);
 

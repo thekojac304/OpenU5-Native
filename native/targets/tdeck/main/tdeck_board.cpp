@@ -40,6 +40,11 @@ constexpr uint16_t kCyan = 0x07FF;
 constexpr uint16_t kGreen = 0x07E0;
 constexpr uint16_t kRed = 0xF800;
 constexpr size_t kReadLimit = 160;
+constexpr uint8_t kMadctlRgb = 0x00;
+constexpr uint8_t kMadctlMirrorX = 0x40;
+constexpr uint8_t kMadctlSwapXy = 0x20;
+constexpr uint8_t kLandscapeRotation1Rgb =
+    kMadctlMirrorX | kMadctlSwapXy | kMadctlRgb;
 
 spi_device_handle_t display_handle(void *handle)
 {
@@ -98,6 +103,8 @@ std::array<uint8_t, 5> glyph(char c)
     case 'S': return {0x46, 0x49, 0x49, 0x49, 0x31};
     case 'T': return {0x01, 0x01, 0x7F, 0x01, 0x01};
     case 'U': return {0x3F, 0x40, 0x40, 0x40, 0x3F};
+    case 'X': return {0x63, 0x14, 0x08, 0x14, 0x63};
+    case 'Y': return {0x07, 0x08, 0x70, 0x08, 0x07};
     case 'a': return {0x20, 0x54, 0x54, 0x54, 0x78};
     case 'c': return {0x38, 0x44, 0x44, 0x44, 0x20};
     case 'e': return {0x38, 0x54, 0x54, 0x54, 0x18};
@@ -243,7 +250,7 @@ esp_err_t Board::initialize_display()
         {0x01, 0, {}, 120},
         {0x11, 0, {}, 120},
         {0x13, 0, {}, 0},
-        {0x36, 1, {0x08}, 0},
+        {0x36, 1, {kMadctlRgb}, 0},
         {0x3A, 1, {0x55}, 10},
         {0xB2, 5, {0x0C, 0x0C, 0x00, 0x33, 0x33}, 0},
         {0xB7, 1, {0x75}, 0},
@@ -260,8 +267,9 @@ esp_err_t Board::initialize_display()
         {0xE1, 14, {0xD0, 0x09, 0x0F, 0x08, 0x07, 0x14, 0x37, 0x44,
                      0x4D, 0x38, 0x15, 0x16, 0x2C, 0x3E}, 0},
         {0x21, 0, {}, 0},
-        // Landscape rotation 1: MX + MV + BGR, matching LilyGO's setRotation(1).
-        {0x36, 1, {0x68}, 0},
+        // LilyGO Setup210 selects TFT_RGB_ORDER=TFT_RGB. Its setRotation(1)
+        // writes MX | MV | RGB = 0x60; setting BGR here swaps red and blue.
+        {0x36, 1, {kLandscapeRotation1Rgb}, 0},
         {0x29, 0, {}, 120},
     };
     for (const auto &entry : kInit) {
@@ -275,7 +283,9 @@ esp_err_t Board::initialize_display()
     ESP_RETURN_ON_ERROR(fill_rect(0, 0, kDisplayWidth, kDisplayHeight, kBlack),
                         kTag, "clear display");
     gpio_set_level(pins::kTftBacklight, 1);
-    ESP_LOGI(kTag, "ST7789 initialized at 320x240 landscape, SPI clock %d Hz", kTftClockHz);
+    ESP_LOGI(kTag,
+             "ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x%02x, SPI clock %d Hz",
+             kLandscapeRotation1Rgb, kTftClockHz);
     return ESP_OK;
 }
 
@@ -321,6 +331,31 @@ esp_err_t Board::fill_rect(int x, int y, int width, int height, uint16_t color)
     return ESP_OK;
 }
 
+esp_err_t Board::draw_rgb565(int x, int y, int width, int height, const uint16_t *pixels)
+{
+    if (!display_initialized_ || pixels == nullptr || width <= 0 || height <= 0 ||
+        width > kDisplayWidth || x < 0 || y < 0 || x + width > kDisplayWidth ||
+        y + height > kDisplayHeight) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    ESP_RETURN_ON_ERROR(set_display_window(x, y, width, height), kTag, "set RGB565 window");
+    std::array<uint8_t, kDisplayWidth * 2> row_bytes{};
+    gpio_set_level(pins::kTftDataCommand, 1);
+    for (int row = 0; row < height; ++row) {
+        for (int col = 0; col < width; ++col) {
+            const uint16_t pixel = pixels[row * width + col];
+            row_bytes[col * 2] = static_cast<uint8_t>(pixel >> 8);
+            row_bytes[col * 2 + 1] = static_cast<uint8_t>(pixel);
+        }
+        spi_transaction_t transaction{};
+        transaction.length = width * 16;
+        transaction.tx_buffer = row_bytes.data();
+        ESP_RETURN_ON_ERROR(spi_device_transmit(display_handle(display_device_), &transaction),
+                            kTag, "write RGB565 row");
+    }
+    return ESP_OK;
+}
+
 esp_err_t Board::draw_text(int x, int y, const char *text, uint16_t color, int scale)
 {
     for (const char *cursor = text; *cursor != '\0'; ++cursor, x += 6 * scale) {
@@ -346,13 +381,33 @@ void Board::show_diagnostics(bool sd_ok)
     }
     if (fill_rect(0, 0, kDisplayWidth, kDisplayHeight, kBlack) != ESP_OK ||
         draw_text(18, 14, "OpenU5-TDeck", kCyan, 3) != ESP_OK ||
-        draw_text(18, 50, "Milestone 3", kWhite, 2) != ESP_OK ||
+        draw_text(18, 50, "Milestone 4", kWhite, 2) != ESP_OK ||
         draw_text(18, 82, "ESP32-S3", kWhite, 2) != ESP_OK ||
         draw_text(18, 108, "16 MB Flash", kWhite, 2) != ESP_OK ||
         draw_text(18, 134, "8 MB PSRAM", kWhite, 2) != ESP_OK ||
         draw_text(18, 174, sd_ok ? "SD: OK" : "SD: FAIL", sd_ok ? kGreen : kRed, 3) != ESP_OK) {
         ESP_LOGE(kTag, "Failed to draw diagnostic screen");
     }
+}
+
+esp_err_t Board::show_initial_view(const uint16_t *pixels, int width, int height,
+                                   const char *coordinates, const char *location)
+{
+    if (!display_initialized_) return ESP_ERR_INVALID_STATE;
+    ESP_RETURN_ON_ERROR(fill_rect(0, 0, kDisplayWidth, kDisplayHeight, kBlack), kTag,
+                        "clear Milestone 4 screen");
+    ESP_RETURN_ON_ERROR(draw_rgb565(8, 8, width, height, pixels), kTag,
+                        "draw initial viewport");
+    ESP_RETURN_ON_ERROR(draw_text(200, 16, "OpenU5", kCyan, 2), kTag, "draw title");
+    ESP_RETURN_ON_ERROR(draw_text(200, 48, "Milestone 4", kWhite, 1), kTag,
+                        "draw milestone");
+    ESP_RETURN_ON_ERROR(draw_text(200, 78, coordinates, kWhite, 1), kTag,
+                        "draw coordinates");
+    ESP_RETURN_ON_ERROR(draw_text(200, 96, location, kWhite, 1), kTag,
+                        "draw location");
+    ESP_RETURN_ON_ERROR(draw_text(200, 126, "SD: OK", kGreen, 1), kTag,
+                        "draw SD status");
+    return ESP_OK;
 }
 
 esp_err_t Board::draw_shared_bus_marker(int pass)

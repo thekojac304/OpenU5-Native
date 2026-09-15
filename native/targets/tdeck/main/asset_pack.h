@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+#include <cstdio>
 #include <cstdint>
 
 #include "esp_err.h"
@@ -16,6 +18,8 @@ struct AssetPackReport {
     uint16_t tile_height = 0;
     uint16_t world_width = 0;
     uint16_t world_height = 0;
+    uint16_t initial_map_width = 0;
+    uint16_t initial_map_height = 0;
     uint8_t initial_location = 0;
     uint8_t initial_floor = 0;
     uint8_t initial_x = 0;
@@ -24,6 +28,31 @@ struct AssetPackReport {
     uint16_t avatar_tile = 0;
     uint8_t sample_map_tile = 0;
     uint32_t sample_tile_crc32 = 0;
+};
+
+class AssetPackReader {
+public:
+    AssetPackReader() = default;
+    ~AssetPackReader();
+    AssetPackReader(const AssetPackReader &) = delete;
+    AssetPackReader &operator=(const AssetPackReader &) = delete;
+
+    /** Open and fully validate the v2 pack while retaining it for bounded reads. */
+    esp_err_t open(const char *path, AssetPackReport &report);
+    void close();
+    bool is_open() const { return file_ != nullptr; }
+
+    esp_err_t read_palette(uint16_t (&palette)[16]);
+    esp_err_t read_tile(uint16_t tile_id, uint8_t (&indexed4)[128]);
+    esp_err_t read_world_span(uint8_t y, uint8_t x, uint8_t *tiles, size_t count);
+    esp_err_t read_initial_map_span(uint8_t y, uint8_t x, uint8_t *tiles, size_t count);
+
+private:
+    FILE *file_ = nullptr;
+    uint32_t palette_offset_ = 0;
+    uint32_t tiles_offset_ = 0;
+    uint32_t world_offset_ = 0;
+    uint32_t initial_map_offset_ = 0;
 };
 
 /** Validate the SD pack by streaming it; no section is loaded wholesale into RAM. */
