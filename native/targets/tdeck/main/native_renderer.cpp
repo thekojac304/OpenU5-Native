@@ -42,11 +42,9 @@ void expand_tile(const uint8_t (&indexed4)[128], const uint16_t (&palette)[16],
 
 }  // namespace
 
-esp_err_t render_initial_view(AssetPackReader &assets,
-                              const AssetPackReport &pack,
-                              uint16_t *rgb565,
-                              size_t pixel_count,
-                              RenderReport &report)
+esp_err_t render_view(AssetPackReader &assets, const AssetPackReport &pack,
+                      uint8_t center_x, uint8_t center_y, uint16_t *rgb565,
+                      size_t pixel_count, RenderReport &report)
 {
     report = {};
     if (!assets.is_open() || rgb565 == nullptr || pixel_count < kViewportPixelCount ||
@@ -67,8 +65,8 @@ esp_err_t render_initial_view(AssetPackReader &assets,
     if (britannia) {
         report.map_context = "Britannia surface (256x256 wrapped)";
         for (int row = 0; row < kViewportTiles; ++row) {
-            const uint8_t map_y = static_cast<uint8_t>(pack.initial_y - kHalfViewport + row);
-            const uint8_t map_x = static_cast<uint8_t>(pack.initial_x - kHalfViewport);
+            const uint8_t map_y = static_cast<uint8_t>(center_y - kHalfViewport + row);
+            const uint8_t map_x = static_cast<uint8_t>(center_x - kHalfViewport);
             const size_t first = std::min<size_t>(kViewportTiles, 256U - map_x);
             uint8_t *destination = &map_tiles[row * kViewportTiles];
             if (assets.read_world_span(map_y, map_x, destination, first) != ESP_OK) return ESP_FAIL;
@@ -82,9 +80,9 @@ esp_err_t render_initial_view(AssetPackReader &assets,
         uint8_t edge_fill = 0;
         if (assets.read_initial_map_span(31, 31, &edge_fill, 1) != ESP_OK) return ESP_FAIL;
         map_tiles.fill(edge_fill);
-        const int left = static_cast<int>(pack.initial_x) - kHalfViewport;
+        const int left = static_cast<int>(center_x) - kHalfViewport;
         for (int row = 0; row < kViewportTiles; ++row) {
-            const int map_y = static_cast<int>(pack.initial_y) - kHalfViewport + row;
+            const int map_y = static_cast<int>(center_y) - kHalfViewport + row;
             if (map_y < 0 || map_y >= 32) continue;
             const int first_x = std::max(0, left);
             const int last_x = std::min(31, left + kViewportTiles - 1);
@@ -128,10 +126,10 @@ esp_err_t render_initial_view(AssetPackReader &assets,
         }
     }
 
-    report.left = static_cast<int16_t>(pack.initial_x) - kHalfViewport;
-    report.top = static_cast<int16_t>(pack.initial_y) - kHalfViewport;
-    report.right = static_cast<int16_t>(pack.initial_x) + kHalfViewport;
-    report.bottom = static_cast<int16_t>(pack.initial_y) + kHalfViewport;
+    report.left = static_cast<int16_t>(center_x) - kHalfViewport;
+    report.top = static_cast<int16_t>(center_y) - kHalfViewport;
+    report.right = static_cast<int16_t>(center_x) + kHalfViewport;
+    report.bottom = static_cast<int16_t>(center_y) + kHalfViewport;
     report.center_map_tile = map_tiles[kHalfViewport * kViewportTiles + kHalfViewport];
     report.avatar_tile = pack.avatar_tile;
     report.viewport_crc32 = crc32_u16le(rgb565, kViewportPixelCount);

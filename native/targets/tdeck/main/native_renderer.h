@@ -25,11 +25,9 @@ struct RenderReport {
     const char *map_context = "unknown";
 };
 
-/** Compose the static faithful 11x11 surface view into native-endian RGB565. */
-esp_err_t render_initial_view(AssetPackReader &assets,
-                              const AssetPackReport &pack,
-                              uint16_t *rgb565,
-                              size_t pixel_count,
-                              RenderReport &report);
+/** Compose the faithful 11x11 view centered on the supplied live coordinates. */
+esp_err_t render_view(AssetPackReader &assets, const AssetPackReport &pack,
+                      uint8_t center_x, uint8_t center_y, uint16_t *rgb565,
+                      size_t pixel_count, RenderReport &report);
 
 }  // namespace openu5

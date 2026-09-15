@@ -1,4 +1,5 @@
 #include "tdeck_board.h"
+#include "boot_trace.h"
 
 #include <algorithm>
 #include <array>
@@ -142,6 +143,7 @@ esp_err_t read_prefix(const char *path, std::array<char, kReadLimit> &buffer, si
 
 esp_err_t Board::initialize_shared_spi()
 {
+    INPUT_TRACE("INIT shared-spi t=%lld already=%d", (long long)esp_timer_get_time(), shared_spi_initialized_);
     if (shared_spi_initialized_) {
         return ESP_OK;
     }
@@ -214,6 +216,7 @@ esp_err_t Board::write_display_command(uint8_t command, const uint8_t *data,
 
 esp_err_t Board::initialize_display()
 {
+    debug51::stage(4, "display-initialize-entry");
     ESP_RETURN_ON_ERROR(initialize_shared_spi(), kTag, "shared SPI setup failed");
 
     const spi_device_interface_config_t display_config = {
@@ -311,7 +314,8 @@ esp_err_t Board::fill_rect(int x, int y, int width, int height, uint16_t color)
         return ESP_ERR_INVALID_ARG;
     }
     ESP_RETURN_ON_ERROR(set_display_window(x, y, width, height), kTag, "set fill window");
-    std::array<uint8_t, kDisplayWidth * 2> pixels{};
+    auto &pixels = transfer_row_;
+    static_assert(sizeof(transfer_row_) == kDisplayWidth * 2);
     const size_t pixels_per_chunk = std::min(width, kDisplayWidth);
     for (size_t index = 0; index < pixels_per_chunk; ++index) {
         pixels[index * 2] = static_cast<uint8_t>(color >> 8);
@@ -339,7 +343,7 @@ esp_err_t Board::draw_rgb565(int x, int y, int width, int height, const uint16_t
         return ESP_ERR_INVALID_ARG;
     }
     ESP_RETURN_ON_ERROR(set_display_window(x, y, width, height), kTag, "set RGB565 window");
-    std::array<uint8_t, kDisplayWidth * 2> row_bytes{};
+    auto &row_bytes = transfer_row_;
     gpio_set_level(pins::kTftDataCommand, 1);
     for (int row = 0; row < height; ++row) {
         for (int col = 0; col < width; ++col) {
@@ -376,12 +380,13 @@ esp_err_t Board::draw_text(int x, int y, const char *text, uint16_t color, int s
 
 void Board::show_diagnostics(bool sd_ok)
 {
+    debug51::stage(6, "startup-screen-clear-draw");
     if (!display_initialized_) {
         return;
     }
     if (fill_rect(0, 0, kDisplayWidth, kDisplayHeight, kBlack) != ESP_OK ||
         draw_text(18, 14, "OpenU5-TDeck", kCyan, 3) != ESP_OK ||
-        draw_text(18, 50, "Milestone 4", kWhite, 2) != ESP_OK ||
+        draw_text(18, 50, "Milestone 5", kWhite, 2) != ESP_OK ||
         draw_text(18, 82, "ESP32-S3", kWhite, 2) != ESP_OK ||
         draw_text(18, 108, "16 MB Flash", kWhite, 2) != ESP_OK ||
         draw_text(18, 134, "8 MB PSRAM", kWhite, 2) != ESP_OK ||
@@ -390,17 +395,25 @@ void Board::show_diagnostics(bool sd_ok)
     }
 }
 
-esp_err_t Board::show_initial_view(const uint16_t *pixels, int width, int height,
-                                   const char *coordinates, const char *location)
+esp_err_t Board::show_view(const uint16_t *pixels, int width, int height,
+                          const char *coordinates, const char *location, bool first_draw)
 {
+    if (first_draw) debug51::stage(11, "game-screen-transition");
     if (!display_initialized_) return ESP_ERR_INVALID_STATE;
-    ESP_RETURN_ON_ERROR(fill_rect(0, 0, kDisplayWidth, kDisplayHeight, kBlack), kTag,
-                        "clear Milestone 4 screen");
+    if (first_draw) {
+        ESP_RETURN_ON_ERROR(fill_rect(0, 0, kDisplayWidth, kDisplayHeight, kBlack), kTag,
+                            "clear Milestone 5 screen");
+    } else {
+        ESP_RETURN_ON_ERROR(fill_rect(198, 76, 120, 18, kBlack), kTag,
+                            "clear live coordinates");
+    }
     ESP_RETURN_ON_ERROR(draw_rgb565(8, 8, width, height, pixels), kTag,
-                        "draw initial viewport");
-    ESP_RETURN_ON_ERROR(draw_text(200, 16, "OpenU5", kCyan, 2), kTag, "draw title");
-    ESP_RETURN_ON_ERROR(draw_text(200, 48, "Milestone 4", kWhite, 1), kTag,
-                        "draw milestone");
+                        "draw live viewport");
+    if (first_draw) {
+        ESP_RETURN_ON_ERROR(draw_text(200, 16, "OpenU5", kCyan, 2), kTag, "draw title");
+        ESP_RETURN_ON_ERROR(draw_text(200, 48, "Milestone 5", kWhite, 1), kTag,
+                            "draw milestone");
+    }
     ESP_RETURN_ON_ERROR(draw_text(200, 78, coordinates, kWhite, 1), kTag,
                         "draw coordinates");
     ESP_RETURN_ON_ERROR(draw_text(200, 96, location, kWhite, 1), kTag,
@@ -418,6 +431,7 @@ esp_err_t Board::draw_shared_bus_marker(int pass)
 
 SdStatus Board::initialize_and_test_sd()
 {
+    debug51::stage(5, "sd-initialize-entry");
     SdStatus status{};
     if (!shared_spi_initialized_) {
         status.error = ESP_ERR_INVALID_STATE;

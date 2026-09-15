@@ -6,6 +6,6 @@ if(NOT IDF_TARGET STREQUAL "esp32s3")
     message(FATAL_ERROR "The T-Deck Plus target requires IDF_TARGET=esp32s3")
 endif()
 
-set(PROJECT_VER "0.4.0")
+set(PROJECT_VER "0.5.1-input-final")
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(openu5_tdeck)

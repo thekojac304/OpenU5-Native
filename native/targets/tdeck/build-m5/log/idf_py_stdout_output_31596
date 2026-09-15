@@ -1,0 +1,8 @@
+Command: ninja all
+[1/4] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-TDeck\native\targets\tdeck\build-m5 && C:\Espressif\tools\python\v6.1\venv\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app C:/Dev/OpenU5-TDeck/native/targets/tdeck/build-m5/partition_table/partition-table.bin C:/Dev/OpenU5-TDeck/native/targets/tdeck/build-m5/openu5_tdeck.bin"
+openu5_tdeck.bin binary size 0x50c00 bytes. Smallest app partition is 0x100000 bytes. 0xaf400 bytes (68%) free.
+[2/4] Performing build step for 'bootloader'
+[1/1] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-TDeck\native\targets\tdeck\build-m5\bootloader && C:\Espressif\tools\python\v6.1\venv\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 C:/Dev/OpenU5-TDeck/native/targets/tdeck/build-m5/bootloader/bootloader.bin"
+Bootloader binary size 0x5850 bytes. 0x27b0 bytes (31%) free.
+[3/4] No install step for 'bootloader'
+[4/4] Completed 'bootloader'

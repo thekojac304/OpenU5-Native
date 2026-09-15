@@ -1,0 +1,4 @@
+# Keep generator output byte-stable across Windows and Unix checkouts.
+/fixtures/foundation.json text eol=lf
+/fixtures/foundation.inc text eol=lf
+/src/tile_flags.inc text eol=lf

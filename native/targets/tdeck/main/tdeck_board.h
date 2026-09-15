@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <array>
 #include <cstdint>
 
 #include "esp_err.h"
@@ -21,8 +22,8 @@ public:
     esp_err_t initialize_display();
     SdStatus initialize_and_test_sd();
     void show_diagnostics(bool sd_ok);
-    esp_err_t show_initial_view(const uint16_t *pixels, int width, int height,
-                                const char *coordinates, const char *location);
+    esp_err_t show_view(const uint16_t *pixels, int width, int height,
+                        const char *coordinates, const char *location, bool first_draw);
 
 private:
     esp_err_t initialize_shared_spi();
@@ -35,6 +36,8 @@ private:
     esp_err_t draw_shared_bus_marker(int pass);
 
     void *display_device_ = nullptr;
+    // Sole app task; synchronous spi_device_transmit completes before reuse.
+    alignas(4) std::array<uint8_t, 320 * 2> transfer_row_{};
     bool shared_spi_initialized_ = false;
     bool display_initialized_ = false;
 };

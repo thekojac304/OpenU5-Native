@@ -5,6 +5,8 @@
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
+#include <memory>
+#include <new>
 
 #include "esp_log.h"
 
@@ -65,10 +67,10 @@ bool read_exact(FILE *file, uint32_t offset, void *destination, size_t length)
            std::fread(destination, 1, length, file) == length;
 }
 
-bool crc_range(FILE *file, uint32_t offset, uint32_t length, uint32_t &result)
+bool crc_range(FILE *file, uint32_t offset, uint32_t length, uint32_t &result,
+               std::array<uint8_t, kIoBufferSize> &buffer)
 {
     if (std::fseek(file, static_cast<long>(offset), SEEK_SET) != 0) return false;
-    std::array<uint8_t, kIoBufferSize> buffer{};
     uint32_t remaining = length;
     uint32_t crc = 0xffffffffU;
     while (remaining > 0) {
@@ -116,6 +118,11 @@ esp_err_t AssetPackReader::open(const char *path, AssetPackReport &report)
 {
     close();
     report = {};
+    // One temporary heap allocation per validation, reused for all CRC ranges.
+    // RAII releases it on every error path; independent readers do not share it.
+    const auto scratch = std::unique_ptr<std::array<uint8_t, kIoBufferSize>>(
+        new (std::nothrow) std::array<uint8_t, kIoBufferSize>);
+    if (!scratch) return ESP_ERR_NO_MEM;
     FILE *file = std::fopen(path, "rb");
     if (file == nullptr) {
         ESP_LOGW(kTag, "Asset pack not found at %s (errno=%d)", path, errno);
@@ -176,7 +183,7 @@ esp_err_t AssetPackReader::open(const char *path, AssetPackReport &report)
             return invalid("Asset pack section lies outside the file");
         }
         uint32_t observed_crc = 0;
-        if (!crc_range(file, sections[i].offset, sections[i].length, observed_crc) ||
+        if (!crc_range(file, sections[i].offset, sections[i].length, observed_crc, *scratch) ||
             observed_crc != sections[i].crc32) {
             ESP_LOGE(kTag, "Section %lu CRC32 mismatch", static_cast<unsigned long>(sections[i].type));
             std::fclose(file);
@@ -209,7 +216,7 @@ esp_err_t AssetPackReader::open(const char *path, AssetPackReport &report)
         return invalid("Asset pack is missing a required v2 section or section size");
     }
     uint32_t payload_crc = 0;
-    if (!crc_range(file, kHeaderSize, report.file_size - kHeaderSize, payload_crc) ||
+    if (!crc_range(file, kHeaderSize, report.file_size - kHeaderSize, payload_crc, *scratch) ||
         payload_crc != report.payload_crc32) {
         std::fclose(file);
         return invalid("Asset pack payload CRC32 mismatch");

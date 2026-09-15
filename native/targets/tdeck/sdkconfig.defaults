@@ -27,3 +27,7 @@ CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
 CONFIG_ESP_CONSOLE_SECONDARY_NONE=y
 CONFIG_ESPTOOLPY_MONITOR_BAUD=115200
 CONFIG_LOG_DEFAULT_LEVEL_INFO=y
+
+# Native game + FAT/SD/SPI + diagnostic formatting need a real call-stack budget.
+# Large app/CRC/display buffers are off-stack; require >=4 KiB measured reserve.
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=12288

@@ -1,13 +1,26 @@
-# OpenU5-TDeck: Milestone 4 corrected initial screen
+# OpenU5-TDeck: Milestone 5 native movement
+
+The foundational native core is now under [../../core](../../core/README.md).
+The device movement slice uses its portable state and rules; hardware/input
+behavior remains unchanged and the latest input cleanup is still physically
+unverified. The new `build-core` firmware validation and size comparison are in
+[../../core/VALIDATION.md](../../core/VALIDATION.md). The M5 figures below remain
+the preserved baseline.
+
+The current build is `0.5.1-input-final`. Trackball is the sole directional
+movement input. Raw keyboard characters, modifiers, matrix positions and
+press/release edges remain available for the future command/text layer. See
+[STACK51.md](STACK51.md) for the retained stack-overflow correction.
 
 Standalone ESP-IDF firmware for the LilyGO T-Deck Plus (ESP32-S3, 16 MiB
-flash, 8 MiB octal PSRAM). Milestone 4 preserves the hardware-verified display,
+flash, 8 MiB octal PSRAM). Milestone 5 preserves the hardware-verified display,
 microSD, shared-SPI, asset validation, and Launcher packaging, and renders the
 initial 11x11 Iolo's Hut viewport selected by INIT.GAM. Pack generation
 and format details are in [../../ASSETS.md](../../ASSETS.md). The web/TypeScript
-runtime is independent and unchanged.
+runtime is independent and unchanged. Directional input, movement scope, and
+intentional deferrals are documented in [MILESTONE5.md](MILESTONE5.md).
 
-No movement, input, animation, NPC, combat, dialogue, audio, save, or turn logic
+No full command, animation, NPC-turn, combat, dialogue, audio, save, or turn logic
 is included. Launcher app-only packaging remains available in
 [LAUNCHER.md](LAUNCHER.md).
 
@@ -74,17 +87,19 @@ After the existing hardware and heap diagnostics, firmware:
 7. Alternates three matching SD reads with three TFT writes on the shared bus.
 8. Opens `/sd/ultima5/openu5-assets.bin`, streams all CRC checks, and retains the
    validated file for bounded palette, map-span, and whole-tile reads.
-9. Uses `location=13`, `floor=0` to select the packed 32x32 Iolo's Hut floor,
-   then reads its 11x11 row-major window centered at `x=15`, `y=15`. Britannia
-   remains available only for initial states whose selected location is zero.
-10. Expands indexed-4bpp pixels to a 61,952-byte RGB565 buffer in PSRAM, then
-    replaces the center terrain cell with Avatar tile `0x11c` as CoreView does.
-11. Transfers the native-scale 176x176 viewport at `(8,8)` and draws temporary
-    Milestone 4 coordinates/location status in the surrounding space.
-12. Logs viewport bounds, tile IDs/read count, render time, heap before/after,
-    and a deterministic CRC32 over the final RGB565 little-endian pixel stream.
-13. Continues the five-second serial heartbeat even when display, SD, or asset
-    validation fails.
+9. Initializes the keyboard over I2C and the optional four trackball direction
+   inputs, then selects the packed 32x32 Iolo's Hut floor at `(15,15)`.
+10. Reads and expands the centered 11x11 map window into a 61,952-byte RGB565
+    buffer in PSRAM, replacing the center terrain tile with Avatar tile `0x11c`.
+11. Uses trackball up/down/left/right as the sole one-tile movement input.
+    Keyboard input is reserved for the future command/text layer.
+    The destination terrain is checked against the TypeScript walkability table.
+12. Redraws the same native-scale 176x176 viewport after a successful step and
+    updates the live X/Y status without reopening or revalidating the asset pack.
+13. Logs normalized actions and movement diagnostics normally; raw keyboard
+    edges/modifiers and trackball directions are available at debug log level.
+14. Continues the five-second serial heartbeat with live coordinates even when
+    display, input, SD, or asset validation fails.
 
 An SD error is logged with its ESP-IDF error name and does not reboot or stop
 the application. A passing interleave test is runtime evidence produced on the
@@ -93,13 +108,15 @@ device; the local build alone cannot establish electrical or card reliability.
 ## Current local validation
 
 - ESP-IDF v6.1 compile: passed.
-- `idf.py size`: passed. Linked image total is 308,116 bytes. Flash code is
-  157,458 bytes, flash data is 68,440 bytes, and DIRAM use is 68,814 of
-  341,760 bytes (20.14%).
-- App binary: 308,240 bytes (`0x4b410`), leaving 71% of the standalone 1 MiB
+- `idf.py size`: passed. Linked image total is 339,608 bytes.
+- App binary: 339,728 bytes (`0x52f10`), leaving 68% of the standalone 1 MiB
   app partition free.
-- Launcher package: 308,240 bytes; minimum Launcher app allocation is 327,680
+- Launcher package: 339,728 bytes; minimum Launcher app allocation is 393,216
   bytes after 64 KiB alignment.
+- Input and movement host tests cover lowercase and shifted letters, numbers,
+  Symbol-layer punctuation, Alt, press/release edges, modifier resynchronization,
+  trackball-only input, all 256 tile IDs, legal,
+  blocked, local-edge, and wrap movement cases.
 - Native pack v2 generation, host validation, and format tests pass. The pack is
   132,284 bytes with payload CRC32 `933c9b82` and SHA-256
   `6eb001ed2a7729e683896998f693d02aeaf1327f3cddd661d1c726ef7414e188`.
@@ -110,13 +127,12 @@ device; the local build alone cannot establish electrical or card reliability.
   bit: the native framebuffer remains standard RGB565 and the asset pack is
   unchanged. The prior `0x68` selected BGR and swapped red/blue; the corrected
   landscape value is `0x60`, matching LilyGO's T-Deck setup.
-- Hardware status: Milestone 3 asset validation and the preceding display, SD,
-  shared-SPI, and Launcher behavior were verified by the user. The corrected
-  Milestone 4 colors still require physical-device visual verification.
+- Hardware status: Avatar movement and trackball feel are verified on the user's
+  T-Deck Plus. Keyboard direction chords have been deliberately removed.
 
 ## Hardware validation checklist
 
-Install the Milestone 4 Launcher image, attach a 115200-baud monitor, and verify:
+Install the Milestone 5 Launcher image, attach a 115200-baud monitor, and verify:
 
 - Serial reports `CPU frequency: 240 MHz`.
 - Screen orientation is landscape; the 176x176 viewport appears at native 1:1 scale.
@@ -127,11 +143,17 @@ Install the Milestone 4 Launcher image, attach a 115200-baud monitor, and verify
   center terrain/Avatar IDs, read count, duration,
   heap measurements, and viewport CRC32.
 - Visually confirm the Iolo's Hut tile orientation and the Avatar centered at `(5,5)`.
+- Use the trackball as the only movement control and confirm all four
+  directions still produce exactly one centered step per detent.
+- Press ordinary, shifted, Symbol-layer, numeric and Alt-modified keys and confirm
+  raw keyboard logs retain their codes, modifiers and press/release state without
+  moving the Avatar.
 - With the pack absent or deliberately corrupted, serial reports that condition
   and heartbeats continue without rendering or rebooting.
 - Without a card, screen ends at `SD: FAIL`, serial explains the error, and
   heartbeats continue.
 - Reset back into Launcher afterward to confirm Launcher remains available.
 
-Do not claim Milestone 4 visual correctness until the rendered screen passes on
-the physical T-Deck Plus.
+Trackball movement, blocking, centering and redraw behavior have passed physical
+testing. The final trackball-only package still requires a stability capture to
+confirm asset/render startup and the retained stack high-water margin.
