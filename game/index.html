@@ -652,22 +652,27 @@
          `flex-wrap: wrap` y los otros cuatro conservan `min-width: 0`, así que este ancho
          fijo no puede desbordar: la fila envuelve antes. */
       .touch-modebar .touch-fullscreen { flex: 0 0 auto; min-width: 44px; }
-      /* Pila de hojas: sólo la activa (.touch-sheet-on) se muestra. min-height estable
-         (~la altura de la cruceta) para que conmutar de modo no dé un salto brusco del
-         canvas al re-reservar. */
+      /* Pila de hojas: sólo la activa (.touch-sheet-on) se muestra. El min-height estable
+         (~la altura de la cruceta, para que conmutar de modo no dé un salto brusco del
+         canvas al re-reservar) es de la hoja MOVE y sólo de ella: las tres hojas de TECLADO
+         ya no viven en el flujo del deck. */
       .touch-sheets { pointer-events: auto; }
-      .touch-sheet { display: none; min-height: 196px; }
+      .touch-sheet { display: none; }
       .touch-sheet.touch-sheet-on { display: block; }
+      .touch-sheet-move { min-height: 196px; }
       .touch-sheet-move.touch-sheet-on { display: block; }
-      /* Filas de teclado (QWERTY / numpad): teclas fluidas a lo ancho. */
-      .touch-kbrow { display: flex; gap: 5px; margin-bottom: 5px; justify-content: center; }
-      .touch-kb { flex: 1 1 0; min-width: 0; padding: 12px 2px; font-size: 16px; }
-      .touch-kb-space { flex: 5 1 0; }
-      .touch-numrow { max-width: 320px; margin-left: auto; margin-right: auto; }
-      .touch-num { flex: 1 1 0; min-width: 0; padding: 16px 2px; font-size: 20px; }
-      /* Hoja Sí/No: dos botones grandes lado a lado. */
-      .touch-sheet-yesno.touch-sheet-on { display: flex; gap: 10px; align-items: stretch; }
-      .touch-yn { flex: 1 1 0; padding: 28px 2px; font-size: 22px; }
+      /* ★★ LA GEOMETRÍA DEL TECLADO (.touch-kbrow · .touch-kb · .touch-kb-space ·
+         .touch-numrow · .touch-num · .touch-yn, y la colocación de las hojas az/num/yesno)
+         SE HA IDO ENTERA a `src/ui/teclado-capa.ts`, que es desde el carril de consistencia
+         la ÚNICA autoridad sobre ella. No se ha «movido por orden»: estas seis reglas eran
+         la BASE que luego cada layout re-escribía por su cuenta —el partido con un
+         `display:none` y un `grid-area` de columna, Enhanced sin ninguna regla (y por tanto
+         estrujada por el deck en `flex-direction:row`), el apaisado con una barra `fixed`
+         propia— así que el mismo teclado salía con cuatro tamaños de tecla. Con la capa, lo
+         que un layout puede decidir es DÓNDE aparece (`--u5-kb-suelo`, que publica
+         `ui/touch.ts`), no cómo es.
+         ⚠ Lo que SÍ se queda aquí es el COLOR de Sí/No, abajo: es paleta y accesibilidad
+         (su aritmética la guarda `tests/deck-a11y-contraste.test.ts`), no geometría. */
       /* Codificación por color de Sí/No. El rojo #7a4a3a daba 2,28:1 (por debajo de la
          norma) y el verde 3,29:1 raspando: se aclaran ambos manteniendo el par
          verde/rojo distinguible (y el color NUNCA es el único indicador: el rótulo dice
@@ -846,29 +851,22 @@
          `overflow-y:hidden` la fila Space/⏎/Esc quedaba CORTADA por abajo (auditoría
          2026-07-25). En apaisado la hoja la dimensiona la cadena flex (sheets flex:1),
          así que el suelo se retira: el que manda es el de la cruceta. */
-      html[data-orient="landscape"] .touch-sheet { min-height: 0; }
+      html[data-orient="landscape"] .touch-sheet-move { min-height: 0; }
       html[data-orient="landscape"] .touch-sheet-move.touch-sheet-on {
         display: flex; flex-direction: column; height: 100%; min-height: 0;
       }
       html[data-orient="landscape"] .touch-cmdwrap { flex: 1 1 auto; min-height: 0; }
-      /* TECLADO A–Z EN APAISADO: fuera de la columna (auditoría 2026-07-25: 10 teclas
-         en los ~236 px de la columna daban **19,1 px** de tecla — inusable, no es que
-         fuera incómodo). Pasa a BARRA FIJA a lo ancho de la pantalla, igual que el
-         teclado del sistema: en un iPhone apaisado (844) las teclas pasan a ~79 px, y
-         en el SE (568) a ~51. Fondo opaco + borde porque flota sobre el juego, y
-         safe-area en los tres lados que toca (en apaisado el notch cae a los lados).
-         La barra de modo (al TOPE de la columna) queda siempre por encima del teclado,
-         así que salir de la hoja sigue siendo un tap. */
-      html[data-orient="landscape"] .touch-sheet-az.touch-sheet-on {
-        position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
-        background: rgba(12, 8, 4, 0.96);
-        border-top: 2px solid #6b5a2a;
-        padding:
-          6px
-          calc(6px + env(safe-area-inset-right))
-          calc(6px + env(safe-area-inset-bottom))
-          calc(6px + env(safe-area-inset-left));
-      }
+      /* ★★ AQUÍ VIVÍA EL TECLADO A–Z APAISADO, Y ES EL ORIGEN DEL CARRIL DE CONSISTENCIA.
+         La regla (auditoría 2026-07-25) sacaba la hoja A–Z de la columna —10 teclas en los
+         ~236 px del raíl daban **19,1 px** de tecla, inusable— y la ponía como BARRA FIJA a
+         lo ancho, con fondo opaco, filete y safe-area. Era la ÚNICA de las cuatro
+         presentaciones del teclado que estaba bien… y era de UNA hoja (az) en UNA
+         orientación, así que num y yesno seguían dentro del raíl y los tres layouts
+         verticales seguían cada uno con la suya.
+         Hoy esa geometría —posición fija, ancho completo, fondo, filete, insets— es la de
+         `src/ui/teclado-capa.ts` para LAS TRES hojas y LAS DOS orientaciones, con los mismos
+         colores y el mismo relleno que esta regla fijó. El apaisado no pierde nada: la capa
+         le da suelo 0 (`ui/touch.ts`), o sea exactamente el `bottom: 0` de aquí. */
       html[data-orient="landscape"] .touch-commands {
         max-height: none; flex: 1 1 auto; grid-auto-rows: minmax(44px, auto);
       }

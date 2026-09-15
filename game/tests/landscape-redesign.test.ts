@@ -22,6 +22,7 @@ import {
   layoutOriginalCss,
   layoutApaisadoCss,
 } from "../src/skin/portrait/deck-ancho.js";
+import { tecladoCapaCss } from "../src/ui/teclado-capa.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const NATIVO_TS = readFileSync(join(HERE, "../src/skin/portrait/deck-nativo.ts"), "utf8");
@@ -31,6 +32,9 @@ const UI = botonesUiCss();
 const BLOQUES = wideDeckCss();
 const ORIG = layoutOriginalCss();
 const LAND = layoutApaisadoCss();
+// La capa de teclado: desde el carril de consistencia (12-09) es quien sirve la barra a lo
+// ancho que este layout inventó, y por eso el sello la lee desde aquí.
+const CAPA = tecladoCapaCss();
 
 describe("pieza 1 · la PIEL DE BOTONES no depende de la orientación", () => {
   // LA QUEJA, MEDIDA: el mismo botón, la misma sesión, sólo cambia la orientación —
@@ -192,7 +196,23 @@ describe("piezas 3-4 · el apaisado se reparte en DOS RAÍLES", () => {
     expect(LAND).toMatch(/data-pad-side="right"\]\s*\.touch-cmdwrap\s*\{\s*grid-column:\s*1;/);
   });
 
-  it("y las hojas de teclado siguen siendo BARRA a lo ancho (decisión del 25-07 intacta)", () => {
-    expect(LAND).toMatch(/\.touch-sheet-az\.touch-sheet-on,[\s\S]{0,200}grid-area:\s*2 \/ 1 \/ 3 \/ -1/);
+  it("y las hojas de teclado siguen siendo BARRA a lo ancho — ahora servida por su capa", () => {
+    // LA DECISIÓN DEL 25-07 SIGUE VIVA; lo que cambia es QUIÉN la sirve. Aquí se colocaban
+    // con `grid-area: 2 / 1 / 3 / -1` dentro de la rejilla de los dos raíles; desde el
+    // carril de consistencia (12-09) la barra a lo ancho la da `ui/teclado-capa.ts` para las
+    // TRES hojas y las DOS orientaciones — en apaisado con suelo 0, que es el `bottom: 0` de
+    // siempre. El apaisado no pierde nada y GANA num y yesno, que hasta hoy se quedaban
+    // dentro del raíl de ~244 px mientras sólo A–Z salía a lo ancho.
+    expect(CAPA, "la capa ancla la hoja al borde inferior y a todo el ancho").toMatch(
+      /position:\s*fixed;[\s\S]{0,120}left:\s*0;[\s\S]{0,40}right:\s*0;/,
+    );
+    expect(CAPA).toMatch(/bottom:\s*var\(--u5-kb-suelo/);
+    // …y este layout ya no coloca ninguna hoja por su cuenta: es la propiedad que impide que
+    // vuelvan a existir cuatro presentaciones del mismo teclado.
+    for (const hoja of ["az", "num", "yesno"]) {
+      expect(LAND, `el apaisado coloca .touch-sheet-${hoja}`).not.toMatch(
+        new RegExp(`touch-sheet-${hoja}\.touch-sheet-on[^}]*grid-area`),
+      );
+    }
   });
 });

@@ -2521,8 +2521,16 @@ export class FaithfulSkin implements Skin {
             "--u5-hud-top",
             `${Math.round(canvas.getBoundingClientRect().bottom)}px`,
           );
+          // QUÉ COMPOSICIÓN VERTICAL ESTÁ VIVA (ver el hermano de `skin/portrait/skin.ts`,
+          // donde está la derivación entera). Esta piel sólo sabe pintar el letterbox: el
+          // 320×200 va ENTERO dentro del canvas, así que `--u5-hud-top` es su borde
+          // INFERIOR y el hueco libre es la franja negra de DEBAJO. Publicarlo es lo que
+          // permite al panel de tienda bajar a esa franja en vez de colgarse hacia arriba
+          // —sobre la consola— como haría con la fórmula del re-flow.
+          root.dataset.u5Portrait = "clasico";
         } else {
           root.style.removeProperty("--u5-hud-top");
+          delete root.dataset.u5Portrait;
         }
       }
     };
@@ -3707,6 +3715,7 @@ export class FaithfulSkin implements Skin {
     // vertical con `--u5-reflow-content`, y por el mismo motivo).
     if (typeof document !== "undefined") {
       document.documentElement.style.removeProperty("--u5-hud-top");
+    delete document.documentElement.dataset.u5Portrait;
     }
     if (this.aspectHandler)
       window.removeEventListener(ASPECT_EVENT, this.aspectHandler);

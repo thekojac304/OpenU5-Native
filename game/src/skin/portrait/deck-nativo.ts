@@ -47,6 +47,13 @@ import { onExpectedSheet } from "../../ui/touch.js";
 import { UI_CLASS } from "./deck-ancho.js";
 import { TapGate } from "../../ui/tap-or-drag.js";
 import { keyboardClearance } from "../../ui/viewport-fit.js";
+// El `transform` de la pila de juego tiene DOS demandantes (este puente y la capa de
+// teclado propia) y ninguno puede escribirlo a pelo: ver la cabecera de ese fichero.
+import {
+  fijarObjetivoElevacion,
+  medirSinLift,
+  pedirElevacion,
+} from "../../ui/elevacion-juego.js";
 import { ts } from "../../i18n/shell.js";
 
 /** Clase que marca el botón ⌨ cuando el teclado del SISTEMA es la única vía de entrada. */
@@ -678,14 +685,34 @@ export function installNativeKeyboard(
     az: { alzada: boolean; visible: boolean },
     num: { alzada: boolean; visible: boolean },
   ): void => {
-    kbBtn.classList.toggle(HINT_CLASS, necesitaTecladoSistema(az, num));
+    const hace_falta = necesitaTecladoSistema(az, num);
+    kbBtn.classList.toggle(HINT_CLASS, hace_falta);
     if (azOn === azWasOn) return;
     azWasOn = azOn;
-    if (azOn) {
+    // ★★ EL AUTO-ALZADO DEL TECLADO DEL SISTEMA PASA A ESTAR GATEADO POR EL MISMO PREDICADO
+    // QUE SU PISTA VISUAL — `necesitaTecladoSistema()`, que dice «la hoja que el motor alzó
+    // NO se ve, así que el teclado del sistema es la ÚNICA vía».
+    //
+    // POR QUÉ AHORA: hasta el carril de consistencia (12-09) el predicado era siempre cierto
+    // para `az` en este layout (la hoja estaba en `display:none`), así que gatear no habría
+    // cambiado nada y no gatear no costaba nada. Desde que la capa de teclado
+    // (`ui/teclado-capa.ts`) sirve la hoja A–Z en los CUATRO layouts, no gatear sí cuesta: el
+    // jugador vería el teclado del port y, encima, el del teléfono tapándolo — dos teclados
+    // para un prompt. El criterio no se inventa aquí, se REUSA: es literalmente la función
+    // que este fichero ya exporta y razona, y que la pista del botón ya consumía.
+    //
+    // ⚠ EL PUENTE NO SE PIERDE, que es lo que el encargo pide preservar. El botón «ABC»
+    // sigue abriéndolo de un toque (con su `focus()` dentro del gesto, que es la única forma
+    // que iOS acepta), el campo sigue montado y sus tres vías de entrada —`beforeinput`,
+    // `keydown` y el centinela del ⌫— siguen intactas. Lo que deja de haber es la apertura
+    // AUTOMÁTICA cuando ya hay teclas en pantalla. Y es, además, lo que la spec del usuario
+    // del 27-07 pedía al pie de la letra: «el teclado estándar … que este se active con un
+    // botón».
+    if (azOn && hace_falta) {
       input.value = KB_SENTINEL;
       input.focus();
       pedirFoco();
-    } else {
+    } else if (!azOn) {
       focoPedido = false;
       if (document.activeElement === input) input.blur();
     }
@@ -795,14 +822,24 @@ export function installNativeKeyboard(
         document.activeElement !== input ||
         document.documentElement.dataset.orient === "landscape"
       ) {
-        contenedorJuego.style.transform = "";
+        // 🔴 ANTES AQUÍ HABÍA UN `contenedorJuego.style.transform = ""` Y ERA UN BORRADO
+        // CIEGO. Este handler corre en cada `resize`/`scroll` del visual viewport (la barra
+        // del navegador apareciendo: constante en un teléfono), así que con el teclado del
+        // sistema cerrado BORRABA el lift de quien fuera — y desde el carril de consistencia
+        // hay otro demandante legítimo: la capa de teclado propia (`ui/touch.ts`,
+        // `syncElevacionTeclado`), que sube la pila cuando la hoja A–Z taparía la consola en
+        // el layout partido. Retirar la demanda PROPIA en vez de la propiedad es lo que
+        // impide que el último en correr gane. Ver `ui/elevacion-juego.ts`.
+        pedirElevacion("sistema", 0);
         return;
       }
-      contenedorJuego.style.transform = ""; // medir LIMPIO (si no, la corrección se realimenta)
-      const r = gameSurface.getBoundingClientRect();
+      // Medir LIMPIO: `getBoundingClientRect()` incluye los transform de los ancestros, así
+      // que con el lift puesto el canvas «ya cabe» y la corrección se evapora al frame
+      // siguiente. `medirSinLift` es el mismo `transform = ""` de antes, con la restauración
+      // garantizada (y sin pisar la demanda de la otra fuente).
+      const r = medirSinLift(() => gameSurface.getBoundingClientRect());
       if (r.height <= 0) return;
-      const dy = keyboardClearance(r.top, r.height, vv.offsetTop, vv.height);
-      if (dy !== 0) contenedorJuego.style.transform = `translateY(${dy}px)`;
+      pedirElevacion("sistema", keyboardClearance(r.top, r.height, vv.offsetTop, vv.height));
     };
     // QUIÉN DISPARA QUÉ, sin adornos: en el ALZADO el visual viewport todavía NO ha
     // encogido (el teclado de iOS llega después y con animación), así que quien manda es
@@ -814,12 +851,16 @@ export function installNativeKeyboard(
     input.addEventListener("blur", elevar);
     vv.addEventListener("resize", elevar);
     vv.addEventListener("scroll", elevar);
+    // El objetivo lo declara quien lo conoce. `ui/touch.ts` resuelve el MISMO nodo (el
+    // padre del canvas) desde su propia vía, y la función es idempotente, así que declararlo
+    // dos veces no es un desacuerdo: es la misma respuesta por dos caminos.
+    fijarObjetivoElevacion(contenedorJuego);
     cleanups.push(() => {
       input.removeEventListener("focus", elevar);
       input.removeEventListener("blur", elevar);
       vv.removeEventListener("resize", elevar);
       vv.removeEventListener("scroll", elevar);
-      contenedorJuego.style.transform = "";
+      pedirElevacion("sistema", 0);
     });
   }
 

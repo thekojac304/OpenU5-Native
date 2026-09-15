@@ -223,6 +223,12 @@ describe("(B) equivalencia de despacho", () => {
         "enter",
         "space",
         "esc",
+        // Conmutador de TECLADO (reporte del usuario 12-09): entra aquí y NO en el cajón
+        // porque es la única vía de un toque a las hojas A–Z/123/Sí-No en la chapa que
+        // oculta la barra de modo. No es un verbo del binario —no sintetiza tecla de
+        // juego—, así que la frase de arriba sigue siendo cierta: la barra es de SISTEMA
+        // y no tiene ni una celda con censo.
+        "kbd",
         "commands",
       ]);
       for (const b of slots) expect(b.hidden, `${b.dataset.u5eSlot} en ${ctx}`).toBe(false);

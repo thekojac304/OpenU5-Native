@@ -94,6 +94,21 @@ const CENSO: Record<string, { literalesMin: number; sueloReglas: number }> = {
   // existen mientras el panel vive, asi que un truncamiento no se veria en ninguna
   // pantalla hasta que alguien abriera un prompt de PJ en un telefono.
   "game/src/enhanced/party/css.ts": { literalesMin: 1, sueloReglas: 16 },
+  // medido 2026-09-12 (panel compacto de tienda, auditoría de entrada manual fase A):
+  // 1 literal (shopPanelCss), 17 reglas. Quinta hermana del patrón y con el riesgo
+  // AGRAVADO respecto a las tres anteriores: su literal lleva backticks ESCAPADOS
+  // (\`--u5-touch-reserve\`, \`html.u5-touch\`…) dentro de comentarios CSS, y un escape
+  // mal puesto corta la hoja en seco sin que TypeScript se queje — que es exactamente
+  // el defecto que esta ficha existe para cazar. Suelo con holgura de una regla.
+  "game/src/enhanced/shop/css.ts": { literalesMin: 1, sueloReglas: 16 },
+  // medido 2026-09-12 (carril de consistencia del teclado): 1 literal (tecladoCapaCss),
+  // 9 reglas. Cuarta hermana del patrón, y la de riesgo MÁS alto de todas por una razón
+  // propia: es la ÚNICA autoridad sobre la geometría del teclado en los cuatro layouts
+  // (las reglas rivales de `index.html`, `deck-ancho.ts` y la chapa Enhanced se retiraron
+  // en su commit), así que un truncamiento por backtick no degrada una presentación —
+  // deja al teclado SIN NINGUNA, en flujo dentro del deck y estrujado, que es exactamente
+  // el defecto que el carril vino a cerrar.
+  "game/src/ui/teclado-capa.ts": { literalesMin: 1, sueloReglas: 6 },
   // medido: 1 literal (CSS), 36 reglas
   "game/src/debug/teleportPicker.ts": { literalesMin: 1, sueloReglas: 25 },
   // medido: 1 literal (CSS), 38 reglas

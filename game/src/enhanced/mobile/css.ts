@@ -299,17 +299,48 @@ ${R} .u5e-dbtn:focus-visible,
 ${R} .u5e-cmd:focus-visible { outline: 2px solid #ffe9a8; outline-offset: 2px; }
 
 /* ── 4. BARRA PERSISTENTE ────────────────────────────────────────────────────────────
-   Rejilla de columnas FIJAS (nunca \`auto-fill\`): ver la nota del cajón, abajo. CINCO
-   celdas, las mismas en los tres contextos — desde el 12-09 «Look» ya no vive aquí (se fue
-   a la fila rápida, donde es un verbo entre verbos: ver \`actionbar.ts\`), y con él se fue
-   la única celda que el censo podía vaciar. Lo que queda son las cinco teclas del PORT:
-   menú, confirmar, pasar, cancelar y la puerta al cajón.
-   Pasar de 6 a 5 columnas ensancha cada celda ~12 px en un teléfono de 390, que es
-   justamente lo que «Commands»/«Comandos» necesitaba para no ir apretado. */
+   Rejilla de columnas FIJAS (nunca \`auto-fill\`): ver la nota del cajón, abajo. SEIS
+   celdas, las mismas en los tres contextos: las cinco teclas del PORT (menú, confirmar,
+   pasar, cancelar y la puerta al cajón) más el conmutador de TECLADO.
+
+   ── EL VAIVÉN 6→5→6, PORQUE LAS DOS MITADES SIGUEN SIENDO VERDAD ─────────────────────
+   Aquí hubo seis celdas, la sexta era «Look», y el 12-09 pasó a cinco: Look era un VERBO
+   de juego en una barra de SISTEMA y se fue a la fila rápida (\`actionbar.ts\`), y la nota
+   que quedó decía —con razón— que quitar una columna ensancha cada celda ~12 px en un
+   teléfono de 390, que era justo lo que «Commands»/«Comandos» necesitaba.
+   El 12-09 (reporte del usuario) vuelve a entrar una sexta, y NO es un verbo: es el
+   conmutador de teclado, la única vía de UN toque a las hojas A–Z/123/Sí-No en la única
+   chapa de las cuatro que no tenía ninguna (ver \`BAR_SLOTS\`). Cabe por la medida que ya
+   estaba escrita y pagada dos líneas más abajo: el \`font-size: 11px\` de \`.u5e-btn\` se
+   eligió **para seis columnas** («la celda … mide ~58 px … seis columnas»), midiendo que
+   «Commands» pide ~53 px y entra de una línea en los DOS idiomas. O sea: los 12 px que la
+   quinta columna regaló eran holgura sobre un rótulo que YA cabía, no el margen que lo
+   hacía caber. Y si alguna vez deja de caber, lo que se verá es el cizallado que la sonda
+   de \`mobile-geometry\` caza en EN y en ES, no una palabra rota en silencio.
+
+   ⚠ EN LA FORMA COMPACTA NO CUESTA NI UN PÍXEL DE ALTO, y por eso la sexta entra ahí sin
+   discusión: \`[data-compacto="1"]\` sirve la barra a \`repeat(3, …)\`, donde cinco celdas ya
+   ocupaban DOS filas (3 + 2, con un hueco). Seis las llena exactamente. */
 ${R} .u5e-bar {
   flex: 1 1 auto;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  /* ── COLUMNAS DESIGUALES, PORQUE LOS RÓTULOS LO SON ─────────────────────────────────
+     Seis columnas iguales a 375 px dan 52 px de contenido por celda, y MEDIDO ahí mismo
+     «Commands» pide 57 (\`scrollWidth\` 57 vs \`clientWidth\` 52): cizallado, que es justo lo
+     que la sonda de \`mobile-geometry\` caza y lo que el comentario del \`font-size\` de abajo
+     dice que no puede pasar. La medida de ese comentario («seis columnas ⇒ ~58 px») se tomó
+     en un teléfono de 390; a 375 —el SE, el más estrecho del censo— sobran 6 px menos y el
+     rótulo deja de entrar.
+     La salida NO es encoger la letra ni partir la palabra (las dos ya están descartadas ahí
+     abajo, y la segunda con un defecto medido detrás): es dejar de repartir a partes iguales
+     un espacio que los rótulos no usan por igual. «☰» es UN glifo y «Commands»/«Comandos»
+     son OCHO; darles la misma columna es lo que obligaba a que la columna sirviera al peor
+     caso. El \`minmax(44px, …)\` del ☰ es el suelo táctil, que sigue mandando sobre el
+     reparto. Reparto resultante a 375: ☰ 44 · las cuatro de en medio ~53 · Commands ~79. */
+  grid-template-columns:
+    minmax(44px, 0.7fr)
+    repeat(4, minmax(0, 1fr))
+    minmax(0, 1.5fr);
   gap: 4px;
   pointer-events: auto;
   min-width: 0;
@@ -346,6 +377,27 @@ ${R} .u5e-btn.u5e-cmds {
   border-color: #a88a3a;
 }
 ${R} .u5e-btn.u5e-cmds[aria-expanded="true"] {
+  background: #6b5a2a;
+  border-color: #ffe9a8;
+}
+/* CONMUTADOR DE TECLADO ENCENDIDO — el MISMO lenguaje visual que el \`touch-mode-on\` de los
+   segmentos de la barra de modo y de los activadores de la fila útil, que es lo que este
+   botón sustituye en esta chapa.
+
+   🔴 SE LEE DE LA RAÍZ, NO DE UNA CLASE PROPIA, y ésa es toda la gracia: \`applyMode()\`
+   publica la hoja viva en \`<html data-deck-sheet>\` desde el 01-08 (para que un ANCESTRO
+   del deck pudiera reaccionar), así que el estado de este conmutador sale gratis y —lo que
+   importa— sale igual venga el cambio de un toque suyo o del AUTO-ALZADO del motor
+   (\`expectInput\`). Con una clase propia habría que sincronizarla en los dos caminos, y el
+   segundo es el que se olvida. Lo único que sí necesita JS es el \`aria-pressed\`, que un
+   atributo de raíz no puede escribir (ver \`onDeckSheet\` en \`ui/touch.ts\`).
+
+   Se enumeran las TRES hojas en vez de \`:not([data-deck-sheet="move"])\`: sin atributo
+   —deck recién montado, antes del primer \`applyMode\`— el \`:not()\` casaría y el botón
+   nacería encendido sobre un teclado que no está. */
+${R}[data-deck-sheet="az"] .u5e-btn.u5e-kbd,
+${R}[data-deck-sheet="num"] .u5e-btn.u5e-kbd,
+${R}[data-deck-sheet="yesno"] .u5e-btn.u5e-kbd {
   background: #6b5a2a;
   border-color: #ffe9a8;
 }

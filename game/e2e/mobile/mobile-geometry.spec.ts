@@ -651,23 +651,27 @@ test("barra de modo apaisada: 2 filas EXACTAS de segmentos ≥44, sin desbordar 
 });
 
 /**
- * 🔴 PINCHADO AL CLÁSICO tras MEDIR la premisa (ficha #127 item 2, 09-08). Corría como
- * `"invariante"` y en el partido moría en `setSheet(page,"az")` con «ningún activador
- * visible» — que se leía como defecto de geometría y no lo es: **en el partido la hoja A–Z
- * no existe en NINGUNA orientación** (el activador está en el DOM con `display:none`, y el
- * texto va por el teclado del SISTEMA, botón «ABC»). La tabla de las cuatro celdas
- * layout×orientación está en `deck.ts`, sobre `hojasDelLayout`.
+ * ★★ DES-PINCHADO EL 12-09: vuelve a ser `"invariante"` y corre en LOS DOS layouts.
  *
- * No es un hueco de producto: la entrada de texto es alcanzable en las cuatro celdas — en el
- * clásico por esta hoja, en el partido por el teclado del SO (visible y a 44 px en las dos
- * orientaciones, medido). Lo que este test fija —que la barra A–Z se sirva a lo ancho de la
- * pantalla— es una propiedad de la hoja, y la hoja sólo la tiene un layout.
+ * Estuvo pinchado al clásico desde el 09-08 (ficha #127 item 2) tras MEDIR su premisa, y la
+ * medición era correcta: en el partido la hoja A–Z **no existía en ninguna orientación** (el
+ * activador estaba en el DOM con `display:none` y el texto iba por el teclado del SISTEMA),
+ * así que el test moría en `setSheet(page,"az")` con «ningún activador visible» — un rojo que
+ * se leía como defecto de geometría sin serlo.
+ *
+ * Lo que cambia no es la premisa: es el PRODUCTO. La capa de teclado
+ * (`src/ui/teclado-capa.ts`) sirve la hoja en los cuatro layouts, así que la propiedad que
+ * este test fija —que la barra A–Z se sirva a lo ancho de la PANTALLA y no dentro del raíl—
+ * ya no es de un layout, es del teclado. Correrlo sólo en el clásico dejaría sin vigilar
+ * justo la celda que el carril arregló.
+ *
+ * ⚠ La única rama que sobrevive es la barra de modo: el partido la retira entera, así que su
+ * aserto va bajo `hayBarraDeModo()` — el mismo patrón que el resto del fichero.
  */
 test("teclado A–Z apaisado: barra a lo ancho de la PANTALLA, teclas operables y tecleables", async ({
   page,
 }) => {
-  test.skip(soloEnLayout("clasico"), "el partido no monta hoja A–Z: su texto va por el teclado del SO");
-  await gotoMobile(page, "clasico");
+  await gotoMobile(page, "invariante");
   await ensureOrient(page, "landscape");
   await setSheet(page, "az");
 
@@ -691,11 +695,23 @@ test("teclado A–Z apaisado: barra a lo ancho de la PANTALLA, teclas operables 
     expect(k.w, "ancho de tecla (patrón teclado-del-SO, suelo operable)").toBeGreaterThanOrEqual(34);
     expect(k.h, `alto de tecla ≥${MIN_TARGET}`).toBeGreaterThanOrEqual(MIN_TARGET);
   }
-  // La barra de modo NO queda debajo del teclado (es la salida de la hoja).
-  const modebar = await rect(page, ".touch-modebar");
-  expect(modebar.y + modebar.h, "la barra de modo sigue accesible sobre el teclado").toBeLessThanOrEqual(
-    sheet.y + 1,
-  );
+  // LA SALIDA DE LA HOJA SIGUE VISIBLE POR ENCIMA DEL TECLADO. Antes esto preguntaba por
+  // `.touch-modebar` a secas, y en apaisado eso ya no existe en NINGÚN layout: el rediseño
+  // de dos raíles la jubila (`layoutApaisadoCss`), y `hayBarraDeModo()` decide por el NOMBRE
+  // del layout, no por el DOM — o sea que en apaisado mentía. Se pregunta por lo observable,
+  // que además es lo que al jugador le importa: que quede ALGO con lo que salir de la hoja.
+  const salidas = await page
+    .locator(".touch-modebar .touch-mode, .touch-util .touch-sheetbtn, .u5padkey-esc")
+    .evaluateAll((els) =>
+      els
+        .map((e) => e.getBoundingClientRect())
+        .filter((r) => r.width > 0 && r.height > 0)
+        .map((r) => r.y + r.height),
+    );
+  expect(
+    salidas.filter((b) => b <= sheet.y + 1).length,
+    "ninguna salida de la hoja queda visible por encima del teclado apaisado",
+  ).toBeGreaterThan(0);
   // Y teclea de verdad: la hoja sigue sintetizando keydown tras el re-anclado.
   //
   // ★ ADJUDICADO EL 02-08 — este aserto estaba MAL ESCRITO, y era uno de los 5 rojos vivos

@@ -100,6 +100,17 @@ import { buildSpellCatalog } from "./enhanced/spells/catalog.js";
 import { makeCastSpellEntry } from "./enhanced/spells/entry.js";
 import { spellPickerOpen } from "./enhanced/spells/panel.js";
 import { closePartyChooser, syncPartyChooser } from "./enhanced/party/panel.js";
+// INTERFAZ DE TIENDA (auditoría de entrada manual, fase A): el prompt `{type:"shop"}` es
+// un getkey CRUDO y por eso nunca alzó hoja del deck. El régimen Modern le pone una
+// superficie —una fila por opción que la fase VIVA ya expone— que sintetiza la MISMA
+// tecla por `press()`. El interruptor es una preferencia pura, como `castingUi`.
+import { closeShopPanel, syncShopPanel } from "./enhanced/shop/panel.js";
+import {
+  guardarShopUi,
+  panelDeTiendaActivo,
+  shopUiGuardado,
+  type ShopUi,
+} from "./enhanced/shop/mode.js";
 import {
   mountEnhancedChrome,
   type EnhancedChromeHandle,
@@ -2085,9 +2096,33 @@ async function boot(): Promise<void> {
       if (spellPickerOpen()) {
         setExpectedInput(null);
         closePartyChooser();
+        closeShopPanel();
         return;
       }
       const pp = prompts.current;
+      // ── PANEL COMPACTO DE TIENDA (auditoría de entrada manual, fase A) ─────────────
+      // El prompt de tienda es un getkey CRUDO: no es dígito, ni Y/N, ni A-Z, así que el
+      // deck nunca le alzó hoja (y con razón — ver el comentario de arriba). La
+      // consecuencia en un teléfono era que la conversación entera del mercader (saludo,
+      // menú por letra, lista de ocho reactivos, `Deal?`, epílogo) se contestaba a ciegas.
+      //
+      // Lo que cambia es LA SUPERFICIE, no el prompt: `syncShopPanel` pinta una fila por
+      // opción que `ShopConsole.snapshot()` YA expone para esa fase, y cada una sintetiza
+      // su letra por el mismo `press()` que usan los botones del deck. El conductor, el
+      // prompt, los precios y el stream de rand no se enteran. Y NO toca `expected`: el
+      // prompt de tienda sigue sin forzar hoja, exactamente como en Clásico.
+      //
+      // El gate es el régimen `u5.shopUI` y NO la chapa Enhanced: acertar una letra de un
+      // menú recién impreso cuesta lo mismo en escritorio, así que esto se ofrece en las
+      // dos superficies (misma decisión que la lista de hechizos). `panelDeTiendaActivo()`
+      // sólo se consulta con una tienda abierta — construye un `URLSearchParams` y toca
+      // `localStorage`, y esto corre en la cola de CADA keydown.
+      const tiendaArmada = pp?.type === "shop" && shopConsole !== null;
+      syncShopPanel({
+        activo: tiendaArmada,
+        disponible: tiendaArmada && panelDeTiendaActivo(),
+        snapshot: tiendaArmada ? (shopConsole?.snapshot() ?? null) : null,
+      });
       // ── SELECTOR COMPACTO DE MIEMBRO (auditoría de mandos móviles, 12-09) ──────────
       // `party-select` sigue siendo un prompt de DÍGITO —sus teclas son '1'..'N'— y por eso
       // seguía alzando la hoja «123» genérica: la rejilla de diez teclas que existe para las
@@ -3532,6 +3567,11 @@ async function boot(): Promise<void> {
     const endShopConsole = (): void => {
       shopConsole = null;
       prompts.current = null;
+      // El panel Modern se desmonta AQUÍ y no sólo en la cola del keydown: la despedida
+      // del mercader es el único momento en que la tienda se cierra, y dejarlo al
+      // `syncShopPanel` del final de la tecla lo mantendría pintado un frame sobre un
+      // mapa que ya no tiene tienda. Cerrar NO emite tecla (ver `dispose`).
+      closeShopPanel();
       hud.refresh();
       refreshAwaiting();
     };
@@ -3776,6 +3816,10 @@ async function boot(): Promise<void> {
         view.setZodiacView(null);
       }
       prompts.current = null;
+      // …y con el prompt se va el panel Modern de tienda, que es una vista suya: cargar
+      // partida en mitad de un mercader lo dejaría pintado sobre la partida nueva (misma
+      // clase que las escenas y los timers que este teardown ya baja).
+      closeShopPanel();
       pendingDirCommand = null;
       pendingDungeonKlimb = false;
       pendingDungeonSearch = null;
@@ -6765,6 +6809,14 @@ async function boot(): Promise<void> {
           // esta fila no avisa de recarga: no la hay.
           castingUi: castingUiGuardado,
           setCastingUi: (ui: CastingUi) => guardarCastingUi(ui),
+          // ── INTERFAZ DE TIENDA (Clásico / Moderno) ────────────────────────────────
+          // EN CALIENTE y sin re-montar nada, por lo mismo que la fila de arriba:
+          // `syncShopPanel` consulta el régimen en la cola de cada tecla, así que el
+          // cambio vale para la fase de tienda siguiente — incluso con el mercader ya
+          // abierto. No hay DOM instalado que reconstruir, y por eso esta fila tampoco
+          // avisa de recarga: no la hay.
+          shopUi: shopUiGuardado,
+          setShopUi: (ui: ShopUi) => guardarShopUi(ui),
           padSideDisponible: padSideOfrecible,
           // ── POSICIÓN DE LA CRUCETA (izquierda · centro · derecha) ─────────────────
           // El gate es la CHAPA VIVA y no la preferencia guardada: `data-u5e-pad` sólo lo

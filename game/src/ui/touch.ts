@@ -24,6 +24,19 @@ import { attachScrollHint, type ScrollHintHandle } from "./scroll-hint.js";
 import { detectFullscreenApi } from "./fullscreen.js";
 import { HoldRepeat } from "./hold-repeat.js";
 import { esTactilAhora, onCambioRegimenTactil } from "./regimen-tactil.js";
+import {
+  bandaDelTeclado,
+  hojaTecladoViva,
+  installTecladoCapa,
+  uninstallTecladoCapa,
+} from "./teclado-capa.js";
+import {
+  fijarObjetivoElevacion,
+  medirSinLift,
+  objetivoElevacion,
+  pedirElevacion,
+} from "./elevacion-juego.js";
+import { keyboardClearance } from "./viewport-fit.js";
 
 // Etiquetas y títulos = capa del shell (UI autorada del port, NO del binario): base
 // INGLESA, traducidas por `ts()` en el render (identidad estricta bajo 'en'). Los
@@ -189,11 +202,23 @@ export const SHEET_ACTIVATORS: { label: string; mode: "yesno" | "num"; title: st
  * prototipo, cuya columna 1 es «☰ · teclado · números · sí/no» (spec del usuario 27-07
  * noche) — vía `ensureSheetActivator("az")`.
  *
- * En el layout PARTIDO no se usa: allí el texto va por el teclado del SISTEMA (botón
- * «ABC» de `skin/portrait/deck-nativo.ts`) y el CSS oculta éste.
+ * ★★ SÍ SE USA EN EL PARTIDO DESDE EL 12-09 (carril de consistencia del teclado). La nota
+ * anterior decía «allí el texto va por el teclado del SISTEMA y el CSS oculta éste», y era
+ * cierta mientras la hoja A–Z estaba en `display:none` en ese layout. Hoy la sirve la capa
+ * (`ui/teclado-capa.ts`) en los cuatro, así que el activador hace falta en los tres layouts
+ * que retiran la barra de modo — si no, el jugador del partido no tendría vía MANUAL de
+ * pedir el teclado del port.
+ *
+ * 🔴 Y POR ESO EL RÓTULO YA NO PUEDE SER «ABC»: en el raíl del partido convive con el botón
+ * «ABC» del teclado del SISTEMA (`skin/portrait/deck-nativo.ts`), y dos botones idénticos
+ * uno al lado del otro con destinos distintos es peor que no tener el segundo. Se usa «A–Z»,
+ * que NO es vocabulario nuevo: es EXACTAMENTE el rótulo con el que la barra de modo nombra
+ * esta misma hoja (`MODE_SEGMENTS`), ya censado en `deck-glyph-census.test.ts` y ya
+ * traducido en `i18n/shell.ts:419`. «ABC» se queda donde estaba: en el puente al teclado del
+ * teléfono.
  */
 export const AZ_ACTIVATOR = {
-  label: "ABC",
+  label: "A–Z",
   mode: "az" as const,
   title: "Show the letter keyboard",
 };
@@ -667,6 +692,36 @@ export function onDeckContext(cb: DeckContextListener): () => void {
 /** Contexto vivo, o `null` si no hay deck montado (escritorio, o `?replay=` solo-UI). */
 export function currentDeckContext(): DeckContext | null {
   return active?.contextNow() ?? null;
+}
+
+/**
+ * ── QUIÉN NECESITA SABER QUE LA HOJA CAMBIÓ, Y POR QUÉ NO LE BASTA EL CSS ─────────────
+ *
+ * `applyMode()` ya publica la hoja viva en `<html data-deck-sheet>`, y con eso el COLOR de
+ * cualquier conmutador externo se resuelve en CSS sin una línea de JS (ver el conmutador
+ * de teclado de la barra Enhanced). Lo que un atributo de raíz NO puede escribir es el
+ * `aria-pressed` del botón — y sin él un conmutador es, para un lector de pantalla, un
+ * botón que no dice si está pulsado.
+ *
+ * Hermano exacto de `onDeckContext`: API de MÓDULO contra la instancia viva, no un global
+ * de `window`. Se notifica desde `applyMode`, o sea en los DOS caminos — el manual
+ * (`setDeckMode`) y el AUTOMÁTICO (`expectInput`, que alza la hoja que el prompt pide) —,
+ * que es justo lo que hace falta: un conmutador que sólo se enterara de sus propios toques
+ * mentiría en cuanto el motor alzara un teclado por su cuenta.
+ *
+ * ⚠ NO ES `onExpectedSheet`, y la diferencia importa: aquél anuncia lo que el MOTOR pide
+ * (y tiene que caer SÍNCRONO dentro del gesto, por el puente al teclado del sistema en
+ * iOS); éste anuncia lo que está ALZADO, venga de donde venga.
+ */
+export type DeckSheetListener = (sheet: DeckMode) => void;
+const deckSheetListeners = new Set<DeckSheetListener>();
+
+/** Suscribe al CAMBIO de hoja alzada. Devuelve la baja. */
+export function onDeckSheet(cb: DeckSheetListener): () => void {
+  deckSheetListeners.add(cb);
+  return () => {
+    deckSheetListeners.delete(cb);
+  };
 }
 
 /**
@@ -1148,6 +1203,13 @@ export class TouchControls {
     // vive en `ui/regimen-tactil.ts` desde #334: era el mismo `(pointer: coarse) ||
     // ?touch=1` escrito a mano en siete sitios del port, cinco de ellos SIN re-evaluar.
     const isTouch = esTactilAhora();
+    // LA CAPA DE TECLADO, INCONDICIONAL Y ANTES DEL RÉGIMEN. Incondicional porque toda su
+    // hoja cuelga de `html.u5-touch` —la clase que `aplicarRegimen` pone y quita— así que en
+    // escritorio no casa ni una regla y no hay nada que gatear aquí; y así el 2-en-1 que
+    // pase a táctil a mitad de sesión la tiene puesta sin depender del rearmado que
+    // `aplicarRegimen` declara como residuo (#334). Es el ÚNICO sitio del port que existe en
+    // los cuatro layouts, que es lo que la hace la autoridad única de esa geometría.
+    installTecladoCapa();
     this.aplicarRegimen(isTouch);
     // #334 — y ahora se ESCUCHA. El puntero primario cambia en caliente en un 2-en-1
     // (plegar a tableta, enchufar un ratón) y hasta hoy el deck se quedaba con el valor
@@ -1268,6 +1330,13 @@ export class TouchControls {
     this.root.remove();
     this.offRegimen?.();
     this.offRegimen = null;
+    // La capa de teclado nace y muere con el deck (son el mismo componente visto desde dos
+    // sitios), y con ella su demanda de lift: dejar el `transform` puesto sobre la pila de
+    // juego tras desmontar el deck es exactamente el residuo que `limpiarElevacion` existe
+    // para no tener. La demanda del teclado del SISTEMA la suelta su propio `dispose()`.
+    pedirElevacion("hoja", 0);
+    fijarObjetivoElevacion(null);
+    uninstallTecladoCapa();
     if (active === this) active = null;
   }
 
@@ -1432,6 +1501,11 @@ export class TouchControls {
       btn.classList.toggle("touch-mode-on", on);
       btn.setAttribute("aria-pressed", on ? "true" : "false");
     }
+    // Conmutadores de FUERA del deck (hoy: el de teclado de la barra Enhanced). Su color
+    // lo resuelve el CSS con `data-deck-sheet`; lo que necesitan de aquí es el
+    // `aria-pressed` (ver el docblock de `onDeckSheet`). Va ANTES de `syncReserve()`
+    // porque un oyente puede cambiar el alto de lo que la reserva mide.
+    for (const cb of deckSheetListeners) cb(mode);
     this.syncReserve();
   }
 
@@ -1548,20 +1622,139 @@ export class TouchControls {
       }
     }
     const rect = this.root.getBoundingClientRect();
+    // ── EL SUELO DE LA CAPA DE TECLADO (`--u5-kb-suelo`) ────────────────────────────
+    // Se publica ANTES de medir la hoja, porque es lo que la coloca: en VERTICAL vale el
+    // alto de la banda del deck (la hoja se posa justo ENCIMA de ella, así que ni la fila
+    // útil con su Esc, ni la cruceta, ni la barra Enhanced quedan tapadas) y en APAISADO
+    // vale 0 (el deck es un raíl LATERAL: no hay banda inferior que respetar, y la barra a
+    // lo ancho pegada abajo es la geometría que ese layout ya servía y que se conserva).
+    // Es la ÚNICA entrada de layout que la capa tiene, y sale de aquí porque aquí es donde
+    // el alto del deck es un hecho medido. Ver `ui/teclado-capa.ts`, punto 2 del contrato.
+    const suelo = this.orient === "landscape" || !active ? 0 : Math.ceil(rect.height);
+    if (root.style.getPropertyValue("--u5-kb-suelo") !== `${suelo}px`) {
+      root.style.setProperty("--u5-kb-suelo", `${suelo}px`);
+    }
+    let cambio = false;
     if (this.orient === "landscape") {
       const w = active && !railsOwnReserve() ? Math.ceil(rect.width) : 0;
-      if (w === this.lastReserve) return;
-      this.lastReserve = w;
-      root.style.setProperty("--u5-touch-reserve-x", `${w}px`);
-      root.style.setProperty("--u5-touch-reserve", "0px");
+      if (w !== this.lastReserve) {
+        this.lastReserve = w;
+        root.style.setProperty("--u5-touch-reserve-x", `${w}px`);
+        root.style.setProperty("--u5-touch-reserve", "0px");
+        cambio = true;
+      }
     } else {
-      const h = active ? Math.ceil(rect.height) : 0;
-      if (h === this.lastReserve) return;
-      this.lastReserve = h;
-      root.style.setProperty("--u5-touch-reserve", `${h}px`);
-      root.style.setProperty("--u5-touch-reserve-x", "0px");
+      // ★ LA RESERVA ES LA **UNIÓN** DE LAS DOS BANDAS, y ése es todo el acoplamiento que
+      // la capa de teclado introduce. La hoja es `fixed`, así que NO entra en `rect` — sin
+      // esta suma, alzar el teclado dejaría la reserva en el alto del deck a secas y el
+      // juego se dibujaría debajo del teclado. `bandaDelTeclado` mide desde el borde
+      // inferior del viewport, o sea que cubre banda del deck + hoja de una vez.
+      //
+      // 🔴 Y NO PUEDE REALIMENTARSE, que es la propiedad que había que conservar: el alto
+      // de la hoja sale de su propia aritmética (filas × alto de tecla) y del ANCHO del
+      // viewport; ni la reserva, ni el canvas, ni `--u5-reflow-content` entran en él. La
+      // dependencia es de un sentido, igual que la del cap del deck contra el re-flow.
+      const caja = active ? (hojaTecladoViva()?.getBoundingClientRect() ?? null) : null;
+      const kb = bandaDelTeclado(caja, window.innerHeight);
+      const h = active ? Math.max(Math.ceil(rect.height), kb) : 0;
+      if (h !== this.lastReserve) {
+        this.lastReserve = h;
+        root.style.setProperty("--u5-touch-reserve", `${h}px`);
+        root.style.setProperty("--u5-touch-reserve-x", "0px");
+        cambio = true;
+      }
     }
-    window.dispatchEvent(new Event("resize"));
+    if (cambio) window.dispatchEvent(new Event("resize"));
+    // SIEMPRE, con reserva nueva o sin ella: el lift depende del rect del canvas, que la
+    // piel acaba de recalcular dentro del `resize` de arriba — y también cambia por vías
+    // que no mueven la reserva (rotación, barra del navegador, cambio de hoja con el mismo
+    // alto). Su propia guarda de igualdad vive en `pedirElevacion`.
+    this.syncElevacionTeclado(active);
+  }
+
+  /**
+   * ★★ QUE LA CONSOLA NO SE QUEDE DEBAJO DEL TECLADO — y por qué hace falta un lift.
+   *
+   * En el layout CLÁSICO no haría falta: ahí el canvas se escala contra el hueco que deja
+   * `--u5-touch-reserve`, así que al crecer la reserva el letterbox encoge solo y el eco del
+   * `getstring` queda a la vista. Pero en el layout PARTIDO (y en Enhanced, que lo hereda)
+   * **el mapa no negocia**: `squareLayout()` saca la escala del ANCHO e ignora el alto
+   * disponible — hay ruling del 03-08 con su medición en `layout-cuadrado.ts` — así que la
+   * pila (mapa + roster + consola) mide lo que mide, la reserva no la mueve, y un teclado
+   * anclado abajo le tapa la banda de log en cuanto el hueco del re-flow es corto (123 px
+   * medidos en un 375×667, contra los ~203 que pide el teclado).
+   *
+   * La cura es la que este repo ya usa para el teclado del SISTEMA (`deck-nativo.ts`,
+   * bloque 6) y para el campo del nombre de la intro: subir la PILA DE JUEGO con un
+   * `transform`, lo justo para que su borde inferior quede por encima del teclado. Es un
+   * `transform`, no un cambio de layout: no mueve el border box del deck (lo que
+   * `syncReserve` mide), no re-escala el canvas y no re-dispara `relayout()` — o sea que no
+   * abre ningún bucle.
+   *
+   * 🔴 SE PIDE, NO SE ESCRIBE. El `transform` de ese contenedor tiene DOS demandantes (éste
+   * y el puente del teclado del sistema) y hasta hoy el segundo lo BORRABA en cada `resize`
+   * del visual viewport. Los dos pasan por `ui/elevacion-juego.ts`, que aplica la mayor —
+   * ver allí el diagnóstico completo.
+   *
+   * Y se mide SIN el lift puesto (`medirSinLift`): `getBoundingClientRect()` incluye los
+   * `transform` de los ancestros, así que medir con él puesto devuelve un canvas que «ya
+   * cabe» y la demanda se evapora al frame siguiente (el lift que parpadea).
+   */
+  private syncElevacionTeclado(active: boolean): void {
+    const hoja = active ? hojaTecladoViva() : null;
+    // ATAJO SIN LECTURAS DE LAYOUT — este método corre en cada `syncReserve()`, que está en
+    // el camino del ResizeObserver. Sin teclado alzado y sin demanda viva no hay nada que
+    // calcular, y salir aquí evita el barrido de canvas y sus `getBoundingClientRect` en el
+    // 99 % de las llamadas. (Con demanda viva NO se atajа: hay que retirarla.)
+    if (!hoja && !objetivoElevacion()) return;
+    // El objetivo es el CONTENEDOR del canvas de la piel, que es lo que hay que subir (no
+    // `#app`: el deck es `position:absolute` contra su padding box y subiría con él). Se
+    // re-resuelve cada vez porque la piel re-CREA su canvas al re-escalar y puede cambiar
+    // de árbol al conmutar de layout; `fijarObjetivoElevacion` es idempotente y limpia el
+    // objetivo anterior, así que no deja transforms huérfanos.
+    // 🔴 EL CANVAS SE ELIGE POR ÁREA, NO POR ORDEN DE DOCUMENTO — y esto costó una
+    // verificación en navegador. `#app canvas` a secas devuelve el PRIMERO, y bajo `#app`
+    // hay seis canvas de 8×8 de la cenefa del marco original (`.u5of-brk`, `ui/shell/
+    // originalFrame.ts`) ANTES del canvas del juego: el lift se habría medido contra una
+    // esquinita decorativa de rect nulo y no habría subido nada, en silencio. Es el MISMO
+    // criterio que `syncReserve` ya usa unas líneas más arriba para el ratio del apaisado
+    // («el de mayor área»), y por la misma razón: bajo la shader alojada también hay dos.
+    let canvas: HTMLCanvasElement | null = null;
+    let mejor = 0;
+    for (const c of document.querySelectorAll<HTMLCanvasElement>("#app canvas")) {
+      const b = c.getBoundingClientRect();
+      if (b.width * b.height > mejor) {
+        mejor = b.width * b.height;
+        canvas = c;
+      }
+    }
+    const contenedor = canvas?.parentElement ?? null;
+    // 🔴 SÓLO SE DECLARA CUANDO SE RESUELVE, nunca se pone a `null` desde aquí. El canvas de
+    // la piel se RE-CREA al re-escalar y en el frame del montaje puede medir 0×0: un
+    // `fijarObjetivoElevacion(null)` en ese instante le quitaría el objetivo —y con él el
+    // transform— al puente del teclado del sistema, que lo había declarado bien. Quien sí
+    // limpia es `dispose()`, que es cuando de verdad no hay juego que elevar.
+    if (contenedor && contenedor !== objetivoElevacion()) fijarObjetivoElevacion(contenedor);
+    if (!hoja || !canvas || !contenedor || this.orient === "landscape") {
+      // APAISADO se queda FUERA a propósito, y es la misma exclusión medida que ya declara
+      // `deck-nativo.ts`: allí el contenido del canvas va en COLUMNAS (el log vive en un
+      // raíl a toda la altura), así que subir el borde inferior sobre el teclado recorta
+      // por arriba ESE MISMO raíl — −158 px de canvas en 844×340 sin rescatar nada.
+      pedirElevacion("hoja", 0);
+      return;
+    }
+    const { top, height, techo } = medirSinLift(() => {
+      const c = canvas.getBoundingClientRect();
+      return { top: c.top, height: c.height, techo: hoja.getBoundingClientRect().top };
+    });
+    if (height <= 0) {
+      pedirElevacion("hoja", 0);
+      return;
+    }
+    // `keyboardClearance(elemTop, elemH, vvTop, vvHeight)` con el «viewport visible» = lo
+    // que queda POR ENCIMA del teclado. Devuelve 0 cuando ya cabe, que es justo el caso del
+    // layout clásico: allí la reserva ya encogió el letterbox y este bloque no hace nada.
+    pedirElevacion("hoja", keyboardClearance(top, height, 0, techo));
   }
 
   /**

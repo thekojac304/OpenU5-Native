@@ -112,6 +112,11 @@ const ES: Record<string, string> = {
   // (entradas «Talk»/«Open»/… más abajo), con su candado en `deck-i18n-coherencia`.
   // Lo de aquí es sólo el cromo NUEVO: la casilla, la barra y los cajones.
   "Enhanced controls": "Mandos mejorados",
+  // Conmutador de TECLADO de la barra Enhanced (reporte del usuario 12-09). El RÓTULO es
+  // «A–Z», que ya es clave de esta tabla (barra de modo / activador del partido) y se
+  // REUSA; lo único nuevo es el title, que dice las dos direcciones porque el botón hace
+  // las dos —«Show the letter keyboard», el title del activador clásico, sólo dice una.
+  "Show or hide the keyboard": "Mostrar u ocultar el teclado",
   "Compact touch controls: a short action bar plus a drawer with every command. All original commands stay available. Changing it reloads the page.":
     "Mandos táctiles compactos: una barra de acciones corta más un cajón con todos los comandos. Siguen estando todos los comandos del original. Cambiarlo recarga la página.",
   // ── INTERFAZ DE LANZAMIENTO (Clásico / Lista de hechizos) ───────────────────────────
@@ -125,6 +130,43 @@ const ES: Record<string, string> = {
   "Spell list": "Lista de hechizos",
   "Classic: type the first letter of each rune, like the original. Spell list: pick from a browsable list, which then enters those same runes for you. Reagents, magic points, level, targeting and failure rules are identical in both.":
     "Clásica: teclea la inicial de cada runa, como el original. Lista de hechizos: elige de una lista, que después introduce esas mismas runas por ti. Reactivos, puntos mágicos, nivel, apuntado y reglas de fallo son idénticos en las dos.",
+  // ── INTERFAZ DE TIENDA (Clásico / Moderno) — auditoría de entrada manual, fase A ─────
+  // Cromo de la sección de ajustes y del panel compacto. Los RÓTULOS DE MERCANCÍA no
+  // están aquí y no lo estarán: «Long Sword», «Ginseng» y los precios los compone el
+  // conductor de la tienda (`ui/shop-console.ts`) y ya pasan por el `t()` del corpus del
+  // binario — el panel los pinta TAL CUAL para no traducirlos dos veces (ver el campo
+  // `crudo` de `enhanced/shop/catalog.ts`). Los NOMBRES PROPIOS de los compañeros, por la
+  // misma regla de siempre, tampoco.
+  "Shops": "Tiendas",
+  "Shop": "Tienda",
+  "Shop interface": "Interfaz de tienda",
+  "Classic": "Clásica",
+  "Modern": "Moderna",
+  "Classic: type the letter the merchant prints, like the original. Modern: a compact panel lists the choices the merchant just offered, and tapping one types that same letter for you. Prices, stock, haggling, gold and every other shop rule are identical in both, and the keyboard keeps working either way.":
+    "Clásica: teclea la letra que imprime el mercader, como el original. Moderna: un panel compacto lista las opciones que el mercader acaba de ofrecer, y al tocar una teclea esa misma letra por ti. Precios, existencias, regateo, oro y las demás reglas de tienda son idénticos en las dos, y el teclado sigue funcionando en ambas.",
+  "Leave shop": "Salir de la tienda",
+  "Continue": "Continuar",
+  // Menús cortos por letra del mercader, tal cual los nombra el conductor. «Leave» es la
+  // opción de la POSADA (dejar a un compañero), no la salida — de ahí que la salida del
+  // panel se llame «Leave shop» y no compartan vocablo.
+  "Buy": "Comprar",
+  "Sell": "Vender",
+  "Cure": "Curar",
+  "Resurrect": "Resucitar",
+  "Rest": "Descansar",
+  // «Heal» NO se repite aquí: ya es clave de esta tabla (subtipos de fuente, más abajo).
+  // Lo que sí cambia es su VALOR, de «Cura» a «Sanar» — el menú del curandero ofrece Cure
+  // y Heal en la MISMA lista, y «Curar»/«Cura» a dos filas de distancia no son dos rótulos
+  // sino uno borroso. El otro consumidor de la clave es el picker de DEBUG de fuentes,
+  // cuya lista mejora igual («Cura veneno / Sanar / Veneno / Mal sabor»).
+  "Leave": "Dejar",
+  "Pick up": "Recoger",
+  "Frigate": "Fragata",
+  "Skiff": "Esquife",
+  "Round": "Ronda",
+  "Wine": "Vino",
+  "Rations": "Raciones",
+  "Chat": "Charlar",
   "Choose a spell": "Elige un hechizo",
   "Search spells…": "Buscar hechizos…",
   "Circle": "Círculo",
@@ -531,7 +573,7 @@ const ES: Record<string, string> = {
   "Room": "Sala",
   // Subtipos de fuente / trampa / campo mágico.
   "Cure poison": "Cura veneno",
-  "Heal": "Cura",
+  "Heal": "Sanar",
   "Poison": "Veneno",
   "Bad taste": "Mal sabor",
   "Pit": "Foso",

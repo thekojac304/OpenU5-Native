@@ -81,30 +81,14 @@ export async function activeSheet(page: Page): Promise<DeckMode | null> {
  * La rama del clásico se deja BYTE A BYTE como estaba: esta función no puede ser la que
  * mueva la pasada clásica, que es la línea base contra la que se compara todo.
  */
-/**
- * ¿Estamos en el PARTIDO **VERTICAL**, que es el único sitio donde el layout retira la hoja
- * A–Z propia? Se lee del DOM VIVO, no del nombre del proyecto.
- *
- * 🔴 POR QUÉ NO VALE `layoutAmbiente()` AQUÍ, y es un defecto que costó un rojo: esa función
- * decide por el NOMBRE DEL PROYECTO (`…-partido`), que dice qué PASADA se está corriendo —
- * no qué layout está montado. Pero el layout partido sólo existe bajo
- * `[data-orient="portrait"]` (`deck-ancho.ts` scopea TODAS sus reglas así): **en APAISADO,
- * dentro del mismo proyecto, la hoja A–Z SÍ existe**. Con el guarda cableado al nombre del
- * proyecto, `mobile-geometry:585` («teclado A–Z apaisado») moría diciendo que la hoja no
- * existe... en la orientación donde sí está.
- *
- * Es literalmente la lección que `deck-ancho.ts` ya tiene escrita del 28-07: *«una guarda
- * escrita contra una GEOMETRÍA caduca en cuanto esa geometría cambia»*. Aquí la geometría es
- * la ORIENTACIÓN, y el guarda no la miraba.
+/*
+ * ⚰ AQUÍ VIVÍA `partidoVertical()`, y su retirada es el cierre de una serie de tres.
+ * Existía para contestar «¿es éste el layout donde la hoja A–Z no existe?», y la respuesta
+ * hoy es «ninguno»: la capa de teclado (`src/ui/teclado-capa.ts`, 12-09) la sirve en los
+ * cuatro. Su lección —no deducir el layout del NOMBRE DEL PROYECTO sino preguntar al DOM
+ * qué hay— sobrevive intacta en `activadorVisible()` y en `hojaAzTocable()`, que es donde
+ * se decide hoy el vehículo. Lo que desaparece no es la disciplina: es la bifurcación.
  */
-async function partidoVertical(page: Page): Promise<boolean> {
-  if (layoutAmbiente() !== "partido") return false;
-  return page.evaluate(
-    () =>
-      document.documentElement.dataset.deckAncho === "bloques" &&
-      document.documentElement.dataset.orient === "portrait",
-  );
-}
 
 /**
  * ★★ EL VEHÍCULO SE ELIGE POR EL ACTIVADOR QUE ESTÁ VISIBLE — tercera y última iteración.
@@ -136,6 +120,32 @@ async function activadorVisible(page: Page, mode: DeckMode): Promise<Locator | n
   if (mode !== "move") {
     const util = page.locator(`.touch-util .touch-sheetbtn-${mode}`);
     if (await util.isVisible().catch(() => false)) return util;
+  }
+  // 3) EL CAJÓN DE LA CHAPA ENHANCED — el tercer vehículo, y el que la serie de tres
+  //    predijo: «si mañana aparece una tercera piel con otro activador, esto sigue
+  //    funcionando sin tocarlo». Tocó tocarlo, y sólo para añadir la rama: la chapa apaga la
+  //    barra de modo Y los botones clásicos de la fila útil (`enhanced/mobile/css.ts`, los
+  //    tres apagados del bloque 1), así que sus activadores de hoja viven en la pestaña
+  //    «Input» del cajón (`enhanced/mobile/drawer.ts`, SHEET_SLOTS) y hay que ABRIRLO.
+  //    Se hace aquí y no en cada spec por la misma razón que las otras dos ramas: un helper
+  //    cableado a un vehículo no falla, se queda esperando un nodo invisible hasta el
+  //    timeout del TEST, y ese rojo mudo se lee como defecto de producto.
+  if (mode !== "move") {
+    const enCajon = page.locator(`.u5e-drawer [data-u5e-sheet="${mode}"]`);
+    if ((await enCajon.count()) > 0) {
+      if (!(await enCajon.isVisible().catch(() => false))) {
+        // DOS toques, y los dos hacen falta: la puerta (el conmutador «Commands» de la
+        // barra) ABRE el cajón, y el cajón abre por la última pestaña usada — que MEDIDO
+        // es «interaction», no «input». Sin el segundo toque el botón existe en el DOM
+        // dentro de un panel oculto y `isVisible()` es false, que es el nodo invisible del
+        // que habla la cabecera.
+        const puerta = page.locator('[data-u5e-slot="commands"]');
+        if ((await puerta.count()) > 0) await puerta.first().tap();
+        const pestana = page.locator('.u5e-drawer [data-u5e-tab="input"]');
+        if (await pestana.isVisible().catch(() => false)) await pestana.tap();
+      }
+      if (await enCajon.isVisible().catch(() => false)) return enCajon;
+    }
   }
   return null;
 }
@@ -378,37 +388,51 @@ async function enfocarTecladoSistema(page: Page): Promise<void> {
 }
 
 /**
- * ¿Está ALZADA Y USABLE la superficie de texto? — POR LA SEÑAL PROPIA DE CADA LAYOUT.
+ * ¿Está ALZADA Y USABLE la superficie de texto? — **UN SOLO TESTIGO, en los dos layouts**.
  *
- * ★★ NO es lo mismo que `activeSheet(page) === "az"`, y ésa es justo la trampa: en el
- * partido el motor SÍ marca `touch-sheet-on` sobre la hoja az (no sabe de CSS) mientras
- * `deck-ancho.ts:213-217` la mantiene `display:none` **sin regla de escape para
- * `.touch-sheet-on`** (num y yesno sí la tienen, `:236` y `:241`). Así que el aserto
- * clásico, duplicado tal cual, pasaría en el partido **midiendo una clase sobre un nodo
- * que no se ve**: verde que no cubre nada.
+ * ★★ AQUÍ HABÍA DOS, Y ERA EL REFLEJO EXACTO DEL DEFECTO DE PRODUCTO. Preguntaba:
+ *   · clásico — la hoja az está alzada Y TIENE CAJA;
+ *   · partido — la hoja az está alzada Y el botón «ABC» lleva `u5kb-wanted` (o sea: la hoja
+ *     NO se ve y el teclado del sistema es la única vía).
+ * Dos testigos porque había dos productos. Desde la capa de teclado (12-09) la hoja se ve en
+ * los cuatro layouts, así que el testigo del partido —que afirma literalmente «la hoja NO se
+ * ve»— pasa a ser FALSO por construcción, y el bueno vale para los dos.
  *
- * Lo que hay que preguntar es lo que el usuario necesita: «¿tengo por dónde teclear?».
- * Cada layout tiene su testigo, y el del partido lo publica el propio producto:
- *   · clásico — la hoja az está alzada Y TIENE CAJA (se puede tapear);
- *   · partido — la hoja az está alzada Y el botón «ABC» lleva `u5kb-wanted`, que es la
- *     clase que `deck-nativo.ts:499` pone exactamente cuando `necesitaTecladoSistema()`
- *     dice «hay hoja alzada que NO se ve» ⇒ el teclado del sistema es la única vía.
+ * Lo que se pregunta sigue siendo lo del usuario («¿tengo por dónde teclear?») y sigue
+ * siendo más estricto que `activeSheet(page) === "az"`: exige CAJA, no sólo clase.
  *
- * En el CLÁSICO esto es MÁS ESTRICTO que el aserto que sustituye: antes se comprobaba la
- * clase y no la caja. Y en el partido cubre un defecto que hoy no cubre nadie: un
- * getstring sin ninguna vía visible de teclear.
+ * ⚠ SE CONSERVA LA VÍA DEL PUENTE como segunda respuesta afirmativa, y no por indulgencia:
+ * si un layout futuro volviera a esconder la hoja, «hay por dónde teclear» seguiría siendo
+ * cierto con el «ABC» realzado, y este predicado no debe mentir por no haberse actualizado.
+ * Lo que ya no hace es ELEGIR por el nombre del proyecto.
  */
 export async function superficieDeTextoLista(page: Page): Promise<boolean> {
-  const partido = await partidoVertical(page);
-  return page.evaluate((esPartido) => {
+  return page.evaluate(() => {
     const hoja = document.querySelector(".touch-sheet-az");
-    const alzada = !!hoja?.classList.contains("touch-sheet-on");
-    if (!alzada) return false;
-    if (esPartido) {
-      return !!document.querySelector(".u5kb-btn")?.classList.contains("u5kb-wanted");
+    if (!hoja?.classList.contains("touch-sheet-on")) return false;
+    if ((hoja as HTMLElement).getBoundingClientRect().height > 0) return true;
+    return !!document.querySelector(".u5kb-btn")?.classList.contains("u5kb-wanted");
+  });
+}
+
+/** ¿Se puede TOCAR la hoja A–Z ahora mismo? (alzada o no: lo que se pregunta es si tiene
+ *  caja cuando se alce, o sea si este layout la sirve). Decide el vehículo de `tapType`. */
+async function hojaAzTocable(page: Page): Promise<boolean> {
+  if ((await activeSheet(page)) !== "az") {
+    const act = await activadorVisible(page, "az");
+    if (!act) return false;
+  }
+  return page.evaluate(() => {
+    const hoja = document.querySelector(".touch-sheet-az");
+    if (!hoja) return false;
+    // Si aún no está alzada, la caja es 0 por el `display:none` de reposo: lo que decide es
+    // que el layout NO la tenga suprimida cuando SÍ está alzada. Se pregunta por el
+    // `display` computado de la regla de la capa, que es lo que el layout puede quitarle.
+    if (hoja.classList.contains("touch-sheet-on")) {
+      return hoja.getBoundingClientRect().height > 0;
     }
-    return (hoja as HTMLElement).getBoundingClientRect().height > 0;
-  }, partido);
+    return true;
+  });
 }
 
 /**
@@ -429,7 +453,15 @@ export async function superficieDeTextoLista(page: Page): Promise<boolean> {
  * `superficieDeTextoLista`.
  */
 export async function tapType(page: Page, text: string): Promise<void> {
-  if (await partidoVertical(page)) {
+  // ★★ EL VEHÍCULO SE ELIGE POR LO QUE SE PUEDE TOCAR, NO POR EL LAYOUT (12-09). La rama
+  // «si es partido, teclado del SISTEMA» describía un producto en el que la hoja A–Z no
+  // existía ahí; desde la capa de teclado existe en los cuatro layouts. Mantener la rama
+  // haría que la pasada del partido siguiera ejercitando el puente y **dejara sin cobertura
+  // la superficie que el jugador ve**, que es la trampa que la cabecera de
+  // `superficieDeTextoLista` ya describe: verde que no cubre nada.
+  // El puente NO se queda sin arnés: lo ejercitan `deck-modos.spec.ts` (foco, ⌫, Enter,
+  // encadenado #302) y el helper `enfocarTecladoSistema`, que siguen intactos.
+  if (!(await hojaAzTocable(page))) {
     await enfocarTecladoSistema(page);
     // `delay` porque el puente emite UN keydown por carácter desde `beforeinput` y el
     // juego procesa cada tecla en su propio tick; sin separación, los getstring se comen
@@ -460,7 +492,7 @@ export async function tapType(page: Page, text: string): Promise<void> {
  * siguiente `tapType` vuelve a pedir el foco en vez de darlo por hecho.
  */
 export async function tapAzEnter(page: Page): Promise<void> {
-  if (await partidoVertical(page)) {
+  if (!(await hojaAzTocable(page))) {
     await enfocarTecladoSistema(page);
     await page.keyboard.press("Enter");
     return;
@@ -863,7 +895,7 @@ export function soloEnLayout(fijado: LayoutConcreto): boolean {
  * recortada / dentro del viewport», que valen en los dos. Sólo el CUERPO decide.
  */
 
-/** Hojas que existen como hoja PROPIA. El partido no tiene A–Z: el texto va por el SO. */
+/** Hojas que existen como hoja PROPIA. Desde el 12-09, LAS CUATRO EN LOS DOS LAYOUTS. */
 /**
  * ⚠ SÍNCRONO ⇒ decide por el NOMBRE DEL PROYECTO, no por el DOM. Sigue siendo un supuesto,
  * pero ya no el que decía esta cabecera.
@@ -892,9 +924,13 @@ export function soloEnLayout(fijado: LayoutConcreto): boolean {
  * no esta función.
  */
 export function hojasDelLayout(): DeckMode[] {
-  return layoutAmbiente() === "partido"
-    ? ["move", "num", "yesno"]
-    : ["move", "az", "num", "yesno"];
+  // ★ YA NO SE BIFURCA, y esa es la noticia. La tabla de arriba sigue siendo el censo
+  // correcto de lo que se midió el 09-08; lo que cambió el 12-09 es el PRODUCTO: la capa de
+  // teclado (`src/ui/teclado-capa.ts`) sirve las tres hojas en los cuatro layouts, así que
+  // el partido ya no es el caso sin A–Z. Se deja la función —no se inlinea la lista— porque
+  // es el sitio donde volvería a bifurcarse si algún layout futuro retirara una hoja, y
+  // porque sus llamantes ya están escritos contra ella.
+  return ["move", "az", "num", "yesno"];
 }
 
 /**

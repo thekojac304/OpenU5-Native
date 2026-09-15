@@ -32,7 +32,10 @@ import {
 
 /** Los tres teclados que la barra de modo servía en el deck clásico. */
 const SHEET_SLOTS: readonly { mode: "az" | "num" | "yesno"; label: string; title: string }[] = [
-  { mode: "az", label: "ABC", title: "Show the letter keyboard" },
+  // «A–Z» y no «ABC»: el mismo vocablo con el que la barra de modo y el activador de la
+  // fila útil nombran esta hoja (ver `AZ_ACTIVATOR`). «ABC» es del puente al teclado del
+  // SISTEMA, y tenerlos iguales hacía indistinguibles dos destinos distintos.
+  { mode: "az", label: "A–Z", title: "Show the letter keyboard" },
   { mode: "num", label: "123", title: "Show the number pad" },
   { mode: "yesno", label: "✓/✗", title: "Answer a Yes/No prompt" },
 ];

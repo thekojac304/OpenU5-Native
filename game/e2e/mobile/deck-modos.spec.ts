@@ -38,6 +38,27 @@ async function fondo(page: Page, sel: string): Promise<string> {
   }, sel);
 }
 
+/**
+ * EL LIFT VIVO, leído del elemento que lo lleva. Es el SUJETO de ② y hasta el 12-09 se medía
+ * por su consecuencia (el `top` del canvas). Eso dejó de valer cuando la hoja A–Z pasó a
+ * verse también en el partido: alzarla mueve la RESERVA, la reserva re-compone la pila y el
+ * `top` del canvas cambia **sin que nadie eleve nada**. Medir la consecuencia hacía que dos
+ * casos de ② acusaran al lift de un movimiento que era del layout.
+ */
+async function liftVivo(page: Page): Promise<string> {
+  return page.evaluate(() => {
+    const el = document.querySelector("[data-u5-lift]");
+    return el?.getAttribute("data-u5-lift") ?? "";
+  });
+}
+
+/** La demanda de UNA fuente, en px (0 = no pide nada). Ver `ui/elevacion-juego.ts`. */
+async function liftDe(page: Page, fuente: "sistema" | "hoja"): Promise<number> {
+  const txt = await liftVivo(page);
+  const m = new RegExp(`${fuente}:(-?\\d+)`).exec(txt);
+  return m ? Number(m[1]) : 0;
+}
+
 /** Rect del canvas de juego (su borde INFERIOR es el de la banda de log en el partido). */
 async function canvasRect(page: Page): Promise<{ top: number; bottom: number }> {
   return page.evaluate(() => {
@@ -56,6 +77,24 @@ async function canvasRect(page: Page): Promise<{ top: number; bottom: number }> 
  * otro alto (el teclado de iOS CAMBIA de tamaño en vivo — barra de autocorrección,
  * emoji, dictado), que es el caso que destapa si el lift se mide sobre sí mismo.
  */
+/**
+ * ABRE EL PUENTE POR SU BOTÓN — la vía soportada desde el carril de consistencia (12-09).
+ *
+ * ⚠ ANTES NO HACÍA FALTA: `syncAz` enfocaba el campo SOLO al alzarse la hoja A–Z, porque en
+ * este layout esa hoja estaba oculta y el teclado del sistema era la ÚNICA vía. Desde que la
+ * capa de teclado sirve la hoja en los cuatro layouts, ese auto-foco queda gateado por el
+ * mismo predicado que ya gobernaba el realce del botón (`necesitaTecladoSistema`): con teclas
+ * en pantalla no se abre solo, para no poner DOS teclados sobre un prompt.
+ * El puente no se ha perdido —es lo que estos tests siguen midiendo— pero hay que pedirlo,
+ * que es exactamente lo que hace el jugador: un toque en «ABC».
+ */
+async function enfocarPuente(page: Page): Promise<void> {
+  await page.locator(".u5kb-btn").tap();
+  await expect
+    .poll(() => page.evaluate(() => document.activeElement?.className ?? ""), { timeout: 4_000 })
+    .toContain("u5kb-input");
+}
+
 async function abrirTecladoDelSistema(page: Page, alto = TECLADO): Promise<void> {
   await page.evaluate((h) => {
     const vv = window.visualViewport! as VisualViewport & { __altoReal?: number };
@@ -119,12 +158,19 @@ test("① el realce del ACTIVO y el de la PISTA son EL MISMO color: por eso el c
   expect(a).not.toBe("rgb(0, 0, 0)");
 });
 
-test("① con la hoja A–Z alzada (que en este layout NO se ve), la pista SÍ se enciende", async ({
+test("① con la hoja A–Z alzada Y VISIBLE, la pista tampoco se enciende (mismo criterio)", async ({
   page,
 }) => {
   await gotoMobile(page, "partido");
-  // Cast → picker de PJ (dígitos) → nombre del conjuro (texto): el flujo que nombra el
-  // usuario. El picker se contesta por tecla, como haría el numpad.
+  // 🔴 ESTE TEST SE LLAMABA «…que en este layout NO se ve, la pista SÍ se enciende» Y SU
+  // PREMISA ERA UN HECHO DEL PRODUCTO, no del criterio: `deck-ancho.ts` ocultaba la hoja A–Z
+  // en el partido y por eso el teclado del sistema era la única vía. El carril de
+  // consistencia (12-09) la sirve en los cuatro layouts, así que la premisa se INVIERTE y
+  // con ella el aserto — el CRITERIO no cambia ni una letra: «la pista se enciende cuando la
+  // hoja alzada NO se ve». Antes eso daba «sí» aquí; ahora da «no», por la misma regla.
+  // (La rama contraria del criterio —hoja alzada e invisible ⇒ pista encendida— la sigue
+  // cubriendo el test PURO de `necesitaTecladoSistema` en `tests/portrait-deck-a4.test.ts`,
+  // que es donde se puede construir ese estado sin falsear el CSS de producción.)
   await page.locator(".touch-commands .touch-cmd", { hasText: "Cast" }).first().tap();
   await page.evaluate(() =>
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "1", bubbles: true })),
@@ -133,8 +179,31 @@ test("① con la hoja A–Z alzada (que en este layout NO se ve), la pista SÍ s
   const azVisible = await page.evaluate(
     () => document.querySelector(".touch-sheet-az")!.getBoundingClientRect().height > 0,
   );
-  expect(azVisible, "premisa: la hoja A–Z está OCULTA en el layout partido").toBe(false);
-  expect(await page.locator(".u5kb-btn").getAttribute("class")).toContain("u5kb-wanted");
+  expect(azVisible, "premisa NUEVA: la hoja A–Z se ve también en el layout partido").toBe(true);
+  expect(await page.locator(".u5kb-btn").getAttribute("class")).not.toContain("u5kb-wanted");
+  // …y el puente NO se ha abierto solo: el jugador tiene teclas delante.
+  expect(await page.evaluate(() => document.activeElement?.className ?? "")).not.toContain(
+    "u5kb-input",
+  );
+});
+
+test("① el puente sigue estando a UN TOQUE (el botón «ABC» abre el teclado del sistema)", async ({
+  page,
+}) => {
+  // El encargo pide preservar el puente al teclado nativo, y esto es su gate: lo que se
+  // retira es la apertura AUTOMÁTICA, no la vía. Un toque en «ABC» enfoca el campo — que es
+  // el instante en que iOS despliega su teclado — y lo tecleado sigue llegando al juego.
+  await gotoMobile(page, "partido");
+  await enfocarPuente(page);
+  const llego = page.evaluate(
+    () =>
+      new Promise<string>((res) => {
+        window.addEventListener("keydown", (e) => res(e.key), { once: true });
+        setTimeout(() => res("(ninguna)"), 4000);
+      }),
+  );
+  await page.keyboard.type("A");
+  expect((await llego).toUpperCase(), "lo tecleado por el puente llega al juego").toBe("A");
 });
 
 // ── ② El UI no se desplaza hasta la primera tecla ─────────────────────────────────
@@ -149,8 +218,9 @@ test("② al alzarse la hoja A–Z el UI SUBE ya —sin teclear— y la banda de
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "1", bubbles: true })),
   );
   await expect(page.locator(".touch-sheet-az")).toHaveClass(/touch-sheet-on/);
-  // El puente ha enfocado su campo: es el instante en que iOS despliega el teclado.
-  expect(await page.evaluate(() => document.activeElement?.className)).toContain("u5kb-input");
+  // El puente se pide por su botón (ver `enfocarPuente`): es el instante en que iOS
+  // despliega el teclado. Lo que ② mide —que el UI suba SIN teclear— no cambia.
+  await enfocarPuente(page);
 
   const bordeTeclado = await page.evaluate(() => window.innerHeight - 300);
   expect(
@@ -179,6 +249,7 @@ test("② si el teclado CRECE, el lift se re-mide LIMPIO y no sobre sí mismo", 
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "1", bubbles: true })),
   );
   await expect(page.locator(".touch-sheet-az")).toHaveClass(/touch-sheet-on/);
+  await enfocarPuente(page);
 
   await abrirTecladoDelSistema(page, 300);
   await abrirTecladoDelSistema(page, 380); // el teclado crece: segundo cálculo
@@ -204,9 +275,11 @@ test("② SIN teclado desplegado no se eleva nada, aunque el prompt esté vivo",
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "1", bubbles: true })),
   );
   await expect(page.locator(".touch-sheet-az")).toHaveClass(/touch-sheet-on/);
-  expect(await page.evaluate(() => document.activeElement?.className)).toContain("u5kb-input");
-  // El campo está enfocado pero el visual viewport NO ha encogido: cero franja, cero lift.
-  expect((await canvasRect(page)).top).toBe(antes.top);
+  await enfocarPuente(page);
+  // El campo está enfocado pero el visual viewport NO ha encogido: cero franja, cero lift
+  // **del sistema**. (La hoja propia sí puede estar pidiendo el suyo: es otra fuente y otro
+  // motivo — ver `liftVivo`. Este test es de ②, o sea del teclado del SISTEMA.)
+  expect(await liftDe(page, "sistema"), "el sistema se elevó sin teclado desplegado").toBe(0);
 });
 
 test("② en APAISADO no se eleva: allí el log va en un raíl a toda la altura y subir recorta", async ({
@@ -227,6 +300,7 @@ test("② en APAISADO no se eleva: allí el log va en un raíl a toda la altura 
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "1", bubbles: true })),
   );
   await expect(page.locator(".touch-sheet-az")).toHaveClass(/touch-sheet-on/);
+  await enfocarPuente(page);
   await abrirTecladoDelSistema(page, 150); // el teclado en apaisado es mucho más bajo
 
   expect(
@@ -246,10 +320,24 @@ test("② al cerrarse el teclado el UI vuelve a su sitio (el lift no se queda pe
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "1", bubbles: true })),
   );
   await expect(page.locator(".touch-sheet-az")).toHaveClass(/touch-sheet-on/);
-  await abrirTecladoDelSistema(page);
+  await enfocarPuente(page);
+  // ⚠ TECLADO ALTO A PROPÓSITO (600 px y no los 300 de un iPhone). Desde el 12-09 la hoja
+  // A–Z propia también pide lift, y la autoridad aplica la MAYOR de las dos demandas: con un
+  // teclado del sistema de 300 px la demanda del SISTEMA sale 0 —el canvas ya está por
+  // encima de él gracias al lift de la hoja— y este test se quedaría sin premisa, midiendo
+  // la liberación de una demanda que nunca existió. Con 600 la del sistema es estrictamente
+  // mayor y la liberación que se aserta abajo vuelve a ser un hecho observable.
+  await abrirTecladoDelSistema(page, 600);
   expect((await canvasRect(page)).top).toBeLessThan(antes.top);
 
+  expect(
+    await liftDe(page, "sistema"),
+    "premisa: con el teclado del sistema desplegado SÍ hay lift suyo",
+  ).toBeLessThan(0);
   await page.evaluate(() => (document.querySelector(".u5kb-input") as HTMLElement).blur());
-  const despues = await canvasRect(page);
-  expect(despues.top).toBe(antes.top);
+  await page.waitForTimeout(200);
+  expect(
+    await liftDe(page, "sistema"),
+    "el lift del SISTEMA se quedó pegado tras cerrar su teclado",
+  ).toBe(0);
 });

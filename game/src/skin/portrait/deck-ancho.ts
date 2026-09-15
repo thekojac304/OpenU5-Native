@@ -169,8 +169,12 @@ html.${ROOT_CLASS}[data-orient="portrait"] .touch-commands {
    (La cifra que citaba esta nota —«COMBATE (2 comandos) ≈110 px»— era del censo viejo
    de combate; desde el 08-08 la hoja de combate lleva NUEVE comandos derivados de
    COMBAT.OVL:0x0838, así que la más corta ya no es ésa. La regla no depende del número:
-   se retira el suelo y punto.) */
-html.${ROOT_CLASS}[data-orient="portrait"] .touch-sheet { min-height: 0; }
+   se retira el suelo y punto.)
+   ⚠ APUNTA A LA HOJA **MOVE**, no a «.touch-sheet» a secas, desde el carril de
+   consistencia: las tres hojas de teclado ya no están en el flujo del deck y su alto lo
+   fija su capa (\`ui/teclado-capa.ts\`). Un selector genérico aquí sería una regla de
+   layout pisando la geometría del teclado, que es justo lo que el carril retira. */
+html.${ROOT_CLASS}[data-orient="portrait"] .touch-sheet-move { min-height: 0; }
 
 /* ── LA BOTONERA SE QUEDA CON EL RESTO (refinamiento 26-07) ─────────────────────────
    El reparto se INVIERTE respecto a todo lo anterior: ya no es la botonera la que fija su
@@ -235,49 +239,48 @@ html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .touch-she
 html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .touch-main {
   display: contents;
 }
-/* La hoja Move SIEMPRE visible y las de teclado propio ocultas — se conserva de «nativo», y
-   es lo que evita que el deck se quede vacío cuando el motor auto-alza una hoja (getstring
-   → A-Z). El teclado del sistema cubre los prompts de TEXTO. */
-html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .touch-sheet-az,
-html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .touch-sheet-num,
-html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .touch-sheet-yesno {
-  display: none;
-}
-/* …PERO Sí/No y numpad SÍ se alzan cuando están ACTIVAS (fix 27-07): los botones nuevos
-   «Sí/No»/«Num» de la fila útil (y el auto-alzado de «expectInput») ponen
-   «touch-sheet-on», y sin estas reglas la hoja seguía oculta EN ESTE layout — el botón
-   cambiaba el modo y no se veía nada (especificidad: el display:none de arriba, 0-4-1,
-   ganaba al «.touch-sheet-on» base de index.html, 0-2-0).
+/* ★★ LA HOJA MOVE SIGUE SIEMPRE VISIBLE — y ésa es la mitad de esta regla que SOBREVIVE.
+   El deck de tres columnas no puede quedarse vacío cuando el motor auto-alza una hoja, y
+   con las hojas de teclado fuera de flujo eso se cumple solo: la cruz, las acciones y la
+   columna de accesos no se mueven ni un píxel al abrirse el teclado.
 
-   DÓNDE se alza — MEDIDO, no elegido a ojo: la hoja abierta SUSTITUYE la columna de
-   ACCIONES (la casilla de «.touch-cmdwrap», col 2 filas 1/-1), no una fila nueva bajo el
-   grid. El primer intento (fila 2 a lo ancho) lo tumbó la propia verificación: el deck
-   entero vive acotado a ~104 px en un iPhone 13, así que la fila nueva ESTRANGULABA la
-   fila 1 a ~14 px y la columna útil quedaba inalcanzable — el hit-test de playwright se
-   negó al tap («#app intercepts pointer events») exactamente donde el pulgar del usuario
-   habría fallado. Superpuesta en la casilla de acciones, cursores y fila útil conservan
-   su alto (el toggle sigue tocable) y el alto del deck NO cambia (cero salto de canvas).
-   La hoja va DESPUÉS de «.touch-cmdwrap» en el DOM, así que pinta encima sin z-index;
-   el fondo opaco evita ver los comandos entre sus teclas.
-   El A-Z se queda oculto a propósito: el texto lo cubre el teclado del SISTEMA
-   (botón «Teclado»). */
-html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .touch-sheet-num.touch-sheet-on {
-  display: block; grid-area: 1 / 2 / -1 / 3; min-width: 0; min-height: 0;
-  overflow-y: auto; overscroll-behavior: contain; background: #000;
-  position: relative; z-index: 1;
-}
-html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .touch-sheet-yesno.touch-sheet-on {
-  display: flex; grid-area: 1 / 2 / -1 / 3; min-width: 0; min-height: 0;
-  gap: 10px; align-items: stretch; background: #000;
-  position: relative; z-index: 1;
-}
-/* ⚠ El «position:relative; z-index:1» de las dos reglas de arriba NO es decorativo — es
-   el fix del bug REAL que reportó el usuario en su iPhone («aparece debajo de la
-   botonera de acciones»): dos grid-items ESTÁTICOS que comparten casilla no se apilan
-   por orden de árbol en todas las fases de pintado — el CONTENIDO de los comandos
-   (fase 7) pintaba ENCIMA del fondo y las teclas de la hoja. Mi primera verificación
-   comparó sólo RECTS (idénticos) y no vio el z-order: verificar superposición =
-   elementFromPoint, no cajas. Con stacking context propio, la hoja gana entera. */
+   🔴 LA OTRA MITAD SE RETIRA, Y ERA EL DEFECTO CENTRAL DEL CARRIL. Decía:
+       .touch-sheet-az, .touch-sheet-num, .touch-sheet-yesno { display: none }
+   con la razón «el A-Z se queda oculto a propósito: el texto lo cubre el teclado del
+   SISTEMA». En su día era coherente —el deck vivía acotado a ~104 px y una fila QWERTY ahí
+   dentro habría dado teclas de 9 px— pero convertía al layout partido en el ÚNICO de los
+   cuatro **sin teclado propio**: el mismo prompt de texto se servía con una superficie en
+   clásico, con otra distinta en Enhanced y con ninguna aquí. El encargo del 12-09 pide un
+   solo componente en los cuatro, y la razón que sostenía la excepción ya no aplica: la hoja
+   no vive en el deck, así que su ancho no es el de la columna sino el de la pantalla.
+   El teclado del SISTEMA **no se pierde** — sigue a un toque del botón «ABC» (\`deck-nativo.ts\`),
+   que es literalmente lo que la spec del 27-07 pedía («deberíamos usar el teclado estándar y
+   que este se active con un botón»). Lo que deja de pasar es que se abra SOLO tapando media
+   pantalla cuando ya hay teclado propio delante; ese gate vive en \`syncAz\` y usa el mismo
+   predicado que ya gobernaba el realce del botón (\`necesitaTecladoSistema\`). */
+/* ★★ AQUÍ VIVÍA LA COLOCACIÓN DE num Y yesno EN LA CASILLA DE ACCIONES — y es la pieza
+   que el carril de consistencia (12-09) retira, con su historia entera porque explica por
+   qué la solución correcta no estaba disponible entonces.
+
+   Decía: \`grid-area: 1 / 2 / -1 / 3\` (la casilla de \`.touch-cmdwrap\`), fondo negro y
+   \`position:relative; z-index:1\`. La colocación se eligió MIDIENDO, y bien: el primer
+   intento —una fila propia a lo ancho, bajo la rejilla— lo tumbó la verificación, porque el
+   deck vivía acotado a ~104 px en un iPhone 13 y la fila nueva ESTRANGULABA la fila 1 a
+   ~14 px, dejando la columna útil intocable («#app intercepts pointer events»). El
+   \`z-index:1\` tampoco era decorativo: dos grid-items estáticos en la misma casilla no se
+   apilan por orden de árbol en todas las fases de pintado, y el CONTENIDO de los comandos
+   pintaba ENCIMA de las teclas (bug real reportado en un iPhone: «aparece debajo de la
+   botonera de acciones»).
+
+   🔴 LO QUE LAS DOS DECISIONES COMPARTÍAN ES LA PREMISA: **que el teclado tenía que caber
+   DENTRO del deck**. De ahí salía todo — la casilla de ~90 px de ancho, el numpad a 34 px de
+   alto con su excepción en el ledger del suelo táctil, y que el mismo numpad midiera una
+   cosa aquí y otra en el clásico. Con la hoja FUERA DE FLUJO (\`ui/teclado-capa.ts\`) la
+   premisa cae: el teclado no compite con la rejilla por la casilla ni con el mapa por el
+   alto, así que no hay nada que estrangular ni ninguna casilla que compartir, y el
+   \`z-index\` pasa a ser el de la capa (50), por encima del deck entero.
+   Las dos razones MEDIDAS siguen siendo ciertas de lo que describían; lo que ya no existe
+   es el sitio del que hablaban. */
 /* 1 · CURSORES «como estaban antes»: la cruz 3×3, celdas de 44 (suelo iOS exacto — en el
    Galaxy S8 no sobra un píxel de ancho). Ocupa las dos filas.
    ── LA RETÍCULA COMÚN DE LAS TRES COLUMNAS (petición del usuario 02-08) ───────────────
@@ -503,14 +506,20 @@ html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .touch-she
    num y sí/no, EN ESE ORDEN». Enter/Esc/Espacio ya no están aquí (se fueron al pad, 1b),
    que es lo que deja la columna en cuatro. El ⛶ cierra la lista. */
 html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .touch-shellbtn { order: -10; }
-html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .u5kb-btn { order: 1; }
-html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .touch-sheetbtn-num { order: 2; }
-html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .touch-sheetbtn-yesno { order: 3; }
+html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .u5kb-btn { order: 2; }
+html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .touch-sheetbtn-num { order: 3; }
+html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .touch-sheetbtn-yesno { order: 4; }
 html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .u5swap-btn { display: none; }
-/* El activador de la hoja A–Z PROPIA sobra en el partido: aquí el texto va por el teclado
-   del SISTEMA (botón «ABC» de deck-nativo) y esa hoja está oculta a propósito. Existe para
-   el layout ORIGINAL, que sí la usa. */
-html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .touch-sheetbtn-az { display: none; }
+/* ★ EL ACTIVADOR DE LA HOJA A–Z **YA NO SOBRA AQUÍ**. Decía «sobra en el partido: el texto
+   va por el teclado del SISTEMA y esa hoja está oculta a propósito» — cierto mientras la
+   hoja estaba oculta, y falso desde que el carril de consistencia la sirve en los cuatro
+   layouts. Sin este botón el jugador del partido no tendría forma MANUAL de pedir el
+   teclado propio (la barra de modo, que es quien lo hace en el deck canónico, está oculta
+   en este layout), y quedaría a merced del auto-alzado. Va en \`order: 1\`, justo antes del
+   «ABC» del sistema: primero el teclado del port, luego el del teléfono. */
+html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .touch-sheetbtn-az {
+  display: block; order: 1;
+}
 /* Al FONDO de esa columna, ⛶ y ☰ — el sitio natural que les faltaba al desaparecer la barra
    de modo. Los 4 conmutadores de teclado propio de esa barra sí se ocultan (ya no existen
    como concepto), pero OJO: el ☰ comparte la clase «touch-mode» con ellos, así que hay que
@@ -600,12 +609,15 @@ html.${ROOT_CLASS} .u5kb-btn::before {
    scroll y sin excepciones por dispositivo. El «pan-y» se queda como red de seguridad.
    SI VUELVES A BAJAR ESTE NÚMERO: estarás re-derogando el suelo táctil, y el precio son las
    teclas de 34 px otra vez. */
-html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .touch-sheet-num.touch-sheet-on .touch-kbrow {
-  gap: 4px; margin-bottom: 4px;
-}
-html.${ROOT_CLASS}[data-deck-ancho="bloques"][data-orient="portrait"] .touch-sheet-num.touch-sheet-on .touch-num {
-  padding: 4px 2px; font-size: 14px; min-height: 34px; touch-action: pan-y;
-}
+/* ★★ Y AQUÍ ESTABA EL NUMPAD A 34 px, la excepción viva del ledger del suelo táctil. Se
+   retira ENTERA con su causa: el \`gap:4px\` + \`min-height:34px\` + \`font-size:14px\` existían
+   porque la hoja tenía que caber en la casilla de acciones del deck, y desde el carril de
+   consistencia la hoja no vive ahí (\`ui/teclado-capa.ts\`). El numpad mide hoy lo que mide en
+   los otros tres layouts —44 px de alto, el suelo iOS exacto— y por eso la excepción
+   «numpad (alto 34)» sale de \`e2e/mobile/suelo-tactil.ts\` en este mismo commit: su
+   \`queLaCerraria\` pedía que el teclado dejara de robarle alto al mapa, y es exactamente lo
+   que un overlay fuera de flujo hace. El \`touch-action: pan-y\` que era su red de seguridad
+   lo hereda la capa, para las tres hojas. */
 
 /* ══ Sub-variante «nativo» — 2ª ITERACIÓN DEL USUARIO (26-07, probando en su móvil) ══
    «Solo pondría 3 barras: cursores, lista de acciones y botonera de teclado, enter, y nada
@@ -628,11 +640,10 @@ html.${ROOT_CLASS}[data-deck-ancho="nativo"][data-orient="portrait"] .touch-mode
 html.${ROOT_CLASS}[data-deck-ancho="nativo"][data-orient="portrait"] .touch-sheet-move {
   display: flex; flex-direction: column;
 }
-html.${ROOT_CLASS}[data-deck-ancho="nativo"][data-orient="portrait"] .touch-sheet-az,
-html.${ROOT_CLASS}[data-deck-ancho="nativo"][data-orient="portrait"] .touch-sheet-num,
-html.${ROOT_CLASS}[data-deck-ancho="nativo"][data-orient="portrait"] .touch-sheet-yesno {
-  display: none;
-}
+/* (Aquí las tres hojas de teclado iban a \`display:none\`, por la misma razón que en
+   «bloques»: el texto por el teclado del SISTEMA. Retirado por el carril de consistencia —
+   ver la nota larga de «bloques» más arriba. El botón «ABC» sigue abriendo el teclado del
+   sistema a un toque en las dos sub-variantes.) */
 /* ZONA 1 (cursores) y ZONA 2 (lista de acciones), una encima de otra a todo el ancho: la
    lista se queda el alto que sobre y es LA ÚNICA que scrollea — la queja de «no scrollea
    bien» venía de tener varias zonas scrolleables anidadas compitiendo por el gesto. */
@@ -801,14 +812,9 @@ html.${ROOT_CLASS}[data-deck-ancho="columnas"][data-orient="portrait"] .touch-mo
 html.${ROOT_CLASS}[data-deck-ancho="columnas"][data-orient="portrait"] .touch-fullscreen {
   min-height: 40px;
 }
-/* Las hojas de TECLADO (A-Z / numpad / Sí-No) no son una columna: cuando se abren ocupan
-   una FILA propia a lo ancho de las cuatro. Si no, 10 teclas en la columna 3 medirían
-   ~7 px — el mismo defecto que la auditoría móvil ya cazó en apaisado. */
-html.${ROOT_CLASS}[data-deck-ancho="columnas"][data-orient="portrait"] .touch-sheet-az.touch-sheet-on,
-html.${ROOT_CLASS}[data-deck-ancho="columnas"][data-orient="portrait"] .touch-sheet-num.touch-sheet-on,
-html.${ROOT_CLASS}[data-deck-ancho="columnas"][data-orient="portrait"] .touch-sheet-yesno.touch-sheet-on {
-  grid-area: 2 / 1 / 3 / -1; min-height: 0; overflow-y: auto;
-}
+/* (La fila propia a lo ancho para las hojas de teclado —\`grid-area: 2 / 1 / 3 / -1\`— era
+   la tercera copia de la misma idea, con su tercer conjunto de propiedades. La idea era
+   correcta y la sirve hoy la capa, igual para las tres hojas y los cuatro layouts.) */
 
 /* ── Sub-variante «cruz»: cruz 3×3 compacta y centrada, rejilla debajo ──────────────
    48 px de celda = el suelo táctil de iOS (44) con 4 px de margen, y 16 menos que los 64
@@ -1095,20 +1101,22 @@ ${S_TACTIL} .touch-controls {
   max-height: 58dvh;
   overflow: hidden;
 }
-/* …y con un TECLADO ALZADO el deck puede crecer. El cap de reposo (58dvh) no da para las
-   columnas MÁS la hoja, y ceder por la fila 1 es lo que estrangulaba la cruceta. El mapa
-   se encoge mientras el teclado está arriba y vuelve solo al cerrarlo — que es lo que
-   hace cualquier teclado de móvil. El alto real lo fija el CONTENIDO (columnas + hoja);
-   este número es sólo el techo que no se alcanza. */
-${S}[data-deck-sheet="az"] .touch-controls,
-${S}[data-deck-sheet="num"] .touch-controls,
-${S}[data-deck-sheet="yesno"] .touch-controls {
-  max-height: 80vh;
-  max-height: 80dvh;
-}
-/* Las hojas no cargan aquí con el suelo de 196 px del deck canónico (existe para que
-   conmutar de modo no dé un salto del canvas; aquí el salto ya lo gobierna el cap). */
-${S} .touch-sheet { min-height: 0; }
+/* ★★ AQUÍ EL DECK CRECÍA DE 58 A 80 dvh CON UN TECLADO ALZADO, Y ESA REGLA SE RETIRA.
+   Su razón era buena y ya no tiene sujeto: «el cap de reposo no da para las columnas MÁS
+   la hoja, y ceder por la fila 1 es lo que estrangulaba la cruceta». Desde el carril de
+   consistencia la hoja NO está en el deck —es un overlay \`fixed\` (\`ui/teclado-capa.ts\`)—
+   así que el deck no tiene que hacerle sitio a nada: sus columnas ocupan lo mismo con el
+   teclado arriba y con el teclado abajo, y la cruceta no puede estrangularse porque nadie
+   le disputa la fila.
+   🔴 Y DEJARLA PUESTA HABRÍA SIDO PEOR QUE INÚTIL: el alto del deck es el de su contenido
+   hasta el cap, y la columna de acciones SIEMPRE quiere más (22 comandos). O sea que subir
+   el techo a 80dvh con el teclado abierto ensancharía la banda del deck justo cuando el
+   teclado se apoya en ella (\`--u5-kb-suelo\`), empujándolo hacia arriba sobre el mapa por
+   una razón que ya no existe. \`data-deck-sheet\` sigue publicándose (\`ui/touch.ts\`): es una
+   señal de estado honesta, sólo que hoy no la consume este cap.
+   Las hojas tampoco cargan con el suelo de 196 px del deck canónico — pero eso ya lo
+   decide su capa; aquí sólo se acota la hoja MOVE, que es la que sigue en flujo. */
+${S} .touch-sheet-move { min-height: 0; }
 /* Los contenedores intermedios dejan de generar caja y sus hijos ascienden a items de la
    rejilla del deck (misma técnica que la sub-variante «columnas»). La hoja MOVE va
    siempre en «contents», no sólo cuando está activa: es lo que mantiene cruceta y
@@ -1261,17 +1269,9 @@ html[data-cursores-lado="derecha"].${UI_CLASS}:not(.${ROOT_CLASS})[data-orient="
   grid-column: 1;
 }
 
-/* ── Las HOJAS de teclado: FILA PROPIA a lo ancho de las tres columnas ────────────
-   No pueden sustituir a la columna 2 como en el partido: ahí caben ~90 px y una fila
-   QWERTY son 10 teclas (9 px cada una, el mismo defecto que la auditoría móvil ya cazó en
-   apaisado). En una fila propia conservan el ancho entero y las tres columnas siguen a la
-   vista encima. */
-${S} .touch-sheet-az.touch-sheet-on,
-${S} .touch-sheet-num.touch-sheet-on,
-${S} .touch-sheet-yesno.touch-sheet-on {
-  grid-area: 2 / 1 / 3 / -1; min-width: 0; min-height: 0;
-  overflow-y: auto; overscroll-behavior: contain;
-}
+/* (Cuarta copia de la fila propia, la del portrait ORIGINAL. Misma retirada y mismo
+   destino: \`ui/teclado-capa.ts\`. El razonamiento que la escribió —«ahí caben ~90 px y una
+   fila QWERTY son 10 teclas»— es el que fundó la capa.) */
 `;
 }
 
@@ -1623,7 +1623,33 @@ ${L} .touch-util .touch-shellbtn { display: block; }
    toca el rótulo, que es compartido con los otros dos layouts. */
 ${L} .touch-util .touch-shellbtn { order: -10; }
 ${L} .touch-util .touch-fullscreen { order: 10; grid-column: 1 / -1; }
-${L} .touch-util .touch-sheetbtn-az,
+/* ★★ EL ACTIVADOR A–Z VUELVE AL RAÍL — y aquí la premisa de la regla anterior llevaba
+   caducada desde el propio rediseño. Decía (en \`layoutOriginalCss\`, y este bloque la
+   heredaba): «en APAISADO la barra de modo sigue viva y ya conmuta esa hoja, un botón más
+   en esa fila le robaría ancho a los que sí hacen falta». Pero el rediseño de DOS RAÍLES
+   **jubila la barra de modo** —lo dice su propio bloque, «FUERA LA BARRA DE MODO»— así que
+   desde entonces en apaisado NO HABÍA NINGUNA vía manual de alzar la hoja A–Z: ni barra de
+   modo (oculta) ni activador (oculto por esta regla). El teclado sólo aparecía si el motor
+   lo alzaba. Es la lección que este mismo fichero tiene escrita dos veces: *«una guarda
+   escrita contra una GEOMETRÍA caduca en cuanto esa geometría cambia»*.
+
+   Y NO CUESTA UN PÍXEL — medido el 12-09 con sonda en los dos proyectos y los dos apaisados
+   del censo (844×340 y 568×320), mostrando el activador y re-midiendo en el mismo frame:
+
+     celda                     antes                       después
+     clásico 844×340           ☰ · Sí/No · 123 · Screen    + A–Z   → todas 44×68, raíl 152×140
+     clásico 568×320           idem                        idem    → todas 44×68, raíl 152×120
+     partido 844×340           + ▤ · ABC · ☰               + A–Z   → todas 44×68, raíl 152×140
+     partido 568×320           idem                        idem    → todas 44×68, raíl 152×120
+
+   La rejilla es de DOS columnas y el «Screen» ocupa fila entera, así que 3 celdas normales
+   y 4 caben en las MISMAS dos filas: el activador entra en un hueco que ya estaba vacío. El
+   alto del raíl y el suelo táctil de cada celda salen idénticos, así que la aritmética del
+   presupuesto vertical del apaisado no se toca.
+
+   El \`u5swap-btn\` (⇄) SIGUE oculto: ése sí duplica un ítem del drawer, y su razón (una
+   astilla de 8 px, acta del apaisado) no ha caducado. */
+${L} .touch-util .touch-sheetbtn-az { display: block; }
 ${L} .touch-util .u5swap-btn { display: none; }
 ${L} .touch-util-btn,
 ${L} .touch-util .touch-mode {
@@ -1711,16 +1737,10 @@ ${L}[data-pad-side="right"] .touch-util,
 ${L}[data-pad-side="right"] .touch-dpad { grid-column: 3; }
 ${L}[data-pad-side="right"] .touch-cmdwrap { grid-column: 1; }
 
-/* ── Las HOJAS de teclado siguen siendo BARRA a lo ancho ────────────────────────────
-   Es la decisión del 25-07 que la auditoría dio por buena (10 teclas en una columna daban
-   19 px). Se conserva tal cual; sólo se le da su sitio en la rejilla nueva. */
-${L} .touch-sheet-az.touch-sheet-on,
-${L} .touch-sheet-num.touch-sheet-on,
-${L} .touch-sheet-yesno.touch-sheet-on {
-  grid-area: 2 / 1 / 3 / -1; align-self: end;
-  min-width: 0; min-height: 0;
-  overflow-y: auto; overscroll-behavior: contain;
-}
+/* (Las hojas de teclado siguen siendo BARRA a lo ancho en apaisado — la decisión del 25-07
+   que la auditoría dio por buena (10 teclas en una columna daban 19 px) — pero ya no la
+   sirve esta rejilla: la sirve \`ui/teclado-capa.ts\` con suelo 0, que es el \`bottom: 0\` de
+   siempre, y ahora también para num y yesno, que aquí seguían dentro del raíl.) */
 `;
 }
 

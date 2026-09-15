@@ -176,9 +176,15 @@ describe("A4 · las tres teclas se mudan al pad", () => {
 describe("A4 · la columna 1 queda en ☰ · teclado · num · sí/no", () => {
   it("orden declarado en el layout PARTIDO", () => {
     expect(BLOQUES).toMatch(/touch-shellbtn\s*\{\s*order:\s*-10;/);
-    expect(BLOQUES).toMatch(/u5kb-btn\s*\{\s*order:\s*1;/);
-    expect(BLOQUES).toMatch(/touch-sheetbtn-num\s*\{\s*order:\s*2;/);
-    expect(BLOQUES).toMatch(/touch-sheetbtn-yesno\s*\{\s*order:\s*3;/);
+    // ⚠ LOS ÓRDENES SE CORREN UNO desde el carril de consistencia del teclado (12-09): el
+    // activador de la hoja A–Z PROPIA entra en la columna (order 1) porque esa hoja ya
+    // existe en este layout, y el «ABC» del teclado del SISTEMA pasa a 2. La spec del
+    // usuario («☰, teclado, num y sí/no, EN ESE ORDEN») se conserva con su lectura natural:
+    // primero el teclado del port, detrás el del teléfono, luego num y sí/no.
+    expect(BLOQUES).toMatch(/touch-sheetbtn-az\s*\{[^}]*order:\s*1;/);
+    expect(BLOQUES).toMatch(/u5kb-btn\s*\{\s*order:\s*2;/);
+    expect(BLOQUES).toMatch(/touch-sheetbtn-num\s*\{\s*order:\s*3;/);
+    expect(BLOQUES).toMatch(/touch-sheetbtn-yesno\s*\{\s*order:\s*4;/);
   });
 
   it("orden declarado en el layout ORIGINAL, con su propio activador de teclado", () => {
@@ -195,10 +201,17 @@ describe("A4 · la columna 1 queda en ☰ · teclado · num · sí/no", () => {
     expect(TOUCH_TS).toMatch(/ensureSheetActivator/);
     expect(DOM_TS).toContain("AZ_ACTIVATOR");
     // Oculto por defecto (incluido APAISADO, donde la barra de modo sigue conmutando esa
-    // hoja) y visible sólo en el portrait original.
+    // hoja) y visible en los DOS layouts de columnas.
+    // ⚠ EL PARTIDO SE LE SUMA EN EL CARRIL DE CONSISTENCIA (12-09). Estaba oculto ahí con
+    // una razón escrita —«en el partido el texto va por el teclado del SISTEMA y esa hoja
+    // está oculta a propósito»— que caducó con la hoja: hoy la sirve la capa de teclado en
+    // los cuatro layouts, y sin este botón el jugador del partido no tendría vía MANUAL de
+    // pedirla (la barra de modo, que es quien la conmuta en el deck canónico, está oculta
+    // en este layout).
     expect(ORIG).toMatch(/\.touch-sheetbtn-az\s*\{\s*display:\s*none;\s*\}/);
     expect(ORIG).toMatch(/touch-sheetbtn-az\s*\{\s*display:\s*block;/);
-    expect(BLOQUES).toMatch(/touch-sheetbtn-az\s*\{\s*display:\s*none;\s*\}/);
+    expect(BLOQUES).toMatch(/touch-sheetbtn-az\s*\{\s*display:\s*block;/);
+    expect(BLOQUES).not.toMatch(/touch-sheetbtn-az\s*\{\s*display:\s*none;/);
   });
 });
 
@@ -548,17 +561,41 @@ describe("A4 · el layout ORIGINAL, homogeneizado", () => {
     expect(ORIG).toMatch(/touch-fullscreen\s*\{\s*order:\s*8;\s*\}/);
   });
 
-  it("las hojas de teclado ocupan una FILA a lo ancho (una QWERTY en 90 px es ilegible)", () => {
-    expect(ORIG).toMatch(/touch-sheet-az\.touch-sheet-on[\s\S]{0,220}grid-area:\s*2 \/ 1 \/ 3 \/ -1;/);
+  it("las hojas de teclado ya NO las coloca este layout: las coloca su capa", () => {
+    // ANTES: `grid-area: 2 / 1 / 3 / -1` — una fila propia a lo ancho, porque «una QWERTY
+    // en 90 px es ilegible». La conclusión era correcta y hoy la garantiza para los CUATRO
+    // layouts `ui/teclado-capa.ts` (overlay `fixed` a ancho de pantalla). Lo que este gate
+    // vigila ahora es la propiedad que sustituye a aquélla, y es MÁS fuerte: que este
+    // fichero no vuelva a colocar una hoja de teclado por su cuenta — que es como nacieron
+    // las cuatro presentaciones distintas del mismo teclado.
+    for (const hoja of ["az", "num", "yesno"]) {
+      expect(ORIG, `layout ORIGINAL coloca .touch-sheet-${hoja}`).not.toMatch(
+        new RegExp(`touch-sheet-${hoja}\.touch-sheet-on[^}]*grid-area`),
+      );
+      expect(BLOQUES, `layout PARTIDO coloca .touch-sheet-${hoja}`).not.toMatch(
+        new RegExp(`touch-sheet-${hoja}\.touch-sheet-on[^}]*grid-area`),
+      );
+    }
   });
 
-  it("con una hoja alzada el deck CRECE en vez de estrangular la cruceta", () => {
-    // El defecto medido: la fila 2 se llevaba 258 px, la fila 1 caía a 101 y la cruceta
-    // (212) se salía del deck recortado — elementFromPoint sobre el ENT devolvía CANVAS.
+  it("con una hoja alzada la cruceta no se estrangula — hoy porque la hoja NO está ahí", () => {
+    // El defecto medido en su día: la fila 2 se llevaba 258 px, la fila 1 caía a 101 y la
+    // cruceta (212) se salía del deck recortado — elementFromPoint sobre el ENT devolvía
+    // CANVAS. La cura de entonces fue dejar CRECER el deck (58dvh → 80dvh con
+    // `data-deck-sheet`), o sea pagarlo con mapa.
+    //
+    // ★ EL CARRIL DE CONSISTENCIA (12-09) LO CIERRA POR LA RAÍZ Y RETIRA ESA CURA: la hoja
+    // no vive en el deck, así que no hay fila 2 que disputar y el deck mide lo mismo con el
+    // teclado arriba que abajo. Lo que se aserta ahora es esa propiedad —ninguna regla que
+    // ensanche el deck por tener teclado— porque con la hoja fuera de flujo ensancharlo
+    // sería empujar el teclado sobre el mapa por una razón muerta (el deck es el SUELO de la
+    // capa: `--u5-kb-suelo`).
+    // `dataset.deckSheet` se sigue publicando y se sigue exigiendo: es una señal de estado
+    // honesta y barata, y hoy la consume el arnés.
     expect(TOUCH_TS).toMatch(/dataset\.deckSheet = mode/);
-    expect(ORIG).toMatch(/\[data-deck-sheet="az"\]/);
-    expect(ORIG).toMatch(/\[data-deck-sheet="num"\]/);
-    expect(ORIG).toMatch(/\[data-deck-sheet="yesno"\]/);
+    expect(ORIG, "el cap del deck ya no puede depender de si hay teclado alzado").not.toMatch(
+      /\[data-deck-sheet="(az|num|yesno)"\][^{]*\{[^}]*max-height/,
+    );
     // …y el suelo de la fila 1 se CALCULA de las mismas medidas con las que se dibuja el
     // pad, para que no puedan divergir. ~~`calc(var(--u5pad-keyrow) + …)`~~ — RE-DERIVADO
     // con la cruz 3×3 (portrait-paridad): al pasar ENT/SPC/ESC a las celdas libres ya no hay

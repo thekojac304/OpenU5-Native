@@ -154,6 +154,17 @@ export interface ShellDeps {
    */
   castingUi?(): "classic" | "modern";
   setCastingUi?(ui: "classic" | "modern"): void;
+  /**
+   * INTERFAZ DE TIENDA — «Classic» (teclear la letra que el mercader imprime, como el
+   * original) o «Modern» (un panel compacto con una fila por opción de la fase viva, que
+   * al tocarla SINTETIZA esa misma letra). Ver `enhanced/shop/panel.ts`.
+   *
+   * 🔴 SIN DEP DE DISPONIBILIDAD, por la MISMA razón que `castingUi` y con el mismo gate:
+   * acertar una letra de un menú recién impreso cuesta lo mismo en las dos superficies,
+   * así que se ofrece en las dos. Ausente ⇒ la fila no se pinta.
+   */
+  shopUi?(): "classic" | "modern";
+  setShopUi?(ui: "classic" | "modern"): void;
   /** Cierra el propio shell (los lanzadores lo cierran antes de abrir su panel). */
   close(): void;
 }
@@ -774,9 +785,47 @@ export function buildShellSections(deps: ShellDeps): DebugSection[] {
     ],
   };
 
-  const sections = [panels, magia, video, mandos, audio, mas, keys, commands];
+  /**
+   * TIENDAS — la interfaz del mercader, y de momento nada más.
+   *
+   * Sección propia y no una fila más en «Magia» por lo mismo que «Magia» no es una fila de
+   * «Partidas y paneles»: son dos familias distintas de ajuste de PARTIDA, y meter la
+   * tienda bajo un título que dice «Magic» la escondería. Va en «Juego» (y no en
+   * «Mandos») por la razón de siempre: «Mandos» es la categoría de las decisiones
+   * TÁCTILES —sus filas desaparecen en escritorio— y esto se ofrece en las dos
+   * superficies.
+   */
+  const tiendas: DebugSection = {
+    id: "shell-shops",
+    group: CAT_GAME,
+    title: ts("Shops"),
+    fields: [
+      ...(deps.shopUi && deps.setShopUi
+        ? [
+            {
+              widget: "select" as const,
+              label: ts("Shop interface"),
+              testId: "u5-shell-shop-ui",
+              hint: ts(
+                "Classic: type the letter the merchant prints, like the original. Modern: a compact panel lists the choices the merchant just offered, and tapping one types that same letter for you. Prices, stock, haggling, gold and every other shop rule are identical in both, and the keyboard keeps working either way.",
+              ),
+              options: [
+                { label: ts("Classic"), value: "classic" },
+                { label: ts("Modern"), value: "modern" },
+              ],
+              get: () => deps.shopUi!(),
+              set: (v: number | string) =>
+                deps.setShopUi!(String(v) === "modern" ? "modern" : "classic"),
+            },
+          ]
+        : []),
+    ],
+  };
+
+  const sections = [panels, magia, tiendas, video, mandos, audio, mas, keys, commands];
   // Misma regla que «Mandos»: sin su gate, la sección no tiene campos y sobra.
   if ((magia.fields ?? []).length === 0) sections.splice(sections.indexOf(magia), 1);
+  if ((tiendas.fields ?? []).length === 0) sections.splice(sections.indexOf(tiendas), 1);
   // La sección de MANDOS sólo existe si alguno de sus tres gates la dota de campos: en
   // escritorio los tres dicen que no, y una sección vacía sería una categoría vacía.
   if ((mandos.fields ?? []).length === 0) sections.splice(sections.indexOf(mandos), 1);

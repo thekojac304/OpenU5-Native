@@ -86,28 +86,20 @@ export interface ExcepcionSuelo {
 }
 
 export const EXCEPCIONES: readonly ExcepcionSuelo[] = [
-  {
-    clases: ["touch-num"],
-    eje: "alto",
-    valor: 34,
-    etiqueta: "numpad (excepción declarada)",
-    donde: "layout PARTIDO vertical, hoja «123», en todo el censo de dispositivos",
-    porQue:
-      "Durante 12 h fueron 44, garantizados por un TOPE que acotaba el mapa. El tope se " +
-      "retiró el 03-08 porque su coste se midió en un eje (alto) y se pagaba en DOS —la " +
-      "escala del mapa es uniforme, así que topar el alto le quitaba el ANCHO y aparecían " +
-      "franjas negras laterales— y porque en hardware real mordía donde el emulador decía " +
-      "que no. El usuario, mirándolo, prefiere el mapa: «los teclados numéricos se ven bien».",
-    queLaCerraria:
-      "(a) que VIVA el scroll de la zona de hojas —hoy muerto por el `touch-action:none` de " +
-      "`.touch-btn`—, con lo que la botonera podría ceder alto sin robárselo al mapa; o " +
-      "(b) un tope re-derivado con su coste medido en LOS DOS EJES y sobre métricas de " +
-      "dispositivo REALES, no emuladas.",
-    fuente: {
-      fichero: "src/skin/portrait/deck-ancho.ts",
-      literal: "font-size: 14px; min-height: 34px; touch-action: pan-y;",
-    },
-  },
+  // ── RETIRADA: «numpad (alto 34)», layout PARTIDO vertical ──────────────────────────
+  // Estuvo viva del 03-08 al 12-09 y se va como el ledger manda: **porque su condición de
+  // cierre se cumplió**, no porque estorbara. Decía (`queLaCerraria`): «(a) que VIVA el
+  // scroll de la zona de hojas … con lo que la botonera podría ceder alto sin robárselo al
+  // mapa; o (b) un tope re-derivado con su coste medido en LOS DOS EJES».
+  // Se cumple (a), y por una vía que entonces no estaba sobre la mesa: el carril de
+  // consistencia del teclado (12-09) saca las tres hojas del deck y las sirve como overlay
+  // `fixed` con su propio scroll (`src/ui/teclado-capa.ts`). El numpad deja de competir con
+  // el mapa por el alto —no está en la misma caja— así que sus teclas miden los 44 px del
+  // suelo iOS en los cuatro layouts, igual que las del clásico.
+  // Y la retirada no es opcional: `assertExcepcionesVivas()` exigía el literal
+  // «font-size: 14px; min-height: 34px; touch-action: pan-y;» en `deck-ancho.ts`, que ese
+  // commit borra con la regla entera. Dejarla aquí sería una excepción sin respaldo — el
+  // caso que esta guarda existe para cazar.
   {
     // Cubre las DOS familias de tecla, igual que la exención histórica `/touch-kb|touch-num/`.
     clases: ["touch-kb", "touch-num"],
@@ -135,7 +127,8 @@ export const EXCEPCIONES: readonly ExcepcionSuelo[] = [
   ...(["alto", "ancho"] as const).map((eje) => ({
     clases: ["u5e-dbtn"],
     eje,
-    // 34, el MISMO valor que el numpad de arriba y por la misma causa raiz. Empezo en 40 y
+    // 34. Fue el MISMO valor que tuvo el numpad hasta el 12-09 (ver la retirada de arriba) y
+    // por la misma causa raiz: el mapa del partido no negocia su alto. Empezo en 40 y
     // se bajo al MEDIRLO: a 375x667 el hueco son 123 px y una cruz de 40 pide 130, asi que
     // los 13 sobrantes salian por arriba y dejaban la flecha de subir cortada. Un objetivo
     // de 34 ENTERO es mejor que uno de 40 al que le falta un tercio.

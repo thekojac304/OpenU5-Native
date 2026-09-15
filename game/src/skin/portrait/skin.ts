@@ -723,6 +723,7 @@ export class PortraitSkin implements Skin {
     uninstallWideDeck();
     document.documentElement.style.removeProperty("--u5-reflow-content");
     document.documentElement.style.removeProperty("--u5-hud-top");
+    delete document.documentElement.dataset.u5Portrait;
     const c = this.canvas;
     if (c) {
       if (this.pointerHandler) c.removeEventListener("pointerdown", this.pointerHandler);
@@ -909,10 +910,31 @@ export class PortraitSkin implements Skin {
       const suelo =
         L.kind === "reflow" ? top + L.panes.panel.dy : top + L.canvasH;
       document.documentElement.style.setProperty("--u5-hud-top", `${Math.round(suelo)}px`);
+      // ── QUÉ COMPOSICIÓN VERTICAL ESTÁ VIVA → `<html data-u5-portrait>` ───────────────
+      // 🔴 HACE FALTA PORQUE `--u5-hud-top` SIGNIFICA DOS COSAS, y un panel flotante no
+      // puede distinguirlas desde CSS. En re-flow es el borde SUPERIOR de la banda de
+      // roster+consola: lo intocable está DEBAJO, y un panel se cuelga de ahí hacia
+      // ARRIBA (sobre el mapa). En letterbox es el borde INFERIOR del canvas: lo
+      // intocable está ENCIMA —el 320×200 entero, consola incluida— y el hueco libre es
+      // la franja negra de DEBAJO. Mismo número, lados opuestos.
+      //
+      // El selector compacto de miembro nació antes que esta distinción y usa una sola
+      // fórmula («cuélgate de hud-top hacia arriba»), que es la correcta en re-flow; el
+      // panel de tienda (`enhanced/shop/css.ts`) es el primero que necesita las dos y por
+      // eso se publica ahora la señal que faltaba.
+      //
+      // Se escribe en la RAÍZ y no en el canvas: quien lo consume es `position:fixed` y
+      // no es descendiente del canvas. Y sólo en VERTICAL, como `--u5-hud-top`: en
+      // apaisado los paneles tienen sus propias reglas (se apartan del raíl) y el
+      // atributo AUSENTE es el estado correcto, no una degradación.
+      document.documentElement.dataset.u5Portrait = L.kind;
     } else {
       // APAISADO: el selector tiene sus propias reglas (se aparta del raíl y se acota), así
-      // que aquí la propiedad AUSENTE es el estado correcto y no una degradación.
+      // que aquí la propiedad AUSENTE es el estado correcto y no una degradación. Y con
+      // ella se va la composición: sin `--u5-hud-top` que desambiguar, el atributo no
+      // significa nada — y dejarlo puesto haría casar en apaisado las reglas verticales.
       document.documentElement.style.removeProperty("--u5-hud-top");
+      delete document.documentElement.dataset.u5Portrait;
     }
     // ANCHO EFECTIVO DEL CANVAS → CSS, en APAISADO. Hermano del de arriba y por el mismo
     // motivo: quien sabe cuánto mide el canvas es quien lo dimensiona.
