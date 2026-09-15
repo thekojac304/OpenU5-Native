@@ -1,5 +1,0 @@
-"-specs=C:/Dev/OpenU5-TDeck/native/targets/tdeck/build-m5/bootloader/specs/picolibc.specs"
--mlongcalls
--fno-builtin-memcpy
--fno-builtin-memset
--fno-builtin-bzero
