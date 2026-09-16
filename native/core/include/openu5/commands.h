@@ -4,6 +4,9 @@
 namespace openu5 {
 struct RestServices;
 struct CombatContext;
+struct DungeonContext;
+struct TransportServices;
+struct DialogueServices;
 // Semantic intent only. Exit is the accepted town-boundary response.
 enum class CommandKind : uint8_t {
     Move,
@@ -21,7 +24,9 @@ enum class CommandKind : uint8_t {
     RestCancel,
     UseItem,
     CombatMove, CombatAttack, CombatPass, CombatEscape, CombatEscapeQuick,
-    CombatAttackCancel, CombatYield, CombatEnemyStep
+    CombatAttackCancel, CombatYield, CombatEnemyStep, Cast,
+    EnterDungeon, DungeonCommand, Board, Disembark, CombatKlimb, CombatGet, CombatOpen,
+    Talk, BeginConversation, DialogueText, DialogueYes, DialogueNo, EndConversation
 };
 struct Command {
     CommandKind kind = CommandKind::Pass;
@@ -30,6 +35,9 @@ struct Command {
     int16_t member = -1, item = -1, hours = 0;
     EquipSlot slot = EquipSlot::None;
     int16_t combat_x = 0, combat_y = 0; // Move/escape: CombatDirection ordinal in x.
+    bool has_target = false, cancel_target = false; // Cast: item=SpellId, member=party target.
+    const char16_t *text = nullptr;
+    size_t text_length = 0; // Borrowed UTF-16, no UI length limit. BeginConversation: member=NPC slot.
 };
 enum class CommandStatus : uint8_t {
     Success,
@@ -38,7 +46,8 @@ enum class CommandStatus : uint8_t {
     AwaitingResponse,
     Unsupported,
     InvalidContext,
-    CoreError
+    CoreError,
+    NeedsStorage
 };
 struct ActionResult {
     CommandStatus status = CommandStatus::Success;
@@ -105,6 +114,9 @@ struct CommandContext {
     bool combat = false, dungeon = false;
     const RestServices *rest_services = nullptr;
     CombatContext *combat_context = nullptr; // Caller-owned arena and resource tables.
+    DungeonContext *dungeon_context = nullptr;
+    const TransportServices *transport_services = nullptr;
+    DialogueServices *dialogue_services = nullptr;
 };
 // Supported projection: foot movement, no outdoor actors, no bridge ambush,
 // trapdoor/quest triggers or combat resources. See COMMANDS.md for exact seams.

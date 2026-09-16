@@ -1,5 +1,10 @@
 # Native combat foundation
 
+Update: [MAGIC.md](MAGIC.md) supersedes this batch's magic, special-AI, field
+resolution and actor-growth exclusions. It documents caller-owned overflow,
+wider actor IDs, semantic Cast and the current parity domain. Historical sizes
+and totals here are superseded by [VALIDATION.md](VALIDATION.md).
+
 Authoritative source: the current `game/src/core` TypeScript implementation.
 This is the **encounter-array, physical-combat projection**, not a complete
 translation of the 5,000-line `Combat` class. Hardware and TypeScript runtime
@@ -166,12 +171,17 @@ No mismatch is waived and no TypeScript runtime behavior was edited.
 Run `node --import tsx native/core/tools/generate-combat-fixtures.ts --check`,
 build/CTest as in README, and `native/core/tools/test-combat-reference.ps1` from
 the repository root. The latter explicitly skips fourteen selected real-arena
-game suites and the combat-map extractor suite when assets are absent.
+game suites and the combat-map extractor suite when assets are absent. Those
+assets are now restored and **all fifteen suites pass**. The additional real-map
+mode validates **159,744 snapshots** across all 128 original arenas and all four
+entry directions. Total parity is **352,349**. Extraction, strict CTest wiring,
+the corrected native exit-border mismatch and results are in
+[REAL_ARENAS.md](REAL_ARENAS.md).
 
-Missing files are `game/assets/maps/combatmaps.json`,
+Required generated/source files are `game/assets/maps/combatmaps.json`,
 `original/u5/ultima5/BRIT.CBT` and `original/u5/ultima5/DUNGEON.CBT`.
-Before full encounters: restore those assets, implement fixed-map seeding and
-remaining world aftermath, then extend parity coverage. Before magic/advanced
+Before full encounters: implement fixed-map seeding and remaining world
+aftermath, then extend parity coverage. Before magic/advanced
 AI: choose a capacity/error contract for TS vector growth and translate the
 deferred status/field/special-action paths without altering RNG order.
 

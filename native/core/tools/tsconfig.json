@@ -1,6 +1,26 @@
 {
   "extends": "../../../game/tsconfig.json",
-  "compilerOptions": { "types": ["node"], "noEmit": true },
-  "include": ["generate-fixtures.ts", "generate-turn-fixtures.ts", "generate-travel-fixtures.ts", "generate-command-fixtures.ts", "generate-item-fixtures.ts", "generate-combat-fixtures.ts"],
+  "compilerOptions": {
+    "types": [
+      "node"
+    ],
+    "noEmit": true
+  },
+  "include": [
+    "check-persistence.ts",
+    "generate-fixtures.ts",
+    "generate-turn-fixtures.ts",
+    "generate-travel-fixtures.ts",
+    "generate-command-fixtures.ts",
+    "generate-item-fixtures.ts",
+    "generate-combat-fixtures.ts",
+    "generate-magic-fixtures.ts",
+    "generate-advanced-combat-fixtures.ts",
+    "generate-dungeon-fixtures.ts",
+    "generate-world-flow-fixtures.ts",
+    "generate-dungeon-flow-fixtures.ts",
+    "generate-transport-flow-fixtures.ts",
+    "generate-dialogue-fixtures.ts"
+  ],
   "exclude": []
 }

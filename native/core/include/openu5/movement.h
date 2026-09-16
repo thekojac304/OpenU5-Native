@@ -3,6 +3,7 @@
 #include "state.h"
 namespace openu5 {
 struct CombatEvent;
+struct DialogueEvent;
 struct MoveReport {
     Position old_position{}, target_position{}, resulting_position{};
     int16_t attempted_x = 0, attempted_y = 0;
@@ -23,14 +24,16 @@ struct StepGeometry {
 Result<StepGeometry> resolve_unoccupied_foot_step(GameState &state, const ActiveMap &map, Direction direction);
 // Ordered semantic event subset. See commands.h / COMMANDS.md for payloads.
 enum class GameEventKind : uint8_t { Message, Moved, MapChanged, PartyChanged, TownExitPrompt,
-    WalkEcho, Sfx, PoisonTick, Quake, NeedsDirection, CombatStarted, CombatEnded, Combat };
+    WalkEcho, Sfx, PoisonTick, Quake, NeedsDirection, CombatStarted, CombatEnded, Combat, DungeonEntered, DungeonExited, Dialogue };
 struct GameEvent {
     GameEventKind kind = GameEventKind::Moved;
     StepMessage message = StepMessage::None; // Legacy movement vocabulary.
+    int16_t dungeon_id = -1; // DungeonEntered payload; -1 = absent.
     const char *text = nullptr; // Borrowed during synchronous delivery; also SFX id / command name.
     uint8_t slots[6]{};
     uint8_t slot_count = 0;
     const CombatEvent *combat = nullptr; // Borrowed synchronous CombatEvent envelope.
+    const DialogueEvent *dialogue = nullptr;
 };
 struct MoveAction { Direction direction = Direction::North; };
 // Preserve the existing device-slice result layout; it never emits events.

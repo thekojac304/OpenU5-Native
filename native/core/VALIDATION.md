@@ -1,6 +1,464 @@
 # Native core validation — 2026-09-15
 
-## Latest batch: physical combat foundation
+## Latest batch: platform-independent persistence
+
+See [PERSISTENCE.md](PERSISTENCE.md) for the source map, API, memory limits and
+remaining platform/application boundaries. **619 new / 1,242,170 total**
+compatibility scenarios; **11 additional native contract scenarios** (including
+eight API assertions) are reported separately from TypeScript parity.
+
+| Check | Result |
+| --- | --- |
+| Persistence compatibility + generation/resource/API checks | 630 scenarios; native-to-TS readback included |
+| Real saves | 2 sources, 6 repeated round trips; no available-source skips |
+| Complete native CTest, real arenas and fixture checks | 35/35 passed |
+| Relevant TS persistence selection | 106 passed, 2 missing-ad01 failures, 6 files |
+| Extractor regression | 226 passed, 2 existing skips, 29 files |
+| Fixture TypeScript typecheck | Passed |
+| ESP-IDF build / idf.py size / Launcher packaging | Passed |
+
+The two existing TS failures still require the user-owned
+`game/e2e/espejo-tour/saves/ad01.gam` (Alex Diener AD tour, Barnabas checkpoint).
+Neither failure was hidden or replaced with a fabricated save. Native parity
+uses the available local INIT.GAM and SAVED.GAM and does not depend on ad01.
+
+| Measurement | Dialogue baseline | Persistence | Delta |
+| --- | ---: | ---: | ---: |
+| App / Launcher binary | 342,192 | 342,224 | +32 B |
+| Linked image | 342,068 | 342,104 | +36 B |
+| Minimum Launcher allocation | 393,216 | 393,216 | 0 |
+| GameState, host / ESP | 2,200 / 2,200 | 2,232 / 2,232 | +32 / +32 B |
+| PartyState, host / ESP | 524 / 524 | 556 / 556 | +32 / +32 B |
+| CharacterState | 32 | 34 | +2 B |
+| TurnState | 72 | 72 | 0 |
+| Json root, host / ESP | — | 88 / 64 | plus dynamic containers |
+| Generation, host / ESP | — | 72 / 48 | borrowed buffers |
+
+The name-capacity correction causes the state/image growth. Codec functions are
+compiled into IDF but remain linker-stripped until application wiring calls them;
+the +32 B image delta is **not** their future linked code cost. The packaged image
+is `native/targets/tdeck/build-core/launcher/OpenU5-TDeck-M5-Launcher.bin`, SHA-256
+`1ebd8afa654146f85274c24cb36ecda787f6c05e45d3803a79fa78015abeb356`.
+
+Maximum checked save buffers: GAM 4,192 B, OOL 512 B, JSON 262,144 B, combined
+envelope 266,347 B. JSON caps: 8,192 values, depth 32. The largest new ESP -Os
+frame is 2,416 B; recursive parser frames are 144 B each. DOM containers and
+copies require dynamic scratch, not a fixed arena; PERSISTENCE.md documents the
+rough 2.5 MiB/container upper allowance and required PSRAM/stack/allocator work.
+No worst-case on-device RAM or power-loss guarantee is claimed.
+
+Resolved findings: nine-byte names, descending object versus ascending enemy
+slot allocation, exact native enemy tile recognition, malformed shallow sidecar
+behavior, Unicode in the host fixture transport, optional-key insertion during
+migrations, and ESP int32_t overload portability. No known mismatch remains in
+the tested domain. Atomic recovery is a new platform contract and is not presented
+as browser fallback behavior. Shops, quests, UI, FATFS and device writes were not
+started. Existing unrelated working-tree changes were retained.
+
+Logs and commands: `build-persistence/{host-build,host-tests,typescript-tests,
+extractor-tests,idf-build-size,launcher}.log`; `tools/check-persistence.ts`;
+`tools/validate-persistence-esp.ps1`; `build-persistence/esp-sizes.txt` and
+`largest-stack.txt`. Original bytes and generated test transports remain ignored.
+
+## Previous batch: generic dialogue/conversation
+
+Source mapping, text contracts and explicit boundaries are in
+[DIALOGUE.md](DIALOGUE.md). **250,226 new / 1,241,551 total** parity snapshots
+pass. No TypeScript runtime, extractor behavior, original assets, UI controls or
+target source/configuration was changed.
+
+| Check | Result |
+| --- | --- |
+| Interpreter/output/effect sequence parity | 237,746 passed; includes all 65,536 UTF-16 leading code units |
+| Game/TalkConsole/NpcManager orchestration parity | 7,124 passed across 548 repeated-conversation scenarios |
+| Direct effects and roster/counter edges | 1,260 passed; equipment lengths 0/48/64/256 |
+| Guard-alarm state/RNG sequences | 4,096 passed |
+| Real dialogue coverage | 135 records, 313 labels, 2,023 distinct nonempty branch lines entered; 1,623 through normal entry |
+| Native CTest, including earlier real arenas and all fixture drift checks | 34/34 passed |
+| New native API/integration assertions | 22 passed |
+| Relevant existing TypeScript selection | 134 passed, 2 failed because an optional recorded save is absent; 9 files |
+| Fixture TypeScript typecheck | Passed |
+| Extractor regression | 226 passed, 2 existing skips; 29 files |
+| Fresh TLK extraction vs generated talk JSON | Four master files exactly equal; deterministic binary fixture drift passed |
+| ESP-IDF build, partition/size checks, idf.py size | Passed |
+| Launcher packaging | Passed image/chip/checksum/SHA-256 validation |
+
+The two TypeScript failures are the `ad01.gam` tests in
+`game/tests/blackthorn-trono-nombre.test.ts`, which require
+`game/e2e/espejo-tour/saves/ad01.gam`. That optional recorded save is absent from
+this checkout. The other eight tests in that file pass, including actual
+Blackthorn dialogue branches and Avatar-name fallback. No save was fabricated
+and no tests were converted to skips. All original TLK/DATA.OVL inputs and the
+four generated dialogue JSON assets are available: **zero native dialogue
+asset-dependent skips**. The extractor's two skips remain its optional user-save
+and historical font comparison; they are unrelated to dialogue.
+
+The 913 isolated label/input pairs exercise real label data using a test-only
+job redirect. The 2,023 coverage count is observed nonempty topic/QA/initial/
+default branch-line entry, not a claim that all narrative paths are reachable.
+The live caller comparison records an explicit QuestEnd boundary marker instead
+of invoking deferred quest logic. Native callback and lifecycle metadata are
+distinguished from the original output/message projection in DIALOGUE.md.
+
+### Mismatches and audit findings resolved
+
+* Real NPC description branches can end the interpreter before its opening
+  presentation logic. TS still runs that logic and can consume an introduction
+  draw. Native now preserves the continuation rather than returning early.
+* Repeated conversations after CallGuards can reach a possessed dialog number.
+  The orchestration reference harness initially called only talkScriptFor on
+  restart. It now uses actual tryTalkPossessed/talkTarget dispatch, matching
+  the native route and the existing caller order.
+* The equipment array's logical length matters to giveItem even though native
+  storage reserves 256 entries. `equipment_count` now preserves that length;
+  inventory/combat/loot writes extend it consistently. Direct parity checks
+  cover empty, normal 48-entry, 64-entry and 256-entry arrays. Existing item,
+  combat, loot and fixture suites are included in the complete regression run.
+* Opening-batch effects and full-party JoinParty behavior follow executable TS,
+  including its existing inconsistencies with nearby comments. Neither runtime
+  was changed to make a preferred mechanic pass.
+* A full-core stack scan found previously unreported actor frames larger than
+  the historical combat-only maximum. Corrected measurements are below.
+
+### Memory, firmware and scratch
+
+Sizes are measured with the host compiler and ESP32-S3 compiler. Before values
+are the completed dungeon/world batch. No raw-struct persistence format is implied.
+
+| Measurement | Before | After | Delta |
+| --- | ---: | ---: | ---: |
+| App / Launcher binary | 341,920 | 342,192 | +272 bytes |
+| Linked image, idf.py size | 341,796 | 342,068 | +272 bytes |
+| Minimum Launcher partition | 393,216 | 393,216 | 0 |
+| GameState, host / ESP | 1,936 / 1,936 | 2,200 / 2,200 | +264 / +264 |
+| PartyState, host / ESP | 524 / 524 | 524 / 524 | 0 |
+| TurnState, host / ESP | 72 / 72 | 72 / 72 | 0 |
+| CommandContext, host / ESP | 216 / 108 | 224 / 112 | +8 / +4 |
+| Command, host / ESP | 18 / 18 | 40 / 28 | +22 / +10 |
+| GameEvent, host / ESP | 32 / 20 | 40 / 24 | +8 / +4 |
+| Conversation, host / ESP | — | 352 / 216 | new runtime object |
+| DialogueSession, host / ESP | — | 736 / 536 | new caller-owned session, includes Conversation |
+| DialogueServices, host / ESP | — | 160 / 80 | borrowed callbacks/configuration |
+| DialogueOutput, host / ESP | — | 72 / 52 | per-record object, before dynamic text/segments |
+| TalkScript, host / ESP | — | 120 / 60 | borrowed views only |
+| TalkItem, host / ESP | — | 32 / 16 | borrowed text plus opcode/value |
+
+GameState growth stores NPC met/dead bitmaps, three generic item flags, logical
+equipment-array length and alignment. The session holds only the active NPC,
+names and coroutine state; it does not duplicate party or inventory state.
+
+This implementation uses standard C++ dynamic strings/vectors for the **current
+conversation's** output and section indexes. Asset text is borrowed. There is
+no full-corpus load, recursive label stack or fixed large stack text buffer.
+Measured over the complete host interpreter corpus:
+
+* Peak live requested heap payload: **3,504 bytes**, including transient copies.
+* Largest single allocation: **1,152 bytes**, an output vector allocation.
+* Maximum retained-capacity accounting: **3,236 bytes** (conservative, counts
+  small-string capacities as well as container capacity; not allocator overhead).
+* Largest emitted text: **153 UTF-16 units**; largest observed output-string
+  capacity: **271 units**, or **544 bytes including the terminator**.
+* Largest returned output batch: **16 records**.
+
+The allocation probe is host-only and excludes loaded test assets and allocator
+headers. These are corpus observations, **not a universal fixed bound** for
+arbitrary injected translations/scripts. ESP libstdc++ allocation capacities can
+differ. No artificial text truncation was introduced to claim a memory bound.
+The eventual application needs an allocation/failure budget before enabling
+dialogue on hardware. Keep the complete corpus **SD-backed**, load/index only
+the active script, and prefer PSRAM for decoded text and session allocations
+when integrating that provider. The current default allocator does not itself
+select PSRAM; no board policy leaked into native/core.
+
+ESP `-Os -fstack-usage` reports **304 bytes** for the largest new dialogue frame
+(`execute_dialogue_command`), **272 bytes** for bind/flush, and **352 bytes** for
+the generic command dispatcher. A fresh scan of **all** core .cpp files gives
+**2,176 bytes** for existing `enter_npc_map`, **1,152 bytes** for existing
+`tick_idle_npcs`, and **912 bytes** for `Engine::spray`. The historical “912 bytes
+largest overall” claim was based on a narrower scan and is superseded here.
+These are individual frames, not whole call-chain bounds including callbacks.
+The existing 323,084-byte A* scratch remains the largest overall caller scratch.
+
+The +272-byte linked/device delta reflects dead stripping in the existing
+movement-focused device slice. It is **not** the flash cost of activating all
+conversation/command machinery or loading TLK assets on-device. Packaging was
+validated without flashing or changing physical controls.
+
+### Reproduction and remaining integration
+
+After the README's existing fixture prerequisites:
+
+```powershell
+node --import tsx native/core/tools/generate-dialogue-fixtures.ts
+node node_modules/typescript/bin/tsc -p native/core/tools/tsconfig.json
+# Use the README's Zig environment variables for the existing build-zig tree.
+C:/Espressif/tools/cmake/4.0.3/bin/cmake.exe --build native/core/build-zig --target host-test
+node node_modules/vitest/vitest.mjs run --root extractor
+native/core/tools/validate-dialogue-esp.ps1
+```
+
+The relevant TS selection is dialogue, dialogue-effects, talk-celda-gorn,
+talk-esc-kernel, talk-mounted-merchant, blackthorn-trono-nombre, keyword-alias-es,
+party and party-roster-contiguity. Local evidence lives in ignored
+`native/core/build-dialogue/`: `coverage.json`, `dialogue-parity.log`,
+`host-tests.log`, `typescript-tests.log`, `extractor-tests.log`, `typecheck.log`,
+`idf-build-size.log`, `launcher.log`, `host-sizes.txt`, `esp-sizes.txt`, and
+`largest-stack.txt` with the complete individual `.su` records alongside it.
+
+Generic interpreter, effects, input semantics and native orchestration are
+translated. Before full shops/quests/persistence: implement the Shop/Guard/
+QuestEnd handoffs; supply an SD/asset-backed registry provider; wire application
+ownership, input and the existing world guard-interception event seam; define
+codecs for the extended state (including NPC rows
+and equipment extent). UI pacing, hardware text entry, audio, rendering and
+the existing dungeon-spell/non-foot-Move boundaries remain deferred.
+
+## Previous batch: dungeon/world orchestration
+
+Source mapping, interfaces, storage contracts and remaining boundaries:
+[DUNGEON_WORLD.md](DUNGEON_WORLD.md). **381,952 new / 991,325 total** checked
+snapshots/sequences. No TypeScript runtime, extractor, original asset, hardware
+key binding or target source/configuration was changed.
+
+| Check | Result |
+| --- | --- |
+| Dungeon rules/objects/search parity | 294,912 passed; all cells of all eight extracted dungeons |
+| Fixed combat/object/loot parity | 53,248 passed; 128 real arenas × four facings × eight floor values |
+| Board/disembark rule sequences | 16,384 passed |
+| Board/disembark orchestration | 6,144 passed; actual Game methods, object mutation, events, context turn and RNG |
+| Dungeon orchestration/corridor/aftermath | 11,264 passed; actual TS command and Game.endCombat references |
+| Native host CTest | 31/31 passed, including all previous suites and fixture drift checks |
+| New native integration/storage checks | 12 passed |
+| Fixture TypeScript typecheck | Passed |
+| Core dungeon/transport/room TypeScript tests | 369/369 passed, 22 files |
+| Broader dungeon UI/e2e selection | 376 passed, 2 failed, 2 skipped; two additional suites failed during import |
+| Extractor regression | 226 passed, 2 existing skips, 29 files |
+| ESP-IDF build / idf.py size | Passed |
+| Launcher packaging | Passed image/chip/checksum/SHA-256 validation |
+
+The broader TS run's unchanged failures are recorded, not waived as parity
+success: `dungeon-botonera.test.ts` has two source-text delimiter assertions
+(`handleDungeonKey` closing delimiter not found), and
+`espejo-dungeon-filter.test.ts` / `espejo-dungeon-ops.test.ts` fail during imported
+mirror-tour tooling evaluation with `SyntaxError: Invalid or unexpected token`.
+Its two skips require unpublished documentation files. Those presentation/e2e
+files were not edited. The extractor's two skips remain the optional user save
+and historical font comparison documented in REAL_ARENAS.md. There are no new
+asset-dependent skips in the native dungeon/fixed-arena suites.
+
+### Mismatches and diagnostics resolved
+
+- Fixed-arena action replay initially omitted the existing required actor-growth
+  reserve. The native API correctly rejected actions; the harness now supplies
+  caller-owned storage. No TS behavior changed.
+- The expanded search corpus caught the missing darkness guard; native Search
+  now preserves the reference's exact early message and zero search RNG.
+- The orchestration fixture initially read SFX text instead of `event.sfx.id`.
+  Its event projection now compares the actual logical cue ID.
+- ESP GCC distinguished `int32_t` (`long`) from `int`: ship metadata references,
+  a Rand callback return type, and the capped-counter template were corrected.
+- No reference mismatch was silently accepted. The final native corpora pass.
+
+### Memory and firmware
+
+Before values are the completed combat-magic batch. Object sizes are measured
+with the host compiler and ESP32-S3 compiler, not inferred from source fields.
+
+| Measurement | Before | After | Delta |
+| --- | ---: | ---: | ---: |
+| App / Launcher binary | 341,904 | 341,920 | +16 bytes |
+| Linked image (idf.py size) | 341,780 | 341,796 | +16 bytes |
+| Minimum Launcher partition | 393,216 | 393,216 | 0 |
+| GameState, host / ESP | 1,920 / 1,920 | 1,936 / 1,936 | +16 / +16 |
+| PartyState, host / ESP | 524 / 524 | 524 / 524 | 0 |
+| TurnState, host / ESP | 72 / 72 | 72 / 72 | 0 |
+| CombatState, host / ESP | 3,640 / 3,448 | 3,816 / 3,604 | +176 / +156 |
+| CombatActor, host / ESP | 112 / 104 | 112 / 104 | 0 |
+| CombatMap, host / ESP | 524 / 524 | 524 / 524 | 0 |
+| CommandContext, host / ESP | 200 / 100 | 216 / 108 | +16 / +8 |
+| Command, host / ESP | 18 / 18 | 18 / 18 | 0 |
+| GameEvent, host / ESP | 32 / 20 | 32 / 20 | 0 |
+| New DungeonState, host / ESP | — | 592 / 592 | new caller-owned session |
+| New DungeonContext, host / ESP | — | 80 / 44 | new borrowed bindings |
+| New DungeonScratch, host / ESP | — | 3,848 / 2,564 | new caller-owned scratch |
+| New TransportServices, host / ESP | — | 64 / 32 | new borrowed callbacks |
+
+The largest new explicit scratch is the **2,564-byte ESP dungeon event scratch**:
+160 records plus count, sufficient for the bounded eight-floor pit chain and
+six-party damage events. Store it alongside the caller-owned session, not in
+`app_main`. The existing general A* scratch remains **323,084 bytes** and is the
+largest overall scratch allocation; place it in PSRAM/static storage.
+
+`-Os -fstack-usage` measures a **336-byte new dungeon-dispatch frame**. The largest
+individual frame across the measured core remains **912 bytes**, existing
+`Engine::spray`. The extended generic command dispatcher is 352 bytes and
+`combat_action` is 288 bytes. These are individual frames, not whole call-chain
+bounds including callbacks. No production heap allocation was introduced.
+
+Loot overflow costs eight bytes per record. A contents-255 chest conservatively
+reserves 136 additional records (1,088 bytes); storage is caller-owned. Fixed
+fields need six bytes each, at most 16 initial records. Existing unbounded combat
+actor growth still requires its earlier caller-owned reserves. Prefer PSRAM for
+catalogs, large actor/loot reserves and pathfinding scratch. The +16-byte firmware
+delta reflects linker stripping in the current device slice and does not measure
+the cost of enabling all dungeon/combat systems on-device.
+
+### Reproduction and evidence
+
+Generate real-data fixtures as documented in README.md, then use its existing
+Zig environment:
+
+```powershell
+node node_modules/typescript/bin/tsc -p native/core/tools/tsconfig.json
+C:/Espressif/tools/cmake/4.0.3/bin/cmake.exe --build native/core/build-zig --target host-test
+node node_modules/vitest/vitest.mjs run --root extractor
+native/core/tools/validate-dungeon-esp.ps1
+```
+
+Local logs and measurements: `native/core/build-dungeon/host-tests.log`,
+`core-ts-tests.log`, `idf-build-size.log`, `launcher.log`, `esp-sizes.txt`,
+`host-sizes.txt`, `largest-stack.txt`. The broader TS and extractor logs are
+`native/core/build-zig/dungeon-ts-tests.log` and `dungeon-extractor-tests.log`.
+
+### Remaining work before claiming complete exploration
+
+The requested core mechanisms are implemented within DUNGEON_WORLD.md's stated
+domain. **Non-foot semantic Move remains an existing unsupported path**, so a
+complete mounted/naval exploration claim is premature. Boarding uses world-owner
+callbacks; its in-memory orchestration is parity checked, while persistent object
+serialization remains outside this batch. Quest entrance/rescue/refuge,
+hydration and narrative predicates remain explicit hooks. Spell-specific dungeon
+field/use-item bridges, save serialization and application wiring remain separate
+integration work. Dialogue, shops, quests, UI, rendering and audio were not begun.
+
+## Previous batch: combat magic and advanced generic combat
+
+Source mapping, semantics, resource limits and exclusions: [MAGIC.md](MAGIC.md).
+**257,024 new / 609,373 total generated parity snapshots pass.** No TypeScript
+runtime, original data or target source/configuration was changed in this batch.
+
+| Check | Result |
+| --- | --- |
+| Resource/mana/reagent/target parity | 25,088 passed |
+| Synthetic advanced combat, including aftermath | 125,440 passed |
+| Advanced combat on real arenas | 106,496 passed; 128 maps × four entries, 13 spells, two configurations |
+| Native host CTest | 22/22 passed, including old suites and live reference generation/drift checks |
+| New storage/invalid-input adapter checks | 3 passed; no mutation/events/RNG on rejection |
+| Fixture TypeScript typecheck | Passed |
+| Selected magic/advanced TS tests | 225/225 passed, 19 files |
+| Previous combat TS reference suite | 258/258 passed, 21 files; 467 distinct tests across both runs |
+| Full extractor | 226 passed, same 2 unrelated skips, 29 files |
+| ESP-IDF build / `idf.py size` | Passed |
+| Launcher packaging | Passed image/chip/checksum/SHA-256 validation |
+
+The extractor skips are the optional user save and historical font-atlas
+comparison described in REAL_ARENAS.md. No requested combat-map suite was skipped.
+The real advanced fixture asserts successful spell effects and ability witnesses;
+it is not merely initialization or failed-cast coverage. It includes actual
+`Game.endCombat` roster synchronization and shared RNG continuation after magic.
+
+### Issues found and resolved
+
+No behavioral mismatch was waived or TS rule altered. Fixture development fixed
+CombatRng construction and the replay encoding for forced actor selection. Real
+arena 9 has no enemy slots: the harness initially forced an absent actor index,
+causing a native test crash; it now reproduces TS's absent-current-actor scan.
+The initial real configuration was strengthened to ensure sufficient mana/level
+and required successful effect coverage. Final corpora pass without exceptions.
+ESP GCC rejected a compressed multi-statement line for misleading indentation;
+the C++ formatting was corrected and the build rerun successfully.
+
+### Memory and firmware delta
+
+Before values are the user's completed real-arena physical-combat batch.
+
+| Measurement | Before | After | Delta |
+| --- | ---: | ---: | ---: |
+| App / Launcher binary | 341,712 | 341,904 | +192 bytes |
+| Linked image (`idf.py size`) | 341,588 | 341,780 | +192 bytes |
+| Minimum Launcher allocation | 393,216 | 393,216 | 0 |
+| `GameState`, host / ESP | 1,720 / 1,720 | 1,920 / 1,920 | +200 / +200 |
+| `PartyState`, host / ESP | 524 / 524 | 524 / 524 | 0 / 0 |
+| `CharacterState`, host / ESP | 32 / 32 | 32 / 32 | 0 / 0 |
+| `CombatState`, host / ESP | 3,424 / 3,244 | 3,640 / 3,448 | +216 / +204 |
+| `CombatActor`, host / ESP | 104 / 96 | 112 / 104 | +8 / +8 |
+| `CombatContext`, host / ESP | 96 / 48 | 112 / 56 | +16 / +8 |
+| `CombatEvent`, host / ESP | 40 / 32 | 48 / 36 | +8 / +4 |
+| `Command`, host / ESP | 16 / 16 | 18 / 18 | +2 / +2 |
+| `GameEvent`, host / ESP | 32 / 20 | 32 / 20 | 0 / 0 |
+| `CommandContext`, host / ESP | 200 / 100 | 200 / 100 | 0 / 0 |
+
+`TurnState` remains 72 bytes; `CombatMap` remains 524 bytes. New mixed-spell
+stock is 192 bytes plus crown state/alignment in GameState. Spell IDs and effect
+tags are bytes; `SpellEffect` is six bytes. Immutable metadata lives in compiled
+read-only tables. No duplicate mana/reagent/status owner exists.
+
+The largest new explicit scratch is the spray's **625 bytes**: 121 cell flags,
+63 four-byte coordinates and 63 four-byte hit IDs. ESP32-S3 GCC `-Os
+-fstack-usage` measures a **912-byte largest individual frame**, `Engine::spray`;
+cast dispatch is 80 bytes and the party-target helper 48 bytes. These are local
+compiler frames, not a total including callees or callback stack use. No new
+temporary is allocated in `app_main`, and no production heap/event queue is used.
+The earlier general A* caller-owned scratch remains 323,084 bytes.
+
+Actor overflow costs **104 bytes per record on ESP**; ordered field slots cost
+six bytes each. Their storage is caller-owned and absent from the device loop.
+For a splitting encounter with 22 existing actors, the conservative cast
+reservation is 68 additional records (7,072 ESP bytes). Prefer PSRAM/static
+storage for growth reserves and large catalogs; never put an unbounded actor
+array on the app task stack. The 22 inline records are initial storage, not an
+original gameplay limit. The TS growth paths have no actor-count ceiling;
+capacity failures are explicit and retryable before side effects.
+
+Unused combat/magic routines remain linker-stripped from the existing device
+slice. The +192-byte firmware delta is **not** the cost of enabling full combat
+on-device. Existing controls remain as physically verified by the user; no
+flashing or hardware operation was performed.
+
+### Reproduction and evidence
+
+Use the existing Zig environment in README.md and run:
+
+```powershell
+node node_modules/typescript/bin/tsc -p native/core/tools/tsconfig.json
+C:/Espressif/tools/cmake/4.0.3/bin/cmake.exe --build native/core/build-zig --target host-test
+# build-zig has OPENU5_REAL_ARENAS=ON
+node --import tsx native/core/tools/generate-magic-fixtures.ts --check
+node --import tsx native/core/tools/generate-advanced-combat-fixtures.ts --check
+native/core/tools/test-combat-reference.ps1
+node node_modules/vitest/vitest.mjs run --root extractor
+native/core/tools/validate-magic-esp.ps1
+```
+
+The final helper uses this machine's existing ESP-IDF v6.1 installation. It runs
+`idf.py build size`, the existing Launcher packager, ESP type-size symbols and
+stack-usage compilation. Evidence is in ignored `native/core/build-magic/` and
+`build-zig/Testing/Temporary/LastTest.log`; coverage ledgers accompany fixtures.
+The baseline image was copied before building. Launcher output remains
+`native/targets/tdeck/build-core/launcher/OpenU5-TDeck-M5-Launcher.bin`.
+
+Final app/Launcher SHA-256:
+`6cb666cb44e80232a8eac4aefaf8402a860d13f649d5d1e9f305e3fed81cd1e1`.
+All **33/33** prior target source/configuration/packager hashes remain unchanged.
+
+Remaining boundaries are listed in MAGIC.md: fixed dungeon seeding/scripted
+aftermath, full world magic and remaining selection workflows, board loot actions,
+dialogue/shops/quests/UI. No observed generic magic/advanced-combat parity
+mismatch blocks the next platform-independent translation batch.
+
+## Previous batch: real-arena physical combat
+
+All **15 formerly skipped suites now pass**. The existing extractor generated
+`game/assets/maps/combatmaps.json` from the restored BRIT.CBT and DUNGEON.CBT.
+**159,744 new real-map snapshots passed**, bringing total parity to **352,349**.
+Native host **16/16**, selected TypeScript **258/258**, full extractor **226 passed
+with two unrelated skips**, fixture typecheck, ESP-IDF build/size and Launcher
+validation passed. One native exit-border mismatch was corrected; no observed
+mismatch remains. Firmware delta is **0 bytes**, and **33/33 target hashes** are
+unchanged. Exact commands, hashes, coverage, skip details and scope are in
+[REAL_ARENAS.md](REAL_ARENAS.md).
+
+## Previous batch: physical combat foundation
 
 Source mapping, interface contracts and explicit exclusions are in
 [COMBAT.md](COMBAT.md). Changes are confined to `native/core`; TypeScript runtime
@@ -109,7 +567,7 @@ unchanged. No hardware operation was performed.
 | Additional real-arena camp suites | **Blocked at collection**: `camp-ambush.test.ts`, `camp-guard-walk.test.ts` require missing `game/assets/maps/combatmaps.json` |
 | ESP-IDF build and `idf.py size` | Passed; new production modules compiled |
 | Launcher packaging | Passed image/header/chip/checksum/SHA-256 checks and byte-identical copy |
-| Target source/configuration/packager isolation | **31/31 SHA-256 hashes unchanged** |
+| Target source/configuration/packager isolation | **29/29 SHA-256 hashes unchanged** |
 | Physical input verification | Still outstanding; not attempted |
 
 The exhaustive 65,536-seed RNG digest remains passing and is not included in

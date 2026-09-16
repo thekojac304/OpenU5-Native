@@ -80,6 +80,7 @@ ItemResult unequip_slot(GameState &g, int32_t n, EquipSlot s) {
     if (v == 255)
         return fail("Nothing equipped.");
     ++g.equipment_quantities[v];
+    extend_equipment(g, v);
     v = 255;
     return {true, false, false, ""};
 }
@@ -93,8 +94,10 @@ ItemResult equip_item(GameState &g, int32_t n, int32_t id, const Rand *rand, boo
         return fail("Thou canst not change armour in heated battle!");
     if (is_item_equipped(c, id)) {
         unequip_item_by_id(g, n, id);
-        if (g.equipment_quantities[id] < 99)
+        if (g.equipment_quantities[id] < 99) {
             ++g.equipment_quantities[id];
+            extend_equipment(g, id);
+        }
         return {true, false, true, ""};
     }
     if (id < 0 || id > 255 || g.equipment_quantities[id] <= 0)
@@ -137,6 +140,7 @@ ItemResult equip_item(GameState &g, int32_t n, int32_t id, const Rand *rand, boo
         return fail("Thou art not strong enough!");
     c.*slots[static_cast<uint8_t>(s)] = static_cast<uint8_t>(id);
     --g.equipment_quantities[id];
+    extend_equipment(g, id);
     if ((id == 42 || id == 44) && rand && (*rand)(0, 15) == 0) {
         c.ring = 255;
         return {true, true, false, "\n\nRing vanishes!\n"};

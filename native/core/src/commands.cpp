@@ -1,6 +1,9 @@
 #include "openu5/commands.h"
-#include "openu5/rest.h"
 #include "openu5/combat.h"
+#include "openu5/dungeon.h"
+#include "openu5/rest.h"
+#include "openu5/transport.h"
+#include "openu5/dialogue_orchestration.h"
 #include <cstdio>
 namespace openu5 {
 namespace {
@@ -27,7 +30,12 @@ struct Runner {
         return c.services.effect && c.services.effect(c.services.context, e, sink());
     }
     ActiveMap map() { return get_active_map(c.world, c.game.position.map).value; }
-    int32_t tile() { return map().tile_at(c.game.position.xy.x, c.game.position.xy.y); }
+    int32_t tile() {
+        return c.transport_services && c.transport_services->tile_at
+                   ? c.transport_services->tile_at(c.transport_services->context,
+                                                   c.game.position.xy.x, c.game.position.xy.y)
+                   : map().tile_at(c.game.position.xy.x, c.game.position.xy.y);
+    }
     int32_t conscious() {
         bool sleeping = false;
         for (int32_t i = 0;
@@ -175,7 +183,8 @@ struct Runner {
                             }
                         const auto err =
                             enter_npc_map(*r.c.actors, data.slots, data.count, id,
-                                          uint8_t(r.c.game.time.hour), data.dead_slots);
+                                          uint8_t(r.c.game.time.hour), data.dead_slots |
+                                          (id >= 1 && id <= 32 ? r.c.game.npc_dead[id-1] : 0));
                         if (err != ActorError::None) {
                             r.result.actor_error = err;
                             r.result.status = CommandStatus::CoreError;
@@ -289,6 +298,21 @@ struct Runner {
             return;
         }
         const auto id = location_at(c.locations, c.game.position.xy.x, c.game.position.xy.y);
+        if (id >= 33 && id <= 40 && c.dungeon_context) {
+            auto &d = *c.dungeon_context;
+            if (d.entry_hook && d.entry_hook(d.context, uint8_t(id), sink()))
+                return;
+            Command enter;
+            enter.kind = CommandKind::EnterDungeon;
+            enter.member = int16_t(id);
+            enter.hours = c.game.position.map.floor;
+            auto saved = c.events;
+            c.events = sink();
+            auto action = execute_dungeon_command(c, enter);
+            c.events = saved;
+            result.status = action.status;
+            return;
+        }
         bool found = false;
         for (size_t i = 0; i < c.world.small_map_count; ++i)
             if (c.world.small_maps[i].id.location == id)
@@ -334,7 +358,17 @@ struct Runner {
 };
 } // namespace
 static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
-    if (cmd.kind >= CommandKind::CombatMove && cmd.kind <= CommandKind::CombatEnemyStep) {
+    if (cmd.kind >= CommandKind::Talk && cmd.kind <= CommandKind::EndConversation)
+        return execute_dialogue_command(c, cmd);
+    if (c.dialogue_services && c.dialogue_services->session.active) {
+        ActionResult result;
+        result.status = CommandStatus::AwaitingResponse;
+        return result;
+    }
+    if (cmd.kind == CommandKind::EnterDungeon || cmd.kind == CommandKind::DungeonCommand)
+        return execute_dungeon_command(c, cmd);
+    if ((cmd.kind >= CommandKind::CombatMove && cmd.kind <= CommandKind::Cast) ||
+        (cmd.kind >= CommandKind::CombatKlimb && cmd.kind <= CommandKind::CombatOpen)) {
         ActionResult result;
         if (!c.combat || !c.combat_context || &c.combat_context->game != &c.game ||
             &c.combat_context->turn != &c.turn) {
@@ -342,18 +376,47 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
             return result;
         }
         auto arena = *c.combat_context;
-        struct Delivery { CommandContext &context; ActionResult &result; } delivery{c,result};
+        if (cmd.kind == CommandKind::Cast && (cmd.item < 0 || cmd.item > 48)) {
+            result.status = CommandStatus::InvalidContext;
+            return result;
+        }
+        struct Delivery {
+            CommandContext &context;
+            ActionResult &result;
+        } delivery{c, result};
         arena.events = {&delivery, [](void *p, const CombatEvent &event) {
-            auto &d = *static_cast<Delivery *>(p);
-            ++d.result.event_count;
-            GameEvent envelope; envelope.kind = GameEventKind::Combat; envelope.combat = &event;
-            if (d.context.events.emit) d.context.events.emit(d.context.events.context, envelope);
-        }};
+                            auto &d = *static_cast<Delivery *>(p);
+                            ++d.result.event_count;
+                            GameEvent envelope;
+                            envelope.kind = GameEventKind::Combat;
+                            envelope.combat = &event;
+                            if (d.context.events.emit)
+                                d.context.events.emit(d.context.events.context, envelope);
+                        }};
         arena.trace = c.rng_trace;
-        const auto action = static_cast<CombatAction>(int(cmd.kind)-int(CommandKind::CombatMove));
-        const auto status = combat_action(arena, action, cmd.combat_x, cmd.combat_y);
-        result.status = status == CombatResult::Ok ? CommandStatus::Success :
-            status == CombatResult::Unsupported ? CommandStatus::Unsupported : CommandStatus::InvalidContext;
+        const auto action =
+            cmd.kind == CommandKind::CombatKlimb ? CombatAction::Klimb
+            : cmd.kind == CommandKind::CombatGet ? CombatAction::Get
+            : cmd.kind == CommandKind::CombatOpen
+                ? CombatAction::Open
+                : static_cast<CombatAction>(int(cmd.kind) - int(CommandKind::CombatMove));
+        CombatPoint aim{cmd.combat_x, cmd.combat_y};
+        const auto status =
+            cmd.kind == CommandKind::Cast
+                ? combat_cast(arena, static_cast<SpellId>(cmd.item),
+                              cmd.has_target ? &aim : nullptr, cmd.member, cmd.cancel_target)
+                : combat_action(arena, action,
+                                (action == CombatAction::Get || action == CombatAction::Open) &&
+                                        !cmd.has_direction
+                                    ? -1
+                                    : cmd.combat_x,
+                                cmd.combat_y);
+        result.status = status == CombatResult::Ok ? CommandStatus::Success
+                        : (status == CombatResult::NeedsActorStorage ||
+                           status == CombatResult::NeedsLootStorage)
+                            ? CommandStatus::NeedsStorage
+                        : status == CombatResult::Unsupported ? CommandStatus::Unsupported
+                                                              : CommandStatus::InvalidContext;
         return result;
     }
     Runner r{c, {}, {&c, [](void *p, int32_t lo, int32_t hi) {
@@ -365,7 +428,8 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
                      }}};
     if (c.combat || c.dungeon ||
         (c.game.position.map.location >= 33 && c.game.position.map.location <= 40) ||
-        static_cast<uint8_t>(cmd.kind) > static_cast<uint8_t>(CommandKind::UseItem) ||
+        (static_cast<uint8_t>(cmd.kind) > static_cast<uint8_t>(CommandKind::UseItem) &&
+         cmd.kind != CommandKind::Board && cmd.kind != CommandKind::Disembark) ||
         ((cmd.kind == CommandKind::Move || cmd.has_direction) &&
          static_cast<uint8_t>(cmd.direction) > 3) ||
         (c.actors && (c.actors->count > 32 || !c.npc_scratch)) ||
@@ -444,7 +508,9 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
     }
     if (cmd.kind == CommandKind::Enter && !c.game.position.map.location) {
         const auto id = location_at(c.locations, c.game.position.xy.x, c.game.position.xy.y);
-        unsupported = unsupported || r.tile() == 17 || r.tile() == 25 || (id >= 33 && id <= 40);
+        unsupported = unsupported || r.tile() == 17 || r.tile() == 25 ||
+                      ((id >= 33 && id <= 40) &&
+                       (!c.dungeon_context || (id == 40 && !c.dungeon_context->entry_hook)));
     }
     if (cmd.kind == CommandKind::Klimb && (r.tile() == 200 || r.tile() == 201 || r.tile() == 134)) {
         MapId id = c.game.position.map;
@@ -500,6 +566,69 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
         return r.result;
     }
     switch (cmd.kind) {
+    case CommandKind::Board:
+    case CommandKind::Disembark: {
+        const auto *s = c.transport_services;
+        if (!s || !s->tile_at || !s->reserve || !s->remove_boarded || !s->drop || !s->park_ship) {
+            r.result.status = CommandStatus::InvalidContext;
+            break;
+        }
+        const auto pos = c.game.position;
+        int x = pos.xy.x, y = pos.xy.y;
+        int under = s->tile_at(s->context, x, y);
+        TransportResult tr;
+        if (cmd.kind == CommandKind::Board) {
+            int32_t hull = c.game.ship_hull, skiffs = c.game.ship_skiffs;
+            if (s->ship_at && s->ship_at(s->context, pos, hull, skiffs)) {
+                c.game.ship_hull = hull;
+                c.game.ship_skiffs = skiffs;
+            }
+            tr = board_transport(c.game, under >= 256 ? under - 256 : 0, c.turn.transport_tile,
+                                 s->horse_owned && s->horse_owned(s->context, pos));
+            if (tr.damaged_warning)
+                r.message("DANGER: SHIP BADLY DAMAGED!");
+            if (tr.skiff_warning)
+                r.message("WARNING: NO SKIFFS ON BOARD!");
+            r.message(tr.message);
+            if (tr.ok) {
+                c.turn.transport_tile = tr.tile;
+                c.game.transport = transport_mode(tr.tile);
+                s->remove_boarded(s->context, pos, under);
+            }
+        } else {
+            bool land = false;
+            for (auto dir :
+                 {Direction::North, Direction::South, Direction::East, Direction::West}) {
+                auto delta = direction_delta(dir);
+                int tile = s->tile_at(s->context, x + delta.dx, y + delta.dy);
+                if (tile >= 0 && tile_properties(tile).value.walkable)
+                    land = true;
+            }
+            bool parked = (c.turn.transport_tile & 0xfc) == 0x24;
+            if (!s->reserve(s->context, parked)) {
+                r.result.status = CommandStatus::NeedsStorage;
+                break;
+            }
+            tr = disembark_transport(c.game, c.turn.transport_tile, land, (under & 0xfe) == 0x6a,
+                                     under >= 0 && tile_properties(under).value.walkable);
+            r.message(tr.message);
+            if (tr.ok) {
+                if (tr.drop_tile >= 0)
+                    s->drop(s->context, pos, tr.drop_tile + 256);
+                if (tr.parked_ship_tile >= 0)
+                    s->park_ship(s->context, pos, tr.parked_ship_tile + 256, c.game.ship_hull,
+                                 c.game.ship_skiffs);
+                c.turn.transport_tile = tr.tile;
+                c.game.transport = transport_mode(tr.tile);
+            }
+        }
+        if (tr.ok) {
+            r.turn();
+            r.event(GameEventKind::MapChanged);
+        } else
+            r.result.status = CommandStatus::Rejected;
+        break;
+    }
     case CommandKind::UseItem: {
         // Extended use-table IDs, not equipment IDs. These Game methods do not
         // validate ownership (the selector does) and do not consume a turn.

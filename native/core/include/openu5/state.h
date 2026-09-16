@@ -4,7 +4,7 @@
 namespace openu5 {
 constexpr uint8_t kMaxParty = 6, kRosterCapacity = 16;
 struct CharacterState {
-    char name[9]{}; // Native .GAM name domain: eight bytes plus terminator.
+    char name[10]{}; // saveNative.ts: nine byte name field plus terminator.
     uint8_t gender = 0;
     char character_class = 0, status = 0;
     uint8_t strength = 0, dexterity = 0, intelligence = 0, current_mp = 0;
@@ -31,16 +31,28 @@ struct InitialState {
     // including the reference's Ready(255) empty-slot toggle behavior.
     int32_t equipment_quantities[256]{};
     int32_t scroll_quantities[8]{}, potion_quantities[8]{}, reagent_quantities[8]{};
+    int32_t spell_quantities[48]{};
+    bool worn_crown = false;
     int32_t keys = 0, gems = 0, torches = 0, skull_keys = 0, magic_carpets = 0;
     int32_t ship_hull = 99; // undefined shipHull defaults to 99 in campRepairShip.
     bool grapple = false;
+    uint8_t dungeon_rooms_cleared[14]{};
+    int32_t ship_skiffs = 0;
+    bool wooden_box = false;
     uint8_t karma = 0;
+    uint16_t equipment_count = 48; // Logical TS array length, distinct from reserved storage.
+    bool sextant = false, spyglass = false, black_badge = false;
+    uint32_t npc_met[32]{}, npc_dead[32]{}; // TS npcMet/npcDead rows, 32 slots/location.
 };
 struct GameState : InitialState {
     uint8_t version = 1;
     TransportMode transport = TransportMode::Foot;
     OriginalRng rng{}; // Game.liveRng lives beside state in TS; explicit here for replay.
 };
+inline void extend_equipment(GameState &g, int32_t index) {
+    if (index >= 0 && index < 256 && index >= g.equipment_count)
+        g.equipment_count = uint16_t(index+1);
+}
 GameState create_foundation_state(const InitialState &initial);
 struct PartyMembers { uint8_t indices[kMaxParty]{}; uint8_t count = 0; };
 PartyMembers party_members(const PartyState &party);

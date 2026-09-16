@@ -1,8 +1,38 @@
 # Native OpenU5 core: semantic commands and world simulation
 
+Platform-independent persistence now adds **619 compatibility scenarios** for
+**1,242,170 total**, plus 11 separate generation/resource/API contract scenarios.
+See [PERSISTENCE.md](PERSISTENCE.md) for native GAM/OOL, JSON sidecars/envelopes,
+semantic byte-buffer hooks, explicit session-state exclusions and the remaining
+storage/application integration work. No SD writes or hardware bindings were added.
+
+The generic dialogue batch brings the total to **1,241,551 checked parity
+snapshots/sequences**. See [DIALOGUE.md](DIALOGUE.md) for the conversation API,
+TypeScript source mapping, 135 real records, UTF-16 behavior and explicit
+quest/shop boundaries. Dungeon/world behavior remains documented in
+[DUNGEON_WORLD.md](DUNGEON_WORLD.md).
+Before a fresh build, regenerate the gitignored asset transports and loot names:
+
+```powershell
+node --import tsx native/core/tools/generate-world-flow-fixtures.ts
+node --import tsx native/core/tools/generate-dungeon-fixtures.ts
+node --import tsx native/core/tools/generate-dungeon-flow-fixtures.ts
+node --import tsx native/core/tools/generate-transport-flow-fixtures.ts
+node --import tsx native/core/tools/generate-dialogue-fixtures.ts
+```
+
+The preceding combat magic and advanced generic combat batch reached **609,373 total parity
+snapshots**, including all 128 real arenas in four directions. See
+[MAGIC.md](MAGIC.md) for APIs, source mapping, memory ownership and remaining
+boundaries, and [VALIDATION.md](VALIDATION.md) for current checks and sizes.
+
+## Previous physical-combat batch
+
 Physical combat foundation and encounter handoff are translated within
-[COMBAT.md](COMBAT.md)'s explicit domain: **192,605 total parity snapshots**,
-**14/14 host checks**. The caller-owned combat state is 3,424 host / 3,244 ESP
+[COMBAT.md](COMBAT.md)'s explicit domain: **352,349 total parity snapshots**,
+**16/16 host checks**, including real arenas. See [REAL_ARENAS.md](REAL_ARENAS.md)
+for source extraction and the 15 formerly skipped suites, now passing.
+The caller-owned combat state is 3,424 host / 3,244 ESP
 bytes; `GameState` remains 1,720 bytes. Hardware targets remain unchanged.
 See [VALIDATION.md](VALIDATION.md) for current results and deferred combat work.
 

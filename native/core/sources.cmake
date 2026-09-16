@@ -1,5 +1,13 @@
 # Shared source list: host and ESP-IDF compile the same portable implementation.
 set(OPENU5_CORE_SOURCES
+    "${CMAKE_CURRENT_LIST_DIR}/src/save_json.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/persistence.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/save_core.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/dungeon.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/dungeon_orchestration.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/transport.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/loot.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/scripted_encounter.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/rng.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/time.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/state.cpp"
@@ -13,4 +21,8 @@ set(OPENU5_CORE_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/commands.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/inventory.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/rest.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/combat.cpp")
+    "${CMAKE_CURRENT_LIST_DIR}/src/combat.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/magic.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/dialogue.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/dialogue_effects.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/dialogue_orchestration.cpp")

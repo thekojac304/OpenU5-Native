@@ -8,6 +8,7 @@
 using namespace openu5;
 using V = std::vector<int64_t>;
 struct Harness {
+    std::vector<CombatMap> real_maps;
     GameState g{}, initial{};
     TurnState t{};
     CombatState s{};
@@ -179,16 +180,18 @@ struct Harness {
         if (k % 4 == 0)
             enemy.index = 12;
         g.position.map.location = k % 3 == 0 ? 1 : 0;
+        if (!real_maps.empty())
+            map = real_maps.at(size_t(k / 4));
         initial = g;
         initial_turn = t;
         const CombatEnemy *defs[16];
         std::fill_n(defs, 16, &enemy);
         auto c = context();
-        if (initialize_combat(c, map, CombatDirection::South, defs,
+        if (initialize_combat(c, map, real_maps.empty() ? CombatDirection::South : CombatDirection(k % 4), defs,
                               k % 8 == 0     ? 0
                               : k % 13 == 12 ? 16
                                              : 3,
-                              k % 5 == 0) != CombatResult::Ok)
+                              real_maps.empty() ? k % 5 == 0 : k / 4 >= 16) != CombatResult::Ok)
             std::abort();
     }
     V snapshot() {
@@ -245,12 +248,41 @@ struct Harness {
     }
 };
 int main(int argc, char **argv) {
-    if (argc != 2)
+    if (argc != 2 && argc != 3)
         return 2;
     std::ifstream file(argv[1]);
     if (!file)
         return 2;
     Harness h;
+    if (argc == 3) {
+        // Read the test transport generated from combatmaps.json, never the CBT bytes.
+        std::ifstream maps(argv[2]);
+        for (int i = 0; i < 128; ++i) {
+            CombatMap m{};
+            maps >> m.index;
+            for (auto &tile : m.tiles) maps >> tile;
+            for (int d = 0; d < 4; ++d) {
+                int count;
+                if (!(maps >> count) || count != 6) return 2;
+                m.start_count[d] = uint8_t(count);
+                for (int p = 0; p < count; ++p) maps >> m.starts[d][p].x >> m.starts[d][p].y;
+            }
+            int count;
+            if (!(maps >> count) || count < 0 || count > 16) return 2;
+            m.unit_count = uint8_t(count);
+            for (int u = 0; u < count; ++u) maps >> m.units[u].x >> m.units[u].y;
+            if (!(maps >> count) || count < 0 || count > 8) return 2;
+            m.trigger_count = uint8_t(count);
+            for (int t = 0; t < count; ++t) {
+                auto &v = m.triggers[t];
+                maps >> v.tile >> v.at.x >> v.at.y >> v.first.x >> v.first.y >> v.second.x >> v.second.y;
+            }
+            if (!maps) return 2;
+            h.real_maps.push_back(m);
+        }
+        std::string extra;
+        if (maps >> extra) return 2;
+    }
     std::string line;
     V previous;
     size_t row = 0;
@@ -292,7 +324,8 @@ int main(int argc, char **argv) {
             const CombatMap *maps[] = {&h.map};
             CombatResources r{maps, 1, defs, 48, h.context().tables};
             auto w = h.world_context();
-            if (start_encounter_combat(w, h.s, r, h.enemy.index, 5, -1, CombatDirection::South,
+            if (start_encounter_combat(w, h.s, r, h.enemy.index, 5, -1,
+                                       h.real_maps.empty() ? CombatDirection::South : CombatDirection(k % 4),
                                        k % 2 != 0) != CombatResult::Ok)
                 std::abort();
         } else if (op == 10) {
@@ -335,6 +368,8 @@ int main(int argc, char **argv) {
         }
     }
     int adapters = 0;
+    if (row == 0) return 2;
+    h.real_maps.clear();
     auto require = [&](bool ok) {
         if (!ok) {
             std::cerr << "combat adapter " << adapters + 1 << " failed\n";
@@ -354,12 +389,12 @@ int main(int argc, char **argv) {
     absent.enemy_count = 48;
     require(start_encounter_combat(w, h.s, absent, h.enemy.index, 5) == CombatResult::MissingMap &&
             h.snapshot() == before && h.g.rng.get_seed() == 123);
-    h.enemy.abilities = 0x1000;
+    h.enemy.name = nullptr;
     const CombatEnemy *one[] = {&h.enemy};
     require(initialize_combat(c, h.map, CombatDirection::South, one, 1) ==
                 CombatResult::Unsupported &&
             h.snapshot() == before);
-    h.enemy.abilities = 0;
+    h.enemy.name = "Rat";
     h.map.unit_count = 17;
     require(initialize_combat(c, h.map, CombatDirection::South, one, 1) == CombatResult::Invalid &&
             h.snapshot() == before);
@@ -382,4 +417,5 @@ int main(int argc, char **argv) {
   std::cout << "CombatContext=" << sizeof(CombatContext) << " CombatEvent=" << sizeof(CombatEvent)
             << " GameEvent=" << sizeof(GameEvent) << " Command=" << sizeof(Command)
             << " CommandContext=" << sizeof(CommandContext) << "\n";
+    return 0;
 }

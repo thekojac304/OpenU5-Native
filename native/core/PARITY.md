@@ -1,6 +1,59 @@
 # Reference map, parity contract and remaining work
 
-## Latest batch: physical combat foundation
+## Latest batch: platform-independent persistence
+
+See [PERSISTENCE.md](PERSISTENCE.md) for source mapping, binary compatibility,
+sidecar/envelope precedence, live-state adapters, generation recovery and memory
+limits. **619 new / 1,242,170 total compatibility scenarios** pass, plus **11
+native persistence contract scenarios** kept outside the TypeScript parity total.
+Native-produced saves/envelopes load back into TypeScript; two real save sources
+complete six repeated round trips. No TypeScript runtime behavior changed.
+
+Codecs and byte/document save/load hooks are implemented. Application/service
+capture and restore wiring, SD/FATFS, UI, shops and quests remain deferred.
+Session-only RNG/combat/dialogue/dungeon objects are not silently added to the
+save format; their exact reference boundaries are listed in PERSISTENCE.md.
+The retained document preserves world/quest/QoL data whose live owners remain
+outside the bounded GameState. This supersedes historical blanket persistence
+exclusions only within the documented codec and adapter domain.
+
+## Previous batch: generic dialogue/conversation
+
+See [DIALOGUE.md](DIALOGUE.md) for the exact TypeScript source map, text/state
+contracts, asset path map and explicit quest/shop handoffs. **250,226 new /
+1,241,551 total** parity snapshots cover the resumable TLK engine, effects,
+semantic Talk/input, NPC meeting/recruitment/alarm state and event order.
+All 135 real dialogue records and 313 labels are exercised, with 2,023 distinct
+nonempty branch lines entered (1,623 without isolated-label redirects).
+Every UTF-16 leading code unit, generic counter/roster edges, 7,124 orchestration
+snapshots and 4,096 alarm seeds are included. No TypeScript behavior was changed.
+
+There are no native dialogue asset skips. Two broader TypeScript tests fail for
+the missing optional `game/e2e/espejo-tour/saves/ad01.gam`; they are not reported
+as passed. Full shops, quests, persistence and UI remain deferred. Historical
+blanket dialogue exclusions below are superseded only within DIALOGUE.md's domain.
+See [VALIDATION.md](VALIDATION.md) for final tests, sizes and memory limits.
+
+## Previous batch: dungeon/world orchestration
+
+See [DUNGEON_WORLD.md](DUNGEON_WORLD.md) for the exact source map and boundaries.
+**381,952 new / 991,325 total** checked snapshots/sequences cover dungeon rules,
+entry/exit/levels, corridor arenas, fixed map/enemy/object setup, chest/loot,
+board/disembark rules and dungeon combat return routing. Generic scripted entry
+and semantic hooks are implemented. Non-foot semantic Move and quest narrative
+remain explicit limitations; this is not a claim of complete transport gameplay.
+Current evidence, including unchanged TS UI/e2e failures, is in VALIDATION.md.
+
+## Previous batch: combat magic and advanced generic combat
+
+See [MAGIC.md](MAGIC.md) for source mapping, resource/RNG/event behavior,
+caller-owned growth, field/status integration and explicit exclusions.
+**257,024 new / 609,373 total snapshots pass**, including **106,496** advanced
+snapshots across all 128 real arenas and four entry directions. Historical
+magic/special-AI/growth exclusions below are superseded within that domain.
+Validation and memory measurements are in [VALIDATION.md](VALIDATION.md).
+
+## Previous batch: physical combat foundation
 
 See [COMBAT.md](COMBAT.md) for exact source mapping and the supported
 encounter-array physical-combat domain. **97,344 new / 192,605 total** generated

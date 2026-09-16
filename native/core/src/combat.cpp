@@ -1,4 +1,6 @@
 #include "openu5/combat.h"
+#include "openu5/dungeon.h"
+#include "openu5/loot.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -24,12 +26,7 @@ bool any_side(const CombatState &s, bool party, bool alive = false) {
 }
 bool inside(int x, int y) { return x >= 0 && y >= 0 && x < 11 && y < 11; }
 int table(const int32_t *v, size_t n, int id) { return v && id >= 0 && size_t(id) < n ? v[id] : 0; }
-bool supported(const CombatEnemy &d) {
-    // Splitting expands the TS vector without a fixed limit; magic decision logic
-    // is deferred.
-    return d.name && std::strlen(d.name) <= 120 &&
-           !(d.abilities & (0x4000 | 0x1000 | 0x0080 | 0x0020 | 0x0008 | 0x0004));
-}
+bool supported(const CombatEnemy &d) { return d.name && std::strlen(d.name) <= 120; }
 struct Engine {
     CombatContext &c;
     CombatState &s;
@@ -122,8 +119,15 @@ struct Engine {
             return false;
         }
     }
+    bool field_blocks(int x, int y) {
+        for (int i = 0; i < s.field_count; ++i)
+            if (s.fields[i].position.x == x && s.fields[i].position.y == y &&
+                s.fields[i].tile == 235)
+                return true;
+        return false;
+    }
     bool free(const CombatActor &a, int x, int y) {
-        return passable(a.enemy, x, y) && !occupant(x, y);
+        return passable(a.enemy, x, y) && !field_blocks(x, y) && !occupant(x, y);
     }
     void triggers(int x, int y) {
         if (!s.room)
@@ -175,8 +179,8 @@ struct Engine {
             a.invisible = true;
             a.render_tile = 29;
         } else if (r.ring == 44) {
-            for (int i = 0; i < std::min<int32_t>(g.party.party_size, int32_t(g.party.character_count));
-                 ++i) {
+            for (int i = 0;
+                 i < std::min<int32_t>(g.party.party_size, int32_t(g.party.character_count)); ++i) {
                 auto &p = g.party.characters[i];
                 if (p.status == 'D' || p.ring != 44)
                     continue;
@@ -201,12 +205,12 @@ struct Engine {
     CombatActor *current() {
         if (combat_over(s))
             return nullptr;
-        if (s.current >= 0 && active(s.actors[s.current]))
+        if (s.current >= 0 && s.current < s.count && active(s.actors[s.current]))
             return &s.actors[s.current];
         s.current = -1;
         for (int k = 0; k < 258 * s.count; ++k) {
             int i = s.scan;
-            s.scan = uint8_t((s.scan + 1) % s.count);
+            s.scan = (s.scan + 1) % s.count;
             auto &a = s.actors[i];
             if (!active(a))
                 continue;
@@ -229,7 +233,7 @@ struct Engine {
                 status_pass(a);
                 continue;
             }
-            s.current = int16_t(i);
+            s.current = i;
             if (player(a)) {
                 auto &r = g.party.characters[a.member];
                 if (r.weapon == 35 || r.shield == 35)
@@ -242,6 +246,8 @@ struct Engine {
     void latch() {
         if (!s.victory && !any_side(s, false) && any_side(s, true, true)) {
             s.victory = true;
+            if (s.victory_latch)
+                s.victory_latch(s.victory_context);
             message("VICTORY!");
         }
     }
@@ -277,9 +283,24 @@ struct Engine {
                 status_pass(a);
             if (active(a) || a.status == CombatStatus::Dead) {
                 int t = tile(a.position.x, a.position.y);
-                if (t == 143 || t == 188)
+                int magnitude = t == 143 || t == 188 ? 100 : t == 4 ? 50 : 0;
+                if (!magnitude)
+                    for (int i = 0; i < s.field_count; ++i) {
+                        auto &f = s.fields[i];
+                        if (f.position.x != a.position.x || f.position.y != a.position.y ||
+                            f.tile == 235)
+                            continue;
+                        magnitude = f.tile == 234   ? 100
+                                    : f.tile == 232 ? 50
+                                    : f.tile == 233 ? 150
+                                                    : 0;
+                        break;
+                    }
+                if (magnitude == 150)
+                    sleep(a);
+                else if (magnitude == 100)
                     damage(a, a, rand(0, 10));
-                else if (t == 4 && (player(a) || ((64 + 4 * a.enemy->index) & 255) < 128))
+                else if (magnitude == 50 && (player(a) || ((64 + 4 * a.enemy->index) & 255) < 128))
                     poison(a, a);
             }
         }
@@ -316,11 +337,12 @@ struct Engine {
         if (id >= 0) {
             auto &q = g.equipment_quantities[id];
             q = (q - 1) & 255;
+            extend_equipment(g, id);
             if (q)
                 return;
             int n = 0;
-            for (int i = 0; i < std::min<int32_t>(g.party.party_size, int32_t(g.party.character_count));
-                 ++i) {
+            for (int i = 0;
+                 i < std::min<int32_t>(g.party.party_size, int32_t(g.party.character_count)); ++i) {
                 if (unequip_item_by_id(g, i, w.id) == EquipSlot::None)
                     continue;
                 ++n;
@@ -329,11 +351,13 @@ struct Engine {
                         remove_weapon(s.actors[j], w.id);
             }
             g.equipment_quantities[w.id] = (g.equipment_quantities[w.id] + n) & 255;
+            extend_equipment(g, w.id);
         } else if (is_thrown_weapon(w.id) && dist > 1) {
             auto &q = g.equipment_quantities[w.id];
-            if (q > 0)
+            if (q > 0) {
                 --q;
-            else {
+                extend_equipment(g, w.id);
+            } else {
                 unequip_item_by_id(g, a.member, w.id, true);
                 remove_weapon(a, w.id, true);
             }
@@ -464,9 +488,12 @@ struct Engine {
             g.party.characters[b.member].current_hp = uint16_t(b.hp);
         } else {
             attacked(a, b, d);
+            if (b.enemy->abilities & 0x1000)
+                divide(b);
             wound(b);
         }
     }
+#include "combat_magic.inc"
     void poison(CombatActor &a, CombatActor &b) {
         if (player(b) && g.party.characters[b.member].status == 'G') {
             g.party.characters[b.member].status = 'P';
@@ -511,11 +538,12 @@ struct Engine {
                 return {int16_t(x), int16_t(y)};
         }
     }
-    void attack_with(CombatActor &a, CombatActor &b, CombatWeapon w, bool enemy_ranged = false) {
+    void attack_with(CombatActor &a, CombatActor &b, CombatWeapon w, bool enemy_ranged = false,
+                     bool negate = false) {
         bool ranged = w.range > 1;
         if (ranged)
             ammo(a, w, combat_distance(a.position.x - b.position.x, a.position.y - b.position.y));
-        if (hit(a, b, w.id)) {
+        if (!negate && hit(a, b, w.id)) {
             strike(a, b, w);
             return;
         }
@@ -593,8 +621,20 @@ struct Engine {
         static constexpr int dx[] = {1, -1, 0, 0, 1, -1, 1, -1}, dy[] = {0, 0, 1, -1, -1, -1, 1, 1};
         int x = a.position.x + dx[dir], y = a.position.y + dy[dir];
         if (!inside(x, y)) {
-            int border = y < 0 ? 3 : y > 10 ? 2 : x > 10 ? 0 : 1;
-            escape(a, border);
+            // Match TS borderForCell's ordered string checks, including the 's'
+            // in "east"/"west" when exiting horizontally from the bottom row.
+            static constexpr const char *names[] = {"east", "west", "south", "north",
+                                                    "ne",   "nw",   "se",    "sw"};
+            const char *name = names[dir];
+            int border = dir == 3 || (std::strchr(name, 'n') && a.position.y == 0)    ? 3
+                         : dir == 2 || (std::strchr(name, 's') && a.position.y == 10) ? 2
+                         : dir == 0 || (std::strchr(name, 'e') && a.position.x == 10) ? 0
+                         : dir == 1 || (std::strchr(name, 'w') && a.position.x == 0)  ? 1
+                                                                                      : -1;
+            if (border >= 0)
+                escape(a, border);
+            else
+                message("Blocked!");
             return;
         }
         if (!free(a, x, y)) {
@@ -732,6 +772,8 @@ struct Engine {
                 strike(a, *b, {33, a.attack, 1});
             return true;
         }
+        bool negate = player(*b) && g.party.characters[b->member].amulet == 45 && a.enemy &&
+                      (a.enemy->abilities & 0x80) && rand(0, 255) < 128;
         if (dist > reach)
             return false;
         if (dist > 1) {
@@ -739,7 +781,7 @@ struct Engine {
                 return false;
             if (!los(a, *b))
                 return false;
-            attack_with(a, *b, {-1, a.attack, a.range}, true);
+            attack_with(a, *b, {-1, a.attack, a.range}, true, negate);
             return true;
         }
         b->last_attacker = a.id;
@@ -782,6 +824,27 @@ struct Engine {
         if (a.enemy && (a.enemy->stationary || a.enemy->index == 26 || a.enemy->index == 27))
             return false;
         auto *b = target(a);
+        if (a.enemy && (a.enemy->abilities & 0x20)) {
+            bool adjacent = b && combat_distance(a.position.x - b->position.x,
+                                                 a.position.y - b->position.y) <= 1;
+            if (!adjacent || rand(0, 3) == 3) {
+                auto p = board_cell();
+                if (free(a, p.x, p.y)) {
+                    a.position = p;
+                    triggers(p.x, p.y);
+                    named(a, " teleports!", a.id);
+                    CombatEvent ev;
+                    ev.kind = CombatEventKind::Moved;
+                    ev.actor = a.id;
+                    ev.x = p.x;
+                    ev.y = p.y;
+                    emit(ev);
+                    return true;
+                }
+            }
+            if (adjacent)
+                return false;
+        }
         if (!b && !flee)
             return false;
         auto sign = [](int v) { return (v > 0) - (v < 0); };
@@ -838,6 +901,8 @@ struct Engine {
                 enemy_attack(a);
             return;
         }
+        if (!player(a) && enemy_special(a))
+            return;
         if (!enemy_attack(a))
             enemy_move(a, false);
     }
@@ -853,9 +918,90 @@ int32_t combat_distance(int32_t dx, int32_t dy) {
     return n;
 }
 bool combat_over(const CombatState &s) { return s.ended || !any_side(s, true); }
+int32_t combat_growth_reserve(const CombatState &s) {
+    int reserve = 0;
+    for (int i = 0; i < s.count; ++i) {
+        auto &a = s.actors[i];
+        if (a.enemy && (a.enemy->abilities & 0x1000))
+            return std::max<int32_t>(s.count, 63) + 1;
+        if (a.enemy && (a.enemy->abilities & 4))
+            reserve = 1;
+    }
+    return reserve;
+}
+CombatResult combat_cast_effect(CombatContext &c, SpellEffect fx, const CombatPoint *aim) {
+    if (!c.combat.initialized || unsigned(fx.kind) > unsigned(MagicEffect::Illusion) ||
+        (fx.kind == MagicEffect::Swarms && (fx.extra < 0 || fx.extra > 4)))
+        return CombatResult::Invalid;
+    if (c.combat.actors.capacity() - c.combat.count < combat_growth_reserve(c.combat) + 4)
+        return CombatResult::NeedsActorStorage;
+    Engine e(c);
+    auto *a = e.current();
+    if (!a || !player(*a))
+        return CombatResult::Ok;
+    e.cast_effect(*a, fx, aim);
+    e.advance();
+    return CombatResult::Ok;
+}
+CombatResult combat_cast(CombatContext &c, SpellId spell, const CombatPoint *aim, int32_t member,
+                         bool cancel_aim) {
+    if (!c.combat.initialized || !spell_definition(spell) || member >= c.game.party.character_count)
+        return CombatResult::Invalid;
+    if (c.combat.actors.capacity() - c.combat.count < combat_growth_reserve(c.combat) + 4)
+        return CombatResult::NeedsActorStorage;
+    Engine e(c);
+    auto *a = e.current();
+    if (!a || !player(*a))
+        return CombatResult::Ok;
+    e.message("Cast...\n", -1, -1, CombatEventKind::Echo);
+    if (c.turn.time_spell == 'N' || (c.game.position.map.location == 18 && !c.game.worn_crown)) {
+        e.message("Absorbed!\n");
+        e.advance();
+        return CombatResult::Ok;
+    }
+    auto r = cast_spell(c.game, c.turn, c.game.party.characters[a->member], spell,
+                        {c.game.position.map.location, true}, e.magic_rng());
+    if (*r.message)
+        e.message(r.message);
+    if (!r.ok && r.consumed)
+        e.message("Failed!");
+    auto kind = r.effect.kind;
+    if (cancel_aim &&
+        (kind == MagicEffect::Attack || kind == MagicEffect::Field || kind == MagicEffect::Line ||
+         kind == MagicEffect::Illusion || kind == MagicEffect::Dispel))
+        return CombatResult::Ok;
+    if (kind == MagicEffect::Mani || kind == MagicEffect::FullHeal || kind == MagicEffect::Cure ||
+        kind == MagicEffect::Awaken || kind == MagicEffect::Resurrect) {
+        if (member < 0)
+            return CombatResult::Ok;
+        auto &p = c.game.party.characters[member];
+        bool ok = apply_target_spell(p, kind, c.game.karma, e.magic_rng());
+        e.message(ok ? "Success!" : "Failed!");
+        for (int i = 0; i < c.combat.count; ++i) {
+            auto &b = c.combat.actors[i];
+            if (b.member != member)
+                continue;
+            b.hp = p.current_hp;
+            if (p.status != 'D' && b.status == CombatStatus::Dead)
+                b.status = CombatStatus::Active;
+            if (p.status == 'S')
+                b.sleeping = true;
+            else if (b.sleeping && p.status == 'G')
+                b.sleeping = false;
+            break;
+        }
+    } else {
+        if (r.effect.kind == MagicEffect::Field)
+            r.effect.kind = MagicEffect::Attack;
+        e.cast_effect(*a, r.effect, aim);
+    }
+    e.advance();
+    return CombatResult::Ok;
+}
 CombatActor *current_combat_actor(CombatContext &c) { return Engine(c).current(); }
 CombatResult initialize_combat(CombatContext &c, const CombatMap &map, CombatDirection dir,
-                               const CombatEnemy *const *enemies, size_t count, bool room) {
+                               const CombatEnemy *const *enemies, size_t count, bool room,
+                               const FixedCombatSetup *fixed) {
     if (int(dir) > 3 || count > 26 || map.unit_count > 16 || map.trigger_count > 8 ||
         &map == &c.combat.map || c.game.party.character_count > 16 || c.game.party.party_size < 0 ||
         c.game.party.party_size > 6)
@@ -872,10 +1018,29 @@ CombatResult initialize_combat(CombatContext &c, const CombatMap &map, CombatDir
     for (int i = 0; i < map.unit_count; ++i)
         if (!inside(map.units[i].x, map.units[i].y))
             return CombatResult::Invalid;
+    if (fixed) {
+        if (!fixed->sprites || !c.enemy_defs)
+            return CombatResult::Invalid;
+        size_t fields = 0;
+        for (int i = 0; i < map.unit_count; ++i)
+            if ((fixed->sprites[i] & 0xfc) == 0xe8)
+                ++fields;
+        if (fields > fixed->field_capacity || (fields && !fixed->fields))
+            return CombatResult::NeedsActorStorage;
+    }
     auto &s = c.combat;
-    // Construct directly in caller storage; avoid a CombatState-sized stack temporary.
+    // Construct directly in caller storage; avoid a CombatState-sized stack
+    // temporary.
+    auto *overflow = s.actors.overflow;
+    auto *pile_overflow = s.piles.overflow;
+    int32_t pile_capacity = s.piles.overflow_capacity;
+    int32_t capacity = s.actors.overflow_capacity;
     s.~CombatState();
     new (&s) CombatState();
+    s.actors.overflow = overflow;
+    s.piles.overflow = pile_overflow;
+    s.piles.overflow_capacity = pile_capacity;
+    s.actors.overflow_capacity = capacity;
     s.map = map;
     s.room = room;
     s.rng.seed(c.game.rng.get_seed());
@@ -921,48 +1086,104 @@ CombatResult initialize_combat(CombatContext &c, const CombatMap &map, CombatDir
         else
             e.status_pass(a);
     }
-    CombatPoint slots[16];
-    bool used[16]{};
-    std::copy(std::begin(map.units), std::end(map.units), slots);
-    for (int i = map.unit_count - 1; i > 0; --i)
-        std::swap(slots[i], slots[e.rand(0, i)]);
-    for (size_t n = 0; n < count; ++n) {
-        int chosen = -1;
-        for (int i = 0; i < map.unit_count; ++i)
-            if (!used[i] && e.passable(enemies[n], slots[i].x, slots[i].y)) {
-                chosen = i;
-                break;
+    if (fixed) {
+        s.fields = fixed->fields;
+        static constexpr int groups[] = {0x14, 0x15, 0x16, 0x22, 0x21, 0x18, 0x1f, 0x18};
+        static constexpr int spans[] = {0x4c, 6, 0, 8, 8, 4, 3, 8, 8, 4, 3, 6, 3, 8, 1, 8};
+        static constexpr int bases[] = {1, 8, 0, 0, 0, 0x1e, 4, 1, 1, 0, 0x2a, 9, 0x2d, 1, 1, 1};
+        int pool[4];
+        for (auto &v : pool)
+            v = groups[e.rand(0, 7)];
+        for (int i = 0; i < map.unit_count; ++i) {
+            int sprite = fixed->sprites[i];
+            auto pos = map.units[i];
+            if (!sprite)
+                continue;
+            if ((sprite & 0xfc) == 0xe8) {
+                s.fields[s.field_count++] = {pos, int16_t(sprite)};
+                continue;
             }
-        if (chosen < 0)
+            if ((sprite & 0xfc) == 0xb4)
+                continue;
+            if (sprite < 0x40) {
+                int key = pos.y * 11 + pos.x;
+                if (sprite == 1) {
+                    s.chest_contents[key] = int16_t(3 * fixed->dungeon_floor + 7);
+                    s.loot[key] = 1;
+                } else if (sprite <= 15) {
+                    int qty = sprite == 2 ? e.rand(1, 10 * fixed->dungeon_floor + 10)
+                                          : (bases[sprite] + e.rand(0, spans[sprite] - 1)) & 255;
+                    s.piles[s.pile_count++] = {pos, int16_t(sprite), int16_t(qty)};
+                } else
+                    s.loot[key] = int16_t(sprite);
+                continue;
+            }
+            int idx = (sprite & 0xfc) == 0xec                      ? pool[sprite & 3]
+                      : sprite == 0x2c                             ? 8
+                      : sprite >= 0x40 && (sprite - 0x40) % 4 == 0 ? (sprite - 0x40) / 4
+                                                                   : -1;
+            if (idx < 0 || size_t(idx) >= c.enemy_def_count || !c.enemy_defs[idx])
+                continue;
+            const auto &def = *c.enemy_defs[idx];
+            auto &a = s.actors[s.count++];
+            a.enemy = &def;
+            a.id = s.count;
+            a.position = pos;
+            a.hp = a.max_hp = def.hp;
+            a.strength = def.strength;
+            a.dexterity = def.dexterity;
+            a.intelligence = def.intelligence;
+            a.defense = def.armor;
+            a.attack = def.damage;
+            a.range = std::max<int32_t>(1, def.range);
+            int v = (def.dexterity + e.rand(0, 7) - 4) & 255;
+            a.speed = uint8_t(v > 30 ? def.dexterity : v);
+            a.counter = uint8_t(36 - a.speed);
+        }
+    } else {
+        CombatPoint slots[16];
+        bool used[16]{};
+        std::copy(std::begin(map.units), std::end(map.units), slots);
+        for (int i = map.unit_count - 1; i > 0; --i)
+            std::swap(slots[i], slots[e.rand(0, i)]);
+        for (size_t n = 0; n < count; ++n) {
+            int chosen = -1;
             for (int i = 0; i < map.unit_count; ++i)
-                if (!used[i]) {
+                if (!used[i] && e.passable(enemies[n], slots[i].x, slots[i].y)) {
                     chosen = i;
                     break;
                 }
-        if (chosen < 0)
-            break;
-        used[chosen] = true;
-        auto &a = s.actors[s.count++];
-        auto &def = *enemies[n];
-        a.enemy = &def;
-        a.id = s.count;
-        a.position = slots[chosen];
-        a.hp = a.max_hp = def.hp;
-        a.strength = def.strength;
-        a.dexterity = def.dexterity;
-        a.intelligence = def.intelligence;
-        a.defense = def.armor;
-        a.attack = def.damage;
-        a.range = std::max<int32_t>(1, def.range);
-        int v = (def.dexterity + e.rand(0, 7) - 4) & 255;
-        a.speed = uint8_t(v > 30 ? def.dexterity : v);
-        a.counter = uint8_t(36 - a.speed);
+            if (chosen < 0)
+                for (int i = 0; i < map.unit_count; ++i)
+                    if (!used[i]) {
+                        chosen = i;
+                        break;
+                    }
+            if (chosen < 0)
+                break;
+            used[chosen] = true;
+            auto &a = s.actors[s.count++];
+            auto &def = *enemies[n];
+            a.enemy = &def;
+            a.id = s.count;
+            a.position = slots[chosen];
+            a.hp = a.max_hp = def.hp;
+            a.strength = def.strength;
+            a.dexterity = def.dexterity;
+            a.intelligence = def.intelligence;
+            a.defense = def.armor;
+            a.attack = def.damage;
+            a.range = std::max<int32_t>(1, def.range);
+            int v = (def.dexterity + e.rand(0, 7) - 4) & 255;
+            a.speed = uint8_t(v > 30 ? def.dexterity : v);
+            a.counter = uint8_t(36 - a.speed);
+        }
     }
     s.victory = !any_side(s, false) && any_side(s, true, true);
     return CombatResult::Ok;
 }
 CombatResult combat_action(CombatContext &c, CombatAction action, int32_t x, int32_t y) {
-    if (!c.combat.initialized || int(action) > int(CombatAction::EnemyStep))
+    if (!c.combat.initialized || int(action) > int(CombatAction::Open))
         return CombatResult::Invalid;
     if (action == CombatAction::Move && (x < 0 || x > 7))
         return CombatResult::Invalid;
@@ -970,6 +1191,18 @@ CombatResult combat_action(CombatContext &c, CombatAction action, int32_t x, int
         return CombatResult::Invalid;
     if (action == CombatAction::Attack && (x < 0 || x > 10 || y < 0 || y > 10))
         return CombatResult::Invalid;
+    if (c.combat.actors.capacity() - c.combat.count < combat_growth_reserve(c.combat))
+        return CombatResult::NeedsActorStorage;
+    if (action == CombatAction::Open) {
+        int largest = 0;
+        for (int v : c.combat.chest_contents)
+            largest = std::max(largest, v);
+        for (int i = 0; i < c.combat.pile_count; ++i)
+            if (c.combat.piles[i].id == 1)
+                largest = std::max(largest, int(c.combat.piles[i].quantity) & 127);
+        if (c.combat.piles.capacity() - c.combat.pile_count < 9 + (largest >> 1))
+            return CombatResult::NeedsLootStorage;
+    }
     Engine e(c);
     auto *a = e.current();
     if (!a)
@@ -1011,6 +1244,132 @@ CombatResult combat_action(CombatContext &c, CombatAction action, int32_t x, int
     if (e.disabled(*a))
         return CombatResult::Ok;
     switch (action) {
+    case CombatAction::Get:
+    case CombatAction::Open: {
+        auto &s = c.combat;
+        auto &g = c.game;
+        int dx = 0, dy = 0;
+        if (x >= 0 && x < 4) {
+            static constexpr int xs[] = {1, -1, 0, 0}, ys[] = {0, 0, 1, -1};
+            dx = xs[x];
+            dy = ys[x];
+        }
+        int tx = a->position.x + dx, ty = a->position.y + dy,
+            key = inside(tx, ty) ? ty * 11 + tx : -1;
+        auto same = [&](int i) {
+            return s.piles[i].position.x == tx && s.piles[i].position.y == ty;
+        };
+        auto erase = [&](int i) {
+            for (int j = i + 1; j < s.pile_count; ++j)
+                s.piles[j - 1] = s.piles[j];
+            --s.pile_count;
+        };
+        bool chest = key >= 0 && (s.loot[key] == 1 || s.loot[key] == 129);
+        int found = -1;
+        for (int i = s.pile_count - 1; i >= 0; --i)
+            if (same(i) && (action == CombatAction::Get || s.piles[i].id == 1)) {
+                found = i;
+                break;
+            }
+        if (action == CombatAction::Get) {
+            if (chest || (found >= 0 && s.piles[found].id == 1))
+                e.message("Open it first!", a->id);
+            else if (found >= 0) {
+                auto grant = s.piles[found];
+                erase(found);
+                apply_loot_grant(g, {grant.id, grant.quantity});
+                if (grant.id == 2)
+                    s.spoil_gold += grant.quantity;
+                char text[128];
+                loot_item_name({grant.id, grant.quantity}, text, sizeof(text));
+                e.message(text, a->id);
+            } else {
+                int tile = key < 0 ? -1 : s.map.tiles[key];
+                if (tile == 0xb0 || tile == 0xb1) {
+                    s.map.tiles[key] = 0x44;
+                    g.torch_turns = 100;
+                    e.message("Borrowed!", a->id);
+                } else if (tile == 0x2d || tile == 0x9a || tile == 0x9b || tile == 0x9c) {
+                    bool reach = tile == 0x2d || (tile == 0x9a   ? dy == 1
+                                                  : tile == 0x9b ? dy == -1
+                                                                 : x >= 0 && x < 4 && dx == 0);
+                    if (!reach)
+                        e.message("Can't reach plate!", a->id);
+                    else {
+                        s.map.tiles[key] = int16_t(tile == 0x2d   ? 0x2c
+                                                   : tile == 0x9c ? (dy == 1 ? 0x9b : 0x9a)
+                                                                  : 0x95);
+                        g.food = uint16_t(std::min(9999, int(g.food) + 1));
+                        if (g.karma)
+                            --g.karma;
+                        e.message(tile == 0x2d ? "Crops picked!" : "Mmmmm...!", a->id);
+                    }
+                } else
+                    e.message("Nothing to get!", a->id);
+            }
+        } else if (chest || found >= 0) {
+            int contents =
+                chest ? std::max(0, int(s.chest_contents[key])) : s.piles[found].quantity & 127;
+            bool trapped = chest && s.loot[key] == 129;
+            if (chest) {
+                s.loot[key] = -1;
+                s.chest_contents[key] = -1;
+            } else
+                erase(found);
+            Rand rand{&e, [](void *p, int32_t lo, int32_t hi) -> int32_t {
+                          return static_cast<Engine *>(p)->rand(lo, hi);
+                      }};
+            if (trapped) {
+                auto trap = chest_trap(g, 128, a->member, rand);
+                e.message("Trapped!", a->id);
+                e.message(trap.message, a->id);
+                for (int i = 0; i < s.count; ++i) {
+                    auto &p = s.actors[i];
+                    if (!player(p))
+                        continue;
+                    auto &r = g.party.characters[p.member];
+                    p.hp = r.current_hp;
+                    if ((r.status == 'D' || !r.current_hp) && active(p))
+                        e.roster_dead(p);
+                }
+            }
+            struct GrantContext {
+                Engine &engine;
+                CombatState &state;
+                int x, y, actor, count = 0;
+            } gc{e, s, tx, ty, a->id};
+            chest_loot(contents, rand,
+                       {&gc, [](void *p, LootGrant grant) {
+                            auto &gc = *static_cast<GrantContext *>(p);
+                            gc.state.piles[gc.state.pile_count++] = {{int16_t(gc.x), int16_t(gc.y)},
+                                                                     int16_t(grant.id),
+                                                                     int16_t(grant.quantity)};
+                            ++gc.count;
+                        }});
+            if (gc.count) {
+                e.message("Found:", a->id);
+                for(int i=s.pile_count-gc.count;i<s.pile_count;++i)
+                    e.message(loot_open_line(s.piles[i].id),a->id);
+            } else
+                e.message("Chest empty!", a->id);
+        } else
+            e.message("Nothing to open!", a->id);
+        e.advance();
+        break;
+    }
+    case CombatAction::Klimb: {
+        int tile = c.combat.map.tiles[a->position.y * 11 + a->position.x];
+        if (tile != 0xc8 && tile != 0xc9 && !(tile == 0x86 && c.combat.room)) {
+            e.message("Klimb-what?", a->id);
+            break;
+        }
+        c.combat.escape_floor_delta = int8_t(tile == 0xc8 ? -1 : 1);
+        a->status = CombatStatus::Fled;
+        e.message(tile == 0xc8 ? "Klimb-Up!" : "Klimb-Down!", a->id);
+        e.message("Escape!", a->id);
+        e.advance();
+        break;
+    }
     case CombatAction::Move:
         e.move(*a, x);
         break;
@@ -1035,10 +1394,11 @@ CombatResult start_encounter_combat(CommandContext &world, CombatState &state,
     if (world.combat || enemy < 0 || size_t(enemy) >= res.enemy_count || !res.enemies ||
         !res.enemies[enemy])
         return CombatResult::Invalid;
-    int index = map_override >= 0 ? map_override
-                                  : std::max<int32_t>(0, tile >= 0 && size_t(tile) < sizeof(kCombatMapIndex)
-                                                    ? int(kCombatMapIndex[tile])
-                                                    : -2);
+    int index = map_override >= 0
+                    ? map_override
+                    : std::max<int32_t>(0, tile >= 0 && size_t(tile) < sizeof(kCombatMapIndex)
+                                               ? int(kCombatMapIndex[tile])
+                                               : -2);
     const CombatMap *map = res.maps && size_t(index) < res.map_count ? res.maps[index] : nullptr;
     if (!map && res.maps && res.map_count)
         map = res.maps[0];
@@ -1161,6 +1521,8 @@ CombatResult finish_encounter_combat(CommandContext &world, CombatState &state) 
     world.combat_context = nullptr;
     state.initialized = false;
     emit(GameEventKind::CombatEnded);
+    if (world.dungeon_context)
+        dungeon_combat_return(world, state.escape_floor_delta, state.escape_border, state.victory);
     if (world.services.effect)
         world.services.effect(world.services.context, CommandEffect::Refuge, world.events);
     return CombatResult::Ok;
