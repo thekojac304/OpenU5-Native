@@ -164,3 +164,6 @@ game/tools/careo-visual/_out
 /native/core/build-dungeon/
 /native/core/build-dialogue/
 /native/core/build-dialogue/
+
+native/targets/tdeck/build/
+native/targets/tdeck/build-*/
