@@ -146,6 +146,13 @@ if(BUILD_TESTING)
   add_executable(action_feedback_regression tests/action_feedback_test.cpp)
   target_link_libraries(action_feedback_regression PRIVATE openu5_core)
   add_test(NAME action_feedback_regression COMMAND action_feedback_regression)
+  # Batch 1 mode-ownership regressions (R-01, R-18, ShrineSpecial).  Drives the
+  # real UiSession and core orchestration against the ESP-free mode-arbitration
+  # policy AlphaRuntime shares (targets/tdeck/main/ui_mode_policy.h).
+  add_executable(ui_mode_regression ../targets/tdeck/host_tests/ui_mode_test.cpp)
+  target_link_libraries(ui_mode_regression PRIVATE openu5_core)
+  target_include_directories(ui_mode_regression PRIVATE ../targets/tdeck/main)
+  add_test(NAME ui_mode_regression COMMAND ui_mode_regression)
   find_program(NODE_EXECUTABLE node)
   if(OPENU5_REAL_ARENAS)
     if(NOT NODE_EXECUTABLE)

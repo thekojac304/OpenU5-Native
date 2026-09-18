@@ -26,6 +26,7 @@
 #include "device_smoke_tests.h"
 #include "device_ui_views.h"
 #include "ui_input_adapter.h"
+#include "ui_mode_policy.h"
 
 namespace tdeck {
 class Board;

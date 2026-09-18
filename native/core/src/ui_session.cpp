@@ -169,6 +169,25 @@ void UiSession::set_base_mode(UiMode m) {
     else if (!is_modal(mode_)) mode_ = m;
 }
 
+UiMode UiSession::world_return_mode(UiMode m) const {
+    if (m == UiMode::Shop) return shop_return_mode_;
+    if (m == UiMode::Dialogue) return dialogue_return_mode_;
+    if (m == UiMode::ShrineSpecial) return shrine_return_mode_;
+    return m;
+}
+
+void UiSession::enter_shrine_mode() {
+    // Every shrine/Blackthorn prompt in the same ceremony (e.g. a re-prompted
+    // donation) re-enters here; only the first entry may (re)capture, or a
+    // later re-prompt would overwrite the register with ShrineSpecial itself.
+    if (base_mode_ != UiMode::ShrineSpecial) shrine_return_mode_ = world_return_mode(base_mode_);
+    set_base_mode(UiMode::ShrineSpecial);
+}
+
+void UiSession::settle_shrine_after_modal() {
+    if (mode_ == UiMode::ShrineSpecial) set_base_mode(shrine_return_mode_);
+}
+
 EventSink UiSession::event_sink() {
     return {this, [](void *p, const GameEvent &e) { static_cast<UiSession *>(p)->consume(e); }};
 }
@@ -344,6 +363,7 @@ void UiSession::cancel_modal() {
     UiIntent i; i.kind = UiIntentKind::ModalResponse; i.request = request;
     i.value.accepted = false;
     dispatch(i);
+    settle_shrine_after_modal();
 }
 
 void UiSession::finish_modal(bool accepted, bool yes, int32_t number, int32_t index) {
@@ -382,6 +402,7 @@ void UiSession::finish_modal(bool accepted, bool yes, int32_t number, int32_t in
     }
     dispatch(i);
     input_[0] = 0; input_length_ = 0; prompt_[0] = 0;
+    settle_shrine_after_modal();
 }
 
 bool UiSession::selection_view(UiSelectionView &out) const {
@@ -757,7 +778,11 @@ void UiSession::consume(const GameEvent &e) {
         append(event_channel(e.kind), e.text ? e.text : "");
     switch (e.kind) {
     case GameEventKind::CombatStarted:
-        pre_combat_mode_=base_mode_; set_base_mode(UiMode::Combat); break;
+        // Combat is authoritative core state, not a session UiSession owns.
+        // If base_mode_ is somehow still a live Shop/Dialogue/ShrineSpecial
+        // session, reduce through its own return register rather than
+        // capturing the session mode itself as a combat return destination.
+        pre_combat_mode_=world_return_mode(base_mode_); set_base_mode(UiMode::Combat); break;
     case GameEventKind::CombatEnded:
         // Combat can finish while aim, inventory, or another combat-owned
         // modal is open. A base-mode-only update leaves that modal alive and
@@ -778,12 +803,17 @@ void UiSession::consume(const GameEvent &e) {
             if (o.kind==DialogueOutputKind::Line)
                 append_utf16(UiTextChannel::Dialogue,o.text.data(),o.text.size(),o.rune?UiTextRune:UiTextNone);
             else if (o.kind==DialogueOutputKind::Prompt) {
+                // Capture BEFORE set_base_mode(Dialogue) overwrites base_mode_,
+                // reduced through any dangling session mode to the real world
+                // mode underneath it (R-18). Repeated prompts within the same
+                // conversation must not re-capture Dialogue itself.
+                if (base_mode_ != UiMode::Dialogue) dialogue_return_mode_ = world_return_mode(base_mode_);
                 set_base_mode(UiMode::Dialogue);
                 begin_text(UiRequestId::Dialogue,o.question?"You respond-":"Your interest?",15,true);
             }
         } else if (e.dialogue->kind==DialogueEventKind::EffectMessage)
             append_utf16(UiTextChannel::Dialogue,e.dialogue->message.data(),e.dialogue->message.size());
-        else if (e.dialogue->kind==DialogueEventKind::Ended) set_base_mode(pre_combat_mode_);
+        else if (e.dialogue->kind==DialogueEventKind::Ended) set_base_mode(dialogue_return_mode_);
         break;
     case GameEventKind::Shop:
         if (!e.shop) break;
@@ -834,8 +864,15 @@ void UiSession::consume(const GameEvent &e) {
         if (e.shop->result && e.shop->result->message) append(UiTextChannel::Shop,e.shop->result->message);
         if (e.shop->kind==ShopEventKind::Exited || shop_phase_==ShopPhase::Closed) {
             prompt_[0]=0;
-            set_base_mode(pre_combat_mode_);
+            set_base_mode(shop_return_mode_);
         } else {
+            // Capture BEFORE set_base_mode(Shop) overwrites base_mode_,
+            // reduced through any dangling session mode to the real world
+            // mode underneath it (R-18). Every non-exit Shop event re-enters
+            // here, so only the first one (base_mode_ != Shop yet) may
+            // (re)capture -- otherwise navigating the shop would overwrite
+            // the register with Shop itself.
+            if (base_mode_ != UiMode::Shop) shop_return_mode_ = world_return_mode(base_mode_);
             set_base_mode(UiMode::Shop);
             if(shop_phase_==ShopPhase::RumorText)begin_text(UiRequestId::Shop,"What rumor?",15);
             else if(shop_phase_==ShopPhase::RationsQuantity)
@@ -846,10 +883,10 @@ void UiSession::consume(const GameEvent &e) {
         direction_request(e.text && std::strcmp(e.text,"klimb")==0?CommandKind::Klimb:CommandKind::Pass,
                           e.text?e.text:"Direction"); break;
     case GameEventKind::TownExitPrompt: begin_yes_no(UiRequestId::TownExit,"Leave this place?",true); break;
-    case GameEventKind::ShrineVisitPrompt: set_base_mode(UiMode::ShrineSpecial); begin_yes_no(UiRequestId::ShrineVisit,"Visit?",false); break;
-    case GameEventKind::ShrineRestorePrompt: set_base_mode(UiMode::ShrineSpecial); begin_text(UiRequestId::ShrineRestore,"Virtue:",15); break;
-    case GameEventKind::ShrineDonatePrompt: set_base_mode(UiMode::ShrineSpecial); begin_number(UiRequestId::ShrineDonate,"How many cycles?",0,99,2); break;
-    case GameEventKind::BlackthornPrompt: set_base_mode(UiMode::ShrineSpecial); begin_text(UiRequestId::Blackthorn,e.text?e.text:"Your response?",14); break;
+    case GameEventKind::ShrineVisitPrompt: enter_shrine_mode(); begin_yes_no(UiRequestId::ShrineVisit,"Visit?",false); break;
+    case GameEventKind::ShrineRestorePrompt: enter_shrine_mode(); begin_text(UiRequestId::ShrineRestore,"Virtue:",15); break;
+    case GameEventKind::ShrineDonatePrompt: enter_shrine_mode(); begin_number(UiRequestId::ShrineDonate,"How many cycles?",0,99,2); break;
+    case GameEventKind::BlackthornPrompt: enter_shrine_mode(); begin_text(UiRequestId::Blackthorn,e.text?e.text:"Your response?",14); break;
     case GameEventKind::GuardPasswordPrompt: begin_text(UiRequestId::GuardPassword,e.text?e.text:"Password?",14); break;
     case GameEventKind::GuardTributePrompt: begin_yes_no(UiRequestId::GuardTribute,"Pay tribute?",false); break;
     case GameEventKind::GuardArrestPrompt: begin_yes_no(UiRequestId::GuardArrest,"Go quietly?",false); break;

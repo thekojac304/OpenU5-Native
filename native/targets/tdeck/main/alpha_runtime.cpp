@@ -694,7 +694,9 @@ void AlphaRuntime::synchronize_after_debug(openu5::WorldPosition before,bool dun
     // left a stale base mode behind.
     context_.dungeon=dungeon_.active;context_.combat=combat_.initialized&&!combat_.ended;
     terrain_.refresh(resources_.world,game_);
-    ui_->set_base_mode(context_.combat?openu5::UiMode::Combat:dungeon_.active?openu5::UiMode::Dungeon:openu5::UiMode::Exploration);
+    // Mode arbitration lives in ui_mode_policy.h so the host suite exercises
+    // the same session-preserving rule production uses.
+    ui_->set_base_mode(resolve_synchronized_base_mode(ui_->base_mode(),context_.combat,dungeon_.active));
     ESP_LOGI(kTag,"debug teleport rebind moved=%d prior_dungeon=%d location=%u floor=%d xy=%u,%u dungeon=%d",
              moved,dungeon_before,
              unsigned(game_.position.map.location),int(game_.position.map.floor),

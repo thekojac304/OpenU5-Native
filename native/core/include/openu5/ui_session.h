@@ -279,7 +279,16 @@ class UiSession {
     UiMode base_mode_ = UiMode::Exploration;
     UiMode mode_ = UiMode::Exploration;
     UiMode return_mode_ = UiMode::Exploration;
+    // Combat is authoritative core state; this register is written only by
+    // CombatStarted and read only by CombatEnded (R-18).
     UiMode pre_combat_mode_ = UiMode::Exploration;
+    // Shop/Dialogue/ShrineSpecial are session-owned UI states with their own
+    // exit lifecycle. Each owns its return register so combat/other sessions
+    // can never mix up which world mode a session should hand control back
+    // to (R-18).
+    UiMode shop_return_mode_ = UiMode::Exploration;
+    UiMode dialogue_return_mode_ = UiMode::Exploration;
+    UiMode shrine_return_mode_ = UiMode::Exploration;
     UiRequestId request_ = UiRequestId::None;
     UiSelectionSource selection_{};
     size_t selection_cursor_ = 0;
@@ -311,6 +320,17 @@ class UiSession {
 
     void dispatch(const UiIntent &) const;
     void enter_modal(UiMode, UiRequestId, const char *);
+    // Reduces a possibly session-owned mode (Shop/Dialogue/ShrineSpecial) to
+    // the world mode underneath it, using that session's own captured return
+    // register. A non-session-owned mode is returned unchanged.
+    UiMode world_return_mode(UiMode) const;
+    // Shared entry point for the four shrine/Blackthorn prompt events.
+    // Captures shrine_return_mode_ before base_mode_ is overwritten.
+    void enter_shrine_mode();
+    // ShrineSpecial has no ordinary input route and no explicit "ended"
+    // event. Called after a modal response resolves; if nothing re-armed a
+    // new shrine prompt, the ceremony is over.
+    void settle_shrine_after_modal();
     void finish_modal(bool accepted, bool yes = false, int32_t number = 0,
                       int32_t index = -1);
     bool handle_modal(const UiAction &);

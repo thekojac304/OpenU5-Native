@@ -17,13 +17,13 @@ Evidence classes used below:
 
 ### Overall integration health: **NOT PLAYABLE END-TO-END**
 
-The **core is in far better shape than the device integration**. 56 of 57 host tests pass, including deep byte-level parity suites for combat, commands, magic, items, shops, dialogue, dungeons, travel and persistence. The failures are almost entirely in the **glue layer**: `native/targets/tdeck/main/alpha_runtime.cpp` (1375 lines), `native/core/src/ui_session.cpp`, `native/core/src/presentation.cpp`, and the **asset pack**.
+The **core is in far better shape than the device integration**. At the original audit baseline, 56 of 57 host tests pass, including deep byte-level parity suites for combat, commands, magic, items, shops, dialogue, dungeons, travel and persistence. **Post-Batch-1, the host suite is 58 total, 57 pass, with only the pre-existing `gameplay_parity` mismatch 59 (R-02/R-03/R-04, unrelated) failing.** The remaining failures are almost entirely in the **glue layer**: `native/targets/tdeck/main/alpha_runtime.cpp` (1375 lines), `native/core/src/ui_session.cpp`, `native/core/src/presentation.cpp`, and the **asset pack**.
 
-That glue layer has **zero automated test coverage**. Nothing in the repository instantiates `AlphaRuntime`. The on-device "smoke tests" are data-presence probes and isolated `UiSession` probes with a spy dispatcher — they never exercise the adapter that consumes the intents. Every defect below lives in exactly the blind spot that testing strategy creates.
+`AlphaRuntime` itself still has no host coverage — nothing in the repository instantiates it directly, and the on-device "smoke tests" are data-presence probes and isolated `UiSession` probes with a spy dispatcher that never exercise the adapter that consumes the intents. **Batch 1 added `ui_mode_regression`, an ESP-free seam (`ui_mode_policy.h`) that host-tests mode arbitration and `UiSession` mode ownership (28/28 GREEN)** — narrowing, but not closing, that blind spot. Most defects below still live in the parts of the blind spot that seam does not cover.
 
 ### Largest risks, in order
 
-1. **R-01 — Shop and Dialogue UI modes are destroyed on every keypress.** `AlphaRuntime::synchronize_after_debug()` (misnamed; it runs on *every* gameplay input, not just debug actions) unconditionally forces `base_mode` to Combat/Dungeon/Exploration. `UiMode::Shop` and `UiMode::Dialogue` are non-modal, so they are overwritten immediately after the core sets them. This single line plausibly breaks every shop, every inn, every tavern and every conversation after the first keystroke. *This is the highest-value single fix in the audit.*
+1. ~~**R-01 — Shop and Dialogue UI modes are destroyed on every keypress.**~~ **RESOLVED in Batch 1.** `AlphaRuntime::synchronize_after_debug()`'s mode arbitration was split out and now preserves `Shop`/`Dialogue`/`ShrineSpecial` instead of unconditionally forcing `base_mode` to Combat/Dungeon/Exploration. See §3 R-01 and §14 Batch 1 for root cause, fix, and test evidence.
 2. **R-05 — The dungeon has no art.** The perspective slice atlases (`DNG1/2/3.16`) and feature art (`ITEMS.16`) that the reference compositor blits are **not packed into the native asset file at all**. `native/tools/u5pack/alpha1.ts` packs dungeon *cell maps* only. `render_dungeon_view()` is a hand-rolled wireframe of `dungeon_line`/`dungeon_rect` calls. ANCHOR 4 cannot be fixed by tuning the renderer; the asset pipeline must be extended first.
 3. **R-19 — Ships cannot sail.** `(Y)ell` on the T-Deck always opens a word prompt. The reference branches to `yellSails()` when aboard a frigate *before* prompting. `CommandKind::YellSails` has no device route at all. All naval travel is blocked.
 4. **R-07/R-08 — The endgame (U)se chain is unreachable,** and the one quest item that *is* listed is bound to the wrong id: the picker offers item **18 labelled "Grapple"**, but id 18 is the **Amulet of Lord British** in the authoritative ZSTATS item table. Crown, Sceptre, Moonstones, Shards, Plans, Watch and Badge are absent from the picker entirely.
@@ -229,9 +229,9 @@ Full report in §12. Summary: **data G, controls G, geometry Y, art R, HUD Y, sa
 | Offer list cursor ↔ authoritative item id resolution | **G** | `shop_offering_at` bridge in `dispatch` is exactly right. |
 | Hierarchical Back (deal → list → menu → exit) | **G** | `handle_shop` deal/list classification. |
 | Rations quantity / rumour text sub-modals | **G** | `finish_modal` converts them to `ShopAction::Text`. |
-| **Shop UI mode survival across keypresses** | **R** | R-01 — `UiMode::Shop` clobbered after every input. |
-| Shop panel composition | **R** | `compose_shop_view` requires `mode()==Shop`; after R-01 it returns `nullptr`. |
-| Shop exit → correct gameplay mode | **R** | `set_base_mode(pre_combat_mode_)` is a stale register. R-18 |
+| **Shop UI mode survival across keypresses** | **G** | R-01 resolved (Batch 1) — `UiMode::Shop` now preserved via `ui_mode_policy.h` arbitration. |
+| Shop panel composition | **G** | `compose_shop_view` requires `mode()==Shop`; no longer clobbered after R-01 fix. |
+| Shop exit → correct gameplay mode | **G** | Shop now owns `shop_return_mode_`, captured before session-mode overwrite. R-18 resolved (Batch 1). |
 | Save/load after a purchase | **G** | Gold/equipment/reagents all round-trip. |
 
 ### N. NPCs / dialogue
@@ -239,15 +239,15 @@ Full report in §12. Summary: **data G, controls G, geometry Y, art R, HUD Y, sa
 | Aspect | Status | Reason / ID |
 |---|---|---|
 | Talk scripts, keywords, name/job/bye, rune output | **G** | `dialogue_parity`, `dialogue_adapter` green. |
-| Player-initiated Talk + direction | **Y** | Route exists; device unproven and subject to R-01. Y-07 |
+| Player-initiated Talk + direction | **Y** | Route exists; R-01 mode ownership is resolved, but the route remains physically unproven on device. Y-07 |
 | Dialogue → quest state mutation | **G** | `dialogue_effects.cpp`; `quest_parity` green. |
 | Schedules, visibility, movement, day/night | **G** | `npc_path`, `actors`, `enter_npc_map`; `turn_parity` green. |
 | **NPC-initiated Talk** | **R** | R-10 |
 | **NPC-initiated Shop** | **R** | R-10 |
 | Guard password / tribute / arrest | **R** | R-09 |
 | Blackthorn interrogation | **R** | R-09 |
-| **Dialogue UI mode survival** | **R** | R-01 |
-| Dialogue exit → correct mode | **R** | R-18 |
+| **Dialogue UI mode survival** | **G** | R-01 resolved (Batch 1). Note: the active prompt loop itself was always protected by `TextEntry` modal state; R-01's damage was to `base_mode` underneath it. |
+| Dialogue exit → correct mode | **G** | Dialogue now owns `dialogue_return_mode_`. R-18 resolved (Batch 1). |
 | NPC walk persistence | **G** | `capture_npc_walk`/`restore_npc_walk` with the fidelity gate. |
 
 ### O. Quests
@@ -256,7 +256,7 @@ Full report in §12. Summary: **data G, controls G, geometry Y, art R, HUD Y, sa
 |---|---|---|
 | Quest tables, flags, shrine bits, doom bits, shadowlords | **G** | `quest_parity` (1581-line `quest_case.inc`) green. |
 | Word-of-power Yell at dungeon entrances | **Y** | Route works; ship branch missing (R-19) does not affect it. Y-24 |
-| Shrines (visit/restore/donate) | **Y** | All three modals wired in `modal()`; `UiMode::ShrineSpecial` is dead in practice (§5). Y-25 |
+| Shrines (visit/restore/donate) | **Y** | All three modals wired in `modal()`; `UiMode::ShrineSpecial` lifecycle repaired in Batch 1 (§5). Remaining YELLOW is physical-device validation only. Y-25 |
 | Search-based quest chains | **Y** | `quest_search.cpp` + `search_objects` fixtures; found objects are world objects → **lost on reload** (R-14). |
 | **Shards → Flames ritual** | **R** | Shards 29–31 absent from the Use picker. R-08 |
 | **Crown / Sceptre / Amulet** | **R** | R-07, R-08 |
@@ -338,7 +338,7 @@ See §8. Summary: **`GameState`/`TurnState` G**, **`CommandState`/outdoor/terrai
 | Renderer rebind after debug | **G** | `synchronize_after_debug` — correct *for its named purpose*; the bug is that it also runs on ordinary input (R-01). |
 | Max Party / Max Resources / Equip Best / Full Test Setup | **G** | Preserved. |
 | On-device diagnostics (37 scenarios) | **Y** | Data-presence probes, not integration tests. Y-06 |
-| Debug masking production defects | **R** | Debug teleport calls `set_base_mode(Exploration)` on the recovery path and `synchronize_after_debug` re-derives mode every input — which **hides** R-01's shrine/dialogue symptoms from debug-driven testing. R-01 note. |
+| Debug masking production defects | **G** — resolved (Batch 1) | Batch 1's mode arbitration now preserves session-owned modes (`Shop`/`Dialogue`/`ShrineSpecial`) during ordinary per-input synchronization, so the debug-driven masking of R-01's symptoms no longer applies. Debug teleport's own recovery path still separately calls `set_base_mode(Exploration)` — that debug-specific recovery behavior is unchanged and correct for its purpose. |
 
 ### W. Frontend / device presentation
 
@@ -348,11 +348,11 @@ See the renderer/mode matrix in §10.
 
 ## 3. KNOWN RED FAILURES
 
-### R-01 — `synchronize_after_debug()` destroys Shop / Dialogue / ShrineSpecial modes on every input · **SEVERITY 1**
+### R-01 — `synchronize_after_debug()` destroyed Shop / ShrineSpecial modes on every input · **SEVERITY 1** · **GREEN — RESOLVED (Batch 1)**
 
-**Symptom:** after the first keystroke in a shop or a conversation, the shop panel disappears and subsequent keys are interpreted as world commands (`b` → "Board", `s` → "Search-", `r` → "Ready").
+**Symptom (as originally observed):** after the first keystroke in a shop, the shop panel disappeared and subsequent keys were interpreted as world commands (`b` → "Board", `s` → "Search-", `r` → "Ready"). The active **Dialogue** prompt loop was not destroyed by this defect — it is protected by `TextEntry` modal state — but `base_mode` was still corrupted underneath it, and `ShrineSpecial` had no other exit (see the `ShrineSpecial` note below).
 
-**Path:**
+**Root cause:** `AlphaRuntime::synchronize_after_debug()` ran after ordinary gameplay processing on *every* input, not just debug actions, and unconditionally forced `base_mode` to Combat/Dungeon/Exploration:
 ```
 AlphaRuntime::handle()                      alpha_runtime.cpp:857
   ui_->handle_input(action)
@@ -363,13 +363,13 @@ AlphaRuntime::handle()                      alpha_runtime.cpp:857
     ui_->set_base_mode(combat ? Combat : dungeon ? Dungeon : Exploration)
                                                              alpha_runtime.cpp:697
 ```
-`UiSession::set_base_mode` assigns `mode_` whenever `!is_modal(mode_)` (`ui_session.cpp:166`). `Shop`, `Dialogue` and `ShrineSpecial` are **not** in `is_modal()` (`ui_session.cpp:39`), so each is overwritten immediately after the core set it.
+`UiSession::set_base_mode` assigns `mode_` whenever `!is_modal(mode_)` (`ui_session.cpp:166`). `Shop`, `Dialogue` and `ShrineSpecial` are **not** in `is_modal()` (`ui_session.cpp:39`), so session-owned state was overwritten on the very same input that entered it. Shop was the direct user-visible casualty; `ShrineSpecial` depended on this same clobber as its only effective exit (see the `ShrineSpecial` fix below).
 
-**Why it survives review:** the function is *named* for debug actions and its comment only discusses the debug picker, but it is the runtime's only per-input rebind of `context_.dungeon` / `context_.combat`, so it must keep running. `AlphaRuntime::command()` at `alpha_runtime.cpp:416` already demonstrates the correct pattern — it only ever *forces* Combat or Dungeon, never Exploration.
+**Implemented fix:** per-input mode arbitration now preserves `Shop` / `Dialogue` / `ShrineSpecial` whenever no authoritative Combat/Dungeon state overrides them, using the shared ESP-free `ui_mode_policy.h` seam (`native/targets/tdeck/main/ui_mode_policy.h`, new). The context/terrain rebind (`context_.dungeon`/`context_.combat`) still runs unconditionally; only the `set_base_mode` write is now conditional, mirroring `AlphaRuntime::command()`'s existing "only force Combat/Dungeon" rule.
 
-**Fix shape:** split the function. Keep the context/terrain rebind unconditional; make the `set_base_mode` call conditional on `ui_->base_mode()` not already being an owned session mode (`Shop`, `Dialogue`, `ShrineSpecial`), or simply mirror `command()`'s "only force Combat/Dungeon" rule and let `DungeonExited`/`CombatEnded`/`Shop Exited` own the return to Exploration.
+**Related writer noted during Batch 1:** `finish_combat_if_needed()` also writes `base_mode` (rebinding to Dungeon/Exploration on the canonical victory exit). It was inspected and left unchanged — it is redundant-but-harmless after the ownership fix, since it only fires on the combat-teardown path and agrees with the new arbitration. See §6 for the full writer inventory.
 
-**Evidence:** [STATIC], unambiguous. **Requires one device capture to confirm the user-visible symptom** (`SERVICE_ACTION` followed by `UI_MODE from=shop to=explore` in the same input's log block is the signature).
+**Evidence:** [STATIC] root cause; [EXEC] fix — `ui_mode_regression` 28/28 GREEN, host suite 57/58 (only unrelated `gameplay_parity` mismatch 59 remains), T-Deck ESP-IDF build PASS. Hardware flash not performed.
 
 ---
 
@@ -647,16 +647,18 @@ Secondary defect: `Board::show_alpha` blits the viewport only for rows `[kHudSky
 
 ---
 
-### R-18 — `pre_combat_mode_` is one stale register serving three return paths · **SEVERITY 2**
+### R-18 — `pre_combat_mode_` was one stale register serving three return paths · **SEVERITY 2** · **GREEN — RESOLVED (Batch 1)**
 
-`ui_session.cpp` writes `pre_combat_mode_` **only** on `CombatStarted`, but reads it on:
+**Root cause:** `ui_session.cpp` wrote `pre_combat_mode_` **only** on `CombatStarted`, but read it on:
 - `CombatEnded` (correct),
 - `Dialogue::Ended` → `set_base_mode(pre_combat_mode_)` (`:785`),
 - `Shop Exited` → `set_base_mode(pre_combat_mode_)` (`:838`).
 
-Sequence that breaks it: fight in a dungeon (`pre_combat_mode_ = Dungeon`) → leave the dungeon → walk to a town → talk to an NPC → end the conversation → **`base_mode` becomes `Dungeon` on the surface.** Today R-01 masks this by re-deriving the mode on the next input; fixing R-01 without fixing R-18 will expose it.
+Breaking sequence: fight in a dungeon (`pre_combat_mode_ = Dungeon`) → leave the dungeon → walk to a town → talk to an NPC → end the conversation → `base_mode` became `Dungeon` on the surface. R-01 previously masked this by re-deriving the mode on the next input; fixing R-01 without fixing R-18 would have exposed it.
 
-**Fix shape:** give dialogue and shop their own return registers, or have both derive the return mode from the live context the way `command()` does.
+**Implemented fix:** Combat keeps its own `pre_combat_mode_`. Shop now owns `shop_return_mode_`. Dialogue now owns `dialogue_return_mode_`. Each return mode is captured before the session-mode overwrite and reduced to the underlying world mode where necessary.
+
+**Evidence:** [STATIC] root cause; [EXEC] fix — `ui_mode_regression` 28/28 GREEN, host suite 57/58 (only unrelated `gameplay_parity` mismatch 59 remains), T-Deck ESP-IDF build PASS. Hardware flash not performed.
 
 ---
 
@@ -708,7 +710,7 @@ Consequence: the ship can be boarded but the sails can never be hoisted — **al
 | Y-22 | Dungeon→combat→dungeon return | `dungeon_combat_return` handles floor delta, escape border and facing; covered by `dungeon_flow_parity` at core level only | Device round-trip test |
 | Y-23 | Dungeon keyboard movement with Movement Mode off | No `w`/`d` fallback; only trackball moves | Probably acceptable, but state it as a deliberate contract |
 | Y-24 | Word-of-power Yell | Works today, but will be affected by the R-19 fix | Regression-test both branches together |
-| Y-25 | Shrines | All three modals dispatch correctly; `UiMode::ShrineSpecial` is set and then immediately discarded (§5) | Device pass at a shrine |
+| Y-25 | Shrines | All three modals dispatch correctly; `UiMode::ShrineSpecial` lifecycle (entry, capture, return) repaired in Batch 1 (§5) — no known mode defect remains | Device pass at a shrine (physical-device validation only) |
 | Y-26 | Beds / auto-sleep | `CommandKind::AutoSleep` is core-internal (`commands.cpp:1163`), reached through `townAutoSleepTurn` | Confirm it is genuinely internal-only |
 | Y-27 | System menu over an open modal | Menu is handled before gameplay routing and does not touch `ui_->mode()` | Device round-trip from inside a selection/target modal |
 
@@ -738,9 +740,9 @@ Consequence: the ship can be boarded but the sails can never be hoisted — **al
 
 | Mode | Entry | Exit | Verdict |
 |---|---|---|---|
-| `ShrineSpecial` | 4 shrine/Blackthorn events | **none** — `handle_input`'s switch has no case, falling to `default: return false` | **Dead in practice.** The mode is set, immediately shadowed by the modal it accompanies, and then wiped by `synchronize_after_debug` on the next input. Were R-01 fixed naively, this becomes a **hard soft-lock**: no input is accepted and only `Alt+M` escapes. **Fix R-01 and ShrineSpecial together.** |
-| `Dialogue` | `DialogueOutputKind::Prompt` | `Ended` → `pre_combat_mode_` | Live, but R-01 + R-18 |
-| `Shop` | Shop events | `Exited`/`Closed` → `pre_combat_mode_` | Live, but R-01 + R-18 |
+| `ShrineSpecial` | 4 shrine/Blackthorn events | **GREEN — RESOLVED (Batch 1).** `ShrineSpecial` now captures `shrine_return_mode_` on entry. After a shrine modal resolves, `UiSession` settles back to that originating world mode only if no new shrine modal was synchronously re-armed. No arbitrary-key dismissal behavior was added. | Previously dead in practice — the mode was set, immediately shadowed by the modal it accompanied, and depended entirely on the R-01 clobber as its only escape. Fixed alongside R-01 per the audit's own instruction not to fix R-01 in isolation. |
+| `Dialogue` | `DialogueOutputKind::Prompt` | `Ended` → `dialogue_return_mode_` | Live — R-01 + R-18 resolved (Batch 1) |
+| `Shop` | Shop events | `Exited`/`Closed` → `shop_return_mode_` | Live — R-01 + R-18 resolved (Batch 1) |
 | all others | — | — | Reachable |
 
 ### `GameEventKind` values with no consumer
@@ -768,7 +770,7 @@ Consequence: the ship can be boarded but the sails can never be hoisted — **al
 | Risk | Detail |
 |---|---|
 | **The device glue is the untested half** | 1375 lines of `alpha_runtime.cpp` + 1082 of `tdeck_board.cpp` + 569 of `tdeck_input.cpp` ≈ 3000 lines with no host test. Every SEVERITY-1 finding lives here or in the presentation/asset layer. |
-| **Mode ownership is split three ways** | `UiSession::consume` sets base mode from events; `AlphaRuntime::command()` forces Combat/Dungeon; `synchronize_after_debug` forces Combat/Dungeon/Exploration. Three writers, no single owner — the direct cause of R-01 and R-18. |
+| **Mode ownership is split four ways** | `UiSession::consume` sets base mode from events; `AlphaRuntime::command()` forces Combat/Dungeon; `synchronize_after_debug` forced Combat/Dungeon/Exploration (root cause of R-01/R-18, **resolved in Batch 1** via the shared `ui_mode_policy.h` seam); `finish_combat_if_needed()` also rebinds base mode on the combat-teardown path (identified during Batch 1, left unchanged — redundant-but-harmless after the ownership fix). |
 | **Viewport blit clips 9 px top and bottom** | `tdeck_board.cpp:628` deliberately reserves those rows for the sky and wind bars. Correct for the world view; wrong for the dungeon view and the gem view, which are full-square compositions. |
 | **Dirty-region cache keyed only on `viewport_crc32`** | Sound, but it means any renderer that produces a constant image (e.g. an all-black dungeon frame) will suppress its own redraw. Worth a `force` on presentation-source changes — `dungeon_presentation_pending_` already does this for dungeon entry. |
 | **Double `render()` per loop iteration** | `main.cpp` calls `runtime.render(board)` twice per pass (once for `input_dirty`, once unconditionally). Harmless today because `dirty_` gates it, but it doubles the animation-tick path cost. |
@@ -783,9 +785,13 @@ Consequence: the ship can be boarded but the sails can never be hoisted — **al
 
 ### Currently failing
 
+Post-Batch-1 host suite: **58 total, 57 pass, 1 fail.**
+
 | Test | Status |
 |---|---|
-| `gameplay_parity` | **FAILING** — mismatch 59, R-03. 56/57 otherwise pass. |
+| `gameplay_parity` | **FAILING** — mismatch 59, R-03. Only failure; all other 57 tests, including the new `ui_mode_regression` (28/28 GREEN), pass. |
+
+`ui_mode_regression` is new, narrow device-glue coverage added in Batch 1 — it host-tests mode arbitration and `UiSession` mode ownership via the `ui_mode_policy.h` seam. It does not make `AlphaRuntime` as a whole host-tested; see Y-05 below.
 
 ### False-confidence tests
 
@@ -866,9 +872,9 @@ Consequence: the ship can be boarded but the sails can never be hoisted — **al
 | `Exploration` | none | `render_snapshot(compose_world_presentation)` | `dispatch_world_command` | — | **G** |
 | `Dungeon` | `dungeon_.active && context_.dungeon` | `render_dungeon_view` | `execute_dungeon_command` | — | **R-05** (art) |
 | `Combat` | `context_.combat && combat_.initialized` | `render_snapshot(compose_combat_presentation)` | combat commands | quick escape | **G** logic / **R-04** icons |
-| `Shop` | `shop_.phase != Closed` | world/combat viewport + `DeviceShopView` overlay | `execute_shop` | hierarchical | **R-01** |
-| `Dialogue` | `dialogue_` session | viewport + transcript | dialogue commands | `EndConversation` | **R-01** |
-| `ShrineSpecial` | shrine/Blackthorn session | viewport only | **nothing** | **nowhere** | **Dead** (§5) |
+| `Shop` | `shop_.phase != Closed` | world/combat viewport + `DeviceShopView` overlay | `execute_shop` | hierarchical | **G** — R-01 resolved (Batch 1) |
+| `Dialogue` | `dialogue_` session | viewport + transcript | dialogue commands | `EndConversation` | **G** — R-01 resolved (Batch 1) |
+| `ShrineSpecial` | shrine/Blackthorn session | viewport only | modal resolution → `shrine_return_mode_` | originating world mode | **G** — resolved (Batch 1) (§5) |
 | `TextEntry` / `NumericEntry` / `YesNo` | request-specific | viewport + prompt | `finish_modal` | `return_mode_` | **G** |
 | `PartySelection` / `InventorySelection` / `EquipmentSelection` / `SpellSelection` | none | viewport + `DeviceSelectionView` | `modal()` | `return_mode_` | **G** routing / **R-07/R-08** content |
 | `TargetSelection` | combat for aim; world for Fire | viewport + reticle (`snapshot.target_*`) | direct command | `return_mode_` | **G** |
@@ -877,7 +883,7 @@ Consequence: the ship can be boarded but the sails can never be hoisted — **al
 
 **Presentation source selection** (`alpha_runtime.cpp` `render()`) is a clean single decision — `combat ? combat : dungeon ? dungeon3d : world`, overridden by the gem view. It logs `PRESENTATION_DISPATCH` every frame. This part is well built; the problems are the *contents* of two of the branches and the *mode* that selects them.
 
-**Impossible combinations found:** none in the renderer. The only contradictions are mode-vs-context (`UiMode::Shop` with `base_mode == Exploration` after R-01; `UiMode::ShrineSpecial` with no handler).
+**Impossible combinations found:** none in the renderer. The previously identified Shop/base-mode and ShrineSpecial lifecycle contradictions were resolved in Batch 1.
 
 ---
 
@@ -990,12 +996,13 @@ Small, independently testable batches, in dependency order. Each batch ends at a
 
 ---
 
-### Batch 1 — Mode ownership · **unblocks all of shops, dialogue, shrines** · risk: medium
-**IDs:** R-01, R-18, `ShrineSpecial` (§5)
-**Files:** `native/targets/tdeck/main/alpha_runtime.cpp` (`synchronize_after_debug`, rename it), `native/core/src/ui_session.cpp` (`consume`, `handle_input`, return registers)
-**Work:** split context-rebind from mode-rebind; give dialogue and shop their own return registers; give `ShrineSpecial` either a real `handle_input` case or delete the mode and stop setting it. **R-01 and ShrineSpecial must land together** — fixing R-01 alone converts a silent bug into a soft-lock.
-**Physical test:** enter a blacksmith, buy an item, back out through every level, confirm the world view and Exploration verbs return. Talk to an NPC, exit, confirm the same. Visit a shrine, donate, confirm recovery.
-**Model:** Opus-level. This is the subtle one; three writers must become one owner.
+### Batch 1 — Mode ownership · **unblocks all of shops, dialogue, shrines** · risk: medium · **COMPLETED**
+**IDs:** R-01 (GREEN), R-18 (GREEN), `ShrineSpecial` (§5, GREEN)
+**Files:** `native/targets/tdeck/main/alpha_runtime.cpp` (mode arbitration split out of `synchronize_after_debug`), `native/targets/tdeck/main/ui_mode_policy.h` (new, ESP-free arbitration seam), `native/core/src/ui_session.cpp` / `native/core/include/openu5/ui_session.h` (`consume`, `handle_input`, `shop_return_mode_`, `dialogue_return_mode_`, `shrine_return_mode_`), `native/core/tests/ui_session_test.cpp`, `native/targets/tdeck/host_tests/ui_mode_test.cpp` (new), `native/core/CMakeLists.txt`
+**Work done:** context/terrain rebind (`context_.dungeon`/`context_.combat`) kept unconditional; the `set_base_mode` write now follows an explicit policy via `ui_mode_policy.h`: authoritative Combat overrides to Combat; authoritative Dungeon overrides to Dungeon; otherwise, if the current mode is `Shop`/`Dialogue`/`ShrineSpecial`, it is preserved; all other states resolve to Exploration. Combat, Shop and Dialogue each got their own return-mode register (`pre_combat_mode_`, `shop_return_mode_`, `dialogue_return_mode_`), captured before the session-mode overwrite. `ShrineSpecial` now captures `shrine_return_mode_` on entry and settles back to it once no new shrine modal is synchronously re-armed. `finish_combat_if_needed()` was inspected as an additional base-mode writer and left unchanged (redundant-but-harmless).
+**Physical test:** enter a blacksmith, buy an item, back out through every level, confirm the world view and Exploration verbs return. Talk to an NPC, exit, confirm the same. Visit a shrine, donate, confirm recovery. **Not yet performed on hardware** — see test evidence below.
+**Test evidence:** `ui_mode_regression` 28/28 GREEN. Full host suite: 58 total, 57 pass, 1 fail (`gameplay_parity` mismatch 59 — pre-existing, unrelated post-combat chest-promotion defect, R-02/R-03/R-04, untouched by this batch). T-Deck ESP-IDF build: PASS. Hardware flash: **not performed**.
+**Model:** Opus-level. This was the subtle one; four writers became one owner.
 
 ---
 
@@ -1214,7 +1221,9 @@ Efficient broad-coverage pass using Developer tools. ~45 minutes. Each step name
 
 ## APPENDIX — Audit artifacts
 
-**Test run:** `ctest` in `native/core/build-alpha20-host`, 57 tests, **56 passed / 1 failed** (`gameplay_parity`, 61.9 s). Mismatch artifact retained at `native/core/build-gameplay/mismatch.json`.
+**Test run (ORIGINAL AUDIT BASELINE RUN, pre-Batch-1):** `ctest` in `native/core/build-alpha20-host`, 57 tests, **56 passed / 1 failed** (`gameplay_parity`, 61.9 s). Mismatch artifact retained at `native/core/build-gameplay/mismatch.json`. This run predates Batch 1 and is preserved as historical evidence.
+
+**Current status (post-Batch-1):** 58 total, 57 pass, 1 fail — same `gameplay_parity` mismatch 59, plus the new `ui_mode_regression` suite (28/28 GREEN). See §14 Batch 1.
 
 **Probe:** a throwaway program linked against `libopenu5_core.a` verified R-06 and R-16 directly. It lives in the session scratchpad, **not** in the repo — it is an audit instrument, not a test. Its assertions are folded into the proposed invariants 18 and 22 in §15, which is where they belong.
 

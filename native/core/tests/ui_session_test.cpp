@@ -102,7 +102,9 @@ int main(){
  check(combat_text.transcript_size()==2&&combat_text.blocked_events_generated()==4&&combat_text.blocked_events_presented()==2);
  // Prompt-derived command path and mode switch back out of combat.
  ge={};ge.kind=GameEventKind::TownExitPrompt;ui.consume(ge);check(ui.mode()==UiMode::YesNo);ui.handle_input(ch('y'));check(spy.intents.back().command.kind==CommandKind::Exit);
- ge={};ge.kind=GameEventKind::CombatEnded;ui.consume(ge);check(ui.mode()!=UiMode::Combat);
+ // The mode captured at CombatStarted was Exploration, so the return is known
+ // exactly.  Asserting only "not Combat" cannot observe a stale return register.
+ ge={};ge.kind=GameEventKind::CombatEnded;ui.consume(ge);check(ui.mode()==UiMode::Exploration&&ui.base_mode()==UiMode::Exploration);
 
  // One-letter handheld shortcuts use the same semantic exploration command
  // paths both normally and immediately after the real CombatEnded event.
