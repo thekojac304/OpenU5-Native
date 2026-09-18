@@ -9,6 +9,12 @@ constexpr size_t kKeyboardColumns = 5;
 constexpr size_t kKeyboardRows = 7;
 constexpr size_t kKeyboardKeyCount = kKeyboardColumns * kKeyboardRows;
 
+// Authoritative T-Deck Plus hardware position for the physical Mic/0 key.
+// Its base-layer code is zero and its Symbol-layer code is '0', so device UI
+// code must bind this position before any character/layer translation.
+constexpr uint8_t kMicrophoneKeyColumn = 0;
+constexpr uint8_t kMicrophoneKeyRow = 6;
+
 struct KeyboardModifiers {
     bool symbol = false;
     bool alt = false;
@@ -24,6 +30,10 @@ struct KeyboardEvent {
     KeyTransition transition = KeyTransition::Released;
     KeyboardModifiers modifiers{};
     bool modifier_key = false;
+    uint8_t base_code = 0;
+    uint8_t symbol_code = 0;
+    uint8_t snapshot[kKeyboardColumns]{};
+    uint8_t previous_snapshot[kKeyboardColumns]{};
 };
 
 /** Converts authoritative five-column matrix snapshots into key edges. */

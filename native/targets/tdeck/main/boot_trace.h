@@ -1,12 +1,37 @@
 #pragma once
+#include <cstdint>
+
 #include "esp_attr.h"
+#include "esp_log.h"
 #include "esp_system.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "input_trace.h"
 
 namespace debug51 {
 struct BootRecord { uint32_t magic; uint32_t count; uint32_t stage; };
+
+class Step {
+public:
+    explicit Step(const char *name) : name_(name), entered_us_(esp_timer_get_time()) {
+        ESP_LOGI("M51", "BOOT_TRACE step=%s enter_us=%lld", name_,
+                 static_cast<long long>(entered_us_));
+    }
+    ~Step() {
+        const int64_t exited_us = esp_timer_get_time();
+        ESP_LOGI("M51", "BOOT_TRACE step=%s exit_us=%lld elapsed_us=%lld", name_,
+                 static_cast<long long>(exited_us),
+                 static_cast<long long>(exited_us - entered_us_));
+    }
+
+    Step(const Step &) = delete;
+    Step &operator=(const Step &) = delete;
+
+private:
+    const char *name_;
+    int64_t entered_us_;
+};
 // No flash writes. Best-effort retention only; cold power/Launcher can clear RTC.
 inline RTC_NOINIT_ATTR BootRecord retained;
 inline void stack_checkpoint(const char *name) {

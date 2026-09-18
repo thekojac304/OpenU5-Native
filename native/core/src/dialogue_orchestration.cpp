@@ -1,4 +1,7 @@
 #include "openu5/dialogue_orchestration.h"
+#include "openu5/shop_orchestration.h"
+#include "openu5/quest.h"
+#include "openu5/blackthorn.h"
 #include <algorithm>
 namespace openu5 {
 void dialogue_alarm(NpcActors &actors, uint8_t location, Rand rand) {
@@ -49,11 +52,29 @@ struct Delivery {
     }
     void handoff(DialogueHandoff h) {
         event(DialogueEventKind::Handoff,nullptr,{},h);
+        if (h == DialogueHandoff::QuestEnd) {
+            const auto theft=apply_faulinei_theft(c.game,c.travel.shadowlord_here,{&c,[](void *p,int32_t lo,int32_t hi)->int32_t {
+                auto &ctx=*static_cast<CommandContext *>(p);
+                const auto n=ctx.game.rng.next(lo,hi).value;
+                if (ctx.rng_trace.emit) ctx.rng_trace.emit(ctx.rng_trace.context,"talk-theft",lo,hi,n);
+                return n;
+            }});
+            if (theft.kind!=TheftKind::None) message("\nSomething was stolen!\n");
+            d.session.deferred=DialogueHandoff::None;
+            return;
+        }
         EventSink sink{this,[](void *p,const GameEvent &e) {
             auto &delivery = *static_cast<Delivery *>(p);
             ++delivery.result.event_count;
             if (delivery.c.events.emit) delivery.c.events.emit(delivery.c.events.context,e);
         }};
+        if (h == DialogueHandoff::Shop && c.shop_services) {
+            auto shop_result = begin_shop(c,d.session.npc);
+            result.event_count += shop_result.event_count;
+            result.status = shop_result.status;
+            return;
+        }
+        if(h==DialogueHandoff::Guard && c.blackthorn){result.status=talk_guard(c,d.session.npc,sink);d.session.deferred=DialogueHandoff::None;return;}
         if (!d.handoff || !d.handoff(d.context,h,d.session.npc,sink)) {
             d.session.deferred = h; result.status = CommandStatus::Unsupported;
         }

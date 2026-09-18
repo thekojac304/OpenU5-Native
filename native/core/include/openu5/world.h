@@ -16,6 +16,8 @@ struct ActiveMap {
     MapGeometry geometry{};
     const uint8_t *tiles = nullptr;
     int32_t edge_fill_tile = kOffMap;
+    void *resolve_context = nullptr;
+    int32_t (*resolve_tile)(void *,MapId,int32_t,int32_t,int32_t) = nullptr;
     int32_t tile_at(int32_t x, int32_t y) const;
 };
 struct WorldData {

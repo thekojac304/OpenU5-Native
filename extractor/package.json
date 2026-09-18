@@ -6,6 +6,7 @@
   "scripts": {
     "extract": "tsx src/cli.ts",
     "pack:native": "tsx ../native/tools/u5pack/cli.ts",
+    "pack:alpha1": "tsx ../native/tools/u5pack/alpha1.ts",
     "test": "vitest run"
   },
   "//fflate": [

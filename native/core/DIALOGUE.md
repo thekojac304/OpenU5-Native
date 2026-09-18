@@ -1,5 +1,12 @@
 # Generic dialogue/conversation translation
 
+Shop handoffs are now implemented when caller-owned `ShopServices` is attached;
+see [SHOPS.md](SHOPS.md). Without that service the historical deferred contract
+below remains unchanged for Shop/Guard. QuestEnd now invokes native Faulinei
+theft using the existing physical-placement value, emits its message when
+applicable, and closes successfully. See [QUESTS.md](QUESTS.md). Guard quest
+behavior remains deferred.
+
 The authoritative implementation is the TypeScript in this repository. This
 batch ports its generic TLK interpreter, effect application and semantic caller
 behavior. It does not replace the TypeScript with an interpretation of DOS/Redux
@@ -150,11 +157,12 @@ Handoffs never fabricate success:
 | --- | --- |
 | Shop, dialog 0x81..0x88 | Full shop dispatch, including shopIsOpen **before** mounted-merchant refusal, inventory/prices/transactions |
 | Guard, dialog 0xff in Blackthorn | Quest-specific password/challenge and consequences |
-| QuestEnd, every normal/programmatic script close | Game.faulineiTheftOnTalkEnd and future quest-end behavior |
+| QuestEnd, every normal/programmatic script close | Implemented: Game.faulineiTheftOnTalkEnd through native apply_faulinei_theft |
 
-An absent/false handler records `session.deferred` and returns Unsupported.
-For QuestEnd the generic conversation still closes, after the handoff and before
-Ended. An installed handler must return true only when it has actually handled
+For unresolved Shop/Guard, an absent/false handler records `session.deferred`
+and returns Unsupported. QuestEnd is built in: handoff, theft mutation/message,
+then Ended; it does not call the external handler. An installed Shop/Guard
+handler must return true only when it has actually handled
 the path or established that its behavior is inapplicable. Its emitted events
 remain ordered and counted. The recorded effect envelope is also an attachment
 point for later quest observers; no quest conditions were embedded in dialogue.
@@ -207,8 +215,9 @@ met/ended, inventory, gold, karma, roster ordering/equipment, RNG and turn count
 Orchestration adds active-session status, clock, NPC met/dead bitmaps, full actor
 order, schedules, dialog numbers and walk state. Following responses exercise
 pending prompt and branch continuation; adapter checks assert native pending
-states and explicit rejection/handoff results. Quest-end fixtures mark the seam
-instead of invoking or pretending to implement quest logic.
+states and explicit rejection/handoff results. The original dialogue fixtures
+mark the quest-end seam; the added quest suite tests theft behavior separately,
+and the adapter check now expects the built-in QuestEnd path to close successfully.
 
 Validation, missing optional save evidence, firmware and memory measurements are
 in [VALIDATION.md](VALIDATION.md). None of the TypeScript runtime, source assets,

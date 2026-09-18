@@ -10,6 +10,7 @@
     "test": "npm run test -w extractor && npm run test -w game",
     "extract": "npm run extract -w extractor --",
     "pack:native": "npm run pack:native -w extractor --",
+    "pack:alpha1": "npm run pack:alpha1 -w extractor --",
     "dev": "npm run dev -w game",
     "build": "npm run build -w game",
     "e2e": "npm run e2e -w game",

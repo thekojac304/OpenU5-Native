@@ -9,6 +9,63 @@ namespace {
 constexpr int kHalfViewport = kViewportTiles / 2;
 constexpr size_t kMaxRequiredTiles = kViewportTiles * kViewportTiles + 1;
 
+uint8_t pixel4(const uint8_t *tile, int pixel)
+{
+    const uint8_t packed = tile[pixel / 2];
+    return (pixel & 1) ? packed & 0x0f : packed >> 4;
+}
+
+void set_pixel4(uint8_t *tile, int pixel, uint8_t value)
+{
+    auto &packed = tile[pixel / 2];
+    if (pixel & 1) packed = uint8_t((packed & 0xf0) | (value & 0x0f));
+    else packed = uint8_t((packed & 0x0f) | ((value & 0x0f) << 4));
+}
+
+bool fire_mask(uint16_t tile, uint16_t &mask)
+{
+    switch (tile) {
+    case 0xb0: mask=0xc0; return true; case 0xb1: mask=0xc1; return true;
+    case 0xb2: mask=0xc2; return true; case 0xb3: mask=0xc3; return true;
+    case 0xbc: mask=0xcc; return true; case 0xbd: mask=0xcd; return true;
+    case 0xbe: mask=0xce; return true; case 0xbf: mask=0xcf; return true;
+    case 0xde: mask=0xc2; return true; default: return false;
+    }
+}
+
+uint8_t fire_nibble(uint16_t &seed)
+{
+    seed=uint16_t(seed+0x9248);seed=uint16_t((seed>>3)|(seed<<13));
+    seed=uint16_t(seed^0x9248);seed=uint16_t(seed+0x11);return uint8_t(seed&15);
+}
+
+bool composite_mask(uint16_t tile,uint16_t &mask)
+{
+    if(tile>=0x60&&tile<=0x6f){mask=uint16_t(tile+0x10);return true;}
+    if(tile>=0x34&&tile<=0x37){mask=uint16_t(0xd0+tile-0x34);return true;}
+    if(tile>=0xe4&&tile<=0xe7){mask=uint16_t(0xd0+tile-0xe4);return true;}
+    return false;
+}
+
+void animated_bitmap(const PresentationTileCache &cache,uint16_t tile,uint32_t tick,
+                     uint8_t (&out)[128])
+{
+    const uint8_t *base=cache.tiles+size_t(tile)*128;std::copy(base,base+128,out);
+    if(tile==1||tile==2||tile==3||tile==0x8f){const int shift=int(tick&15);for(int row=0;row<16;++row){const int src=(row-shift+16)&15;std::copy(base+src*8,base+src*8+8,out+row*8);}return;}
+    uint16_t mask_tile=0;
+    if(composite_mask(tile,mask_tile)){
+        uint8_t water[128]{};const uint8_t *water_base=cache.tiles+3*128;const int shift=int(tick&15);
+        for(int row=0;row<16;++row){const int src=(row-shift+16)&15;std::copy(water_base+src*8,water_base+src*8+8,water+row*8);}
+        const uint8_t *mask=cache.tiles+size_t(mask_tile)*128;
+        for(int p=0;p<256;++p)if(pixel4(mask,p)&8)set_pixel4(out,p,pixel4(water,p));
+        return;
+    }
+    if(fire_mask(tile,mask_tile)){
+        const uint8_t *mask=cache.tiles+size_t(mask_tile)*128;uint16_t seed=uint16_t(0x1f94U^(tick*257U)^tile);
+        for(int p=0;p<256;++p){const auto m=pixel4(mask,p);if(m)set_pixel4(out,p,uint8_t(pixel4(base,p)^(fire_nibble(seed)&m)));}
+    }
+}
+
 uint32_t crc32_u16le(const uint16_t *pixels, size_t count)
 {
     uint32_t crc = 0xffffffffU;
@@ -40,7 +97,109 @@ void expand_tile(const uint8_t (&indexed4)[128], const uint16_t (&palette)[16],
     }
 }
 
+constexpr uint16_t kDungeonBlack = 0x0000;
+constexpr uint16_t kDungeonCeiling = 0x0841;
+constexpr uint16_t kDungeonFloor = 0x2104;
+constexpr uint16_t kDungeonWall = 0x7a08;
+constexpr uint16_t kDungeonMortar = 0xce79;
+constexpr uint16_t kDungeonFeature = 0x07e0;
+constexpr uint16_t kDungeonDanger = 0xf800;
+
+void dungeon_pixel(uint16_t *pixels, int x, int y, uint16_t color, uint16_t &primitives) {
+    if (x < 0 || y < 0 || x >= kViewportPixels || y >= kViewportPixels) return;
+    pixels[y * kViewportPixels + x] = color;
+    ++primitives;
+}
+
+void dungeon_rect(uint16_t *pixels, int left, int top, int right, int bottom,
+                  uint16_t color, uint16_t &primitives) {
+    left = std::max(0, left); top = std::max(0, top);
+    right = std::min(kViewportPixels - 1, right); bottom = std::min(kViewportPixels - 1, bottom);
+    for (int y = top; y <= bottom; ++y)
+        for (int x = left; x <= right; ++x) dungeon_pixel(pixels, x, y, color, primitives);
+}
+
+void dungeon_line(uint16_t *pixels, int x0, int y0, int x1, int y1,
+                  uint16_t color, uint16_t &primitives) {
+    const int dx = x0 < x1 ? x1 - x0 : x0 - x1;
+    const int sx = x0 < x1 ? 1 : -1;
+    const int dy = y0 < y1 ? y0 - y1 : y1 - y0;
+    const int sy = y0 < y1 ? 1 : -1;
+    int error = dx + dy;
+    while (true) {
+        dungeon_pixel(pixels, x0, y0, color, primitives);
+        if (x0 == x1 && y0 == y1) break;
+        const int doubled = error * 2;
+        if (doubled >= dy) { error += dy; x0 += sx; }
+        if (doubled <= dx) { error += dx; y0 += sy; }
+    }
+}
+
+bool dungeon_wall(const DungeonState &d, int x, int y) {
+    const int type = dungeon_cell(d, d.pos.floor, (x + 8) & 7, (y + 8) & 7) >> 4;
+    if (type == 11 || type == 12) return true;
+    if (type != 13) return false;
+    const int n = int(d.pos.floor) * 64 + ((y + 8) & 7) * 8 + ((x + 8) & 7);
+    return (d.revealed[n >> 3] & (1U << (n & 7))) == 0;
+}
+
+void dungeon_report(RenderReport &report, const DungeonState &d, uint16_t *pixels) {
+    report.left = 0; report.top = 0; report.right = 7; report.bottom = 7;
+    report.center_map_tile = dungeon_cell(d, d.pos.floor, d.pos.x, d.pos.y);
+    report.avatar_tile = 0;
+    report.viewport_bytes = uint32_t(kViewportPixelCount * sizeof(uint16_t));
+    report.viewport_crc32 = crc32_u16le(pixels, kViewportPixelCount);
+}
+
+void marker_pixel(uint16_t *viewport,int cell_x,int cell_y,int x,int y,uint16_t color)
+{
+    const int px=cell_x*kTilePixels+x,py=cell_y*kTilePixels+y;
+    if(px>=0&&py>=0&&px<kViewportPixels&&py<kViewportPixels)
+        viewport[py*kViewportPixels+px]=color;
+}
+
+void active_marker(uint16_t *viewport,int cell_x,int cell_y,uint16_t color)
+{
+    // Four heavy corners remain legible over animated sprites without hiding
+    // the combatant.  This is intentionally not the targeting shape.
+    for(int n=1;n<=5;++n)for(int thickness=0;thickness<2;++thickness){
+        marker_pixel(viewport,cell_x,cell_y,n,thickness,color);
+        marker_pixel(viewport,cell_x,cell_y,15-n,thickness,color);
+        marker_pixel(viewport,cell_x,cell_y,n,15-thickness,color);
+        marker_pixel(viewport,cell_x,cell_y,15-n,15-thickness,color);
+        marker_pixel(viewport,cell_x,cell_y,thickness,n,color);
+        marker_pixel(viewport,cell_x,cell_y,15-thickness,n,color);
+        marker_pixel(viewport,cell_x,cell_y,thickness,15-n,color);
+        marker_pixel(viewport,cell_x,cell_y,15-thickness,15-n,color);
+    }
+}
+
+void target_reticle(uint16_t *viewport,int cell_x,int cell_y,uint16_t color)
+{
+    // Inset box plus center tick: visually distinct from the active-actor
+    // corner brackets and still exposes most of the target sprite.
+    for(int n=3;n<=12;++n){
+        marker_pixel(viewport,cell_x,cell_y,n,3,color);
+        marker_pixel(viewport,cell_x,cell_y,n,12,color);
+        marker_pixel(viewport,cell_x,cell_y,3,n,color);
+        marker_pixel(viewport,cell_x,cell_y,12,n,color);
+    }
+    for(int n=6;n<=9;++n){
+        marker_pixel(viewport,cell_x,cell_y,n,7,color);
+        marker_pixel(viewport,cell_x,cell_y,7,n,color);
+    }
+}
+
 }  // namespace
+
+esp_err_t initialize_tile_cache(AssetPackReader &assets,const AssetPackReport &pack,
+                                uint8_t *storage,size_t storage_size,PresentationTileCache &cache)
+{
+    cache={};if(!assets.is_open()||pack.tile_count!=512||!storage||storage_size<kCachedTileBytes)return ESP_ERR_INVALID_ARG;
+    if(assets.read_palette(cache.palette)!=ESP_OK)return ESP_FAIL;
+    for(uint16_t tile=0;tile<512;++tile){uint8_t record[128]{};if(assets.read_tile(tile,record)!=ESP_OK)return ESP_FAIL;std::copy(record,record+128,storage+size_t(tile)*128);}
+    cache.tiles=storage;return ESP_OK;
+}
 
 esp_err_t render_view(AssetPackReader &assets, const AssetPackReport &pack,
                       uint8_t center_x, uint8_t center_y, uint16_t *rgb565,
@@ -134,6 +293,222 @@ esp_err_t render_view(AssetPackReader &assets, const AssetPackReport &pack,
     report.avatar_tile = pack.avatar_tile;
     report.viewport_crc32 = crc32_u16le(rgb565, kViewportPixelCount);
     return ESP_OK;
+}
+
+esp_err_t render_active_view(AssetPackReader &assets, const AssetPackReport &pack,
+                             const ActiveMap &map, Position center, uint16_t avatar_tile,
+                             uint16_t *rgb565, size_t pixel_count, RenderReport &report)
+{
+    report = {};
+    if (!assets.is_open() || !rgb565 || pixel_count < kViewportPixelCount ||
+        pack.tile_count != 512 || avatar_tile >= pack.tile_count) return ESP_ERR_INVALID_ARG;
+    uint16_t palette[16]{}; if (assets.read_palette(palette) != ESP_OK) return ESP_FAIL;
+    std::array<uint16_t,kViewportTiles*kViewportTiles> map_tiles{};
+    for(int row=0;row<kViewportTiles;++row)for(int col=0;col<kViewportTiles;++col){
+        int x=int(center.x)-kHalfViewport+col,y=int(center.y)-kHalfViewport+row;
+        if(map.geometry.wraps){x=wrap_coord(x);y=wrap_coord(y);}
+        int tile=map.tile_at(x,y);map_tiles[size_t(row*kViewportTiles+col)]=uint16_t(tile<0?0:tile&511);
+    }
+    std::array<uint16_t,kMaxRequiredTiles> required{};size_t required_count=0;
+    auto add=[&](uint16_t tile){for(size_t i=0;i<required_count;++i)if(required[i]==tile)return;required[required_count++]=tile;};
+    for(auto tile:map_tiles)
+        add(tile);
+    add(avatar_tile);uint8_t indexed4[128]{};
+    for(size_t i=0;i<required_count;++i){if(assets.read_tile(required[i],indexed4)!=ESP_OK)return ESP_FAIL;++report.tile_records_read;
+        for(int row=0;row<kViewportTiles;++row)for(int col=0;col<kViewportTiles;++col)if(map_tiles[size_t(row*kViewportTiles+col)]==required[i])expand_tile(indexed4,palette,rgb565,col,row);
+        if(required[i]==avatar_tile)expand_tile(indexed4,palette,rgb565,kHalfViewport,kHalfViewport);
+    }
+    report.left=int16_t(int(center.x)-kHalfViewport);report.top=int16_t(int(center.y)-kHalfViewport);
+    report.right=int16_t(int(center.x)+kHalfViewport);report.bottom=int16_t(int(center.y)+kHalfViewport);
+    report.center_map_tile=uint8_t(map_tiles[kHalfViewport*kViewportTiles+kHalfViewport]);report.avatar_tile=avatar_tile;
+    report.viewport_crc32=crc32_u16le(rgb565,kViewportPixelCount);report.map_context=map.kind==MapKind::Small?"small map":map.kind==MapKind::Underworld?"underworld":"Britannia";return ESP_OK;
+}
+
+esp_err_t render_snapshot(const PresentationTileCache &cache,const PresentationSnapshot &snapshot,
+                          uint32_t animation_tick,int64_t world_turn,uint16_t *rgb565,
+                          size_t pixel_count,RenderReport &report)
+{
+    report={};if(!cache.tiles||!rgb565||pixel_count<kViewportPixelCount)return ESP_ERR_INVALID_ARG;
+    std::fill(rgb565,rgb565+kViewportPixelCount,uint16_t(0));
+    std::array<uint16_t,kMaxRequiredTiles> required{};size_t count=0;
+    auto add=[&](uint16_t tile){for(size_t i=0;i<count;++i)if(required[i]==tile)return;required[count++]=tile;};
+    int16_t frames[kPresentationCells]{};
+    for(int i=0;i<kPresentationCells;++i){const int raw=snapshot.tiles[i];if(raw<0){frames[i]=int16_t(raw);continue;}const int frame=animated_tile_frame(raw,animation_tick,world_turn);frames[i]=int16_t(frame);add(uint16_t(frame));report.animated_cells[i]=snapshot.animated[i];report.animated_cell_count=uint16_t(report.animated_cell_count+(snapshot.animated[i]?1U:0U));}
+    uint8_t bitmap[128]{};
+    for(size_t n=0;n<count;++n){animated_bitmap(cache,required[n],animation_tick,bitmap);for(int row=0;row<kViewportTiles;++row)for(int col=0;col<kViewportTiles;++col)if(frames[row*kViewportTiles+col]==int16_t(required[n]))expand_tile(bitmap,cache.palette,rgb565,col,row);}
+    if(snapshot.active_x>=0&&snapshot.active_y>=0&&snapshot.active_x<kViewportTiles&&snapshot.active_y<kViewportTiles)
+        active_marker(rgb565,snapshot.active_x,snapshot.active_y,
+                      cache.palette[snapshot.active_enemy?12:14]);
+    if(snapshot.target_x>=0&&snapshot.target_y>=0&&snapshot.target_x<kViewportTiles&&snapshot.target_y<kViewportTiles)
+        target_reticle(rgb565,snapshot.target_x,snapshot.target_y,
+                       cache.palette[snapshot.target_valid?11:12]);
+    report.left=int16_t(int(snapshot.center.x)-kHalfViewport);report.top=int16_t(int(snapshot.center.y)-kHalfViewport);
+    report.right=int16_t(int(snapshot.center.x)+kHalfViewport);report.bottom=int16_t(int(snapshot.center.y)+kHalfViewport);
+    report.center_map_tile=uint8_t(std::max<int16_t>(0,snapshot.tiles[kHalfViewport*kViewportTiles+kHalfViewport]));
+    report.viewport_crc32=crc32_u16le(rgb565,kViewportPixelCount);report.viewport_bytes=uint32_t(kViewportPixelCount*sizeof(uint16_t));
+    report.map_context=snapshot.combat?"combat authoritative snapshot":"world authoritative snapshot";return ESP_OK;
+}
+
+esp_err_t render_dungeon_view(const DungeonState &d, uint16_t *pixels, size_t count,
+                              RenderReport &report, uint16_t &primitives) {
+    report = {}; primitives = 0;
+    if (!d.active || !pixels || count < kViewportPixelCount) return ESP_ERR_INVALID_ARG;
+    // This is a first-person compositor, not a tile-map fallback.  It reads the
+    // live dungeon floor directly and uses the same blocking rule as movement.
+    for (int y = 0; y < kViewportPixels; ++y) {
+        const uint16_t color = y < kViewportPixels / 2 ? kDungeonCeiling : kDungeonFloor;
+        for (int x = 0; x < kViewportPixels; ++x) pixels[y * kViewportPixels + x] = color;
+    }
+    primitives = uint16_t(kViewportPixelCount);
+    constexpr int left[] = {0, 20, 44, 64, 78};
+    constexpr int top[] = {0, 20, 42, 62, 76};
+    constexpr int right[] = {175, 155, 131, 111, 97};
+    constexpr int bottom[] = {175, 155, 133, 113, 99};
+    constexpr int dx[] = {0, 1, 0, -1};
+    constexpr int dy[] = {-1, 0, 1, 0};
+    const int facing = int(d.pos.facing) & 3;
+    const int side_left = (facing + 3) & 3, side_right = (facing + 1) & 3;
+    int wall_depth = 4;
+    for (int depth = 1; depth <= 4; ++depth) {
+        const int x = int(d.pos.x) + dx[facing] * depth;
+        const int y = int(d.pos.y) + dy[facing] * depth;
+        if (dungeon_wall(d, x, y)) { wall_depth = depth; break; }
+    }
+    // Perspective corridor frames and the two side tests are deliberately
+    // independent of retained world coordinates.
+    for (int depth = 0; depth < wall_depth; ++depth) {
+        const int cx = int(d.pos.x) + dx[facing] * depth;
+        const int cy = int(d.pos.y) + dy[facing] * depth;
+        dungeon_line(pixels, left[depth], top[depth], right[depth], top[depth], kDungeonMortar, primitives);
+        dungeon_line(pixels, left[depth], bottom[depth], right[depth], bottom[depth], kDungeonMortar, primitives);
+        if (dungeon_wall(d, cx + dx[side_left], cy + dy[side_left])) {
+            dungeon_line(pixels, left[depth], top[depth], left[depth + 1], top[depth + 1], kDungeonWall, primitives);
+            dungeon_line(pixels, left[depth], bottom[depth], left[depth + 1], bottom[depth + 1], kDungeonWall, primitives);
+        }
+        if (dungeon_wall(d, cx + dx[side_right], cy + dy[side_right])) {
+            dungeon_line(pixels, right[depth], top[depth], right[depth + 1], top[depth + 1], kDungeonWall, primitives);
+            dungeon_line(pixels, right[depth], bottom[depth], right[depth + 1], bottom[depth + 1], kDungeonWall, primitives);
+        }
+    }
+    const int wl = left[wall_depth], wt = top[wall_depth];
+    const int wr = right[wall_depth], wb = bottom[wall_depth];
+    dungeon_rect(pixels, wl, wt, wr, wb, kDungeonWall, primitives);
+    for (int y = wt + 5; y < wb; y += 10)
+        dungeon_line(pixels, wl, y, wr, y, kDungeonMortar, primitives);
+    for (int x = wl + 8; x < wr; x += 16)
+        dungeon_line(pixels, x, wt, x, wb, kDungeonMortar, primitives);
+    // A live wanderer is an authoritative part of DungeonState and must appear
+    // in the same first-person direction used by the core's attack command.
+    const int wx = (int(d.pos.x) + dx[facing]) & 7, wy = (int(d.pos.y) + dy[facing]) & 7;
+    if (d.wanderer.type != 255 && !d.wanderer.hidden && d.wanderer.floor == d.pos.floor &&
+        d.wanderer.x == wx && d.wanderer.y == wy && wall_depth > 1) {
+        dungeon_rect(pixels, 80, 62, 95, 110, kDungeonDanger, primitives);
+        dungeon_rect(pixels, 84, 52, 91, 62, kDungeonDanger, primitives);
+    }
+    const int here = dungeon_cell(d, d.pos.floor, d.pos.x, d.pos.y) >> 4;
+    if (here >= 1 && here <= 8) {
+        dungeon_rect(pixels, 82, 132, 93, 143, here == 8 ? kDungeonDanger : kDungeonFeature, primitives);
+    }
+    dungeon_report(report, d, pixels); report.map_context = "dungeon3d authoritative viewport";
+    return ESP_OK;
+}
+
+esp_err_t render_dungeon_gem_view(const DungeonState &d, uint16_t *pixels, size_t count,
+                                  RenderReport &report, uint16_t &primitives) {
+    report = {}; primitives = 0;
+    if (!d.active || !pixels || count < kViewportPixelCount) return ESP_ERR_INVALID_ARG;
+    std::fill(pixels, pixels + kViewportPixelCount, kDungeonBlack);
+    constexpr int size = 22, cell = 8, center = 11;
+    std::array<uint8_t, size * size> reached{};
+    std::array<uint16_t, size * size> queue{};
+    size_t head = 0, tail = 0;
+    reached[center * size + center] = 1;
+    queue[tail++] = uint16_t(center * size + center);
+    constexpr int nx[] = {-1, 0, 1, -1, 1, -1, 0, 1};
+    constexpr int ny[] = {-1, -1, -1, 0, 0, 1, 1, 1};
+    auto type_at = [&](int col, int row) {
+        return int(dungeon_cell(d, d.pos.floor, (int(d.pos.x) + col - center + 8) & 7,
+                                (int(d.pos.y) + row - center + 8) & 7) >> 4);
+    };
+    while (head < tail) {
+        const int at = queue[head++], col = at % size, row = at / size;
+        for (int n = 0; n < 8; ++n) {
+            const int x = col + nx[n], y = row + ny[n];
+            if (x < 0 || x >= size || y < 0 || y >= size) continue;
+            const int next = y * size + x;
+            if (reached[next]) continue;
+            reached[next] = 1;
+            if (!dungeon_wall(d, int(d.pos.x) + x - center, int(d.pos.y) + y - center))
+                queue[tail++] = uint16_t(next);
+        }
+    }
+    for (int row = 0; row < size; ++row) for (int col = 0; col < size; ++col) {
+        if (!reached[row * size + col]) continue;
+        const int type = type_at(col, row);
+        const int x = col * cell, y = row * cell;
+        if (type == 11) dungeon_rect(pixels, x, y, x + 7, y + 7, kDungeonMortar, primitives);
+        else if (type == 12 || type == 13) dungeon_rect(pixels, x + 1, y + 1, x + 6, y + 6, kDungeonWall, primitives);
+        else if (type == 8) dungeon_rect(pixels, x + 1, y + 2, x + 6, y + 5, kDungeonDanger, primitives);
+        else if (type >= 1 && type <= 7) dungeon_rect(pixels, x + 2, y + 2, x + 5, y + 5, kDungeonFeature, primitives);
+    }
+    dungeon_rect(pixels, center * cell + 2, center * cell + 2, center * cell + 5, center * cell + 5,
+                 kDungeonFeature, primitives);
+    dungeon_report(report, d, pixels); report.map_context = "View Gem dungeon floor";
+    return ESP_OK;
+}
+
+esp_err_t render_world_gem_view(const ActiveMap &map, Position center, uint16_t *pixels,
+                                size_t count, RenderReport &report, uint16_t &primitives) {
+    report = {}; primitives = 0;
+    if (!pixels || count < kViewportPixelCount) return ESP_ERR_INVALID_ARG;
+    std::fill(pixels, pixels + kViewportPixelCount, kDungeonBlack);
+    constexpr int cells = 32, pixel = 5, origin = 8;
+    for (int row = 0; row < cells; ++row) for (int col = 0; col < cells; ++col) {
+        int x = int(center.x) + col - cells / 2, y = int(center.y) + row - cells / 2;
+        if (map.geometry.wraps) { x = wrap_coord(x); y = wrap_coord(y); }
+        else if (x < 0 || y < 0 || x >= map.geometry.width || y >= map.geometry.height) continue;
+        const int tile = map.tile_at(x, y);
+        // Gem view is a terrain-category map, not an object-layer snapshot.
+        const uint16_t color = (tile & 3) == 3 ? 0x001f : (tile & 7) == 0 ? 0x07e0 :
+                               (tile & 15) < 4 ? 0x7be0 : 0x8410;
+        dungeon_rect(pixels, origin + col * pixel, origin + row * pixel,
+                     origin + col * pixel + pixel - 1, origin + row * pixel + pixel - 1,
+                     color, primitives);
+    }
+    dungeon_rect(pixels, origin + 16 * pixel, origin + 16 * pixel,
+                 origin + 16 * pixel + pixel - 1, origin + 16 * pixel + pixel - 1,
+                 kDungeonFeature, primitives);
+    report.left = int16_t(int(center.x) - 16); report.top = int16_t(int(center.y) - 16);
+    report.right = int16_t(int(center.x) + 15); report.bottom = int16_t(int(center.y) + 15);
+    report.viewport_bytes = uint32_t(kViewportPixelCount * sizeof(uint16_t));
+    report.viewport_crc32 = crc32_u16le(pixels, kViewportPixelCount);
+    report.map_context = "View Gem world terrain";
+    return ESP_OK;
+}
+
+esp_err_t render_intro_view(const PresentationTileCache &cache,const IntroViewFrame &frame,
+                            uint32_t tick,uint16_t *pixels,size_t count,RenderReport &report)
+{
+    constexpr int width=kIntroViewColumns*kTilePixels;
+    constexpr size_t required=size_t(width)*kIntroViewRows*kTilePixels;
+    report={};if(!cache.tiles||!pixels||count<required)return ESP_ERR_INVALID_ARG;
+    std::fill(pixels,pixels+required,uint16_t(0));uint8_t ground[128]{},actor[128]{};
+    for(int row=0;row<kIntroViewRows;++row)for(int col=0;col<kIntroViewColumns;++col){
+        const int i=row*kIntroViewColumns+col;const uint16_t tile=frame.tiles[i];if(tile==0xffffU)continue;
+        const uint8_t terrain=frame.terrain[i];animated_bitmap(cache,uint16_t(animated_tile_frame(terrain,tick,0)),tick,ground);
+        const bool has_actor=tile>=0x100U&&tile<512U;if(has_actor)animated_bitmap(cache,tile,tick,actor);
+        for(int y=0;y<16;++y)for(int x=0;x<16;++x){const int p=y*16+x;uint8_t color=pixel4(ground,p);if(has_actor){const uint8_t over=pixel4(actor,p);if(over)color=over;}pixels[(row*16+y)*width+col*16+x]=cache.palette[color];}
+    }
+    if(frame.effect==IntroViewEffect::Dissolve&&frame.effect_col<kIntroViewColumns&&frame.effect_row<kIntroViewRows){
+        animated_bitmap(cache,frame.effect_tile,tick,actor);
+        for(int y=0;y<16;++y)for(int x=0;x<16;++x){unsigned rank=0;for(unsigned bit=0;bit<4;++bit){const unsigned q=((unsigned(y)>>bit)&1U)*2U+((unsigned(x)>>bit)&1U);constexpr unsigned offset[4]={0,2,3,1};rank=rank*4U+offset[q];}const int p=y*16+x;const uint8_t over=pixel4(actor,p);if(rank<frame.effect_shown&&over)pixels[(int(frame.effect_row)*16+y)*width+int(frame.effect_col)*16+x]=cache.palette[over];}
+    }else if(frame.effect==IntroViewEffect::Moongate&&frame.effect_col<kIntroViewColumns&&frame.effect_row<kIntroViewRows){
+        animated_bitmap(cache,frame.effect_tile,tick,actor);const int height=std::min<int>(15,frame.effect_step);
+        for(int y=16-height;y<16;++y)for(int x=0;x<16;++x){const uint8_t over=pixel4(actor,y*16+x);if(over)pixels[(int(frame.effect_row)*16+y)*width+int(frame.effect_col)*16+x]=cache.palette[over];}
+    }else if(frame.effect==IntroViewEffect::Beam){
+        int x=128+9*int(frame.effect_step),y=32+3*int(frame.effect_step);for(int n=0;n<=9;++n){const int px=x+n,py=y+n/3;if(px>=0&&px<width&&py>=0&&py<kIntroViewRows*16){pixels[py*width+px]=cache.palette[15];if(py+1<kIntroViewRows*16)pixels[(py+1)*width+px]=cache.palette[11];}}
+    }
+    report.viewport_bytes=uint32_t(required*sizeof(uint16_t));report.viewport_crc32=crc32_u16le(pixels,required);report.map_context="INTRO.OVL scripted View";return ESP_OK;
 }
 
 }  // namespace openu5

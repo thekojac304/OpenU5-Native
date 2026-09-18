@@ -1,5 +1,27 @@
 # Shared source list: host and ESP-IDF compile the same portable implementation.
 set(OPENU5_CORE_SOURCES
+    "${CMAKE_CURRENT_LIST_DIR}/src/frontend.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/frontend_settings.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/hud.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/intro_view.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/system_menu.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/display_names.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/presentation.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/ui_session.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/dungeon_encounters.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/world_terrain.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/world_commands.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/look.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/world_magic.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/gameplay_save.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/outdoor.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/shrine.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/quest.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/quest_world.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/quest_search.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/blackthorn.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/shops.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/shop_orchestration.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/save_json.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/persistence.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/save_core.cpp"
@@ -26,3 +48,9 @@ set(OPENU5_CORE_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/dialogue.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/dialogue_effects.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/dialogue_orchestration.cpp")
+if(OPENU5_ENABLE_DEVELOPER_TOOLS)
+  list(APPEND OPENU5_CORE_SOURCES
+      "${CMAKE_CURRENT_LIST_DIR}/src/ui_debug_menu.cpp"
+      "${CMAKE_CURRENT_LIST_DIR}/src/debug_map_picker.cpp"
+      "${CMAKE_CURRENT_LIST_DIR}/src/debug_developer.cpp")
+endif()

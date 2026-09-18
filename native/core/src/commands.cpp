@@ -1,23 +1,35 @@
+#include "openu5/look.h"
+#include "openu5/world_terrain.h"
 #include "openu5/commands.h"
 #include "openu5/combat.h"
 #include "openu5/dungeon.h"
 #include "openu5/rest.h"
 #include "openu5/transport.h"
 #include "openu5/dialogue_orchestration.h"
+#include "openu5/shop_orchestration.h"
+#include "openu5/shrine.h"
+#include "openu5/quest_world.h"
+#include "openu5/blackthorn.h"
+#include "openu5/outdoor.h"
+#include "openu5/world_commands.h"
+#include "openu5/loot.h"
 #include <cstdio>
+#include <algorithm>
 namespace openu5 {
 namespace {
 struct Runner {
     CommandContext &c;
     ActionResult result{};
     Rand rand;
+    Position attempted_target{};
+    EventSink destination = c.events; // Stable downstream sink across nested subsystem handoffs.
     EventSink sink() {
         return {this, [](void *p, const GameEvent &e) { static_cast<Runner *>(p)->emit(e); }};
     }
     void emit(const GameEvent &e) {
         ++result.event_count;
-        if (c.events.emit)
-            c.events.emit(c.events.context, e);
+        if (destination.emit)
+            destination.emit(destination.context, e);
     }
     void event(GameEventKind kind, const char *text = nullptr) {
         GameEvent e;
@@ -26,10 +38,89 @@ struct Runner {
         emit(e);
     }
     void message(const char *s) { event(GameEventKind::Message, s); }
+    void fire(Command cmd){
+        auto &g=c.game;auto *q=c.quest_world;auto projectile=[&](int fx,int fy,int tx,int ty){GameEvent e;e.kind=GameEventKind::CellProjectile;e.projectile={int16_t(fx),int16_t(fy),int16_t(tx),int16_t(ty)};emit(e);};
+        if(!g.position.map.location&&cmd.has_direction){
+            int ship=c.turn.transport_tile;if((ship&248)!=32){message("What?");return;}
+            bool northsouth=int(cmd.direction)<2;if(((ship&1)==0)==northsouth){message("Fire broadsides only!");return;}
+            if(!c.outdoor){result.status=CommandStatus::InvalidContext;return;}
+            auto &owner=*c.outdoor;auto d=direction_delta(cmd.direction);int range=3,hull=0;bool hit=false;
+            for(auto &e:owner.enemies)e.cannon_target=false;
+            for(int n=1;n<=3&&!hit;++n)for(auto &e:owner.enemies)if(e.water&&e.x==((g.position.xy.x+d.dx*n)&255)&&e.y==((g.position.xy.y+d.dy*n)&255)){e.cannon_target=true;range=n;hull=e.hull<0?99:e.hull;hit=true;break;}
+            event(GameEventKind::Sfx,"cannon-fire");projectile(0,0,d.dx*range,d.dy*range);
+            if(hit){turn();int remaining=hull-rand(1,20);if(remaining<0)message("Ship sunk!");for(size_t i=0;i<owner.enemies.size();++i)if(owner.enemies[i].cannon_target){if(remaining<0)owner.enemies.erase(owner.enemies.begin()+ptrdiff_t(i));else{owner.enemies[i].hull=remaining;owner.enemies[i].cannon_target=false;}break;}}
+            else {message("Missed!");}event(GameEventKind::MapChanged);return;
+        }
+        if(!g.position.map.location||(g.position.map.location>=33&&g.position.map.location<=40)){message("What?");return;}
+        auto raw=[&](int x,int y){return q&&q->tile_at?q->tile_at(q->context,x,y):get_active_map(c.world,g.position.map).value.tile_at(x,y);};
+        constexpr int dx[]={0,1,0,-1},dy[]={-1,0,1,0};int found=-1,cx=0,cy=0,tile=0;
+        for(int i=0;i<4;++i){cx=(g.position.xy.x+dx[i])&255;cy=(g.position.xy.y+dy[i])&255;tile=raw(cx,cy);if((tile&252)==180){found=i;break;}}
+        if(found<0){message("What?");return;}
+        if(!q||!q->volatile_tile){result.status=CommandStatus::InvalidContext;return;}
+        message("BOOOM!");event(GameEventKind::Sfx,"cannon-fire");int ox=dx[found],oy=dy[found],dir=tile&3;bool changed=false;
+        for(int n=0;n<4;++n){cx=(cx+dx[dir])&255;cy=(cy+dy[dir])&255;ox+=dx[dir];oy+=dy[dir];const NpcActor *npc=nullptr;if(c.actors)for(size_t i=0;i<c.actors->count;++i){auto &a=c.actors->actors[i];if(a.location==g.position.map.location&&a.z==g.position.map.floor&&a.x==cx&&a.y==cy){npc=&a;break;}}
+            if(npc){g.karma=uint8_t(g.karma>5?g.karma-5:0);if(g.position.map.location<=32&&npc->schedule.slot<32)g.npc_dead[g.position.map.location-1]|=uint32_t(1)<<npc->schedule.slot;event(GameEventKind::PartyChanged);changed=true;break;}
+            int t=raw(cx,cy);if((t>=151&&t<=153)||(t>=184&&t<=187)){q->volatile_tile(q->context,cx,cy,68);message("Door destroyed!");changed=true;break;}
+        }
+        projectile(dx[found],dy[found],ox,oy);if(changed)event(GameEventKind::MapChanged);
+    }
+    void waterfall_fall() {
+        auto &g = c.game;
+        message("F-A-L-L-S!!!\n");
+        g.position.xy.y = uint8_t(wrap_coord(g.position.xy.y + 2));
+        event(GameEventKind::Sfx, "waterfall-fall");
+        for (int32_t i = 0; i < g.party.party_size && i < g.party.character_count; ++i) {
+            auto &ch = g.party.characters[i];
+            if (ch.status == 'D') continue;
+            const auto rolled = rand(0, 60) >> 1;
+            const auto threshold = rolled > 0 ? rolled : 1;
+            if (ch.dexterity > threshold) continue;
+            if (ch.current_hp) --ch.current_hp;
+            if (!ch.current_hp) {
+                ch.status = 'D';
+                if (g.party.active_character == i) g.party.active_character = 255;
+            }
+        }
+        if (g.position.xy.x == 0x36 && g.position.xy.y == 0x8a) {
+            message("Falling into underworld!!\n");
+            g.position.map.floor = 255;
+            if (c.quest_world && !hydrate_underworld_plot(g, *c.quest_world))
+                result.status = CommandStatus::NeedsStorage;
+        }
+        event(GameEventKind::MapChanged);
+    }
     bool effect(CommandEffect e) {
+        if(e==CommandEffect::RefreshHourTiles && c.terrain)c.terrain->refresh(c.world,c.game);
+        if(e==CommandEffect::Doors && c.commands.door.turns>0)--c.commands.door.turns;
+        if (!c.game.position.map.location &&
+            (e == CommandEffect::Waterfall || e == CommandEffect::WaterfallUnder)) {
+            const auto attempts = e == CommandEffect::Waterfall ? 256 : 1;
+            for (int i = 0; i < attempts; ++i) {
+                const auto pos = c.game.position.xy;
+                const auto t = map().tile_at(pos.x, wrap_coord(pos.y + (e == CommandEffect::Waterfall ? 1 : 0)));
+                if ((t & 0xfc) != 0xd4) break;
+                waterfall_fall();
+            }
+        }
+        if(c.quest_world && e==CommandEffect::Refuge){auto status=check_refuge(c,sink());if(status==CommandStatus::InvalidContext)result.status=status;return false;}
+        if(c.blackthorn && (e==CommandEffect::Capture || e==CommandEffect::Tribute))return blackthorn_turn_effect(c,e,sink(),rand);
+        if(c.quest_world && e==CommandEffect::Moongate){auto &q=*c.quest_world;auto &g=c.game;if(g.position.map.location || !q.moon_phases || !moongate_at(g,c.turn,q))return false;event(GameEventKind::Sfx,"moongate");auto phase=active_gate_phase(g,c.turn,q);if((g.time.hour==0&&g.time.minute<10) || phase<0 || size_t(phase)>=q.moonstone_count || q.moonstones[phase].location==255){event(GameEventKind::MapChanged);return false;}auto loc=q.moonstones[phase].location;auto banner=c.services.banner?c.services.banner(c.services.context,loc):nullptr;moonstone_teleport(g,c.turn,c.travel,q.moonstones,q.moonstone_count,phase,banner,transitions());return false;}
+        if (c.shrine_services && e==CommandEffect::ShrineGuardian) {
+            shrine_guardian(c.game,sink()); return false;
+        }
+        if (c.shrine_services && e==CommandEffect::ShrineEntry) {
+            shrine_entry(c.game,*c.shrine_services,tile(),sink()); return false;
+        }
         return c.services.effect && c.services.effect(c.services.context, e, sink());
     }
-    ActiveMap map() { return get_active_map(c.world, c.game.position.map).value; }
+    ActiveMap map() {
+        auto m=get_active_map(c.world,c.game.position.map).value;
+        if(c.combat && c.combat_context) {
+            m.kind=MapKind::Small;m.geometry={11,11,false};m.resolve_context=c.combat_context;
+            m.resolve_tile=[](void *p,MapId,int32_t x,int32_t y,int32_t){return int32_t(static_cast<CombatContext *>(p)->combat.map.tiles[y*11+x]);};
+        } else {m.resolve_context=&c;m.resolve_tile=[](void *p,MapId id,int32_t x,int32_t y,int32_t tile){auto &ctx=*static_cast<CommandContext *>(p);if(ctx.transport_services&&ctx.transport_services->tile_at)tile=ctx.transport_services->tile_at(ctx.transport_services->context,x,y);if(ctx.quest_world)tile=quest_world_tile(ctx,id,x,y,tile);return open_door_tile(ctx,id,x,y,tile);};}
+        return m;
+    }
     int32_t tile() {
         return c.transport_services && c.transport_services->tile_at
                    ? c.transport_services->tile_at(c.transport_services->context,
@@ -63,8 +154,9 @@ struct Runner {
         if (!outdoor_world_turn_runs(c.game, c.turn, c.commands.outdoor_phases))
             return;
         ++result.world_turns;
-        (void)roll_spawn_gate(rand, under, c.game.position.map.floor, c.game.time.hour);
-        // Game.outdoorWorldTurn with combatResources absent ends after this gate.
+        const auto spawn = roll_spawn_gate(rand, under, c.game.position.map.floor, c.game.time.hour);
+        const auto status = outdoor_tick(c, map(), spawn.spawn, rand, sink());
+        if (status != CommandStatus::Success) result.status = status;
     }
     void turn_events(const TurnResult &r) {
         if (r.poison_ticks.count) {
@@ -80,6 +172,28 @@ struct Runner {
         if (r.poisoned.count)
             message("Poisoned!");
     }
+    void troll_script(const TrollRoll &troll) {
+        TrollSneakScript script;
+        char names[6][40]{};
+        script.beats[script.count++] = {"\nThou spieth trolls under the bridge!\n\n", 10, false};
+        for (uint8_t i = 0; i < troll.indices.count; ++i) {
+            const auto &ch = c.game.party.characters[troll.indices.values[i]];
+            const char *first = ch.name;
+            while (*first == ' ' || *first == '\t' || *first == '\r' || *first == '\n') ++first;
+            const char *last = first;
+            while (*last) ++last;
+            while (last > first && (last[-1] == ' ' || last[-1] == '\t' || last[-1] == '\r' || last[-1] == '\n')) --last;
+            if (last == first) std::snprintf(names[i], sizeof(names[i]), "Avatar sneaks across");
+            else std::snprintf(names[i], sizeof(names[i]), "%.*s sneaks across", int(last-first), first);
+            script.beats[script.count++] = {names[i], 5, false};
+            script.beats[script.count++] = {".", 5, true};
+            script.beats[script.count++] = {".", 5, true};
+            script.beats[script.count++] = {".", -1, true};
+            script.beats[script.count++] = {"\n", -1, false};
+        }
+        if (troll.payer_index < 0) script.beats[script.count++] = {"Trolls evaded!\n", -1, false};
+        GameEvent e; e.kind = GameEventKind::TrollSneak; e.troll_sneak = &script; emit(e);
+    }
     void turn(bool consumed = true, const StepGeometry *step = nullptr, bool pass = false) {
         const bool pre = c.travel.drunk_pre_rolled;
         c.travel.drunk_pre_rolled = false;
@@ -93,6 +207,7 @@ struct Runner {
             ctx.tile_under_party = under;
             ctx.blocked = step && step->blocked;
             ctx.on_swamp = step && step->on_swamp;
+            ctx.on_bridge = step && step->on_bridge;
             ctx.skip_world_turn = true;
             ctx.sky = c.sky;
             ctx.after_wind = {&slow, [](void *p) {
@@ -112,6 +227,17 @@ struct Runner {
                 event(GameEventKind::Sfx, "quake");
             }
             turn_events(r);
+            if (r.has_troll && r.troll.fired && r.troll.on_foot) troll_script(r.troll);
+            if (r.has_troll && r.troll.payer_index >= 0) {
+                c.commands.awaiting_troll = true;
+                c.commands.troll_toll = r.troll.toll;
+                c.commands.troll_under_party = under;
+                c.commands.troll_x = attempted_target.x;
+                c.commands.troll_y = attempted_target.y;
+                GameEvent e; e.kind = GameEventKind::TrollTollPrompt; e.note = r.troll.toll; emit(e);
+                result.status = CommandStatus::AwaitingResponse;
+                return;
+            }
             if (!ctx.blocked) {
                 effect(CommandEffect::WaterfallUnder);
                 effect(CommandEffect::Doors);
@@ -146,6 +272,7 @@ struct Runner {
                     ctx.second_world_turn = true;
             }
         ctx.hazard_context = this;
+        if(c.quest_world)ctx.on_trapdoor=[](void *p){auto &r=*static_cast<Runner *>(p);return quest_trapdoor(r.c,r.sink());};
         ctx.tile_under_party = [](void *p) { return static_cast<Runner *>(p)->tile(); };
         ctx.after_housekeeping = {this, [](void *p) {
                                       auto &r = *static_cast<Runner *>(p);
@@ -172,6 +299,15 @@ struct Runner {
                 else if (e == ReloadEffect::RefreshHourTiles)
                     r.effect(CommandEffect::RefreshHourTiles);
                 else {
+                    if(e==ReloadEffect::ClearTerrain && r.c.terrain)r.c.terrain->clear_residence();
+                    if(e==ReloadEffect::ResetDoors)r.c.commands.door.turns=0;
+                    if(e==ReloadEffect::ClearEnemies && r.c.outdoor)r.c.outdoor->enemies.clear();
+                    if(e==ReloadEffect::HydrateUnderworld && r.c.quest_world && !hydrate_underworld_plot(r.c.game,*r.c.quest_world))
+                        r.result.status=CommandStatus::NeedsStorage;
+                    if(e==ReloadEffect::UrbanEffects && r.c.quest_world)
+                        r.result.status=urban_shadowlord(r.c,r.sink(),r.rand);
+                    if(e==ReloadEffect::HydrateInterior && r.c.quest_world && !hydrate_interior_objects(r.c,id))r.result.status=CommandStatus::NeedsStorage;
+                    if(e==ReloadEffect::DiscardInterior && r.c.quest_world)discard_interior_objects(r.c.game,*r.c.quest_world,id);
                     if (r.c.services.reload)
                         r.c.services.reload(r.c.services.context, e, id, r.sink());
                     if (e == ReloadEffect::EnterNpcs && r.c.actors) {
@@ -194,6 +330,105 @@ struct Runner {
             },
             [](void *p, GameEventKind k, const char *s) { static_cast<Runner *>(p)->event(k, s); }};
     }
+    void sync_transport(int32_t tile) {
+        c.turn.transport_tile = tile;
+        c.game.transport = transport_mode(tile);
+    }
+    void naval_step(Direction dir) {
+        const auto delta = direction_delta(dir);
+        const auto x = wrap_coord(c.game.position.xy.x + delta.dx);
+        const auto y = wrap_coord(c.game.position.xy.y + delta.dy);
+        const auto dest = map().tile_at(x, y), tile = c.turn.transport_tile;
+        const auto actor = outdoor_actor_tile(c, x, y);
+        const bool occupied = actor != 0 && !boardable_actor_tile(actor, tile);
+        const bool sailing = c.turn.sail_dir != 0 && (tile & 0xfc) == 0x20;
+        if ((tile & 0xfc) == 0x24) message("Rowing!");
+        const auto passable = is_passable(dest, c.game.transport);
+        if (passable.value && !occupied) {
+            c.game.position.xy = {uint8_t(x), uint8_t(y)};
+            event(GameEventKind::Moved);
+            effect(CommandEffect::Waterfall);
+            return;
+        }
+        if (sailing) {
+            if (dest == 0x47) {
+                message("Docked!");
+                sync_transport(tile + 4);
+            } else {
+                const auto damage = rand(1, 30);
+                message(dest == 3 ? "BREAKING UP!" : "COLLISION!");
+                if (damage >= c.game.ship_hull) {
+                    sink_player_ship(c.game, c.turn, rand, sink());
+                } else c.game.ship_hull -= damage;
+            }
+            c.turn.sail_dir = 0;
+            return;
+        }
+        if (occupied && tile >= 0x20 && (actor & 0xfc) == 0xec) return;
+        message("Blocked!");
+        if (dest == 0x2f) {
+            message("OUCH!");
+            const auto damage = rand(1, 8);
+            auto i = c.game.party.active_character;
+            if (i >= c.game.party.character_count) i = 0;
+            if (i < c.game.party.character_count) {
+                auto &hp = c.game.party.characters[i].current_hp;
+                hp = uint16_t(hp > damage ? hp - damage : 0);
+            }
+        } else event(GameEventKind::Sfx, "move-blocked");
+    }
+    void naval_turn(int32_t drift = 0) {
+        auto &t = c.turn;
+        if (c.game.hms_cape) t.hms_cape_toggle ^= 1;
+        OutdoorTurnContext ctx;
+        ctx.tile_under_party = map().tile_at(c.game.position.xy.x, c.game.position.xy.y);
+        ctx.minutes = c.game.hms_cape ? 1 : 2;
+        ctx.skip_world_turn = true;
+        ctx.sky = c.sky;
+        turn_events(outdoor_turn(c.game, t, rand, ctx));
+        if (!c.game.hms_cape || t.hms_cape_toggle == 0) world(ctx.tile_under_party);
+        if (!drift || !t.sail_dir || !t.wind) return;
+        static constexpr Direction courses[]{Direction::North, Direction::West, Direction::East,
+                                             Direction::North, Direction::South};
+        static constexpr int dx[]{0, 0, 0, -1, 1}, dy[]{0, 1, -1, 0, 0};
+        const auto course = direction_delta(courses[t.sail_dir]);
+        const auto threshold = (1 + (dx[t.wind] != course.dx) + (dy[t.wind] != course.dy)) % 3;
+        if (threshold > t.wind_drift_counter) ++t.wind_drift_counter;
+        else {
+            t.wind_drift_counter = 0;
+            naval_step(courses[drift]);
+        }
+    }
+    void naval_move(Direction dir) {
+        static constexpr int facing[]{0, 2, 1, 3}, sail[]{3, 4, 2, 1};
+        static constexpr const char *names[]{"North", "South", "East", "West"};
+        const auto tile = c.turn.transport_tile, base = tile & 0xfc;
+        const auto index = static_cast<uint8_t>(dir);
+        const auto next = base + facing[index];
+        const bool turned = next != tile, town = c.game.position.map.location != 0;
+        if (base == 0x20 && c.turn.sail_dir != sail[index]) {
+            c.turn.sail_dir = sail[index];
+            c.turn.wind_drift_counter = 0;
+        }
+        sync_transport(next);
+        if (base == 0x20 && !turned) naval_turn(c.turn.sail_dir);
+        else if (turned && !town && base != 0x28) {
+            char head[16];
+            std::snprintf(head, sizeof(head), "Head %s", names[index]);
+            message(head);
+            if (c.game.ship_hull < 50) message("Hull weak!");
+            naval_turn();
+        } else {
+            if (base == 0x28 || town) {
+                char echo[16];
+                std::snprintf(echo, sizeof(echo), "%s%s", base == 0x28 ? "Row " : "", names[index]);
+                event(GameEventKind::WalkEcho, echo);
+            }
+            naval_step(dir);
+            naval_turn();
+        }
+        event(GameEventKind::MapChanged);
+    }
     void move(Direction dir, bool staggered = false) {
         if (!staggered && c.game.position.map.location && c.turn.drunk_turns > 0) {
             if (c.turn.time_spell != 'T')
@@ -208,7 +443,17 @@ struct Runner {
             c.travel.drunk_pre_rolled = true;
         }
         static constexpr const char *names[]{"North", "South", "East", "West"};
-        event(GameEventKind::WalkEcho, names[static_cast<uint8_t>(dir)]);
+        char echo[16];
+        const auto base = c.turn.transport_tile & 0xfc;
+        const char *verb = base == 0x10 ? "Ride " : base == 0x14 ? "Fly " : "";
+        std::snprintf(echo, sizeof(echo), "%s%s", verb, names[static_cast<uint8_t>(dir)]);
+        const bool naval = c.game.transport == TransportMode::Ship || c.game.transport == TransportMode::Skiff;
+        if (!naval) event(GameEventKind::WalkEcho, echo);
+        const auto faced = mount_face_tile(c.turn.transport_tile, dir);
+        if (faced != c.turn.transport_tile) {
+            c.turn.transport_tile = faced;
+            event(GameEventKind::MapChanged);
+        }
         const auto m = map();
         const auto d = direction_delta(dir);
         if (c.actors && c.game.position.map.location) {
@@ -226,7 +471,12 @@ struct Runner {
                 }
             }
         }
-        const auto resolved = resolve_unoccupied_foot_step(c.game, m, dir);
+        if (naval) { naval_move(dir); return; }
+        Position target{};
+        const auto actor = target_for_step(c.game.position.xy, m.geometry, dir, target)
+                               ? outdoor_actor_tile(c, target.x, target.y) : 0;
+        attempted_target=target;
+        const auto resolved = resolve_world_step(c.game, m, dir, c.turn.transport_tile, actor);
         if (resolved.error != Error::None) {
             result.error = resolved.error;
             result.status = CommandStatus::CoreError;
@@ -265,6 +515,10 @@ struct Runner {
         effect(CommandEffect::ShrineEntry);
     }
     void enter() {
+        if (c.shrine_services && (tile()==17 || tile()==25)) {
+            const auto action=enter_shrine(c,tile());
+            result.event_count+=action.event_count; result.status=action.status; return;
+        }
         if (c.game.position.map.location) {
             message("Enter what?");
             result.status = CommandStatus::Rejected;
@@ -300,6 +554,7 @@ struct Runner {
         const auto id = location_at(c.locations, c.game.position.xy.x, c.game.position.xy.y);
         if (id >= 33 && id <= 40 && c.dungeon_context) {
             auto &d = *c.dungeon_context;
+            if(c.quest_world){auto q=doom_entrance(c,id,sink());if(q.status!=CommandStatus::Success || q.turn){result.status=q.status;return;}}
             if (d.entry_hook && d.entry_hook(d.context, uint8_t(id), sink()))
                 return;
             Command enter;
@@ -326,6 +581,16 @@ struct Runner {
         load_small_map(c.game, c.turn, c.travel, uint8_t(id), banner, transitions());
     }
     void klimb(Command cmd) {
+        if(!c.game.position.map.location){
+            if(!c.game.grapple){message("With what?");result.status=CommandStatus::Rejected;return;}
+            if(c.game.transport!=TransportMode::Foot){message("On foot!");result.status=CommandStatus::Rejected;return;}
+            if(!cmd.has_direction){event(GameEventKind::NeedsDirection,"klimb");result.status=CommandStatus::AwaitingResponse;return;}
+            const auto d=direction_delta(cmd.direction);int x=wrap_coord(c.game.position.xy.x+d.dx),y=wrap_coord(c.game.position.xy.y+d.dy);
+            const auto tile=map().tile_at(x,y);
+            if(tile!=12){message(tile==13?"Impassable!":"Not climbable!");result.status=CommandStatus::Rejected;return;}
+            for(int32_t i=0;i<c.game.party.party_size&&i<c.game.party.character_count;++i){auto &ch=c.game.party.characters[i];if(ch.status=='D')continue;if(ch.dexterity>=rand(1,30))continue;int damage=rand(1,5);ch.current_hp=uint16_t(ch.current_hp>damage?ch.current_hp-damage:0);if(!ch.current_hp)ch.status='D';message("Fell!");}
+            c.game.position.xy={uint8_t(x),uint8_t(y)};turn();event(GameEventKind::Moved);return;
+        }
         if (c.game.transport == TransportMode::Horse) {
             message("Klimb--On foot!");
             result.status = CommandStatus::Rejected;
@@ -358,6 +623,16 @@ struct Runner {
 };
 } // namespace
 static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
+    if(c.commands.awaiting_troll&&cmd.kind!=CommandKind::TrollToll){ActionResult r;r.status=CommandStatus::AwaitingResponse;return r;}
+    if(cmd.kind==CommandKind::BlackthornAction){ActionResult r;if(cmd.item<0||cmd.item>int16_t(BlackthornAction::Arrest)){r.status=CommandStatus::InvalidContext;return r;}auto rand=rng_source(c.game.rng);r.status=blackthorn_action(c,BlackthornAction(cmd.item),TalkText(cmd.text?cmd.text:u"",cmd.text_length),cmd.member!=0,c.events,rand);return r;}
+    if(c.blackthorn && (c.blackthorn->shrine>=0||c.blackthorn->password||c.blackthorn->tribute||c.blackthorn->arrest)){ActionResult r;r.status=CommandStatus::AwaitingResponse;return r;}
+    if (cmd.kind == CommandKind::ShopAction) {
+        if (cmd.item < 0 || cmd.item > int16_t(ShopAction::Text)) { ActionResult r; r.status=CommandStatus::Rejected; return r; }
+        return execute_shop(c,{ShopAction(cmd.item),cmd.member,cmd.text,cmd.text_length});
+    }
+    if (c.shop_services && c.shop_services->session.phase != ShopPhase::Closed) {
+        ActionResult r; r.status=CommandStatus::AwaitingResponse; return r;
+    }
     if (cmd.kind >= CommandKind::Talk && cmd.kind <= CommandKind::EndConversation)
         return execute_dialogue_command(c, cmd);
     if (c.dialogue_services && c.dialogue_services->session.active) {
@@ -365,10 +640,27 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
         result.status = CommandStatus::AwaitingResponse;
         return result;
     }
-    if (cmd.kind == CommandKind::EnterDungeon || cmd.kind == CommandKind::DungeonCommand)
+    if(cmd.kind==CommandKind::Mix){
+        ActionResult result;
+        if(c.combat||cmd.item<0||cmd.item>48||c.game.party.character_count>16||c.game.party.party_size<0||c.game.party.party_size>6){result.status=CommandStatus::InvalidContext;return result;}
+        auto emit=[&](GameEvent e){++result.event_count;if(c.events.emit)c.events.emit(c.events.context,e);};auto say=[&](const char *s){GameEvent e;e.kind=GameEventKind::Message;e.text=s;emit(e);};
+        if(cmd.hours<=0){return result;}if(!cmd.reagent_mask){say("Nothing to mix!");return result;}
+        for(int i=0;i<8;++i)if((cmd.reagent_mask&(1<<i))&&c.game.reagent_quantities[i]<cmd.hours){say("Insufficient reagents!");return result;}
+        say("Mixing...");for(int i=0;i<8;++i)if(cmd.reagent_mask&(1<<i))c.game.reagent_quantities[i]-=cmd.hours;
+        auto *def=spell_definition(SpellId(cmd.item));if(cmd.item<48&&def->reagents==cmd.reagent_mask){c.game.spell_quantities[cmd.item]=std::min<int32_t>(99,c.game.spell_quantities[cmd.item]+cmd.hours);say("Done!");return result;}
+        auto opener=first_conscious_index(c.game.party);auto trap=chest_trap(c.game,c.game.position.map.location,opener<0?0:opener,rng_source(c.game.rng));GameEvent e;e.kind=GameEventKind::Sfx;e.text="dungeon-trap";emit(e);say(trap.message);if(trap.damage_mask){e={};e.kind=GameEventKind::PoisonTick;for(int i=0;i<6;++i)if(trap.damage_mask&(1<<i))e.slots[e.slot_count++]=uint8_t(i);emit(e);}return result;
+    }
+    if (cmd.kind==CommandKind::ShrineAction) {
+        if (!cmd.shrine) { ActionResult result; result.status=CommandStatus::InvalidContext; return result; }
+        return execute_shrine(c,*cmd.shrine);
+    }
+    if(cmd.kind==CommandKind::UseMoonstone && !c.combat){ActionResult r;r.status=use_moonstone(c,cmd.item,c.events);return r;}
+
+    if(c.dungeon && !c.combat && cmd.kind==CommandKind::UseItem && (cmd.item==18 || cmd.item==19 || cmd.item==20 || cmd.item==33 || cmd.item==36 || (cmd.item>=29 && cmd.item<=31))){ActionResult r;r.status=use_quest_item(c,cmd.item,c.events);return r;}
+    if (cmd.kind == CommandKind::EnterDungeon || cmd.kind == CommandKind::DungeonCommand || (c.dungeon&&!c.combat&&(cmd.kind==CommandKind::Cast||(cmd.kind==CommandKind::UseItem&&cmd.item>=0&&cmd.item<=37))))
         return execute_dungeon_command(c, cmd);
-    if ((cmd.kind >= CommandKind::CombatMove && cmd.kind <= CommandKind::Cast) ||
-        (cmd.kind >= CommandKind::CombatKlimb && cmd.kind <= CommandKind::CombatOpen)) {
+    if ((cmd.kind >= CommandKind::CombatMove && cmd.kind < CommandKind::Cast) || (cmd.kind==CommandKind::Cast && c.combat) || (c.combat&&cmd.kind==CommandKind::UseItem&&cmd.item>=0&&cmd.item<=37) ||
+        (cmd.kind >= CommandKind::CombatKlimb && cmd.kind <= CommandKind::CombatSearch)) {
         ActionResult result;
         if (!c.combat || !c.combat_context || &c.combat_context->game != &c.game ||
             &c.combat_context->turn != &c.turn) {
@@ -398,19 +690,39 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
             cmd.kind == CommandKind::CombatKlimb ? CombatAction::Klimb
             : cmd.kind == CommandKind::CombatGet ? CombatAction::Get
             : cmd.kind == CommandKind::CombatOpen
-                ? CombatAction::Open
+                ? CombatAction::OpenAt
+            : cmd.kind == CommandKind::CombatSearch ? CombatAction::Search
                 : static_cast<CombatAction>(int(cmd.kind) - int(CommandKind::CombatMove));
         CombatPoint aim{cmd.combat_x, cmd.combat_y};
+        EventSink use_events{&delivery,[](void *p,const GameEvent &e){auto &d=*static_cast<Delivery*>(p);++d.result.event_count;if(d.context.events.emit)d.context.events.emit(d.context.events.context,e);}};
+        auto use=[&](){
+            if(cmd.item<16)return combat_use_consumable(arena,cmd.item,use_events);
+            if(arena.combat.actors.capacity()-arena.combat.count<combat_growth_reserve(arena.combat)+4)return CombatResult::NeedsActorStorage;
+            auto *actor=current_combat_actor(arena);if(!actor||actor->member==255)return CombatResult::Ok;
+            auto out=world_magic(c,cmd,{},use_events,rng_source(arena.combat.rng));
+            if(out.status==CommandStatus::InvalidContext)return CombatResult::Invalid;
+            if(out.status==CommandStatus::Unsupported)return CombatResult::Unsupported;
+            return combat_cast_effect(arena,{});
+        };
+        const int cast_qty_before=cmd.kind==CommandKind::Cast&&cmd.item>=0&&cmd.item<48?c.game.spell_quantities[cmd.item]:-1;
+        int32_t combat_arg=cmd.combat_x;
+        if((action==CombatAction::Get||action==CombatAction::Search)&&cmd.has_direction){
+            combat_arg=cmd.direction==Direction::East?0:cmd.direction==Direction::West?1:cmd.direction==Direction::South?2:3;
+        }
         const auto status =
-            cmd.kind == CommandKind::Cast
+            cmd.kind==CommandKind::UseItem?use():cmd.kind == CommandKind::Cast
                 ? combat_cast(arena, static_cast<SpellId>(cmd.item),
                               cmd.has_target ? &aim : nullptr, cmd.member, cmd.cancel_target)
                 : combat_action(arena, action,
-                                (action == CombatAction::Get || action == CombatAction::Open) &&
-                                        !cmd.has_direction
+                                (action == CombatAction::Get || action == CombatAction::OpenAt || action == CombatAction::Search) &&
+                                !cmd.has_direction
                                     ? -1
-                                    : cmd.combat_x,
+                                    : combat_arg,
                                 cmd.combat_y);
+        if(cmd.kind==CommandKind::Cast&&cmd.item>=0&&cmd.item<48&&c.game.spell_quantities[cmd.item]<cast_qty_before){
+            static constexpr int no_ceremony[]={1,13,37,28,40,44,45};bool ceremonial=cmd.item!=46;for(int id:no_ceremony)ceremonial&=cmd.item!=id;
+            if(ceremonial){GameEvent e;e.kind=GameEventKind::Sfx;e.text="spell-cast";use_events.emit(use_events.context,e);e={};e.kind=GameEventKind::MagicCeremony;e.note=spell_definition(SpellId(cmd.item))->circle;use_events.emit(use_events.context,e);}
+        }
         result.status = status == CombatResult::Ok ? CommandStatus::Success
                         : (status == CombatResult::NeedsActorStorage ||
                            status == CombatResult::NeedsLootStorage)
@@ -426,11 +738,31 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
                              ctx.rng_trace.emit(ctx.rng_trace.context, "command", lo, hi, value);
                          return value;
                      }}};
-    if (c.combat || c.dungeon ||
-        (c.game.position.map.location >= 33 && c.game.position.map.location <= 40) ||
+    if(!c.combat&&(cmd.kind==CommandKind::NewOrder||cmd.kind==CommandKind::SetActivePlayer)){
+        auto &g=c.game;auto &party=g.party;if(party.character_count>kRosterCapacity||party.party_size<0||party.party_size>kMaxParty){r.result.status=CommandStatus::InvalidContext;return r.result;}
+        if(cmd.kind==CommandKind::NewOrder){
+            if(cmd.member<0||cmd.item<0||cmd.member>=party.character_count||cmd.item>=party.character_count)r.message("nobody!");
+            else if(!cmd.member||!cmd.item){std::string text=party.characters[0].name;if(text.empty())text="The Avatar";text+=" must lead!";r.message(text.c_str());}
+            else{std::swap(party.characters[cmd.member],party.characters[cmd.item]);r.event(GameEventKind::PartyChanged);}
+        }else if(!cmd.member){party.active_character=255;r.message("None!");}
+        else{int i=cmd.member-1;if(i<0||i>=party.party_size||i>=party.character_count||party.characters[i].status=='D'||party.characters[i].status=='S'){r.message("Invalid!");if(!g.position.map.location)r.turn();}
+            else{party.active_character=uint8_t(i);std::string name=party.characters[i].name;auto first=name.find_first_not_of(" \t\r\n\f\v"),last=name.find_last_not_of(" \t\r\n\f\v");name=first==std::string::npos?"Avatar":name.substr(first,last-first+1);r.message(name.c_str());}}
+        return r.result;
+    }
+    if(!c.combat && (cmd.kind==CommandKind::ViewGem||cmd.kind==CommandKind::AfterGemView||(c.dungeon&&cmd.kind==CommandKind::Ignite))){
+        if(c.game.party.character_count>kRosterCapacity||c.game.party.party_size<0||c.game.party.party_size>kMaxParty||(c.dungeon&&(!c.dungeon_context||!c.dungeon_context->state.active))){r.result.status=CommandStatus::InvalidContext;return r.result;}
+        if(cmd.kind==CommandKind::ViewGem){if(c.game.gems>0){--c.game.gems;r.event(GameEventKind::PartyChanged);r.event(GameEventKind::GemView);return r.result;}r.message("You have none!\n");}
+        if(cmd.kind==CommandKind::Ignite){r.result.item=ignite_torch(c.game,r.rand,c.dungeon_context->state.pos.dungeon);if(!r.result.item.ok)r.message(r.result.item.message);}
+        if(c.dungeon){auto tr=advance_turn(c.game,c.turn,1,r.rand,c.sky);for(uint8_t i=0;i<tr.message_count;++i)r.message(turn_message_text(tr.messages[i]));}else r.turn();
+        return r.result;
+    }
+    const bool dungeon_camp=c.dungeon&&(cmd.kind==CommandKind::Rest||cmd.kind==CommandKind::RestCancel);
+    if (c.combat || (c.dungeon&&!dungeon_camp) ||
+        (dungeon_camp&&(!c.dungeon_context||!c.dungeon_context->state.active)) ||
+        (c.game.position.map.location >= 33 && c.game.position.map.location <= 40 && !dungeon_camp) ||
         (static_cast<uint8_t>(cmd.kind) > static_cast<uint8_t>(CommandKind::UseItem) &&
-         cmd.kind != CommandKind::Board && cmd.kind != CommandKind::Disembark) ||
-        ((cmd.kind == CommandKind::Move || cmd.has_direction) &&
+         cmd.kind != CommandKind::Board && cmd.kind != CommandKind::Disembark && cmd.kind!=CommandKind::Yell && cmd.kind!=CommandKind::YellSails && cmd.kind!=CommandKind::TrollToll && cmd.kind!=CommandKind::HarpsichordNote && cmd.kind!=CommandKind::Get && cmd.kind!=CommandKind::Search && cmd.kind!=CommandKind::Open && cmd.kind!=CommandKind::Jimmy && cmd.kind!=CommandKind::Push && cmd.kind!=CommandKind::Look && cmd.kind!=CommandKind::CrystalBall && cmd.kind!=CommandKind::DropCoin && cmd.kind!=CommandKind::MakeWish && cmd.kind!=CommandKind::Attack && cmd.kind!=CommandKind::Fire && cmd.kind!=CommandKind::Cast) ||
+        ((cmd.kind == CommandKind::Move || cmd.kind == CommandKind::Look || cmd.kind==CommandKind::Attack || cmd.kind==CommandKind::Fire || cmd.kind == CommandKind::Open || cmd.kind == CommandKind::Jimmy || cmd.kind == CommandKind::Push || cmd.kind == CommandKind::Get || cmd.has_direction) &&
          static_cast<uint8_t>(cmd.direction) > 3) ||
         (c.actors && (c.actors->count > 32 || !c.npc_scratch)) ||
         (c.npc_data_count && !c.npc_data) || (c.locations.x_count && !c.locations.x) ||
@@ -446,6 +778,10 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
         return r.result;
     }
     const bool exit = cmd.kind == CommandKind::Exit || cmd.kind == CommandKind::DeclineExit;
+    if (c.commands.awaiting_troll && cmd.kind != CommandKind::TrollToll) {
+        r.result.status = CommandStatus::AwaitingResponse;
+        return r.result;
+    }
     if (exit != c.commands.awaiting_exit) {
         r.result.status = CommandStatus::InvalidContext;
         return r.result;
@@ -470,24 +806,13 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
                          (cmd.kind == CommandKind::Klimb && !cmd.has_direction);
     const bool intercept = dispatch && primary && cmd.kind != CommandKind::Move &&
                            c.game.position.map.location && c.turn.drunk_turns > 0;
-    if ((cmd.kind == CommandKind::Move || intercept) &&
-        (c.turn.transport_tile != 28 || c.game.transport != TransportMode::Foot)) {
-        r.result.status = CommandStatus::Unsupported;
-        return r.result;
-    }
-    if ((cmd.kind == CommandKind::Move && c.game.transport != TransportMode::Foot) ||
-        (cmd.kind == CommandKind::Klimb && !c.game.position.map.location)) {
-        r.result.status = CommandStatus::Unsupported;
-        return r.result;
-    }
     // Preflight all possible stagger targets and destination floors before RNG.
     // Bridge tolls / trapdoors need deferred subsystem state and cannot be
     // skipped.
     auto unsupported_tile = [&](int32_t tile) {
-        return (c.game.position.map.location && tile == 140) ||
-               (!c.game.position.map.location && (tile == 106 || tile == 107));
+        return c.game.position.map.location && tile == 140 && !c.quest_world;
     };
-    bool unsupported = c.game.position.map.location && r.tile() == 140;
+    bool unsupported = c.game.position.map.location && r.tile() == 140 && !c.quest_world;
     if (cmd.kind == CommandKind::Move || intercept) {
         for (int32_t i = 0; i < 4; ++i)
             if (c.turn.drunk_turns > 0 || i == static_cast<int32_t>(cmd.direction)) {
@@ -508,9 +833,9 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
     }
     if (cmd.kind == CommandKind::Enter && !c.game.position.map.location) {
         const auto id = location_at(c.locations, c.game.position.xy.x, c.game.position.xy.y);
-        unsupported = unsupported || r.tile() == 17 || r.tile() == 25 ||
+        unsupported = unsupported || ((r.tile() == 17 || r.tile() == 25) && !c.shrine_services) ||
                       ((id >= 33 && id <= 40) &&
-                       (!c.dungeon_context || (id == 40 && !c.dungeon_context->entry_hook)));
+                       (!c.dungeon_context || (id == 40 && !c.quest_world && !c.dungeon_context->entry_hook)));
     }
     if (cmd.kind == CommandKind::Klimb && (r.tile() == 200 || r.tile() == 201 || r.tile() == 134)) {
         MapId id = c.game.position.map;
@@ -523,7 +848,7 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
                 return r.result;
             }
             unsupported = unsupported ||
-                          next.value.tile_at(c.game.position.xy.x, c.game.position.xy.y) == 140;
+                          (next.value.tile_at(c.game.position.xy.x, c.game.position.xy.y) == 140 && !c.quest_world);
         }
     }
     if (unsupported) {
@@ -531,7 +856,7 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
         return r.result;
     }
     if (cmd.kind == CommandKind::Rest && cmd.hours > 0) {
-        const auto eligible = camp_context(c.game, c.turn, r.tile());
+        const auto eligible = camp_context(c.game, c.turn, r.tile(),dungeon_camp);
         if (!eligible.ship && (eligible.ok && (!c.rest_services ||
                                                (eligible.bed ? (!c.rest_services->snap_npcs ||
                                                                 !c.rest_services->occupied ||
@@ -566,6 +891,72 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
         return r.result;
     }
     switch (cmd.kind) {
+    case CommandKind::Fire:r.fire(cmd);break;
+    case CommandKind::Cast: {
+        if(cmd.item==46 && !c.quest_world){r.result.status=CommandStatus::InvalidContext;break;}
+        auto action=world_magic(c,cmd,r.map(),r.sink(),r.rand);r.result.status=action.status;
+        if(action.gate){auto &q=*c.quest_world;int phase=cmd.hours;if((c.turn.transport_tile&240)==32 || phase<0 || size_t(phase)>=q.moonstone_count)r.message("Failed!");else {auto loc=q.moonstones[phase].location;auto banner=c.services.banner?c.services.banner(c.services.context,loc):nullptr;if(!moonstone_teleport(c.game,c.turn,c.travel,q.moonstones,q.moonstone_count,phase,banner,r.transitions()))r.message("Failed!");}}
+        if(action.turn){r.turn();}break;
+    }
+    case CommandKind::Look:case CommandKind::CrystalBall:case CommandKind::DropCoin:case CommandKind::MakeWish: r.result.status=world_look(c,cmd,r.map(),r.sink(),r.rand);break;
+    case CommandKind::Attack:case CommandKind::Open:case CommandKind::Jimmy:case CommandKind::Push: {
+        auto action=world_interaction(c,cmd,r.map(),r.sink(),r.rand);
+        r.result.status=action.status;
+        if(action.turn)r.turn();
+        if(action.map_after)r.event(GameEventKind::MapChanged);
+        if(action.moved_after)r.event(GameEventKind::Moved);
+        break;
+    }
+    case CommandKind::TrollToll: {
+        if (!c.commands.awaiting_troll) { r.result.status = CommandStatus::NoOp; break; }
+        c.commands.awaiting_troll = false;
+        const auto paid = int32_t(c.game.gold) - c.commands.troll_toll;
+        if (cmd.member != 0 && int16_t(uint16_t(paid)) >= 0) {
+            c.game.gold = uint16_t(paid);
+            r.effect(CommandEffect::Doors);
+            r.actors(false);
+            r.world(c.commands.troll_under_party);
+            r.effect(CommandEffect::Waterfall);
+        } else {
+            auto *arena=c.outdoor?c.outdoor->combat:c.quest_world?c.quest_world->encounter:nullptr;
+            auto *assets=c.outdoor?c.outdoor->resources:c.quest_world?c.quest_world->combat_resources:nullptr;
+            if(!arena || !assets)break;
+            const auto saved = c.events; c.events = r.sink();
+            auto &encounter = *arena;
+            auto resources=*assets; resources.remove_enemy=nullptr;
+            const auto status = start_encounter_combat(c, encounter.combat, resources,
+                                                       41, r.tile(), -1, CombatDirection::South, false);
+            c.events = saved;
+            if (status == CombatResult::Ok) {
+                encounter.combat.loot_x=c.commands.troll_x;
+                encounter.combat.loot_y=c.commands.troll_y;
+                encounter.combat.has_world_loot_origin=true;
+                c.combat_context = &encounter;
+            }
+            else r.result.status = CommandStatus::CoreError;
+        }
+        break;
+    }
+    case CommandKind::YellSails:
+        if ((c.turn.transport_tile & 0xf8) != 0x20 || c.game.position.map.location >= 0x80) {
+            r.message("what?");
+            r.result.status = CommandStatus::Rejected;
+        } else {
+            const bool furl = (c.turn.transport_tile & 0xfc) == 0x20;
+            r.message(furl ? "FURL!" : "HOIST!");
+            r.sync_transport(c.turn.transport_tile + (furl ? 4 : -4));
+            if (furl) c.turn.sail_dir = 0;
+            r.turn();
+            r.event(GameEventKind::MapChanged);
+        }
+        break;
+    case CommandKind::Get:case CommandKind::Search:{auto q=cmd.kind==CommandKind::Get?get_quest_object(c,cmd.direction,r.sink()):search_world(c,cmd.has_direction?&cmd.direction:nullptr,r.sink(),r.rand,cmd.member);r.result.status=q.status;if(q.turn)r.turn();break;}
+    case CommandKind::Yell: {
+        auto q=yell_in_world(c,TalkText(cmd.text?cmd.text:u"",cmd.text_length),r.sink());
+        r.result.status=q.status;if(q.turn)r.turn();if(q.map_after_turn)r.event(GameEventKind::MapChanged);break;
+    }
+    case CommandKind::HarpsichordNote:
+        r.result.status=play_harpsichord(c,cmd.item,r.sink());break;
     case CommandKind::Board:
     case CommandKind::Disembark: {
         const auto *s = c.transport_services;
@@ -633,7 +1024,31 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
         // Extended use-table IDs, not equipment IDs. These Game methods do not
         // validate ownership (the selector does) and do not consume a turn.
         char text[96];
-        if (cmd.item == 35) {
+        if(cmd.item>=0 && cmd.item<16){auto a=world_magic(c,cmd,r.map(),r.sink(),r.rand);r.result.status=a.status;} else if (cmd.item==18 || cmd.item==19 || cmd.item==20 || cmd.item==33 || cmd.item==36 || (cmd.item>=29 && cmd.item<=31)) {
+            r.result.status=use_quest_item(c,cmd.item,r.sink());
+        } else if(cmd.item>=21&&cmd.item<=28){r.result.status=use_moonstone(c,cmd.item-21,r.sink());
+        } else if (cmd.item == 16) {
+            r.message("Carpet");
+            if(c.game.position.map.location>=33){r.message("Not here!");r.result.status=CommandStatus::Rejected;}
+            else if(c.game.transport==TransportMode::Ship){r.message("X-it ship first!");r.result.status=CommandStatus::Rejected;}
+            else if(c.game.transport!=TransportMode::Foot){r.message("Only on foot!");r.result.status=CommandStatus::Rejected;}
+            else if(c.game.magic_carpets>0){r.message("Boarded!");r.sync_transport(20+r.rand(0,1));--c.game.magic_carpets;}
+        } else if (cmd.item == 17) {
+            if(cmd.has_direction&&(!c.quest_world||!c.quest_world->volatile_tile)){r.result.status=CommandStatus::InvalidContext;break;}
+            --c.game.skull_keys;r.message("Skull Key");
+            const auto loc=c.game.position.map.location;
+            if(loc>=33&&loc<=127){r.message("Not here!");r.result.status=CommandStatus::Rejected;break;}
+            if(loc>=128||!cmd.has_direction)break;
+            const auto d=direction_delta(cmd.direction);int x=c.game.position.xy.x+d.dx,y=c.game.position.xy.y+d.dy;
+            if(!loc){x&=255;y&=255;}
+            auto *q=c.quest_world;const auto tile=q->tile_at?q->tile_at(q->context,x,y):get_active_map(c.world,c.game.position.map).value.tile_at(x,y);
+            if(tile==151||tile==152){q->volatile_tile(q->context,x,y,tile==151?184:186);r.event(GameEventKind::MapChanged);}
+        } else if (cmd.item == 32) {
+            r.message("Spyglass");
+            if(c.game.position.map.location>=33 || c.game.position.map.floor<0 || c.game.position.map.floor>=128)r.message("Not here!");
+            else if(c.game.time.hour>=6 && c.game.time.hour<=18)r.message("No stars!");
+            else {r.message("Looking...");emit_zodiac(c,r.sink(),r.rand);}
+        } else if (cmd.item == 35) {
             r.message("Watch");
             const auto &t = c.game.time;
             const int32_t hour = t.hour % 12 == 0 ? 12 : t.hour % 12;
@@ -662,6 +1077,7 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
         break;
     }
     case CommandKind::Ready:
+
         r.result.item = equip_item(c.game, cmd.member, cmd.item, &r.rand);
         r.result.status = r.result.item.ok ? CommandStatus::Success : CommandStatus::Rejected;
         break;
@@ -678,7 +1094,7 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
         r.turn();
         break;
     case CommandKind::Rest: {
-        const auto e = camp_context(c.game, c.turn, r.tile());
+        const auto e = camp_context(c.game, c.turn, r.tile(),dungeon_camp);
         if (!e.ok) {
             r.message(e.message);
             r.turn();
@@ -697,9 +1113,20 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
         RestContext ctx{c.game, c.turn, r.rand, r.sink(), *c.rest_services, c.sky};
         const auto result = e.bed ? bed_sleep(ctx, cmd.hours) : camp(ctx, cmd.hours, cmd.member);
         if (result.ambush) {
-            r.result.status = CommandStatus::AwaitingResponse;
-            r.result.pending_camp_enemy = result.enemy;
-            c.commands.pending_camp_enemy = result.enemy;
+            auto *arena=c.outdoor?c.outdoor->combat:c.quest_world?c.quest_world->encounter:nullptr;
+            auto *assets=c.outdoor?c.outdoor->resources:c.quest_world?c.quest_world->combat_resources:nullptr;
+            if(arena&&assets){
+                auto resources=*assets;resources.remove_enemy=nullptr;
+                const auto saved=c.events;c.events=r.sink();
+                auto status=start_encounter_combat(c,arena->combat,resources,result.enemy,r.tile(),0,CombatDirection::South,false);
+                c.events=saved;
+                r.result.status=status==CombatResult::Ok?CommandStatus::Success:status==CombatResult::NeedsActorStorage?CommandStatus::NeedsStorage:CommandStatus::InvalidContext;
+                if(status==CombatResult::Ok)c.combat_context=arena;
+            }else{
+                r.result.status = CommandStatus::AwaitingResponse;
+                r.result.pending_camp_enemy = result.enemy;
+                c.commands.pending_camp_enemy = result.enemy;
+            }
         }
         break;
     }

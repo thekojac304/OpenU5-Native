@@ -88,49 +88,71 @@ Error dungeon_chest_loot(int floor, Rand rand, LootGrant (&out)[7], uint8_t &cou
     }
     return Error::None;
 }
-void apply_loot_grant(GameState &g, LootGrant v) {
-    auto add = [&](int32_t &n, int a) { n = std::min<int32_t>(99, n + a); };
+DecodedLootItem decode_loot(LootGrant v) {
+    DecodedLootItem out{}; out.quantity=v.quantity;
+    switch(v.id){
+    case 1: out.category=LootCategory::Chest; break;
+    case 2: out.category=LootCategory::Gold; break;
+    case 3: out.category=LootCategory::Potion; out.item_index=v.quantity; out.quantity=1; break;
+    case 4: out.category=LootCategory::Scroll; out.item_index=v.quantity&7; out.quantity=1; break;
+    case 5: case 6: case 9: case 10: case 11: case 12:
+        out.category=LootCategory::Equipment; out.item_index=v.quantity; out.quantity=v.quantity==27||v.quantity==29?5:1; break;
+    case 7: out.category=LootCategory::Keys; out.quantity=v.quantity&127; break;
+    case 8: out.category=LootCategory::Gems; break;
+    case 13: out.category=LootCategory::Torches; break;
+    case 14: out.category=LootCategory::QuestItem; out.item_index=14; out.quantity=1; break;
+    case 15: out.category=LootCategory::Food; break;
+    default: break;
+    }
+    return out;
+}
+const char *loot_category_name(LootCategory c){switch(c){
+case LootCategory::Chest:return "chest";case LootCategory::Gold:return "gold";
+case LootCategory::Potion:return "potion";case LootCategory::Scroll:return "scroll";
+case LootCategory::Equipment:return "equipment";case LootCategory::Keys:return "keys";
+case LootCategory::Gems:return "gems";case LootCategory::Torches:return "torches";
+case LootCategory::Food:return "food";case LootCategory::QuestItem:return "quest";
+default:return "none";}}
+bool apply_loot_grant(GameState &g, LootGrant v) {
+    auto add = [&](int32_t &n, int a) {if(a<=0||n>=99)return false;const auto before=n;n=std::min<int32_t>(99,n+a);return n!=before;};
     int q = v.quantity;
     switch (v.id) {
     case 2:
+        if(q<=0||g.gold>=9999)return false;
         g.gold = uint16_t(std::min(9999, int(g.gold) + q));
-        break;
+        return true;
     case 7:
-        add(g.keys, q);
-        break;
+        return add(g.keys, q&127);
     case 8:
-        add(g.gems, q);
-        break;
+        return add(g.gems, q);
     case 13:
-        add(g.torches, q);
-        break;
+        return add(g.torches, q);
     case 15:
+        if(q<=0||g.food>=9999)return false;
         g.food = uint16_t(std::min(9999, int(g.food) + q));
-        break;
+        return true;
     case 3:
-        if (q >= 0 && q < 8)
-            add(g.potion_quantities[q], 1);
-        break;
+        if (q < 0 || q >= 8) return false;
+        return add(g.potion_quantities[q], 1);
     case 4:
-        add(g.scroll_quantities[q & 7], 1);
-        break;
+        if (q < 0 || q > 255) return false;
+        return add(g.scroll_quantities[q & 7], 1);
     case 5:
     case 6:
     case 9:
     case 10:
     case 11:
     case 12:
-        if (q >= 0 && q < 256) {
-            add(g.equipment_quantities[q], q == 27 || q == 29 ? 5 : 1);
-            extend_equipment(g, q);
-        }
-        break;
+        if (q < 0 || q >= 256) return false;
+        if(!add(g.equipment_quantities[q], q == 27 || q == 29 ? 5 : 1))return false;
+        extend_equipment(g, q); return true;
     case 14:
-        g.wooden_box = true;
-        break;
+        if(g.wooden_box)return false;
+        g.wooden_box = true; return true;
     default:
-        break;
+        return false;
     }
+    return false;
 }
 const char *loot_open_line(int id) {
     static const char *names[] = {

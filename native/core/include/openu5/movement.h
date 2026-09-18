@@ -4,6 +4,15 @@
 namespace openu5 {
 struct CombatEvent;
 struct DialogueEvent;
+struct ShopEvent;
+struct EndgameScript;
+struct RefugeScript;
+struct ZodiacView;
+struct TrollSneakScript {
+    struct Beat { const char *text = nullptr; int8_t pause_units = -1; bool append = false; };
+    Beat beats[32]{};
+    uint8_t count = 0;
+};
 struct MoveReport {
     Position old_position{}, target_position{}, resulting_position{};
     int16_t attempted_x = 0, attempted_y = 0;
@@ -22,9 +31,15 @@ struct StepGeometry {
 };
 // Exact resolveStep projection for transport=foot, actorTile=0. No full turn.
 Result<StepGeometry> resolve_unoccupied_foot_step(GameState &state, const ActiveMap &map, Direction direction);
+// Reference resolveStep for foot/mount/carpet (naval commands have their own turn).
+// actor_tile is the outdoor enemy owner's tile, zero when unoccupied.
+Result<StepGeometry> resolve_world_step(GameState &, const ActiveMap &, Direction,
+                                        int32_t transport_tile, int32_t actor_tile = 0);
 // Ordered semantic event subset. See commands.h / COMMANDS.md for payloads.
+struct NpcActor;
 enum class GameEventKind : uint8_t { Message, Moved, MapChanged, PartyChanged, TownExitPrompt,
-    WalkEcho, Sfx, PoisonTick, Quake, NeedsDirection, CombatStarted, CombatEnded, Combat, DungeonEntered, DungeonExited, Dialogue };
+    WalkEcho, Sfx, PoisonTick, Quake, NeedsDirection, CombatStarted, CombatEnded, Combat, DungeonEntered, DungeonExited, Dialogue, Shop,
+    ShrineVisitPrompt, ShrineRestorePrompt, ShrineDonatePrompt, ShrineKeyWait, RitualInvert, CellExplosion, GameWon, Endgame, BlackthornPrompt, GuardPasswordPrompt, GuardTributePrompt, GuardArrestPrompt, NpcInitiatesTalk, NpcInitiatesShop, Refuge, TrollSneak, TrollTollPrompt, CrystalBallPrompt, WellDropPrompt, FountainDrinkPrompt, WellWishPrompt, Zodiac, GemView, MapReveal, CellProjectile, MagicCeremony };
 struct GameEvent {
     GameEventKind kind = GameEventKind::Moved;
     StepMessage message = StepMessage::None; // Legacy movement vocabulary.
@@ -34,6 +49,18 @@ struct GameEvent {
     uint8_t slot_count = 0;
     const CombatEvent *combat = nullptr; // Borrowed synchronous CombatEvent envelope.
     const DialogueEvent *dialogue = nullptr;
+    const ShopEvent *shop = nullptr;
+    struct CellFx { int16_t dx=0,dy=0,bursts=0,pre_delay_units=0,under_tile=0; } cell_fx{};
+    int32_t note=0;
+    const EndgameScript *endgame=nullptr;
+    const NpcActor *npc=nullptr; // Borrowed identity for semantic conversation/shop initiation.
+    const RefugeScript *refuge=nullptr;
+    const TrollSneakScript *troll_sneak=nullptr;
+    const ZodiacView *zodiac=nullptr;
+    const uint8_t *sign_raw=nullptr;
+    size_t sign_raw_size=0;
+    bool sign=false, gem_from_crystal=false;
+    struct Projectile {int16_t from_dx=0,from_dy=0,to_dx=0,to_dy=0;} projectile;
 };
 struct MoveAction { Direction direction = Direction::North; };
 // Preserve the existing device-slice result layout; it never emits events.

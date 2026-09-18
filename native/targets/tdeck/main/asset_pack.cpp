@@ -15,8 +15,6 @@ namespace {
 
 constexpr char kTag[] = "OpenU5Assets";
 constexpr std::array<uint8_t, 8> kMagic{'O', 'U', '5', 'P', 'A', 'C', 'K', 0};
-constexpr uint16_t kVersionMajor = 2;
-constexpr uint16_t kVersionMinor = 0;
 constexpr uint16_t kHeaderSize = 148;
 constexpr uint16_t kSectionCount = 5;
 constexpr uint16_t kTileFormatIndexed4 = 1;
@@ -139,12 +137,14 @@ esp_err_t AssetPackReader::open(const char *path, AssetPackReport &report)
     }
     const uint16_t major = read_u16le(&header[8]);
     const uint16_t minor = read_u16le(&header[10]);
-    if (major != kVersionMajor || minor != kVersionMinor ||
+    if (major != kAssetPackVersionMajor || minor != kAssetPackVersionMinor ||
         read_u16le(&header[12]) != kHeaderSize || read_u16le(&header[14]) != kSectionCount) {
         ESP_LOGE(kTag, "Unsupported asset pack layout/version %u.%u", major, minor);
         std::fclose(file);
         return ESP_FAIL;
     }
+    report.version_major = major;
+    report.version_minor = minor;
     report.file_size = read_u32le(&header[16]);
     report.payload_crc32 = read_u32le(&header[20]);
     if (read_u32le(&header[24]) != 0) {
@@ -246,6 +246,16 @@ esp_err_t AssetPackReader::open(const char *path, AssetPackReport &report)
         std::fclose(file);
         return invalid("Could not read the initial-position map tile");
     }
+    report.firmware_match = report.file_size == kExpectedAssetPackSize &&
+                            report.payload_crc32 == kExpectedAssetPackCrc32;
+    ESP_LOGI(kTag, "Asset pack v%u.%u size=%lu payload CRC=%08lx expected SHA-256=%.12s firmware_match=%d",
+             unsigned(report.version_major), unsigned(report.version_minor),
+             (unsigned long)report.file_size, (unsigned long)report.payload_crc32,
+             kExpectedAssetPackSha256, report.firmware_match);
+    if (!report.firmware_match)
+        ESP_LOGE(kTag, "ASSET PACK MISMATCH expected size=%lu CRC=%08lx; stale/incompatible pack will not start",
+                 (unsigned long)kExpectedAssetPackSize,
+                 (unsigned long)kExpectedAssetPackCrc32);
     file_ = file;
     palette_offset_ = palette->offset;
     tiles_offset_ = tiles->offset;

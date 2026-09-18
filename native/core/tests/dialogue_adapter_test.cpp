@@ -27,7 +27,7 @@ int main(){
     Command response;response.kind=CommandKind::DialogueYes;execute_command(c,response);check(g.karma==51&&session.conversation.pending()==DialoguePending::Interest);
     execute_command(c,input);response.kind=CommandKind::DialogueNo;execute_command(c,response);check(g.karma==50);
     const auto seed=g.rng.get_seed();Command pass;pass.kind=CommandKind::Pass;check(execute_command(c,pass).status==CommandStatus::AwaitingResponse&&g.rng.get_seed()==seed&&g.turns_since_start==0);
-    Command end;end.kind=CommandKind::EndConversation;r=execute_command(c,end);check(!session.active&&r.status==CommandStatus::Unsupported&&session.deferred==DialogueHandoff::QuestEnd);
+    Command end;end.kind=CommandKind::EndConversation;r=execute_command(c,end);check(!session.active&&r.status==CommandStatus::Success&&session.deferred==DialogueHandoff::None);
     check(execute_command(c,end).status==CommandStatus::NoOp&&execute_command(c,response).status==CommandStatus::InvalidContext);
     services.handoff=[](void *,DialogueHandoff,const NpcActor &,EventSink){return true;};execute_command(c,cmd);check(g.rng.get_seed()==seed);check(execute_command(c,end).status==CommandStatus::Success);
     actors.actors[0].schedule.dialog=0x81;services.handoff=nullptr;r=execute_command(c,cmd);check(r.status==CommandStatus::Unsupported&&!session.active&&session.deferred==DialogueHandoff::Shop&&g.rng.get_seed()==seed);

@@ -5,7 +5,28 @@ bool foot(int t) { return t == 0x1c || t == 0x1d; }
 bool ship(int t) { return (t & 0xf8) == 0x20; }
 bool skiff(int t) { return (t & 0xfc) == 0x28; }
 } // namespace
-TransportMode transport_mode(int t) {
+int32_t mount_face_tile(int32_t tile, Direction dir) {
+    const auto base = tile & 0xfc;
+    if ((base != 0x10 && base != 0x14) ||
+        (dir != Direction::East && dir != Direction::West)) return tile;
+    return (base == 0x10 ? 0x12 : 0x14) + (dir == Direction::West ? 1 : 0);
+}
+bool boardable_actor_tile(int32_t actor_tile, int32_t transport_tile) {
+    const auto a = actor_tile & 0xff, t = transport_tile & 0xff;
+    if (t >= 0x30 || t < 0x20)
+        return (a >= 0x24 && a < 0x2c) || a == 0x1b || (a & 0xfe) == 0x10;
+    if (t < 0x28) return false;
+    return a >= 0x24 && a < 0x28;
+}
+void sink_player_ship(GameState &g, TurnState &t, Rand rand, EventSink sink) {
+    auto message=[&](const char *text){GameEvent e;e.kind=GameEventKind::Message;e.text=text;if(sink.emit)sink.emit(sink.context,e);};
+    message("Ship sunk!");
+    if(g.ship_skiffs>0){message("Abandon ship!");t.transport_tile=0x28+(t.transport_tile&3);}
+    else if(g.magic_carpets>0){message("Abandon ship!");t.transport_tile=0x14+rand(0,1);--g.magic_carpets;}
+    else {message("DROWNING!!!");t.transport_tile=0;}
+    g.transport=transport_mode(t.transport_tile);
+}
+TransportMode transport_mode(int32_t t) {
     int b = t & 0xfc;
     return b == 0x10   ? TransportMode::Horse
            : b == 0x14 ? TransportMode::Carpet
@@ -13,7 +34,7 @@ TransportMode transport_mode(int t) {
            : ship(t)   ? TransportMode::Ship
                        : TransportMode::Foot;
 }
-TransportResult board_transport(GameState &g, int world, int from, bool owned) {
+TransportResult board_transport(GameState &g, int32_t world, int32_t from, bool owned) {
     TransportResult r;
     r.message = "What?";
     int loc = g.position.map.location;
@@ -58,7 +79,7 @@ TransportResult board_transport(GameState &g, int world, int from, bool owned) {
     }
     return r;
 }
-TransportResult disembark_transport(GameState &g, int tile, bool land, bool water, bool walkable) {
+TransportResult disembark_transport(GameState &g, int32_t tile, bool land, bool water, bool walkable) {
     TransportResult r;
     switch (tile & 0xfc) {
     case 0x10:

@@ -40,7 +40,9 @@ Error confirm_town_exit(GameState &, bool yes, LocationTable, TransitionServices
 bool apply_stair_step(GameState &, const WorldData &, int32_t tile, Direction, TransitionServices);
 bool klimb_ladder(GameState &, const WorldData &, int16_t delta, TransitionServices);
 struct Moonstone {
-    uint8_t x = 0, y = 0, z = 0, location = 255;
+    uint8_t x = 0, y = 0;
+    int16_t z = 0; // Interior basements use -1; underworld uses 255.
+    uint8_t location = 255;
     bool buried = false;
 };
 bool moonstone_teleport(GameState &, TurnState &, TravelState &, const Moonstone *, size_t count,

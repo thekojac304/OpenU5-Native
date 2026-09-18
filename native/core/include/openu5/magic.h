@@ -57,6 +57,10 @@ struct SpellDef {
     uint8_t circle, reagents, time_bits;
 };
 const SpellDef *spell_definition(SpellId);
+// Compact player-facing copy derived from the same SpellEffect table used to
+// execute the spell.  These are deliberately not translations of spell words.
+const char *spell_effect_summary(SpellId);
+const char *spell_target_label(SpellId);
 enum class MagicEffect : uint8_t {
     None,
     Light,

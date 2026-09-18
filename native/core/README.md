@@ -1,5 +1,25 @@
 # Native OpenU5 core: semantic commands and world simulation
 
+## Current gameplay status
+
+The platform-independent gameplay integration is complete for the major semantic
+loop: **41,836 new sequences / 2,076,501 cumulative**. See [GAMEPLAY.md](GAMEPLAY.md)
+for transports, bridge tolls, outdoor encounters, generic commands, dungeon
+handoffs, buffer persistence, owner setup and alpha readiness. No device/UI/FATFS
+work was started. The older sections below are historical batch records, not
+current blockers; the quest continuation is complete as recorded in QUESTS.md.
+
+Historical partial quest checkpoint: 4,249 new differential observations,
+including two bounded nontermination observations, bring the cumulative count to
+2,033,537. See [QUESTS.md](QUESTS.md) for exact coverage and unfinished quest
+orchestration at that checkpoint. The completed continuation in QUESTS.md and
+current gameplay status above supersede this historical exclusion.
+
+Shop commerce now adds **787,118 snapshots**, bringing the cumulative total to
+**2,029,288**. See [SHOPS.md](SHOPS.md) for APIs, all 46 real shops, validation,
+and presentation/storage/quest boundaries. Generate its helper and real-flow
+fixtures before building a fresh checkout.
+
 Platform-independent persistence now adds **619 compatibility scenarios** for
 **1,242,170 total**, plus 11 separate generation/resource/API contract scenarios.
 See [PERSISTENCE.md](PERSISTENCE.md) for native GAM/OOL, JSON sidecars/envelopes,
@@ -119,6 +139,10 @@ zero `CommandResult.event_count`. See [COMMANDS.md](COMMANDS.md) for the streami
 event lifetime, result semantics and explicitly untranslated event families.
 
 ## Host build and test
+
+The portable presentation/controller boundary is documented in
+[UI_SESSION.md](UI_SESSION.md).  It is independent of the existing T-Deck input
+and renderer slice.
 
 With a host C++ compiler and CMake available, from the repository root:
 

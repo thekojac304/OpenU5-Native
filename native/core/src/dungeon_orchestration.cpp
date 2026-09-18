@@ -1,5 +1,10 @@
+#include "openu5/quest_world.h"
 #include "openu5/dungeon.h"
+#include "openu5/dungeon_encounters.h"
+#include "openu5/world_terrain.h"
 #include "openu5/loot.h"
+#include "openu5/magic.h"
+#include "openu5/world_commands.h"
 namespace openu5 {
 namespace {
 void emit(EventSink sink, GameEventKind k, const char *text = nullptr) {
@@ -10,6 +15,7 @@ void emit(EventSink sink, GameEventKind k, const char *text = nullptr) {
         sink.emit(sink.context, e);
 }
 void reload(CommandContext &c, ReloadEffect e) {
+    if(c.terrain){if(e==ReloadEffect::ClearTerrain)c.terrain->clear_residence();else if(e==ReloadEffect::RefreshHourTiles)c.terrain->refresh(c.world,c.game);}
     if (c.services.reload)
         c.services.reload(c.services.context, e, 0, c.events);
 }
@@ -31,11 +37,13 @@ void translate(CommandContext &c) {
             exit_dungeon(c, true);
             break;
         case DungeonEventKind::Room:
-            if (ctx.start_room)
+            if(ctx.encounters){auto status=dungeon_encounter(c,e.value);if(status!=CombatResult::Ok)ctx.encounter_status=status==CombatResult::NeedsActorStorage?CommandStatus::NeedsStorage:CommandStatus::InvalidContext;}
+            else if (ctx.start_room)
                 ctx.start_room(ctx.context, e.value, c.events);
             break;
         case DungeonEventKind::Corridor:
-            if (ctx.start_corridor)
+            if(ctx.encounters){auto status=dungeon_encounter(c,-1,e.value==1);if(status!=CombatResult::Ok)ctx.encounter_status=status==CombatResult::NeedsActorStorage?CommandStatus::NeedsStorage:CommandStatus::InvalidContext;}
+            else if (ctx.start_corridor)
                 ctx.start_corridor(ctx.context, e.value == 1, c.events);
             break;
         case DungeonEventKind::Loot: {
@@ -77,6 +85,7 @@ void exit_dungeon(CommandContext &c, bool under) {
 void dungeon_combat_return(CommandContext &c, int delta, int border, bool victory) {
     auto &ctx = *c.dungeon_context;
     auto &d = ctx.state;
+    ctx.encounter_status=CommandStatus::Success;
     int cause = ctx.corridor_cause;
     ctx.corridor_cause = -1;
     ctx.room_entry_valid = false;
@@ -146,6 +155,26 @@ static ActionResult run_dungeon_command(CommandContext &c, Command cmd) {
         result.status = CommandStatus::NoOp;
         return result;
     }
+    if(cmd.kind==CommandKind::UseItem){
+        auto out=world_magic(c,cmd,{},c.events,rng_source(c.game.rng));result.status=out.status;return result;
+    }
+    if(cmd.kind==CommandKind::Cast){
+        if(cmd.item<0||cmd.item>48||cmd.caster<0||cmd.caster>=c.game.party.character_count){result.status=CommandStatus::InvalidContext;return result;}
+        auto rand=rng_source(c.game.rng);auto cast=cast_spell(c.game,c.turn,c.game.party.characters[cmd.caster],SpellId(cmd.item),{d.pos.dungeon,false,-1,0},rand);
+        auto say=[&](const char *s){if(s&&*s)emit(c.events,GameEventKind::Message,s);};say(cast.message);
+        if(!cast.ok){if(cast.consumed)say("Failed!");return result;}
+        auto fx=cast.effect.kind;
+        if(fx==MagicEffect::Field||fx==MagicEffect::Dispel||fx==MagicEffect::Disarm){
+            constexpr int dx[]={0,1,0,-1},dy[]={-1,0,1,0};int own=d.pos.floor*64+d.pos.y*8+d.pos.x,front=d.pos.floor*64+((d.pos.y+dy[int(d.pos.facing)])&7)*8+((d.pos.x+dx[int(d.pos.facing)])&7);
+            if(fx==MagicEffect::Field){auto &cell=d.cells[front];if(cell&247)say("Failed!");else cell=uint8_t((cell&8)|(cast.effect.value==53?130:cast.effect.value==51?129:cast.effect.value==52?128:131));}
+            else{int type=fx==MagicEffect::Dispel?8:4,index=(d.cells[own]>>4)==type?own:front;auto &cell=d.cells[index];if((cell>>4)!=type)say("Failed!");else if(fx==MagicEffect::Dispel){cell&=8;say("Field destroyed!");}else{if(cell&1)say("Disarmed!");cell=uint8_t((cell&8)|112);say("Chest opened!");}}
+            return result;
+        }
+        Command tick;tick.kind=CommandKind::DungeonCommand;tick.item=int16_t(fx==MagicEffect::Ascend?DungeonAction::MagicUp:fx==MagicEffect::Descend?DungeonAction::MagicDown:DungeonAction::Tick);
+        result=run_dungeon_command(c,tick);
+        if(fx==MagicEffect::Mani||fx==MagicEffect::FullHeal||fx==MagicEffect::Cure||fx==MagicEffect::Awaken||fx==MagicEffect::Resurrect){if(cmd.member>=0&&cmd.member<c.game.party.character_count)say(apply_target_spell(c.game.party.characters[cmd.member],fx,c.game.karma,rand)?"Success!":"Failed!");}
+        return result;
+    }
     if (cmd.item < 0 || cmd.item > int(DungeonAction::Search)) {
         result.status = CommandStatus::Unsupported;
         return result;
@@ -181,10 +210,14 @@ static ActionResult run_dungeon_command(CommandContext &c, Command cmd) {
     for (int i = 0; i < tr.message_count; ++i)
         emit(c.events, GameEventKind::Message, turn_message_text(tr.messages[size_t(i)]));
     translate(c);
+    result.status=ctx.encounter_status;
     if (action != DungeonAction::Attack) {
+        if(c.quest_world && action!=DungeonAction::Tick && d.active && d.pos.dungeon==40)set_quest_flag(c.game.quest,QuestFlag::InDoom);
         if (ctx.rescue_hook && action != DungeonAction::Tick)
             ctx.rescue_hook(ctx.context, c.events);
-        if (c.services.effect)
+        if (c.quest_world)
+            check_refuge(c,c.events);
+        else if (c.services.effect)
             c.services.effect(c.services.context, CommandEffect::Refuge, c.events);
     }
     result.turns = c.game.turns_since_start - before;

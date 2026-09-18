@@ -9,8 +9,16 @@
 namespace openu5 {
 
 constexpr char kAssetPackPath[] = "/sd/ultima5/openu5-assets.bin";
+constexpr uint16_t kAssetPackVersionMajor = 2;
+constexpr uint16_t kAssetPackVersionMinor = 0;
+constexpr uint32_t kExpectedAssetPackSize = 132284;
+constexpr uint32_t kExpectedAssetPackCrc32 = 0x933c9b82U;
+constexpr char kExpectedAssetPackSha256[] =
+    "6eb001ed2a7729e683896998f693d02aeaf1327f3cddd661d1c726ef7414e188";
 
 struct AssetPackReport {
+    uint16_t version_major = 0;
+    uint16_t version_minor = 0;
     uint32_t file_size = 0;
     uint32_t payload_crc32 = 0;
     uint16_t tile_count = 0;
@@ -28,6 +36,7 @@ struct AssetPackReport {
     uint16_t avatar_tile = 0;
     uint8_t sample_map_tile = 0;
     uint32_t sample_tile_crc32 = 0;
+    bool firmware_match = false;
 };
 
 class AssetPackReader {

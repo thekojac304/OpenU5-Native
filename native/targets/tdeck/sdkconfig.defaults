@@ -14,6 +14,10 @@ CONFIG_SPIRAM_MODE_OCT=y
 CONFIG_SPIRAM_SPEED_80M=y
 CONFIG_SPIRAM_BOOT_INIT=y
 CONFIG_SPIRAM_USE_MALLOC=y
+# Route large C++ persistence/resource containers to PSRAM while preserving
+# small/hot state in internal RAM.
+CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=4096
+CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL=49152
 # Reach app_main and print a warning even if PSRAM cannot initialize.
 CONFIG_SPIRAM_IGNORE_NOTFOUND=y
 # Keep all static data and executable code independent of external RAM.
@@ -30,4 +34,4 @@ CONFIG_LOG_DEFAULT_LEVEL_INFO=y
 
 # Native game + FAT/SD/SPI + diagnostic formatting need a real call-stack budget.
 # Large app/CRC/display buffers are off-stack; require >=4 KiB measured reserve.
-CONFIG_ESP_MAIN_TASK_STACK_SIZE=12288
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=24576

@@ -7,6 +7,11 @@
     "noEmit": true
   },
   "include": [
+    "check-gameplay.ts",
+    "generate-movement-flow-fixtures.ts",
+    "generate-outdoor-tables.ts",
+    "check-quests.ts",
+    "generate-quest-case.ts",
     "check-persistence.ts",
     "generate-fixtures.ts",
     "generate-turn-fixtures.ts",
@@ -20,7 +25,11 @@
     "generate-world-flow-fixtures.ts",
     "generate-dungeon-flow-fixtures.ts",
     "generate-transport-flow-fixtures.ts",
-    "generate-dialogue-fixtures.ts"
+    "generate-dialogue-fixtures.ts",
+    "generate-shop-tables.ts",
+    "generate-shop-greetings.ts",
+    "generate-shop-fixtures.ts",
+    "generate-shop-flow-fixtures.ts"
   ],
   "exclude": []
 }

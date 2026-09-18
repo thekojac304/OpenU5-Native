@@ -1,6 +1,8 @@
 #include "openu5/combat.h"
+#include "openu5/display_names.h"
 #include "openu5/dungeon.h"
 #include "openu5/loot.h"
+#include "openu5/quest_world.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -25,6 +27,12 @@ bool any_side(const CombatState &s, bool party, bool alive = false) {
     return false;
 }
 bool inside(int x, int y) { return x >= 0 && y >= 0 && x < 11 && y < 11; }
+bool chest_encoded(int encoded) { return encoded == 1 || encoded == 129; }
+bool unopened_chest(const CombatState &s, int key) {
+    return key >= 0 && key < kCombatCells && chest_encoded(s.loot[key]) &&
+           s.chest_state[key] != CombatChestState::Consumed &&
+           s.chest_state[key] != CombatChestState::Promoted;
+}
 int table(const int32_t *v, size_t n, int id) { return v && id >= 0 && size_t(id) < n ? v[id] : 0; }
 bool supported(const CombatEnemy &d) { return d.name && std::strlen(d.name) <= 120; }
 struct Engine {
@@ -91,7 +99,7 @@ struct Engine {
         int t = tile(x, y);
         if (t < 0)
             return false;
-        if (s.loot[y * 11 + x] == 1 || s.loot[y * 11 + x] == 129)
+        if (unopened_chest(s, y * 11 + x))
             t = 1;
         if (size_t(t) >= sizeof(kCombatTileFlags))
             return false;
@@ -279,8 +287,23 @@ struct Engine {
         s.current = -1;
         if (closing >= 0) {
             auto &a = s.actors[closing];
-            if (party_side(a))
+            if (party_side(a)) {
+                if(player(a) && active(a) && a.position.y==2) {
+                    const int x=a.position.x;
+                    int painted=tile(x,1);bool covered=false;
+                    for(int i=0;i<s.count;++i) {
+                        const auto &o=s.actors[i];
+                        if(o.position.x!=x || o.position.y!=1 || (o.status!=CombatStatus::Active && o.status!=CombatStatus::Sleeping))continue;
+                        painted=o.render_tile>=0?o.render_tile:player(o)?0:o.enemy->tile>=0?o.enemy->tile:64+4*o.enemy->index;covered=true;break;
+                    }
+                    if(!covered && inside(x,1)) {
+                        if(s.loot[11+x])painted=s.loot[11+x];
+                        else for(int i=0;i<s.field_count;++i)if(s.fields[i].position.x==x && s.fields[i].position.y==1){painted=s.fields[i].tile;break;}
+                    }
+                    if((painted&252)==60){s.absorbed_any=true;a.status=CombatStatus::Absorbed;named(a," is absorbed!",a.id);}
+                }
                 status_pass(a);
+            }
             if (active(a) || a.status == CombatStatus::Dead) {
                 int t = tile(a.position.x, a.position.y);
                 int magnitude = t == 143 || t == 188 ? 100 : t == 4 ? 50 : 0;
@@ -443,6 +466,7 @@ struct Engine {
                         ++s.spoil_chests;
                         s.chest_contents[k] = int16_t(d.treasure);
                         s.loot[k] = r30() < d.treasure ? 129 : 1;
+                        s.chest_state[k] = CombatChestState::Unopened;
                     } else
                         s.loot[k] = 31;
                 }
@@ -917,6 +941,21 @@ int32_t combat_distance(int32_t dx, int32_t dy) {
     }
     return n;
 }
+CombatPoint combat_cell_to_world(const CombatState &state, int32_t combat_x, int32_t combat_y) {
+    const int dx = combat_x - state.arena_origin_x;
+    const int dy = combat_y - state.arena_origin_y;
+    int wx = dx, wy = dy;
+    switch (state.arena_entry) {
+    case CombatDirection::North: wx = -dx; wy = -dy; break;
+    case CombatDirection::East:  wx = dy;  wy = -dx; break;
+    case CombatDirection::West:  wx = -dy; wy = dx; break;
+    default: break; // South is the authored, unrotated orientation.
+    }
+    wx += state.loot_x;
+    wy += state.loot_y;
+    if (!state.encounter_location) { wx &= 255; wy &= 255; }
+    return {int16_t(wx), int16_t(wy)};
+}
 bool combat_over(const CombatState &s) { return s.ended || !any_side(s, true); }
 int32_t combat_growth_reserve(const CombatState &s) {
     int reserve = 0;
@@ -999,6 +1038,34 @@ CombatResult combat_cast(CombatContext &c, SpellId spell, const CombatPoint *aim
     return CombatResult::Ok;
 }
 CombatActor *current_combat_actor(CombatContext &c) { return Engine(c).current(); }
+int32_t combat_sceptre_fields(CombatContext &c) {
+    auto *actor=current_combat_actor(c);if(!actor)return 0;
+    int32_t count=0;
+    for(int dx=-1;dx<=1;++dx)for(int dy=-1;dy<=1;++dy){
+        int x=actor->position.x+dx,y=actor->position.y+dy;
+        if(x<0||y<0||x>=11||y>=11)continue;
+        auto &tile=c.combat.map.tiles[y*11+x];if(tile>=0 && (tile&240)==112){tile=5;++count;}
+    }
+    return count;
+}
+CombatResult combat_use_consumable(CombatContext &c,int32_t item,EventSink sink){
+    if(item<0||item>=16||!c.combat.initialized)return CombatResult::Invalid;
+    if(c.combat.actors.capacity()-c.combat.count<combat_growth_reserve(c.combat)+4)return CombatResult::NeedsActorStorage;
+    Engine e(c);auto *a=e.current();if(!a||!player(*a))return CombatResult::Ok;
+    auto emit=[&](GameEventKind kind,const char *text=nullptr,int note=0){GameEvent event;event.kind=kind;event.text=text;event.note=note;if(sink.emit)sink.emit(sink.context,event);};
+    auto say=[&](const char *s){if(s&&*s)emit(GameEventKind::Message,s);};auto used=[&](const char*name){char text[64]{};std::snprintf(text,sizeof(text),"Used %s.",name);say(text);};
+    if(item>=8){int color=item-8;consume_potion(c.game,color);used(potion_display_name(color));auto &p=c.game.party.characters[a->member];auto out=apply_potion_effect(p,reroll_potion_color(color,e.magic_rng()),e.magic_rng(),128);say(out.result.message&&*out.result.message?out.result.message:"No effect!");emit(GameEventKind::Sfx,"potion-used");emit(GameEventKind::MagicCeremony,nullptr,color);a->hp=p.current_hp;a->sleeping=p.status=='S';if(out.result.ok&&out.effective_color==6){a->invisible=true;a->render_tile=29;}if(out.result.ok&&out.effective_color==5)a->render_tile=144;}
+    else{if(c.game.scroll_quantities[item]>0)--c.game.scroll_quantities[item];used(scroll_display_name(item));switch(item){
+        case 0:c.turn.light_spell_minutes=240;say("Light!");break;
+        case 1:say("Wind change!");break;
+        case 2:c.turn.time_spell='P';c.turn.spell_turns=100;say("Protection!");break;
+        case 3:c.turn.time_spell='N';c.turn.spell_turns=20;say("Negate magic!");break;
+        case 4:say("View!");say("Not here!");break;
+        case 5:say("Summon Daemon!");e.cast_effect(*a,{MagicEffect::Daemon,1},nullptr);break;
+        case 6:say("Resurrection!");say("Not here!");break;
+        case 7:c.turn.time_spell='T';c.turn.spell_turns=20;say("Negate time!");break;
+    }static constexpr int8_t indices[8]={0,-1,2,3,-1,-1,-1,7};if(indices[item]>=0){emit(GameEventKind::Sfx,"scroll-used");emit(GameEventKind::MagicCeremony,nullptr,indices[item]);}}e.advance();return CombatResult::Ok;
+}
 CombatResult initialize_combat(CombatContext &c, const CombatMap &map, CombatDirection dir,
                                const CombatEnemy *const *enemies, size_t count, bool room,
                                const FixedCombatSetup *fixed) {
@@ -1019,7 +1086,7 @@ CombatResult initialize_combat(CombatContext &c, const CombatMap &map, CombatDir
         if (!inside(map.units[i].x, map.units[i].y))
             return CombatResult::Invalid;
     if (fixed) {
-        if (!fixed->sprites || !c.enemy_defs)
+        if ((map.unit_count && !fixed->sprites) || !c.enemy_defs)
             return CombatResult::Invalid;
         size_t fields = 0;
         for (int i = 0; i < map.unit_count; ++i)
@@ -1183,7 +1250,7 @@ CombatResult initialize_combat(CombatContext &c, const CombatMap &map, CombatDir
     return CombatResult::Ok;
 }
 CombatResult combat_action(CombatContext &c, CombatAction action, int32_t x, int32_t y) {
-    if (!c.combat.initialized || int(action) > int(CombatAction::Open))
+    if (!c.combat.initialized || int(action) > int(CombatAction::OpenAt))
         return CombatResult::Invalid;
     if (action == CombatAction::Move && (x < 0 || x > 7))
         return CombatResult::Invalid;
@@ -1193,7 +1260,7 @@ CombatResult combat_action(CombatContext &c, CombatAction action, int32_t x, int
         return CombatResult::Invalid;
     if (c.combat.actors.capacity() - c.combat.count < combat_growth_reserve(c.combat))
         return CombatResult::NeedsActorStorage;
-    if (action == CombatAction::Open) {
+    if (action == CombatAction::Open || action == CombatAction::OpenAt) {
         int largest = 0;
         for (int v : c.combat.chest_contents)
             largest = std::max(largest, v);
@@ -1203,10 +1270,18 @@ CombatResult combat_action(CombatContext &c, CombatAction action, int32_t x, int
         if (c.combat.piles.capacity() - c.combat.pile_count < 9 + (largest >> 1))
             return CombatResult::NeedsLootStorage;
     }
+    if (action == CombatAction::Search && c.combat.piles.capacity() == c.combat.pile_count)
+        return CombatResult::NeedsLootStorage;
     Engine e(c);
     auto *a = e.current();
     if (!a)
         return CombatResult::Ok;
+    if (action == CombatAction::OpenAt) {
+        const int dx = x - a->position.x, dy = y - a->position.y;
+        if (!((dx == 1 || dx == -1) && dy == 0) &&
+            !(dx == 0 && (dy == 1 || dy == -1)))
+            return CombatResult::Invalid;
+    }
     if (action == CombatAction::EnemyStep) {
         if (!player(*a) || a->charmed) {
             e.enemy_turn(*a);
@@ -1245,7 +1320,8 @@ CombatResult combat_action(CombatContext &c, CombatAction action, int32_t x, int
         return CombatResult::Ok;
     switch (action) {
     case CombatAction::Get:
-    case CombatAction::Open: {
+    case CombatAction::Open:
+    case CombatAction::OpenAt: {
         auto &s = c.combat;
         auto &g = c.game;
         int dx = 0, dy = 0;
@@ -1254,7 +1330,8 @@ CombatResult combat_action(CombatContext &c, CombatAction action, int32_t x, int
             dx = xs[x];
             dy = ys[x];
         }
-        int tx = a->position.x + dx, ty = a->position.y + dy,
+        int tx = action == CombatAction::OpenAt ? x : a->position.x + dx,
+            ty = action == CombatAction::OpenAt ? y : a->position.y + dy,
             key = inside(tx, ty) ? ty * 11 + tx : -1;
         auto same = [&](int i) {
             return s.piles[i].position.x == tx && s.piles[i].position.y == ty;
@@ -1264,7 +1341,7 @@ CombatResult combat_action(CombatContext &c, CombatAction action, int32_t x, int
                 s.piles[j - 1] = s.piles[j];
             --s.pile_count;
         };
-        bool chest = key >= 0 && (s.loot[key] == 1 || s.loot[key] == 129);
+        bool chest = unopened_chest(s, key);
         int found = -1;
         for (int i = s.pile_count - 1; i >= 0; --i)
             if (same(i) && (action == CombatAction::Get || s.piles[i].id == 1)) {
@@ -1276,8 +1353,13 @@ CombatResult combat_action(CombatContext &c, CombatAction action, int32_t x, int
                 e.message("Open it first!", a->id);
             else if (found >= 0) {
                 auto grant = s.piles[found];
+                // Award first: a malformed legacy record must remain visible
+                // rather than becoming a successful-looking lost pickup.
+                if (!apply_loot_grant(g, {grant.id, grant.quantity})) {
+                    e.message("Nothing to get!", a->id);
+                    return CombatResult::Ok;
+                }
                 erase(found);
-                apply_loot_grant(g, {grant.id, grant.quantity});
                 if (grant.id == 2)
                     s.spoil_gold += grant.quantity;
                 char text[128];
@@ -1314,6 +1396,7 @@ CombatResult combat_action(CombatContext &c, CombatAction action, int32_t x, int
             if (chest) {
                 s.loot[key] = -1;
                 s.chest_contents[key] = -1;
+                s.chest_state[key] = CombatChestState::Consumed;
             } else
                 erase(found);
             Rand rand{&e, [](void *p, int32_t lo, int32_t hi) -> int32_t {
@@ -1370,6 +1453,26 @@ CombatResult combat_action(CombatContext &c, CombatAction action, int32_t x, int
         e.advance();
         break;
     }
+    case CombatAction::Search: {
+        auto &s=c.combat;auto &g=c.game;
+        int dx=0,dy=0;
+        if(x>=0&&x<4){static constexpr int xs[]={1,-1,0,0},ys[]={0,0,1,-1};dx=xs[x];dy=ys[x];}
+        const int tx=a->position.x+dx,ty=a->position.y+dy,key=inside(tx,ty)?ty*11+tx:-1;
+        if(key<0){e.message("Nothing of note.",a->id);e.advance();break;}
+        if(unopened_chest(s,key)){
+            const int difficulty=(s.chest_contents[key]&127)|(s.loot[key]==129?128:0);
+            const int stat=a->member<g.party.character_count?g.party.characters[a->member].intelligence:0;
+            const uint16_t threshold=uint16_t(((difficulty&128)?(difficulty&127):0)-stat+30)>>1;
+            const bool success=e.rand(1,30)>=threshold, trapped=(difficulty&128)!=0;
+            const char *found=success!=trapped?"no trap!":success?((difficulty&127)<10?"a simple trap!":(difficulty&127)>20?"a complex trap!":"a trap!"):"a trap!";
+            char text[64];std::snprintf(text,sizeof(text),"\nThou dost find\n%s",found);e.message(text,a->id);
+        } else if(s.loot[key]==31){
+            const int roll=e.rand(0,7);
+            if(roll==0){const bool food=e.rand(0,3)==0;const int qty=e.rand(1,3);s.loot[key]=0;s.piles[s.pile_count++]={{int16_t(tx),int16_t(ty)},int16_t(food?15:2),int16_t(qty)};e.message(food?"\nThou dost find\nfood!":"\nThou dost find\ngold!",a->id);}
+            else {s.loot[key]=0;const int outcome=e.rand(0,31);if(outcome==19){if(a->member<g.party.character_count)g.party.characters[a->member].status='P';e.message("\nThou dost find\nPlague!",a->id);}else {const int pick=e.rand(0,e.rand(0,3));static constexpr const char *names[]={"nothing!","worms!","guts!","a bloody pulp!"};char text[64];std::snprintf(text,sizeof(text),"\nThou dost find\n%s",names[pick]);e.message(text,a->id);}}
+        } else e.message("\nThou dost find\nnothing of note.",a->id);
+        e.advance();break;
+    }
     case CombatAction::Move:
         e.move(*a, x);
         break;
@@ -1388,9 +1491,11 @@ CombatResult combat_action(CombatContext &c, CombatAction action, int32_t x, int
     }
     return CombatResult::Ok;
 }
-CombatResult start_encounter_combat(CommandContext &world, CombatState &state,
-                                    const CombatResources &res, int32_t enemy, int32_t tile,
-                                    int32_t map_override, CombatDirection entry, bool intro) {
+static CombatResult encounter_preflight(const CommandContext &world, const CombatState &state,
+                                        const CombatResources &res, int32_t enemy,int32_t tile,
+                                        int32_t map_override,CombatDirection entry,
+                                        const CombatMap *&map,const CombatEnemy *&base,
+                                        const CombatEnemy *&companion) {
     if (world.combat || enemy < 0 || size_t(enemy) >= res.enemy_count || !res.enemies ||
         !res.enemies[enemy])
         return CombatResult::Invalid;
@@ -1399,7 +1504,7 @@ CombatResult start_encounter_combat(CommandContext &world, CombatState &state,
                     : std::max<int32_t>(0, tile >= 0 && size_t(tile) < sizeof(kCombatMapIndex)
                                                ? int(kCombatMapIndex[tile])
                                                : -2);
-    const CombatMap *map = res.maps && size_t(index) < res.map_count ? res.maps[index] : nullptr;
+    map = res.maps && size_t(index) < res.map_count ? res.maps[index] : nullptr;
     if (!map && res.maps && res.map_count)
         map = res.maps[0];
     if (!map)
@@ -1408,14 +1513,14 @@ CombatResult start_encounter_combat(CommandContext &world, CombatState &state,
                                       12, 13, 14, 15, 17, 16, 17, 19, 33, 21, 20, 33,
                                       24, 26, 35, 21, 21, 24, 30, 24, 41, 0,  22, 36,
                                       35, 23, 39, 39, 40, 20, 42, 43, 44, 45, 20, 38};
-    const auto *base = res.enemies[enemy];
+    base = res.enemies[enemy];
     if (base->group_name && std::strlen(base->group_name) > 160)
         return CombatResult::Invalid;
     if (!supported(*base))
         return CombatResult::Unsupported;
     // Reject a potentially unsupported companion before touching either stream.
     int fi = base->index >= 0 && base->index < 48 ? friends[base->index] : base->index;
-    const auto *companion =
+    companion =
         fi >= 0 && size_t(fi) < res.enemy_count && res.enemies[fi] ? res.enemies[fi] : base;
     if (!supported(*companion))
         return CombatResult::Unsupported;
@@ -1432,6 +1537,27 @@ CombatResult start_encounter_combat(CommandContext &world, CombatState &state,
     for (auto n : map->start_count)
         if (n > 6)
             return CombatResult::Invalid;
+    if(map==&state.map)return CombatResult::Invalid;
+    return CombatResult::Ok;
+}
+CombatResult preflight_encounter_combat(const CommandContext &world,const CombatState &state,
+                                        const CombatResources &res,int32_t enemy,int32_t tile,
+                                        int32_t map_override,CombatDirection entry){
+    const CombatMap *map=nullptr;const CombatEnemy *base=nullptr,*companion=nullptr;
+    return encounter_preflight(world,state,res,enemy,tile,map_override,entry,map,base,companion);
+}
+CombatResult start_encounter_combat(CommandContext &world, CombatState &state,
+                                    const CombatResources &res, int32_t enemy, int32_t tile,
+                                    int32_t map_override, CombatDirection entry, bool intro,
+                                    const char *post_group_line) {
+    const CombatMap *map=nullptr;const CombatEnemy *base=nullptr,*companion=nullptr;
+    auto preflight=encounter_preflight(world,state,res,enemy,tile,map_override,entry,map,base,companion);
+    if(preflight!=CombatResult::Ok)return preflight;
+    state.encounter_location=world.game.position.map.location;
+    state.encounter_floor=world.game.position.map.floor;
+    state.loot_x=world.game.position.xy.x;
+    state.loot_y=world.game.position.xy.y;
+    state.has_world_loot_origin=true;
     auto draw = [&](int lo, int hi) {
         int v = world.game.rng.next(lo, hi).value;
         if (world.rng_trace.emit)
@@ -1440,6 +1566,7 @@ CombatResult start_encounter_combat(CommandContext &world, CombatState &state,
     };
     if (res.reset_doors)
         res.reset_doors(res.context);
+    world.commands.door.turns = 0;
     int n = base->max_per_map;
     int loc = world.game.position.map.location;
     if (loc >= 1 && loc <= 32 && base->index != 12)
@@ -1458,6 +1585,17 @@ CombatResult start_encounter_combat(CommandContext &world, CombatState &state,
     auto result = initialize_combat(c, *map, entry, group, size_t(n));
     if (result != CombatResult::Ok)
         return result;
+    state.arena_entry = entry;
+    state.arena_origin_x = 0;
+    state.arena_origin_y = 0;
+    // Capture the entry placement once.  The active actor may move before an
+    // enemy leaves a chest, so it is not a valid combat-to-world anchor.
+    for (int i = 0; i < state.count; ++i)
+        if (player(state.actors[i])) {
+            state.arena_origin_x = state.actors[i].position.x;
+            state.arena_origin_y = state.actors[i].position.y;
+            break;
+        }
     world.combat = true;
     world.commands.pending_camp_enemy = -1;
     if (res.remove_enemy)
@@ -1477,6 +1615,8 @@ CombatResult start_encounter_combat(CommandContext &world, CombatState &state,
         std::snprintf(text, sizeof(text), "%*s%s\n", spaces, "", base->group_name);
         emit(GameEventKind::Message, text);
     }
+    if (post_group_line)
+        emit(GameEventKind::Message, post_group_line);
     emit(GameEventKind::Message, "*** CONFLICT ***\n");
     Rand rand{&world, [](void *p, int32_t lo, int32_t hi) -> int32_t {
                   auto &w = *static_cast<CommandContext *>(p);
@@ -1505,8 +1645,25 @@ CombatResult finish_encounter_combat(CommandContext &world, CombatState &state) 
         if (world.events.emit)
             world.events.emit(world.events.context, e);
     };
+    if(state.absorbed_any){
+        if(world.game.wooden_box && !quest_flag(world.game.quest,QuestFlag::GameWon) && (!world.quest_world || !world.quest_world->end_record || !world.quest_world->end_record(world.quest_world->context,9)))return CombatResult::Invalid;
+        if(world.dungeon_context){world.dungeon_context->room_entry_valid=false;world.dungeon_context->corridor_cause=-1;}
+        world.game.rng.seed(state.rng.get_seed());world.combat=false;world.combat_context=nullptr;state.initialized=false;
+        emit(GameEventKind::CombatEnded);absorption_endgame(world,world.events);return CombatResult::Ok;
+    }
     if (!state.victory)
         emit(GameEventKind::Message, "BATTLE IS LOST!");
+    // Encounters started through OutdoorServices install a victory latch that
+    // promotes combat chests to the defeated roaming actor's exact world tile
+    // and clears those cells. Direct encounters (notably Troll toll refusal
+    // and camp ambushes) have no OutdoorServices owner. Preserve any remaining
+    // chests at their arena-relative encounter coordinates before CombatState
+    // teardown so rendering and Open share one authoritative QuestObject.
+    if(state.victory&&!world.dungeon&&world.quest_world&&world.quest_world->append){
+        int chest_count=0;for(int cell=0;cell<kCombatCells;++cell)if(unopened_chest(state,cell))++chest_count;
+        if(chest_count&&world.quest_world->reserve&&!world.quest_world->reserve(world.quest_world->context,size_t(chest_count)))return CombatResult::NeedsActorStorage;
+        for(int cell=0;cell<kCombatCells;++cell){const int encoded=state.loot[cell];if(!unopened_chest(state,cell))continue;QuestObject chest{};chest.location=state.has_world_loot_origin?state.encounter_location:world.game.position.map.location;chest.floor=state.has_world_loot_origin?state.encounter_floor:world.game.position.map.floor;const auto mapped=combat_cell_to_world(state,cell%kCombatGrid,cell/kCombatGrid);chest.x=mapped.x;chest.y=mapped.y;chest.tile=1;chest.chest=true;chest.trapped=encoded==129;chest.contents=std::max(0,int(state.chest_contents[cell]))|(encoded&128);world.quest_world->append(world.quest_world->context,chest);state.loot[cell]=0;state.chest_contents[cell]=0;state.chest_state[cell]=CombatChestState::Promoted;}
+    }
     for (int i = 0; i < state.count; ++i) {
         auto &a = state.actors[i];
         if (!player(a))
@@ -1523,7 +1680,9 @@ CombatResult finish_encounter_combat(CommandContext &world, CombatState &state) 
     emit(GameEventKind::CombatEnded);
     if (world.dungeon_context)
         dungeon_combat_return(world, state.escape_floor_delta, state.escape_border, state.victory);
-    if (world.services.effect)
+    if (world.quest_world)
+        check_refuge(world, world.events);
+    else if (world.services.effect)
         world.services.effect(world.services.context, CommandEffect::Refuge, world.events);
     return CombatResult::Ok;
 }

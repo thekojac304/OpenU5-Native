@@ -1,0 +1,72 @@
+#include "openu5/blackthorn.h"
+#include "openu5/shrine.h"
+#include "openu5/dialogue_orchestration.h"
+#include "openu5/shops.h"
+#include <algorithm>
+#include <cstdlib>
+#include <string>
+namespace openu5 {
+int32_t count_living(const GameState &g){int n=0;for(int i=0;i<g.party.party_size && i<g.party.character_count;++i)n+=g.party.characters[i].status!='D';return n;}
+int32_t pick_interrogation_shrine(const GameState &g){for(int i=0;i<8;++i)if(i>=g.quest.destroyed_count || !g.quest.shrine_destroyed[i])return i;return -1;}
+GuardDemand guard_demand(GameState &g,const TurnState &t,TalkText text,bool agree){
+    if(g.position.map.location==18)return {0,t.time_spell=='\x1d'&&quest_text_equal(text.substr(0,4),u"IMPE")?0:1,0};
+    int kind=g.position.map.location==5?1:2;if(!agree)return {kind,1,0};int amount=kind==1?g.gold-(g.gold/2):count_living(g)*10;if(g.gold<amount)return {kind,1,0};g.gold=uint16_t(g.gold-amount);return {kind,0,amount};
+}
+namespace {
+void event(EventSink s,GameEventKind kind,const std::string &text=""){GameEvent e;e.kind=kind;e.text=text.empty()?nullptr:text.c_str();if(s.emit)s.emit(s.context,e);}
+std::string str(TalkText s){std::string out;for(auto ch:s)out+=char(ch);return out;}
+std::string name(const CharacterState &c){std::string s=c.name;auto a=s.find_first_not_of(" \t\n\r\v\f"),b=s.find_last_not_of(" \t\n\r\v\f");return a==std::string::npos?"Avatar":s.substr(a,b-a+1);}
+const char *record(CommandContext &c,int i){return c.shrine_services&&c.shrine_services->record?c.shrine_services->record(c.shrine_services->context,i):nullptr;}
+void deposit(CommandContext &c){c.game.position={{10,7},{18,-1}};c.game.keys=0;c.game.transport=TransportMode::Foot;c.turn.transport_tile=28;}
+std::string sacrifice(GameState &g){int living=0;for(int i=0;i<g.party.party_size && i<g.party.character_count;++i)if(g.party.characters[i].status!='D' && ++living==2){auto victim=g.party.characters[i];std::string result=victim.name;for(int j=i+1;j<g.party.character_count;++j)g.party.characters[j-1]=g.party.characters[j];victim.party_status=127;g.party.characters[15]=victim;g.party.character_count=16;g.party.party_size=std::max<int32_t>(0,g.party.party_size-1);return result;}return "";}
+void question(CommandContext &c,EventSink sink){auto &s=*c.blackthorn;std::string q=record(c,s.round<3?s.round:3);if(s.round<3){if(c.shrine_services->data)q+=str(c.shrine_services->data->virtues[s.shrine]);q+="?\"";}event(sink,GameEventKind::BlackthornPrompt,q);}
+NpcActor *adjacent(CommandContext &c){NpcActor *winner=nullptr;if(!c.actors)return nullptr;for(size_t i=0;i<c.actors->count;++i){auto &a=c.actors->actors[i];if(a.location!=c.game.position.map.location||a.z!=c.game.position.map.floor||std::abs(a.x-c.game.position.xy.x)+std::abs(a.y-c.game.position.xy.y)!=1)continue;auto idx=schedule_index(a.schedule.times,uint8_t(c.game.time.hour));int ai=a.schedule.ai[idx];if(ai<=3||((ai==4||ai==5)&&!a.schedule.dialog))continue;if(!winner||a.schedule.slot>=winner->schedule.slot)winner=&a;}return winner;}
+void password(CommandContext &c,EventSink s){c.blackthorn->password=true;event(s,GameEventKind::GuardPasswordPrompt,"\"Give now the\npassword, bearer\nof the Badge!\"\n\nYour response?");}
+}
+CommandStatus talk_guard(CommandContext &c,const NpcActor &npc,EventSink sink){if(!c.blackthorn)return CommandStatus::InvalidContext;if(c.game.position.map.location==18){if(c.turn.time_spell=='\x1d')password(c,sink);return CommandStatus::Success;}c.blackthorn->tribute=true;c.blackthorn->npc_slot=npc.schedule.slot;GameEvent e;e.kind=GameEventKind::GuardTributePrompt;e.note=c.game.position.map.location==5?-1:count_living(c.game)*10;if(sink.emit)sink.emit(sink.context,e);return CommandStatus::Success;}
+CommandStatus blackthorn_action(CommandContext &c,BlackthornAction action,TalkText response,bool agree,EventSink sink,Rand rand){
+    if(!c.blackthorn)return CommandStatus::InvalidContext;
+    auto &s=*c.blackthorn;auto &g=c.game;
+    if(action==BlackthornAction::Password){if(!s.password)return CommandStatus::NoOp;s.password=false;if(!guard_demand(g,c.turn,response,false).ret){event(sink,GameEventKind::Message,"\"Pass, friend!\"");return CommandStatus::Success;}action=BlackthornAction::Capture;}
+    if(action==BlackthornAction::Tribute){if(!s.tribute)return CommandStatus::NoOp;s.tribute=false;if(!guard_demand(g,c.turn,{},agree).ret)event(sink,GameEventKind::PartyChanged);else{s.arrest=true;event(sink,GameEventKind::GuardArrestPrompt);}return CommandStatus::Success;}
+    if(action==BlackthornAction::Arrest){if(!s.arrest)return CommandStatus::NoOp;s.arrest=false;if(agree){event(sink,GameEventKind::Message,"Yes\n\nThe guard strikes thee unconscious!\n");event(sink,GameEventKind::Message,"\nThou dost awaken to...\n");g.position={{25,4},{4,0}};g.keys=0;c.travel.shadowlord_here=-1;if(g.time.hour!=8){g.time.hour=8;g.time.minute=0;}event(sink,GameEventKind::MapChanged);event(sink,GameEventKind::PartyChanged);}else{event(sink,GameEventKind::Message,"No\n\n\"Then defend thyself, rogue!\"\n");if(c.actors){dialogue_alarm(*c.actors,g.position.map.location,rand);for(size_t i=0;i<c.actors->count;++i){auto &npc=c.actors->actors[i];if(npc.location==g.position.map.location && npc.z==g.position.map.floor && npc.schedule.slot==s.npc_slot)return town_attack_commit(c,npc,true,sink);}}}return CommandStatus::Success;}
+    if(action!=BlackthornAction::Capture && (action!=BlackthornAction::Answer || s.shrine<0))return CommandStatus::NoOp;
+    for(int i=0;i<12;++i)if(!record(c,i))return CommandStatus::InvalidContext;
+    if(action==BlackthornAction::Capture){s.shrine=int8_t(pick_interrogation_shrine(g));s.round=0;s.living=int8_t(count_living(g));if(s.shrine<0){deposit(c);event(sink,GameEventKind::Message,"\nThou art subdued and blindfolded!");event(sink,GameEventKind::MapChanged);event(sink,GameEventKind::PartyChanged);return CommandStatus::Success;}
+        for(auto text:{"\nThou art subdued and blindfolded!","\n\nStrong guards drag thee away!","\n\nThou hast been chained and manacled!","\n\nFootsteps!"})event(sink,GameEventKind::Message,text);
+        event(sink,GameEventKind::Message,"\n\nBlackthorn says:\n\n\"Ah, "+name(g.party.characters[0])+"!\n'Tis indeed an honour to meet thee at last! ");int gender=g.party.characters[0].gender;event(sink,GameEventKind::Message,std::string("\n\nGUARD! Release this good")+(gender==12?" lady ":gender==11?"man ":"")+"at once!\"");event(sink,GameEventKind::Message,record(c,11));question(c,sink);return CommandStatus::AwaitingResponse;
+    }
+    auto trimmed=talk_trim(response);TalkText mantra=c.shrine_services->data?c.shrine_services->data->mantras[s.shrine]:TalkText{};bool matched=quest_text_contains(trimmed.substr(0,14),mantra);
+    if(!matched && s.round>=1 && s.living>1)advance_clock(g,c.turn,2,&rand,c.sky);
+    if(!matched && s.living>1 && s.round<3){if(!s.round){event(sink,GameEventKind::Message,record(c,7));event(sink,GameEventKind::Message,std::string(record(c,8))+(g.party.character_count>1?g.party.characters[1].name:"")+" die!\" \n\n");}++s.round;question(c,sink);return CommandStatus::AwaitingResponse;}
+    if(matched){g.quest.shrine_destroyed[s.shrine]=255;g.quest.destroyed_count=std::max<uint8_t>(g.quest.destroyed_count,uint8_t(s.shrine+1));g.karma=uint8_t(g.karma<=5?0:g.karma-5);if(s.living>1)sacrifice(g);event(sink,GameEventKind::Message,record(c,s.living>1?5:9));}
+    else if(s.living<2)event(sink,GameEventKind::Message,record(c,10));
+    else{auto victim=sacrifice(g);event(sink,GameEventKind::Message,record(c,4));event(sink,GameEventKind::Message,"\n\n"+victim+" is sliced in half! ");event(sink,GameEventKind::Message,record(c,6));}
+    s.shrine=-1;deposit(c);event(sink,GameEventKind::MapChanged);event(sink,GameEventKind::PartyChanged);return CommandStatus::Success;
+}
+bool blackthorn_turn_effect(CommandContext &c,CommandEffect effect,EventSink sink,Rand rand){
+    if(!c.blackthorn)return false;
+    auto &s=*c.blackthorn;auto npc=adjacent(c);
+    if(effect==CommandEffect::Capture){bool alive=false;for(int i=0;i<c.game.party.party_size && i<c.game.party.character_count;++i)alive|=c.game.party.characters[i].status=='G'||c.game.party.characters[i].status=='P'||c.game.party.characters[i].status=='S';if(c.game.position.map.location!=18||!alive||!npc||npc->schedule.type!=112)return false;if(c.turn.time_spell=='\x1d')password(c,sink);else blackthorn_action(c,BlackthornAction::Capture,{},false,sink,rand);return true;}
+    if(effect!=CommandEffect::Tribute || !c.game.position.map.location || s.tribute||s.arrest||!npc)return false;
+    int idx=schedule_index(npc->schedule.times,uint8_t(c.game.time.hour)),ai=npc->schedule.ai[idx];
+    if(ai>5){if(npc->schedule.dialog==254){event(sink,GameEventKind::Message,"\"Begone,\nvermin!\"\n");if(npc->schedule.type>=64 && npc->schedule.type<116){npc->schedule.dialog=253;for(auto &a:npc->schedule.ai)a=3;}return true;}if(npc->schedule.type==112 && c.game.position.map.location!=18){s.arrest=true;s.npc_slot=npc->schedule.slot;event(sink,GameEventKind::GuardArrestPrompt);return true;}if(npc->schedule.type>=64)return town_attack_commit(c,*npc,true,sink)==CommandStatus::Success;for(size_t i=0;i<c.actors->count;++i)if(&c.actors->actors[i]==npc){for(size_t j=i+1;j<c.actors->count;++j)c.actors->actors[j-1]=c.actors->actors[j];--c.actors->count;break;}return false;}
+    if(c.game.position.map.location==18)return false;
+    if(ai==4)npc->schedule.ai[idx]=1;
+    if(npc->schedule.dialog!=255){
+        const int dialog=npc->schedule.dialog;
+        GameEvent e;e.npc=npc;
+        if(dialog>=128 && dialog<=252){
+            if(!shop_is_open(npc->schedule.times,uint8_t(c.game.time.hour))){event(sink,GameEventKind::Message,"A merchant says:\n\"Come see me at\nmy shoppe, when\nit's open!\"\n");return true;}
+            if((c.turn.transport_tile&252)==16 && dialog!=131){event(sink,GameEventKind::Message,"A merchant says:\n\"GET THAT HORSE OUT OF HERE!\"\n");return true;}
+            e.kind=GameEventKind::NpcInitiatesShop;
+        }else{
+            if(!c.dialogue_services || !talk_script_for(c.dialogue_services->registry,c.game.position.map.location,dialog))return false;
+            e.kind=GameEventKind::NpcInitiatesTalk;
+        }
+        if(sink.emit)sink.emit(sink.context,e);
+        return true;
+    }
+    talk_guard(c,*npc,sink);return true;
+}
+}

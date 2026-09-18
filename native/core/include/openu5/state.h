@@ -1,6 +1,7 @@
 #pragma once
 #include "time.h"
 #include "rng.h"
+#include "quest_state.h"
 namespace openu5 {
 constexpr uint8_t kMaxParty = 6, kRosterCapacity = 16;
 struct CharacterState {
@@ -21,6 +22,7 @@ struct PartyState {
 };
 // Foundation projection, NOT a complete save or complete TS GameState.
 struct InitialState {
+    QuestState quest{};
     PartyState party{};
     GameTime time{};
     WorldPosition position{};
@@ -39,6 +41,7 @@ struct InitialState {
     uint8_t dungeon_rooms_cleared[14]{};
     int32_t ship_skiffs = 0;
     bool wooden_box = false;
+    bool hms_cape = false;
     uint8_t karma = 0;
     uint16_t equipment_count = 48; // Logical TS array length, distinct from reserved storage.
     bool sextant = false, spyglass = false, black_badge = false;

@@ -1,6 +1,39 @@
 # Reference map, parity contract and remaining work
 
-## Latest batch: platform-independent persistence
+## Current: gameplay integration
+
+[GAMEPLAY.md](GAMEPLAY.md) supersedes the old non-foot, bridge, outdoor ownership
+and generic world-command blockers. **36,792 movement + 5,044 gameplay sequences
+= 41,836 new / 2,076,501 cumulative**. Native owner/domain assertions are counted
+separately. All required new assets are present; no mismatch is waived. The
+major semantic loop is ready for first playable-alpha adapter integration under
+the documented resource and persistence contract.
+
+## Quest/progression semantic core — completed continuation
+
+[QUESTS.md](QUESTS.md) supersedes the prior partial quest ledger. **5,377 quest
+observations / 2,034,665 cumulative**, including two bounded observations of
+reference nontermination. This continuation adds **1,128** cases/sequences to
+the 4,249 partial baseline. Real world/NPC/combat progression, persistence,
+endgame and Refuge are validated through semantic commands and shared owners.
+Optional visual shrine/Blackthorn scene timelines remain outside this contract.
+The later GAMEPLAY.md batch resolves the travel and generic-orchestration blockers.
+
+## Previous batch: platform-independent commerce
+
+See [SHOPS.md](SHOPS.md) for all eight shop categories, semantic sessions,
+lookup/offering data, inventory/gold/service mutations, dialogue handoff,
+reference mapping and explicit presentation/native-number-domain boundaries.
+**787,118 new / 2,029,288 cumulative parity/compatibility snapshots** cover
+202,712 helper and 584,406 session snapshots across all 46 real catalog shops.
+Shop raw console rendering is excluded; semantic state, active offers, mutations,
+results, time/RNG and world-effect ordering are compared. Native handoff/resource
+contract checks are separate from that parity count. No TS runtime was changed.
+
+This supersedes older blanket shop exclusions only within SHOPS.md's contract.
+Quests, device UI/controls, non-foot travel completion and FATFS remain deferred.
+Active shop sessions are not persisted by the existing reference formats.
+## Previous batch: platform-independent persistence
 
 See [PERSISTENCE.md](PERSISTENCE.md) for source mapping, binary compatibility,
 sidecar/envelope precedence, live-state adapters, generation recovery and memory

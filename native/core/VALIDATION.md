@@ -1,6 +1,143 @@
-# Native core validation — 2026-09-15
+# Native core validation — 2026-09-16
 
-## Latest batch: platform-independent persistence
+## Current: gameplay integration
+
+See [GAMEPLAY.md](GAMEPLAY.md) for coverage, source mapping, ownership and limits.
+
+| Check | Result |
+| --- | --- |
+| Final host regression | 49/49 passed; zero failures; 204.61 seconds |
+| New differential sequences | 41,836: movement 36,792; Game integration 5,044 |
+| Cumulative parity/compatibility observations | 2,076,501 |
+| Native owner/domain assertions | 21, outside the parity count |
+| New fixture/harness TypeScript typecheck | Passed |
+| ESP-IDF build / size / Launcher package | Passed; no flashing |
+| App image / delta this batch | 342,288 bytes / 0 |
+| GameState / CombatState | 2,304 / 3,604 bytes; unchanged |
+| Largest new individual Xtensa frame | outdoor_tick: 1,712 bytes |
+| Prior persistence frame / external A* scratch | 2,544 / 323,084 bytes; unchanged |
+
+Final full host regression result is recorded in GAMEPLAY.md. Older measurements
+below describe earlier checkpoints and do not override this batch's status.
+
+## Quest/progression continuation
+
+See [QUESTS.md](QUESTS.md) for the source map, counting contract, memory and gaps.
+
+| Check | Result |
+| --- | --- |
+| Native host/fixture checks | 44/44: 43 non-quest checks plus final quest_parity |
+| Quest differential observations | 5,377; 5,375 completed and two bounded reference-loop observations |
+| New in this continuation / cumulative | 1,128 / 2,034,665 |
+| TypeScript quest/reference tests | 359 passed, 26 files |
+| Full extractor tests | 226 passed, two optional skips, 29 files |
+| Native fixture TypeScript typecheck | Passed |
+| ESP-IDF build / size / Launcher package | Passed; no flashing |
+| App image | 342,288 bytes (+32 from partial quest pass, +64 pre-quest) |
+| GameState / QuestState | 2,304 / 68 bytes (+32 / +28 from partial pass) |
+| Largest measured frame | restore_core 2,544 bytes; largest new quest orchestration 608 |
+
+Coverage includes 214 real NPC sequences, 82 encounter sequences, four party
+escapes, five combat-to-Refuge sequences, six final-room absorption endings,
+one normal guard victory, all 113 real search entries, and five 40-step shrine
+approaches. All eight shrine definitions/ceremony rules are exercised. There are
+no required quest asset skips. Three foot-only shrine route exclusions and the
+two existing optional extractor skips are documented in QUESTS.md.
+
+Artifacts are regenerated under ignored `build-quests/`: coverage.json,
+input/actual JSONL, TypeScript/extractor logs, idf-build-size.log, launcher.log,
+esp-sizes.txt and largest-stack.txt. `QUEST_FOCUS` runs write coverage-focus.json,
+never overwrite the final coverage report. The final report only follows a
+successful full comparison. Individual snapshots within a sequence do not inflate
+the cumulative count. Fixture generation omits unrelated search catalogs from
+combat-only cases to stay within the existing parser limits, and supplies the
+real selected arenas instead of relying on missing-map fallback behavior.
+
+The command/event projection excludes optional visual scene rendering and does
+not establish an uninterrupted campaign or on-device gameplay. Existing non-foot
+Move and bridge-toll restrictions remain outside this quest batch. The firmware
+still strips unused quest code; the small image delta does not forecast alpha size.
+
+## Previous batch: platform-independent commerce
+
+See [SHOPS.md](SHOPS.md) for source mapping, numeric and presentation boundaries,
+semantic API, table provenance and deferred work. **787,118 new / 2,029,288 total**
+parity/compatibility snapshots pass. The new count is 202,712 helper snapshots
+plus 584,406 session snapshots; 19 native contract assertions are separate.
+
+| Check | Final result |
+| --- | --- |
+| Complete native CTest with real arenas and fixture drift | **42/42 passed** |
+| Shop helper and actual ShopConsole/Game session replays | **787,118 passed** |
+| Shop-related TypeScript tests, including schedule/proximity/drain | **388 passed, 20 files** |
+| Relevant extractor/data/shop/native compatibility tests | **44 passed, 5 files** |
+| Fixture TypeScript typecheck | Passed |
+| ESP-IDF build / idf.py size / Launcher packaging | Passed |
+| Real shop coverage | All **46 catalog shops**; no shop asset skips |
+
+The real suite covers 63 equipment buy offers, all 48 sale IDs at each of nine
+blacksmiths (432 success/refusal paths), 22 reagent offers, nine guild lots,
+eight ship offers, 21 healer services, 18 inn services, all three catalog horse
+sellers and every tavern location/subtype. Six wines and all 26 rumor keywords
+are exercised. SHOPS.md distinguishes attempted route labels from successful
+transactions and explains the fourth horse-town price row without a keeper.
+
+Missing `ad01.gam` remains a pre-existing persistence-fixture boundary; no source
+or generated shop asset is missing, and no substitute save/data was fabricated.
+This batch did not rerun or claim to repair the two previously recorded tests
+requiring that save. The selected shop/extractor suites have no skips/failures.
+
+| Measurement | Before | Shop batch | Delta |
+| --- | ---: | ---: | ---: |
+| App / Launcher binary | 342,224 B | 342,224 B | **0 B** |
+| Linked image | 342,104 B | 342,104 B | **0 B** |
+| Minimum Launcher allocation | 393,216 B | 393,216 B | 0 B |
+| GameState, host / ESP | 2,232 / 2,232 B | 2,232 / 2,232 B | **0 B** |
+| PartyState, host / ESP | 556 / 556 B | 556 / 556 B | 0 B |
+| TurnState, host / ESP | 72 / 72 B | 72 / 72 B | 0 B |
+| ShopSession, host / ESP | — | **56 / 44 B** | caller-owned |
+| ShopServices, host / ESP | — | 96 / 48 B | borrowed callbacks |
+| ShopData, host / ESP | — | 128 / 64 B | borrowed views |
+| ShopResult, host / ESP | — | 56 / 36 B | synchronous |
+| ShopEvent, host / ESP | — | 32 / 16 B | synchronous |
+| CommandContext, host / ESP | 224 / 112 B | 232 / 116 B | +8 / +4 B |
+| GameEvent, host / ESP | 40 / 24 B | 48 / 28 B | +8 / +4 B |
+
+Because this checkout lacked the prior ignored firmware, the baseline is an
+independent build of the pre-batch HEAD native tree, archived under
+`native/core/build-shops/baseline-source`. Baseline and current builds use the
+same ESP-IDF 6.1 toolchain/default configuration. No board source/configuration
+changed. Shop code is compiled but linker-stripped until device application
+integration calls it; zero firmware growth is not a future linked-shop cost.
+
+The final Launcher file is
+`native/targets/tdeck/build-core/launcher/OpenU5-TDeck-M5-Launcher.bin`, SHA-256:
+`314c1de3f2fcd892e8b76187520aadd032bee46e81b5779a1661882ba04eee36`.
+
+ESP `-Os -fstack-usage` reports the largest new individual frame as **672 B**
+(`execute_shop`), followed by 160 B (`begin_shop`), and 144 B for inn pickup,
+shop offering enumeration and the tavern-round wrapper. This is individual-frame
+evidence, not a measured device call-chain high-water mark. There is **no heap or
+caller scratch requirement** in the shop implementation. The largest explicit
+local storage buffer is the **34 B roster-record copy**; rumor matching uses a
+**30 B fixed text buffer**. Events/temporary result structures are accounted for
+in the stack-frame report. Caller-owned assets and world storage are additional.
+
+Resolved findings include pause continuation, Enter closing the reagent list,
+missing-pool rumor RNG short-circuiting, legacy healer charity/drain differences,
+fallback horse cancellation, empty-stock lookup, active-pending transaction
+state, and ESP int32_t overload portability. No known mismatch remains in the
+specified commerce projection. Raw console rendering and arbitrary JS numeric
+states are explicitly outside that projection, as documented in SHOPS.md.
+
+The first fresh-checkout validation also exposed pre-existing CRLF-versus-LF
+fixture drift; regenerating the unchanged reference fixtures resolved it without
+changing their canonical data. All final checks above were run after the fixes.
+No quest progression, UI, FATFS wiring, hardware binding or physical operation
+was performed. Remaining world/service-owner adapters and quest hooks are listed
+in SHOPS.md; no new generic-commerce blocker precedes the quest batch.
+
+## Previous batch: platform-independent persistence
 
 See [PERSISTENCE.md](PERSISTENCE.md) for the source map, API, memory limits and
 remaining platform/application boundaries. **619 new / 1,242,170 total**

@@ -8,6 +8,9 @@ struct CombatPoint {
 };
 enum class CombatDirection : uint8_t { East, West, South, North, NE, NW, SE, SW };
 enum class CombatStatus : uint8_t { Active, Dead, Fled, Sleeping, Charmed, Absorbed };
+// A chest lifecycle is independent of its encoded render tile: a consumed
+// arena chest must never be promoted when combat later exits.
+enum class CombatChestState : uint8_t { None, Unopened, Consumed, Promoted };
 struct CombatWeapon {
     int32_t id = 255, attack = 1, range = 1;
 };
@@ -18,6 +21,7 @@ struct CombatEnemy {
     uint16_t abilities = 0; // EnemyAbilities masks, not Redux flags.
     uint8_t move_class = 0;
     bool stationary = false;
+    int16_t tile = -1; // Borrowed asset sprite; -1 uses the canonical index family.
 };
 struct CombatTrigger {
     int16_t tile = 0;
@@ -103,6 +107,13 @@ struct CombatState {
     OriginalRng rng{};
     uint32_t action_count = 0;
     int32_t spoil_chests = 0;
+    // Exact exploration identity captured at encounter entry. Direct scripted
+    // encounters may override loot_x/y with their blocking world coordinate.
+    int32_t encounter_location = 0, encounter_floor = 0, loot_x = 0, loot_y = 0;
+    // The return anchor represents this initial player cell in the arena.
+    int16_t arena_origin_x = 0, arena_origin_y = 0;
+    CombatDirection arena_entry = CombatDirection::South;
+    CombatChestState chest_state[kCombatCells]{};
     int32_t current = -1, count = 0, scan = 0;
     int16_t escape_border = -1;
     uint8_t queue_count = 0;
@@ -113,7 +124,9 @@ struct CombatState {
     int8_t escape_floor_delta = 0; // 0 = absent.
     void *victory_context = nullptr;
     void (*victory_latch)(void *) = nullptr;
-    bool queue_live = false, ended = false, victory = false, room = false, initialized = false;
+    bool queue_live = false, ended = false, victory = false, room = false, initialized = false,
+         has_world_loot_origin = false;
+    bool absorbed_any = false;
 };
 struct CombatTables {
     const int32_t *attack = nullptr, *range = nullptr, *defense = nullptr,
@@ -143,6 +156,7 @@ struct FixedCombatSetup {
 CombatResult initialize_combat(CombatContext &, const CombatMap &, CombatDirection,
                                const CombatEnemy *const *, size_t, bool room = false, const FixedCombatSetup *fixed = nullptr);
 CombatActor *current_combat_actor(CombatContext &);
+int32_t combat_sceptre_fields(CombatContext &);
 bool combat_over(const CombatState &);
 enum class CombatAction : uint8_t {
     Move,
@@ -153,17 +167,22 @@ enum class CombatAction : uint8_t {
     AttackCancel,
     Yield,
     EnemyStep,
-    Klimb, Get, Open
+    Klimb, Get, Open, Search,
+    // Internal UI route for an already-resolved adjacent Open target. The
+    // legacy Open action retains its direction-ordinal API.
+    OpenAt
 };
 CombatResult combat_action(CombatContext &, CombatAction, int32_t x = 0, int32_t y = 0);
 // Maximum additional actor storage required conservatively before any action.
 int32_t combat_growth_reserve(const CombatState &);
 CombatResult combat_cast_effect(CombatContext &, SpellEffect, const CombatPoint *aim = nullptr);
+CombatResult combat_use_consumable(CombatContext &,int32_t item,EventSink);
 // Atomic semantic cast: target_member=-1 cancels a required party target;
 // cancel_aim loses already-paid resources without advancing the turn, as in TS.
 CombatResult combat_cast(CombatContext &, SpellId, const CombatPoint *aim = nullptr,
                          int32_t target_member = -1, bool cancel_aim = false);
 int32_t combat_distance(int32_t dx, int32_t dy);
+CombatPoint combat_cell_to_world(const CombatState &, int32_t combat_x, int32_t combat_y);
 // World handoff does not own maps, enemies or NPC removal. Missing maps reject
 // before RNG.
 struct CombatResources {
@@ -179,7 +198,11 @@ struct CombatResources {
 CombatResult start_encounter_combat(CommandContext &, CombatState &, const CombatResources &,
                                     int32_t enemy, int32_t tile, int32_t map_override = -1,
                                     CombatDirection entry = CombatDirection::South,
-                                    bool intro = true);
+                                    bool intro = true, const char *post_group_line = nullptr);
+// Read-only validation for owners that must remove an NPC before scene entry.
+CombatResult preflight_encounter_combat(const CommandContext &,const CombatState &,const CombatResources &,
+                                       int32_t enemy,int32_t tile,int32_t map_override=-1,
+                                       CombatDirection entry=CombatDirection::South);
 CombatResult finish_encounter_combat(CommandContext &, CombatState &);
 // Generic fixed/scripted entry. The caller supplies the already-approved trigger
 // and exact arena/units; no quest conditions or narrative rewards live here.

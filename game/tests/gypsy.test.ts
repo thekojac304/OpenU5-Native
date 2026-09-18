@@ -1,7 +1,9 @@
 /**
  * Tests del cuestionario de la gitana (creación de personaje, FONT.OVL).
  * Reglas exactas del binario; ver re/notes/gypsy.md y re/verified/gypsy.md.
- * Bracket determinista desde seed 0 (rng.md: nada re-siembra antes de la gitana).
+ * Seed 0 is a deterministic golden fixture. The DOS frontend normally hashes
+ * its clock into the shared RNG before the menu (re/notes/rng-186-acta.md), so
+ * production character creation must pass the live post-menu seed explicitly.
  */
 import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";

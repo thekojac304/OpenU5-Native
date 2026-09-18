@@ -11,6 +11,7 @@ struct TurnState {
     char time_spell = 0;
     int32_t spell_turns = -1; // -1 = undefined; 255 = permanent.
     int32_t transport_tile = 0x1c, wind = 0, wind_drift_counter = 0;
+    int32_t sail_dir = 0, hms_cape_toggle = 0;
     bool has_shadowlords = false;
     std::array<int32_t, 3> shadowlord_locations{{128,128,128}};
     int32_t skull_tree_day = 0;

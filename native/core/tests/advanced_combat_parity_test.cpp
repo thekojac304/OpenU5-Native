@@ -265,10 +265,13 @@ int main(int argc, char **argv) {
                 w.combat_context = &c;
                 w.events = {&h, [](void *p, const GameEvent &e) {
                                 auto &h = *static_cast<Advanced *>(p);
-                                if (e.kind != GameEventKind::Combat)
+                                if (e.kind == GameEventKind::Combat) {
+                                    h.event(*e.combat);
+                                    h.modes.push_back(e.combat->mode);
+                                } else if (e.kind != GameEventKind::Sfx &&
+                                           e.kind != GameEventKind::MagicCeremony) {
                                     std::abort();
-                                h.event(*e.combat);
-                                h.modes.push_back(e.combat->mode);
+                                }
                             }};
                 Command cmd;
                 cmd.kind = CommandKind::Cast;

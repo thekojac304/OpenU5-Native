@@ -6,10 +6,11 @@ bool in_bounds(int32_t x, int32_t y, MapGeometry m) {
     return x >= 0 && y >= 0 && x < m.width && y < m.height;
 }
 int32_t ActiveMap::tile_at(int32_t x, int32_t y) const {
-    if (!tiles) return kOffMap;
     if (geometry.wraps) { x = wrap_coord(x); y = wrap_coord(y); }
     else if (!in_bounds(x, y, geometry)) return kOffMap;
-    return tiles[size_t(y) * geometry.width + size_t(x)];
+    if (!tiles && !resolve_tile) return kOffMap;
+    const int32_t tile=tiles?tiles[size_t(y) * geometry.width + size_t(x)]:kOffMap;
+    return resolve_tile?resolve_tile(resolve_context,id,x,y,tile):tile;
 }
 Result<ActiveMap> get_active_map(const WorldData &w, MapId id) {
     ActiveMap m{};

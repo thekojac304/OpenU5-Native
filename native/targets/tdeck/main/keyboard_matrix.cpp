@@ -86,14 +86,17 @@ size_t KeyboardMatrix::apply_snapshot(const uint8_t columns[kKeyboardColumns],
             if (pressed) active_codes_[column][row] = code;
             else active_codes_[column][row] = 0;
             if (count < capacity && events != nullptr) {
-                events[count] = {
-                    .code = code,
-                    .column = static_cast<uint8_t>(column),
-                    .row = static_cast<uint8_t>(row),
-                    .transition = pressed ? KeyTransition::Pressed : KeyTransition::Released,
-                    .modifiers = next_modifiers,
-                    .modifier_key = is_modifier(column, row),
-                };
+                auto &event=events[count];event={};
+                event.code=code;
+                event.column=static_cast<uint8_t>(column);
+                event.row=static_cast<uint8_t>(row);
+                event.transition=pressed?KeyTransition::Pressed:KeyTransition::Released;
+                event.modifiers=next_modifiers;
+                event.modifier_key=is_modifier(column,row);
+                event.base_code=kBase[column][row];
+                event.symbol_code=kSymbol[column][row];
+                memcpy(event.snapshot,next,sizeof(event.snapshot));
+                memcpy(event.previous_snapshot,columns_,sizeof(event.previous_snapshot));
             }
             ++count;
         }
@@ -105,9 +108,9 @@ size_t KeyboardMatrix::apply_snapshot(const uint8_t columns[kKeyboardColumns],
 
 void KeyboardMatrix::desynchronize()
 {
-    memset(columns_, 0, sizeof(columns_));
-    memset(active_codes_, 0, sizeof(active_codes_));
-    modifiers_ = {};
+    // Keep the last known-good state observable while transport recovery is in
+    // progress. The next valid snapshot becomes a quiet baseline, replacing
+    // active codes/modifiers without manufacturing release edges.
     synchronized_ = false;
 }
 

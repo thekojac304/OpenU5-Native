@@ -1,5 +1,13 @@
 # Semantic command orchestration
 
+## Current integration
+
+[GAMEPLAY.md](GAMEPLAY.md) is the current orchestration/reachability ledger.
+Non-foot movement, bridge troll continuations, outdoor encounters, generic
+Open/Jimmy/Push/Get/Look/Use/Cast/Attack/Fire, rest ambushes, dungeon camping,
+terrain ownership and buffer adapters are now connected. Earlier restrictions
+below describe the initial command batch and are superseded where listed there.
+
 ## Inventory/rest extension
 
 The current command engine additionally supports resolved `Ready`, `Unready`,

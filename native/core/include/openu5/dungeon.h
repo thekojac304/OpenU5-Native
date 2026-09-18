@@ -1,6 +1,7 @@
 #pragma once
 #include "commands.h"
 namespace openu5 {
+struct DungeonEncounters;
 // Facing order is the dungeon's N/E/S/W order, not Direction's order.
 enum class DungeonFacing : uint8_t { North, East, South, West };
 struct DungeonPosition {
@@ -95,6 +96,8 @@ struct DungeonContext {
     bool room_entry_valid = false;
     // Return true when a quest-specific entrance encounter consumed Enter.
     bool (*entry_hook)(void *, uint8_t dungeon, EventSink) = nullptr;
+    DungeonEncounters *encounters = nullptr;
+    CommandStatus encounter_status = CommandStatus::Success;
 };
 ActionResult execute_dungeon_command(CommandContext &, Command);
 void exit_dungeon(CommandContext &, bool underworld);

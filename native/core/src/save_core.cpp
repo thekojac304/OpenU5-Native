@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <cstdio>
 namespace openu5::save {
 namespace {
 using J = Json;
@@ -80,6 +81,29 @@ bool char_in(const J &j, CharacterState &c) {
 }
 } // namespace
 void capture_core(const GameState &g, const TurnState &t, Json &s) {
+    for(unsigned i=0;i<113;++i){char key[16];std::snprintf(key,sizeof(key),"search:%u",i);if(g.quest.search_present[i/8]&(1u<<(i%8)))s["questFlags"][key]=J(bool(g.quest.search_found[i/8]&(1u<<(i%8))));else s["questFlags"].erase(key);}
+    if(g.hms_cape || s["specialItems"].has("hmsCape"))s["specialItems"]["hmsCape"]=J(g.hms_cape);
+    for (unsigned i=0;i<unsigned(QuestFlag::Count);++i) {
+        const auto f=QuestFlag(i); const auto key=quest_flag_name(f);
+        if (g.quest.flag_present & (1u<<i)) s["questFlags"][key]=J(quest_flag(g.quest,f));
+        else s["questFlags"].erase(key);
+    }
+    constexpr const char *shards[]={"falsehood","hatred","cowardice"};
+    constexpr const char *artifacts[]={"amulet","crown","sceptre"};
+    for (unsigned i=0;i<3;++i) {
+        s["shards"][shards[i]]=J(g.quest.shards[i]);
+        s["lbArtifacts"][artifacts[i]]=J(g.quest.artifacts[i]);
+    }
+    const char *optional[]={"shrineQuestBitmap","shrineVisitedBitmap","shadowlordDoomBits","shadowlordSummoned"};
+    const int32_t values[]={g.quest.shrine_quest,g.quest.shrine_visited,g.quest.doom_bits,g.quest.summoned};
+    for (unsigned i=0;i<4;++i) {
+        if (g.quest.optional_present & (1u<<i)) s[optional[i]]=J(values[i]);
+        else s.erase(optional[i]);
+    }
+    if (g.quest.destroyed_count) {
+        s["shrineDestroyed"]=J::array();
+        for (uint8_t i=0;i<g.quest.destroyed_count;++i) s["shrineDestroyed"].values.emplace_back(g.quest.shrine_destroyed[i]);
+    } else if (s.has("shrineDestroyed")) s["shrineDestroyed"]=J::array();
     s["version"] = J(int(g.version));
     s["characters"].kind = J::Array;
     s["characters"].values.resize(g.party.character_count);
@@ -151,6 +175,8 @@ void capture_core(const GameState &g, const TurnState &t, Json &s) {
     F("transportTile", transport_tile);
     F("wind", wind);
     F("windDriftCtr", wind_drift_counter);
+    F("sailDir", sail_dir);
+    F("hmsCapeToggle", hms_cape_toggle);
     F("skullTreeFoundDay", skull_tree_day);
 #undef F
     if (t.spell_turns < 0)
@@ -178,7 +204,7 @@ Error restore_core(const Json &s, GameState &game, TurnState &turn) {
     // The document codec accepts TS's broad JSON domain. A live bounded C++
     // projection must reject fields it cannot represent, not narrow silently.
     for (auto key : {"shipHull", "shipSkiffs", "prevHour", "lightSpellMins", "drunkTurns", "transportTile",
-                     "wind", "windDriftCtr", "skullTreeFoundDay"})
+                     "wind", "windDriftCtr", "sailDir", "hmsCapeToggle", "skullTreeFoundDay"})
         if (s.has(key) && !fits(s[key], INT32_MIN, INT32_MAX))
             return Error::NativeDomain;
     for (auto key : {"feluccaPhase", "trammelPhase", "timeSpellTurns"})
@@ -218,6 +244,36 @@ Error restore_core(const Json &s, GameState &game, TurnState &turn) {
     }
     GameState g{};
     TurnState t{};
+    g.hms_cape=s["specialItems"]["hmsCape"].truth();
+    for(unsigned i=0;i<113;++i){char key[16];std::snprintf(key,sizeof(key),"search:%u",i);if(s["questFlags"].has(key)){if(s["questFlags"][key].kind!=J::Bool)return Error::NativeDomain;g.quest.search_present[i/8]|=uint8_t(1u<<(i%8));if(s["questFlags"][key].truth())g.quest.search_found[i/8]|=uint8_t(1u<<(i%8));}}
+    for (unsigned i=0;i<unsigned(QuestFlag::Count);++i) {
+        const auto f=QuestFlag(i); const auto key=quest_flag_name(f);
+        if (s["questFlags"].has(key)) {
+            if (s["questFlags"][key].kind!=J::Bool) return Error::NativeDomain;
+            set_quest_flag(g.quest,f,s["questFlags"][key].truth());
+        }
+    }
+    constexpr const char *shards[]={"falsehood","hatred","cowardice"};
+    constexpr const char *artifacts[]={"amulet","crown","sceptre"};
+    for (unsigned i=0;i<3;++i) {
+        g.quest.shards[i]=s["shards"][shards[i]].truth();
+        g.quest.artifacts[i]=s["lbArtifacts"][artifacts[i]].truth();
+    }
+    const char *optional[]={"shrineQuestBitmap","shrineVisitedBitmap","shadowlordDoomBits","shadowlordSummoned"};
+    int32_t *values[]={&g.quest.shrine_quest,&g.quest.shrine_visited,&g.quest.doom_bits,&g.quest.summoned};
+    for (unsigned i=0;i<4;++i) if (s.has(optional[i])) {
+        if (!fits(s[optional[i]],INT32_MIN,INT32_MAX)) return Error::NativeDomain;
+        *values[i]=int32_t(s[optional[i]].integer()); g.quest.optional_present |= uint8_t(1u<<i);
+    }
+    if (s.has("shrineDestroyed")) {
+        const auto &a=s["shrineDestroyed"];
+        if (a.kind!=J::Array || a.values.size()>8) return Error::NativeDomain;
+        g.quest.destroyed_count=uint8_t(a.values.size());
+        for (size_t i=0;i<a.values.size();++i) {
+            if (!fits(a.at(i),0,255)) return Error::NativeDomain;
+            g.quest.shrine_destroyed[i]=uint8_t(a.at(i).integer());
+        }
+    }
     g.rng = game.rng; // TS persistence does not serialize Game.liveRng.
     if (s["characters"].kind != J::Array || s["characters"].values.size() > 16)
         return Error::NativeDomain;
@@ -306,8 +362,11 @@ Error restore_core(const Json &s, GameState &game, TurnState &turn) {
     F("lightSpellMins", light_spell_minutes);
     F("drunkTurns", drunk_turns);
     F("transportTile", transport_tile);
+    if (!s.has("transportTile")) t.transport_tile = 28;
     F("wind", wind);
     F("windDriftCtr", wind_drift_counter);
+    F("sailDir", sail_dir);
+    F("hmsCapeToggle", hms_cape_toggle);
     F("skullTreeFoundDay", skull_tree_day);
 #undef F
     t.felucca_phase = int32_t(s["feluccaPhase"].integer(-1));

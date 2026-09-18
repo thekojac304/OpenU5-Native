@@ -167,3 +167,4 @@ game/tools/careo-visual/_out
 
 native/targets/tdeck/build/
 native/targets/tdeck/build-*/
+/native/core/build-shops/

@@ -27,8 +27,8 @@ struct DialogueServices {
     // Optional translation and alias injection; names/knows/RNG are orchestration-owned.
     ConversationContext language{};
     void *context = nullptr;
-    // False/absent leaves an explicit deferred result. QuestEnd is the exact seam
-    // for Game.faulineiTheftOnTalkEnd, not an invented successful quest outcome.
+    // False/absent leaves an explicit deferred result for Guard/Shop.
+    // QuestEnd is handled by the native Game.faulineiTheftOnTalkEnd translation.
     bool (*handoff)(void *, DialogueHandoff, const NpcActor &, EventSink) = nullptr;
 };
 void dialogue_alarm(NpcActors &, uint8_t location, Rand);

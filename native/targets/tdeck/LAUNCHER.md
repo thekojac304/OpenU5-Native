@@ -1,60 +1,26 @@
-# Launcher packaging — Milestone 5.1 stack correction
+# Launcher packaging — Alpha 2.0.0 alpha2 physical correction
 
-## Generate
-
-In an activated ESP-IDF v6.1 shell, from `native/targets/tdeck`:
+From an activated ESP-IDF v6.1 shell:
 
 ```sh
-idf.py -B build-m5 build
-python package_launcher.py --build-dir build-m5
+idf.py -B build-alpha20-final build
+python package_launcher.py --build-dir build-alpha20-final
 ```
 
-Output:
+Validated output:
 
-`native/targets/tdeck/build-m5/launcher/OpenU5-TDeck-M5-Launcher.bin`
+`build-alpha20-final/launcher/OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`
 
-The packager uses the existing normal ESP-IDF build, validates its ESP32-S3 app
-header, segment checksum, and appended SHA-256, then copies it byte-for-byte.
-It does not compile, merge, pad, flash, or modify the normal build output. For
-another build directory use `python package_launcher.py --build-dir PATH`.
+The packager validates the ESP32-S3 application header, segment checksum, and
+appended SHA-256 before making a byte-identical copy. It does not merge a
+bootloader or partition table, pad, flash, or otherwise modify the image.
 
-Current package details:
+- Firmware version: `2.0.0-alpha2-debug`
+- Size: 779,680 bytes
+- SHA-256: `895f7099a7d5eee72d295390a1149af75f4f4ee06307fb3ab8a964e701330cbe`
+- Minimum 64-KiB-aligned Launcher allocation: 786,432 bytes (768 KiB)
+- ESP-IDF: 6.1, target ESP32-S3
 
-- Version: `0.5.1-input-final`; stability capture in [STACK51.md](STACK51.md).
-- Exact size: 339,728 bytes.
-- SHA-256: `5784cc45d38fdd1d50d17a3debf73737a8ff08ed70367836fa3d16ccd7e0cb01`.
-- Minimum aligned Launcher app allocation: 393,216 bytes (384 KiB).
-- Source app image: `build-m5/openu5_tdeck.bin`, also 339,728 bytes.
-
-## Format and compatibility
-
-The file starts with the standard ESP application header (`0xE9`) at offset
-zero, followed by segments, checksum, and SHA-256. It contains no Launcher
-wrapper, bootloader, partition table, filesystem, or leading address padding.
-Launcher chooses the destination app partition.
-
-This preserves the packaging model verified for Milestone 1 against
-[bmorcelli Launcher installation documentation](https://github.com/bmorcelli/Launcher/wiki/Obtaining-binaries-to-launch),
-the [SD installer](https://github.com/bmorcelli/Launcher/blob/main/src/sd_functions.cpp),
-and its [partition install layout](https://github.com/bmorcelli/Launcher/blob/main/src/partition_install_layout.cpp).
-Milestone 5 adds no application NVS or data-partition dependency; the asset pack
-remains an ordinary file on the microSD card.
-
-## Install on T-Deck Plus
-
-Copy `OpenU5-TDeck-M5-Launcher.bin` to a FAT-formatted SD card, insert it, open
-Launcher, choose **SD**, select the file, and choose **Install**. The package
-requires one available app entry and at least 384 KiB of suitably contiguous
-app space after alignment.
-
-Do not use the standalone `idf.py flash` workflow for coexistence installation;
-that separate workflow also writes this project's standalone partition table.
-After testing, reset and enter Launcher again to confirm it remains selectable.
-
-## Validation status
-
-Local ESP-IDF v6.1 diagnostic build, package validation, checksum validation,
-and byte-for-byte comparison passed. Avatar movement and trackball feel were
-hardware-verified by the user. The prior keyboard cleanup failed physical
-verification. Keyboard lockup and repeated startup screens are unresolved;
-this build adds evidence collection only.
+This image is host-built and has not been flashed or physically timed in this
+environment. See [ALPHA20_FRONTEND_NEW_GAME.md](ALPHA20_FRONTEND_NEW_GAME.md)
+for the frontend/new-game design, verification record, and physical checklist.

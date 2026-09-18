@@ -50,7 +50,7 @@ def main() -> None:
         raise ValueError("App image must be inside the build directory")
     data = source.read_bytes()
     validate(data)
-    destination = build / "launcher" / "OpenU5-TDeck-M5-Launcher.bin"
+    destination = build / "launcher" / "OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin"
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_bytes(data)
     if destination.read_bytes() != data:

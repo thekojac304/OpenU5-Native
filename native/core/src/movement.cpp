@@ -1,4 +1,5 @@
 #include "openu5/movement.h"
+#include "openu5/transport.h"
 
 namespace openu5 {
 namespace {
@@ -100,19 +101,31 @@ const char *step_message_text(StepMessage message) {
 }
 
 Result<StepGeometry> resolve_unoccupied_foot_step(GameState &state, const ActiveMap &map, Direction direction) {
+    if (state.transport != TransportMode::Foot) return {{}, Error::InvalidRange};
+    return resolve_world_step(state, map, direction, 28);
+}
+
+Result<StepGeometry> resolve_world_step(GameState &state, const ActiveMap &map, Direction direction,
+                                        int32_t transport_tile, int32_t actor_tile) {
     StepGeometry r{};
-    if (state.transport != TransportMode::Foot) return {r, Error::InvalidRange};
     if (!map.tiles || (map.geometry.wraps && (map.geometry.width != 256 || map.geometry.height != 256)) ||
         map.geometry.width == 0 || map.geometry.height == 0 || map.geometry.width > 256 || map.geometry.height > 256)
         return {r, Error::InvalidMap};
     Position target{};
     if (!target_for_step(state.position.xy, map.geometry, direction, target)) {
-        // TS uses constant grass filler, not edgeFillTile. Foot can leave even a void basement.
-        r.exited_map = true;
+        // Reference uses constant grass filler even in a void basement.
+        r.exited_map = is_passable(5, state.transport).value;
+        if (!r.exited_map) {
+            r.blocked = true;
+            r.message = StepMessage::Blocked;
+            r.minutes = 1;
+        }
         return {r, Error::None};
     }
     const int32_t tile = map.tile_at(target.x, target.y);
-    const auto passable = is_passable(tile, TransportMode::Foot);
+    const bool occupied = map.geometry.wraps && actor_tile != 0 &&
+                          !boardable_actor_tile(actor_tile, transport_tile);
+    const auto passable = occupied ? Result<bool>{false, Error::None} : is_passable(tile, state.transport);
     if (passable.error != Error::None) return {r, passable.error};
     if (!passable.value) {
         r.blocked = true;
@@ -128,8 +141,8 @@ Result<StepGeometry> resolve_unoccupied_foot_step(GameState &state, const Active
         r.speed_class = terrain_speed_class(tile);
         r.message = r.speed_class == 1 ? StepMessage::SlowProgress :
                     r.speed_class == 2 ? StepMessage::VerySlow : StepMessage::None;
-        r.on_bridge = tile == 0x6a || tile == 0x6b;
-        r.on_swamp = tile == 4;
+        r.on_bridge = (tile == 0x6a || tile == 0x6b) && state.transport == TransportMode::Foot;
+        r.on_swamp = tile == 4 && state.transport == TransportMode::Foot;
     }
     return {r, Error::None};
 }
