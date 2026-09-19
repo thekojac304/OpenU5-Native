@@ -28,6 +28,7 @@
 #include "openu5/commands.h"
 #include "openu5/look.h"
 #include "openu5/npc_path.h"
+#include "openu5/shrine.h"
 #include "openu5/ui_session.h"
 #include "openu5/world.h"
 #include <algorithm>
@@ -363,45 +364,99 @@ static void a7_blackthorn_answer_advances_interrogation() {
     std::cout << "A7 (Blackthorn answer advances interrogation) executed\n";
 }
 
-// A8: blackthorn_machine_never_softlocks_the_world.
-static void a8_blackthorn_machine_never_softlocks_the_world() {
-    struct Case {
-        const char *name;
-        void (*arm)(BlackthornSession &);
-    };
-    const Case cases[] = {
-        {"Blackthorn answer", [](BlackthornSession &s) { s.shrine = 0; }},
-        {"GuardPassword", [](BlackthornSession &s) { s.password = true; }},
-        {"GuardTribute", [](BlackthornSession &s) { s.tribute = true; }},
-        {"GuardArrest", [](BlackthornSession &s) { s.arrest = true; }},
-    };
-    for (const auto &c : cases) {
-        GameState game{};
-        game.party.party_size = game.party.character_count = 1;
-        game.party.characters[0].status = 'G';
-        game.position.map.location = 2;
-        TurnState turn{};
-        TravelState travel{};
-        CommandState commands{};
-        BlackthornSession blackthorn{};
-        c.arm(blackthorn);
-        std::vector<uint8_t> large(65536, 5), small(1024, 5);
-        MapData local{{2, 0}, small.data(), small.size()};
-        WorldData world{large.data(), large.data(), large.size(), large.size(), &local, 1};
-        CommandContext ctx{game, turn, travel, commands, world};
-        ctx.blackthorn = &blackthorn;
+// A8: machine_never_softlocks_after_real_resolution.
+//
+// Superseded version. The prior A8 armed a BlackthornSession flag directly
+// and issued Pass WITHOUT ever dispatching the resolving BlackthornAction --
+// that only re-exercises the correct, intentional commands.cpp:628 gate ("an
+// UNRESOLVED prompt blocks the world"), which is working as designed, not
+// the actual Batch 4 defect ("a modal ANSWER was silently dropped, so the
+// flag never cleared and the block became permanent"). A1/A3/A4/A5/A6
+// already prove the real per-family fix in detail; this is the compact
+// cross-family regression the task asks A8 to be: drive the real trigger,
+// answer through the real UiSession path, THEN issue a fresh Pass and
+// require it is not AwaitingResponse -- i.e. verify the machine actually
+// resolves before asserting it no longer blocks.
+//
+// GuardPassword/GuardTribute/GuardArrest each resolve in a single round
+// trip and are driven end-to-end for real, exactly like A1/A3/A5. Blackthorn's
+// interrogation is a multi-round core state machine gated on 12 MISCMSG
+// records (ShrineServices::record) that this host suite carries no content
+// for (see A7's own comment, and host_tests/ui_mode_test.cpp's SHRINE-1/2
+// note -- an established, pre-existing convention, not new to this fix). A
+// minimal, content-FREE ShrineServices is wired here (a fixed placeholder
+// string per record index; no real MISCMSG/virtue/mantra data, and no
+// assertion anywhere depends on its content) purely so the REAL
+// blackthorn_action() state machine can run to completion instead of
+// returning InvalidContext, with `living = 1` so a single answer concludes
+// the interrogation on this first round rather than *correctly* advancing
+// to another round (which would also legitimately return AwaitingResponse
+// and must not be mistaken for a softlock -- that branch requires
+// `living > 1` and is exercised, unresolved, by A7).
+static void a8_machine_never_softlocks_after_real_resolution() {
+    auto pass_unblocked = [](CommandContext &ctx, const char *label) {
         Command pass;
         pass.kind = CommandKind::Pass;
-        auto result = execute_command(ctx, pass);
-        check(result.status != CommandStatus::AwaitingResponse,
-              std::string("A8: after ") + c.name +
-                  " resolves (via a real modal answer flow), a subsequent Pass must not remain "
-                  "AwaitingResponse -- RED expected: today all four Blackthorn flows leave their "
-                  "flag set forever (see A1/A3/A5/A7), so this reproduces the exact user-visible "
-                  "permanent softlock at commands.cpp's `c.blackthorn && (shrine>=0||password||"
-                  "tribute||arrest)` AwaitingResponse gate");
+        auto after = execute_command(ctx, pass);
+        check(after.status != CommandStatus::AwaitingResponse,
+              std::string("A8: after the real ") + label +
+                  " modal answer actually resolves the machine, a subsequent Pass must not remain "
+                  "AwaitingResponse -- this is the real anti-softlock invariant (distinct from an "
+                  "intentionally unresolved prompt correctly blocking the world, which A7 already "
+                  "exercises for Blackthorn's multi-round case)");
+    };
+
+    { // GuardTribute -- same real trigger/answer as A1.
+        GuardWorld w(2);
+        w.game.gold = 500;
+        w.add_guard(5, 112, 255, 4, 10, 9);
+        w.pass();
+        w.ui.handle_input(ch(u'y'));
+        pass_unblocked(w.ctx, "GuardTribute");
     }
-    std::cout << "A8 (Blackthorn machine never softlocks the world) executed\n";
+    { // GuardArrest -- same real direct-arrest trigger/answer as A3.
+        GuardWorld w(2);
+        w.add_guard(7, 112, 255, /*ai=*/6, 10, 9);
+        w.pass();
+        w.ui.handle_input(ch(u'y'));
+        pass_unblocked(w.ctx, "GuardArrest");
+    }
+    { // GuardPassword -- same real Palace badge-guard trigger/answer as A5.
+        GuardWorld w(18);
+        w.turn.time_spell = '\x1d';
+        w.add_guard(7, 112, 255, 4, 10, 9);
+        w.pass();
+        w.ui.handle_input(ch(u'I'));
+        w.ui.handle_input(ch(u'M'));
+        w.ui.handle_input(ch(u'P'));
+        w.ui.handle_input(ch(u'E'));
+        w.ui.handle_input(confirm_action());
+        pass_unblocked(w.ctx, "GuardPassword");
+    }
+    { // Blackthorn -- same minimal armed-session fixture as A7, extended with
+      // a content-free ShrineServices and living=1 so the real state machine
+      // reaches its concluding branch (s.shrine=-1) on the first answer.
+        GuardWorld w(2);
+        w.game.party.party_size = w.game.party.character_count = 1;
+        w.blackthorn.shrine = 0;
+        w.blackthorn.round = 0;
+        w.blackthorn.living = 1;
+        struct Fixture {
+            static const char *record(void *, int32_t) { return "x"; }
+        };
+        ShrineSession shrine_session{};
+        ShrineServices shrine_services{shrine_session, nullptr, nullptr, &Fixture::record};
+        w.ctx.shrine_services = &shrine_services;
+        GameEvent e;
+        e.kind = GameEventKind::BlackthornPrompt;
+        e.text = "\"What sayest thou to this virtue?\"";
+        w.ui.consume(e);
+        w.ui.handle_input(ch(u'N'));
+        w.ui.handle_input(ch(u'o'));
+        w.ui.handle_input(confirm_action());
+        pass_unblocked(w.ctx, "Blackthorn");
+    }
+    std::cout << "A8 (machine never softlocks after real resolution) executed\n";
 }
 
 // A9: fountain_opens_party_selection.
@@ -467,7 +522,7 @@ int main() {
     a5_guard_password_impe_passes();
     a6_guard_password_cancel_submits_empty();
     a7_blackthorn_answer_advances_interrogation();
-    a8_blackthorn_machine_never_softlocks_the_world();
+    a8_machine_never_softlocks_after_real_resolution();
     a9_fountain_opens_party_selection();
     a10_fountain_status_text_and_cancel();
     std::cout << checks << " batch4 group A checks executed, " << failures << " failed\n";

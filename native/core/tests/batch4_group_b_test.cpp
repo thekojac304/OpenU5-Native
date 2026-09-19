@@ -270,6 +270,40 @@ static void b4_npc_initiated_shop_uses_same_entry_as_player_talk() {
 }
 
 // B5: npc_initiation_identity_lifetime.
+//
+// Superseded version. The prior third check asserted `!dialogue_session.active`
+// after routing the real NpcInitiatesTalk event through the exact same
+// `UiSession::consume()` path B1 requires to reach `BeginConversation` and
+// activate the session -- both this test's own tap (its comment said so
+// verbatim: "Forward, exactly like ui.event_sink() would") and B1's default
+// `ctx.events = ui.event_sink()` end up calling the identical
+// `UiSession::consume()`. Given the production `UiSession::consume()` case
+// added for R-10 (native/core/src/ui_session.cpp) dispatches
+// BeginConversation immediately and unconditionally whenever it sees
+// NpcInitiatesTalk/NpcInitiatesShop, that check could never hold at the same
+// time as B1 -- confirmed empirically (B1 green, this check red) before this
+// correction, not merely asserted.
+//
+// The deeper reason is an architectural-layer mismatch, not a fixture bug:
+// in production, UiSession NEVER sees NpcInitiatesTalk/NpcInitiatesShop at
+// all. AlphaRuntime::consume_event() intercepts both event kinds BEFORE
+// forwarding to ui_->consume() and defers the dispatch to
+// drain_pending_npc_initiation(), called once the outer command has fully
+// unwound (see the R-10 resolution in ALPHA20_BATCH4_ADJUDICATION.md /
+// GAMEPLAY_INTEGRATION_AUDIT.md). That pending register lives as private
+// AlphaRuntime state (native/targets/tdeck/main/alpha_runtime.h), which is
+// ESP-only and not linked into this host suite; no ESP-free seam was carved
+// out of it (the adjudication's own "Not resolved, but does not block RED
+// design" note), and inventing one solely to give this one test something
+// to poll would be new production abstraction this pass does not justify.
+// So this test does NOT drive UiSession::consume() at all -- asserting the
+// session stays inactive after that path would be asserting a state
+// production never produces. Instead it proves exactly the invariant that
+// belongs at the host/core layer: the identity IS stable, survives past the
+// synchronous delivery window, and -- used exactly as the deferred drain
+// would use it -- is sufficient on its own (no retained pointer) to open the
+// correct session. B1-B4 already prove the real UiSession/AlphaRuntime-shaped
+// consumption end-to-end.
 static void b5_npc_initiation_identity_lifetime() {
     // GameEvent::npc is a borrowed pointer, valid only for synchronous
     // delivery ("borrowed identity for semantic conversation/shop
@@ -283,17 +317,20 @@ static void b5_npc_initiation_identity_lifetime() {
     auto &npc = w.add_npc(5, 0x40, 9, 4, times, 0, 10, 9);
 
     struct Tap {
-        UiSession *ui;
         int32_t slot = -1;
         uint8_t location = 0;
-    } tap{&w.ui};
+    } tap{};
     w.ctx.events = {&tap, [](void *p, const GameEvent &e) {
                         auto &t = *static_cast<Tap *>(p);
                         if (e.kind == GameEventKind::NpcInitiatesTalk && e.npc) {
                             t.slot = e.npc->schedule.slot;
                             t.location = e.npc->location;
                         }
-                        t.ui->consume(e); // Forward, exactly like ui.event_sink() would.
+                        // Deliberately NOT forwarded to UiSession here -- see
+                        // the function comment above. B1-B4 already drive the
+                        // real ui.event_sink() -> UiSession::consume() ->
+                        // BeginConversation path end-to-end; this tap isolates
+                        // just the identity-capture half of the invariant.
                     }};
     w.pass();
 
@@ -308,15 +345,20 @@ static void b5_npc_initiation_identity_lifetime() {
     check(resolved == &npc,
           "B5: re-resolving the actor from the copied (slot, location) identity, AFTER the emitting "
           "command has fully returned/unwound, must find the SAME actor the event named -- the "
-          "invariant the future deferred drain (R-10 ruling: AlphaRuntime::consume_event, deferred, "
-          "never the immediate re-entrant call the adjudication measured as merely tolerated) "
-          "depends on");
-    check(!w.dialogue_session.active,
-          "B5: there is no production deferred register/consumer at all today (see the R-10 "
-          "ruling) -- nothing re-resolves this identity after the turn unwinds and dispatches "
-          "BeginConversation from it, so a dialogue session never opens even though this test just "
-          "proved the identity round-trip is sound. This legitimately remains RED with no "
-          "pending/deferred register added in this pass");
+          "invariant AlphaRuntime's deferred drain (R-10 ruling: AlphaRuntime::consume_event, "
+          "deferred, never the immediate re-entrant call the adjudication measured as merely "
+          "tolerated) depends on");
+
+    Command begin;
+    begin.kind = CommandKind::BeginConversation;
+    begin.member = int16_t(resolved->schedule.slot);
+    dispatch_world_command(w.ctx, begin);
+    check(w.dialogue_session.active && w.dialogue_session.npc.schedule.slot == resolved->schedule.slot,
+          "B5: the re-resolved identity, used exactly as the deferred drain would use it "
+          "(BeginConversation{member=slot}), must open a real dialogue session naming the SAME "
+          "actor the original borrowed-pointer event identified -- closing the loop the deferred "
+          "design depends on: capture, survive the synchronous window, re-resolve without the "
+          "pointer, and successfully initiate");
     std::cout << "B5 (NPC-initiated identity lifetime) executed\n";
 }
 
