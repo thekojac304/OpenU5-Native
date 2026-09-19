@@ -505,8 +505,11 @@ DebugResult apply_debug_preset(CommandContext &c, DebugPreset preset) {
         mutations = maximize_party(g, true);
         mutations = uint16_t(mutations + stock_inventory(g));
         mutations = uint16_t(mutations + apply_best_gear(g, combat_tables(c)));
-        g.party.active_character = 0;
-        ++mutations;
+        // Prepare a multi-member combat test state without invoking the real
+        // Set Active Player mechanic: leaving it at the "unrestricted" sentinel
+        // keeps combat scheduling free to cycle every party member, matching
+        // normal (non-debug) turn order. See GAMEPLAY_INTEGRATION_AUDIT.md.
+        g.party.active_character = 255;
         break;
     case DebugPreset::Dungeon:
         mutations = stock_inventory(g);

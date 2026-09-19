@@ -165,6 +165,11 @@ TurnResult outdoor_turn(GameState &g, TurnState &s, Rand source, const OutdoorTu
                 for (int32_t i = 0; i < g.party.party_size && i < g.party.character_count && i < 6; ++i) {
                     const auto &ch = g.party.characters[i];
                     if (ch.status == 'D' || ch.status == 'S') continue;
+                    // Reference-faithful 1..30 vs. dexterity check (matches the original
+                    // disassembly exactly). Max Dexterity (30) can never fail this roll,
+                    // so a maxed-Dex character is legitimately immune to being chosen as
+                    // the bridge-troll toll payer -- an incidental effect of Max Stats,
+                    // not a gameplay bug. Do not change. See GAMEPLAY_INTEGRATION_AUDIT.md.
                     const auto roll = rand(1,30); b.dex_rolls[b.indices.count] = roll; member(b.indices,i);
                     if (ch.dexterity < roll) { b.payer_index = i; b.toll = 99 - 3*(first < 0 ? 0 : g.party.characters[first].strength); break; }
                 }

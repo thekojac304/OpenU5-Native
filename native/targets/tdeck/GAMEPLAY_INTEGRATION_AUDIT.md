@@ -112,9 +112,9 @@ All routes are `UiSession::handle_exploration` → `UiIntent` → `AlphaRuntime:
 | `v` | View gem | **R** | ANCHOR 3. R-17 |
 | `x` | X-it (Disembark) | **Y** | Y-07 |
 | `y` | Yell | **G** | R-19 **GREEN** (Batch 3) — frigate branch dispatches `YellSails`; word-of-power Yell unchanged (Y-24 both branches covered). |
-| `z` | Z-stats | **Y** | Preserved as working; party highlight preserved. Y-07 |
+| `z` | Z-stats | **R** | Member picker and party highlight work; the Stats/Arms/Provisions/Reagents/Spells/Items/Armaments page family does not exist — selecting a member just reopens the picker. R-22 |
 | space/Enter | Pass | **G** | Two independent routes, both echo. |
-| `0`–`9` | Set Active Player / harpsichord note | **G** | Y-20, R-20 **GREEN** (Batch 3) — digits dispatch `SetActivePlayer` with the literal digit; at the harpsichord they are intercepted first and dispatch `HarpsichordNote`. |
+| `0`–`9` | Set Active Player / harpsichord note | **G** at the core/`UiSession` level; **device-partial** on T-Deck hardware | Y-20, R-20 **GREEN** (Batch 3) — digits dispatch `SetActivePlayer` with the literal digit; at the harpsichord they are intercepted first and dispatch `HarpsichordNote`. On T-Deck hardware, digits `1`-`9` (and Cancel, via short-press) are physically reachable, but literal `'0'` — the clear-active-player route — is not: the only matrix position resolving to `'0'` is the physical Mic key, which `UiInputAdapter::translate()` unconditionally intercepts for short=Cancel/long=Movement-Mode before any character dispatch. Tracked as **Y-29** (device-only reachability gap, open). |
 | any other | `"X-What?"` | **G** | Matches reference unknown-key echo. |
 
 ### D. View command family
@@ -872,6 +872,59 @@ Observed divergence (from the generated mismatch artifact) is in scroll-use even
 
 ---
 
+### R-22 — Native Z-stats status/inventory pages missing · **SEVERITY 2**
+
+**Discovery context:** pre-Batch-4 hardware testing walked the reference `(Z)` command family and compared it against the native T-Deck implementation. This was missed by the original audit — Batch 3's Use-picker reachability work (R-07/R-08) covers the `(U)se` item picker only and does not substitute for `(Z)` status pages, which are a distinct, unimplemented UI axis.
+
+**Reference `(Z)` page family:** the reference presents a member-select screen, then, per selected member, a multi-page status flow:
+- Stats page (attributes, level, exp, hp/mp)
+- Arms page (equipped weapon/armor/shield/ring/amulet)
+- Provisions page (food, gold, torches, gems, keys)
+- Reagents page
+- Spells page (known spells / spellbook contents)
+- Items page — including quest/special possessions: Amulet, Crown, Sceptre, Shards, Moonstones, HMS Cape plans, Spyglass, Sextant, Black Badge, Wooden Box
+- Armaments page (full weapon/armor inventory)
+
+**Native limitation:** `case 'z'` in `ui_session.cpp` (`handle_exploration`) only dispatches `UiIntentKind::OpenStatusSelection` with `UiRequestId::Status`, which opens the initial party-member picker. Selecting a member does not advance to any Stats/Arms/Provisions/Reagents/Spells/Items/Armaments page — it merely reopens or repositions the same member picker. There is no real status-page axis backing `(Z)` today, so none of the quest/special items listed above (which the reference explicitly surfaces under `(Z)`'s Items page) are ever shown to the player through this command.
+
+**Fix shape:** not yet designed — full implementation is deferred to its own future batch (see §14 Batch 13). This entry is evidence-only; do not implement in the same pass that files this finding.
+
+**Evidence:** [STATIC] — `ui_session.cpp` `case 'z'` and the `OpenStatusSelection`/`UiRequestId::Status` handling; [REF] — reference `(Z)` page family listed above.
+
+---
+
+### R-23 — Blackthorn sacrifice can leave blank roster gaps · **SEVERITY 3**
+
+**Discovery context:** pre-Batch-4 hardware testing traced `sacrificeFirstCompanion()` (reference) against `blackthorn.cpp::sacrifice()` (native) while investigating an unrelated single-character-combat report (see R-24/DebugPreset::Combat, which turned out to be the actual cause of that report — this finding is separate and lower priority).
+
+**Reference behavior:** `sacrificeFirstCompanion()` performs full roster compaction — `characters.splice(victim, 1)` removes the sacrificed member and shifts every later slot down, then `characters[15] = sacrificedRecord` places the sacrificed record's remnant at the fixed final roster slot.
+
+**Native divergence:** `blackthorn.cpp::sacrifice()` only shifts entries within the old `character_count`, then unconditionally forces `character_count = 16`. Because the shift does not extend into the newly-exposed range `[old character_count, 16)`, and `character_count` is forced to 16 regardless, this can expose blank/default-constructed roster slots inside `[0, character_count)` that were never part of a compaction shift.
+
+**Potential downstream effects:** any code that iterates `[0, character_count)` and assumes every slot holds a real (if possibly dead) character — including the Developer fill helpers (`fillable_party`/`maximize_party` in `debug_developer.cpp`, which stop at the first blank `name[0] == 0` slot) — may see a native-only blank gap that the reference roster never produces.
+
+**Scope note:** this is **not** the cause of the user's ordinary one-character-in-combat report; that was `DebugPreset::Combat` silently engaging Set Active Player (R-24, fixed in the pre-Batch-4 Developer-tool cleanup). R-23 is a separate, lower-priority fidelity bug and is not fixed in this pass.
+
+**Fix shape:** not yet designed — mirror the reference's `splice`+fixed-slot-15 compaction exactly. Deferred to a future batch.
+
+**Evidence:** [REF] `sacrificeFirstCompanion()`; [STATIC] `native/core/src/blackthorn.cpp` `sacrifice()`.
+
+---
+
+### R-24 — `DebugPreset::Combat` silently engaged Set Active Player, auto-passing every other party member · **SEVERITY 1** · **GREEN — RESOLVED (pre-Batch-4 Developer-tool cleanup)**
+
+**Discovery context:** pre-Batch-4 hardware testing of the Developer `Combat` preset found that after applying it and entering combat, only one party member (member 0 / the Avatar) ever received a manual turn; every other party CombatActor was created correctly but was silently auto-passed every cycle.
+
+**Root cause:** `apply_debug_preset(..., DebugPreset::Combat)` (`native/core/src/debug_developer.cpp`) set `g.party.active_character = 0` after maximizing the party. `active_character != 255` is not inert debug metadata — it is the live state read by the real Set Active Player mechanic (`commands.cpp` `CommandKind::SetActivePlayer`, and the scheduling check in `combat.cpp`'s `Engine::current()`: `if (player(a) && g.party.active_character != 255 && a.member != g.party.active_character) ... skip = true`). Setting it to `0` is functionally identical to the player manually pressing `1` (Set Active Player, member 0) before combat — every other living player actor is auto-passed for the rest of the encounter.
+
+**Fix:** `DebugPreset::Combat` no longer touches `active_character` away from the unrestricted sentinel (`255`); it now explicitly (re)asserts `255` after preparing the maxed/geared/stocked multi-member state, so the preset produces a good combat test party without engaging Set Active Player. The real Set Active Player command and combat scheduling logic are unchanged.
+
+**Regression coverage:** `debug_developer_test.cpp` — (1) the existing preset check now asserts `active_character == 255` after `DebugPreset::Combat`; (2) a new RED-before-GREEN regression builds a real multi-member arena via `initialize_combat`, cycles turns through the real combat scheduling path (`current_combat_actor`/`combat_action`), and asserts more than one distinct party member receives a turn. Verified to fail (RED) against the pre-fix source with the message "combat preset leaves every party member reachable for manual turns, not just one," and to pass (GREEN) after the fix.
+
+**Evidence:** [EXEC] RED-before-GREEN regression in `debug_developer_test.cpp`; [STATIC] `combat.cpp` `Engine::current()` skip logic; [STATIC] `commands.cpp` `SetActivePlayer` handler.
+
+---
+
 ## 4. YELLOW / UNPROVEN AREAS
 
 | ID | Area | Why unproven | Missing evidence |
@@ -887,7 +940,7 @@ Observed divergence (from the generated mismatch artifact) is in scroll-use even
 | Y-17 | Acknowledgements | One hardcoded line vs. the reference credit sequence | Low priority |
 | Y-18 | Developer entry from frontend | Calls `frontend_.enter_game()` directly, entering gameplay on whatever INIT.GAM state was loaded at boot | Confirm this is the intended debug affordance |
 | Y-19 | Mix quantity | `c.hours = 1` hardcoded in `modal()`; reference lets the player choose a batch size | Add a numeric modal |
-| Y-20 | `SetActivePlayer` | **GREEN — RESOLVED (Batch 3).** The reference binds the digit keys `0`-`9` (kernel `0x4080`, via MAINOUT `0xc06` / TOWN `0xe34`), not `N`; `N` stays New Order. `handle_exploration` now echoes `"Set Active Plr:"` and dispatches `CommandKind::SetActivePlayer` with the **literal** digit (`'2'` -> `command.member = 2`), because the core handler performs its own `member - 1` exactly as the kernel takes `key - '1'`. Digit range, party validity and the `None!`/`Invalid!` outcomes stay entirely in that core handler — no new selection modal. At the harpsichord the digit is intercepted first (R-20). | Covered by `batch3_group_a_test.cpp` A4/A5 |
+| Y-20 | `SetActivePlayer` | **GREEN — RESOLVED (Batch 3) at the core/`UiSession` level.** The reference binds the digit keys `0`-`9` (kernel `0x4080`, via MAINOUT `0xc06` / TOWN `0xe34`), not `N`; `N` stays New Order. `handle_exploration` now echoes `"Set Active Plr:"` and dispatches `CommandKind::SetActivePlayer` with the **literal** digit (`'2'` -> `command.member = 2`), because the core handler performs its own `member - 1` exactly as the kernel takes `key - '1'`. Digit range, party validity and the `None!`/`Invalid!` outcomes stay entirely in that core handler — no new selection modal. At the harpsichord the digit is intercepted first (R-20). The core/session route accepts a literal `'0'` (clear active player) exactly like any other digit; **on T-Deck hardware specifically**, digits `1`-`9` reach this route, but `'0'` cannot, because the only matrix position that resolves to `'0'` is the physical Mic key, which the device input adapter intercepts unconditionally for short=Cancel/long=Movement-Mode before any digit is ever produced. That device-only gap is tracked separately as **Y-29**. | Covered by `batch3_group_a_test.cpp` A4/A5 (core/session level); Y-29 covers the T-Deck hardware reachability gap |
 | Y-21 | Rel Hur scroll | `world_magic.cpp` `case 1` needs `cmd.has_direction`; the device never supplies one for scroll use | Same class as R-11, smaller blast radius |
 | Y-22 | Dungeon→combat→dungeon return | `dungeon_combat_return` handles floor delta, escape border and facing; covered by `dungeon_flow_parity` at core level only | Device round-trip test |
 | Y-23 | Dungeon keyboard movement with Movement Mode off | No `w`/`d` fallback; only trackball moves | Probably acceptable, but state it as a deliberate contract |
@@ -896,6 +949,19 @@ Observed divergence (from the generated mismatch artifact) is in scroll-use even
 | Y-26 | Beds / auto-sleep | `CommandKind::AutoSleep` is core-internal (`commands.cpp:1163`), reached through `townAutoSleepTurn` | Confirm it is genuinely internal-only |
 | Y-28 | Combat Ready picker close timing | Two presentation gaps that do **not** affect action cost (see section 3 R-06): the empty-handed case opens a disabled `"(None available)"` picker instead of charging immediately without one, and `ItemResult::vanished` (`"Ring vanishes!"`) does not close the picker early the way the reference does | Close the picker from `AlphaRuntime::modal()` on `vanished`, and short-circuit the empty-handed open |
 | Y-27 | System menu over an open modal | Menu is handled before gameplay routing and does not touch `ui_->mode()` | Device round-trip from inside a selection/target modal |
+| Y-29 | Physical "clear active player" (digit `0`) is hardware-unreachable on T-Deck | **OPEN.** `SetActivePlayer` with `member=0` (clears `active_character` back to `255`, `commands.cpp:747`) requires the literal character `'0'`. On T-Deck the only matrix position that resolves to `'0'` (`kSymbol[0][6]`, per `keyboard_matrix.cpp`) is the physical Mic/0 key, and `UiInputAdapter::translate()` intercepts that exact `column==kMicrophoneKeyColumn && row==kMicrophoneKeyRow` position unconditionally, before any modifier check, to implement short-press=Cancel / long-press=Movement-Mode-toggle. A literal `'0'` therefore never reaches `handle_exploration`'s digit switch on this hardware. Digits `1`-`9` (Set Active Player members 1-6, and Cancel already covered by short-press) remain reachable. See the pre-Batch-4 hardware investigation below for the surveyed alternatives and the recommended (not yet implemented) route. | Implement the recommended Sym+Mic/0 route (see below) once approved, or accept the gap and document it as a deliberate handheld-contract limitation |
+
+**Y-29 investigation detail — surveyed candidates for a device-reachable "clear active player" route:**
+
+| Candidate | Hardware/input distinguishable? | Conflicts with existing action? | Preserves short=Cancel / long=Movement Mode? | Complexity |
+|---|---|---|---|---|
+| Shift+0 (shift + physical Mic key) | **No** — the Mic-key branch in `ui_input_adapter.cpp::translate()` matches on `column`/`row` alone and returns before `raw.modifiers` is ever inspected, for both the pressed and released edges | N/A — unreachable | N/A — unreachable | N/A |
+| Alt+0 (alt + physical Mic key) | **No** — same reason: the position match short-circuits before the `raw.modifiers.alt` branch further down in the same function is ever reached | N/A — unreachable | N/A — unreachable | N/A |
+| Symbol/"Fn" layer + physical Mic key (**preferred — see recommendation below**) | **Yes, with a small code change** — today the position check in `UiInputAdapter::translate()` fires unconditionally and never inspects `raw.modifiers.symbol`, so this chord is currently swallowed by the same short/long Cancel/Movement-Mode branch as a bare press; but `raw.modifiers.symbol` is already carried on every `RawInputEvent`, so the branch can be taught to check it first | **No** — a *plain* Mic/0 press (no Symbol) keeps exactly its current short=Cancel / long=Movement-Mode behavior unchanged; only the Symbol-held case would newly diverge, and that combination is not bound to anything today | **Yes for the unmodified key** — the short/long contract is untouched for a plain press; only the Symbol-held edge of the same physical key gains new behavior | **Low** — confined to `ui_input_adapter.cpp`'s Mic-key branch: when `raw.modifiers.symbol` is set, bypass the short/long Cancel/Movement-Mode special case entirely and instead emit `action.kind = UiActionKind::Character, action.character = '0'`, which flows through the *existing, already-correct* `case '0'` digit path in `ui_session.cpp::handle_exploration` verbatim (including the harpsichord-note-0 interception, exactly as a real `'0'` press elsewhere would) — and also restores the keyboard's normal Symbol-layer numeric-`0` behavior anywhere a literal `0` is genuinely needed, not just for Set Active Player |
+| Alt + a different digit-producing key (e.g. the symbol-layer key that yields `'1'`, column 0 row 1) | **Yes** — that position is untouched by the Mic-key special case; `raw.modifiers.alt` and `raw.column`/`raw.row` are both already carried on every `RawInputEvent` | **No** — today `raw.modifiers.alt` combined with any key other than `m`/`d`/`s`/`l` falls through `UiInputAdapter::translate()`'s alt branch and returns `false` (dropped, no-op); this exact chord is currently dead input | **Yes** — entirely independent code path from the Mic-key branch | **Low**, but **not preferred** — it works, but it repurposes an unrelated key/modifier combination that has no relationship to the digit `0` at all, whereas Sym+Mic/0 is the position that was always meant to produce `'0'` in the first place |
+| A dedicated system/context-menu command (e.g. exposed from the `(N)ew Order` party-selection screen) | Yes, trivially — any UI affordance can carry it | Would need new UI; `(N)` today only performs the reference's two-stage swap-order flow, which has no Set-Active-Player affordance in the reference either | Yes — unrelated code path | **Higher** — no reference precedent for a menu-driven active-player clear; inventing one risks diverging from reference behaviour, and it still requires a rendering/interaction affordance that does not exist today |
+
+**Recommendation (NOT IMPLEMENTED YET — pending approval):** teach the Mic/0 branch in `UiInputAdapter::translate()` to check `raw.modifiers.symbol` before applying its short/long special case. A **plain** physical Mic/0 press keeps its current, unchanged contract: short press = Cancel, long press = Movement Mode toggle. A **Sym + physical Mic/0** press should instead bypass the short/long handling entirely, emit the literal character `'0'`, and flow through the existing normal character path — the same `case '0'` digit route every other digit already uses. This makes `SetActivePlayer(member=0)` / clear-active-player reachable on hardware, and also restores the keyboard's expected Symbol-layer numeric-`0` behavior anywhere else a literal `0` is genuinely needed. This supersedes the previously-recommended Alt+&lt;other-key&gt; workaround (still listed above for completeness): Sym+Mic/0 is the position the hardware's own symbol layer was already designed to produce `'0'` from, so it is the correct fix rather than a repurposed unrelated chord. As with the rest of Y-29, this is documented as a recommendation only — **not implemented in this pass** — pending explicit approval before implementation.
 
 ---
 
@@ -916,7 +982,7 @@ Observed divergence (from the generated mismatch artifact) is in scroll-use even
 | `UseMoonstone` | **Live** — R-08 resolved (Batch 3): moonstone rows 21-28 are in the Use picker whenever carried |
 | `HarpsichordNote` | **Live** — R-20 resolved (Batch 3): digit keys at the harpsichord |
 | `YellSails` | **Live** — R-19 resolved (Batch 3): `(Y)ell` aboard a frigate |
-| `SetActivePlayer` | **Live** — Y-20 resolved (Batch 3): digit keys `0`-`9` |
+| `SetActivePlayer` | **Live at the core/`UiSession` level** — Y-20 resolved (Batch 3): literal digits `0`-`9`. On T-Deck hardware, digits `1`-`9` are physically reachable; literal `0` remains blocked by the Mic/0 special handling — tracked as **Y-29**. |
 | `AutoSleep` | Core-internal. Fine. |
 
 ### `UiMode` values
@@ -1074,33 +1140,35 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 
 ## 11. RESOURCE / ITEM MATRIX
 
+**Note on the `View` column (post-R-22):** "Z-stats (R-22)" below means the reference exposes this resource on a `(Z)` status page, but native `(Z)` currently implements only the member picker — see R-22. The `Status` column separates the resource's own storage/use functionality (which is fine) from that missing presentation route.
+
 | Resource | Get | Use | Ready | View | Save | Status |
 |---|---|---|---|---|---|---|
-| Gold | ✓ | n/a | n/a | Z-stats | ✓ | **G** |
-| Food | ✓ | n/a (auto-consumed) | n/a | Z-stats | ✓ | **G** |
+| Gold | ✓ | n/a | n/a | Z-stats (R-22) | ✓ | **G** storage/use / R-22 view |
+| Food | ✓ | n/a (auto-consumed) | n/a | Z-stats (R-22) | ✓ | **G** storage/use / R-22 view |
 | Gems | ✓ | n/a | n/a | **`V`** | ✓ | **R-17** |
-| Keys | ✓ | via Jimmy/Open | n/a | Z-stats | ✓ | **G** |
-| Torches | ✓ | `I`gnite | n/a | Z-stats | ✓ | **G** |
-| Reagents ×8 | shop | `M`ix | n/a | Z-stats | ✓ | **Y-19** |
-| Equipment ×48 | ✓ / shop | n/a | **`R`** | Z-stats | ✓ | **G** world, dungeon and combat (R-06 resolved, Batch 3) |
-| Armour / helmets / shields | ✓ | n/a | ✓ | ✓ | ✓ | **G** |
-| Weapons / ammo | ✓ | n/a | ✓ (ammo checked) | ✓ | ✓ | **G** |
+| Keys | ✓ | via Jimmy/Open | n/a | Z-stats (R-22) | ✓ | **G** storage/use / R-22 view |
+| Torches | ✓ | `I`gnite | n/a | Z-stats (R-22) | ✓ | **G** storage/use / R-22 view |
+| Reagents ×8 | shop | `M`ix | n/a | Z-stats (R-22) | ✓ | **Y-19** storage/use / R-22 view |
+| Equipment ×48 | ✓ / shop | n/a | **`R`** | Z-stats (R-22) | ✓ | **G** world, dungeon and combat (R-06 resolved, Batch 3) / R-22 view |
+| Armour / helmets / shields | ✓ | n/a | ✓ | Z-stats (R-22) | ✓ | **G** storage/use / R-22 view |
+| Weapons / ammo | ✓ | n/a | ✓ (ammo checked) | Z-stats (R-22) | ✓ | **G** storage/use / R-22 view |
 | Potions ×8 (ids 8–15) | ✓ | ✓ + party target | n/a | picker | ✓ | **G** |
 | Scrolls ×8 (ids 0–7) | ✓ | ✓ | n/a | picker | ✓ | **Y-21** (Rel Hur needs a direction) |
-| Spells ×48 | `M`ix | `C`ast | n/a | picker + summary | ✓ | **R-11**, **R-16** |
+| Spells ×48 | `M`ix | `C`ast | n/a | picker + summary; Z-stats Spells page (R-22) | ✓ | **R-11**, **R-16** / R-22 view |
 | Magic Carpet (16) | quest | ✓ | n/a | picker | ✓ | **Y** |
 | Skull Key (17) | quest | ✓ | n/a | picker | ✓ | **Y** |
-| Amulet (18) | quest | ✓ | n/a | picker | ✓ | **G** — R-07 resolved (Batch 3) |
-| Crown (19) | quest | ✓ | n/a | picker | ✓ | **G** — R-08 resolved (Batch 3) |
-| Sceptre (20) | quest | ✓ | n/a | picker | ✓ | **G** — R-08 resolved (Batch 3) |
-| Moonstones (21–28) | quest | ✓ | n/a | picker (gated on `!buried`) | ✓ | **G** picker — R-08 resolved (Batch 3); persistence still **R-14** |
-| Shards (29–31) | quest | ✓ | n/a | picker | ✓ | **G** — R-08 resolved (Batch 3) |
-| Spyglass (32) | quest | ✓ route | n/a | picker | ✓ | **R-13** (no zodiac view) |
-| Plans (33) | quest | ✓ | n/a | picker (gated on `hms_cape`) | ✓ | **G** — R-08 resolved (Batch 3) |
-| Sextant (34) | quest | ✓ | n/a | picker | ✓ | **G** |
+| Amulet (18) | quest | ✓ | n/a | picker; Z-stats Items page (R-22) | ✓ | **G** Use-picker — R-07 resolved (Batch 3) / R-22 Z-stats Items-page view still missing |
+| Crown (19) | quest | ✓ | n/a | picker; Z-stats Items page (R-22) | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / R-22 Z-stats Items-page view still missing |
+| Sceptre (20) | quest | ✓ | n/a | picker; Z-stats Items page (R-22) | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / R-22 Z-stats Items-page view still missing |
+| Moonstones (21–28) | quest | ✓ | n/a | picker (gated on `!buried`); Z-stats Items page (R-22) | ✓ | **G** picker — R-08 resolved (Batch 3); persistence still **R-14**; R-22 Z-stats Items-page view still missing |
+| Shards (29–31) | quest | ✓ | n/a | picker; Z-stats Items page (R-22) | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / R-22 Z-stats Items-page view still missing |
+| Spyglass (32) | quest | ✓ route | n/a | picker; Z-stats Items page (R-22) | ✓ | **R-13** (no zodiac view) / R-22 Z-stats Items-page view still missing |
+| Plans (33) | quest | ✓ | n/a | picker (gated on `hms_cape`); Z-stats Items page (R-22) | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / R-22 Z-stats Items-page view still missing |
+| Sextant (34) | quest | ✓ | n/a | picker; Z-stats Items page (R-22) | ✓ | **G** Use-picker / R-22 Z-stats Items-page view still missing |
 | **Watch (35)** | **no owner anywhere** | **absent** | n/a | **absent** | ✓ | **OPEN** — deliberately excluded by Batch 3: no `GameState`/`QuestState`/`QuestWorldServices` field backs id 35, so no possession gate exists. Inventing one was out of scope. |
-| Badge (36) | quest | ✓ | n/a | picker (gated on `black_badge`) | ✓ | **G** — R-08 resolved (Batch 3) |
-| Wooden Box (37) | quest | ✓ ("How?") | n/a | picker | ✓ | **G** |
+| Badge (36) | quest | ✓ | n/a | picker (gated on `black_badge`); Z-stats Items page (R-22) | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / R-22 Z-stats Items-page view still missing |
+| Wooden Box (37) | quest | ✓ ("How?") | n/a | picker; Z-stats Items page (R-22) | ✓ | **G** Use-picker / R-22 Z-stats Items-page view still missing |
 | Grapple | quest | **Klimb-only, never a Use item** | n/a | — | ✓ | **G** — R-07 resolved (Batch 3): removed from the Use picker entirely |
 | Loose loot piles | ✓ LIFO | n/a | n/a | rendered `0x100+id` | **✗** | **R-14** |
 | World chests | Open→piles | n/a | n/a | correct sprite (was **tile 1 = blue**; R-02 resolved Batch 2) | **✗** | R-02 **G** / **R-14** |
@@ -1321,6 +1389,15 @@ Small, independently testable batches, in dependency order. Each batch ends at a
 
 ---
 
+### Batch 13 — Z-stats status/inventory pages · risk: medium, moderate scope
+**IDs:** R-22
+**Files:** `native/core/src/ui_session.cpp` (`case 'z'` / `UiIntentKind::OpenStatusSelection`), `native/targets/tdeck/main/alpha_runtime.cpp` (member-select consumption), `native/targets/tdeck/main/native_renderer.cpp` (new page rendering)
+**Work:** design and add the real per-member status-page axis behind the existing member picker: Stats, Arms, Provisions, Reagents, Spells, Items (including the quest/special possessions — Amulet, Crown, Sceptre, Shards, Moonstones, HMS Cape plans, Spyglass, Sextant, Black Badge, Wooden Box), and Armaments, matching the reference page-by-page. This is a self-contained, moderate-scope UI addition; it does not block or depend on Batch 9-12.
+**Physical test:** `Z`, select each member, page through all seven pages, confirm quest/special items appear exactly when owned.
+**Model:** Sonnet for the mechanical per-page wiring; a short design pass first to settle page navigation (which key pages forward/back, whether it nests under `OpenStatusSelection` or is a new `UiMode`).
+
+---
+
 ## 15. PROPOSED REGRESSION TESTS
 
 ### Invariants worth asserting (cheap, high value)
@@ -1380,7 +1457,7 @@ Efficient broad-coverage pass using Developer tools. ~45 minutes. Each step name
 11. Teleport to **Britain**. Confirm NPCs are visible and moving on schedule.
 12. `T`alk to an NPC: name / job / bye. **[R-01] Confirm the conversation survives more than one keypress.**
 13. `L`ook at a sign. `S`earch. `O`pen a door. `J`immy a locked door. `K`limb. `P`ush furniture.
-14. `Z`-stats: page through Provisions and Stats; confirm the party highlight.
+14. `Z`-stats: **expected/blocking on R-22** — native does not yet implement the Stats/Arms/Provisions/Reagents/Spells/Items/Armaments page family, so this step cannot page through Provisions and Stats today. Current expected behavior: `Z` opens the member picker; selecting a member reopens/repositions the same picker with no further page. Confirm only the party highlight and picker reachability; do not expect Provisions/Stats pages until R-22 is implemented (§14 Batch 13).
 15. **[R-01] Enter a blacksmith. Buy an item. Back out one level at a time. Confirm the world view and Exploration verbs return.** Repeat at an inn (Rest), a healer (Heal), a tavern (Rations + Rumour) and a reagent shop.
 
 ### Phase 3 — Combat and victory loot (7 min)
@@ -1444,8 +1521,12 @@ Efficient broad-coverage pass using Developer tools. ~45 minutes. Each step name
 
 **Historical status (post-Batch-2, superseded):** 58 total, **57 pass, 1 fail**. R-02, R-03 and R-04 are GREEN; `gameplay_parity` mismatch 59 is **fixed**. The sole remaining failure is `gameplay_parity` at **mismatch 2034 (R-21)** — a scroll-use event/message/SFX divergence that was masked by mismatch 59 until now, confirmed pre-existing (reproduces on the untouched `63eeac3b` baseline) and out of scope for Batch 2. `ui_mode_regression` (28/28 GREEN, Batch 1) and all Batch 2 regressions (`presentation_regression`, `combat_loot_open_regression`, `combat_escape_regression`, `direct_troll_handoff_regression`) pass. T-Deck ESP-IDF build: PASS. Hardware flash: **not performed**. See §14 Batch 2 and §3 R-21. This entry is preserved as historical record of the program's state at that point and is superseded by Batch 3 below; it is not rewritten with later knowledge.
 
-**Current status (post-Batch-3):** the host ctest suite is substantially larger than the post-Batch-2 snapshot above (65 registered tests, up from 58), reflecting Batch 3's new `batch3_group_b`/`batch3_group_c` suites and the TypeScript drift/fixture tests. R-06 (`Ready` rejected in combat/dungeons), R-07 (Use-picker id 18 mis-binding), R-08 (endgame Use chain unreachable), R-19 (`(Y)ell` has no frigate branch) and R-20 (harpsichord melody unreachable) are all **GREEN — RESOLVED (Batch 3)**; see §3 for each. `CombatYield` is confirmed live and routed end-to-end through the real `execute_command()`/`combat.cpp` path, not just emitted by `UiSession` (§15 invariant 21; `native/core/tests/batch3_group_c_test.cpp` C13). The sole known failure remains `gameplay_parity` at mismatch 2034 (R-21, still RED/OPEN — untouched by Batch 3, tracked as Batch 12). T-Deck ESP-IDF firmware was not rebuilt as part of this pass (no production code changed). See §3 R-06/R-07/R-08/R-19/R-20/R-21 and §14 Batch 3.
+**Status (post-Batch-3):** the host ctest suite is substantially larger than the post-Batch-2 snapshot above (61 registered tests in the authoritative `native/core/build-batch1-control` acceptance tree, up from 58), reflecting Batch 3's new `batch3_group_b`/`batch3_group_c` suites and the TypeScript drift/fixture tests. (A stale, non-authoritative `OPENU5_REAL_ARENAS=ON` build tree was briefly observed reporting 65 tests during this window; that count came from a build configuration different from the Batch acceptance tree and was never the authoritative figure — the number to cite for Batch acceptance is always the `build-batch1-control` count.) R-06 (`Ready` rejected in combat/dungeons), R-07 (Use-picker id 18 mis-binding), R-08 (endgame Use chain unreachable), R-19 (`(Y)ell` has no frigate branch) and R-20 (harpsichord melody unreachable) are all **GREEN — RESOLVED (Batch 3)**; see §3 for each. `CombatYield` is confirmed live and routed end-to-end through the real `execute_command()`/`combat.cpp` path, not just emitted by `UiSession` (§15 invariant 21; `native/core/tests/batch3_group_c_test.cpp` C13). The sole known failure remains `gameplay_parity` at mismatch 2034 (R-21, still RED/OPEN — untouched by Batch 3, tracked as Batch 12). Batch 3 did change production code (§14 Batch 3 file list), and T-Deck ESP-IDF 6.1 firmware was rebuilt and passed as part of that same Batch 3 validation: `openu5_tdeck.bin` was approximately `0xc63f0` bytes, with 23% of the app partition free and zero compiler warnings. Hardware flash was not performed at that Batch 3 validation point. See §3 R-06/R-07/R-08/R-19/R-20/R-21 and §14 Batch 3.
+
+**Current status (pre-Batch-4 Developer-tool cleanup):** Batch 3 is committed and pushed to `main`. The current work-in-progress on top of it is a small, self-contained Developer-tool correction — **R-24** (`DebugPreset::Combat` no longer silently engages Set Active Player) — plus its regression coverage, three new evidence-only audit findings (R-22 Z-stats, R-23 Blackthorn roster gap, Y-29 physical clear-active-player hardware reachability), and this document's own text corrections. No gameplay behavior other than the R-24 Developer-preset fix changed. The authoritative `native/core/build-batch1-control` suite is **61 total, 60 pass, 1 fail** — the sole failure remains `gameplay_parity` mismatch 2034 (R-21, unrelated, pre-existing). T-Deck ESP-IDF firmware was rebuilt clean for this pass because `DebugPreset::Combat`'s production behavior changed. See §3 R-24 for the fix and evidence.
 
 **Probe:** a throwaway program linked against `libopenu5_core.a` verified R-06 and R-16 directly. It lives in the session scratchpad, **not** in the repo — it is an audit instrument, not a test. Its R-06 assertions are now carried permanently by `native/core/tests/batch3_group_c_test.cpp` (invariant 22, §15); R-16 remains probe-only.
 
-**Working tree (as of this document update, Batch 3):** contains the completed Batch 3 implementation and tests — production changes in `native/core/include/openu5/combat.h`, `native/core/include/openu5/inventory_picker.h`, `native/core/include/openu5/ui_session.h`, `native/core/src/combat.cpp`, `native/core/src/commands.cpp`, `native/core/src/display_names.cpp`, `native/core/src/inventory_picker.cpp`, `native/core/src/ui_session.cpp`, `native/targets/tdeck/main/alpha_runtime.cpp` and `native/targets/tdeck/main/alpha_runtime.h`; test changes in `native/core/tests/batch3_group_b_test.cpp` and `native/core/tests/batch3_group_c_test.cpp` (the latter now also carries the C13 real-routing `CombatYield` regression guard) — plus this document update. No other production code was modified.
+**Working tree, historical (Batch 3, committed/pushed):** at the time of that document update, the tree contained the completed Batch 3 implementation and tests — production changes in `native/core/include/openu5/combat.h`, `native/core/include/openu5/inventory_picker.h`, `native/core/include/openu5/ui_session.h`, `native/core/src/combat.cpp`, `native/core/src/commands.cpp`, `native/core/src/display_names.cpp`, `native/core/src/inventory_picker.cpp`, `native/core/src/ui_session.cpp`, `native/targets/tdeck/main/alpha_runtime.cpp` and `native/targets/tdeck/main/alpha_runtime.h`; test changes in `native/core/tests/batch3_group_b_test.cpp` and `native/core/tests/batch3_group_c_test.cpp` (the latter now also carries the C13 real-routing `CombatYield` regression guard) — plus that document update. That Batch 3 tree has since been committed and pushed to `main`.
+
+**Working tree (current, pre-Batch-4 Developer-tool cleanup, not committed):** on top of the committed/pushed Batch 3 baseline, the current uncommitted working tree contains only the small R-24 Developer-tool fix and its supporting changes: `native/core/src/debug_developer.cpp` (production fix), `native/core/tests/debug_developer_test.cpp` (regression coverage), `native/core/src/turn.cpp` (a documentation-only comment on the reference-faithful troll dexterity check; no logic changed), and this document (R-22/R-23/R-24/Y-29 findings, Batch 13 plan entry, and the text corrections in this section). No other production code was modified.

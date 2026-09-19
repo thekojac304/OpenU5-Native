@@ -1,9 +1,11 @@
 #include "openu5/debug_developer.h"
 
+#include "openu5/combat.h"
 #include "openu5/outdoor.h"
 #include "openu5/persistence.h"
 #include "openu5/quest.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -193,8 +195,46 @@ int main() {
           "quest-neutral stocked preset");
     const auto preset_seed = presets.game.rng.get_seed();
     check(apply_debug_preset(presets.context, DebugPreset::Combat).status == DebugStatus::Applied &&
-              presets.game.party.active_character == 0 && !presets.context.combat && presets.game.rng.get_seed() == preset_seed,
-          "combat preset prepares state without inventing a combat session");
+              presets.game.party.active_character == 255 && !presets.context.combat && presets.game.rng.get_seed() == preset_seed,
+          "combat preset prepares state without inventing a combat session or locking active player");
+
+    // RED-before-GREEN regression: DebugPreset::Combat used to set
+    // active_character=0, which silently engages the real Set Active Player
+    // mechanic and makes combat scheduling auto-pass every member but one.
+    // Prove the preset instead leaves every party member manually reachable
+    // over a real combat turn cycle.
+    CombatMap combat_map{};
+    std::fill(std::begin(combat_map.tiles), std::end(combat_map.tiles), int16_t(5));
+    combat_map.start_count[2] = uint8_t(presets.game.party.party_size);
+    for (int32_t i = 0; i < presets.game.party.party_size; ++i)
+        combat_map.starts[2][i] = {int16_t(5 - i), 5};
+    combat_map.unit_count = 1;
+    combat_map.units[0] = {8, 8};
+    CombatEnemy combat_enemy{};
+    combat_enemy.hp = 50;
+    combat_enemy.damage = 1;
+    const CombatEnemy *combat_defs[] = {&combat_enemy};
+    check(initialize_combat(presets.combat_owner, combat_map, CombatDirection::South, combat_defs, 1) ==
+              CombatResult::Ok,
+          "combat preset produces a valid multi-member arena");
+    bool member_took_turn[kRosterCapacity]{};
+    int distinct_players = 0;
+    for (int iter = 0; iter < 200 && !combat_over(presets.combat); ++iter) {
+        auto *actor = current_combat_actor(presets.combat_owner);
+        if (!actor)
+            break;
+        if (actor->member != 255) {
+            if (!member_took_turn[actor->member]) {
+                member_took_turn[actor->member] = true;
+                ++distinct_players;
+            }
+            combat_action(presets.combat_owner, CombatAction::Pass);
+        } else {
+            combat_action(presets.combat_owner, CombatAction::EnemyStep);
+        }
+    }
+    check(distinct_players > 1,
+          "combat preset leaves every party member reachable for manual turns, not just one");
     std::memset(presets.game.dungeon_rooms_cleared, 0xff, sizeof(presets.game.dungeon_rooms_cleared));
     check(apply_debug_preset(presets.context, DebugPreset::Dungeon).status == DebugStatus::Applied &&
               quest_flag(presets.game.quest, QuestFlag::Word33) && quest_flag(presets.game.quest, QuestFlag::Word40) &&
