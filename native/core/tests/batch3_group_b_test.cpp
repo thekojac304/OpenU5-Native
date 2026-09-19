@@ -147,7 +147,14 @@ static void b3_picker_completeness_red() {
     g.quest.artifacts[1] = true; // Crown (19).
     g.quest.artifacts[2] = true; // Sceptre (20).
     g.quest.shards[0] = g.quest.shards[1] = g.quest.shards[2] = true; // Shards 29-31.
-    g.hms_cape = false; // Plans (33) gate is possession of the cape item itself, not hms_cape rigged flag.
+    // Plans (33) possession gate IS g.hms_cape: cross-checked against quest_world.cpp's
+    // apply_search_grant(id==4, quality==255) (Get/pickup sets g.hms_cape=true, matching
+    // the "Ship rigged for double speed!" message moving to Get) and against the
+    // authoritative TS reference (game/src/core/endgame/use-tools.ts useHmsCape(): the
+    // comment there confirms the Use-time write is a no-op because "el (G)et ya dejó
+    // 0xFF" -- there is no separate ownership flag distinct from this bit in either
+    // implementation. See report section C for the full trace.
+    g.hms_cape = true; // Plans (33) owned -- must gate the Use picker's row 33.
     g.black_badge = true; // Badge (36).
     bool moonstone_owned[8];
     for (bool &owned : moonstone_owned) owned = true; // All 8 moonstones possessed/not-buried.
@@ -175,7 +182,9 @@ static void b4_row_id_matches_command_id() {
     g.quest.artifacts[0] = g.quest.artifacts[1] = g.quest.artifacts[2] = true;
     g.quest.shards[0] = true;
     // hms_cape/black_badge gate Plans/Badge in the real picker via specialItems
-    // possession flags; g.black_badge doubles as "owns the badge" today.
+    // possession flags; g.hms_cape/g.black_badge double as "owns the item" today
+    // (see B3's comment above for the g.hms_cape possession-vs-rigged adjudication).
+    g.hms_cape = true;
     g.black_badge = true;
     bool moonstone_owned[8]{};
     moonstone_owned[0] = true; // Moonstone phase 0 (real id 21) possessed.

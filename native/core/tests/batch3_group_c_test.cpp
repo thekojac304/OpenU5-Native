@@ -237,26 +237,159 @@ static void c3_combat_ready_red() {
     std::cout << "C3 (combat Ready routing) executed\n";
 }
 
-// C4 (isolated from routing): the SEPARATE investigation finding under test
-// here is whether CombatActor's cached weapon/attack/defense fields
-// (native/core/include/openu5/combat.h ~37-48) have any resync mechanism
-// after equipment changes -- independent of whether Ready routing itself
-// currently permits combat Ready at all (that is C2/C3's question).
+// C4 -- revised per the Batch 3 RED-test adjudication pass. The prior shape
+// of this test PRESCRIBED an architecture (a direct standalone equip_item()
+// call must itself mutate CombatActor's cache) that the audit does not
+// actually require: a correct fix may legitimately route Ready ->
+// equip_item() -> an EXPLICIT CombatActor refresh/resync step, in which case
+// equip_item() itself stays entirely unaware of CombatState, and the old
+// C4's RED assertion would never turn GREEN even under a correct fix. C4 is
+// therefore now TWO functions:
 //
-// This builds a real CombatActor via the SAME production TrollToll entry
-// path as C3 above, records its cached fields for starting equipment A (no
-// weapon equipped), then mutates the AUTHORITATIVE equipment by calling
-// equip_item() DIRECTLY (native/core/src/inventory.cpp) -- deliberately
-// bypassing the rejected command()/Ready routing path, exactly as the
-// spec's stated fallback allows, so the cache question can be isolated from
-// the routing question C2/C3 already cover. It only calls real production
-// functions (equip_item() and nothing else) and never reassigns
-// CombatActor's fields by hand; grep of combat.cpp/combat.h/inventory.cpp
-// during this pass found no function anywhere that writes to
-// CombatActor::weapons[]/attack/defense/range other than the one-time
-// population in combat.cpp's arena-construction code (~1120-1150), executed
-// once by TrollToll's arena entry and never again -- there is no resync
-// seam at all today, so this test is expected to be genuinely RED.
+//   1. c4_ready_equipment_cache_invariant_red() -- the actual required
+//      invariant, stated without prescribing who owns the resync: "After a
+//      successful CommandKind::Ready while in combat, authoritative
+//      GameState equipment and the active player's cached CombatActor
+//      equipment-derived state agree." Exercised through the REAL
+//      command()/execute_command() routing path, same construction as C3.
+//      On today's baseline this fails first at ROUTING (Ready is rejected
+//      outright while c.combat is true, exactly like C3), so the cache
+//      question is never reached here either -- that is expected and
+//      acceptable; this function is the one whose GREEN condition the
+//      eventual fix must satisfy end-to-end.
+//
+//   2. c4_characterization_direct_equip_cache_staleness() -- the prior
+//      direct-equip() investigation, KEPT as independent evidence of the
+//      underlying cache defect, but explicitly labeled CHARACTERIZATION
+//      (documents CURRENT behavior as a GREEN guard, like C5 below) rather
+//      than a must-turn-GREEN regression test. It intentionally bypasses
+//      Ready/command() routing, so it says nothing about who should own the
+//      eventual resync -- only that no resync seam exists anywhere today.
+static void c4_ready_equipment_cache_invariant_red() {
+    constexpr int player_x = 101, player_y = 102, bridge_x = 101, bridge_y = 102, bridge_tile = 106;
+    std::vector<uint8_t> tiles(256 * 256, 5);
+    tiles[bridge_y * 256 + bridge_x] = bridge_tile;
+    WorldData world{tiles.data(), tiles.data(), tiles.size(), tiles.size()};
+    GameState game{};
+    game.position = {{uint8_t(player_x), uint8_t(player_y)}, {0, 0}};
+    game.party.party_size = game.party.character_count = 1;
+    auto &avatar = game.party.characters[0];
+    avatar.party_status = 0;
+    avatar.status = 'G';
+    avatar.current_hp = avatar.max_hp = 100;
+    avatar.dexterity = 20;
+    avatar.strength = 50;
+    avatar.helmet = avatar.armor = avatar.shield = avatar.ring = avatar.amulet = 255;
+    avatar.weapon = 255; // No weapon equipped yet (equipment A).
+    game.equipment_quantities[31] = 1; // Long Sword, owned, unequipped -- equipment B to Ready into.
+    game.rng.seed(0x2600);
+    TurnState turn{};
+    TravelState travel{};
+    CommandState commands{};
+    CommandContext context{game, turn, travel, commands, world};
+
+    struct Objects {
+        std::vector<QuestObject> values;
+    };
+    Objects objects{};
+    QuestWorldServices quest{};
+    quest.context = &objects;
+    quest.count = [](void *p) { return static_cast<Objects *>(p)->values.size(); };
+    quest.read = [](void *p, size_t i) { return static_cast<Objects *>(p)->values[i]; };
+    quest.reserve = [](void *p, size_t n) { static_cast<Objects *>(p)->values.reserve(n); return true; };
+    quest.append = [](void *p, const QuestObject &o) { static_cast<Objects *>(p)->values.push_back(o); };
+    quest.erase = [](void *p, size_t i) { auto &v = static_cast<Objects *>(p)->values; v.erase(v.begin() + ptrdiff_t(i)); };
+    quest.write = [](void *p, size_t i, const QuestObject &o) { static_cast<Objects *>(p)->values[i] = o; };
+    context.quest_world = &quest;
+    WorldTerrain terrain{};
+    context.terrain = &terrain;
+    terrain.refresh(world, game);
+
+    CombatMap arena{};
+    for (auto &tile : arena.tiles) tile = 5;
+    arena.start_count[int(CombatDirection::South)] = 1;
+    arena.starts[int(CombatDirection::South)][0] = {5, 6};
+    arena.unit_count = 1;
+    arena.units[0] = {6, 4};
+    CombatEnemy troll{};
+    troll.index = 41;
+    troll.name = "Troll";
+    troll.hp = 10;
+    troll.max_per_map = 1;
+    troll.tile = 400;
+    const CombatMap *maps[] = {&arena};
+    const CombatEnemy *enemies[42]{};
+    enemies[41] = &troll;
+    CombatState battle{};
+    CombatContext battle_owner{game, turn, battle};
+    CombatResources resources{maps, 1, enemies, 42, {}};
+    OutdoorServices outdoor{};
+    outdoor.combat = &battle_owner;
+    outdoor.resources = &resources;
+    context.outdoor = &outdoor;
+
+    commands.awaiting_troll = true;
+    commands.troll_toll = 99;
+    commands.troll_x = bridge_x;
+    commands.troll_y = bridge_y;
+    Command refuse{};
+    refuse.kind = CommandKind::TrollToll;
+    refuse.member = 0;
+    auto entered = execute_command(context, refuse);
+    check(entered.status == CommandStatus::Success && context.combat && battle.initialized,
+          "C4 setup: production TrollToll refusal enters a real combat arena");
+
+    int player_actor = -1;
+    for (int i = 0; i < battle.count; ++i)
+        if (!battle.actors[i].enemy) player_actor = i;
+    check(player_actor >= 0, "C4 setup: a live player CombatActor exists in the arena");
+    check(avatar.weapon == 255, "C4 setup: authoritative equipment A is confirmed as 'no weapon equipped'");
+
+    // C4: attempt Ready through the real routing path while c.combat is true,
+    // then check the INVARIANT -- not any particular resync mechanism.
+    Command ready;
+    ready.kind = CommandKind::Ready;
+    ready.member = 0;
+    ready.item = 31; // Long Sword.
+    auto result = execute_command(context, ready);
+    const auto &actor = battle.actors[player_actor >= 0 ? player_actor : 0];
+    const int32_t cached_weapon_id = actor.weapon_count ? actor.weapons[0].id : -1;
+    const bool invariant_holds =
+        result.status == CommandStatus::Success && avatar.weapon == 31 && cached_weapon_id == 31;
+    check(invariant_holds,
+          "C4: expected that after a successful combat Ready, authoritative GameState equipment "
+          "(avatar.weapon) and the active player's cached CombatActor equipment-derived state "
+          "agree -- RED expected against baseline: Ready routing itself is rejected while "
+          "c.combat is true, exactly like C3, so the invariant cannot yet be reached, let alone "
+          "hold. This test does NOT prescribe whether the eventual fix keeps equip_item() "
+          "CombatState-unaware and resyncs the cache elsewhere, or has equip_item() itself notify "
+          "combat -- either design satisfies this invariant.");
+    if (!invariant_holds)
+        std::cerr << "  C4 detail: status=" << int(result.status) << " avatar.weapon=" << int(avatar.weapon)
+                  << " cached weapons[0].id=" << cached_weapon_id
+                  << " (RED expected: InvalidContext=" << int(CommandStatus::InvalidContext) << ")\n";
+    std::cout << "C4 (Ready equipment/cache invariant, routing-exercised) executed\n";
+}
+
+// C4 CHARACTERIZATION (not a must-turn-GREEN regression): independent
+// evidence of the underlying cache defect, isolated from the routing
+// question above. This builds a real CombatActor via the SAME production
+// TrollToll entry path as C3, records its cached fields for starting
+// equipment A (no weapon equipped), then mutates the AUTHORITATIVE
+// equipment by calling equip_item() DIRECTLY (native/core/src/inventory.cpp)
+// -- deliberately bypassing Ready/command() routing, exactly as the spec's
+// stated fallback allows, to isolate the cache question from the routing
+// question C2/C3/c4_ready_equipment_cache_invariant_red already cover. It
+// only calls real production functions (equip_item() and nothing else) and
+// never reassigns CombatActor's fields by hand; grep of
+// combat.cpp/combat.h/inventory.cpp during this pass found no function
+// anywhere that writes to CombatActor::weapons[]/attack/defense/range other
+// than the one-time population in combat.cpp's arena-construction code
+// (~1120-1150), executed once by TrollToll's arena entry and never again --
+// there is no resync seam at all today. This is asserted as a GREEN
+// characterization of that CURRENT state (like C5 below), not as a RED
+// requirement that a direct equip_item() call itself must resync the cache
+// -- see the header comment above for why that would be the wrong contract.
 //
 // Note on starting equipment: this host fixture (like the pre-existing
 // direct_troll_handoff_test.cpp/C3 above) does not wire a CombatContext::
@@ -270,11 +403,11 @@ static void c3_combat_ready_red() {
 // change. Equipment A is therefore deliberately "no weapon equipped" (so
 // the authoritative starting state has a real, unambiguous value: none),
 // and the test's actual claim is the invariance one -- the cached actor
-// fields must be BYTE-FOR-BYTE IDENTICAL before and after equip_item()
-// changes the authoritative equipment from A (none) to B (Long Sword, id
-// 31), because nothing in production ever touches them again after arena
-// construction.
-static void c4_combat_actor_cache_staleness_isolated() {
+// fields are observed to be BYTE-FOR-BYTE IDENTICAL before and after
+// equip_item() changes the authoritative equipment from A (none) to B (Long
+// Sword, id 31), because nothing in production touches them again after
+// arena construction.
+static void c4_characterization_direct_equip_cache_staleness() {
     constexpr int player_x = 101, player_y = 102, bridge_x = 101, bridge_y = 102, bridge_tile = 106;
     std::vector<uint8_t> tiles(256 * 256, 5);
     tiles[bridge_y * 256 + bridge_x] = bridge_tile;
@@ -380,18 +513,22 @@ static void c4_combat_actor_cache_staleness_isolated() {
     const int32_t range_after = actor_after.range;
     const int32_t defense_after = actor_after.defense;
 
-    // The desired/reference behavior (per the audit's investigation finding)
-    // is that the cache resyncs, i.e. these should differ once a real
-    // resync seam exists. Today none of them ever can, since nothing writes
-    // to the actor after construction -- so this is expected to be RED
-    // (cache_resynced == false) precisely because it is IDENTICAL.
+    // CHARACTERIZATION, not a RED requirement: this documents CURRENT
+    // behavior (no resync seam exists today, so the cache is unchanged) as a
+    // GREEN guard, the same style as C5 below. It intentionally does NOT
+    // assert that a direct equip_item() call must itself resync the cache --
+    // that would prescribe an architecture the audit does not require (see
+    // the C4 header comment above). Once a real fix lands (via whichever
+    // design it chooses), this characterization is expected to need updating
+    // -- that is fine; it is not gating anything today.
     const bool cache_resynced = weapon_count_after != weapon_count_before || weapon_id_after != weapon_id_before ||
                                 weapon_attack_after != weapon_attack_before || attack_after != attack_before ||
                                 range_after != range_before;
-    check(cache_resynced,
-          "C4 RED: expected CombatActor's cached weapon_count/weapons[]/attack/range to reflect the "
-          "new equipment (id 31, Long Sword) after equip_item() changed the authoritative GameState -- "
-          "no resync seam exists today, so the cache is expected to be completely unchanged");
+    check(!cache_resynced,
+          "C4 CHARACTERIZATION: CombatActor's cached weapon_count/weapons[]/attack/range remain "
+          "byte-for-byte unchanged after a direct equip_item() call changes the authoritative "
+          "GameState (id 31, Long Sword) -- documents that no resync seam exists today; this is "
+          "evidence for the defect, not a prescription for how the eventual fix must resync it");
     std::cerr << "  C4 detail: authoritative avatar.weapon before=255 after=" << int(avatar.weapon)
               << " (real change). CombatActor.weapon_count before=" << weapon_count_before
               << " after=" << weapon_count_after << "; weapons[0].id before=" << weapon_id_before
@@ -404,7 +541,7 @@ static void c4_combat_actor_cache_staleness_isolated() {
                                   : " -- cache is STALE: every cached field is byte-for-byte identical "
                                     "before and after despite the authoritative equipment genuinely "
                                     "changing from 'none' to id 31\n");
-    std::cout << "C4 (isolated CombatActor cache staleness) executed\n";
+    std::cout << "C4 (characterization: direct-equip cache staleness, GREEN) executed\n";
 }
 
 // C5: armour-lock semantics in battle. Reused/characterized rather than
@@ -461,7 +598,8 @@ int main() {
     c1_world_ready_green_guard();
     c2_dungeon_ready_red();
     c3_combat_ready_red();
-    c4_combat_actor_cache_staleness_isolated();
+    c4_ready_equipment_cache_invariant_red();
+    c4_characterization_direct_equip_cache_staleness();
     c5_armour_lock_characterization();
     c6_dungeon_not_battle_for_equip();
     std::cout << checks << " batch3 group C checks executed, " << failures << " failed\n";
