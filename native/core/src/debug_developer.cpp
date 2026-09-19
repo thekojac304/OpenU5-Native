@@ -608,14 +608,62 @@ namespace {
 // Real canonical location ids (matching debug_map_picker's destination
 // enumeration / the extracted location table -- see debug_map_picker_test.cpp
 // and GAMEPLAY_INTEGRATION_AUDIT.md): Britain=2, Blackthorn Palace=18,
-// Serpent's Hold=32 (home of the Flame of Courage), Deceit=33 (the first of
-// the eight dungeons). Certification setups look these up by id directly
-// through apply_debug_teleport(), exactly like any other DebugTeleportRequest
-// caller -- there is no separate id table to keep in sync (PART 5).
+// Empath Abbey=31, Deceit=33 (the first of the eight dungeons).
+// Certification setups look these up by id directly through
+// apply_debug_teleport(), exactly like any other DebugTeleportRequest caller
+// -- there is no separate id table to keep in sync (PART 5).
 constexpr uint8_t kLocationBritain = 2;
 constexpr uint8_t kLocationBlackthornPalace = 18;
-constexpr uint8_t kLocationSerpentsHold = 32;
+constexpr uint8_t kLocationEmpathAbbey = 31;
 constexpr uint8_t kLocationDeceit = 33;
+
+// Batch 4.5A-4 correction pass: the real, authoritative ritual/flame-cast
+// check is cast_shard_into_flame() (quest.cpp), invoked from
+// quest_world.cpp:103 with the party's live position:
+//   cast_shard_into_flame(id-29, g.position.xy.x, g.position.xy.y,
+//                          g.position.map.location, g.position.map.floor, ...)
+// It requires x==15, y==flame_y[i], location==30+i, floor==flame_floor[i],
+// where flame_y[]={9,3,16} and flame_floor[]={2,1,-1} (quest.cpp). For i=1
+// (Hatred shard / Astaroth / Flame of Love) that is location 31 (Empath
+// Abbey), floor 1, (15,3) -- exactly the coordinate this batch's design
+// review pointed at. It is the Hatred chain, not Falsehood, per this exact
+// table (30+i for i=0 is the Lycaeum/Falsehood chain, at (15,9,2); i=2 is
+// Serpent's Hold/Cowardice, at (15,16,-1)) -- corrected here rather than
+// silently kept mislabeled. Any of the three would be an equally valid,
+// equally sourced choice since FlameShard grants all three shards; Empath
+// Abbey's is used because it was independently verified against
+// re/notes/shadowlord-ritual.md and game/src/momentos/defs.ts as well.
+constexpr uint8_t kLocationEmpathAbbeyFlameFloor = 1;
+constexpr int32_t kLocationEmpathAbbeyFlameX = 15, kLocationEmpathAbbeyFlameY = 3;
+
+// Batch 4.5A-4 correction pass: CommandKind::YellSails (commands.cpp) -- the
+// real command a Yell dispatches to while aboard a frigate -- gates purely on
+// TurnState::transport_tile (must be in the frigate range 0x20-0x27) and
+// GameState::position.map.location (< 0x80); it never reads terrain. The
+// device layer mirrors the exact same transport_tile test before routing 'y'
+// at all (alpha_runtime.cpp's refresh_session_context():
+// set_sail_context((turn_.transport_tile&0xf8)==0x20, ...)). TurnState::
+// transport_tile defaults to 0x1c (Foot, turn.h) and debug_set_transport()
+// only ever writes GameState::transport, never TurnState::transport_tile --
+// so setting GameState::transport=Ship alone (the prior ShipSails
+// composition) left transport_tile at 0x1c and Yell would still show the
+// ordinary word-of-power prompt, never the real sails toggle. 0x24 is the
+// exact "hoisted frigate" tile real boarding assigns (transport.cpp's
+// board_transport ship() branch; world_flow_adapter_test.cpp's own real-
+// boarding fixture and this file's own DebugPreset::Transport both already
+// use 0x24) -- reused here, not invented.
+//
+// No concrete real-map "on open water" (x,y) coordinate is recorded anywhere
+// in this codebase's tests, fixtures, or docs (checked transport_flow_parity_
+// test.cpp, world_flow_adapter_test.cpp, debug_map_picker_test.cpp, and every
+// *.md under native/targets/tdeck -- all ship-adjacent coordinates found are
+// synthetic test-harness fixtures, not real extracted overworld terrain).
+// Per this batch's own instruction not to invent one, the teleport target
+// stays Britain's already-evidenced default entrance: the YellSails gate
+// above is location-content-independent (any non-dungeon, non-Underworld-
+// style location id satisfies it), so what actually made the old setup
+// non-functional was the missing transport_tile write, not the destination.
+constexpr int32_t kShipSailsTransportTile = 0x24;
 
 DebugTeleportRequest standard_small_map_entry(uint8_t location) {
     DebugTeleportRequest r;
@@ -634,6 +682,23 @@ DebugTeleportRequest standard_dungeon_entry(uint8_t location) {
     return r;
 }
 
+// Explicit manual coordinate (standard_entry=false): apply_debug_teleport
+// never refuses this even onto a cell that fails the walkability check
+// (T4, debug_map_picker_test.cpp) -- the same "free tester placement"
+// mechanism already used for e.g. Blackthorn's prison or Serpent's Hold's
+// Flame of Courage. Required here because the flame ritual cell is not a
+// destination's standard/default entrance.
+DebugTeleportRequest explicit_small_map_entry(uint8_t location, int16_t floor, int32_t x, int32_t y) {
+    DebugTeleportRequest r;
+    r.kind = DebugDestinationKind::SmallMap;
+    r.location = location;
+    r.floor = floor;
+    r.x = x;
+    r.y = y;
+    r.standard_entry = false;
+    return r;
+}
+
 } // namespace
 
 DebugCertificationResult apply_debug_certification(CommandContext &c, DebugCertification cert) {
@@ -648,14 +713,20 @@ DebugCertificationResult apply_debug_certification(CommandContext &c, DebugCerti
 
     switch (cert) {
     case DebugCertification::ShipSails:
-        // PART 6: normal (unrigged) sail timing -- HMS Cape is deliberately
-        // never granted here (see debug_set_special_item(HmsCape, ...),
-        // which this setup never calls).
+        // PART 6, corrected: normal (unrigged) sail timing -- HMS Cape is
+        // deliberately never granted here (see debug_set_special_item(
+        // HmsCape, ...), which this setup never calls). Also sets
+        // TurnState::transport_tile into the frigate range (0x24) -- without
+        // it, real Yell/YellSails routing never actually engages (see the
+        // kShipSailsTransportTile comment above); GameState::transport alone
+        // is not enough.
         accumulate(debug_set_transport(g, TransportMode::Ship));
         accumulate(debug_set_resource(g, DebugResource::ShipHull, 50));
         accumulate(debug_set_resource(g, DebugResource::ShipSkiffs, 2));
         accumulate(debug_set_runtime_number(c.turn, DebugRuntimeNumber::Wind, 2));
         accumulate(debug_set_runtime_number(c.turn, DebugRuntimeNumber::SailDirection, 2));
+        accumulate(debug_set_runtime_number(c.turn, DebugRuntimeNumber::TransportTile,
+                                            kShipSailsTransportTile));
         out.teleport_request = standard_small_map_entry(kLocationBritain);
         out.teleport = apply_debug_teleport(c, out.teleport_request);
         break;
@@ -679,17 +750,21 @@ DebugCertificationResult apply_debug_certification(CommandContext &c, DebugCerti
         break;
 
     case DebugCertification::FlameShard:
-        // PART 9: grant the three shards only; Shadowlord/flame progression
-        // (ShadowlordSummoned, doom bits) is deliberately left untouched.
-        // Serpent's Hold is the cleanest existing debug-teleport
-        // representation of a flame location -- its Default Entrance z=0
-        // resolution is the exact subject of the Batch 4.5A-1 T2 regression
-        // (ui_debug_menu_test.cpp), so it is the most concretely verified
-        // standard-entry target available.
+        // PART 9, corrected: grant the three shards only; Shadowlord/flame
+        // progression (ShadowlordSummoned, doom bits) is deliberately left
+        // untouched. The prior version teleported to Serpent's Hold's
+        // Default Entrance (its town-square door), which is NOT the verified
+        // flame/ritual cell -- cast_shard_into_flame() checks the party's
+        // exact live position (quest_world.cpp:103), and no town's default
+        // entrance coincides with it. This now uses an explicit manual
+        // coordinate teleport to Empath Abbey (location 31), floor 1,
+        // (15,3) -- the exact, sourced ritual cell for the Hatred shard /
+        // Astaroth / Flame of Love chain (see the constants above).
         accumulate(debug_set_quest_item(g, DebugQuestItem::ShardFalsehood, true));
         accumulate(debug_set_quest_item(g, DebugQuestItem::ShardHatred, true));
         accumulate(debug_set_quest_item(g, DebugQuestItem::ShardCowardice, true));
-        out.teleport_request = standard_small_map_entry(kLocationSerpentsHold);
+        out.teleport_request = explicit_small_map_entry(kLocationEmpathAbbey, kLocationEmpathAbbeyFlameFloor,
+                                                         kLocationEmpathAbbeyFlameX, kLocationEmpathAbbeyFlameY);
         out.teleport = apply_debug_teleport(c, out.teleport_request);
         break;
 

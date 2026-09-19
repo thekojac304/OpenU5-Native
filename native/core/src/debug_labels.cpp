@@ -122,6 +122,7 @@ constexpr size_t kPresetSheetCount = sizeof(kPresetSheets) / sizeof(kPresetSheet
 constexpr const char *kShipSailsEffects[] = {
     "LIVE: Set Transport = Ship", "Set sane Ship Hull (50) and Skiffs (2)",
     "Set deterministic Wind and Sail Direction",
+    "LIVE: Set frigate transport tile (hoisted) -- required for real Yell/Sails routing",
     "Does NOT grant HMS Cape -- tests normal (unrigged) sail timing",
     "Teleport to Britain, ground floor / default entrance",
     "Player must press Yell to trigger real sail behavior "
@@ -145,8 +146,9 @@ constexpr const char *kBlackthornBadgeEffects[] = {
 constexpr const char *kFlameShardEffects[] = {
     "LIVE: Grant all three Shards (Falsehood/Hatred/Cowardice)",
     "Shadowlord/flame progression state left untouched",
-    "Teleport to Serpent's Hold, ground floor / default entrance",
-    "Player must perform the real Yell / shard interaction at the flame",
+    "Teleport to Empath Abbey, floor 1, (15,3) -- the verified Hatred/"
+    "Astaroth Flame of Love ritual cell, not a default entrance",
+    "Player must perform the real Use-Shard interaction at the flame",
 };
 constexpr const char *kShopNpcEffects[] = {
     "Set Gold to 9999",

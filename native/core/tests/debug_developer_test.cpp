@@ -322,16 +322,19 @@ int main() {
     // are tested at the core-API layer.
     {
         // Deterministic world/dungeon fixture: Britain(2), Blackthorn
-        // Palace(18) and Serpent's Hold(32) ground-floor small maps (tile 5,
-        // the same generic-walkable convention debug_map_picker_test.cpp's
-        // own default Harness uses), plus eight dungeons with an authored
+        // Palace(18), and Empath Abbey(31) floor 1 small maps (tile 5, the
+        // same generic-walkable convention debug_map_picker_test.cpp's own
+        // default Harness uses), plus eight dungeons with an authored
         // floor-0 ladder-up entry cell, matching Deceit(33)'s real shape.
+        // Empath Abbey floor 1 replaces the prior (wrong) Serpent's Hold
+        // fixture -- see the correction-pass note on kLocationEmpathAbbey in
+        // debug_developer.cpp.
         GameState g; TurnState t; TravelState tr; CommandState cs;
         std::vector<uint8_t> large(65536, 5), local(1024, 5);
         MapData maps[] = {
             {{2, 0}, local.data(), local.size()},
             {{18, 0}, local.data(), local.size()},
-            {{32, 0}, local.data(), local.size()},
+            {{31, 1}, local.data(), local.size()},
         };
         WorldData world{large.data(), large.data(), large.size(), large.size(), maps,
                         sizeof(maps) / sizeof(maps[0])};
@@ -352,8 +355,13 @@ int main() {
         g.party.active_character = 255;
         g.rng.seed(0x2468ace0);
 
-        // C5: Flame/Shard setup grants the three shards, leaves Shadowlord
-        // progression untouched, and teleports to Serpent's Hold.
+        // C5 (correction pass): Flame/Shard setup grants the three shards,
+        // leaves Shadowlord progression untouched, and teleports to the
+        // *verified ritual cell* -- Empath Abbey, floor 1, (15,3) -- not a
+        // town's default entrance. This is the exact position
+        // cast_shard_into_flame() (quest.cpp) checks against the party's
+        // live g.position when a shard is Used (quest_world.cpp:103):
+        // x==15, y==flame_y[1]==3, location==30+1==31, floor==flame_floor[1]==1.
         const auto rng_before = g.rng.get_seed();
         auto flame = apply_debug_certification(c, DebugCertification::FlameShard);
         check(flame.setup.status == DebugStatus::Applied && flame.teleport.status == DebugTeleportStatus::Applied,
@@ -362,8 +370,10 @@ int main() {
               "C5: all three shards granted");
         check(g.quest.summoned == -1 && g.quest.doom_bits == 0,
               "C5: Shadowlord/flame progression left untouched (summoned default is -1, unset)");
-        check(g.position.map.location == 32 && g.position.map.floor == 0,
-              "C5: deterministic teleport to Serpent's Hold");
+        check(g.position.map.location == 31 && g.position.map.floor == 1 &&
+                  g.position.xy.x == 15 && g.position.xy.y == 3,
+              "C5 GREEN: deterministic teleport to the verified Empath Abbey flame ritual "
+              "cell (location 31, floor 1, x=15, y=3), not a default entrance");
         check(g.rng.get_seed() == rng_before, "C5: no RNG advanced by the setup itself");
 
         // C3: Shop/NPC setup sets Gold/clock and teleports to Britain; no
@@ -379,8 +389,20 @@ int main() {
         check(g.position.map.location == 2 && g.position.map.floor == 0,
               "C3: deterministic teleport to Britain ground floor");
 
-        // C6: Ship/Sails setup prepares sane transport state, never grants
-        // HMS Cape, and never fires a Sails/Yell command itself.
+        // C6 (correction pass): Ship/Sails setup prepares sane transport
+        // state, never grants HMS Cape, and never fires a Sails/Yell command
+        // itself -- and now also leaves the real YellSails command actually
+        // reachable. CommandKind::YellSails (commands.cpp) gates purely on
+        // `(turn.transport_tile & 0xf8) == 0x20` (frigate tile range) and
+        // `position.map.location < 0x80`; the prior setup never wrote
+        // transport_tile, which defaults to 0x1c (Foot, turn.h) -- so Yell
+        // would still have shown the ordinary word prompt, never the sails
+        // toggle, despite g.transport already being Ship. This is the exact
+        // real-gameplay contract "Ship transport is actually valid for real
+        // gameplay testing" cashes out to in this codebase (no concrete
+        // real-map water coordinate exists anywhere in this repo's tests/
+        // fixtures/docs to gate on instead -- see the kShipSailsTransportTile
+        // comment in debug_developer.cpp).
         auto ship = apply_debug_certification(c, DebugCertification::ShipSails);
         check(ship.setup.status == DebugStatus::Applied && ship.teleport.status == DebugTeleportStatus::Applied,
               "C6: Ship/Sails setup applies");
@@ -388,7 +410,14 @@ int main() {
               "C6: sane transport/hull/skiffs");
         check(!g.hms_cape, "C6: HMS Cape remains false");
         check(g.position.map.location == 2 && g.position.map.floor == 0,
-              "C6: deterministic teleport to Britain (transport-capable location)");
+              "C6: deterministic teleport to Britain (any non-Underworld/dungeon location "
+              "satisfies YellSails' own location gate -- see commands.cpp)");
+        check(t.transport_tile == 0x24, "C6 GREEN: transport_tile set to the real hoisted-frigate "
+              "value (matches DebugPreset::Transport's own choice and real boarding)");
+        check((t.transport_tile & 0xf8) == 0x20 && g.position.map.location < 0x80,
+              "C6 GREEN: the setup satisfies CommandKind::YellSails' exact real gate "
+              "(commands.cpp) -- Yell now actually reaches the sails toggle, not just "
+              "GameState::transport being Ship");
 
         // C4: Dungeon setup composes the Dungeon preset (stocked inventory,
         // torch, room-bitmap reset, word-of-power flags already proven above
