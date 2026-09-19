@@ -12,6 +12,14 @@ constexpr DebugItemLabel kQuestItemLabels[] = {
     {"Shard of Falsehood", 29}, {"Shard of Hatred", 30}, {"Shard of Cowardice", 31},
     {"Amulet of Lord British", 18}, {"Crown of Lord British", 19}, {"Sceptre of Lord British", 20}};
 
+// Ordinal position is the DebugSpecialItem enum ordinal; canonical_id is the
+// real gameplay item id, matching UsableItemPickerInput's own documented ids
+// (native/core/include/openu5/inventory_picker.h) 1:1. Grapple carries -1: it
+// is Klimb-only and never a (U)se-item id (see R-07).
+constexpr DebugItemLabel kSpecialItemLabels[] = {
+    {"Grapple", -1}, {"Spyglass", 32}, {"HMS Cape Plans", 33}, {"Sextant", 34},
+    {"Pocket Watch", 35}, {"Black Badge", 36}, {"Wooden Box", 37}};
+
 void copy_text(const char *text, char *buf, size_t buf_size) {
     if (!buf || !buf_size) return;
     std::snprintf(buf, buf_size, "%s", text ? text : "");
@@ -31,6 +39,18 @@ DebugItemLabel debug_quest_item_label(DebugQuestItem item) {
     const auto index = size_t(item);
     constexpr size_t count = sizeof(kQuestItemLabels) / sizeof(kQuestItemLabels[0]);
     return index < count ? kQuestItemLabels[index] : DebugItemLabel{};
+}
+
+DebugItemLabel debug_special_item_label(DebugSpecialItem item) {
+    const auto index = size_t(item);
+    constexpr size_t count = sizeof(kSpecialItemLabels) / sizeof(kSpecialItemLabels[0]);
+    return index < count ? kSpecialItemLabels[index] : DebugItemLabel{};
+}
+
+void debug_format_item_label(const char *name, int32_t canonical_id, char *buf, size_t buf_size) {
+    if (!buf || !buf_size) return;
+    if (canonical_id >= 0) std::snprintf(buf, buf_size, "%s [%d]", name ? name : "Unknown", int(canonical_id));
+    else copy_text(name, buf, buf_size);
 }
 
 const char *debug_status_name(DebugStatus status) {

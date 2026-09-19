@@ -55,13 +55,16 @@ int main() {
 
     // L5: root category labels -- count and non-null unique names.
     const auto category_count = debug_root_category_count();
-    check(category_count == 12, "L5: root category count");
+    check(category_count == 14, "L5: root category count (Batch 4.5A-3 adds Special Items + Quest / World)");
     for (size_t i = 0; i < category_count; ++i) {
         const char *name = debug_root_category_name(i);
         check(name != nullptr && name[0] != '\0', "L5: category name non-null/non-empty");
         for (size_t j = 0; j < i; ++j)
             check(std::strcmp(name, debug_root_category_name(j)) != 0, "L5: category names unique");
     }
+    check(std::strcmp(debug_root_category_name(6), "Quest Items") == 0, "L5: Quest Items at index 6");
+    check(std::strcmp(debug_root_category_name(7), "Special Items") == 0, "L5: Special Items at index 7");
+    check(std::strcmp(debug_root_category_name(8), "Quest / World") == 0, "L5: Quest / World at index 8");
 
     // L6: no ordinal/id conflation -- enum ordinal must never equal the
     // canonical gameplay id by coincidence of matching the wrong field.
@@ -108,6 +111,30 @@ int main() {
     check(std::strcmp(debug_teleport_result_label(DebugTeleportStatus::InvalidFloor, false, false),
                        "Invalid floor") == 0,
           "teleport result label: non-applied status passthrough");
+
+    // S4 (Batch 4.5A-3): exact DebugSpecialItem name + canonical id for all
+    // seven values, including Grapple's -1 (Klimb-only, never a Use-item id --
+    // see R-07, PART13).
+    struct { DebugSpecialItem item; const char *name; int32_t id; } special_items[] = {
+        {DebugSpecialItem::Grapple, "Grapple", -1},
+        {DebugSpecialItem::Spyglass, "Spyglass", 32},
+        {DebugSpecialItem::HmsCape, "HMS Cape Plans", 33},
+        {DebugSpecialItem::Sextant, "Sextant", 34},
+        {DebugSpecialItem::PocketWatch, "Pocket Watch", 35},
+        {DebugSpecialItem::BlackBadge, "Black Badge", 36},
+        {DebugSpecialItem::WoodenBox, "Wooden Box", 37},
+    };
+    for (const auto &entry : special_items) {
+        const auto label = debug_special_item_label(entry.item);
+        check(label.name && std::strcmp(label.name, entry.name) == 0, "S4: special item name");
+        check(label.canonical_id == entry.id, "S4: special item canonical id");
+    }
+
+    // Item label composition: "Name [id]" when canonical_id >= 0, else "Name".
+    debug_format_item_label("Black Badge", 36, buf, sizeof(buf));
+    check(std::strcmp(buf, "Black Badge [36]") == 0, "item label with canonical id");
+    debug_format_item_label("Grapple", -1, buf, sizeof(buf));
+    check(std::strcmp(buf, "Grapple") == 0, "item label without canonical id");
 
     std::cout << checks << " debug labels checks passed\n";
 }

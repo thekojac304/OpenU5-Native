@@ -34,7 +34,8 @@ struct DebugItemLabel {
 // UiDebugCategory::Count.
 inline constexpr const char *kDebugRootCategoryNames[] = {
     "Teleport", "Party", "Stats", "Inventory", "Equipment", "Reagents",
-    "Quest", "Time", "Transport", "NPC / Dungeon", "Presets", "Diagnostics"};
+    "Quest Items", "Special Items", "Quest / World", "Time", "Transport",
+    "NPC / Dungeon", "Presets", "Diagnostics"};
 inline constexpr size_t kDebugRootCategoryCount =
     sizeof(kDebugRootCategoryNames) / sizeof(kDebugRootCategoryNames[0]);
 constexpr size_t debug_root_category_count() { return kDebugRootCategoryCount; }
@@ -59,6 +60,17 @@ const char *debug_diagnostic_group_name(size_t index);
 // item name and the real gameplay item id (never the same as the enum
 // ordinal or the menu's own quest-item selector index).
 DebugItemLabel debug_quest_item_label(DebugQuestItem item);
+
+// DebugSpecialItem name + canonical id (Batch 4.5A-3 Part 13). Grapple's
+// canonical_id is -1: it is Klimb-only (commands.cpp / dungeon.cpp pit logic),
+// never a (U)se-item id, and must never be confused with real id 18 (the
+// Amulet of Lord British) -- that exact confusion was R-07. The remaining six
+// ids (32-37) match UsableItemPickerInput's own documented ids 1:1.
+DebugItemLabel debug_special_item_label(DebugSpecialItem item);
+
+// Composes "Name [id]" when canonical_id >= 0, else just "Name" (Grapple).
+// Writes into caller-owned storage; buf is always null-terminated on success.
+void debug_format_item_label(const char *name, int32_t canonical_id, char *buf, size_t buf_size);
 
 // DebugStatus/DebugTeleportStatus presentation text. "Unsupported" (not
 // "Unavailable") is the exact required wording for DebugStatus::Unsupported.

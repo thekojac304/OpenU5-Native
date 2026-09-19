@@ -133,13 +133,15 @@ int main(){
   g3.party.characters[1].name[0] = 0; // U4 fallback: blank slot 1
   UiDebugMenu menu3(c3); menu3.open();
 
-  // U1: Quest Item row is human-readable, not raw ordinal 0.
-  menu3.handle_input(pick(int(UiDebugCategory::QuestProgression)));
+  // U1: Quest Item row is human-readable, not raw ordinal 0 -- now an explicit
+  // named row (Batch 4.5A-3 Part 6) rather than a raw selector/value pair: the
+  // canonical id lives in the row LABEL, and the value is the Yes/No
+  // possession state itself.
+  menu3.handle_input(pick(int(UiDebugCategory::QuestItems)));
   {
-   const auto rv = menu3.row_value(2);
-   check(rv.kind == DebugRowValue::Kind::TextWithId, "U1: Quest Item row is TextWithId");
-   check(rv.text && std::strcmp(rv.text, "Shard of Falsehood") == 0, "U1: Quest Item name");
-   check(rv.canonical_id == 29, "U1: Quest Item canonical id");
+   check(std::strcmp(menu3.row_label(0), "Shard of Falsehood [29]") == 0, "U1: Quest Item row label");
+   const auto rv = menu3.row_value(0);
+   check(rv.kind == DebugRowValue::Kind::Boolean, "U1: Quest Item row is Boolean possession state");
   }
   menu3.handle_input(act(UiActionKind::Back));
 
@@ -149,7 +151,7 @@ int main(){
   static constexpr int kTeleportActions[] = {5};
   static constexpr int kPartyActions[] = {2, 3, 4};
   static constexpr int kEquipmentActions[] = {3, 4, 5, 6};
-  static constexpr int kQuestActions[] = {7};
+  static constexpr int kQuestWorldActions[] = {6};
   static constexpr int kNpcActions[] = {7};
   static constexpr int kShortcutActions[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14};
   static constexpr int kDiagnosticActions[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
@@ -157,10 +159,15 @@ int main(){
       {UiDebugCategory::Teleport, 6, kTeleportActions, 1},
       {UiDebugCategory::Party, 5, kPartyActions, 3},
       {UiDebugCategory::Stats, 9, nullptr, 0},
-      {UiDebugCategory::Inventory, 12, nullptr, 0},
+      {UiDebugCategory::Inventory, 14, nullptr, 0},
       {UiDebugCategory::Equipment, 7, kEquipmentActions, 4},
       {UiDebugCategory::Reagents, 2, nullptr, 0},
-      {UiDebugCategory::QuestProgression, 8, kQuestActions, 1},
+      // Quest Items/Special Items rows all report real Boolean/Unsupported
+      // state (never Kind::None), even though Confirm fires immediately --
+      // see item_edit_range()/apply_action() in ui_debug_menu.cpp.
+      {UiDebugCategory::QuestItems, 6, nullptr, 0},
+      {UiDebugCategory::SpecialItems, 7, nullptr, 0},
+      {UiDebugCategory::QuestWorld, 7, kQuestWorldActions, 1},
       {UiDebugCategory::Time, 6, nullptr, 0},
       {UiDebugCategory::Transport, 6, nullptr, 0},
       {UiDebugCategory::NpcDungeonState, 8, kNpcActions, 1},
@@ -221,6 +228,100 @@ int main(){
    check(rv.text && std::strcmp(rv.text, "Horse") == 0, "U5: Transport Mode reflects Horse after edit");
   }
   menu3.handle_input(act(UiActionKind::Back));
+ }
+
+ // --- Batch 4.5A-3: Special Items + Developer capability wiring (S1-S9) ---
+ {
+  GameState g4; TurnState t4; TravelState tr4; CommandState cs4;
+  static uint8_t large4[65536]{};
+  WorldData w4{large4, large4, sizeof(large4), sizeof(large4)};
+  CommandContext c4{g4, t4, tr4, cs4, w4};
+  UiDebugMenu menu4(c4); menu4.open();
+
+  // S1: Special Items category exists with 7 rows in the exact spec order.
+  menu4.handle_input(pick(int(UiDebugCategory::SpecialItems)));
+  check(menu4.view().category == int(UiDebugCategory::SpecialItems) && menu4.view().count == 7,
+        "S1: Special Items category has 7 rows");
+  static constexpr const char *kSpecialLabels[] = {
+      "Grapple", "Spyglass [32]", "HMS Cape Plans [33]", "Sextant [34]",
+      "Pocket Watch [35]", "Black Badge [36]", "Wooden Box [37]"};
+  for (size_t i = 0; i < 7; ++i)
+   check(std::strcmp(menu4.row_label(i), kSpecialLabels[i]) == 0, "S1: Special Items row label");
+
+  // S2: Black Badge toggle -- possession only, TurnState::time_spell untouched
+  // (Part 4's semantic boundary). Cursor moves via Next (no side effect);
+  // only Confirm mutates.
+  for (int i = 0; i < 5; ++i) menu4.handle_input(act(UiActionKind::Next));
+  check(menu4.view().cursor == 5, "S2 setup: cursor on Black Badge row");
+  check(!g4.black_badge, "S2 setup: Black Badge starts unowned");
+  menu4.handle_input(act(UiActionKind::Confirm));
+  check(g4.black_badge && t4.time_spell == 0,
+        "S2: Confirm sets game.black_badge, leaves turn.time_spell untouched");
+  menu4.handle_input(act(UiActionKind::Confirm));
+  check(!g4.black_badge && t4.time_spell == 0,
+        "S2: second Confirm toggles possession back off, time_spell still untouched");
+
+  // S3: Pocket Watch reports Unsupported and never mutates GameState.
+  for (int i = 0; i < 5; ++i) menu4.handle_input(act(UiActionKind::Previous)); // back to row 0
+  menu4.handle_input(act(UiActionKind::Next)); menu4.handle_input(act(UiActionKind::Next));
+  menu4.handle_input(act(UiActionKind::Next)); menu4.handle_input(act(UiActionKind::Next));
+  check(menu4.view().cursor == 4, "S3 setup: cursor on Pocket Watch row");
+  check(menu4.row_value(4).kind == DebugRowValue::Kind::Unsupported, "S3: Pocket Watch row is Unsupported kind");
+  GameState before_pw = g4;
+  menu4.handle_input(act(UiActionKind::Confirm));
+  check(menu4.view().has_result && menu4.view().last_status == DebugStatus::Unsupported,
+        "S3: Confirm on Pocket Watch reports Result: Unsupported");
+  check(std::memcmp(&before_pw, &g4, sizeof(GameState)) == 0,
+        "S3: GameState is byte-identical after an unsupported request");
+  menu4.handle_input(act(UiActionKind::Back));
+
+  // S5: Quest Items are six explicit named rows -- no raw "Quest item: 0"
+  // selector remains.
+  menu4.handle_input(pick(int(UiDebugCategory::QuestItems)));
+  check(menu4.view().count == 6, "S5: Quest Items category has 6 rows");
+  static constexpr const char *kQuestItemLabels[] = {
+      "Shard of Falsehood [29]", "Shard of Hatred [30]", "Shard of Cowardice [31]",
+      "Amulet of Lord British [18]", "Crown of Lord British [19]", "Sceptre of Lord British [20]"};
+  for (size_t i = 0; i < 6; ++i)
+   check(std::strcmp(menu4.row_label(i), kQuestItemLabels[i]) == 0, "S5: Quest Item row label");
+
+  // S6: Quest item toggles -- one shard, one Lord British artifact.
+  check(!g4.quest.shards[0], "S6 setup: ShardFalsehood starts OFF");
+  menu4.handle_input(pick(0));
+  check(g4.quest.shards[0], "S6: ShardFalsehood toggled ON via Quest Items");
+  check(!g4.quest.artifacts[0], "S6 setup: Amulet starts OFF");
+  menu4.handle_input(pick(3));
+  check(g4.quest.artifacts[0], "S6: Amulet toggled ON via Quest Items");
+  menu4.handle_input(act(UiActionKind::Back));
+
+  // S7: ShadowlordSummoned is reachable on the Quest / World page and reaches
+  // the existing debug_set_quest_number() setter.
+  menu4.handle_input(pick(int(UiDebugCategory::QuestWorld)));
+  check(menu4.view().count == 7, "S7: Quest / World has 7 rows");
+  check(std::strcmp(menu4.row_label(5), "Shadowlord Summoned") == 0, "S7: Shadowlord Summoned row label");
+  menu4.handle_input(pick(5)); type_and_confirm(menu4, "3");
+  check(g4.quest.summoned == 3, "S7: Shadowlord Summoned reaches debug_set_quest_number");
+  menu4.handle_input(act(UiActionKind::Back));
+
+  // S8: Karma and Torch Turns are reachable on the Inventory page.
+  menu4.handle_input(pick(int(UiDebugCategory::Inventory)));
+  check(menu4.view().count == 14, "S8: Inventory has 14 rows (Karma/Torch Turns added)");
+  check(std::strcmp(menu4.row_label(7), "Karma") == 0 && std::strcmp(menu4.row_label(8), "Torch Turns") == 0,
+        "S8: Karma/Torch Turns row labels");
+  menu4.handle_input(pick(7)); type_and_confirm(menu4, "42");
+  check(g4.karma == 42, "S8: Karma reaches debug_set_resource");
+  menu4.handle_input(pick(8)); type_and_confirm(menu4, "77");
+  check(g4.torch_turns == 77, "S8: Torch Turns reaches debug_set_resource");
+  menu4.handle_input(act(UiActionKind::Back));
+
+  // S9: dungeon slot's UI range excludes the always-invalid slot 7 (seven
+  // dungeons, slots 0..6). The setter's own dungeon>=7 rejection remains a
+  // defensive guard underneath.
+  menu4.handle_input(pick(int(UiDebugCategory::NpcDungeonState)));
+  menu4.handle_input(pick(4));
+  check(menu4.view().editing && menu4.view().maximum == 6, "S9: dungeon slot max excludes invalid slot 7");
+  menu4.handle_input(act(UiActionKind::Cancel));
+  menu4.handle_input(act(UiActionKind::Back));
  }
 
  std::cout<<checks<<" debug menu checks passed; sizeof(UiDebugMenu)="<<sizeof(UiDebugMenu)<<"\n";

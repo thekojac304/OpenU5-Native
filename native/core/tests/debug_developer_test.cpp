@@ -1,9 +1,11 @@
 #include "openu5/debug_developer.h"
 
 #include "openu5/combat.h"
+#include "openu5/inventory_picker.h"
 #include "openu5/outdoor.h"
 #include "openu5/persistence.h"
 #include "openu5/quest.h"
+#include "openu5/quest_world.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -100,8 +102,35 @@ int main() {
 
     check(debug_set_special_item(h.game, DebugSpecialItem::Spyglass, true).status == DebugStatus::Applied && h.game.spyglass,
           "special item editor");
-    check(debug_set_special_item(h.game, DebugSpecialItem::PocketWatch, true).status == DebugStatus::Unsupported,
-          "unowned always-available pocket watch is explicit");
+    {
+        GameState before_pw = h.game;
+        check(debug_set_special_item(h.game, DebugSpecialItem::PocketWatch, true).status == DebugStatus::Unsupported &&
+                  std::memcmp(&before_pw, &h.game, sizeof(GameState)) == 0,
+              "unowned always-available pocket watch is explicit and never mutates GameState");
+    }
+
+    // Black Badge semantic boundary (Batch 4.5A-3 Part 4): the debug toggle
+    // must alter possession (GameState::black_badge) only. It must never set
+    // TurnState::time_spell -- that wear-state transition belongs exclusively
+    // to the real (U)se path (quest_world.cpp's use_quest_item), which is what
+    // the Palace guard/password behavior keys off of.
+    check(debug_set_special_item(h.game, DebugSpecialItem::BlackBadge, true).status == DebugStatus::Applied &&
+              h.game.black_badge && h.turn.time_spell == 0,
+          "debug Black Badge toggle sets possession only, not time_spell");
+    {
+        UsableItemPickerInput picker_input{};
+        picker_input.black_badge = h.game.black_badge;
+        const auto rows = usable_item_picker_rows(picker_input);
+        bool found_badge = false;
+        for (size_t i = 0; i < rows.count; ++i)
+            if (rows.rows[i].id == 36) found_badge = true;
+        check(found_badge, "Use picker contains Black Badge after debug possession toggle");
+    }
+    check(use_quest_item(h.context, 36, EventSink{}) == CommandStatus::Success && h.turn.time_spell == '\x1d',
+          "real gameplay Use path still owns the wear-state transition");
+    check(debug_set_special_item(h.game, DebugSpecialItem::BlackBadge, false).status == DebugStatus::Applied &&
+              !h.game.black_badge && h.turn.time_spell == '\x1d',
+          "debug Black Badge toggle off is possession-only too; it does not touch time_spell");
     check(debug_set_quest_item(h.game, DebugQuestItem::ShardHatred, true).status == DebugStatus::Applied && h.game.quest.shards[1] &&
               debug_set_quest_item(h.game, DebugQuestItem::Crown, true).status == DebugStatus::Applied && h.game.quest.artifacts[1],
           "shard and artifact editors");

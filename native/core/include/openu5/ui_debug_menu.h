@@ -16,7 +16,9 @@ enum class UiDebugCategory : uint8_t {
     Inventory,
     Equipment,
     Reagents,
-    QuestProgression,
+    QuestItems,
+    SpecialItems,
+    QuestWorld,
     Time,
     Transport,
     NpcDungeonState,
@@ -100,7 +102,7 @@ class UiDebugMenu {
     bool last_teleport_passability_known_ = false, last_teleport_passable_ = false;
     bool has_result_ = false;
     size_t destination_ = 0, floor_ = 0, member_ = 0, inventory_index_ = 0;
-    size_t equip_slot_ = 0, quest_flag_ = 0, quest_item_ = 0, npc_location_ = 0,
+    size_t equip_slot_ = 0, quest_flag_ = 0, npc_location_ = 0,
            npc_index_ = 0, dungeon_slot_ = 0, dungeon_room_ = 0;
     int32_t teleport_x_ = 0, teleport_y_ = 0;
     bool standard_entry_ = true;
@@ -112,11 +114,20 @@ class UiDebugMenu {
     // per-call formatting buffers.
     mutable char floor_label_buf_[20]{};
     mutable char character_label_buf_[20]{};
+    mutable char quest_item_label_buf_[32]{};
+    mutable char special_item_label_buf_[32]{};
 
     size_t item_count() const;
     const char *category_name(size_t) const;
     bool item_edit_range(size_t row, int64_t &, int64_t &, int64_t &) const;
     DebugRowValue character_row_value(size_t member) const;
+    // Direct possession reads shared by row_value() (presentation) and
+    // apply_action() (the Confirm-toggles-it mutation) so the two can never
+    // drift (Batch 4.5A-3 Part 3/4): these categories fire on a single Confirm
+    // rather than the numeric edit-dialog two-step, so item_edit_range() is
+    // deliberately never true for their rows.
+    bool quest_item_value(size_t index) const;
+    bool special_item_value(size_t index) const;
     void enter_or_apply();
     void apply_value(int64_t);
     void apply_action();
