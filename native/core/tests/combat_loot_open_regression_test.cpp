@@ -94,6 +94,43 @@ int main(){
     check(finish_encounter_combat(context,battle)==CombatResult::Ok,"normal combat teardown succeeds");
     check(objects.values.empty(),"a consumed combat chest is never promoted or duplicated in the world");
 
+    // R03-DIRECT (Batch 2 RED): the TypeScript reference never promotes an
+    // UNOPENED arena chest to a world object on exit -- unclaimed treasure is
+    // simply lost (game.ts collectSpoils() is a stats-only counter, never a
+    // worldObjects.push). This is distinct from the consumed-chest case just
+    // above (already GREEN): here the chest is still unopened at teardown,
+    // exercising the direct/scripted-encounter path in
+    // combat.cpp::finish_encounter_combat (no OutdoorServices owner), which
+    // is the sibling of the outdoor victory_latch promotion covered by
+    // R03-OUTDOOR in presentation_test.cpp. Expected to FAIL RED against the
+    // current baseline, which still appends a chest QuestObject here.
+    {
+        GameState direct_game{};direct_game.party.character_count=direct_game.party.party_size=1;
+        auto &direct_member=direct_game.party.characters[0];
+        direct_member.party_status=0;direct_member.status='G';
+        direct_member.current_hp=direct_member.max_hp=100;
+        TurnState direct_turn{};TravelState direct_travel{};CommandState direct_commands{};
+        std::vector<uint8_t> direct_tiles(256*256,5);
+        WorldData direct_world{direct_tiles.data(),direct_tiles.data(),direct_tiles.size(),direct_tiles.size()};
+        CommandContext direct_context{direct_game,direct_turn,direct_travel,direct_commands,direct_world};
+        Objects direct_objects{};QuestWorldServices direct_quest{};
+        direct_quest.context=&direct_objects;direct_quest.count=count;direct_quest.read=read;
+        direct_quest.reserve=reserve;direct_quest.append=append;
+        direct_context.quest_world=&direct_quest;direct_context.combat=true;
+        CombatState direct_state{};direct_state.initialized=true;direct_state.victory=true;direct_state.ended=true;
+        // loot[]==1 + default (None) chest_state == unopened_chest() true; the
+        // chest is never Open'd/Get'd in this scenario.
+        direct_state.loot[60]=1;direct_state.chest_contents[60]=20;
+        direct_state.encounter_location=0;direct_state.encounter_floor=0;
+        direct_state.loot_x=41;direct_state.loot_y=41;
+        direct_state.arena_origin_x=5;direct_state.arena_origin_y=5;
+        direct_state.arena_entry=CombatDirection::South;direct_state.has_world_loot_origin=true;
+        check(finish_encounter_combat(direct_context,direct_state)==CombatResult::Ok,
+              "R03-DIRECT: direct-encounter teardown succeeds with the chest still unopened");
+        check(direct_objects.values.empty(),
+              "R03-DIRECT RED: reference-faithful teardown must not promote an unopened arena chest to a world object");
+    }
+
     // A gem reaches its real inventory field only through Get, and View consumes
     // that same field.  Walking/rendering is deliberately absent from this path.
     context.combat=false;context.combat_context=nullptr;

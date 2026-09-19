@@ -1653,17 +1653,12 @@ CombatResult finish_encounter_combat(CommandContext &world, CombatState &state) 
     }
     if (!state.victory)
         emit(GameEventKind::Message, "BATTLE IS LOST!");
-    // Encounters started through OutdoorServices install a victory latch that
-    // promotes combat chests to the defeated roaming actor's exact world tile
-    // and clears those cells. Direct encounters (notably Troll toll refusal
-    // and camp ambushes) have no OutdoorServices owner. Preserve any remaining
-    // chests at their arena-relative encounter coordinates before CombatState
-    // teardown so rendering and Open share one authoritative QuestObject.
-    if(state.victory&&!world.dungeon&&world.quest_world&&world.quest_world->append){
-        int chest_count=0;for(int cell=0;cell<kCombatCells;++cell)if(unopened_chest(state,cell))++chest_count;
-        if(chest_count&&world.quest_world->reserve&&!world.quest_world->reserve(world.quest_world->context,size_t(chest_count)))return CombatResult::NeedsActorStorage;
-        for(int cell=0;cell<kCombatCells;++cell){const int encoded=state.loot[cell];if(!unopened_chest(state,cell))continue;QuestObject chest{};chest.location=state.has_world_loot_origin?state.encounter_location:world.game.position.map.location;chest.floor=state.has_world_loot_origin?state.encounter_floor:world.game.position.map.floor;const auto mapped=combat_cell_to_world(state,cell%kCombatGrid,cell/kCombatGrid);chest.x=mapped.x;chest.y=mapped.y;chest.tile=1;chest.chest=true;chest.trapped=encoded==129;chest.contents=std::max(0,int(state.chest_contents[cell]))|(encoded&128);world.quest_world->append(world.quest_world->context,chest);state.loot[cell]=0;state.chest_contents[cell]=0;state.chest_state[cell]=CombatChestState::Promoted;}
-    }
+    // R-03 (Batch 2): the reference never promotes unclaimed arena treasure to
+    // a world object on exit. An unopened chest or an uncollected loose-loot
+    // pile is simply lost when the party leaves the encounter (game.ts
+    // collectSpoils() is a stats-only counter, never a worldObjects.push).
+    // CombatState teardown below intentionally leaves any still-unopened
+    // chest cells as-is; they vanish with the rest of the arena.
     for (int i = 0; i < state.count; ++i) {
         auto &a = state.actors[i];
         if (!player(a))

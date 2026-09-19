@@ -17,7 +17,7 @@ Evidence classes used below:
 
 ### Overall integration health: **NOT PLAYABLE END-TO-END**
 
-The **core is in far better shape than the device integration**. At the original audit baseline, 56 of 57 host tests pass, including deep byte-level parity suites for combat, commands, magic, items, shops, dialogue, dungeons, travel and persistence. **Post-Batch-1, the host suite is 58 total, 57 pass, with only the pre-existing `gameplay_parity` mismatch 59 (R-02/R-03/R-04, unrelated) failing.** The remaining failures are almost entirely in the **glue layer**: `native/targets/tdeck/main/alpha_runtime.cpp` (1375 lines), `native/core/src/ui_session.cpp`, `native/core/src/presentation.cpp`, and the **asset pack**.
+The **core is in far better shape than the device integration**. At the original audit baseline, 56 of 57 host tests pass, including deep byte-level parity suites for combat, commands, magic, items, shops, dialogue, dungeons, travel and persistence. **Post-Batch-1, the host suite was 58 total, 57 pass, with only the pre-existing `gameplay_parity` mismatch 59 (R-02/R-03/R-04) failing.** **Post-Batch-2, R-02/R-03/R-04 are GREEN and mismatch 59 is fixed.** The host suite is still 58 total, 57 pass, but the sole failure is now a *different*, newly-exposed mismatch — **`gameplay_parity` mismatch 2034 (R-21)**, a scroll-use event/message/SFX divergence that was simply hidden behind mismatch 59 until now. Mismatch 2034 was reproduced byte-for-byte on the untouched pre-Batch-2 baseline with the Batch 2 changes removed, confirming it is pre-existing and unrelated to R-02/R-03/R-04; it is tracked separately (§3 R-21) and was **not** fixed in Batch 2. The remaining failures are almost entirely in the **glue layer**: `native/targets/tdeck/main/alpha_runtime.cpp` (1375 lines), `native/core/src/ui_session.cpp`, `native/core/src/presentation.cpp`, and the **asset pack**.
 
 `AlphaRuntime` itself still has no host coverage — nothing in the repository instantiates it directly, and the on-device "smoke tests" are data-presence probes and isolated `UiSession` probes with a spy dispatcher that never exercise the adapter that consumes the intents. **Batch 1 added `ui_mode_regression`, an ESP-free seam (`ui_mode_policy.h`) that host-tests mode arbitration and `UiSession` mode ownership (28/28 GREEN)** — narrowing, but not closing, that blind spot. Most defects below still live in the parts of the blind spot that seam does not cover.
 
@@ -34,8 +34,8 @@ The **core is in far better shape than the device integration**. At the original
 
 | Anchor | Verdict | Root cause status |
 |---|---|---|
-| **1 — stale blue/relic symbol after loot removed** | **RED** | **Root-caused.** Two independent mechanisms: (a) native promotes unopened arena chests to world objects that the reference never creates (**failing test, reproducible**); (b) the world presentation renders a chest object at raw `o.tile` = **1** = deep-water terrain (blue) instead of sprite `0x101`. |
-| **2 — loose-loot icons don't match identity** | **RED** | **Root-caused.** The combat and world loot tile equations are correct (`0x100+id`, verified [EXEC]). The defect is **layer ordering**: `compose_world_presentation` paints *every* quest object last-wins, so a chest/prop/ship object overdraws a loot icon in the same cell with a raw terrain tile. |
+| **1 — stale blue/relic symbol after loot removed** | **GREEN — RESOLVED (Batch 2), hardware validation not yet performed** | **Root-caused and fixed.** Two mechanisms, both repaired: (a) native promoted unopened arena chests to world objects the reference never creates — both promotion sites (`combat.cpp::finish_encounter_combat`, `outdoor.cpp::outdoor_start` `victory_latch`) removed (R-03); (b) the invalid promoted objects carried raw `o.tile` = **1** = deep-water terrain (blue) instead of sprite `0x101` — this defect disappears as a consequence of (a), since legitimate stationary chest QuestObjects already store the pre-offset sprite tile correctly (R-02). `gameplay_parity` mismatch 59, the reproducible failing test for this anchor, is now GREEN. Physical device confirmation is the one remaining step — see §16 Phase 3 steps 19–22. |
+| **2 — loose-loot icons don't match identity** | **GREEN — RESOLVED (Batch 2), hardware validation not yet performed** | **Root-caused and fixed.** The combat and world loot tile equations were already correct (`0x100+id`, verified [EXEC]). The defect was **layer ordering**: `compose_world_presentation` painted *every* quest object in one unified last-write-wins pass, so a chest/prop/ship object could overdraw a loot icon sharing its cell. Repaired (R-04) by splitting composition into the reference's two layers — stationary/non-loot objects resolved first-match-per-cell, then loot/search resolved last-match-per-cell (LIFO) and painted unconditionally on top, so a stationary object can never mask loot again. Covered by `presentation_regression`'s new R04-OVERLAY (deliberately defeats insertion-order luck) and R04-LIFO cases. Physical device confirmation is the one remaining step — see §16 Phase 3 step 21. |
 | **3 — View Gem appears to do nothing** | **RED** | **Partially root-caused.** Command, gem decrement, deferred turn and a renderer dispatch all exist and are wired. The **presentation itself is fabricated**: `render_world_gem_view` colours cells by `tile&3`/`tile&7`/`tile&15` bit tests, which is not a terrain classification — the output is noise, and the top/bottom 9 px are overdrawn by the sky/wind bars. Needs one device capture to separate "renders noise" from "renders nothing". |
 | **4 — dungeon 3D broken/unusable** | **RED** | **Root-caused.** Required art is not in the asset pack (above). Controls are, however, already correct — see §12. |
 
@@ -140,9 +140,9 @@ See the full Resource/Item matrix in §11. Summary: **gold/food/gems/keys/torche
 | Loose-object spawn, LIFO stack, one-item-per-Get | **G** | `combat.cpp:1346` top-of-stack scan; preserved as intended. |
 | Full-inventory retention (`apply_loot_grant` fails → pile kept) | **G** | Deliberate and correct: "award first, erase second". |
 | Final removal → `pile_count` 0 | **G** | Confirmed. |
-| Cell recomposition after removal | **R** | ANCHOR 1 (b). R-02, R-04 |
-| Combat→world chest promotion | **R** | ANCHOR 1 (a) — reproducible test failure. R-03 |
-| Loot icon identity | **R** | ANCHOR 2 — layer ordering. R-04 |
+| Cell recomposition after removal | **G** — RESOLVED (Batch 2) | ANCHOR 1 (b). R-02 fixed — no chest-tile-1 producer remains. |
+| Combat→world chest promotion | **G** — RESOLVED (Batch 2) | ANCHOR 1 (a) — `gameplay_parity` mismatch 59 fixed. R-03: both promotion sites removed. |
+| Loot icon identity | **G** — RESOLVED (Batch 2) | ANCHOR 2 — two-layer composition. R-04 fixed. |
 | Corpse/blood decor persistence (`loot[]` 30/31) | **G** | Reference-correct: `TILE_CORPSE`/`TILE_BLOOD` persist in `lootLayer` [REF]. |
 | Save/load of world loot | **R** | `objects_` not serialized. R-14 |
 
@@ -196,7 +196,7 @@ See the full Resource/Item matrix in §11. Summary: **gold/food/gems/keys/torche
 | Canonical victory exit → teardown | **G** | `finish_combat_if_needed` runs `finish_encounter_combat`, then rebinds base mode to Dungeon/Exploration. |
 | Return to world | **Y** | `log_combat_world_restore` + tile save/restore exist; unproven on device. Y-07 |
 | Return to dungeon cell/facing | **Y** | `dungeon_combat_return` handles floor delta, escape border, facing. Unproven. Y-22 |
-| **Post-combat chest promotion** | **R** | R-03 — fails `gameplay_parity`. |
+| **Post-combat chest promotion** | **G** — RESOLVED (Batch 2) | R-03 — both promotion sites removed; `gameplay_parity` mismatch 59 fixed. Unclaimed arena treasure is now correctly lost on exit, matching the reference. |
 | Ready in combat | **R** | R-06 |
 | Combat save/load | **N** | Not serialized; the reference does not save mid-combat. Intentional. |
 
@@ -274,7 +274,7 @@ Full report in §12. Summary: **data G, controls G, geometry Y, art R, HUD Y, sa
 | Signs | **G** | `look_sign` test + `resolve_look_sign`. |
 | Terrain overrides (volatile/persistent/hourly/wipe) | **G** | `WorldTerrain` with a 4-layer `inspect()`; `capture_terrain`/`restore_terrain` round-trip. |
 | Fields, traps, fireplaces, emitters, light flood | **G** | `presentation.cpp` `visibility()` + `kEmitters`; `presentation_regression` green. |
-| Chests in the world | **R** | Rendered as terrain tile 1. R-02 |
+| Chests in the world | **G** — RESOLVED (Batch 2) | R-02 fixed. The invalid tile-1 world chests came solely from the R-03 promotion sites; legitimate stationary chest QuestObjects (`quest_world.cpp::hydrate_interior_objects`) already stored the correct pre-offset sprite tile (`0x101`) and needed no change. |
 | Quest objects / hidden items | **R** | Not serialized. R-14 |
 | Beds / camp / auto-sleep | **Y** | `AutoSleep` is core-internal; `rest.cpp` covered by `travel_parity`. Y-26 |
 | Ladders / stairs / bridges | **G** | Klimb + `resolve_world_step` speed classes. |
@@ -373,25 +373,27 @@ AlphaRuntime::handle()                      alpha_runtime.cpp:857
 
 ---
 
-### R-02 — World chest objects render as deep-water terrain (ANCHOR 1b) · **SEVERITY 1**
+### R-02 — World chest objects render as deep-water terrain (ANCHOR 1b) · **SEVERITY 1** · **GREEN — RESOLVED (Batch 2)**
 
-`presentation.cpp:205`:
+**Symptom (as originally observed):** `presentation.cpp:205`:
 ```cpp
 place(o.x, o.y, (o.shadowlord || o.loot || o.search) ? o.tile + 256 : o.tile, ...)
 ```
-A chest object has `chest=true` but `loot=false, search=false, shadowlord=false`, and `tile=1` (`combat.cpp:1665`, `world_commands.cpp`). So it is placed as **terrain tile 1 = deep water**, a solid blue cell, instead of sprite `0x101`.
+A chest object has `chest=true` but `loot=false, search=false, shadowlord=false`, and `tile=1` (`combat.cpp:1665`, `world_commands.cpp`). So it was placed as **terrain tile 1 = deep water**, a solid blue cell, instead of sprite `0x101`.
 
-**Reference [REF]:** `game.ts::lootRenderTiles()` (line 1327) renders **only** `kind==="loot"` and `kind==="search"` objects, both at `id + 0x100`, and explicitly notes that object tiles `0x101..0x10F` are `walkable:false` and must be entities, never composed terrain. Chests in the reference are map-override tiles, not entities.
+**Reference [REF]:** `game.ts::lootRenderTiles()` (line 1327) renders **only** `kind==="loot"` and `kind==="search"` objects, both at `id + 0x100`, and explicitly notes that object tiles `0x101..0x10F` are `walkable:false` and must be entities, never composed terrain. Chests in the reference are map-override tiles, not entities, and their stored `WorldObject.tile` is already pre-offset into sprite-bank space at creation time (`hydrateInteriorObjects`: `tile = p.type + 0x100`).
 
-**Fix shape:** either (a) restrict the quest-object entity layer to `loot|search|shadowlord` exactly as the reference does and write chests to the terrain override layer, or (b) add `chest` to the `+256` predicate. (a) is reference-faithful.
+**Corrected root cause (Batch 2 investigation):** this was **not** fundamentally a renderer-predicate bug. Every legitimate stationary chest/prop/ship producer in the native codebase already followed the reference's pre-offset convention correctly (`quest_world.cpp::hydrate_interior_objects`: `o.tile = n.type+256`; the pirate-ship prize: `o.prize.tile=292`). The only producers emitting a *raw, un-offset* `chest.tile=1` were the two invalid post-combat promotion sites documented under R-03. The rendering predicate in `presentation.cpp` and the equivalent terrain-composition predicate in `quest_world.cpp::quest_world_tile` were both faithfully rendering a bad input, not misclassifying a good one.
 
-**Evidence:** [STATIC] + [REF].
+**Implemented fix:** none required in the renderer. Removing R-03's two invalid promotion sites removes the only producer of a bad-tile chest object; once nothing creates `chest.tile=1`, the deep-water manifestation cannot occur. **No chest-specific `+256` special case was added to `presentation.cpp`, and `quest_world_tile()` was not modified** — both were confirmed correct as-is.
+
+**Evidence:** [STATIC] + [REF] root cause; [EXEC] fix — `presentation_regression`'s existing stationary sprite-bank tile assertion (a `torch` object built with `tile=0x101`, asserting it renders unchanged) already proves the correct convention and required no new coverage. `gameplay_parity` mismatch 59 (the reproducible manifestation of this defect combined with R-03) is GREEN. T-Deck ESP-IDF build: PASS. Hardware flash: **not performed**.
 
 ---
 
-### R-03 — Native promotes arena chests to world objects; the reference does not (ANCHOR 1a) · **SEVERITY 1**
+### R-03 — Native promotes arena chests to world objects; the reference does not (ANCHOR 1a) · **SEVERITY 1** · **GREEN — RESOLVED (Batch 2)**
 
-**Reproducible failure, in the repo today:**
+**Reproducible failure (as originally observed):**
 ```
 ctest -R gameplay_parity      →  Error: Gameplay mismatch 59
 ```
@@ -399,31 +401,43 @@ Sequence 59 is `move, pass, pass, fight×2000, quick×100, end` with seed 3 on t
 
 | | `/worldObjects` |
 |---|---|
-| native (actual) | `[{location:0, floor:0, x:10, y:10, tile:1, kind:"chest", contents:20, trapped:false}]` |
+| native (actual, pre-Batch-2) | `[{location:0, floor:0, x:10, y:10, tile:1, kind:"chest", contents:20, trapped:false}]` |
 | TypeScript reference (expected) | `[]` |
 
-Source: `combat.cpp:1665` — the teardown loop walks every `unopened_chest(state, cell)` and `append`s a world `QuestObject`. The reference has no such promotion; unclaimed arena treasure is simply lost, which is why the victory arena stays open for looting.
+**Root cause — corrected from the original audit wording: TWO promotion sites, not one.** The original audit cited only `combat.cpp:1665`. The Batch 2 investigation found a **second, independent, functionally identical** promotion site that the audit missed:
+1. `native/core/src/combat.cpp` — `finish_encounter_combat()`. The teardown loop walked every `unopened_chest(state, cell)` and `append`ed a world `QuestObject{tile=1, ...}`. This is the direct/scripted-encounter path (no `OutdoorServices` owner — Troll toll refusal, camp ambushes).
+2. `native/core/src/outdoor.cpp` — `outdoor_start()`'s `victory_latch`. The identical promotion, for encounters that *do* have an `OutdoorServices` owner (ordinary roaming-monster encounters) — **this is the path `gameplay_parity` sequence 59 actually exercises.**
 
-Combined with R-02 this is exactly ANCHOR 1: **after looting everything, a blue tile-1 cell remains at the encounter coordinate.**
+The reference has no such promotion on either path; unclaimed arena treasure is simply lost on exit (`game.ts` `collectSpoils()` is a stats-only counter, never a `worldObjects.push`), which is why the victory arena stays open for looting.
+
+Combined with R-02 this was exactly ANCHOR 1: **after looting everything, a blue tile-1 cell remained at the encounter coordinate.**
 
 **Note:** `expected` here is generated by running the live TypeScript core at test time (`check-gameplay.ts` spawns `gameplay_driver` and compares against the TS run), so this is not a stale fixture. `typescript_dungeon_fixture_drift` and the other drift tests all pass, confirming fixture freshness.
 
-**Evidence:** [EXEC] + [REF].
+**Implemented fix:** both promotion sites removed in their entirety (no replacement persistence path added — unclaimed arena treasure is simply lost, as the reference does). The pirate-ship prize promotion in `outdoor.cpp`'s `victory_latch` is unrelated and was left untouched. Two other pre-existing tests that encoded the old (buggy) promotion as their expected behavior — `combat_escape_regression` and `direct_troll_handoff_regression` — were corrected to the reference-faithful expectation as a direct consequence of this fix; their substantive escape/teardown/terrain-restoration coverage is unchanged.
+
+**Evidence:** [EXEC] + [REF] root cause; [EXEC] fix — `gameplay_parity` mismatch 59 is **fixed**: the run now proceeds past sequence 59 entirely. `combat_loot_open_regression` (R03-DIRECT), `presentation_regression` (R03-OUTDOOR), `combat_escape_regression`, and `direct_troll_handoff_regression` are all GREEN. T-Deck ESP-IDF build: PASS. Hardware flash: **not performed**.
+
+**Note:** `combat_cell_to_world` (the arena-relative rotation helper the removed promotion sites used) currently has no remaining production caller. This is noted for awareness only — it is **not** a required cleanup and Batch 2 deliberately did not remove or refactor it, to keep scope minimal.
 
 ---
 
-### R-04 — Quest-object layer overdraws loot icons (ANCHOR 2) · **SEVERITY 2**
+### R-04 — Quest-object layer overdraws loot icons (ANCHOR 2) · **SEVERITY 2** · **GREEN — RESOLVED (Batch 2)**
 
-The loot tile equations are **correct** — verified by probe:
+The loot tile equations were already **correct** — verified by probe:
 ```
 loot_render(id=2 gold)=0x102   loot_render(id=8 gem)=0x108
 loot_render(chest 1)=0x101     loot_render(trapped 129)=0x101   (&0x7f folds the trap bit — matches reference)
 ```
-The defect is ordering. `compose_world_presentation` iterates **all** quest objects last-wins and places every one of them; a chest, prop, ship or torch object sharing a cell with a loot object will overdraw the loot sprite with a raw terrain tile. The reference builds a `Map` keyed by cell containing **only** loot/search entries, so a non-loot object can never mask a loot icon.
+**Root cause (as originally observed):** the defect was ordering. `compose_world_presentation` iterated **all** quest objects last-wins and placed every one of them; a chest, prop, ship or torch object sharing a cell with a loot object could overdraw the loot sprite with a raw terrain tile. The reference builds a `Map` keyed by cell containing **only** loot/search entries, resolved last-match/LIFO and painted after a separate first-match stationary-object layer, so a non-loot object can never mask a loot icon.
 
-**Fix shape:** mirror the reference's per-cell top-of-stack map, restricted to the renderable kinds.
+**Implemented fix:** `compose_world_presentation` now composes two reference-faithful layers instead of one unified pass:
+- **Layer 1 (stationary/non-loot: chest/prop/ship/torch/plot/shadowlord)** — first matching object per cell wins, mirroring `game.ts tileAt()`'s `Array.find`.
+- **Layer 2 (loot/search only)** — last matching object per cell wins (LIFO/top-of-stack), always painted *after* layer 1, mirroring `game.ts lootRenderTiles()`, so loose loot or a search find can never be masked by a co-located stationary object regardless of `QuestWorldServices` append order.
 
-**Evidence:** [STATIC] + [REF].
+No `QuestObject` storage/layout change was made; `quest_world_tile()` was left untouched (it already implements correct first-match semantics for its own separate consumers, and the accepted RED tests did not require changing it).
+
+**Evidence:** [STATIC] + [REF] root cause; [EXEC] fix — `presentation_regression`'s new R04-OVERLAY case (deliberately appends the loot object first and the stationary object second, defeating today's-then accidental insertion-order success, and asserts the loot sprite still wins) and R04-LIFO case (two loot objects in one cell, asserts the last-appended one is visible) are both GREEN. T-Deck ESP-IDF build: PASS. Hardware flash: **not performed**.
 
 ---
 
@@ -690,6 +704,27 @@ Consequence: the ship can be boarded but the sails can never be hoisted — **al
 
 ---
 
+### R-21 — `gameplay_parity` scroll-use event/message/SFX divergence, newly exposed after Batch 2 · **SEVERITY: unassessed** · **RED — OPEN, newly exposed**
+
+**Discovery context:** Batch 2 fixed `gameplay_parity` mismatch 59 (R-03). Fixing it allowed the same test to run further and reach a *different* failure, previously hidden:
+```
+ctest -R gameplay_parity      →  Error: Gameplay mismatch 2034
+```
+Observed divergence (from the generated mismatch artifact) is in scroll-use event output — example: native emits message text `"Scroll"` where the reference emits `"Used Vas Lor Scroll."`, and the reference's expected event stream includes an `sfx: "scroll-used"` event and an `unknown`-kind event that native's actual output does not produce.
+
+**Critical scoping evidence:** this mismatch was reproduced **byte-for-byte** on the untouched pre-Batch-2 baseline (`63eeac3b`), with the Batch 2 production changes stashed out. Therefore:
+- it is **pre-existing**, not introduced by Batch 2;
+- it was **masked** by the earlier-failing mismatch 59, which halted the test before sequence 2034 was ever reached;
+- it is **not caused by, and is out of scope for, R-02/R-03/R-04**.
+
+**No root cause has been investigated yet.** This finding is intentionally narrow and evidence-only: [EXEC] `gameplay_parity` reaches mismatch 2034 after Batch 2; [EXEC] the identical mismatch reproduces on the untouched `63eeac3b` baseline. Do not assume a cause (scroll message table, missing `sfx` event consumer, event-shape difference, or something else) until investigated. Do not fold this into R-16 (spell description/label mismatches) unless a future investigation proves they share a cause — R-16 is about spell *descriptions*, not scroll-use *event output*, and the two have not been shown to be related.
+
+**Fix shape:** not yet determined — requires its own investigation batch (see §14 Batch 12).
+
+**Evidence:** [EXEC] only, both directions (present after Batch 2; present on the untouched baseline).
+
+---
+
 ## 4. YELLOW / UNPROVEN AREAS
 
 | ID | Area | Why unproven | Missing evidence |
@@ -785,11 +820,13 @@ Consequence: the ship can be boarded but the sails can never be hoisted — **al
 
 ### Currently failing
 
-Post-Batch-1 host suite: **58 total, 57 pass, 1 fail.**
+Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, mismatch 59, R-03).
+
+**Post-Batch-2 host suite is: 58 total, 57 pass, 1 fail.** Mismatch 59 is fixed. `gameplay_parity` still fails, but now at a *different* location:
 
 | Test | Status |
 |---|---|
-| `gameplay_parity` | **FAILING** — mismatch 59, R-03. Only failure; all other 57 tests, including the new `ui_mode_regression` (28/28 GREEN), pass. |
+| `gameplay_parity` | **FAILING** — mismatch 2034, **R-21** (newly exposed, pre-existing, unrelated to Batch 2 — see §3 R-21). Mismatch 59 (R-03) is **fixed** and no longer the failure. Only failure; all other 57 tests, including `ui_mode_regression` (28/28 GREEN) and the Batch 2 regressions (`presentation_regression`, `combat_loot_open_regression`, `combat_escape_regression`, `direct_troll_handoff_regression`), pass. |
 
 `ui_mode_regression` is new, narrow device-glue coverage added in Batch 1 — it host-tests mode arbitration and `UiSession` mode ownership via the `ui_mode_policy.h` seam. It does not make `AlphaRuntime` as a whole host-tested; see Y-05 below.
 
@@ -799,8 +836,8 @@ Post-Batch-1 host suite: **58 total, 57 pass, 1 fail.**
 |---|---|
 | `ui_session_tests` | Uses a `Spy` dispatcher that records `UiIntent`s and never executes them. Proves `UiSession` routing; proves **nothing** about `AlphaRuntime::dispatch`, `modal()`, `open_selection` or `synchronize_after_debug` — i.e. exactly where R-01, R-06, R-07, R-08, R-09, R-11 live. |
 | `device_smoke_tests` (37 scenarios) | Cases 3,4,5,9,10,12,13,15,18,19,20,21,24,26,27,28,29 are **data-presence assertions** ("is the table non-empty", "is the name non-null"). Cases 2,6,7,8,11,17,22,25 are `UiSession`-with-spy probes. Case 16 composes a snapshot but asserts only a hash. **No scenario validates a rendered frame, a mode round-trip, or a full input→state→presentation chain.** |
-| `presentation_regression` | Asserts snapshot composition; never checks that the chosen tile is the *right* tile for the object kind — which is why R-02 and R-04 survived. |
-| `combat_loot_open_regression` | Covers Open→pile→Get authoritative mutation. Does **not** assert that the cell stops rendering loot, nor that no world object is created on exit — R-01/R-03's blind spot. |
+| `presentation_regression` *(historical — gap closed in Batch 2)* | At the original audit baseline, asserted snapshot composition but never checked that the chosen tile was the *right* tile for the object kind, which is why R-02 and R-04 survived. Batch 2 added R03-OUTDOOR, R04-OVERLAY and R04-LIFO cases that close this gap; the test now asserts both the correct tile and the correct layering. |
+| `combat_loot_open_regression` *(historical — gap closed in Batch 2)* | At the original audit baseline, covered Open→pile→Get authoritative mutation but did **not** assert that no world object is created on exit — R-01/R-03's blind spot. Batch 2 added the R03-DIRECT case that closes this gap. |
 | `debug_developer_test`, `debug_map_picker_test` | Strong (they assert no turn/RNG consumption), but they exercise the debug path, which `synchronize_after_debug` *serves correctly*. They therefore cannot expose R-01. |
 | `frontend_test` | State machine only; no view/art assertions. |
 
@@ -871,7 +908,7 @@ Post-Batch-1 host suite: **58 total, 57 pass, 1 fail.**
 | (system menu active) | `system_menu_.active()` | system-menu view | `SystemMenuSession` | gameplay mode | **G** — asserted exclusive |
 | `Exploration` | none | `render_snapshot(compose_world_presentation)` | `dispatch_world_command` | — | **G** |
 | `Dungeon` | `dungeon_.active && context_.dungeon` | `render_dungeon_view` | `execute_dungeon_command` | — | **R-05** (art) |
-| `Combat` | `context_.combat && combat_.initialized` | `render_snapshot(compose_combat_presentation)` | combat commands | quick escape | **G** logic / **R-04** icons |
+| `Combat` | `context_.combat && combat_.initialized` | `render_snapshot(compose_combat_presentation)` | combat commands | quick escape | **G** logic / icons — R-04 resolved (Batch 2, `compose_world_presentation` two-layer fix) |
 | `Shop` | `shop_.phase != Closed` | world/combat viewport + `DeviceShopView` overlay | `execute_shop` | hierarchical | **G** — R-01 resolved (Batch 1) |
 | `Dialogue` | `dialogue_` session | viewport + transcript | dialogue commands | `EndConversation` | **G** — R-01 resolved (Batch 1) |
 | `ShrineSpecial` | shrine/Blackthorn session | viewport only | modal resolution → `shrine_return_mode_` | originating world mode | **G** — resolved (Batch 1) (§5) |
@@ -918,7 +955,7 @@ Post-Batch-1 host suite: **58 total, 57 pass, 1 fail.**
 | Wooden Box (37) | quest | ✓ ("How?") | n/a | picker | ✓ | **G** |
 | Grapple | quest | **should not be a Use item** | n/a | — | ✓ | **R-07** |
 | Loose loot piles | ✓ LIFO | n/a | n/a | rendered `0x100+id` | **✗** | **R-14** |
-| World chests | Open→piles | n/a | n/a | **tile 1 = blue** | **✗** | **R-02**, **R-14** |
+| World chests | Open→piles | n/a | n/a | correct sprite (was **tile 1 = blue**; R-02 resolved Batch 2) | **✗** | R-02 **G** / **R-14** |
 
 ---
 
@@ -1006,12 +1043,13 @@ Small, independently testable batches, in dependency order. Each batch ends at a
 
 ---
 
-### Batch 2 — Loot & chest presentation (ANCHORS 1 + 2) · risk: low
-**IDs:** R-02, R-03, R-04
-**Files:** `native/core/src/presentation.cpp` (`compose_world_presentation` quest-object layer), `native/core/src/combat.cpp:1665` (promotion)
-**Work:** restrict the entity layer to `loot|search|shadowlord` with a per-cell top-of-stack map mirroring `lootRenderTiles()`; route chests to the terrain-override layer; remove or gate the post-combat chest promotion so `gameplay_parity` passes.
-**Verify:** `ctest -R gameplay_parity` must go green — this batch has a hard pass/fail gate already in the repo.
-**Physical test:** troll chest → Open → Search → Get to zero → confirm the cell shows plain terrain, no blue square; confirm each icon matches the next `G` result.
+### Batch 2 — Loot & chest presentation (ANCHORS 1 + 2) · risk: low · **COMPLETED**
+**IDs:** R-02 (GREEN), R-03 (GREEN), R-04 (GREEN)
+**Files:** `native/core/src/presentation.cpp` (`compose_world_presentation` two-layer quest-object composition), `native/core/src/combat.cpp` (`finish_encounter_combat` — promotion removed), `native/core/src/outdoor.cpp` (`outdoor_start` `victory_latch` — promotion removed; a second invalid site the original audit did not identify), `native/core/tests/combat_loot_open_regression_test.cpp` (R03-DIRECT), `native/core/tests/presentation_test.cpp` (R03-OUTDOOR, R04-OVERLAY, R04-LIFO), `native/core/tests/combat_escape_regression_test.cpp` and `native/core/tests/direct_troll_handoff_test.cpp` (stale post-fix expectations corrected).
+**Work done:** removed both post-combat unopened-chest promotion sites in their entirety (no replacement persistence path — unclaimed arena treasure is now correctly lost on exit, matching the reference); restructured `compose_world_presentation`'s quest-object loop into two passes — stationary/non-loot objects resolved first-match-per-cell, then loot/search resolved last-match-per-cell (LIFO) and painted unconditionally after layer 1. No renderer hack was added for R-02 (confirmed no chest-specific `+256` case was needed, `quest_world_tile()` untouched) and no `QuestObject` storage/layout refactor was performed.
+**Verify:** `ctest -R gameplay_parity` — mismatch 59 is **fixed**; execution now proceeds well past sequence 59. (The run still fails, at a *different*, pre-existing, newly-exposed mismatch 2034 — tracked separately as **R-21**, confirmed unrelated to this batch; see §3 R-21 and §14 Batch 12.)
+**Physical test:** troll chest → Open → Search → Get to zero → confirm the cell shows plain terrain, no blue square; confirm each icon matches the next `G` result. **Not yet performed on hardware.**
+**Test evidence:** `combat_loot_open_regression` PASS (R03-DIRECT GREEN; consumed-chest guard and existing LIFO/full-inventory behavior unchanged and GREEN). `presentation_regression` PASS (R03-OUTDOOR, R04-OVERLAY, R04-LIFO GREEN; existing stationary sprite-bank tile convention GREEN). `combat_escape_regression` PASS (stale promoted-chest expectation corrected to reference behavior; escape/bridge-restoration coverage unchanged). `direct_troll_handoff_regression` PASS (same correction; combat-local Open and consumed-chest no-duplication coverage unchanged). `ui_mode_regression` PASS (Batch 1 untouched). Full host suite: 58 total, **57 pass, 1 fail** — sole failure is `gameplay_parity` at the newly-exposed mismatch 2034 (R-21), confirmed pre-existing and reproduced on the untouched `63eeac3b` baseline. T-Deck ESP-IDF build: PASS. Hardware flash: **not performed**.
 **Model:** Sonnet/Codex is sufficient — the target behaviour is fully specified by the reference and by a failing test.
 
 ---
@@ -1104,6 +1142,16 @@ Small, independently testable batches, in dependency order. Each batch ends at a
 
 ---
 
+### Batch 12 — Scroll-use event/message/SFX divergence (R-21) · risk: **unknown — investigation required** · **NOT STARTED**
+**IDs:** R-21 (RED, OPEN, newly exposed)
+**Files:** unknown — not yet investigated. Likely candidates given the observed symptom (scroll-use message text and missing `sfx`/`unknown` events) are the native scroll-use handler and its message/event tables, but this is a guess, not a finding, and must not be treated as one.
+**Work:** first, root-cause `gameplay_parity` mismatch 2034 the same way R-02/R-03/R-04 were root-caused in Batch 2 — trace the exact native code path for the failing sequence, inspect the generated mismatch artifact, and adjudicate against the authoritative reference before proposing a fix. Do not assume this shares a cause with R-16 (spell description/label mismatches) — R-16 concerns spell descriptions, not scroll-use event output — unless investigation proves otherwise.
+**Verify:** `ctest -R gameplay_parity` must go green with **no new mismatch surfacing** past 2034, the same hard pass/fail gate pattern used for Batch 2.
+**Physical test:** not yet determined pending root cause.
+**Model:** Sonnet/Opus for investigation, depending on what the root cause turns out to be — undetermined until the investigation phase runs.
+
+---
+
 ## 15. PROPOSED REGRESSION TESTS
 
 ### Invariants worth asserting (cheap, high value)
@@ -1118,10 +1166,10 @@ Small, independently testable batches, in dependency order. Each batch ends at a
 | 6 | **`UiMode::Dialogue` survives a dialogue keypress round-trip** | runtime — catches R-01 |
 | 7 | Every `UiMode` reachable by `set_base_mode` has a `handle_input` case | static assert / test — catches `ShrineSpecial` |
 | 8 | A successful pickup mutates exactly one inventory field | extend `combat_loot_open_regression` |
-| 9 | **A removed loose item no longer renders in that cell** | `presentation_regression` — catches ANCHOR 1 |
-| 10 | **An empty loot stack renders the underlying terrain** | `presentation_regression` — catches ANCHOR 1 |
-| 11 | **The visible loot tile equals `0x100 + (next Get result id)`** | `presentation_regression` — catches ANCHOR 2 |
-| 12 | **No world object renders with a tile < 0x100** | `presentation_regression` — catches R-02 in one line |
+| 9 | A removed loose item no longer renders in that cell | `presentation_regression` — **ADOPTED (Batch 2)**, pre-existing coverage confirmed sufficient |
+| 10 | An empty loot stack renders the underlying terrain | `presentation_regression` — **ADOPTED (Batch 2)**, pre-existing coverage confirmed sufficient |
+| 11 | The visible loot tile equals `0x100 + (next Get result id)` | `presentation_regression` — **ADOPTED (Batch 2)** as R04-OVERLAY/R04-LIFO |
+| 12 | ~~No world object renders with a tile < 0x100~~ | **REJECTED (Batch 2 investigation)** — this is a **false invariant**: legitimate `plot`-kind QuestObjects (crown, sceptre, shards, amulet) deliberately keep a raw tile below `0x100` (`quest_world.cpp:42`, `game.ts` `hydrateInteriorObjects`), so a blanket `tile>=0x100` check was explicitly not added. The narrower, correct invariant actually adopted is: *a stationary chest/prop-style object that reaches presentation with a sprite-bank tile renders that exact pre-offset tile unchanged* — already proven by `presentation_regression`'s existing `torch` case. |
 | 13 | Every equipment slot holds ≤ 1 item | `item_parity` |
 | 14 | Every modal `UiRequestId` opened by `consume` is handled by `finish_modal` **or** `AlphaRuntime::modal` | runtime — **catches R-09** |
 | 15 | Every `GameEventKind` has a consumer or an explicit `IGNORED` entry | runtime — catches R-10, R-12, R-13 |
@@ -1171,9 +1219,9 @@ Efficient broad-coverage pass using Developer tools. ~45 minutes. Each step name
 17. Trigger an overworld encounter. Move, `A`ttack with the reticle, `F`ire, `C`ast a combat spell.
 18. **[R-06] Press `R` in combat, select a weapon. Confirm the weapon actually changes** (today it will not).
 19. Win. **Confirm the arena stays open.** `O`pen the chest, `S`earch it, `G` + direction repeatedly to zero.
-20. **[ANCHOR 1] Confirm the cell shows plain arena floor — no blue square, no leftover symbol.**
-21. **[ANCHOR 2] Before each `G`, note the visible icon; confirm the message names the same item.**
-22. Mic (Back) → canonical victory exit. **[ANCHOR 1] Confirm no blue tile-1 cell at the encounter coordinate on the overworld.**
+20. **[ANCHOR 1 — Batch 2 regression-validation] Confirm the cell shows plain arena floor — no blue square, no leftover symbol.** (Code/test-level fix is GREEN as of Batch 2; this step is the outstanding hardware confirmation, not a check for a known-open defect.)
+21. **[ANCHOR 2 — Batch 2 regression-validation] Before each `G`, note the visible icon; confirm the message names the same item.** (Code/test-level fix is GREEN as of Batch 2; this step is the outstanding hardware confirmation.)
+22. Mic (Back) → canonical victory exit. **[ANCHOR 1 — Batch 2 regression-validation] Confirm no blue tile-1 cell at the encounter coordinate on the overworld.** (`gameplay_parity` mismatch 59 is fixed at the code/test level; this step is the outstanding hardware confirmation, not a check for a known-open defect.)
 23. Save, reload. **[R-14] Confirm any loot left behind is still there.**
 
 ### Phase 4 — Items, magic, view (6 min)
@@ -1221,10 +1269,12 @@ Efficient broad-coverage pass using Developer tools. ~45 minutes. Each step name
 
 ## APPENDIX — Audit artifacts
 
-**Test run (ORIGINAL AUDIT BASELINE RUN, pre-Batch-1):** `ctest` in `native/core/build-alpha20-host`, 57 tests, **56 passed / 1 failed** (`gameplay_parity`, 61.9 s). Mismatch artifact retained at `native/core/build-gameplay/mismatch.json`. This run predates Batch 1 and is preserved as historical evidence.
+**Test run (ORIGINAL AUDIT BASELINE RUN, pre-Batch-1):** `ctest` in `native/core/build-alpha20-host`, 57 tests, **56 passed / 1 failed** (`gameplay_parity`, 61.9 s). Mismatch artifact retained at `native/core/build-gameplay/mismatch.json`. This run predates Batch 1 and is preserved as historical evidence. At this point in the program, mismatch 2034 (R-21) had not yet been observed — it was unreachable behind mismatch 59 — and this record is preserved as-is rather than rewritten with knowledge that did not exist at the time.
 
-**Current status (post-Batch-1):** 58 total, 57 pass, 1 fail — same `gameplay_parity` mismatch 59, plus the new `ui_mode_regression` suite (28/28 GREEN). See §14 Batch 1.
+**Status (post-Batch-1, historical):** 58 total, 57 pass, 1 fail — `gameplay_parity` failing at mismatch 59, plus the new `ui_mode_regression` suite (28/28 GREEN). See §14 Batch 1. As with the baseline run above, mismatch 2034 was not yet reachable or known at this point and this record is preserved unchanged.
+
+**Current status (post-Batch-2):** 58 total, **57 pass, 1 fail**. R-02, R-03 and R-04 are GREEN; `gameplay_parity` mismatch 59 is **fixed**. The sole remaining failure is `gameplay_parity` at **mismatch 2034 (R-21)** — a scroll-use event/message/SFX divergence that was masked by mismatch 59 until now, confirmed pre-existing (reproduces on the untouched `63eeac3b` baseline) and out of scope for Batch 2. `ui_mode_regression` (28/28 GREEN, Batch 1) and all Batch 2 regressions (`presentation_regression`, `combat_loot_open_regression`, `combat_escape_regression`, `direct_troll_handoff_regression`) pass. T-Deck ESP-IDF build: PASS. Hardware flash: **not performed**. See §14 Batch 2 and §3 R-21.
 
 **Probe:** a throwaway program linked against `libopenu5_core.a` verified R-06 and R-16 directly. It lives in the session scratchpad, **not** in the repo — it is an audit instrument, not a test. Its assertions are folded into the proposed invariants 18 and 22 in §15, which is where they belong.
 
-**Working tree:** unchanged apart from this document. No production code was modified during the audit.
+**Working tree (as of this document update):** contains the completed Batch 2 implementation and tests (`native/core/src/combat.cpp`, `native/core/src/outdoor.cpp`, `native/core/src/presentation.cpp`, and the corresponding test files) plus this document update. No other production code was modified.

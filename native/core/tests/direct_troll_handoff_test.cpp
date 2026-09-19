@@ -57,20 +57,24 @@ int main(){
     check(troll_actor>=0,"direct encounter contains exactly one Troll");
     const auto combat_chest=battle.actors[troll_actor].position;
     // Simulate the combat engine's already-completed one-Troll victory state;
-    // return coordinates and promotion remain entirely production-owned.
+    // return coordinates and teardown remain entirely production-owned.
     battle.actors[troll_actor].status=CombatStatus::Dead;
     const int chest_cell=combat_chest.y*kCombatGrid+combat_chest.x;
     battle.loot[chest_cell]=129;battle.chest_contents[chest_cell]=9;battle.victory=true;battle.ended=true;
     check(finish_encounter_combat(context,battle)==CombatResult::Ok,"normal finished-combat teardown runs");
-    check(objects.values.size()==1&&objects.values[0].chest&&objects.values[0].x==102&&objects.values[0].y==100,
-          "teardown promotes one chest through the arena-relative world transform");
-    check(objects.values[0].x!=bridge_x||objects.values[0].y!=bridge_y,
-          "promotion does not collapse the combat chest to the return anchor");
+    // STALE EXPECTATION CORRECTED (Batch 2, R-03): this block previously
+    // asserted the pre-fix native behavior -- "teardown promotes one chest
+    // through the arena-relative world transform" -- and then exercised
+    // world Open against that invented object. The reference never promotes
+    // an unopened arena chest to a world object on exit; it is simply lost
+    // with the rest of the arena. combat_cell_to_world's arena-relative
+    // rotation math has no remaining production caller once the promotion
+    // that used it is removed. With nothing promoted, there is nothing left
+    // in the world for Open to find, so the trailing "exact-direction Open
+    // finds the promoted chest" sub-case is removed along with it.
+    check(objects.values.empty(),
+          "R-03: reference-faithful teardown must not promote the defeated Troll's unopened chest to a world object");
     check(terrain.effective(world,{0,0},bridge_x,bridge_y)==bridge_tile,"bridge terrain survives teardown");
-    // The exact mapped chest is east of this adjacent exploration cell.
-    game.position.xy={101,100};const auto map=get_active_map(world,{0,0});Command open{};open.kind=CommandKind::Open;open.direction=Direction::East;open.has_direction=true;
-    check(world_interaction(context,open,map.value,{},rng_source(game.rng)).status==CommandStatus::Success,"exact-direction Open finds the promoted chest");
-    check(!objects.values.empty()&&!objects.values[0].chest,"Open consumes no duplicate or shadow chest");
 
     save::Json snapshot=save::Json::object();save::capture_terrain(terrain,snapshot);std::string encoded;
     check(save::encode_json(snapshot,encoded)==save::JsonError::None,"terrain save encodes");save::Json decoded;WorldTerrain restored;

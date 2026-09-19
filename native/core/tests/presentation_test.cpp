@@ -78,21 +78,37 @@ int main(){
               "outdoor combat starts with authoritative enemy coordinate");
         battle_state.loot[60]=129;battle_state.chest_contents[60]=7;battle_state.victory=true;
         battle_state.victory_latch(battle_state.victory_context);
-        check(battle_objects.values.size()==1&&battle_objects.values[0].chest&&
-                  battle_objects.values[0].trapped&&battle_objects.values[0].contents==(128|7)&&
-                  battle_objects.values[0].x==11&&battle_objects.values[0].y==10&&
-                  battle_state.loot[60]==0,
-              "combat chest becomes one authoritative trapped world object");
-        battle_context.combat=false;Command exact_open{};exact_open.kind=CommandKind::Open;
-        exact_open.direction=Direction::East;exact_open.has_direction=true;
-        check(world_interaction(battle_context,exact_open,outdoor_map.value,{},rng_source(battle_game.rng)).status==CommandStatus::Success&&
-                  !battle_objects.values.empty()&&!battle_objects.values[0].chest,
-              "exact adjacent Open consumes promoted chest and leaves generated loot");
+        // R03-OUTDOOR (Batch 2 RED): STALE EXPECTATION CORRECTED. This block
+        // previously asserted the current (buggy) native behavior --
+        // "combat chest becomes one authoritative trapped world object" --
+        // and then exercised world Open against that invented object. The
+        // accepted investigation shows the TypeScript reference never
+        // promotes an unopened arena chest on the outdoor victory_latch path
+        // either (game.ts collectSpoils() only counts; it never pushes a
+        // worldObjects entry). gameplay_parity mismatch 59 is caused solely
+        // by this promotion. The old "exact adjacent Open consumes promoted
+        // chest" sub-case is removed along with it: once nothing is
+        // promoted, there is nothing in the world to Open, so that assertion
+        // no longer describes reference-faithful behavior. Expected to FAIL
+        // RED against the current baseline, which still promotes here.
+        check(battle_objects.values.empty(),
+              "R03-OUTDOOR RED: reference-faithful victory_latch must not promote an unopened arena chest to a world object");
     }
 
     // Troll toll and other direct encounter starts do not pass through
-    // OutdoorServices::victory_latch. Teardown must still promote the exact
-    // rendered combat chest into world state at the blocked Troll coordinate.
+    // OutdoorServices::victory_latch; they tear down through
+    // combat.cpp::finish_encounter_combat directly.
+    //
+    // STALE EXPECTATION CORRECTED (Batch 2, R-03): this block previously
+    // asserted the pre-fix native behavior -- "teardown must still promote
+    // the exact rendered combat chest into world state" -- and then
+    // exercised world Open against that invented object. The accepted
+    // investigation and the sibling R03-OUTDOOR case above establish that
+    // the reference never promotes an unopened arena chest on exit, on
+    // either path. With the finish_encounter_combat promotion removed, there
+    // is nothing left in the world for Open to find, so the old "exact
+    // adjacent Open finds direct-encounter chest" sub-case is removed along
+    // with it.
     {
         GameState direct_game{};direct_game.position={{40,41},{0,0}};
         direct_game.party.character_count=direct_game.party.party_size=1;
@@ -104,9 +120,8 @@ int main(){
         Objects direct_objects{};QuestWorldServices direct_quest{};direct_quest.context=&direct_objects;direct_quest.count=count;direct_quest.read=read;direct_quest.reserve=reserve;direct_quest.append=append;direct_quest.erase=erase;direct_quest.write=write;direct_context.quest_world=&direct_quest;
         CombatState direct_state{};direct_state.initialized=true;direct_state.victory=true;direct_state.ended=true;direct_state.loot[60]=129;direct_state.chest_contents[60]=9;direct_state.encounter_location=0;direct_state.encounter_floor=0;direct_state.loot_x=41;direct_state.loot_y=41;direct_state.arena_origin_x=5;direct_state.arena_origin_y=5;direct_state.arena_entry=CombatDirection::South;direct_state.has_world_loot_origin=true;direct_context.combat=true;
         check(finish_encounter_combat(direct_context,direct_state)==CombatResult::Ok,"direct Troll-style encounter tears down");
-        check(direct_objects.values.size()==1&&direct_objects.values[0].chest&&direct_objects.values[0].trapped&&direct_objects.values[0].contents==(128|9)&&direct_objects.values[0].location==0&&direct_objects.values[0].floor==0&&direct_objects.values[0].x==41&&direct_objects.values[0].y==41,"direct encounter chest survives teardown with exact Troll identity");
-        direct_game.position.xy={40,41};auto direct_map=get_active_map(direct_world,direct_game.position.map);Command exact{};exact.kind=CommandKind::Open;exact.direction=Direction::East;exact.has_direction=true;
-        check(world_interaction(direct_context,exact,direct_map.value,{},rng_source(direct_game.rng)).status==CommandStatus::Success,"exact adjacent Open finds direct-encounter chest");
+        check(direct_objects.values.empty(),
+              "R-03: reference-faithful teardown must not promote an unopened arena chest to a world object (direct-encounter path)");
     }
 
     terrain.set({13,0},4,5,185);snap=compose_world_presentation(context,active.value,{5,5},0x11c);
@@ -119,6 +134,50 @@ int main(){
     objects.values.pop_back();
     const auto picked_up=get_quest_object(context,Direction::North,{});check(picked_up.status==CommandStatus::Success&&objects.values.empty(),"Get removes the live object");
     snap=compose_world_presentation(context,active.value,{5,5},0x11c);check(snap.tiles[4*11+5]==5,"picked-up object reveals terrain");
+
+    // R04-OVERLAY (Batch 2 RED): the reference composes TWO layers -- a
+    // stationary/non-loot layer (chest/prop/ship/torch, first match per
+    // cell, game.ts tileAt()) and a loot/search overlay drawn AFTER it,
+    // unconditionally on top (game.ts lootRenderTiles()), so a stationary
+    // object sharing a cell with loose loot can never mask it. The native
+    // compose_world_presentation loop today is a single last-write-wins pass
+    // with no such layering, and only happens to look correct in real play
+    // because interior objects are hydrated before any loot/search object is
+    // appended. This case deliberately defeats that accidental ordering by
+    // appending the loot object FIRST and the stationary object SECOND, so
+    // today's unified last-wins loop paints the stationary tile on top.
+    // Expected to FAIL RED against the current baseline.
+    {
+        QuestObject overlay_loot{13,0,5,4,8};overlay_loot.loot=true;overlay_loot.item_id=8;overlay_loot.quality=1;
+        objects.values.push_back(overlay_loot);
+        QuestObject overlay_prop{13,0,5,4,0x142};overlay_prop.prop=true;
+        objects.values.push_back(overlay_prop);
+        snap=compose_world_presentation(context,active.value,{5,5},0x11c);
+        check(snap.tiles[4*11+5]==0x108,
+              "R04-OVERLAY RED: loose loot must render on top of a co-located stationary object regardless of append order");
+        objects.values.clear();
+    }
+
+    // R04-LIFO: two loot/search objects sharing one world cell -- the LAST
+    // appended (top of stack) is the visible representative, matching
+    // game.ts lootRenderTiles()'s per-cell Map (last entry wins). Not
+    // previously covered at the world-presentation level (the existing LIFO
+    // coverage in combat_loot_open_regression_test.cpp exercises
+    // compose_combat_presentation's combat-arena pile, a different
+    // function/data path). Expected to already pass on the current
+    // baseline: with no competing stationary object in the cell, the
+    // existing unified last-write-wins loop already happens to satisfy
+    // last-entry-wins for loot-only cells.
+    {
+        QuestObject lifo_bottom{13,0,5,4,8};lifo_bottom.loot=true;lifo_bottom.item_id=8;lifo_bottom.quality=1;
+        objects.values.push_back(lifo_bottom);
+        QuestObject lifo_top{13,0,5,4,13};lifo_top.loot=true;lifo_top.item_id=13;lifo_top.quality=1;
+        objects.values.push_back(lifo_top);
+        snap=compose_world_presentation(context,active.value,{5,5},0x11c);
+        check(snap.tiles[4*11+5]==0x10d,
+              "R04-LIFO: the last-appended loot object is the visible top-of-stack representative");
+        objects.values.clear();
+    }
 
     std::vector<uint8_t> passage_tiles(32*32,5);passage_tiles[13*32+17]=79;MapData passage{{17,2},passage_tiles.data(),passage_tiles.size()};
     world.small_maps=&passage;game.position.map={17,2};game.position.xy={17,13};quest.passage_open=true;active=get_active_map(world,{17,2});

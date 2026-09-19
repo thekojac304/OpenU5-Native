@@ -74,18 +74,18 @@ int main(){
 
     check(finish_encounter_combat(context,combat)==CombatResult::Ok,"direct Troll encounter uses common teardown");
     check(!context.combat&&!combat.initialized,"combat context returns to exploration exactly once");
-    check(objects.values.size()==1&&objects.values[0].chest&&objects.values[0].trapped&&
-              objects.values[0].contents==(128|9),"defeated Troll chest is promoted exactly once");
-    check(objects.values[0].location==0&&objects.values[0].floor==0&&
-              objects.values[0].x==bridge_x&&objects.values[0].y==bridge_y,
-          "promoted chest preserves exact world identity");
+    // STALE EXPECTATION CORRECTED (Batch 2, R-03): this block previously
+    // asserted the pre-fix native behavior -- "defeated Troll chest is
+    // promoted exactly once" -- and then exercised world Open against that
+    // invented object. The reference never promotes an unopened arena chest
+    // to a world object on exit; it is simply lost with the rest of the
+    // arena. With the promotion removed, there is nothing left in the world
+    // for Open to find, so the trailing "exact-direction Open finds promoted
+    // chest" sub-case is removed along with it.
+    check(objects.values.empty(),
+          "R-03: reference-faithful teardown must not promote the defeated Troll's unopened chest to a world object");
     const auto active=get_active_map(world,game.position.map);
     check(active.error==Error::None&&active.value.tile_at(bridge_x,bridge_y)==bridge_tile,
           "authoritative bridge tile survives combat teardown");
-    Command open{};open.kind=CommandKind::Open;open.direction=Direction::East;open.has_direction=true;
-    check(world_interaction(context,open,active.value,{},rng_source(game.rng)).status==CommandStatus::Success,
-          "exact-direction Open finds promoted chest");
-    bool chest_left=false;for(const auto &object:objects.values)chest_left|=object.chest;
-    check(!chest_left,"Open consumes the one promoted chest without duplicates");
-    std::cout<<"Troll escape, teardown, exact chest promotion, and bridge restoration passed\n";
+    std::cout<<"Troll escape, teardown, no chest promotion, and bridge restoration passed\n";
 }

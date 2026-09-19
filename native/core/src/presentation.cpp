@@ -199,10 +199,37 @@ PresentationSnapshot compose_world_presentation(CommandContext &c,const ActiveMa
     PresentationSnapshot s;s.center=center;
     for(int row=0;row<kPresentationWindow;++row)for(int col=0;col<kPresentationWindow;++col){const int i=row*kPresentationWindow+col;s.tiles[i]=int16_t(effective_terrain(c,map,int(center.x)-kHalf+col,int(center.y)-kHalf+row));}
     visibility(c,map,center,s.visible);
-    auto place=[&](int x,int y,int tile,uint32_t actor_id=0,uint8_t seed=0){int dx=x-int(center.x),dy=y-int(center.y);if(map.geometry.wraps){if(dx>128)dx-=256;if(dx< -128)dx+=256;if(dy>128)dy-=256;if(dy< -128)dy+=256;}const int col=dx+kHalf,row=dy+kHalf;if(col>=0&&row>=0&&col<kPresentationWindow&&row<kPresentationWindow&&s.visible[row*kPresentationWindow+col]){const int at=row*kPresentationWindow+col;s.tiles[at]=int16_t(tile);s.actor_ids[at]=actor_id;s.actor_seeds[at]=seed;}};
+    auto cell_at=[&](int x,int y)->int{int dx=x-int(center.x),dy=y-int(center.y);if(map.geometry.wraps){if(dx>128)dx-=256;if(dx< -128)dx+=256;if(dy>128)dy-=256;if(dy< -128)dy+=256;}const int col=dx+kHalf,row=dy+kHalf;if(col<0||row<0||col>=kPresentationWindow||row>=kPresentationWindow)return -1;const int at=row*kPresentationWindow+col;return s.visible[at]?at:-1;};
+    auto place=[&](int x,int y,int tile,uint32_t actor_id=0,uint8_t seed=0){const int at=cell_at(x,y);if(at>=0){s.tiles[at]=int16_t(tile);s.actor_ids[at]=actor_id;s.actor_seeds[at]=seed;}};
     if(!map.id.location&&c.outdoor)for(size_t i=0;i<c.outdoor->enemies.size();++i){const auto&e=c.outdoor->enemies[i];place(e.x,e.y,e.tile,0x10000U+uint32_t(e.slot>=0?e.slot:int(i)+32),uint8_t(e.tile&0xfc));}
     if(map.id.location&&c.actors)for(size_t i=0;i<c.actors->count;++i){const auto&a=c.actors->actors[i];if(a.location==map.id.location&&a.z==map.id.floor&&a.schedule.dialog)place(a.x,a.y,a.schedule.type+256,0x20000U+a.schedule.slot,uint8_t(a.schedule.type&0xfc));}
-    auto*q=c.quest_world;if(q&&q->count&&q->read)for(size_t i=0;i<q->count(q->context);++i){const auto o=q->read(q->context,i);if(o.location==map.id.location&&o.floor==map.id.floor)place(o.x,o.y,(o.shadowlord||o.loot||o.search)?o.tile+256:o.tile,o.shadowlord?0x30000U+uint32_t(o.slot>=0?o.slot:int(i)):0,uint8_t(o.tile&0xfc));}
+    // R-04 (Batch 2): two reference-faithful layers, not one unified
+    // last-write-wins pass. Layer 1 (stationary/non-loot: chest/prop/ship/
+    // torch/plot/shadowlord) resolves first-match-per-cell, mirroring
+    // game.ts tileAt()'s Array.find. Layer 2 (loot/search only) resolves
+    // last-match-per-cell -- LIFO/top-of-stack -- and is always painted
+    // *after* layer 1, mirroring game.ts lootRenderTiles(), so loose loot or
+    // a search find can never be masked by a stationary object sharing its
+    // cell, regardless of QuestWorldServices append order.
+    auto*q=c.quest_world;
+    if(q&&q->count&&q->read){
+        bool claimed[kPresentationCells]{};
+        for(size_t i=0;i<q->count(q->context);++i){
+            const auto o=q->read(q->context,i);
+            if(o.loot||o.search)continue;
+            if(o.location!=map.id.location||o.floor!=map.id.floor)continue;
+            const int at=cell_at(o.x,o.y);
+            if(at<0||claimed[at])continue;
+            claimed[at]=true;
+            place(o.x,o.y,o.shadowlord?o.tile+256:o.tile,o.shadowlord?0x30000U+uint32_t(o.slot>=0?o.slot:int(i)):0,uint8_t(o.tile&0xfc));
+        }
+        for(size_t i=0;i<q->count(q->context);++i){
+            const auto o=q->read(q->context,i);
+            if(!o.loot&&!o.search)continue;
+            if(o.location!=map.id.location||o.floor!=map.id.floor)continue;
+            place(o.x,o.y,o.tile+256,o.shadowlord?0x30000U+uint32_t(o.slot>=0?o.slot:int(i)):0,uint8_t(o.tile&0xfc));
+        }
+    }
     s.tiles[kHalf*kPresentationWindow+kHalf]=int16_t(avatar_tile);s.visible[kHalf*kPresentationWindow+kHalf]=1;
     for(int i=0;i<kPresentationCells;++i){if(!s.visible[i]&&s.tiles[i]!=kPresentationOffMap){s.tiles[i]=kPresentationHidden;s.actor_ids[i]=0;}const auto k=tile_animation_kind(s.tiles[i]);s.animated[i]=k==TileAnimationKind::TileCycle||k==TileAnimationKind::WaterScroll||k==TileAnimationKind::WaterComposite||k==TileAnimationKind::FireNoise||k==TileAnimationKind::ActorProgram;s.any_animated|=s.animated[i]!=0;}
     return s;

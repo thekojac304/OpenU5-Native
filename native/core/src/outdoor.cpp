@@ -86,23 +86,11 @@ CommandStatus outdoor_start(CommandContext &c,size_t index,const ActiveMap &map,
         auto &s=*static_cast<OutdoorServices*>(p);
         if(!s.prize_owner||!s.prize_owner->append)return;
         if(s.pending_prize)s.prize_owner->append(s.prize_owner->context,s.prize);
-        for(int cell=0;cell<kCombatCells;++cell){
-            const int encoded=s.combat->combat.loot[cell];
-            if(encoded!=1&&encoded!=129)continue;
-            QuestObject chest{};
-            chest.location=s.encounter_location;
-            chest.floor=s.encounter_floor;
-            chest.x=s.encounter_x;
-            chest.y=s.encounter_y;
-            chest.tile=1;
-            chest.chest=true;
-            chest.trapped=(encoded&128)!=0;
-            chest.contents=std::max(0,int(s.combat->combat.chest_contents[cell]))|(encoded&128);
-            s.prize_owner->append(s.prize_owner->context,chest);
-            s.combat->combat.loot[cell]=0;
-            s.combat->combat.chest_contents[cell]=0;
-            s.combat->combat.chest_state[cell]=CombatChestState::Promoted;
-        }
+        // R-03 (Batch 2): the reference never promotes unclaimed arena
+        // treasure to a world object on exit. An unopened chest is simply
+        // lost when the party leaves the encounter (game.ts collectSpoils()
+        // is a stats-only counter, never a worldObjects.push). The pirate
+        // ship prize above is unrelated and unaffected.
         s.pending_prize=false;
     };
     if(battle.victory)battle.victory_latch(battle.victory_context);
