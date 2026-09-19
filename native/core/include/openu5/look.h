@@ -25,4 +25,8 @@ struct ZodiacView {
 };
 void emit_zodiac(CommandContext &,EventSink,Rand);
 CommandStatus world_look(CommandContext &,Command,const ActiveMap &,EventSink,Rand);
+// Pure fountain-drink flavour text (reference: main.ts's pickMember("Who will
+// drink?")). Presentation only -- no state, no HP, no turn, no command. The
+// picked member's party status decides the line; cancelled overrides both.
+const char *fountain_drink_result(char status, bool cancelled);
 }

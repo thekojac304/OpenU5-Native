@@ -165,6 +165,15 @@ if(BUILD_TESTING)
   add_executable(batch3_group_c_tests tests/batch3_group_c_test.cpp)
   target_link_libraries(batch3_group_c_tests PRIVATE openu5_core)
   add_test(NAME batch3_group_c COMMAND batch3_group_c_tests)
+  # Batch 4 -- RED-only tests for R-09 (Blackthorn/guard modal handling and
+  # FountainDrink presentation) and R-10 (NPC-initiated Talk/Shop). See
+  # native/targets/tdeck/ALPHA20_BATCH4_ADJUDICATION.md.
+  add_executable(batch4_group_a_tests tests/batch4_group_a_test.cpp)
+  target_link_libraries(batch4_group_a_tests PRIVATE openu5_core)
+  add_test(NAME batch4_group_a COMMAND batch4_group_a_tests)
+  add_executable(batch4_group_b_tests tests/batch4_group_b_test.cpp)
+  target_link_libraries(batch4_group_b_tests PRIVATE openu5_core)
+  add_test(NAME batch4_group_b COMMAND batch4_group_b_tests)
   find_program(NODE_EXECUTABLE node)
   if(OPENU5_REAL_ARENAS)
     if(NOT NODE_EXECUTABLE)

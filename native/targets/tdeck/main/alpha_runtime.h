@@ -107,6 +107,16 @@ class AlphaRuntime {
     size_t selection_count_ = 0;
     openu5::UiRequestId selection_request_ = openu5::UiRequestId::None;
     int16_t pending_order_from_ = -1;
+    // R-10: NpcInitiatesTalk/NpcInitiatesShop must not re-enter command()
+    // from inside consume_event() (it runs while the emitting world command
+    // is still on the stack). consume_event() copies only the stable
+    // identity here -- never the event's borrowed NpcActor* -- and
+    // drain_pending_npc_initiation() dispatches BeginConversation once the
+    // outer input has fully unwound (see AlphaRuntime::handle()).
+    enum class PendingNpcInitiation : uint8_t { None, Talk, Shop };
+    PendingNpcInitiation pending_npc_initiation_ = PendingNpcInitiation::None;
+    int16_t pending_npc_slot_ = -1;
+    uint8_t pending_npc_location_ = 0;
     char16_t shrine_virtue_[64]{};
     size_t shrine_virtue_length_ = 0;
     openu5::AssetPackReader *tiles_ = nullptr;
@@ -175,6 +185,7 @@ class AlphaRuntime {
     void cast_selected_spell(int16_t spell);
     void start_magic_ceremony(int index);
     void synchronize_after_debug(openu5::WorldPosition before, bool dungeon_before);
+    void drain_pending_npc_initiation();
     void synchronize_loaded_world();
     void service_frontend_intent();
     void service_system_menu_intent();

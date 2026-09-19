@@ -1,4 +1,5 @@
 #include "openu5/ui_session.h"
+#include "openu5/blackthorn.h"
 #include "openu5/combat.h"
 #include "openu5/dialogue_orchestration.h"
 #include "openu5/dungeon.h"
@@ -358,6 +359,20 @@ void UiSession::cancel_modal() {
         finish_modal(false);
         return;
     }
+    // R-09 cancel semantics. Reference askText.cancel resolves as onText(""),
+    // not a dismissal: Blackthorn's interrogation and the guard password
+    // challenge must still submit (an empty, always-failing) answer so the
+    // BlackthornSession flag clears and the machine advances, instead of a
+    // bare accepted=false ModalResponse that the dispatcher drops and that
+    // leaves the world permanently AwaitingResponse (the guard-password ESC
+    // case is the worst of the two: the prompt is gone and nothing hints at
+    // why the game is stuck).
+    if (mode_ == UiMode::TextEntry &&
+        (request_ == UiRequestId::Blackthorn || request_ == UiRequestId::GuardPassword)) {
+        input_[0] = 0; input_length_ = 0;
+        finish_modal(false);
+        return;
+    }
     const auto request = request_;
     // R-06 combat (R)eady action cost. The reference charges the acting
     // combatant's turn ONCE PER 'R' INTERACTION, when the equipment picker
@@ -430,6 +445,29 @@ void UiSession::finish_modal(bool accepted, bool yes, int32_t number, int32_t in
         i.shop.action = accepted ? ShopAction::Text : ShopAction::Cancel;
         i.shop.text = input_;
         i.shop.length = input_length_;
+    } else if (request == UiRequestId::Blackthorn && old_mode == UiMode::TextEntry) {
+        // Pure (request, answer) -> Command map; all persistent Blackthorn
+        // state lives in the core's BlackthornSession (R-09 ruling, batch 4
+        // adjudication section D).
+        i.kind = UiIntentKind::Command;
+        i.command.kind = CommandKind::BlackthornAction;
+        i.command.item = int16_t(BlackthornAction::Answer);
+        i.command.text = input_; i.command.text_length = input_length_;
+    } else if (request == UiRequestId::GuardPassword && old_mode == UiMode::TextEntry) {
+        i.kind = UiIntentKind::Command;
+        i.command.kind = CommandKind::BlackthornAction;
+        i.command.item = int16_t(BlackthornAction::Password);
+        i.command.text = input_; i.command.text_length = input_length_;
+    } else if (request == UiRequestId::GuardTribute && old_mode == UiMode::YesNo) {
+        i.kind = UiIntentKind::Command;
+        i.command.kind = CommandKind::BlackthornAction;
+        i.command.item = int16_t(BlackthornAction::Tribute);
+        i.command.member = yes ? 1 : 0;
+    } else if (request == UiRequestId::GuardArrest && old_mode == UiMode::YesNo) {
+        i.kind = UiIntentKind::Command;
+        i.command.kind = CommandKind::BlackthornAction;
+        i.command.item = int16_t(BlackthornAction::Arrest);
+        i.command.member = yes ? 1 : 0;
     }
     dispatch(i);
     input_[0] = 0; input_length_ = 0; prompt_[0] = 0;
@@ -942,15 +980,60 @@ void UiSession::consume(const GameEvent &e) {
     case GameEventKind::ShrineVisitPrompt: enter_shrine_mode(); begin_yes_no(UiRequestId::ShrineVisit,"Visit?",false); break;
     case GameEventKind::ShrineRestorePrompt: enter_shrine_mode(); begin_text(UiRequestId::ShrineRestore,"Virtue:",15); break;
     case GameEventKind::ShrineDonatePrompt: enter_shrine_mode(); begin_number(UiRequestId::ShrineDonate,"How many cycles?",0,99,2); break;
-    case GameEventKind::BlackthornPrompt: enter_shrine_mode(); begin_text(UiRequestId::Blackthorn,e.text?e.text:"Your response?",14); break;
+    case GameEventKind::BlackthornPrompt: {
+        // Reference: main.ts:2706 askText(question + "\n\nYour response?\n:",
+        // max 0xE) -- the suffix is the ask-text widget's own display
+        // addition, not part of the semantic BlackthornPrompt event text
+        // (confirmed by quest_parity's world-flow fixture, which compares the
+        // raw event text without it). Compose it here, presentation-only,
+        // rather than in the core event producer.
+        enter_shrine_mode();
+        char combined[256]{};
+        if (e.text) { std::snprintf(combined,sizeof(combined),"%s\n\nYour response?",e.text); }
+        begin_text(UiRequestId::Blackthorn, e.text?combined:"Your response?", 14);
+        break;
+    }
     case GameEventKind::GuardPasswordPrompt: begin_text(UiRequestId::GuardPassword,e.text?e.text:"Password?",14); break;
     case GameEventKind::GuardTributePrompt: begin_yes_no(UiRequestId::GuardTribute,"Pay tribute?",false); break;
-    case GameEventKind::GuardArrestPrompt: begin_yes_no(UiRequestId::GuardArrest,"Go quietly?",false); break;
+    case GameEventKind::GuardArrestPrompt:
+        // Reference: hud.message('\n"Thou art under arrest!"\n\n"Wilt thou come
+        // quietly?"\n\n:'). Native's prompt text was abbreviated to "Go quietly?"
+        // with no announcement line (batch 4 prompt-fidelity scope).
+        append(UiTextChannel::Quest,"\"Thou art under arrest!\"");
+        begin_yes_no(UiRequestId::GuardArrest,"Wilt thou come quietly?",false);
+        break;
     case GameEventKind::TrollTollPrompt: begin_yes_no(UiRequestId::TrollToll,"Pay toll?",false); break;
     case GameEventKind::CrystalBallPrompt: begin_yes_no(UiRequestId::CrystalBall,"Peer into it?",false); break;
     case GameEventKind::WellDropPrompt: begin_yes_no(UiRequestId::WellDrop,"Drop a coin?",false); break;
-    case GameEventKind::FountainDrinkPrompt: begin_yes_no(UiRequestId::FountainDrink,"Drink?",false); break;
+    case GameEventKind::FountainDrinkPrompt: {
+        // Reference is pickMember("Who will drink?") with pure flavour text --
+        // not a yes/no prompt (R-09 adjudication section A.2/G.3). UiSession
+        // does not own the party roster, so it opens the picker locally
+        // (matching the prompt/mode a host test can observe with no device
+        // layer present) and also raises OpenPartySelection so the owner can
+        // supply the real selection source; AlphaRuntime resolves the chosen
+        // member and prints the flavour line with no command, no HP/state
+        // change and no turn.
+        append(UiTextChannel::Message,"a gurgling fountain!");
+        enter_modal(UiMode::PartySelection,UiRequestId::FountainDrink,"Who will drink?");
+        UiIntent i; i.kind=UiIntentKind::OpenPartySelection; i.request=UiRequestId::FountainDrink; dispatch(i);
+        break;
+    }
     case GameEventKind::WellWishPrompt: begin_text(UiRequestId::WellWish,"What dost thou wish?",12); break;
+    case GameEventKind::NpcInitiatesTalk:
+    case GameEventKind::NpcInitiatesShop:
+        // The core asking the frontend to run another command, not a modal
+        // answer or a user action -- but CommandKind::BeginConversation
+        // already matches an NPC by schedule.slot alone
+        // (dialogue_orchestration.cpp) and already hands off dialog
+        // 0x81..0x88 to the shop session, so Talk and Shop initiation share
+        // this one entry point (R-10 ruling). e.npc is borrowed for this
+        // synchronous delivery only; only the stable slot identity is used.
+        if (e.npc) {
+            Command c; c.kind = CommandKind::BeginConversation; c.member = int16_t(e.npc->schedule.slot);
+            command(c);
+        }
+        break;
     case GameEventKind::GameWon:
     case GameEventKind::Endgame:
         if(e.text)append(UiTextChannel::Quest,e.text);

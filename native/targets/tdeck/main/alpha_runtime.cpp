@@ -251,6 +251,24 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
 void AlphaRuntime::dispatch_ui(void *p,const openu5::UiIntent&i){static_cast<AlphaRuntime*>(p)->dispatch(i);}
 void AlphaRuntime::dispatch_event(void *p,const openu5::GameEvent&e){static_cast<AlphaRuntime*>(p)->consume_event(e);}
 void AlphaRuntime::consume_event(const openu5::GameEvent&e){
+    // R-10: NpcInitiatesTalk/NpcInitiatesShop fire from inside the still-live
+    // outer command() call (blackthorn_turn_effect, reached from the town
+    // turn tail). UiSession::consume() would translate these into an
+    // immediate BeginConversation dispatch -- exactly the re-entrant call
+    // into this class's own instrumented command() the adjudication measured
+    // as merely tolerated, not the desired architecture. Intercept here,
+    // before UiSession ever sees the event, and copy only the stable
+    // identity (schedule.slot, location) -- e.npc is borrowed for this
+    // synchronous delivery only and must never be retained. The drain runs
+    // once the outer input has fully unwound (see handle()).
+    if(e.kind==openu5::GameEventKind::NpcInitiatesTalk||e.kind==openu5::GameEventKind::NpcInitiatesShop){
+        if(e.npc){
+            pending_npc_initiation_=e.kind==openu5::GameEventKind::NpcInitiatesTalk?PendingNpcInitiation::Talk:PendingNpcInitiation::Shop;
+            pending_npc_slot_=int16_t(e.npc->schedule.slot);
+            pending_npc_location_=e.npc->location;
+        }
+        return;
+    }
     ui_->consume(e);
     if(e.kind==openu5::GameEventKind::DungeonEntered){
         dungeon_presentation_pending_=true;
@@ -625,7 +643,10 @@ void AlphaRuntime::service_combat(){
     }
 }
 
-void AlphaRuntime::modal(const openu5::UiIntent&i){if(!i.value.accepted){if(i.request==openu5::UiRequestId::Party)pending_order_from_=-1;if(i.request==openu5::UiRequestId::EquipmentMember||i.request==openu5::UiRequestId::Equipment)pending_ready_member_=-1;if(i.request==openu5::UiRequestId::UseTarget||i.request==openu5::UiRequestId::Inventory)pending_use_item_=-1;if(i.request==openu5::UiRequestId::Target)pending_combat_spell_=-1;if(i.request==openu5::UiRequestId::ShrineVisit||i.request==openu5::UiRequestId::ShrineRestore){shrine_.visit=shrine_.restore=-1;shrine_virtue_length_=0;}return;}openu5::Command c;
+void AlphaRuntime::modal(const openu5::UiIntent&i){if(!i.value.accepted){if(i.request==openu5::UiRequestId::Party)pending_order_from_=-1;if(i.request==openu5::UiRequestId::EquipmentMember||i.request==openu5::UiRequestId::Equipment)pending_ready_member_=-1;if(i.request==openu5::UiRequestId::UseTarget||i.request==openu5::UiRequestId::Inventory)pending_use_item_=-1;if(i.request==openu5::UiRequestId::Target)pending_combat_spell_=-1;if(i.request==openu5::UiRequestId::ShrineVisit||i.request==openu5::UiRequestId::ShrineRestore){shrine_.visit=shrine_.restore=-1;shrine_virtue_length_=0;}
+    // FountainDrink (R-09 E): pure flavour text, no command, no HP/state/turn.
+    if(i.request==openu5::UiRequestId::FountainDrink)ui_->append(openu5::UiTextChannel::Message,openu5::fountain_drink_result(0,true));
+    return;}openu5::Command c;
     if(i.request==openu5::UiRequestId::Party){if(pending_order_from_<0){pending_order_from_=int16_t(i.value.index);open_selection(openu5::UiMode::PartySelection,openu5::UiRequestId::Party);}else{c.kind=openu5::CommandKind::NewOrder;c.member=pending_order_from_;c.item=int16_t(i.value.index);pending_order_from_=-1;command(c);}}
     else if(i.request==openu5::UiRequestId::Status&&i.value.index>=0&&size_t(i.value.index)<selection_count_){status_member_=selections_[i.value.index].value;open_selection(openu5::UiMode::PartySelection,openu5::UiRequestId::Status);}
     else if(i.request==openu5::UiRequestId::EquipmentMember&&i.value.index>=0&&size_t(i.value.index)<selection_count_){pending_ready_member_=selections_[i.value.index].value;open_selection(openu5::UiMode::EquipmentSelection,openu5::UiRequestId::Equipment);}
@@ -647,6 +668,15 @@ void AlphaRuntime::modal(const openu5::UiIntent&i){if(!i.value.accepted){if(i.re
     else if(i.request==openu5::UiRequestId::ShrineVisit){shrine_virtue_length_=0;ui_->begin_text(openu5::UiRequestId::ShrineRestore,"Virtue?",15);}
     else if(i.request==openu5::UiRequestId::ShrineRestore){if(!shrine_virtue_length_){shrine_virtue_length_=std::min<size_t>(i.value.text_length,63);std::memcpy(shrine_virtue_,i.value.text,shrine_virtue_length_*sizeof(char16_t));shrine_virtue_[shrine_virtue_length_]=0;ui_->begin_text(openu5::UiRequestId::ShrineRestore,"Mantra?",15);}else{openu5::TalkText mantras[3]={{i.value.text,i.value.text_length},{i.value.text,i.value.text_length},{i.value.text,i.value.text_length}};openu5::ShrineInput input;input.action=shrine_.visit>=0?openu5::ShrineAction::SubmitVisit:openu5::ShrineAction::SubmitRestore;input.virtue={shrine_virtue_,shrine_virtue_length_};input.mantras={mantras,3};c.kind=openu5::CommandKind::ShrineAction;c.shrine=&input;shrine_virtue_length_=0;command(c);}}
     else if(i.request==openu5::UiRequestId::ShrineDonate){openu5::ShrineInput input;input.action=openu5::ShrineAction::Donate;input.value=i.value.number;c.kind=openu5::CommandKind::ShrineAction;c.shrine=&input;command(c);}
+    // FountainDrink (R-09 E): resolve the picked party member's status against
+    // the runtime-owned roster and print the reference's pure flavour line.
+    // No command, no HP/state mutation, no turn -- UiSession already entered
+    // and exited PartySelection on its own; this only supplies the text.
+    else if(i.request==openu5::UiRequestId::FountainDrink&&i.value.index>=0&&size_t(i.value.index)<selection_count_){
+        const int16_t member=selections_[i.value.index].value;
+        const char status=member>=0&&member<game_.party.character_count?game_.party.characters[member].status:'G';
+        ui_->append(openu5::UiTextChannel::Message,openu5::fountain_drink_result(status,false));
+    }
 }
 
 void AlphaRuntime::cast_selected_spell(int16_t spell){
@@ -715,11 +745,46 @@ void AlphaRuntime::open_selection(openu5::UiMode mode,openu5::UiRequestId reques
     else if(mode==openu5::UiMode::EquipmentSelection){const int member=pending_ready_member_>=0?pending_ready_member_:active_member(game_);const auto ready=openu5::ready_items(game_,member);for(int n=0;n<ready.count;++n){const int i=ready.ids[n];add(i,openu5::equipment_display_name(i),game_.equipment_quantities[i],openu5::is_item_equipped(game_.party.characters[member],i));}}
     else if(mode==openu5::UiMode::SpellSelection){for(int i=0;i<48;++i)if(request==openu5::UiRequestId::Custom||game_.spell_quantities[i]>0)add(i,openu5::spell_display_name(i),game_.spell_quantities[i]);}
     if(!selection_count_){auto&s=selections_[selection_count_++];std::snprintf(s.label,sizeof(s.label),"(None available)");s.enabled=false;}
-    const char *prompt=mode==openu5::UiMode::PartySelection?(request==openu5::UiRequestId::EquipmentMember?"Ready whom?":request==openu5::UiRequestId::UseTarget?"Use on whom?":"Party"):mode==openu5::UiMode::InventorySelection?"Use item":mode==openu5::UiMode::EquipmentSelection?"Ready":"Spell";
+    const char *prompt=mode==openu5::UiMode::PartySelection?(request==openu5::UiRequestId::EquipmentMember?"Ready whom?":request==openu5::UiRequestId::UseTarget?"Use on whom?":request==openu5::UiRequestId::FountainDrink?"Who will drink?":"Party"):mode==openu5::UiMode::InventorySelection?"Use item":mode==openu5::UiMode::EquipmentSelection?"Ready":"Spell";
     const size_t initial=mode==openu5::UiMode::PartySelection?size_t(request==openu5::UiRequestId::Status&&status_member_>=0?status_member_:active_member(game_)):0;
     ui_->begin_selection(mode,request,prompt,{this,selection_count,selection_item},initial);
 }
 
+// R-10 deferred drain. Runs once the outer input has fully unwound (called
+// from handle(), beside synchronize_after_debug()), never nested inside the
+// command() call that produced the pending initiation.
+void AlphaRuntime::drain_pending_npc_initiation(){
+    if(pending_npc_initiation_==PendingNpcInitiation::None)return;
+    const auto kind=pending_npc_initiation_;
+    const auto slot=pending_npc_slot_;
+    const auto location=pending_npc_location_;
+    pending_npc_initiation_=PendingNpcInitiation::None;
+    pending_npc_slot_=-1;
+    pending_npc_location_=0;
+    // Current map/location must still be the captured one -- a stale
+    // initiation (e.g. a teleport landed mid-cycle) is dropped, never
+    // deferred across another world turn.
+    if(game_.position.map.location!=location)return;
+    // The UI must not already be inside an incompatible active session or
+    // modal -- BeginConversation only makes sense from plain Exploration.
+    if(ui_->mode()!=openu5::UiMode::Exploration)return;
+    openu5::NpcActor *npc=nullptr;
+    for(size_t i=0;i<actors_.count;++i){
+        auto &a=actors_.actors[i];
+        if(a.location==location&&a.schedule.slot==uint8_t(slot)){npc=&a;break;}
+    }
+    if(!npc)return; // the slot no longer resolves to the intended NPC.
+    // The emitter's dialog window (0x80..0xFC) is wider than the shop
+    // handoff BeginConversation actually supports (0x81..0x88, batch 4
+    // adjudication section C). Rather than inventing a fallback shop or
+    // falling through to "Funny, no response!", safely drop an
+    // out-of-range shop initiation.
+    if(kind==PendingNpcInitiation::Shop&&(npc->schedule.dialog<0x81||npc->schedule.dialog>0x88))return;
+    openu5::Command begin;
+    begin.kind=openu5::CommandKind::BeginConversation;
+    begin.member=int16_t(npc->schedule.slot);
+    command(begin);
+}
 void AlphaRuntime::synchronize_after_debug(openu5::WorldPosition before,bool dungeon_before){
     const bool moved=before.map.location!=game_.position.map.location||before.map.floor!=game_.position.map.floor||before.xy.x!=game_.position.xy.x||before.xy.y!=game_.position.xy.y;
     // The portable picker mutates the authoritative owners.  Rebind the device
@@ -891,6 +956,7 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
     }
 #endif
     synchronize_after_debug(before,dungeon_before);
+    drain_pending_npc_initiation();
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
     if(teleport_action)
         ESP_LOGI(kTag,"DEBUG_TELEPORT type=%d id=%u floor/depth=%d entrance=%d requested_xy=%ld,%ld result=%s game_before=L%u/F%d/%u,%u game_after=L%u/F%d/%u,%u dungeon_before=active%d/F%d/%u,%u dungeon_after=active%d/F%d/%u,%u context_before=dungeon%d context_after=dungeon%d,combat%d",

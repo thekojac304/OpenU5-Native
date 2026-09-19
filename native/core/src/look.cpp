@@ -62,4 +62,8 @@ CommandStatus world_look(CommandContext &c,Command cmd,const ActiveMap &map,Even
     if(tile==89){if(sun){apply_damage(g,g.party.active_character==255?0:g.party.active_character,1);emit(sink,GameEventKind::PartyChanged);}else emit_zodiac(c,sink,rand);}
     return CommandStatus::Success;
 }
+const char *fountain_drink_result(char status,bool cancelled){
+    if(cancelled)return "None!";
+    return (status=='D'||status=='S')?"Incapacitated!":"Refreshing...";
+}
 }
