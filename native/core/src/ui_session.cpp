@@ -165,8 +165,12 @@ void UiSession::dispatch(const UiIntent &i) const {
 
 void UiSession::set_base_mode(UiMode m) {
     base_mode_ = m;
+#if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
     if (mode_ == UiMode::DebugMenu) debug_return_mode_ = m;
     else if (!is_modal(mode_)) mode_ = m;
+#else
+    if (!is_modal(mode_)) mode_ = m;
+#endif
 }
 
 UiMode UiSession::world_return_mode(UiMode m) const {
