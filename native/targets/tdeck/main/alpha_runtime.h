@@ -184,6 +184,11 @@ class AlphaRuntime {
     DevicePartyHighlight compose_party_highlight() const;
     const DeviceContextActionBar *compose_context_bar();
     void modal(const openu5::UiIntent &);
+    // Pushes the two narrow world facts UiSession's exploration key routing
+    // needs (sails context, harpsichord context) from authoritative runtime
+    // state into the session, immediately before an input is routed.  See
+    // UiSession::set_sail_context/set_harpsichord_active (R-19/R-20).
+    void refresh_session_context();
     void open_selection(openu5::UiMode, openu5::UiRequestId);
     static size_t selection_count(void *);
     static openu5::UiSelectionItem selection_item(void *, size_t);

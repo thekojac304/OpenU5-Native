@@ -217,21 +217,31 @@ class UiSession {
     int32_t shop_cursor() const { return shop_cursor_; }
     void set_shop_offer_count(size_t count) { shop_offer_count_=count; if(!count)shop_cursor_=0;else if(size_t(shop_cursor_)>=count)shop_cursor_=int32_t(count-1); }
 
-    // --- Batch 3 RED-test seams (native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md
-    // R-19/R-20). Mirror the existing set_shop_offer_count() pattern: a value is
-    // pushed in from AlphaRuntime (or, in host tests, directly) and merely
-    // stored here. Neither setter is read by handle_exploration() today, so
-    // adding them does not change any routing decision -- they exist only so a
-    // host test can express "the player is aboard a frigate" / "the player is
-    // standing at the harpsichord" as input to UiSession without inventing a
-    // production fix. Do not wire these into command dispatch from this
-    // change; that is the scope of a future GREEN batch.
+    // --- Narrow world-context mirrors (GAMEPLAY_INTEGRATION_AUDIT.md R-19/R-20).
+    // UiSession does not own GameState/TurnState, so the two facts exploration
+    // key routing needs are pushed in from the owner, exactly like
+    // set_shop_offer_count(). AlphaRuntime::refresh_session_context() writes both
+    // from authoritative runtime state immediately before every key is routed;
+    // host tests write them directly. Nothing here derives or caches world state
+    // on its own -- these are mirrors, not a second source of truth.
+    //
+    // Sails (R-19): frigate_aboard mirrors (TurnState::transport_tile & 0xf8) ==
+    // 0x20 and location_allows_sails mirrors position.map.location < 0x80 -- the
+    // same two predicates the reference's yell() dispatcher tests before routing
+    // to yellSails() (game/src/core/game.ts) and the same pair
+    // CommandKind::YellSails re-checks authoritatively in commands.cpp.
     void set_sail_context(bool frigate_aboard, bool location_allows_sails) {
         sail_context_frigate_ = frigate_aboard;
         sail_context_location_ok_ = location_allows_sails;
     }
     bool sail_context_frigate() const { return sail_context_frigate_; }
     bool sail_context_location_ok() const { return sail_context_location_ok_; }
+    // Harpsichord (R-20): mirrors Game.harpsichordSeated() -- small map (location
+    // != 0), not in combat and not in a dungeon, with the harpsichord tile 0x8D
+    // immediately south of the party. While it is true, digit keys play a note
+    // instead of selecting the active player, matching the reference's key
+    // routing order (main.ts: the harpsichord intercept runs before the
+    // set-active-player arm).
     void set_harpsichord_active(bool at_harpsichord) { harpsichord_active_ = at_harpsichord; }
     bool harpsichord_active() const { return harpsichord_active_; }
 
@@ -331,7 +341,7 @@ class UiSession {
     int16_t combat_initial_x_ = 0, combat_initial_y_ = 0, combat_aim_range_ = 1;
     int16_t target_render_x_ = -1, target_render_y_ = -1;
     bool target_render_marker_ = false;
-    // Batch 3 RED-test seam storage (see the public setters above).
+    // World-context mirrors (see the public setters above).
     bool sail_context_frigate_ = false, sail_context_location_ok_ = false;
     bool harpsichord_active_ = false;
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)

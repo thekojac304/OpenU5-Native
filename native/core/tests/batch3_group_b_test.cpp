@@ -34,12 +34,21 @@ void check(bool ok, const char *what) {
     }
 }
 
-// Builds the shared seam's narrow input from a GameState, exactly the fields
-// AlphaRuntime::open_selection() reads today (game_.magic_carpets etc.), plus
-// the 8 moonstone-owned flags (real ids 21-28, phase = id-21) supplied
-// separately by the caller since QuestWorldServices' Moonstone::buried is not
-// a GameState field -- see report section L. This is fixture plumbing only;
-// the production-shared logic lives entirely in usable_item_picker_rows().
+// Builds the shared seam's narrow input from a GameState: every possession gate
+// the seam consults, copied from its authoritative owner, plus the 8
+// moonstone-owned flags (real ids 21-28, phase = id-21) supplied separately by
+// the caller since QuestWorldServices' Moonstone::buried is not a GameState
+// field -- see report section L. This is fixture plumbing only; the
+// production-shared logic lives entirely in usable_item_picker_rows(), and
+// AlphaRuntime::open_selection() fills the same struct from the same owners.
+//
+// GREEN pass note: the artifacts/shards/hms_cape/black_badge copies below were
+// added when the seam's input was widened to carry the real possession gates
+// (spec Group B, "Expand its input ONLY as needed to represent the real
+// possession gates"). Only this plumbing changed -- no assertion in this file
+// was weakened, removed or re-scoped; B3/B4 still demand the full canonical id
+// set. Before the widening the fixture simply had no way to say "the Amulet is
+// owned", so those assertions were unreachable rather than merely failing.
 UsableItemPickerInput picker_input(const GameState &g, const bool (&moonstone_owned)[8] = {}) {
     UsableItemPickerInput in;
     in.magic_carpets = g.magic_carpets;
@@ -48,6 +57,10 @@ UsableItemPickerInput picker_input(const GameState &g, const bool (&moonstone_ow
     in.spyglass = g.spyglass;
     in.sextant = g.sextant;
     in.wooden_box = g.wooden_box;
+    for (int i = 0; i < 3; ++i) in.artifacts[i] = g.quest.artifacts[i];
+    for (int i = 0; i < 3; ++i) in.shards[i] = g.quest.shards[i];
+    in.hms_cape = g.hms_cape;
+    in.black_badge = g.black_badge;
     for (int i = 0; i < 8; ++i) in.moonstone_owned[i] = moonstone_owned[i];
     return in;
 }

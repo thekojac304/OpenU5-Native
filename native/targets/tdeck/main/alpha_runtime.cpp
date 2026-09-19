@@ -675,11 +675,41 @@ void AlphaRuntime::cast_selected_spell(int16_t spell){
 
 size_t AlphaRuntime::selection_count(void*p){return static_cast<AlphaRuntime*>(p)->selection_count_;}
 openu5::UiSelectionItem AlphaRuntime::selection_item(void*p,size_t i){auto&r=*static_cast<AlphaRuntime*>(p);return i<r.selection_count_?openu5::UiSelectionItem{r.selections_[i].label,r.selections_[i].enabled}:openu5::UiSelectionItem{};}
+// Mirrors the two narrow world facts UiSession's exploration key routing needs
+// into the session, straight from the authoritative owners.  Called immediately
+// before each input is routed, so the session can never act on a stale mirror
+// (R-19/R-20).
+void AlphaRuntime::refresh_session_context(){
+    // Sails: the frigate transport range 0x20-0x27 and the Underworld cut-off,
+    // the same pair CommandKind::YellSails re-checks in commands.cpp.
+    ui_->set_sail_context((turn_.transport_tile&0xf8)==0x20,game_.position.map.location<0x80);
+    // Harpsichord: small map only, never in combat or a dungeon, with the
+    // harpsichord tile (141 / 0x8D) immediately SOUTH of the party -- the
+    // party sits on the chair north of the instrument facing it.  Matches
+    // Game.harpsichordSeated() (game/src/core/game.ts).
+    bool seated=false;
+    if(!context_.combat&&!dungeon_.active&&game_.position.map.location){
+        const int y=int(game_.position.xy.y)+1;
+        seated=terrain_.effective(resources_.world,game_.position.map,game_.position.xy.x,y)==141;
+    }
+    ui_->set_harpsichord_active(seated);
+}
+
 void AlphaRuntime::open_selection(openu5::UiMode mode,openu5::UiRequestId request){selection_count_=0;selection_request_=request;
     auto add=[&](int value,const char*name,int qty=1,bool equipped=false){if(selection_count_>=64)return;auto&s=selections_[selection_count_++];s.value=int16_t(value);s.enabled=name&&*name;if(!name||!*name){std::snprintf(s.label,sizeof(s.label),"Unresolved id %d",value);ESP_LOGE(kTag,"UNRESOLVED_NAME selection=%d request=%d",value,int(request));}else format_ready_row(s.label,sizeof(s.label),name,uint16_t(std::max(qty,0)),equipped);};
     if(mode==openu5::UiMode::PartySelection){for(int i=0;i<game_.party.party_size&&i<game_.party.character_count;++i){auto&s=selections_[selection_count_++];s.value=int16_t(i);s.enabled=true;std::snprintf(s.label,sizeof(s.label),"%d %.9s HP%u",i+1,game_.party.characters[i].name,unsigned(game_.party.characters[i].current_hp));}}
     else if(mode==openu5::UiMode::InventorySelection){for(int i=0;i<8;++i)if(game_.potion_quantities[i])add(8+i,openu5::potion_display_name(i),game_.potion_quantities[i]);for(int i=0;i<8;++i)if(game_.scroll_quantities[i])add(i,openu5::scroll_display_name(i),game_.scroll_quantities[i]);
+        // Possession gates for the usable-item rows, each read from its
+        // authoritative owner: GameState counters/flags, QuestState artifacts and
+        // shards, and QuestWorldServices' per-phase moonstones (owned == not
+        // buried).  The row selection itself lives in the shared, ESP-free
+        // openu5::usable_item_picker_rows() seam that the host Batch 3 Group B
+        // test drives, so device and host cannot diverge (R-07/R-08).
         openu5::UsableItemPickerInput usable_input{};usable_input.magic_carpets=game_.magic_carpets;usable_input.skull_keys=game_.skull_keys;usable_input.grapple=game_.grapple;usable_input.spyglass=game_.spyglass;usable_input.sextant=game_.sextant;usable_input.wooden_box=game_.wooden_box;
+        for(int a=0;a<3;++a)usable_input.artifacts[a]=game_.quest.artifacts[a];
+        for(int a=0;a<3;++a)usable_input.shards[a]=game_.quest.shards[a];
+        usable_input.hms_cape=game_.hms_cape;usable_input.black_badge=game_.black_badge;
+        for(size_t m=0;m<8&&m<quest_.moonstone_count;++m)usable_input.moonstone_owned[m]=quest_.moonstones&&!quest_.moonstones[m].buried;
         const auto usable_rows=openu5::usable_item_picker_rows(usable_input);
         for(size_t ui=0;ui<usable_rows.count;++ui)add(usable_rows.rows[ui].id,usable_rows.rows[ui].name,usable_rows.rows[ui].quantity);}
     else if(mode==openu5::UiMode::EquipmentSelection){const int member=pending_ready_member_>=0?pending_ready_member_:active_member(game_);const auto ready=openu5::ready_items(game_,member);for(int n=0;n<ready.count;++n){const int i=ready.ids[n];add(i,openu5::equipment_display_name(i),game_.equipment_quantities[i],openu5::is_item_equipped(game_.party.characters[member],i));}}
@@ -826,7 +856,7 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
     else if(context_.combat&&combat_ai_turn()){
         if(combat_input_count_<sizeof(combat_input_queue_)/sizeof(combat_input_queue_[0]))combat_input_queue_[combat_input_count_++]=action;
         ESP_LOGD(kTag,"combat queued action=%s count=%u",action_name(action.kind),unsigned(combat_input_count_));
-    }else {if(ui_->mode()==openu5::UiMode::Shop)ui_->set_shop_offer_count(openu5::shop_offering_count(game_,shop_,shop_data_));ui_->handle_input(action);
+    }else {if(ui_->mode()==openu5::UiMode::Shop)ui_->set_shop_offer_count(openu5::shop_offering_count(game_,shop_,shop_data_));refresh_session_context();ui_->handle_input(action);
         if(mode_before==openu5::UiMode::Combat&&(action.kind==openu5::UiActionKind::Character)&&
            (action.character==u'o'||action.character==u'O')&&ui_->mode()==openu5::UiMode::TargetSelection&&
            ui_->target_command_kind()==openu5::CommandKind::CombatOpen){

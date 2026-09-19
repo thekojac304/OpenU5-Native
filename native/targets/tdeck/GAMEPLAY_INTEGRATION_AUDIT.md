@@ -25,9 +25,9 @@ The **core is in far better shape than the device integration**. At the original
 
 1. ~~**R-01 — Shop and Dialogue UI modes are destroyed on every keypress.**~~ **RESOLVED in Batch 1.** `AlphaRuntime::synchronize_after_debug()`'s mode arbitration was split out and now preserves `Shop`/`Dialogue`/`ShrineSpecial` instead of unconditionally forcing `base_mode` to Combat/Dungeon/Exploration. See §3 R-01 and §14 Batch 1 for root cause, fix, and test evidence.
 2. **R-05 — The dungeon has no art.** The perspective slice atlases (`DNG1/2/3.16`) and feature art (`ITEMS.16`) that the reference compositor blits are **not packed into the native asset file at all**. `native/tools/u5pack/alpha1.ts` packs dungeon *cell maps* only. `render_dungeon_view()` is a hand-rolled wireframe of `dungeon_line`/`dungeon_rect` calls. ANCHOR 4 cannot be fixed by tuning the renderer; the asset pipeline must be extended first.
-3. **R-19 — Ships cannot sail.** `(Y)ell` on the T-Deck always opens a word prompt. The reference branches to `yellSails()` when aboard a frigate *before* prompting. `CommandKind::YellSails` has no device route at all. All naval travel is blocked.
-4. **R-07/R-08 — The endgame (U)se chain is unreachable,** and the one quest item that *is* listed is bound to the wrong id: the picker offers item **18 labelled "Grapple"**, but id 18 is the **Amulet of Lord British** in the authoritative ZSTATS item table. Crown, Sceptre, Moonstones, Shards, Plans, Watch and Badge are absent from the picker entirely.
-5. **R-06 — `Ready` is rejected in combat and in dungeons** while the UI happily offers it: a textbook success-without-effect.
+3. ~~**R-19 — Ships cannot sail.**~~ **RESOLVED in Batch 3.** `handle_exploration` now branches to `CommandKind::YellSails` when the party is aboard a frigate outside the Underworld, exactly as the reference's `yell()` dispatcher does, before the word prompt. See §3 R-19 and §14 Batch 3.
+4. ~~**R-07/R-08 — The endgame (U)se chain is unreachable.**~~ **RESOLVED in Batch 3.** `usable_item_display_name()` now has exactly one interpretation — the real canonical id — and the shared picker seam gates a row per canonical id from its authoritative possession owner. Grapple is gone from the picker (Klimb-only). Pocket Watch (35) remains the one deliberate omission: no field anywhere backs it. See §3 R-07/R-08 and §14 Batch 3.
+5. ~~**R-06 — `Ready` is rejected in combat and in dungeons.**~~ **RESOLVED in Batch 3.** Ready now routes in all three contexts, passes `battle = c.combat` to `equip_item()`, and refreshes the acting player's `CombatActor` equipment cache after a successful in-combat change. See §3 R-06 and §14 Batch 3.
 6. **R-09/R-10 — Five modal responses and both NPC-initiated events are silently discarded**, disabling Blackthorn, the Britannia guards, fountains, and every shopkeeper/guard that starts the conversation.
 
 ### Anchor verdicts
@@ -102,18 +102,19 @@ All routes are `UiSession::handle_exploration` → `UiIntent` → `AlphaRuntime:
 | `k` | Klimb | **Y** | `KlimbCancel` on modal cancel is wired correctly. Y-07 |
 | `l` | Look | **Y** | `look_sign` test green. Y-07 |
 | `m` | Mix | **Y** | Opens spell list with `UiRequestId::Custom`; qty hardcoded to 1, reagent mask from definition. Y-19 |
-| `n` | New Order | **Y** | Two-stage party selection → `NewOrder`. `SetActivePlayer` unreachable (§5). Y-20 |
+| `n` | New Order | **Y** | Two-stage party selection → `NewOrder`. Y-07. (`SetActivePlayer` is now reachable on the digit keys — Y-20 **GREEN**, Batch 3.) |
 | `o` | Open | **Y** | Troll chest Open preserved as working. Y-07 |
 | `p` | Push | **Y** | Y-07 |
-| `r` | Ready | **G**(world) / **R**(combat+dungeon) | R-06 |
+| `r` | Ready | **G** (world, dungeon, combat) | R-06 **GREEN** (Batch 3) |
 | `s` | Search | **Y** | Trap reporting preserved as working. Y-07 |
 | `t` | Talk | **Y** | Player-initiated works; NPC-initiated does not. R-10 |
-| `u` | Use item | **R** | Picker id space wrong and incomplete. R-07, R-08 |
+| `u` | Use item | **G** (picker) | R-07, R-08 **GREEN** (Batch 3) — canonical real ids, complete owned set, no Grapple. Pocket Watch 35 still excluded (no backing state). |
 | `v` | View gem | **R** | ANCHOR 3. R-17 |
 | `x` | X-it (Disembark) | **Y** | Y-07 |
-| `y` | Yell | **R** | No frigate branch → sails unreachable. R-19 |
+| `y` | Yell | **G** | R-19 **GREEN** (Batch 3) — frigate branch dispatches `YellSails`; word-of-power Yell unchanged (Y-24 both branches covered). |
 | `z` | Z-stats | **Y** | Preserved as working; party highlight preserved. Y-07 |
 | space/Enter | Pass | **G** | Two independent routes, both echo. |
+| `0`–`9` | Set Active Player / harpsichord note | **G** | Y-20, R-20 **GREEN** (Batch 3) — digits dispatch `SetActivePlayer` with the literal digit; at the harpsichord they are intercepted first and dispatch `HarpsichordNote`. |
 | any other | `"X-What?"` | **G** | Matches reference unknown-key echo. |
 
 ### D. View command family
@@ -129,7 +130,7 @@ All routes are `UiSession::handle_exploration` → `UiIntent` → `AlphaRuntime:
 
 ### E. Inventory / items
 
-See the full Resource/Item matrix in §11. Summary: **gold/food/gems/keys/torches/reagents/equipment G**, **potions/scrolls Y**, **quest items and tools R**.
+See the full Resource/Item matrix in §11. Summary: **gold/food/gems/keys/torches/reagents/equipment G**, **potions/scrolls Y**, **quest items and tools G — RESOLVED (Batch 3)** (R-07, R-08; see §3).
 
 ### F. Loose loot / chests / remains
 
@@ -155,8 +156,8 @@ See the full Resource/Item matrix in §11. Summary: **gold/food/gems/keys/torche
 | Equip / replace / toggle-unequip | **G** | `equip_item` toggles (`inventory.cpp:95`), so Unready is covered without `CommandKind::Unready`. |
 | Slot rules, two-handed, rings/amulets, ammo | **G** | `item_parity`, `advanced_combat_parity`. |
 | List refresh after equip | **G** | `modal()` re-opens the selection from just-mutated fields — correct pattern. |
-| **Ready in combat** | **R** | R-06 [EXEC] |
-| **Ready in dungeon** | **R** | R-06 [EXEC] |
+| **Ready in combat** | **G** — RESOLVED (Batch 3) | R-06. Routes through `CommandKind::Ready`, `equip_item(..., battle=true)` (armour lock preserved), then `resync_player_equipment()` refreshes the actor's cached weapons/attack/range/defense. The combat action is charged **once per `R` interaction, at picker close** (`UiSession::cancel_modal()` -> `CommandKind::CombatYield`), matching `closeAndEndTurn`/`playerReady()`. Presentation gaps: **Y-28**. |
+| **Ready in dungeon** | **G** — RESOLVED (Batch 3) | R-06. Ordinary free action: `battle=false`, no armour lock, no turn charged. |
 | Save/load of equipment | **G** | `save_core.cpp` round-trips all six slots. |
 
 ### H. Magic (48 spells)
@@ -181,7 +182,7 @@ See the full Resource/Item matrix in §11. Summary: **gold/food/gems/keys/torche
 | Potion target prompt (`UseTarget`) | **G** | `modal()` opens party selection for items 6 and 8–15 before dispatch. |
 | Consumption on cancel | **G** | Deliberately reference-correct: "canceling target selection still loses it" (`inventory.h`). |
 | Scroll effects | **Y** | `case 1` (wind) requires `cmd.has_direction`, which the device never supplies → Rel Hur scroll changes nothing. Y-21 |
-| Magic items (carpet/skull key/spyglass/sextant/watch/box) | **R** | Half absent, one mis-ided. R-07, R-08, R-13 |
+| Magic items (carpet/skull key/spyglass/sextant/watch/box) | **G** picker | R-07/R-08 resolved (Batch 3): all state-backed tools listed by real canonical id. Watch (35) still absent — no backing state. Spyglass zodiac view still **R-13**. |
 
 ### J. Combat
 
@@ -197,7 +198,7 @@ See the full Resource/Item matrix in §11. Summary: **gold/food/gems/keys/torche
 | Return to world | **Y** | `log_combat_world_restore` + tile save/restore exist; unproven on device. Y-07 |
 | Return to dungeon cell/facing | **Y** | `dungeon_combat_return` handles floor delta, escape border, facing. Unproven. Y-22 |
 | **Post-combat chest promotion** | **G** — RESOLVED (Batch 2) | R-03 — both promotion sites removed; `gameplay_parity` mismatch 59 fixed. Unclaimed arena treasure is now correctly lost on exit, matching the reference. |
-| Ready in combat | **R** | R-06 |
+| Ready in combat | **G** — RESOLVED (Batch 3) | R-06 |
 | Combat save/load | **N** | Not serialized; the reference does not save mid-combat. Intentional. |
 
 ### K. Dungeons
@@ -217,7 +218,7 @@ Full report in §12. Summary: **data G, controls G, geometry Y, art R, HUD Y, sa
 | Movement Mode **off** | `a`=Attack, `s`=Search, `w`/`d`="What?" — no keyboard movement | **Y** | Y-23 |
 | `o`/`g`/`j`/`s`/`k`/`space` | Open/Get/Jimmy/Search/Klimb/Pass | **G** |
 | `c`, `u`, `z`, `v` | Cast, Use, Stats, View gem | **G** route / see R-11, R-17 |
-| `r` Ready | offered, then rejected | **R** — R-06 |
+| `r` Ready | offered and applied | **G** — R-06 RESOLVED (Batch 3) |
 | `m` Mix | silently aliased to Cast | **Y** — Y-15 |
 | Mic short = Back, Mic long = Movement Mode | unchanged in dungeon | **G** |
 
@@ -255,16 +256,16 @@ Full report in §12. Summary: **data G, controls G, geometry Y, art R, HUD Y, sa
 | Aspect | Status | Reason / ID |
 |---|---|---|
 | Quest tables, flags, shrine bits, doom bits, shadowlords | **G** | `quest_parity` (1581-line `quest_case.inc`) green. |
-| Word-of-power Yell at dungeon entrances | **Y** | Route works; ship branch missing (R-19) does not affect it. Y-24 |
+| Word-of-power Yell at dungeon entrances | **Y** | Route works; unaffected by the R-19 ship branch added in Batch 3 (both branches now regression-covered — Y-24 discharged). Y-07 |
 | Shrines (visit/restore/donate) | **Y** | All three modals wired in `modal()`; `UiMode::ShrineSpecial` lifecycle repaired in Batch 1 (§5). Remaining YELLOW is physical-device validation only. Y-25 |
 | Search-based quest chains | **Y** | `quest_search.cpp` + `search_objects` fixtures; found objects are world objects → **lost on reload** (R-14). |
-| **Shards → Flames ritual** | **R** | Shards 29–31 absent from the Use picker. R-08 |
-| **Crown / Sceptre / Amulet** | **R** | R-07, R-08 |
+| Shards → Flames ritual | **G** reachability | R-08 resolved (Batch 3): shards 29–31 are Use-picker rows gated on `game.quest.shards[0..2]`. |
+| Crown / Sceptre / Amulet | **G** reachability | R-07/R-08 resolved (Batch 3): ids 18/19/20 gated on `game.quest.artifacts[0..2]`. |
 | Blackthorn / Falsehood / Abbey | **R** | R-09 |
-| Codex / endgame | **R** | Gated behind the Use chain. R-08 |
-| HMS Cape plans | **R** | Item 33 absent. R-08 |
-| Harpsichord melody (Cove passage) | **R** | `CommandKind::HarpsichordNote` has no route (§5). R-20 |
-| Moonstones / moongates | **R** | Items 21–28 absent; `CommandKind::UseMoonstone` unreachable. R-08 |
+| Codex / endgame | **Y** | The Use chain that gated it is reachable (R-08 resolved, Batch 3); the endgame itself is still unproven end-to-end. Y-07 |
+| HMS Cape plans | **G** reachability | R-08 resolved (Batch 3): id 33 gated on `game.hms_cape`. |
+| Harpsichord melody (Cove passage) | **G** | R-20 resolved (Batch 3): digit keys at the harpsichord dispatch `CommandKind::HarpsichordNote`. |
+| Moonstones / moongates | **G** reachability / **R-14** persistence | R-08 resolved (Batch 3): ids 21–28 are rows whenever carried (`!buried`), so `CommandKind::UseMoonstone` is reachable. Burial state still does not survive save/load — R-14. |
 
 ### P. World objects / terrain / special cells
 
@@ -286,7 +287,7 @@ Full report in §12. Summary: **data G, controls G, geometry Y, art R, HUD Y, sa
 | Walking + speed classes (swamp/cactus/bridge) | **G** | `movement_flow_parity`. |
 | Horse, carpet, skiff Board/X-it | **Y** | `transport_flow_parity` green; device unproven. Y-07 |
 | Ship Board/X-it | **Y** | Same. |
-| **Ship sails (hoist/furl)** | **R** | R-19 — blocks all ocean travel. |
+| Ship sails (hoist/furl) | **G** | R-19 resolved (Batch 3): `(Y)ell` aboard a frigate dispatches `CommandKind::YellSails`. |
 | Wind + drift | **G** | `turn.cpp`; wind bar in HUD. |
 | Transport tile → avatar sprite | **G** | `turn_.transport_tile+0x100` in `render()`. |
 | Combat while mounted/aboard | **G** | `advanced_combat_parity`. |
@@ -310,7 +311,7 @@ Full report in §12. Summary: **data G, controls G, geometry Y, art R, HUD Y, sa
 |---|---|---|
 | HP, death, status letters (G/P/S/D/C) | **G** | `combat_parity`, `item_parity`. |
 | Party wipe / defeat | **G** | `combat.cpp` `end()` with `victory=false`. |
-| Resurrection (In Mani Corp, healer, ankh) | **G** | `apply_target_spell` + `shop_orchestration` healer flow — but healer reachability is subject to R-01. |
+| Resurrection (In Mani Corp, healer, ankh) | **G** | `apply_target_spell` + `shop_orchestration` healer flow. Healer reachability was subject to R-01; R-01 is GREEN — RESOLVED (Batch 1), so this no longer applies. |
 | Active member / combat actor identity | **G** | `active_member()` + `current_combat_actor()`. |
 | Save/load of party status | **G** | `partyStatus`, `status`, `currentHp`, `monthsAtInn` round-trip. |
 
@@ -335,7 +336,7 @@ See §8. Summary: **`GameState`/`TurnState` G**, **`CommandState`/outdoor/terrai
 | 12 categories, editing, confirmation | **G** | `ui_debug_menu` + `debug_developer` tests. |
 | **Dungeon teleport creates a real session** | **G** | `debug_map_picker.cpp:323` builds `CommandKind::EnterDungeon` and calls `execute_dungeon_command` — the production path, not a fake. |
 | No turn/RNG consumption | **G** | Asserted by `debug_developer_test`. |
-| Renderer rebind after debug | **G** | `synchronize_after_debug` — correct *for its named purpose*; the bug is that it also runs on ordinary input (R-01). |
+| Renderer rebind after debug | **G** | `synchronize_after_debug` — correct *for its named purpose*. It also runs on ordinary input; that was R-01, which is GREEN — RESOLVED (Batch 1) (Batch 1's mode arbitration now preserves session-owned modes during ordinary per-input synchronization). |
 | Max Party / Max Resources / Equip Best / Full Test Setup | **G** | Preserved. |
 | On-device diagnostics (37 scenarios) | **Y** | Data-presence probes, not integration tests. Y-06 |
 | Debug masking production defects | **G** — resolved (Batch 1) | Batch 1's mode arbitration now preserves session-owned modes (`Shop`/`Dialogue`/`ShrineSpecial`) during ordinary per-input synchronization, so the debug-driven masking of R-01's symptoms no longer applies. Debug teleport's own recovery path still separately calls `set_base_mode(Exploration)` — that debug-specific recovery behavior is unchanged and correct for its purpose. |
@@ -457,7 +458,7 @@ What the device does instead (`native_renderer.cpp:352-411`): fills the top half
 
 ---
 
-### R-06 — `Ready` is rejected in combat and in dungeons · **SEVERITY 2**
+### R-06 — `Ready` is rejected in combat and in dungeons · **SEVERITY 2** · **GREEN — RESOLVED (Batch 3)**
 
 Probe output [EXEC]:
 ```
@@ -473,9 +474,78 @@ Meanwhile `UiSession::handle_combat` case `'r'` and `handle_dungeon` case `'r'` 
 
 **Evidence:** [EXEC].
 
+#### Resolution (Batch 3)
+
+Reference-correct semantics, one context at a time:
+
+| Context | Routing | `equip_item` `battle` | Armour lock (ids 9-15) | Turn/action cost | Actor cache |
+|---|---|---|---|---|---|
+| World / town | unchanged | `false` | no | free action (unchanged) | n/a |
+| **Dungeon corridor** | now legal | `false` | **no** - a dungeon is not a battle | **free action, no turn charged** | n/a |
+| **Combat arena** | now legal | `true` | **yes** - preserved | see note below | **refreshed** |
+
+`commands.cpp`'s blanket context gate now carries an explicit `ready_anywhere` exemption for `CommandKind::Ready` on three of its clauses (`c.combat`, `c.dungeon && !dungeon_camp`, and the `location 33-40` clause - the range the binary writes into `g_location` on dungeon entry). Everything else about the gate is untouched. The `battle` flag is `c.combat` and nothing else, so a dungeon corridor Ready keeps passing `false` and can still change armour.
+
+**Explicit `CombatActor` refresh after a successful combat Ready.** `equip_item()` is deliberately left CombatState-unaware - inventory does not learn about combat. Instead the Ready **handler** orchestrates two steps, exactly as the reference's `game.readyItem()` does (`equipItem()` then `combat.syncPlayerEquip()`):
+
+```
+CommandKind::Ready
+  -> equip_item(game, member, item, rand, /*battle=*/c.combat)
+  -> if ok && c.combat && c.combat_context:
+         resync_player_equipment(*c.combat_context, member)
+```
+
+`resync_player_equipment()` (`combat.cpp`, declared in `combat.h`) refreshes **only** the equipment-derived cache: `weapon_count`, `weapons[]`, `attack`, `range`, `defense`. HP, position, status, the enemy flag, initiative/`counter` and every other dynamic field are untouched, matching the reference's "no toca HP ni iniciativa". Member to actor mapping is by the actor's own `member` field, **not** by array index: arena construction skips dead members and enemies share the array, so index equality does not hold.
+
+To make initial construction and mid-combat refresh incapable of drifting, the weapon-cache computation was factored into one internal helper, `load_equipment_cache()`, now called by both `initialize_combat()` and `resync_player_equipment()`. It mirrors the reference's `characterWeapons()` (helmet, weapon, shield in order; skip slot 255 and any item whose attack-table entry is <= 0; empty result collapses to the generic `CombatWeapon` sentinel).
+
+**Turn/action cost in combat - implemented at the picker-interaction layer (R-06 correction pass).**
+
+Authoritative reference control flow, traced end-to-end rather than inferred from comments:
+
+| Moment | Reference | Charges? |
+|---|---|---|
+| `R` pressed in the arena | `main.ts:3347` -> `hud.echo(CMD_STRINGS.ready)` -> `openCombatReadyPicker(cur.charIdx)` | no |
+| Picker opens (`hud.message(READY_UI.item)`) | — | no |
+| No equippable rows | early return: `"Thou art empty-handed!"`, picker never opens, then `combatOut(cb.playerReady())` | **yes, once** |
+| Cursor move (`act.kind === "move"`) | `publish()` | no |
+| Equip succeeds (`act.kind === "equip"`) | `game.readyItem(charIdx, id, true)`, then `publish()` — **picker stays open** | **no** |
+| Equip rejected (armour lock / hands / strength / ammo) | `readyRejectLines(r.message)`, then `publish()` — **picker stays open** | **no** |
+| `"Ring vanishes!"` (`r.vanished`) | `closeAndEndTurn(false)` — closes without `"Done"` | **yes, once** |
+| ESC / Done (`act.kind === "close"`) | `closeAndEndTurn(true)` — closes with `"Done"` | **yes, once** |
+
+`closeAndEndTurn` tears the picker down (`view.setReadyPicker(null)`, `prompts.current = null`, `refreshAwaiting()`) and *then* calls `combatOut(cb.playerReady())`. `CombatSession.playerReady()` (`game/src/core/combat/combat.ts:3102`) is `requirePlayerTurn()` + `advanceTurn()` and nothing else — body-identical to `playerYieldTurn()` (`:3085`). `readyPickerKey` -> `itemPageKey` (`game/src/core/itemPageController.ts:48`) maps Enter/Space to `enter` (-> `equip`) and Escape to `close`, so **ESC is not a free cancel in combat**: it charges, unlike the (U)se picker's ESC, which prints `"None!"` and costs nothing (`main.ts:5119`).
+
+So the cost is **exactly one combat action per `R` interaction**, at close, independent of how many rows were inspected, equipped or refused, and independent of whether anything changed.
+
+The overworld/town/dungeon path is a different function: `doReady()` -> `pickMember()` -> `openReadyPicker()` (`main.ts:4643`), whose `close()` is silent and calls no turn API at all, and whose member-selection ESC prints `"None!"` and returns. Ready is a **free action** there.
+
+**Ownership layer.** The cost is a property of the *picker interaction*, not of an equip, so it is charged in `UiSession::cancel_modal()` — the one place a Ready picker terminally closes in this port. `equip_item()` remains completely unaware of combat and of action cost, and the per-equip `CommandKind::Ready` handler charges nothing:
+
+- an equip leaves through `finish_modal()` (accepted), and `AlphaRuntime::modal()` then reopens the selector — a fresh `begin_selection()`, never a close, so no charge;
+- the terminal close (`Cancel`/`Back`) leaves through `cancel_modal()`, which dispatches the cancelled `ModalResponse` first and then a `CommandKind::CombatYield` command — the same teardown-then-spend order as `closeAndEndTurn`;
+- the charge is gated on `request == UiRequestId::Equipment && return_mode_ == UiMode::Combat`, so world and dungeon-corridor Ready stay free and the member-selection step (`UiRequestId::EquipmentMember`, which `AlphaRuntime` skips in combat anyway) is never charged.
+
+`CombatYield` is the port's existing silent advance-the-turn action (`combat.cpp`: `if (action == CombatAction::Yield) { e.advance(); return CombatResult::Ok; }`, behind the same `if (!player(*a)) return;` guard that `requirePlayerTurn()` provides), i.e. the exact counterpart of `playerReady()`. It was previously listed as a dead `CommandKind` in section 5; it now has this one route.
+
+**Two narrow presentational divergences remain — tracked as Y-28, cost is unaffected:**
+
+1. **Empty-handed.** The reference does not open the picker and charges immediately. This port always opens the selection (`AlphaRuntime::open_selection()` inserts a disabled `"(None available)"` row), so the charge arrives when the player dismisses it. Still exactly one action per `R`, but it costs the player one extra keypress and a picker flash.
+2. **`"Ring vanishes!"`.** `equip_item()` does model `ItemResult::vanished` (`inventory.cpp:146`), but `AlphaRuntime::modal()`'s Equipment branch reopens the selector unconditionally instead of closing early on it. The reference closes the picker at that moment. Again the charge is still exactly one, at the eventual close.
+
+Neither changes how many combat actions an `R` interaction costs, which is why R-06 is GREEN; both are real presentation gaps and are named rather than left implicit.
+
+`CommandKind::Unready` was **not** touched: it has no device route (`equip_item` toggles, so unequipping already works through Ready) and is out of this batch's scope. See section 5.
+
+**Regression coverage:** `native/core/tests/batch3_group_c_test.cpp`, 37 checks.
+
+*Core/command layer (real `execute_command()` path):* C1 world Ready guard, C2 dungeon-corridor Ready (success, no turn charged), C3 combat Ready routing, C4 combat Ready equipment/cache invariant, C4 characterization (a *direct* `equip_item()` call still leaves the cache stale - proving the resync belongs to the Ready orchestration, not to `equip_item`), C5 combat armour lock, C6 dungeon != battle.
+
+*Picker-interaction layer (real `UiSession::handle_input()` -> `dispatch()` path with a spy dispatcher):* C7 world Ready close charges nothing, C8 dungeon-corridor Ready close charges nothing, C9 combat Ready charges exactly once and only at close, with the teardown dispatched before the turn is spent, C10 three equips inside one interaction charge nothing and the terminal close still charges exactly once (no double-charge from repeated selection callbacks), C11 a rejected equip charges nothing at the attempt and the interaction still costs exactly one, plus an empty-handed picker that dispatches nothing on Confirm and charges exactly once on dismissal, C12 cancelling the Ready member selection is free.
+
 ---
 
-### R-07 — Use picker binds item id 18 to "Grapple"; id 18 is the Amulet of Lord British · **SEVERITY 2**
+### R-07 — Use picker binds item id 18 to "Grapple"; id 18 is the Amulet of Lord British · **SEVERITY 2** · **GREEN — RESOLVED (Batch 3)**
 
 `alpha_runtime.cpp` `open_selection`, InventorySelection branch:
 ```cpp
@@ -496,9 +566,15 @@ Additionally, the Grapple is not a `(U)se` item in Ultima V at all: it is consum
 
 **Evidence:** [REF] + [STATIC].
 
+#### Resolution (Batch 3)
+
+`display_names.cpp::usable_names` is now indexed by the **real canonical id and nothing else**. The former alternate "offset" reading (slot 0 = Carpet, 1 = Skull Key, 2 = Grapple) is gone - there is exactly one interpretation of the index, so an offset bug cannot recur. Ids 0-15 are deliberately null (the scroll/potion ranges, named by `scroll_display_name()`/`potion_display_name()`), and id 18 is `"Amulet of Lord British"`.
+
+**Grapple remains a Klimb-only item.** It is not an entry of the (U)se extended-item table at all; it is consumed by `commands.cpp`'s Klimb handler and `dungeon.cpp`'s pit logic. `UsableItemPickerInput` still carries a `grapple` field so a caller can pass one whole possession picture, but the seam **never reads it**, and this is stated at the field.
+
 ---
 
-### R-08 — The endgame (U)se chain is unreachable from the T-Deck · **SEVERITY 1**
+### R-08 — The endgame (U)se chain is unreachable from the T-Deck · **SEVERITY 1** · **GREEN — RESOLVED (Batch 3)**
 
 The picker offers ids **16, 17, 18(wrong), 32, 34, 37**. The core implements **16, 17, 18, 19, 20, 21–28, 29–31, 32, 33, 34, 35, 36, 37**.
 
@@ -519,6 +595,42 @@ Missing, with the quest each one blocks:
 **Fix shape:** one table extension in `display_names.cpp` + one predicate list in `open_selection` driven by `game_.specialItems`/`shards`/`crown`/`sceptre`/`hmsCape`/`blackBadge` (all of which already exist and already round-trip through save).
 
 **Evidence:** [STATIC] + [REF].
+
+#### Resolution (Batch 3)
+
+Row selection lives in one shared, ESP-free seam - `openu5::usable_item_picker_rows()` (`native/core/include/openu5/inventory_picker.h`, `native/core/src/inventory_picker.cpp`) - called by **both** `AlphaRuntime::open_selection()` and the host Group B test, so device and host cannot diverge. Its input was widened from "the six flags the old code happened to read" to the real possession gates. Row order follows the reference's `buildUseRows()` (`game/src/core/usePicker.ts`).
+
+Canonical id -> authoritative possession owner -> display name:
+
+| id (hex) | Item | Possession owner | Display name |
+|---|---|---|---|
+| 16 (0x10) | Magic Carpet | `GameState::magic_carpets` | Magic Carpet |
+| 17 (0x11) | Skull Key | `GameState::skull_keys` | Skull Key |
+| 18 (0x12) | Amulet of Lord British | `game.quest.artifacts[0]` | Amulet of Lord British |
+| 19 (0x13) | Crown of Lord British | `game.quest.artifacts[1]` | Crown of Lord British |
+| 20 (0x14) | Sceptre of Lord British | `game.quest.artifacts[2]` | Sceptre of Lord British |
+| 21-28 (0x15-0x1c) | Moonstones, phase = id - 21 | `QuestWorldServices::moonstones[phase].buried == false` | Moonstone (generic) |
+| 29 (0x1d) | Shard of Falsehood | `game.quest.shards[0]` | Shard of Falsehood |
+| 30 (0x1e) | Shard of Hatred | `game.quest.shards[1]` | Shard of Hatred |
+| 31 (0x1f) | Shard of Cowardice | `game.quest.shards[2]` | Shard of Cowardice |
+| 32 (0x20) | Spyglass | `GameState::spyglass` | Spyglass |
+| 33 (0x21) | HMS Cape plans | `GameState::hms_cape` | HMS Cape Plans |
+| 34 (0x22) | Sextant | `GameState::sextant` | Sextant |
+| **35 (0x23)** | **Pocket Watch** | **none - intentionally excluded** | **none (null)** |
+| 36 (0x24) | Black Badge | `GameState::black_badge` | Black Badge |
+| 37 (0x25) | Wooden Box | `GameState::wooden_box` | Wooden Box |
+
+`kUsableItemPickerMaxRows` was raised from 6 to **21** - the exact size of the full owned set - so no valid row is ever truncated.
+
+Notes on the three gates that needed adjudication:
+
+- **Moonstones (21-28)** have no scalar `GameState` field. Possession is `QuestWorldServices::moonstones[phase].buried == false` - "owned" means "carried, not buried" - which is precisely how the reference gates the same rows (`buildUseRows()` pushes one row per `!m.buried` moonstone) and how `use_moonstone()` already reads them. The picker reads **current** ownership only. **Moonstone persistence across save/load remains R-14 and is untouched by this batch.**
+- **HMS Cape plans (33)** is gated on `game.hms_cape`. That bit *is* possession: `quest_world.cpp`'s `apply_search_grant(id==4, quality==255)` sets it on (G)et, and the reference's `useHmsCape()` states its own Use-time write is a no-op because the pickup already wrote `0xFF`. There is no separate "rigged" ownership flag in either implementation.
+- **Black Badge (36)** is gated on `game.black_badge`, which is possession. `time_spell` is the separate Use-*time* effect and is not an ownership gate.
+
+**Pocket Watch (id 35) is still deliberately excluded.** No field in `GameState`, `QuestState` or `QuestWorldServices` backs it - re-confirmed this batch across `state.h`, `debug_developer.cpp` and `save_core.cpp` - so no row can be gated on possessing it, and its display-name slot stays null so an ungated row can never render. Inventing a backing field was explicitly out of scope. **Open follow-up.**
+
+**Regression coverage:** `native/core/tests/batch3_group_b_test.cpp` - B1 real-id names, B1 Pocket-Watch characterization, B2 id 18 != Grapple (and no Grapple row at all), B3 full-set completeness including moonstones, B4 picker row id == the id later dispatched as `CommandKind::UseItem`, B5 no unresolved/null names for any visible row, B6 Grapple stays Klimb-only.
 
 ---
 
@@ -676,7 +788,7 @@ Breaking sequence: fight in a dungeon (`pre_combat_mode_ = Dungeon`) → leave t
 
 ---
 
-### R-19 — `(Y)ell` has no frigate branch, so ships cannot sail · **SEVERITY 1**
+### R-19 — `(Y)ell` has no frigate branch, so ships cannot sail · **SEVERITY 1** · **GREEN — RESOLVED (Batch 3)**
 
 Reference dispatcher [REF], `game.ts:5054`:
 ```ts
@@ -696,11 +808,46 @@ Consequence: the ship can be boarded but the sails can never be hoisted — **al
 
 **Fix shape:** two lines in `handle_exploration` — branch on the transport tile before the text prompt, exactly as the reference does. The device has `turn_.transport_tile` available via the same `UiSession` that already tracks shop phase.
 
+#### Resolution (Batch 3)
+
+`handle_exploration`'s `'y'` case now branches before the word prompt:
+
+```cpp
+case 'y':
+    command_echo("Yell");
+    if (sail_context_frigate_ && sail_context_location_ok_) { c.kind = CommandKind::YellSails; break; }
+    begin_text(UiRequestId::YellText, "Yell what?", 15); return true;
+```
+
+`UiSession` does not own `GameState`/`TurnState`, so the two predicates are **mirrored in** from the owner through the narrow context path, exactly as `set_shop_offer_count()` already works. The Batch-3 RED-test seam `set_sail_context(frigate_aboard, location_allows_sails)` was **promoted into a real production-fed path**: `AlphaRuntime::refresh_session_context()` writes both values from authoritative runtime state (`(turn_.transport_tile & 0xf8) == 0x20` and `game_.position.map.location < 0x80`) immediately before every input is routed, so tests can never supply something production does not. The mirror only *routes*; `CommandKind::YellSails` re-checks the same two predicates authoritatively in `commands.cpp`, so a stale mirror could at worst mis-route, never mis-apply.
+
+It is a state-driven HOIST/FURL toggle: no new choice modal, no new UI. Frigate tiles are `0x20-0x27`; `location >= 0x80` (Underworld) excludes sails behaviour.
+
+**Y-24 discharged:** the word-of-power branch is unchanged and covered alongside the sails branch — `batch3_group_a_test.cpp` A1 (frigate -> `YellSails`, no `YellText` modal), A2 (non-frigate still opens `YellText`), A3 (the word path still reaches `CommandKind::Yell`).
+
+**Evidence:** [REF] + [STATIC] + [EXEC].
+
 ---
 
-### R-20 — Harpsichord melody unreachable · **SEVERITY 3**
+### R-20 — Harpsichord melody unreachable · **SEVERITY 3** · **GREEN — RESOLVED (Batch 3)**
 
-`play_harpsichord` (`quest_world.cpp:116`) and `CommandKind::HarpsichordNote` are fully implemented, including the Cove secret-passage trigger at location 17 floor 2. No device route constructs the command — the note digits are never captured.
+`play_harpsichord` (`quest_world.cpp:116`) and `CommandKind::HarpsichordNote` are fully implemented, including the Cove secret-passage trigger at location 17 floor 2. No device route constructed the command — the note digits were never captured.
+
+#### Resolution (Batch 3)
+
+`handle_exploration` now routes the digit keys `'0'`-`'9'`, in the reference's own order (`main.ts`): the harpsichord intercept is tested **first**, and when it fires the digit dispatches `CommandKind::HarpsichordNote` with the literal note digit and never reaches the set-active-player arm. Outside that context the digit is a `SetActivePlayer` (Y-20 below).
+
+Whether the intercept is active is a second narrow runtime/session context mirror, `set_harpsichord_active()`, fed by `AlphaRuntime::refresh_session_context()` from the authoritative rules — the same predicate as the reference's `Game.harpsichordSeated()`:
+
+- not in combat, not in a dungeon;
+- small map only (`position.map.location != 0`, so never the overworld or the Underworld);
+- the harpsichord tile **141 / 0x8D** immediately **south** of the party (the chair is north of the instrument).
+
+No modal was invented, and digit interception is **not** broadened beyond that context: outside it every digit still routes to `SetActivePlayer`.
+
+The existing melody implementation (`advance_melody` / `play_harpsichord`, the 13-note sequence `6 7 8 9 8 7 8 7 6 7 6 5 3` and the Cove passage-open mutation at location 17 floor 2) is **unchanged**; `batch3_group_a_test.cpp` A6 drives the whole melody through `execute_command()` as a GREEN guard.
+
+**Regression coverage:** A5 (digit at the harpsichord dispatches `HarpsichordNote`, not `SetActivePlayer`), A6 (core melody GREEN guard).
 
 ---
 
@@ -740,13 +887,14 @@ Observed divergence (from the generated mismatch artifact) is in scroll-use even
 | Y-17 | Acknowledgements | One hardcoded line vs. the reference credit sequence | Low priority |
 | Y-18 | Developer entry from frontend | Calls `frontend_.enter_game()` directly, entering gameplay on whatever INIT.GAM state was loaded at boot | Confirm this is the intended debug affordance |
 | Y-19 | Mix quantity | `c.hours = 1` hardcoded in `modal()`; reference lets the player choose a batch size | Add a numeric modal |
-| Y-20 | `SetActivePlayer` | `N` is bound to New Order (two-stage swap); the reference also supports selecting an active member | Adjudicate the reference key binding |
+| Y-20 | `SetActivePlayer` | **GREEN — RESOLVED (Batch 3).** The reference binds the digit keys `0`-`9` (kernel `0x4080`, via MAINOUT `0xc06` / TOWN `0xe34`), not `N`; `N` stays New Order. `handle_exploration` now echoes `"Set Active Plr:"` and dispatches `CommandKind::SetActivePlayer` with the **literal** digit (`'2'` -> `command.member = 2`), because the core handler performs its own `member - 1` exactly as the kernel takes `key - '1'`. Digit range, party validity and the `None!`/`Invalid!` outcomes stay entirely in that core handler — no new selection modal. At the harpsichord the digit is intercepted first (R-20). | Covered by `batch3_group_a_test.cpp` A4/A5 |
 | Y-21 | Rel Hur scroll | `world_magic.cpp` `case 1` needs `cmd.has_direction`; the device never supplies one for scroll use | Same class as R-11, smaller blast radius |
 | Y-22 | Dungeon→combat→dungeon return | `dungeon_combat_return` handles floor delta, escape border and facing; covered by `dungeon_flow_parity` at core level only | Device round-trip test |
 | Y-23 | Dungeon keyboard movement with Movement Mode off | No `w`/`d` fallback; only trackball moves | Probably acceptable, but state it as a deliberate contract |
-| Y-24 | Word-of-power Yell | Works today, but will be affected by the R-19 fix | Regression-test both branches together |
+| Y-24 | Word-of-power Yell | **GREEN — DISCHARGED (Batch 3).** Both branches are regression-tested together: `batch3_group_a` A1 (frigate → `YellSails`, no modal), A2 (non-frigate → `YellText`), A3 (word path → `CommandKind::Yell`). | — |
 | Y-25 | Shrines | All three modals dispatch correctly; `UiMode::ShrineSpecial` lifecycle (entry, capture, return) repaired in Batch 1 (§5) — no known mode defect remains | Device pass at a shrine (physical-device validation only) |
 | Y-26 | Beds / auto-sleep | `CommandKind::AutoSleep` is core-internal (`commands.cpp:1163`), reached through `townAutoSleepTurn` | Confirm it is genuinely internal-only |
+| Y-28 | Combat Ready picker close timing | Two presentation gaps that do **not** affect action cost (see section 3 R-06): the empty-handed case opens a disabled `"(None available)"` picker instead of charging immediately without one, and `ItemResult::vanished` (`"Ring vanishes!"`) does not close the picker early the way the reference does | Close the picker from `AlphaRuntime::modal()` on `vanished`, and short-circuit the empty-handed open |
 | Y-27 | System menu over an open modal | Menu is handled before gameplay routing and does not touch `ui_->mode()` | Device round-trip from inside a selection/target modal |
 
 ---
@@ -757,18 +905,18 @@ Observed divergence (from the generated mismatch artifact) is in scroll-use even
 
 | Value | Verdict |
 |---|---|
-| `Unready` | **Dead but harmless** — `equip_item` toggles, so unequipping works |
+| `Unready` | **Dead but harmless** — `equip_item` toggles, so unequipping works. Intentionally left alone by Batch 3's R-06 fix. |
 | `CombatEscape` | **Dead** — only `CombatEscapeQuick` is bound; confirm the slow-escape variant is intentionally unused |
 | `CombatAttackCancel` | **Deliberately dead** — documented at `ui_session.cpp:486`; removing it consumed a turn, which is wrong for the handheld contract. Keep. |
-| `CombatYield` | **Dead** — no route anywhere |
+| `CombatYield` | **Live** — R-06 correction pass: `UiSession::cancel_modal()` dispatches it to spend the combat action when a combat (R)eady picker closes, the counterpart of the reference's `playerReady()` |
 | `ShopAction` | **Dead** — shops go through `UiIntentKind::Shop` → `execute_shop`. Candidate for deletion. |
 | `EnterDungeon` | Reachable only from `commands.cpp:561` (world `Enter`) and `debug_map_picker.cpp:323`. Correct — not player-constructed. |
 | `BeginConversation` | **Dead** — blocked by R-10 |
 | `BlackthornAction` | **Dead** — blocked by R-09 |
-| `UseMoonstone` | **Dead** — blocked by R-08 |
-| `HarpsichordNote` | **Dead** — R-20 |
-| `YellSails` | **Dead** — R-19 |
-| `SetActivePlayer` | **Dead** — Y-20 |
+| `UseMoonstone` | **Live** — R-08 resolved (Batch 3): moonstone rows 21-28 are in the Use picker whenever carried |
+| `HarpsichordNote` | **Live** — R-20 resolved (Batch 3): digit keys at the harpsichord |
+| `YellSails` | **Live** — R-19 resolved (Batch 3): `(Y)ell` aboard a frigate |
+| `SetActivePlayer` | **Live** — Y-20 resolved (Batch 3): digit keys `0`-`9` |
 | `AutoSleep` | Core-internal. Fine. |
 
 ### `UiMode` values
@@ -796,7 +944,7 @@ Observed divergence (from the generated mismatch artifact) is in scroll-use even
 
 ### Display-name tables
 
-`usable_names` has 32 consecutive `nullptr` entries (indices 3–31 and 33, 35, 36) — the `UNRESOLVED_NAME` logging path in `open_selection` exists precisely to catch this and currently cannot fire because those rows are never added. See R-08.
+**Stale as of Batch 3 — corrected.** `usable_names` (`native/core/src/display_names.cpp`) is now indexed by the real canonical (U)se item id and has only 17 `nullptr` entries, all deliberate: indices 0–15 (the scroll/potion id ranges, named instead through `scroll_display_name()`/`potion_display_name()`) and index 35 / 0x23 (Pocket Watch — no `GameState` field backs possession, so the row is intentionally kept unresolvable rather than rendered ungated; see R-08). Every other id in 16–37 (the full R-08 owned-item table) now has a real name. The `UNRESOLVED_NAME` logging path in `open_selection` exists to catch a regression of this, not a currently-live gap. See R-07/R-08.
 
 ---
 
@@ -834,7 +982,7 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 
 | Test | Why it over-reports |
 |---|---|
-| `ui_session_tests` | Uses a `Spy` dispatcher that records `UiIntent`s and never executes them. Proves `UiSession` routing; proves **nothing** about `AlphaRuntime::dispatch`, `modal()`, `open_selection` or `synchronize_after_debug` — i.e. exactly where R-01, R-06, R-07, R-08, R-09, R-11 live. |
+| `ui_session_tests` | Uses a `Spy` dispatcher that records `UiIntent`s and never executes them. Proves `UiSession` routing; proves **nothing** about `AlphaRuntime::dispatch`, `modal()`, `open_selection` or `synchronize_after_debug` — i.e. exactly where R-01, R-06, R-07, R-08, R-09, R-11 live. **Partly mitigated (Batch 3):** the Use-picker row-selection logic was extracted into the ESP-free `openu5::usable_item_picker_rows()` seam that `AlphaRuntime::open_selection()` and `batch3_group_b_tests` now both call, so that slice of `open_selection` is host-testable. `batch3_group_a_tests` drives the real `UiSession::handle_input()` -> `dispatch()` path for the sails/digit/harpsichord routes; `batch3_group_c_tests` drives the real `execute_command()` path for Ready in all three contexts. |
 | `device_smoke_tests` (37 scenarios) | Cases 3,4,5,9,10,12,13,15,18,19,20,21,24,26,27,28,29 are **data-presence assertions** ("is the table non-empty", "is the name non-null"). Cases 2,6,7,8,11,17,22,25 are `UiSession`-with-spy probes. Case 16 composes a snapshot but asserts only a hash. **No scenario validates a rendered frame, a mode round-trip, or a full input→state→presentation chain.** |
 | `presentation_regression` *(historical — gap closed in Batch 2)* | At the original audit baseline, asserted snapshot composition but never checked that the chosen tile was the *right* tile for the object kind, which is why R-02 and R-04 survived. Batch 2 added R03-OUTDOOR, R04-OVERLAY and R04-LIFO cases that close this gap; the test now asserts both the correct tile and the correct layering. |
 | `combat_loot_open_regression` *(historical — gap closed in Batch 2)* | At the original audit baseline, covered Open→pile→Get authoritative mutation but did **not** assert that no world object is created on exit — R-01/R-03's blind spot. Batch 2 added the R03-DIRECT case that closes this gap. |
@@ -859,7 +1007,7 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 | Transport (mode, tile, hull, skiffs, sail dir, HMS Cape) | ✓ | ✓ | ✓ | **G** |
 | Quest flags, shrine bitmaps, doom bits, shadowlords, shards | ✓ | ✓ | ✓ | **G** |
 | NPC dead/met bitmaps + NPC walk state | ✓ | ✓ | ✓ (`enter_npc_map` then overlay) | **G** |
-| Special items (crown/sceptre/amulet/badge/box/spyglass/sextant/grapple) | ✓ | ✓ | n/a (picker missing — R-08) | **G** storage / **R** use |
+| Special items (crown/sceptre/amulet/badge/box/spyglass/sextant/grapple) | ✓ | ✓ | picker (grapple deliberately excluded — Klimb-only) | **G** storage / **G** use (R-07/R-08 resolved, Batch 3) |
 | Door timer, town/outdoor turn phases, awaiting-exit | ✓ (`gameplay_save`) | ✓ | ✓ | **G** |
 | Terrain overrides (`mapOverrides`, `openDoors`) | ✓ | ✓ | ✓ | **G** |
 | Overworld enemies | ✓ | ✓ | ✓ | **G** |
@@ -913,7 +1061,7 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 | `Dialogue` | `dialogue_` session | viewport + transcript | dialogue commands | `EndConversation` | **G** — R-01 resolved (Batch 1) |
 | `ShrineSpecial` | shrine/Blackthorn session | viewport only | modal resolution → `shrine_return_mode_` | originating world mode | **G** — resolved (Batch 1) (§5) |
 | `TextEntry` / `NumericEntry` / `YesNo` | request-specific | viewport + prompt | `finish_modal` | `return_mode_` | **G** |
-| `PartySelection` / `InventorySelection` / `EquipmentSelection` / `SpellSelection` | none | viewport + `DeviceSelectionView` | `modal()` | `return_mode_` | **G** routing / **R-07/R-08** content |
+| `PartySelection` / `InventorySelection` / `EquipmentSelection` / `SpellSelection` | none | viewport + `DeviceSelectionView` | `modal()` | `return_mode_` | **G** routing / **G** content (R-07/R-08 resolved, Batch 3) |
 | `TargetSelection` | combat for aim; world for Fire | viewport + reticle (`snapshot.target_*`) | direct command | `return_mode_` | **G** |
 | `DebugMenu` | developer build | `DeviceDebugScreen` (viewport suppressed) | `UiDebugMenu` | `debug_return_mode_` | **G** |
 | *gem view overlay* | `gem_view_active_` | `render_world_gem_view` / `render_dungeon_gem_view` | any key closes | prior mode + `AfterGemView` | **R-17** |
@@ -934,7 +1082,7 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 | Keys | ✓ | via Jimmy/Open | n/a | Z-stats | ✓ | **G** |
 | Torches | ✓ | `I`gnite | n/a | Z-stats | ✓ | **G** |
 | Reagents ×8 | shop | `M`ix | n/a | Z-stats | ✓ | **Y-19** |
-| Equipment ×48 | ✓ / shop | n/a | **`R`** | Z-stats | ✓ | **G** world / **R-06** combat+dungeon |
+| Equipment ×48 | ✓ / shop | n/a | **`R`** | Z-stats | ✓ | **G** world, dungeon and combat (R-06 resolved, Batch 3) |
 | Armour / helmets / shields | ✓ | n/a | ✓ | ✓ | ✓ | **G** |
 | Weapons / ammo | ✓ | n/a | ✓ (ammo checked) | ✓ | ✓ | **G** |
 | Potions ×8 (ids 8–15) | ✓ | ✓ + party target | n/a | picker | ✓ | **G** |
@@ -942,18 +1090,18 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 | Spells ×48 | `M`ix | `C`ast | n/a | picker + summary | ✓ | **R-11**, **R-16** |
 | Magic Carpet (16) | quest | ✓ | n/a | picker | ✓ | **Y** |
 | Skull Key (17) | quest | ✓ | n/a | picker | ✓ | **Y** |
-| **Amulet (18)** | quest | **mislabelled "Grapple"** | n/a | picker | ✓ | **R-07** |
-| **Crown (19)** | quest | **absent** | n/a | **absent** | ✓ | **R-08** |
-| **Sceptre (20)** | quest | **absent** | n/a | **absent** | ✓ | **R-08** |
-| **Moonstones (21–28)** | quest | **absent** | n/a | **absent** | ✓ | **R-08** |
-| **Shards (29–31)** | quest | **absent** | n/a | **absent** | ✓ | **R-08** |
+| Amulet (18) | quest | ✓ | n/a | picker | ✓ | **G** — R-07 resolved (Batch 3) |
+| Crown (19) | quest | ✓ | n/a | picker | ✓ | **G** — R-08 resolved (Batch 3) |
+| Sceptre (20) | quest | ✓ | n/a | picker | ✓ | **G** — R-08 resolved (Batch 3) |
+| Moonstones (21–28) | quest | ✓ | n/a | picker (gated on `!buried`) | ✓ | **G** picker — R-08 resolved (Batch 3); persistence still **R-14** |
+| Shards (29–31) | quest | ✓ | n/a | picker | ✓ | **G** — R-08 resolved (Batch 3) |
 | Spyglass (32) | quest | ✓ route | n/a | picker | ✓ | **R-13** (no zodiac view) |
-| **Plans (33)** | quest | **absent** | n/a | **absent** | ✓ | **R-08** |
+| Plans (33) | quest | ✓ | n/a | picker (gated on `hms_cape`) | ✓ | **G** — R-08 resolved (Batch 3) |
 | Sextant (34) | quest | ✓ | n/a | picker | ✓ | **G** |
-| **Watch (35)** | quest | **absent** | n/a | **absent** | ✓ | **R-08** |
-| **Badge (36)** | quest | **absent** | n/a | **absent** | ✓ | **R-08** |
+| **Watch (35)** | **no owner anywhere** | **absent** | n/a | **absent** | ✓ | **OPEN** — deliberately excluded by Batch 3: no `GameState`/`QuestState`/`QuestWorldServices` field backs id 35, so no possession gate exists. Inventing one was out of scope. |
+| Badge (36) | quest | ✓ | n/a | picker (gated on `black_badge`) | ✓ | **G** — R-08 resolved (Batch 3) |
 | Wooden Box (37) | quest | ✓ ("How?") | n/a | picker | ✓ | **G** |
-| Grapple | quest | **should not be a Use item** | n/a | — | ✓ | **R-07** |
+| Grapple | quest | **Klimb-only, never a Use item** | n/a | — | ✓ | **G** — R-07 resolved (Batch 3): removed from the Use picker entirely |
 | Loose loot piles | ✓ LIFO | n/a | n/a | rendered `0x100+id` | **✗** | **R-14** |
 | World chests | Open→piles | n/a | n/a | correct sprite (was **tile 1 = blue**; R-02 resolved Batch 2) | **✗** | R-02 **G** / **R-14** |
 
@@ -995,7 +1143,7 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 | 30. Movement Mode controls | **G** | W/S/A/D = forward/back/turn-left/turn-right — **already matches the requested target** |
 | 31. Trackball | **G** | up/down/left/right = forward/back/turn-left/turn-right |
 | 32. Keyboard (Movement Mode off) | **Y-23** | No movement keys; verbs only |
-| — | **R-06** | `Ready` offered and rejected |
+| — | R-06 **G** | `Ready` offered and applied (RESOLVED, Batch 3) |
 | — | **R-17** | Dungeon gem view is a synthetic flood fill |
 
 **Bottom line:** the dungeon's *logic* is in good shape and its *controls are already correct*. The unusable view is an **asset-pipeline gap**, not a control or state bug. Do not "fix" the controls.
@@ -1006,20 +1154,20 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 
 | Quest system | Core | Player route | Status |
 |---|---|---|---|
-| Word-of-power Yell at dungeon entrances | ✓ `yell_word_of_power` | ✓ `Y` | **Y-24** |
+| Word-of-power Yell at dungeon entrances | ✓ `yell_word_of_power` | ✓ `Y` (non-frigate branch) | **G** — Y-24 discharged (Batch 3) |
 | Shadowlord summoning in Flame rooms | ✓ `summon_shadowlord` | ✓ `Y` | **Y** |
-| **Shard ritual (Falsehood/Hatred/Cowardice)** | ✓ `cast_shard_into_flame` + `apply_shard_destruction` | **✗ no Use route** | **R-08** |
-| **Crown / Sceptre / Amulet** | ✓ `use_quest_item` | **✗ / mislabelled** | **R-07, R-08** |
-| Sceptre force-field dissolution (world + dungeon) | ✓ both branches | **✗** | **R-08** |
+| Shard ritual (Falsehood/Hatred/Cowardice) | ✓ `cast_shard_into_flame` + `apply_shard_destruction` | ✓ Use picker ids 29–31 | **G** — R-08 resolved (Batch 3) |
+| Crown / Sceptre / Amulet | ✓ `use_quest_item` | ✓ Use picker ids 18–20, correctly named | **G** — R-07/R-08 resolved (Batch 3) |
+| Sceptre force-field dissolution (world + dungeon) | ✓ both branches | ✓ Use picker id 20 | **G** — R-08 resolved (Batch 3) |
 | **Blackthorn interrogation** | ✓ `blackthorn.cpp`, `BlackthornAction` | **✗ modal discarded** | **R-09** |
 | **Guard password / tribute / arrest** | ✓ `talk_guard` + 3 prompts | **✗ modals discarded** | **R-09** |
 | Shrines (visit / restore / donate / quest bits) | ✓ `shrine.cpp` | ✓ all 3 modals wired | **Y-25** |
 | Search-revealed quest objects | ✓ `quest_search.cpp` + fixtures | ✓ `S` | **R-14** (lost on reload) |
 | Lord British progression / karma | ✓ `dialogue_effects` | ✓ Talk | **Y** |
-| **Harpsichord passage (Cove)** | ✓ `play_harpsichord` | **✗** | **R-20** |
-| **Moongates / moonstones** | ✓ `use_moonstone`, `transitions.cpp` | **✗** | **R-08** |
-| **HMS Cape** | ✓ id 33 | **✗** | **R-08** |
-| Codex / endgame script | ✓ `EndgameScript`, `GameWon`/`Endgame` events appended to transcript | gated behind the above | **R-08** |
+| Harpsichord passage (Cove) | ✓ `play_harpsichord` | ✓ digit keys while seated | **G** — R-20 resolved (Batch 3) |
+| Moongates / moonstones | ✓ `use_moonstone`, `transitions.cpp` | ✓ Use picker ids 21–28 when carried | **G** reachability — R-08 resolved (Batch 3); persistence still **R-14** |
+| HMS Cape | ✓ id 33 | ✓ Use picker id 33 | **G** — R-08 resolved (Batch 3) |
+| Codex / endgame script | ✓ `EndgameScript`, `GameWon`/`Endgame` events appended to transcript | no longer gated — the Use chain above is reachable | **Y** — R-08 resolved (Batch 3); end-to-end endgame still unproven |
 | Underworld | ✓ `exit_dungeon(true)` | ✓ | **G** logic |
 | Refuge / camp scenes | ✓ `RefugeScript` | event unconsumed | **Y-04** |
 
@@ -1054,11 +1202,32 @@ Small, independently testable batches, in dependency order. Each batch ends at a
 
 ---
 
-### Batch 3 — Reachability: Use picker, Yell sails, Ready context · risk: low
-**IDs:** R-06, R-07, R-08, R-19, R-20, Y-20
-**Files:** `native/core/src/display_names.cpp` (`usable_names`), `native/targets/tdeck/main/alpha_runtime.cpp` (`open_selection`), `native/core/src/ui_session.cpp` (`handle_exploration` case `'y'`), `native/core/src/commands.cpp:660-662` (routing predicates)
-**Work:** name all 13 usable items; build the picker from possession flags; drop the grapple row; add the frigate branch to `(Y)ell`; add `Ready`/`Unready` to the dungeon and combat routing lists and pass `battle = c.combat`.
-**Physical test:** Debug → Full Test Setup → `U` and confirm every owned tool appears with the right name; board a ship and hoist sails; `R` in combat and in a dungeon and confirm the weapon actually changes.
+### Batch 3 — Reachability: Use picker, Yell sails, Ready context · risk: low · **COMPLETED**
+**IDs:** R-06 (GREEN), R-07 (GREEN), R-08 (GREEN), R-19 (GREEN), R-20 (GREEN), Y-20 (GREEN)
+**Files:** `native/core/src/display_names.cpp` (`usable_names` — real canonical ids only), `native/core/include/openu5/inventory_picker.h` + `native/core/src/inventory_picker.cpp` (shared ESP-free picker seam: widened possession input, `kUsableItemPickerMaxRows` 6 → 21), `native/targets/tdeck/main/alpha_runtime.{h,cpp}` (`open_selection` fills the widened seam input; new `refresh_session_context()` feeds the session's sail/harpsichord mirrors before every routed input), `native/core/include/openu5/ui_session.h` + `native/core/src/ui_session.cpp` (`handle_exploration` case `'y'` and the new digit cases; the two RED-test seams promoted to production-fed context mirrors), `native/core/src/commands.cpp` (context gate `ready_anywhere` exemption; Ready handler passes `battle = c.combat` and calls the resync), `native/core/include/openu5/combat.h` + `native/core/src/combat.cpp` (`load_equipment_cache()` shared by arena construction and the new `resync_player_equipment()`).
+
+**Work done:**
+- **R-07/R-08** — `usable_item_display_name()` now has exactly one index interpretation, the real canonical id; the alternate offset reading is gone. The picker seam gates one row per canonical id from its authoritative owner (`game.quest.artifacts[0..2]` for 18–20, `QuestWorldServices` moonstones `!buried` for 21–28, `game.quest.shards[0..2]` for 29–31, `game.hms_cape` for 33, `game.black_badge` for 36, plus the pre-existing 16/17/32/34/37). Rows carry the same real id later dispatched as `CommandKind::UseItem`, each resolves a real name, and none appears twice. **Grapple is removed from the Use picker entirely and remains Klimb-only.** **Pocket Watch (35) is intentionally still excluded** — no authoritative state owner exists and none was invented.
+- **R-19** — `(Y)ell` aboard a frigate outside the Underworld dispatches `CommandKind::YellSails` (state-driven HOIST/FURL toggle, no modal); the word-of-power branch is unchanged. The context is a narrow mirror fed by `AlphaRuntime::refresh_session_context()` from `turn_.transport_tile` and `position.map.location`, and re-checked authoritatively by the command itself.
+- **Y-20** — digits `0`–`9` dispatch `CommandKind::SetActivePlayer` with the literal digit; the core handler keeps its own `member - 1`, range/party validity and `None!`/`Invalid!` messages. No new modal.
+- **R-20** — at the authored harpsichord context (small map, not combat, not dungeon, tile 141/0x8D immediately south) the digit is intercepted *before* `SetActivePlayer` and dispatches `CommandKind::HarpsichordNote` with the literal note digit. The existing melody/Cove-passage core implementation is unchanged and still GREEN. Digit interception is not broadened beyond that context.
+- **R-06** — Ready is legal in world, dungeon corridor and combat. Dungeon Ready is an ordinary free action (`battle=false`, no armour lock, no turn charged). Combat Ready routes through `CommandKind::Ready`, calls `equip_item(..., battle=true)` (armour lock preserved) and, on success, calls **`resync_player_equipment()`** to refresh the acting player's `CombatActor` equipment-derived cache (`weapon_count`, `weapons[]`, `attack`, `range`, `defense`) from authoritative `GameState`. `equip_item()` itself is **not** coupled to combat state. Arena construction and the resync share one `load_equipment_cache()` helper so they cannot drift.
+- **R-06 combat action cost (correction pass)** — the reference charges the acting combatant's turn **once per `R` interaction, at picker close** (`main.ts::openCombatReadyPicker` -> `closeAndEndTurn` -> `CombatSession.playerReady()` = `requirePlayerTurn()` + `advanceTurn()`), whether or not anything was equipped, and ESC is **not** a free cancel there. Implemented at the layer that owns that interaction: `UiSession::cancel_modal()` dispatches `CommandKind::CombatYield` after the cancelled `ModalResponse`, gated on `UiRequestId::Equipment` with `return_mode_ == UiMode::Combat`. Equips leave through `finish_modal()` and cost nothing, so inspecting/equipping/failing on any number of rows still costs exactly one action. World and dungeon Ready remain free; `equip_item()` stays unaware of combat and of action cost. Two presentational gaps remain (empty-handed picker, `"Ring vanishes!"` early close) — tracked as **Y-28**; neither changes the cost.
+
+**Verify:** `ctest --test-dir native/core/build-batch1-control`.
+
+**Physical test:** Debug → Full Test Setup → `U` and confirm every owned tool appears with the right name; board a ship and hoist sails; `R` in combat and in a dungeon and confirm the weapon actually changes; sit at the harpsichord and play `6 7 8 9 8 7 8 7 6 7 6 5 3`. **Not yet performed on hardware.**
+
+**Test evidence:** `batch3_group_a` 19/19 GREEN, `batch3_group_b` 74/74 GREEN, `batch3_group_c` 37/37 GREEN (17 core/command-layer + 20 picker-interaction-layer checks after the R-06 action-cost correction pass). Targeted regression set all PASS: `ui_session`, `item_parity`, `command_parity`, `transport_flow_parity`, `quest_parity`, `ui_mode_regression`, `presentation_regression`, `combat_loot_open_regression`, `direct_troll_handoff_regression`, `world_flow_adapters`, `world_flow_parity`, `dungeon_parity`. Full host suite: **61 total, 60 pass, 1 fail** — the sole failure is `gameplay_parity`, still at **mismatch 2034** (R-21), byte-identical to the pre-batch baseline, with **no new earlier mismatch**. T-Deck ESP-IDF 6.1 build: **PASS** (`openu5_tdeck.bin` 0xc63f0 bytes, 23% of the app partition free; zero compiler warnings). Hardware flash: **not performed**.
+
+**Known remaining, intentionally deferred:**
+- **Pocket Watch id 35** — no authoritative state owner; excluded from the picker and from the name table.
+- **Combat Ready picker presentation (Y-28)** — the action *cost* now matches the reference exactly (one per `R` interaction, at close). Two presentation gaps remain: the empty-handed case opens a disabled `"(None available)"` picker instead of charging without one, and `ItemResult::vanished` does not close the picker early. Neither affects cost. See section 3 R-06.
+- **Moonstone persistence** — the picker reads current ownership only; save/load persistence stays **R-14**.
+- **`syncPlayerEquip`'s invisibility rule** — the reference clears the invisible flag when ring 42 is *removed*. Not implemented here; out of the listed resync field set and uncovered by the batch contracts.
+- **`CommandKind::Unready`** — still routeless by design (see section 5).
+- **R-21 `gameplay_parity` mismatch 2034** — untouched and still OPEN.
+
 **Model:** Sonnet/Codex. Mechanical, but the item-id table must be transcribed from `use-tools.ts:7` exactly.
 
 ---
@@ -1134,7 +1303,7 @@ Small, independently testable batches, in dependency order. Each batch ends at a
 
 ---
 
-### Batch 11 — Test infrastructure · risk: low · **do this in parallel with Batch 1**
+### Batch 11 — Test infrastructure · risk: low
 **IDs:** Y-05, Y-06, and everything in §15
 **Files:** new `native/targets/tdeck/host_tests/runtime_integration_test.cpp` + a thin `AlphaRuntime` seam
 **Work:** see §15. Without this, every batch above is verified only by hand.
@@ -1178,8 +1347,8 @@ Small, independently testable batches, in dependency order. Each batch ends at a
 | 18 | Every spell has a target label consistent with its `target_type` | `magic_parity` — **catches R-16** (12 failures today) |
 | 19 | Every spell summary equals `MagicDefinitions.json::SimpleDescription` | new drift test — catches R-16 |
 | 20 | Every serialized field round-trips, and **every live owner is serialized** | `persistence_driver` — **catches R-14, R-15** |
-| 21 | Every `CommandKind` is either produced by a UI route or annotated core-internal | static test — catches R-19, R-20, and the §5 list |
-| 22 | `Ready` succeeds in world, combat and dungeon | `command_parity` — **catches R-06** (probe already written) |
+| 21 | Every `CommandKind` is either produced by a UI route or annotated core-internal | static test — R-19, R-20 and Y-20 are now routed (Batch 3). `CombatYield` is also live and routed: `UiSession::cancel_modal()` emits it, and `commands.cpp`'s generic `CombatMove..CombatEnemyStep` range dispatch (`static_cast<CombatAction>(int(cmd.kind) - int(CommandKind::CombatMove))`) carries it straight through to `combat.cpp`'s `CombatAction::Yield` handler — see `native/core/tests/batch3_group_c_test.cpp` C13. The remaining §5 dead/annotated-only list is `Unready`, `CombatEscape`, `ShopAction`, `BeginConversation` (R-10), `BlackthornAction` (R-09) |
+| 22 | `Ready` succeeds in world, combat and dungeon | **DONE (Batch 3)** — `batch3_group_c` C1/C2/C3/C4 through the real `execute_command()` path, plus the combat `CombatActor` cache invariant |
 
 ### The structural change that makes most of these possible
 
@@ -1217,7 +1386,7 @@ Efficient broad-coverage pass using Developer tools. ~45 minutes. Each step name
 ### Phase 3 — Combat and victory loot (7 min)
 16. Debug → Max Party, Max Resources, Equip Best Gear.
 17. Trigger an overworld encounter. Move, `A`ttack with the reticle, `F`ire, `C`ast a combat spell.
-18. **[R-06] Press `R` in combat, select a weapon. Confirm the weapon actually changes** (today it will not).
+18. **[R-06] Press `R` in combat, select a weapon. Confirm the weapon actually changes** — and that the character then *attacks with it* (the `CombatActor` cache resync). Fixed in Batch 3; hardware confirmation outstanding.
 19. Win. **Confirm the arena stays open.** `O`pen the chest, `S`earch it, `G` + direction repeatedly to zero.
 20. **[ANCHOR 1 — Batch 2 regression-validation] Confirm the cell shows plain arena floor — no blue square, no leftover symbol.** (Code/test-level fix is GREEN as of Batch 2; this step is the outstanding hardware confirmation, not a check for a known-open defect.)
 21. **[ANCHOR 2 — Batch 2 regression-validation] Before each `G`, note the visible icon; confirm the message names the same item.** (Code/test-level fix is GREEN as of Batch 2; this step is the outstanding hardware confirmation.)
@@ -1225,14 +1394,14 @@ Efficient broad-coverage pass using Developer tools. ~45 minutes. Each step name
 23. Save, reload. **[R-14] Confirm any loot left behind is still there.**
 
 ### Phase 4 — Items, magic, view (6 min)
-24. `U`se: **[R-07/R-08]** confirm every owned tool is listed with the correct name; confirm "Grapple" is absent and the Amulet is present.
+24. `U`se: **[R-07/R-08]** confirm every owned tool is listed with the correct name; confirm "Grapple" is absent and the Amulet is present. Fixed in Batch 3; hardware confirmation outstanding. (Pocket Watch is expected to be absent — no backing state.)
 25. `U`se a potion on a party member. `U`se a scroll.
 26. `C`ast Mani on a companion. `M`ix a spell.
 27. **[R-11]** Cast An Sanct in the world at a locked door. Confirm it does something and does not silently eat the charge.
 28. **[ANCHOR 3]** `V` with gems. **Photograph the screen.** Confirm the gem count decremented, a legible map appeared, and closing it charged exactly one turn (`VIEW_EFFECT` / `VIEW_RESULT` in the log).
 
 ### Phase 5 — Transport (4 min)
-29. Debug → Transport → Ship. `B`oard. **[R-19] `Y`ell → confirm HOIST/FURL, not a word prompt.** Sail with the wind.
+29. Debug → Transport → Ship. `B`oard. **[R-19] `Y`ell → confirm HOIST/FURL, not a word prompt.** Sail with the wind. Fixed in Batch 3; hardware confirmation outstanding.
 30. `X`-it. Board a horse, a carpet, a skiff. Confirm the avatar sprite changes each time.
 31. Save, reload aboard the ship; confirm transport and hull survive.
 
@@ -1244,7 +1413,7 @@ Efficient broad-coverage pass using Developer tools. ~45 minutes. Each step name
 36. Find stairs, `K`limb down. Confirm the depth readout and a new floor.
 37. Walk into a pit; walk into a field. Confirm the damage message and the feature art.
 38. `S`earch, `O`pen, `G`et, `J`immy in the dungeon.
-39. `C`ast Uus Por / Des Por. **[R-06] `R`eady in the dungeon.**
+39. `C`ast Uus Por / Des Por. **[R-06] `R`eady in the dungeon** — confirm it applies and charges no turn. Fixed in Batch 3; hardware confirmation outstanding.
 40. Trigger a dungeon encounter. Win. **Confirm the return is to the same cell and facing.**
 41. `Alt+M` System Menu → close. `Alt+D` Developer → Back. **Confirm the dungeon view returns both times.**
 42. **[R-15]** Save inside the dungeon, reload, and record exactly what happens.
@@ -1252,7 +1421,7 @@ Efficient broad-coverage pass using Developer tools. ~45 minutes. Each step name
 44. Walk out at the level-1 entrance → surface. Confirm the world view and Exploration verbs.
 
 ### Phase 7 — Quest-critical interaction (3 min)
-45. Debug → Quest → grant a shard. **[R-08] `U`se it in a Flame room.** (Today it will not be listed.)
+45. Debug → Quest → grant a shard. **[R-08] `U`se it in a Flame room.** Fixed in Batch 3; hardware confirmation outstanding.
 46. `Y`ell a word of power at a dungeon entrance; confirm the quake and the flag toggle.
 47. Visit a shrine: Visit → Virtue → Donate. **[R-01] Confirm the game is still playable afterwards.**
 
@@ -1273,8 +1442,10 @@ Efficient broad-coverage pass using Developer tools. ~45 minutes. Each step name
 
 **Status (post-Batch-1, historical):** 58 total, 57 pass, 1 fail — `gameplay_parity` failing at mismatch 59, plus the new `ui_mode_regression` suite (28/28 GREEN). See §14 Batch 1. As with the baseline run above, mismatch 2034 was not yet reachable or known at this point and this record is preserved unchanged.
 
-**Current status (post-Batch-2):** 58 total, **57 pass, 1 fail**. R-02, R-03 and R-04 are GREEN; `gameplay_parity` mismatch 59 is **fixed**. The sole remaining failure is `gameplay_parity` at **mismatch 2034 (R-21)** — a scroll-use event/message/SFX divergence that was masked by mismatch 59 until now, confirmed pre-existing (reproduces on the untouched `63eeac3b` baseline) and out of scope for Batch 2. `ui_mode_regression` (28/28 GREEN, Batch 1) and all Batch 2 regressions (`presentation_regression`, `combat_loot_open_regression`, `combat_escape_regression`, `direct_troll_handoff_regression`) pass. T-Deck ESP-IDF build: PASS. Hardware flash: **not performed**. See §14 Batch 2 and §3 R-21.
+**Historical status (post-Batch-2, superseded):** 58 total, **57 pass, 1 fail**. R-02, R-03 and R-04 are GREEN; `gameplay_parity` mismatch 59 is **fixed**. The sole remaining failure is `gameplay_parity` at **mismatch 2034 (R-21)** — a scroll-use event/message/SFX divergence that was masked by mismatch 59 until now, confirmed pre-existing (reproduces on the untouched `63eeac3b` baseline) and out of scope for Batch 2. `ui_mode_regression` (28/28 GREEN, Batch 1) and all Batch 2 regressions (`presentation_regression`, `combat_loot_open_regression`, `combat_escape_regression`, `direct_troll_handoff_regression`) pass. T-Deck ESP-IDF build: PASS. Hardware flash: **not performed**. See §14 Batch 2 and §3 R-21. This entry is preserved as historical record of the program's state at that point and is superseded by Batch 3 below; it is not rewritten with later knowledge.
 
-**Probe:** a throwaway program linked against `libopenu5_core.a` verified R-06 and R-16 directly. It lives in the session scratchpad, **not** in the repo — it is an audit instrument, not a test. Its assertions are folded into the proposed invariants 18 and 22 in §15, which is where they belong.
+**Current status (post-Batch-3):** the host ctest suite is substantially larger than the post-Batch-2 snapshot above (65 registered tests, up from 58), reflecting Batch 3's new `batch3_group_b`/`batch3_group_c` suites and the TypeScript drift/fixture tests. R-06 (`Ready` rejected in combat/dungeons), R-07 (Use-picker id 18 mis-binding), R-08 (endgame Use chain unreachable), R-19 (`(Y)ell` has no frigate branch) and R-20 (harpsichord melody unreachable) are all **GREEN — RESOLVED (Batch 3)**; see §3 for each. `CombatYield` is confirmed live and routed end-to-end through the real `execute_command()`/`combat.cpp` path, not just emitted by `UiSession` (§15 invariant 21; `native/core/tests/batch3_group_c_test.cpp` C13). The sole known failure remains `gameplay_parity` at mismatch 2034 (R-21, still RED/OPEN — untouched by Batch 3, tracked as Batch 12). T-Deck ESP-IDF firmware was not rebuilt as part of this pass (no production code changed). See §3 R-06/R-07/R-08/R-19/R-20/R-21 and §14 Batch 3.
 
-**Working tree (as of this document update):** contains the completed Batch 2 implementation and tests (`native/core/src/combat.cpp`, `native/core/src/outdoor.cpp`, `native/core/src/presentation.cpp`, and the corresponding test files) plus this document update. No other production code was modified.
+**Probe:** a throwaway program linked against `libopenu5_core.a` verified R-06 and R-16 directly. It lives in the session scratchpad, **not** in the repo — it is an audit instrument, not a test. Its R-06 assertions are now carried permanently by `native/core/tests/batch3_group_c_test.cpp` (invariant 22, §15); R-16 remains probe-only.
+
+**Working tree (as of this document update, Batch 3):** contains the completed Batch 3 implementation and tests — production changes in `native/core/include/openu5/combat.h`, `native/core/include/openu5/inventory_picker.h`, `native/core/include/openu5/ui_session.h`, `native/core/src/combat.cpp`, `native/core/src/commands.cpp`, `native/core/src/display_names.cpp`, `native/core/src/inventory_picker.cpp`, `native/core/src/ui_session.cpp`, `native/targets/tdeck/main/alpha_runtime.cpp` and `native/targets/tdeck/main/alpha_runtime.h`; test changes in `native/core/tests/batch3_group_b_test.cpp` and `native/core/tests/batch3_group_c_test.cpp` (the latter now also carries the C13 real-routing `CombatYield` regression guard) — plus this document update. No other production code was modified.

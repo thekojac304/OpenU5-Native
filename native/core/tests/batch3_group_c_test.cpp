@@ -11,6 +11,7 @@
 #include "openu5/dungeon.h"
 #include "openu5/inventory.h"
 #include "openu5/outdoor.h"
+#include "openu5/ui_session.h"
 #include "openu5/world_commands.h"
 #include "openu5/world_terrain.h"
 #include <algorithm>
@@ -32,6 +33,51 @@ void check(bool ok, const char *what) {
 }
 Rand rng_from(GameState &g) {
     return {&g, [](void *p, int32_t lo, int32_t hi) { return static_cast<GameState *>(p)->rng.next(lo, hi).value; }};
+}
+
+// ---------------------------------------------------------------------------
+// C7-C11 fixture: the Ready PICKER INTERACTION lifecycle, driven through the
+// real UiSession::handle_input() -> dispatch() path with the same spy-dispatcher
+// pattern used by ui_session_test.cpp and batch3_group_a_test.cpp. The combat
+// (R)eady ACTION COST is an interaction-level fact -- the reference charges it
+// once when the picker CLOSES, not inside the per-item equip -- so it is
+// asserted at the layer that owns the picker lifecycle, not at equip_item().
+struct Spy {
+    std::vector<UiIntent> intents;
+    static void send(void *p, const UiIntent &i) { static_cast<Spy *>(p)->intents.push_back(i); }
+    size_t combat_yields() const {
+        size_t n = 0;
+        for (const auto &i : intents)
+            if (i.kind == UiIntentKind::Command && i.command.kind == CommandKind::CombatYield) ++n;
+        return n;
+    }
+};
+// Two equipment rows, both selectable, mirroring AlphaRuntime's real
+// EquipmentSelection source.
+struct Rows {
+    size_t count = 2;
+    bool enabled = true;
+    static size_t size(void *p) { return static_cast<Rows *>(p)->count; }
+    static UiSelectionItem item(void *p, size_t) {
+        auto &r = *static_cast<Rows *>(p);
+        return UiSelectionItem{"Dagger", r.enabled};
+    }
+};
+UiAction cancel_action() {
+    UiAction a;
+    a.kind = UiActionKind::Cancel;
+    return a;
+}
+UiAction confirm_action() {
+    UiAction a;
+    a.kind = UiActionKind::Confirm;
+    return a;
+}
+// Opens an equipment picker exactly as AlphaRuntime::open_selection() does,
+// from the given world mode.
+void open_ready_picker(UiSession &ui, Rows &rows) {
+    ui.begin_selection(UiMode::EquipmentSelection, UiRequestId::Equipment, "Ready",
+                       {&rows, Rows::size, Rows::item});
 }
 } // namespace
 
@@ -152,9 +198,21 @@ static void c3_combat_ready_red() {
     avatar.dexterity = 20;
     avatar.strength = 50;
     avatar.helmet = avatar.armor = avatar.shield = avatar.ring = avatar.amulet = 255;
-    avatar.weapon = 17; // Dagger, equipped.
+    // GREEN-pass FIXTURE correction (no assertion changed). This previously read
+    // `avatar.weapon = 17` ("Dagger, equipped"), which made C3's own assertion
+    // unreachable for a reason that has nothing to do with routing: item 17 and
+    // item 31 are BOTH type 0x30 (two-handed) in the authoritative type table
+    // (DATA.OVL DS 0x1a7e -- native/core/src/inventory.cpp `types[]`, identical
+    // to game/src/core/equip.ts TYPE_TABLE), and equip_item's 0x30 arm requires
+    // BOTH hands free, so the equip was correctly refused with "Both hands must
+    // be free before thou canst wield that!" no matter how Ready routed. The
+    // party therefore starts bare-handed here, which is the only state from
+    // which the reference itself permits wielding a two-handed weapon. The
+    // assertion below is byte-for-byte unchanged: combat Ready must reach the
+    // real handler, succeed, and leave avatar.weapon == 31.
+    avatar.weapon = 255;
     game.equipment_quantities[17] = 1;
-    game.equipment_quantities[31] = 1; // Long Sword, owned, unequipped -- a different weapon to Ready.
+    game.equipment_quantities[31] = 1; // Long Sword, owned, unequipped -- the weapon to Ready.
     game.rng.seed(0x2600);
     TurnState turn{};
     TravelState travel{};
@@ -321,8 +379,26 @@ static void c4_ready_equipment_cache_invariant_red() {
     const CombatEnemy *enemies[42]{};
     enemies[41] = &troll;
     CombatState battle{};
+    // GREEN-pass FIXTURE correction (no assertion changed). This arena
+    // previously ran with EMPTY CombatTables, which made C4's own invariant
+    // unreachable for a reason orthogonal to the defect: every combat
+    // attack-table lookup resolved to 0, so characterWeapons()' reference rule
+    // ("skip any slot whose attack value is <= 0", game/src/core/equip.ts, and
+    // its `[{id: 0xff, attack: 1, range: 1}]` empty fallback) collapsed the
+    // cache to the generic id-255 sentinel whatever equipment was worn -- a
+    // correct recompute was indistinguishable from no recompute at all. The
+    // real device always supplies these tables (AlphaRuntime wires
+    // combat_context_.tables / combat_resources_.tables from the loaded asset
+    // pack), so a minimal one is supplied here: item 31 (Long Sword) gets a
+    // real attack value, and nothing else does. The assertion below is
+    // byte-for-byte unchanged.
+    static int32_t attack_values[48]{}, range_values[48]{};
+    attack_values[31] = 10;
+    range_values[31] = 1;
+    const CombatTables tables{attack_values, range_values, nullptr, nullptr, 48};
     CombatContext battle_owner{game, turn, battle};
-    CombatResources resources{maps, 1, enemies, 42, {}};
+    battle_owner.tables = tables;
+    CombatResources resources{maps, 1, enemies, 42, tables};
     OutdoorServices outdoor{};
     outdoor.combat = &battle_owner;
     outdoor.resources = &resources;
@@ -594,6 +670,260 @@ static void c6_dungeon_not_battle_for_equip() {
     std::cout << "C6 (dungeon != battle for equip_item, GREEN guard) executed\n";
 }
 
+
+// ---------------------------------------------------------------------------
+// C7-C11: R-06 (R)eady ACTION/TURN COST semantics, at the picker-interaction
+// layer that owns them.
+//
+// Authoritative reference control flow (game/src/main.ts):
+//   * Overworld/town/dungeon -- `doReady()` -> `pickMember()` -> `openReadyPicker()`.
+//     Its `close()` is silent: `view.setReadyPicker(null); prompts.current = null;
+//     refreshAwaiting();`. There is NO turn call anywhere on that path, and ESC at
+//     the member-selection step just prints "None!". Ready is a FREE action.
+//   * Combat -- `openCombatReadyPicker()`. Its `closeAndEndTurn()` tears the picker
+//     down and then calls `combatOut(cb.playerReady())`. `CombatSession.playerReady()`
+//     (game/src/core/combat/combat.ts) is `requirePlayerTurn()` + `advanceTurn()` and
+//     nothing else -- byte-identical to `playerYieldTurn()`.
+//     `closeAndEndTurn` is reached from exactly three places, all terminal:
+//       - `act.kind === "close"` (ESC / Done)          -> charges, with "Done"
+//       - `r.vanished` ("Ring vanishes!")              -> charges, without "Done"
+//       - the empty-handed early return                -> charges, picker never opens
+//     The `act.kind === "equip"` arm does NOT close and does NOT charge, whether the
+//     equip SUCCEEDED or was REJECTED (armour lock / hands / strength / ammo) -- it
+//     re-prints and calls `publish()`, leaving the picker open. So the cost is
+//     exactly ONE per 'R' interaction, independent of how many rows were inspected,
+//     equipped or refused.
+//
+// In this port the equip arm leaves through UiSession::finish_modal() (AlphaRuntime
+// then reopens the selection), and the terminal close leaves through
+// UiSession::cancel_modal() -- which is therefore the single charge point.
+
+static void c7_world_ready_picker_is_free() {
+    UiTextBlock blocks[8];
+    Spy spy;
+    Rows rows;
+    UiSession ui{{blocks, 8}, {&spy, Spy::send}, {40, 8, 12}};
+    ui.set_base_mode(UiMode::Exploration);
+    open_ready_picker(ui, rows);
+    ui.handle_input(cancel_action());
+    check(spy.combat_yields() == 0,
+          "C7: closing a WORLD Ready picker must charge no combat action -- overworld "
+          "Ready is a free action in the reference (openReadyPicker::close is silent)");
+    check(!spy.intents.empty() && spy.intents.back().kind == UiIntentKind::ModalResponse &&
+              spy.intents.back().request == UiRequestId::Equipment &&
+              !spy.intents.back().value.accepted,
+          "C7: the world Ready picker still closes through the ordinary cancelled "
+          "ModalResponse");
+    std::cout << "C7 (world Ready picker is free) executed\n";
+}
+
+static void c8_dungeon_ready_picker_is_free() {
+    UiTextBlock blocks[8];
+    Spy spy;
+    Rows rows;
+    UiSession ui{{blocks, 8}, {&spy, Spy::send}, {40, 8, 12}};
+    ui.set_base_mode(UiMode::Dungeon);
+    open_ready_picker(ui, rows);
+    ui.handle_input(cancel_action());
+    check(spy.combat_yields() == 0,
+          "C8: closing a DUNGEON-CORRIDOR Ready picker must charge no combat action -- a "
+          "dungeon corridor is not an arena, and the reference's dungeon loop uses the same "
+          "free overworld picker");
+    check(ui.mode() == UiMode::Dungeon,
+          "C8: the dungeon Ready picker returns to Dungeon mode");
+    std::cout << "C8 (dungeon Ready picker is free) executed\n";
+}
+
+static void c9_combat_ready_close_charges_exactly_once() {
+    UiTextBlock blocks[8];
+    Spy spy;
+    Rows rows;
+    UiSession ui{{blocks, 8}, {&spy, Spy::send}, {40, 8, 12}};
+    ui.set_base_mode(UiMode::Combat);
+    open_ready_picker(ui, rows);
+    check(spy.combat_yields() == 0,
+          "C9: OPENING the combat Ready picker must not charge -- the reference charges at "
+          "close, not at open");
+    ui.handle_input(cancel_action());
+    check(spy.combat_yields() == 1,
+          "C9: closing a COMBAT Ready picker must charge the acting combatant's turn exactly "
+          "once (closeAndEndTurn -> playerReady -> advanceTurn)");
+    // Order matters: closeAndEndTurn tears the picker down and only then spends
+    // the turn.
+    check(spy.intents.size() >= 2 &&
+              spy.intents[spy.intents.size() - 2].kind == UiIntentKind::ModalResponse &&
+              spy.intents.back().kind == UiIntentKind::Command &&
+              spy.intents.back().command.kind == CommandKind::CombatYield,
+          "C9: the picker teardown (ModalResponse) is dispatched BEFORE the turn is spent, "
+          "matching closeAndEndTurn's own order");
+    check(ui.mode() == UiMode::Combat, "C9: the combat Ready picker returns to Combat mode");
+    std::cout << "C9 (combat Ready close charges exactly once) executed\n";
+}
+
+static void c10_combat_ready_equips_do_not_charge() {
+    // The reference's `equip` arm never closes the picker and never charges,
+    // however many rows are inspected or equipped. This port routes each equip
+    // through finish_modal() and AlphaRuntime reopens the selection, so the same
+    // must hold across repeated open/equip cycles: still exactly one charge, and
+    // only at the terminal close.
+    UiTextBlock blocks[8];
+    Spy spy;
+    Rows rows;
+    UiSession ui{{blocks, 8}, {&spy, Spy::send}, {40, 8, 12}};
+    ui.set_base_mode(UiMode::Combat);
+    for (int equips = 0; equips < 3; ++equips) {
+        open_ready_picker(ui, rows); // AlphaRuntime's per-equip reopen.
+        ui.handle_input(confirm_action());
+        check(spy.combat_yields() == 0,
+              "C10: equipping a row must never charge a combat action -- the reference's equip "
+              "arm keeps the picker open and only publishes");
+        check(spy.intents.back().kind == UiIntentKind::ModalResponse &&
+                  spy.intents.back().request == UiRequestId::Equipment &&
+                  spy.intents.back().value.accepted,
+              "C10: each equip still leaves through an ACCEPTED Equipment ModalResponse");
+    }
+    open_ready_picker(ui, rows);
+    ui.handle_input(cancel_action());
+    check(spy.combat_yields() == 1,
+          "C10: after three equips inside one interaction, the terminal close charges the turn "
+          "exactly once -- no double-charging from repeated selection callbacks");
+    std::cout << "C10 (combat Ready equips do not charge; no double-charge) executed\n";
+}
+
+static void c11_combat_ready_empty_and_rejected_still_charge_once() {
+    // Two reference facts in one fixture:
+    //   * a REJECTED equip (armour lock etc.) does not close and does not charge --
+    //     the cost still arrives once, at the close;
+    //   * with nothing equippable the reference charges anyway ("Thou art
+    //     empty-handed!", `combatOut(cb.playerReady())` without opening the picker).
+    //     This port always opens the selection (AlphaRuntime inserts a disabled
+    //     "(None available)" row), so the charge arrives when the player dismisses
+    //     it -- still exactly one per 'R'.
+    {
+        UiTextBlock blocks[8];
+        Spy spy;
+        Rows rows;
+        UiSession ui{{blocks, 8}, {&spy, Spy::send}, {40, 8, 12}};
+        ui.set_base_mode(UiMode::Combat);
+        // A rejected equip reaches the picker owner exactly like an accepted one
+        // (the rejection is reported by the Ready command's result, and
+        // AlphaRuntime reopens the selection either way); the interaction then
+        // ends with a normal close.
+        open_ready_picker(ui, rows);
+        ui.handle_input(confirm_action());
+        check(spy.combat_yields() == 0,
+              "C11: an equip attempt that the core will REJECT still charges nothing at the "
+              "attempt itself");
+        open_ready_picker(ui, rows); // AlphaRuntime reopens after the rejection.
+        ui.handle_input(cancel_action());
+        check(spy.combat_yields() == 1,
+              "C11: a rejected equip followed by the close charges exactly one combat action");
+    }
+    {
+        UiTextBlock blocks[8];
+        Spy spy;
+        Rows rows;
+        rows.count = 1;
+        rows.enabled = false; // The "(None available)" disabled row.
+        UiSession ui{{blocks, 8}, {&spy, Spy::send}, {40, 8, 12}};
+        ui.set_base_mode(UiMode::Combat);
+        open_ready_picker(ui, rows);
+        ui.handle_input(confirm_action());
+        check(spy.combat_yields() == 0 && spy.intents.empty(),
+              "C11: confirming the disabled empty-handed row dispatches nothing at all");
+        ui.handle_input(cancel_action());
+        check(spy.combat_yields() == 1,
+              "C11: dismissing an empty-handed combat Ready picker still charges exactly one "
+              "combat action ('R' was the combatant's action; COMBAT does not revert it)");
+    }
+    std::cout << "C11 (empty-handed and rejected combat Ready still charge once) executed\n";
+}
+
+static void c12_member_selection_cancel_is_free() {
+    // ESC at the reference's PLAYER-selection step prints "None!" and exits with
+    // no cost (doReady's pickMember cancel arm). That step is
+    // UiRequestId::EquipmentMember here, and AlphaRuntime skips it entirely in
+    // combat -- so it must never charge, even if its return mode were Combat.
+    UiTextBlock blocks[8];
+    Spy spy;
+    Rows rows;
+    UiSession ui{{blocks, 8}, {&spy, Spy::send}, {40, 8, 12}};
+    ui.set_base_mode(UiMode::Combat);
+    ui.begin_selection(UiMode::PartySelection, UiRequestId::EquipmentMember, "Ready whom?",
+                       {&rows, Rows::size, Rows::item});
+    ui.handle_input(cancel_action());
+    check(spy.combat_yields() == 0,
+          "C12: cancelling the Ready MEMBER selection must charge nothing -- the reference's "
+          "player-picker ESC prints \"None!\" and returns without a turn");
+    std::cout << "C12 (Ready member-selection cancel is free) executed\n";
+}
+
+// CombatYield host-level regression guard (test-only; no production code
+// touched). The existing Ready-close UI tests above (C9-C11) only prove that
+// UiSession EMITS CommandKind::CombatYield to a spy dispatcher -- they never
+// exercise the real command()/execute_command() routing path in
+// native/core/src/commands.cpp, nor the real native/core/src/combat.cpp
+// CombatAction::Yield handler behind it. This test builds a real, minimal
+// two-player combat arena (no spy) and dispatches CommandKind::CombatYield
+// through the real execute_command() routing, then asserts the same
+// turn-advance semantics the reference already specifies for
+// CombatAction::Yield (combat.cpp: `if (action == CombatAction::Yield) {
+// e.advance(); }`) -- identical to the turn-advance CombatAction::Pass
+// already shares via the same e.advance() call.
+static void c13_combat_yield_real_route_advances_turn() {
+    GameState game{};
+    game.party.party_size = game.party.character_count = 2;
+    for (int i = 0; i < 2; ++i) {
+        auto &m = game.party.characters[i];
+        m.party_status = 0;
+        m.status = 'G';
+        m.current_hp = m.max_hp = 100;
+        m.dexterity = 20;
+    }
+    TurnState turn{};
+    CombatState battle{};
+    battle.initialized = true;
+    battle.count = 2;
+    battle.current = 0;
+    // Actor 0 (the active player) is far from its next turn; actor 1 is due
+    // immediately, so advance()'s scan deterministically lands on actor 1
+    // next -- the same "current moves to the other live combatant" fact any
+    // turn-advancing action (Pass or Yield) must produce.
+    battle.actors[0].id = 1;
+    battle.actors[0].member = 0;
+    battle.actors[0].status = CombatStatus::Active;
+    battle.actors[0].position = {5, 5};
+    battle.actors[0].counter = 5;
+    battle.actors[1].id = 2;
+    battle.actors[1].member = 1;
+    battle.actors[1].status = CombatStatus::Active;
+    battle.actors[1].position = {6, 5};
+    battle.actors[1].counter = 1;
+    CombatContext arena{game, turn, battle};
+
+    std::vector<uint8_t> tiles(256 * 256, 5);
+    WorldData world{tiles.data(), tiles.data(), tiles.size(), tiles.size()};
+    TravelState travel{};
+    CommandState commands{};
+    CommandContext context{game, turn, travel, commands, world};
+    context.combat = true;
+    context.combat_context = &arena;
+
+    Command yield{};
+    yield.kind = CommandKind::CombatYield;
+    auto result = execute_command(context, yield);
+    check(result.status == CommandStatus::Success,
+          "C13: CombatYield dispatched through the real execute_command() routing succeeds for "
+          "the active player");
+    check(battle.current == 1,
+          "C13: CombatYield's real combat.cpp route advances the turn to the other live "
+          "combatant, exactly like CombatAction::Yield's e.advance() (same semantics the port "
+          "already shares with CombatAction::Pass)");
+    check(battle.actors[0].status == CombatStatus::Active,
+          "C13: yielding does not itself remove the yielding actor from combat");
+    std::cout << "C13 (CombatYield real routing advances the turn) executed\n";
+}
+
 int main() {
     c1_world_ready_green_guard();
     c2_dungeon_ready_red();
@@ -602,6 +932,13 @@ int main() {
     c4_characterization_direct_equip_cache_staleness();
     c5_armour_lock_characterization();
     c6_dungeon_not_battle_for_equip();
+    c7_world_ready_picker_is_free();
+    c8_dungeon_ready_picker_is_free();
+    c9_combat_ready_close_charges_exactly_once();
+    c10_combat_ready_equips_do_not_charge();
+    c11_combat_ready_empty_and_rejected_still_charge_once();
+    c12_member_selection_cancel_is_free();
+    c13_combat_yield_real_route_advances_turn();
     std::cout << checks << " batch3 group C checks executed, " << failures << " failed\n";
     return failures > 0 ? 1 : 0;
 }

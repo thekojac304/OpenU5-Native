@@ -355,6 +355,23 @@ void UiSession::cancel_modal() {
         return;
     }
     const auto request = request_;
+    // R-06 combat (R)eady action cost. The reference charges the acting
+    // combatant's turn ONCE PER 'R' INTERACTION, when the equipment picker
+    // CLOSES -- never per item equipped, and whether or not anything was
+    // equipped (main.ts::openCombatReadyPicker -> closeAndEndTurn ->
+    // CombatSession.playerReady(), which is `requirePlayerTurn()` +
+    // `advanceTurn()` and nothing else). Equipping keeps the picker open and
+    // costs nothing; a rejected equip likewise; ESC still costs the turn (unlike
+    // the (U)se picker's free "None!" cancel). This close is that single
+    // charge point: the equip path leaves through finish_modal(), never here,
+    // and AlphaRuntime's per-equip reopen is a fresh begin_selection, so
+    // inspecting or equipping any number of rows still yields exactly one
+    // charge. Overworld/town/dungeon Ready has no cost at all in the reference
+    // (openReadyPicker::close is silent), hence the Combat-only gate; the
+    // member-selection step (EquipmentMember) is never charged either, matching
+    // the reference's free "None!" exit from the player picker.
+    const bool combat_ready_close =
+        request == UiRequestId::Equipment && return_mode_ == UiMode::Combat;
     mode_ = return_mode_;
     request_ = UiRequestId::None;
     selection_ = {};
@@ -363,6 +380,16 @@ void UiSession::cancel_modal() {
     UiIntent i; i.kind = UiIntentKind::ModalResponse; i.request = request;
     i.value.accepted = false;
     dispatch(i);
+    // Order mirrors closeAndEndTurn(): tear the picker down first, then spend
+    // the turn. CombatYield is the port's existing silent advance-the-turn
+    // action (combat.cpp: `if (action == CombatAction::Yield) { e.advance(); }`
+    // behind the same not-a-player-turn guard), i.e. the byte-equivalent of the
+    // reference's playerReady()/playerYieldTurn() pair.
+    if (combat_ready_close) {
+        UiIntent yield; yield.kind = UiIntentKind::Command;
+        yield.command.kind = CommandKind::CombatYield;
+        dispatch(yield);
+    }
     settle_shrine_after_modal();
 }
 
@@ -608,9 +635,34 @@ bool UiSession::handle_exploration(const UiAction &a) {
     case 'u': { command_echo("Use item");UiIntent i; i.kind=UiIntentKind::OpenInventorySelection; i.request=UiRequestId::Inventory; dispatch(i); return true; }
     case 'v': command_echo("View a gem!"); c.kind=CommandKind::ViewGem; break;
     case 'x': command_echo("X-it "); c.kind=CommandKind::Disembark; break;
-    case 'y': command_echo("Yell"); begin_text(UiRequestId::YellText,"Yell what?",15); return true;
+    // (Y)ell dispatches exactly as the reference's yell() does: aboard a frigate
+    // (transport 0x20-0x27) outside the Underworld (location < 0x80) it is the
+    // HOIST/FURL sails toggle -- a state-driven command with no word prompt and
+    // no choice modal; anywhere else it is the ordinary word-of-power prompt.
+    // The two predicates are mirrored in from the owner (set_sail_context);
+    // CommandKind::YellSails re-checks them authoritatively in commands.cpp, so
+    // a stale mirror can only mis-route, never mis-apply (R-19).
+    case 'y':
+        command_echo("Yell");
+        if (sail_context_frigate_ && sail_context_location_ok_) { c.kind=CommandKind::YellSails; break; }
+        begin_text(UiRequestId::YellText,"Yell what?",15); return true;
     case 'z': { command_echo("Z-stats");UiIntent i;i.kind=UiIntentKind::OpenStatusSelection;i.request=UiRequestId::Status;dispatch(i);return true; }
     case ' ': command_echo("Pass"); c.kind=CommandKind::Pass; break;
+    // Digits '0'-'9'.  Reference key order (main.ts): the harpsichord intercept
+    // is tested FIRST and, when the party is seated at the instrument, the digit
+    // plays a note and never reaches the set-active-player arm; otherwise every
+    // digit is a SET ACTIVE PLAYER with the literal key value (kernel 0x4080
+    // takes key-'1' itself, which the CommandKind::SetActivePlayer handler
+    // reproduces with its own member-1). Digit validity/party range and the
+    // None!/Invalid! outcomes stay in that core handler -- no modal, no second
+    // selection UI (R-20, Y-20).
+    case '0': case '1': case '2': case '3': case '4':
+    case '5': case '6': case '7': case '8': case '9': {
+        const int16_t digit = int16_t(k - '0');
+        if (harpsichord_active_) { c.kind=CommandKind::HarpsichordNote; c.item=digit; break; }
+        command_echo("Set Active Plr:");
+        c.kind=CommandKind::SetActivePlayer; c.member=digit; break;
+    }
     default: append(UiTextChannel::Message, k == 'd' ? "D-What?" : k == 'w' ? "W-What?" : "What?"); return true;
     }
     command(c); return true;

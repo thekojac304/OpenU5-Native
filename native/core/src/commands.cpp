@@ -757,9 +757,18 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
         return r.result;
     }
     const bool dungeon_camp=c.dungeon&&(cmd.kind==CommandKind::Rest||cmd.kind==CommandKind::RestCancel);
-    if (c.combat || (c.dungeon&&!dungeon_camp) ||
+    // R-06: (R)eady is legal in ALL three contexts, not just the overworld. The
+    // reference reaches the same ZSTATS try_equip_or_unequip picker from the
+    // overworld loop, the dungeon loop and COMBAT's 'R' dispatcher; only two
+    // things differ in an arena, and both belong to the Ready handler below, not
+    // to this context gate: equip_item's battle flag (the body-armour lock, ids
+    // 9-15) and the CombatActor cache refresh. A dungeon CORRIDOR Ready is an
+    // ordinary free action -- c.combat is false there, so it passes battle=false
+    // and charges nothing.
+    const bool ready_anywhere=cmd.kind==CommandKind::Ready;
+    if ((c.combat&&!ready_anywhere) || (c.dungeon&&!dungeon_camp&&!ready_anywhere) ||
         (dungeon_camp&&(!c.dungeon_context||!c.dungeon_context->state.active)) ||
-        (c.game.position.map.location >= 33 && c.game.position.map.location <= 40 && !dungeon_camp) ||
+        (c.game.position.map.location >= 33 && c.game.position.map.location <= 40 && !dungeon_camp && !ready_anywhere) ||
         (static_cast<uint8_t>(cmd.kind) > static_cast<uint8_t>(CommandKind::UseItem) &&
          cmd.kind != CommandKind::Board && cmd.kind != CommandKind::Disembark && cmd.kind!=CommandKind::Yell && cmd.kind!=CommandKind::YellSails && cmd.kind!=CommandKind::TrollToll && cmd.kind!=CommandKind::HarpsichordNote && cmd.kind!=CommandKind::Get && cmd.kind!=CommandKind::Search && cmd.kind!=CommandKind::Open && cmd.kind!=CommandKind::Jimmy && cmd.kind!=CommandKind::Push && cmd.kind!=CommandKind::Look && cmd.kind!=CommandKind::CrystalBall && cmd.kind!=CommandKind::DropCoin && cmd.kind!=CommandKind::MakeWish && cmd.kind!=CommandKind::Attack && cmd.kind!=CommandKind::Fire && cmd.kind!=CommandKind::Cast) ||
         ((cmd.kind == CommandKind::Move || cmd.kind == CommandKind::Look || cmd.kind==CommandKind::Attack || cmd.kind==CommandKind::Fire || cmd.kind == CommandKind::Open || cmd.kind == CommandKind::Jimmy || cmd.kind == CommandKind::Push || cmd.kind == CommandKind::Get || cmd.has_direction) &&
@@ -1077,9 +1086,30 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
         break;
     }
     case CommandKind::Ready:
-
-        r.result.item = equip_item(c.game, cmd.member, cmd.item, &r.rand);
+        // battle = c.combat: inside an arena the reference passes the equip its
+        // in-combat flag, which locks body armour (ids 9-15). A dungeon corridor
+        // is NOT battle -- c.combat is false there, so armour changes stay legal,
+        // matching the reference's `g_location > 0x7f` (any COMBAT map) gate
+        // rather than "is the party underground".
+        r.result.item = equip_item(c.game, cmd.member, cmd.item, &r.rand, c.combat);
         r.result.status = r.result.item.ok ? CommandStatus::Success : CommandStatus::Rejected;
+        // A successful in-combat change must reach the arena, or the character
+        // keeps swinging the weapon they just took off (reference:
+        // game.readyItem() -> combat.syncPlayerEquip()). equip_item() stays
+        // CombatState-unaware; this handler owns the orchestration, and the
+        // helper touches only the equipment-derived cache.
+        //
+        // Turn cost: the reference charges the combat turn ONCE per 'R'
+        // COMMAND, when the Ready picker closes (main.ts' closeAndEndTurn ->
+        // CombatSession.playerReady), not once per item equipped inside the
+        // still-open picker. That is a picker-lifecycle event this per-equip
+        // command does not model -- AlphaRuntime reopens the selector after each
+        // Ready -- so charging here would consume one combat turn per equip and
+        // diverge from the reference. Left to the picker owner; see
+        // GAMEPLAY_INTEGRATION_AUDIT.md R-06.
+        if (r.result.item.ok && c.combat && c.combat_context &&
+            &c.combat_context->game == &c.game)
+            resync_player_equipment(*c.combat_context, cmd.member);
         break;
     case CommandKind::Unready:
         r.result.item = unequip_slot(c.game, cmd.member, cmd.slot);

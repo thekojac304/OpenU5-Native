@@ -35,6 +35,31 @@ bool unopened_chest(const CombatState &s, int key) {
 }
 int table(const int32_t *v, size_t n, int id) { return v && id >= 0 && size_t(id) < n ? v[id] : 0; }
 bool supported(const CombatEnemy &d) { return d.name && std::strlen(d.name) <= 120; }
+// The ONE place a player CombatActor's equipment-derived cache is computed, so
+// arena construction and a mid-combat refresh after (R)eady cannot drift.
+// Mirrors the reference's characterWeapons() (game/src/core/equip.ts): helmet,
+// weapon and shield in that order, skipping the empty slot (255) and anything
+// whose attack table entry is <= 0; an empty result collapses to the generic
+// CombatWeapon sentinel, exactly as the reference's `[{id: 0xff, attack: 1,
+// range: 1}]` fallback does.  Writes ONLY weapon_count/weapons[]/attack/range;
+// defense is the caller's (it needs the Engine's roster-wide sum).
+void load_equipment_cache(CombatActor &a, const CharacterState &r, const CombatTables &tables) {
+    a.weapon_count = 0;
+    for (int id : {r.helmet, r.weapon, r.shield}) {
+        int attack = table(tables.attack, tables.count, id);
+        if (id == 255 || attack <= 0)
+            continue;
+        int range = table(tables.range, tables.count, id);
+        a.weapons[a.weapon_count++] = {id, attack, range == 0 ? 1 : range};
+    }
+    if (!a.weapon_count) {
+        a.weapons[0] = {};
+        a.weapon_count = 1;
+    }
+    a.attack = a.weapons[0].attack;
+    a.range = std::max<int32_t>(1, a.weapons[0].range);
+}
+
 struct Engine {
     CombatContext &c;
     CombatState &s;
@@ -1135,19 +1160,7 @@ CombatResult initialize_combat(CombatContext &c, const CombatMap &map, CombatDir
         a.speed = r.dexterity;
         a.counter = uint8_t(36 - a.speed);
         a.defense = e.defense(r);
-        for (int id : {r.helmet, r.weapon, r.shield}) {
-            int attack = table(c.tables.attack, c.tables.count, id);
-            if (id == 255 || attack <= 0)
-                continue;
-            int range = table(c.tables.range, c.tables.count, id);
-            a.weapons[a.weapon_count++] = {id, attack, range == 0 ? 1 : range};
-        }
-        if (!a.weapon_count) {
-            a.weapons[0] = {};
-            a.weapon_count = 1;
-        }
-        a.attack = a.weapons[0].attack;
-        a.range = std::max<int32_t>(1, a.weapons[0].range);
+        load_equipment_cache(a, r, c.tables);
         if (r.status == 'S')
             e.sleep(a);
         else
@@ -1635,6 +1648,41 @@ CombatResult start_encounter_combat(CommandContext &world, CombatState &state,
     emit(GameEventKind::CombatStarted);
     return CombatResult::Ok;
 }
+// R-06: after a successful (R)eady inside an arena, refresh the acting player's
+// CombatActor equipment-derived cache from the authoritative GameState record --
+// otherwise the character keeps attacking with the weapon they just took off for
+// the rest of the fight.  Reference: CombatSession.syncPlayerEquip(), called by
+// game.readyItem() only when the equip succeeded and a combat is live
+// (game/src/core/game.ts).  Deliberately NOT wired into equip_item(): inventory
+// stays unaware of CombatState, and the Ready command handler orchestrates the
+// two steps.
+//
+// Touches only the equipment-derived cache (weapon_count, weapons[], attack,
+// range, defense).  HP, position, status, the enemy flag, initiative/counter and
+// every other dynamic combat field are left exactly as they are, matching the
+// reference's "No toca HP ni iniciativa".  Returns false when the member has no
+// live actor in this arena (a legitimate no-op, as in the reference).
+bool resync_player_equipment(CombatContext &c, int32_t member) {
+    auto &s = c.combat;
+    if (!s.initialized || member < 0 || member >= c.game.party.character_count)
+        return false;
+    for (int i = 0; i < s.count; ++i) {
+        auto &a = s.actors[i];
+        // Map party member -> actor by the actor's own member field, which
+        // arena construction stamps from the roster index.  Actor index is NOT
+        // the party index: dead members are skipped during construction and
+        // enemies share the same array.
+        if (a.enemy || a.member == 255 || a.member != uint8_t(member))
+            continue;
+        const auto &r = c.game.party.characters[member];
+        Engine e(c);
+        a.defense = e.defense(r);
+        load_equipment_cache(a, r, c.tables);
+        return true;
+    }
+    return false;
+}
+
 CombatResult finish_encounter_combat(CommandContext &world, CombatState &state) {
     if (!world.combat || !state.initialized)
         return CombatResult::Invalid;

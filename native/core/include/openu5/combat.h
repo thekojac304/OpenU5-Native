@@ -210,6 +210,13 @@ CombatDirection dungeon_room_entry(const CombatMap &, uint8_t facing);
 CombatResult start_fixed_combat(CommandContext &, CombatContext &, const CombatMap &,
                                 const FixedCombatSetup &, CombatDirection, bool room,
                                 int corridor_cause = -1);
+// Refreshes ONE player CombatActor's equipment-derived cache (weapon_count,
+// weapons[], attack, range, defense) from the authoritative GameState roster
+// record, leaving every other actor field untouched.  Called by the (R)eady
+// command handler after a successful in-combat equip change; equip_item()
+// itself never touches CombatState.  Returns false (no-op) when the member has
+// no live actor in this arena.  See GAMEPLAY_INTEGRATION_AUDIT.md R-06.
+bool resync_player_equipment(CombatContext &, int32_t member);
 void build_corridor_map(GameState &, const struct DungeonState &, int max_per_map,
                          CombatMap &, uint8_t sprites[16]);
 } // namespace openu5
