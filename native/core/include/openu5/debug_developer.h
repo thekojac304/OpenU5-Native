@@ -1,6 +1,7 @@
 #pragma once
 
 #include "combat.h"
+#include "debug_map_picker.h"
 
 namespace openu5 {
 
@@ -123,6 +124,30 @@ enum class DebugPreset : uint8_t {
     SaveLoad
 };
 
+// Batch 4.5A-4: deterministic Certification setups for common hardware test
+// scenarios. Unlike DebugPreset (generic state scaffolding), each of these
+// composes existing debug setters and the existing teleport API around one
+// specific, named hardware verification scenario -- see PART 4-10 of
+// GAMEPLAY_INTEGRATION_AUDIT.md. Certification setups never patch session
+// internals (dialogue/shop/Blackthorn/combat/NPC pointers) and never invoke a
+// gameplay action on the player's behalf beyond the deterministic setup
+// itself; the real verb under test (Yell, Use, Talk, ...) is always left for
+// the tester to perform.
+enum class DebugCertification : uint8_t {
+    ShipSails,
+    Dungeon,
+    BlackthornBadge,
+    FlameShard,
+    ShopNpc,
+    Count
+};
+
+struct DebugCertificationResult {
+    DebugResult setup;
+    DebugTeleportResult teleport;
+    DebugTeleportRequest teleport_request;
+};
+
 DebugResult debug_set_character_number(GameState &, size_t, DebugCharacterNumber, int32_t);
 DebugResult debug_set_character_text(GameState &, size_t, DebugCharacterText, const char *);
 DebugResult debug_set_equipment_slot(GameState &, size_t, EquipSlot, int32_t);
@@ -156,5 +181,11 @@ DebugResult apply_debug_shortcut(CommandContext &, DebugShortcut);
 // RNG: Combat/Dungeon/Shrine prepare valid state for those subsystems, while the
 // existing command/map-picker APIs remain responsible for actually entering one.
 DebugResult apply_debug_preset(CommandContext &, DebugPreset);
+
+// Composes existing debug setters + apply_debug_teleport() only (PART 5); the
+// teleport itself goes through the exact same production-safe path the
+// Teleport category uses (real dungeon-entry command for DebugCertification::
+// Dungeon, standard-entry refusal-on-impassable for small maps).
+DebugCertificationResult apply_debug_certification(CommandContext &, DebugCertification);
 
 } // namespace openu5

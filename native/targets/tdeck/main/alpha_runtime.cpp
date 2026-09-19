@@ -776,6 +776,22 @@ DeviceDebugScreen AlphaRuntime::debug_screen() const{
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
     if(!debug_)return out;
     const auto v=debug_->view();
+    if(v.confirming&&v.confirming_sheet){
+        // Batch 4.5A-4 Part 1/13: the one shared preset/Certification
+        // confirm/effect sheet. Core hands over the exact display name and
+        // effect lines (UiDebugMenuView::confirming_sheet); this device
+        // layer only formats them into the existing row/status grid --
+        // no new screen, no device-owned wording (see debug_labels.h).
+        const char *verb=v.category==int(openu5::UiDebugCategory::Certification)?"Run Certification":"Apply preset";
+        std::snprintf(out.breadcrumb,sizeof(out.breadcrumb),"Developer > %.32s",v.title?v.title:"");
+        std::snprintf(out.status,sizeof(out.status),"%s: %.30s?",verb,v.confirming_sheet->display_name);
+        std::snprintf(out.position,sizeof(out.position),"Enter=Apply Back=Cancel");
+        out.row_count=std::min(kDebugScreenRows,v.confirming_sheet->effect_count);
+        out.selected_row=out.row_count; // informational list -- nothing is "selected"
+        for(size_t i=0;i<out.row_count;++i)
+            std::snprintf(out.rows[i],sizeof(out.rows[i]),"%.51s",v.confirming_sheet->effects[i]);
+        return out;
+    }
     if(v.category<0)std::snprintf(out.breadcrumb,sizeof(out.breadcrumb),"Developer");
     else std::snprintf(out.breadcrumb,sizeof(out.breadcrumb),"Developer > %.32s",v.title?v.title:"");
     std::snprintf(out.position,sizeof(out.position),"%u/%u",unsigned(v.cursor+1),unsigned(v.count));
@@ -807,7 +823,7 @@ DeviceDebugScreen AlphaRuntime::debug_screen() const{
         if(s.running)std::snprintf(out.status,sizeof(out.status),"RUN %u/%u P%u F%u %.20s",unsigned(s.completed),unsigned(s.total),unsigned(s.passed),unsigned(s.failed),s.scenario);
         else if(s.complete)std::snprintf(out.status,sizeof(out.status),"DONE P%u F%u %.30s",unsigned(s.passed),unsigned(s.failed),s.failed?s.first_failure:"all passed");
         else std::snprintf(out.status,sizeof(out.status),"Results: %s",kSmokeTestSdPath);
-    } else if(v.has_result)std::snprintf(out.status,sizeof(out.status),"Result: %s",v.category==int(openu5::UiDebugCategory::Teleport)?openu5::debug_teleport_result_label(v.last_teleport_status,v.teleport_passability_known,v.teleport_passable):openu5::debug_status_name(v.last_status));
+    } else if(v.has_result)std::snprintf(out.status,sizeof(out.status),"Result: %s",(v.category==int(openu5::UiDebugCategory::Teleport)||v.category==int(openu5::UiDebugCategory::Certification))?openu5::debug_teleport_result_label(v.last_teleport_status,v.teleport_passability_known,v.teleport_passable):openu5::debug_status_name(v.last_status));
 #endif
     return out;
 }

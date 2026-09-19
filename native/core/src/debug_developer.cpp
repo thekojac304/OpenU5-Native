@@ -536,16 +536,31 @@ DebugResult apply_debug_preset(CommandContext &c, DebugPreset preset) {
         mutations = 12;
         break;
     case DebugPreset::Transport:
+        // Batch 4.5A-4 PART 11 adjudication: this preset used to also set
+        // g.hms_cape = true. RED characterization (pre-fix) proved that made
+        // every generic Transport-preset setup silently rig the ship (half
+        // movement cost + tile-advance parity flip -- commands.cpp:382-389),
+        // even though nothing about "prepare a coherent transport test"
+        // implies "and also test the HMS Cape speed bonus". No comment, test
+        // name, or prior audit entry ties this preset specifically to HMS
+        // Cape behavior (unlike StockedInventory's explicit "quest-neutral
+        // tools only" contract, which already deliberately excludes it).
+        // Adjudicated: generic Transport preset now means normal transport;
+        // HMS Cape is tested on its own via Special Items or the dedicated
+        // Ship/Sails Certification setup (which also never grants it).
+        // hms_cape_toggle is reset to 0 (its default) rather than left at
+        // its old 1: that field only has any effect while hms_cape is true
+        // (commands.cpp:382), so leaving it "half-toggled" here would be a
+        // misleading residue of the removed grant, not a real state.
         g.transport = TransportMode::Ship;
         g.ship_hull = 50;
         g.ship_skiffs = 2;
-        g.hms_cape = true;
         c.turn.transport_tile = 0x24;
         c.turn.wind = 3;
         c.turn.sail_dir = 3;
         c.turn.wind_drift_counter = 0;
-        c.turn.hms_cape_toggle = 1;
-        mutations = 9;
+        c.turn.hms_cape_toggle = 0;
+        mutations = 8;
         break;
     case DebugPreset::Endgame:
         mutations = maximize_party(g, true);
@@ -586,6 +601,117 @@ DebugResult apply_debug_preset(CommandContext &c, DebugPreset preset) {
         break;
     }
     return result(DebugStatus::Applied, mutations);
+}
+
+namespace {
+
+// Real canonical location ids (matching debug_map_picker's destination
+// enumeration / the extracted location table -- see debug_map_picker_test.cpp
+// and GAMEPLAY_INTEGRATION_AUDIT.md): Britain=2, Blackthorn Palace=18,
+// Serpent's Hold=32 (home of the Flame of Courage), Deceit=33 (the first of
+// the eight dungeons). Certification setups look these up by id directly
+// through apply_debug_teleport(), exactly like any other DebugTeleportRequest
+// caller -- there is no separate id table to keep in sync (PART 5).
+constexpr uint8_t kLocationBritain = 2;
+constexpr uint8_t kLocationBlackthornPalace = 18;
+constexpr uint8_t kLocationSerpentsHold = 32;
+constexpr uint8_t kLocationDeceit = 33;
+
+DebugTeleportRequest standard_small_map_entry(uint8_t location) {
+    DebugTeleportRequest r;
+    r.kind = DebugDestinationKind::SmallMap;
+    r.location = location;
+    r.standard_entry = true;
+    return r;
+}
+
+DebugTeleportRequest standard_dungeon_entry(uint8_t location) {
+    DebugTeleportRequest r;
+    r.kind = DebugDestinationKind::Dungeon;
+    r.location = location;
+    r.floor = 0;
+    r.standard_entry = true;
+    return r;
+}
+
+} // namespace
+
+DebugCertificationResult apply_debug_certification(CommandContext &c, DebugCertification cert) {
+    auto &g = c.game;
+    DebugCertificationResult out;
+    uint16_t mutations = 0;
+    DebugStatus status = DebugStatus::Applied;
+    auto accumulate = [&](DebugResult r) {
+        mutations = uint16_t(mutations + r.mutations);
+        if (r.status != DebugStatus::Applied) status = r.status;
+    };
+
+    switch (cert) {
+    case DebugCertification::ShipSails:
+        // PART 6: normal (unrigged) sail timing -- HMS Cape is deliberately
+        // never granted here (see debug_set_special_item(HmsCape, ...),
+        // which this setup never calls).
+        accumulate(debug_set_transport(g, TransportMode::Ship));
+        accumulate(debug_set_resource(g, DebugResource::ShipHull, 50));
+        accumulate(debug_set_resource(g, DebugResource::ShipSkiffs, 2));
+        accumulate(debug_set_runtime_number(c.turn, DebugRuntimeNumber::Wind, 2));
+        accumulate(debug_set_runtime_number(c.turn, DebugRuntimeNumber::SailDirection, 2));
+        out.teleport_request = standard_small_map_entry(kLocationBritain);
+        out.teleport = apply_debug_teleport(c, out.teleport_request);
+        break;
+
+    case DebugCertification::Dungeon:
+        // PART 7: reuse the existing Dungeon preset verbatim, then teleport
+        // via the real EnterDungeon command path (apply_debug_teleport's
+        // Dungeon branch) -- DungeonState itself is never patched directly.
+        accumulate(apply_debug_preset(c, DebugPreset::Dungeon));
+        out.teleport_request = standard_dungeon_entry(kLocationDeceit);
+        out.teleport = apply_debug_teleport(c, out.teleport_request);
+        break;
+
+    case DebugCertification::BlackthornBadge:
+        // PART 8: possession only -- must never set turn.time_spell (that
+        // wear-state transition belongs exclusively to the real (U)se path,
+        // exactly like the Special Items Black Badge toggle it reuses).
+        accumulate(debug_set_special_item(g, DebugSpecialItem::BlackBadge, true));
+        out.teleport_request = standard_small_map_entry(kLocationBlackthornPalace);
+        out.teleport = apply_debug_teleport(c, out.teleport_request);
+        break;
+
+    case DebugCertification::FlameShard:
+        // PART 9: grant the three shards only; Shadowlord/flame progression
+        // (ShadowlordSummoned, doom bits) is deliberately left untouched.
+        // Serpent's Hold is the cleanest existing debug-teleport
+        // representation of a flame location -- its Default Entrance z=0
+        // resolution is the exact subject of the Batch 4.5A-1 T2 regression
+        // (ui_debug_menu_test.cpp), so it is the most concretely verified
+        // standard-entry target available.
+        accumulate(debug_set_quest_item(g, DebugQuestItem::ShardFalsehood, true));
+        accumulate(debug_set_quest_item(g, DebugQuestItem::ShardHatred, true));
+        accumulate(debug_set_quest_item(g, DebugQuestItem::ShardCowardice, true));
+        out.teleport_request = standard_small_map_entry(kLocationSerpentsHold);
+        out.teleport = apply_debug_teleport(c, out.teleport_request);
+        break;
+
+    case DebugCertification::ShopNpc:
+        // PART 10: clock is tagged LIVE in the effect sheet -- it directly
+        // gates NPC schedules/shop hours, which is the entire point of this
+        // setup, but is still a real, disclosed side effect.
+        accumulate(debug_set_resource(g, DebugResource::Gold, 9999));
+        accumulate(debug_set_clock(g, DebugClockPart::Hour, 12));
+        accumulate(debug_set_clock(g, DebugClockPart::Minute, 0));
+        out.teleport_request = standard_small_map_entry(kLocationBritain);
+        out.teleport = apply_debug_teleport(c, out.teleport_request);
+        break;
+
+    case DebugCertification::Count:
+        break;
+    }
+
+    if (out.teleport.status != DebugTeleportStatus::Applied)
+        status = DebugStatus::CoreRejected;
+    out.setup = result(status, mutations);
+    return out;
 }
 
 } // namespace openu5

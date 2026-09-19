@@ -35,7 +35,7 @@ struct DebugItemLabel {
 inline constexpr const char *kDebugRootCategoryNames[] = {
     "Teleport", "Party", "Stats", "Inventory", "Equipment", "Reagents",
     "Quest Items", "Special Items", "Quest / World", "Time", "Transport",
-    "NPC / Dungeon", "Presets", "Diagnostics"};
+    "NPC / Dungeon", "Presets", "Diagnostics", "Certification"};
 inline constexpr size_t kDebugRootCategoryCount =
     sizeof(kDebugRootCategoryNames) / sizeof(kDebugRootCategoryNames[0]);
 constexpr size_t debug_root_category_count() { return kDebugRootCategoryCount; }
@@ -85,6 +85,25 @@ const char *debug_teleport_result_label(DebugTeleportStatus status, bool passabi
 
 const char *transport_mode_name(TransportMode mode);
 const char *equipment_slot_name(EquipSlot slot);
+
+// Batch 4.5A-4: preset/Certification effect-sheet metadata (PART 1/4/13).
+// Every entry is a short, already-formatted, static line; a leading "LIVE: "
+// marks a mutation that touches a live gameplay register or meaningful
+// progression state (PART 2) rather than pure debug-test scaffolding.
+// Device presentation renders these lines verbatim inside the one shared
+// confirm/effect sheet (UiDebugMenuView::confirming_sheet) -- it does not
+// know preset/Certification semantics and must not compose its own wording,
+// exactly like every other debug-menu label table in this file.
+struct DebugEffectSheet {
+    const char *display_name = "Unknown";
+    const char *const *effects = nullptr;
+    size_t effect_count = 0;
+};
+
+// Indexed by DebugPreset/DebugCertification ordinal. Returns a safe empty
+// sheet ("Unknown", zero lines) for an out-of-range value.
+const DebugEffectSheet &debug_preset_info(DebugPreset preset);
+const DebugEffectSheet &debug_certification_info(DebugCertification certification);
 
 // Signed-z floor identity established by Batch 4.5A-1: z=-1 -> "Basement",
 // z=0 -> "Ground Floor", z>=1 -> "Level N". Writes into caller-owned storage

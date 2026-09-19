@@ -120,6 +120,37 @@ int main(){
         "T5: walkable explicit teleport reports Applied(walkable) via teleport_passable");
   check(impassable_view.teleport_passability_known && !impassable_view.teleport_passable,
         "T5: impassable explicit teleport reports Applied(impassable) via teleport_passable");
+
+  // --- Batch 4.5A-4 C1/C2: Certification category + UI-driven Blackthorn
+  // Badge setup, reusing this block's Blackthorn(18)/Serpent's Hold(32)
+  // small-map fixture (z=0 walkable entrance at 15,30 -- the exact shape T1
+  // already proved Default Entrance resolves correctly). ---
+  menu2.handle_input(act(UiActionKind::Back)); // back to root from Teleport
+
+  // C1: Certification category exists with exactly 5 rows, exact names.
+  menu2.handle_input(pick(int(UiDebugCategory::Certification)));
+  check(menu2.view().category == int(UiDebugCategory::Certification) && menu2.view().count == 5,
+        "C1: Certification category has 5 rows");
+  static constexpr const char *kCertNames[] = {
+      "Ship / Sails Test", "Dungeon Test", "Blackthorn Badge Test", "Flame / Shard Test", "Shop / NPC Test"};
+  for (size_t i = 0; i < 5; ++i)
+   check(std::strcmp(menu2.row_label(i), kCertNames[i]) == 0, "C1: exact Certification row label");
+
+  // C2: Blackthorn Badge setup, driven entirely through UiDebugMenu.
+  check(!g2.black_badge, "C2 setup: Black Badge starts unowned");
+  menu2.handle_input(pick(2)); // Blackthorn Badge Test row
+  check(menu2.view().confirming && menu2.view().confirming_sheet &&
+            std::strcmp(menu2.view().confirming_sheet->display_name, "Blackthorn Badge Test") == 0,
+        "C2: selecting the row opens the confirm/effect sheet, not an immediate apply");
+  check(!g2.black_badge, "C2: state not yet mutated while the sheet is open");
+  menu2.handle_input(act(UiActionKind::Confirm));
+  check(g2.black_badge, "C2: black_badge is true after Confirm");
+  check(t2.time_spell == 0, "C2: time_spell unchanged (possession only)");
+  check(g2.position.map.location == 18 && g2.position.map.floor == 0 &&
+            g2.position.xy.x == 15 && g2.position.xy.y == 30,
+        "C2: location/floor/x/y set to the Palace of Blackthorn default entrance");
+  check(c2.blackthorn == nullptr, "C2: no BlackthornSession patched");
+  menu2.handle_input(act(UiActionKind::Back));
  }
 
  // --- Batch 4.5A-2: row_label()/row_value() view-model (U1-U5) ---
@@ -155,6 +186,7 @@ int main(){
   static constexpr int kNpcActions[] = {7};
   static constexpr int kShortcutActions[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14};
   static constexpr int kDiagnosticActions[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+  static constexpr int kCertificationActions[] = {0,1,2,3,4};
   const CategoryRows tables[] = {
       {UiDebugCategory::Teleport, 6, kTeleportActions, 1},
       {UiDebugCategory::Party, 5, kPartyActions, 3},
@@ -173,6 +205,7 @@ int main(){
       {UiDebugCategory::NpcDungeonState, 8, kNpcActions, 1},
       {UiDebugCategory::ShortcutsPresets, 15, kShortcutActions, 15},
       {UiDebugCategory::Diagnostics, 16, kDiagnosticActions, 16},
+      {UiDebugCategory::Certification, 5, kCertificationActions, 5},
   };
   for (const auto &table : tables) {
    menu3.handle_input(pick(int(table.category)));
@@ -321,6 +354,36 @@ int main(){
   menu4.handle_input(pick(4));
   check(menu4.view().editing && menu4.view().maximum == 6, "S9: dungeon slot max excludes invalid slot 7");
   menu4.handle_input(act(UiActionKind::Cancel));
+  menu4.handle_input(act(UiActionKind::Back));
+
+  // --- Batch 4.5A-4 P4/P5: every preset now requires the confirm/effect
+  // sheet before it applies (PART 1/13). Uses the Combat preset (row 5+2=7
+  // in ShortcutsPresets) as a representative case: it has an observable,
+  // easy-to-pin mutation (Gold -> 9999 via the composed StockedInventory
+  // helper) that must stay untouched until the second Confirm. ---
+  check(!g4.black_badge, "P4/P5 setup sanity: reusing g4 from S1-S9 above");
+  menu4.handle_input(pick(int(UiDebugCategory::ShortcutsPresets)));
+  check(g4.gold == 0, "P4 setup: Gold starts at 0");
+  menu4.handle_input(pick(7)); // Combat Test Setup preset row
+  check(menu4.view().confirming && menu4.view().confirming_sheet &&
+            std::strcmp(menu4.view().confirming_sheet->display_name, "Combat Test Setup") == 0,
+        "P4: selecting a preset row opens its effect sheet, not an immediate apply");
+  check(g4.gold == 0, "P4: state is not yet mutated while the sheet is open");
+  menu4.handle_input(act(UiActionKind::Confirm));
+  check(g4.gold == 9999 && g4.party.active_character == 255,
+        "P4: the second Confirm actually applies the preset");
+  menu4.handle_input(act(UiActionKind::Back));
+
+  // P5: cancelling the confirm sheet leaves state untouched and returns
+  // cleanly to the row list (not stuck mid-confirmation). Reuses the same
+  // Combat preset row: Cancel must leave Gold at 0, not 9999.
+  g4.gold = 0; // reset the P4 mutation so this check is unambiguous
+  menu4.handle_input(pick(int(UiDebugCategory::ShortcutsPresets)));
+  menu4.handle_input(pick(7)); // Combat Test Setup preset row
+  check(menu4.view().confirming, "P5 setup: confirm sheet open for the Combat preset");
+  menu4.handle_input(act(UiActionKind::Back));
+  check(!menu4.view().confirming && g4.gold == 0 && menu4.view().category == int(UiDebugCategory::ShortcutsPresets),
+        "P5: cancelling the confirm sheet leaves state unchanged and returns to the row list");
   menu4.handle_input(act(UiActionKind::Back));
  }
 

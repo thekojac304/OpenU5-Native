@@ -30,8 +30,8 @@ int64_t clamp_add(int64_t value,int delta,int64_t lo,int64_t hi){
 }
 }
 
-void UiDebugMenu::open(){open_=true;editing_=false;edit_typed_=false;confirming_=false;category_=-1;cursor_=0;standard_entry_=true;last_status_=DebugStatus::Applied;last_teleport_status_=DebugTeleportStatus::Applied;has_result_=false;}
-void UiDebugMenu::close(){open_=false;editing_=false;edit_typed_=false;confirming_=false;category_=-1;cursor_=0;}
+void UiDebugMenu::open(){open_=true;editing_=false;edit_typed_=false;confirming_=false;confirming_sheet_=nullptr;category_=-1;cursor_=0;standard_entry_=true;last_status_=DebugStatus::Applied;last_teleport_status_=DebugTeleportStatus::Applied;has_result_=false;}
+void UiDebugMenu::close(){open_=false;editing_=false;edit_typed_=false;confirming_=false;confirming_sheet_=nullptr;category_=-1;cursor_=0;}
 
 const char *UiDebugMenu::category_name(size_t i) const{return i<debug_root_category_count()?debug_root_category_name(i):"";}
 size_t UiDebugMenu::item_count() const{
@@ -45,6 +45,7 @@ size_t UiDebugMenu::item_count() const{
  case UiDebugCategory::Transport:return countof(transport_items);case UiDebugCategory::NpcDungeonState:return countof(npc_items);
  case UiDebugCategory::ShortcutsPresets:return countof(shortcut_items);case UiDebugCategory::Count:break;
  case UiDebugCategory::Diagnostics:return 1+debug_diagnostic_group_count();
+ case UiDebugCategory::Certification:return size_t(DebugCertification::Count);
  }return 0;
 }
 const char *UiDebugMenu::row_label(size_t index) const{
@@ -57,8 +58,13 @@ const char *UiDebugMenu::row_label(size_t index) const{
  case UiDebugCategory::SpecialItems:{const auto l=debug_special_item_label(DebugSpecialItem(index));debug_format_item_label(l.name,l.canonical_id,special_item_label_buf_,sizeof(special_item_label_buf_));return special_item_label_buf_;}
  case UiDebugCategory::QuestWorld:return quest_world_items[index];case UiDebugCategory::Time:return time_items[index];
  case UiDebugCategory::Transport:return transport_items[index];case UiDebugCategory::NpcDungeonState:return npc_items[index];
- case UiDebugCategory::ShortcutsPresets:return shortcut_items[index];case UiDebugCategory::Count:break;
+ // Rows 0-4 are plain shortcuts; rows 5-14 are the ten presets, whose
+ // display names now come from the single core-owned effect-sheet table
+ // (Batch 4.5A-4 PART 1) instead of a locally duplicated "Preset: X" string.
+ case UiDebugCategory::ShortcutsPresets:return index>=5?debug_preset_info(DebugPreset(index-5)).display_name:shortcut_items[index];
+ case UiDebugCategory::Count:break;
  case UiDebugCategory::Diagnostics:return index==0?kRunAllItem:debug_diagnostic_group_name(index-1);
+ case UiDebugCategory::Certification:return debug_certification_info(DebugCertification(index)).display_name;
  }return "";
 }
 bool UiDebugMenu::quest_item_value(size_t index) const{
@@ -105,6 +111,10 @@ bool UiDebugMenu::item_edit_range(size_t row,int64_t &v,int64_t &lo,int64_t &hi)
  // which offered an always-invalid slot 7.
  case UiDebugCategory::NpcDungeonState:switch(row){case 0:v=int64_t(npc_location_);hi=31;break;case 1:v=int64_t(npc_index_);hi=31;break;case 2:v=(g.npc_dead[npc_location_]>>npc_index_)&1;hi=1;break;case 3:v=(g.npc_met[npc_location_]>>npc_index_)&1;hi=1;break;case 4:v=int64_t(dungeon_slot_);hi=6;break;case 5:v=int64_t(dungeon_room_);hi=15;break;case 6:{size_t byte=dungeon_slot_*2+dungeon_room_/8;v=byte<14?((g.dungeon_rooms_cleared[byte]>>(dungeon_room_%8))&1):0;hi=1;break;}default:return false;}return true;
  case UiDebugCategory::ShortcutsPresets:case UiDebugCategory::Diagnostics:case UiDebugCategory::Count:return false;
+ // Certification rows fire directly on Confirm (through the shared
+ // confirmation sheet), exactly like the ten presets above -- never a
+ // numeric edit dialog.
+ case UiDebugCategory::Certification:return false;
  }return false;
 }
 
@@ -211,6 +221,7 @@ DebugRowValue UiDebugMenu::row_value(size_t index) const{
   if(has_range){out.kind=DebugRowValue::Kind::Integer;out.value=v;}
   return out;
  case UiDebugCategory::ShortcutsPresets:case UiDebugCategory::Diagnostics:case UiDebugCategory::Count:return out;
+ case UiDebugCategory::Certification:return out; // pure action rows (Kind::None)
  }
  return out;
 }
@@ -231,7 +242,10 @@ void UiDebugMenu::apply_value(int64_t value){auto &g=context_.game;auto &t=conte
  case UiDebugCategory::Time:if(cursor_<5)set(debug_set_clock(g,DebugClockPart(cursor_),int32_t(value)));else set(debug_set_resource(g,DebugResource::TurnsSinceStart,value));break;
  case UiDebugCategory::Transport:if(cursor_==0)set(debug_set_transport(g,TransportMode(value)));else if(cursor_==1)set(debug_set_resource(g,DebugResource::ShipHull,value));else if(cursor_==2)set(debug_set_resource(g,DebugResource::ShipSkiffs,value));else {static constexpr DebugRuntimeNumber n[]={DebugRuntimeNumber::Wind,DebugRuntimeNumber::SailDirection,DebugRuntimeNumber::HmsCapeToggle};set(debug_set_runtime_number(t,n[cursor_-3],int32_t(value)));}break;
  case UiDebugCategory::NpcDungeonState:if(cursor_==0)npc_location_=size_t(value);else if(cursor_==1)npc_index_=size_t(value);else if(cursor_==2)set(debug_set_npc_flag(g,DebugNpcFlag::Dead,npc_location_,npc_index_,value!=0));else if(cursor_==3)set(debug_set_npc_flag(g,DebugNpcFlag::Met,npc_location_,npc_index_,value!=0));else if(cursor_==4)dungeon_slot_=size_t(value);else if(cursor_==5)dungeon_room_=size_t(value);else set(debug_set_dungeon_room_cleared(g,dungeon_slot_,dungeon_room_,value!=0));break;
- case UiDebugCategory::ShortcutsPresets:case UiDebugCategory::Diagnostics:case UiDebugCategory::Count:break;
+ // Presets/Certification never enter editing_ (item_edit_range() is always
+ // false for them -- see item_edit_range()), so apply_value() is never
+ // invoked for these categories either.
+ case UiDebugCategory::ShortcutsPresets:case UiDebugCategory::Diagnostics:case UiDebugCategory::Count:case UiDebugCategory::Certification:break;
  }}
 
 void UiDebugMenu::apply_action(){
@@ -257,19 +271,44 @@ void UiDebugMenu::apply_action(){
  case UiDebugCategory::NpcDungeonState:if(cursor_==7)set(debug_clear_overworld_enemies(context_));break;
  case UiDebugCategory::ShortcutsPresets:if(cursor_==0)set(apply_debug_shortcut(context_,DebugShortcut::MaximizeAll));else if(cursor_==1)set(apply_debug_shortcut(context_,DebugShortcut::MaxResources));else if(cursor_==2)set(apply_debug_shortcut(context_,DebugShortcut::BestEquipment));else if(cursor_==3)set(apply_debug_shortcut(context_,DebugShortcut::FullMaxParty));else if(cursor_==4)set(apply_debug_shortcut(context_,DebugShortcut::KillShadowlords));else set(apply_debug_preset(context_,DebugPreset(cursor_-5)));break;
  case UiDebugCategory::Diagnostics:if(diagnostics_.start)diagnostics_.start(diagnostics_.context,cursor_?int(cursor_-1):-1);break;
+ // Batch 4.5A-4: a Certification setup surfaces through the same
+ // last_status_/last_teleport_status_/last_teleport_request_ fields the
+ // Teleport category already uses, so device presentation needs no
+ // Certification-specific result rendering.
+ case UiDebugCategory::Certification:if(cursor_<size_t(DebugCertification::Count)){
+   auto out=apply_debug_certification(context_,DebugCertification(cursor_));
+   last_status_=out.setup.status;
+   last_teleport_status_=out.teleport.status;
+   last_teleport_request_=out.teleport_request;
+   last_teleport_passability_known_=out.teleport.passability_known;
+   last_teleport_passable_=out.teleport.passable;
+   has_result_=true;
+  }break;
  default:break;
  }}
 
 bool UiDebugMenu::action_requires_confirmation() const{
  return (category_==int16_t(UiDebugCategory::Equipment)&&cursor_==6)||
-        (category_==int16_t(UiDebugCategory::ShortcutsPresets)&&cursor_==3);
+        (category_==int16_t(UiDebugCategory::ShortcutsPresets)&&cursor_==3)||
+        // Batch 4.5A-4 PART 1/4: every preset row (5-14) and every
+        // Certification row now requires the confirm/effect sheet -- no
+        // preset or Certification setup may apply on a single Confirm.
+        (category_==int16_t(UiDebugCategory::ShortcutsPresets)&&cursor_>=5)||
+        category_==int16_t(UiDebugCategory::Certification);
 }
-void UiDebugMenu::enter_or_apply(){int64_t v,lo,hi;if(item_edit_range(cursor_,v,lo,hi)){editing_=true;edit_typed_=false;edit_value_=v;edit_min_=lo;edit_max_=hi;}else if(action_requires_confirmation())confirming_=true;else apply_action();}
+const DebugEffectSheet *UiDebugMenu::effect_sheet_for_current_row() const{
+ if(category_==int16_t(UiDebugCategory::ShortcutsPresets)&&cursor_>=5)
+  return &debug_preset_info(DebugPreset(cursor_-5));
+ if(category_==int16_t(UiDebugCategory::Certification)&&cursor_<size_t(DebugCertification::Count))
+  return &debug_certification_info(DebugCertification(cursor_));
+ return nullptr; // legacy Full Test Setup shortcut: plain `confirmation` text only
+}
+void UiDebugMenu::enter_or_apply(){int64_t v,lo,hi;if(item_edit_range(cursor_,v,lo,hi)){editing_=true;edit_typed_=false;edit_value_=v;edit_min_=lo;edit_max_=hi;}else if(action_requires_confirmation()){confirming_=true;confirming_sheet_=effect_sheet_for_current_row();}else apply_action();}
 bool UiDebugMenu::handle_input(const UiAction &a){if(!open_)return false;
- if(confirming_){if(a.kind==UiActionKind::Cancel||a.kind==UiActionKind::Back){confirming_=false;return true;}if(a.kind==UiActionKind::Confirm){confirming_=false;apply_action();}return true;}
+ if(confirming_){if(a.kind==UiActionKind::Cancel||a.kind==UiActionKind::Back){confirming_=false;confirming_sheet_=nullptr;return true;}if(a.kind==UiActionKind::Confirm){confirming_=false;confirming_sheet_=nullptr;apply_action();}return true;}
  if(editing_){if(a.kind==UiActionKind::Cancel||a.kind==UiActionKind::Back){editing_=false;edit_typed_=false;return true;}if(a.kind==UiActionKind::Confirm){apply_value(edit_value_);editing_=false;edit_typed_=false;return true;}if(a.kind==UiActionKind::Character&&a.character>=u'0'&&a.character<=u'9'){const int digit=a.character-u'0';edit_value_=edit_typed_?std::min<int64_t>(edit_max_,edit_value_*10+digit):std::min<int64_t>(edit_max_,digit);edit_value_=std::max(edit_min_,edit_value_);edit_typed_=true;return true;}int delta=0;if(a.kind==UiActionKind::Next)delta=1;else if(a.kind==UiActionKind::Previous)delta=-1;else if(a.kind==UiActionKind::Direction)delta=(a.direction==Direction::East||a.direction==Direction::South)?1:-1;if(delta){edit_value_=clamp_add(edit_value_,delta,edit_min_,edit_max_);edit_typed_=false;}return true;}
  if(a.kind==UiActionKind::Cancel||a.kind==UiActionKind::Back){if(category_<0)close();else{category_=-1;cursor_=0;}return true;}
  const auto n=item_count();if(!n)return true;
  if(a.kind==UiActionKind::Next)cursor_=(cursor_+1)%n;else if(a.kind==UiActionKind::Previous)cursor_=(cursor_+n-1)%n;else if(a.kind==UiActionKind::Direction){if(a.direction==Direction::South||a.direction==Direction::East)cursor_=(cursor_+1)%n;else cursor_=(cursor_+n-1)%n;}else if(a.kind==UiActionKind::SelectIndex&&a.index>=0&&size_t(a.index)<n){cursor_=size_t(a.index);if(category_<0){category_=int16_t(cursor_);cursor_=0;if(category_==int16_t(UiDebugCategory::Teleport))standard_entry_=true;}else enter_or_apply();}else if(a.kind==UiActionKind::Confirm){if(category_<0){category_=int16_t(cursor_);cursor_=0;if(category_==int16_t(UiDebugCategory::Teleport))standard_entry_=true;}else enter_or_apply();}return true;}
-UiDebugMenuView UiDebugMenu::view() const{UiDebugMenuView v;v.open=open_;v.editing=editing_;v.confirming=confirming_;v.category=category_;v.cursor=cursor_;v.count=item_count();v.title=category_<0?"Developer":category_name(size_t(category_));v.item=row_label(cursor_);v.confirmation=confirming_?"Apply full test setup?":nullptr;v.last_status=last_status_;v.last_teleport_status=last_teleport_status_;v.teleport_request=last_teleport_request_;v.teleport_passability_known=last_teleport_passability_known_;v.teleport_passable=last_teleport_passable_;v.has_result=has_result_;if(editing_){v.editable=true;v.value=edit_value_;v.minimum=edit_min_;v.maximum=edit_max_;}else{int64_t x,lo,hi;if(category_>=0&&item_edit_range(cursor_,x,lo,hi)){v.editable=true;v.value=x;v.minimum=lo;v.maximum=hi;}}return v;}
+UiDebugMenuView UiDebugMenu::view() const{UiDebugMenuView v;v.open=open_;v.editing=editing_;v.confirming=confirming_;v.category=category_;v.cursor=cursor_;v.count=item_count();v.title=category_<0?"Developer":category_name(size_t(category_));v.item=row_label(cursor_);v.confirming_sheet=confirming_sheet_;v.confirmation=confirming_&&!confirming_sheet_?"Apply full test setup?":nullptr;v.last_status=last_status_;v.last_teleport_status=last_teleport_status_;v.teleport_request=last_teleport_request_;v.teleport_passability_known=last_teleport_passability_known_;v.teleport_passable=last_teleport_passable_;v.has_result=has_result_;if(editing_){v.editable=true;v.value=edit_value_;v.minimum=edit_min_;v.maximum=edit_max_;}else{int64_t x,lo,hi;if(category_>=0&&item_edit_range(cursor_,x,lo,hi)){v.editable=true;v.value=x;v.minimum=lo;v.maximum=hi;}}return v;}
 } // namespace openu5

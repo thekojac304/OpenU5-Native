@@ -55,7 +55,7 @@ int main() {
 
     // L5: root category labels -- count and non-null unique names.
     const auto category_count = debug_root_category_count();
-    check(category_count == 14, "L5: root category count (Batch 4.5A-3 adds Special Items + Quest / World)");
+    check(category_count == 15, "L5: root category count (Batch 4.5A-4 adds Certification)");
     for (size_t i = 0; i < category_count; ++i) {
         const char *name = debug_root_category_name(i);
         check(name != nullptr && name[0] != '\0', "L5: category name non-null/non-empty");
@@ -65,6 +65,7 @@ int main() {
     check(std::strcmp(debug_root_category_name(6), "Quest Items") == 0, "L5: Quest Items at index 6");
     check(std::strcmp(debug_root_category_name(7), "Special Items") == 0, "L5: Special Items at index 7");
     check(std::strcmp(debug_root_category_name(8), "Quest / World") == 0, "L5: Quest / World at index 8");
+    check(std::strcmp(debug_root_category_name(14), "Certification") == 0, "L5: Certification at index 14");
 
     // L6: no ordinal/id conflation -- enum ordinal must never equal the
     // canonical gameplay id by coincidence of matching the wrong field.
@@ -135,6 +136,76 @@ int main() {
     check(std::strcmp(buf, "Black Badge [36]") == 0, "item label with canonical id");
     debug_format_item_label("Grapple", -1, buf, sizeof(buf));
     check(std::strcmp(buf, "Grapple") == 0, "item label without canonical id");
+
+    // Batch 4.5A-4 P1: every DebugPreset has non-empty effect metadata -- a
+    // real display name and at least one non-null effect line. Iterates all
+    // ten values so a future preset added without metadata fails loudly here
+    // rather than surfacing as a blank confirmation sheet on device.
+    static constexpr DebugPreset kAllPresets[] = {
+        DebugPreset::MaxedParty,      DebugPreset::StockedInventory, DebugPreset::Combat,
+        DebugPreset::Dungeon,         DebugPreset::Shrine,           DebugPreset::Quest,
+        DebugPreset::Transport,       DebugPreset::Endgame,          DebugPreset::LowHealthStatus,
+        DebugPreset::SaveLoad,
+    };
+    for (const auto preset : kAllPresets) {
+        const auto &sheet = debug_preset_info(preset);
+        check(sheet.display_name && sheet.display_name[0] != '\0', "P1: preset display name non-empty");
+        check(sheet.effect_count > 0, "P1: preset has at least one effect line");
+        check(sheet.effects != nullptr, "P1: preset effect array non-null");
+        for (size_t i = 0; i < sheet.effect_count; ++i)
+            check(sheet.effects[i] != nullptr && sheet.effects[i][0] != '\0', "P1: no null/empty effect line");
+    }
+    // Exact display names for the presets PART 1/3 calls out by name.
+    check(std::strcmp(debug_preset_info(DebugPreset::Combat).display_name, "Combat Test Setup") == 0,
+          "P1: Combat preset display name matches the PART 1 example");
+    check(std::strcmp(debug_preset_info(DebugPreset::Transport).display_name, "Transport Test Setup") == 0,
+          "P1: Transport preset display name");
+
+    // P2: known live-state presets contain at least one "LIVE: " line.
+    // Spot-check exactly the four PART 2 names -- Shrine, Transport,
+    // Endgame, SaveLoad -- plus Combat, which PART 1's own worked example
+    // shows carrying a LIVE line (Active Player).
+    auto has_live_line = [](const DebugEffectSheet &sheet) {
+        for (size_t i = 0; i < sheet.effect_count; ++i)
+            if (std::strncmp(sheet.effects[i], "LIVE: ", 6) == 0) return true;
+        return false;
+    };
+    check(has_live_line(debug_preset_info(DebugPreset::Combat)), "P2: Combat preset discloses a LIVE line");
+    check(has_live_line(debug_preset_info(DebugPreset::Shrine)), "P2: Shrine preset discloses a LIVE line");
+    check(has_live_line(debug_preset_info(DebugPreset::Transport)), "P2: Transport preset discloses a LIVE line");
+    check(has_live_line(debug_preset_info(DebugPreset::Endgame)), "P2: Endgame preset discloses a LIVE line");
+    check(has_live_line(debug_preset_info(DebugPreset::SaveLoad)), "P2: SaveLoad preset discloses a LIVE line");
+    // StockedInventory is deliberately quest-neutral -- it must NOT claim a
+    // LIVE mutation (see PART 3's "quest-neutral tools only" contract).
+    check(!has_live_line(debug_preset_info(DebugPreset::StockedInventory)),
+          "P2: quest-neutral StockedInventory preset has no LIVE line");
+
+    // C1 (metadata half): Certification has exactly five entries with the
+    // exact PART 4 names, each carrying real effect metadata. The
+    // UiDebugMenu-driven half of C1 (category/row wiring) lives in
+    // ui_debug_menu_test.cpp per PART 15.
+    check(size_t(DebugCertification::Count) == 5, "C1: exactly five Certification setups");
+    static constexpr const char *kCertificationNames[] = {
+        "Ship / Sails Test", "Dungeon Test", "Blackthorn Badge Test", "Flame / Shard Test", "Shop / NPC Test",
+    };
+    for (size_t i = 0; i < size_t(DebugCertification::Count); ++i) {
+        const auto &sheet = debug_certification_info(DebugCertification(i));
+        check(std::strcmp(sheet.display_name, kCertificationNames[i]) == 0, "C1: exact Certification name");
+        check(sheet.effect_count > 0, "C1: Certification has at least one effect line");
+        for (size_t j = 0; j < sheet.effect_count; ++j)
+            check(sheet.effects[j] != nullptr && sheet.effects[j][0] != '\0', "C1: no null/empty effect line");
+    }
+    // Ship/Sails and Blackthorn Badge each disclose their explicit "does NOT
+    // grant/wear" non-mutation, per PART 6/8.
+    auto has_line_containing = [](const DebugEffectSheet &sheet, const char *needle) {
+        for (size_t i = 0; i < sheet.effect_count; ++i)
+            if (std::strstr(sheet.effects[i], needle)) return true;
+        return false;
+    };
+    check(has_line_containing(debug_certification_info(DebugCertification::ShipSails), "Does NOT grant HMS Cape"),
+          "C1: Ship/Sails sheet discloses HMS Cape is not granted");
+    check(has_line_containing(debug_certification_info(DebugCertification::BlackthornBadge), "Does NOT wear"),
+          "C1: Blackthorn Badge sheet discloses the badge is not worn");
 
     std::cout << checks << " debug labels checks passed\n";
 }

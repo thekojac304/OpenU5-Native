@@ -24,6 +24,9 @@ enum class UiDebugCategory : uint8_t {
     NpcDungeonState,
     ShortcutsPresets,
     Diagnostics,
+    // Batch 4.5A-4: deterministic Certification setups (PART 4). Appended
+    // last so every prior category's numeric index is unchanged.
+    Certification,
     Count
 };
 static_assert(debug_root_category_count() == size_t(UiDebugCategory::Count),
@@ -59,6 +62,13 @@ struct UiDebugMenuView {
     size_t cursor = 0, count = 0;
     const char *title = nullptr, *item = nullptr;
     const char *confirmation = nullptr;
+    // Batch 4.5A-4 PART 1/13: non-null while `confirming` is true for a
+    // preset or Certification row -- carries the exact display name + effect
+    // lines core wants shown before Confirm applies the mutation. Null for
+    // the one remaining plain-text confirmation (Equipment/Presets "Full
+    // Test Setup" shortcut, which predates this metadata and keeps its
+    // simple `confirmation` string instead).
+    const DebugEffectSheet *confirming_sheet = nullptr;
     int64_t value = 0, minimum = 0, maximum = 0;
     DebugStatus last_status = DebugStatus::Applied;
     DebugTeleportStatus last_teleport_status = DebugTeleportStatus::Applied;
@@ -93,6 +103,10 @@ class UiDebugMenu {
   private:
     CommandContext &context_;
     bool open_ = false, editing_ = false, edit_typed_ = false, confirming_ = false;
+    // Batch 4.5A-4: set alongside confirming_ for a preset/Certification row;
+    // always cleared with it (open/close/Cancel/Back/apply) -- see
+    // effect_sheet_for_current_row().
+    const DebugEffectSheet *confirming_sheet_ = nullptr;
     int16_t category_ = -1;
     size_t cursor_ = 0;
     int64_t edit_value_ = 0, edit_min_ = 0, edit_max_ = 0;
@@ -132,6 +146,11 @@ class UiDebugMenu {
     void apply_value(int64_t);
     void apply_action();
     bool action_requires_confirmation() const;
+    // Batch 4.5A-4 Part 13: the one seam that maps the current confirming
+    // row to its data-driven effect sheet, shared by every preset and every
+    // Certification setup. Returns nullptr for the legacy Full Test Setup
+    // shortcut confirmation, which keeps its plain `confirmation` string.
+    const DebugEffectSheet *effect_sheet_for_current_row() const;
     DebugDestination destination() const;
     void set(DebugResult r) { last_status_ = r.status; has_result_ = true; }
 };
