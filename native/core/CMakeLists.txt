@@ -153,6 +153,18 @@ if(BUILD_TESTING)
   target_link_libraries(ui_mode_regression PRIVATE openu5_core)
   target_include_directories(ui_mode_regression PRIVATE ../targets/tdeck/main)
   add_test(NAME ui_mode_regression COMMAND ui_mode_regression)
+  # Repair Batch 3 -- RED-only tests for R-06 (Ready), R-07/R-08 (Use
+  # picker), R-19 (Yell/sails), R-20 (harpsichord), Y-20 (SetActivePlayer).
+  # See native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md.
+  add_executable(batch3_group_a_tests tests/batch3_group_a_test.cpp)
+  target_link_libraries(batch3_group_a_tests PRIVATE openu5_core)
+  add_test(NAME batch3_group_a COMMAND batch3_group_a_tests)
+  add_executable(batch3_group_b_tests tests/batch3_group_b_test.cpp)
+  target_link_libraries(batch3_group_b_tests PRIVATE openu5_core)
+  add_test(NAME batch3_group_b COMMAND batch3_group_b_tests)
+  add_executable(batch3_group_c_tests tests/batch3_group_c_test.cpp)
+  target_link_libraries(batch3_group_c_tests PRIVATE openu5_core)
+  add_test(NAME batch3_group_c COMMAND batch3_group_c_tests)
   find_program(NODE_EXECUTABLE node)
   if(OPENU5_REAL_ARENAS)
     if(NOT NODE_EXECUTABLE)

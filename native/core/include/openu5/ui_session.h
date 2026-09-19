@@ -217,6 +217,24 @@ class UiSession {
     int32_t shop_cursor() const { return shop_cursor_; }
     void set_shop_offer_count(size_t count) { shop_offer_count_=count; if(!count)shop_cursor_=0;else if(size_t(shop_cursor_)>=count)shop_cursor_=int32_t(count-1); }
 
+    // --- Batch 3 RED-test seams (native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md
+    // R-19/R-20). Mirror the existing set_shop_offer_count() pattern: a value is
+    // pushed in from AlphaRuntime (or, in host tests, directly) and merely
+    // stored here. Neither setter is read by handle_exploration() today, so
+    // adding them does not change any routing decision -- they exist only so a
+    // host test can express "the player is aboard a frigate" / "the player is
+    // standing at the harpsichord" as input to UiSession without inventing a
+    // production fix. Do not wire these into command dispatch from this
+    // change; that is the scope of a future GREEN batch.
+    void set_sail_context(bool frigate_aboard, bool location_allows_sails) {
+        sail_context_frigate_ = frigate_aboard;
+        sail_context_location_ok_ = location_allows_sails;
+    }
+    bool sail_context_frigate() const { return sail_context_frigate_; }
+    bool sail_context_location_ok() const { return sail_context_location_ok_; }
+    void set_harpsichord_active(bool at_harpsichord) { harpsichord_active_ = at_harpsichord; }
+    bool harpsichord_active() const { return harpsichord_active_; }
+
     void set_base_mode(UiMode);
     void consume(const GameEvent &);
     EventSink event_sink();
@@ -313,6 +331,9 @@ class UiSession {
     int16_t combat_initial_x_ = 0, combat_initial_y_ = 0, combat_aim_range_ = 1;
     int16_t target_render_x_ = -1, target_render_y_ = -1;
     bool target_render_marker_ = false;
+    // Batch 3 RED-test seam storage (see the public setters above).
+    bool sail_context_frigate_ = false, sail_context_location_ok_ = false;
+    bool harpsichord_active_ = false;
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
     UiDebugMenu *debug_menu_ = nullptr;
     UiMode debug_return_mode_ = UiMode::Exploration;

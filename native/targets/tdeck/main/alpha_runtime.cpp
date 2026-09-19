@@ -16,6 +16,7 @@
 #include "boot_trace.h"
 #include "native_renderer.h"
 #include "openu5/display_names.h"
+#include "openu5/inventory_picker.h"
 #include "openu5/loot.h"
 #include "openu5/magic.h"
 #include "openu5/persistence.h"
@@ -677,7 +678,10 @@ openu5::UiSelectionItem AlphaRuntime::selection_item(void*p,size_t i){auto&r=*st
 void AlphaRuntime::open_selection(openu5::UiMode mode,openu5::UiRequestId request){selection_count_=0;selection_request_=request;
     auto add=[&](int value,const char*name,int qty=1,bool equipped=false){if(selection_count_>=64)return;auto&s=selections_[selection_count_++];s.value=int16_t(value);s.enabled=name&&*name;if(!name||!*name){std::snprintf(s.label,sizeof(s.label),"Unresolved id %d",value);ESP_LOGE(kTag,"UNRESOLVED_NAME selection=%d request=%d",value,int(request));}else format_ready_row(s.label,sizeof(s.label),name,uint16_t(std::max(qty,0)),equipped);};
     if(mode==openu5::UiMode::PartySelection){for(int i=0;i<game_.party.party_size&&i<game_.party.character_count;++i){auto&s=selections_[selection_count_++];s.value=int16_t(i);s.enabled=true;std::snprintf(s.label,sizeof(s.label),"%d %.9s HP%u",i+1,game_.party.characters[i].name,unsigned(game_.party.characters[i].current_hp));}}
-    else if(mode==openu5::UiMode::InventorySelection){for(int i=0;i<8;++i)if(game_.potion_quantities[i])add(8+i,openu5::potion_display_name(i),game_.potion_quantities[i]);for(int i=0;i<8;++i)if(game_.scroll_quantities[i])add(i,openu5::scroll_display_name(i),game_.scroll_quantities[i]);if(game_.magic_carpets)add(16,openu5::usable_item_display_name(0),game_.magic_carpets);if(game_.skull_keys)add(17,openu5::usable_item_display_name(1),game_.skull_keys);if(game_.grapple)add(18,openu5::usable_item_display_name(2));if(game_.spyglass)add(32,openu5::usable_item_display_name(32));if(game_.sextant)add(34,openu5::usable_item_display_name(34));if(game_.wooden_box)add(37,openu5::usable_item_display_name(37));}
+    else if(mode==openu5::UiMode::InventorySelection){for(int i=0;i<8;++i)if(game_.potion_quantities[i])add(8+i,openu5::potion_display_name(i),game_.potion_quantities[i]);for(int i=0;i<8;++i)if(game_.scroll_quantities[i])add(i,openu5::scroll_display_name(i),game_.scroll_quantities[i]);
+        openu5::UsableItemPickerInput usable_input{};usable_input.magic_carpets=game_.magic_carpets;usable_input.skull_keys=game_.skull_keys;usable_input.grapple=game_.grapple;usable_input.spyglass=game_.spyglass;usable_input.sextant=game_.sextant;usable_input.wooden_box=game_.wooden_box;
+        const auto usable_rows=openu5::usable_item_picker_rows(usable_input);
+        for(size_t ui=0;ui<usable_rows.count;++ui)add(usable_rows.rows[ui].id,usable_rows.rows[ui].name,usable_rows.rows[ui].quantity);}
     else if(mode==openu5::UiMode::EquipmentSelection){const int member=pending_ready_member_>=0?pending_ready_member_:active_member(game_);const auto ready=openu5::ready_items(game_,member);for(int n=0;n<ready.count;++n){const int i=ready.ids[n];add(i,openu5::equipment_display_name(i),game_.equipment_quantities[i],openu5::is_item_equipped(game_.party.characters[member],i));}}
     else if(mode==openu5::UiMode::SpellSelection){for(int i=0;i<48;++i)if(request==openu5::UiRequestId::Custom||game_.spell_quantities[i]>0)add(i,openu5::spell_display_name(i),game_.spell_quantities[i]);}
     if(!selection_count_){auto&s=selections_[selection_count_++];std::snprintf(s.label,sizeof(s.label),"(None available)");s.enabled=false;}
