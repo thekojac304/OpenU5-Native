@@ -342,5 +342,64 @@ int main() {
               h.dungeon.pos.dungeon == active_before.dungeon,
           "non-combat core rejection is reported without partial mutation");
 
+    // --- Batch 4.5A-1 RED: Default Entrance floor selection (T3, T4, T6) ---
+
+    // T6 (characterization): debug_floor_at returns signed z sorted ascending,
+    // not a player-facing floor identity. Lord British's Castle (location 17)
+    // already exposes floors {-1,0,1,2,3} above: ordinal index 0 is the
+    // basement (z=-1) and signed z=0 sits at ordinal index 1. This is the
+    // exact semantic gap Default Entrance must not confuse: "the chosen floor
+    // used by teleport" must be the signed value 0, not list index 0.
+    check(debug_floor_at(h.context, castle, 0).value == -1 &&
+              debug_floor_at(h.context, castle, 1).value == 0,
+          "T6: floor ordinal 0 is the basement, not signed z=0 -- ordinal is not floor identity");
+
+    // T3: standard entrance must refuse an impassable destination cell.
+    // Synthetic single-floor small map: location 99, z=0, (15,30) is void.
+    std::vector<uint8_t> impassable_floor(1024, 5);
+    impassable_floor[30 * kSmallMapSize + 15] = 255;
+    h.maps.push_back({{99, 0}, impassable_floor.data(), impassable_floor.size()});
+    h.world = {h.large.data(), h.large.data(), h.large.size(), h.large.size(), h.maps.data(), h.maps.size()};
+    {
+        const auto before_position = h.game.position;
+        const auto before_events = h.events.size();
+        const auto before_reloads = h.reloads.size();
+        auto vr = validate_debug_teleport(
+            h.context, request(DebugDestinationKind::SmallMap, 99, 0, 0, 0, true));
+        check(vr.status == DebugTeleportStatus::Applied && vr.passability_known && !vr.passable,
+              "T3 setup: synthetic standard-entry destination cell is confirmed impassable");
+
+        auto ar = apply_debug_teleport(
+            h.context, request(DebugDestinationKind::SmallMap, 99, 0, 0, 0, true));
+        // Expected future behavior is a dedicated DebugTeleportStatus::ImpassableDestination,
+        // which does not exist in the production enum yet and must not be added in this
+        // RED-only pass. Nearest honest observable proxy: the request must not be
+        // reported as Applied, and no GameState mutation or map transition may occur.
+        check(ar.status != DebugTeleportStatus::Applied,
+              "T3 RED: standard-entry Default Entrance must refuse an impassable cell "
+              "(currently always applies; DebugTeleportStatus::ImpassableDestination is "
+              "not yet a production enum value)");
+        check(h.game.position.map.location == before_position.map.location &&
+                  h.game.position.xy.x == before_position.xy.x &&
+                  h.game.position.xy.y == before_position.xy.y &&
+                  h.events.size() == before_events && h.reloads.size() == before_reloads,
+              "T3 RED: a refused Default Entrance must not mutate GameState or emit a transition");
+    }
+
+    // T4 (GREEN characterization guard): an explicit manual coordinate may
+    // remain impassable. Only the *default* entrance is required to be valid;
+    // basement access and free tester placement (e.g. Blackthorn's prison,
+    // Serpent's Hold's Flame of Courage) must keep working unchanged.
+    {
+        auto r4 = apply_debug_teleport(
+            h.context, request(DebugDestinationKind::SmallMap, 99, 0, 15, 30, false));
+        check(r4.status == DebugTeleportStatus::Applied && r4.passability_known && !r4.passable,
+              "T4: explicit manual coordinate teleport still applies to an impassable cell "
+              "and reports it as not passable");
+        check(h.game.position.map.location == 99 && h.game.position.xy.x == 15 &&
+                  h.game.position.xy.y == 30,
+              "T4: explicit manual coordinate teleport actually relocates the party");
+    }
+
     std::cout << checks << " debug map picker checks passed\n";
 }

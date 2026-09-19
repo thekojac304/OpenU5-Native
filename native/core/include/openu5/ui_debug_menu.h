@@ -39,6 +39,13 @@ struct UiDebugMenuView {
     DebugStatus last_status = DebugStatus::Applied;
     DebugTeleportStatus last_teleport_status = DebugTeleportStatus::Applied;
     DebugTeleportRequest teleport_request{};
+    // Carries the authoritative DebugTeleportResult passability metadata for
+    // the last teleport, so device presentation can distinguish "Applied
+    // (walkable)" from "Applied (impassable)" -- last_teleport_status alone
+    // cannot, since an explicit manual impassable coordinate still reports
+    // Applied (see Part 3/T4/T5).
+    bool teleport_passability_known = false;
+    bool teleport_passable = false;
 };
 
 class UiDebugMenu {
@@ -60,6 +67,7 @@ class UiDebugMenu {
     DebugStatus last_status_ = DebugStatus::Applied;
     DebugTeleportStatus last_teleport_status_ = DebugTeleportStatus::Applied;
     DebugTeleportRequest last_teleport_request_{};
+    bool last_teleport_passability_known_ = false, last_teleport_passable_ = false;
     bool has_result_ = false;
     size_t destination_ = 0, floor_ = 0, member_ = 0, inventory_index_ = 0;
     size_t equip_slot_ = 0, quest_flag_ = 0, quest_item_ = 0, npc_location_ = 0,

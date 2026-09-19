@@ -28,7 +28,7 @@ Error load_small_map(GameState &g, TurnState &t, TravelState &v, uint8_t id, con
                      TransitionServices s) {
     if (banner && !(id >= 14 && id <= 18) && id != 40)
         message(s, banner);
-    g.position = {{15, 30}, {id, 0}};
+    g.position = {{uint8_t(kSmallMapEntryX), uint8_t(kSmallMapEntryY)}, {id, kSmallMapEntryFloor}};
     effect(s, ReloadEffect::EnterNpcs, id);
     effect(s, ReloadEffect::ClearEnemies, id);
     effect(s, ReloadEffect::ResetDoors, id);

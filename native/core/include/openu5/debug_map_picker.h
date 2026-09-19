@@ -28,7 +28,12 @@ enum class DebugTeleportStatus : uint8_t {
     MissingMapData,
     MissingDungeonContext,
     ActiveCombat,
-    CoreRejected
+    CoreRejected,
+    // Standard-entry (Default Entrance) refusal: the resolved destination cell
+    // is known and not walkable. GameState is not mutated and no MapChanged
+    // event is emitted. An explicit manual coordinate (standard_entry == false)
+    // is never refused this way -- see apply_debug_teleport.
+    ImpassableDestination
 };
 
 struct DebugTeleportRequest {

@@ -115,7 +115,15 @@ DebugList debug_list(int category){
     default:return {kPresetItems,sizeof(kPresetItems)/sizeof(*kPresetItems)};
     }
 }
-const char *teleport_status_name(openu5::DebugTeleportStatus s){static const char*n[]={"Applied","Invalid destination","Invalid floor","Invalid coordinates","Missing map data","Missing dungeon context","Blocked by active combat","Core rejected"};return n[std::min<size_t>(size_t(s),7)];}
+const char *teleport_status_name(openu5::DebugTeleportStatus s){static const char*n[]={"Applied","Invalid destination","Invalid floor","Invalid coordinates","Missing map data","Missing dungeon context","Blocked by active combat","Core rejected","Impassable destination"};return n[std::min<size_t>(size_t(s),8)];}
+// Applied alone does not say whether the destination cell was walkable -- an
+// explicit manual coordinate still applies onto an impassable cell (Part 3),
+// so presentation must consult the view's passability metadata as well.
+const char *teleport_result_label(const openu5::UiDebugMenuView &v){
+    if(v.last_teleport_status==openu5::DebugTeleportStatus::Applied&&v.teleport_passability_known&&!v.teleport_passable)
+        return "Applied (impassable)";
+    return teleport_status_name(v.last_teleport_status);
+}
 const char *debug_status_name(openu5::DebugStatus s){static const char*n[]={"Applied","Unavailable","Invalid character","Invalid index","Invalid value","Missing context","Missing data","Core rejected"};return n[std::min<size_t>(size_t(s),7)];}
 bool combat_actor_live(const openu5::CombatActor &a){return a.status!=openu5::CombatStatus::Dead&&a.status!=openu5::CombatStatus::Fled&&a.status!=openu5::CombatStatus::Absorbed;}
 const char *terrain_source(const openu5::TerrainSample &s){
@@ -828,7 +836,7 @@ DeviceDebugScreen AlphaRuntime::debug_screen() const{
         if(s.running)std::snprintf(out.status,sizeof(out.status),"RUN %u/%u P%u F%u %.20s",unsigned(s.completed),unsigned(s.total),unsigned(s.passed),unsigned(s.failed),s.scenario);
         else if(s.complete)std::snprintf(out.status,sizeof(out.status),"DONE P%u F%u %.30s",unsigned(s.passed),unsigned(s.failed),s.failed?s.first_failure:"all passed");
         else std::snprintf(out.status,sizeof(out.status),"Results: %s",kSmokeTestSdPath);
-    } else if(v.has_result)std::snprintf(out.status,sizeof(out.status),"Result: %s",v.category==int(openu5::UiDebugCategory::Teleport)?teleport_status_name(v.last_teleport_status):debug_status_name(v.last_status));
+    } else if(v.has_result)std::snprintf(out.status,sizeof(out.status),"Result: %s",v.category==int(openu5::UiDebugCategory::Teleport)?teleport_result_label(v):debug_status_name(v.last_status));
 #endif
     return out;
 }

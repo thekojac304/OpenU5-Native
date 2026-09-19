@@ -2,6 +2,11 @@
 #include "movement.h"
 #include "npc_path.h"
 namespace openu5 {
+// Canonical small-map arrival cell (party.ts / debugApi.ts goToLocation): every
+// normal town/keep/dwelling entry and every Debug Default Entrance land here.
+constexpr int32_t kSmallMapEntryX = 15;
+constexpr int32_t kSmallMapEntryY = 30;
+constexpr int16_t kSmallMapEntryFloor = 0;
 // Reload services own existing terrain/object/door systems, just as turn hooks
 // own enemy/combat effects. Invoked synchronously in authoritative Game order.
 enum class ReloadEffect : uint8_t {

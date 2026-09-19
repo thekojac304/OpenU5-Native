@@ -140,8 +140,8 @@ DebugTeleportResult validate_map_cell(const CommandContext &c, const DebugTelepo
             return result(DebugTeleportStatus::InvalidFloor);
         if (!map->tiles || map->size < size_t(kSmallMapSize) * kSmallMapSize)
             return result(DebugTeleportStatus::MissingMapData);
-        const int32_t x = r.standard_entry ? 15 : r.x;
-        const int32_t y = r.standard_entry ? 30 : r.y;
+        const int32_t x = r.standard_entry ? kSmallMapEntryX : r.x;
+        const int32_t y = r.standard_entry ? kSmallMapEntryY : r.y;
         if (x < 0 || y < 0 || x >= kSmallMapSize || y >= kSmallMapSize)
             return result(DebugTeleportStatus::InvalidCoordinates);
         out.passability_known = true;
@@ -285,6 +285,17 @@ DebugTeleportResult apply_debug_teleport(CommandContext &c, const DebugTeleportR
     if (out.status != DebugTeleportStatus::Applied)
         return out;
 
+    // Debug-certification safety contract: a standard-entry (Default Entrance)
+    // teleport must never silently drop the party on a known-impassable cell.
+    // This is a refusal at *apply* time only -- validate_debug_teleport keeps
+    // reporting Applied/passable=false so callers can inspect the cell before
+    // deciding whether to apply. An explicit manual coordinate request
+    // (standard_entry == false) is left untouched; see T4/Part 3.
+    if (r.standard_entry && out.passability_known && !out.passable) {
+        out.status = DebugTeleportStatus::ImpassableDestination;
+        return out;
+    }
+
     switch (r.kind) {
     case DebugDestinationKind::Britannia:
     case DebugDestinationKind::Underworld:
@@ -303,8 +314,8 @@ DebugTeleportResult apply_debug_teleport(CommandContext &c, const DebugTeleportR
         if (c.dungeon_context)
             c.dungeon_context->state.active = false;
         c.dungeon = false;
-        const int32_t x = r.standard_entry ? 15 : r.x;
-        const int32_t y = r.standard_entry ? 30 : r.y;
+        const int32_t x = r.standard_entry ? kSmallMapEntryX : r.x;
+        const int32_t y = r.standard_entry ? kSmallMapEntryY : r.y;
         c.game.position = {{uint8_t(x), uint8_t(y)}, {r.location, r.floor}};
         // Exact DebugApi.goToLocation/teleportSmallMap recipe and order.
         reload(c, ReloadEffect::ResetDoors, r.location);
