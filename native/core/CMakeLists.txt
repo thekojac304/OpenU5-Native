@@ -190,6 +190,13 @@ if(BUILD_TESTING)
   target_link_libraries(batch45b_tests PRIVATE openu5_core)
   target_include_directories(batch45b_tests PRIVATE ../targets/tdeck/main)
   add_test(NAME batch45b COMMAND batch45b_tests "${CMAKE_CURRENT_SOURCE_DIR}/../../game/assets/ds-strings.json")
+  # Batch 4.5B correction -- the real pack's 33rd entry (misc-records.bin)
+  # exceeded AlphaResourcePack's stale 32-entry bound. No openu5_core link
+  # needed: this only exercises the host-portable predicate in
+  # alpha_resource_limits.h.
+  add_executable(alpha_resource_capacity_tests tests/alpha_resource_capacity_test.cpp)
+  target_include_directories(alpha_resource_capacity_tests PRIVATE ../targets/tdeck/main)
+  add_test(NAME alpha_resource_capacity COMMAND alpha_resource_capacity_tests)
   find_program(NODE_EXECUTABLE node)
   if(OPENU5_REAL_ARENAS)
     if(NOT NODE_EXECUTABLE)

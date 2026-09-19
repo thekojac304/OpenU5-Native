@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstdio>
 
+#include "alpha_resource_limits.h"
 #include "esp_err.h"
 #include "misc_records.h"
 #include "openu5/commands.h"
@@ -132,7 +133,7 @@ class AlphaResourcePack {
         char name[32]{};
         uint32_t offset = 0, length = 0, crc32 = 0, records = 0, stride = 0;
     };
-    static constexpr size_t kMaxEntries = 32;
+    static constexpr size_t kMaxEntries = kAlphaResourceMaxEntries;
     FILE *file_ = nullptr;
     Entry entries_[kMaxEntries]{};
     size_t entry_count_ = 0;

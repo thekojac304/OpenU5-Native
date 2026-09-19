@@ -88,7 +88,7 @@ esp_err_t AlphaResourcePack::open(const char *path, AlphaResourceReport &report)
     report.version_minor = u16(header + 10);
     entry_count_ = u32(header + 16); report.file_size = u32(header + 20);
     report.payload_crc32 = u32(header + 24); report.entry_count = uint32_t(entry_count_);
-    if (!entry_count_ || entry_count_ > kMaxEntries || std::fseek(file_, 0, SEEK_END) != 0 ||
+    if (!alpha_resource_entry_count_ok(uint32_t(entry_count_)) || std::fseek(file_, 0, SEEK_END) != 0 ||
         long(report.file_size) != std::ftell(file_)) { close(); return ESP_ERR_INVALID_SIZE; }
     uint32_t toc_crc = 0xffffffffU;
     for (size_t i = 0; i < entry_count_; ++i) {
