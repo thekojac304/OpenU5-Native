@@ -53,5 +53,6 @@ if(OPENU5_ENABLE_DEVELOPER_TOOLS)
   list(APPEND OPENU5_CORE_SOURCES
       "${CMAKE_CURRENT_LIST_DIR}/src/ui_debug_menu.cpp"
       "${CMAKE_CURRENT_LIST_DIR}/src/debug_map_picker.cpp"
-      "${CMAKE_CURRENT_LIST_DIR}/src/debug_developer.cpp")
+      "${CMAKE_CURRENT_LIST_DIR}/src/debug_developer.cpp"
+      "${CMAKE_CURRENT_LIST_DIR}/src/debug_labels.cpp")
 endif()

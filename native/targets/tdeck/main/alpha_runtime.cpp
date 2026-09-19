@@ -15,6 +15,7 @@
 #include "freertos/task.h"
 #include "boot_trace.h"
 #include "native_renderer.h"
+#include "openu5/debug_labels.h"
 #include "openu5/display_names.h"
 #include "openu5/inventory_picker.h"
 #include "openu5/loot.h"
@@ -84,47 +85,6 @@ const char *shortcut_name(DeviceShortcut s){static const char*n[]={"none","devel
 int debug_depth(const openu5::UiDebugMenuView &v){return v.editing?2:v.category>=0?1:0;}
 #endif
 
-constexpr const char *kDebugCategories[]={"Teleport","Party","Stats","Inventory","Equipment","Reagents","Quest","Time","Transport","NPC / Dungeon","Presets","Diagnostics"};
-constexpr const char *kTeleportItems[]={"Destination","Floor","X","Y","Standard entry","Teleport now"};
-constexpr const char *kPartyItems[]={"Character","Party size","Heal party","Clear status","Revive party"};
-constexpr const char *kStatsItems[]={"Character","Strength","Dexterity","Intelligence","Current MP","Current HP","Max HP","Experience","Level"};
-constexpr const char *kInventoryItems[]={"Food","Gold","Keys","Gems","Torches","Skull keys","Magic carpets","Inventory index","Equipment qty","Spell qty","Scroll qty","Potion qty"};
-constexpr const char *kEquipmentItems[]={"Character","Slot","Item id","Max Party","Max Resources","Equip Best Gear","Full Test Setup"};
-constexpr const char *kReagentItems[]={"Reagent index","Quantity"};
-constexpr const char *kQuestItems[]={"Quest flag","Toggle flag","Quest item","Toggle item","Shrine quest bits","Shrine visited bits","Doom bits","Kill Shadowlords"};
-constexpr const char *kTimeItems[]={"Year","Month","Day","Hour","Minute","Turns since start"};
-constexpr const char *kTransportItems[]={"Mode","Ship hull","Ship skiffs","Wind","Sail direction","HMS Cape toggle"};
-constexpr const char *kNpcItems[]={"Location index","NPC index","Toggle dead","Toggle met","Dungeon slot","Room","Toggle room cleared","Clear overworld enemies"};
-constexpr const char *kPresetItems[]={"Max Party","Max Resources","Equip Best Gear","Full Test Setup","Kill Shadowlords","Maxed party","Stocked inventory","Combat","Dungeon","Shrine","Quest","Transport","Endgame","Low health/status","Save/load"};
-constexpr const char *kDiagnosticItems[]={"Run All","Overworld","Local Maps","Dialogue","Shops / Inns","Inventory / Equipment","Combat","Dungeons","Shrines / Special","Transport","Quest / Progression","Persistence","Device Input","Debug Tools","Resources","Presentation"};
-struct DebugList {const char *const *items;size_t count;};
-DebugList debug_list(int category){
-    switch(category){
-    case -1:return {kDebugCategories,sizeof(kDebugCategories)/sizeof(*kDebugCategories)};
-    case int(openu5::UiDebugCategory::Teleport):return {kTeleportItems,sizeof(kTeleportItems)/sizeof(*kTeleportItems)};
-    case int(openu5::UiDebugCategory::Party):return {kPartyItems,sizeof(kPartyItems)/sizeof(*kPartyItems)};
-    case int(openu5::UiDebugCategory::Stats):return {kStatsItems,sizeof(kStatsItems)/sizeof(*kStatsItems)};
-    case int(openu5::UiDebugCategory::Inventory):return {kInventoryItems,sizeof(kInventoryItems)/sizeof(*kInventoryItems)};
-    case int(openu5::UiDebugCategory::Equipment):return {kEquipmentItems,sizeof(kEquipmentItems)/sizeof(*kEquipmentItems)};
-    case int(openu5::UiDebugCategory::Reagents):return {kReagentItems,sizeof(kReagentItems)/sizeof(*kReagentItems)};
-    case int(openu5::UiDebugCategory::QuestProgression):return {kQuestItems,sizeof(kQuestItems)/sizeof(*kQuestItems)};
-    case int(openu5::UiDebugCategory::Time):return {kTimeItems,sizeof(kTimeItems)/sizeof(*kTimeItems)};
-    case int(openu5::UiDebugCategory::Transport):return {kTransportItems,sizeof(kTransportItems)/sizeof(*kTransportItems)};
-    case int(openu5::UiDebugCategory::NpcDungeonState):return {kNpcItems,sizeof(kNpcItems)/sizeof(*kNpcItems)};
-    case int(openu5::UiDebugCategory::Diagnostics):return {kDiagnosticItems,sizeof(kDiagnosticItems)/sizeof(*kDiagnosticItems)};
-    default:return {kPresetItems,sizeof(kPresetItems)/sizeof(*kPresetItems)};
-    }
-}
-const char *teleport_status_name(openu5::DebugTeleportStatus s){static const char*n[]={"Applied","Invalid destination","Invalid floor","Invalid coordinates","Missing map data","Missing dungeon context","Blocked by active combat","Core rejected","Impassable destination"};return n[std::min<size_t>(size_t(s),8)];}
-// Applied alone does not say whether the destination cell was walkable -- an
-// explicit manual coordinate still applies onto an impassable cell (Part 3),
-// so presentation must consult the view's passability metadata as well.
-const char *teleport_result_label(const openu5::UiDebugMenuView &v){
-    if(v.last_teleport_status==openu5::DebugTeleportStatus::Applied&&v.teleport_passability_known&&!v.teleport_passable)
-        return "Applied (impassable)";
-    return teleport_status_name(v.last_teleport_status);
-}
-const char *debug_status_name(openu5::DebugStatus s){static const char*n[]={"Applied","Unavailable","Invalid character","Invalid index","Invalid value","Missing context","Missing data","Core rejected"};return n[std::min<size_t>(size_t(s),7)];}
 bool combat_actor_live(const openu5::CombatActor &a){return a.status!=openu5::CombatStatus::Dead&&a.status!=openu5::CombatStatus::Fled&&a.status!=openu5::CombatStatus::Absorbed;}
 const char *terrain_source(const openu5::TerrainSample &s){
     return s.wiped?"wipe":s.transient?"transient":s.persistent?"persistent":s.hourly?"hourly":"base";
@@ -816,27 +776,38 @@ DeviceDebugScreen AlphaRuntime::debug_screen() const{
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
     if(!debug_)return out;
     const auto v=debug_->view();
-    const auto list=debug_list(v.category);
     if(v.category<0)std::snprintf(out.breadcrumb,sizeof(out.breadcrumb),"Developer");
     else std::snprintf(out.breadcrumb,sizeof(out.breadcrumb),"Developer > %.32s",v.title?v.title:"");
     std::snprintf(out.position,sizeof(out.position),"%u/%u",unsigned(v.cursor+1),unsigned(v.count));
     const size_t start=v.cursor>=kDebugScreenRows?v.cursor-kDebugScreenRows+1:0;
-    out.row_count=std::min(kDebugScreenRows,list.count-start);out.selected_row=v.cursor-start;
-    for(size_t row=0;row<out.row_count;++row){const size_t index=start+row;std::snprintf(out.rows[row],sizeof(out.rows[row]),"%.50s",list.items[index]);
-        if(index==v.cursor&&v.editable){char value[28]{};
-            if(v.category==int(openu5::UiDebugCategory::Teleport)&&v.cursor==0){auto d=openu5::debug_destination_at(context_,size_t(v.value));std::snprintf(value,sizeof(value)," = %.20s",d.error==openu5::Error::None&&d.value.name?d.value.name:"Unknown");}
-            else if(v.category==int(openu5::UiDebugCategory::Teleport)&&v.cursor==4)std::snprintf(value,sizeof(value)," = %s",v.value?"On":"Off");
-            else std::snprintf(value,sizeof(value)," = %lld",(long long)v.value);
-            std::strncat(out.rows[row],value,sizeof(out.rows[row])-std::strlen(out.rows[row])-1);
-            if(v.editing)std::strncat(out.rows[row]," [edit]",sizeof(out.rows[row])-std::strlen(out.rows[row])-1);
-        }}
+    out.row_count=std::min(kDebugScreenRows,v.count-start);out.selected_row=v.cursor-start;
+    // Every visible row -- not just the selected one -- gets its own label
+    // and current value from UiDebugMenu; the device layer only formats what
+    // core hands it (Batch 4.5A-2 Part 4/6: no device-owned label tables, no
+    // cursor-only value visibility).
+    for(size_t row=0;row<out.row_count;++row){
+        const size_t index=start+row;
+        std::snprintf(out.rows[row],sizeof(out.rows[row]),"%.50s",debug_->row_label(index));
+        const auto rv=debug_->row_value(index);
+        char value[36]{};
+        switch(rv.kind){
+        case openu5::DebugRowValue::Kind::None:break;
+        case openu5::DebugRowValue::Kind::Integer:std::snprintf(value,sizeof(value)," %lld",(long long)rv.value);break;
+        case openu5::DebugRowValue::Kind::Boolean:std::snprintf(value,sizeof(value)," %s",rv.value?"Yes":"No");break;
+        case openu5::DebugRowValue::Kind::Text:std::snprintf(value,sizeof(value)," %.24s",rv.text?rv.text:"Unknown");break;
+        case openu5::DebugRowValue::Kind::TextWithId:std::snprintf(value,sizeof(value)," %.18s [%d]",rv.text?rv.text:"Unknown",int(rv.canonical_id));break;
+        case openu5::DebugRowValue::Kind::Unsupported:std::snprintf(value,sizeof(value)," Unsupported");break;
+        }
+        std::strncat(out.rows[row],value,sizeof(out.rows[row])-std::strlen(out.rows[row])-1);
+        if(index==v.cursor&&v.editing)std::strncat(out.rows[row]," [edit]",sizeof(out.rows[row])-std::strlen(out.rows[row])-1);
+    }
     if(v.confirming)std::snprintf(out.status,sizeof(out.status),"%s",v.confirmation?v.confirmation:"Confirm?");
     else if(v.category==int(openu5::UiDebugCategory::Diagnostics)){
         const auto s=smoke_.view();
         if(s.running)std::snprintf(out.status,sizeof(out.status),"RUN %u/%u P%u F%u %.20s",unsigned(s.completed),unsigned(s.total),unsigned(s.passed),unsigned(s.failed),s.scenario);
         else if(s.complete)std::snprintf(out.status,sizeof(out.status),"DONE P%u F%u %.30s",unsigned(s.passed),unsigned(s.failed),s.failed?s.first_failure:"all passed");
         else std::snprintf(out.status,sizeof(out.status),"Results: %s",kSmokeTestSdPath);
-    } else if(v.has_result)std::snprintf(out.status,sizeof(out.status),"Result: %s",v.category==int(openu5::UiDebugCategory::Teleport)?teleport_result_label(v):debug_status_name(v.last_status));
+    } else if(v.has_result)std::snprintf(out.status,sizeof(out.status),"Result: %s",v.category==int(openu5::UiDebugCategory::Teleport)?openu5::debug_teleport_result_label(v.last_teleport_status,v.teleport_passability_known,v.teleport_passable):openu5::debug_status_name(v.last_status));
 #endif
     return out;
 }
@@ -969,7 +940,7 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
     if(teleport_action)
         ESP_LOGI(kTag,"DEBUG_TELEPORT type=%d id=%u floor/depth=%d entrance=%d requested_xy=%ld,%ld result=%s game_before=L%u/F%d/%u,%u game_after=L%u/F%d/%u,%u dungeon_before=active%d/F%d/%u,%u dungeon_after=active%d/F%d/%u,%u context_before=dungeon%d context_after=dungeon%d,combat%d",
                  int(teleport_request.kind),unsigned(teleport_request.location),int(teleport_request.floor),teleport_request.standard_entry,long(teleport_request.x),long(teleport_request.y),
-                 teleport_status_name(teleport_status),unsigned(before.map.location),int(before.map.floor),unsigned(before.xy.x),unsigned(before.xy.y),
+                 openu5::debug_teleport_status_name(teleport_status),unsigned(before.map.location),int(before.map.floor),unsigned(before.xy.x),unsigned(before.xy.y),
                  unsigned(game_.position.map.location),int(game_.position.map.floor),unsigned(game_.position.xy.x),unsigned(game_.position.xy.y),
                  dungeon_before,int(dungeon_pos_before.floor),unsigned(dungeon_pos_before.x),unsigned(dungeon_pos_before.y),
                  dungeon_.active,int(dungeon_.pos.floor),unsigned(dungeon_.pos.x),unsigned(dungeon_.pos.y),
@@ -985,7 +956,7 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
         ESP_LOGI(kTag,"DUNGEON_RENDERER active=%d dungeon=%u depth=%u",dungeon_.active,unsigned(dungeon_.pos.dungeon),unsigned(dungeon_.pos.floor));
         ESP_LOGI(kTag,"DEBUG_DUNGEON_TELEPORT_RESULT result=success reason=normal-dungeon-init");
     } else if(teleport_action&&teleport_request.kind==openu5::DebugDestinationKind::Dungeon) {
-        ESP_LOGE(kTag,"DEBUG_DUNGEON_TELEPORT_RESULT result=failure reason=%s session_active=%d context_dungeon=%d",teleport_status_name(teleport_status),dungeon_.active,context_.dungeon);
+        ESP_LOGE(kTag,"DEBUG_DUNGEON_TELEPORT_RESULT result=failure reason=%s session_active=%d context_dungeon=%d",openu5::debug_teleport_status_name(teleport_status),dungeon_.active,context_.dungeon);
         if(!dungeon_.active)ui_->set_base_mode(openu5::UiMode::Exploration);
     }
 #endif

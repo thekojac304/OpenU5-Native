@@ -1,6 +1,7 @@
 #pragma once
 
 #include "debug_developer.h"
+#include "debug_labels.h"
 #include "debug_map_picker.h"
 #include "ui_session.h"
 
@@ -22,6 +23,27 @@ enum class UiDebugCategory : uint8_t {
     ShortcutsPresets,
     Diagnostics,
     Count
+};
+static_assert(debug_root_category_count() == size_t(UiDebugCategory::Count),
+              "debug_labels root category table must match UiDebugCategory::Count 1:1");
+
+// Describes one visible debug-menu row's current state independently of
+// cursor position (Batch 4.5A-2 Part 3): every row can report its own label
+// and value without the caller having to move the cursor there first.
+struct DebugRowValue {
+    enum class Kind : uint8_t {
+        None,        // pure action row (e.g. "Teleport now"); nothing to show
+        Integer,     // plain numeric state
+        Boolean,     // value != 0 renders as Yes/No
+        Text,        // text is the whole story (e.g. a name)
+        TextWithId,  // text plus its canonical_id (e.g. "Shard of Falsehood [29]")
+        Unsupported  // presentation parity with DebugStatus::Unsupported
+    };
+
+    Kind kind = Kind::None;
+    int64_t value = 0;
+    const char *text = nullptr;
+    int32_t canonical_id = -1;
 };
 
 struct UiDiagnosticsServices {
@@ -58,6 +80,14 @@ class UiDebugMenu {
     bool handle_input(const UiAction &);
     UiDebugMenuView view() const;
 
+    // Batch 4.5A-2 Part 3: row_label()/row_value() describe row `index`
+    // independently of cursor_, so every visible row -- not just the
+    // currently selected one -- can be presented with its real label and
+    // current state. At the root menu (no category entered) every row is a
+    // category name and row_value() is always Kind::None.
+    const char *row_label(size_t index) const;
+    DebugRowValue row_value(size_t index) const;
+
   private:
     CommandContext &context_;
     bool open_ = false, editing_ = false, edit_typed_ = false, confirming_ = false;
@@ -75,11 +105,18 @@ class UiDebugMenu {
     int32_t teleport_x_ = 0, teleport_y_ = 0;
     bool standard_entry_ = true;
     UiDiagnosticsServices diagnostics_{};
+    // Scratch formatting storage for row_value() text that must be composed
+    // rather than borrowed verbatim (floor labels, character-name fallback).
+    // Safe because each is consumed by the caller immediately after the
+    // row_value() call that filled it, exactly like DeviceDebugScreen's own
+    // per-call formatting buffers.
+    mutable char floor_label_buf_[20]{};
+    mutable char character_label_buf_[20]{};
 
     size_t item_count() const;
     const char *category_name(size_t) const;
-    const char *item_name() const;
-    bool item_edit_range(int64_t &, int64_t &, int64_t &) const;
+    bool item_edit_range(size_t row, int64_t &, int64_t &, int64_t &) const;
+    DebugRowValue character_row_value(size_t member) const;
     void enter_or_apply();
     void apply_value(int64_t);
     void apply_action();

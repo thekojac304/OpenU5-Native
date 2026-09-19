@@ -122,5 +122,106 @@ int main(){
         "T5: impassable explicit teleport reports Applied(impassable) via teleport_passable");
  }
 
+ // --- Batch 4.5A-2: row_label()/row_value() view-model (U1-U5) ---
+ {
+  GameState g3; TurnState t3; TravelState tr3; CommandState cs3;
+  static uint8_t large3[65536]{};
+  WorldData w3{large3, large3, sizeof(large3), sizeof(large3)};
+  CommandContext c3{g3, t3, tr3, cs3, w3};
+  g3.party.character_count = 2; g3.party.party_size = 2;
+  std::strcpy(g3.party.characters[0].name, "Avatar");
+  g3.party.characters[1].name[0] = 0; // U4 fallback: blank slot 1
+  UiDebugMenu menu3(c3); menu3.open();
+
+  // U1: Quest Item row is human-readable, not raw ordinal 0.
+  menu3.handle_input(pick(int(UiDebugCategory::QuestProgression)));
+  {
+   const auto rv = menu3.row_value(2);
+   check(rv.kind == DebugRowValue::Kind::TextWithId, "U1: Quest Item row is TextWithId");
+   check(rv.text && std::strcmp(rv.text, "Shard of Falsehood") == 0, "U1: Quest Item name");
+   check(rv.canonical_id == 29, "U1: Quest Item canonical id");
+  }
+  menu3.handle_input(act(UiActionKind::Back));
+
+  // U2: table-driven walk of every reachable row in every current category.
+  // Action rows (no state) may report Kind::None; every other row must not.
+  struct CategoryRows { UiDebugCategory category; size_t count; const int *action_rows; size_t action_count; };
+  static constexpr int kTeleportActions[] = {5};
+  static constexpr int kPartyActions[] = {2, 3, 4};
+  static constexpr int kEquipmentActions[] = {3, 4, 5, 6};
+  static constexpr int kQuestActions[] = {7};
+  static constexpr int kNpcActions[] = {7};
+  static constexpr int kShortcutActions[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14};
+  static constexpr int kDiagnosticActions[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+  const CategoryRows tables[] = {
+      {UiDebugCategory::Teleport, 6, kTeleportActions, 1},
+      {UiDebugCategory::Party, 5, kPartyActions, 3},
+      {UiDebugCategory::Stats, 9, nullptr, 0},
+      {UiDebugCategory::Inventory, 12, nullptr, 0},
+      {UiDebugCategory::Equipment, 7, kEquipmentActions, 4},
+      {UiDebugCategory::Reagents, 2, nullptr, 0},
+      {UiDebugCategory::QuestProgression, 8, kQuestActions, 1},
+      {UiDebugCategory::Time, 6, nullptr, 0},
+      {UiDebugCategory::Transport, 6, nullptr, 0},
+      {UiDebugCategory::NpcDungeonState, 8, kNpcActions, 1},
+      {UiDebugCategory::ShortcutsPresets, 15, kShortcutActions, 15},
+      {UiDebugCategory::Diagnostics, 16, kDiagnosticActions, 16},
+  };
+  for (const auto &table : tables) {
+   menu3.handle_input(pick(int(table.category)));
+   check(menu3.view().count == table.count, "U2: category row count matches");
+   for (size_t row = 0; row < table.count; ++row) {
+    bool is_action = false;
+    for (size_t a = 0; a < table.action_count; ++a) if (size_t(table.action_rows[a]) == row) is_action = true;
+    const auto rv = menu3.row_value(row);
+    if (is_action) check(rv.kind == DebugRowValue::Kind::None, "U2: action row is Kind::None");
+    else check(rv.kind != DebugRowValue::Kind::None, "U2: state row must not be Kind::None");
+   }
+   menu3.handle_input(act(UiActionKind::Back));
+  }
+
+  // U3: non-selected rows still expose values (guards the cursor-only bug).
+  // Uses Next (not SelectIndex/Confirm) so the cursor moves without opening
+  // the edit dialog on the destination row.
+  menu3.handle_input(pick(int(UiDebugCategory::Stats)));
+  const auto strength_before = menu3.row_value(1);
+  menu3.handle_input(act(UiActionKind::Next));
+  menu3.handle_input(act(UiActionKind::Next));
+  menu3.handle_input(act(UiActionKind::Next));
+  check(menu3.view().cursor == 3 && !menu3.view().editing, "U3: cursor moved away from row 1, not editing");
+  const auto strength_after = menu3.row_value(1);
+  check(strength_before.kind == strength_after.kind && strength_before.value == strength_after.value,
+        "U3: non-selected row value unchanged after moving cursor");
+  menu3.handle_input(act(UiActionKind::Back));
+
+  // U4: character row uses party name, falling back safely when blank.
+  menu3.handle_input(pick(int(UiDebugCategory::Party)));
+  {
+   const auto rv = menu3.row_value(0);
+   check(rv.kind == DebugRowValue::Kind::Text, "U4: Character row is Text");
+   check(rv.text && std::strcmp(rv.text, "Avatar") == 0, "U4: Character row uses party name");
+  }
+  menu3.handle_input(pick(0)); type_and_confirm(menu3, "1"); // select blank slot 1
+  {
+   const auto rv = menu3.row_value(0);
+   check(rv.text && std::strcmp(rv.text, "Character 1") == 0, "U4: blank character falls back safely");
+  }
+  menu3.handle_input(act(UiActionKind::Back));
+
+  // U5: Transport Mode row is human-readable, not a raw integer.
+  menu3.handle_input(pick(int(UiDebugCategory::Transport)));
+  {
+   const auto rv = menu3.row_value(0);
+   check(rv.kind == DebugRowValue::Kind::Text, "U5: Transport Mode row is Text");
+   check(rv.text && std::strcmp(rv.text, "Foot") == 0, "U5: Transport Mode default is Foot");
+  }
+  menu3.handle_input(pick(0)); type_and_confirm(menu3, "1"); // Horse
+  {
+   const auto rv = menu3.row_value(0);
+   check(rv.text && std::strcmp(rv.text, "Horse") == 0, "U5: Transport Mode reflects Horse after edit");
+  }
+  menu3.handle_input(act(UiActionKind::Back));
+ }
+
  std::cout<<checks<<" debug menu checks passed; sizeof(UiDebugMenu)="<<sizeof(UiDebugMenu)<<"\n";
 }
