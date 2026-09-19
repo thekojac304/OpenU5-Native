@@ -41,6 +41,7 @@ void AlphaResourceOwners::release() {
                     static_cast<void *>(combat_tables), static_cast<void *>(shop_records),
                     static_cast<void *>(shop_numbers), static_cast<void *>(shop_names),
                     static_cast<void *>(shop_text_offsets), static_cast<void *>(shop_text_records),
+                    static_cast<void *>(misc_text_offsets), static_cast<void *>(misc_text_records),
                     static_cast<void *>(dialogue_data), static_cast<void *>(shrine_text),
                     static_cast<void *>(look_offsets), static_cast<void *>(look_text),
                     static_cast<void *>(signs), static_cast<void *>(sign_text),
@@ -111,7 +112,7 @@ esp_err_t AlphaResourcePack::open(const char *path, AlphaResourceReport &report)
     }
     heap_caps_free(scratch);
     if ((payload_crc ^ 0xffffffffU) != report.payload_crc32) { close(); return ESP_ERR_INVALID_CRC; }
-    static const char *required[]={"init.gam","init.ool","overworld.map","underworld.map","smallmaps.bin","dungeons.bin","npcs.bin","worldtables.bin","combat.bin","shops.bin","shop-records.bin","talk.bin","shrines.bin","questions.bin","intro-text.bin","intro-title.rgb565","credits.rgb565","demo-scene.bin","look.bin","signs.bin","runes.ch","combatmaps.json","data.json","shoppe.json","talk-towne.json","talk-dwelling.json","talk-castle.json","talk-keep.json","look2.json","signs.json","endgame.json"};
+    static const char *required[]={"init.gam","init.ool","overworld.map","underworld.map","smallmaps.bin","dungeons.bin","npcs.bin","worldtables.bin","combat.bin","shops.bin","shop-records.bin","misc-records.bin","talk.bin","shrines.bin","questions.bin","intro-text.bin","intro-title.rgb565","credits.rgb565","demo-scene.bin","look.bin","signs.bin","runes.ch","combatmaps.json","data.json","shoppe.json","talk-towne.json","talk-dwelling.json","talk-castle.json","talk-keep.json","look2.json","signs.json","endgame.json"};
     for (const char *name:required) if(!find(name)){ESP_LOGE(kTag,"Required entry missing: %s",name);close();return ESP_ERR_NOT_FOUND;}
     report.firmware_match = report.file_size == kExpectedAlphaResourceSize &&
                             report.payload_crc32 == kExpectedAlphaResourceCrc32;
@@ -215,6 +216,17 @@ esp_err_t AlphaResourcePack::load(AlphaResourceOwners &o, AlphaResourceReport &r
        o.shop_text_offsets[i+1]>shop_text_records->length-shop_text_dir||
        o.shop_text_records[o.shop_text_offsets[i+1]-1]!=0){o.release();return ESP_ERR_INVALID_SIZE;}
     o.shop_text_record_count=shop_text_count;
+    const auto *misc_text_records=find("misc-records.bin");uint8_t misc_text_head[4]{};
+    if(!misc_text_records||read(*misc_text_records,0,misc_text_head,4)!=ESP_OK){o.release();return ESP_FAIL;}
+    const uint32_t misc_text_count=u32(misc_text_head);const size_t misc_text_dir=4+size_t(misc_text_count+1)*4;
+    if(!misc_text_count||misc_text_count>512||misc_text_dir>misc_text_records->length){o.release();return ESP_ERR_INVALID_SIZE;}
+    o.misc_text_offsets=static_cast<uint32_t*>(psram_alloc(size_t(misc_text_count+1)*4));
+    o.misc_text_records=static_cast<char*>(psram_alloc(misc_text_records->length-misc_text_dir));
+    if(!o.misc_text_offsets||!o.misc_text_records){o.release();return ESP_ERR_NO_MEM;}
+    if(read(*misc_text_records,4,o.misc_text_offsets,size_t(misc_text_count+1)*4)!=ESP_OK||
+       read(*misc_text_records,misc_text_dir,o.misc_text_records,misc_text_records->length-misc_text_dir)!=ESP_OK||
+       !validate_misc_text_records(o.misc_text_offsets,o.misc_text_records,misc_text_records->length-misc_text_dir,misc_text_count)){o.release();return ESP_ERR_INVALID_SIZE;}
+    o.misc_text_record_count=misc_text_count;
     const auto *talk=find("talk.bin");if(!talk||talk->length<4){o.release();return ESP_ERR_INVALID_SIZE;}o.dialogue_data=static_cast<uint8_t*>(psram_alloc(talk->length));if(!o.dialogue_data){o.release();return ESP_ERR_NO_MEM;}if(read(*talk,0,o.dialogue_data,talk->length)!=ESP_OK){o.release();return ESP_FAIL;}o.dialogue_data_size=talk->length;
     const auto *shrines=find("shrines.bin");uint8_t shrine_count[4]{};if(!shrines||shrines->length!=4+8*56||read(*shrines,0,shrine_count,4)!=ESP_OK||u32(shrine_count)!=8){o.release();return ESP_ERR_INVALID_SIZE;}o.shrine_text=static_cast<char16_t*>(psram_alloc(8*24*sizeof(char16_t)));if(!o.shrine_text){o.release();return ESP_ERR_NO_MEM;}for(int i=0;i<8;++i){uint8_t b[56]{};if(read(*shrines,4+i*56,b,sizeof(b))!=ESP_OK){o.release();return ESP_FAIL;}char16_t*v=o.shrine_text+i*24;size_t vn=0,mn=0;for(int j=0;j<16;++j){v[j]=char16_t(u16(b+j*2));if(v[j])vn=j+1;}for(int j=0;j<8;++j){v[16+j]=char16_t(u16(b+32+j*2));if(v[16+j])mn=j+1;}o.shrine_data.virtues[i]={v,vn};o.shrine_data.mantras[i]={v+16,mn};o.shrine_data.x[i]=int32_t(u32(b+48));o.shrine_data.y[i]=int32_t(u32(b+52));}o.shrine_data.count=8;
     const auto *questions=find("questions.bin");uint8_t question_head[4]{};if(!questions||questions->length<4+29*4||read(*questions,0,question_head,4)!=ESP_OK||u32(question_head)!=28){o.release();return ESP_ERR_INVALID_SIZE;}uint8_t question_dir[29*4]{};if(read(*questions,4,question_dir,sizeof(question_dir))!=ESP_OK){o.release();return ESP_FAIL;}const size_t question_data_at=4+sizeof(question_dir),question_bytes=questions->length-question_data_at;if(u32(question_dir+28*4)!=question_bytes){o.release();return ESP_ERR_INVALID_SIZE;}o.question_text=static_cast<char*>(psram_alloc(question_bytes));if(!o.question_text){o.release();return ESP_ERR_NO_MEM;}if(read(*questions,question_data_at,o.question_text,question_bytes)!=ESP_OK){o.release();return ESP_FAIL;}for(size_t i=0;i<28;++i){const auto begin=u32(question_dir+i*4),end=u32(question_dir+(i+1)*4);if(begin>=end||end>question_bytes||o.question_text[end-1]!=0){o.release();return ESP_ERR_INVALID_SIZE;}o.questions[i]=o.question_text+begin;}o.question_count=28;
@@ -234,7 +246,7 @@ esp_err_t AlphaResourcePack::load(AlphaResourceOwners &o, AlphaResourceReport &r
     if(read(*signs,sign_text_at,o.sign_text,sign_text_bytes)!=ESP_OK||(sign_raw_bytes&&read(*signs,sign_raw_at,o.sign_raw,sign_raw_bytes)!=ESP_OK)){o.release();return ESP_FAIL;}
     for(uint32_t i=0;i<sign_count;++i){uint8_t b[sign_record]{};if(read(*signs,sign_header+size_t(i)*sign_record,b,sizeof(b))!=ESP_OK){o.release();return ESP_FAIL;}const uint32_t to=u32(b+8),tl=u32(b+12),ro=u32(b+16),rl=u32(b+20);if(to>=sign_text_bytes||tl>=sign_text_bytes-to||o.sign_text[to+tl]!=0||ro>sign_raw_bytes||rl>sign_raw_bytes-ro){o.release();return ESP_ERR_INVALID_SIZE;}auto &record=o.signs[i];record.map={b[0],i16(b+2)};record.x=b[4];record.y=b[5];record.value={o.sign_text+to,rl?o.sign_raw+ro:nullptr,rl};}
     o.sign_count=sign_count;
-    o.psram_bytes=over->length+under->length+init->length+init_ool->length+size_t(sc)*1024+dc*sizeof(openu5::DungeonData)+nc*sizeof(openu5::NpcSlot)+size_t(pc)*4+size_t(qc)*sizeof(openu5::SearchObject)+size_t(shc)*sizeof(openu5::ShardSpawn)+size_t(cmc)*(sizeof(openu5::CombatMap)+16)+size_t(cec)*(sizeof(openu5::CombatEnemy)+42)+size_t(ctc)*16+size_t(src)*(sizeof(openu5::ShopRecord)+64)+sn*4+talk->length+8*24*sizeof(char16_t)+question_bytes+intro_bytes+title_bytes+credits_bytes+creation->length+demo_bytes+1024+size_t(shop_text_count+1)*4+shop_text_records->length-shop_text_dir+size_t(look_count+1)*4+look->length-look_dir+size_t(sign_count)*sizeof(openu5::LookSignRecord)+sign_text_bytes+sign_raw_bytes;
+    o.psram_bytes=over->length+under->length+init->length+init_ool->length+size_t(sc)*1024+dc*sizeof(openu5::DungeonData)+nc*sizeof(openu5::NpcSlot)+size_t(pc)*4+size_t(qc)*sizeof(openu5::SearchObject)+size_t(shc)*sizeof(openu5::ShardSpawn)+size_t(cmc)*(sizeof(openu5::CombatMap)+16)+size_t(cec)*(sizeof(openu5::CombatEnemy)+42)+size_t(ctc)*16+size_t(src)*(sizeof(openu5::ShopRecord)+64)+sn*4+talk->length+8*24*sizeof(char16_t)+question_bytes+intro_bytes+title_bytes+credits_bytes+creation->length+demo_bytes+1024+size_t(shop_text_count+1)*4+shop_text_records->length-shop_text_dir+size_t(misc_text_count+1)*4+misc_text_records->length-misc_text_dir+size_t(look_count+1)*4+look->length-look_dir+size_t(sign_count)*sizeof(openu5::LookSignRecord)+sign_text_bytes+sign_raw_bytes;
     ESP_LOGI(kTag,"Loaded owners: %lu small floors, %lu dungeons, %lu NPC records; PSRAM=%zu",(unsigned long)sc,(unsigned long)dc,(unsigned long)nc,o.psram_bytes);
     return ESP_OK;
 }

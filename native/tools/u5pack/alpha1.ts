@@ -351,8 +351,7 @@ function lookData(): Buffer {
   header.writeUInt32LE(at, 4 + rows.length * 4); return Buffer.concat([header, ...encoded]);
 }
 
-function stringRecords(path: string): Buffer {
-  const rows: string[] = JSON.parse(readFileSync(resolve(ROOT, path), "utf8"));
+function encodeStringRecords(rows: string[]): Buffer {
   const encoded = rows.map((row) => Buffer.from(`${row}\0`, "utf8"));
   const header = Buffer.alloc(4 + (rows.length + 1) * 4);
   header.writeUInt32LE(rows.length, 0);
@@ -360,6 +359,30 @@ function stringRecords(path: string): Buffer {
   encoded.forEach((row, i) => { header.writeUInt32LE(at, 4 + i * 4); at += row.length; });
   header.writeUInt32LE(at, 4 + rows.length * 4);
   return Buffer.concat([header, ...encoded]);
+}
+
+function stringRecords(path: string): Buffer {
+  return encodeStringRecords(JSON.parse(readFileSync(resolve(ROOT, path), "utf8")));
+}
+
+// MISCMSG.DAT, extracted from the user's own original data by
+// extractor/src/parsers/ds-strings.ts into game/assets/ds-strings.json. This
+// is the borrowed-English text ShrineServices::record serves to both
+// blackthorn.cpp's capture/interrogation records (0-11) and shrine.cpp's
+// Codex/mantra records (12-44); see native/core/include/openu5/shrine.h.
+function miscMsgRecords(): Buffer {
+  const ds = JSON.parse(readFileSync(resolve(ROOT, "game/assets/ds-strings.json"), "utf8"));
+  const rows: string[] = ds["MISCMSG.DAT"];
+  if (!Array.isArray(rows) || rows.length < 45) {
+    throw new Error(`ds-strings.json MISCMSG.DAT has ${rows?.length ?? 0} records; expected at least 45`);
+  }
+  for (const row of rows) {
+    if ([...row].some((ch) => ch.codePointAt(0)! > 127)) {
+      throw new Error("MISCMSG.DAT record has a non-ASCII code point; stringRecords' utf8 encoding " +
+        "would no longer be byte-identical to the original latin1 extraction");
+    }
+  }
+  return encodeStringRecords(rows);
 }
 
 function signData(): Buffer {
@@ -410,6 +433,7 @@ const entries: Entry[] = [
   { name: "demo-scene.bin", data: demoScene, records: 4, stride: 76 },
   { name: "look.bin", data: lookData() },
   { name: "shop-records.bin", data: stringRecords("game/assets/shoppe.json") },
+  { name: "misc-records.bin", data: miscMsgRecords() },
   { name: "signs.bin", data: packedSigns, records: packedSigns.readUInt32LE(0), stride: ALPHA_SIGN_RECORD_BYTES },
   file("runes.ch", "original/u5/ultima5/runes.ch"),
   file("combatmaps.json", "game/assets/maps/combatmaps.json"),

@@ -146,6 +146,8 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
     quest_.moon_phases=resources_.moon_phases;quest_.moon_phase_count=resources_.moon_phase_count;
     dialogue_assets_.bind(resources_.dialogue_data,resources_.dialogue_data_size);dialogue_services_.registry={&dialogue_assets_,AlphaDialogueCache::lookup};
     shrine_services_.data=&resources_.shrine_data;
+    shrine_services_.context=this;
+    shrine_services_.record=[](void *p,int32_t index)->const char*{auto&r=*static_cast<AlphaRuntime*>(p);return tdeck::misc_text_record({r.resources_.misc_text_offsets,r.resources_.misc_text_records,r.resources_.misc_text_record_count},index);};
     combat_actor_overflow_=static_cast<openu5::CombatActor*>(heap_caps_calloc(32,sizeof(openu5::CombatActor),kPsram));
     combat_pile_overflow_=static_cast<openu5::CombatLootPile*>(heap_caps_calloc(32,sizeof(openu5::CombatLootPile),kPsram));
     combat_fields_=static_cast<openu5::CombatField*>(heap_caps_calloc(32,sizeof(openu5::CombatField),kPsram));

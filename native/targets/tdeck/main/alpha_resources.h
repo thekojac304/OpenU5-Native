@@ -5,6 +5,7 @@
 #include <cstdio>
 
 #include "esp_err.h"
+#include "misc_records.h"
 #include "openu5/commands.h"
 #include "openu5/combat.h"
 #include "openu5/dungeon.h"
@@ -19,10 +20,10 @@ namespace tdeck {
 constexpr char kAlphaResourcePath[] = "/sd/ultima5/openu5-alpha1-resources.bin";
 constexpr uint16_t kAlphaResourceVersionMajor = 2;
 constexpr uint16_t kAlphaResourceVersionMinor = 0;
-constexpr uint32_t kExpectedAlphaResourceSize = 1840139;
-constexpr uint32_t kExpectedAlphaResourceCrc32 = 0x550ebdd1U;
+constexpr uint32_t kExpectedAlphaResourceSize = 1843143;
+constexpr uint32_t kExpectedAlphaResourceCrc32 = 0x6ee17679U;
 constexpr char kExpectedAlphaResourceSha256[] =
-    "4e1fc6cd2733806232dbbd0af3bd6767b1d2ca58db8b3d2ce2d13a1531e50050";
+    "0ac80e41be1b2b3ae20966730cd775347c5ac3f2cfe4f1da8ad6eb8ee02c819b";
 
 struct CreationSprite {
     uint16_t width = 0, height = 0;
@@ -75,6 +76,12 @@ struct AlphaResourceOwners {
     uint32_t *shop_text_offsets = nullptr;
     char *shop_text_records = nullptr;
     size_t shop_text_record_count = 0;
+    // MISCMSG.DAT, borrowed English text: Blackthorn capture/interrogation
+    // (blackthorn.cpp records 0-11) and shrine Codex/mantra text (shrine.cpp
+    // records 12-44) both resolve through ShrineServices::record here.
+    uint32_t *misc_text_offsets = nullptr;
+    char *misc_text_records = nullptr;
+    size_t misc_text_record_count = 0;
     uint8_t *dialogue_data = nullptr;
     size_t dialogue_data_size = 0;
     char16_t *shrine_text = nullptr;

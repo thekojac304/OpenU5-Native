@@ -181,6 +181,15 @@ if(BUILD_TESTING)
   add_executable(batch4_group_b_tests tests/batch4_group_b_test.cpp)
   target_link_libraries(batch4_group_b_tests PRIVATE openu5_core)
   add_test(NAME batch4_group_b COMMAND batch4_group_b_tests)
+  # Batch 4.5B -- Blackthorn capture production-resource integration: proves
+  # ShrineServices::record/::context are actually wired to the packed
+  # MISCMSG.DAT resource the way AlphaRuntime wires it (real capture and
+  # shrine Codex text on hardware, not silence). See
+  # native/targets/tdeck/main/alpha_runtime.cpp and misc_records.h.
+  add_executable(batch45b_tests tests/batch45b_test.cpp)
+  target_link_libraries(batch45b_tests PRIVATE openu5_core)
+  target_include_directories(batch45b_tests PRIVATE ../targets/tdeck/main)
+  add_test(NAME batch45b COMMAND batch45b_tests "${CMAKE_CURRENT_SOURCE_DIR}/../../game/assets/ds-strings.json")
   find_program(NODE_EXECUTABLE node)
   if(OPENU5_REAL_ARENAS)
     if(NOT NODE_EXECUTABLE)
