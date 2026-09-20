@@ -77,7 +77,7 @@ static constexpr SpellEffect kEffects[] = {
 {MagicEffect::Reveal},
 {MagicEffect::Swarms,31,4},
 {MagicEffect::Seal},
-{MagicEffect::Animation},
+{MagicEffect::Unlock},
 {MagicEffect::FullHeal},
 {MagicEffect::Line,1,2},
 {MagicEffect::TimeStatus,81,30},

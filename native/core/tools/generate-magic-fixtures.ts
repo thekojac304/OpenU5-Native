@@ -8,7 +8,16 @@ import {OriginalRng} from '../../../game/src/core/rng-original.js';
 const root=new URL('../',import.meta.url),check=process.argv.includes('--check');
 function output(path:string,s:string){const url=new URL(path,root);if(check){if(readFileSync(url,'utf8')!==s)throw Error(`drift ${path}`);}else writeFileSync(url,s);}
 export const defs=buildSpellDefs(JSON.parse(readFileSync(new URL('../../../game/src/core/data/MagicDefinitions.json',import.meta.url),'utf8')));
-const effects=['Light,100','Attack,48','Awaken','Cure','Mani','Poof','Disarm','Repel','Wind','Peer','Summon','Food','Light,255','Attack,49','Field,53,0','Field,51,1','Field,52,2','Blink','Dispel','TimeStatus,80,20','Field,54,3','Ascend','Descend','Reveal','Swarms,31,4','Seal','Animation','FullHeal','Line,1,2','TimeStatus,81,30','Quake','TimeStatus,67,20','TimeStatus,78,10','DeathVision','Charm','Polymorph','Invisible','Attack,50','Illusion','Animation','Line,2,1','Fear','Resurrect','Daemon','Line,4,1','Line,3,2','Gate','TimeStatus,84,10','Animation'];
+// effects[26] (In Ex Por): audit R-16 / Batch 8 adjudication, not "Animation".
+// re/notes/magic.md's 2026-08-07 correction ("un worker, DOS llamadores")
+// proved In Ex Por's world branch (CAST:0x1026) calls the same
+// magic_door_open_worker as the Skull Key -- a real door-unlock effect, not a
+// no-op cast animation. game/src/core/magic/cast.ts case 26 still returns
+// castAnimOnly (tracked separately, content-audit.md PENDIENTE(3)); native
+// classifies it Unlock so kEffects stops contradicting that finding, without
+// wiring the tile mutation itself here (see magic.h's MagicEffect::Unlock doc
+// and native/core/src/magic.cpp's cast_target_prompt comment).
+const effects=['Light,100','Attack,48','Awaken','Cure','Mani','Poof','Disarm','Repel','Wind','Peer','Summon','Food','Light,255','Attack,49','Field,53,0','Field,51,1','Field,52,2','Blink','Dispel','TimeStatus,80,20','Field,54,3','Ascend','Descend','Reveal','Swarms,31,4','Seal','Unlock','FullHeal','Line,1,2','TimeStatus,81,30','Quake','TimeStatus,67,20','TimeStatus,78,10','DeathVision','Charm','Polymorph','Invisible','Attack,50','Illusion','Animation','Line,2,1','Fear','Resurrect','Daemon','Line,4,1','Line,3,2','Gate','TimeStatus,84,10','Animation'];
 output('src/magic_tables.inc','// Generated from authoritative MagicDefinitions.json, buildSpellDefs and magic/tables.ts.\nstatic constexpr SpellDef kSpells[] = {\n'+defs.map(d=>`{${[d.key,d.name,d.targetType,d.type,d.timePermitted].map(s=>JSON.stringify(s)).join(',')},${d.circle},${d.reagents.reduce((m,r)=>m|1<<r,0)},${TIME_PERMITTED_BITS[d.index]??0}}`).join(',\n')+'\n};\nstatic constexpr SpellEffect kEffects[] = {\n'+effects.map(e=>'{MagicEffect::'+e+'}').join(',\n')+'\n};\n');
 const rows:string[]=[];let cases=0;
 for(let spell=0;spell<49;++spell)for(let variant=0;variant<32;++variant)for(let si=0;si<16;++si){

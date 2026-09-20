@@ -10,23 +10,46 @@ const SpellDef *spell_definition(SpellId id) {
     return unsigned(id) < 49 ? &kSpells[unsigned(id)] : nullptr;
 }
 const char *spell_effect_summary(SpellId id) {
+    // Batch 8 / audit R-16 adjudication: nine entries below were hand-typed
+    // (commit c18f5b64) without cross-checking MagicDefinitions.json and drifted
+    // to describe a DIFFERENT spell's effect. Corrected against
+    // MagicDefinitions.json::SimpleDescription, cross-checked where the JSON's
+    // own accuracy was in question (In Zu -- re/notes/fx-lineaoe-negate-derivation.md
+    // mode-1 "dormir"; Quas An Wis / In An -- game/src/core/magic/tables.ts
+    // TIME_STATUS.confusion/negate). In Ex Por (#26) keeps its own note below --
+    // its old "Animates an object" text matched the ANIMATION-ONLY belief that
+    // re/notes/magic.md retracted 2026-08-07; MagicDefinitions.json's
+    // "unlocks magical locks" is the corrected, authoritative claim there, not
+    // a stale one. See GAMEPLAY_INTEGRATION_AUDIT.md R-16 for the full table.
     static constexpr const char *kSummaries[48] = {
         "Light / night vision", "Magic missile", "Awakens a companion", "Cures poison",
-        "Heals a companion", "Teleports a map creature", "Unlocks or disarms", "Repels a creature",
-        "Changes the wind", "View a gem map", "Summons a creature", "Creates food",
+        "Heals a companion", "Makes objects vanish", "Unlocks or disarms", "Repels a creature",
+        "Changes the wind", "Reveals caster's location", "Summons a creature", "Creates food",
         "Strong light / night vision", "Powerful fire attack", "Creates a fire field", "Creates a poison field",
         "Creates a sleep field", "Short-range blink", "Dispels a field", "Protects from sleep",
         "Creates an energy field", "Climb up one dungeon level", "Descend one dungeon level", "Reveals a creature",
-        "Summons insect swarms", "Seals a door", "Animates an object", "Fully heals a companion",
-        "Makes a creature invisible", "Speeds a companion", "Earthquake attack", "Negates magic",
-        "Shows nearby deaths", "Reveals the surrounding map", "Charms a creature", "Polymorphs a creature",
-        "Protects a companion", "Deadly map attack", "Creates an illusion", "Views a gem map",
-        "Fear attack", "Puts creatures to sleep", "Resurrects a companion", "Summons a daemon",
-        "Death bolt", "Fire bolt", "Moonstone gate travel", "Slows a creature"
+        "Summons insect swarms", "Seals a door", "Unlocks magical locks", "Fully heals a companion",
+        "Puts enemies to sleep", "Speeds a companion", "Earthquake attack", "Charms multiple enemies",
+        "Negates magic", "Reveals the surrounding map", "Charms a creature", "Polymorphs a creature",
+        "Grants invisibility", "Deadly map attack", "Creates an illusion", "Views a gem map",
+        "Blasts foes with poison", "Causes fear", "Resurrects a companion", "Summons a daemon",
+        "Death bolt", "Fire bolt", "Moonstone gate travel", "Stops passage of time"
     };
     return unsigned(id) < 48 ? kSummaries[unsigned(id)] : nullptr;
 }
 const char *spell_target_label(SpellId id) {
+    // Batch 8 / audit R-16: An Tym (#47) was the sole confirmed kTargets defect
+    // -- "Direction" left over from a hand-typed table (commit c18f5b64) even
+    // though An Tym's target_type is noSelection and its TimeStatus effect (a
+    // global time-stop, re/notes/fx-lineaoe-negate-derivation.md SS2) never
+    // consumes a direction, exactly like its noSelection siblings Quas An Wis
+    // and In An, both already "World". The other 11 spells the audit flagged
+    // (5,6,7,13,18,23,25,26,28,34,38) are NOT defects: their raw target_type
+    // string is the unreliable one (see the cast_target_prompt comment below),
+    // and "Direction" correctly names the real input -- a combat-reticle aim or
+    // a world/line getdir, both direction-driven -- that cast_target_prompt()
+    // and the line-spell getdir (re/notes/fx-lineaoe-negate-derivation.md SS1)
+    // already implement for them.
     static constexpr const char *kTargets[48] = {
         "World", "Direction", "Party member", "Party member", "Party member", "Direction",
         "Direction", "Direction", "World", "World", "World", "Party", "World", "Direction",
@@ -34,7 +57,7 @@ const char *spell_target_label(SpellId id) {
         "Dungeon", "Direction", "Area", "Direction", "Direction", "Party member", "Direction",
         "Self", "Area", "World", "World", "World", "Direction", "Self", "Self", "Area",
         "Direction", "World", "Direction", "World", "Party member", "World", "Direction", "Direction",
-        "World", "Direction"
+        "World", "World"
     };
     return unsigned(id) < 48 ? kTargets[unsigned(id)] : nullptr;
 }
@@ -49,14 +72,23 @@ const char *spell_target_label(SpellId id) {
 //
 // WORLD keys on the EFFECT, not on target_type.  target_type is unreliable
 // here (audit R-16: spell_target_label contradicts it for 12 of 48 spells) and
-// it over-selects: An Ylem (Poof), An Grav (Dispel) and In Ex Por (Animation)
-// all carry a selectedMapUnit / SelectedMapPosition target_type yet have NO
-// world effect at all.  The reference's world dispatcher (game/src/main.ts,
-// doCast) arms a getdir for exactly three effect descriptors -- sealDoor
-// (An Ex Por), disarmOrOpen (An Sanct) and blink (In Por) -- and falls off the
-// end of its else-if chain for everything else, consuming the charge and doing
-// nothing without ever prompting.  world_magic.cpp agrees independently: its
-// only pre-flight target guards name items 6, 25 and 17.
+// it over-selects: An Ylem (Poof) and An Grav (Dispel) carry a selectedMapUnit
+// target_type yet have NO world effect at all.  The reference's world
+// dispatcher (game/src/main.ts, doCast) arms a getdir for exactly three effect
+// descriptors -- sealDoor (An Ex Por), disarmOrOpen (An Sanct) and blink
+// (In Por) -- and falls off the end of its else-if chain for An Ylem/An Grav,
+// consuming the charge and doing nothing without ever prompting.
+//
+// In Ex Por (Unlock, formerly believed Animation/no-op) is NOT a fourth member
+// of that "no effect" group -- re/notes/magic.md's 2026-08-07 correction
+// proved its world branch (CAST:0x1026) calls the same magic_door_open_worker
+// as the Skull Key, so the reference itself is stale here (game/src/core/magic/
+// cast.ts case 26 still returns castAnimOnly and is tracked separately,
+// content-audit.md PENDIENTE(3)).  This entry keeps returning None below --
+// same as before -- because wiring the real getdir + tile mutation is a
+// dedicated follow-up (Batch 8 / audit R-16 scoped it out; see the kEffects[26]
+// note in magic_tables.inc), not a metadata fix.  world_magic.cpp's pre-flight
+// target guards (items 6 and 25) are unaffected by this for the same reason.
 //
 // UNDERGROUND there is no getdir at all.  The reference's doDungeonCast
 // resolves An Sanct against the party's dungeon FACING (applyAnSanctOpenChest)

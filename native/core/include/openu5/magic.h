@@ -85,6 +85,17 @@ enum class MagicEffect : uint8_t {
     Reveal,
     Swarms,
     Seal,
+    // Unlocks a magically-sealed door (0x97/0x98 -> 0xB8/0xBA), same tile
+    // transform the (U)se Skull Key path already applies (commands.cpp,
+    // CommandKind::UseItem case 17).  Audit R-16 / Batch 8: In Ex Por (#26)
+    // was long believed to be a no-op cast animation; re/notes/magic.md's
+    // 2026-08-07 correction ("un worker, DOS llamadores") proved its world
+    // branch (CAST:0x1026) calls the identical magic_door_open_worker as the
+    // Skull Key.  Classified here so kEffects/kSummaries stop contradicting
+    // that finding; the tile mutation itself is NOT wired to this kind yet
+    // (deliberately -- see the Batch 8 note in magic_tables.inc) and stays a
+    // tracked follow-up, same shape as Poof/Reveal/etc. above.
+    Unlock,
     Animation,
     Line,
     Quake,

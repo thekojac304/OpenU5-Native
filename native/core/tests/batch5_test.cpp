@@ -28,10 +28,21 @@
 //   still spend the charge.
 //
 //   Exactly three world casts take a direction in the reference: An Ex Por
-//   (sealDoor), An Sanct (disarmOrOpen) and In Por (blink).  An Ylem, An Grav
-//   and In Ex Por have no world effect branch at all -- they consume and do
-//   nothing, silently, without a prompt.  world_magic.cpp agrees independently:
-//   its only pre-flight target guards name items 6, 25 and 17.
+//   (sealDoor), An Sanct (disarmOrOpen) and In Por (blink).  An Ylem and An Grav
+//   have no world effect branch at all -- they consume and do nothing, silently,
+//   without a prompt.  world_magic.cpp agrees independently: its only
+//   pre-flight target guards name items 6, 25 and 17.
+//
+//   In Ex Por (#26) is tested below as a fourth "no prompt" case, matching
+//   TODAY's native behaviour, but audit R-16 (Batch 8) found the premise behind
+//   that behaviour is stale: re/notes/magic.md's 2026-08-07 correction proved
+//   In Ex Por's world branch (CAST:0x1026) calls the same magic_door_open_worker
+//   as the Skull Key, so the reference *should* raise a getdir here too. The
+//   reference itself hasn't been fixed yet (game/src/core/magic/cast.ts case 26
+//   still returns castAnimOnly; content-audit.md PENDIENTE(3)), and wiring the
+//   real getdir + tile mutation natively is a dedicated follow-up, not a
+//   metadata fix -- see the kEffects[26] note in magic_tables.inc. This test
+//   still asserts None because that is what both ports currently do.
 #include "openu5/magic.h"
 #include "openu5/outdoor.h"
 #include "openu5/quest_world.h"
@@ -127,14 +138,19 @@ static void policy_tests() {
 
     // A2 GREEN guard -- the spells whose target_type mentions a map unit or a
     // map position but which have NO world effect must NOT grow a fabricated
-    // prompt.  The reference's doCast has no branch for An Ylem (Poof),
-    // An Grav (Dispel) or In Ex Por (Animation): they consume and do nothing.
+    // prompt.  The reference's doCast has no branch for An Ylem (Poof) or
+    // An Grav (Dispel): they consume and do nothing.
     check(cast_target_prompt(SpellId::AnYlem, false, false) == CastTargetPrompt::None,
           "A2 guard: An Ylem has no world effect and must not prompt");
     check(cast_target_prompt(SpellId::AnGrav, false, false) == CastTargetPrompt::None,
           "A2 guard: An Grav has no world effect and must not prompt");
+    // In Ex Por (Unlock) is asserted None here too, but for a different reason
+    // than An Ylem/An Grav above -- see the file header and magic_tables.inc's
+    // kEffects[26] note.  It DOES have a real world effect (RE-confirmed
+    // 2026-08-07); wiring its getdir prompt is a tracked follow-up, not yet
+    // done, so today's answer is still None.
     check(cast_target_prompt(SpellId::InExPor, false, false) == CastTargetPrompt::None,
-          "A2 guard: In Ex Por has no world effect and must not prompt");
+          "A2 guard: In Ex Por's real door-unlock prompt is not wired yet (tracked follow-up, not this batch)");
     check(cast_target_prompt(SpellId::InLor, false, false) == CastTargetPrompt::None,
           "A2 guard: a targetless spell must not prompt in the world");
 

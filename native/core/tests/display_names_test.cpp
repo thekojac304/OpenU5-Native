@@ -1,5 +1,6 @@
 #include "openu5/display_names.h"
 #include "openu5/magic.h"
+#include "openu5/rng.h"
 
 #include <cstring>
 #include <iostream>
@@ -7,6 +8,7 @@
 namespace {
 int failures=0;
 void check(bool ok,const char *what){if(!ok){std::cerr<<"FAIL: "<<what<<'\n';++failures;}}
+bool has(const char *hay,const char *needle){return hay&&std::strstr(hay,needle)!=nullptr;}
 }
 
 int main(){
@@ -37,6 +39,64 @@ int main(){
           "An Nox description comes from its Cure effect");
     check(std::strcmp(spell_target_label(SpellId::VasFlam),"Direction")==0,
           "Vas Flam target label follows implemented targeting");
+
+    // Audit R-16 (Batch 8): kSummaries entries confirmed to contradict
+    // MagicDefinitions.json::SimpleDescription (and, for In Zu, the RE-derived
+    // line-spell mode-1 "dormir"/sleep effect). Semantic substring checks, not
+    // literal-string duplication of the table: each pins the corrected meaning
+    // in and the old, wrong meaning out.
+    check(has(spell_effect_summary(SpellId::AnYlem),"vanish")&&!has(spell_effect_summary(SpellId::AnYlem),"Teleport"),
+          "An Ylem summary matches its Poof effect (vanish), not a teleport");
+    check(has(spell_effect_summary(SpellId::InWis),"location")&&!has(spell_effect_summary(SpellId::InWis),"gem"),
+          "In Wis summary reveals the caster's location, not a gem map");
+    check(has(spell_effect_summary(SpellId::InZu),"sleep")&&!has(spell_effect_summary(SpellId::InZu),"invisible"),
+          "In Zu summary matches its sleep line-effect, not invisibility");
+    check(has(spell_effect_summary(SpellId::QuasAnWis),"harm")&&!has(spell_effect_summary(SpellId::QuasAnWis),"Negat"),
+          "Quas An Wis summary charms multiple enemies, not negate magic");
+    check(has(spell_effect_summary(SpellId::InAn),"Negat")&&!has(spell_effect_summary(SpellId::InAn),"death"),
+          "In An summary negates magic, not death vision");
+    check(has(spell_effect_summary(SpellId::SanctLor),"nvisib")&&!has(spell_effect_summary(SpellId::SanctLor),"Protect"),
+          "Sanct Lor summary grants invisibility, not a generic protection");
+    check(has(spell_effect_summary(SpellId::InNoxHur),"poison")&&!has(spell_effect_summary(SpellId::InNoxHur),"Fear"),
+          "In Nox Hur summary blasts foes with poison, not fear");
+    check(has(spell_effect_summary(SpellId::InQuasCorp),"fear")&&!has(spell_effect_summary(SpellId::InQuasCorp),"sleep"),
+          "In Quas Corp summary causes fear, not sleep");
+    check(has(spell_effect_summary(SpellId::AnTym),"time")&&!has(spell_effect_summary(SpellId::AnTym),"Slows"),
+          "An Tym summary stops the passage of time, not a slow effect");
+
+    // Audit R-16: the sole confirmed kTargets defect -- An Tym is a noSelection
+    // global time-stop, like its World-labelled siblings Quas An Wis/In An, not
+    // a direction-consuming spell.
+    check(std::strcmp(spell_target_label(SpellId::AnTym),"World")==0,
+          "An Tym target label is World, matching its noSelection siblings");
+
+    // Audit R-16: kEffects[26]/[28] adjudicated against RE evidence, not
+    // "fixed" to match the audit's guess -- lock the adjudicated values in so a
+    // future well-meaning edit doesn't flip them back based on the raw
+    // (unreliable) target_type/SimpleDescription text alone.
+    {
+        GameState g{}; TurnState t{}; auto &p = g.party.characters[0];
+        p.current_mp = 30; p.level = 8;
+        g.spell_quantities[unsigned(SpellId::InExPor)] = 1;
+        OriginalRng orng; orng.seed(1);
+        Rand rng{&orng, [](void *ctx, int32_t lo, int32_t hi) -> int32_t {
+                     return static_cast<OriginalRng *>(ctx)->next(lo, hi).value; }};
+        auto r = cast_spell(g, t, p, SpellId::InExPor, {1, false, -1, 0}, rng);
+        check(r.ok && r.effect.kind == MagicEffect::Unlock,
+              "In Ex Por is classified Unlock (RE-confirmed door-unlock), not Animation");
+    }
+    {
+        GameState g{}; TurnState t{}; auto &p = g.party.characters[0];
+        p.current_mp = 30; p.level = 8;
+        g.spell_quantities[unsigned(SpellId::InZu)] = 1;
+        OriginalRng orng; orng.seed(1);
+        Rand rng{&orng, [](void *ctx, int32_t lo, int32_t hi) -> int32_t {
+                     return static_cast<OriginalRng *>(ctx)->next(lo, hi).value; }};
+        auto r = cast_spell(g, t, p, SpellId::InZu, {0, true, -1, 0}, rng);
+        check(r.ok && r.effect.kind == MagicEffect::Line,
+              "In Zu stays classified Line (RE-confirmed lineAoe delivery, sleep is mode 1), not re-typed to a sleep-only kind");
+    }
+
     check(is_generic_identifier_label("Equipment 4"),"generic equipment label detected");
     check(is_generic_identifier_label("Location 13"),"generic location label detected");
     check(!is_generic_identifier_label("Iolo's Hut"),"authoritative label accepted");
