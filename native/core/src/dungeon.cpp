@@ -1,4 +1,5 @@
 #include "openu5/dungeon.h"
+#include "openu5/dungeon_view.h"
 #include "openu5/loot.h"
 #include <cstring>
 namespace openu5 {
@@ -417,8 +418,10 @@ void dungeon_action(GameState &g, TurnState &t, DungeonState &d, DungeonAction a
             return;
         }
         if (type == 12) {
-            int loc = d.pos.dungeon;
-            int variant = loc == 33 || loc == 36 || loc == 37 ? 3 : loc == 38 || loc == 39 ? 2 : 1;
+            // One derivation of g_dng_wall_variant, shared with the first-person
+            // view (dungeon_view.cpp): the Search message and the wall texture
+            // must never be able to disagree about which dungeon this is.
+            int variant = dungeon_wall_variant(d.pos.dungeon);
             if (variant == 1)
                 r.msg("Nothing on the stalactite.");
             else if (variant == 2)

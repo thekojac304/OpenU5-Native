@@ -1,4 +1,5 @@
 #pragma once
+#include "dungeon.h"
 #include "state.h"
 #include "turn.h"
 #include <cstddef>
@@ -37,4 +38,26 @@ struct HudWorldState {
 HudWorldState hud_world_state(const GameState &, const TurnState &,
                               const int32_t *moon_phases, size_t moon_phase_count,
                               bool dungeon_active = false);
+
+/**
+ * R-05 -- the two DUNGEON bands.  The original replaces the overworld's sky and
+ * wind strips with the dungeon's own readout while a dungeon view is mounted:
+ * the top band is the level ("L1".."L8", g_floor 0..7 + 1) and the bottom band
+ * is the facing ("Dir:" + the direction name right-justified in a field of 7),
+ * both bracketed.  Reference: skin/fiel/dungeon.ts `dungeonLevelLabel` /
+ * `dungeonDirLabel` / `DUNGEON_DIR_NAMES`, painted by skin.ts; the direction
+ * literals are the same English table the wind strip uses.
+ *
+ * On the T-Deck the two bands are drawn INSIDE the 176x176 viewport, because the
+ * device frame is 2 px where the original's is 8 -- a deliberate, documented
+ * platform divergence.  Their CONTENT, which is what this function owns, is the
+ * original's; without it a turn in place produced no on-screen feedback at all
+ * in a corridor whose two directions look alike.
+ */
+struct HudDungeonBands {
+    char level[8]{};
+    char direction[16]{};
+    bool active = false;
+};
+HudDungeonBands hud_dungeon_bands(const DungeonState &, bool dungeon_active);
 }

@@ -536,8 +536,15 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
                             const DeviceDebugScreen *debug,bool movement_mode,
                             uint8_t ui_size,const DeviceShopView *shop,const DeviceSelectionView *selection,
                             const DeviceContextActionBar *context_bar,DevicePartyHighlight party_highlight,
-                            uint32_t viewport_crc)
+                            uint32_t viewport_crc,const openu5::HudDungeonBands *dungeon_bands)
 {
+    // R-05.  The T-Deck's 176x176 viewport has no 8 px margin to put the
+    // original's dungeon bands in, so they are drawn over the same two 9 px
+    // strips the overworld uses for sky and wind -- a documented platform
+    // divergence in POSITION only.  Their CONTENT is the original's, and
+    // without them a turn in place gave the player no feedback whatsoever in a
+    // corridor whose two directions look alike.
+    const bool bands_active=dungeon_bands&&dungeon_bands->active;
     if(!display_initialized_||!pixels)return ESP_ERR_INVALID_STATE;
     (void)turn;(void)overlay;
     debug_last_full_redraw_=false;debug_last_dirty_regions_=0;debug_last_pixels_=0;
@@ -591,7 +598,24 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
         ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudPartyFrameX,0,kDisplayWidth-openu5::kHudPartyFrameX,kDisplayHeight,kBlack),kTag,"leave compact selector");
         selection_cache_valid_=false;context_cache_valid_=false;alpha_ui_cache_valid_=false;
     }
+    // Centre a band caption in the 9 px strip, the T-Deck stand-in for the
+    // original's bracketed centred band (skin.ts drawCenteredBand).
+    auto band_text=[](char *out,size_t cap,const char *text){
+        const int columns=openu5::kHudSkyBarW/openu5::kHudCellWidth;
+        int n=0;while(text[n])++n;
+        int pad=(columns-n)/2;if(pad<0)pad=0;
+        size_t at=0;
+        for(int i=0;i<pad&&at+1<cap;++i)out[at++]=' ';
+        for(int i=0;i<n&&at+1<cap;++i)out[at++]=text[i];
+        out[at]=0;
+    };
     auto draw_sky_bar=[&]()->esp_err_t{
+        if(bands_active){
+            char line[34]{};band_text(line,sizeof(line),dungeon_bands->level);
+            ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudSkyBarX,openu5::kHudSkyBarY,
+                                openu5::kHudSkyBarW,openu5::kHudSkyBarH,line,kWhite),kTag,"draw dungeon level band");
+            return ESP_OK;
+        }
         if(!runes_font)return ESP_ERR_INVALID_ARG;
         ESP_RETURN_ON_ERROR(set_display_window(openu5::kHudSkyBarX,openu5::kHudSkyBarY,
                             openu5::kHudSkyBarW,openu5::kHudSkyBarH),kTag,"set U5 sky window");
@@ -607,9 +631,11 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
         return ESP_OK;
     };
     auto draw_wind_bar=[&]()->esp_err_t{
-        char line[30]{};std::snprintf(line,sizeof(line)," Wind: %-16.16s",hud.wind_visible?hud.wind:"--");
+        char line[34]{};
+        if(bands_active)band_text(line,sizeof(line),dungeon_bands->direction);
+        else std::snprintf(line,sizeof(line)," Wind: %-16.16s",hud.wind_visible?hud.wind:"--");
         ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudWindBarX,openu5::kHudWindBarY,
-                            openu5::kHudWindBarW,openu5::kHudWindBarH,line,kWhite),kTag,"draw U5 wind bar");
+                            openu5::kHudWindBarW,openu5::kHudWindBarH,line,kWhite),kTag,"draw lower strip");
         return ESP_OK;
     };
     if(animation_only&&animated_cells){
@@ -621,8 +647,15 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
                                 pixels+(row*openu5::kTilePixels+clip_top)*openu5::kViewportPixels+col*openu5::kTilePixels,openu5::kViewportPixels),kTag,"draw clipped animated Alpha cell");}
         return ESP_OK;
     }
-    uint32_t sky_signature=hud.sky_visible?0x51U:0x17U;for(size_t i=0;i<hud.mark_count;++i)sky_signature=sky_signature*16777619U^(uint32_t(hud.marks[i].cell)<<16|uint32_t(hud.marks[i].glyph)<<8|uint32_t(hud.marks[i].sun));
-    char wind_text[30]{};std::snprintf(wind_text,sizeof(wind_text)," Wind: %-16.16s",hud.wind_visible?hud.wind:"--");
+    // The band captions take part in the SAME cache signatures as the strips
+    // they replace, so a Klimb (level) or a turn (direction) repaints its strip
+    // on the very frame that produced it, and nothing else repaints.
+    uint32_t sky_signature=bands_active?0x9dU:hud.sky_visible?0x51U:0x17U;
+    if(bands_active)for(const char *c=dungeon_bands->level;*c;++c)sky_signature=sky_signature*16777619U^uint32_t(uint8_t(*c));
+    else for(size_t i=0;i<hud.mark_count;++i)sky_signature=sky_signature*16777619U^(uint32_t(hud.marks[i].cell)<<16|uint32_t(hud.marks[i].glyph)<<8|uint32_t(hud.marks[i].sun));
+    char wind_text[34]{};
+    if(bands_active)std::snprintf(wind_text,sizeof(wind_text),"%.30s",dungeon_bands->direction);
+    else std::snprintf(wind_text,sizeof(wind_text)," Wind: %-16.16s",hud.wind_visible?hud.wind:"--");
     const bool viewport_changed=!viewport_cache_valid_||viewport_crc_!=viewport_crc;
     if(viewport_changed){
         constexpr int top=openu5::kHudSkyBarH;
@@ -631,7 +664,7 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
         debug_last_pixels_+=openu5::kViewportPixels*height;++debug_last_dirty_regions_;
     }
     if(!sky_bar_cache_valid_||sky_bar_signature_!=sky_signature){ESP_RETURN_ON_ERROR(draw_sky_bar(),kTag,"compose authentic sky strip");sky_bar_signature_=sky_signature;sky_bar_cache_valid_=true;debug_last_pixels_+=openu5::kHudSkyBarW*openu5::kHudSkyBarH;++debug_last_dirty_regions_;}
-    if(!viewport_cache_valid_||std::strcmp(wind_bar_cache_,wind_text)!=0){ESP_RETURN_ON_ERROR(draw_wind_bar(),kTag,"compose wind strip");std::snprintf(wind_bar_cache_,sizeof(wind_bar_cache_),"%s",wind_text);debug_last_pixels_+=openu5::kHudWindBarW*openu5::kHudWindBarH;++debug_last_dirty_regions_;}
+    if(!viewport_cache_valid_||std::strcmp(wind_bar_cache_,wind_text)!=0){ESP_RETURN_ON_ERROR(draw_wind_bar(),kTag,"compose lower strip");std::snprintf(wind_bar_cache_,sizeof(wind_bar_cache_),"%s",wind_text);debug_last_pixels_+=openu5::kHudWindBarW*openu5::kHudWindBarH;++debug_last_dirty_regions_;}
     viewport_crc_=viewport_crc;viewport_cache_valid_=true;
     if((!shop||!shop->active)&&(!selection||!selection->active)&&alpha_ui_size_cache_!=ui_size){
         ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudPartyFrameX,0,kDisplayWidth-openu5::kHudPartyFrameX,kDisplayHeight,kBlack),kTag,"reflow gameplay UI scale");

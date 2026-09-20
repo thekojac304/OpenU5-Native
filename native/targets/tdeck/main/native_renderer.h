@@ -63,9 +63,15 @@ esp_err_t render_snapshot(const PresentationTileCache &, const PresentationSnaps
  * Render the active 8x8 dungeon floor as the handheld first-person viewport.
  * This deliberately consumes DungeonState, rather than surface return
  * coordinates, so a live dungeon session can never fall through to world art.
+ *
+ * R-05: the DECISIONS (which slice, which feature, which depth, in what order,
+ * and whether there is any light at all) come from openu5::plan_dungeon_view()
+ * in native/core, which is host-tested by `dungeon_view_regression`.  GameState
+ * and TurnState are required because the light gate reads the torch counter and
+ * the light-spell timer -- the same pair dungeon.cpp's (S)earch reads.
  */
-esp_err_t render_dungeon_view(const DungeonState &, uint16_t *rgb565,
-                              size_t pixel_count, RenderReport &report,
+esp_err_t render_dungeon_view(const GameState &, const TurnState &, const DungeonState &,
+                              uint16_t *rgb565, size_t pixel_count, RenderReport &report,
                               uint16_t &primitives);
 
 /** Render the reference-style 22x22 connected-floor map shown by View Gem. */

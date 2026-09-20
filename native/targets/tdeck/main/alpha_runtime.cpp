@@ -1728,7 +1728,7 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
             e=openu5::render_world_gem_view(world_gem_map,game_.position.xy,viewport_,openu5::kViewportPixelCount,report,dungeon_primitives);
             presentation_source="gem-view";
         } else if(dungeon_source)
-            e=openu5::render_dungeon_view(dungeon_,viewport_,openu5::kViewportPixelCount,report,dungeon_primitives);
+            e=openu5::render_dungeon_view(game_,turn_,dungeon_,viewport_,openu5::kViewportPixelCount,report,dungeon_primitives);
         else e=openu5::render_snapshot(tile_cache_,snapshot,tick,game_.turns_since_start,
                                        viewport_,openu5::kViewportPixelCount,report);
     }
@@ -1757,10 +1757,14 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
         *debug_view_=debug_screen();debug_ptr=debug_view_;animation_only=false;++debug_render_count_;
     }
     const auto hud=openu5::hud_world_state(game_,turn_,resources_.moon_phases,resources_.moon_phase_count,dungeon_.active);
+    // R-05: while the dungeon3d source owns the viewport, the two strips carry
+    // the dungeon's level and facing.  The gem view and the zodiac view are
+    // full-square presentations of their own and keep the world bars.
+    const auto dungeon_bands=openu5::hud_dungeon_bands(dungeon_,dungeon_source&&!gem_view_active_&&!zodiac_view_active_);
     if(e==ESP_OK)e=board.show_alpha(viewport_,*ui_,game_,turn_,hud,resources_.runes_font,overlay(),report.animated_cells,
                                      animation_only,debug_ptr,
                                      input_.movement_mode_active(ui_->mode(),ui_->accepts_direction_input()),
-                                     settings_.ui_size,compose_shop_view(),compose_selection_view(),compose_context_bar(),compose_party_highlight(),report.viewport_crc32);
+                                     settings_.ui_size,compose_shop_view(),compose_selection_view(),compose_context_bar(),compose_party_highlight(),report.viewport_crc32,&dungeon_bands);
     const auto us=uint32_t(esp_timer_get_time()-start);render_high_us_=std::max(render_high_us_,us);
     if(dungeon_source){
         dungeon_render_high_us_=std::max(dungeon_render_high_us_,us);

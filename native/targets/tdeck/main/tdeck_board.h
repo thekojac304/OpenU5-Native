@@ -76,7 +76,12 @@ public:
                          const DeviceSelectionView *selection = nullptr,
                          const DeviceContextActionBar *context_bar = nullptr,
                          DevicePartyHighlight party_highlight = {},
-                         uint32_t viewport_crc = 0);
+                         uint32_t viewport_crc = 0,
+                         // R-05: while a dungeon view is mounted the two 9 px
+                         // strips over the viewport carry the dungeon's own
+                         // level and facing instead of a blank sky and
+                         // "Wind: --".  Null or inactive = the world bars.
+                         const openu5::HudDungeonBands *dungeon_bands = nullptr);
     esp_err_t show_frontend(const openu5::FrontendView &, const uint16_t *preview = nullptr,
                             const uint16_t *title_art = nullptr,
                             const uint16_t *panel_art = nullptr,
@@ -137,7 +142,7 @@ private:
     uint32_t viewport_crc_ = 0;
     uint32_t sky_bar_signature_ = 0;
     bool sky_bar_cache_valid_ = false;
-    char wind_bar_cache_[30]{};
+    char wind_bar_cache_[34]{};
     DeviceShopView shop_cache_{};
     bool shop_cache_valid_ = false;
     DeviceSelectionView selection_cache_{};

@@ -1,5 +1,6 @@
 #include "native_renderer.h"
 
+#include "openu5/dungeon_view.h"
 #include "openu5/world_fx.h"
 
 #include <algorithm>
@@ -107,6 +108,57 @@ constexpr uint16_t kDungeonMortar = 0xce79;
 constexpr uint16_t kDungeonFeature = 0x07e0;
 constexpr uint16_t kDungeonDanger = 0xf800;
 
+// R-05.  The EGA-16 entries the reference's PACKLESS dungeon renderer uses
+// (skin/fiel/dungeon.ts drawSidePlaceholder / drawFrontPlaceholder /
+// drawContents), converted to RGB565.  The device is still packless -- the
+// DNG*.16 slice atlases and the ITEMS.16 feature bank are not in the asset pack
+// yet -- so it draws the reference's OWN fallback rather than an invented one.
+constexpr uint16_t kEga0 = 0x0000;  // #000000
+constexpr uint16_t kEga6 = 0xaaa0;  // #aa5500 brown  (door panel, closed chest)
+constexpr uint16_t kEga7 = 0xad55;  // #aaaaaa light grey (front wall, right side)
+constexpr uint16_t kEga8 = 0x52aa;  // #555555 dark grey  (left side, open chest)
+constexpr uint16_t kEga10 = 0x57ea; // #55ff55
+constexpr uint16_t kEga11 = 0x57ff; // #55ffff light cyan (fountain)
+constexpr uint16_t kEga12 = 0xfaaa; // #ff5555
+constexpr uint16_t kEga13 = 0xfabf; // #ff55ff
+constexpr uint16_t kEga14 = 0xffea; // #ffff55 yellow (ladder)
+
+/**
+ * Ring box at `depth` -- the reference's `ringBox()`, derived from the real
+ * SIDE_X slice table rather than from hand-tuned constants.  `near` spans to the
+ * viewport edge at depth 0.
+ */
+struct DungeonRing { int l, r, top, bot; };
+DungeonRing dungeon_ring(int depth) {
+    const int d = depth < 0 ? 0 : depth > kDungeonMaxDepth ? kDungeonMaxDepth : depth;
+    return {kDungeonSideXLeft[d], kDungeonSideXRight[d] + (d == 0 ? 24 : 0),
+            kDungeonSliceY + d * 18, kDungeonSliceY + kDungeonSliceHeight - d * 18};
+}
+
+/** Feature anchor box at `depth` -- the reference's `featureBox()`. */
+struct DungeonFeatureBox { int cx, floor_y, s; };
+DungeonFeatureBox dungeon_feature_box(int depth) {
+    static const int inner_l[4] = {40, 72, 88, 96};
+    static const int inner_r[4] = {152, 120, 104, 96};
+    static const int floor_y[4] = {150, 122, 106, 98};
+    const int d = depth < 0 ? 0 : depth > kDungeonMaxDepth ? kDungeonMaxDepth : depth;
+    const int w = std::max(8, inner_r[d] - inner_l[d]);
+    return {kDungeonCenterX, floor_y[d], w};
+}
+
+/**
+ * Wall tint by `g_dng_wall_variant`.  The original swaps the whole slice ATLAS
+ * (DNG1 olive / DNG2 red / DNG3 grey); packless, the placeholder can only carry
+ * the hue.  Replace this with atlas selection once R-05's asset half lands.
+ */
+uint16_t dungeon_variant_wall(uint8_t variant, uint16_t base) {
+    switch (variant) {
+    case 1: return 0x9d45; // olive
+    case 2: return 0xa984; // red-brown
+    default: return base;  // grey
+    }
+}
+
 void dungeon_pixel(uint16_t *pixels, int x, int y, uint16_t color, uint16_t &primitives) {
     if (x < 0 || y < 0 || x >= kViewportPixels || y >= kViewportPixels) return;
     pixels[y * kViewportPixels + x] = color;
@@ -135,6 +187,29 @@ void dungeon_line(uint16_t *pixels, int x0, int y0, int x1, int y1,
         if (doubled >= dy) { error += dy; x0 += sx; }
         if (doubled <= dx) { error += dx; y0 += sy; }
     }
+}
+
+/**
+ * Fill the trapezoid a side slice occupies between its near and far rings --
+ * the packless stand-in for the pre-drawn perspective slice.  Scanline fill
+ * between the two interpolated edges, so it clips like any other primitive.
+ */
+void dungeon_side_quad(uint16_t *pixels, const DungeonRing &near, const DungeonRing &far,
+                       bool left, uint16_t fill, uint16_t &primitives) {
+    const int nx = left ? near.l : near.r, fx = left ? far.l : far.r;
+    const int span = far.top - near.top;
+    if (span <= 0) return;
+    for (int i = 0; i <= span; ++i) {
+        const int y_top = near.top + i, y_bot = near.bot - i;
+        const int x = nx + (fx - nx) * i / span;
+        const int a = left ? nx : x, b = left ? x : nx;
+        dungeon_line(pixels, a, y_top, b, y_top, fill, primitives);
+        dungeon_line(pixels, a, y_bot, b, y_bot, fill, primitives);
+        dungeon_pixel(pixels, x, y_top, kEga0, primitives);
+        dungeon_pixel(pixels, x, y_bot, kEga0, primitives);
+    }
+    dungeon_line(pixels, nx, near.top, nx, near.bot, kEga0, primitives);
+    dungeon_line(pixels, fx, far.top, fx, far.bot, kEga0, primitives);
 }
 
 bool dungeon_wall(const DungeonState &d, int x, int y) {
@@ -351,65 +426,172 @@ esp_err_t render_snapshot(const PresentationTileCache &cache,const PresentationS
     report.map_context=snapshot.combat?"combat authoritative snapshot":"world authoritative snapshot";return ESP_OK;
 }
 
-esp_err_t render_dungeon_view(const DungeonState &d, uint16_t *pixels, size_t count,
+esp_err_t render_dungeon_view(const GameState &g, const TurnState &t, const DungeonState &d,
+                              uint16_t *pixels, size_t count,
                               RenderReport &report, uint16_t &primitives) {
     report = {}; primitives = 0;
     if (!d.active || !pixels || count < kViewportPixelCount) return ESP_ERR_INVALID_ARG;
-    // This is a first-person compositor, not a tile-map fallback.  It reads the
-    // live dungeon floor directly and uses the same blocking rule as movement.
+    // R-05.  WHAT is drawn is decided by openu5::plan_dungeon_view() in
+    // native/core -- the portable, host-tested seam that mirrors the original's
+    // dng_draw_view driver.  This function only PAINTS the plan; it no longer
+    // re-derives geometry, sight or contents from the map, so the picture cannot
+    // disagree with the core about what the party is looking at.
+    const auto plan = plan_dungeon_view(g, t, d);
+
+    // Light gate (DUNGEON:0x1AD6): with neither torch nor light spell the
+    // original skips the whole raycast and the viewport stays black.
+    if (!plan.lit) {
+        for (size_t i = 0; i < kViewportPixelCount; ++i) pixels[i] = kDungeonBlack;
+        primitives = uint16_t(kViewportPixelCount);
+        dungeon_report(report, d, pixels);
+        report.map_context = "dungeon3d unlit viewport";
+        return ESP_OK;
+    }
+
     for (int y = 0; y < kViewportPixels; ++y) {
         const uint16_t color = y < kViewportPixels / 2 ? kDungeonCeiling : kDungeonFloor;
         for (int x = 0; x < kViewportPixels; ++x) pixels[y * kViewportPixels + x] = color;
     }
     primitives = uint16_t(kViewportPixelCount);
-    constexpr int left[] = {0, 20, 44, 64, 78};
-    constexpr int top[] = {0, 20, 42, 62, 76};
-    constexpr int right[] = {175, 155, 131, 111, 97};
-    constexpr int bottom[] = {175, 155, 133, 113, 99};
-    constexpr int dx[] = {0, 1, 0, -1};
-    constexpr int dy[] = {-1, 0, 1, 0};
-    const int facing = int(d.pos.facing) & 3;
-    const int side_left = (facing + 3) & 3, side_right = (facing + 1) & 3;
-    int wall_depth = 4;
-    for (int depth = 1; depth <= 4; ++depth) {
-        const int x = int(d.pos.x) + dx[facing] * depth;
-        const int y = int(d.pos.y) + dy[facing] * depth;
-        if (dungeon_wall(d, x, y)) { wall_depth = depth; break; }
-    }
-    // Perspective corridor frames and the two side tests are deliberately
-    // independent of retained world coordinates.
-    for (int depth = 0; depth < wall_depth; ++depth) {
-        const int cx = int(d.pos.x) + dx[facing] * depth;
-        const int cy = int(d.pos.y) + dy[facing] * depth;
-        dungeon_line(pixels, left[depth], top[depth], right[depth], top[depth], kDungeonMortar, primitives);
-        dungeon_line(pixels, left[depth], bottom[depth], right[depth], bottom[depth], kDungeonMortar, primitives);
-        if (dungeon_wall(d, cx + dx[side_left], cy + dy[side_left])) {
-            dungeon_line(pixels, left[depth], top[depth], left[depth + 1], top[depth + 1], kDungeonWall, primitives);
-            dungeon_line(pixels, left[depth], bottom[depth], left[depth + 1], bottom[depth + 1], kDungeonWall, primitives);
+
+    const uint16_t wall_tint = dungeon_variant_wall(plan.wall_variant, kEga7);
+
+    for (uint8_t i = 0; i < plan.count; ++i) {
+        const auto &op = plan.ops[i];
+        switch (op.kind) {
+        case DungeonOpKind::Side: {
+            // base = slice - depth.  Bases 0 (plain wall), 4 (side door) and
+            // 0x14 (alcove) are solid; 0x10 is an OPEN passage, which the
+            // reference paints black so the corridor reads as continuing.
+            const int base = int(op.slice) - int(op.depth);
+            const bool solid = base != 0x10;
+            const bool left = op.side == DungeonSide::Left;
+            const auto near_ring = dungeon_ring(op.depth);
+            const auto far_ring = dungeon_ring(std::min<int>(op.depth + 1, kDungeonMaxDepth));
+            const uint16_t fill = solid ? (left ? kEga8 : wall_tint) : kEga0;
+            dungeon_side_quad(pixels, near_ring, far_ring, left, fill, primitives);
+            const int edge_a = left ? near_ring.l : far_ring.r;
+            const int edge_b = left ? far_ring.l : near_ring.r;
+            const int inner = std::min(edge_a, edge_b) + 1;
+            const int outer = std::max(edge_a, edge_b) - 1;
+            if (base == 4) {
+                // A side DOOR.  Packless, mark it so a doorway on the wall
+                // beside you is not mistaken for plain masonry.
+                const int h = (near_ring.bot - near_ring.top) / 3;
+                if (outer > inner)
+                    dungeon_rect(pixels, inner, near_ring.bot - h, outer, near_ring.bot - 2,
+                                 kEga6, primitives);
+            } else if (base == 0x14) {
+                // An ALCOVE (special wall 0xC): a recessed dark panel.
+                const int mid = (near_ring.top + near_ring.bot) / 2;
+                if (outer > inner)
+                    dungeon_rect(pixels, inner, mid - 12, outer, mid + 12, kEga0, primitives);
+            } else if (solid) {
+                for (int y = near_ring.top + 12; y < near_ring.bot; y += 20)
+                    dungeon_line(pixels, edge_a, y, edge_b, y, kDungeonMortar, primitives);
+            }
+            break;
         }
-        if (dungeon_wall(d, cx + dx[side_right], cy + dy[side_right])) {
-            dungeon_line(pixels, right[depth], top[depth], right[depth + 1], top[depth + 1], kDungeonWall, primitives);
-            dungeon_line(pixels, right[depth], bottom[depth], right[depth + 1], bottom[depth + 1], kDungeonWall, primitives);
+        case DungeonOpKind::Front: {
+            // The dead end sits on the ring BEHIND the last open cell, exactly
+            // as the reference's drawFrontPlaceholder anchors it.
+            const auto box = dungeon_ring(std::min<int>(op.depth + 1, kDungeonMaxDepth));
+            const int base = int(op.slice) - int(op.depth);
+            dungeon_rect(pixels, box.l, box.top, box.r, box.bot,
+                         base == 0x18 ? kEga8 : wall_tint, primitives);
+            dungeon_line(pixels, box.l, box.top, box.r, box.top, kEga0, primitives);
+            dungeon_line(pixels, box.l, box.bot, box.r, box.bot, kEga0, primitives);
+            dungeon_line(pixels, box.l, box.top, box.l, box.bot, kEga0, primitives);
+            dungeon_line(pixels, box.r, box.top, box.r, box.bot, kEga0, primitives);
+            if (base == 12) {
+                // Dead end WITH A DOOR: rooms-broke, a normal door, a room, or a
+                // revealed secret door.  Before Batch 9 all four painted a blank
+                // grey wall, so a doorway was indistinguishable from masonry.
+                const int w = (box.r - box.l) * 2 / 5;
+                const int h = (box.bot - box.top) * 62 / 100;
+                const int cx = (box.l + box.r) / 2;
+                dungeon_rect(pixels, cx - w / 2, box.bot - h, cx + w / 2, box.bot, kEga6,
+                             primitives);
+            } else if (base == 8) {
+                for (int y = box.top + 5; y < box.bot; y += 10)
+                    dungeon_line(pixels, box.l, y, box.r, y, kDungeonMortar, primitives);
+                for (int x = box.l + 8; x < box.r; x += 16)
+                    dungeon_line(pixels, x, box.top, x, box.bot, kDungeonMortar, primitives);
+            }
+            break;
         }
-    }
-    const int wl = left[wall_depth], wt = top[wall_depth];
-    const int wr = right[wall_depth], wb = bottom[wall_depth];
-    dungeon_rect(pixels, wl, wt, wr, wb, kDungeonWall, primitives);
-    for (int y = wt + 5; y < wb; y += 10)
-        dungeon_line(pixels, wl, y, wr, y, kDungeonMortar, primitives);
-    for (int x = wl + 8; x < wr; x += 16)
-        dungeon_line(pixels, x, wt, x, wb, kDungeonMortar, primitives);
-    // A live wanderer is an authoritative part of DungeonState and must appear
-    // in the same first-person direction used by the core's attack command.
-    const int wx = (int(d.pos.x) + dx[facing]) & 7, wy = (int(d.pos.y) + dy[facing]) & 7;
-    if (d.wanderer.type != 255 && !d.wanderer.hidden && d.wanderer.floor == d.pos.floor &&
-        d.wanderer.x == wx && d.wanderer.y == wy && wall_depth > 1) {
-        dungeon_rect(pixels, 80, 62, 95, 110, kDungeonDanger, primitives);
-        dungeon_rect(pixels, 84, 52, 91, 62, kDungeonDanger, primitives);
-    }
-    const int here = dungeon_cell(d, d.pos.floor, d.pos.x, d.pos.y) >> 4;
-    if (here >= 1 && here <= 8) {
-        dungeon_rect(pixels, 82, 132, 93, 143, here == 8 ? kDungeonDanger : kDungeonFeature, primitives);
+        case DungeonOpKind::Feature: {
+            const bool field = op.cell_type == uint8_t(DungeonCellKind::MagicField);
+            if (!field && !dungeon_feature_drawable(op.cell_type, op.sub)) break;
+            const auto box = dungeon_feature_box(op.depth);
+            switch (DungeonCellKind(op.cell_type)) {
+            case DungeonCellKind::LadderUp:
+            case DungeonCellKind::LadderDown:
+            case DungeonCellKind::LadderUpDown: {
+                const int h = box.s * 9 / 10, top = box.floor_y - h, rail = std::max(2, box.s / 8);
+                dungeon_line(pixels, box.cx - rail, box.floor_y, box.cx - rail, top, kEga14,
+                             primitives);
+                dungeon_line(pixels, box.cx + rail, box.floor_y, box.cx + rail, top, kEga14,
+                             primitives);
+                for (int r = 0; r <= 4; ++r) {
+                    const int y = top + h * r / 4;
+                    dungeon_line(pixels, box.cx - rail, y, box.cx + rail, y, kEga14, primitives);
+                }
+                break;
+            }
+            case DungeonCellKind::Chest:
+            case DungeonCellKind::OpenChest: {
+                const int w = std::max(2, box.s / 6), h = std::max(2, box.s * 28 / 100);
+                const bool closed = DungeonCellKind(op.cell_type) == DungeonCellKind::Chest;
+                dungeon_rect(pixels, box.cx - w, box.floor_y - h, box.cx + w, box.floor_y,
+                             closed ? kEga6 : kEga8, primitives);
+                break;
+            }
+            case DungeonCellKind::Fountain: {
+                const int rx = std::max(2, box.s / 5), ry = std::max(2, box.s * 8 / 100);
+                const int cy = box.floor_y - box.s / 10;
+                dungeon_line(pixels, box.cx - rx, cy, box.cx + rx, cy, kEga11, primitives);
+                dungeon_line(pixels, box.cx - rx, cy - ry, box.cx + rx, cy - ry, kEga11,
+                             primitives);
+                dungeon_line(pixels, box.cx - rx, cy - ry, box.cx - rx, cy, kEga11, primitives);
+                dungeon_line(pixels, box.cx + rx, cy - ry, box.cx + rx, cy, kEga11, primitives);
+                break;
+            }
+            case DungeonCellKind::Trap: {
+                const int w = std::max(2, box.s / 5);
+                dungeon_rect(pixels, box.cx - w, box.floor_y - 3, box.cx + w, box.floor_y,
+                             kDungeonDanger, primitives);
+                break;
+            }
+            case DungeonCellKind::MagicField: {
+                static const uint16_t colours[4] = {kEga13, kEga10, kEga12, kEga11};
+                const uint16_t colour = colours[op.sub & 3];
+                const int w = std::max(2, box.s / 4), h = std::max(2, box.s / 2);
+                const int top = box.floor_y - h;
+                dungeon_line(pixels, box.cx - w, top, box.cx + w, top, colour, primitives);
+                dungeon_line(pixels, box.cx - w, box.floor_y, box.cx + w, box.floor_y, colour,
+                             primitives);
+                dungeon_line(pixels, box.cx - w, top, box.cx - w, box.floor_y, colour, primitives);
+                dungeon_line(pixels, box.cx + w, top, box.cx + w, box.floor_y, colour, primitives);
+                break;
+            }
+            default: break;
+            }
+            break;
+        }
+        case DungeonOpKind::Monster: {
+            // Tables 0x2E2A (X by depth) and 0x2E32 (Y by [row][depth]); row 1 is
+            // the CEILING row -- a lurking spider or slime, not invisibility.
+            static const int mon_x[3] = {72, 80, 88};
+            static const int mon_y[2][3] = {{86, 96, 98}, {40, 70, 85}};
+            const int di = std::min(std::max(int(op.depth), 1), 3) - 1;
+            const int x = mon_x[di], y = mon_y[op.ceiling ? 1 : 0][di];
+            const int half = std::max(6, kDungeonCenterX - x);
+            dungeon_rect(pixels, x, y, kDungeonCenterX + half, y + half, kDungeonDanger,
+                         primitives);
+            break;
+        }
+        }
     }
     dungeon_report(report, d, pixels); report.map_context = "dungeon3d authoritative viewport";
     return ESP_OK;
