@@ -3,6 +3,7 @@
 #include "openu5/combat.h"
 #include "openu5/dialogue_orchestration.h"
 #include "openu5/dungeon.h"
+#include "openu5/dungeon_view.h"
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
 #include "openu5/ui_debug_menu.h"
 #endif
@@ -467,6 +468,15 @@ void UiSession::finish_modal(bool accepted, bool yes, int32_t number, int32_t in
     } else if (request == UiRequestId::Dialogue && old_mode == UiMode::YesNo) {
         i.kind = UiIntentKind::Command;
         i.command.kind = yes ? CommandKind::DialogueYes : CommandKind::DialogueNo;
+    } else if (request == UiRequestId::DungeonDrink && old_mode == UiMode::YesNo) {
+        // Batch 9B.  "Will you drink?" (DS 0x7700): 'Y' prints "Yes.  Gulp!"
+        // (0x7718, two spaces) and drinks; 'N' prints "No." (0x7712) with no
+        // effect and no turn, so nothing is dispatched at all.
+        append(UiTextChannel::Message, yes ? "Yes.  Gulp!" : "No.");
+        if (!yes) { input_[0]=0; input_length_=0; prompt_[0]=0; settle_shrine_after_modal(); return; }
+        i.kind = UiIntentKind::Command;
+        i.command.kind = CommandKind::DungeonCommand;
+        i.command.item = int16_t(DungeonAction::Drink);
     } else if (request == UiRequestId::RestHours && old_mode == UiMode::NumericEntry) {
         i.kind = UiIntentKind::Command;
         i.command.kind = accepted ? CommandKind::Rest : CommandKind::RestCancel;
@@ -602,6 +612,20 @@ bool UiSession::handle_modal(const UiAction &a) {
     if (mode_ == UiMode::TargetSelection) {
         if (a.kind == UiActionKind::Cancel || a.kind == UiActionKind::Back) {
             const auto cancelled_request = request_;
+            // Batch 9B.  A dungeon prompt's abort is "Pass" (DS 0x84ec for the
+            // Dir- loop, 0x6cc6 for Klimb-U/D-), not a bare dismissal: Klimb
+            // spends the turn, Search does not.  Both are dungeon_action()'s
+            // own dir == 2 arm, so the abort stays one core call, not a
+            // UI-invented no-op.
+            if (pending_command_.kind == CommandKind::DungeonCommand) {
+                auto cancelled_dungeon = pending_command_;
+                const bool search = cancelled_dungeon.item == int16_t(DungeonAction::Search);
+                mode_ = return_mode_; request_ = UiRequestId::None;
+                prompt_[0]=0; pending_command_={};
+                command_echo("Pass");
+                if (!search) { cancelled_dungeon.hours = 2; command(cancelled_dungeon); }
+                return true;
+            }
             const bool klimb = pending_command_.kind == CommandKind::Klimb;
             const bool attack = pending_command_.kind == CommandKind::CombatAttack;
             const bool cast = pending_command_.kind == CommandKind::Cast;
@@ -636,6 +660,34 @@ bool UiSession::handle_modal(const UiAction &a) {
                     pending_command_.combat_x=int16_t(nx);
                     pending_command_.combat_y=int16_t(ny);
                 }
+            } else if (pending_command_.kind == CommandKind::DungeonCommand) {
+                // Batch 9B.  Both dungeon prompts read the kernel's ARROW codes,
+                // which is exactly what the T-Deck's trackball produces, and
+                // both deliver their answer in dungeon_action()'s `dir`
+                // parameter (Command::hours), never as a compass direction --
+                // the corridor's geometry is relative to the party's facing.
+                //   Klimb-U/D- (0x6cba):  up = 0 (up), down = 1 (down).
+                //   Dir- (0x0672):        up = 0 Ahead, down = 1 Here,
+                //                         left = 2 Left, right = 3 Right.
+                // A key outside a prompt's own set is ignored and the prompt
+                // stays open, reproducing the original's getkey loop
+                // (1eca->1ece->1eac).
+                auto cmd = pending_command_;
+                const bool klimb = cmd.item == int16_t(DungeonAction::Klimb);
+                const bool vertical = a.direction == Direction::North ||
+                                      a.direction == Direction::South;
+                if (klimb && !vertical) return true;
+                const int16_t dir =
+                    a.direction == Direction::North ? 0 : a.direction == Direction::South ? 1
+                    : a.direction == Direction::West ? 2 : 3;
+                cmd.hours = dir;
+                command_echo(klimb ? (dir ? "Down" : "Up")
+                             : dir == 0 ? "Ahead" : dir == 1 ? "Here"
+                             : dir == 2 ? "Left" : "Right");
+                mode_ = return_mode_; request_ = UiRequestId::None;
+                prompt_[0]=0; pending_command_={};
+                command(cmd);
+                return true;
             } else if (pending_command_.kind == CommandKind::Fire) {
                 const auto d = direction_delta(a.direction);
                 // Fire remains the authoritative one-direction core command;
@@ -755,6 +807,25 @@ bool UiSession::handle_exploration(const UiAction &a) {
     command(c); return true;
 }
 
+void UiSession::refresh_dungeon_context(const GameState &g, const DungeonState &d,
+                                        bool dungeon_active) {
+    const bool live = dungeon_active && d.active;
+    set_dungeon_prompt_context(live && dungeon_klimb_choice(g, d),
+                               live && (dungeon_cell(d, d.pos.floor, d.pos.x, d.pos.y) >> 4) ==
+                                           uint8_t(DungeonCellKind::Fountain));
+}
+
+// Batch 9B (R-05 part 3).  The dungeon key map is the reference's own DUNGEON
+// dispatcher (game/src/main.ts, handleDungeonKey + the command table below it,
+// mirroring jump table 0x3178 with default 0x34D8).  Before this batch it
+// implemented a SUBSET, and three core capabilities had no input path at all:
+// DungeonAction::TurnAround (dungeon.cpp:501), DungeonAction::Drink
+// (dungeon.cpp:342) and the dungeon arm of CommandKind::Ignite
+// (commands.cpp:752) were dead code, dungeon_klimb_choice() had no caller
+// anywhere in the tree so Klimb could never descend from an up+down cell, and
+// Search's `dir` parameter was always 0 so only "Ahead" was reachable.  On a
+// T-Deck, whose keyboard has no arrow keys, the practical consequence was that
+// a player who ran out of light inside a dungeon could not (I)gnite a torch.
 bool UiSession::handle_dungeon(const UiAction &a) {
     Command c; c.kind = CommandKind::DungeonCommand;
     if (a.kind == UiActionKind::Direction) {
@@ -764,15 +835,58 @@ bool UiSession::handle_dungeon(const UiAction &a) {
                                                           : DungeonAction::Right);
         command(c); return true;
     }
-    if (a.kind == UiActionKind::Confirm) { c.item=int16_t(DungeonAction::Pass); command(c); return true; }
+    // Enter (and '.') are TURN AROUND, not Pass: `key === "Enter" || key === "."
+    // ? "turnAround"`.  Pass is Space, handled below.  Both were previously
+    // Pass, which is why an about-face was unreachable on a device whose only
+    // direction input is a four-way trackball.
+    if (a.kind == UiActionKind::Confirm) {
+        command_echo("Turn around");
+        c.item=int16_t(DungeonAction::TurnAround); command(c); return true;
+    }
     if (a.kind != UiActionKind::Character) return false;
-    switch (lower_ascii(a.character)) {
+    const auto k = lower_ascii(a.character);
+    switch (k) {
     case 'a': c.item=int16_t(DungeonAction::Attack); break;
     case 'g': c.item=int16_t(DungeonAction::Get); break;
     case 'j': c.item=int16_t(DungeonAction::Jimmy); break;
-    case 'k': c.item=int16_t(DungeonAction::Klimb); break;
+    // (K)limb with a ladder BOTH ways does not decide for the player: the
+    // original opens "Klimb-U/D-" (0x6cba) and waits.  The keypress that opens
+    // it costs no turn (the asm's getkey is free); the U/D/Pass answer is what
+    // reaches dungeon_action() and charges one.  With a single way -- or none
+    // -- it resolves directly, exactly as before.
+    case 'k':
+        c.item=int16_t(DungeonAction::Klimb);
+        if (dungeon_klimb_choice_) {
+            command_echo("Klimb-U/D-");
+            begin_target(UiRequestId::Direction,"Klimb-U/D-",c,-1,-1); return true;
+        }
+        command_echo("Klimb-"); break;
     case 'o': c.item=int16_t(DungeonAction::Open); break;
-    case 's': c.item=int16_t(DungeonAction::Search); break;
+    // (S)earch asks "Dir-" (SJOG 0x0672): up=Ahead, down=Here, left=Left,
+    // right=Right, Space/ESC aborts without a turn.  dungeon_action() has
+    // carried that parameter since the port landed; nothing ever supplied it.
+    case 's':
+        command_echo("Search-");
+        c.item=int16_t(DungeonAction::Search);
+        begin_target(UiRequestId::Direction,"Dir-",c,-1,-1); return true;
+    // (I)gnite is a dungeon command in the original (CMDS.OVL 0x0D98), and
+    // commands.cpp already has a dedicated `c.dungeon && Ignite` arm that seeds
+    // ignite_torch() with the dungeon number.  Nothing could reach it.
+    case 'i': command_echo("Ignite torch!"); c.kind=CommandKind::Ignite; break;
+    // (D)rink.  On a fountain the original asks first (DS 0x7700, getkey Y/N);
+    // off one, the reference's declared QoL shortcut drinks directly and
+    // dungeon_action() answers "No fountain here."
+    case 'd':
+        command_echo("Drink");
+        if (dungeon_fountain_here_) {
+            begin_yes_no(UiRequestId::DungeonDrink,"Will you drink?"); return true;
+        }
+        c.item=int16_t(DungeonAction::Drink); break;
+    // (H)ole up & camp is legal in a dungeon (kernel 0x3C9A branch loc>=0x21);
+    // commands.cpp's `dungeon_camp` exists for exactly this and had no caller.
+    // Same hours prompt the overworld uses.
+    case 'h': command_echo("Hole up"); begin_number(UiRequestId::RestHours,"Hours (1-9)?",1,9,1); return true;
+    case '.': command_echo("Turn around"); c.item=int16_t(DungeonAction::TurnAround); break;
     case 'c': { command_echo("Cast");UiIntent i; i.kind=UiIntentKind::OpenSpellSelection; i.request=UiRequestId::Spell; dispatch(i); return true; }
     // The dungeon has its own command context, but these menus are deliberately
     // shared UI affordances.  They return to UiMode::Dungeon via return_mode_.
@@ -781,8 +895,16 @@ bool UiSession::handle_dungeon(const UiAction &a) {
     case 'u': { command_echo("Use item");UiIntent i; i.kind=UiIntentKind::OpenInventorySelection; i.request=UiRequestId::Inventory; dispatch(i); return true; }
     case 'v': command_echo("View a gem!"); c.kind=CommandKind::ViewGem; break;
     case 'z': { command_echo("Z-stats");UiIntent i;i.kind=UiIntentKind::OpenStatusSelection;i.request=UiRequestId::Status;dispatch(i);return true; }
-    case ' ': c.item=int16_t(DungeonAction::Pass); break;
-    default: append(UiTextChannel::Message,"What?"); return true;
+    case ' ': command_echo("Pass"); c.item=int16_t(DungeonAction::Pass); break;
+    // Digits are SET ACTIVE PLAYER in the corridor too (DUNGEON 0x07bc-0x07d6,
+    // with the return forced to 0 = no turn).  There is no harpsichord in a
+    // dungeon, so the exploration handler's instrument intercept has no analogue.
+    case '0': case '1': case '2': case '3': case '4':
+    case '5': case '6': case '7': case '8': case '9':
+        command_echo("Set Active Plr:");
+        c.kind=CommandKind::SetActivePlayer; c.member=int16_t(k - '0'); break;
+    // Jump-table default 0x34D8, with 'W' (Wear) keeping its own text at 0x3450.
+    default: append(UiTextChannel::Message, k == 'w' ? "W-What?" : "What?"); return true;
     }
     command(c); return true;
 }

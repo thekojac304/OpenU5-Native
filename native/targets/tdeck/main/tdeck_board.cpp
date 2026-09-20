@@ -756,7 +756,10 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
     // 0x2a28, an XOR of the row's rectangle, shared with the picker cursor and
     // the combat hit. It is the top of openu5::roster_invert_row's precedence.
     for(size_t row=0;row<6;++row){char line[24]{};uint16_t color=kWhite;bool invert=false;if(row<members.count){const auto index=members.indices[row];const auto&a=game.party.characters[index];const bool selected=index==party_highlight.selected,actor=index==party_highlight.actor;std::snprintf(line,sizeof(line),"%c%u %-7.7s %3u/%3u %c",selected?'>':actor?'*':' ',unsigned(row+1),a.name,unsigned(std::min<uint16_t>(a.current_hp,999)),unsigned(std::min<uint16_t>(a.max_hp,999)),a.status?a.status:'G');color=selected?kGreen:actor?kCyan:kWhite;invert=index==party_highlight.damage_flash;}ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudRightX,4+int(row)*8,openu5::kHudRightW,8,line,color,1,1,invert),kTag,"draw party row");}
-    char location[24]{};const char*name=game.position.map.location==0?(game.position.map.floor<0?"Underworld":"Britannia"):location_display_name(game.position.map.location);std::snprintf(location,sizeof(location),"%.22s",name?name:"Unknown place");
+    // Batch 9B.  While a dungeon session is mounted the caption is the DUNGEON's
+    // name, not game.position's -- that field holds the surface RETURN context
+    // for the whole descent and is stale by design (see hud_location_caption()).
+    char location[24]{};const char*name=hud_location_caption(game.position.map.location,game.position.map.floor,bands_active,bands_active?dungeon_bands->dungeon_id:uint8_t(0));std::snprintf(location,sizeof(location),"%.22s",name);
     char clock[24]{};std::snprintf(clock,sizeof(clock),"Day %ld  %02ld:%02ld",long(game.time.day),long(game.time.hour),long(game.time.minute));
     const char*world[]={location,clock};for(int i=0;i<2;++i)ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudRightX,58+i*10,openu5::kHudRightW,8,world[i],i==0?kCyan:kWhite),kTag,"draw world status");
     ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudRightX,78,openu5::kHudRightW,8,

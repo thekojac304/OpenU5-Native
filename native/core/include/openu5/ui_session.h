@@ -9,6 +9,7 @@ namespace openu5 {
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
 class UiDebugMenu;
 #endif
+struct DungeonState;
 
 // Presentation state only.  A frontend may render these however it likes.
 enum class UiMode : uint8_t {
@@ -132,6 +133,9 @@ enum class UiRequestId : uint8_t {
     Spell,
     Target,
     Debug,
+    // Batch 9B: the reference's "Will you drink?" beat (DS 0x7700) before a
+    // dungeon fountain gulp.  Answering yes dispatches DungeonAction::Drink.
+    DungeonDrink,
     Custom
 };
 
@@ -244,6 +248,30 @@ class UiSession {
     // set-active-player arm).
     void set_harpsichord_active(bool at_harpsichord) { harpsichord_active_ = at_harpsichord; }
     bool harpsichord_active() const { return harpsichord_active_; }
+    // Dungeon prompt context (Batch 9B, R-05 part 3): the same narrow-mirror
+    // shape as the two above.  Two reference dungeon commands do not decide for
+    // the player when the cell offers a choice:
+    //   * (K)limb on a cell with a ladder BOTH ways opens "Klimb-U/D-" (0x6cba)
+    //     -- dungeon_klimb_choice() is the authoritative predicate;
+    //   * (D)rink while standing ON a fountain asks "Will you drink?" (DS
+    //     0x7700) before the gulp.
+    // UiSession owns no dungeon state, so the owner pushes both immediately
+    // before each key is routed.  dungeon_action() re-checks each one
+    // authoritatively ("No fountain here.", and Klimb's own up/down caps), so a
+    // stale mirror can only mis-route a prompt, never mis-apply an action --
+    // exactly the R-19 sail-context contract.
+    void set_dungeon_prompt_context(bool klimb_needs_choice, bool fountain_here) {
+        dungeon_klimb_choice_ = klimb_needs_choice;
+        dungeon_fountain_here_ = fountain_here;
+    }
+    // Named *_prompt so they cannot be confused with the authoritative
+    // openu5::dungeon_klimb_choice() predicate these mirror.
+    bool dungeon_klimb_prompt() const { return dungeon_klimb_choice_; }
+    bool dungeon_fountain_prompt() const { return dungeon_fountain_here_; }
+    // Convenience wrapper that derives both predicates from the authoritative
+    // owners, so a caller cannot get the derivation subtly wrong.  A cleared
+    // context (no live session) resets both.
+    void refresh_dungeon_context(const GameState &, const DungeonState &, bool dungeon_active);
     // Transcript page geometry (Batch 4.5C): another narrow mirror of the same
     // shape as set_sail_context()/set_harpsichord_active() above. The owner's
     // renderer is the only thing that knows the actual on-screen column width
@@ -370,6 +398,7 @@ class UiSession {
     // World-context mirrors (see the public setters above).
     bool sail_context_frigate_ = false, sail_context_location_ok_ = false;
     bool harpsichord_active_ = false;
+    bool dungeon_klimb_choice_ = false, dungeon_fountain_here_ = false;
     size_t transcript_columns_ = 0, transcript_rows_ = 0;
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
     UiDebugMenu *debug_menu_ = nullptr;

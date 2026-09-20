@@ -156,6 +156,20 @@ if(BUILD_TESTING)
   target_link_libraries(input_regression PRIVATE openu5_core)
   target_compile_features(input_regression PRIVATE cxx_std_20)
   add_test(NAME input_regression COMMAND input_regression)
+  # Batch 9B -- the dungeon RUNTIME regressions (R-05 part 3).  Unlike
+  # dungeon_view_regression (which proves plan_dungeon_view()) and
+  # dungeon_parity (which calls dungeon_action() directly), this drives the
+  # physical device path: a RawInputEvent through tdeck::UiInputAdapter, the
+  # real UiSession dungeon router, the real core dispatch, and AlphaRuntime's
+  # per-input mode rebind via the shared ui_mode_policy.h seam.  It also owns
+  # the HUD location-caption identity (tdeck::hud_location_caption).
+  add_executable(dungeon_input_regression ../targets/tdeck/host_tests/dungeon_input_test.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp)
+  target_link_libraries(dungeon_input_regression PRIVATE openu5_core)
+  target_include_directories(dungeon_input_regression PRIVATE ../targets/tdeck/main)
+  target_compile_features(dungeon_input_regression PRIVATE cxx_std_20)
+  add_test(NAME dungeon_input_regression COMMAND dungeon_input_regression)
   add_executable(action_feedback_regression tests/action_feedback_test.cpp)
   target_link_libraries(action_feedback_regression PRIVATE openu5_core)
   add_test(NAME action_feedback_regression COMMAND action_feedback_regression)
@@ -307,5 +321,5 @@ if(BUILD_TESTING)
     set(OPENU5_CTEST_CONFIG_ARGS)
   endif()
   add_custom_target(host-test COMMAND "${CMAKE_CTEST_COMMAND}" ${OPENU5_CTEST_CONFIG_ARGS} --output-on-failure
-  DEPENDS frontend_tests ui_session_tests display_names_tests quest_search_tests debug_labels_tests ${UI_DEBUG_TEST_TARGET} debug_map_picker_tests debug_developer_tests gameplay_integration_tests look_sign_tests gameplay_driver movement_flow_parity_tests quest_driver shop_parity_tests shop_flow_tests shop_adapter_tests persistence_driver dialogue_adapter_tests dialogue_parity_tests transport_flow_parity_tests world_flow_adapter_tests dungeon_flow_parity_tests world_flow_parity_tests dungeon_parity_tests advanced_combat_parity_tests magic_parity_tests combat_parity_tests core_parity_tests turn_parity_tests travel_parity_tests command_parity_tests item_parity_tests movement_regression presentation_regression dungeon_view_regression combat_escape_regression combat_loot_open_regression input_regression USES_TERMINAL)
+  DEPENDS frontend_tests ui_session_tests display_names_tests quest_search_tests debug_labels_tests ${UI_DEBUG_TEST_TARGET} debug_map_picker_tests debug_developer_tests gameplay_integration_tests look_sign_tests gameplay_driver movement_flow_parity_tests quest_driver shop_parity_tests shop_flow_tests shop_adapter_tests persistence_driver dialogue_adapter_tests dialogue_parity_tests transport_flow_parity_tests world_flow_adapter_tests dungeon_flow_parity_tests world_flow_parity_tests dungeon_parity_tests advanced_combat_parity_tests magic_parity_tests combat_parity_tests core_parity_tests turn_parity_tests travel_parity_tests command_parity_tests item_parity_tests movement_regression presentation_regression dungeon_view_regression dungeon_input_regression combat_escape_regression combat_loot_open_regression input_regression USES_TERMINAL)
 endif()

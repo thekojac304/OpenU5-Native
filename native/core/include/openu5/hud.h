@@ -57,6 +57,10 @@ HudWorldState hud_world_state(const GameState &, const TurnState &,
 struct HudDungeonBands {
     char level[8]{};
     char direction[16]{};
+    // Batch 9B.  The dungeon's own identity, for the HUD's location caption.
+    // GameState::position keeps the SURFACE return context for the whole
+    // session, so the caption cannot be derived from it while this is active.
+    uint8_t dungeon_id = 0;
     bool active = false;
 };
 HudDungeonBands hud_dungeon_bands(const DungeonState &, bool dungeon_active);

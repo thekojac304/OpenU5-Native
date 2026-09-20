@@ -13,6 +13,7 @@ HudDungeonBands hud_dungeon_bands(const DungeonState &d,bool dungeon_active){
     HudDungeonBands o{};
     o.active=dungeon_active&&d.active;
     if(!o.active)return o;
+    o.dungeon_id=d.pos.dungeon;
     // "L1".."L8" -- g_floor 0..7 is level 1..8 (dungeon.md S4).
     const int level=int(d.pos.floor)+1;
     o.level[0]='L';o.level[1]=char('0'+(level<1?1:level>8?8:level));o.level[2]=0;
