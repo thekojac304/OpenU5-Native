@@ -57,7 +57,7 @@ Full per-column detail (state, presentation, save, reason, files, next action) f
 |---|---|---|---|---|---|---|---|---|
 | Title / attract | any key, 20 s idle | `AlphaRuntime::handle` → `frontend_.handle` | `FrontendSession::handle` | `FrontendView` + `render_intro_view` | `frontend_tests` | ✗ | **Y** | State machine proven; art path unproven on device. Y-07 |
 | Main menu (8 items) | hotkeys `JCTUARSD`, trackball, Enter | same | `activate_menu` | `FrontendViewKind::Menu` | `frontend_tests` | ✗ | **Y** | All 8 routes exist [STATIC]. Movement Mode WASD does **not** navigate here — Y-01 |
-| Journey Onward | menu 0 | `service_frontend_intent` → `save_.load` | `load_native_state` + `synchronize_loaded_world` | gameplay rebind | `frontend`, `persistence` | ✗ | **R** | Load does not restore/clear `objects_`. R-14 |
+| Journey Onward | menu 0 | `service_frontend_intent` → `save_.load` | `load_native_state` + `synchronize_loaded_world` | gameplay rebind | `frontend`, `persistence` | ✗ | **G** | Load restores/clears `objects_` and `dungeon_`. R-14/R-15 resolved (Batch 6) |
 | Create New Character | menu 1 | creation phases → `CreateInitialSave` | `apply_new_journey_identity`, `preserve_new_journey_template_bytes` | creation canvas | `frontend_tests` | ✗ | **Y** | Reset path at `alpha_runtime.cpp:1308` *does* clear `objects_`/`dungeon_`/`combat_` correctly. Unproven on device. Y-07 |
 | Transfer from Ultima IV | menu 2 | notice only | — | — | — | — | **N** | Explicit "Ultima IV transfer is deferred" (`frontend.cpp:88`). Intentional. |
 | Introduction | menu 3 | `IntroAnimation`, 21 pages | `IntroViewPlayer` | `render_intro_view` | `frontend_tests` | ✗ | **Y** | Y-07 |
@@ -145,7 +145,7 @@ See the full Resource/Item matrix in §11. Summary: **gold/food/gems/keys/torche
 | Combat→world chest promotion | **G** — RESOLVED (Batch 2) | ANCHOR 1 (a) — `gameplay_parity` mismatch 59 fixed. R-03: both promotion sites removed. |
 | Loot icon identity | **G** — RESOLVED (Batch 2) | ANCHOR 2 — two-layer composition. R-04 fixed. |
 | Corpse/blood decor persistence (`loot[]` 30/31) | **G** | Reference-correct: `TILE_CORPSE`/`TILE_BLOOD` persist in `lootLayer` [REF]. |
-| Save/load of world loot | **R** | `objects_` not serialized. R-14 |
+| Save/load of world loot | **G** | `objects_` serialized/restored via the sidecar. R-14 resolved (Batch 6) |
 
 ### G. Ready / equipment
 
@@ -258,14 +258,14 @@ Full report in §12. Summary: **data G, controls G, geometry Y, art R, HUD Y, sa
 | Quest tables, flags, shrine bits, doom bits, shadowlords | **G** | `quest_parity` (1581-line `quest_case.inc`) green. |
 | Word-of-power Yell at dungeon entrances | **Y** | Route works; unaffected by the R-19 ship branch added in Batch 3 (both branches now regression-covered — Y-24 discharged). Y-07 |
 | Shrines (visit/restore/donate) | **Y** | All three modals wired in `modal()`; `UiMode::ShrineSpecial` lifecycle repaired in Batch 1 (§5). Remaining YELLOW is physical-device validation only. Y-25 |
-| Search-based quest chains | **Y** | `quest_search.cpp` + `search_objects` fixtures; found objects are world objects → **lost on reload** (R-14). |
+| Search-based quest chains | **Y** | `quest_search.cpp` + `search_objects` fixtures; found objects are world objects → now survive reload (R-14 resolved, Batch 6). |
 | Shards → Flames ritual | **G** reachability | R-08 resolved (Batch 3): shards 29–31 are Use-picker rows gated on `game.quest.shards[0..2]`. |
 | Crown / Sceptre / Amulet | **G** reachability | R-07/R-08 resolved (Batch 3): ids 18/19/20 gated on `game.quest.artifacts[0..2]`. |
 | Blackthorn / Falsehood / Abbey | **R** | R-09 |
 | Codex / endgame | **Y** | The Use chain that gated it is reachable (R-08 resolved, Batch 3); the endgame itself is still unproven end-to-end. Y-07 |
 | HMS Cape plans | **G** reachability | R-08 resolved (Batch 3): id 33 gated on `game.hms_cape`. |
 | Harpsichord melody (Cove passage) | **G** | R-20 resolved (Batch 3): digit keys at the harpsichord dispatch `CommandKind::HarpsichordNote`. |
-| Moonstones / moongates | **G** reachability / **R-14** persistence | R-08 resolved (Batch 3): ids 21–28 are rows whenever carried (`!buried`), so `CommandKind::UseMoonstone` is reachable. Burial state still does not survive save/load — R-14. |
+| Moonstones / moongates | **G** | R-08 resolved (Batch 3): ids 21–28 are rows whenever carried (`!buried`), so `CommandKind::UseMoonstone` is reachable. Burial state (`buried`/`location`) was never part of `objects_`/R-14 — it lives in core `GameState` and already survived save/load; a revealed-but-not-yet-`(G)et`-ed ground marker is a `QuestObject` and is covered by the R-14 fix (Batch 6). Stale "Burial state does not survive save/load" wording corrected. |
 
 ### P. World objects / terrain / special cells
 
@@ -276,7 +276,7 @@ Full report in §12. Summary: **data G, controls G, geometry Y, art R, HUD Y, sa
 | Terrain overrides (volatile/persistent/hourly/wipe) | **G** | `WorldTerrain` with a 4-layer `inspect()`; `capture_terrain`/`restore_terrain` round-trip. |
 | Fields, traps, fireplaces, emitters, light flood | **G** | `presentation.cpp` `visibility()` + `kEmitters`; `presentation_regression` green. |
 | Chests in the world | **G** — RESOLVED (Batch 2) | R-02 fixed. The invalid tile-1 world chests came solely from the R-03 promotion sites; legitimate stationary chest QuestObjects (`quest_world.cpp::hydrate_interior_objects`) already stored the correct pre-offset sprite tile (`0x101`) and needed no change. |
-| Quest objects / hidden items | **R** | Not serialized. R-14 |
+| Quest objects / hidden items | **G** | Serialized/restored via the sidecar. R-14 resolved (Batch 6) |
 | Beds / camp / auto-sleep | **Y** | `AutoSleep` is core-internal; `rest.cpp` covered by `travel_parity`. Y-26 |
 | Ladders / stairs / bridges | **G** | Klimb + `resolve_world_step` speed classes. |
 
@@ -324,7 +324,7 @@ See §8. Summary: **`GameState`/`TurnState` G**, **`CommandState`/outdoor/terrai
 | Aspect | Status | Reason / ID |
 |---|---|---|
 | Open/close from any gameplay mode | **G** | Checked before gameplay routing in `handle()`; restores settings on close. |
-| Save / load slots | **Y** | `service_system_menu_intent` → `synchronize_loaded_world`; inherits R-14/R-15. |
+| Save / load slots | **G** | `service_system_menu_intent` → `synchronize_loaded_world`; R-14/R-15 resolved (Batch 6). |
 | Brightness, trackball sensitivity, text size, Movement Mode | **G** | Persisted through `AlphaSettingsService`. |
 | Return to the originating gameplay mode | **G** | System menu does not touch `ui_->mode()`. |
 | Modal preservation across menu open/close | **Y** | Not tested; a modal open underneath should survive. Y-27 |
@@ -830,7 +830,7 @@ Emitted by `world_magic.cpp` for `MagicEffect::DeathVision` (Wis An Ylem) and by
 
 ---
 
-### R-14 — World objects are never serialized, and never cleared on load · **SEVERITY 1**
+### R-14 — World objects are never serialized, and never cleared on load · **SEVERITY 1** · **GREEN — RESOLVED (Batch 6)**
 
 `AlphaRuntime::objects_` (`std::vector<QuestObject>`) holds combat-promoted chests, `(S)earch`-revealed items, shard spawns, spilled world loot, ships and props. Grep across `save_core.cpp`, `gameplay_save.cpp` and `alpha_save.cpp` finds **no reference to it**.
 
@@ -842,13 +842,41 @@ Two consequences:
 
 **Evidence:** [STATIC].
 
+#### Resolution (Batch 6)
+
+**Adjudicated against the reference first** (`game/src/core/state.ts` — the `WorldObject`/`worldObjects` doc; `game/src/core/saveNative.ts`'s `SaveSidecar`; `game/src/core/persistence.ts`'s `deserialize`), not assumed from the audit wording. Two things the reference settles that the original write-up didn't know yet:
+- Interior objects (chest/prop/loot/plot **in a town/castle**) are already correctly handled: they're **regenerated/discarded per map-entry transition** (`hydrate_interior_objects`/`discard_interior_objects`, already wired to `load_small_map`/`exit_to_overworld`), not part of what a save captures. The reference states this explicitly (`state.ts:108-111`). Nothing here needed a production change.
+- A **load is not a transition**. `deserialize` (`persistence.ts:788-810`) restores `worldObjects` **verbatim** with no re-hydration pass, defaulting to `[]` only when the field is absent (a save predating the field). So whatever was live at save time — chest mid-loot, an in-flight search reveal, a docked ship — round-trips exactly, interior or not. Whole-vector capture (not a filtered/derived subset) is therefore the *correct* shape, not an ephemeral-state overreach.
+
+**Implemented:** `capture_world_objects`/`restore_world_objects` (`native/core/include/openu5/gameplay_save.h`, `native/core/src/gameplay_save.cpp`) capture/restore the entire `objects_` pool through the existing `QuestWorldServices` callback seam (`count`/`read`/`reserve`/`append`) — no new coupling to `AlphaRuntime` internals. `synchronize_loaded_world()` (`alpha_runtime.cpp`) now does `objects_.clear();` unconditionally before restoring, so a domain-invalid or absent sidecar field degrades to an empty pool (safe default) rather than leaving stale objects from a previous world live, and a validation failure never partially populates the pool (validate-then-commit, matching `restore_gameplay`'s existing contract). `AlphaSaveService::save()` (`alpha_save.cpp`) captures via the same `c.quest_world` seam already threaded through `CommandContext`.
+
+**Backward compatibility:** an older save with no `worldObjects` key restores to an empty pool, not a crash (`restore_world_objects` returns `Error::None` for an absent field).
+
+**Tests:** `native/core/tests/gameplay_integration_test.cpp` (ctest `gameplay_integration`) — round-trip of a chest + an Underworld plot item through capture/encode/parse/restore; a contaminated pool (simulating save B's objects still live) does not survive the clear-then-restore sequence; a domain-invalid entry (out-of-range tile) and an absent field both leave the pool empty rather than partially populated or crashing.
+
+**Not fixed here, and not claimed:** moonstone *burial* state (the `buried`/`location` flag) was never part of `objects_` — it lives in core `GameState`/the native `.gam` window and was already correctly persisted before this batch (see the moonstone-persistence correction below).
+
 ---
 
-### R-15 — `DungeonState` is not serialized · **SEVERITY 2**
+### R-15 — `DungeonState` is not serialized · **SEVERITY 2** · **GREEN — RESOLVED (Batch 6)**
 
 Only `dungeonRoomsCleared` persists. `DungeonState` (`active`, `pos.dungeon/floor/x/y/facing`, the 512-byte mutable cell copy, the 64-byte `revealed` bitmap, the wanderer) is absent. `synchronize_loaded_world` does `dungeon_ = {}`, so a save taken inside a dungeon reloads at the **surface return position** with the dungeon session gone — silently. Reveal progress and field/trap mutations are lost.
 
 Whether U5 permits saving inside a dungeon at all is a reference question worth settling before fixing; if it does not, this becomes an explicit N/A plus a save-time refusal message.
+
+#### Resolution (Batch 6)
+
+**Adjudicated first, per the audit's own instruction to settle this before picking A or B.** The authentic DOS behavior (`re/notes/save-window-writer.md`, `re/notes/dungeon-map-buffers.md`, `re/notes/combat-dungeons.md`, cross-checked against `game/src/core/saveNative.ts:923-926`) is: **saving underground is permitted, unconditionally** — the original (Q)uit&Save handler is one raw `AH=0x40` dump of the live 4192-byte DGROUP window, with no location/mode check anywhere in that path. Because the DOS engine keeps a single shared position register for every context, that same dump naturally captures the true in-dungeon location/floor/x/y/facing and the dungeon map-reveal buffer, all inside the same window. **Option A (serialize and restore `DungeonState`)** is therefore the reference-correct shape, not Option B (refuse to save underground) — confirmed by an on-disk 15-file corpus sample showing live in-dungeon coordinates in captured `.GAM`s. (Ironically, the reference *TypeScript* engine doesn't model this fidelity either — `dungeonState` lives outside its serialized `GameState`, a self-declared "QoL, not fidelity" gap in `persistence.ts`/`savepanel.ts` — but the DOS behavior, not the TS port's shortcut, is what an alpha implementation should match, and Option A is the only shape consistent with it.)
+
+**Implemented:** `capture_dungeon`/`restore_dungeon` (`gameplay_save.h`/`.cpp`) round-trip the full live session — `pos` (dungeon/floor/x/y/facing), `quickness_toggle`, the 512-byte `cells` copy, the 64-byte `revealed` bitmap, and the wanderer — through the JSON sidecar (not new native `.gam` byte offsets: the port's own `dungeon_`/game-position split, unlike DOS's single register, means the surface-return `game_.position` and the live dungeon session are already two different owners, and the sidecar is where every other owner not covered by fixed `.gam` offsets already lives). `AlphaSaveService::save()` captures from `c.dungeon_context->state` (already threaded through `CommandContext`, no new parameter). `synchronize_loaded_world()` restores into `dungeon_`, falling back to an inactive session (`dungeon_ = {}`) on a domain-invalid or absent document — the common case (a surface save) resolves this way by design, not as an error path.
+
+**Memory-safety-motivated validation, not just domain hygiene:** `pos.floor`/`pos.x`/`pos.y` are validated to `[0,7]` and `facing` to `[0,3]` — tighter than their `uint8_t` storage width — because they are **unguarded array indices** downstream: `dungeon.cpp`'s `offset(f,x,y) = f*64+y*8+x` indexes the 512-byte cell grid with no bounds check, and `quest_world.cpp`'s facing-delta lookup indexes a 4-entry table the same way. A corrupt or hand-edited sidecar with an out-of-range value is rejected (`Error::NativeDomain`) rather than read out of bounds.
+
+**Backward compatibility:** a save with no `dungeon` key (the overwhelming common case — any surface save) restores to an inactive session directly; this is not a degraded/error path.
+
+**Tests:** `native/core/tests/gameplay_integration_test.cpp` (ctest `gameplay_integration`) — a full session (mutated cells, revealed bitmap, an active wanderer) round-trips exactly through capture/encode/parse/restore; an out-of-range `facing` (which would index the direction-delta table out of bounds) is rejected without mutating the live session, and the caller's own fallback (mirroring `synchronize_loaded_world`) clears it; an absent `dungeon` key resets a stale live session to inactive directly.
+
+**Not fixed here:** the underlying `DungeonEncounters`/combat-arena wiring for a restored session is unchanged — this batch persists the *session*, it doesn't add new dungeon combat behavior.
 
 ---
 
@@ -1458,8 +1486,8 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 | Door timer, town/outdoor turn phases, awaiting-exit | ✓ (`gameplay_save`) | ✓ | ✓ | **G** |
 | Terrain overrides (`mapOverrides`, `openDoors`) | ✓ | ✓ | ✓ | **G** |
 | Overworld enemies | ✓ | ✓ | ✓ | **G** |
-| **World objects (`objects_`)** | ✗ | ✗ | leaks across loads | **R-14** |
-| **Dungeon session** | ✗ | cleared | base mode re-derived next input | **R-15** |
+| **World objects (`objects_`)** | ✓ | ✓ | cleared-then-restored, no leak | R-14 resolved (Batch 6) |
+| **Dungeon session** | ✓ | restored if active | full session (pos/cells/revealed/wanderer) resumes | R-15 resolved (Batch 6) |
 | Combat session | ✗ | cleared | ✓ | **N** (matches reference) |
 | Dialogue / shop / shrine / Blackthorn sessions | ✗ | cleared | ✓ | **N** (session-only, correct) |
 | Settings (brightness, movement mode, trackball, UI size) | ✓ (separate `settings.json`) | ✓ | ✓ | **G** |
@@ -1542,7 +1570,7 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 | Amulet (18) | quest | ✓ | n/a | picker; Z-stats Items page (R-22) | ✓ | **G** Use-picker — R-07 resolved (Batch 3) / R-22 Z-stats Items-page view still missing |
 | Crown (19) | quest | ✓ | n/a | picker; Z-stats Items page (R-22) | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / R-22 Z-stats Items-page view still missing |
 | Sceptre (20) | quest | ✓ | n/a | picker; Z-stats Items page (R-22) | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / R-22 Z-stats Items-page view still missing |
-| Moonstones (21–28) | quest | ✓ | n/a | picker (gated on `!buried`); Z-stats Items page (R-22) | ✓ | **G** picker — R-08 resolved (Batch 3); persistence still **R-14**; R-22 Z-stats Items-page view still missing |
+| Moonstones (21–28) | quest | ✓ | n/a | picker (gated on `!buried`); Z-stats Items page (R-22) | ✓ | **G** picker — R-08 resolved (Batch 3); ground-marker persistence R-14 resolved (Batch 6); R-22 Z-stats Items-page view still missing |
 | Shards (29–31) | quest | ✓ | n/a | picker; Z-stats Items page (R-22) | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / R-22 Z-stats Items-page view still missing |
 | Spyglass (32) | quest | ✓ route | n/a | picker; Z-stats Items page (R-22) | ✓ | **R-13** (no zodiac view) / R-22 Z-stats Items-page view still missing |
 | Plans (33) | quest | ✓ | n/a | picker (gated on `hms_cape`); Z-stats Items page (R-22) | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / R-22 Z-stats Items-page view still missing |
@@ -1551,8 +1579,8 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 | Badge (36) | quest | ✓ | n/a | picker (gated on `black_badge`); Z-stats Items page (R-22) | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / R-22 Z-stats Items-page view still missing |
 | Wooden Box (37) | quest | ✓ ("How?") | n/a | picker; Z-stats Items page (R-22) | ✓ | **G** Use-picker / R-22 Z-stats Items-page view still missing |
 | Grapple | quest | **Klimb-only, never a Use item** | n/a | — | ✓ | **G** — R-07 resolved (Batch 3): removed from the Use picker entirely |
-| Loose loot piles | ✓ LIFO | n/a | n/a | rendered `0x100+id` | **✗** | **R-14** |
-| World chests | Open→piles | n/a | n/a | correct sprite (was **tile 1 = blue**; R-02 resolved Batch 2) | **✗** | R-02 **G** / **R-14** |
+| Loose loot piles | ✓ LIFO | n/a | n/a | rendered `0x100+id` | **✓** | R-14 resolved (Batch 6) |
+| World chests | Open→piles | n/a | n/a | correct sprite (was **tile 1 = blue**; R-02 resolved Batch 2) | **✓** | R-02 **G** / R-14 resolved (Batch 6) |
 
 ---
 
@@ -1588,7 +1616,7 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 | 26. Underworld transition | **G** | `exit_dungeon(true)` from floor ≥ 8 |
 | 27. System menu round-trip | **Y-27** | No device proof |
 | 28. Developer menu round-trip | **G** | `debug_return_mode_` restores Dungeon |
-| 29. **Save/load in dungeon** | **R-15** | Session dropped silently |
+| 29. **Save/load in dungeon** | **G** | R-15 resolved (Batch 6): session (position/cells/revealed/wanderer) round-trips through the sidecar |
 | 30. Movement Mode controls | **G** | W/S/A/D = forward/back/turn-left/turn-right — **already matches the requested target** |
 | 31. Trackball | **G** | up/down/left/right = forward/back/turn-left/turn-right |
 | 32. Keyboard (Movement Mode off) | **Y-23** | No movement keys; verbs only |
@@ -1611,10 +1639,10 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 | **Blackthorn interrogation** | ✓ `blackthorn.cpp`, `BlackthornAction` | **✗ modal discarded** | **R-09** |
 | **Guard password / tribute / arrest** | ✓ `talk_guard` + 3 prompts | **✗ modals discarded** | **R-09** |
 | Shrines (visit / restore / donate / quest bits) | ✓ `shrine.cpp` | ✓ all 3 modals wired | **Y-25** |
-| Search-revealed quest objects | ✓ `quest_search.cpp` + fixtures | ✓ `S` | **R-14** (lost on reload) |
+| Search-revealed quest objects | ✓ `quest_search.cpp` + fixtures | ✓ `S` | R-14 resolved (Batch 6) — survives reload |
 | Lord British progression / karma | ✓ `dialogue_effects` | ✓ Talk | **Y** |
 | Harpsichord passage (Cove) | ✓ `play_harpsichord` | ✓ digit keys while seated | **G** — R-20 resolved (Batch 3) |
-| Moongates / moonstones | ✓ `use_moonstone`, `transitions.cpp` | ✓ Use picker ids 21–28 when carried | **G** reachability — R-08 resolved (Batch 3); persistence still **R-14** |
+| Moongates / moonstones | ✓ `use_moonstone`, `transitions.cpp` | ✓ Use picker ids 21–28 when carried | **G** — R-08 resolved (Batch 3); ground-marker persistence R-14 resolved (Batch 6) |
 | HMS Cape | ✓ id 33 | ✓ Use picker id 33 | **G** — R-08 resolved (Batch 3) |
 | Codex / endgame script | ✓ `EndgameScript`, `GameWon`/`Endgame` events appended to transcript | no longer gated — the Use chain above is reachable | **Y** — R-08 resolved (Batch 3); end-to-end endgame still unproven |
 | Underworld | ✓ `exit_dungeon(true)` | ✓ | **G** logic |
@@ -1707,12 +1735,17 @@ Small, independently testable batches, in dependency order. Each batch ends at a
 
 ---
 
-### Batch 6 — Persistence gaps · risk: medium
-**IDs:** R-14, R-15
-**Files:** `native/core/src/gameplay_save.cpp`, `native/core/include/openu5/gameplay_save.h`, `native/targets/tdeck/main/alpha_runtime.cpp` (`synchronize_loaded_world`)
-**Work:** add a `worldObjects` sidecar array with capture/restore; add `objects_.clear()` on load; decide and then implement the dungeon-save policy (serialize `DungeonState`, or refuse to save underground with a reference-appropriate message).
-**Physical test:** open a chest, walk away, save, reload, confirm the loose loot is still there; search a tree for the skull key, reload, confirm; save in a dungeon and observe the documented behaviour.
-**Model:** Sonnet, with an explicit reference decision from the user on the dungeon-save question.
+### Batch 6 — Persistence gaps · risk: medium · **COMPLETED**
+**IDs:** R-14 (**GREEN — RESOLVED**), R-15 (**GREEN — RESOLVED**)
+**Files:** `native/core/include/openu5/gameplay_save.h`, `native/core/src/gameplay_save.cpp` (new `capture_world_objects`/`restore_world_objects`/`capture_dungeon`/`restore_dungeon`), `native/targets/tdeck/main/alpha_save.cpp` (`save()` captures via `c.quest_world`/`c.dungeon_context->state`), `native/targets/tdeck/main/alpha_runtime.cpp` (`synchronize_loaded_world`), `native/core/tests/gameplay_integration_test.cpp` (new coverage).
+**Work actually done:**
+- Adjudicated both items against the reference before touching production code (`game/src/core/state.ts`, `saveNative.ts`, `persistence.ts`; `re/notes/save-window-writer.md` + `dungeon-map-buffers.md` + `combat-dungeons.md`) — see the full adjudication in the R-14/R-15 Resolution subsections in §3. Two premises in the original write-up needed correcting in the process: interior objects (town/castle chests/props) were already correctly handled by the existing `hydrate_interior_objects`/`discard_interior_objects` transition hooks and needed no change; and the "moonstone burial state does not survive save/load" line was a mis-attribution — burial state is core `GameState`, already persisted, and was never part of `objects_`/R-14.
+- R-14: whole-`objects_`-vector capture/restore through the existing `QuestWorldServices` callback seam, `objects_.clear()` unconditionally before restore in `synchronize_loaded_world` (fixes the cross-save leak), validate-then-commit (a domain-invalid or absent sidecar field degrades to an empty pool, never a partial one).
+- R-15: **Option A** (serialize/restore `DungeonState`) confirmed as reference-correct — saving underground is authentically permitted in the DOS original, which captures live dungeon position/reveal state as a side effect of being one raw memory dump. The port's own `dungeon_`/`game_.position` split (unlike DOS's single register) means this lives in the JSON sidecar, not new `.gam` byte offsets. `pos.floor`/`x`/`y`/`facing` are validated to the exact ranges the engine indexes with (not just their storage width), because they are unguarded indices into the cell grid and the facing-delta table downstream.
+**Tests:** `native/core/tests/gameplay_integration_test.cpp` → ctest `gameplay_integration`. RED = compile failure against pre-batch code (the API didn't exist yet); GREEN post-fix, 42 assertions. Full suite **69 / 68 pass / 1 fail**, the fail being `gameplay_parity` mismatch **2034** / R-21 — unchanged from the pre-batch baseline.
+**Firmware:** incremental ESP-IDF v6.1 rebuild of `build-batch5-world-targeting/openu5_tdeck.bin`, 835,712 bytes (0xcc280, up from 829,024 / 0xca860 pre-batch), 20% of the 0x100000 app partition free; zero compiler warnings.
+**Physical test:** **not performed** (no hardware access in this session) — the physical-test script from the plan (open a chest/walk away/save/reload; search a tree for the skull key/reload; save in a dungeon and observe) remains open for hardware validation.
+**Model:** Sonnet.
 
 ---
 
@@ -1855,7 +1888,7 @@ Efficient broad-coverage pass using Developer tools. ~45 minutes. Each step name
 20. **[ANCHOR 1 — Batch 2 regression-validation] Confirm the cell shows plain arena floor — no blue square, no leftover symbol.** (Code/test-level fix is GREEN as of Batch 2; this step is the outstanding hardware confirmation, not a check for a known-open defect.)
 21. **[ANCHOR 2 — Batch 2 regression-validation] Before each `G`, note the visible icon; confirm the message names the same item.** (Code/test-level fix is GREEN as of Batch 2; this step is the outstanding hardware confirmation.)
 22. Mic (Back) → canonical victory exit. **[ANCHOR 1 — Batch 2 regression-validation] Confirm no blue tile-1 cell at the encounter coordinate on the overworld.** (`gameplay_parity` mismatch 59 is fixed at the code/test level; this step is the outstanding hardware confirmation, not a check for a known-open defect.)
-23. Save, reload. **[R-14] Confirm any loot left behind is still there.**
+23. Save, reload. **[R-14] Confirm any loot left behind is still there.** Fixed in Batch 6; hardware confirmation outstanding.
 
 ### Phase 4 — Items, magic, view (6 min)
 24. `U`se: **[R-07/R-08]** confirm every owned tool is listed with the correct name; confirm "Grapple" is absent and the Amulet is present. Fixed in Batch 3; hardware confirmation outstanding. (Pocket Watch is expected to be absent — no backing state.)
@@ -1880,7 +1913,7 @@ Efficient broad-coverage pass using Developer tools. ~45 minutes. Each step name
 39. `C`ast Uus Por / Des Por. **[R-06] `R`eady in the dungeon** — confirm it applies and charges no turn. Fixed in Batch 3; hardware confirmation outstanding.
 40. Trigger a dungeon encounter. Win. **Confirm the return is to the same cell and facing.**
 41. `Alt+M` System Menu → close. `Alt+D` Developer → Back. **Confirm the dungeon view returns both times.**
-42. **[R-15]** Save inside the dungeon, reload, and record exactly what happens.
+42. **[R-15]** Save inside the dungeon, reload, and confirm the dungeon session (position, facing, revealed cells, wanderer) resumes exactly. Fixed in Batch 6; hardware confirmation outstanding.
 43. Descend past floor 7 → Underworld. Confirm the transition.
 44. Walk out at the level-1 entrance → surface. Confirm the world view and Exploration verbs.
 

@@ -1531,7 +1531,19 @@ void AlphaRuntime::synchronize_loaded_world(){
     // a load arriving mid-scene must take the stage down rather than leave a
     // throne room drawn over a completely different world.
     blackthorn_pacer_.cancel();blackthorn_scene_state_={};
-    actors_={};const auto loc=game_.position.map.location;if(loc>=1&&loc<=32){auto &n=resources_.npc_locations[loc-1];openu5::enter_npc_map(actors_,n.slots,n.count,uint8_t(loc),uint8_t(game_.time.hour),game_.npc_dead[loc-1]);openu5::save::restore_npc_walk(retained_,uint8_t(loc),true,actors_);}terrain_.refresh(resources_.world,game_);dungeon_={};combat_.initialized=false;
+    actors_={};const auto loc=game_.position.map.location;if(loc>=1&&loc<=32){auto &n=resources_.npc_locations[loc-1];openu5::enter_npc_map(actors_,n.slots,n.count,uint8_t(loc),uint8_t(game_.time.hour),game_.npc_dead[loc-1]);openu5::save::restore_npc_walk(retained_,uint8_t(loc),true,actors_);}terrain_.refresh(resources_.world,game_);combat_.initialized=false;
+    // R-14: the pool has no owner-side backing store to diff against the new
+    // document, so a load must clear it before reconstructing -- otherwise a
+    // save taken while save B's world objects are live would leak them into
+    // save A's world (see object_append/object_erase; capture_world_objects).
+    objects_.clear();
+    if(openu5::save::restore_world_objects(retained_,quest_)!=openu5::save::Error::None)ESP_LOGW(kTag,"WORLD_OBJECTS_RESTORE_FAILED domain-invalid sidecar; world objects left empty");
+    ESP_LOGI(kTag,"WORLD_OBJECTS_RESTORE count=%u",unsigned(objects_.size()));
+    // R-15: an in-progress dungeon session round-trips through the sidecar;
+    // a surface save (the common case) or a domain-invalid document both
+    // fall back to no active session rather than leaking the prior one.
+    if(openu5::save::restore_dungeon(retained_,dungeon_)!=openu5::save::Error::None){dungeon_={};ESP_LOGW(kTag,"DUNGEON_RESTORE_FAILED domain-invalid sidecar; dungeon session left inactive");}
+    ESP_LOGI(kTag,"DUNGEON_RESTORE active=%d dungeon=%u depth=%u",dungeon_.active,unsigned(dungeon_.pos.dungeon),unsigned(dungeon_.pos.floor));
 }
 
 void AlphaRuntime::service_frontend_intent(){

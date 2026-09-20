@@ -152,6 +152,8 @@ bool AlphaSaveService::save(openu5::CommandContext &c,openu5::OutdoorServices&o,
     if(!stage("free-space",space_ok,kFatMountPath)){std::snprintf(last_failure_,sizeof(last_failure_),"Insufficient SD free space");ms=uint32_t((esp_timer_get_time()-start+999)/1000);return false;}
     openu5::save::capture_gameplay(c.commands,o,retained);openu5::save::capture_terrain(t,retained);
     openu5::save::capture_npc_walk(a,c.game.position.map.location,retained);
+    if(c.quest_world)openu5::save::capture_world_objects(*c.quest_world,retained);
+    if(c.dungeon_context)openu5::save::capture_dungeon(c.dungeon_context->state,retained);
     s.gam={};s.side={};s.json.clear();
     if(!stage("gam-encode",openu5::save::export_native_state(c.game,c.turn,retained,base,base_size,s.gam,s.side,true)==openu5::save::Error::None,"INIT.GAM")){ms=uint32_t((esp_timer_get_time()-start+999)/1000);return false;}
     if(new_journey)openu5::save::preserve_new_journey_template_bytes(s.gam,base,base_size);
