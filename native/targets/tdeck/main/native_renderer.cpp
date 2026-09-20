@@ -486,6 +486,44 @@ esp_err_t render_world_gem_view(const ActiveMap &map, Position center, uint16_t 
     return ESP_OK;
 }
 
+esp_err_t render_zodiac_view(const ZodiacView &view, uint16_t *pixels, size_t count,
+                             RenderReport &report, uint16_t &primitives)
+{
+    report = {}; primitives = 0;
+    if (!pixels || count < kViewportPixelCount) return ESP_ERR_INVALID_ARG;
+    std::fill(pixels, pixels + kViewportPixelCount, kDungeonBlack);
+    constexpr uint16_t kStarColor = 0xffff;   // white background stars
+    constexpr uint16_t kSignColor = 0xffe0;   // yellow zodiac glyph marker
+    constexpr uint16_t kLineColor = 0x7bef;   // dim Shadowlord-track line
+    for (const auto &star : view.stars) dungeon_pixel(pixels, star.x, star.y, kStarColor, primitives);
+    for (const auto &sign : view.signs) {
+        // "la línea nace 8 px a la izquierda" (zodiac-view.ts) -- a short
+        // horizontal segment from line_x to star_x, drawn only when a
+        // Shadowlord occupies that sign's city (the zodiac's one gameplay
+        // tell; the rest is cosmetic).
+        if (sign.has_line) dungeon_line(pixels, sign.line_x, sign.y, sign.star_x, sign.y, kLineColor, primitives);
+        dungeon_rect(pixels, sign.star_x, sign.y, sign.star_x + 1, sign.y + 1, kSignColor, primitives);
+    }
+    report.viewport_bytes = uint32_t(kViewportPixelCount * sizeof(uint16_t));
+    report.viewport_crc32 = crc32_u16le(pixels, kViewportPixelCount);
+    report.map_context = "Zodiac view";
+    return ESP_OK;
+}
+
+void shift_viewport_vertically(uint16_t *pixels, int offset_px)
+{
+    if (!pixels || offset_px <= 0) return;
+    if (offset_px > kViewportPixels) offset_px = kViewportPixels;
+    for (int y = kViewportPixels - 1; y >= 0; --y) {
+        const int src_y = std::max(0, y - offset_px);
+        if (src_y == y) continue;
+        std::copy(pixels + src_y * kViewportPixels, pixels + (src_y + 1) * kViewportPixels,
+                  pixels + y * kViewportPixels);
+    }
+}
+
+uint32_t recompute_viewport_crc32(const uint16_t *pixels, size_t count) { return crc32_u16le(pixels, count); }
+
 esp_err_t render_intro_view(const PresentationTileCache &cache,const IntroViewFrame &frame,
                             uint32_t tick,uint16_t *pixels,size_t count,RenderReport &report)
 {

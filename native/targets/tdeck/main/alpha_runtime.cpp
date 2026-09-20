@@ -296,7 +296,28 @@ void AlphaRuntime::consume_event(const openu5::GameEvent&e){
         ESP_LOGI(kTag,"VIEW_EFFECT type=gem presentation=%s deferred_turn=%d dungeon=%d",
                  dungeon_.active?"dungeon-floor-map":"world-map",gem_view_charges_turn_,dungeon_.active);
     }
+    if(e.kind==openu5::GameEventKind::Zodiac&&e.zodiac){
+        zodiac_view_=*e.zodiac;zodiac_view_active_=true;
+        dirty_=true;dirty_reason_="zodiac-view";
+        ESP_LOGI(kTag,"VIEW_EFFECT type=zodiac presentation=night-sky deferred_turn=0");
+    }
+    if(e.kind==openu5::GameEventKind::Quake){
+        const int64_t now=esp_timer_get_time();
+        const bool running=quake_pulses_>0&&(now-quake_start_us_)<int64_t(quake_pulses_)*openu5::kQuakePeriodMs*1000;
+        if(running)quake_pulses_+=openu5::kQuakePulses;
+        else{quake_start_us_=now;quake_pulses_=openu5::kQuakePulses;}
+        dirty_=true;dirty_reason_="quake";
+        ESP_LOGI(kTag,"QUAKE pulses=%d extended=%d",quake_pulses_,running);
+    }
     if(e.kind==openu5::GameEventKind::MagicCeremony)start_magic_ceremony(e.note);
+    if(e.kind==openu5::GameEventKind::MapReveal){
+        // e.note is DEATH_VISION_FRAMES=20 (run-n-frames units, world_magic.cpp's
+        // emit()); the reference's runMapReveal() converts frames*PAUSE_UNIT_MS
+        // to a wall-clock window and swallows input for it.
+        map_reveal_end_us_=esp_timer_get_time()+int64_t(e.note)*kPresentationUnitMs*1000;
+        dirty_=true;dirty_reason_="map-reveal";
+        ESP_LOGI(kTag,"MAP_REVEAL frames=%ld duration_ms=%ld",long(e.note),long(e.note)*long(kPresentationUnitMs));
+    }
     if(e.kind==openu5::GameEventKind::Combat&&e.combat&&
        e.combat->kind==openu5::CombatEventKind::Message&&e.combat->text&&
        std::strcmp(e.combat->text,"Blocked!")==0){
@@ -1007,12 +1028,28 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
                  action_name(action.kind),advanced?"key-wait-advance":"swallowed",int(blackthorn_pacer_.state()));
         return true;
     }
+    // R-12: "revealing traga el input" -- the reference's modal reveal loop
+    // (main.ts runMapReveal/cancelMapReveal) reads no keyboard while armed and
+    // re-censors itself automatically on the wall-clock timer in render(),
+    // never on a keypress; unlike gem view there is no explicit close action.
+    if(map_reveal_end_us_>esp_timer_get_time()&&shortcut==DeviceShortcut::None){
+        ESP_LOGI(kTag,"MAP_REVEAL_INPUT action=%s effect=swallowed gameplay_command=none",action_name(action.kind));
+        return true;
+    }
     if(gem_view_active_&&shortcut==DeviceShortcut::None){
         const bool charge=gem_view_charges_turn_;
         gem_view_active_=false;gem_view_charges_turn_=false;
         if(charge){openu5::Command after{};after.kind=openu5::CommandKind::AfterGemView;command(after);}
         ESP_LOGI(kTag,"VIEW_RESULT result=closed deferred_turn=%d ui=%s dungeon=%d",charge,mode_name(ui_->mode()),dungeon_.active);
         dirty_=true;dirty_reason_="gem-view-close";return true;
+    }
+    // R-13: "se cierra con CUALQUIER tecla" (main.ts) -- same modal-close
+    // shape as gem view, but (U)se already spent the turn, so closing never
+    // dispatches a command.
+    if(zodiac_view_active_&&shortcut==DeviceShortcut::None){
+        zodiac_view_active_=false;
+        ESP_LOGI(kTag,"VIEW_RESULT result=closed view=zodiac deferred_turn=0 ui=%s",mode_name(ui_->mode()));
+        dirty_=true;dirty_reason_="zodiac-view-close";return true;
     }
     ESP_LOGD(kTag,"UI input mode=%s action=%s char=%u index=%ld pending=%d",mode_name(mode_before),action_name(action.kind),unsigned(action.character),long(action.index),mode_before==openu5::UiMode::TargetSelection);
     const auto before=game_.position;const bool dungeon_before=dungeon_.active;const auto dungeon_pos_before=dungeon_.pos;
@@ -1398,12 +1435,33 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     }
     const bool magic_inverted=magic_invert_end_us_>now&&now>=magic_invert_start_us_;
     if(magic_inverted!=magic_was_inverted_){dirty_=true;dirty_reason_=magic_inverted?"magic-invert":"magic-restore";}
+    // R-12: the view "re-censors itself on expiry" (the reference's own
+    // phrasing) -- a plain timer read, no explicit close command, and the
+    // last revealed frame must still be replaced by one more real render so
+    // the censorship comes back on screen instead of freezing revealed.
+    const bool map_reveal_active=map_reveal_end_us_>now;
+    if(map_reveal_active!=map_reveal_was_active_){dirty_=true;dirty_reason_=map_reveal_active?"map-reveal":"map-reveal-end";}
+    map_reveal_was_active_=map_reveal_active;
+    if(!map_reveal_active)map_reveal_end_us_=0;
+    int quake_offset_px=0;
+    if(quake_pulses_>0){
+        const int64_t elapsed_ms=(now-quake_start_us_)/1000;
+        if(elapsed_ms>=int64_t(quake_pulses_)*openu5::kQuakePeriodMs)quake_pulses_=0;
+        else quake_offset_px=openu5::quake_offset_at(int32_t(elapsed_ms),quake_pulses_);
+    }
+    const bool quake_active=quake_pulses_>0;
+    if(quake_active!=quake_was_active_){dirty_=true;dirty_reason_=quake_active?"quake":"quake-end";}
+    quake_was_active_=quake_active;
     const uint32_t tick=uint32_t(now/55000);
     const bool debug_mode=ui_->mode()==openu5::UiMode::DebugMenu;
     // A world/combat animation flag must never wake the modal Developer UI.
     // Alpha 1.3 entered here every 55 ms, then converted animation_only to a
     // full debug-screen clear below: the physical flashing root cause.
-    bool animation_only=!debug_mode&&!dirty_&&!force&&animation_visible_&&tick!=rendered_animation_tick_;
+    // Quake oscillates within its own active window (8 pulses of down/rest,
+    // not one fixed state like the magic-invert flash), so it needs the same
+    // periodic re-render pump as tile animation, not just a dirty flag on
+    // the start/stop transition.
+    bool animation_only=!debug_mode&&!dirty_&&!force&&(animation_visible_||quake_active)&&tick!=rendered_animation_tick_;
     if(dungeon_presentation_pending_){force=true;animation_only=false;}
     if(!dirty_&&!force&&!animation_only)return ESP_OK;
     const char *render_reason=force?"full-redraw":animation_only?"animation-tick":dirty_reason_;
@@ -1434,7 +1492,7 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
         ESP_LOGE(kTag,"WORLD_MAP_MISSING location=%u floor=%d xy=%u,%u",unsigned(game_.position.map.location),
                  int(game_.position.map.floor),unsigned(game_.position.xy.x),unsigned(game_.position.xy.y));
         return ESP_FAIL;
-    }const int avatar=turn_.transport_tile>=0?turn_.transport_tile+0x100:tile_report_.avatar_tile;snapshot=openu5::compose_world_presentation(context_,active.value,game_.position.xy,avatar);if(gem_view_active_){world_gem_map=active.value;world_gem_map_ready=true;}}
+    }const int avatar=turn_.transport_tile>=0?turn_.transport_tile+0x100:tile_report_.avatar_tile;snapshot=openu5::compose_world_presentation(context_,active.value,game_.position.xy,avatar,map_reveal_active);if(gem_view_active_){world_gem_map=active.value;world_gem_map_ready=true;}}
     ESP_LOGI(kTag,"PRESENTATION_DISPATCH ui=%s combat=%d dungeon=%d source=%s",mode_name(ui_->mode()),combat_source,dungeon_source,presentation_source);
     int16_t open_marker_x=-1,open_marker_y=-1;
     if(snapshot.combat&&ui_->take_target_render_marker(open_marker_x,open_marker_y)){
@@ -1466,7 +1524,10 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     uint16_t dungeon_primitives=0;
     if(!debug_mode){
         if(dungeon_source)ESP_LOGI(kTag,"DUNGEON_DRAW_BEGIN viewport=176x176 source=%s",gem_view_active_?"gem-view":"dungeon3d");
-        if(dungeon_source&&gem_view_active_){
+        if(zodiac_view_active_){
+            e=openu5::render_zodiac_view(zodiac_view_,viewport_,openu5::kViewportPixelCount,report,dungeon_primitives);
+            presentation_source="zodiac-view";
+        } else if(dungeon_source&&gem_view_active_){
             e=openu5::render_dungeon_gem_view(dungeon_,viewport_,openu5::kViewportPixelCount,report,dungeon_primitives);
             presentation_source="gem-view";
         } else if(gem_view_active_&&world_gem_map_ready){
@@ -1481,6 +1542,10 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
         for(size_t p=0;p<openu5::kViewportPixelCount;++p)
             viewport_[p]=magic_xor_palette_pixel(viewport_[p],tile_cache_.palette);
         report.viewport_crc32^=0xa5c35a3cU;
+    }
+    if(e==ESP_OK&&quake_offset_px>0&&!debug_mode){
+        openu5::shift_viewport_vertically(viewport_,quake_offset_px);
+        report.viewport_crc32=openu5::recompute_viewport_crc32(viewport_,openu5::kViewportPixelCount);
     }
     const DeviceDebugScreen *debug_ptr=nullptr;
     if(debug_mode){

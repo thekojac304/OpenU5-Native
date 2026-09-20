@@ -61,15 +61,42 @@ class ActorAnimationClock {
 /** The same light-radius calculation used by the reference CoreView. */
 int32_t presentation_light_level(const GameState &, const TurnState &);
 
+/**
+ * Y-04 (Quake): vertical viewport-shake offset in canvas px at time `t_ms`
+ * since the shake started, for a shake of `pulses` pulses (default one
+ * kernel-primitive invocation; the Codex ceremony triggers three in a row).
+ * Square wave -- `kQuakeAmplitudePx` during the down phase of each pulse,
+ * 0 during rest, 0 outside [0, pulses*kQuakePeriodMs). Pure function (host
+ * test coverage); the device applies it as a re-blit offset of the 11x11
+ * game window only -- HUD/frame/text never move (skin/fiel/quake.ts, the
+ * reference's own witness-derived dynamics).
+ */
+constexpr int kQuakeAmplitudePx = 2;
+constexpr int kQuakePulses = 8;
+constexpr int kQuakeDownMs = 42;
+constexpr int kQuakePeriodMs = 117; // down(42) + rest(75)
+constexpr int kQuakeDurationMs = kQuakePulses * kQuakePeriodMs;
+int quake_offset_at(int32_t t_ms, int pulses = kQuakePulses);
+
 /** Classify a tile without advancing gameplay state or consuming gameplay RNG. */
 TileAnimationKind tile_animation_kind(int32_t tile);
 
 /** Select the logical tile-id frame. phase is the free-running 55 ms presentation tick. */
 int32_t animated_tile_frame(int32_t tile, uint32_t phase, int64_t world_turn);
 
-/** Compose terrain, live overrides, objects/actors, visibility, and the party. */
+/**
+ * Compose terrain, live overrides, objects/actors, visibility, and the party.
+ * `reveal_all` bypasses the light-radius/sight-blocking censorship entirely
+ * (R-12: Wis An Ylem / In Quas Wis / the white potion's Death Vision effect --
+ * `revealViewport` in the reference `CoreView`, which returns no censorship
+ * bitmap at all while active, not a flood run with light=infinity, because a
+ * flood still stops at walls and would leave sealed rooms dark). It never
+ * touches GameState/TurnState: the effect is real-time, not turn-gated, so
+ * the caller (the device render loop) owns the timer and passes the flag.
+ */
 PresentationSnapshot compose_world_presentation(CommandContext &, const ActiveMap &,
-                                                 Position center, int32_t avatar_tile);
+                                                 Position center, int32_t avatar_tile,
+                                                 bool reveal_all = false);
 
 /** Compose the live combat arena, including fields, loot, and combatants. */
 PresentationSnapshot compose_combat_presentation(const CombatState &, const GameState &);

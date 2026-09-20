@@ -7,6 +7,7 @@
 #include "openu5/presentation.h"
 #include "openu5/dungeon.h"
 #include "openu5/intro_view.h"
+#include "openu5/look.h"
 #include "openu5/world.h"
 #include "esp_err.h"
 
@@ -76,6 +77,29 @@ esp_err_t render_dungeon_gem_view(const DungeonState &, uint16_t *rgb565,
 esp_err_t render_world_gem_view(const ActiveMap &, Position, uint16_t *rgb565,
                                 size_t pixel_count, RenderReport &report,
                                 uint16_t &primitives);
+
+/**
+ * Render the night-sky Zodiac view shown by (U)se Spyglass (R-13). `view`'s
+ * star/sign coordinates are already in this viewport's own pixel space
+ * (look.cpp's emit_zodiac ranges them to [9,182)x[9,172), matching the
+ * reference's own map-window-relative plot() calls) -- no map/tile lookup.
+ */
+esp_err_t render_zodiac_view(const ZodiacView &view, uint16_t *rgb565,
+                             size_t pixel_count, RenderReport &report,
+                             uint16_t &primitives);
+
+/**
+ * Y-04 (Quake): re-blit the already-rendered 11x11 game window `offset_px`
+ * canvas rows lower (the witness-derived dynamic is purely vertical, HUD/
+ * frame/text untouched -- this never touches anything outside `pixels`).
+ * The vacated rows at the top are filled by clamping to the window's own
+ * edge row, not black, so the 2px amplitude never flashes a bare bar.
+ * A no-op for `offset_px<=0`.
+ */
+void shift_viewport_vertically(uint16_t *pixels, int offset_px);
+
+/** Recompute a RenderReport's viewport_crc32 after a caller-side post-process (e.g. the quake shift above). */
+uint32_t recompute_viewport_crc32(const uint16_t *pixels, size_t count);
 
 /** Render the authoritative FONT.OVL four-row View band at its native 304x64 size. */
 esp_err_t render_intro_view(const PresentationTileCache &, const IntroViewFrame &,

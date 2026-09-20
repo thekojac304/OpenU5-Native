@@ -190,6 +190,32 @@ int main(){
     game.time.hour=0;game.position.xy={16,16};snap=compose_world_presentation(context,active.value,{16,16},0x11c);
     check(snap.tiles[0]==kPresentationHidden,"night visibility/fog censors distant cells");
 
+    // R-12: Wis An Ylem / In Quas Wis / Death Vision bypass the censorship
+    // bitmap entirely (the reference's revealViewport), not a flood re-run
+    // with a higher light value -- a flood still stops at walls and would
+    // leave sealed rooms dark, which is exactly the divergence the reference
+    // comment for `revealViewport` calls out.
+    snap=compose_world_presentation(context,active.value,{16,16},0x11c,/*reveal_all=*/true);
+    check(snap.tiles[0]!=kPresentationHidden&&snap.tiles[0]==5,"map reveal shows real terrain through night censorship");
+    check(snap.visible[0]==1,"map reveal marks every cell of the window visible");
+    snap=compose_world_presentation(context,active.value,{16,16},0x11c);
+    check(snap.tiles[0]==kPresentationHidden,"map reveal does not leak into the next ordinary snapshot");
+
+    // Y-04 (Quake): square wave, 2px amplitude, 8 pulses of a 117ms period
+    // (42ms down + 75ms rest), silent before/after the window.
+    check(quake_offset_at(-1)==0,"quake is silent before it starts");
+    check(quake_offset_at(0)==kQuakeAmplitudePx,"quake starts in the down phase");
+    check(quake_offset_at(41)==kQuakeAmplitudePx&&quake_offset_at(42)==0,"quake down phase is exactly 42ms");
+    check(quake_offset_at(116)==0&&quake_offset_at(117)==kQuakeAmplitudePx,"quake period is 117ms");
+    check(quake_offset_at(7*117)==kQuakeAmplitudePx,"the 8th pulse still runs inside the window");
+    check(quake_offset_at(8*117)==0,"quake is silent after its 8 pulses");
+    // The Codex ceremony fires the primitive 3x for one sustained shake:
+    // 3*kQuakePulses pulses, so it is still running at a time where a single
+    // default-length trigger (kQuakePulses) has already gone silent.
+    check(quake_offset_at(8*117)==0,"a single quake trigger has stopped by its own duration");
+    check(quake_offset_at(8*117,3*kQuakePulses)==kQuakeAmplitudePx,"the Codex's 3x-sustained shake is still running there");
+    check(quake_offset_at(3*kQuakeDurationMs,3*kQuakePulses)==0,"the sustained shake still stops after its own 3x duration");
+
     const auto seed=game.rng.get_seed();const auto turns=game.turns_since_start;
     check(tile_animation_kind(1)==TileAnimationKind::WaterScroll,"water is presentation animated");
     check(tile_animation_kind(0xb0)==TileAnimationKind::FireNoise,"torch is presentation animated");

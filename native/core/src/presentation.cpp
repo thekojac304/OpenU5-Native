@@ -73,7 +73,8 @@ void flood(int cc,int cr,int light,TileSampler sample,void *sample_context,
 struct WorldSampler {CommandContext *context;const ActiveMap *map;Position center;};
 int sample_world(void *p,int col,int row){auto &s=*static_cast<WorldSampler*>(p);return effective_terrain(*s.context,*s.map,int(s.center.x)-kHalf+col,int(s.center.y)-kHalf+row);}
 
-void visibility(CommandContext &c,const ActiveMap &map,Position center,uint8_t (&out)[kPresentationCells]) {
+void visibility(CommandContext &c,const ActiveMap &map,Position center,bool reveal_all,uint8_t (&out)[kPresentationCells]) {
+    if(reveal_all){std::fill(std::begin(out),std::end(out),uint8_t(1));return;}
     WorldSampler sampler{&c,&map,center};uint8_t emit[kPresentationCells]{};
     constexpr int reach=3;
     for(int er=-reach;er<kPresentationWindow+reach;++er)for(int ec=-reach;ec<kPresentationWindow+reach;++ec){
@@ -132,6 +133,13 @@ int32_t presentation_light_level(const GameState &g,const TurnState &t){
     if(t.light_spell_minutes>0&&light<18)light=18;
     if(g.torch_turns>0&&light<10)light=10;
     return light;
+}
+
+int quake_offset_at(int32_t t_ms,int pulses){
+    if(pulses<1)pulses=1;
+    if(t_ms<0||t_ms>=pulses*kQuakePeriodMs)return 0;
+    const int phase=t_ms%kQuakePeriodMs;
+    return phase<kQuakeDownMs?kQuakeAmplitudePx:0;
 }
 
 TileAnimationKind tile_animation_kind(int32_t tile){
@@ -195,10 +203,10 @@ int32_t animated_tile_frame(int32_t tile,uint32_t phase,int64_t turn){
     return base+int((tile-base+step)%size);
 }
 
-PresentationSnapshot compose_world_presentation(CommandContext &c,const ActiveMap &map,Position center,int32_t avatar_tile){
+PresentationSnapshot compose_world_presentation(CommandContext &c,const ActiveMap &map,Position center,int32_t avatar_tile,bool reveal_all){
     PresentationSnapshot s;s.center=center;
     for(int row=0;row<kPresentationWindow;++row)for(int col=0;col<kPresentationWindow;++col){const int i=row*kPresentationWindow+col;s.tiles[i]=int16_t(effective_terrain(c,map,int(center.x)-kHalf+col,int(center.y)-kHalf+row));}
-    visibility(c,map,center,s.visible);
+    visibility(c,map,center,reveal_all,s.visible);
     auto cell_at=[&](int x,int y)->int{int dx=x-int(center.x),dy=y-int(center.y);if(map.geometry.wraps){if(dx>128)dx-=256;if(dx< -128)dx+=256;if(dy>128)dy-=256;if(dy< -128)dy+=256;}const int col=dx+kHalf,row=dy+kHalf;if(col<0||row<0||col>=kPresentationWindow||row>=kPresentationWindow)return -1;const int at=row*kPresentationWindow+col;return s.visible[at]?at:-1;};
     auto place=[&](int x,int y,int tile,uint32_t actor_id=0,uint8_t seed=0){const int at=cell_at(x,y);if(at>=0){s.tiles[at]=int16_t(tile);s.actor_ids[at]=actor_id;s.actor_seeds[at]=seed;}};
     if(!map.id.location&&c.outdoor)for(size_t i=0;i<c.outdoor->enemies.size();++i){const auto&e=c.outdoor->enemies[i];place(e.x,e.y,e.tile,0x10000U+uint32_t(e.slot>=0?e.slot:int(i)+32),uint8_t(e.tile&0xfc));}

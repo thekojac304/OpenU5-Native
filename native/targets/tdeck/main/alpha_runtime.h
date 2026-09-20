@@ -149,6 +149,11 @@ class AlphaRuntime {
     bool dungeon_presentation_pending_ = false;
     bool gem_view_active_ = false;
     bool gem_view_charges_turn_ = false;
+    // R-13: Use Spyglass. Closes on any key like gem view, but charges no
+    // deferred turn -- (U)se already spent it. e.zodiac is borrowed for the
+    // synchronous emit only, so the star/sign field is copied out here.
+    bool zodiac_view_active_ = false;
+    openu5::ZodiacView zodiac_view_{};
     uint32_t attract_origin_frame_ = 0;
     uint32_t frontend_reconstruction_count_ = 0;
     uint32_t frontend_state_change_count_ = 0;
@@ -179,6 +184,22 @@ class AlphaRuntime {
     bool teleport_snapshot_pending_ = false;
     int64_t magic_invert_start_us_ = 0, magic_invert_end_us_ = 0;
     bool magic_was_inverted_ = false;
+    // R-12: Wis An Ylem / In Quas Wis / Death Vision. Wall-clock, not
+    // turn-gated -- matches the reference's revealViewport(ms) timer, not a
+    // per-turn counter. Input is swallowed while active (see handle()) and
+    // compose_world_presentation's reveal_all bypasses the light/wall
+    // censorship for the same window (see consume_event/render()).
+    int64_t map_reveal_end_us_ = 0;
+    bool map_reveal_was_active_ = false;
+    // Y-04 (Quake): the reference collapses every {kind:"quake"} event of a
+    // turn into ONE trigger(now, count*QUAKE_PULSES) call (skin.ts's
+    // planTurnPhase/applyTurnFx) -- a sustained shake, not N overlapping
+    // ones. consume_event() sees events one at a time, so a retrigger while
+    // one is still running EXTENDS the pulse count instead of resetting the
+    // clock, reconstructing the same total duration.
+    int64_t quake_start_us_ = 0;
+    int quake_pulses_ = 0;
+    bool quake_was_active_ = false;
 
     static void dispatch_ui(void *, const openu5::UiIntent &);
     static void dispatch_event(void *, const openu5::GameEvent &);
