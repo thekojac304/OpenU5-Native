@@ -113,6 +113,23 @@ struct CastContext {
     int8_t absorbed = -1;
     uint8_t wind_arrow = 0;
 };
+// Which target prompt the (C)ast command must raise BEFORE it dispatches the
+// Cast, given the context the caster stands in.  Audit R-11 / Batch 5.
+//
+//   CombatReticle   -- the combat aim cursor (UiRequestId::Target): the caller
+//                      seeds it with the acting combatant's cell, the player
+//                      walks it with directions and presses Confirm, and the
+//                      Command leaves with has_target set.
+//   WorldDirection  -- the ordinary world getdir (UiRequestId::Direction): one
+//                      direction press dispatches the Cast with has_direction
+//                      set; any other key cancels.
+//   None            -- dispatch immediately, no prompt.
+//
+// selectedCombatPlayer / castingCombatPlayer spells are NOT described here:
+// they are party-picker / self-cast shapes resolved by the caller before this
+// is consulted.
+enum class CastTargetPrompt : uint8_t { None, CombatReticle, WorldDirection };
+CastTargetPrompt cast_target_prompt(SpellId, bool in_combat, bool in_dungeon);
 // The caller supplies the active RNG stream; combat must use CombatState.rng.
 CastResult cast_spell(GameState &, TurnState &, CharacterState &, SpellId, CastContext, Rand);
 bool mix_spell(GameState &, SpellId, int32_t quantity);

@@ -725,11 +725,25 @@ void AlphaRuntime::cast_selected_spell(int16_t spell){
         c.member=actor&&actor->member!=255?actor->member:int16_t(active_member(game_));
         command(c);return;
     }
-    if(context_.combat&&(std::strstr(target,"MapPosition")||std::strstr(target,"MapUnit")||
-       std::strcmp(target,"direction")==0)){
+    // Which prompt this cast owes the player, in THIS context, is the shared
+    // openu5::cast_target_prompt() seam (R-11 / Batch 5) rather than an
+    // inline predicate, so the host suite can drive the same decision this
+    // ESP-only function makes.
+    switch(openu5::cast_target_prompt(openu5::SpellId(spell),context_.combat,dungeon_.active)){
+    case openu5::CastTargetPrompt::CombatReticle:{
         const int16_t x=actor?actor->position.x:5,y=actor?actor->position.y:5;
         ui_->begin_target(openu5::UiRequestId::Target,"Spell aim",c,x,y);
         dirty_=true;return;
+    }
+    case openu5::CastTargetPrompt::WorldDirection:
+        // The ordinary world getdir, identical to every other directional
+        // world command (Talk/Open/Push/Klimb) -- UiRequestId::Direction with
+        // no reticle cell, so one direction press dispatches the Cast with
+        // has_direction set and Cancel dispatches it without one.
+        ui_->begin_target(openu5::UiRequestId::Direction,"Direction?",c,-1,-1);
+        dirty_=true;return;
+    case openu5::CastTargetPrompt::None:
+        break;
     }
     command(c);
 }

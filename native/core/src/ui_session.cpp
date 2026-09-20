@@ -593,8 +593,16 @@ bool UiSession::handle_modal(const UiAction &a) {
             else { UiIntent i; i.kind=UiIntentKind::ModalResponse; i.request=cancelled_request;
                    i.value.accepted=false; dispatch(i); }
         } else if (a.kind == UiActionKind::Direction) {
+            // R-11. The aim RETICLE belongs to combat, and combat marks itself
+            // with UiRequestId::Target (AlphaRuntime::cast_selected_spell's
+            // "Spell aim"). A Cast parked on UiRequestId::Direction is the
+            // WORLD getdir -- An Ex Por / An Sanct / In Por -- and must behave
+            // like every other world getdir: one press dispatches with
+            // has_direction, which is the only field world_magic() reads.
+            // Walking a reticle there could never deliver the direction, so
+            // the world cast consumed its charge and no-opped.
             if (pending_command_.kind == CommandKind::CombatAttack ||
-                pending_command_.kind == CommandKind::Cast) {
+                (pending_command_.kind == CommandKind::Cast && request_ == UiRequestId::Target)) {
                 const auto d = direction_delta(a.direction);
                 const int nx=std::max(0,std::min(10,int(pending_command_.combat_x)+d.dx));
                 const int ny=std::max(0,std::min(10,int(pending_command_.combat_y)+d.dy));
@@ -628,7 +636,8 @@ bool UiSession::handle_modal(const UiAction &a) {
             }
         } else if (a.kind == UiActionKind::Confirm &&
                    (pending_command_.kind == CommandKind::CombatAttack ||
-                    pending_command_.kind == CommandKind::Cast ||
+                    (pending_command_.kind == CommandKind::Cast &&
+                     request_ == UiRequestId::Target) ||
                     (pending_command_.kind == CommandKind::Fire &&
                      pending_command_.has_direction))) {
             if(pending_command_.kind==CommandKind::CombatAttack&&

@@ -1,5 +1,6 @@
 #include "openu5/magic.h"
 #include <algorithm>
+#include <cstring>
 namespace openu5 {
 namespace {
 #include "magic_tables.inc"
@@ -36,6 +37,52 @@ const char *spell_target_label(SpellId id) {
         "World", "Direction"
     };
     return unsigned(id) < 48 ? kTargets[unsigned(id)] : nullptr;
+}
+// Batch 5 seam (audit R-11).  The decision AlphaRuntime::cast_selected_spell
+// makes about which prompt a (C)ast owes the player, extracted so the host
+// suite can drive it: cast_selected_spell lives behind ESP-IDF headers (audit
+// Y-05), so the Batch 3 precedent (openu5::usable_item_picker_rows) applies --
+// extract the decision, test it on the host, let the device call it.
+//
+// COMBAT is the port's existing rule, byte for byte: any target_type naming a
+// map position, a map unit or a direction opens the aim reticle.
+//
+// WORLD keys on the EFFECT, not on target_type.  target_type is unreliable
+// here (audit R-16: spell_target_label contradicts it for 12 of 48 spells) and
+// it over-selects: An Ylem (Poof), An Grav (Dispel) and In Ex Por (Animation)
+// all carry a selectedMapUnit / SelectedMapPosition target_type yet have NO
+// world effect at all.  The reference's world dispatcher (game/src/main.ts,
+// doCast) arms a getdir for exactly three effect descriptors -- sealDoor
+// (An Ex Por), disarmOrOpen (An Sanct) and blink (In Por) -- and falls off the
+// end of its else-if chain for everything else, consuming the charge and doing
+// nothing without ever prompting.  world_magic.cpp agrees independently: its
+// only pre-flight target guards name items 6, 25 and 17.
+//
+// UNDERGROUND there is no getdir at all.  The reference's doDungeonCast
+// resolves An Sanct against the party's dungeon FACING (applyAnSanctOpenChest)
+// and has no seal or blink branch, and the dungeon command path never reaches
+// world_magic.
+CastTargetPrompt cast_target_prompt(SpellId id, bool in_combat, bool in_dungeon) {
+    const auto *d = spell_definition(id);
+    if (!d)
+        return CastTargetPrompt::None;
+    if (in_combat) {
+        const char *target = d->target_type ? d->target_type : "";
+        return std::strstr(target, "MapPosition") || std::strstr(target, "MapUnit") ||
+                       std::strcmp(target, "direction") == 0
+                   ? CastTargetPrompt::CombatReticle
+                   : CastTargetPrompt::None;
+    }
+    if (in_dungeon)
+        return CastTargetPrompt::None;
+    switch (kEffects[unsigned(id)].kind) {
+    case MagicEffect::Seal:
+    case MagicEffect::Disarm:
+    case MagicEffect::Blink:
+        return CastTargetPrompt::WorldDirection;
+    default:
+        return CastTargetPrompt::None;
+    }
 }
 bool mix_spell(GameState &g, SpellId id, int32_t qty) {
     const auto *d = spell_definition(id);

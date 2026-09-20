@@ -184,6 +184,13 @@ if(BUILD_TESTING)
   add_executable(batch4_group_b_tests tests/batch4_group_b_test.cpp)
   target_link_libraries(batch4_group_b_tests PRIVATE openu5_core)
   add_test(NAME batch4_group_b COMMAND batch4_group_b_tests)
+  # Batch 5 -- world spell targeting (R-11) and the Rel Hur scroll getdir
+  # (Y-21).  Drives the openu5::cast_target_prompt() policy seam, the real
+  # UiSession TargetSelection machinery and the real world_magic() charge /
+  # mana ordering.  See native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md.
+  add_executable(batch5_tests tests/batch5_test.cpp)
+  target_link_libraries(batch5_tests PRIVATE openu5_core)
+  add_test(NAME batch5 COMMAND batch5_tests)
   # Batch 4.5B -- Blackthorn capture production-resource integration: proves
   # ShrineServices::record/::context are actually wired to the packed
   # MISCMSG.DAT resource the way AlphaRuntime wires it (real capture and

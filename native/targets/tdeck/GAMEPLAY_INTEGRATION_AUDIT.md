@@ -92,7 +92,7 @@ All routes are `UiSession::handle_exploration` → `UiIntent` → `AlphaRuntime:
 | dir | Move | **Y** | `world_flow_parity`, `movement_flow_parity` green; device presentation unproven. Y-07 |
 | `a` | Attack | **Y** | Direction prompt → `CommandKind::Attack`. Y-07 |
 | `b` | Board | **Y** | `transport_flow_parity` green. Y-07 |
-| `c` | Cast | **R** | World direction/unit targets never prompted. R-11 |
+| `c` | Cast | **G** — RESOLVED (Batch 5), hardware-certified | R-11. World An Sanct / In Por / An Ex Por now open the ordinary world getdir; hardware checkpoint GREEN — all three passed on the physical T-Deck. |
 | `e` | Enter | **Y** | Dungeon entry logs exist; town/dungeon entry unproven. Y-07 |
 | `f` | Fire | **Y** | Reticle + Confirm path in `handle_modal`; `CellProjectile` has no renderer. Y-04 |
 | `g` | Get | **G** | Directional, LIFO, authoritative increment — preserved as working. World loot icon = `o.tile+256` matches reference [REF]. |
@@ -168,7 +168,7 @@ See the full Resource/Item matrix in §11. Summary: **gold/food/gems/keys/torche
 | Mix | **Y** | Quantity hardcoded to 1. Y-19 |
 | Combat casting (self / party / aim / direction) | **G** | `cast_selected_spell` covers `selectedCombatPlayer`, `castingCombatPlayer`, `MapPosition`, `MapUnit`, `direction` — **but only when `context_.combat`**. |
 | Dungeon casting (Uus Por / Des Por / fields / dispel) | **G** | `dungeon_orchestration.cpp:160+` routes to `MagicUp`/`MagicDown`/`Tick`. |
-| **World casting with a target** | **R** | R-11 — 6 spells consume charge + MP, then no-op. |
+| **World casting with a target** | **G** — RESOLVED (Batch 5), hardware-certified | R-11 — **three** spells (An Sanct / In Por / An Ex Por), not six, were the defect; they now prompt for a direction and apply. The other three named in the old row (An Ylem / An Grav / In Ex Por) have no world effect in the reference either. Hardware checkpoint GREEN — An Sanct (locked door), In Por (world blink) and An Ex Por (door) all passed on the physical T-Deck on the first attempt. World spell targeting presents a directional prompt, not a combat-style target reticle — confirmed correct per the reference `doCast` getdir behavior, not a defect. |
 | Ceremony (invert + timing) | **G** | `start_magic_ceremony` calibrated to CAST2:0000; no-ceremony list matches. |
 | `MagicEffect::Reveal`/`DeathVision` visual | **R** | R-12 |
 | **Spell descriptions vs. actual effects** | **R** | R-16 — ≥10/48 summaries and 12/48 target labels contradict the effect [EXEC]+[REF]. |
@@ -181,7 +181,7 @@ See the full Resource/Item matrix in §11. Summary: **gold/food/gems/keys/torche
 | Potion ids 8–15, scroll ids 0–7 | **G** | Index space matches `world_magic.cpp` handlers exactly; `item_parity` green. |
 | Potion target prompt (`UseTarget`) | **G** | `modal()` opens party selection for items 6 and 8–15 before dispatch. |
 | Consumption on cancel | **G** | Deliberately reference-correct: "canceling target selection still loses it" (`inventory.h`). |
-| Scroll effects | **Y** | `case 1` (wind) requires `cmd.has_direction`, which the device never supplies → Rel Hur scroll changes nothing. Y-21 |
+| Scroll effects | **G** — DISCHARGED (Batch 5) | Y-21's premise was **stale**: `AlphaRuntime::modal()`'s Inventory branch already opens `begin_target(UseTarget,"Direction?")` for scroll id 1, so the device *does* supply a direction and Rel Hur changes the wind. Proven host-side by `batch5` B4 + C6. One newly recorded divergence on the cancel path: **Y-31**. |
 | Magic items (carpet/skull key/spyglass/sextant/watch/box) | **G** picker | R-07/R-08 resolved (Batch 3): all state-backed tools listed by real canonical id. Watch (35) still absent — no backing state. Spyglass zodiac view still **R-13**. |
 
 ### J. Combat
@@ -217,7 +217,7 @@ Full report in §12. Summary: **data G, controls G, geometry Y, art R, HUD Y, sa
 | No strafing invented | confirmed — `DungeonAction` has no strafe | **G** |
 | Movement Mode **off** | `a`=Attack, `s`=Search, `w`/`d`="What?" — no keyboard movement | **Y** | Y-23 |
 | `o`/`g`/`j`/`s`/`k`/`space` | Open/Get/Jimmy/Search/Klimb/Pass | **G** |
-| `c`, `u`, `z`, `v` | Cast, Use, Stats, View gem | **G** route / see R-11, R-17 |
+| `c`, `u`, `z`, `v` | Cast, Use, Stats, View gem | **G** route / R-11 RESOLVED (Batch 5), see R-17 |
 | `r` Ready | offered and applied | **G** — R-06 RESOLVED (Batch 3) |
 | `m` Mix | silently aliased to Cast | **Y** — Y-15 |
 | Mic short = Back, Mic long = Movement Mode | unchanged in dungeon | **G** |
@@ -695,7 +695,7 @@ Reference `dropCoin(false)` (the "No" answer) prints `"No\n"`; native's `WellDro
 
 ---
 
-### R-11 — Six world spells consume charge and MP, then do nothing · **SEVERITY 2**
+### R-11 — World spells that need a direction consume charge and MP, then do nothing · **SEVERITY 2** · **GREEN — RESOLVED (Batch 5), hardware-certified**
 
 `AlphaRuntime::cast_selected_spell` only opens a target/direction prompt when `context_.combat` is true:
 ```cpp
@@ -717,6 +717,106 @@ Outside combat it falls through to `command(c)` with `has_direction=false` and n
 **Fix shape:** drop the `context_.combat &&` guard and use `UiSession::begin_target` with a direction request in the world, mirroring `direction_request()`.
 
 **Evidence:** [STATIC] + table dump.
+
+#### Adjudication (Batch 5) — the table above is wrong about three of its six rows
+
+Only **three** world casts take a direction. The reference's world dispatcher
+(`game/src/main.ts`, `doCast`) arms a getdir for exactly three effect
+descriptors — `sealDoor` (An Ex Por 25), `disarmOrOpen` (An Sanct 6) and
+`blink` (In Por 17) — and falls off the end of its `else if` chain for
+everything else. `world_magic.cpp` agrees independently: its only pre-flight
+target guards name items **6, 25 and 17** (`world_magic.cpp:43-44`).
+
+| Spell | Effect (`kEffects`) | Reference `doCast` branch | Batch 5 verdict |
+|---|---|---|---|
+| An Sanct (6) | `Disarm` | `disarmOrOpen` → getdir | **R-11, fixed** |
+| In Por (17) | `Blink` | `blink` → getdir | **R-11, fixed** |
+| An Ex Por (25) | `Seal` | `sealDoor` → getdir | **R-11, fixed** |
+| An Ylem (5) | `Poof` | *no branch* | **Not R-11.** Consumes and does nothing, silently, in the reference too. No prompt is owed. |
+| An Grav (18) | `Dispel` | *no branch* outside the dungeon | **Not R-11.** Its world-map dispel is unimplemented in the reference port as well; a getdir here would be fabricated. |
+| In Ex Por (26) | `Animation` | *no branch* | **Not R-11.** The original binary's #26 is getdir + animation only (it stopped opening doors; skull doors are `(U)se Skull Key`). The reference port implements neither the getdir nor the animation. The missing animation is R-12/Batch 7 territory, not targeting. |
+
+Adding a prompt for An Ylem / An Grav / In Ex Por would **fabricate** UX the
+original does not have, so Batch 5 deliberately does not. That is why the fix
+keys on the **effect kind**, not on `target_type` — `target_type` over-selects
+here, and R-16 already shows it is unreliable metadata.
+
+**Charge ordering — the audit's Batch 5 "Care" note had it backwards.** The
+plan said "cancelling must not consume". The reference consumes **first**:
+`castSpell()` runs, decrements the charge and the mana and fires the ceremony,
+and *only then* is `pendingCastDoor` / `pendingCastUnlock` / `pendingCastBlink`
+armed and the getdir entered (`main.ts`, `doCast` tail). Cancelling the getdir
+prints `"Cancelled."` (seal/unlock) or nothing at all (blink) and **refunds
+nothing**. That is bug-for-bug original behaviour and the fix preserves it: the
+existing `UiSession` cancel arm already dispatches the Cast with
+`has_direction=false`, which lands on `world_magic.cpp:55`
+(`if(!cmd.has_direction){say("Cancelled.");return {};}`) — charge gone, terrain
+untouched — exactly matching the reference. No refund logic was added.
+
+#### Root cause (Batch 5) — two defects, both required
+
+1. **`AlphaRuntime::cast_selected_spell`** gated the prompt on
+   `context_.combat`, so a world cast never opened one and dispatched straight
+   through with `has_direction=false`.
+2. **`UiSession::handle_modal`** treated *every* `CommandKind::Cast` sitting in
+   `TargetSelection` as the combat aim **reticle**: a direction press walked
+   `combat_x`/`combat_y` and dispatched nothing, and Confirm dispatched with
+   `has_target` — never `has_direction`. `world_magic()` reads `has_direction`
+   **only**, so removing the `context_.combat &&` guard alone would still have
+   produced a no-op. Fixing (1) without (2) would have looked like a fix and
+   changed nothing on hardware.
+
+#### Resolution (Batch 5)
+
+- **New seam `openu5::cast_target_prompt(SpellId, in_combat, in_dungeon)`**
+  (`native/core/include/openu5/magic.h`, `native/core/src/magic.cpp`) returns
+  `CombatReticle` / `WorldDirection` / `None`. Combat keeps today's predicate
+  byte for byte. The world arm selects on `kEffects[id].kind ∈ {Seal, Disarm,
+  Blink}`. The dungeon arm returns `None`: the reference's `doDungeonCast`
+  resolves An Sanct against the party's dungeon **facing**
+  (`applyAnSanctOpenChest`), has no seal or blink branch, and the dungeon
+  command path never reaches `world_magic`. Extracted rather than left inline
+  because `cast_selected_spell` is behind ESP-IDF headers (Y-05) — the Batch 3
+  `usable_item_picker_rows` precedent.
+- **`AlphaRuntime::cast_selected_spell`** now switches on that seam and, for
+  `WorldDirection`, opens the ordinary world getdir
+  (`begin_target(UiRequestId::Direction, "Direction?", c, -1, -1)`) — the same
+  call shape Talk/Open/Push/Klimb and the Rel Hur scroll already use.
+- **`UiSession::handle_modal`** now gates the Cast reticle (both the Direction
+  and the Confirm arms) on `request_ == UiRequestId::Target`, which is what
+  combat uses. A Cast on `UiRequestId::Direction` therefore takes the shared
+  world-getdir path: one press dispatches with `has_direction`, echoing the
+  direction like every other world getdir. Combat is bit-identical.
+
+**RED → GREEN:** `native/core/tests/batch5_test.cpp`, registered as ctest
+`batch5`. Pre-fix **30/34** — the four failures were A1 ×3 (the three world
+spells answered `None`) and B1 (a direction at the world getdir dispatched
+nothing). Post-fix **34/34**. The guards that were green before and after pin
+what must *not* change: A2 (no fabricated prompt for An Ylem / An Grav / In Ex
+Por), A3 (combat reticle selection unchanged), A4 (no dungeon getdir), B2
+(combat aim walk + Confirm unchanged), B3/C3/C5 (a cancelled world cast still
+spends charge and mana — the reference ordering).
+
+**Full suite after the fix:** 69 tests, 68 pass, 1 fail — `gameplay_parity`
+mismatch **2034** / R-21, the sole known expected failure, untouched by this
+batch.
+
+**Hardware checkpoint: GREEN.** An Sanct on a locked door, In Por blink in
+world gameplay, and An Ex Por on a door were all run on the physical T-Deck
+and **passed**, each on the first test attempt. Batch 5 is now fully
+certified in software and on physical hardware. World spell targeting
+presents a directional prompt (getdir), not a combat-style target reticle —
+this matches the reference and is not a defect.
+
+**Known divergence recorded, not fixed (Y-30):** `world_magic()` fuses
+"consume the spell" and "apply the direction" into one call, so the native
+prompt necessarily comes *before* consumption while the reference consumes
+first. Net state is identical for both the success and the cancel path (the
+cancel still dispatches), but the *message/ceremony ordering* differs, and a
+cast that would fail its gate (`"Not here!"`, `"None mixed!"`, `"M.P. too
+low!"`, `"Absorbed!"`) raises a spurious getdir first where the reference
+prints the failure immediately and never prompts. Closing that needs
+`world_magic` split into cast + apply — a core API change outside Batch 5.
 
 ---
 
@@ -1216,7 +1316,7 @@ A design review of the freshly-landed R-30 work found two of the five Certificat
 | Y-18 | Developer entry from frontend | Calls `frontend_.enter_game()` directly, entering gameplay on whatever INIT.GAM state was loaded at boot | Confirm this is the intended debug affordance |
 | Y-19 | Mix quantity | `c.hours = 1` hardcoded in `modal()`; reference lets the player choose a batch size | Add a numeric modal |
 | Y-20 | `SetActivePlayer` | **GREEN — RESOLVED (Batch 3) at the core/`UiSession` level.** The reference binds the digit keys `0`-`9` (kernel `0x4080`, via MAINOUT `0xc06` / TOWN `0xe34`), not `N`; `N` stays New Order. `handle_exploration` now echoes `"Set Active Plr:"` and dispatches `CommandKind::SetActivePlayer` with the **literal** digit (`'2'` -> `command.member = 2`), because the core handler performs its own `member - 1` exactly as the kernel takes `key - '1'`. Digit range, party validity and the `None!`/`Invalid!` outcomes stay entirely in that core handler — no new selection modal. At the harpsichord the digit is intercepted first (R-20). The core/session route accepts a literal `'0'` (clear active player) exactly like any other digit; **on T-Deck hardware specifically**, digits `1`-`9` reach this route, but `'0'` cannot, because the only matrix position that resolves to `'0'` is the physical Mic key, which the device input adapter intercepts unconditionally for short=Cancel/long=Movement-Mode before any digit is ever produced. That device-only gap is tracked separately as **Y-29**. | Covered by `batch3_group_a_test.cpp` A4/A5 (core/session level); Y-29 covers the T-Deck hardware reachability gap |
-| Y-21 | Rel Hur scroll | `world_magic.cpp` `case 1` needs `cmd.has_direction`; the device never supplies one for scroll use | Same class as R-11, smaller blast radius |
+| Y-21 | Rel Hur scroll | **GREEN — DISCHARGED (Batch 5). The stated claim is false.** `AlphaRuntime::modal()`'s Inventory branch (`alpha_runtime.cpp:684`) already routes scroll id 1 (and skull key 17) through `ui_->begin_target(UiRequestId::UseTarget,"Direction?",c)`, and `UiSession`'s TargetSelection direction arm dispatches `UseItem` with `has_direction` set, so `world_magic.cpp` `case 1` sets the wind. Both halves are now pinned host-side: `batch5` B4 (the getdir dispatches `UseItem` + direction) and C6 (`world_magic` spends the scroll and sets `turn.wind`). No production change was needed for the stated defect. | Discharged; the remaining cancel-path divergence is tracked separately as **Y-31** |
 | Y-22 | Dungeon→combat→dungeon return | `dungeon_combat_return` handles floor delta, escape border and facing; covered by `dungeon_flow_parity` at core level only | Device round-trip test |
 | Y-23 | Dungeon keyboard movement with Movement Mode off | No `w`/`d` fallback; only trackball moves | Probably acceptable, but state it as a deliberate contract |
 | Y-24 | Word-of-power Yell | **GREEN — DISCHARGED (Batch 3).** Both branches are regression-tested together: `batch3_group_a` A1 (frigate → `YellSails`, no modal), A2 (non-frigate → `YellText`), A3 (word path → `CommandKind::Yell`). | — |
@@ -1225,6 +1325,8 @@ A design review of the freshly-landed R-30 work found two of the five Certificat
 | Y-28 | Combat Ready picker close timing | Two presentation gaps that do **not** affect action cost (see section 3 R-06): the empty-handed case opens a disabled `"(None available)"` picker instead of charging immediately without one, and `ItemResult::vanished` (`"Ring vanishes!"`) does not close the picker early the way the reference does | Close the picker from `AlphaRuntime::modal()` on `vanished`, and short-circuit the empty-handed open |
 | Y-27 | System menu over an open modal | Menu is handled before gameplay routing and does not touch `ui_->mode()` | Device round-trip from inside a selection/target modal |
 | Y-29 | Physical "clear active player" (digit `0`) is hardware-unreachable on T-Deck | **OPEN.** `SetActivePlayer` with `member=0` (clears `active_character` back to `255`, `commands.cpp:747`) requires the literal character `'0'`. On T-Deck the only matrix position that resolves to `'0'` (`kSymbol[0][6]`, per `keyboard_matrix.cpp`) is the physical Mic/0 key, and `UiInputAdapter::translate()` intercepts that exact `column==kMicrophoneKeyColumn && row==kMicrophoneKeyRow` position unconditionally, before any modifier check, to implement short-press=Cancel / long-press=Movement-Mode-toggle. A literal `'0'` therefore never reaches `handle_exploration`'s digit switch on this hardware. Digits `1`-`9` (Set Active Player members 1-6, and Cancel already covered by short-press) remain reachable. See the pre-Batch-4 hardware investigation below for the surveyed alternatives and the recommended (not yet implemented) route. | Implement the recommended Sym+Mic/0 route (see below) once approved, or accept the gap and document it as a deliberate handheld-contract limitation |
+| Y-30 | World cast prompt/consumption ordering under the fused `world_magic()` | **OPEN — newly discovered (Batch 5 adjudication), deliberately not fixed.** `world_magic()` performs `cast_spell()` (charge + mana + ceremony) and the direction-dependent effect in **one** call, so the native getdir must be raised *before* the call, while the reference consumes first and prompts after (`main.ts` `doCast` → `pendingCastDoor`/`pendingCastUnlock`/`pendingCastBlink`). Net state matches on both the success and the cancel path (a cancelled world cast still dispatches, so the charge is still spent — `batch5` B3/C3/C5), so this is a **presentation-ordering** divergence, not a state divergence: the result message and the `MagicCeremony` flash land after the getdir instead of before it, and a cast that would fail its own gate (`"Not here!"`, `"None mixed!"`, `"M.P. too low!"`, `"Absorbed!"`) raises a spurious getdir first where the reference prints the failure immediately and never prompts. Most visible on An Ex Por outdoors and In Por in town (both `"Not here!"`). | Split `world_magic` into a cast step and an apply-direction step, then have `AlphaRuntime` dispatch the cast, read the effect, and only then prompt. Core API change — out of Batch 5 scope. |
+| Y-31 | Cancelling the Rel Hur (and skull key) `(U)se` getdir refunds the item | **OPEN — newly discovered (Batch 5 adjudication), deliberately not fixed.** The reference consumes at item-selection time, *before* the getdir: `readScroll()` runs and prints its messages, then `pendingScrollWind` is armed (`main.ts` `doCast`-adjacent `(U)se` branch), and cancelling leaves the scroll spent with the wind unchanged; the skull key is explicitly the same (`main.ts`: "la llave YA se decrementó al seleccionar el item (0x18c4 va ANTES del getdir)"). Native instead dispatches nothing on cancel — `UiSession`'s TargetSelection cancel arm sends a bare `ModalResponse{accepted=false}` for a `UseItem` pending command, and `AlphaRuntime::modal()` only clears `pending_use_item_` — so ESC at the Rel Hur prompt **refunds the scroll**. Out of Batch 5 scope: the fix lives in `AlphaRuntime::modal()`'s cancel arm, which is ESP-only and would need its own seam, and it shares a code path with the Batch-3-certified `(U)se` picker (R-07/R-08) and with Y-28. Not part of Y-21's stated claim, which is discharged. | Dispatch the pending `UseItem` with `has_direction=false` on cancel for scroll ids 0–7 (and decide the skull key separately), with a host-testable seam for `modal()`'s cancel arm |
 
 **Y-29 investigation detail — surveyed candidates for a device-reachable "clear active player" route:**
 
@@ -1327,7 +1429,7 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 
 | Test | Why it over-reports |
 |---|---|
-| `ui_session_tests` | Uses a `Spy` dispatcher that records `UiIntent`s and never executes them. Proves `UiSession` routing; proves **nothing** about `AlphaRuntime::dispatch`, `modal()`, `open_selection` or `synchronize_after_debug` — i.e. exactly where R-01, R-06, R-07, R-08, R-09, R-11 live. **Partly mitigated (Batch 3):** the Use-picker row-selection logic was extracted into the ESP-free `openu5::usable_item_picker_rows()` seam that `AlphaRuntime::open_selection()` and `batch3_group_b_tests` now both call, so that slice of `open_selection` is host-testable. `batch3_group_a_tests` drives the real `UiSession::handle_input()` -> `dispatch()` path for the sails/digit/harpsichord routes; `batch3_group_c_tests` drives the real `execute_command()` path for Ready in all three contexts. |
+| `ui_session_tests` | Uses a `Spy` dispatcher that records `UiIntent`s and never executes them. Proves `UiSession` routing; proves **nothing** about `AlphaRuntime::dispatch`, `modal()`, `open_selection` or `synchronize_after_debug` — i.e. exactly where R-01, R-06, R-07, R-08, R-09, R-11 live. **Partly mitigated (Batch 3):** the Use-picker row-selection logic was extracted into the ESP-free `openu5::usable_item_picker_rows()` seam that `AlphaRuntime::open_selection()` and `batch3_group_b_tests` now both call, so that slice of `open_selection` is host-testable. `batch3_group_a_tests` drives the real `UiSession::handle_input()` -> `dispatch()` path for the sails/digit/harpsichord routes; `batch3_group_c_tests` drives the real `execute_command()` path for Ready in all three contexts. **Further mitigated (Batch 5):** the R-11 slice of `cast_selected_spell` — which prompt a (C)ast owes the player in a given context — was extracted the same way into `openu5::cast_target_prompt()`, and `batch5_tests` drives that seam plus the real `UiSession` TargetSelection routing and the real `world_magic()` consumption ordering. |
 | `device_smoke_tests` (37 scenarios) | Cases 3,4,5,9,10,12,13,15,18,19,20,21,24,26,27,28,29 are **data-presence assertions** ("is the table non-empty", "is the name non-null"). Cases 2,6,7,8,11,17,22,25 are `UiSession`-with-spy probes. Case 16 composes a snapshot but asserts only a hash. **No scenario validates a rendered frame, a mode round-trip, or a full input→state→presentation chain.** |
 | `presentation_regression` *(historical — gap closed in Batch 2)* | At the original audit baseline, asserted snapshot composition but never checked that the chosen tile was the *right* tile for the object kind, which is why R-02 and R-04 survived. Batch 2 added R03-OUTDOOR, R04-OVERLAY and R04-LIFO cases that close this gap; the test now asserts both the correct tile and the correct layering. |
 | `combat_loot_open_regression` *(historical — gap closed in Batch 2)* | At the original audit baseline, covered Open→pile→Get authoritative mutation but did **not** assert that no world object is created on exit — R-01/R-03's blind spot. Batch 2 added the R03-DIRECT case that closes this gap. |
@@ -1433,8 +1535,8 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 | Armour / helmets / shields | ✓ | n/a | ✓ | Z-stats (R-22) | ✓ | **G** storage/use / R-22 view |
 | Weapons / ammo | ✓ | n/a | ✓ (ammo checked) | Z-stats (R-22) | ✓ | **G** storage/use / R-22 view |
 | Potions ×8 (ids 8–15) | ✓ | ✓ + party target | n/a | picker | ✓ | **G** |
-| Scrolls ×8 (ids 0–7) | ✓ | ✓ | n/a | picker | ✓ | **Y-21** (Rel Hur needs a direction) |
-| Spells ×48 | `M`ix | `C`ast | n/a | picker + summary; Z-stats Spells page (R-22) | ✓ | **R-11**, **R-16** / R-22 view |
+| Scrolls ×8 (ids 0–7) | ✓ | ✓ | n/a | picker | ✓ | Y-21 **discharged (Batch 5)** — the Rel Hur getdir exists and works; cancel divergence = Y-31 |
+| Spells ×48 | `M`ix | `C`ast | n/a | picker + summary; Z-stats Spells page (R-22) | ✓ | R-11 **RESOLVED (Batch 5)**, **R-16** / R-22 view |
 | Magic Carpet (16) | quest | ✓ | n/a | picker | ✓ | **Y** |
 | Skull Key (17) | quest | ✓ | n/a | picker | ✓ | **Y** |
 | Amulet (18) | quest | ✓ | n/a | picker; Z-stats Items page (R-22) | ✓ | **G** Use-picker — R-07 resolved (Batch 3) / R-22 Z-stats Items-page view still missing |
@@ -1589,12 +1691,18 @@ Small, independently testable batches, in dependency order. Each batch ends at a
 
 ---
 
-### Batch 5 — World spell targeting · risk: medium
-**IDs:** R-11, Y-21
-**Files:** `native/targets/tdeck/main/alpha_runtime.cpp` (`cast_selected_spell`)
-**Work:** remove the `context_.combat &&` guard; open a direction/target prompt in the world for `direction`, `selectedMapUnit`, `selectedMapPosition`; route the Rel Hur scroll through the same prompt.
-**Care:** `cast_spell` consumes the charge *before* the effect runs. The prompt must come **before** dispatch (it does — `begin_target` holds a `pending_command_`), so cancelling must not consume. Verify against `magic_parity`.
-**Physical test:** An Sanct on a locked door; In Por blink; An Ex Por on a door.
+### Batch 5 — World spell targeting · risk: medium · **COMPLETED (fully certified in software and on physical T-Deck hardware)**
+**IDs:** R-11 (**GREEN — RESOLVED**), Y-21 (**GREEN — DISCHARGED, premise was stale**)
+**Files:** `native/core/include/openu5/magic.h` + `native/core/src/magic.cpp` (new `cast_target_prompt` seam), `native/core/src/ui_session.cpp` (`handle_modal` TargetSelection), `native/targets/tdeck/main/alpha_runtime.cpp` (`cast_selected_spell`), `native/core/tests/batch5_test.cpp` (new), `native/core/CMakeLists.txt`.
+**Work actually done (differs from the plan above — see the R-11 adjudication in §3):**
+- The "6 spells" in the original R-11 table is **3**. Only An Sanct (6), In Por (17) and An Ex Por (25) take a direction in the reference; An Ylem (5), An Grav (18) and In Ex Por (26) have **no world effect branch at all** and must not grow a fabricated prompt. The fix therefore keys on the **effect kind** (`Seal`/`Disarm`/`Blink`), not on `target_type` — which over-selects here and which R-16 already shows is unreliable.
+- Removing the `context_.combat &&` guard was **necessary but not sufficient**. `UiSession::handle_modal` treated every `CommandKind::Cast` in `TargetSelection` as the combat aim *reticle*, so a direction press walked `combat_x/combat_y` and dispatched nothing, and Confirm set `has_target` — never `has_direction`, the only field `world_magic()` reads. Both arms are now gated on `request_ == UiRequestId::Target` (combat's request id), so a Cast on `UiRequestId::Direction` takes the shared world-getdir path.
+- **The plan's "Care" note was backwards.** The reference consumes the charge and the mana **first** and prompts **after** (`main.ts` `doCast` → `pendingCastDoor`/`pendingCastUnlock`/`pendingCastBlink`), and cancelling refunds nothing. The existing `UiSession` cancel arm already dispatches the Cast with `has_direction=false`, which lands on `world_magic.cpp:55` and reproduces the reference exactly. **No refund logic was added**; three tests now hold that ordering in place.
+- **Y-21 needed no production change.** `alpha_runtime.cpp:684` already routes scroll id 1 through `begin_target(UseTarget,"Direction?")`; the audit's "the device never supplies one" was stale. Proven host-side end to end (`batch5` B4 + C6).
+**Newly discovered, deliberately not fixed:** **Y-30** (prompt/consumption ordering under the fused `world_magic()`), **Y-31** (cancelling the Rel Hur / skull-key `(U)se` getdir refunds the item, where the reference consumes).
+**Tests:** `native/core/tests/batch5_test.cpp` → ctest `batch5`. RED **30/34** pre-fix (A1 ×3 + B1), GREEN **34/34** post-fix. Full suite **69 / 68 pass / 1 fail**, the fail being `gameplay_parity` mismatch **2034** / R-21 — unchanged from the pre-batch baseline.
+**Firmware:** fresh ESP-IDF v6.1 build `build-batch5-world-targeting/openu5_tdeck.bin`, 829,536 bytes (0xca860), 21% of the 0x100000 app partition free.
+**Physical test — GREEN, PASS.** An Sanct on a locked door, In Por blink (world gameplay), and An Ex Por on a door all passed on the physical T-Deck, each on the first test attempt. R-11 hardware validation: GREEN. Batch 5 status: fully certified in software + physical hardware.
 **Model:** Opus-level — the consume-ordering interacts with the reference's bug-for-bug charge semantics.
 
 ---
@@ -1753,7 +1861,7 @@ Efficient broad-coverage pass using Developer tools. ~45 minutes. Each step name
 24. `U`se: **[R-07/R-08]** confirm every owned tool is listed with the correct name; confirm "Grapple" is absent and the Amulet is present. Fixed in Batch 3; hardware confirmation outstanding. (Pocket Watch is expected to be absent — no backing state.)
 25. `U`se a potion on a party member. `U`se a scroll.
 26. `C`ast Mani on a companion. `M`ix a spell.
-27. **[R-11]** Cast An Sanct in the world at a locked door. Confirm it does something and does not silently eat the charge.
+27. **[R-11 — Batch 5 hardware checkpoint, GREEN — PASS]** Cast **An Sanct** in the world at a locked door; cast **In Por** in world gameplay (overworld) and confirm the blink; cast **An Ex Por** at a door in a town. Each must raise a `Direction?` prompt, echo the direction, and apply. All three passed on the physical T-Deck, each on the first test attempt. Fully certified in software and on physical hardware.
 28. **[ANCHOR 3]** `V` with gems. **Photograph the screen.** Confirm the gem count decremented, a legible map appeared, and closing it charged exactly one turn (`VIEW_EFFECT` / `VIEW_RESULT` in the log).
 
 ### Phase 5 — Transport (4 min)
