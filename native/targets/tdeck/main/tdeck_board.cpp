@@ -719,7 +719,10 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
         selection_cache_=*selection;selection_cache_valid_=true;alpha_ui_cache_valid_=true;return ESP_OK;
     }
     const auto members=openu5::party_members(game.party);
-    for(size_t row=0;row<6;++row){char line[24]{};uint16_t color=kWhite;if(row<members.count){const auto index=members.indices[row];const auto&a=game.party.characters[index];const bool selected=index==party_highlight.selected,actor=index==party_highlight.actor;std::snprintf(line,sizeof(line),"%c%u %-7.7s %3u/%3u %c",selected?'>':actor?'*':' ',unsigned(row+1),a.name,unsigned(std::min<uint16_t>(a.current_hp,999)),unsigned(std::min<uint16_t>(a.max_hp,999)),a.status?a.status:'G');color=selected?kGreen:actor?kCyan:kWhite;}ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudRightX,4+int(row)*8,openu5::kHudRightW,8,line,color),kTag,"draw party row");}
+    // Y-04 (#213): `damage_flash` puts ONE row in reverse video -- the binary's
+    // 0x2a28, an XOR of the row's rectangle, shared with the picker cursor and
+    // the combat hit. It is the top of openu5::roster_invert_row's precedence.
+    for(size_t row=0;row<6;++row){char line[24]{};uint16_t color=kWhite;bool invert=false;if(row<members.count){const auto index=members.indices[row];const auto&a=game.party.characters[index];const bool selected=index==party_highlight.selected,actor=index==party_highlight.actor;std::snprintf(line,sizeof(line),"%c%u %-7.7s %3u/%3u %c",selected?'>':actor?'*':' ',unsigned(row+1),a.name,unsigned(std::min<uint16_t>(a.current_hp,999)),unsigned(std::min<uint16_t>(a.max_hp,999)),a.status?a.status:'G');color=selected?kGreen:actor?kCyan:kWhite;invert=index==party_highlight.damage_flash;}ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudRightX,4+int(row)*8,openu5::kHudRightW,8,line,color,1,1,invert),kTag,"draw party row");}
     char location[24]{};const char*name=game.position.map.location==0?(game.position.map.floor<0?"Underworld":"Britannia"):location_display_name(game.position.map.location);std::snprintf(location,sizeof(location),"%.22s",name?name:"Unknown place");
     char clock[24]{};std::snprintf(clock,sizeof(clock),"Day %ld  %02ld:%02ld",long(game.time.day),long(game.time.hour),long(game.time.minute));
     const char*world[]={location,clock};for(int i=0;i<2;++i)ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudRightX,58+i*10,openu5::kHudRightW,8,world[i],i==0?kCyan:kWhite),kTag,"draw world status");
@@ -895,7 +898,7 @@ esp_err_t Board::show_frontend(const openu5::FrontendView&v,const uint16_t*previ
 }
 
 esp_err_t Board::draw_text_box(int x,int y,int width,int height,const char *text,
-                               uint16_t color,int scale_x,int scale_y)
+                               uint16_t color,int scale_x,int scale_y,bool invert)
 {
     if(!display_initialized_||!text||width<=0||height<=0||width>kDisplayWidth||
        x<0||y<0||x+width>kDisplayWidth||y+height>kDisplayHeight||scale_x<=0||scale_y<=0)
@@ -907,11 +910,14 @@ esp_err_t Board::draw_text_box(int x,int y,int width,int height,const char *text
     for(int row=0;row<height;++row){
         const int glyph_row=row/scale_y;
         for(int col=0;col<width;++col){
-            uint16_t pixel=kBlack;const size_t char_index=size_t(col/cell_width);
+            // Reverse video swaps the two: the glyph is punched out of a
+            // filled row, which is what an XOR of the row's rectangle looks
+            // like on a two-colour row (kernel 0x2a28).
+            uint16_t pixel=invert?color:kBlack;const size_t char_index=size_t(col/cell_width);
             const int glyph_col=(col%cell_width)/scale_x;
             if(glyph_row<7&&glyph_col<5&&char_index<text_length){
                 const auto bitmap=glyph(text[char_index]);
-                if(bitmap[glyph_col]&(1U<<glyph_row))pixel=color;
+                if(bitmap[glyph_col]&(1U<<glyph_row))pixel=invert?kBlack:color;
             }
             row_bytes[col*2]=uint8_t(pixel>>8);row_bytes[col*2+1]=uint8_t(pixel);
         }

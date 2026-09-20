@@ -101,7 +101,8 @@ private:
                                  int source_height, int source_stride);
     esp_err_t draw_text(int x, int y, const char *text, uint16_t color, int scale);
     esp_err_t draw_text_box(int x, int y, int width, int height, const char *text,
-                            uint16_t color, int scale_x = 1, int scale_y = 1);
+                            uint16_t color, int scale_x = 1, int scale_y = 1,
+                            bool invert = false);
     esp_err_t draw_text_box_metrics(int x,int y,int width,int height,const char *text,
                                     uint16_t color,DeviceTextMetrics metrics);
     esp_err_t draw_shared_bus_marker(int pass);

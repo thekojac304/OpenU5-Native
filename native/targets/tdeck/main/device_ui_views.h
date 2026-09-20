@@ -86,6 +86,11 @@ inline uint16_t magic_xor_palette_pixel(uint16_t pixel,const uint16_t *palette) 
 struct DevicePartyHighlight {
     int8_t selected=-1;
     int8_t actor=-1;
+    // Y-04 (#213). The roster row in REVERSE VIDEO, the binary's shared 0x2a28
+    // primitive. It outranks `selected`/`actor` while it lasts, because 0x2a28
+    // is an XOR over the framebuffer -- see openu5::roster_invert_row, which
+    // owns the precedence rule this field is the top of.
+    int8_t damage_flash=-1;
 };
 
 inline bool selection_row_needs_redraw(const DeviceSelectionView &current,

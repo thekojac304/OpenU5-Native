@@ -1,5 +1,7 @@
 #include "native_renderer.h"
 
+#include "openu5/world_fx.h"
+
 #include <algorithm>
 #include <array>
 
@@ -519,6 +521,29 @@ void shift_viewport_vertically(uint16_t *pixels, int offset_px)
         if (src_y == y) continue;
         std::copy(pixels + src_y * kViewportPixels, pixels + (src_y + 1) * kViewportPixels,
                   pixels + y * kViewportPixels);
+    }
+}
+
+void paint_world_fx_dot(uint16_t *pixels, int32_t dx_milli, int32_t dy_milli)
+{
+    if (!pixels) return;
+    // The window's centre cell is where the party stands; a milli-cell offset
+    // therefore lands at (5 + dx) tiles from the left edge, plus half a tile.
+    constexpr int32_t half_window = kViewportTiles / 2;
+    const int32_t x = ((half_window * kWorldFxMilliCell + dx_milli) * kTilePixels) /
+                          kWorldFxMilliCell + kTilePixels / 2;
+    const int32_t y = ((half_window * kWorldFxMilliCell + dy_milli) * kTilePixels) /
+                          kWorldFxMilliCell + kTilePixels / 2;
+    constexpr int32_t side = kWorldFxProjectileDotPx;
+    // The same white as the combat missile (the sibling effect this cadence is
+    // borrowed from); RGB565 saturated.
+    constexpr uint16_t colour = 0xffff;
+    for (int32_t row = y - side / 2; row < y - side / 2 + side; ++row) {
+        if (row < 0 || row >= kViewportPixels) continue;
+        for (int32_t col = x - side / 2; col < x - side / 2 + side; ++col) {
+            if (col < 0 || col >= kViewportPixels) continue;
+            pixels[row * kViewportPixels + col] = colour;
+        }
     }
 }
 

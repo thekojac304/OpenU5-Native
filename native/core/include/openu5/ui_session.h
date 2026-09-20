@@ -315,6 +315,16 @@ class UiSession {
 
     void append(UiTextChannel, const char *, uint8_t flags = UiTextNone);
     void append_utf16(UiTextChannel, const char16_t *, size_t, uint8_t flags = UiTextNone);
+    /**
+     * Y-04: `messageAppend` -- continue the line already on screen instead of
+     * starting a new one. The original's `$ sneaks across` prints its three
+     * dots one at a time onto the SAME line (MAINOUT 0x1c56-0x1c65), so a
+     * presenter that pushed each dot as its own block would read nothing like
+     * the reference. Extends the last block in place when it is still the tail
+     * of the same channel and has room; otherwise it degrades to a plain
+     * append, which is the worst case the original never reaches.
+     */
+    void append_continuation(UiTextChannel, const char *);
 
   private:
     UiTranscriptStorage transcript_{};

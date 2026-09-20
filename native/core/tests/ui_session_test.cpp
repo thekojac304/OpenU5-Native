@@ -350,5 +350,30 @@ int main(){
            t7_spy.intents.back().command.kind==CommandKind::BlackthornAction&&
            t7_spy.intents.back().command.item==int16_t(BlackthornAction::Answer));
  }
+ // Y-04: append_continuation -- `messageAppend`. The three dots of the troll
+ // crossing (MAINOUT 0x1c56-0x1c65) print onto the line already on screen.
+ {
+     UiTextBlock cont_blocks[8];Spy cont_spy;UiSession cont{{cont_blocks,8},{&cont_spy,Spy::send},{8,3,8}};
+     cont.append(UiTextChannel::Message,"Shamino sneaks across");
+     const auto blocks_after_line=cont.transcript_size();
+     cont.append_continuation(UiTextChannel::Message,".");
+     cont.append_continuation(UiTextChannel::Message,".");
+     cont.append_continuation(UiTextChannel::Message,".");
+     check(cont.transcript_size()==blocks_after_line);
+     check(std::strcmp(cont.transcript_at(cont.transcript_size()-1)->text,"Shamino sneaks across...")==0);
+     // An empty continuation is a no-op, never a blank block.
+     cont.append_continuation(UiTextChannel::Message,"");
+     check(cont.transcript_size()==blocks_after_line);
+     // A continuation onto a DIFFERENT channel's tail cannot corrupt it: it
+     // degrades to an ordinary append instead.
+     cont.append(UiTextChannel::CommandEcho,"Pass");
+     cont.append_continuation(UiTextChannel::Message,"!");
+     check(cont.transcript_size()==blocks_after_line+2);
+     check(std::strcmp(cont.transcript_at(cont.transcript_size()-1)->text,"!")==0);
+     // ...and so does a continuation with nothing in front of it at all.
+     UiTextBlock empty_blocks[4];Spy empty_spy;UiSession empty{{empty_blocks,4},{&empty_spy,Spy::send},{8,3,4}};
+     empty.append_continuation(UiTextChannel::Message,"orphan");
+     check(empty.transcript_size()==1&&std::strcmp(empty.transcript_at(0)->text,"orphan")==0);
+ }
  std::cout<<checks<<" UI session checks passed; sizeof(UiSession)="<<sizeof(UiSession)<<" block="<<sizeof(UiTextBlock)<<"\n";
 }

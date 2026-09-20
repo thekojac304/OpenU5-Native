@@ -245,6 +245,31 @@ void UiSession::append(UiTextChannel channel, const char *text, uint8_t flags) {
     preserve_scroll_on_growth(lines_before);
 }
 
+void UiSession::append_continuation(UiTextChannel channel, const char *text) {
+    if (!text || !*text) return;
+    // A continuation ends any "Blocked! xN" run, exactly as append() does: the
+    // tail block is no longer the one that latch is allowed to grow.
+    blocked_repeat_ = 0;
+    blocked_block_sequence_ = 0;
+    blocked_actor_ = -1;
+    if (transcript_count_ && transcript_.blocks) {
+        const auto index = (transcript_head_ + transcript_count_ - 1) % transcript_.capacity;
+        auto &last = transcript_.blocks[index];
+        const size_t added = std::strlen(text);
+        if (last.channel == channel && !(last.flags & UiTextContinuesAfter) &&
+            size_t(last.length) + added < kUiTranscriptBlockBytes) {
+            const size_t lines_before = wrapped_line_count();
+            std::memcpy(last.text + last.length, text, added);
+            last.length = uint16_t(last.length + added);
+            last.text[last.length] = 0;
+            last.sequence = ++block_sequence_;
+            preserve_scroll_on_growth(lines_before);
+            return;
+        }
+    }
+    append(channel, text);
+}
+
 void UiSession::append_combat_event(const CombatEvent &event) {
     const bool blocked = event.kind == CombatEventKind::Message && event.text &&
                          std::strcmp(event.text, "Blocked!") == 0;

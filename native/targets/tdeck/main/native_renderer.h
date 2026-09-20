@@ -98,6 +98,16 @@ esp_err_t render_zodiac_view(const ZodiacView &view, uint16_t *rgb565,
  */
 void shift_viewport_vertically(uint16_t *pixels, int offset_px);
 
+/**
+ * Y-04 (CellProjectile): mark the flying cannon ball at FRACTIONAL cell
+ * coordinates, in milli-cells relative to the party (the window centre). The
+ * ball lives BETWEEN cells, so it cannot be expressed as a tile blit -- the
+ * reference paints it as a small square glyph for the same reason. A no-op
+ * when the point falls outside the 11x11 window, exactly as the original's
+ * draw is clipped by the viewport. Touches nothing but `pixels`.
+ */
+void paint_world_fx_dot(uint16_t *pixels, int32_t dx_milli, int32_t dy_milli);
+
 /** Recompute a RenderReport's viewport_crc32 after a caller-side post-process (e.g. the quake shift above). */
 uint32_t recompute_viewport_crc32(const uint16_t *pixels, size_t count);
 

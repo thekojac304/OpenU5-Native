@@ -35,6 +35,10 @@ constexpr size_t kCreationWidth=320,kCreationHeight=152,kCreationPixels=kCreatio
 // 44 beats. The arena holds the copied narrative for one turn (the seven
 // throne-room prints plus the interrogation question are well under 2 KiB).
 constexpr size_t kBlackthornSceneSteps=96,kBlackthornSceneTextBytes=4096;
+// Y-04 (Batch 7B). The worst real narrative turn plus headroom: the troll
+// crossing is 1 + 6*5 + 1 = 32 beats and the refuge script is 16, and either
+// can be followed by the rest of its own turn.
+constexpr size_t kNarrativeSceneSteps=64,kNarrativeSceneTextBytes=2048;
 // One run-n-frames unit (kernel 0x3ae6 / an INT 1Ch tick), the same 55 ms
 // calibration the tile-animation tick and the reference pacers already use.
 constexpr uint32_t kPresentationUnitMs=55;
@@ -128,9 +132,12 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
         blackthorn_steps_=static_cast<openu5::BlackthornSceneStep*>(heap_caps_calloc(kBlackthornSceneSteps,sizeof(openu5::BlackthornSceneStep),kPsram));
         blackthorn_scene_text_=static_cast<char*>(heap_caps_calloc(kBlackthornSceneTextBytes,1,kPsram));
         blackthorn_scene_grid_=static_cast<int16_t*>(heap_caps_calloc(openu5::kBlackthornSceneCells,sizeof(int16_t),kPsram));
+        narrative_steps_=static_cast<openu5::NarrativeSceneStep*>(heap_caps_calloc(kNarrativeSceneSteps,sizeof(openu5::NarrativeSceneStep),kPsram));
+        narrative_text_=static_cast<char*>(heap_caps_calloc(kNarrativeSceneTextBytes,1,kPsram));
     }
     if(!astar_scratch_||!transcript_||!viewport_||!creation_canvas_||!tile_cache_storage_||!debug_view_||!ui_mem)return ESP_ERR_NO_MEM;
     if(!blackthorn_script_||!blackthorn_steps_||!blackthorn_scene_text_||!blackthorn_scene_grid_)return ESP_ERR_NO_MEM;
+    if(!narrative_steps_||!narrative_text_)return ESP_ERR_NO_MEM;
     {
         debug51::Step trace("presentation-tile-cache-load");
         ESP_RETURN_ON_ERROR(openu5::initialize_tile_cache(tiles,tile_report,tile_cache_storage_,openu5::kCachedTileBytes,tile_cache_),kTag,"cache presentation tiles");
@@ -166,6 +173,8 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
     blackthorn_pacer_.attach({blackthorn_steps_,kBlackthornSceneSteps,blackthorn_scene_text_,
                               kBlackthornSceneTextBytes,blackthorn_scene_grid_});
     blackthorn_pacer_.set_unit_ms(kPresentationUnitMs);
+    narrative_pacer_.attach({narrative_steps_,kNarrativeSceneSteps,narrative_text_,kNarrativeSceneTextBytes});
+    poison_.set_blip_ms(openu5::kPoisonBlipMs);
     look_services_.context=this;look_services_.describe=[](void*p,int32_t tile){auto&r=*static_cast<AlphaRuntime*>(p);return tile>=0&&size_t(tile)<r.resources_.look_count?r.resources_.look_text+r.resources_.look_offsets[tile]:"something";};look_services_.sign=[](void*p,openu5::MapId map,int32_t x,int32_t y){auto&r=*static_cast<AlphaRuntime*>(p);return openu5::resolve_look_sign(r.resources_.signs,r.resources_.sign_count,map,x,y);};context_.look=&look_services_;
     context_.services={this,command_effect,command_reload,banner};context_.events={this,dispatch_event};
     quest_.context=this;quest_.count=object_count;quest_.read=object_read;quest_.reserve=object_reserve;quest_.append=object_append;quest_.erase=object_erase;quest_.write=object_write;
@@ -279,7 +288,63 @@ void AlphaRuntime::consume_event(const openu5::GameEvent&e){
         dirty_=true;dirty_reason_="blackthorn-scene";
         return;
     }
+    // Y-04 (Batch 7B). Refuge and TrollSneak are MODAL narrative scenes: from
+    // the first scene event onward the pacer owns the rest of the turn and
+    // hands it back a beat at a time, exactly as the Blackthorn pacer above
+    // does. Every borrowed payload pointer in `e` dies with this call, so the
+    // pacer copies what it keeps.
+    if(narrative_pacer_.enqueue(e)){
+        if(e.kind==openu5::GameEventKind::Refuge||e.kind==openu5::GameEventKind::TrollSneak)
+            ESP_LOGI(kTag,"NARRATIVE_SCENE_BEGIN scene=%d queued=%u",
+                     int(narrative_pacer_.scene()),unsigned(narrative_pacer_.queued_steps()));
+        dirty_=true;dirty_reason_="narrative-scene";
+        return;
+    }
     ui_->consume(e);
+    if(e.kind==openu5::GameEventKind::PoisonTick){
+        // #213. The roster row inversion is the SHARED 0x2a28 primitive, one
+        // 93 ms blip per poisoned member in SLOT order. Not modal: the tick
+        // happens on every step, so it swallows no input and defers no turn.
+        poison_.run(e.slots,e.slot_count,uint32_t(esp_timer_get_time()/1000));
+        dirty_=true;dirty_reason_="poison-tick";
+        ESP_LOGI(kTag,"POISON_FEEDBACK slots=%u blip_ms=%lu row=%d modal=0",
+                 unsigned(e.slot_count),(unsigned long)openu5::kPoisonBlipMs,int(poison_.flash_row()));
+    }
+    if(e.kind==openu5::GameEventKind::CellExplosion){
+        // #201/#243. Presentation only: the world object the ritual destroys
+        // has ALREADY been committed by the core, and `under_tile` is what
+        // holds its sprite on the cell for the whole choreography instead of
+        // deferring that mutation. The lead is the remainder of this device's
+        // own shake window -- the reference's `cerrarVentanaDeSacudida`, which
+        // pushes the burst past the quake it follows.
+        const int64_t now=esp_timer_get_time();
+        openu5::WorldFx fx;
+        fx.kind=openu5::WorldFxKind::Explosion;
+        fx.dx=e.cell_fx.dx;fx.dy=e.cell_fx.dy;
+        fx.bursts=e.cell_fx.bursts;fx.pre_delay_units=e.cell_fx.pre_delay_units;
+        fx.under_tile=e.cell_fx.under_tile;
+        fx.lead_ms=uint32_t(quake_remaining_ms(now));
+        world_fx_.push(fx,uint32_t(now/1000));
+        dirty_=true;dirty_reason_="cell-explosion";
+        ESP_LOGI(kTag,"CELL_EXPLOSION dx=%d dy=%d bursts=%d pause_units=%d under=%d lead_ms=%lu duration_ms=%lu",
+                 int(fx.dx),int(fx.dy),int(fx.bursts),int(fx.pre_delay_units),int(fx.under_tile),
+                 (unsigned long)fx.lead_ms,(unsigned long)openu5::WorldFxLayer::duration_ms(fx));
+    }
+    if(e.kind==openu5::GameEventKind::CellProjectile){
+        // #313. ONE flight per shot, never one per cell; the origin is the
+        // ship for a broadside and the cannon's own cell on foot. The ball
+        // lives BETWEEN cells, so it is a sub-cell dot and never a tile write.
+        openu5::WorldFx fx;
+        fx.kind=openu5::WorldFxKind::Projectile;
+        fx.from_dx=e.projectile.from_dx;fx.from_dy=e.projectile.from_dy;
+        fx.to_dx=e.projectile.to_dx;fx.to_dy=e.projectile.to_dy;
+        world_fx_.push(fx,uint32_t(esp_timer_get_time()/1000));
+        dirty_=true;dirty_reason_="cell-projectile";
+        ESP_LOGI(kTag,"CELL_PROJECTILE from=(%d,%d) to=(%d,%d) cells=%d duration_ms=%lu",
+                 int(fx.from_dx),int(fx.from_dy),int(fx.to_dx),int(fx.to_dy),
+                 openu5::WorldFxLayer::projectile_cells(fx),
+                 (unsigned long)openu5::WorldFxLayer::duration_ms(fx));
+    }
     if(e.kind==openu5::GameEventKind::DungeonEntered){
         dungeon_presentation_pending_=true;
         ESP_LOGI(kTag,"DUNGEON_LOAD_BEGIN dungeon=%u depth=%u",unsigned(dungeon_.pos.dungeon),unsigned(dungeon_.pos.floor));
@@ -348,6 +413,82 @@ bool AlphaRuntime::service_blackthorn_scene(){
                  (unsigned long)released,(unsigned long)blackthorn_pacer_.dropped_steps());
     blackthorn_released_=released;
     return released!=released_before||state!=state_before||phase!=phase_before;
+}
+
+// Y-04. The reference's `cerrarVentanaDeSacudida` (skin/turn-phase.ts): an
+// effect that FOLLOWS a shake does not start inside it -- the binary's
+// screen_shake_fx blocks until it is done. Native has no audio catalogue, so
+// the shake window is the only lead this device can derive, and it is the one
+// the ritual actually needs (three quakes precede its burst).
+int64_t AlphaRuntime::quake_remaining_ms(int64_t now_us) const{
+    if(quake_pulses_<=0)return 0;
+    const int64_t elapsed_ms=(now_us-quake_start_us_)/1000;
+    const int64_t window_ms=int64_t(quake_pulses_)*openu5::kQuakePeriodMs;
+    return elapsed_ms>=window_ms?0:window_ms-elapsed_ms;
+}
+
+// Y-04 (Batch 7B). The beat sink of the narrative pacer. A beat is the whole
+// of what the scene changes at that instant: a console line (new, or a
+// CONTINUATION of the one on screen -- the three dots of `$ sneaks across`),
+// a sound cue, and/or the refuge's visual phase. The pacer owns the timing;
+// this owns nothing but the routing.
+void AlphaRuntime::narrative_beat(void *p,const openu5::NarrativeSceneBeat &beat){
+    auto &self=*static_cast<AlphaRuntime*>(p);
+    if(!self.ui_)return;
+    if(beat.text){
+        if(beat.append)self.ui_->append_continuation(openu5::UiTextChannel::Message,beat.text);
+        else self.ui_->append(openu5::UiTextChannel::Message,beat.text);
+    }
+    // Y-03 owns real audio; the cue is semantic here, as everywhere else.
+    if(beat.sfx)ESP_LOGI(kTag,"SFX_CUE id=%s source=narrative-scene",beat.sfx);
+    if(beat.phase!=openu5::RefugePhase::None)
+        ESP_LOGI(kTag,"REFUGE_SCENE phase=%d",int(beat.phase));
+}
+
+// Releases whatever of the deferred Refuge/TrollSneak turn is due now, and
+// applies the refuge's state mutation when -- and only when -- the scene has
+// finished. The sink is UiSession's own, deliberately NOT this class's
+// consume_event: a released event must reach the session, never be re-offered
+// to the pacer. Returns true when anything moved.
+//
+// KNOWN AND BOUNDED: because a released event reaches UiSession directly, it
+// does not re-run consume_event's own presentation tail (world fx, poison
+// flash). That is the same contract service_blackthorn_scene() has, and it is
+// safe for the turns these scenes actually defer -- turn_events() emits
+// PoisonTick BEFORE troll_script(), and check_refuge is the terminal event of
+// its turn, so no deferred tail carries an fx today. If one ever does, this
+// sink is where it would have to grow, not the pacer.
+bool AlphaRuntime::service_narrative_scene(){
+    if(!narrative_pacer_.active())return false;
+    const auto released_before=narrative_pacer_.released_steps();
+    const auto phase_before=narrative_pacer_.phase();
+    narrative_pacer_.pump(uint32_t(esp_timer_get_time()/1000),{this,narrative_beat},ui_->event_sink());
+    const auto released=narrative_pacer_.released_steps();
+    const auto phase=narrative_pacer_.phase();
+    narrative_released_=released;
+    const auto finished=narrative_pacer_.take_completion();
+    if(finished!=openu5::NarrativeScene::None)
+        ESP_LOGI(kTag,"NARRATIVE_SCENE_END scene=%d released=%lu dropped=%lu",
+                 int(finished),(unsigned long)released,(unsigned long)narrative_pacer_.dropped_steps());
+    if(finished==openu5::NarrativeScene::Refuge){
+        // BLCKTHRN 0x0bfd-0x0c4d, in the reference's own order: the scene
+        // comes down FIRST (the pacer has already unmounted it), and only then
+        // does the resurrection commit and reveal the castle.
+        const auto status=openu5::resolve_refuge(context_,ui_->event_sink());
+        ESP_LOGI(kTag,"REFUGE_RESOLVE status=%d location=%u karma=%ld",
+                 int(status),unsigned(game_.position.map.location),long(game_.karma));
+        dirty_=true;dirty_reason_="refuge-resolve";
+    }
+    return released!=released_before||phase!=phase_before||finished!=openu5::NarrativeScene::None;
+}
+
+// #213. Advances the roster flash. Not modal and not turn-gated: it runs off
+// the same frame clock as every other presentation timer here.
+bool AlphaRuntime::service_poison_flash(){
+    if(!poison_.active())return false;
+    const auto row_before=poison_.flash_row();
+    poison_.pump(uint32_t(esp_timer_get_time()/1000));
+    return poison_.flash_row()!=row_before;
 }
 
 void AlphaRuntime::start_magic_ceremony(int index){
@@ -1028,6 +1169,23 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
                  action_name(action.kind),advanced?"key-wait-advance":"swallowed",int(blackthorn_pacer_.state()));
         return true;
     }
+    // Y-04. Refuge and TrollSneak are MODAL: the reference pacers swallow input
+    // for the whole scene, and neither has a dismissal key -- both advance on
+    // their own clock and end by themselves. The same transcript-paging
+    // exception applies, for the same reason as above.
+    if(narrative_pacer_.modal()&&shortcut==DeviceShortcut::None){
+        if(action.kind==openu5::UiActionKind::PageUp||action.kind==openu5::UiActionKind::PageDown){
+            refresh_session_context();
+            ui_->handle_input(action);
+            dirty_=true;dirty_reason_="transcript-page";
+            ESP_LOGI(kTag,"NARRATIVE_SCENE_INPUT action=%s effect=transcript-page scene=%d",
+                     action_name(action.kind),int(narrative_pacer_.scene()));
+            return true;
+        }
+        ESP_LOGI(kTag,"NARRATIVE_SCENE_INPUT action=%s effect=swallowed scene=%d gameplay_command=none",
+                 action_name(action.kind),int(narrative_pacer_.scene()));
+        return true;
+    }
     // R-12: "revealing traga el input" -- the reference's modal reveal loop
     // (main.ts runMapReveal/cancelMapReveal) reads no keyboard while armed and
     // re-censors itself automatically on the wall-clock timer in render(),
@@ -1287,6 +1445,10 @@ const DeviceSelectionView *AlphaRuntime::compose_selection_view(){
 
 DevicePartyHighlight AlphaRuntime::compose_party_highlight() const{
     DevicePartyHighlight out{};out.selected=-1;out.actor=-1;
+    // #213: the poison tick's row inversion. It is published here, alongside
+    // the picker and combat markers, precisely because all three ARE the same
+    // primitive in the binary and may not share a row.
+    out.damage_flash=poison_.flash_row();
     if(context_.combat&&combat_.current>=0&&combat_.current<combat_.count){const auto &actor=combat_.actors[combat_.current];if(actor.member!=255)out.actor=int8_t(actor.member);}
     openu5::UiSelectionView view{};if(ui_&&ui_->selection_view(view)&&view.mode==openu5::UiMode::PartySelection&&view.cursor<selection_count_)out.selected=int8_t(selections_[view.cursor].value);
     else if(out.actor>=0)out.selected=out.actor;
@@ -1427,6 +1589,8 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     }
     service_combat();
     if(service_blackthorn_scene()){dirty_=true;dirty_reason_="blackthorn-scene";}
+    if(service_narrative_scene()){dirty_=true;dirty_reason_="narrative-scene";}
+    if(service_poison_flash()){dirty_=true;dirty_reason_="poison-tick";}
     assert(!frontend_.active() && !system_menu_.active() && "gameplay renderer lacks display ownership");
     if(smoke_.pump()){dirty_=true;dirty_reason_="smoke-test-progress";}
     const int64_t now=esp_timer_get_time();DeviceShortcut held_shortcut{};
@@ -1452,6 +1616,20 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     const bool quake_active=quake_pulses_>0;
     if(quake_active!=quake_was_active_){dirty_=true;dirty_reason_=quake_active?"quake":"quake-end";}
     quake_was_active_=quake_active;
+    // Y-04 (Batch 7B). Three more presentation timers, all of them on the same
+    // frame clock as the quake above: none blocks, none freezes the loop.
+    openu5::WorldFxOp world_fx_ops[openu5::kWorldFxSlots*2]{};
+    const size_t world_fx_count=world_fx_.paint(uint32_t(now/1000),world_fx_ops,
+                                                sizeof(world_fx_ops)/sizeof(world_fx_ops[0]));
+    const bool world_fx_active=world_fx_.active();
+    if(world_fx_active!=world_fx_was_active_){dirty_=true;dirty_reason_=world_fx_active?"world-fx":"world-fx-end";}
+    world_fx_was_active_=world_fx_active;
+    const bool poison_active=poison_.active();
+    if(poison_active!=poison_was_active_){dirty_=true;dirty_reason_=poison_active?"poison-tick":"poison-tick-end";}
+    poison_was_active_=poison_active;
+    const bool narrative_active=narrative_pacer_.active();
+    if(narrative_active!=narrative_was_active_){dirty_=true;dirty_reason_=narrative_active?"narrative-scene":"narrative-scene-end";}
+    narrative_was_active_=narrative_active;
     const uint32_t tick=uint32_t(now/55000);
     const bool debug_mode=ui_->mode()==openu5::UiMode::DebugMenu;
     // A world/combat animation flag must never wake the modal Developer UI.
@@ -1461,7 +1639,7 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     // not one fixed state like the magic-invert flash), so it needs the same
     // periodic re-render pump as tile animation, not just a dirty flag on
     // the start/stop transition.
-    bool animation_only=!debug_mode&&!dirty_&&!force&&(animation_visible_||quake_active)&&tick!=rendered_animation_tick_;
+    bool animation_only=!debug_mode&&!dirty_&&!force&&(animation_visible_||quake_active||world_fx_active||poison_active)&&tick!=rendered_animation_tick_;
     if(dungeon_presentation_pending_){force=true;animation_only=false;}
     if(!dirty_&&!force&&!animation_only)return ESP_OK;
     const char *render_reason=force?"full-redraw":animation_only?"animation-tick":dirty_reason_;
@@ -1473,12 +1651,18 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     // was the whole visible defect. It draws from the pacer's own room and
     // cast; no gameplay position is consulted or rewritten to produce it.
     const bool blackthorn_source=blackthorn_pacer_.mounted();
-    const bool combat_source=!blackthorn_source&&context_.combat&&combat_.initialized;
-    const bool dungeon_source=!blackthorn_source&&!combat_source&&context_.dungeon&&dungeon_.active;
+    // Y-04 -- the refuge's own staged window (BLCKTHRN 0x0962). Like the
+    // capture scene it outranks the world: while the party sleeps in the
+    // nothingness the ordinary map must NOT be what the viewport shows.
+    const bool refuge_source=!blackthorn_source&&narrative_pacer_.mounted();
+    const bool combat_source=!blackthorn_source&&!refuge_source&&context_.combat&&combat_.initialized;
+    const bool dungeon_source=!blackthorn_source&&!refuge_source&&!combat_source&&context_.dungeon&&dungeon_.active;
     // One source decision owns gameplay presentation.  In particular, the
     // surface return coordinate is deliberately absent from the dungeon arm.
-    const char *presentation_source=blackthorn_source?"blackthorn-scene":combat_source?"combat":dungeon_source?"dungeon3d":"world";
+    const char *presentation_source=blackthorn_source?"blackthorn-scene":refuge_source?"refuge-scene":combat_source?"combat":dungeon_source?"dungeon3d":"world";
     if(blackthorn_source)snapshot=openu5::compose_blackthorn_presentation(blackthorn_pacer_.view());
+    else if(refuge_source)snapshot=openu5::compose_refuge_presentation(narrative_pacer_.phase(),
+        turn_.transport_tile>=0?int16_t(turn_.transport_tile+0x100):int16_t(tile_report_.avatar_tile));
     else if(combat_source)snapshot=openu5::compose_combat_presentation(combat_,game_);
     else if(dungeon_source)snapshot.center={dungeon_.pos.x,dungeon_.pos.y};
     else{auto active=openu5::get_active_map(resources_.world,game_.position.map);if(active.error!=openu5::Error::None){
@@ -1517,7 +1701,17 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
         int(snapshot.center.x),int(snapshot.center.y),snapshot.combat,dungeon_.active);teleport_snapshot_pending_=false;}
     // The scene bakes its own cast into the window at fixed reference cells;
     // the actor-program clock would wander them off their staged positions.
-    if(!debug_mode&&!dungeon_source&&!blackthorn_source)actor_animation_.render(snapshot,tick,turn_.time_spell=='T');
+    if(!debug_mode&&!dungeon_source&&!blackthorn_source&&!refuge_source)actor_animation_.render(snapshot,tick,turn_.time_spell=='T');
+    // Y-04 (#201/#243/#313). The world fx are a TEMPORARY per-cell override of
+    // the already-composed window: no world tile, object table or save is
+    // touched to show them. They go on last so the burst lands over whatever
+    // the composer produced, exactly as the original blits over the redrawn
+    // viewport. Cells travel as offsets from the party, which is the window
+    // centre in every one of these sources.
+    const bool world_fx_paintable=!debug_mode&&!dungeon_source&&!gem_view_active_&&!zodiac_view_active_;
+    if(world_fx_paintable&&world_fx_count)
+        openu5::apply_world_fx(snapshot,world_fx_ops,
+                               std::min(world_fx_count,sizeof(world_fx_ops)/sizeof(world_fx_ops[0])));
     openu5::RenderReport report{};
     const int64_t start=esp_timer_get_time();
     esp_err_t e=ESP_OK;
@@ -1537,6 +1731,17 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
             e=openu5::render_dungeon_view(dungeon_,viewport_,openu5::kViewportPixelCount,report,dungeon_primitives);
         else e=openu5::render_snapshot(tile_cache_,snapshot,tick,game_.turns_since_start,
                                        viewport_,openu5::kViewportPixelCount,report);
+    }
+    // The cannon ball lives BETWEEN cells, so it is painted into the rasterized
+    // window rather than composed into the snapshot (a cell blit cannot place
+    // it). It precedes the invert/shake post-processes so those act on the
+    // whole picture, as they do on the device's screen.
+    if(e==ESP_OK&&world_fx_paintable){
+        for(size_t i=0;i<world_fx_count&&i<sizeof(world_fx_ops)/sizeof(world_fx_ops[0]);++i){
+            if(world_fx_ops[i].kind!=openu5::WorldFxOpKind::Dot)continue;
+            openu5::paint_world_fx_dot(viewport_,world_fx_ops[i].dx_milli,world_fx_ops[i].dy_milli);
+            report.viewport_crc32=openu5::recompute_viewport_crc32(viewport_,openu5::kViewportPixelCount);
+        }
     }
     if(e==ESP_OK&&magic_inverted&&!debug_mode){
         for(size_t p=0;p<openu5::kViewportPixelCount;++p)
@@ -1596,6 +1801,13 @@ void AlphaRuntime::synchronize_loaded_world(){
     // a load arriving mid-scene must take the stage down rather than leave a
     // throne room drawn over a completely different world.
     blackthorn_pacer_.cancel();blackthorn_scene_state_={};
+    // Y-04. Same rule for the narrative scenes and the live fx: all three are
+    // pure presentation, none is saved, and a load arriving mid-scene must
+    // take them down rather than leave a refuge stage, a half-played burst or
+    // a stuck roster flash over a completely different world. The narrative
+    // pacer is cancelled WITHOUT reporting a completion, so a load can never
+    // trigger the resurrection the scene would otherwise have applied.
+    narrative_pacer_.cancel();world_fx_.clear();poison_.cancel();
     actors_={};const auto loc=game_.position.map.location;if(loc>=1&&loc<=32){auto &n=resources_.npc_locations[loc-1];openu5::enter_npc_map(actors_,n.slots,n.count,uint8_t(loc),uint8_t(game_.time.hour),game_.npc_dead[loc-1]);openu5::save::restore_npc_walk(retained_,uint8_t(loc),true,actors_);}terrain_.refresh(resources_.world,game_);combat_.initialized=false;
     // R-14: the pool has no owner-side backing store to diff against the new
     // document, so a load must clear it before reconstructing -- otherwise a

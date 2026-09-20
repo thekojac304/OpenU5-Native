@@ -14,6 +14,9 @@
 #include "openu5/look.h"
 #include "openu5/blackthorn.h"
 #include "openu5/blackthorn_scene.h"
+#include "openu5/narrative_scene.h"
+#include "openu5/poison_tick.h"
+#include "openu5/world_fx.h"
 #include "openu5/outdoor.h"
 #include "openu5/shop_orchestration.h"
 #include "openu5/shrine.h"
@@ -90,6 +93,17 @@ class AlphaRuntime {
     char *blackthorn_scene_text_ = nullptr;
     int16_t *blackthorn_scene_grid_ = nullptr;
     uint32_t blackthorn_released_ = 0;
+    // Y-04 -- the five remaining feedback/VFX channels (Batch 7B). All three
+    // owners are PRESENTATION ONLY: none of them reads or writes GameState,
+    // the clock or any RNG. `narrative_pacer_` is the single sequencer the
+    // Refuge and TrollSneak scenes share; its queue and text arena are PSRAM,
+    // like every other large runtime buffer here.
+    openu5::WorldFxLayer world_fx_{};
+    openu5::PoisonFlashPacer poison_{};
+    openu5::NarrativeScenePacer narrative_pacer_{};
+    openu5::NarrativeSceneStep *narrative_steps_ = nullptr;
+    char *narrative_text_ = nullptr;
+    uint32_t narrative_released_ = 0;
     openu5::CommandContext context_{game_,turn_,travel_,commands_,resources_.world};
     openu5::save::Json retained_{};
     AlphaSaveService save_{};
@@ -200,6 +214,9 @@ class AlphaRuntime {
     int64_t quake_start_us_ = 0;
     int quake_pulses_ = 0;
     bool quake_was_active_ = false;
+    bool world_fx_was_active_ = false;
+    bool poison_was_active_ = false;
+    bool narrative_was_active_ = false;
 
     static void dispatch_ui(void *, const openu5::UiIntent &);
     static void dispatch_event(void *, const openu5::GameEvent &);
@@ -238,6 +255,14 @@ class AlphaRuntime {
     void refresh_session_context();
     /** Release whatever of the deferred Blackthorn scene is due; true = redraw. */
     bool service_blackthorn_scene();
+    /** ms of this device's own shake window still owed at `now_us`. */
+    int64_t quake_remaining_ms(int64_t now_us) const;
+    /** Release whatever of the deferred Refuge/TrollSneak scene is due. */
+    bool service_narrative_scene();
+    /** Advance the poison roster flash; true = redraw. */
+    bool service_poison_flash();
+    /** Beat sink for the narrative pacer (append / continue / cue / phase). */
+    static void narrative_beat(void *, const openu5::NarrativeSceneBeat &);
     void open_selection(openu5::UiMode, openu5::UiRequestId);
     static size_t selection_count(void *);
     static openu5::UiSelectionItem selection_item(void *, size_t);
