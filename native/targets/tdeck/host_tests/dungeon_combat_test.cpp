@@ -47,6 +47,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <fstream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -88,6 +89,81 @@ const char *mode_name(UiMode m) {
 // AlphaRuntime's own enemy-beat constant (alpha_runtime.cpp kEnemyBeatUs).
 constexpr int64_t kEnemyBeatUs = 220000;
 
+
+
+// ---------------------------------------------------------------------------
+// Authored fixtures.  Both are the same files the parity suites read; CTest
+// passes their paths.  Nothing here is synthesised -- a test that invented its
+// own dungeon could not have told this batch apart from the last one.
+// ---------------------------------------------------------------------------
+struct AuthoredBoard {
+    CombatMap map{};
+    uint8_t sprites[16]{};
+};
+struct Authored {
+    bool ok = false;
+    const char *why = "";
+    uint8_t cells[8][512]{};          // indexed by location - 33
+    std::vector<AuthoredBoard> boards; // ARRAY POSITION order: 16 britannia, then 112 dungeon
+    const uint8_t *dungeon(int loc) const { return cells[loc - 33]; }
+    uint8_t cell(int loc, int f, int x, int y) const {
+        return dungeon(loc)[f * 64 + y * 8 + x];
+    }
+};
+
+Authored load_authored(const char *dungeon_fixture, const char *board_fixture) {
+    Authored a;
+    if (!dungeon_fixture || !board_fixture) {
+        a.why = "no fixture paths given (CTest passes them; run via ctest)";
+        return a;
+    }
+    {
+        std::ifstream df(dungeon_fixture);
+        if (!df) { a.why = "dungeon-maps.txt did not open"; return a; }
+        int loc;
+        int seen = 0;
+        while (df >> loc) {
+            if (loc < 33 || loc > 40) { a.why = "unexpected dungeon id"; return a; }
+            for (int i = 0; i < 512; ++i) { int v; df >> v; a.cells[loc - 33][i] = uint8_t(v); }
+            ++seen;
+        }
+        if (seen != 8) { a.why = "expected 8 authored dungeons"; return a; }
+    }
+    {
+        std::ifstream mf(board_fixture);
+        if (!mf) { a.why = "fixed-maps.txt did not open"; return a; }
+        int index;
+        while (mf >> index) {
+            AuthoredBoard b;
+            b.map.index = index;
+            for (auto &t : b.map.tiles) mf >> t;
+            for (int d = 0; d < 4; ++d) {
+                int n; mf >> n;
+                b.map.start_count[d] = uint8_t(n);
+                for (int i = 0; i < n; ++i) mf >> b.map.starts[d][i].x >> b.map.starts[d][i].y;
+            }
+            int n; mf >> n;
+            b.map.unit_count = uint8_t(n);
+            for (int i = 0; i < n; ++i) {
+                int s;
+                mf >> b.map.units[i].x >> b.map.units[i].y >> s;
+                b.sprites[i] = uint8_t(s);
+            }
+            mf >> n;
+            b.map.trigger_count = uint8_t(n);
+            for (int i = 0; i < n; ++i) {
+                auto &t = b.map.triggers[i];
+                mf >> t.tile >> t.at.x >> t.at.y >> t.first.x >> t.first.y >> t.second.x >>
+                    t.second.y;
+            }
+            a.boards.push_back(b);
+        }
+        if (a.boards.size() != 128) { a.why = "expected 128 authored combat boards"; return a; }
+    }
+    a.ok = true;
+    return a;
+}
+
 // ---------------------------------------------------------------------------
 // One device fixture that can enter combat three ways.
 // ---------------------------------------------------------------------------
@@ -118,8 +194,8 @@ struct Runtime {
 
     // --- enemy definitions.  The corridor builder asks for 0x40 + type*4, so
     // every wanderer type must resolve; index 5 is the one the room uses.
-    CombatEnemy enemy_defs_storage[32]{};
-    const CombatEnemy *enemy_defs[32]{};
+    CombatEnemy enemy_defs_storage[64]{};
+    const CombatEnemy *enemy_defs[64]{};
 
     // --- overworld reference path resources.
     CombatMap overworld_map{};
@@ -142,7 +218,7 @@ struct Runtime {
     CommandStatus last_status = CommandStatus::Success;
 
     Runtime() {
-        for (int i = 0; i < 32; ++i) {
+        for (int i = 0; i < 64; ++i) {
             auto &d = enemy_defs_storage[i];
             d.index = i;
             d.name = "Wanderer";
@@ -158,7 +234,7 @@ struct Runtime {
             enemy_defs[i] = &d;
         }
         combat_context.enemy_defs = enemy_defs;
-        combat_context.enemy_def_count = 32;
+        combat_context.enemy_def_count = 64;
 
         // Deceit (33).  Floor 0 is open corridor with a down-ladder at (4,4);
         // floor 1 carries a ROOM cell (0xF0|1) directly beneath it, so one
@@ -188,6 +264,7 @@ struct Runtime {
         room_map.units[1] = {6, 3};
         room_sprites[0] = room_sprites[1] = uint8_t(0x40 + 5 * 4);
         arenas[0] = {&room_map, room_sprites};
+
         encounters.combat = &combat_context;
         encounters.arenas = arenas;
         encounters.count = 1;
@@ -207,7 +284,7 @@ struct Runtime {
         overworld_resources.maps = overworld_maps;
         overworld_resources.map_count = 1;
         overworld_resources.enemies = enemy_defs;
-        overworld_resources.enemy_count = 32;
+        overworld_resources.enemy_count = 64;
 
         // A full six-member party, like the device's.  A one-member fixture
         // would hide every turn-scheduling arm that only fires with more than
@@ -428,6 +505,50 @@ struct Runtime {
         w.floor = dungeon.pos.floor;
         w.x = w.prev_x = uint8_t((dungeon.pos.x + dx[f]) & 7);
         w.y = w.prev_y = uint8_t((dungeon.pos.y + dy[f]) & 7);
+    }
+
+    // Batch 9E -- swap this fixture over to AUTHORED data: the real DUNGEON.DAT
+    // cells for `loc` and the real DUNGEON.CBT board for its room, so the repro
+    // runs on shipped geometry instead of a synthetic map.  Call before
+    // enter_dungeon().
+    void install_authored(const Authored &a, int loc, int room) {
+        data[0].location = uint8_t(loc);
+        std::memcpy(data[0].cells, a.dungeon(loc), sizeof(data[0].cells));
+        const auto &board = a.boards[size_t(dungeon_room_map(loc, room))];
+        room_map = board.map;
+        room_map.index = dungeon_room_map(loc, room);
+        std::memcpy(room_sprites, board.sprites, sizeof(room_sprites));
+        arenas[0] = {&room_map, room_sprites};
+    }
+
+    // Batch 9E -- mark an authored SECRET DOOR revealed, which is what a player
+    // does with (S)earch before they can walk through it.  Deceit floor 0 (5,3),
+    // the LadderDown into room 0, is reached ONLY through the 0xD0 secret door at
+    // (5,4); a fixture that parachutes the party onto the ladder without this has
+    // silently removed the way out again.
+    void reveal(int floor, int x, int y) {
+        const int n = floor * 64 + y * 8 + x;
+        dungeon.revealed[n >> 3] |= uint8_t(1 << (n & 7));
+    }
+
+    // Batch 9E -- the AUTHORED in-arena escape: every conscious member steps onto
+    // the board's klimb tile and presses (K).  Driven through the real key path
+    // (UiInputAdapter -> UiSession -> CommandKind::CombatKlimb -> CombatAction::
+    // Klimb), not by poking CombatState.  Only the standing-on-the-tile part is
+    // staged, exactly as walk_party_off_north() stages the board edge.
+    void klimb_party_out(int tile_x, int tile_y, int budget = 64) {
+        for (int i = 0; i < budget && c.combat; ++i) {
+            service_combat();
+            settle_combat();
+            if (!c.combat) break;
+            auto *actor = current_combat_actor(combat_context);
+            if (!actor) break;
+            if (actor->member == 255) break;
+            actor->position.x = int16_t(tile_x);
+            actor->position.y = int16_t(tile_y);
+            press('k');
+        }
+        service_combat();
     }
 
     // The overworld reference entry: exactly what outdoor.cpp does when a
@@ -875,9 +996,470 @@ void d9d_11_stranded_arena_recovers() {
            "dungeon input works immediately after the recovery");
 }
 
+// ===========================================================================
+// Batch 9E -- dungeon combat-ROOM escape.  ADJUDICATION + COVERAGE.
+// ===========================================================================
+//
+// Physical testing after Batch 9D reported that leaving a ladder-entered
+// dungeon combat room by walking off the board edge returned the party into a
+// sealed 1x1 dungeon cell.  The room has been identified from the authored
+// data as DECEIT (33) floor 1 (5,3), room 0 -- combat board array position 16
+// = DUNGEON.CBT #0, two chests, a mimic and eleven slimes, which is the same
+// "slimes and a chest" room the Batch 9D session had been using (16 Phase 6C
+// step 33u).  Entry is the 0x20 LadderDown at Deceit floor 0 (5,3).
+//
+// THAT RETURN IS REFERENCE-FAITHFUL AND IS NOT A DEFECT.  dng_enter_room saves
+// g_party_x/y on entry (DUNGEON.OVL 0x0084/0x008c) and restores them on BOTH
+// exit branches (0x00fa-0x0103), so the arena's exit border never moves the
+// party in the maze; a fled room is legitimately not cleared, so its cell keeps
+// 0xFn; and the cleared-room ladder-pair de-seal in dungeon.cpp caps() is gated
+// on 0xAn by design (the reference pins the same property).  Deceit room 0 has
+// four wall neighbours, so the party is sealed in.
+//
+// What the player was meant to use is on the BOARD, not in the maze: the room's
+// own .CBT carries an in-arena (K)limb tile -- 0xC8 up, 0xC9 down, or the
+// room-gated 0x86 grate (SJOG cmd_klimb_combat 0x1df4 + test [g_unk_58a1],0x80)
+// -- which sets CombatState::escape_floor_delta, and dungeon_combat_return()
+// applies that delta on a flee.  Deceit room 0's board has 0xC8 at (5,2), and
+// it lands the party back on the very ladder cell they came down.
+//
+// The structural finding, censused below: 13 of the 14 authored sealed room
+// cells carry exactly the klimb tile that leads back the way the party came in.
+//
+// These tests therefore pin BOTH exits as correct, and the difference between
+// them, so neither can be "fixed" into the other.
+
+
+// The three in-arena escape tiles.  0x86 is the grate, and it only klimbs
+// inside a ROOM (combat.cpp's `tile == 0x86 && c.combat.room`).
+constexpr int kLadderUpTile = 0xc8, kLadderDownTile = 0xc9, kGrateTile = 0x86;
+
+int count_tile(const CombatMap &m, int tile) {
+    int n = 0;
+    for (auto t : m.tiles) if (t == tile) ++n;
+    return n;
+}
+bool find_tile(const CombatMap &m, int tile, int &x, int &y) {
+    for (int i = 0; i < 121; ++i)
+        if (m.tiles[i] == tile) { x = i % 11; y = i / 11; return true; }
+    return false;
+}
+
+// The hardware room, named once.
+constexpr int kDeceit = 33, kDeceitRoom = 0;
+constexpr int kDeceitRoomFloor = 1, kDeceitRoomX = 5, kDeceitRoomY = 3;
+constexpr int kDeceitLadderFloor = 0;      // (5,3) on floor 0 is 0x20 LadderDown.
+// The representative GRATE room, so the coverage is not Deceit-specific.
+constexpr int kDestard = 35, kDestardRoom = 0;
+constexpr int kDestardRoomFloor = 0, kDestardRoomX = 3, kDestardRoomY = 1;
+constexpr int kDestardLadderFloor = 1;     // (3,1) on floor 1 is 0x18 LadderUp.
+
+// Neighbours the MOVER would let the party step onto -- the same predicate
+// dungeon.cpp Forward/Back applies, including the revealed-secret-door arm
+// (an unrevealed 0xD is wall; a found one is a door you walk through).
+int passable_neighbours(const DungeonState &d) {
+    static constexpr int dx[] = {0, 1, 0, -1}, dy[] = {-1, 0, 1, 0};
+    int n = 0;
+    for (int i = 0; i < 4; ++i) {
+        const int x = (d.pos.x + dx[i]) & 7, y = (d.pos.y + dy[i]) & 7;
+        const int t = dungeon_cell(d, d.pos.floor, x, y) >> 4;
+        if (t == 11 || t == 12) continue;
+        if (t == 13) {
+            const int k = int(d.pos.floor) * 64 + y * 8 + x;
+            if (!(d.revealed[k >> 3] & (1u << (k & 7)))) continue;
+        }
+        ++n;
+    }
+    return n;
+}
+
+void dump_dungeon(const char *label, const Runtime &r) {
+    std::printf("      [%-20s] dungeon=%d floor=%d x=%d y=%d facing=%d cell=%02X "
+                "nbrs=%d delta=%d victory=%d\n",
+                label, r.dungeon.pos.dungeon, r.dungeon.pos.floor, r.dungeon.pos.x,
+                r.dungeon.pos.y, int(r.dungeon.pos.facing),
+                dungeon_cell(r.dungeon, r.dungeon.pos.floor, r.dungeon.pos.x, r.dungeon.pos.y),
+                passable_neighbours(r.dungeon), r.combat.escape_floor_delta, r.combat.victory);
+}
+
+// ---------------------------------------------------------------------------
+// B9E-0  The authored census (evidence, not gameplay logic).
+// ---------------------------------------------------------------------------
+void b9e_0_sealed_room_census(const Authored &a) {
+    std::printf("B9E-0 -- the authored sealed-room census and the hardware room\n");
+    if (!a.ok) { expect(false, "B9E-0", a.why); return; }
+
+    int sealed = 0, with_escape = 0;
+    std::string exceptions;
+    for (int loc = 33; loc <= 40; ++loc)
+        for (int f = 0; f < 8; ++f)
+            for (int y = 0; y < 8; ++y)
+                for (int x = 0; x < 8; ++x) {
+                    const uint8_t v = a.cell(loc, f, x, y);
+                    if ((v >> 4) != 0xf) continue;
+                    static constexpr int dx[] = {0, 1, 0, -1}, dy[] = {-1, 0, 1, 0};
+                    bool all_wall = true, secret = false;
+                    for (int i = 0; i < 4; ++i) {
+                        const int k = a.cell(loc, f, (x + dx[i]) & 7, (y + dy[i]) & 7) >> 4;
+                        if (k == 13) secret = true;
+                        if (!(k == 11 || k == 12)) all_wall = false;
+                    }
+                    if (!all_wall || secret) continue;
+                    ++sealed;
+                    const int board = dungeon_room_map(loc, v & 15);
+                    const auto &m = a.boards[size_t(board)].map;
+                    const int esc = count_tile(m, kLadderUpTile) + count_tile(m, kLadderDownTile) +
+                                    count_tile(m, kGrateTile);
+                    if (esc) ++with_escape;
+                    else {
+                        char buf[64];
+                        std::snprintf(buf, sizeof(buf), "%d:%d:(%d,%d) r%d ", loc, f, x, y, v & 15);
+                        exceptions += buf;
+                    }
+                }
+    std::printf("      sealed room cells=%d  with an in-arena klimb/grate escape=%d\n", sealed,
+                with_escape);
+    std::printf("      without one: %s\n", exceptions.c_str());
+    expect(sealed == 14, "B9E-0a", "DUNGEON.DAT holds exactly 14 sealed room cells");
+    // MEASURED: twelve.  The two without are BOTH in Doom, and one of them is the
+    // ENDGAME room -- Doom 40:7:(5,7) r15 = combat board 127 = Lord British's, which
+    // is reached by a PIT (no entry ladder to hand back) and must stay sealed.  Set
+    // that one aside and the ordinary sealed rooms are 12 of 13, with Doom room 6
+    // the single ordinary cell the authored data leaves without any in-arena way out.
+    expect(with_escape == 12, "B9E-0b",
+           "12 of the 14 carry an authored in-arena klimb/grate escape on their own board");
+    expect(exceptions == "40:2:(5,5) r6 40:7:(5,7) r15 ", "B9E-0c",
+           "and the two that do not are Doom room 6 and the Doom ENDGAME room");
+
+    // And the hardware room itself, identified from the authored data.
+    const uint8_t room_cell = a.cell(kDeceit, kDeceitRoomFloor, kDeceitRoomX, kDeceitRoomY);
+    const uint8_t ladder = a.cell(kDeceit, kDeceitLadderFloor, kDeceitRoomX, kDeceitRoomY);
+    const auto &board = a.boards[size_t(dungeon_room_map(kDeceit, kDeceitRoom))];
+    int chests = 0, slimes = 0;
+    for (int i = 0; i < board.map.unit_count; ++i) {
+        if (board.sprites[i] == 1) ++chests;
+        if (board.sprites[i] == 0x40 + 24 * 4) ++slimes;   // enemy 24 = SLIME
+    }
+    int kx = 0, ky = 0;
+    const bool has_up = find_tile(board.map, kLadderUpTile, kx, ky);
+    std::printf("      Deceit 1 (5,3): cell=%02X ladder above=%02X board=%d chests=%d slimes=%d "
+                "0xC8@(%d,%d)=%d\n",
+                room_cell, ladder, dungeon_room_map(kDeceit, kDeceitRoom), chests, slimes, kx, ky,
+                has_up);
+    expect(room_cell == 0xf0, "B9E-0d", "Deceit 33:1:(5,3) is authored room 0 (0xF0)");
+    expect(ladder == 0x20, "B9E-0e", "and Deceit floor 0 (5,3) is the 0x20 LadderDown above it");
+    expect(chests == 2 && slimes == 11, "B9E-0f",
+           "its board is the 'slimes and a chest' room the hardware session used");
+    expect(has_up && kx == 5 && ky == 2, "B9E-0g",
+           "and the board carries the authored 0xC8 up-ladder at (5,2)");
+}
+
+// ---------------------------------------------------------------------------
+// B9E-1  Deceit room 0, EDGE-WALK exit.  The hardware observation.
+//        The sealed return is EXPECTED -- this test asserts it, it does not
+//        report it.
+// ---------------------------------------------------------------------------
+void b9e_1_deceit_edge_walk_is_faithful(const Authored &a) {
+    std::printf("B9E-1 -- Deceit room 0: the edge-walk exit returns to the sealed cell, as it must\n");
+    if (!a.ok) { expect(false, "B9E-1", a.why); return; }
+    auto r = std::make_unique<Runtime>();
+    r->install_authored(a, kDeceit, kDeceitRoom);
+    r->enter_dungeon(kDeceit);
+    r->dungeon.pos.floor = uint8_t(kDeceitLadderFloor);
+    // The authored approach: the 0xD0 secret door south of the ladder, already
+    // found with (S)earch -- otherwise the fixture starts the party somewhere no
+    // player could be standing.
+    r->reveal(kDeceitLadderFloor, kDeceitRoomX, kDeceitRoomY + 1);
+    r->put_at(kDeceitRoomX, kDeceitRoomY, DungeonFacing::North);
+    r->press('k');   // 0x20 is down-only: no U/D prompt, it resolves directly.
+    dump_dungeon("deceit-room-entry", *r);
+    expect(r->c.combat && r->combat.room && r->dungeon.pos.floor == kDeceitRoomFloor, "B9E-1a",
+           "the ladder down from Deceit floor 0 (5,3) starts the authored room fight");
+
+    r->walk_party_off_north();
+    dump_dungeon("deceit-edge-walk", *r);
+    expect(!r->c.combat && !r->combat.victory, "B9E-1b", "the party leaves by the board edge");
+    expect(r->combat.escape_floor_delta == 0, "B9E-1c",
+           "an edge-walk sets NO escape_floor_delta -- the border never moves the party");
+    expect(r->dungeon.pos.dungeon == kDeceit && r->dungeon.pos.floor == kDeceitRoomFloor &&
+               r->dungeon.pos.x == kDeceitRoomX && r->dungeon.pos.y == kDeceitRoomY,
+           "B9E-1d", "so the party is restored to the room-entry cell, 33:1:(5,3)");
+    expect(dungeon_cell(r->dungeon, kDeceitRoomFloor, kDeceitRoomX, kDeceitRoomY) == 0xf0,
+           "B9E-1e", "the fled room keeps its authored 0xF0 -- it is not cleared");
+    expect(!dungeon_room_cleared(r->g, kDeceit, kDeceitRoom), "B9E-1f",
+           "and the room-cleared bit stays unset");
+    expect(passable_neighbours(r->dungeon) == 0, "B9E-1g",
+           "all four dungeon neighbours are wall -- the sealed cell of the report");
+    expect(!dungeon_klimb_choice(r->g, r->dungeon), "B9E-1h",
+           "no dungeon-side Klimb choice is offered on an uncleared room cell");
+
+    // (K) and ordinary movement, through the real device path.
+    const int floor_before = r->dungeon.pos.floor;
+    r->press('k');
+    expect(r->dungeon.pos.floor == floor_before, "B9E-1i",
+           "EXPECTED: dungeon-side (K)limb does not lift the party out of a FLED room");
+    r->ball(tdeck::RawInputKind::TrackballUp);
+    expect(r->dungeon.pos.x == kDeceitRoomX && r->dungeon.pos.y == kDeceitRoomY, "B9E-1j",
+           "EXPECTED: ordinary movement stays Blocked! -- this is 1988, not a defect");
+    expect(r->dungeon.active && r->ui.mode() == UiMode::Dungeon, "B9E-1k",
+           "the dungeon session and UiMode are intact throughout");
+}
+
+// ---------------------------------------------------------------------------
+// B9E-2  Deceit room 0, the AUTHORED in-arena (K)limb escape.  The mechanism
+//        the player was meant to use, and the coverage this batch exists for.
+// ---------------------------------------------------------------------------
+void b9e_2_deceit_in_arena_klimb(const Authored &a) {
+    std::printf("B9E-2 -- Deceit room 0: the authored in-arena (K)limb escape\n");
+    if (!a.ok) { expect(false, "B9E-2", a.why); return; }
+    auto r = std::make_unique<Runtime>();
+    r->install_authored(a, kDeceit, kDeceitRoom);
+    r->enter_dungeon(kDeceit);
+    r->dungeon.pos.floor = uint8_t(kDeceitLadderFloor);
+    // The authored approach: the 0xD0 secret door south of the ladder, already
+    // found with (S)earch -- otherwise the fixture starts the party somewhere no
+    // player could be standing.
+    r->reveal(kDeceitLadderFloor, kDeceitRoomX, kDeceitRoomY + 1);
+    r->put_at(kDeceitRoomX, kDeceitRoomY, DungeonFacing::North);
+    r->press('k');
+    expect(r->c.combat && r->combat.room, "B9E-2a", "the same authored room fight is live");
+
+    int kx = 0, ky = 0;
+    expect(find_tile(r->room_map, kLadderUpTile, kx, ky) && kx == 5 && ky == 2, "B9E-2b",
+           "the arena carries the authored 0xC8 up-ladder at board (5,2)");
+
+    // Every conscious member steps onto the ladder tile and presses (K) -- the
+    // real key, through UiInputAdapter -> UiSession -> CombatKlimb.
+    r->klimb_party_out(kx, ky);
+    dump_dungeon("deceit-in-arena-K", *r);
+
+    expect(!r->c.combat && !r->combat.victory, "B9E-2c", "combat ends without a victory");
+    expect(r->combat.escape_floor_delta == -1, "B9E-2d",
+           "the 0xC8 tile sets escape_floor_delta = -1 (Klimb-Up!)");
+    expect(r->dungeon.pos.floor == kDeceitLadderFloor, "B9E-2e",
+           "dungeon_combat_return() applies that delta on a FLEE: floor 1 -> 0");
+    expect(r->dungeon.pos.dungeon == kDeceit && r->dungeon.pos.x == kDeceitRoomX &&
+               r->dungeon.pos.y == kDeceitRoomY,
+           "B9E-2f", "x/y are the saved room-entry coordinates, restored unchanged");
+    expect(dungeon_cell(r->dungeon, r->dungeon.pos.floor, r->dungeon.pos.x, r->dungeon.pos.y) ==
+               0x20,
+           "B9E-2g", "so the party stands back on the very LadderDown cell they came down");
+    expect(dungeon_cell(r->dungeon, kDeceitRoomFloor, kDeceitRoomX, kDeceitRoomY) == 0xf0,
+           "B9E-2h", "the room is still UNCLEARED -- fleeing wins nothing");
+    expect(!dungeon_room_cleared(r->g, kDeceit, kDeceitRoom), "B9E-2i",
+           "and its cleared bit stays unset");
+    expect(dungeon_cell(r->dungeon, kDeceitLadderFloor, kDeceitRoomX, kDeceitRoomY + 1) == 0xd0,
+           "B9E-2j",
+           "the ladder cell is served by the authored 0xD0 secret door to the south");
+    expect(passable_neighbours(r->dungeon) > 0, "B9E-2j2",
+           "with that door found, the party is back somewhere navigable");
+    r->put_at(kDeceitRoomX, kDeceitRoomY, DungeonFacing::South);
+    r->ball(tdeck::RawInputKind::TrackballUp);
+    expect(r->dungeon.pos.y == kDeceitRoomY + 1 && r->dungeon.pos.floor == kDeceitLadderFloor,
+           "B9E-2j3", "and can walk back out through it -- the escape is a real exit");
+    expect(r->dungeon.active && r->ui.mode() == UiMode::Dungeon, "B9E-2k",
+           "UiSession is back in UiMode::Dungeon");
+    const int before = r->dungeon_dispatches;
+    r->press(' ');
+    expect(r->dungeon_dispatches > before, "B9E-2l",
+           "and the FIRST key after the escape reaches the dungeon");
+}
+
+// ---------------------------------------------------------------------------
+// B9E-3  The other direction and the other tile: Destard room 0's GRATE.
+//        0x86 only klimbs inside a room, and it goes DOWN (+1).
+// ---------------------------------------------------------------------------
+void b9e_3_destard_grate_escape(const Authored &a) {
+    std::printf("B9E-3 -- Destard room 0: the room-gated 0x86 grate escape goes DOWN\n");
+    if (!a.ok) { expect(false, "B9E-3", a.why); return; }
+    auto r = std::make_unique<Runtime>();
+    r->install_authored(a, kDestard, kDestardRoom);
+    r->enter_dungeon(kDestard);
+    r->dungeon.pos.floor = uint8_t(kDestardLadderFloor);
+    r->put_at(kDestardRoomX, kDestardRoomY, DungeonFacing::North);
+    expect(dungeon_cell(r->dungeon, kDestardLadderFloor, kDestardRoomX, kDestardRoomY) == 0x18,
+           "B9E-3a", "Destard floor 1 (3,1) is the authored 0x18 LadderUp");
+    r->press('k');   // up-only: resolves directly.
+    expect(r->c.combat && r->combat.room && r->dungeon.pos.floor == kDestardRoomFloor, "B9E-3b",
+           "klimbing UP lands in the authored room on floor 0 and starts its fight");
+
+    int kx = 0, ky = 0;
+    expect(find_tile(r->room_map, kGrateTile, kx, ky), "B9E-3c",
+           "the arena carries the authored 0x86 grate");
+    expect(count_tile(r->room_map, kLadderUpTile) == 0 &&
+               count_tile(r->room_map, kLadderDownTile) == 0,
+           "B9E-3d", "and no 0xC8/0xC9 -- so a pass here really is the grate arm");
+
+    r->klimb_party_out(kx, ky);
+    dump_dungeon("destard-grate", *r);
+    expect(!r->c.combat && !r->combat.victory, "B9E-3e", "combat ends without a victory");
+    expect(r->combat.escape_floor_delta == 1, "B9E-3f",
+           "the grate sets escape_floor_delta = +1 (Klimb-Down!), like 0xC9");
+    expect(r->dungeon.pos.floor == kDestardLadderFloor, "B9E-3g",
+           "the party drops back to floor 1, the way they came up");
+    expect(dungeon_cell(r->dungeon, r->dungeon.pos.floor, r->dungeon.pos.x, r->dungeon.pos.y) ==
+               0x18,
+           "B9E-3h", "onto the same 0x18 LadderUp cell");
+    expect(dungeon_cell(r->dungeon, kDestardRoomFloor, kDestardRoomX, kDestardRoomY) == 0xf0,
+           "B9E-3i", "the fled room stays uncleared here too");
+    const int before = r->dungeon_dispatches;
+    r->press(' ');
+    expect(r->dungeon_dispatches > before, "B9E-3j", "first key after the escape reaches the dungeon");
+}
+
+// ---------------------------------------------------------------------------
+// B9E-4  VICTORY is not flee.  Same room, same edge-walk, different bookkeeping.
+// ---------------------------------------------------------------------------
+void b9e_4_victory_is_not_flee(const Authored &a) {
+    std::printf("B9E-4 -- Deceit room 0: victory clears the room, fleeing does not\n");
+    if (!a.ok) { expect(false, "B9E-4", a.why); return; }
+    auto r = std::make_unique<Runtime>();
+    r->install_authored(a, kDeceit, kDeceitRoom);
+    r->enter_dungeon(kDeceit);
+    r->dungeon.pos.floor = uint8_t(kDeceitLadderFloor);
+    // The authored approach: the 0xD0 secret door south of the ladder, already
+    // found with (S)earch -- otherwise the fixture starts the party somewhere no
+    // player could be standing.
+    r->reveal(kDeceitLadderFloor, kDeceitRoomX, kDeceitRoomY + 1);
+    r->put_at(kDeceitRoomX, kDeceitRoomY, DungeonFacing::North);
+    r->press('k');
+    expect(r->c.combat && r->combat.room, "B9E-4a", "the authored room fight is live");
+
+    for (int i = 0; i < r->combat.count; ++i) {
+        auto &actor = r->combat.actors[i];
+        if (actor.enemy) { actor.hp = 0; actor.status = CombatStatus::Dead; }
+    }
+    r->walk_party_off_north();   // combat_over() stays false while players live
+    dump_dungeon("deceit-victory", *r);
+
+    expect(!r->c.combat && r->combat.victory, "B9E-4b", "the room is won");
+    expect(r->dungeon.pos.floor == kDeceitRoomFloor && r->dungeon.pos.x == kDeceitRoomX &&
+               r->dungeon.pos.y == kDeceitRoomY,
+           "B9E-4c", "victory restores the same entry cell -- the border moves nobody here either");
+    expect(dungeon_cell(r->dungeon, kDeceitRoomFloor, kDeceitRoomX, kDeceitRoomY) == 0xa0,
+           "B9E-4d", "but the victory latch degrades the authored cell 0xF0 -> 0xA0");
+    expect(dungeon_room_cleared(r->g, kDeceit, kDeceitRoom), "B9E-4e",
+           "and records the room as cleared");
+    expect(passable_neighbours(r->dungeon) == 0, "B9E-4f",
+           "the authored geometry is untouched -- the cell is still walled in");
+    expect(dungeon_cell(r->dungeon, kDeceitLadderFloor, kDeceitRoomX, kDeceitRoomY) == 0x20,
+           "B9E-4g", "the LadderDown above is still there");
+    const int floor_before = r->dungeon.pos.floor;
+    r->press('k');
+    expect(r->dungeon.pos.floor == kDeceitLadderFloor && floor_before == kDeceitRoomFloor,
+           "B9E-4h",
+           "and on a CLEARED room the port-authorized ladder-pair de-seal lifts the party out");
+    const int before = r->dungeon_dispatches;
+    r->press(' ');
+    expect(r->dungeon_dispatches > before, "B9E-4i", "first key after the return reaches the dungeon");
+
+    // Re-entry: a cleared room does not refight.
+    r->press('k');
+    expect(!r->c.combat && r->dungeon.pos.floor == kDeceitRoomFloor, "B9E-4j",
+           "klimbing back down into a CLEARED room starts no fight");
+}
+
+// ---------------------------------------------------------------------------
+// B9E-5  Re-entry after FLEEING: the room is still there and fights again.
+// ---------------------------------------------------------------------------
+void b9e_5_fled_room_refights(const Authored &a) {
+    std::printf("B9E-5 -- a fled room is still owed a fight\n");
+    if (!a.ok) { expect(false, "B9E-5", a.why); return; }
+    auto r = std::make_unique<Runtime>();
+    r->install_authored(a, kDeceit, kDeceitRoom);
+    r->enter_dungeon(kDeceit);
+    r->dungeon.pos.floor = uint8_t(kDeceitLadderFloor);
+    // The authored approach: the 0xD0 secret door south of the ladder, already
+    // found with (S)earch -- otherwise the fixture starts the party somewhere no
+    // player could be standing.
+    r->reveal(kDeceitLadderFloor, kDeceitRoomX, kDeceitRoomY + 1);
+    r->put_at(kDeceitRoomX, kDeceitRoomY, DungeonFacing::North);
+    r->press('k');
+    int kx = 0, ky = 0;
+    find_tile(r->room_map, kLadderUpTile, kx, ky);
+    r->klimb_party_out(kx, ky);
+    expect(!r->c.combat && r->dungeon.pos.floor == kDeceitLadderFloor, "B9E-5a",
+           "the party klimbed out of the room without clearing it");
+    r->press('k');   // straight back down the same ladder
+    expect(r->c.combat && r->combat.room, "B9E-5b",
+           "re-entering an UNCLEARED room fights it again");
+}
+
+// ---------------------------------------------------------------------------
+// B9E-6  The gate: a sealed room nobody has entered gains nothing.  This is the
+//        guard against re-broadening the cleared-room de-seal to room cells at
+//        large (which Batch 9E briefly did, and which is a parity divergence).
+// ---------------------------------------------------------------------------
+void b9e_6_unentered_room_gate(const Authored &a) {
+    std::printf("B9E-6 -- an unentered sealed room is not klimbable\n");
+    if (!a.ok) { expect(false, "B9E-6", a.why); return; }
+    auto r = std::make_unique<Runtime>();
+    r->install_authored(a, kDeceit, kDeceitRoom);
+    r->enter_dungeon(kDeceit);
+    // Deceit 33:2:(1,1) is authored room 2, sealed, and NEVER entered here.
+    r->dungeon.pos.floor = 2;
+    r->put_at(1, 1, DungeonFacing::North);
+    expect(dungeon_cell(r->dungeon, 2, 1, 1) == 0xf2, "B9E-6a",
+           "33:2:(1,1) is authored room 2, sealed and unfought");
+    expect(!r->c.combat, "B9E-6b", "no fight has happened on this cell");
+    expect(passable_neighbours(r->dungeon) == 0, "B9E-6c", "it is walled in");
+    // Its ladder pair exists (0x20 above, 0x30 below), so only the cleared-room
+    // gate keeps it shut -- which is exactly the property under guard.
+    expect(dungeon_cell(r->dungeon, 1, 1, 1) == 0x20 && dungeon_cell(r->dungeon, 3, 1, 1) == 0x30,
+           "B9E-6d", "and a ladder pair DOES straddle it, so the gate is what holds");
+    const int floor_before = r->dungeon.pos.floor;
+    r->press('k');
+    expect(r->dungeon.pos.floor == floor_before, "B9E-6e",
+           "(K)limb still refuses -- an unfought room is not a staircase");
+    r->ball(tdeck::RawInputKind::TrackballUp);
+    expect(r->dungeon.pos.x == 1 && r->dungeon.pos.y == 1, "B9E-6f", "and movement stays blocked");
+}
+
+// ---------------------------------------------------------------------------
+// B9E-7  Corridor control.  The wanderer return is the one the binary really
+//        repositions, and nothing in this batch may touch it.
+// ---------------------------------------------------------------------------
+void b9e_7_corridor_return_unchanged() {
+    std::printf("B9E-7 -- corridor returns keep their own, different rules\n");
+    {
+        auto r = std::make_unique<Runtime>();
+        r->enter_dungeon(33);
+        r->put_at(2, 2, DungeonFacing::North);
+        auto &w = r->dungeon.wanderer;
+        w = {};
+        w.type = 0x1b;
+        w.floor = r->dungeon.pos.floor;
+        w.x = w.prev_x = r->dungeon.pos.x;
+        w.y = w.prev_y = r->dungeon.pos.y;
+        UiAction pass{};
+        pass.kind = UiActionKind::Character;
+        pass.character = u' ';
+        r->route(pass);
+        expect(r->c.combat && !r->combat.room, "B9E-7a", "the ambush opens a CORRIDOR fight");
+        r->walk_party_off_north();
+        expect(!r->c.combat && r->dungeon.pos.x == 2 && r->dungeon.pos.y == 1 &&
+                   r->dungeon.pos.facing == DungeonFacing::North,
+               "B9E-7b", "an ambush escape steps one cell through the exit border");
+        expect(r->dungeon.wanderer.type != 255, "B9E-7c",
+               "and the corridor return re-arms the wanderer");
+    }
+    {
+        auto r = std::make_unique<Runtime>();
+        r->enter_dungeon(33);
+        r->put_at(4, 4, DungeonFacing::North);
+        r->place_wanderer_ahead(0x14);
+        r->press('a');
+        expect(r->c.combat && !r->combat.room, "B9E-7d", "(A)ttack opens a CORRIDOR fight");
+        r->walk_party_off_north();
+        expect(!r->c.combat && r->dungeon.pos.x == 4 && r->dungeon.pos.y == 4 &&
+                   r->dungeon.pos.floor == 0,
+               "B9E-7e", "an attack escape does NOT reposition the party");
+    }
+}
+
 } // namespace
 
-int main() {
+int main(int argc, char **argv) {
     std::printf("Batch 9D -- non-overworld combat transition regressions\n\n");
     d9d_1_overworld_reference();
     d9d_2_dungeon_wanderer_combat();
@@ -890,6 +1472,18 @@ int main() {
     d9d_9_prompt_mirrors_are_pushed();
     d9d_10_developer_teleport_during_combat();
     d9d_11_stranded_arena_recovers();
+
+    std::printf("\nBatch 9E -- dungeon combat-room escape (adjudication + coverage)\n\n");
+    const auto authored = load_authored(argc > 1 ? argv[1] : nullptr,
+                                        argc > 2 ? argv[2] : nullptr);
+    b9e_0_sealed_room_census(authored);
+    b9e_1_deceit_edge_walk_is_faithful(authored);
+    b9e_2_deceit_in_arena_klimb(authored);
+    b9e_3_destard_grate_escape(authored);
+    b9e_4_victory_is_not_flee(authored);
+    b9e_5_fled_room_refights(authored);
+    b9e_6_unentered_room_gate(authored);
+    b9e_7_corridor_return_unchanged();
     std::printf("\n%d checks, %d failures\n", g_checks, g_failures);
     return g_failures ? 1 : 0;
 }

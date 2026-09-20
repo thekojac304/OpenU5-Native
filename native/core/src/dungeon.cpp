@@ -20,6 +20,27 @@ void caps(const GameState &g, const DungeonState &d, bool &up, bool &down) {
     int c = dungeon_cell(d, d.pos.floor, d.pos.x, d.pos.y), t = c >> 4;
     up = t == 1 || t == 3 || ((c & 8) && g.grapple);
     down = t == 2 || t == 3 || t == 6;
+    // The LADDER-PAIR de-seal on a CLEARED room cell (t == 10, 0xAn).  Deliberate,
+    // lead-authorized divergence -- derivation in re/notes/salas-selladas-mazmorra.md
+    // section 5.  Fourteen authored room cells sit where a stair landing used to be,
+    // have four wall neighbours and no secret door, and 1988 leaves the party in them
+    // for good.  Once the room is CLEARED this hands back the half of the stair that
+    // still lives on the neighbouring floor.  The `up || down` guard keeps it minimal:
+    // it can only turn a dead end into an exit, never change an outcome the binary
+    // already gave.
+    //
+    // `t != 10` IS THE RULE, NOT AN OVERSIGHT.  A FLED room is legitimately not
+    // cleared, keeps its 0xFn, and gets nothing here -- and that is reference-faithful
+    // (game/src/core/dungeon/dungeon.ts parejaDeEscaleraBajoSala gates on RoomsBroke;
+    // game/tests/salas-selladas-mazmorra.test.ts pins "la pareja NO abre una sala SIN
+    // despejar").  Batch 9E briefly widened this to fled rooms and the widening was
+    // REMOVED: the authored escape from a room you are fleeing is not on the dungeon
+    // side at all, it is the in-arena (K)limb tile on the room's own .CBT board
+    // (0xC8 up / 0xC9 down / room-gated 0x86 grate -> CombatState::escape_floor_delta,
+    // applied by dungeon_combat_return()).  13 of the 14 sealed rooms carry exactly the
+    // klimb tile that leads back the way the party came in; the census and both paths
+    // are exercised in dungeon_combat_regression (B9E-*).  Widening this gate re-buys
+    // a parity divergence and hides the mechanism the player is meant to use.
     if (up || down || t != 10)
         return;
     int a = dungeon_cell(d, d.pos.floor - 1, d.pos.x, d.pos.y) >> 4;

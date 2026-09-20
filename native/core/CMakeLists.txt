@@ -190,7 +190,11 @@ if(BUILD_TESTING)
   target_link_libraries(dungeon_combat_regression PRIVATE openu5_core)
   target_include_directories(dungeon_combat_regression PRIVATE ../targets/tdeck/main)
   target_compile_features(dungeon_combat_regression PRIVATE cxx_std_20)
-  add_test(NAME dungeon_combat_regression COMMAND dungeon_combat_regression)
+  # Batch 9E drives the AUTHORED Deceit/Destard rooms, so it reads the same two
+  # shipped fixtures the parity suites do -- DUNGEON.DAT cells and DUNGEON.CBT boards.
+  add_test(NAME dungeon_combat_regression COMMAND dungeon_combat_regression
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dungeon-maps.txt"
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/fixed-maps.txt")
   add_executable(action_feedback_regression tests/action_feedback_test.cpp)
   target_link_libraries(action_feedback_regression PRIVATE openu5_core)
   add_test(NAME action_feedback_regression COMMAND action_feedback_regression)

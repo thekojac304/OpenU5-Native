@@ -444,7 +444,7 @@ No `QuestObject` storage/layout change was made; `quest_world_tile()` was left u
 
 ### R-05 — Dungeon presentation (ANCHOR 4) · **SEVERITY 1** · **YELLOW — presentation LOGIC resolved (Batch 9); dungeon RUNTIME resolved (Batch 9B); authored ART packed and painted (Batch 9C); awaiting the final physical dungeon session**
 
-> **Batch 9D note (scope, not a verdict change).** The hardware session after Batch 9C confirmed the authored art, navigation, interactions and per-dungeon wall variants as **good**, and reported dead controls in combat entered *from* a dungeon. That is not a presentation defect: the renderer's own source arbitration makes `combat_source` outrank `dungeon_source`, so a dungeon-origin fight draws the combat scene and the dungeon art is not on that path at all. It is filed as a **combat-transition integration** issue (§14 Batch 9D) and the Batch 9C art verdict is **unchanged**. One genuine R-05 **part 2** follow-up did come out of it: Batch 9B's two dungeon prompt mirrors had no production caller, so `Klimb-U/D-` and `Will you drink?` were unreachable on hardware even though the host suite proved them. Fixed in Batch 9D; §16 steps **33j and 33k must be re-judged**, not carried over as confirmed.
+> **Batch 9D note (scope, not a verdict change).** The hardware session after Batch 9C confirmed the authored art, navigation, interactions and per-dungeon wall variants as **good**, and reported dead controls in combat entered *from* a dungeon. That is not a presentation defect: the renderer's own source arbitration makes `combat_source` outrank `dungeon_source`, so a dungeon-origin fight draws the combat scene and the dungeon art is not on that path at all. It is filed as a **combat-transition integration** issue (§14 Batch 9D) and the Batch 9C art verdict is **unchanged**. The Batch 9E report (a fled combat room returning the party into a sealed cell) is likewise not presentation — it was adjudicated as **reference-faithful**, with the authored escape sitting on the combat board rather than in the maze, and the authored-art evidence is again **not** downgraded. See §14 Batch 9E. One genuine R-05 **part 2** follow-up did come out of it: Batch 9B's two dungeon prompt mirrors had no production caller, so `Klimb-U/D-` and `Will you drink?` were unreachable on hardware even though the host suite proved them. Fixed in Batch 9D; §16 steps **33j and 33k must be re-judged**, not carried over as confirmed.
 
 `native/tools/u5pack/alpha1.ts:49` packs `dungeons.bin` — 8 records × 516 bytes = **cell maps only**. There is no DNG or ITEMS record in the pack, and `native/ASSETS.md` never mentions dungeon art.
 
@@ -2154,6 +2154,95 @@ New owner-side helper `openu5::close_stranded_combat()` ends such an arena throu
 **Physical test:** §16 Phase 6C.
 **Model:** Opus 5.
 
+### Batch 9E — Dungeon combat-ROOM escape · risk: low · **GREEN — ADJUDICATION + COVERAGE, no gameplay change**
+**IDs:** combat-transition integration (Batch 9D lane, part 2); the sealed-room divergence of `re/notes/salas-selladas-mazmorra.md` section 5.
+**Files:** `native/core/src/dungeon.cpp` (comment only); `native/targets/tdeck/host_tests/dungeon_combat_test.cpp`; `native/core/CMakeLists.txt`.
+
+> **This batch changes NO gameplay behaviour.** The only production edit is a comment. What it ships is the adjudication and the missing host coverage.
+
+**Trigger.** The physical T-Deck session after Batch 9D. Dungeon combat controls, the fight itself, death/resurrection and explicit `A` initiation were all confirmed **good** — Batch 9D's three defects are closed. One new report: leaving a ladder-entered dungeon combat room by walking the party off the combat-board edge returned them into a sealed 1×1 dungeon cell.
+
+**Scope ruling (R-05).** Presentation is not implicated and the Batch 9C authored-art verdict is **unchanged and not downgraded**. The renderer drew exactly what the cell it was handed said.
+
+#### The headline finding
+
+**Sealed dungeon combat rooms carry their own escape, and it is on the COMBAT BOARD, not in the maze.** A room's `.CBT` board can contain an in-arena (K)limb tile — `0xC8` up, `0xC9` down, or the room-gated `0x86` grate (`SJOG cmd_klimb_combat 0x1df4` + `test [g_unk_58a1],0x80`). Using it sets `CombatState::escape_floor_delta`, and `dungeon_combat_return()` applies that delta when the party fled. **That is the only room exit that moves the party in the dungeon.**
+
+Walking off the board edge is also a valid room exit — in fact it is the *only generic* one, because ESC/quick-withdraw is refused inside a room (`"Escape-Not here!"`, `CMDS.OVL 0x1822`, checked **before** the victory gate at `0x183a`, so even a won room cannot be closed with it). The reference states the consequence outright: *"la única salida de una sala es vaciar el bando party del tablero ANDANDO"* (`COMBAT.OVL 0x0ca6-0x0cc7`). But the edge never repositions anybody: `dng_enter_room` saves `g_party_x/y` on entry (`DUNGEON.OVL 0x0084/0x008c`) and restores them on **both** exit branches (`0x00fa-0x0103`).
+
+So: edge-walk out of an uncleared, sealed room ⇒ back in the sealed cell. **That is reference-faithful and is not a defect.**
+
+#### The actual hardware reproduction — Deceit, not Doom
+
+| | |
+|---|---|
+| Dungeon | **Deceit (33)** |
+| Cell | **floor 1, (5,3)** — authored room 0, `0xF0` |
+| Entry | the `0x20` **LadderDown** at Deceit floor 0 (5,3) |
+| Combat board | array position **16** = `DUNGEON.CBT #0` |
+| Board contents | **2 chests, 1 mimic, 11 slimes** |
+| Authored escape | **`0xC8` up-ladder at board (5,2)** → `escape_floor_delta = −1` → back onto the same LadderDown cell |
+
+The board contents are the discriminator: across all 112 dungeon boards only **two** carry both a chest (sprite 1) and slimes (sprite `0x40 + 24·4`) — Deceit room 0 and Shame room 2 — and Shame room 2's dungeon cell is not sealed. It is also the same *"slimes and a chest"* room this document's own §16 Phase 6C step 33u records the Batch 9D session using.
+
+A first pass of this batch mis-identified the target as **Doom 40:2:(5,5) room 6**. That was wrong and is corrected here: Doom room 6 is the one ordinary sealed room with **no** in-arena escape at all, which makes it the worst possible example of the reported case rather than the case itself.
+
+#### The authored census
+
+Measured over the shipped `fixtures/dungeon-maps.txt` and `fixtures/fixed-maps.txt`, and re-run every time `dungeon_combat_regression` runs (B9E-0):
+
+| | count |
+|---|---|
+| sealed room cells in `DUNGEON.DAT` (four wall neighbours, no secret door) | **14** |
+| …carrying an in-arena `0xC8`/`0xC9`/`0x86` escape on their own board | **12** |
+| …without one | **2**, both in Doom |
+
+The two without are **Doom 40:2:(5,5) room 6** — the single *ordinary* sealed room the authored data leaves with no in-arena way out — and **Doom 40:7:(5,7) room 15**, which is board 127, **Lord British's endgame room**: it is reached by a *pit*, has no entry ladder to hand back, and must stay sealed by design. Setting the endgame room aside, the ordinary sealed rooms are **12 of 13**.
+
+> **Correction to this batch's own first pass.** An earlier note in this lane reported *13 of 14*. That figure came from a different predicate (does the board's klimb direction *match* the entry ladder), which scored the endgame room as a vacuous match. The measured count of sealed rooms that actually carry an in-arena escape tile is **12 of 14**. The census is exercised, not asserted from a table.
+
+#### Victory and flee are intentionally not equivalent
+
+| | flee | victory |
+|---|---|---|
+| restored cell | room-entry cell | room-entry cell |
+| authored cell after | `0xFn` — unchanged | `0xFn → 0xAn` (victory latch → `dungeon_mark_room()`) |
+| room-cleared bit | unset | set |
+| re-entry | **fights again** | walk-in, no fight |
+| dungeon-side ladder-pair de-seal (`caps()`, `t == 10`) | not offered | offered |
+| the way out | the board's own in-arena (K)limb tile | the cleared-room ladder pair |
+
+Each outcome has its own exit and they are different exits. The reference pins the same asymmetry (`parejaDeEscaleraBajoSala` gates on `RoomsBroke`; `game/tests/salas-selladas-mazmorra.test.ts`, *"la pareja NO abre una sala SIN despejar"*).
+
+#### Production verdict
+
+**Native already matched the reference for the observed case.** Exercised against the reference core in-tree (`DungeonState` + `Combat` + `Game.endCombat`'s room arm) and against native on the same authored data: same restored floor/x/y, same `0xF` cell, same `Klimb-what?`, same `Blocked!`.
+
+An earlier revision of this batch added a `DungeonState::room_return_*` provenance record that let `caps()` de-seal a **fled** room. It was investigated, measured, and **removed in full** — it was a parity divergence, and it hid the mechanism the player is actually meant to use. `dungeon.h`, `dungeon_orchestration.cpp` and `gameplay_save.cpp` are byte-identical to Batch 9D; `dungeon.cpp` carries a comment and no code change. **No gameplay parity change is retained from the mistaken fix.**
+
+**Tests added:** `dungeon_combat_regression` grows **59 → 124 checks**, B9E-0…B9E-7, driven on **authored** data (CTest passes both fixtures) through the Batch 9D device path — `RawInputEvent → UiInputAdapter → UiSession → dispatch_world_command → execute_dungeon_command → dungeon_encounter → start_fixed_combat`, with the in-arena escape driven by the real `k` key (`CommandKind::CombatKlimb → CombatAction::Klimb`), not by poking `CombatState`.
+
+| test | proves |
+|---|---|
+| B9E-0 | the 14/12/2 census, and the identification of Deceit room 0 from the board's own chests+slimes |
+| B9E-1 | Deceit room 0 edge-walk → sealed `0xF0` return, `K` refuses, movement blocked — **asserted as correct** |
+| B9E-2 | Deceit room 0 in-arena `0xC8` → `delta = −1`, back on the LadderDown, and the party walks out through the authored secret door |
+| B9E-3 | Destard room 0 room-gated `0x86` grate → `delta = +1`, the opposite direction and the other tile |
+| B9E-4 | victory → `0xF0 → 0xA0`, cleared bit, ladder-pair de-seal works, no refight |
+| B9E-5 | a **fled** room fights again on re-entry |
+| B9E-6 | an unentered sealed room with a ladder pair straddling it is still not klimbable — the guard against re-broadening `caps()` |
+| B9E-7 | corridor/wanderer returns keep their own rules (ambush steps a cell, attack does not, wanderer re-armed) |
+
+One fixture subtlety worth recording: Deceit floor 0 (5,3), the LadderDown, is reachable **only** through the authored `0xD0` secret door at (5,4). The regression marks it revealed, as a player would with (S)earch, so the fixture does not start the party somewhere no player could stand.
+
+**Host suite:** 75 tests, **73 pass, 2 fail** — `gameplay_parity` mismatch **2034** (R-21, intentionally open, **untouched**) and `quest_parity` `3221225477` (pre-existing environment failure). Byte-identical to the Batch 9D baseline re-measured at the start of this batch. `dungeon_input_regression` 65/65, `dungeon_view_regression`, `dungeon_art_regression`, both combat parity suites, `combat_escape_regression`, `combat_loot_open_regression`, `debug_map_picker` 62, `debug_developer` 69, `gameplay_integration` 42 — all GREEN and unchanged. Batch 9D's D9D-1…D9D-11 (59 checks) run unchanged inside `dungeon_combat_regression`, including the developer-teleport refusal and stranded-arena recovery.
+
+**Firmware:** ESP-IDF 6.1, `build-batch9e-final/openu5_tdeck.bin`, **0xcffb0 (851,888) bytes**, **19% free** of the 1,048,576 B app partition, **zero compiler warnings**, and **0 B delta** against Batch 9D's 0xcffb0 (851,888) — as expected, since no production code changed.
+
+**SD card: unchanged.** No resource touched; the Batch 9C pack (2,039,545 B, CRC `0x2065ad91`) stays as it is. Flash firmware only.
+**Physical test:** §16 Phase 6D.
+**Model:** Opus 5.
+
 ### Batch 10 — View Gem presentation · risk: low
 **IDs:** R-17, Y-14
 **Files:** `native/targets/tdeck/main/native_renderer.cpp`, `tdeck_board.cpp` (bar overdraw)
@@ -2329,6 +2418,20 @@ Flash `build-batch9d-combat/openu5_tdeck.bin`. **Do not touch the card** — Bat
 33w. **[stranded-arena guard]** If any fight ever *does* go unresponsive, do not power-cycle — capture the serial log and look for `COMBAT_STRANDED` and the surrounding `PRESENTATION_DISPATCH` lines. The runtime now closes that state by itself within one frame; if the log shows it firing, the recovery worked and the interesting question is what produced the state. If the controls are dead and `COMBAT_STRANDED` never appears, that is a different defect and the log will say which mode and which source owned the frame.
 
 **Gate.** 33s, 33u and 33v are the three hardware reports this batch exists for. If 33s or 33u still shows dead controls, **stop and report the serial log** rather than re-opening the dungeon art: §14 Batch 9D records exactly what was ruled out and what the log lines now distinguish.
+
+### Phase 6D — Dungeon combat-ROOM escape gate (Batch 9E, 6 min) · *firmware only; the SD card is unchanged*
+
+Flash `build-batch9e-final/openu5_tdeck.bin`. **Do not touch the card** — Batch 9E changes no resource, and no gameplay behaviour either: these steps confirm the authored mechanism on glass and record the sealed return as **expected**.
+
+The room is **Deceit, floor 1, (5,3)** — the slime-and-chest room. Reach it from Deceit floor 0 (5,3), the ladder cell behind the secret door, and (K)limb down.
+
+33x. **[the authored escape — the step that matters]** Enter the room. **During combat**, find the **up-ladder tile inside the arena** (board cell (5,2), near the top of the cave), walk a party member onto it and press **`K`**. Expected: the fight ends through the Klimb, the party is back on **Deceit floor 0 (5,3)** — the ladder they came down — dungeon controls work on the first key, and the room is **still unfought**.
+33y. **[edge-walk — reference behaviour, NOT a regression]** Enter the same room again and leave *without winning* by walking every conscious member off one shared board edge. Expected: the party is back on **Deceit floor 1 (5,3)**, the room is still uncleared, **all four sides are walls, movement is Blocked! and dungeon-side `K` answers "Klimb-what?"**. **Record this as PASS.** It is what the original does; the exit was the in-arena ladder in 33x. Do not file it as a defect.
+33z. **[victory]** Enter and **win** the room, then leave by the board edge. Expected: the room is marked cleared, `K` on the cell now lifts the party back up to floor 0, and klimbing back down starts **no** fight.
+33aa. **[the other tile, if convenient]** Any room whose arena shows a **grate** or a **down**-ladder: the same in-arena `K` must take the party **down** a floor instead of up. Destard floor 0 (3,1) — reached by klimbing **up** from floor 1 (3,1) — is the measured example.
+33ab. **[developer teleport]** Unchanged re-check: during a dungeon fight the teleport must still refuse with "Blocked by active combat", must not freeze, and must work once the fight is over.
+
+**Gate.** 33x is what this batch exists for. If the in-arena `K` does **not** move the party a floor, capture the serial log — that is a real defect. If 33y leaves the party sealed, that is **correct** and the batch passes.
 
 ### Phase 7 — Quest-critical interaction (3 min)
 45. Debug → Quest → grant a shard. **[R-08] `U`se it in a Flame room.** Fixed in Batch 3; hardware confirmation outstanding.
