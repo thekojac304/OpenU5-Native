@@ -173,6 +173,14 @@ enum class CombatAction : uint8_t {
     OpenAt
 };
 CombatResult combat_action(CombatContext &, CombatAction, int32_t x = 0, int32_t y = 0);
+// Batch 9D.  Closes an arena that can never schedule another actor but was
+// never ended -- the state in which every command silently succeeds having
+// done nothing and the owner's finish_encounter_combat() can never fire, so a
+// mounted combat scene owns the screen and the keyboard and answers neither.
+// Owners call this from their combat service tick, so the recovery does not
+// depend on the player pressing something.  A no-op whenever combat can still
+// continue, and a no-op once ended is already set.
+void close_stranded_combat(CombatContext &);
 // Maximum additional actor storage required conservatively before any action.
 int32_t combat_growth_reserve(const CombatState &);
 CombatResult combat_cast_effect(CombatContext &, SpellEffect, const CombatPoint *aim = nullptr);

@@ -285,6 +285,26 @@ DebugTeleportResult apply_debug_teleport(CommandContext &c, const DebugTeleportR
     if (out.status != DebugTeleportStatus::Applied)
         return out;
 
+    // Batch 9D.  A live arena owns the screen, the keys and a CombatState whose
+    // return bookkeeping (encounter_location/floor, loot_x/y, the dungeon room
+    // latch) describes the place the party left.  Every arm below rewrites
+    // exactly that place -- the Britannia/Underworld/SmallMap arms additionally
+    // clear DungeonContext::state.active -- while leaving CommandContext::combat
+    // true.  The result is a mounted combat scene over a world that no longer
+    // matches it and no reachable way out: the freeze the hardware session hit
+    // when it tried to teleport away from a broken dungeon fight.
+    //
+    // The policy is the picker's own and already exists: refuse at apply time
+    // with DebugTeleportStatus::ActiveCombat, which debug_labels.cpp already
+    // renders as "Blocked by active combat" and the device screen already
+    // shows.  It was only ever enforced on the cross-dungeon arm, which is the
+    // one case that happened to route through execute_dungeon_command()'s own
+    // combat guard.  Finish the fight (or flee) and the teleport works again.
+    if (c.combat) {
+        out.status = DebugTeleportStatus::ActiveCombat;
+        return out;
+    }
+
     // Debug-certification safety contract: a standard-entry (Default Entrance)
     // teleport must never silently drop the party on a known-impassable cell.
     // This is a refusal at *apply* time only -- validate_debug_teleport keeps

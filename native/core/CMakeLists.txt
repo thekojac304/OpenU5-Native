@@ -177,6 +177,20 @@ if(BUILD_TESTING)
   target_include_directories(dungeon_input_regression PRIVATE ../targets/tdeck/main)
   target_compile_features(dungeon_input_regression PRIVATE cxx_std_20)
   add_test(NAME dungeon_input_regression COMMAND dungeon_input_regression)
+  # Batch 9D -- the non-overworld combat TRANSITION regressions.  Same device
+  # seam as dungeon_input_regression, but it lets a dungeon actually start a
+  # fight: corridor (A)ttack, ladder-into-room, the combat command set that
+  # follows, and the return to dungeon input.  dungeon_input_regression stops
+  # short of combat (it hardcodes combat=false in its resync tail) and the
+  # combat parity suites never touch UiSession, so the entry/exit integration
+  # between them was untested until the hardware found it.
+  add_executable(dungeon_combat_regression ../targets/tdeck/host_tests/dungeon_combat_test.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp)
+  target_link_libraries(dungeon_combat_regression PRIVATE openu5_core)
+  target_include_directories(dungeon_combat_regression PRIVATE ../targets/tdeck/main)
+  target_compile_features(dungeon_combat_regression PRIVATE cxx_std_20)
+  add_test(NAME dungeon_combat_regression COMMAND dungeon_combat_regression)
   add_executable(action_feedback_regression tests/action_feedback_test.cpp)
   target_link_libraries(action_feedback_regression PRIVATE openu5_core)
   add_test(NAME action_feedback_regression COMMAND action_feedback_regression)

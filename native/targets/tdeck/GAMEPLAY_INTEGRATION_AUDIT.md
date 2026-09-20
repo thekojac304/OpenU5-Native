@@ -444,6 +444,8 @@ No `QuestObject` storage/layout change was made; `quest_world_tile()` was left u
 
 ### R-05 — Dungeon presentation (ANCHOR 4) · **SEVERITY 1** · **YELLOW — presentation LOGIC resolved (Batch 9); dungeon RUNTIME resolved (Batch 9B); authored ART packed and painted (Batch 9C); awaiting the final physical dungeon session**
 
+> **Batch 9D note (scope, not a verdict change).** The hardware session after Batch 9C confirmed the authored art, navigation, interactions and per-dungeon wall variants as **good**, and reported dead controls in combat entered *from* a dungeon. That is not a presentation defect: the renderer's own source arbitration makes `combat_source` outrank `dungeon_source`, so a dungeon-origin fight draws the combat scene and the dungeon art is not on that path at all. It is filed as a **combat-transition integration** issue (§14 Batch 9D) and the Batch 9C art verdict is **unchanged**. One genuine R-05 **part 2** follow-up did come out of it: Batch 9B's two dungeon prompt mirrors had no production caller, so `Klimb-U/D-` and `Will you drink?` were unreachable on hardware even though the host suite proved them. Fixed in Batch 9D; §16 steps **33j and 33k must be re-judged**, not carried over as confirmed.
+
 `native/tools/u5pack/alpha1.ts:49` packs `dungeons.bin` — 8 records × 516 bytes = **cell maps only**. There is no DNG or ITEMS record in the pack, and `native/ASSETS.md` never mentions dungeon art.
 
 `extractor/src/parsers/dngtiles.ts` **exists** and parses exactly what is needed (`parseDngView`, `parseItemsView`), and `game/src/skin/fiel/dungeon.ts` documents the authoritative compositor: 28 pre-drawn perspective slices per wall variant blitted at fixed X per depth with mirrored pairs, plus 20 half-feature images from ITEMS.16 for stairs/fountains/traps/chests, with floor speckle and ceiling **baked into each slice**.
@@ -2103,6 +2105,55 @@ Every Batch 9B figure held exactly. The two empty DNG slots are 8 and 24 — the
 **Physical test:** §16 steps 33–33k against real textures — the meaningful final R-05 checkpoint.
 **Model:** Opus 5.
 
+### Batch 9D — Non-overworld combat TRANSITION · risk: medium · **GREEN for the three proven defects; the entry-side symptom is NOT reproduced in host — see "What this batch did not prove"**
+**IDs:** combat-transition integration (new); R-05 part 2 follow-up (the two Batch 9B prompt mirrors); developer-tool safety (`DebugTeleportStatus::ActiveCombat`).
+**Files:** `native/targets/tdeck/host_tests/dungeon_combat_test.cpp` (new); `native/core/include/openu5/combat.h`, `native/core/src/combat.cpp`, `native/core/src/debug_map_picker.cpp`; `native/targets/tdeck/main/alpha_runtime.cpp`, `main/ui_mode_policy.h`; `native/core/CMakeLists.txt`.
+
+**Trigger.** The physical T-Deck session after Batch 9C. Authored dungeon art, navigation, fountains, interactions and per-dungeon wall variants were all confirmed good, and overworld combat unchanged. Three new reports: **(1)** combat started from a dungeon corridor opens the scene but normal combat controls do nothing; **(2)** a room reached by a ladder does the same; **(3)** opening developer options and teleporting out of that state freezes the game.
+
+**Scope ruling (R-05).** Presentation is not implicated. The renderer's own source arbitration makes `combat_source` outrank `dungeon_source`, so a dungeon-origin fight draws the combat scene and the dungeon art is not on this path at all. Recorded as a **combat-transition integration** issue; the Batch 9C authored-art verdict is unchanged and is **not** downgraded.
+
+**Defect A — developer teleport is not a combat exit (the freeze).** `apply_debug_teleport()` had **no `c.combat` guard**. The Britannia / Underworld / SmallMap arms clear `DungeonContext::state.active`, set `c.dungeon = false` and rewrite `GameState::position`, while `CommandContext::combat` and `CombatState::initialized` stay true. The result is a mounted arena over a world that no longer matches it: the renderer keeps choosing `combat_source`, the router keeps sending keys to `handle_combat()`, and `CombatState`'s return bookkeeping (`encounter_location`/`floor`, `loot_x/y`, the dungeon room latch) still describes a place that no longer exists. There is no reachable way back — which from the player's seat is a freeze. The same-dungeon floor/cell arm was equally unguarded and rewrote `DungeonState::pos` underneath a live arena. Only the *cross-dungeon* arm was covered, and only incidentally, because it routes through `execute_dungeon_command()`'s own combat guard.
+**Policy chosen: option 2, refuse — and it is the project's existing convention, not a new one.** `DebugTeleportStatus::ActiveCombat` already existed, `debug_labels.cpp` already renders it as "Blocked by active combat", and `debug_map_picker_test` already pinned the cross-dungeon case. Batch 9D enforces it **uniformly, before any mutation**, in the same shape as the existing `ImpassableDestination` refusal. It is not a ban: finish or flee the fight and the identical request applies.
+
+**Defect B — a stranded arena wedges the runtime.** `Engine::current()` returns null exactly when nobody can ever act again (`combat_over()` is true by its own definition), but `CombatState::ended` is set only by `Engine::end()`, which runs only from inside an action that *had* an actor. An arena reaching that state by any other route leaves the owner with no actor to arm an AI beat for, nothing queued, every combat command returning `Ok` having done nothing, and `finish_encounter_combat()` declining forever because `ended` is false — a combat scene that owns the screen and the keyboard and answers neither. That is the reported symptom exactly, and the runtime had no escape hatch: `AlphaRuntime::schedule_combat()` simply `return`ed on a null actor.
+New owner-side helper `openu5::close_stranded_combat()` ends such an arena through the ordinary `end()` path; `AlphaRuntime::schedule_combat()` calls it from the combat service tick, logs `COMBAT_STRANDED`, and runs the normal teardown, so recovery costs **no keypress**. It is deliberately **not** inside `combat_action()`: the reference's own command path is a silent no-op in that state and `combat_parity` pins the trace. That was measured, not assumed — putting it in `combat_action()` broke `combat_parity` at row 11241 (`op=2 field=4 got=1 expected=0`, trace 825 vs 800), and moving it to the owner restored the byte-identical trace.
+
+**Defect C — Batch 9B's two dungeon prompt mirrors had no production caller.** `UiSession::refresh_dungeon_context()` was called only by `dungeon_input_test.cpp`. Nothing in `AlphaRuntime` ever called it, so on hardware `dungeon_klimb_prompt()` and `dungeon_fountain_prompt()` were permanently **false**: `(K)limb` silently preferred **up** on an up-and-down ladder — the exact defect Batch 9B set out to fix, and a step (§16 33j) the 9B checkpoint recorded as confirmed — and `(D)rink` never asked "Will you drink?". A pure host/device drift: the host suite proved a rule the device never ran. Fixed by moving the publication into the shared ESP-free seam `tdeck::publish_dungeon_prompt_context()` in `ui_mode_policy.h`, beside `resolve_synchronized_base_mode()` and for the same stated reason, and calling it from `AlphaRuntime::refresh_session_context()` immediately before every key is routed — the same narrow-mirror contract as the sail (R-19) and harpsichord (R-20) mirrors already there. `dungeon_combat_regression` drives that seam, so the two cannot drift again.
+
+**Encounter initiation — no defect; the hardware observation is correct.** Traced to `game/src/core/dungeon/dungeon.ts` (original `0x1D4A` attack / `0x0B7E` ambush) and matched against `native/core/src/dungeon.cpp`. There are exactly two triggers and neither is sight or adjacency: `DungeonAction::Attack` emits `Corridor(cause=attack)` only when the wanderer occupies the cell the party **faces** (otherwise "What?"), and `tick()` emits `Corridor(cause=ambush)` when the wanderer's own random walk **steps onto the party**, after printing "Attacked!"/"Attacked from the <dir>!" and turning the party to face it. **Requiring `A` is reference-correct and is left alone.** `dungeon_combat_regression` D9D-7 now pins the ambush half so it cannot silently regress.
+
+**Transition matrix** — measured through the real input seam, not derived. `overworld` = `start_encounter_combat()`; `dungeon` = corridor `(A)ttack`; `room` = ladder into an authored room arena. All three agree on every field, which is the finding:
+
+| State | Overworld | Dungeon wanderer | Combat room | Correct | Verdict |
+|---|---|---|---|---|---|
+| `UiSession::mode()` | Combat | Combat | Combat | Combat | agree |
+| `UiSession::base_mode()` | Combat | Combat | Combat | Combat | agree |
+| `pre_combat_mode_` | Exploration | Dungeon | Dungeon | source mode | agree |
+| `CommandContext::combat` | 1 | 1 | 1 | 1 | agree |
+| `CommandContext::combat_context` | set | set | set | set | agree |
+| `CommandContext::dungeon` | 0 | 1 | 1 | source | agree |
+| `DungeonState::active` | 0 | 1 | 1 | source | agree |
+| `CombatState::room` | 0 | 0 | 1 | per path | agree |
+| `corridor_cause` / `room_entry_valid` | n/a | 1 / false | -1 / true | per path | agree |
+| active modal at entry | none | none | none | none | agree |
+| scheduled actor | player | player | player | player | agree |
+| queued inputs | 0 | 0 | 0 | 0 | agree |
+| next key routed to | combat | combat | combat | combat | agree |
+| first key after exit | world | dungeon | dungeon | source | agree |
+
+**What this batch did not prove.** The entry-side symptom itself — "the scene opens and the controls are dead" — **could not be reproduced** in host against a faithful, instrumented mirror of `AlphaRuntime::handle()`, `::command()`, `::service_combat()`, `::schedule_combat()` and `::finish_combat_if_needed()`, driven from `RawInputEvent` through the real `UiInputAdapter`, `UiSession`, `dispatch_world_command()`, `execute_dungeon_command()`, `dungeon_action()`, `dungeon_encounter()` and `start_fixed_combat()`, with a six-member party, across all three entry paths. Positively **ruled out**: a stale dungeon modal surviving entry (D9D-8), a renderer/input mode split (the matrix above), an uninitialised combat session, an incomplete return context, a mis-set `pre_combat_mode_`, and inputs stuck in the AI queue with no beat. What remains and **is** fixed is the one production state that produces exactly that symptom and had no recovery — Defect B — plus the two integration gaps above. Whether the device reached Defect B's state by the route this batch could not construct is what the §16 Phase 6C checkpoint decides; if the controls are still dead after this image, the `COMBAT_STRANDED` and `PRESENTATION_DISPATCH` lines in the serial log now say which half is wrong.
+
+**Tests added:** `dungeon_combat_regression` (`native/targets/tdeck/host_tests/dungeon_combat_test.cpp`), **59 checks**, D9D-1…D9D-11: the overworld reference path; corridor `(A)ttack`; ladder-into-room; ambush; the combat command set after a dungeon entry (aim reticle open **and** cancelled, move, pass); the return to dungeon for both corridor and room including the **first key after the fight**; dungeon-modal ownership across entry; the two prompt mirrors; developer teleport during combat; and stranded-arena recovery. RED before the fixes: **8 of 59** — D9D-9a/b (mirrors never published), D9D-10b/c/d (teleport tore the dungeon session down and moved the party under a live arena), D9D-11c/d/e (the stranded arena never closed and the dungeon never came back). GREEN after: **59/59**.
+
+**Host suite:** 75 tests, **73 pass, 2 fail** — `gameplay_parity` mismatch **2034** (R-21, intentionally open) and `quest_parity` `3221225477` (pre-existing environment failure). Both signatures byte-identical to the Batch 9C baseline (74 tests, 72/2); the suite grew by exactly the one new test. All eight dungeon tests, both combat parity suites, `combat_escape_regression`, `combat_loot_open_regression`, `debug_map_picker`, `debug_developer`, `dungeon_input_regression`, `dungeon_view_regression` and `dungeon_art_regression` GREEN and **unchanged**.
+
+**Firmware:** ESP-IDF 6.1, `build-batch9d-combat/openu5_tdeck.bin`, **0xcffb0 (851,888) bytes**, **19% free** of the 1,048,576 B app partition, zero compiler warnings, **+384 B** over Batch 9C's 0xcfe30 (851,504).
+
+**SD card: unchanged.** No resource touched; the Batch 9C pack (2,039,545 B, CRC `0x2065ad91`) stays exactly as it is. Flash firmware only.
+**Physical test:** §16 Phase 6C.
+**Model:** Opus 5.
+
 ### Batch 10 — View Gem presentation · risk: low
 **IDs:** R-17, Y-14
 **Files:** `native/targets/tdeck/main/native_renderer.cpp`, `tdeck_board.cpp` (bar overdraw)
@@ -2263,6 +2314,21 @@ Efficient broad-coverage pass using Developer tools. ~45 minutes. Each step name
 33l. **[9B identity]** While standing in Deceit, read the right-hand location strip: it must say **`Deceit`**. Reach it *from* another named map (Serpent's Hold is the case that produced the original report) and confirm it still says `Deceit`, then leave and confirm the strip returns to the surface name. Check one more dungeon if convenient.
 
 **Gate.** 33g, 33h and 33j were confirmed on hardware at the Batch 9B checkpoint. Re-run the whole 33g–33l run once on the 9C image — now that the corridor is authored art, 33g and 33i are judgeable in a way they were not against the wireframe. If any step fails, **stop and report it**: the art work sits directly on this path, and a routing regression would look like an art fault.
+
+**Batch 9D correction to 33j and 33k.** Both steps were recorded as confirmed at the 9B checkpoint, but neither prompt could actually appear on that image: nothing in `AlphaRuntime` ever published the two mirrors they read (§14 Batch 9D, defect C). On the 9D image `Klimb-U/D-` and `Will you drink?` must genuinely appear. **Re-run 33j and 33k and judge them fresh.**
+
+### Phase 6C — Non-overworld COMBAT TRANSITION gate (Batch 9D, 8 min) · *firmware only; the SD card is unchanged*
+
+Flash `build-batch9d-combat/openu5_tdeck.bin`. **Do not touch the card** — Batch 9D changes no resource, and the Batch 9C pack is still the right one.
+
+33r. **[control case — overworld]** Start one ordinary overworld fight. Attack, aim, pass and move must all work exactly as before. This is the known-good comparison; if it is wrong, stop here, because nothing below is interpretable.
+33s. **[dungeon wanderer]** In a dungeon, find a wandering monster and step so it is in the cell **directly ahead**. Press `A`. *(Requiring `A` is correct — §14 Batch 9D, "Encounter initiation". Sight and adjacency never start a fight; only `A` while facing it, or the monster stepping onto you.)* The combat scene must open **and the controls must work on the first key**: `A` must open the aim reticle, the trackball must move the reticle and then the actor, Space/Enter must pass. Fight it to a conclusion.
+33t. **[return to the dungeon]** When the fight ends, the dungeon view must come back by itself. The **first** key afterwards must be a dungeon command — no extra press to "wake it up". Check `Dir:` and `L#` are still right and the location strip still names the dungeon.
+33u. **[combat room]** Take the ladder into the room that previously produced dead controls (slimes and a chest). Combat controls must work immediately, the chest must be openable with `O` + direction, and walking the party off the board edge must return you to the corridor with working input.
+33v. **[developer teleport safety — the freeze case]** Start a dungeon fight, then open the developer menu (`Alt+D`) and attempt a teleport out. **The expected result is an explicit refusal reading "Blocked by active combat" — not a teleport, and above all not a freeze.** Back out of the menu: the fight must still be there and still playable. Finish or flee it, then repeat the same teleport — it must now work. Try both an out-of-dungeon destination (Britannia) and a same-dungeon floor change; both must refuse while the fight is live.
+33w. **[stranded-arena guard]** If any fight ever *does* go unresponsive, do not power-cycle — capture the serial log and look for `COMBAT_STRANDED` and the surrounding `PRESENTATION_DISPATCH` lines. The runtime now closes that state by itself within one frame; if the log shows it firing, the recovery worked and the interesting question is what produced the state. If the controls are dead and `COMBAT_STRANDED` never appears, that is a different defect and the log will say which mode and which source owned the frame.
+
+**Gate.** 33s, 33u and 33v are the three hardware reports this batch exists for. If 33s or 33u still shows dead controls, **stop and report the serial log** rather than re-opening the dungeon art: §14 Batch 9D records exactly what was ruled out and what the log lines now distinguish.
 
 ### Phase 7 — Quest-critical interaction (3 min)
 45. Debug → Quest → grant a shard. **[R-08] `U`se it in a Flame room.** Fixed in Batch 3; hardware confirmation outstanding.

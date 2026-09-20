@@ -1063,6 +1063,27 @@ CombatResult combat_cast(CombatContext &c, SpellId spell, const CombatPoint *aim
     return CombatResult::Ok;
 }
 CombatActor *current_combat_actor(CombatContext &c) { return Engine(c).current(); }
+// Batch 9D.  Engine::current() returns null exactly when nobody can ever act
+// again -- combat_over() is already true by its own definition -- but
+// CombatState::ended is set only by Engine::end(), which runs only from inside
+// an action that DID have an actor.  An arena that reaches that state any other
+// way strands its owner: nothing to schedule an AI beat for, every combat
+// command silently succeeding having done nothing, and finish_encounter_combat()
+// declining forever because ended is false.  On the device that is a combat
+// scene that owns the screen and the keyboard and answers neither.
+//
+// This deliberately does NOT live inside combat_action(): the reference's own
+// command path is a silent no-op in that state and combat_parity pins the
+// trace.  It is an owner-side escape hatch, called from the combat service tick
+// (AlphaRuntime::schedule_combat()), so the recovery costs no keypress and no
+// parity byte.
+void close_stranded_combat(CombatContext &c) {
+    if (!c.combat.initialized || c.combat.ended)
+        return;
+    Engine e(c);
+    if (!e.current())
+        e.end();
+}
 int32_t combat_sceptre_fields(CombatContext &c) {
     auto *actor=current_combat_actor(c);if(!actor)return 0;
     int32_t count=0;
@@ -1287,6 +1308,10 @@ CombatResult combat_action(CombatContext &c, CombatAction action, int32_t x, int
         return CombatResult::NeedsLootStorage;
     Engine e(c);
     auto *a = e.current();
+    // A null actor stays a silent no-op here: the reference's own combat
+    // command path does nothing in that state, and combat_parity pins the
+    // trace.  Recovering a stranded arena is the OWNER's job, on its service
+    // tick -- see close_stranded_combat() below and its two callers.
     if (!a)
         return CombatResult::Ok;
     if (action == CombatAction::OpenAt) {

@@ -1,8 +1,30 @@
 #pragma once
 
+#include "openu5/dungeon.h"
 #include "openu5/ui_session.h"
 
 namespace tdeck {
+
+// Batch 9D.  The per-input publication of the two dungeon prompt mirrors
+// UiSession cannot derive for itself (it owns no DungeonState): whether the
+// cell under the party offers a Klimb BOTH ways, and whether it is a fountain.
+// It exists here, beside resolve_synchronized_base_mode(), for the same reason
+// that one does -- alpha_runtime.cpp cannot be host-compiled, so production and
+// the host suite must share one definition of the rule or they drift.
+//
+// They drifted.  Batch 9B added UiSession::refresh_dungeon_context() and the
+// Klimb-U/D- and "Will you drink?" prompts that read the mirrors, and wired the
+// call into the host test's own input tail -- but nothing in AlphaRuntime ever
+// called it.  On hardware both mirrors were therefore permanently false: (K)limb
+// silently preferred up on an up+down ladder (the exact defect 9B set out to
+// fix) and (D)rink never asked.  AlphaRuntime::refresh_session_context() calls
+// this now, immediately before every key is routed, exactly like the sail (R-19)
+// and harpsichord (R-20) mirrors beside it.
+inline void publish_dungeon_prompt_context(openu5::UiSession &ui, const openu5::GameState &game,
+                                           const openu5::DungeonState &dungeon,
+                                           bool dungeon_active) {
+    ui.refresh_dungeon_context(game, dungeon, dungeon_active);
+}
 
 // Pure, ESP-free extraction of the mode arbitration performed by
 // AlphaRuntime::synchronize_after_debug() on every gameplay input.

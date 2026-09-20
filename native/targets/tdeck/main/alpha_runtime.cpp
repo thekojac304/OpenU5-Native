@@ -794,7 +794,21 @@ void AlphaRuntime::schedule_combat(){
     if(!finish_combat_if_needed())return;
     if(!context_.combat)return;
     auto *actor=openu5::current_combat_actor(combat_context_);
-    if(!actor)return;
+    if(!actor){
+        // Batch 9D.  No actor will ever be schedulable again, so no beat can be
+        // armed, nothing is queued, and every combat command silently succeeds
+        // having done nothing -- the arena keeps the screen and the keyboard
+        // and answers neither.  Close it through the core's own end path and
+        // run the ordinary teardown, so recovery costs no keypress.
+        openu5::close_stranded_combat(combat_context_);
+        if(combat_.ended){
+            ESP_LOGW(kTag,"COMBAT_STRANDED reason=no-schedulable-actor count=%ld victory=%d -- closing",
+                     long(combat_.count),combat_.victory);
+            finish_combat_if_needed();
+            dirty_=true;
+        }
+        return;
+    }
     if(actor->member!=255&&!actor->charmed){
         const int range=std::max<int32_t>(1,actor->range);
         int initial_x=actor->position.x,initial_y=actor->position.y;
@@ -943,6 +957,13 @@ void AlphaRuntime::refresh_session_context(){
         seated=terrain_.effective(resources_.world,game_.position.map,game_.position.xy.x,y)==141;
     }
     ui_->set_harpsichord_active(seated);
+    // Dungeon prompts (Batch 9B's two mirrors, wired up in Batch 9D): whether
+    // the cell under the party offers a Klimb BOTH ways, and whether it is a
+    // fountain.  Same narrow-mirror contract as the two above, pushed through
+    // the shared ui_mode_policy.h seam the host suite drives, so the device and
+    // dungeon_input_regression/dungeon_combat_regression cannot disagree about
+    // when "Klimb-U/D-" and "Will you drink?" appear.
+    publish_dungeon_prompt_context(*ui_,game_,dungeon_,context_.dungeon&&dungeon_.active);
     // Transcript page geometry (Batch 4.5C, GAMEPLAY_INTEGRATION_AUDIT.md
     // 4.5C): mirrors whichever transcript-bearing panel is currently showing
     // -- shop log, selector log, or the world/dialogue running log -- so
