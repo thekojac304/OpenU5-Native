@@ -59,6 +59,23 @@ the current scroll offset.  Pixel dimensions do not appear in this module.
 The current prompt remains separately queryable even if its transcript block
 has rolled out.
 
+Paging follows a chat-scrollback contract (Batch 4.5C): `scroll_offset_lines()
+== 0` means "following the newest text," and any newly appended text is shown
+immediately. Once `PageUp` moves the offset away from zero, further appends
+hold the same lines on screen (the offset advances by exactly the number of
+new wrapped lines added) instead of snapping back to the bottom -- `PageDown`
+back to zero is what restores auto-follow. This holds for every append path
+(`append`, `append_utf16`, and the coalesced "Blocked! xN" combat-repeat
+rewrite) and is unaffected by an active modal, since `PageUp`/`PageDown` are
+handled before modal/mode routing regardless of what is on screen underneath.
+`set_transcript_view_metrics(columns, rows)` is an optional narrow mirror
+(same shape as `set_sail_context`/`set_harpsichord_active`): a device owner
+refreshes it immediately before routing each key with whichever panel's
+actual on-screen geometry currently applies, so one `PageUp` press pages by
+exactly one screen instead of the constructor's fixed defaults. Unset (the
+host-test default), everything falls back to `UiSessionConfig::wrap_columns`/
+`page_rows` exactly as before.
+
 ## Developer menu
 
 When `OPENU5_ENABLE_DEVELOPER_TOOLS=ON`, `UiDebugMenu` adds an 11-category,
@@ -89,10 +106,12 @@ transaction, open party/inventory/equipment/spell selectors, drive combat aim,
 page the transcript, and (in a developer build) navigate teleport and preset
 menus.  It is intentionally not a PC renderer.
 
-`ui_session_tests` has 49 checks covering command routing, text isolation, yes/no, numeric input,
+`ui_session_tests` has 271 checks covering command routing, text isolation, yes/no, numeric input,
 cancellation, selections, dialogue, shop, combat targeting, ordered/bounded
 history (including wrapping across storage-block boundaries), paging,
-prompt-derived commands, and gameplay mode switching. `ui_debug_menu_tests`
+prompt-derived commands, gameplay mode switching, and (Batch 4.5C) the
+scroll/auto-follow contract above across a real dialogue conversation and a
+long BlackthornPrompt narrative. `ui_debug_menu_tests`
 has 10 checks covering hierarchy navigation, numeric editing through the real
 developer API, teleport application, Full Max Party, back/close, and
 session/debug switching.

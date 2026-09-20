@@ -693,6 +693,28 @@ void AlphaRuntime::refresh_session_context(){
         seated=terrain_.effective(resources_.world,game_.position.map,game_.position.xy.x,y)==141;
     }
     ui_->set_harpsichord_active(seated);
+    // Transcript page geometry (Batch 4.5C, GAMEPLAY_INTEGRATION_AUDIT.md
+    // 4.5C): mirrors whichever transcript-bearing panel is currently showing
+    // -- shop log, selector log, or the world/dialogue running log -- so
+    // Shift+Up/Shift+Down page by the row/column count actually on screen
+    // instead of UiSession's fixed constructor defaults. The world panel's
+    // geometry varies with the text-size setting and with whether a context
+    // bar is reserving space at the bottom; world_transcript_geometry()
+    // (tdeck_board.h) is the same helper Board::render() uses to lay out
+    // that panel, so the two can never drift apart.
+    size_t transcript_columns=openu5::kHudTranscriptColumns,transcript_rows=kShopLogRows;
+    openu5::UiSelectionView selection_probe{};
+    if(ui_->mode()==openu5::UiMode::Shop){
+        // Defaults above already match the shop log strip.
+    }else if(ui_->selection_view(selection_probe)){
+        transcript_rows=kSelectorLogRows;
+    }else{
+        const auto mode=ui_->mode();
+        const bool context_active=mode==openu5::UiMode::TargetSelection||mode==openu5::UiMode::TextEntry||
+                                   mode==openu5::UiMode::NumericEntry||mode==openu5::UiMode::YesNo;
+        world_transcript_geometry(settings_.ui_size,context_active,transcript_columns,transcript_rows);
+    }
+    ui_->set_transcript_view_metrics(transcript_columns,transcript_rows);
 }
 
 void AlphaRuntime::open_selection(openu5::UiMode mode,openu5::UiRequestId request){selection_count_=0;selection_request_=request;
@@ -1289,7 +1311,18 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     const char *presentation_source=combat_source?"combat":dungeon_source?"dungeon3d":"world";
     if(combat_source)snapshot=openu5::compose_combat_presentation(combat_,game_);
     else if(dungeon_source)snapshot.center={dungeon_.pos.x,dungeon_.pos.y};
-    else{auto active=openu5::get_active_map(resources_.world,game_.position.map);if(active.error!=openu5::Error::None)return ESP_FAIL;const int avatar=turn_.transport_tile>=0?turn_.transport_tile+0x100:tile_report_.avatar_tile;snapshot=openu5::compose_world_presentation(context_,active.value,game_.position.xy,avatar);if(gem_view_active_){world_gem_map=active.value;world_gem_map_ready=true;}}
+    else{auto active=openu5::get_active_map(resources_.world,game_.position.map);if(active.error!=openu5::Error::None){
+        // A missing {location,floor} map (e.g. a resource pack built before a
+        // forced-relocation destination such as Blackthorn's deposit() target
+        // was authored) leaves this render bailing out silently every tick,
+        // so the previous frame (a stale scene) stays on screen forever with
+        // no trace of why. Log it once per occurrence so a hardware retest
+        // can tell "no map for this position" apart from every other stale-
+        // frame cause instead of guessing.
+        ESP_LOGE(kTag,"WORLD_MAP_MISSING location=%u floor=%d xy=%u,%u",unsigned(game_.position.map.location),
+                 int(game_.position.map.floor),unsigned(game_.position.xy.x),unsigned(game_.position.xy.y));
+        return ESP_FAIL;
+    }const int avatar=turn_.transport_tile>=0?turn_.transport_tile+0x100:tile_report_.avatar_tile;snapshot=openu5::compose_world_presentation(context_,active.value,game_.position.xy,avatar);if(gem_view_active_){world_gem_map=active.value;world_gem_map_ready=true;}}
     ESP_LOGI(kTag,"PRESENTATION_DISPATCH ui=%s combat=%d dungeon=%d source=%s",mode_name(ui_->mode()),combat_source,dungeon_source,presentation_source);
     int16_t open_marker_x=-1,open_marker_y=-1;
     if(snapshot.combat&&ui_->take_target_render_marker(open_marker_x,open_marker_y)){

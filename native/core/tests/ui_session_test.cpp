@@ -1,3 +1,4 @@
+#include "openu5/blackthorn.h"
 #include "openu5/combat.h"
 #include "openu5/dialogue_orchestration.h"
 #include "openu5/dungeon.h"
@@ -178,5 +179,176 @@ int main(){
  check(literal.mode()==UiMode::TextEntry&&literal.input_length()==6);
  check(literal_spy.intents.size()==literal_intents);
  for(size_t i=0;i<6;++i)check(literal.input_buffer()[i]==char16_t(std::string("loguta")[i]));
+
+ // Batch 4.5B hardware correction (presentation seam, RED 1): a Blackthorn
+ // interrogation question long enough to have overflowed the 96-byte
+ // kUiPromptBytes prompt line before the fix must land in the transcript,
+ // leaving only the short response cue in the modal prompt.
+ {
+     UiTextBlock bt_blocks[16]{};Spy bt_spy;
+     UiSession bt{{bt_blocks,16},{&bt_spy,Spy::send},{38,8,12}};
+     const char *question="\"What sayest thou to this, that thy honesty in the face "
+         "of the Mystic Shrine of Compassion shall now be tested before Lord "
+         "Blackthorn himself?\"";
+     check(std::strlen(question)>kUiPromptBytes-1);
+     GameEvent bt_event{};bt_event.kind=GameEventKind::BlackthornPrompt;bt_event.text=question;
+     bt.consume(bt_event);
+     check(bt.mode()==UiMode::TextEntry&&bt.request()==UiRequestId::Blackthorn&&
+           bt.base_mode()==UiMode::ShrineSpecial);
+     check(std::strcmp(bt.prompt(),"Your response?")==0);
+     check(bt.transcript_at(bt.transcript_size()-1)&&
+           std::strstr(bt.transcript_at(bt.transcript_size()-1)->text,"Mystic Shrine of Compassion")!=nullptr);
+ }
+ // Batch 4.5C (generic transcript scroll/page UX, T1-T7): overflowed
+ // dialogue/quest/jail text must stay reachable by paging, and paging must
+ // never disturb an active modal or a live conversation underneath it.
+ {
+     // T1: default view follows newest; PageUp exposes older content and
+     // dispatches no gameplay command.
+     UiTextBlock t1_blocks[32]{};Spy t1_spy;
+     UiSession t1{{t1_blocks,32},{&t1_spy,Spy::send},{10,4,12}};
+     for(int i=0;i<20;++i){char line[16];std::snprintf(line,sizeof(line),"line%d",i);t1.append(UiTextChannel::Message,line);}
+     check(t1.wrapped_line_count()==20);
+     UiRenderedLine t1_out[4]{};
+     check(t1.visible_lines(t1_out,4)==4&&std::string(t1_out[0].text)=="line16"&&std::string(t1_out[3].text)=="line19");
+     const auto t1_intents_before=t1_spy.intents.size();
+     check(t1.handle_input(action(UiActionKind::PageUp)));
+     check(t1_spy.intents.size()==t1_intents_before);
+     check(t1.scroll_offset_lines()==4);
+     check(t1.visible_lines(t1_out,4)==4&&std::string(t1_out[0].text)=="line12"&&std::string(t1_out[3].text)=="line15");
+
+     // T2: paging further up moves further back; paging down moves toward
+     // newest again, and reaching the bottom restores follow-newest (offset 0).
+     check(t1.handle_input(action(UiActionKind::PageUp)));
+     check(t1.scroll_offset_lines()==8);
+     check(t1.handle_input(action(UiActionKind::PageDown)));
+     check(t1.scroll_offset_lines()==4);
+     check(t1.visible_lines(t1_out,4)==4&&std::string(t1_out[0].text)=="line12");
+     check(t1.handle_input(action(UiActionKind::PageDown)));
+     check(t1.scroll_offset_lines()==0);
+
+     // T3: while scrolled away from the newest text, a newly appended message
+     // must not yank the view back to the bottom -- the same lines stay on
+     // screen until the player pages down to the new content themselves.
+     check(t1.handle_input(action(UiActionKind::PageUp)));
+     check(t1.scroll_offset_lines()==4);
+     check(t1.visible_lines(t1_out,4)==4&&std::string(t1_out[0].text)=="line12"&&std::string(t1_out[3].text)=="line15");
+     t1.append(UiTextChannel::Message,"line20");
+     check(t1.transcript_at(t1.transcript_size()-1)&&std::strcmp(t1.transcript_at(t1.transcript_size()-1)->text,"line20")==0);
+     check(t1.visible_lines(t1_out,4)==4&&std::string(t1_out[0].text)=="line12"&&std::string(t1_out[3].text)=="line15");
+     check(t1.handle_input(action(UiActionKind::PageDown)));
+     check(t1.handle_input(action(UiActionKind::PageDown)));
+     check(t1.scroll_offset_lines()==0);
+     check(t1.visible_lines(t1_out,4)==4&&std::string(t1_out[3].text)=="line20");
+
+     // T4: while already following the newest text, a new message is shown
+     // immediately with no extra input required.
+     t1.append(UiTextChannel::Message,"line21");
+     check(t1.scroll_offset_lines()==0);
+     check(t1.visible_lines(t1_out,4)==4&&std::string(t1_out[3].text)=="line21");
+ }
+ {
+     // T5: an active TextEntry modal survives transcript navigation -- typed
+     // text, the modal itself and the prompt are untouched, and paging
+     // dispatches nothing.
+     UiTextBlock t5_blocks[16]{};Spy t5_spy;
+     UiSession t5{{t5_blocks,16},{&t5_spy,Spy::send},{10,3,12}};
+     for(int i=0;i<10;++i){char line[16];std::snprintf(line,sizeof(line),"log%d",i);t5.append(UiTextChannel::Message,line);}
+     t5.begin_text(UiRequestId::Custom,"Name?",6);
+     t5.handle_input(ch('a'));t5.handle_input(ch('b'));t5.handle_input(ch('c'));
+     check(t5.mode()==UiMode::TextEntry&&t5.input_length()==3);
+     const auto t5_intents_before=t5_spy.intents.size();
+     check(t5.handle_input(action(UiActionKind::PageUp)));
+     check(t5.handle_input(action(UiActionKind::PageDown)));
+     check(t5.mode()==UiMode::TextEntry&&t5.input_length()==3);
+     check(t5.input_buffer()[0]=='a'&&t5.input_buffer()[1]=='b'&&t5.input_buffer()[2]=='c');
+     check(t5_spy.intents.size()==t5_intents_before);
+     check(std::strcmp(t5.prompt(),"Name?")==0);
+ }
+ {
+     // T6: a real dialogue conversation long enough to overflow the visible
+     // transcript stays entirely reachable by paging, and text that arrives
+     // while the player is reviewing older lines does not disturb the view.
+     UiTextBlock t6_blocks[32]{};
+     UiSession t6{{t6_blocks,32},{},{12,4,12}};
+     DialogueOutput t6_line;t6_line.kind=DialogueOutputKind::Line;
+     DialogueEvent t6_de{DialogueEventKind::Output,&t6_line};
+     GameEvent t6_ge{};t6_ge.kind=GameEventKind::Dialogue;t6_ge.dialogue=&t6_de;
+     const char16_t *t6_texts[]={u"Gorn says greetings traveler",u"The jailer paces the corridor",
+         u"Blackthorn will see thee shortly",u"The chains rattle in the dark",
+         u"A guard mutters under his breath",u"Thou shouldst not have come here"};
+     for(auto *text:t6_texts){t6_line.text=text;t6.consume(t6_ge);}
+     check(t6.wrapped_line_count()>4);
+     check(t6.transcript_at(0)&&std::strstr(t6.transcript_at(0)->text,"Gorn")!=nullptr);
+     UiRenderedLine t6_out[4]{};
+     check(t6.visible_lines(t6_out,4)==4);
+     bool gorn_visible_default=false;for(auto&l:t6_out)if(std::strstr(l.text,"Gorn"))gorn_visible_default=true;
+     check(!gorn_visible_default);
+     bool gorn_reachable=false;
+     for(int guard=0;guard<20&&!gorn_reachable;++guard){
+         t6.handle_input(action(UiActionKind::PageUp));
+         t6.visible_lines(t6_out,4);
+         for(auto&l:t6_out)if(std::strstr(l.text,"Gorn"))gorn_reachable=true;
+     }
+     check(gorn_reachable);
+     UiRenderedLine t6_before_new[4]{};std::memcpy(t6_before_new,t6_out,sizeof(t6_out));
+     const auto t6_scroll_before_new=t6.scroll_offset_lines();
+     t6_line.text=u"The talk is not yet finished";t6.consume(t6_ge);
+     t6.visible_lines(t6_out,4);
+     for(size_t i=0;i<4;++i)check(std::string(t6_out[i].text)==std::string(t6_before_new[i].text));
+     check(t6.scroll_offset_lines()>=t6_scroll_before_new);
+     for(int i=0;i<20;++i)t6.handle_input(action(UiActionKind::PageDown));
+     check(t6.scroll_offset_lines()==0);
+     t6.visible_lines(t6_out,4);
+     bool new_line_reachable=false;for(auto&l:t6_out)if(std::strstr(l.text,"finished"))new_line_reachable=true;
+     check(new_line_reachable);
+ }
+ {
+     // T7: a long BlackthornPrompt narrative, driven through the real event
+     // path used by the Batch 4.5B presentation fix, stays reviewable via
+     // transcript paging while "Your response?" remains the live modal and
+     // the player's partial answer is never disturbed.
+     UiTextBlock t7_blocks[24]{};Spy t7_spy;
+     UiSession t7{{t7_blocks,24},{&t7_spy,Spy::send},{20,4,12}};
+     for(int i=0;i<8;++i){char line[16];std::snprintf(line,sizeof(line),"jail%d",i);t7.append(UiTextChannel::Quest,line);}
+     const char *narrative="\"Thou standest accused before Lord Blackthorn himself, and "
+         "shalt answer for thy trespass against the Shrine of Compassion "
+         "ere the pendulum finds thee wanting.\"";
+     GameEvent t7_event{};t7_event.kind=GameEventKind::BlackthornPrompt;t7_event.text=narrative;
+     t7.consume(t7_event);
+     check(t7.mode()==UiMode::TextEntry&&t7.request()==UiRequestId::Blackthorn);
+     check(std::strcmp(t7.prompt(),"Your response?")==0);
+     bool narrative_in_transcript=false;
+     for(size_t i=0;i<t7.transcript_size();++i)
+         if(std::strstr(t7.transcript_at(i)->text,"pendulum"))narrative_in_transcript=true;
+     check(narrative_in_transcript);
+     t7.handle_input(ch('y'));t7.handle_input(ch('e'));t7.handle_input(ch('s'));
+     check(t7.input_length()==3);
+     const auto t7_intents_before=t7_spy.intents.size();
+     // The narrative was appended immediately before the modal, so it starts
+     // out as the newest text; only the earliest words ("standest accused")
+     // may already have scrolled above the default view. Page up exactly
+     // until they surface, the same generic search T6 uses, rather than
+     // assuming a fixed page count.
+     UiRenderedLine t7_out[4]{};
+     bool narrative_visible=false;
+     for(int guard=0;guard<20&&!narrative_visible;++guard){
+         t7.visible_lines(t7_out,4);
+         for(size_t i=0;i<4;++i)
+             if(std::strstr(t7_out[i].text,"standest")||std::strstr(t7_out[i].text,"accused")||std::strstr(t7_out[i].text,"Blackthorn"))
+                 narrative_visible=true;
+         if(!narrative_visible)t7.handle_input(action(UiActionKind::PageUp));
+     }
+     check(narrative_visible);
+     check(t7.mode()==UiMode::TextEntry&&t7.input_length()==3&&std::strcmp(t7.prompt(),"Your response?")==0);
+     check(t7.input_buffer()[0]=='y'&&t7.input_buffer()[1]=='e'&&t7.input_buffer()[2]=='s');
+     check(t7_spy.intents.size()==t7_intents_before);
+     for(int i=0;i<5;++i)t7.handle_input(action(UiActionKind::PageDown));
+     check(t7.scroll_offset_lines()==0);
+     t7.handle_input(action(UiActionKind::Confirm));
+     check(t7_spy.intents.back().kind==UiIntentKind::Command&&
+           t7_spy.intents.back().command.kind==CommandKind::BlackthornAction&&
+           t7_spy.intents.back().command.item==int16_t(BlackthornAction::Answer));
+ }
  std::cout<<checks<<" UI session checks passed; sizeof(UiSession)="<<sizeof(UiSession)<<" block="<<sizeof(UiTextBlock)<<"\n";
 }

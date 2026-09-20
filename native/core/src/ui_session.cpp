@@ -213,7 +213,12 @@ void UiSession::push_block(UiTextChannel channel, const char *text, size_t lengt
     b.text[b.length] = 0;
     if (transcript_count_ < transcript_.capacity) ++transcript_count_;
     else transcript_head_ = (transcript_head_ + 1) % transcript_.capacity;
-    scroll_lines_ = 0;
+}
+
+void UiSession::preserve_scroll_on_growth(size_t lines_before) {
+    if (!scroll_lines_) return; // Already following newest -- nothing to preserve.
+    const auto lines_after = wrapped_line_count();
+    if (lines_after > lines_before) scroll_lines_ += lines_after - lines_before;
 }
 
 void UiSession::append(UiTextChannel channel, const char *text, uint8_t flags) {
@@ -221,9 +226,11 @@ void UiSession::append(UiTextChannel channel, const char *text, uint8_t flags) {
     blocked_block_sequence_ = 0;
     blocked_actor_ = -1;
     if (!text) return;
+    const size_t lines_before = wrapped_line_count();
     const size_t total = std::strlen(text);
     if (!total) {
         push_block(channel, "", 0, flags);
+        preserve_scroll_on_growth(lines_before);
         return;
     }
     size_t at = 0;
@@ -235,6 +242,7 @@ void UiSession::append(UiTextChannel channel, const char *text, uint8_t flags) {
         push_block(channel, text + at, n, f);
         at += n;
     }
+    preserve_scroll_on_growth(lines_before);
 }
 
 void UiSession::append_combat_event(const CombatEvent &event) {
@@ -250,12 +258,13 @@ void UiSession::append_combat_event(const CombatEvent &event) {
         const auto index = (transcript_head_ + transcript_count_ - 1) % transcript_.capacity;
         auto &last = transcript_.blocks[index];
         if (last.sequence == blocked_block_sequence_ && last.channel == UiTextChannel::Combat) {
+            const size_t lines_before = wrapped_line_count();
             ++blocked_repeat_;
             std::snprintf(last.text, sizeof(last.text), "Blocked! x%u", unsigned(blocked_repeat_));
             last.length = uint16_t(std::strlen(last.text));
             last.sequence = ++block_sequence_;
             blocked_block_sequence_ = last.sequence;
-            scroll_lines_ = 0;
+            preserve_scroll_on_growth(lines_before);
             return;
         }
     }
@@ -270,6 +279,7 @@ void UiSession::append_combat_event(const CombatEvent &event) {
 void UiSession::append_utf16(UiTextChannel channel, const char16_t *text, size_t length,
                              uint8_t flags) {
     if (!text) return;
+    const size_t lines_before = wrapped_line_count();
     char chunk[kUiTranscriptBlockBytes]{};
     size_t used = 0;
     bool continued = false;
@@ -303,6 +313,7 @@ void UiSession::append_utf16(UiTextChannel channel, const char16_t *text, size_t
         std::memcpy(chunk + used, encoded, n); used += n;
     }
     if (used || !length) flush(false);
+    preserve_scroll_on_growth(lines_before);
 }
 
 const UiTextBlock *UiSession::transcript_at(size_t index) const {
@@ -830,13 +841,16 @@ bool UiSession::handle_shop(const UiAction &a) {
 }
 
 bool UiSession::handle_input(const UiAction &a) {
-    if (a.kind == UiActionKind::PageUp) {
-        const auto total=wrapped_line_count();
-        const auto max=total>config_.page_rows?total-config_.page_rows:0;
-        scroll_lines_=std::min(max,scroll_lines_+config_.page_rows); return true;
-    }
-    if (a.kind == UiActionKind::PageDown) {
-        scroll_lines_=scroll_lines_>config_.page_rows?scroll_lines_-config_.page_rows:0; return true;
+    if (a.kind == UiActionKind::PageUp || a.kind == UiActionKind::PageDown) {
+        const size_t page=transcript_rows_?transcript_rows_:config_.page_rows;
+        if (a.kind == UiActionKind::PageUp) {
+            const auto total=wrapped_line_count();
+            const auto max=total>page?total-page:0;
+            scroll_lines_=std::min(max,scroll_lines_+page);
+        } else {
+            scroll_lines_=scroll_lines_>page?scroll_lines_-page:0;
+        }
+        return true;
     }
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
     if (mode_ == UiMode::DebugMenu && debug_menu_) {
@@ -985,12 +999,15 @@ void UiSession::consume(const GameEvent &e) {
         // max 0xE) -- the suffix is the ask-text widget's own display
         // addition, not part of the semantic BlackthornPrompt event text
         // (confirmed by quest_parity's world-flow fixture, which compares the
-        // raw event text without it). Compose it here, presentation-only,
-        // rather than in the core event producer.
+        // raw event text without it). The narrative/question itself belongs
+        // in the transcript, not the small kUiPromptBytes (96-byte) prompt
+        // line -- concatenating it into the modal prompt silently truncated
+        // long interrogation questions there. Matches the established
+        // GuardArrestPrompt pattern just below: narrative goes to append(),
+        // only the short response cue is the modal prompt.
         enter_shrine_mode();
-        char combined[256]{};
-        if (e.text) { std::snprintf(combined,sizeof(combined),"%s\n\nYour response?",e.text); }
-        begin_text(UiRequestId::Blackthorn, e.text?combined:"Your response?", 14);
+        if (e.text) append(UiTextChannel::Quest, e.text);
+        begin_text(UiRequestId::Blackthorn, "Your response?", 14);
         break;
     }
     case GameEventKind::GuardPasswordPrompt: begin_text(UiRequestId::GuardPassword,e.text?e.text:"Password?",14); break;
@@ -1043,7 +1060,7 @@ void UiSession::consume(const GameEvent &e) {
 }
 
 size_t UiSession::wrapped_line_count(size_t columns) const {
-    columns=columns?columns:config_.wrap_columns;
+    columns=columns?columns:(transcript_columns_?transcript_columns_:config_.wrap_columns);
     columns=std::max<size_t>(1,std::min(columns,kUiRenderedLineBytes-1));
     size_t lines=0;
     for_each_wrapped_line(*this,columns,[&](const UiRenderedLine &){++lines;});

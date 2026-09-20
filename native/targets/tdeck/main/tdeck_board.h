@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <array>
 #include <cstdint>
@@ -16,6 +17,24 @@ namespace tdeck {
 
 constexpr size_t kDebugScreenRows = 9;
 constexpr size_t kAlphaTranscriptLines = openu5::kHudTranscriptLines;
+// Shop and selector panels reserve a fixed-size transcript log strip that
+// does not resize with the text-size setting (device_ui_views.h/tdeck_board.cpp).
+constexpr size_t kShopLogRows = 7;
+constexpr size_t kSelectorLogRows = 5;
+
+// Shared by the world/dialogue transcript panel's renderer and by the
+// input-routing page-geometry mirror (AlphaRuntime::refresh_session_context())
+// so a single Shift+Up/Shift+Down press pages by exactly what is on screen.
+// Both the text-size setting and whether a context bar is reserving space at
+// the bottom change how many rows/columns actually fit (Batch 4.5C).
+inline void world_transcript_geometry(uint8_t ui_size, bool context_active,
+                                       size_t &columns, size_t &rows) {
+    const auto text_metrics = ui_text_metrics(ui_size);
+    columns = size_t(openu5::kHudRightW / text_metrics.cell_width);
+    const int transcript_bottom = context_active ? kContextBarTop : 240; // 240: physical display height.
+    rows = std::min<size_t>(kAlphaTranscriptLines,
+        size_t((transcript_bottom - openu5::kHudTranscriptY) / text_metrics.line_height));
+}
 struct DeviceDebugScreen {
     char breadcrumb[48]{};
     char position[24]{};

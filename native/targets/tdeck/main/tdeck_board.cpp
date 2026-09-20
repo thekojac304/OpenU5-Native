@@ -690,7 +690,6 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
             ESP_RETURN_ON_ERROR(draw_text_box(184,39+int(i)*14,134,12,line,current&&i==shop->selected_row?kGreen:kWhite),kTag,"shop offer row");account(134*12);
         }
         if(first||shop->gold!=shop_cache_.gold){char line[24]{};std::snprintf(line,sizeof(line),"Gold: %ld",long(shop->gold));ESP_RETURN_ON_ERROR(draw_text_box(184,127,134,8,line,kWhite),kTag,"shop gold");account(134*8);}
-        constexpr size_t kShopLogRows=7;
         std::fill(std::begin(transcript_lines_),std::end(transcript_lines_),openu5::UiRenderedLine{});
         const auto count=ui.visible_lines(transcript_lines_,kShopLogRows,openu5::kHudTranscriptColumns);
         for(size_t i=0;i<kShopLogRows;++i){const char*text=i<count?transcript_lines_[i].text:"";const uint32_t seq=i<count?transcript_lines_[i].sequence:0;const uint16_t color=i<count&&transcript_lines_[i].channel==openu5::UiTextChannel::Shop?kCyan:kWhite;auto&cached=transcript_cache_[i];if(first||cached.sequence!=seq||cached.color!=color||std::strcmp(cached.text,text)!=0){ESP_RETURN_ON_ERROR(draw_text_box(184,152+int(i)*8,134,8,text,color),kTag,"shop transcript row");account(134*8);cached.sequence=seq;cached.color=color;std::snprintf(cached.text,sizeof(cached.text),"%s",text);}}
@@ -713,7 +712,7 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
         if(changed(selection->detail2,selection_cache_.detail2)){ESP_RETURN_ON_ERROR(draw_text_box(184,35,134,8,selection->detail2,kWhite),kTag,"selector detail row two");account(134*8);}
         const size_t rows=std::max(selection->row_count,selection_cache_.row_count);
         for(size_t i=0;i<rows&&i<kSelectionVisibleRows;++i){if(!selection_row_needs_redraw(*selection,selection_cache_,i,first))continue;char line[24]{};if(i<selection->row_count)std::snprintf(line,sizeof(line),"%c%.21s",i==selection->selected_row?'>':' ',selection->rows[i]);ESP_RETURN_ON_ERROR(draw_text_box(184,46+int(i)*14,134,12,line,i<selection->row_count&&i==selection->selected_row?kGreen:kWhite),kTag,"selector row");account(134*12);}
-        constexpr size_t kSelectorLogRows=5;std::fill(std::begin(transcript_lines_),std::end(transcript_lines_),openu5::UiRenderedLine{});const auto count=ui.visible_lines(transcript_lines_,kSelectorLogRows,openu5::kHudTranscriptColumns);
+        std::fill(std::begin(transcript_lines_),std::end(transcript_lines_),openu5::UiRenderedLine{});const auto count=ui.visible_lines(transcript_lines_,kSelectorLogRows,openu5::kHudTranscriptColumns);
         const bool show_transcript=selection_uses_transcript(*selection);
         for(size_t i=0;i<kSelectorLogRows;++i){const char*text=show_transcript&&i<count?transcript_lines_[i].text:"";const uint32_t seq=show_transcript&&i<count?transcript_lines_[i].sequence:0;const uint16_t color=show_transcript&&i<count&&transcript_lines_[i].channel==openu5::UiTextChannel::Combat?kRed:kWhite;auto&cached=transcript_cache_[i];if(first||cached.sequence!=seq||cached.color!=color||std::strcmp(cached.text,text)!=0){ESP_RETURN_ON_ERROR(draw_text_box(184,172+int(i)*8,134,8,text,color),kTag,"selector transcript");account(134*8);cached.sequence=seq;cached.color=color;std::snprintf(cached.text,sizeof(cached.text),"%s",text);}}
         ESP_RETURN_ON_ERROR(draw_context_bar(selection->context,182,137,first),kTag,"selector context action bar");account(137*25);
@@ -741,10 +740,8 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
         std::memset(transcript_cache_,0,sizeof(transcript_cache_));alpha_ui_cache_valid_=false;
         if(!context_active)context_cache_valid_=false;
     }
-    const int transcript_bottom=context_active?kContextBarTop:kDisplayHeight;
-    const size_t transcript_columns=size_t(openu5::kHudRightW/text_metrics.cell_width);
-    const size_t transcript_rows=std::min<size_t>(kAlphaTranscriptLines,
-        size_t((transcript_bottom-openu5::kHudTranscriptY)/text_metrics.line_height));
+    size_t transcript_columns=0,transcript_rows=0;
+    world_transcript_geometry(ui_size,context_active,transcript_columns,transcript_rows);
     std::fill(std::begin(transcript_lines_),std::end(transcript_lines_),openu5::UiRenderedLine{});
     const auto count=ui.visible_lines(transcript_lines_,transcript_rows,transcript_columns);
     for(size_t i=0;i<transcript_rows;++i){const char*text="";uint32_t seq=0;uint16_t color=kWhite;if(i<count){text=transcript_lines_[i].text;seq=transcript_lines_[i].sequence;color=transcript_lines_[i].channel==openu5::UiTextChannel::Prompt?kCyan:transcript_lines_[i].channel==openu5::UiTextChannel::Combat?kRed:kWhite;}auto&cached=transcript_cache_[i];if(!alpha_ui_cache_valid_||cached.sequence!=seq||cached.color!=color||std::strcmp(cached.text,text)!=0){ESP_RETURN_ON_ERROR(draw_text_box_metrics(openu5::kHudRightX,openu5::kHudTranscriptY+int(i)*text_metrics.line_height,openu5::kHudRightW,text_metrics.line_height,text,color,text_metrics),kTag,"draw running log row");cached.sequence=seq;cached.color=color;std::snprintf(cached.text,sizeof(cached.text),"%s",text);}}

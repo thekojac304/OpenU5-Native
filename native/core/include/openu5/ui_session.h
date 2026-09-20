@@ -244,6 +244,22 @@ class UiSession {
     // set-active-player arm).
     void set_harpsichord_active(bool at_harpsichord) { harpsichord_active_ = at_harpsichord; }
     bool harpsichord_active() const { return harpsichord_active_; }
+    // Transcript page geometry (Batch 4.5C): another narrow mirror of the same
+    // shape as set_sail_context()/set_harpsichord_active() above. The owner's
+    // renderer is the only thing that knows the actual on-screen column width
+    // and row count for whichever transcript-bearing panel is currently
+    // showing (they vary with the text-size setting and with whether a
+    // context bar is reserving space), so it pushes both in immediately
+    // before each key is routed. Shift+Up/Shift+Down (PageUp/PageDown) and
+    // wrapped_line_count()'s no-argument overload use these instead of the
+    // fixed constructor defaults so a single page of paging matches a single
+    // page of what is actually rendered. Zero means "unset"; falls back to
+    // the constructor config exactly as before (host tests that never call
+    // this keep exercising the fixed defaults).
+    void set_transcript_view_metrics(size_t columns, size_t rows) {
+        transcript_columns_ = columns;
+        transcript_rows_ = rows;
+    }
 
     void set_base_mode(UiMode);
     void consume(const GameEvent &);
@@ -344,6 +360,7 @@ class UiSession {
     // World-context mirrors (see the public setters above).
     bool sail_context_frigate_ = false, sail_context_location_ok_ = false;
     bool harpsichord_active_ = false;
+    size_t transcript_columns_ = 0, transcript_rows_ = 0;
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
     UiDebugMenu *debug_menu_ = nullptr;
     UiMode debug_return_mode_ = UiMode::Exploration;
@@ -373,6 +390,10 @@ class UiSession {
     void command_echo(const char *);
     void direction_request(CommandKind, const char *);
     void push_block(UiTextChannel, const char *, size_t, uint8_t);
+    // A scrolled-away view (scroll_lines_ > 0) must hold the same lines on
+    // screen when the transcript grows -- see the appenders below. Following
+    // the newest text (scroll_lines_ == 0) is left alone; that is auto-follow.
+    void preserve_scroll_on_growth(size_t lines_before);
     void append_combat_event(const CombatEvent &);
 };
 
