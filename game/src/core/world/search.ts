@@ -296,6 +296,25 @@ const EQUIP_IDX_GLASS_SWORD = 39;
  * NpcManager, las dos mitades de la tabla única del binario). Sin predicado (callers
  * legados/tests) el gate degrada al comportamiento anterior (más permisivo). #287
  */
+/**
+ * Los floors autorados de SEARCH_OBJECT son el byte crudo de DATA.OVL
+ * (0..255). Para una localización de mapa pequeño (location !== 0) ese byte
+ * es la codificación de sótano de DOS y hay que decodificarlo como
+ * complemento a dos con signo (0xFF -> -1), igual que cualquier otro floor
+ * de mapa pequeño en tiempo de ejecución (smallmaps.json: sótano de las
+ * localizaciones 18/4/17 = floor -1; blackthornCaptureDeposit fija
+ * position.floor = -1). Para el mapa MUNDO (location === 0), 255 YA es el
+ * floor real y correcto del Underworld (state.ts/game.ts lo comparan tal
+ * cual) y no debe tocarse -- decodificarlo también rompería en silencio los
+ * objetos de búsqueda del Underworld. Éste es el único punto donde
+ * SearchObject.floor se compara contra un floor real (searchAt/isFindable);
+ * ningún otro archivo necesita conocer esta codificación.
+ */
+export function decodeAuthoredFloor(location: number, raw: number): number {
+  if (location === 0) return raw;
+  return raw <= 127 ? raw : raw - 256;
+}
+
 function isFindable(
   state: GameState,
   index: number,
@@ -303,7 +322,8 @@ function isFindable(
   occupiedAt?: (x: number, y: number, floor: number) => boolean,
 ): boolean {
   // 0x770e == 0 exigido por 0x0d (0x0572 `je 0x5a1`) y 0x0f (0x059f `jne 0x5f6`).
-  const cellFree = (): boolean => !(occupiedAt?.(entry.x, entry.y, entry.floor) ?? false);
+  const cellFree = (): boolean =>
+    !(occupiedAt?.(entry.x, entry.y, decodeAuthoredFloor(entry.location, entry.floor)) ?? false);
   switch (index) {
     case SEARCH_IDX_KEYS_DEN:
       return state.keys === 0 && cellFree();
@@ -355,7 +375,7 @@ export function searchAt(
     (o, i) =>
       i < SEARCH_ENTRY_COUNT &&
       o.location === location &&
-      o.floor === floor &&
+      decodeAuthoredFloor(o.location, o.floor) === floor &&
       o.x === x &&
       o.y === y &&
       isFindable(state, i, o, occupiedAt),

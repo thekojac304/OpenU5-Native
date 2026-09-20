@@ -62,6 +62,18 @@ describe("searchAt (tabla SEARCH_OBJECT de DATA.OVL)", () => {
     expect(r.message).toBe("Nothing of note.");
   });
 
+  it("Underworld (location 0, floor 255): el floor NO se decodifica -- 255 ES el floor real del Underworld, no un byte de sótano", () => {
+    // searchObjects[0] vive en el mapa MUNDO (location 0): su floor autorado
+    // 255 ES el floor real en tiempo de ejecución para el Underworld (igual
+    // que game.ts/world.cpp lo comparan tal cual), no el byte crudo de sótano
+    // de DOS que decodeAuthoredFloor traduce a -1 sólo para location !== 0.
+    // Si se decodificara aquí también, este objeto dejaría de hallarse.
+    expect(data.searchObjects[0]).toMatchObject({ id: 11, location: 0, floor: 255, x: 233, y: 233 });
+    const state = newGame();
+    const r = searchAt(state, data, 0, 255, 233, 233);
+    expect(r.found).toBe(0x10b); // id 11 + 0x100
+  });
+
   it("el centinela de ceros (índice 113) NO se busca: el binario itera sólo 113", () => {
     // La entrada 114 de la tabla es loc/floor/x/y = 0 (relleno). El binario para
     // en si=0x70 (113 entradas), así que buscar en (loc 0, planta 0, 0, 0) no revela
@@ -118,13 +130,17 @@ describe("grant de ItemKey — get_special_item 0x1458 rama keys (SJOG 0x1568)",
   });
 
   it("un ItemKey con quality ≤ 0x7f (searchObjects[13], quality 9) da 9 keys normales al recoger", () => {
+    // El floor autorado (255) es el byte crudo de DATA.OVL para el sótano de un
+    // mapa pequeño; en tiempo de ejecución esa misma celda vive en floor -1
+    // (smallmaps.json loc18, blackthornCaptureDeposit) -- decodeAuthoredFloor
+    // convierte uno en otro. Se busca con -1, el floor real de la celda.
     expect(data.searchObjects[13]).toMatchObject({ id: 7, quality: 9, location: 18, floor: 255, x: 8, y: 6 });
     const state = newGame();
     // Índice 0x0d es re-hallable sólo con 0 llaves normales (gate SJOG 0x055d);
     // init.keys > 0, así que hay que vaciarlas para que el gate deje hallarlo.
     state.keys = 0;
     const skullBefore = state.skullKeys;
-    const r = searchAt(state, data, 18, 255, 8, 6);
+    const r = searchAt(state, data, 18, -1, 8, 6);
     expect(r.found).toBe(0x107);
     const count = applySearchGrant(state, r.entry!); // el (G)et
     expect(count).toBe(9);
@@ -245,23 +261,25 @@ describe("gates de re-hallazgo (search_fixed_hidden_items, SJOG 0x0558-0x05b4)",
   });
 
   it("Buccaneer's Den (0x0d): sólo hallable con 0 llaves; da 9 al recoger y es repetible al re-vaciar", () => {
+    // Se busca en floor -1 (el sótano real de la localización 18), no el 255
+    // autorado -- ver decodeAuthoredFloor.
     const state = newGame();
     expect(state.keys).toBeGreaterThan(0); // init.keys = 2 → gate cerrado
-    expect(searchAt(state, data, 18, 255, 8, 6).found).toBeNull();
+    expect(searchAt(state, data, 18, -1, 8, 6).found).toBeNull();
 
     state.keys = 0; // gate abierto
-    const r1 = searchAt(state, data, 18, 255, 8, 6);
+    const r1 = searchAt(state, data, 18, -1, 8, 6);
     expect(r1.found).toBe(0x107);
     applySearchGrant(state, r1.entry!); // el (G)et → +9 → gate se auto-cierra
     expect(state.keys).toBe(9);
 
     // Con 9 llaves ya no aparece (NO once-only: es el inventario quien decide).
-    expect(searchAt(state, data, 18, 255, 8, 6).found).toBeNull();
+    expect(searchAt(state, data, 18, -1, 8, 6).found).toBeNull();
     expect(state.keys).toBe(9);
 
     // Re-vaciar → vuelve a estar hallable (repetible).
     state.keys = 0;
-    const r3 = searchAt(state, data, 18, 255, 8, 6);
+    const r3 = searchAt(state, data, 18, -1, 8, 6);
     expect(r3.found).toBe(0x107);
     applySearchGrant(state, r3.entry!);
     expect(state.keys).toBe(9);
@@ -296,14 +314,15 @@ describe("gates de re-hallazgo (search_fixed_hidden_items, SJOG 0x0558-0x05b4)",
     };
     expect(searchAt(state, data, 0, 0, 64, 80, occupied).found).toBeNull(); // 0x0f
     state.keys = 0;
-    expect(searchAt(state, data, 18, 255, 8, 6, occupied).found).toBeNull(); // 0x0d
-    // El predicado se consultó con las coordenadas de la ENTRADA (x, y, floor).
+    expect(searchAt(state, data, 18, -1, 8, 6, occupied).found).toBeNull(); // 0x0d
+    // El predicado se consultó con las coordenadas de la ENTRADA (x, y, floor
+    // DECODIFICADO: -1, no el 255 autorado -- ver decodeAuthoredFloor).
     expect(seen).toContainEqual([64, 80, 0]);
-    expect(seen).toContainEqual([8, 6, 255]);
+    expect(seen).toContainEqual([8, 6, -1]);
 
     // Control positivo: casilla libre → los dos vuelven a hallarse.
     expect(searchAt(state, data, 0, 0, 64, 80, () => false).found).toBe(0x105);
-    expect(searchAt(state, data, 18, 255, 8, 6, () => false).found).toBe(0x107);
+    expect(searchAt(state, data, 18, -1, 8, 6, () => false).found).toBe(0x107);
   });
 
   it("el gate 0x770e NO aplica a índices normales ni al árbol 0x0e (sólo 0x0d/0x0f llaman)", () => {

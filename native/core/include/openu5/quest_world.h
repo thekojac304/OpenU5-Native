@@ -72,6 +72,18 @@ CommandStatus urban_shadowlord(CommandContext &,EventSink,Rand);
 QuestCommandResult doom_entrance(CommandContext &,int32_t,EventSink);
 int32_t actor_attack_arena(int32_t tile,int32_t creature,int32_t transport,int32_t location);
 CommandStatus town_attack_commit(CommandContext &,const NpcActor &,bool hostile,EventSink);
+// Authored SearchObject floors are the raw DATA.OVL byte (0..255). For a
+// small-map location (location != 0) that byte is DOS's basement encoding
+// and must decode as signed two's-complement (0xFF -> -1), matching every
+// other small-map floor convention (smallmaps.json's basement floor -1;
+// blackthorn.cpp's deposit() and every other basement destination). For the
+// WORLD map (location == 0), 255 is itself the correct, already-meaningful
+// runtime floor for the Underworld (types.h's FloorId comment; world.cpp's
+// get_active_map()) and must be left untouched -- decoding it too would
+// silently break Underworld search objects. This is the one place
+// SearchObject::floor is ever compared against a runtime floor (search_at,
+// quest_search.cpp); no other file needs to know about the encoding.
+int32_t decode_authored_floor(int32_t location, int32_t raw);
 int32_t search_at(GameState &,TurnState &,const SearchObject *,size_t,int32_t,int32_t,bool occupied);
 int32_t apply_search_grant(GameState &,QuestWorldServices &,int32_t id,int32_t quality);
 QuestCommandResult get_quest_object(CommandContext &,Direction,EventSink);

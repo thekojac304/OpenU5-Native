@@ -4,9 +4,13 @@
 #include <algorithm>
 #include <string>
 namespace openu5 {
+int32_t decode_authored_floor(int32_t location,int32_t raw){
+    if(location==0)return raw;
+    return raw<=127?raw:raw-256;
+}
 int32_t search_at(GameState &g,TurnState &t,const SearchObject *objects,size_t count,int32_t x,int32_t y,bool occupied){
     if(!objects)return -1;
-    for(size_t i=0;i<count && i<113;++i){const auto &o=objects[i];if(o.location!=g.position.map.location||o.floor!=g.position.map.floor||o.x!=x||o.y!=y)continue;
+    for(size_t i=0;i<count && i<113;++i){const auto &o=objects[i];if(o.location!=g.position.map.location||decode_authored_floor(o.location,o.floor)!=g.position.map.floor||o.x!=x||o.y!=y)continue;
         bool findable=i==13?g.keys==0&&!occupied:i==14?g.time.day!=t.skull_tree_day:i==15?g.equipment_quantities[39]==0&&!occupied:!(g.quest.search_found[i/8]&(1u<<(i%8)));
         if(!findable)continue;
         if(i==14)t.skull_tree_day=g.time.day;else if(i!=13 && i!=15){g.quest.search_found[i/8]|=uint8_t(1u<<(i%8));g.quest.search_present[i/8]|=uint8_t(1u<<(i%8));}return int32_t(i);
