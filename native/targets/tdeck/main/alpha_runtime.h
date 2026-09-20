@@ -13,6 +13,7 @@
 #include "openu5/dungeon_encounters.h"
 #include "openu5/look.h"
 #include "openu5/blackthorn.h"
+#include "openu5/blackthorn_scene.h"
 #include "openu5/outdoor.h"
 #include "openu5/shop_orchestration.h"
 #include "openu5/shrine.h"
@@ -75,6 +76,20 @@ class AlphaRuntime {
     openu5::ShrineServices shrine_services_{shrine_};
     openu5::LookServices look_services_{};
     openu5::BlackthornSession blackthorn_{};
+    // #324 / R-32 -- the Blackthorn capture scene. The semantic session above
+    // is untouched; these are presentation only. The pacer defers the whole
+    // capture turn and releases it beat by beat, so the staged sequence plays
+    // instead of the narrative arriving as one burst over the Palace lobby.
+    // Its queue, text arena, working room grid and per-segment script scratch
+    // are all PSRAM, like every other large runtime buffer here.
+    openu5::BlackthornSceneState blackthorn_scene_state_{};
+    openu5::BlackthornSceneServices blackthorn_scene_services_{};
+    openu5::BlackthornScenePacer blackthorn_pacer_{};
+    openu5::BlackthornSceneScript *blackthorn_script_ = nullptr;
+    openu5::BlackthornSceneStep *blackthorn_steps_ = nullptr;
+    char *blackthorn_scene_text_ = nullptr;
+    int16_t *blackthorn_scene_grid_ = nullptr;
+    uint32_t blackthorn_released_ = 0;
     openu5::CommandContext context_{game_,turn_,travel_,commands_,resources_.world};
     openu5::save::Json retained_{};
     AlphaSaveService save_{};
@@ -200,6 +215,8 @@ class AlphaRuntime {
     // state into the session, immediately before an input is routed.  See
     // UiSession::set_sail_context/set_harpsichord_active (R-19/R-20).
     void refresh_session_context();
+    /** Release whatever of the deferred Blackthorn scene is due; true = redraw. */
+    bool service_blackthorn_scene();
     void open_selection(openu5::UiMode, openu5::UiRequestId);
     static size_t selection_count(void *);
     static openu5::UiSelectionItem selection_item(void *, size_t);

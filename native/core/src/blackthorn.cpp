@@ -21,6 +21,27 @@ void deposit(CommandContext &c){c.game.position={{10,7},{18,-1}};c.game.keys=0;c
 std::string sacrifice(GameState &g){int living=0;for(int i=0;i<g.party.party_size && i<g.party.character_count;++i)if(g.party.characters[i].status!='D' && ++living==2){auto victim=g.party.characters[i];std::string result=victim.name;for(int j=i+1;j<g.party.character_count;++j)g.party.characters[j-1]=g.party.characters[j];victim.party_status=127;g.party.characters[15]=victim;g.party.character_count=16;g.party.party_size=std::max<int32_t>(0,g.party.party_size-1);return result;}return "";}
 void question(CommandContext &c,EventSink sink){auto &s=*c.blackthorn;std::string q=record(c,s.round<3?s.round:3);if(s.round<3){if(c.shrine_services->data)q+=str(c.shrine_services->data->virtues[s.shrine]);q+="?\"";}event(sink,GameEventKind::BlackthornPrompt,q);}
 NpcActor *adjacent(CommandContext &c){NpcActor *winner=nullptr;if(!c.actors)return nullptr;for(size_t i=0;i<c.actors->count;++i){auto &a=c.actors->actors[i];if(a.location!=c.game.position.map.location||a.z!=c.game.position.map.floor||std::abs(a.x-c.game.position.xy.x)+std::abs(a.y-c.game.position.xy.y)!=1)continue;auto idx=schedule_index(a.schedule.times,uint8_t(c.game.time.hour));int ai=a.schedule.ai[idx];if(ai<=3||((ai==4||ai==5)&&!a.schedule.dialog))continue;if(!winner||a.schedule.slot>=winner->schedule.slot)winner=&a;}return winner;}
+// #324 / R-32 -- the staged half of the capture. Present only when the caller
+// wired the packed throne-room grid; otherwise every emission below is skipped
+// and the capture stays the text-only stream every parity fixture observes.
+BlackthornSceneServices *capture_scene(CommandContext &c){
+    auto *s=c.blackthorn_scene;return s&&s->capture_tiles&&s->state&&s->script?s:nullptr;
+}
+void emit_scene(const BlackthornSceneServices &s,EventSink sink){
+    GameEvent e;e.kind=GameEventKind::BlackthornScene;e.blackthorn_scene=s.script;if(sink.emit)sink.emit(sink.context,e);
+}
+// kernel getkey_with_redraw 0x266c. The capture has five of its own (0x0894,
+// 0x08cd, 0x053f, 0x04f6, 0x0510); same event kind as the shrine rite uses.
+void key_wait(EventSink s){event(s,GameEventKind::ShrineKeyWait);}
+// explosion_fx_at_cell (kernel 0x3522) over slot 1's LAST coordinates
+// (0x0414-0x041e). The scene window is centred on (5,5), so the cell travels
+// as an offset from the centre, exactly like every other CellExplosion.
+void emit_sacrifice_explosion(const BlackthornSceneServices &s,EventSink sink){
+    int x=0,y=0;sacrifice_victim_cell(*s.state,x,y);
+    GameEvent e;e.kind=GameEventKind::CellExplosion;
+    e.cell_fx={int16_t(x-kBlackthornSceneCols/2),int16_t(y-kBlackthornSceneRows/2),1,0,0};
+    if(sink.emit)sink.emit(sink.context,e);
+}
 void password(CommandContext &c,EventSink s){c.blackthorn->password=true;event(s,GameEventKind::GuardPasswordPrompt,"\"Give now the\npassword, bearer\nof the Badge!\"\n\nYour response?");}
 }
 CommandStatus talk_guard(CommandContext &c,const NpcActor &npc,EventSink sink){if(!c.blackthorn)return CommandStatus::InvalidContext;if(c.game.position.map.location==18){if(c.turn.time_spell=='\x1d')password(c,sink);return CommandStatus::Success;}c.blackthorn->tribute=true;c.blackthorn->npc_slot=npc.schedule.slot;GameEvent e;e.kind=GameEventKind::GuardTributePrompt;e.note=c.game.position.map.location==5?-1:count_living(c.game)*10;if(sink.emit)sink.emit(sink.context,e);return CommandStatus::Success;}
@@ -33,15 +54,78 @@ CommandStatus blackthorn_action(CommandContext &c,BlackthornAction action,TalkTe
     if(action!=BlackthornAction::Capture && (action!=BlackthornAction::Answer || s.shrine<0))return CommandStatus::NoOp;
     for(int i=0;i<12;++i)if(!record(c,i))return CommandStatus::InvalidContext;
     if(action==BlackthornAction::Capture){s.shrine=int8_t(pick_interrogation_shrine(g));s.round=0;s.living=int8_t(count_living(g));if(s.shrine<0){deposit(c);event(sink,GameEventKind::Message,"\nThou art subdued and blindfolded!");event(sink,GameEventKind::MapChanged);event(sink,GameEventKind::PartyChanged);return CommandStatus::Success;}
-        for(auto text:{"\nThou art subdued and blindfolded!","\n\nStrong guards drag thee away!","\n\nThou hast been chained and manacled!","\n\nFootsteps!"})event(sink,GameEventKind::Message,text);
-        event(sink,GameEventKind::Message,"\n\nBlackthorn says:\n\n\"Ah, "+name(g.party.characters[0])+"!\n'Tis indeed an honour to meet thee at last! ");int gender=g.party.characters[0].gender;event(sink,GameEventKind::Message,std::string("\n\nGUARD! Release this good")+(gender==12?" lady ":gender==11?"man ":"")+"at once!\"");event(sink,GameEventKind::Message,record(c,11));question(c,sink);return CommandStatus::AwaitingResponse;
+        const char *texts[4]={"\nThou art subdued and blindfolded!","\n\nStrong guards drag thee away!","\n\nThou hast been chained and manacled!","\n\nFootsteps!"};
+        const std::string greeting="\n\nBlackthorn says:\n\n\"Ah, "+name(g.party.characters[0])+"!\n'Tis indeed an honour to meet thee at last! ";
+        const int gender=g.party.characters[0].gender;
+        const std::string guard_order=std::string("\n\nGUARD! Release this good")+(gender==12?" lady ":gender==11?"man ":"")+"at once!\"";
+        auto *scene=capture_scene(c);
+        if(scene){
+            // The prints of the binary are INTERLEAVED with the scene: the
+            // blindfold blackout, the drag, the room mounting with the party
+            // chained, the guards marching in, the fizzle of Blackthorn and
+            // the two getkey points. Order and offsets: BLCKTHRN 0x0652 ->
+            // 0x08d0, mirrored one for one from runCaptureScene() in the
+            // TypeScript reference.
+            char classes[6]{};const int seated=std::min<int>(s.living,6);
+            for(int i=0;i<seated && i<g.party.character_count;++i)classes[i]=g.party.characters[i].character_class;
+            init_capture_scene(*scene->state,classes,seated);
+            event(sink,GameEventKind::Message,texts[0]);                                  // 0x0652
+            build_blackout_intro_script(*scene->script);emit_scene(*scene,sink);          // 0x0672-0x06ae
+            event(sink,GameEventKind::Message,texts[1]);                                  // 0x06b0
+            build_throne_mount_script(*scene->state,scene->capture_tiles,*scene->script);
+            emit_scene(*scene,sink);                                                      // 0x06b9-0x07d1
+            event(sink,GameEventKind::Message,texts[2]);                                  // 0x07dc
+            build_chained_pause_script(*scene->script);emit_scene(*scene,sink);           // 0x07df
+            event(sink,GameEventKind::Message,texts[3]);                                  // 0x07ea
+            build_blackthorn_entry_script(*scene->state,*scene->script);
+            emit_scene(*scene,sink);                                                      // 0x07ed-0x0878
+            event(sink,GameEventKind::Message,greeting);                                  // 0x087f-0x0891
+            key_wait(sink);                                                               // 0x0894
+            event(sink,GameEventKind::Message,guard_order);                               // 0x0897-0x08bc
+            build_guard_release_script(*scene->state,*scene->script);emit_scene(*scene,sink); // 0x08bf
+            event(sink,GameEventKind::Message,record(c,11));                              // 0x08c6
+            key_wait(sink);                                                               // 0x08cd
+            question(c,sink);return CommandStatus::AwaitingResponse;
+        }
+        for(auto text:texts)event(sink,GameEventKind::Message,text);
+        event(sink,GameEventKind::Message,greeting);event(sink,GameEventKind::Message,guard_order);event(sink,GameEventKind::Message,record(c,11));question(c,sink);return CommandStatus::AwaitingResponse;
     }
     auto trimmed=talk_trim(response);TalkText mantra=c.shrine_services->data?c.shrine_services->data->mantras[s.shrine]:TalkText{};bool matched=quest_text_contains(trimmed.substr(0,14),mantra);
+    auto *scene=capture_scene(c);
     if(!matched && s.round>=1 && s.living>1)advance_clock(g,c.turn,2,&rand,c.sky);
-    if(!matched && s.living>1 && s.round<3){if(!s.round){event(sink,GameEventKind::Message,record(c,7));event(sink,GameEventKind::Message,std::string(record(c,8))+(g.party.character_count>1?g.party.characters[1].name:"")+" die!\" \n\n");}++s.round;question(c,sink);return CommandStatus::AwaitingResponse;}
-    if(matched){g.quest.shrine_destroyed[s.shrine]=255;g.quest.destroyed_count=std::max<uint8_t>(g.quest.destroyed_count,uint8_t(s.shrine+1));g.karma=uint8_t(g.karma<=5?0:g.karma-5);if(s.living>1)sacrifice(g);event(sink,GameEventKind::Message,record(c,s.living>1?5:9));}
-    else if(s.living<2)event(sink,GameEventKind::Message,record(c,10));
-    else{auto victim=sacrifice(g);event(sink,GameEventKind::Message,record(c,4));event(sink,GameEventKind::Message,"\n\n"+victim+" is sliced in half! ");event(sink,GameEventKind::Message,record(c,6));}
+    if(!matched && s.living>1 && s.round<3){
+        if(!s.round){
+            event(sink,GameEventKind::Message,record(c,7));
+            // anim_vm 0x36da runs BETWEEN rec7 and rec8 (0x0523): the guard
+            // marches the companion to the torture table and the hourglass is
+            // planted full. The getkey at 0x053f follows the die! line.
+            if(scene){build_warning_script(*scene->state,*scene->script);emit_scene(*scene,sink);}
+            event(sink,GameEventKind::Message,std::string(record(c,8))+(g.party.character_count>1?g.party.characters[1].name:"")+" die!\" \n\n");
+            if(scene)key_wait(sink);
+        }
+        // Escalation: the sand falls on a failed round 1 or 2 (0x05da/0x05e2).
+        if(scene && s.round>=1 && build_hourglass_script(s.round,*scene->script))emit_scene(*scene,sink);
+        ++s.round;question(c,sink);return CommandStatus::AwaitingResponse;}
+    if(matched){g.quest.shrine_destroyed[s.shrine]=255;g.quest.destroyed_count=std::max<uint8_t>(g.quest.destroyed_count,uint8_t(s.shrine+1));g.karma=uint8_t(g.karma<=5?0:g.karma-5);if(s.living>1)sacrifice(g);event(sink,GameEventKind::Message,record(c,s.living>1?5:9));
+        if(scene){
+            // Betrayal. With companions, rec5 is printed inside
+            // sacrifice_member(0) before the siren (0x03c2); alone it is the
+            // pardon at 0x058e and nothing is sacrificed. Both then take the
+            // common tail: getkey 0x0510, then anim_vm 0x369e.
+            if(s.living>1){build_sacrifice_script(*scene->state,*scene->script);emit_scene(*scene,sink);emit_sacrifice_explosion(*scene,sink);}
+            key_wait(sink);
+            build_finale_script(*scene->state,*scene->script);emit_scene(*scene,sink);
+        }}
+    else if(s.living<2){event(sink,GameEventKind::Message,record(c,10));
+        if(scene){key_wait(sink);build_finale_script(*scene->state,*scene->script);emit_scene(*scene,sink);}}
+    else{auto victim=sacrifice(g);event(sink,GameEventKind::Message,record(c,4));
+        if(scene){build_sacrifice_script(*scene->state,*scene->script);emit_scene(*scene,sink);emit_sacrifice_explosion(*scene,sink);}
+        event(sink,GameEventKind::Message,"\n\n"+victim+" is sliced in half! ");
+        if(scene)key_wait(sink);                                          // 0x04f6
+        event(sink,GameEventKind::Message,record(c,6));
+        // 0x08d9: only if slot 8 is still standing -- the 0x369e exits have
+        // already removed him, the pendulum has not.
+        if(scene && blackthorn_on_stage(*scene->state)){build_blackthorn_exit_script(*scene->state,*scene->script);emit_scene(*scene,sink);}}
     s.shrine=-1;deposit(c);event(sink,GameEventKind::MapChanged);event(sink,GameEventKind::PartyChanged);return CommandStatus::Success;
 }
 bool blackthorn_turn_effect(CommandContext &c,CommandEffect effect,EventSink sink,Rand rand){

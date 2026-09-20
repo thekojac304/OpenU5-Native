@@ -1,5 +1,6 @@
 #pragma once
 #include "quest_world.h"
+#include "blackthorn_scene.h"
 namespace openu5 {
 struct BlackthornSession {
     int8_t shrine=-1,round=0,living=0;

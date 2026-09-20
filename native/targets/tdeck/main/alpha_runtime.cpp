@@ -30,6 +30,14 @@ constexpr char kTag[]="AlphaRuntime";
 constexpr uint32_t kInternal=MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT,kPsram=MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT;
 constexpr size_t kAstarBytes=323084,kTranscriptBlocks=96;
 constexpr size_t kCreationWidth=320,kCreationHeight=152,kCreationPixels=kCreationWidth*kCreationHeight;
+// #324 / R-32 -- the deferred Blackthorn capture turn. The longest real turn
+// is the capture entry: 15 events and 50 scene beats; the escorted finale is
+// 44 beats. The arena holds the copied narrative for one turn (the seven
+// throne-room prints plus the interrogation question are well under 2 KiB).
+constexpr size_t kBlackthornSceneSteps=96,kBlackthornSceneTextBytes=4096;
+// One run-n-frames unit (kernel 0x3ae6 / an INT 1Ch tick), the same 55 ms
+// calibration the tile-animation tick and the reference pacers already use.
+constexpr uint32_t kPresentationUnitMs=55;
 constexpr int kVirtueX[8]={40,48,48,40,40,48,40,48};
 constexpr int kVirtueY[8]={5,7,4,10,8,0,5,6};
 constexpr int64_t kEnemyBeatUs=400000;
@@ -113,8 +121,16 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
         tile_cache_storage_=static_cast<uint8_t*>(heap_caps_malloc(openu5::kCachedTileBytes,kPsram));
         debug_view_=static_cast<DeviceDebugScreen*>(heap_caps_calloc(1,sizeof(DeviceDebugScreen),kPsram));
         ui_mem=heap_caps_malloc(sizeof(openu5::UiSession),kPsram);
+        // #324 / R-32. kBlackthornSceneSteps is the worst real turn plus
+        // headroom: the capture entry is the longest at 15 events and 50
+        // beats; the escorted finale is 44 beats.
+        blackthorn_script_=static_cast<openu5::BlackthornSceneScript*>(heap_caps_calloc(1,sizeof(openu5::BlackthornSceneScript),kPsram));
+        blackthorn_steps_=static_cast<openu5::BlackthornSceneStep*>(heap_caps_calloc(kBlackthornSceneSteps,sizeof(openu5::BlackthornSceneStep),kPsram));
+        blackthorn_scene_text_=static_cast<char*>(heap_caps_calloc(kBlackthornSceneTextBytes,1,kPsram));
+        blackthorn_scene_grid_=static_cast<int16_t*>(heap_caps_calloc(openu5::kBlackthornSceneCells,sizeof(int16_t),kPsram));
     }
     if(!astar_scratch_||!transcript_||!viewport_||!creation_canvas_||!tile_cache_storage_||!debug_view_||!ui_mem)return ESP_ERR_NO_MEM;
+    if(!blackthorn_script_||!blackthorn_steps_||!blackthorn_scene_text_||!blackthorn_scene_grid_)return ESP_ERR_NO_MEM;
     {
         debug51::Step trace("presentation-tile-cache-load");
         ESP_RETURN_ON_ERROR(openu5::initialize_tile_cache(tiles,tile_report,tile_cache_storage_,openu5::kCachedTileBytes,tile_cache_),kTag,"cache presentation tiles");
@@ -138,7 +154,19 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
     context_.dialogue_services=&dialogue_services_;context_.shop_services=&shop_services_;context_.shrine_services=&shrine_services_;
     context_.outdoor=&outdoor_;context_.terrain=&terrain_;context_.quest_world=&quest_;
     terrain_.writes={this,terrain_write};
-    context_.blackthorn=&blackthorn_;look_services_.context=this;look_services_.describe=[](void*p,int32_t tile){auto&r=*static_cast<AlphaRuntime*>(p);return tile>=0&&size_t(tile)<r.resources_.look_count?r.resources_.look_text+r.resources_.look_offsets[tile]:"something";};look_services_.sign=[](void*p,openu5::MapId map,int32_t x,int32_t y){auto&r=*static_cast<AlphaRuntime*>(p);return openu5::resolve_look_sign(r.resources_.signs,r.resources_.sign_count,map,x,y);};context_.look=&look_services_;
+    context_.blackthorn=&blackthorn_;
+    // #324 / R-32. Wiring capture_tiles is what turns the staged scene on:
+    // with the packed throne room absent the capture emits the same
+    // text-only stream it always did, which is the degradation every parity
+    // harness relies on.
+    blackthorn_scene_services_.capture_tiles=resources_.blackthorn_scene_tiles;
+    blackthorn_scene_services_.state=&blackthorn_scene_state_;
+    blackthorn_scene_services_.script=blackthorn_script_;
+    context_.blackthorn_scene=&blackthorn_scene_services_;
+    blackthorn_pacer_.attach({blackthorn_steps_,kBlackthornSceneSteps,blackthorn_scene_text_,
+                              kBlackthornSceneTextBytes,blackthorn_scene_grid_});
+    blackthorn_pacer_.set_unit_ms(kPresentationUnitMs);
+    look_services_.context=this;look_services_.describe=[](void*p,int32_t tile){auto&r=*static_cast<AlphaRuntime*>(p);return tile>=0&&size_t(tile)<r.resources_.look_count?r.resources_.look_text+r.resources_.look_offsets[tile]:"something";};look_services_.sign=[](void*p,openu5::MapId map,int32_t x,int32_t y){auto&r=*static_cast<AlphaRuntime*>(p);return openu5::resolve_look_sign(r.resources_.signs,r.resources_.sign_count,map,x,y);};context_.look=&look_services_;
     context_.services={this,command_effect,command_reload,banner};context_.events={this,dispatch_event};
     quest_.context=this;quest_.count=object_count;quest_.read=object_read;quest_.reserve=object_reserve;quest_.append=object_append;quest_.erase=object_erase;quest_.write=object_write;
     quest_.tile_at=tile_at;quest_.volatile_tile=volatile_tile;quest_.persistent_tile=persistent_tile;
@@ -239,6 +267,18 @@ void AlphaRuntime::consume_event(const openu5::GameEvent&e){
         }
         return;
     }
+    // #324 / R-32. The capture turn is emitted synchronously in full; the
+    // scene pacer takes ownership of it from the first scene event onward and
+    // hands it back a beat at a time (see service_blackthorn_scene()). Every
+    // borrowed payload pointer in `e` dies with this call, so the pacer copies
+    // what it keeps.
+    if(blackthorn_pacer_.enqueue(e)){
+        if(e.kind==openu5::GameEventKind::BlackthornScene)
+            ESP_LOGI(kTag,"BLACKTHORN_SCENE_SEGMENT beats=%u state=%d",
+                     unsigned(e.blackthorn_scene?e.blackthorn_scene->count:0),int(blackthorn_pacer_.state()));
+        dirty_=true;dirty_reason_="blackthorn-scene";
+        return;
+    }
     ui_->consume(e);
     if(e.kind==openu5::GameEventKind::DungeonEntered){
         dungeon_presentation_pending_=true;
@@ -268,6 +308,27 @@ void AlphaRuntime::consume_event(const openu5::GameEvent&e){
                  static_cast<unsigned long>(ui_->blocked_events_presented()));
     }
 }
+// #324 / R-32. Releases whatever of the deferred capture turn is due now.
+// Returns true when anything moved, so the caller can mark the frame dirty.
+// The sink is UiSession's own, deliberately NOT this class's consume_event:
+// a released event must reach the session, never be re-offered to the pacer.
+bool AlphaRuntime::service_blackthorn_scene(){
+    if(!blackthorn_pacer_.active())return false;
+    const auto released_before=blackthorn_pacer_.released_steps();
+    const auto state_before=blackthorn_pacer_.state();
+    const auto phase_before=blackthorn_pacer_.view().phase;
+    blackthorn_pacer_.pump(uint32_t(esp_timer_get_time()/1000),ui_->event_sink());
+    const auto released=blackthorn_pacer_.released_steps();
+    const auto state=blackthorn_pacer_.state();
+    const auto phase=blackthorn_pacer_.view().phase;
+    if(phase!=phase_before||state!=state_before)
+        ESP_LOGI(kTag,"BLACKTHORN_SCENE phase=%d->%d state=%d->%d released=%lu dropped=%lu",
+                 int(phase_before),int(phase),int(state_before),int(state),
+                 (unsigned long)released,(unsigned long)blackthorn_pacer_.dropped_steps());
+    blackthorn_released_=released;
+    return released!=released_before||state!=state_before||phase!=phase_before;
+}
+
 void AlphaRuntime::start_magic_ceremony(int index){
     index=std::clamp(index,0,8);const int64_t now=esp_timer_get_time();
     // CAST2:0000 calibrated by the existing DOS audio reference: noise lead,
@@ -909,6 +970,29 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
         ESP_LOGI(kTag,"SYSTEM_MENU action=%s accepted=%d open=%d gameplay_command=none",action_name(action.kind),accepted,system_menu_.active());
         dirty_=true;dirty_reason_="system-menu";return accepted;
     }
+    // #324 / R-32. While a scene segment is running the reference pacer
+    // swallows input (the same rule the shrine rite uses) and the binary is
+    // simply inside its own synchronous routine. Two deliberate exceptions:
+    // transcript paging, which touches no scene state and dispatches nothing
+    // (Batch 4.5C), and the getkey_with_redraw points, which is what the
+    // original waits on.
+    if(blackthorn_pacer_.modal()&&shortcut==DeviceShortcut::None){
+        if(action.kind==openu5::UiActionKind::PageUp||action.kind==openu5::UiActionKind::PageDown){
+            // Same pre-routing push the ordinary path does, so a page of
+            // paging is a page of what is actually on screen (Batch 4.5C).
+            refresh_session_context();
+            ui_->handle_input(action);
+            dirty_=true;dirty_reason_="transcript-page";
+            ESP_LOGI(kTag,"BLACKTHORN_SCENE_INPUT action=%s effect=transcript-page scene_state=%d",
+                     action_name(action.kind),int(blackthorn_pacer_.state()));
+            return true;
+        }
+        const bool advanced=action.kind==openu5::UiActionKind::Confirm&&blackthorn_pacer_.advance_key();
+        if(advanced){dirty_=true;dirty_reason_="blackthorn-scene";}
+        ESP_LOGI(kTag,"BLACKTHORN_SCENE_INPUT action=%s effect=%s scene_state=%d gameplay_command=none",
+                 action_name(action.kind),advanced?"key-wait-advance":"swallowed",int(blackthorn_pacer_.state()));
+        return true;
+    }
     if(gem_view_active_&&shortcut==DeviceShortcut::None){
         const bool charge=gem_view_charges_turn_;
         gem_view_active_=false;gem_view_charges_turn_=false;
@@ -1007,7 +1091,13 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
     transcript_high_water_=std::max<uint32_t>(transcript_high_water_,uint32_t(ui_->transcript_size()));dirty_=true;return true;
 }
 
-const char *AlphaRuntime::overlay() const {static char text[64]{};text[0]=0;if(ui_&&ui_->mode()==openu5::UiMode::Shop)return text;if(ui_&&ui_->mode()==openu5::UiMode::TargetSelection){const int x=ui_->target_x(),y=ui_->target_y();if(ui_->target_command_kind()==openu5::CommandKind::Fire){if(ui_->target_has_direction())std::snprintf(text,sizeof(text),"Fire: %s",openu5::direction_name(ui_->target_direction()));else std::snprintf(text,sizeof(text),"Fire: choose direction");}else{const openu5::CombatActor *target=nullptr;if(context_.combat)for(int i=0;i<combat_.count;++i){const auto&a=combat_.actors[i];if(combat_actor_live(a)&&a.position.x==x&&a.position.y==y){target=&a;break;}}if(target){const char *name=target->enemy&&target->enemy->name?target->enemy->name:target->member<game_.party.character_count?game_.party.characters[target->member].name:"Actor";std::snprintf(text,sizeof(text),"Aim: %.16s (%d,%d)",name,x,y);}else std::snprintf(text,sizeof(text),"Aim: empty (%d,%d)",x,y);}}
+const char *AlphaRuntime::overlay() const {static char text[64]{};text[0]=0;
+    // #324 / R-32. The original's getkey_with_redraw points have no on-screen
+    // cue because a DOS player simply pressed a key; on the handheld the scene
+    // would otherwise look frozen. A device affordance, not transcript text.
+    if(blackthorn_pacer_.awaiting_key()){std::snprintf(text,sizeof(text),"Enter: continue");return text;}
+    if(ui_&&ui_->mode()==openu5::UiMode::Shop)return text;
+    if(ui_&&ui_->mode()==openu5::UiMode::TargetSelection){const int x=ui_->target_x(),y=ui_->target_y();if(ui_->target_command_kind()==openu5::CommandKind::Fire){if(ui_->target_has_direction())std::snprintf(text,sizeof(text),"Fire: %s",openu5::direction_name(ui_->target_direction()));else std::snprintf(text,sizeof(text),"Fire: choose direction");}else{const openu5::CombatActor *target=nullptr;if(context_.combat)for(int i=0;i<combat_.count;++i){const auto&a=combat_.actors[i];if(combat_actor_live(a)&&a.position.x==x&&a.position.y==y){target=&a;break;}}if(target){const char *name=target->enemy&&target->enemy->name?target->enemy->name:target->member<game_.party.character_count?game_.party.characters[target->member].name:"Actor";std::snprintf(text,sizeof(text),"Aim: %.16s (%d,%d)",name,x,y);}else std::snprintf(text,sizeof(text),"Aim: empty (%d,%d)",x,y);}}
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
     else if(ui_&&ui_->mode()==openu5::UiMode::DebugMenu&&debug_){auto v=debug_->view();std::snprintf(text,sizeof(text),"%s > %s",v.title?v.title:"Debug",v.item?v.item:"");}
 #endif
@@ -1285,6 +1375,7 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
         return e;
     }
     service_combat();
+    if(service_blackthorn_scene()){dirty_=true;dirty_reason_="blackthorn-scene";}
     assert(!frontend_.active() && !system_menu_.active() && "gameplay renderer lacks display ownership");
     if(smoke_.pump()){dirty_=true;dirty_reason_="smoke-test-progress";}
     const int64_t now=esp_timer_get_time();DeviceShortcut held_shortcut{};
@@ -1304,12 +1395,19 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     const char *render_reason=force?"full-redraw":animation_only?"animation-tick":dirty_reason_;
     auto &snapshot=presentation_;snapshot={};
     openu5::ActiveMap world_gem_map{};bool world_gem_map_ready=false;
-    const bool combat_source=context_.combat&&combat_.initialized;
-    const bool dungeon_source=!combat_source&&context_.dungeon&&dungeon_.active;
+    // #324 / R-32 -- the fourth presentation source. It outranks the others
+    // because the capture scene is a staged cutscene: while it is mounted the
+    // ordinary Palace-lobby world must not be what the viewport shows, which
+    // was the whole visible defect. It draws from the pacer's own room and
+    // cast; no gameplay position is consulted or rewritten to produce it.
+    const bool blackthorn_source=blackthorn_pacer_.mounted();
+    const bool combat_source=!blackthorn_source&&context_.combat&&combat_.initialized;
+    const bool dungeon_source=!blackthorn_source&&!combat_source&&context_.dungeon&&dungeon_.active;
     // One source decision owns gameplay presentation.  In particular, the
     // surface return coordinate is deliberately absent from the dungeon arm.
-    const char *presentation_source=combat_source?"combat":dungeon_source?"dungeon3d":"world";
-    if(combat_source)snapshot=openu5::compose_combat_presentation(combat_,game_);
+    const char *presentation_source=blackthorn_source?"blackthorn-scene":combat_source?"combat":dungeon_source?"dungeon3d":"world";
+    if(blackthorn_source)snapshot=openu5::compose_blackthorn_presentation(blackthorn_pacer_.view());
+    else if(combat_source)snapshot=openu5::compose_combat_presentation(combat_,game_);
     else if(dungeon_source)snapshot.center={dungeon_.pos.x,dungeon_.pos.y};
     else{auto active=openu5::get_active_map(resources_.world,game_.position.map);if(active.error!=openu5::Error::None){
         // A missing {location,floor} map (e.g. a resource pack built before a
@@ -1345,7 +1443,9 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     if(teleport_snapshot_pending_){ESP_LOGI(kTag,"TELEPORT_RENDERER map=L%u/F%d xy=%u,%u snapshot_center=%d,%d combat=%d dungeon=%d",
         unsigned(game_.position.map.location),int(game_.position.map.floor),unsigned(game_.position.xy.x),unsigned(game_.position.xy.y),
         int(snapshot.center.x),int(snapshot.center.y),snapshot.combat,dungeon_.active);teleport_snapshot_pending_=false;}
-    if(!debug_mode&&!dungeon_source)actor_animation_.render(snapshot,tick,turn_.time_spell=='T');
+    // The scene bakes its own cast into the window at fixed reference cells;
+    // the actor-program clock would wander them off their staged positions.
+    if(!debug_mode&&!dungeon_source&&!blackthorn_source)actor_animation_.render(snapshot,tick,turn_.time_spell=='T');
     openu5::RenderReport report{};
     const int64_t start=esp_timer_get_time();
     esp_err_t e=ESP_OK;
@@ -1413,6 +1513,10 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
 }
 
 void AlphaRuntime::synchronize_loaded_world(){
+    // #324 / R-32. A capture scene is pure presentation and is never saved;
+    // a load arriving mid-scene must take the stage down rather than leave a
+    // throne room drawn over a completely different world.
+    blackthorn_pacer_.cancel();blackthorn_scene_state_={};
     actors_={};const auto loc=game_.position.map.location;if(loc>=1&&loc<=32){auto &n=resources_.npc_locations[loc-1];openu5::enter_npc_map(actors_,n.slots,n.count,uint8_t(loc),uint8_t(game_.time.hour),game_.npc_dead[loc-1]);openu5::save::restore_npc_walk(retained_,uint8_t(loc),true,actors_);}terrain_.refresh(resources_.world,game_);dungeon_={};combat_.initialized=false;
 }
 

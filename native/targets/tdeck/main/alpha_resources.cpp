@@ -48,7 +48,8 @@ void AlphaResourceOwners::release() {
                     static_cast<void *>(sign_raw), static_cast<void *>(question_text),
                     static_cast<void *>(intro_text), static_cast<void *>(intro_title),
                     static_cast<void *>(credits_panel), static_cast<void *>(creation_sprite_blob),
-                    static_cast<void *>(demo_scene), static_cast<void *>(runes_font)})
+                    static_cast<void *>(demo_scene), static_cast<void *>(runes_font),
+                    static_cast<void *>(blackthorn_scene_tiles)})
         if (p) heap_caps_free(p);
     if (small_maps) heap_caps_free(small_maps);
     if (combat_map_views) heap_caps_free(combat_map_views);
@@ -112,7 +113,7 @@ esp_err_t AlphaResourcePack::open(const char *path, AlphaResourceReport &report)
     }
     heap_caps_free(scratch);
     if ((payload_crc ^ 0xffffffffU) != report.payload_crc32) { close(); return ESP_ERR_INVALID_CRC; }
-    static const char *required[]={"init.gam","init.ool","overworld.map","underworld.map","smallmaps.bin","dungeons.bin","npcs.bin","worldtables.bin","combat.bin","shops.bin","shop-records.bin","misc-records.bin","talk.bin","shrines.bin","questions.bin","intro-text.bin","intro-title.rgb565","credits.rgb565","demo-scene.bin","look.bin","signs.bin","runes.ch","combatmaps.json","data.json","shoppe.json","talk-towne.json","talk-dwelling.json","talk-castle.json","talk-keep.json","look2.json","signs.json","endgame.json"};
+    static const char *required[]={"init.gam","init.ool","overworld.map","underworld.map","smallmaps.bin","dungeons.bin","npcs.bin","worldtables.bin","combat.bin","shops.bin","shop-records.bin","misc-records.bin","blackthorn-scene.bin","talk.bin","shrines.bin","questions.bin","intro-text.bin","intro-title.rgb565","credits.rgb565","demo-scene.bin","look.bin","signs.bin","runes.ch","combatmaps.json","data.json","shoppe.json","talk-towne.json","talk-dwelling.json","talk-castle.json","talk-keep.json","look2.json","signs.json","endgame.json"};
     for (const char *name:required) if(!find(name)){ESP_LOGE(kTag,"Required entry missing: %s",name);close();return ESP_ERR_NOT_FOUND;}
     report.firmware_match = report.file_size == kExpectedAlphaResourceSize &&
                             report.payload_crc32 == kExpectedAlphaResourceCrc32;
@@ -227,6 +228,18 @@ esp_err_t AlphaResourcePack::load(AlphaResourceOwners &o, AlphaResourceReport &r
        read(*misc_text_records,misc_text_dir,o.misc_text_records,misc_text_records->length-misc_text_dir)!=ESP_OK||
        !validate_misc_text_records(o.misc_text_offsets,o.misc_text_records,misc_text_records->length-misc_text_dir,misc_text_count)){o.release();return ESP_ERR_INVALID_SIZE;}
     o.misc_text_record_count=misc_text_count;
+    // Blackthorn's throne room (#324 / R-32): cols, rows, then cols*rows
+    // int16 tiles. Rejected outright when it is not the expected 11x11, so a
+    // stale pack can never half-stage the capture scene.
+    const auto *scene=find("blackthorn-scene.bin");uint8_t scene_head[8]{};
+    if(!scene||read(*scene,0,scene_head,8)!=ESP_OK){o.release();return ESP_FAIL;}
+    const uint32_t scene_cols=u32(scene_head),scene_rows=u32(scene_head+4);
+    const size_t scene_cells=size_t(openu5::kBlackthornSceneCells);
+    if(scene_cols!=uint32_t(openu5::kBlackthornSceneCols)||scene_rows!=uint32_t(openu5::kBlackthornSceneRows)||
+       scene->length!=8+scene_cells*sizeof(int16_t)){o.release();return ESP_ERR_INVALID_SIZE;}
+    o.blackthorn_scene_tiles=static_cast<int16_t*>(psram_alloc(scene_cells*sizeof(int16_t)));
+    if(!o.blackthorn_scene_tiles){o.release();return ESP_ERR_NO_MEM;}
+    if(read(*scene,8,o.blackthorn_scene_tiles,scene_cells*sizeof(int16_t))!=ESP_OK){o.release();return ESP_FAIL;}
     const auto *talk=find("talk.bin");if(!talk||talk->length<4){o.release();return ESP_ERR_INVALID_SIZE;}o.dialogue_data=static_cast<uint8_t*>(psram_alloc(talk->length));if(!o.dialogue_data){o.release();return ESP_ERR_NO_MEM;}if(read(*talk,0,o.dialogue_data,talk->length)!=ESP_OK){o.release();return ESP_FAIL;}o.dialogue_data_size=talk->length;
     const auto *shrines=find("shrines.bin");uint8_t shrine_count[4]{};if(!shrines||shrines->length!=4+8*56||read(*shrines,0,shrine_count,4)!=ESP_OK||u32(shrine_count)!=8){o.release();return ESP_ERR_INVALID_SIZE;}o.shrine_text=static_cast<char16_t*>(psram_alloc(8*24*sizeof(char16_t)));if(!o.shrine_text){o.release();return ESP_ERR_NO_MEM;}for(int i=0;i<8;++i){uint8_t b[56]{};if(read(*shrines,4+i*56,b,sizeof(b))!=ESP_OK){o.release();return ESP_FAIL;}char16_t*v=o.shrine_text+i*24;size_t vn=0,mn=0;for(int j=0;j<16;++j){v[j]=char16_t(u16(b+j*2));if(v[j])vn=j+1;}for(int j=0;j<8;++j){v[16+j]=char16_t(u16(b+32+j*2));if(v[16+j])mn=j+1;}o.shrine_data.virtues[i]={v,vn};o.shrine_data.mantras[i]={v+16,mn};o.shrine_data.x[i]=int32_t(u32(b+48));o.shrine_data.y[i]=int32_t(u32(b+52));}o.shrine_data.count=8;
     const auto *questions=find("questions.bin");uint8_t question_head[4]{};if(!questions||questions->length<4+29*4||read(*questions,0,question_head,4)!=ESP_OK||u32(question_head)!=28){o.release();return ESP_ERR_INVALID_SIZE;}uint8_t question_dir[29*4]{};if(read(*questions,4,question_dir,sizeof(question_dir))!=ESP_OK){o.release();return ESP_FAIL;}const size_t question_data_at=4+sizeof(question_dir),question_bytes=questions->length-question_data_at;if(u32(question_dir+28*4)!=question_bytes){o.release();return ESP_ERR_INVALID_SIZE;}o.question_text=static_cast<char*>(psram_alloc(question_bytes));if(!o.question_text){o.release();return ESP_ERR_NO_MEM;}if(read(*questions,question_data_at,o.question_text,question_bytes)!=ESP_OK){o.release();return ESP_FAIL;}for(size_t i=0;i<28;++i){const auto begin=u32(question_dir+i*4),end=u32(question_dir+(i+1)*4);if(begin>=end||end>question_bytes||o.question_text[end-1]!=0){o.release();return ESP_ERR_INVALID_SIZE;}o.questions[i]=o.question_text+begin;}o.question_count=28;

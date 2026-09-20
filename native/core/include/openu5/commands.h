@@ -12,6 +12,7 @@ struct ShrineServices;
 struct ShrineInput;
 struct QuestWorldServices;
 struct BlackthornSession;
+struct BlackthornSceneServices;
 struct OutdoorServices;
 struct LookServices;
 struct WorldTerrain;
@@ -138,6 +139,10 @@ struct CommandContext {
     ShrineServices *shrine_services = nullptr;
     QuestWorldServices *quest_world = nullptr;
     BlackthornSession *blackthorn = nullptr;
+    // #324 / R-32. Absent (or with no packed room) the capture emits the
+    // same text-only stream it always did -- the discriminant that keeps
+    // every existing parity fixture and pure harness byte-identical.
+    BlackthornSceneServices *blackthorn_scene = nullptr;
     OutdoorServices *outdoor = nullptr;
     const LookServices *look = nullptr;
     WorldTerrain *terrain = nullptr;

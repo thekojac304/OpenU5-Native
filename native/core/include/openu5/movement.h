@@ -7,6 +7,7 @@ struct DialogueEvent;
 struct ShopEvent;
 struct EndgameScript;
 struct RefugeScript;
+struct BlackthornSceneScript;
 struct ZodiacView;
 struct TrollSneakScript {
     struct Beat { const char *text = nullptr; int8_t pause_units = -1; bool append = false; };
@@ -39,7 +40,7 @@ Result<StepGeometry> resolve_world_step(GameState &, const ActiveMap &, Directio
 struct NpcActor;
 enum class GameEventKind : uint8_t { Message, Moved, MapChanged, PartyChanged, TownExitPrompt,
     WalkEcho, Sfx, PoisonTick, Quake, NeedsDirection, CombatStarted, CombatEnded, Combat, DungeonEntered, DungeonExited, Dialogue, Shop,
-    ShrineVisitPrompt, ShrineRestorePrompt, ShrineDonatePrompt, ShrineKeyWait, RitualInvert, CellExplosion, GameWon, Endgame, BlackthornPrompt, GuardPasswordPrompt, GuardTributePrompt, GuardArrestPrompt, NpcInitiatesTalk, NpcInitiatesShop, Refuge, TrollSneak, TrollTollPrompt, CrystalBallPrompt, WellDropPrompt, FountainDrinkPrompt, WellWishPrompt, Zodiac, GemView, MapReveal, CellProjectile, MagicCeremony };
+    ShrineVisitPrompt, ShrineRestorePrompt, ShrineDonatePrompt, ShrineKeyWait, RitualInvert, CellExplosion, GameWon, Endgame, BlackthornPrompt, GuardPasswordPrompt, GuardTributePrompt, GuardArrestPrompt, NpcInitiatesTalk, NpcInitiatesShop, Refuge, TrollSneak, TrollTollPrompt, CrystalBallPrompt, WellDropPrompt, FountainDrinkPrompt, WellWishPrompt, Zodiac, GemView, MapReveal, CellProjectile, MagicCeremony, BlackthornScene };
 struct GameEvent {
     GameEventKind kind = GameEventKind::Moved;
     StepMessage message = StepMessage::None; // Legacy movement vocabulary.
@@ -56,6 +57,10 @@ struct GameEvent {
     const NpcActor *npc=nullptr; // Borrowed identity for semantic conversation/shop initiation.
     const RefugeScript *refuge=nullptr;
     const TrollSneakScript *troll_sneak=nullptr;
+    // Borrowed for the synchronous delivery only, like every other payload
+    // here: the Blackthorn capture scene segment (#324 / R-32). A consumer
+    // that outlives the emit must copy the beats it needs.
+    const BlackthornSceneScript *blackthorn_scene=nullptr;
     const ZodiacView *zodiac=nullptr;
     const uint8_t *sign_raw=nullptr;
     size_t sign_raw_size=0;

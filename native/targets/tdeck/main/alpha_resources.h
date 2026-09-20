@@ -15,16 +15,17 @@
 #include "openu5/quest_world.h"
 #include "openu5/look.h"
 #include "openu5/intro_view.h"
+#include "openu5/blackthorn_scene.h"
 
 namespace tdeck {
 
 constexpr char kAlphaResourcePath[] = "/sd/ultima5/openu5-alpha1-resources.bin";
 constexpr uint16_t kAlphaResourceVersionMajor = 2;
 constexpr uint16_t kAlphaResourceVersionMinor = 0;
-constexpr uint32_t kExpectedAlphaResourceSize = 1843143;
-constexpr uint32_t kExpectedAlphaResourceCrc32 = 0x6ee17679U;
+constexpr uint32_t kExpectedAlphaResourceSize = 1843457;
+constexpr uint32_t kExpectedAlphaResourceCrc32 = 0x2b1449f4U;
 constexpr char kExpectedAlphaResourceSha256[] =
-    "0ac80e41be1b2b3ae20966730cd775347c5ac3f2cfe4f1da8ad6eb8ee02c819b";
+    "1a5b5a402ec9480ed8ee5963c7fbf1e04470f10cbfeedd5dfc69d9b9f50fa573";
 
 struct CreationSprite {
     uint16_t width = 0, height = 0;
@@ -110,6 +111,11 @@ struct AlphaResourceOwners {
     CreationSprite creation_sprites[11]{};
     uint8_t *demo_scene = nullptr;
     uint8_t *runes_font = nullptr;
+    // Blackthorn's private throne room (#324 / R-32): MISCMAPS.DAT record 0 as
+    // an 11x11 int16 grid, the stage the capture scene mounts. Borrowed by
+    // BlackthornSceneServices::capture_tiles; never mutated (the scene pacer
+    // patches its own working copy).
+    int16_t *blackthorn_scene_tiles = nullptr;
     openu5::IntroViewData intro_view{};
     size_t psram_bytes = 0;
 

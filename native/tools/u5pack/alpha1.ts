@@ -385,6 +385,32 @@ function miscMsgRecords(): Buffer {
   return encodeStringRecords(rows);
 }
 
+// Blackthorn's private throne room (#324 / audit R-32): MISCMAPS.DAT record 0,
+// the 11x11 grid the capture scene stages the party, the guards and Blackthorn
+// himself on. The extractor already produces it as shrine-scene.json's
+// `capture` key (the same parser that yields the shrine and Codex rooms); this
+// is its first native consumer, so it is packed here for the first time rather
+// than hand-copied into device code. Wire format: cols, rows, then cols*rows
+// int16 tiles, row-major -- the layout native/core's BlackthornSceneScript
+// mounts verbatim.
+function blackthornScene(): Buffer {
+  const scenes = JSON.parse(readFileSync(resolve(ROOT, "game/assets/shrine-scene.json"), "utf8"));
+  const capture = scenes?.capture;
+  if (!capture) throw new Error("shrine-scene.json has no `capture` room");
+  const { cols, rows, tiles } = capture;
+  if (cols !== 11 || rows !== 11) throw new Error(`capture room is ${cols}x${rows}; expected 11x11`);
+  const flat: number[] = tiles.flat();
+  if (flat.length !== cols * rows) throw new Error(`capture room has ${flat.length} tiles; expected ${cols * rows}`);
+  const out = Buffer.alloc(8 + flat.length * 2);
+  out.writeUInt32LE(cols, 0);
+  out.writeUInt32LE(rows, 4);
+  flat.forEach((tile, i) => {
+    if (!Number.isInteger(tile) || tile < 0 || tile > 0xffff) throw new Error(`capture tile ${i} is ${tile}`);
+    out.writeInt16LE(tile, 8 + i * 2);
+  });
+  return out;
+}
+
 function signData(): Buffer {
   return buildAlphaSignData(JSON.parse(readFileSync(resolve(ROOT, "game/assets/signs.json"), "utf8")));
 }
@@ -434,6 +460,7 @@ const entries: Entry[] = [
   { name: "look.bin", data: lookData() },
   { name: "shop-records.bin", data: stringRecords("game/assets/shoppe.json") },
   { name: "misc-records.bin", data: miscMsgRecords() },
+  { name: "blackthorn-scene.bin", data: blackthornScene(), records: 11 * 11, stride: 2 },
   { name: "signs.bin", data: packedSigns, records: packedSigns.readUInt32LE(0), stride: ALPHA_SIGN_RECORD_BYTES },
   file("runes.ch", "original/u5/ultima5/runes.ch"),
   file("combatmaps.json", "game/assets/maps/combatmaps.json"),

@@ -20,6 +20,7 @@ set(OPENU5_CORE_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/quest_world.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/quest_search.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/blackthorn.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/blackthorn_scene.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/shops.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/shop_orchestration.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/save_json.cpp"

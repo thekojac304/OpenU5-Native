@@ -1055,6 +1055,12 @@ void UiSession::consume(const GameEvent &e) {
     case GameEventKind::Endgame:
         if(e.text)append(UiTextChannel::Quest,e.text);
         break;
+    case GameEventKind::BlackthornScene:
+        // #324 / R-32. Purely staged presentation: the owner's scene pacer
+        // consumes these and draws them, and none of it is transcript text.
+        // Listed explicitly rather than left to `default` so it is obvious
+        // that dropping it here is the intent, not an oversight.
+        break;
     default: break;
     }
 }

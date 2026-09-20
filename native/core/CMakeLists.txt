@@ -193,6 +193,16 @@ if(BUILD_TESTING)
   target_link_libraries(batch45b_tests PRIVATE openu5_core)
   target_include_directories(batch45b_tests PRIVATE ../targets/tdeck/main)
   add_test(NAME batch45b COMMAND batch45b_tests "${CMAKE_CURRENT_SOURCE_DIR}/../../game/assets/ds-strings.json")
+  # Batch 4.5D -- the Blackthorn capture SCENE (audit R-32). Takes both the
+  # real MISCMSG.DAT extraction and the real packed resource file: the
+  # throne-room grid is read out of openu5-alpha1-resources.bin rather than
+  # embedded, so a packer regression fails here instead of on hardware.
+  add_executable(blackthorn_scene_tests tests/blackthorn_scene_test.cpp)
+  target_link_libraries(blackthorn_scene_tests PRIVATE openu5_core)
+  target_include_directories(blackthorn_scene_tests PRIVATE ../targets/tdeck/main)
+  add_test(NAME blackthorn_scene COMMAND blackthorn_scene_tests
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../game/assets/ds-strings.json"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
   # Batch 4.5B correction -- the real pack's 33rd entry (misc-records.bin)
   # exceeded AlphaResourcePack's stale 32-entry bound. No openu5_core link
   # needed: this only exercises the host-portable predicate in
