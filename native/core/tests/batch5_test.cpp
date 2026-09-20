@@ -27,22 +27,23 @@
 //   behaviour and these tests hold it in place: a cancelled world cast must
 //   still spend the charge.
 //
-//   Exactly three world casts take a direction in the reference: An Ex Por
-//   (sealDoor), An Sanct (disarmOrOpen) and In Por (blink).  An Ylem and An Grav
-//   have no world effect branch at all -- they consume and do nothing, silently,
-//   without a prompt.  world_magic.cpp agrees independently: its only
-//   pre-flight target guards name items 6, 25 and 17.
+//   Four world casts take a direction in the reference: An Ex Por (sealDoor),
+//   An Sanct (disarmOrOpen), In Por (blink) and, as of Batch 8B, In Ex Por
+//   (unlock).  An Ylem and An Grav have no world effect branch at all -- they
+//   consume and do nothing, silently, without a prompt.  world_magic.cpp
+//   agrees independently: its pre-flight target guards name items 6, 17, 25
+//   and 26.
 //
-//   In Ex Por (#26) is tested below as a fourth "no prompt" case, matching
-//   TODAY's native behaviour, but audit R-16 (Batch 8) found the premise behind
-//   that behaviour is stale: re/notes/magic.md's 2026-08-07 correction proved
-//   In Ex Por's world branch (CAST:0x1026) calls the same magic_door_open_worker
-//   as the Skull Key, so the reference *should* raise a getdir here too. The
-//   reference itself hasn't been fixed yet (game/src/core/magic/cast.ts case 26
-//   still returns castAnimOnly; content-audit.md PENDIENTE(3)), and wiring the
-//   real getdir + tile mutation natively is a dedicated follow-up, not a
-//   metadata fix -- see the kEffects[26] note in magic_tables.inc. This test
-//   still asserts None because that is what both ports currently do.
+//   In Ex Por (#26): audit R-16 (Batch 8) found that the long-standing "no
+//   prompt" premise was stale -- re/notes/magic.md's 2026-08-07 correction
+//   proved In Ex Por's world branch (CAST:0x1026) calls the same
+//   magic_door_open_worker as the Skull Key, so the reference *should* raise a
+//   getdir here too. Batch 8B wires that natively (world_magic.cpp's Unlock
+//   branch applies the Skull Key's own 0x97/0x98 -> 0xB8/0xBA transform), so
+//   this test now asserts WorldDirection.  The TypeScript reference
+//   (game/src/core/magic/cast.ts case 26) still returns castAnimOnly --
+//   content-audit.md PENDIENTE(3) tracks that side separately; it is out of
+//   scope for this native-only batch.
 #include "openu5/magic.h"
 #include "openu5/outdoor.h"
 #include "openu5/quest_world.h"
@@ -135,6 +136,12 @@ static void policy_tests() {
           "A1: In Por in the world must raise a direction prompt (RED: combat-only gating)");
     check(cast_target_prompt(SpellId::AnExPor, false, false) == CastTargetPrompt::WorldDirection,
           "A1: An Ex Por in the world must raise a direction prompt (RED: combat-only gating)");
+    // Batch 8B: In Ex Por (Unlock) joins the direction-prompting group -- see
+    // the file header for the RE evidence (re/notes/magic.md 2026-08-07) and
+    // world_magic.cpp's Unlock branch.
+    check(cast_target_prompt(SpellId::InExPor, false, false) == CastTargetPrompt::WorldDirection,
+          "A1 (Batch 8B): In Ex Por in the world must raise a direction prompt (real door-unlock "
+          "effect, RE-confirmed 2026-08-07)");
 
     // A2 GREEN guard -- the spells whose target_type mentions a map unit or a
     // map position but which have NO world effect must NOT grow a fabricated
@@ -144,13 +151,6 @@ static void policy_tests() {
           "A2 guard: An Ylem has no world effect and must not prompt");
     check(cast_target_prompt(SpellId::AnGrav, false, false) == CastTargetPrompt::None,
           "A2 guard: An Grav has no world effect and must not prompt");
-    // In Ex Por (Unlock) is asserted None here too, but for a different reason
-    // than An Ylem/An Grav above -- see the file header and magic_tables.inc's
-    // kEffects[26] note.  It DOES have a real world effect (RE-confirmed
-    // 2026-08-07); wiring its getdir prompt is a tracked follow-up, not yet
-    // done, so today's answer is still None.
-    check(cast_target_prompt(SpellId::InExPor, false, false) == CastTargetPrompt::None,
-          "A2 guard: In Ex Por's real door-unlock prompt is not wired yet (tracked follow-up, not this batch)");
     check(cast_target_prompt(SpellId::InLor, false, false) == CastTargetPrompt::None,
           "A2 guard: a targetless spell must not prompt in the world");
 
@@ -174,6 +174,12 @@ static void policy_tests() {
           "A4 guard: An Sanct underground uses dungeon facing, never a getdir");
     check(cast_target_prompt(SpellId::InPor, false, true) == CastTargetPrompt::None,
           "A4 guard: In Por underground must not prompt");
+    // Batch 8B: In Ex Por's unlock worker writes "el mapa vivo" (the town/world
+    // coordinate grid, re/notes/magic.md), not a dungeon's per-cell state --
+    // same scope as An Ex Por (Seal), which has no dungeon branch either.
+    check(cast_target_prompt(SpellId::InExPor, false, true) == CastTargetPrompt::None,
+          "A4 guard (Batch 8B): In Ex Por underground must not prompt, matching An Ex Por's "
+          "town/world-only scope");
 }
 
 // ---------------------------------------------------------------------------
@@ -293,6 +299,120 @@ static void effect_tests() {
               "C1: An Ex Por East seals the locked door");
         check(w.game.spell_quantities[25] == 0 && w.game.party.characters[0].current_mp == 45,
               "C1: the successful seal spends one charge and the circle in mana");
+    }
+
+    // C1x (Batch 8B) -- In Ex Por with a direction unlocks a magically locked
+    // door in front, using the exact 0x97 -> 0xB8 transform the Skull Key
+    // already applies (commands.cpp, CommandKind::UseItem case 17).
+    {
+        TownWorld w;
+        w.tiles[4 * 32 + 5] = 151; // magically locked door (0x97), East of the party
+        w.game.spell_quantities[26] = 1;
+        CommandContext c{w.game, w.turn, w.travel, w.commands, w.world};
+        c.quest_world = &w.quest;
+        const auto active = get_active_map(w.world, w.game.position.map);
+        std::vector<Seen> events; EventSink sink{&events, capture};
+        Command cast; cast.kind = CommandKind::Cast; cast.item = 26; cast.caster = 0;
+        cast.direction = Direction::East; cast.has_direction = true;
+        world_magic(c, cast, active.value, sink, rng_source(w.game.rng));
+        check(w.tiles[4 * 32 + 5] == 184 && said(events, "Success!") &&
+                  emitted(events, GameEventKind::MapChanged),
+              "C1x (Batch 8B): In Ex Por East unlocks the 0x97 door to 0xB8");
+        check(w.game.spell_quantities[26] == 0 && w.game.party.characters[0].current_mp == 45,
+              "C1x (Batch 8B): the successful unlock spends one charge and the circle in mana");
+    }
+
+    // C1y (Batch 8B) -- In Ex Por also unlocks the 0x98 door variant, to 0xBA.
+    {
+        TownWorld w;
+        w.tiles[4 * 32 + 5] = 152; // magically locked door (0x98), East of the party
+        w.game.spell_quantities[26] = 1;
+        CommandContext c{w.game, w.turn, w.travel, w.commands, w.world};
+        c.quest_world = &w.quest;
+        const auto active = get_active_map(w.world, w.game.position.map);
+        std::vector<Seen> events; EventSink sink{&events, capture};
+        Command cast; cast.kind = CommandKind::Cast; cast.item = 26; cast.caster = 0;
+        cast.direction = Direction::East; cast.has_direction = true;
+        world_magic(c, cast, active.value, sink, rng_source(w.game.rng));
+        check(w.tiles[4 * 32 + 5] == 186 && said(events, "Success!"),
+              "C1y (Batch 8B): In Ex Por East unlocks the 0x98 door to 0xBA");
+    }
+
+    // C1z (Batch 8B) -- In Ex Por on a tile that isn't magically locked
+    // reports "No effect!" but, matching the ordering C3 pins for An Sanct,
+    // still spends the charge: castSpell always runs before the getdir target
+    // is resolved.
+    {
+        TownWorld w;
+        w.tiles[4 * 32 + 5] = 184; // already-unlocked door, not a valid Unlock target
+        w.game.spell_quantities[26] = 1;
+        CommandContext c{w.game, w.turn, w.travel, w.commands, w.world};
+        c.quest_world = &w.quest;
+        const auto active = get_active_map(w.world, w.game.position.map);
+        std::vector<Seen> events; EventSink sink{&events, capture};
+        Command cast; cast.kind = CommandKind::Cast; cast.item = 26; cast.caster = 0;
+        cast.direction = Direction::East; cast.has_direction = true;
+        world_magic(c, cast, active.value, sink, rng_source(w.game.rng));
+        check(w.tiles[4 * 32 + 5] == 184 && said(events, "No effect!") &&
+                  !emitted(events, GameEventKind::MapChanged),
+              "C1z (Batch 8B): In Ex Por on a non-magically-locked tile reports No effect! and "
+              "changes no terrain");
+        check(w.game.spell_quantities[26] == 0,
+              "C1z (Batch 8B): the charge is still spent even when the target is invalid");
+    }
+
+    // C1w ORDERING (Batch 8B) -- the SAME cast with no direction (the
+    // cancelled getdir) still spends the charge and the mana and prints
+    // "Cancelled.", exactly like An Ex Por's C3 below and for the same
+    // reference reason: castSpell runs before pendingCastUnlock is armed.
+    {
+        TownWorld w;
+        w.tiles[4 * 32 + 5] = 151;
+        w.game.spell_quantities[26] = 1;
+        CommandContext c{w.game, w.turn, w.travel, w.commands, w.world};
+        c.quest_world = &w.quest;
+        const auto active = get_active_map(w.world, w.game.position.map);
+        std::vector<Seen> events; EventSink sink{&events, capture};
+        Command cast; cast.kind = CommandKind::Cast; cast.item = 26; cast.caster = 0;
+        cast.cancel_target = true; // what UiSession stamps on a cancelled aim
+        world_magic(c, cast, active.value, sink, rng_source(w.game.rng));
+        check(said(events, "Cancelled."), "C1w ordering (Batch 8B): a cancelled In Ex Por says "
+                                           "Cancelled.");
+        check(w.game.spell_quantities[26] == 0 && w.game.party.characters[0].current_mp == 45,
+              "C1w ordering (Batch 8B): a cancelled In Ex Por still spends the charge and the "
+              "mana");
+        check(w.tiles[4 * 32 + 5] == 151,
+              "C1w ordering (Batch 8B): a cancelled In Ex Por changes no terrain");
+    }
+
+    // C1v (Batch 8B) -- the behavioral round trip the follow-up asked for:
+    // cast An Ex Por (Seal) on an ordinary unlocked door to lock it, then cast
+    // In Ex Por (Unlock) on the SAME door to open it back up, driving both
+    // spells through the real Cast dispatch (world_magic) rather than calling
+    // any tile-mutation helper directly.  An Ex Por's own locking behavior
+    // (C1 above) is unchanged by this batch; this pins the pair together.
+    {
+        TownWorld w;
+        w.tiles[4 * 32 + 5] = 184; // ordinary unlocked door, East of the party
+        w.game.spell_quantities[25] = 1;
+        w.game.spell_quantities[26] = 1;
+        CommandContext c{w.game, w.turn, w.travel, w.commands, w.world};
+        c.quest_world = &w.quest;
+        const auto active = get_active_map(w.world, w.game.position.map);
+        std::vector<Seen> lock_events; EventSink lock_sink{&lock_events, capture};
+        Command seal; seal.kind = CommandKind::Cast; seal.item = 25; seal.caster = 0;
+        seal.direction = Direction::East; seal.has_direction = true;
+        world_magic(c, seal, active.value, lock_sink, rng_source(w.game.rng));
+        check(w.tiles[4 * 32 + 5] == 151 && said(lock_events, "Locked!"),
+              "C1v (Batch 8B): An Ex Por locks the door (0xB8 -> 0x97)");
+        std::vector<Seen> unlock_events; EventSink unlock_sink{&unlock_events, capture};
+        Command unseal; unseal.kind = CommandKind::Cast; unseal.item = 26; unseal.caster = 0;
+        unseal.direction = Direction::East; unseal.has_direction = true;
+        world_magic(c, unseal, active.value, unlock_sink, rng_source(w.game.rng));
+        check(w.tiles[4 * 32 + 5] == 184 && said(unlock_events, "Success!"),
+              "C1v (Batch 8B): In Ex Por on the same door unlocks it back (0x97 -> 0xB8)");
+        check(w.game.spell_quantities[25] == 0 && w.game.spell_quantities[26] == 0,
+              "C1v (Batch 8B): both casts spent their own charge");
     }
 
     // C2 -- An Sanct with a direction unlocks the door in front.

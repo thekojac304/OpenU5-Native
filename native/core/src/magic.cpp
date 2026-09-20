@@ -84,11 +84,12 @@ const char *spell_target_label(SpellId id) {
 // proved its world branch (CAST:0x1026) calls the same magic_door_open_worker
 // as the Skull Key, so the reference itself is stale here (game/src/core/magic/
 // cast.ts case 26 still returns castAnimOnly and is tracked separately,
-// content-audit.md PENDIENTE(3)).  This entry keeps returning None below --
-// same as before -- because wiring the real getdir + tile mutation is a
-// dedicated follow-up (Batch 8 / audit R-16 scoped it out; see the kEffects[26]
-// note in magic_tables.inc), not a metadata fix.  world_magic.cpp's pre-flight
-// target guards (items 6 and 25) are unaffected by this for the same reason.
+// content-audit.md PENDIENTE(3)).  Batch 8B wired the real getdir + tile
+// mutation natively: Unlock now joins Seal/Disarm/Blink below, and
+// world_magic.cpp's Unlock branch (sibling to its Seal/Disarm block) applies
+// the identical 0x97/0x98 -> 0xB8/0xBA transform the Skull Key already uses
+// (commands.cpp, CommandKind::UseItem case 17), gated by the same pre-flight
+// mutable-terrain guard extended to item 26.
 //
 // UNDERGROUND there is no getdir at all.  The reference's doDungeonCast
 // resolves An Sanct against the party's dungeon FACING (applyAnSanctOpenChest)
@@ -111,6 +112,7 @@ CastTargetPrompt cast_target_prompt(SpellId id, bool in_combat, bool in_dungeon)
     case MagicEffect::Seal:
     case MagicEffect::Disarm:
     case MagicEffect::Blink:
+    case MagicEffect::Unlock:
         return CastTargetPrompt::WorldDirection;
     default:
         return CastTargetPrompt::None;

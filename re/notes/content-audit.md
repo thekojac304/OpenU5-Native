@@ -150,6 +150,16 @@ Núcleo ASM-derivado y con paridad (`re/tools/magic_parity.py`, `__parity__/magi
   al revés. Se arregla APARTE (toca `game/src`; medir antes si mueve stream).
   Derivación y controles: `inexpor-dos-llamadores-acta.md`.
   Mantras de shrine (otro dominio). "~50 hechizos/8 círculos" (claim, corrobora).
+  **ACTUALIZACIÓN (Batch 8B, 2026-09-20):** el lado **nativo** (`native/core`) ya
+  implementa la mecánica — `world_magic.cpp` gana una rama `MagicEffect::Unlock`
+  hermana de `Seal`/`Disarm`, reutilizando la transformación 0x97/0x98 → 0xB8/0xBA
+  que ya usaba la Skull Key, con el mismo guard de pre-vuelo extendido al ítem 26.
+  Regresión de comportamiento en `native/core/tests/batch5_test.cpp` (casos C1v/C1w/
+  C1x/C1y/C1z), host suite completo sin regresiones (68/70, únicos fallos los ya
+  conocidos R-21 `gameplay_parity` #2034 y el crash de entorno de `quest_parity`),
+  firmware ESP-IDF limpio. `cast.ts case 26 → castAnimOnly` (lado TypeScript,
+  `game/src`) **sigue pendiente**, sin tocar por este batch — es el "APARTE" que
+  este mismo párrafo ya preveía, ahora acotado a un solo lado.
 
 ### 2 · COMBATE & CRIATURAS
 100% cubierta en lo aseverado por fuentes; núcleo byte-fiel (COMBAT.OVL/COMSUBS.OVL).

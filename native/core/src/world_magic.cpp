@@ -40,7 +40,7 @@ WorldCommandResult world_magic(CommandContext &c,Command cmd,const ActiveMap &ma
     if(cmd.item<0||cmd.item>48||cmd.caster<0||cmd.caster>=g.party.character_count)return {CommandStatus::InvalidContext};
     auto *q=c.quest_world;
     // These effects require mutable terrain; reject absent owners before spending resources.
-    if((cmd.item==6||cmd.item==25)&&cmd.has_direction&&(!q||!q->volatile_tile))return {CommandStatus::InvalidContext};
+    if((cmd.item==6||cmd.item==25||cmd.item==26)&&cmd.has_direction&&(!q||!q->volatile_tile))return {CommandStatus::InvalidContext};
     if(cmd.item==17&&cmd.has_direction&&!c.outdoor)return {CommandStatus::InvalidContext};
     if(cmd.item==46&&(!q||(q->moonstone_count&&!q->moonstones)))return {CommandStatus::InvalidContext};
     auto cast=cast_spell(g,t,g.party.characters[cmd.caster],SpellId(cmd.item),{g.position.map.location,false,-1,0},rand);
@@ -66,6 +66,14 @@ WorldCommandResult world_magic(CommandContext &c,Command cmd,const ActiveMap &ma
             for(size_t i=0;i<objects.size();++i){auto o=q->read(q->context,i);o.slot=objects[i].slot;q->write(q->context,i,o);}
             for(auto &s:pool)if(s.tile==1&&s.x==x&&s.y==y&&s.floor==g.position.map.floor&&s.kind==PoolOwnerKind::Object){auto o=q->read(q->context,s.owner_index);o.contents&=127;o.trapped=false;q->write(q->context,s.owner_index,o);say("Success!");return {};}
         }say(fx==MagicEffect::Seal?"No effect!":"Failed!");return {};
+    }
+    if(fx==MagicEffect::Unlock){
+        if(!cmd.has_direction){say("Cancelled.");return {};}
+        auto d=direction_delta(cmd.direction);int x=g.position.xy.x+d.dx,y=g.position.xy.y+d.dy;if(map.geometry.wraps){x&=255;y&=255;}
+        int tile=q->tile_at?q->tile_at(q->context,x,y):map.tile_at(x,y);
+        int next=tile==151?184:tile==152?186:-1;
+        if(next>=0){q->volatile_tile(q->context,x,y,next);say("Success!");emit(GameEventKind::MapChanged);return {};}
+        say("No effect!");return {};
     }
     if(fx==MagicEffect::Blink&&cmd.has_direction){auto &o=*c.outdoor;auto origin=[](int p){return (((p&240)-((p&15)<8?16:0))&255);};int px=g.position.xy.x,py=g.position.xy.y;bool fresh=o.has_chunk_origin&&((px-o.chunk_x)&255)<32&&((py-o.chunk_y)&255)<32;int ox=fresh?o.chunk_x:origin(px),oy=fresh?o.chunk_y:origin(py);auto d=direction_delta(cmd.direction);int dx=-1,dy=-1;
         for(int x=px+d.dx,y=py+d.dy;x>=ox&&x<std::min(ox+32,256)&&y>=oy&&y<std::min(oy+32,256);x+=d.dx,y+=d.dy)if(map.tile_at(x,y)==5){dx=x;dy=y;}

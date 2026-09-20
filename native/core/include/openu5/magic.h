@@ -91,10 +91,12 @@ enum class MagicEffect : uint8_t {
     // was long believed to be a no-op cast animation; re/notes/magic.md's
     // 2026-08-07 correction ("un worker, DOS llamadores") proved its world
     // branch (CAST:0x1026) calls the identical magic_door_open_worker as the
-    // Skull Key.  Classified here so kEffects/kSummaries stop contradicting
-    // that finding; the tile mutation itself is NOT wired to this kind yet
-    // (deliberately -- see the Batch 8 note in magic_tables.inc) and stays a
-    // tracked follow-up, same shape as Poof/Reveal/etc. above.
+    // Skull Key.  Batch 8 classified it here; Batch 8B wired the tile
+    // mutation in world_magic.cpp (sibling to the Seal/Disarm branch, same
+    // pre-flight mutable-terrain guard extended to item 26).  Dungeon casts
+    // stay a no-op: the RE-derived worker writes "el mapa vivo" (the town/
+    // world coordinate grid), not a dungeon's per-cell state, matching An Ex
+    // Por (Seal), which likewise has no dungeon branch.
     Unlock,
     Animation,
     Line,
