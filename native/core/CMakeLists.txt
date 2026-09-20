@@ -140,6 +140,13 @@ if(BUILD_TESTING)
   add_executable(dungeon_view_regression tests/dungeon_view_test.cpp)
   target_link_libraries(dungeon_view_regression PRIVATE openu5_core)
   add_test(NAME dungeon_view_regression COMMAND dungeon_view_regression)
+  # Batch 9C -- the AUTHORED-ART half of R-05.  dungeon_view_regression proves
+  # the semantic plan; this proves the next step only: which authored image of
+  # DNG*/ITEMS/MON*.16 each plan op blits, into which box, with which flips, in
+  # which order.  Still no framebuffer -- the mapping is decidable without one.
+  add_executable(dungeon_art_regression tests/dungeon_art_test.cpp)
+  target_link_libraries(dungeon_art_regression PRIVATE openu5_core)
+  add_test(NAME dungeon_art_regression COMMAND dungeon_art_regression)
   add_executable(combat_escape_regression tests/combat_escape_regression_test.cpp)
   target_link_libraries(combat_escape_regression PRIVATE openu5_core)
   add_test(NAME combat_escape_regression COMMAND combat_escape_regression)
@@ -286,6 +293,14 @@ if(BUILD_TESTING)
     set_tests_properties(typescript_transport_flow_fixture_drift PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
     add_test(NAME typescript_dungeon_flow_fixture_drift COMMAND "${NODE_EXECUTABLE}" --import tsx "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate-dungeon-flow-fixtures.ts" --check)
     set_tests_properties(typescript_dungeon_flow_fixture_drift PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+    # Batch 9C / R-05 -- GOLDEN EXTRACTION identity for the authored dungeon art:
+    # dimensions plus indexed-pixel and mask CRC32 for one image of every semantic
+    # class, agreed by three independent readings (extractor parser, packer, and
+    # the generated pack read back through the device's container). Reports SKIP
+    # and passes when the user's original data or the built pack is absent, the
+    # same convention the extractor catalog's optional stages use.
+    add_test(NAME typescript_dungeon_art_identity COMMAND "${NODE_EXECUTABLE}" --import tsx "${CMAKE_CURRENT_SOURCE_DIR}/tools/check-dungeon-art-identity.ts")
+    set_tests_properties(typescript_dungeon_art_identity PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
     add_test(NAME typescript_world_flow_fixture_drift COMMAND "${NODE_EXECUTABLE}" --import tsx "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate-world-flow-fixtures.ts" --check)
     set_tests_properties(typescript_world_flow_fixture_drift PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
     add_test(NAME typescript_dungeon_fixture_drift COMMAND "${NODE_EXECUTABLE}" --import tsx "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate-dungeon-fixtures.ts" --check)
@@ -321,5 +336,5 @@ if(BUILD_TESTING)
     set(OPENU5_CTEST_CONFIG_ARGS)
   endif()
   add_custom_target(host-test COMMAND "${CMAKE_CTEST_COMMAND}" ${OPENU5_CTEST_CONFIG_ARGS} --output-on-failure
-  DEPENDS frontend_tests ui_session_tests display_names_tests quest_search_tests debug_labels_tests ${UI_DEBUG_TEST_TARGET} debug_map_picker_tests debug_developer_tests gameplay_integration_tests look_sign_tests gameplay_driver movement_flow_parity_tests quest_driver shop_parity_tests shop_flow_tests shop_adapter_tests persistence_driver dialogue_adapter_tests dialogue_parity_tests transport_flow_parity_tests world_flow_adapter_tests dungeon_flow_parity_tests world_flow_parity_tests dungeon_parity_tests advanced_combat_parity_tests magic_parity_tests combat_parity_tests core_parity_tests turn_parity_tests travel_parity_tests command_parity_tests item_parity_tests movement_regression presentation_regression dungeon_view_regression dungeon_input_regression combat_escape_regression combat_loot_open_regression input_regression USES_TERMINAL)
+  DEPENDS frontend_tests ui_session_tests display_names_tests quest_search_tests debug_labels_tests ${UI_DEBUG_TEST_TARGET} debug_map_picker_tests debug_developer_tests gameplay_integration_tests look_sign_tests gameplay_driver movement_flow_parity_tests quest_driver shop_parity_tests shop_flow_tests shop_adapter_tests persistence_driver dialogue_adapter_tests dialogue_parity_tests transport_flow_parity_tests world_flow_adapter_tests dungeon_flow_parity_tests world_flow_parity_tests dungeon_parity_tests advanced_combat_parity_tests magic_parity_tests combat_parity_tests core_parity_tests turn_parity_tests travel_parity_tests command_parity_tests item_parity_tests movement_regression presentation_regression dungeon_view_regression dungeon_art_regression dungeon_input_regression combat_escape_regression combat_loot_open_regression input_regression USES_TERMINAL)
 endif()

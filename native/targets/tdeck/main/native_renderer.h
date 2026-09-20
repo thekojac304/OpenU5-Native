@@ -6,6 +6,7 @@
 #include "asset_pack.h"
 #include "openu5/presentation.h"
 #include "openu5/dungeon.h"
+#include "openu5/dungeon_art.h"
 #include "openu5/intro_view.h"
 #include "openu5/look.h"
 #include "openu5/world.h"
@@ -69,8 +70,20 @@ esp_err_t render_snapshot(const PresentationTileCache &, const PresentationSnaps
  * in native/core, which is host-tested by `dungeon_view_regression`.  GameState
  * and TurnState are required because the light gate reads the torch counter and
  * the light-spell timer -- the same pair dungeon.cpp's (S)earch reads.
+ *
+ * R-05 Batch 9C: HOW it is drawn is the authored art of DNG1/2/3.16, ITEMS.16
+ * and MON0-7.16, resident in `art`.  Which image each plan op blits, into which
+ * box, with which flips and in which order is decided by
+ * openu5::dungeon_art_blits(), host-tested by `dungeon_art_regression`; this
+ * function only moves the pixels.  With `art` empty -- no pack, or a pack whose
+ * art failed to validate -- the corridor paints black rather than inventing
+ * substitute geometry, so a bad pack is visibly a bad pack.
+ *
+ * `phase` only picks the wanderer's animation frames; it touches nothing
+ * semantic.
  */
 esp_err_t render_dungeon_view(const GameState &, const TurnState &, const DungeonState &,
+                              const DungeonArtSurfaces &art, uint32_t phase,
                               uint16_t *rgb565, size_t pixel_count, RenderReport &report,
                               uint16_t &primitives);
 

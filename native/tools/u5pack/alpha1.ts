@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { PNG } from "pngjs";
 import { alphaEnemyName } from "./alpha1-enemy.js";
 import { ALPHA_SIGN_RECORD_BYTES, buildAlphaSignData } from "./alpha1-signs.js";
+import { buildDungeonArt } from "./alpha1-dungeon-art.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const OUT = resolve(ROOT, "native/assets/openu5-alpha1-resources.bin");
@@ -438,6 +439,7 @@ const demoScene = (() => {
   out.writeUInt16LE(script.length, 12); Buffer.from(maps).copy(out, 16); Buffer.from(script).copy(out, 320);
   return out;
 })();
+const dungeonArt = buildDungeonArt(resolve(ROOT, "original/u5/ultima5"));
 const entries: Entry[] = [
   file("init.gam", "game/assets/init.gam"),
   file("init.ool", "game/assets/init.ool"),
@@ -462,6 +464,18 @@ const entries: Entry[] = [
   { name: "misc-records.bin", data: miscMsgRecords() },
   { name: "blackthorn-scene.bin", data: blackthornScene(), records: 11 * 11, stride: 2 },
   { name: "signs.bin", data: packedSigns, records: packedSigns.readUInt32LE(0), stride: ALPHA_SIGN_RECORD_BYTES },
+  // Batch 9C / R-05 -- the AUTHORED dungeon art (alpha1-dungeon-art.ts). Five
+  // ordinary TOC entries, not a second asset system. The three wall variants stay
+  // separate because a dungeon uses exactly one: that keeps each variant its own
+  // CRC-checked unit and leaves a one-resident-variant loader open if PSRAM ever
+  // gets tight (the device currently keeps all three -- see dungeon_art_cache.h
+  // for why). ITEMS and all eight MON banks are shared by every dungeon and are
+  // small, so each travels whole.
+  { name: "dungeon-dng1.art", data: dungeonArt.wall[0]!, records: 28 },
+  { name: "dungeon-dng2.art", data: dungeonArt.wall[1]!, records: 28 },
+  { name: "dungeon-dng3.art", data: dungeonArt.wall[2]!, records: 28 },
+  { name: "dungeon-items.art", data: dungeonArt.items, records: 20 },
+  { name: "dungeon-mon.art", data: dungeonArt.mon, records: 8 * 6 },
   file("runes.ch", "original/u5/ultima5/runes.ch"),
   file("combatmaps.json", "game/assets/maps/combatmaps.json"),
   file("data.json", "game/assets/data.json"),

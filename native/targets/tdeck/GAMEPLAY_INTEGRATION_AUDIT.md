@@ -24,7 +24,7 @@ The **core is in far better shape than the device integration**. At the original
 ### Largest risks, in order
 
 1. ~~**R-01 — Shop and Dialogue UI modes are destroyed on every keypress.**~~ **RESOLVED in Batch 1.** `AlphaRuntime::synchronize_after_debug()`'s mode arbitration was split out and now preserves `Shop`/`Dialogue`/`ShrineSpecial` instead of unconditionally forcing `base_mode` to Combat/Dungeon/Exploration. See §3 R-01 and §14 Batch 1 for root cause, fix, and test evidence.
-2. **R-05 — The dungeon** (ANCHOR 4). **Batch 9 resolved the presentation LOGIC; Batch 9B resolved the dungeon RUNTIME; the authored TEXTURES are still absent.** Batch 9 proved and fixed eight semantic presentation defects behind a new portable seam, `openu5::plan_dungeon_view()`. Batch 9B then fixed what the first hardware session exposed: the dungeon key map was a **subset** of the reference dispatcher’s — `(I)gnite` above all, so a party could not make light from inside a dark dungeon — and the HUD location caption read the stale surface map id instead of the dungeon’s. What remains of R-05 is exactly its original asset half: `DNG1/2/3.16`, `ITEMS.16` and `MON0-7.16` are **still not packed** (193,864 B measured at their native 4bpp+mask), so the device paints the reference’s own packless placeholders. See §3 R-05 and §14 Batches 9 / 9B / 9C.
+2. **R-05 — The dungeon** (ANCHOR 4). **Batch 9 resolved the presentation LOGIC; Batch 9B resolved the dungeon RUNTIME; Batch 9C packed and painted the authored ART.** Batch 9 proved and fixed eight semantic presentation defects behind a new portable seam, `openu5::plan_dungeon_view()`. Batch 9B then fixed what the first hardware session exposed: the dungeon key map was a **subset** of the reference dispatcher’s — `(I)gnite` above all, so a party could not make light from inside a dark dungeon — and the HUD location caption read the stale surface map id instead of the dungeon’s. Batch 9C then closed the asset half: `DNG1/2/3.16`, `ITEMS.16` and `MON0-7.16` are packed at their native 4bpp+mask (193,864 B of authored pixels in 195,768 B of container), resident in PSRAM, and blitted by `render_dungeon_view()` through a second portable seam, `openu5::dungeon_art_blits()`. The pack identity changed, so **the SD card must be rewritten together with the firmware** (§14 Batch 9C). R-05's remaining status turns on the final physical dungeon session; see §3 R-05 and §14 Batches 9 / 9B / 9C.
 3. ~~**R-19 — Ships cannot sail.**~~ **RESOLVED in Batch 3.** `handle_exploration` now branches to `CommandKind::YellSails` when the party is aboard a frigate outside the Underworld, exactly as the reference's `yell()` dispatcher does, before the word prompt. See §3 R-19 and §14 Batch 3.
 4. ~~**R-07/R-08 — The endgame (U)se chain is unreachable.**~~ **RESOLVED in Batch 3.** `usable_item_display_name()` now has exactly one interpretation — the real canonical id — and the shared picker seam gates a row per canonical id from its authoritative possession owner. Grapple is gone from the picker (Klimb-only). Pocket Watch (35) remains the one deliberate omission: no field anywhere backs it. See §3 R-07/R-08 and §14 Batch 3.
 5. ~~**R-06 — `Ready` is rejected in combat and in dungeons.**~~ **RESOLVED in Batch 3.** Ready now routes in all three contexts, passes `battle = c.combat` to `equip_item()`, and refreshes the acting player's `CombatActor` equipment cache after a successful in-combat change. See §3 R-06 and §14 Batch 3.
@@ -442,7 +442,7 @@ No `QuestObject` storage/layout change was made; `quest_world_tile()` was left u
 
 ---
 
-### R-05 — Dungeon presentation (ANCHOR 4) · **SEVERITY 1** · **YELLOW — presentation LOGIC resolved (Batch 9); dungeon RUNTIME resolved (Batch 9B); authored ART still unpacked**
+### R-05 — Dungeon presentation (ANCHOR 4) · **SEVERITY 1** · **YELLOW — presentation LOGIC resolved (Batch 9); dungeon RUNTIME resolved (Batch 9B); authored ART packed and painted (Batch 9C); awaiting the final physical dungeon session**
 
 `native/tools/u5pack/alpha1.ts:49` packs `dungeons.bin` — 8 records × 516 bytes = **cell maps only**. There is no DNG or ITEMS record in the pack, and `native/ASSETS.md` never mentions dungeon art.
 
@@ -549,11 +549,32 @@ RawInputEvent (matrix code / trackball kind)
 
 **Still open after Batch 9B:** `(L)ook` in a corridor. The reference's dungeon `L` opens its own `Dir-` prompt and chains the fountain-drink beat (`DNGLOOK 0x012f`); the native core has no `DungeonAction::Look` at all, so wiring a key would have meant inventing gameplay rather than reaching an existing rule. Left out deliberately, recorded here rather than silently.
 
-#### Remaining, part 3 of 3 — the ASSET pipeline · **RED, OPEN**
+#### Resolved, part 3 of 3 — the ASSET pipeline · **Batch 9C**
 
-Unchanged by Batch 9 and still the original R-05 finding. `native/tools/u5pack/alpha1.ts:49` packs `dungeons.bin` — 8 records × 516 bytes = **cell maps only**. There is no DNG or ITEMS record in the pack and `native/ASSETS.md` never mentions dungeon art. `extractor/src/parsers/dngtiles.ts` already parses exactly what is needed (`parseDngView`, `parseItemsView`) and `extractor/src/pipeline.ts` already emits `dungeon-persp.png/json` and `dungeon-feat.png/json` when the originals are present — but those outputs are not currently in `game/assets/`, and nothing consumes them natively.
+This was the original R-05 finding, and it is now closed on the host side. `native/tools/u5pack/alpha1.ts` packed `dungeons.bin` — 8 records × 516 bytes = **cell maps only** — and nothing else about a dungeon's appearance. Batch 9C added five ordinary TOC entries carrying the authored art itself, reusing the accepted extractor parsers rather than writing new ones, and replaced the wireframe painting with a blitter that consumes them.
 
-**Budget, measured this batch** (the §14 Batch 9 plan called for this first): the three DNG variants are 28 slots each (indices 8 and 24 null), all 164 px tall, widths 8/16/24/32/56/80 — **217,792 B per variant as RGB565, 653,376 B for all three**; ITEMS.16 is 20 images totalling **34,680 B** with masks. At 4 bpp plus a palette, as the originals store them, all three variants are ≈163 KB. A single variant is the most that ever needs to be resident, so a per-dungeon RGB565 cache is ≈213 KB + 34 KB of features. Feasible, but it is a pack-format version bump (the `packs_match` gate will correctly block old cards) and a real slice blitter.
+**What is packed** (`native/tools/u5pack/alpha1-dungeon-art.ts`, container `OU5DART1`):
+
+| Entry | Source | Banks × images | Payload | Entry bytes | Entry CRC32 |
+|---|---|---|---|---|---|
+| `dungeon-dng1.art` | `DNG1.16` | 1 × 28 | 54,448 B 4bpp | 54,800 | `0x088b567b` |
+| `dungeon-dng2.art` | `DNG2.16` | 1 × 28 | 54,448 B 4bpp | 54,800 | `0x98754b71` |
+| `dungeon-dng3.art` | `DNG3.16` | 1 × 28 | 54,448 B 4bpp | 54,800 | `0x1631de3b` |
+| `dungeon-items.art` | `ITEMS.16` | 1 × 20 | 8,160 B 4bpp + 2,040 B mask | 10,456 | `0xf97191f7` |
+| `dungeon-mon.art` | `MON0-7.16` | 8 × 6 | 16,256 B 4bpp + 4,064 B mask | 20,912 | `0xfa91efa5` |
+| **Total** | | **146 images** | **193,864 B authored** | **195,768** | |
+
+The images are stored in the originals' **own** 4bpp indexed encoding plus the containers' own 1bpp AND-masks — nothing is pre-expanded to RGB565. That is half the bytes, and it keeps the packed data byte-identical to the source files, which is what makes the identity check below meaningful. An index becomes a colour only at blit time, through `openu5::kDungeonEgaRgb565`. Transparency is the mask, never colour-0 keying: the open chest's black interior is opaque, and keying would punch a hole through it.
+
+**Identity.** `native/core/tools/check-dungeon-art-identity.ts` (ctest `typescript_dungeon_art_identity`) compares dimensions, indexed-pixel CRC32 and mask CRC32 for one image of every semantic class across **three independent readings** — the accepted extractor parsers reading the raw file, the packer's own reader, and the bytes in the generated pack read back through the container the device reads — and re-derives the pixels a fourth way, from the extractor's decoded RGBA, so a nibble-order or stride mistake cannot hide. It also rebuilds every entry and requires the result to equal the pack byte for byte, which is what makes the pack's identity constants describe a reproducible build. With the user's original data absent it reports SKIP and passes, the same convention the extractor catalog's optional stages use.
+
+**Pack identity changed, as approved.** 34 entries / 1,843,457 B / payload CRC `0x2b1449f4` → **39 entries / 2,039,545 B / payload CRC `0x2065ad91`** (SHA-256 `434cd664…b4ea`), a delta of **+196,088 B** (195,768 B of art plus five 64-byte TOC records). `kExpectedAlphaResourceSize`, `kExpectedAlphaResourceCrc32` and `kExpectedAlphaResourceSha256` were updated together, and the five entry names were added to `AlphaResourcePack::open()`'s `required[]` so a pre-9C card is rejected **by name** and not only by the size/CRC lock. Verified in both directions against the retained old pack: old → `firmware_match=false` (device shows the identity screen and refuses to start), new → `firmware_match=true`. The entry bound in `alpha_resource_limits.h` is 64 and was **not** raised; 39 fits. The pack format was **not** version-bumped: a named-entry TOC needs none for new entries.
+
+**Runtime residency and cache.** `tdeck::DungeonArtCache` reads all five entries once, inside `AlphaRuntime::initialize()`, while the pack is still open — `main.cpp` closes it immediately afterwards, which is also why the device performs **no SD access for art at any point during play**: a dungeon transition can neither stall nor fail on the card. Resident cost is **195,768 B of PSRAM** (the five entry blobs, indexed in place) plus ≈1.8 KB of internal-RAM descriptor tables, which stay internal for the same reason `alpha_resources.h` gives for its own pointer tables: the painter walks them every redraw.
+
+All three wall variants are resident, not one. The party can enter any of the eight dungeons in a single session, so over a session all three genuinely *are* what is needed; the alternative — one resident variant reloaded on entry — would save ≈109 KB of a part with megabytes spare in exchange for SD I/O inside a dungeon transition. The trade was made deliberately in favour of the quieter runtime. The consequence is that the cache is a **selector, not a loader**: `select()` repoints the wall surface array and reads nothing, so first entry, turning, stepping, changing level, leaving, re-entering and switching to a different-variant dungeon all cost **zero reloads**. Its identity is `openu5::DungeonArtCacheKey` — the wall bank alone — which `dungeon_art_regression` proves is stable under turn/move/level/light changes and changes only with the variant. It also proves that the shortcut `alpha_runtime.cpp` uses to build the key (straight from the dungeon number, rather than building a whole plan to read one field) agrees with the plan for **every** dungeon.
+
+**Degradation.** A missing, truncated or tampered art entry fails `openu5::dungeon_art_parse()` — which validates the container's shape and every pixel/mask span **before** indexing anything, so a half-indexed bank is impossible — the cache stays unready, and the corridor paints **black** rather than substitute geometry. A bad pack is therefore visibly a bad pack, not a crash and not a silent fallback.
 
 **Fix shape (unchanged, now with the seam in place):** 1) extend `alpha1.ts` with `dngview.bin`/`itemsview.bin` using the existing `dngtiles.ts` parser; 2) add slice/feature readers to `asset_pack.cpp`; 3) replace the placeholder painting inside `render_dungeon_view` with a slice blitter — **the plan it consumes already carries the piece code, the X, the mirror flag and the variant**, so this is now a paint-only change; 4) port `featureBlits()`' anchor tables (`FEAT_Y_LADDER_UP`, `FEAT_Y_FLOOR`, `FEAT_Y_TOP_HORIZON`) for the ITEMS.16 half-images.
 
@@ -1598,7 +1619,7 @@ A design review of the freshly-landed R-30 work found two of the five Certificat
 | **PSRAM budget** | A* 323 KB + transcript 15 KB + viewport 62 KB + creation canvas 97 KB + tile cache + 8 dungeon arenas. The DNG/ITEMS budget check is **done** (Batch 9): 217,792 B per DNG variant as RGB565 (653,376 B for all three) + 34,680 B for ITEMS.16; ≈163 KB for all three at 4 bpp. Only one variant is ever resident, so ≈213 KB + 34 KB. Affordable as a cache; a streaming reader is not forced. |
 | **24 KiB main stack, dedicated input task, keyboard recovery** | All preserved and working. Do not disturb. |
 | **SD DMA headroom guard** | `AlphaSaveService::reserve_dma_headroom` + `SdHeadroomGuard` is a good pattern; save/load is the riskiest device operation and it is well defended. |
-| **Asset/firmware identity gate** | `packs_match` blocks startup on CRC/SHA mismatch. Excellent — keep it when the asset pack version bumps for R-05 part 2 (Batch 9B). Batch 9 did **not** touch the pack format, so existing cards stay valid. |
+| **Asset/firmware identity gate** | `packs_match` blocks startup on CRC/SHA mismatch. It did its job in Batch 9C: adding the dungeon art changed the pack identity (1,843,457 → 2,039,545 B, CRC `0x2b1449f4` → `0x2065ad91`), so **a pre-9C card is correctly refused** and firmware and card must be updated together. The format itself was not bumped — a named-entry TOC needs no version change for new entries — and the gate was neither weakened nor bypassed. |
 
 ---
 
@@ -1700,7 +1721,7 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 | (frontend active) | `frontend_.active()` | `render_frontend` / `render_intro_view` / creation canvas | `FrontendSession` | menu | **G** — asserted exclusive |
 | (system menu active) | `system_menu_.active()` | system-menu view | `SystemMenuSession` | gameplay mode | **G** — asserted exclusive |
 | `Exploration` | none | `render_snapshot(compose_world_presentation)` | `dispatch_world_command` | — | **G** |
-| `Dungeon` | `dungeon_.active && context_.dungeon` | `render_dungeon_view(plan_dungeon_view(...))` | `execute_dungeon_command` | `handle_dungeon()` → full reference dispatcher (Batch 9B) | **G** logic (Batch 9, `dungeon_view_regression`) / **G** input (Batch 9B, `dungeon_input_regression`) / **R-05** art still unpacked |
+| `Dungeon` | `dungeon_.active && context_.dungeon` | `render_dungeon_view(plan_dungeon_view(...))` | `execute_dungeon_command` | `handle_dungeon()` → full reference dispatcher (Batch 9B) | **G** logic (Batch 9, `dungeon_view_regression`) / **G** input (Batch 9B, `dungeon_input_regression`) / **G** art (Batch 9C, `dungeon_art_regression` + `typescript_dungeon_art_identity`) |
 | `Combat` | `context_.combat && combat_.initialized` | `render_snapshot(compose_combat_presentation)` | combat commands | quick escape | **G** logic / icons — R-04 resolved (Batch 2, `compose_world_presentation` two-layer fix) |
 | `Shop` | `shop_.phase != Closed` | world/combat viewport + `DeviceShopView` overlay | `execute_shop` | hierarchical | **G** — R-01 resolved (Batch 1) |
 | `Dialogue` | `dialogue_` session | viewport + transcript | dialogue commands | `EndConversation` | **G** — R-01 resolved (Batch 1) |
@@ -1767,18 +1788,18 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 | 7. Cell decoding (wall/door/stair/pit/field) | **G** | High nibble = type, per DNGLOOK dict; `dungeon_cell`/`dungeon_wall` agree with the movement blocker |
 | 8. Visibility | **G** — Batch 9 | Concern **withdrawn**: the torus wrap is what the original does on purpose (`coreview.ts dungeonView().add()` marches the ray unwrapped and reads the tile `&7` so the corridor continues across the border). Batch 9 added the missing piece instead — the **light gate**: with neither torch nor light spell the viewport is now black, as DUNGEON:0x1AD6 requires |
 | 9. Geometry | **G** — Batch 9 | `plan_dungeon_view()` emits all four side families (wall 0–3, door 4–7, open passage 16–19, alcove 20–23) and all three front families (dead end 8–11, door front 12–15, special 25–27), classified by the neighbour/blocking cell, plus the standing-on-a-door ring-0 suppression. **Sight is now its own rule**, not the movement blocker: a door, a room and a revealed secret door all stop the view |
-| 10. **Authored textures** | **R-05** — still OPEN | **Not in the asset pack.** Measured this batch: 217,792 B per DNG variant as RGB565 (653,376 B for three), + 34,680 B for ITEMS.16. The device paints the reference's own packless placeholders, on the reference's `ringBox()` geometry |
-| 11. Wall/floor/ceiling | **Y** — Batch 9 | The **variant now reaches the view**: `plan_dungeon_view()` carries `dungeon_wall_variant()`, the same derivation (S)earch uses, and the renderer tints by it. Still a tint over a placeholder rather than the DNG1 olive / DNG2 red / DNG3 grey atlases, and floor speckle/ceiling remain flat fills — both wait on R-05's asset half |
+| 10. **Authored textures** | **G** — Batch 9C | **Packed and painted.** Five `dungeon-*.art` entries carry all 146 authored images at their native 4bpp+mask (193,864 B); `render_dungeon_view()` blits them through `dungeon_art_blits()`. The wireframe stand-in and its `ringBox()` geometry are **gone** |
+| 11. Wall/floor/ceiling | **G** — Batch 9 + 9C | The variant reaches the view (`plan_dungeon_view()` carries `dungeon_wall_variant()`), and Batch 9C turned the **tint** into **atlas selection**: V1/V2/V3 select the DNG1 olive / DNG2 red / DNG3 grey banks. Floor speckle and ceiling are no longer flat fills — they are baked into each authored slice, as in the original |
 | 12. Viewport composition | **G** — Batch 9 | 176×176 correct. The two 9 px strips still sit over the viewport (the T-Deck frame is 2 px, so unlike the original there is nowhere outside to put them — documented divergence), but they now carry the dungeon's **own** bands, `L1`..`L8` and `Dir:` + facing, instead of a blank sky and `Wind: --` |
 | 13. HUD integration | **G** — Batch 9 | `hud_dungeon_bands()` (core, host-tested D12) supplies the level and facing captions; `tdeck_board.cpp` paints them in place of the sky/wind strips and folds them into the same cache signatures, so a Klimb or a turn repaints its strip on the frame that produced it |
 | 14. Movement (fwd/back) | **G** | `DungeonAction::Forward`/`Back`; `dungeon_flow_parity` green |
 | 15. Turning | **G** | `Left`/`Right` |
 | 16. Backward movement | **G** | Distinct action, does not turn |
 | 17. Blocked behaviour | **G** | Same `dungeon_wall` rule as the renderer — consistent |
-| 18. Stairs / ladders | **G** logic / **G** placement — Batch 9 / **R-05** art | `dungeon.cpp` up/down with floor bounds → `ExitSurface`/`ExitUnderworld`. Now **drawn at every depth 0–3**, not only underfoot: a ladder two cells ahead used to be invisible |
-| 19. Pits | **G** logic / **G** placement — Batch 9 / **R-05** art | Damage script path present; drawn at every depth, and the trap `(sub & 7) == 0` gate (fn_1952 @0x197b) is now honoured |
-| 20. Fields / traps | **G** logic / **G** placement — Batch 9 / **R-05** art | Cast-created fields at `dungeon_orchestration.cpp:165`; a magic field is drawn by its own primitive coloured by `sub & 3` (it has no ITEMS.16 art in the original either) |
-| 21. Objects | **G** logic / **R-05** art — Batch 9 | Was: only the `here` cell, as one 12×12 green/red blob. Now every cone cell of kind 1–8 at depths 0–3, painted far→near after the corridor, each with its own primitive (ladder / chest / open chest / fountain / trap / field). The wanderer is drawn at depths 1–3 and a `hidden` one is drawn on the **ceiling row** instead of being suppressed |
+| 18. Stairs / ladders | **G** — Batch 9 logic+placement / Batch 9C art | `dungeon.cpp` up/down with floor bounds → `ExitSurface`/`ExitUnderworld`. Now **drawn at every depth 0–3**, not only underfoot: a ladder two cells ahead used to be invisible |
+| 19. Pits | **G** — Batch 9 logic+placement / Batch 9C art | Damage script path present; drawn at every depth, and the trap `(sub & 7) == 0` gate (fn_1952 @0x197b) is now honoured |
+| 20. Fields / traps | **G** — Batch 9 logic+placement / Batch 9C art | Cast-created fields at `dungeon_orchestration.cpp:165`; a magic field is drawn by its own primitive coloured by `sub & 3` (it has no ITEMS.16 art in the original either) |
+| 21. Objects | **G** — Batch 9 logic / Batch 9C art | Was: only the `here` cell, as one 12×12 green/red blob. Now every cone cell of kind 1–8 at depths 0–3, painted far→near after the corridor, each now as its authored ITEMS.16 half-image pair (ladder / chest / open chest / fountain / trap; a magic field has no ITEMS art in the original either and keeps its own primitive). The wanderer is drawn at depths 1–3 from its MON0-7 bank and a `hidden` one is drawn on the **ceiling row** instead of being suppressed |
 | 22. Encounters | **G** | `DungeonEncounters` + `dungeon_arenas_` bound to all combat maps |
 | 23. Dungeon combat | **G** | `start_room` / `start_corridor` with `corridor_cause` |
 | 24. Combat return | **Y-22** | `dungeon_combat_return` handles floor delta, escape border and facing; core-tested only |
@@ -1793,7 +1814,7 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 | — | R-06 **G** | `Ready` offered and applied (RESOLVED, Batch 3) |
 | — | **R-17** | Dungeon gem view is a synthetic flood fill |
 
-**Bottom line (revised again after Batch 9B):** the dungeon was **three** gaps, not one or two. The **presentation logic** was genuinely defective in eight provable ways (§3 R-05 part 1) and is now fixed and host-tested behind `plan_dungeon_view()`. The **controls** were **not** already correct — that earlier reading was a false negative, taken from `dungeon_action()`'s completeness rather than from the UI dispatcher that a physical key actually reaches; (I)gnite, (D)rink, (H)ole up, Turn Around, the Klimb U/D choice, the Search Dir- choice and the digit keys were all unreachable, and three core APIs had zero callers. Batch 9B fixed the routing (§3 R-05 part 2) and added `dungeon_input_regression`, which drives the real input path. What is left is the **asset-pipeline gap** (part 3).
+**Bottom line (revised again after Batch 9B):** the dungeon was **three** gaps, not one or two. The **presentation logic** was genuinely defective in eight provable ways (§3 R-05 part 1) and is now fixed and host-tested behind `plan_dungeon_view()`. The **controls** were **not** already correct — that earlier reading was a false negative, taken from `dungeon_action()`'s completeness rather than from the UI dispatcher that a physical key actually reaches; (I)gnite, (D)rink, (H)ole up, Turn Around, the Klimb U/D choice, the Search Dir- choice and the digit keys were all unreachable, and three core APIs had zero callers. Batch 9B fixed the routing (§3 R-05 part 2) and added `dungeon_input_regression`, which drives the real input path. Batch 9C closed the **asset-pipeline gap** (part 3): the authored art is packed with per-image CRC identity, resident in PSRAM, and painted through a second portable seam — leaving only the final physical dungeon session to confirm on glass.
 
 ---
 
@@ -2019,31 +2040,68 @@ Small, independently testable batches, in dependency order. Each batch ends at a
 **Scope note.** Batch 9B's brief makes a physical checkpoint a **hard gate** before authored-art integration ("If hardware input is still broken: STOP"). That checkpoint cannot be run from this session, so the art half was deliberately left unstarted rather than built on an unverified foundation. The read-only asset inventory the brief asks for *before* any encoding decision **was** completed, and its measurements are in Batch 9C below.
 **Model:** Opus 5.
 
-### Batch 9C — Dungeon perspective ART · risk: **high**, largest remaining scope · **NOT STARTED — blocked on the Batch 9B hardware checkpoint**
-**IDs:** R-05 part 3 of 3, §12 rows 10-11.
-**Files:** `extractor/src/parsers/dngtiles.ts` + `monview.ts` (exist, reuse), `extractor/src/pipeline.ts` (already emits all three atlases), `native/tools/u5pack/alpha1.ts`, `native/ASSETS.md`, `native/targets/tdeck/main/{alpha_resources,native_renderer}.cpp`.
+### Batch 9C — Authored dungeon ART · risk: high · **DONE**
+**IDs:** R-05 part 3 of 3, §12 rows 10-11, 18-21.
+**Files:** `native/tools/u5pack/alpha1-dungeon-art.ts` (new) + `alpha1.ts`; `native/core/include/openu5/dungeon_art.h` + `src/dungeon_art.cpp` (new); `native/core/tests/dungeon_art_test.cpp` (new); `native/core/tools/check-dungeon-art-identity.ts` (new); `native/targets/tdeck/main/dungeon_art_cache.{h,cpp}` (new); `native_renderer.{h,cpp}`, `alpha_resources.{h,cpp}`, `alpha_runtime.{h,cpp}`; both `CMakeLists.txt`.
 
-**Asset inventory — completed in Batch 9B, all figures [EXEC] measured, not estimated:**
+**Asset inventory — measured in Batch 9B, re-verified byte for byte this batch:**
 
-| Bank | Source | Images | Dimensions | 4bpp | +1bpp mask | as RGB565 |
-|---|---|---|---|---|---|---|
-| Perspective | `DNG1.16` | 26 of 28 slots | h=164, w in {8,16,24,32,56,80} | 54,448 B | n/a | 217,792 B |
-| Perspective | `DNG2.16` | 26 of 28 | same | 54,448 B | n/a | 217,792 B |
-| Perspective | `DNG3.16` | 26 of 28 | same | 54,448 B | n/a | 217,792 B |
-| **DNG total** | | **78** | | **163,344 B** | | **653,376 B** |
-| Features | `ITEMS.16` | 20 | 40x80, 24x56, 40x24, 24x32, 16x24, 16x16, 8x8 | 8,160 B | **10,200 B** | 32,640 B |
-| Wanderers | `MON0-7.16` | 48 | 24x66, 16x25, 8x6 | 16,256 B | **20,320 B** | 65,024 B |
-| **All authored dungeon art** | | **146** | | | **193,864 B** | **751,040 B** |
+| Bank | Source | Images | Dimensions | 4bpp | +1bpp mask |
+|---|---|---|---|---|---|
+| Perspective | `DNG1.16` | 26 of 28 slots | h=164, w in {8,16,24,32,56,80} | 54,448 B | n/a |
+| Perspective | `DNG2.16` | 26 of 28 | same | 54,448 B | n/a |
+| Perspective | `DNG3.16` | 26 of 28 | same | 54,448 B | n/a |
+| **DNG total** | | **78** | | **163,344 B** | |
+| Features | `ITEMS.16` | 20 | 40x80, 24x56, 40x24, 24x32, 16x24, 16x16, 8x8 | 8,160 B | **10,200 B** |
+| Wanderers | `MON0-7.16` | 48 | 24x66, 16x25, 8x6 | 16,256 B | **20,320 B** |
+| **All authored dungeon art** | | **146** | | | **193,864 B** |
 
-Every source file is present in `original/u5/ultima5/`, and `extractor/src/parsers/dngtiles.ts` (`parseDngView`, `parseItemsView`) and `monview.ts` (`parseMonView`) already decode all three banks, including ITEMS/MON's 1bpp AND-mask transparency baked into alpha. `extractor/src/pipeline.ts` already emits `dungeon-persp`, `dungeon-feat` and `dungeon-mon` as PNG+JSON atlases when the originals are present — those outputs are simply not in `game/assets/` and nothing consumes them natively.
+Every Batch 9B figure held exactly. The two empty DNG slots are 8 and 24 — the depth-0 entries of front bases 8 and 24, which a front op can never reach because the driver only emits one at si > 0.
 
-**Corrections to the Batch 9 budget estimate.** ITEMS.16 was recorded as "34,680 B with masks"; measured, it is **10,200 B** at 4bpp+mask (the 34,680 figure was the RGB565 size, itself 32,640). MON0-7 was not budgeted at all and adds 20,320 B. The headline number is better than estimated: **all three wall variants plus every feature and wanderer fit in 193,864 B** in the originals' own 4bpp encoding.
+**The authoritative mapping**, reconstructed from `DUNGEON.OVL` + the DATA.OVL tables and cross-checked against `game/src/skin/fiel/dungeon.ts` and the accepted container parsers. Every anchor below was **derived, not assumed**: the side-slice widths are exactly what makes the four rings of each side abut (left 16→96, right 96→176), and tables 0x2e72 `[56,72,80,88]` and 0x2E2A `[72,80,88]` are exactly `96 − width` for the near feature and wanderer images — which is why the resolver anchors centred pairs at `96 − w` rather than carrying a second table. `dungeon_art_regression` re-derives both from the dimension tables, so a bad edit cannot silently move the art.
 
-**Architecture the measurements support.** Keep the authored 4bpp+mask encoding in the pack and decode to RGB565 on demand behind a small cache; do **not** pre-expand to RGB565 in flash (4x the bytes for no fidelity gain), and do **not** build a streaming subsystem — 194 KB is not large enough to force one. The pack is a named-entry TOC (`alpha1.ts` `{name, data, records, stride}`), so three new records need **no format/schema version bump**; check the entry bound in `alpha_resource_limits.h` first (it was last raised in Batch 4.5B for the 33rd entry). Note the app partition is **not** the constraint — the pack is a separate SD file loaded into PSRAM — but `kExpectedAlphaResourceSize` / `kExpectedAlphaResourceCrc32` are compiled in and enforced at boot, so **the pack must be regenerated and the SD card rewritten together with the firmware**. That has been confirmed as acceptable.
+| Plan op | Bank | Image | Destination | Flips | Order |
+|---|---|---|---|---|---|
+| Side, plain wall | DNG*n* | `0 + depth` | `x` from plan (0x2e62), `y=14`, natural size | right slice mirrored | near→far |
+| Side, door | DNG*n* | `4 + depth` | same | same | |
+| Side, open passage | DNG*n* | `16 + depth` | same | same | |
+| Side, alcove (special wall) | DNG*n* | `20 + depth` | same | same | |
+| Front, dead end | DNG*n* | `8 + depth` | **pair**: `96−w` normal, `96` mirrored | H only | at first blocker |
+| Front, door | DNG*n* | `12 + depth` | same pair | H only | |
+| Front, special wall | DNG*n* | `24 + depth` | same pair | H only | |
+| Feature, ladder up | ITEMS | `0 + si` | pair at `96−w`, `y` = 0x2e82 `[15,39,71,87]` | H **+ V flip** | block 1 |
+| Feature, ladder down | ITEMS | `0 + si` | pair, `y` = horizon 96 | H only | block 2 |
+| Feature, fountain | ITEMS | `4 + si` | pair, `y` = horizon 96 | H only | |
+| Feature, trap | ITEMS | `8 + si` | pair, `y` = 0x2e7a `[152,120,104,96]` | H only | gated on `(sub&7)==0` |
+| Feature, closed chest | ITEMS | `12 + si` | same floor `y` | H only | |
+| Feature, open chest | ITEMS | `16 + si` | same floor `y` | H only | |
+| Feature, magic field | — | **none** | — | — | sparkle subsystem, no ITEMS art |
+| Wanderer | MON*bank* | `frame*3 + depth−1` | pair at 0x2E2A, `y` = 0x2E32 row 0 | H only | far→near |
+| Wanderer, ceiling | MON*bank* | same | same, `y` = 0x2E32 **row 1** | H only | |
 
-**Work, in order:** 1) add the three records to `alpha1.ts` and update `native/ASSETS.md`; 2) golden extraction tests (decoded-pixel CRC + dimensions) for a front wall, front door, side wall, side passage, side door, one wall variant, ladder, chest, trap, normal wanderer, ceiling wanderer, **before** any renderer change; 3) readers in `alpha_resources.cpp`; 4) replace the placeholder painting in `render_dungeon_view()` with the blitter — **the plan already carries the piece code, the X, the mirror flag and the variant**, so this is paint-only; 5) port `featureBlits()`' anchor tables (`FEAT_Y_LADDER_UP` = [15,39,71,87], `FEAT_Y_FLOOR` = [152,120,104,96], `FEAT_Y_TOP_HORIZON` = 96) and the ladder-up vertical flip; 6) swap the variant **tint** for variant **atlas selection**.
-**Physical test:** re-run §16 step 33 (photograph the view) against real textures.
-**Model:** Opus-level, its own session.
+`LadderUpDown` carries **both** feature blocks — the V-flipped up block first (`fn_1952` @0x1984), the normal down block second (@0x19ae) — which is why one op can expand to four blits.
+
+**Masks and mirroring.** DNG slices are fully opaque (floor speckle and ceiling are baked in). ITEMS and MON carry the container's own 1bpp MSB-first AND-mask where **bit 1 = background**; transparency comes from it and never from colour-0 keying. A blit occupies `[x, x+w) × [y, y+h)`; `mirror` flips horizontally inside that box and `vflip` vertically, which is exactly what the binary's 0x8b7c / 0x8a2c primitives do.
+
+**Paint order.** Black background → the plan's ops in order → each op's blits in order. The plan already emits corridor rings near→far with the front wall at the first blocker and contents far→near; expansion **preserves** that, which `dungeon_art_regression` A8 asserts against a real plan so nothing authored can reorder the picture behind the plan's back.
+
+**Architecture.** Two portable seams, not one. `plan_dungeon_view()` (Batch 9) decides *what*; `dungeon_art_blits()` (new, `native/core/src/dungeon_art.cpp`) decides *which image, where, with which flips, in what order*; `render_dungeon_view()` now only **paints**. No classification, light gate, sight rule, ring suppression, feature eligibility or depth logic was moved into the renderer, and none was duplicated. The container parser `dungeon_art_parse()` also lives in core, so the bounds checking between a corrupt card and a wild pointer is host-testable. The wireframe stand-in — `dungeon_ring()`, `dungeon_feature_box()`, `dungeon_variant_wall()`, `dungeon_side_quad()` and the placeholder EGA constants — was removed as dead code; `dungeon_pixel/rect/line` survive because the gem and zodiac views still use them.
+
+**`primitives` changed meaning** in the dungeon path: it now counts **blits**, not per-pixel writes. The old counter started at 30,976 and incremented per pixel, which an authored 176×176 repaint would overflow in a `uint16_t`; a blit count is both in range and the number the metrics line actually wants.
+
+**Pack.** 34 entries / 1,843,457 B / CRC `0x2b1449f4` → **39 entries / 2,039,545 B / CRC `0x2065ad91`**, SHA-256 `434cd664b4b92472386e04f08012aee52932296e4c432ec0f1c2e0d26f63b4ea`; **+196,088 B**. Generation is deterministic (byte-identical on re-run) and reproducible from `original/u5/ultima5/` — the same repository convention `runes.ch` already uses — via the accepted extractor parsers. The packer **refuses to build** a pack whose extracted images disagree with the authored dimension tables that `dungeon_art.h` carries, so the two ends cannot drift apart silently.
+
+**Memory.** 195,768 B PSRAM (the five entry blobs, indexed in place; no second copy, no RGB565 pre-expansion) + ≈1.8 KB internal-RAM descriptor tables. Read once during `AlphaRuntime::initialize()` while the pack is open; **zero SD access for art during play**, and no per-frame allocation of any kind.
+
+**Tests added:** `dungeon_art_regression` (A1–A13: dimension invariants derived from the geometry, variant→bank, cache identity incl. the runtime shortcut's agreement with the plan for all eight dungeons, side/front/feature/wanderer mapping, paint order against a real plan, unlit view, missing catalog, the packed container and its corruption catalogue, surface lookup bounds, the EGA table) and `typescript_dungeon_art_identity` (golden extraction CRCs, three independent readings, plus byte-for-byte pack reproduction). Both were confirmed RED against deliberate defects before being accepted: a wrong feature Y table and a weakened container bounds check each produced a specific, named failure.
+
+**Host suite:** 74 tests, **72 pass, 2 fail** — `gameplay_parity` mismatch **2034** (R-21, intentionally open) and `quest_parity` `3221225477` (pre-existing environment failure). Both signatures are byte-identical to the Batch 9B baseline; the suite grew by exactly the two new tests. All eight dungeon tests GREEN, including Batch 9's `dungeon_view_regression` and Batch 9B's `dungeon_input_regression`, **unchanged**.
+
+**Firmware:** ESP-IDF 6.1, `build-batch9c-dungeon-art/openu5_tdeck.bin`, **0xcfe30 (851,504) bytes**, **18.7% free** of the 1,048,576 B app partition, zero compiler warnings, **+2,288 B** over Batch 9B's 0xcf540 (849,216). The art itself adds nothing to flash — it lives on the SD card.
+
+**SD card:** the pack identity changed, so **the card must be rewritten with the firmware**. See §16 step 0c.
+**Physical test:** §16 steps 33–33k against real textures — the meaningful final R-05 checkpoint.
+**Model:** Opus 5.
 
 ### Batch 10 — View Gem presentation · risk: low
 **IDs:** R-17, Y-14
@@ -2123,6 +2181,7 @@ Every source file is present in `original/u5/ultima5/`, and `extractor/src/parse
 Efficient broad-coverage pass using Developer tools. ~45 minutes. Each step names the log line that proves it.
 
 ### Phase 0 — Boot and frontend (5 min)
+0c. **[Batch 9C — SD card, do this FIRST]** Batch 9C changed the resource pack, so firmware and card must be updated **together**. Rebuild the pack with `npm run pack:alpha1` and copy `native/assets/openu5-alpha1-resources.bin` over the existing `<SD>:\ultima5\openu5-alpha1-resources.bin`, replacing it. **Do not reformat the card** and do not delete anything else: saves and settings live in separate files and are untouched. Then flash `build-batch9c-dungeon-art/openu5_tdeck.bin`. The new pack is **2,039,545 bytes**, payload CRC32 `0x2065ad91`, SHA-256 `434cd664…b4ea`; `openu5-assets.bin` (the tile pack) is **unchanged** and must stay as it is. If the card is not updated the device will stop on the identity screen with `match=0` — that is the gate working, not a fault.
 1. Boot. Confirm `IDENTITY ... match=1` and the identity screen.
 2. Title → wait 20 s → attract demo → any key → menu.
 3. Menu: `U` Introduction (page through), `A` Acknowledgements, `R` Return to View, `S` Settings (change brightness + trackball, Back to persist).
@@ -2167,13 +2226,18 @@ Efficient broad-coverage pass using Developer tools. ~45 minutes. Each step name
 
 ### Phase 6 — Dungeon (10 min) · *the big one*
 32. Debug → Teleport → Dungeon (Deceit), floor 0, standard entry. Confirm `DUNGEON_SESSION_STATE active=1` **and** a usable view.
-33. **[ANCHOR 4] Photograph the view.** Authored wall texture and variant colour are still **expected to be absent** until Batch 9B — do not fail the step on that. What Batch 9 must show, and what steps 33a–33f check, is that the view is *correct about the dungeon*.
+33. **[ANCHOR 4] Photograph the view.** As of Batch 9C the authored Ultima V wall art **must be present**: textured masonry slices with baked floor speckle and ceiling, not flat wedges and not outlines. If you still see line/wireframe geometry, the card is stale — re-check step 0c before failing anything else.
 33a. **[R-05 light gate]** With the torch OUT and no light spell running, stand anywhere in the corridor. **The viewport must be entirely black.** Ignite a torch: the corridor appears on that keypress.
 33b. **[R-05 bands]** Read the strip above the viewport: it must say **`L1`**, not a blank sky. Read the strip below: **`Dir:` + the facing**, not `Wind: --`.
 33c. **[R-05 turning]** Turn left then right **with the trackball** (or with `A`/`D` *only* after Movement Mode is ON — with it OFF, `A` is **Attack** and `D` is **Drink**, which is what made the first physical session read as “controls dead”). **The lower band must change on each turn.**
 33d. **[R-05 doors]** Stand so a **door or a room entrance** is two cells ahead down an open corridor. The corridor must **stop** at it and show a dead end with a door panel — previously the view ran straight through as if the cell were open. Then stand ON the door: the two nearest side slices must drop away.
 33e. **[R-05 features at depth]** Stand so a **ladder or a chest is one or two cells ahead**, not underfoot. **It must be visible from there** — previously only the cell underfoot ever drew anything.
 33f. **[R-05 wanderer]** Let a wandering monster approach. It must be drawn from **three cells out**, not only when adjacent; if it is a ceiling-lurking type it must appear **high in the frame**, not vanish.
+33m. **[R-05 authored walls — Batch 9C]** The corridor must be **textured art**, and the four depth rings must **abut** with no seams or black gaps between them (left edge 16→96, right 96→176). The only black in a lit view is the vanishing point beyond the light.
+33n. **[R-05 authored front door]** Repeat 33d and look at the art, not just the geometry: a **dead end** and a **door** must be visibly different images, and the front wall must read as one symmetric piece — its two mirrored halves meet at the centre column and must not overlap or leave a gap.
+33o. **[R-05 side geometry]** Find at least one **passage**, **alcove** and **side door** on a side wall. All three must be visually distinct from plain masonry and from each other, and each must appear on the **correct side** — walk past it and confirm it stays on the side the map says.
+33p. **[R-05 wall variant]** Visit a dungeon whose variant differs (`dungeon_wall_variant()`: dungeons 1, 4, 5 → DNG3 grey; 6, 7 → DNG2 red; the rest → DNG1 olive). The wall **appearance must change**, and it must change on entry, not after a step.
+33q. **[R-05 authored wanderer]** Repeat 33f against the art: the monster must be a recognisable **sprite** with clean edges against the corridor — no opaque rectangle around it (that would mean the AND-mask was lost) and no holes punched through its dark interior (that would mean colour-0 keying crept back in).
 34. Movement Mode ON: `W` advances, `S` backs up, `A`/`D` turn. Walk into a wall; confirm the blocked response.
 35. Trackball: same four.
 36. Find stairs, `K`limb down. Confirm the depth readout and a new floor. **[R-05]** The top band must read `L2` on the descent itself.
@@ -2189,7 +2253,7 @@ Efficient broad-coverage pass using Developer tools. ~45 minutes. Each step name
 
 ### Phase 6B — Dungeon RUNTIME gate (Batch 9B, 5 min) · *run this before any Batch 9C art work*
 
-Flash `build-batch9b-input/openu5_tdeck.bin`. The asset pack is **unchanged** by Batch 9B, so the existing SD card stays valid and no repack is needed.
+*Superseded by Batch 9C:* flash `build-batch9c-dungeon-art/openu5_tdeck.bin` and update the card per step **0c** — 9C changed the pack, so the 9B card no longer boots. The steps below are unchanged and remain the input-routing gate; run them in the same session as 33m-33q.
 
 33g. **[9B input — turning and movement]** Inside Deceit with a torch lit, turn left, turn right, advance, and back up **with the trackball**. Facing must change on each turn and the cell must change on each move — watch the `Dir:` band and the corridor together. Then press Enter: that is now **Turn Around**, so the `Dir:` band must flip 180°, *not* pass the turn.
 33h. **[9B input — the critical one, Ignite from the dark]** Let the torch burn out, or teleport in without one. The viewport must be black (33a). Now press `I`. **A torch must light and the corridor must appear on that keypress.** Before Batch 9B this answered `"What?"` and the only way out of a dark dungeon was to leave it.
@@ -2198,7 +2262,7 @@ Flash `build-batch9b-input/openu5_tdeck.bin`. The asset pack is **unchanged** by
 33k. **[9B input — Search direction]** Press `S`. The prompt `Dir-` must appear. Answer **down** (Here) and confirm the search reports the cell underfoot, not the one ahead. Also confirm `H` opens the camp hours prompt, `D` drinks (or answers "No fountain here."), and a digit key sets the active player.
 33l. **[9B identity]** While standing in Deceit, read the right-hand location strip: it must say **`Deceit`**. Reach it *from* another named map (Serpent's Hold is the case that produced the original report) and confirm it still says `Deceit`, then leave and confirm the strip returns to the surface name. Check one more dungeon if convenient.
 
-**Gate.** If 33g–33k all pass, the Batch 9B routing fix is confirmed on hardware and Batch 9C (authored art) may start. If any of them fails, **stop and report the failing step** — the art work is built directly on this path.
+**Gate.** 33g, 33h and 33j were confirmed on hardware at the Batch 9B checkpoint. Re-run the whole 33g–33l run once on the 9C image — now that the corridor is authored art, 33g and 33i are judgeable in a way they were not against the wireframe. If any step fails, **stop and report it**: the art work sits directly on this path, and a routing regression would look like an art fault.
 
 ### Phase 7 — Quest-critical interaction (3 min)
 45. Debug → Quest → grant a shard. **[R-08] `U`se it in a Flame room.** Fixed in Batch 3; hardware confirmation outstanding.

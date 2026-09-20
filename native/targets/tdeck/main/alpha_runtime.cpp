@@ -115,6 +115,19 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
         debug51::Step trace("alpha-resource-load-owners");
         ESP_RETURN_ON_ERROR(pack.load(resources_,report),kTag,"load Alpha resource owners");
     }
+    {
+        // Batch 9C / R-05. The authored dungeon art must be read HERE: main.cpp
+        // closes the pack as soon as this returns, which is also why the device
+        // never touches SD for art again. A failure is logged and tolerated --
+        // the dungeon then paints black instead of the corridor, which is a
+        // visible, diagnosable state, not a crash and not a silent fallback to
+        // invented geometry.
+        debug51::Step trace("dungeon-art-load");
+        const esp_err_t art=dungeon_art_.load(pack);
+        if(art!=ESP_OK)
+            ESP_LOGE(kTag,"Authored dungeon art unavailable (%s); the dungeon viewport will be blank",
+                     esp_err_to_name(art));
+    }
     alpha_report_=report;
     void *ui_mem=nullptr;
     {
@@ -1727,8 +1740,15 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
         } else if(gem_view_active_&&world_gem_map_ready){
             e=openu5::render_world_gem_view(world_gem_map,game_.position.xy,viewport_,openu5::kViewportPixelCount,report,dungeon_primitives);
             presentation_source="gem-view";
-        } else if(dungeon_source)
-            e=openu5::render_dungeon_view(game_,turn_,dungeon_,viewport_,openu5::kViewportPixelCount,report,dungeon_primitives);
+        } else if(dungeon_source){
+            // R-05. The wall variant is a pure function of the dungeon, so the
+            // cache key changes only when the party enters a dungeon with a
+            // different bank -- a turn, a step or a level change never reloads.
+            dungeon_art_.select({openu5::dungeon_art_wall_bank_index(
+                openu5::dungeon_wall_variant(dungeon_.pos.dungeon))});
+            e=openu5::render_dungeon_view(game_,turn_,dungeon_,dungeon_art_.surfaces(),tick,
+                                          viewport_,openu5::kViewportPixelCount,report,dungeon_primitives);
+        }
         else e=openu5::render_snapshot(tile_cache_,snapshot,tick,game_.turns_since_start,
                                        viewport_,openu5::kViewportPixelCount,report);
     }

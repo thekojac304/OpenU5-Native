@@ -75,6 +75,18 @@ esp_err_t AlphaResourcePack::read(const Entry &e, size_t at, void *out, size_t n
     return ESP_OK;
 }
 
+uint32_t AlphaResourcePack::entry_length(const char *name) const {
+    const Entry *entry = name ? find(name) : nullptr;
+    return entry ? entry->length : 0U;
+}
+
+esp_err_t AlphaResourcePack::read_entry(const char *name, void *out, size_t capacity) const {
+    const Entry *entry = name ? find(name) : nullptr;
+    if (!entry) return ESP_ERR_NOT_FOUND;
+    if (!out || capacity < entry->length) return ESP_ERR_INVALID_SIZE;
+    return read(*entry, 0, out, entry->length);
+}
+
 esp_err_t AlphaResourcePack::open(const char *path, AlphaResourceReport &report) {
     close(); report = {};
     file_ = std::fopen(path, "rb");
@@ -113,7 +125,11 @@ esp_err_t AlphaResourcePack::open(const char *path, AlphaResourceReport &report)
     }
     heap_caps_free(scratch);
     if ((payload_crc ^ 0xffffffffU) != report.payload_crc32) { close(); return ESP_ERR_INVALID_CRC; }
-    static const char *required[]={"init.gam","init.ool","overworld.map","underworld.map","smallmaps.bin","dungeons.bin","npcs.bin","worldtables.bin","combat.bin","shops.bin","shop-records.bin","misc-records.bin","blackthorn-scene.bin","talk.bin","shrines.bin","questions.bin","intro-text.bin","intro-title.rgb565","credits.rgb565","demo-scene.bin","look.bin","signs.bin","runes.ch","combatmaps.json","data.json","shoppe.json","talk-towne.json","talk-dwelling.json","talk-castle.json","talk-keep.json","look2.json","signs.json","endgame.json"};
+    static const char *required[]={"init.gam","init.ool","overworld.map","underworld.map","smallmaps.bin","dungeons.bin","npcs.bin","worldtables.bin","combat.bin","shops.bin","shop-records.bin","misc-records.bin","blackthorn-scene.bin","talk.bin","shrines.bin","questions.bin","intro-text.bin","intro-title.rgb565","credits.rgb565","demo-scene.bin","look.bin","signs.bin","runes.ch","combatmaps.json","data.json","shoppe.json","talk-towne.json","talk-dwelling.json","talk-castle.json","talk-keep.json","look2.json","signs.json","endgame.json",
+                                  // Batch 9C / R-05: the authored dungeon art. Named here so a pack
+                                  // built before it existed is rejected by NAME, not only by the
+                                  // size/CRC identity lock -- the log then says which half is stale.
+                                  "dungeon-dng1.art","dungeon-dng2.art","dungeon-dng3.art","dungeon-items.art","dungeon-mon.art"};
     for (const char *name:required) if(!find(name)){ESP_LOGE(kTag,"Required entry missing: %s",name);close();return ESP_ERR_NOT_FOUND;}
     report.firmware_match = report.file_size == kExpectedAlphaResourceSize &&
                             report.payload_crc32 == kExpectedAlphaResourceCrc32;

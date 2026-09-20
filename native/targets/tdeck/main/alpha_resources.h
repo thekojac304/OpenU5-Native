@@ -22,10 +22,10 @@ namespace tdeck {
 constexpr char kAlphaResourcePath[] = "/sd/ultima5/openu5-alpha1-resources.bin";
 constexpr uint16_t kAlphaResourceVersionMajor = 2;
 constexpr uint16_t kAlphaResourceVersionMinor = 0;
-constexpr uint32_t kExpectedAlphaResourceSize = 1843457;
-constexpr uint32_t kExpectedAlphaResourceCrc32 = 0x2b1449f4U;
+constexpr uint32_t kExpectedAlphaResourceSize = 2039545;
+constexpr uint32_t kExpectedAlphaResourceCrc32 = 0x2065ad91U;
 constexpr char kExpectedAlphaResourceSha256[] =
-    "1a5b5a402ec9480ed8ee5963c7fbf1e04470f10cbfeedd5dfc69d9b9f50fa573";
+    "434cd664b4b92472386e04f08012aee52932296e4c432ec0f1c2e0d26f63b4ea";
 
 struct CreationSprite {
     uint16_t width = 0, height = 0;
@@ -133,6 +133,21 @@ class AlphaResourcePack {
     esp_err_t load(AlphaResourceOwners &, AlphaResourceReport &);
     void close();
     bool is_open() const { return file_ != nullptr; }
+
+    /**
+     * Byte length of a named TOC entry, or 0 when the pack does not carry it.
+     * Batch 9C: the dungeon art cache sizes its own PSRAM allocations from this
+     * rather than from a constant, so a pack whose art grows cannot overrun a
+     * buffer sized by an older firmware.
+     */
+    uint32_t entry_length(const char *name) const;
+
+    /**
+     * Copy a whole named entry into `out`. `capacity` must be at least
+     * `entry_length(name)`; the entry's own CRC32 was already verified by
+     * open(), so a successful read here is authored data, not a guess.
+     */
+    esp_err_t read_entry(const char *name, void *out, size_t capacity) const;
 
   private:
     struct Entry {

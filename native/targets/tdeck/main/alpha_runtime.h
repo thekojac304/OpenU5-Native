@@ -8,6 +8,7 @@
 #include "alpha_dialogue.h"
 #include "alpha_save.h"
 #include "asset_pack.h"
+#include "dungeon_art_cache.h"
 #include "openu5/combat.h"
 #include "openu5/dialogue_orchestration.h"
 #include "openu5/dungeon_encounters.h"
@@ -69,6 +70,11 @@ class AlphaRuntime {
     openu5::DungeonContext dungeon_context_{dungeon_,dungeon_scratch_};
     openu5::DungeonArena *dungeon_arenas_ = nullptr;
     openu5::DungeonEncounters dungeon_encounters_{};
+    // Batch 9C / R-05 -- the authored dungeon art (DNG1/2/3.16, ITEMS.16,
+    // MON0-7.16), read once from the resource pack during initialize() while it
+    // is still open. Presentation only: it never reads or writes GameState, the
+    // clock or any RNG, and after the one load it never touches SD again.
+    DungeonArtCache dungeon_art_{};
     openu5::DialogueSession dialogue_{};
     AlphaDialogueCache dialogue_assets_{};
     openu5::DialogueServices dialogue_services_{dialogue_};

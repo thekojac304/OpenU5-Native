@@ -32,6 +32,7 @@ set(OPENU5_CORE_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/dungeon.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/dungeon_orchestration.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/dungeon_view.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/dungeon_art.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/transport.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/loot.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/scripted_encounter.cpp"

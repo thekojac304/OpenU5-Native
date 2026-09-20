@@ -4,7 +4,7 @@ idf_component_register(
          "keyboard_matrix.cpp"
          "device_smoke_tests.cpp"
          "asset_pack.cpp" "native_renderer.cpp" "alpha_resources.cpp" "alpha_dialogue.cpp"
-         "alpha_save.cpp" "alpha_runtime.cpp" "ui_input_adapter.cpp"
+         "alpha_save.cpp" "alpha_runtime.cpp" "ui_input_adapter.cpp" "dungeon_art_cache.cpp"
          ${OPENU5_CORE_SOURCES}
     INCLUDE_DIRS "." "../../../core/include"
     PRIV_REQUIRES esp_system esp_app_format esp_hw_support esp_psram heap spi_flash freertos esp_timer
