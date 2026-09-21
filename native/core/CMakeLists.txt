@@ -320,6 +320,10 @@ if(BUILD_TESTING)
   add_executable(batch12_combat_field_tests tests/batch12_combat_field_test.cpp)
   target_link_libraries(batch12_combat_field_tests PRIVATE openu5_core)
   add_test(NAME batch12_combat_field COMMAND batch12_combat_field_tests)
+
+  add_executable(batch13_tests tests/batch13_test.cpp)
+  target_link_libraries(batch13_tests PRIVATE openu5_core)
+  add_test(NAME batch13 COMMAND batch13_tests)
   # Batch 4.5B -- Blackthorn capture production-resource integration: proves
   # ShrineServices::record/::context are actually wired to the packed
   # MISCMSG.DAT resource the way AlphaRuntime wires it (real capture and

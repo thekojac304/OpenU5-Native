@@ -47,7 +47,13 @@ int main() {
     game.scroll_quantities[0]=1;Command scroll{};scroll.kind=CommandKind::UseItem;scroll.item=0;
     world_magic(context,scroll,active.value,sink,rng_source(game.rng));
     check(game.scroll_quantities[0]==0,"scroll quantity decrements");
-    check(has_text(events,std::string("Used ")+scroll_display_name(0)+"."),"scroll names the used item");
+    // Batch 13 / R-21: CAST.OVL 0x11f0 prints the CATEGORY word "Scroll" (DS
+    // 0x466a) and never the scroll's own name; the handler then prints its own
+    // DS line.  This check used to assert the opposite and locked in the
+    // fabrication that `gameplay_parity` mismatch 2034 was reporting.
+    check(has_text(events,"Scroll"),"scroll echoes the DS 0x466a category word");
+    check(!has_text(events,std::string("Used ")+scroll_display_name(0)+"."),
+          "scroll does not echo its own name");
     check(has_text(events,"Light!"),"scroll reports its result");
     check(has_event(events,GameEventKind::Sfx)&&has_event(events,GameEventKind::MagicCeremony,0),
           "scroll emits semantic audio and ceremony events");
@@ -55,11 +61,25 @@ int main() {
     events.clear();game.potion_quantities[0]=1;Command potion{};potion.kind=CommandKind::UseItem;potion.item=8;potion.member=0;
     world_magic(context,potion,active.value,sink,rng_source(game.rng));
     check(game.potion_quantities[0]==0,"potion quantity decrements");
-    check(has_text(events,std::string("Used ")+potion_display_name(0)+"."),"potion names the used item");
+    // Same rule at the drinker, CAST.OVL 0x136e (DS 0x4706).
+    check(has_text(events,"Potion"),"potion echoes the DS 0x4706 category word");
+    check(!has_text(events,std::string("Used ")+potion_display_name(0)+"."),
+          "potion does not echo its own name");
     check(has_event(events,GameEventKind::Sfx)&&has_event(events,GameEventKind::MagicCeremony,0),
           "potion emits semantic audio and ceremony events");
+    // Blue on a healthy member has no authored DS line, so the reference prints
+    // the category word and nothing else -- the old ">=2 messages" check only
+    // passed because of the fabricated "No effect!" fallback.  The real
+    // invariant is that an authored line IS printed when one exists.
     size_t potion_messages=0;for(const auto &event:events)if(event.kind==GameEventKind::Message)++potion_messages;
-    check(potion_messages>=2,"potion reports a meaningful result");
+    check(potion_messages==1,"silent potion prints only the category word");
+    check(!has_text(events,"No effect!"),"potion invents no fallback line");
+    events.clear();game.potion_quantities[2]=1;member.status='P';
+    Command cure{};cure.kind=CommandKind::UseItem;cure.item=10;cure.member=0;
+    world_magic(context,cure,active.value,sink,rng_source(game.rng));
+    check(has_text(events,"Potion"),"cure potion echoes the category word");
+    check(has_text(events,"Poison cured!"),"authored DS 0x4717 line is still printed");
+    member.status='G';
 
     events.clear();game.spell_quantities[0]=1;Command spell{};spell.kind=CommandKind::Cast;spell.item=0;spell.caster=0;
     world_magic(context,spell,active.value,sink,rng_source(game.rng));

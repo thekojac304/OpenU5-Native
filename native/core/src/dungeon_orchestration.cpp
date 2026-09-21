@@ -162,7 +162,14 @@ static ActionResult run_dungeon_command(CommandContext &c, Command cmd) {
         if(cmd.item<0||cmd.item>48||cmd.caster<0||cmd.caster>=c.game.party.character_count){result.status=CommandStatus::InvalidContext;return result;}
         auto rand=rng_source(c.game.rng);auto cast=cast_spell(c.game,c.turn,c.game.party.characters[cmd.caster],SpellId(cmd.item),{d.pos.dungeon,false,-1,0},rand);
         auto say=[&](const char *s){if(s&&*s)emit(c.events,GameEventKind::Message,s);};say(cast.message);
-        if(!cast.ok){if(cast.consumed)say("Failed!");return result;}
+        if(!cast.ok){if(cast.consumed)say("Failed!");emit(c.events,GameEventKind::Sfx,"invalid-magic");return result;}
+        // CAST2:0x0000 -- there is ONE cast dispatcher (CAST.OVL 0x0f1a), so a
+        // dungeon cast reaches the ceremony with the same circle index the
+        // overworld and arena mouths use.  Only the three weapon-spells and the
+        // four line fans skip it (they have their own sound), plus Vas Rel Por,
+        // whose ceremony hangs off its phase gate at 0x0d31.
+        {static constexpr int no_ceremony[]={1,13,37,28,40,44,45};bool ceremonial=cmd.item!=46;for(int id:no_ceremony)ceremonial&=cmd.item!=id;
+         if(ceremonial){emit(c.events,GameEventKind::Sfx,"spell-cast");GameEvent ce;ce.kind=GameEventKind::MagicCeremony;ce.note=spell_definition(SpellId(cmd.item))->circle;if(c.events.emit)c.events.emit(c.events.context,ce);}}
         auto fx=cast.effect.kind;
         if(fx==MagicEffect::Field||fx==MagicEffect::Dispel||fx==MagicEffect::Disarm){
             constexpr int dx[]={0,1,0,-1},dy[]={-1,0,1,0};int own=d.pos.floor*64+d.pos.y*8+d.pos.x,front=d.pos.floor*64+((d.pos.y+dy[int(d.pos.facing)])&7)*8+((d.pos.x+dx[int(d.pos.facing)])&7);

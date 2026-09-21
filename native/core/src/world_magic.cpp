@@ -10,7 +10,6 @@ WorldCommandResult world_magic(CommandContext &c,Command cmd,const ActiveMap &ma
     auto &g=c.game;auto &t=c.turn;const int location=c.dungeon&&c.dungeon_context?c.dungeon_context->state.pos.dungeon:g.position.map.location;
     auto emit=[&](GameEventKind k,const char *s=nullptr){GameEvent e;e.kind=k;e.text=s;if(k==GameEventKind::MapReveal)e.note=20;if(sink.emit)sink.emit(sink.context,e);};
     auto say=[&](const char *s){if(s&&*s)emit(GameEventKind::Message,s);};
-    auto used=[&](const char *name){char text[64]{};std::snprintf(text,sizeof(text),"Used %s.",name?name:"item");say(text);};
     auto ceremony=[&](int index,const char *audio){emit(GameEventKind::Sfx,audio);GameEvent e;e.kind=GameEventKind::MagicCeremony;e.note=index;if(sink.emit)sink.emit(sink.context,e);};
     auto target=[&]()->CharacterState *{return cmd.member>=0&&cmd.member<g.party.character_count?&g.party.characters[cmd.member]:nullptr;};
     if(cmd.kind==CommandKind::UseItem){
@@ -23,9 +22,9 @@ WorldCommandResult world_magic(CommandContext &c,Command cmd,const ActiveMap &ma
             if(cmd.item==37){say("Box");say("How?");return {};}
             return {use_quest_item(c,cmd.item,sink)};
         }
-        if(cmd.item>=8&&cmd.item<16){consume_potion(g,cmd.item-8);used(potion_display_name(cmd.item-8));if(auto *p=target()){auto effect=apply_potion_effect(*p,reroll_potion_color(cmd.item-8,rand),rand,location);say(effect.result.message&&*effect.result.message?effect.result.message:"No effect!");if(effect.reveal)emit(GameEventKind::MapReveal);ceremony(cmd.item-8,"potion-used");}return {};}
+        if(cmd.item>=8&&cmd.item<16){consume_potion(g,cmd.item-8);say("Potion");if(auto *p=target()){ceremony(cmd.item-8,"potion-used");auto effect=apply_potion_effect(*p,reroll_potion_color(cmd.item-8,rand),rand,location);say(effect.result.message);if(effect.reveal)emit(GameEventKind::MapReveal);}return {};}
         if(cmd.item<0||cmd.item>7)return {CommandStatus::Unsupported};
-        if(g.scroll_quantities[cmd.item]>0){--g.scroll_quantities[cmd.item];}used(scroll_display_name(cmd.item));
+        if(g.scroll_quantities[cmd.item]>0){--g.scroll_quantities[cmd.item];}say("Scroll");
         switch(cmd.item){
         case 0:t.light_spell_minutes=240;say("Light!");break;
         case 1:say("Wind change!");if(cmd.has_direction&&location<33){t.wind=int(cmd.direction)+1;t.wind_drift_counter=0;}break;

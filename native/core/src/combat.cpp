@@ -1099,9 +1099,9 @@ CombatResult combat_use_consumable(CombatContext &c,int32_t item,EventSink sink)
     if(c.combat.actors.capacity()-c.combat.count<combat_growth_reserve(c.combat)+4)return CombatResult::NeedsActorStorage;
     Engine e(c);auto *a=e.current();if(!a||!player(*a))return CombatResult::Ok;
     auto emit=[&](GameEventKind kind,const char *text=nullptr,int note=0){GameEvent event;event.kind=kind;event.text=text;event.note=note;if(sink.emit)sink.emit(sink.context,event);};
-    auto say=[&](const char *s){if(s&&*s)emit(GameEventKind::Message,s);};auto used=[&](const char*name){char text[64]{};std::snprintf(text,sizeof(text),"Used %s.",name);say(text);};
-    if(item>=8){int color=item-8;consume_potion(c.game,color);used(potion_display_name(color));auto &p=c.game.party.characters[a->member];auto out=apply_potion_effect(p,reroll_potion_color(color,e.magic_rng()),e.magic_rng(),128);say(out.result.message&&*out.result.message?out.result.message:"No effect!");emit(GameEventKind::Sfx,"potion-used");emit(GameEventKind::MagicCeremony,nullptr,color);a->hp=p.current_hp;a->sleeping=p.status=='S';if(out.result.ok&&out.effective_color==6){a->invisible=true;a->render_tile=29;}if(out.result.ok&&out.effective_color==5)a->render_tile=144;}
-    else{if(c.game.scroll_quantities[item]>0)--c.game.scroll_quantities[item];used(scroll_display_name(item));switch(item){
+    auto say=[&](const char *s){if(s&&*s)emit(GameEventKind::Message,s);};
+    if(item>=8){int color=item-8;consume_potion(c.game,color);say("Potion");emit(GameEventKind::Sfx,"potion-used");emit(GameEventKind::MagicCeremony,nullptr,color);auto &p=c.game.party.characters[a->member];auto out=apply_potion_effect(p,reroll_potion_color(color,e.magic_rng()),e.magic_rng(),128);say(out.result.message);a->hp=p.current_hp;a->sleeping=p.status=='S';if(out.result.ok&&out.effective_color==6){a->invisible=true;a->render_tile=29;}if(out.result.ok&&out.effective_color==5)a->render_tile=144;}
+    else{if(c.game.scroll_quantities[item]>0)--c.game.scroll_quantities[item];say("Scroll");switch(item){
         case 0:c.turn.light_spell_minutes=240;say("Light!");break;
         case 1:say("Wind change!");break;
         case 2:c.turn.time_spell='P';c.turn.spell_turns=100;say("Protection!");break;
