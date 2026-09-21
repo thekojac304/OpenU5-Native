@@ -1124,6 +1124,16 @@ would also move the stream. *Port:* `game/src/core/combat/combat.ts:406`
 (`combatCastEffect`), wired at `game/src/main.ts:2268` (verified 2026-08-08). A test guards
 the clone: `game/tests/field-wall-dungeon.test.ts` turns **red** if anyone "fixes" the zeros.
 
+*Native port (added 2026-09-21):* the same clone lives in `native/core/src/magic_tables.inc`
+(`{Field,53,0}/{Field,51,1}/{Field,52,2}/{Field,54,3}`), `native/core/src/combat.cpp`'s
+`combat_cast` (the `Field → Attack` rewrite, mirroring `combatCastEffect`) and
+`native/core/src/combat_magic.inc`'s `spell_flight` (`{16,30,99,18,0,21,0}`, zeros included).
+Its guard is `native/core/tests/batch12_combat_field_test.cpp` (CTest `batch12_combat_field`),
+which turns **red** both if combat starts seeding fields and if the two zeros are given
+damage. It was opened by a T-Deck hardware report of exactly this defect — "In Flam Grav
+flashes but leaves no fire field" — so the ticket now has a *player-side* sighting on real
+glass, not only a disassembly reading. Reachability is still **NOT SURVEYED**.
+
 **Grade:** mechanism **MEASURED** (both branches, the weapon table, the damage table and the
 whole combat chain, read). **Reachability NOT SURVEYED**: all four are allowed in combat by
 the `DS:0x1C90` mask (`0x03`), so the path exists — but nobody has counted how many playthroughs

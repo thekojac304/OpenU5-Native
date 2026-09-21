@@ -288,6 +288,16 @@ if(BUILD_TESTING)
   add_executable(batch7b_tests tests/batch7b_test.cpp)
   target_link_libraries(batch7b_tests PRIVATE openu5_core)
   add_test(NAME batch7b COMMAND batch7b_tests)
+  # Batch 12 -- combat field magic. Pins the REFERENCE behavior of the four
+  # In*Grav spells against the hardware report that they "leave no field" in
+  # the arena: CAST.OVL 0x004c's combat branch seeds no field by design
+  # (docs/bugs-del-original.md SS2.9, ticket #91), the dungeon branch is the
+  # only writer of DS:0x4596, and arena fields are authored .CBT units that
+  # persist, render and apply COMBAT:0x1b1e's magnitude dispatch. Turns RED if
+  # anyone "fixes" combat field creation or the two zero attack values.
+  add_executable(batch12_combat_field_tests tests/batch12_combat_field_test.cpp)
+  target_link_libraries(batch12_combat_field_tests PRIVATE openu5_core)
+  add_test(NAME batch12_combat_field COMMAND batch12_combat_field_tests)
   # Batch 4.5B -- Blackthorn capture production-resource integration: proves
   # ShrineServices::record/::context are actually wired to the packed
   # MISCMSG.DAT resource the way AlphaRuntime wires it (real capture and
