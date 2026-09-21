@@ -9,10 +9,32 @@ template <size_t N> const char *at(const char *const (&values)[N], int32_t id) {
     return id >= 0 && size_t(id) < N && values[id] && *values[id] ? values[id] : nullptr;
 }
 
-// InventoryDetails.json Armament ids, normalized to the human-readable names
-// extracted from DATA.OVL.  The index is the save-game equipment id.
+// The 48 equipment names of DATA.OVL DS 0x17f6 (the DGROUP long-name pointer
+// table; the reference ships the byte-exact dump as
+// game/src/core/data/longEquipNames.json).  The index IS the save-game
+// equipment id -- the same id space as inventory.cpp's `types`/`weights`
+// tables, which are verbatim copies of DS 0x1a7e / DS 0x1aae.
+//
+// R-22 CORRECTION (Batch 14).  This table was previously transcribed from
+// InventoryDetails.json's `Armament` map, which carries a PHANTOM
+// `[0] = "BareHands"` entry from the clone-era Redux data set, so every name
+// sat one slot high.  The reference itself compensates with `.slice(1)`
+// (game/src/ui/shop-console.ts, and the rule is spelled out in
+// game/src/core/world/search.ts's EQUIP_IDX_GLASS_SWORD comment); native did
+// not, so `equipment_display_name(16)` returned "Mystic Armour" for the
+// Dagger and `(27)` returned "Bow" for the Arrows.  Three independent
+// anchors inside native itself pin the correct alignment:
+//   * equip_type_of(9..15) == 0x40 -- the armour band ZSTATS.OVL:0x0c94
+//     locks in battle, so id 9 is an armour, not the Jewel Shield;
+//   * ammo_item_for() maps 26/36 -> 27 and 28 -> 29 -- Bow/Magic Bow ->
+//     Arrows and Crossbow -> Quarrels (ZSTATS.OVL:0x0d0c);
+//   * is_thrown_weapon() is {16, 21, 22} -- Dagger/Spear/Throwing Axe
+//     (COMSUBS:0x097c, rama 0x9b8).
+// Every caller (Z-stats Arms and Armaments pages, the Ready picker, the
+// blacksmith, the Developer equipment rows) was showing the neighbouring
+// item's name before this correction.
 constexpr const char *equipment_names[] = {
-    "Bare Hands", "Leather Helm", "Chain Coif", "Iron Helm", "Spiked Helm",
+    "Leather Helm", "Chain Coif", "Iron Helm", "Spiked Helm",
     "Small Shield", "Large Shield", "Spiked Shield", "Magic Shield", "Jewel Shield",
     "Cloth Armour", "Leather Armour", "Ring Mail", "Scale Mail", "Chain Mail",
     "Plate Mail", "Mystic Armour", "Dagger", "Sling", "Club", "Flaming Oil",
@@ -20,8 +42,11 @@ constexpr const char *equipment_names[] = {
     "Bow", "Arrows", "Crossbow", "Quarrels", "Long Sword", "2H Hammer", "2H Axe",
     "2H Sword", "Halberd", "Sword of Chaos", "Magic Bow", "Silver Sword", "Magic Axe",
     "Glass Sword", "Jeweled Sword", "Mystic Sword", "Ring of Invisibility",
-    "Ring of Protection", "Ring of Regeneration", "Amulet of Turning", "Spiked Collar"
+    "Ring of Protection", "Ring of Regeneration", "Amulet/Turning", "Spiked Collar",
+    "Ankh"
 };
+static_assert(sizeof(equipment_names) / sizeof(equipment_names[0]) == 48,
+              "the equipment name table must cover exactly the 48 ids of DS 0x1a7e");
 constexpr const char *reagent_names[] = {
     "Sulfur Ash", "Ginseng", "Garlic", "Spider Silk", "Blood Moss", "Black Pearl",
     "Nightshade", "Mandrake"

@@ -30,9 +30,18 @@ int main(){
         check(potion_display_name(i)!=nullptr,"potion id resolves");
         check(scroll_display_name(i)!=nullptr,"scroll id resolves");
     }
-    check(std::strcmp(equipment_display_name(4),"Spiked Helm")==0,"equipment 4 reference parity");
-    check(std::strcmp(equipment_display_name(16),"Mystic Armour")==0,"equipment 16 reference parity");
-    check(std::strcmp(equipment_display_name(38),"Silver Sword")==0,"equipment 38 reference parity");
+    // R-22 / Batch 14.  These three anchors previously encoded the phantom
+    // "BareHands" slot of InventoryDetails.json, which pushed every equipment
+    // name one id high.  They now name the ids the binary itself pins:
+    // 4 is a shield (equip_type_of == 0x20 and id < 16 -> EquipSlot::Shield),
+    // 16 is the Dagger of COMSUBS 0x097c's thrown-weapon set {16, 21, 22},
+    // and 38 is the Magic Axe (39 is the Glass Sword whose pack slot
+    // SJOG 0x0587 gates the overworld search on).  See src/display_names.cpp.
+    check(std::strcmp(equipment_display_name(4),"Small Shield")==0,"equipment 4 reference parity");
+    check(std::strcmp(equipment_display_name(16),"Dagger")==0,"equipment 16 reference parity");
+    check(std::strcmp(equipment_display_name(38),"Magic Axe")==0,"equipment 38 reference parity");
+    check(std::strcmp(equipment_display_name(39),"Glass Sword")==0,"equipment 39 reference parity");
+    check(std::strcmp(equipment_display_name(47),"Ankh")==0,"equipment 47 reference parity");
     check(std::strcmp(reagent_display_name(7),"Mandrake")==0,"reagent reference parity");
     check(std::strcmp(spell_display_name(47),"An Tym")==0,"spell reference parity");
     check(std::strcmp(spell_effect_summary(SpellId::AnNox),"Cures poison")==0,

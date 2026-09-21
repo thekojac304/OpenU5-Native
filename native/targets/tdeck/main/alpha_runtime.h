@@ -27,6 +27,7 @@
 #include "openu5/intro_view.h"
 #include "openu5/system_menu.h"
 #include "openu5/world_terrain.h"
+#include "openu5/zstats.h"
 #include "native_renderer.h"
 #include "device_smoke_tests.h"
 #include "device_ui_views.h"
@@ -65,6 +66,13 @@ class AlphaRuntime {
     openu5::TravelState &travel() { return travel_; }
     openu5::CommandState &commands() { return commands_; }
     openu5::NpcActors &actors() { return actors_; }
+
+    // Batch 14 / R-22 host-test seam --------------------------------------
+    // The (Z)-stats modal, observable without a Board. `zstats_view()` is the
+    // SAME openu5::ZStatsPage compose_selection_view() paints, so a host test
+    // and the device panel cannot disagree about a row.
+    bool zstats_active() const { return zstats_open_; }
+    openu5::ZStatsPage zstats_view() const;
 
   private:
     struct Selection { char label[40]{}; int16_t value = -1; bool enabled = true; };
@@ -204,6 +212,13 @@ class AlphaRuntime {
     int16_t pending_ready_member_ = -1;
     int16_t pending_use_item_ = -1;
     int16_t status_member_ = -1;
+    // R-22. The (Z)-stats page modal: the axis slot of ztats-layout.md
+    // section 2 plus the current list's scroll offset. Presentation only --
+    // while it is open nothing is dispatched, no turn is charged and no RNG
+    // is drawn, exactly as cmd_zstats (ZSTATS.OVL:0x0a3a) behaves.
+    bool zstats_open_ = false;
+    int zstats_page_ = 0;
+    size_t zstats_scroll_ = 0;
     int32_t combat_world_tile_before_ = openu5::kOffMap;
     bool combat_world_tile_saved_ = false;
     struct DirectTrollTrace {
@@ -289,6 +304,12 @@ class AlphaRuntime {
     /** Beat sink for the narrative pacer (append / continue / cue / phase). */
     static void narrative_beat(void *, const openu5::NarrativeSceneBeat &);
     void open_selection(openu5::UiMode, openu5::UiRequestId);
+    /** Open the (Z)-stats page axis on `member`'s stats page (R-22). */
+    void open_zstats(int member);
+    /** Route one input into the open (Z)-stats modal; true = it was consumed. */
+    bool handle_zstats_input(const openu5::UiAction &);
+    /** The possession bits the Items page needs that GameState does not own. */
+    openu5::ZStatsInput zstats_input() const;
     static size_t selection_count(void *);
     static openu5::UiSelectionItem selection_item(void *, size_t);
     const char *overlay() const;

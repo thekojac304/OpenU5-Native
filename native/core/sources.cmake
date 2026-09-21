@@ -50,6 +50,7 @@ set(OPENU5_CORE_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/commands.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/inventory.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/inventory_picker.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/zstats.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/rest.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/combat.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/magic.cpp"

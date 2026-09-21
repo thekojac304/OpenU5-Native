@@ -21,6 +21,8 @@ The **core is in far better shape than the device integration**. At the original
 
 `AlphaRuntime` itself still has no host coverage — nothing in the repository instantiates it directly, and the on-device "smoke tests" are data-presence probes and isolated `UiSession` probes with a spy dispatcher that never exercise the adapter that consumes the intents. **Batch 1 added `ui_mode_regression`, an ESP-free seam (`ui_mode_policy.h`) that host-tests mode arbitration and `UiSession` mode ownership (28/28 GREEN)** — narrowing, but not closing, that blind spot. Most defects below still live in the parts of the blind spot that seam does not cover.
 
+**Batch 14 added a second host-driven `AlphaRuntime` suite.** `batch14_zstats_runtime` uses the same Batch 11 seam to drive the new `(Z)`-stats modal entirely through production routing — raw input, `UiInputAdapter`, `UiSession`, `dispatch()` — so the modal's input isolation and turn accounting are asserted against the real `handle()` rather than a mirror. See §14 Batch 14.
+
 **Batch 11 changed the first sentence of this paragraph.** `AlphaRuntime` is now directly host-instantiated and host-driven — the real, unmodified `alpha_runtime.cpp` links into a new host executable (`alpha_runtime_integration_regression`) via harmless ESP-IDF/Board/storage substitutes, and 22 RED→GREEN assertions drive its actual `handle()`/`dispatch()`/`command()` across five representative command classes. This closes the *integration-testability* gap that made every earlier batch's "hand-mirrored" host coverage (see `dungeon_combat_test.cpp`'s and `dungeon_input_test.cpp`'s own file-header warnings that they *copy* `AlphaRuntime`'s per-input tail rather than exercise it) unable to catch a routing/turn-accounting bug in `AlphaRuntime` itself. It does **not** retroactively resolve any Y/R item below — see §14 Batch 11 for exactly what is and is not now covered.
 
 ### Largest risks, in order
@@ -114,7 +116,7 @@ All routes are `UiSession::handle_exploration` → `UiIntent` → `AlphaRuntime:
 | `v` | View gem | **G** — host+firmware RESOLVED (Batch 10); hardware visual check pending | ANCHOR 3. R-17/Y-14 |
 | `x` | X-it (Disembark) | **Y** | Y-07 |
 | `y` | Yell | **G** | R-19 **GREEN** (Batch 3) — frigate branch dispatches `YellSails`; word-of-power Yell unchanged (Y-24 both branches covered). |
-| `z` | Z-stats | **R** | Member picker and party highlight work; the Stats/Arms/Provisions/Reagents/Spells/Items/Armaments page family does not exist — selecting a member just reopens the picker. R-22 |
+| `z` | Z-stats | **G** | Member picker (`select_player` 0x0000) then the full 17-slot page axis: per-member Stats and Arms, Provisions, and the Reagents/Spells/Items/Armaments lists, with the binary's circular ring, its `0`–`6` jumps, its 7-row list paging and its Space/ESC-only exit. **R-22 RESOLVED (Batch 14)** |
 | space/Enter | Pass | **G** | Two independent routes, both echo. |
 | `0`–`9` | Set Active Player / harpsichord note | **G** at the core/`UiSession` level; **device-partial** on T-Deck hardware | Y-20, R-20 **GREEN** (Batch 3) — digits dispatch `SetActivePlayer` with the literal digit; at the harpsichord they are intercepted first and dispatch `HarpsichordNote`. On T-Deck hardware, digits `1`-`9` (and Cancel, via short-press) are physically reachable, but literal `'0'` — the clear-active-player route — is not: the only matrix position resolving to `'0'` is the physical Mic key, which `UiInputAdapter::translate()` unconditionally intercepts for short=Cancel/long=Movement-Mode before any character dispatch. Tracked as **Y-29** (device-only reachability gap, open). |
 | any other | `"X-What?"` | **G** | Matches reference unknown-key echo. |
@@ -1261,7 +1263,7 @@ M5 is the load-bearing one: a single-digit change to an index the parity suite c
 
 ---
 
-### R-22 — Native Z-stats status/inventory pages missing · **SEVERITY 2**
+### R-22 — Native Z-stats status/inventory pages missing · **SEVERITY 2** · **GREEN — RESOLVED (Batch 14)**
 
 **Discovery context:** pre-Batch-4 hardware testing walked the reference `(Z)` command family and compared it against the native T-Deck implementation. This was missed by the original audit — Batch 3's Use-picker reachability work (R-07/R-08) covers the `(U)se` item picker only and does not substitute for `(Z)` status pages, which are a distinct, unimplemented UI axis.
 
@@ -1276,9 +1278,9 @@ M5 is the load-bearing one: a single-digit change to an index the parity suite c
 
 **Native limitation:** `case 'z'` in `ui_session.cpp` (`handle_exploration`) only dispatches `UiIntentKind::OpenStatusSelection` with `UiRequestId::Status`, which opens the initial party-member picker. Selecting a member does not advance to any Stats/Arms/Provisions/Reagents/Spells/Items/Armaments page — it merely reopens or repositions the same member picker. There is no real status-page axis backing `(Z)` today, so none of the quest/special items listed above (which the reference explicitly surfaces under `(Z)`'s Items page) are ever shown to the player through this command.
 
-**Fix shape:** not yet designed — full implementation is deferred to its own future batch (see §14 Batch 13). This entry is evidence-only; do not implement in the same pass that files this finding.
+**Fix (Batch 14) — RESOLVED.** The page family was implemented against the binary, not against the bullet list above (which was written from memory and got two things wrong: the odd per-member page is **Arms only** — `draw_arms_page` 0x02a8 paints the six equipment slots and no spellbook — and list `0xe` is **Spells**, the mixture counts at `0x57f0`, not a second item page). See §14 Batch 14 for the full write-up, the proven page family and the residuals.
 
-**Evidence:** [STATIC] — `ui_session.cpp` `case 'z'` and the `OpenStatusSelection`/`UiRequestId::Status` handling; [REF] — reference `(Z)` page family listed above.
+**Evidence:** [STATIC] — `ui_session.cpp` `case 'z'` and the `OpenStatusSelection`/`UiRequestId::Status` handling; [REF] — `re/notes/zstats.md` (ZSTATS.OVL function map, record layout, the DS 0x1a7e/0x1aae tables) and `re/notes/ztats-layout.md` (the 17-slot page axis §2, per-page field order §1/§8, `render_item_list` §3–§5, the key matrix §1b/§8.5); [TEST] — `batch14_zstats_model` (97 checks) and `batch14_zstats_runtime` (54 checks).
 
 ---
 
@@ -1793,35 +1795,35 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 
 ## 11. RESOURCE / ITEM MATRIX
 
-**Note on the `View` column (post-R-22):** "Z-stats (R-22)" below means the reference exposes this resource on a `(Z)` status page, but native `(Z)` currently implements only the member picker — see R-22. The `Status` column separates the resource's own storage/use functionality (which is fine) from that missing presentation route.
+**Note on the `View` column (post-Batch-14):** "Z-stats (R-22)" below means the reference exposes this resource on a `(Z)` status page. **R-22 is RESOLVED (Batch 14)**: the page family exists and every row below is reachable on device, so those `View` entries now describe a route that works rather than a missing one. The `Status` column still separates the resource's own storage/use functionality from that presentation route. The one row that remains view-less is the Pocket Watch (extended id `0x23`), which no `GameState` field backs — see R-08 and the Batch 14 residuals.
 
 | Resource | Get | Use | Ready | View | Save | Status |
 |---|---|---|---|---|---|---|
-| Gold | ✓ | n/a | n/a | Z-stats (R-22) | ✓ | **G** storage/use / R-22 view |
-| Food | ✓ | n/a (auto-consumed) | n/a | Z-stats (R-22) | ✓ | **G** storage/use / R-22 view |
+| Gold | ✓ | n/a | n/a | Z-stats Provisions page | ✓ | **G** storage/use / **G** view (R-22 resolved, Batch 14) |
+| Food | ✓ | n/a (auto-consumed) | n/a | Z-stats Provisions page | ✓ | **G** storage/use / **G** view (R-22 resolved, Batch 14) |
 | Gems | ✓ | n/a | n/a | **`V`** | ✓ | **G** — R-17/Y-14 RESOLVED (Batch 10), hardware check pending |
-| Keys | ✓ | via Jimmy/Open | n/a | Z-stats (R-22) | ✓ | **G** storage/use / R-22 view |
-| Torches | ✓ | `I`gnite | n/a | Z-stats (R-22) | ✓ | **G** storage/use / R-22 view |
-| Reagents ×8 | shop | `M`ix | n/a | Z-stats (R-22) | ✓ | **Y-19** storage/use / R-22 view |
-| Equipment ×48 | ✓ / shop | n/a | **`R`** | Z-stats (R-22) | ✓ | **G** world, dungeon and combat (R-06 resolved, Batch 3) / R-22 view |
-| Armour / helmets / shields | ✓ | n/a | ✓ | Z-stats (R-22) | ✓ | **G** storage/use / R-22 view |
-| Weapons / ammo | ✓ | n/a | ✓ (ammo checked) | Z-stats (R-22) | ✓ | **G** storage/use / R-22 view |
+| Keys | ✓ | via Jimmy/Open | n/a | Z-stats Provisions page | ✓ | **G** storage/use / **G** view (R-22 resolved, Batch 14) |
+| Torches | ✓ | `I`gnite | n/a | Z-stats Provisions page | ✓ | **G** storage/use / **G** view (R-22 resolved, Batch 14) |
+| Reagents ×8 | shop | `M`ix | n/a | Z-stats Reagents page | ✓ | **Y-19** storage/use / **G** view (R-22 resolved, Batch 14) |
+| Equipment ×48 | ✓ / shop | n/a | **`R`** | Z-stats Armaments page | ✓ | **G** world, dungeon and combat (R-06 resolved, Batch 3) / **G** view (R-22 resolved, Batch 14 — which also corrected the off-by-one in `equipment_display_name`) |
+| Armour / helmets / shields | ✓ | n/a | ✓ | Z-stats Arms + Armaments pages | ✓ | **G** storage/use / **G** view (R-22 resolved, Batch 14) |
+| Weapons / ammo | ✓ | n/a | ✓ (ammo checked) | Z-stats Arms + Armaments pages | ✓ | **G** storage/use / **G** view (R-22 resolved, Batch 14) |
 | Potions ×8 (ids 8–15) | ✓ | ✓ + party target | n/a | picker | ✓ | **G** |
 | Scrolls ×8 (ids 0–7) | ✓ | ✓ | n/a | picker | ✓ | Y-21 **discharged (Batch 5)** — the Rel Hur getdir exists and works; cancel divergence = Y-31 |
-| Spells ×48 | `M`ix | `C`ast | n/a | picker + summary; Z-stats Spells page (R-22) | ✓ | R-11 **RESOLVED (Batch 5)**, **R-16 RESOLVED (Batch 8)** / R-22 view |
+| Spells ×48 | `M`ix | `C`ast | n/a | picker + summary; Z-stats Spells page | ✓ | R-11 **RESOLVED (Batch 5)**, **R-16 RESOLVED (Batch 8)** / **G** view (R-22 resolved, Batch 14) |
 | Magic Carpet (16) | quest | ✓ | n/a | picker | ✓ | **Y** |
 | Skull Key (17) | quest | ✓ | n/a | picker | ✓ | **Y** |
-| Amulet (18) | quest | ✓ | n/a | picker; Z-stats Items page (R-22) | ✓ | **G** Use-picker — R-07 resolved (Batch 3) / R-22 Z-stats Items-page view still missing |
-| Crown (19) | quest | ✓ | n/a | picker; Z-stats Items page (R-22) | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / R-22 Z-stats Items-page view still missing |
-| Sceptre (20) | quest | ✓ | n/a | picker; Z-stats Items page (R-22) | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / R-22 Z-stats Items-page view still missing |
-| Moonstones (21–28) | quest | ✓ | n/a | picker (gated on `!buried`); Z-stats Items page (R-22) | ✓ | **G** picker — R-08 resolved (Batch 3); ground-marker persistence R-14 resolved (Batch 6); R-22 Z-stats Items-page view still missing |
-| Shards (29–31) | quest | ✓ | n/a | picker; Z-stats Items page (R-22) | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / R-22 Z-stats Items-page view still missing |
-| Spyglass (32) | quest | ✓ route | n/a | picker; Z-stats Items page (R-22) | ✓ | **R-13** (no zodiac view) / R-22 Z-stats Items-page view still missing |
-| Plans (33) | quest | ✓ | n/a | picker (gated on `hms_cape`); Z-stats Items page (R-22) | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / R-22 Z-stats Items-page view still missing |
-| Sextant (34) | quest | ✓ | n/a | picker; Z-stats Items page (R-22) | ✓ | **G** Use-picker / R-22 Z-stats Items-page view still missing |
+| Amulet (18) | quest | ✓ | n/a | picker; Z-stats Items page | ✓ | **G** Use-picker — R-07 resolved (Batch 3) / **G** Z-stats Items-page view (R-22 resolved, Batch 14) |
+| Crown (19) | quest | ✓ | n/a | picker; Z-stats Items page | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / **G** Z-stats Items-page view (R-22 resolved, Batch 14) |
+| Sceptre (20) | quest | ✓ | n/a | picker; Z-stats Items page | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / **G** Z-stats Items-page view (R-22 resolved, Batch 14) |
+| Moonstones (21–28) | quest | ✓ | n/a | picker (gated on `!buried`); Z-stats Items page | ✓ | **G** picker — R-08 resolved (Batch 3); ground-marker persistence R-14 resolved (Batch 6); **G** Z-stats Items-page view (R-22 resolved, Batch 14 — the page reads the same `!buried` gate as the picker) |
+| Shards (29–31) | quest | ✓ | n/a | picker; Z-stats Items page | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / **G** Z-stats Items-page view (R-22 resolved, Batch 14) |
+| Spyglass (32) | quest | ✓ route | n/a | picker; Z-stats Items page | ✓ | **R-13** (no zodiac view) / **G** Z-stats Items-page view (R-22 resolved, Batch 14) |
+| Plans (33) | quest | ✓ | n/a | picker (gated on `hms_cape`); Z-stats Items page | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / **G** Z-stats Items-page view (R-22 resolved, Batch 14) |
+| Sextant (34) | quest | ✓ | n/a | picker; Z-stats Items page | ✓ | **G** Use-picker / **G** Z-stats Items-page view (R-22 resolved, Batch 14) |
 | **Watch (35)** | **no owner anywhere** | **absent** | n/a | **absent** | ✓ | **OPEN** — deliberately excluded by Batch 3: no `GameState`/`QuestState`/`QuestWorldServices` field backs id 35, so no possession gate exists. Inventing one was out of scope. |
-| Badge (36) | quest | ✓ | n/a | picker (gated on `black_badge`); Z-stats Items page (R-22) | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / R-22 Z-stats Items-page view still missing |
-| Wooden Box (37) | quest | ✓ ("How?") | n/a | picker; Z-stats Items page (R-22) | ✓ | **G** Use-picker / R-22 Z-stats Items-page view still missing |
+| Badge (36) | quest | ✓ | n/a | picker (gated on `black_badge`); Z-stats Items page | ✓ | **G** Use-picker — R-08 resolved (Batch 3) / **G** Z-stats Items-page view (R-22 resolved, Batch 14) |
+| Wooden Box (37) | quest | ✓ ("How?") | n/a | picker; Z-stats Items page | ✓ | **G** Use-picker / **G** Z-stats Items-page view (R-22 resolved, Batch 14) |
 | Grapple | quest | **Klimb-only, never a Use item** | n/a | — | ✓ | **G** — R-07 resolved (Batch 3): removed from the Use picker entirely |
 | Loose loot piles | ✓ LIFO | n/a | n/a | rendered `0x100+id` | **✓** | R-14 resolved (Batch 6) |
 | World chests | Open→piles | n/a | n/a | correct sprite (was **tile 1 = blue**; R-02 resolved Batch 2) | **✓** | R-02 **G** / R-14 resolved (Batch 6) |
@@ -2506,12 +2508,119 @@ This finding compounds observation B rather than replacing axis 4: an enemy on a
 
 ---
 
-### Batch 14 — Z-stats status/inventory pages · risk: medium, moderate scope *(was numbered Batch 13; renumbered because Batch 13 went to R-21)*
-**IDs:** R-22
-**Files:** `native/core/src/ui_session.cpp` (`case 'z'` / `UiIntentKind::OpenStatusSelection`), `native/targets/tdeck/main/alpha_runtime.cpp` (member-select consumption), `native/targets/tdeck/main/native_renderer.cpp` (new page rendering)
-**Work:** design and add the real per-member status-page axis behind the existing member picker: Stats, Arms, Provisions, Reagents, Spells, Items (including the quest/special possessions — Amulet, Crown, Sceptre, Shards, Moonstones, HMS Cape plans, Spyglass, Sextant, Black Badge, Wooden Box), and Armaments, matching the reference page-by-page. This is a self-contained, moderate-scope UI addition; it does not block or depend on Batch 9-12.
-**Physical test:** `Z`, select each member, page through all seven pages, confirm quest/special items appear exactly when owned.
-**Model:** Sonnet for the mechanical per-page wiring; a short design pass first to settle page navigation (which key pages forward/back, whether it nests under `OpenStatusSelection` or is a new `UiMode`).
+### Batch 14 — Z-stats status/inventory pages · risk: medium, moderate scope · **GREEN — IMPLEMENTED AND VALIDATED** *(was numbered Batch 13; renumbered because Batch 13 went to R-21)*
+**IDs:** R-22 (evidence-only since the pre-Batch-4 Developer-tool cleanup) — now **GREEN**.
+
+#### The proven page family and navigation
+
+Adjudicated from the binary first. `ZSTATS.OVL` overlay #23 and the DATA.OVL DGROUP tables it reads are the authority (`re/notes/zstats.md`, `re/notes/ztats-layout.md`); the TypeScript skin (`game/src/skin/fiel/ztats.ts`) corroborates and is cited where it refines, never where it differs.
+
+**Selection runs FIRST.** `cmd_zstats` (0x0a3a) does not open a page: at 0x0a40 it calls `select_player` (0x0000), which prints `"Player: "` (DS 0x96b4) and enters the kernel picker. Only the member it returns opens a page, at axis slot `member*2`. Native already had this half — it is the only part of `(Z)` that worked.
+
+**The axis is 17 slots (`[bp-2]`), not "seven pages":**
+
+| Slot | Page | Routine | Banner |
+|---|---|---|---|
+| even 0,2,…,10 | **Stats** of member `idx>>1` | `draw_stat_page` 0x0082 | member name |
+| odd 1,3,…,11 | **Arms** of member `idx>>1` | `draw_arms_page` 0x02a8 | member name |
+| `0xc` | **Provisions** | 0x039c (headerless tail-call) | `Equipment` (DS 0x9724) |
+| `0xd` | **Reagents** | `render_item_list` 0x06e8 | `Reagents` (0x97ac) |
+| `0xe` | **Spells** | `render_item_list` | `Spells` (0x97b6) |
+| `0xf` | **Items** (quest/special) | `render_item_list` | `Items` (0x97be) |
+| `0x10` | **Armaments** | `render_item_list` | `Armaments` (0x97c4) |
+
+The ring is **circular with four wrap gates** and never enters the unused window `[party*2, 0x0b]`: forward, `party*2-1 → 0xc` (0x0af7) and `0x10 → 0` (0x0b0a); backward, `0 → 0x10` (0x0ac6) and `0xc → party*2-1` (0x0aac).
+
+**Two prior descriptions in this document were wrong and are corrected here.** (a) The odd page is **Arms only** — the asm at 0x02a8 paints the six equipment slots `+0x19..+0x1e` and nothing else; the "equipment + spellbook" reading was an earlier note's invention. (b) List `0xe` is **Spells** (the mixture counts at `0x57f0`, confirmed by the dumped name table at DS 0x19e2), not a second generic item page.
+
+**Field-level facts pinned per page.** Stats (0x0082) prints the **level on the header line** (record `+0x16`) beside the sex glyph and class, the health word centred, then two columns: `Str=`/`  HP:`, `Int=`/`  HM:`, `Dex=`/`  Ex:` — where **`HM` is max HP (`+0x12`)** and **`Ex` is experience (`+0x14`)** — and `    Magic:` (current MP, `+0x0f`, the one 2-wide field that pads with SPACE, not `'0'`). Arms (0x02a8) walks `+0x19` helmet, `+0x1a` armour, `+0x1b` hand A, `+0x1c` hand B, `+0x1d` ring, `+0x1e` amulet, **skipping** `0xff` slots (`print_padded_string` 0x0278 returns 0), and prints `(None ready)` (0x9716) when all six are empty. Provisions (0x039c) prints `" Food: "`/`" Gold: "` (4-wide) then the dot-leader counters `" Keys......."`/`" Gems......."`/`" Torches...."` (2-wide), and the `" Grapple"` line only when one is carried. Lists (0x06e8) show **seven** content rows (the render loop stops at cursor row 8, the frame's bottom edge), filter to `qty>0` via `find_next_owned` 0x05a4, format each row as a 2-digit space-padded count + `'-'` (0x2d) + name, drop **both** number and separator when the stored byte is the `0xff` sentinel (0x062e), and print `(None owned!)` (0x9794) when nothing is owned.
+
+**Key matrix.** Space (0x0a78) and ESC (0x0a81) are the **only** keys that close — navigating never closes. Arrows cycle the axis; inside a list that actually overflows, up/down **scroll** (0x081c/0x086c) and left/right leave to change page (0x0948), while a list that fits falls through to the axis (§8.5). PgUp/PgDn step a literal 7. `'1'`–`'6'` jump to a member's stats page bounded by `g_party_size` (0x0b12) and `'0'` jumps to Provisions (0x0b37). **`'z'` is not read inside the loop at all** — there is no `cmp` for it; it opens and never re-enters or closes.
+
+#### What was built
+
+A new ESP-free presentation seam, `native/core/include/openu5/zstats.h` + `src/zstats.cpp`, turns live `GameState` into a composed `ZStatsPage` (banner, up to eight row strings, list totals and scroll markers). It is presentation only: it writes nothing, reads no clock and draws no RNG — matching `cmd_zstats`, which consumes exactly **zero** rolls and charges **no** turn. The Items page deliberately **reuses `usable_item_picker_rows()`** (R-07/R-08's seam) for its flag/counter tail, because the original reads one extended table (0xB9EE) for both the `(Z)` Items page and the `(U)se` picker; that keeps the moonstone gate (`owned == !buried`) in a single place instead of forking it.
+
+`AlphaRuntime` gained the modal itself: `open_zstats()` arms the axis when the picker confirms a member (this arm previously **reopened the very same picker**, which is exactly why `(Z)` had no pages), `handle_zstats_input()` is the key loop, and it is called from `handle()` **before any routing**, beside the gem and zodiac views — so a direction can never reach `dispatch_world_command()` as a Move and a command letter can never arm a prompt behind the modal.
+
+Rendering reuses the existing compact-selector panel primitive (title band, two detail lines, eight rows, context bar) rather than adding a second text renderer: the original's page is sixteen cells wide and eight rows tall, which is what that panel already shows.
+
+#### One narrow production defect this exposed, and fixed
+
+`openu5::equipment_display_name()` was **off by one for all 48 ids**. Its table had been transcribed from `InventoryDetails.json`'s `Armament` map, which carries a phantom `[0] = "BareHands"` entry from the clone-era Redux data set; the reference itself compensates with `.slice(1)` (`game/src/ui/shop-console.ts`, and the rule is spelled out in `game/src/core/world/search.ts`'s `EQUIP_IDX_GLASS_SWORD` comment) and native did not. Three anchors **inside native itself** pin the correct alignment, independently of any name table:
+
+* `equip_type_of(9..15) == 0x40` — the armour band `ZSTATS.OVL:0x0c94` locks in battle, so id 9 is an armour, not the Jewel Shield;
+* `ammo_item_for()` maps 26/36 → 27 and 28 → 29 — Bow/Magic Bow → **Arrows**, Crossbow → **Quarrels** (0x0d0c);
+* `is_thrown_weapon()` is `{16, 21, 22}` — Dagger/Spear/Throwing Axe (`COMSUBS:0x097c`).
+
+So `equipment_display_name(16)` returned **"Mystic Armour"** for the Dagger and `(27)` returned **"Bow"** for the Arrows. Every consumer was showing the neighbouring item's name — the Ready picker, the blacksmith, the Developer equipment rows — and `(Z)`'s Arms and Armaments pages could not have been correct without fixing it. The fix is the table itself, re-seated onto the binary's own id space (the byte-exact DS 0x17f6 dump, `game/src/core/data/longEquipNames.json`), which also restores the missing 48th entry, **Ankh**, and corrects `"Amulet of Turning"` to the binary's `"Amulet/Turning"`. A `static_assert` now pins the table at exactly 48. This is the only production change outside the Z-stats path, and `display_names_test.cpp`'s three anchors — which had encoded the off-by-one — were re-seated with it.
+
+#### Files changed
+
+| File | Purpose |
+|---|---|
+| `native/core/include/openu5/zstats.h` | **new** — the ESP-free Z-stats presentation contract: page axis constants, `ZStatsPage`/`ZStatsList`, the axis and compose entry points |
+| `native/core/src/zstats.cpp` | **new** — composes all four page kinds from live `GameState`; the axis ring and its four wrap gates |
+| `native/core/src/display_names.cpp` | equipment name table re-seated onto the binary id space (+ `Ankh`, `Amulet/Turning`, `static_assert(48)`) |
+| `native/core/sources.cmake` | registers `zstats.cpp` for host and ESP-IDF alike |
+| `native/core/CMakeLists.txt` | registers `batch14_zstats_model` and `batch14_zstats_runtime` |
+| `native/core/tests/batch14_zstats_model_test.cpp` | **new** — 97 checks over the page model |
+| `native/core/tests/display_names_test.cpp` | the three off-by-one anchors re-seated, two added |
+| `native/targets/tdeck/main/alpha_runtime.h` | the modal's state, its three methods, and the `zstats_active()`/`zstats_view()` host-test seam |
+| `native/targets/tdeck/main/alpha_runtime.cpp` | `open_zstats()`, `handle_zstats_input()`, the pre-routing interception, and the panel composition |
+| `native/targets/tdeck/host_tests/batch14_zstats_runtime_test.cpp` | **new** — 54 checks driving the real production routing |
+| `native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md` | this write-up, the matrix rows, the §11 resource rows and the §16 Phase 6H checklist |
+
+#### Tests and RED → GREEN evidence
+
+Both suites were written **before** the implementation and run against an inert seam that reproduced pre-batch behaviour exactly (the modal never opened; `(Z)` still just reopened the picker):
+
+* `batch14_zstats_model` — **96 checks, 86 failures** RED → **97 checks, 0 failures** GREEN (the 97th is a later placeholder sweep). The ten vacuous greens in the RED run were degenerate cases (an empty list is empty either way).
+* `batch14_zstats_runtime` — **54 checks, 33 failures** RED → **54 checks, 0 failures** GREEN. The 21 vacuous greens there were "nothing happened" assertions that trivially held while no modal existed.
+
+Because several of those runtime greens were vacuous, the isolation guards were **mutation-checked** as well: deleting the single pre-routing interception line in `handle()` (and nothing else) turns **27 of 54** checks RED — including every Z9 isolation assertion, both Z10 exit assertions and all four Z11 turn/RNG assertions. Reverted; back to 0 failures.
+
+During the GREEN pass, fifteen row-spacing assertions were adjudicated against the DGROUP strings rather than forced to match: the trailing space in `" Food: "`/`" Gold: "` (DS 0x972e/0x9738) was a **production** bug and was fixed, while the stat-column and centring expectations were **test** errors — the two spaces before `HP:`/`HM:`/`Ex:` belong to the label strings themselves, and the centring width is 16 cells, because `draw_stat_page`'s second `set_text_window` is `(1, 0x18, 1, 0x27, 9)` = cols 24..39. (The faithful TypeScript skin narrows its own panel to 15 for roster alignment; that is its refinement, not the asm's.)
+
+| Guard | Covered by |
+|---|---|
+| Z1 command routing | `batch14_zstats_runtime` Z1-0…Z1-6 |
+| Z2 live character data | `batch14_zstats_model` Z2-1…Z2-14 |
+| Z3 equipment naming | model Z3-1…Z3-20 (incl. the off-by-one anchors and a full placeholder sweep) |
+| Z4 inventory counts | model Z4-1…Z4-5, Z4a-1…Z4a-11 |
+| Z5 inventory ordering | model Z5-1…Z5-16 |
+| Z6 zero counts | model Z6-1…Z6-5 |
+| Z7 character navigation | runtime Z7-1…Z7-6 |
+| Z8 page navigation | model Z8-1…Z8-8, Z8b-1…Z8b-8; runtime Z8-1…Z8-6, Z8b-1…Z8b-6 |
+| Z9 modal input isolation | runtime Z9-1…Z9-7 |
+| Z10 exit semantics | runtime Z10-1…Z10-6 |
+| Z11 no turn/time mutation | runtime Z11-1…Z11-4 |
+| Z12 abnormal status | model Z12-1…Z12-4 |
+| Z13 party-size edge cases | model Z13-1…Z13-6; runtime Z13-1…Z13-8 |
+| Z14 repeated lifecycle | runtime Z14-1…Z14-4 |
+
+#### Residual differences from the original
+
+Recorded honestly; none of them is a semantic difference.
+
+1. **No IBM.CH box frame around a list.** `draw_list_frame` (0x045e) paints a 15x10 scroll frame from glyphs 0x10/0x11/0x13–0x17. The T-Deck's 5x7 face is ASCII-only and the compact-selector panel already carries its own cyan rules in the same place, so the frame is not drawn. Content, row count, ordering and paging are unchanged.
+2. **Sex is `M`/`F`, not the CP437 `♂`/`♀`.** Same cause: `tdeck_board.cpp`'s `glyph()` is an ASCII switch. `GameState::gender` still holds the binary's own 0x0b/0x0c.
+3. **Item names are unabbreviated.** The original's list column is 14 cells and its name tables are abbreviated to fit it (`"Sp. Silk"`, `"Sht. Sword"`, `"In Sanct G"`). The T-Deck row is wider, so every row names its item through native's existing canonical helper. The item SET, the ORDER and the quantity column — the authored facts — are reproduced exactly; the abbreviation is a column-width artifact.
+4. **No rune sigils on the Items page.** `print_list_row`'s `*`/`!`/`(` branches switch to `RUNES.CH` to draw a scroll/potion/moonstone pictogram. Native prints the canonical name instead (`"In Sanct Scroll"`, `"Blue Potion"`, `"Moonstone"`), which carries the same information in an ASCII face.
+5. **Pocket Watch (extended id 0x23) still has no row.** No `GameState` field backs it, so no row can be gated on possessing it — the same R-08 gap the `(U)se` picker has, unchanged by this batch.
+6. **No `"Player: <name>"` / `"Status: "` console echo during selection.** The binary echoes the chosen name and a persistent `Status:` line with the wave cursor for the duration of the sheet. Native keeps its existing `"Z-stats"` command echo. Presentation only; filed as a minor follow-up, not fixed here.
+7. **Digit shortcuts work inside the page loop, not inside the picker.** `'0'`–`'6'` are asm-derived for the page loop (0x0b12/0x0b37) and are implemented. The picker's own digit selection is *observed* behaviour of a kernel routine outside this overlay, and wiring it would mean changing digit handling for **every** party picker in the game (Ready whom, Use on whom, …) — out of scope here.
+
+#### What this batch did NOT do
+
+- It did not touch R-23 (Blackthorn roster compaction), Y-29, Y-31/Y-32 or the `quest_parity` harness crash; all four remain open and are unchanged.
+- It did not reopen Batch 13's magic-ceremony work.
+- It did not refactor the inventory system, the display-name infrastructure beyond the single off-by-one table, or the UI architecture.
+- It did not change the resource pack, so the flashed SD card needs no repack.
+
+**Host suite:** **83 total, 82 pass, 1 fail** — two registered tests up from Batch 13's 81, and the **only** failure is the same pre-existing one the pre-batch baseline run produced on this tree: `quest_parity` (`STATUS_ACCESS_VIOLATION`, exit `3221225477`, the MinGW/w64devkit environment finding from Batch 8). `gameplay_parity` remains **5058/5058 GREEN**. `display_names` passes with the corrected table, and every TypeScript drift check is green.
+
+**Firmware:** `idf.py -B build-batch14 build` **PASS**. `openu5_tdeck.bin` = `0xd19e0` (**858,592 bytes**), **+4,848 bytes** over Batch 13's `0xd06f0` (853,744) — the new page model, the modal and the panel composition. App partition `0x2e620` = **189,984 bytes (18%) free** (was 19%). **Zero warnings from any project file** (the only log warnings are the five pre-existing ESP-IDF `component_validation.cmake` notices about `esp_wifi`/`wpa_supplicant` private includes). The resource pack is unchanged, so **no SD recopy is needed**. Hardware flash not performed in this session — the device checklist is §16 Phase 6H.
 
 ---
 
@@ -2573,7 +2682,7 @@ Efficient broad-coverage pass using Developer tools. ~45 minutes. Each step name
 11. Teleport to **Britain**. Confirm NPCs are visible and moving on schedule.
 12. `T`alk to an NPC: name / job / bye. **[R-01] Confirm the conversation survives more than one keypress.**
 13. `L`ook at a sign. `S`earch. `O`pen a door. `J`immy a locked door. `K`limb. `P`ush furniture.
-14. `Z`-stats: **expected/blocking on R-22** — native does not yet implement the Stats/Arms/Provisions/Reagents/Spells/Items/Armaments page family, so this step cannot page through Provisions and Stats today. Current expected behavior: `Z` opens the member picker; selecting a member reopens/repositions the same picker with no further page. Confirm only the party highlight and picker reachability; do not expect Provisions/Stats pages until R-22 is implemented (§14 Batch 13).
+14. `Z`-stats: **R-22 implemented (Batch 14)** — `Z` opens the member picker, and confirming a member now opens the real page axis. Page through Stats, Arms, Provisions and the four lists and confirm the ring wraps; see §16 Phase 6H for the full checklist.
 15. **[R-01] Enter a blacksmith. Buy an item. Back out one level at a time. Confirm the world view and Exploration verbs return.** Repeat at an inn (Rest), a healer (Heal), a tavern (Rations + Rumour) and a reagent shop.
 
 ### Phase 3 — Combat and victory loot (7 min)
@@ -2745,6 +2854,33 @@ Setup: Developer menu — give the party a few of each scroll and potion, mana a
 
 **Gate.** 33ar and 33at are the two R-21 observations. If either still shows the old text, the flashed image is not this build. 33au and 33av are the controls that prove the correction removed a fabrication rather than suppressing real output; if 33au prints nothing, stop and report — that would be over-correction, not R-21.
 
+### Phase 6H — the (Z)-stats page family (Batch 14 / R-22, 8 min) · *firmware only; the SD card is unchanged*
+
+Flash `build-batch14/openu5_tdeck.bin`. **Do not touch the card** — Batch 14 changes no resource.
+
+Setup: Developer menu — a party of at least **three** members with **deliberately different** stats (so an aliased field is visible), some gold/food/keys/gems/torches, a few reagents, a couple of mixed spells, and at least **eight** distinct armaments so the Armaments list overflows its seven rows. Equip one member fully (helm, armour, weapon, shield, ring, amulet) and leave another with **nothing** equipped.
+
+34a. **[Z opens the picker, not a page]** In ordinary overworld play press `Z`. The right panel must show the member picker with the roster highlight — `select_player` (0x0000) runs first, exactly as before this batch.
+34b. **[confirming opens the sheet]** Move the picker to member 2 and press **Enter**. The panel title must become **that member's name** and the body must be their **Stats** page: `M`/`F`, `Lv-N`, class; the health word centred; then `Str=`/`HP:`, `Int=`/`HM:`, `Dex=`/`Ex:`, and `Magic:`. Before this batch this step merely reopened the picker — if it still does, the flashed image is not this build.
+34c. **[the values are that member's]** Compare the numbers against the Developer values you set. `HM` is **max HP** and `Ex` is **experience** — not "magic points" and not the level. Press `1`, then `2`, then `3`: each must show its own member's distinct numbers, not the first member's.
+34d. **[Arms page]** From a Stats page, page **right once**. Title stays the member's name, body shows `Arms` and the equipped items **by real name**. Page to the member you left unequipped: it must read `(None ready)`, not six blank rows.
+34e. **[real item names, no placeholders]** On the Arms page of the fully-equipped member, read every line. Each must be a genuine item name (`Iron Helm`, `Plate Mail`, `Long Sword`, `Large Shield`, `Ring of Protection`, `Amulet/Turning`). **Nothing may read `Equipment 12`, `Item 30` or similar.** This step is also the visible check on the Batch 14 name-table correction — if a helm shows up named as a shield, or arrows as a bow, the off-by-one is back.
+34f. **[Provisions]** Keep paging right past the last member's Arms page. The next page must be titled **`Equipment`** and list `Food:`, `Gold:`, then `Keys.......`, `Gems.......`, `Torches....`. A carried grapple adds a `Grapple` line; without one, that line must be absent entirely. Press `0` from any page to jump straight here.
+34g. **[the four lists, in order]** Page right four more times: **Reagents**, **Spells**, **Items**, **Armaments** — in that order. Each row is a 2-digit count, `-`, then the item name.
+34h. **[zero counts are absent, not zero]** A reagent you own **none** of must not appear at all. A list with nothing owned must read `(None owned!)`, not an empty box.
+34i. **[quest items appear only when owned]** On the **Items** page, confirm the scrolls/potions you carry appear **with** counts, and that any Lord British regalia, Shard, Spyglass, Sextant, Black Badge or Wooden Box you hold appears **without** a number (those are stored `0xff`). Anything you do not own must be absent.
+34j. **[list paging]** On **Armaments** with more than seven owned items, the detail line reads `1-7 of N` with a `v` marker. Press **down**: the window scrolls by one and the marker becomes `^ v`. **Left/right** must still change page from inside the list, not scroll it.
+34k. **[the ring wraps both ways]** From Armaments, page **right** once: you must land back on **member 1's Stats** page. From member 1's Stats page, page **left** once: you must land on **Armaments**. Paging must **never** show a blank page between the last member and Provisions.
+34l. **[navigating never closes]** Page around the whole ring at least twice. The modal must stay open the entire time — only Space and Mic close it.
+34m. **[no movement, no turn]** Watch the clock and the viewport while doing 34l. The avatar must **not move** and the **day/time must not advance**. Then press `i`, `p`, `k`, `e`, `s` while the sheet is open: nothing may happen — no torch lit, no gem spent, no prompt armed behind the panel.
+34n. **[exit restores gameplay immediately]** Press **Space**. The sheet closes and the normal world HUD returns. The **very next** trackball nudge must move the avatar and advance the clock by one turn. Repeat with the **Mic** key instead of Space — same result.
+34o. **[reopen is sane]** Press `Z` again. It must open the **picker** (not the page you were last on), and confirming must open a **Stats** page with no leftover scroll position. Repeat the open/browse/close cycle five times; nothing may drift.
+34p. **[abnormal condition]** *(if convenient)* Poison or kill a member via the Developer menu, then view their Stats page. The centred health line must read **`Poisoned`** / **`Dead`** and the rest of the page must still render normally.
+
+**Gate.** 34b, 34e and 34n are the three that matter. 34b proves the page family exists at all (the R-22 symptom was that it did not); 34e proves the equipment names are seated on the right id space; 34n proves the modal hands input back cleanly. If 34m shows the clock advancing, stop and report — the pre-routing interception is not doing its job.
+
+**Expected residuals — do NOT report these as defects** (see §14 Batch 14): a list has no drawn box frame, sex is `M`/`F` rather than `♂`/`♀`, item names are unabbreviated (`Spider Silk`, not `Sp. Silk`), the Items page shows canonical names rather than rune sigils, there is no Pocket Watch row, and there is no `Player: <name>` / `Status:` console echo during selection.
+
 ## APPENDIX — Audit artifacts
 
 **Test run (ORIGINAL AUDIT BASELINE RUN, pre-Batch-1):** `ctest` in `native/core/build-alpha20-host`, 57 tests, **56 passed / 1 failed** (`gameplay_parity`, 61.9 s). Mismatch artifact retained at `native/core/build-gameplay/mismatch.json`. This run predates Batch 1 and is preserved as historical evidence. At this point in the program, mismatch 2034 (R-21) had not yet been observed — it was unreachable behind mismatch 59 — and this record is preserved as-is rather than rewritten with knowledge that did not exist at the time.
@@ -2784,6 +2920,8 @@ Setup: Developer menu — give the party a few of each scroll and potion, mana a
 **Status (post-Batch-7, missing feedback renderers, partial):** R-12 and R-13 became **GREEN — RESOLVED**; see §3 for each. Y-04 is **partially resolved**: `Quake` now has a real, reference-derived consumer, but `CellExplosion`, `CellProjectile`, `PoisonTick`, `Refuge` and `TrollSneak` remain open, each needing more than this batch's scope justified rushing (see the "Batch 7 continued" plan entry in §14 for the concrete reason per channel). The plan's original "risk: low" / single-template framing was corrected during adjudication before any production code was written, per this batch's own read-first instruction -- R-12 and Quake needed real, reference-derived fixes (a censorship bypass and a witness-calibrated waveform, respectively), not a bare copy of `start_magic_ceremony`. The authoritative `native/core/build-batch1-control` suite reports **69 total, 68 pass, 1 fail** — sole failure `gameplay_parity` mismatch 2034 (R-21, unrelated, pre-existing, unchanged, re-confirmed this session). `presentation_regression` carries all new coverage (the `reveal_all` bypass and the `quake_offset_at` waveform), both confirmed RED (compile failure against pre-fix source, via `git stash` of only `presentation.h`/`presentation.cpp`) before GREEN. T-Deck ESP-IDF 6.1 firmware was rebuilt fresh into `native/targets/tdeck/build-batch7-feedback-renderers` and **passed**: `openu5_tdeck.bin` is `0xccad0` (836,816) bytes, with 20% (`0x33530` bytes) of the 1 MiB app partition free and zero compiler warnings from any project file. Hardware flash was not performed (no physical device attached to this session); the physical checkpoints from §14 Batch 7 remain outstanding. The resource pack was **not** modified this session; no SD recopy is required. Files touched: `native/core/include/openu5/presentation.h`, `native/core/src/presentation.cpp`, `native/core/tests/presentation_test.cpp`, `native/targets/tdeck/main/alpha_runtime.h`, `native/targets/tdeck/main/alpha_runtime.cpp`, `native/targets/tdeck/main/native_renderer.h`, `native/targets/tdeck/main/native_renderer.cpp`, and this document.
 
 **Status (post-Batch-12, combat field magic — adjudicated, no production change):** The hardware report that In Flam Grav / In Nox Grav / In Zu Grav "cast, flash, and leave no persistent field on the battlefield" was traced to the reference before any code was touched, and it is **the original's own behaviour, deliberately cloned** — `CAST.OVL cast_field_wall` 0x004c seeds a field only in its DUNGEON branch (the sole reader of `DS:0x4596`); its COMBAT branch loads a spell-weapon id from `DS:0x4592` and calls `COMSUBS:0x0c52`, the same dispatcher Grav Por / Vas Flam / Xen Corp use, with `attackValues` 18 / 0 / 21 / 0. See §14 "Batch 12 (combat-field magic lane)" for the six-axis evidence and `docs/bugs-del-original.md` §2.9 / ticket #91. **No production file was modified**: the batch ships the adjudication plus the host coverage that was missing, `native/core/tests/batch12_combat_field_test.cpp` (new, registered as the `batch12_combat_field` CTest). Because a first-run-green guard proves nothing, it was validated by mutating production code twice and reverting — seeding a field in `combat_cast` turns it RED (10 failures) and giving In Zu Grav / In Sanct Grav real damage turns it RED (1 failure); `git status` confirms `native/core/src/` unmodified afterwards. The authoritative suite grew from 78 to **79** registered tests and reports **79 total, 77 pass, 2 fail** — the identical pair the pre-batch baseline run produced on this same tree: `gameplay_parity` (R-21, "Gameplay mismatch 2034", deferred by instruction and untouched) and `quest_parity` (`STATUS_ACCESS_VIOLATION`, exit `3221225477`, the MinGW/w64devkit environment finding already recorded in Batch 8's status). All magic and combat suites are green, `magic_parity`, `typescript_magic_fixture_drift`, `combat_parity` and `advanced_combat_parity` included. T-Deck ESP-IDF 6.1 firmware was rebuilt fresh into `native/targets/tdeck/build-batch12` and **passed**: `openu5_tdeck.bin` is `0xd0430` bytes with 19% of the 1 MiB app partition free — byte-for-byte the same size as Batch 11, as a batch that changes no production code must be. Hardware flash was not performed; the device checklist is §16 Phase 6E. One non-blocking finding recorded but **not** fixed (it changes no behaviour and this batch touches no production code): `AlphaRuntime::combat_fields_` is allocated and assigned once at boot, then orphaned by the first `initialize_combat`, which restores only the actor and pile overflow pointers. R-21 was **not** investigated, as instructed. Files touched: `native/core/tests/batch12_combat_field_test.cpp` (new), `native/core/CMakeLists.txt`, and this document.
+
+**Status (post-Batch-14, R-22 implemented — the `(Z)`-stats page family):** R-22 — filed evidence-only during the pre-Batch-4 Developer-tool cleanup and open since — is **GREEN — RESOLVED**. Native `(Z)` had only the member picker: confirming a member reopened the very same picker, so no status or inventory page existed at all. The page family was adjudicated from `ZSTATS.OVL` and the DATA.OVL DGROUP before any code was written, and two descriptions previously recorded in this document were found wrong and corrected: the odd per-member page is **Arms only** (`draw_arms_page` 0x02a8 paints the six equipment slots and no spellbook), and list `0xe` is **Spells** (the mixture counts at `0x57f0`), not a second item page. What shipped is the real 17-slot axis of `cmd_zstats` (0x0a3a) — per-member Stats and Arms, Provisions, and the Reagents/Spells/Items/Armaments lists — with the binary's circular ring and its four wrap gates, its `'0'`–`'6'` jumps bounded by `g_party_size` (0x0b12/0x0b37), `render_item_list`'s seven content rows and its scroll-vs-page sub-loop (0x07d0), and Space/ESC as the **only** keys that close (0x0a78/0x0a81). The model lives in a new ESP-free seam, `openu5/zstats.h` + `src/zstats.cpp`, which writes nothing, reads no clock and draws no RNG — matching `cmd_zstats`, which consumes exactly zero rolls and charges no turn — and whose Items page **reuses `usable_item_picker_rows()`** because the original reads one extended table (0xB9EE) for both the `(Z)` Items page and the `(U)se` picker. `AlphaRuntime` owns the modal and intercepts input **before any routing**, beside the gem and zodiac views, so a direction can never reach `dispatch_world_command()` as a Move. Implementing it exposed one genuine production defect outside the Z-stats path, fixed narrowly: **`equipment_display_name()` was off by one for all 48 ids**, because its table had been transcribed from `InventoryDetails.json`'s `Armament` map with its phantom `[0] = "BareHands"` entry (the reference compensates with `.slice(1)`; native did not). Three anchors inside native itself pin the correct alignment — the armour band `equip_type_of(9..15) == 0x40`, `ammo_item_for()`'s 26/36→27 and 28→29, and `is_thrown_weapon()`'s `{16, 21, 22}` — so `equipment_display_name(16)` was returning "Mystic Armour" for the Dagger and `(27)` "Bow" for the Arrows, in the Ready picker and the blacksmith as well as here. The table is now re-seated onto the binary's own id space (the byte-exact DS 0x17f6 dump), restoring the missing 48th entry **Ankh**, with a `static_assert` pinning the count; `display_names_test.cpp`'s three anchors, which had encoded the off-by-one, were re-seated with it. Both new suites were written first and run RED against an inert seam that reproduced pre-batch behaviour exactly: `batch14_zstats_model` **96 checks / 86 failures → 97 / 0**, `batch14_zstats_runtime` **54 / 33 → 54 / 0**; because several runtime greens were vacuous while no modal existed, deleting the single pre-routing interception line in `handle()` was mutation-checked and turns **27 of 54** RED, then reverted. Fifteen row-spacing assertions were adjudicated against the DGROUP strings rather than forced to match — the trailing space in `" Food: "`/`" Gold: "` (0x972e/0x9738) was a production bug and was fixed, while the stat-column and 16-cell centring expectations were test errors. The authoritative suite went from **81 total / 80 pass / 1 fail** to **83 total / 82 pass / 1 fail** (the +2 is the two new targets); `gameplay_parity` remains 5058/5058 GREEN and the sole failure is still `quest_parity`'s MinGW/w64devkit `STATUS_ACCESS_VIOLATION` (exit `3221225477`) from Batch 8, present identically in this batch's own pre-edit baseline run. The resource pack is **unchanged**, so the flashed SD card needs no repack. T-Deck ESP-IDF 6.1 firmware **PASS** into `build-batch14`: `openu5_tdeck.bin` `0xd19e0` = **858,592 bytes**, **+4,848** over Batch 13, **189,984 bytes (18%) free**, **zero project warnings**. Hardware flash was not performed in this session; the device checklist is §16 Phase 6H, and the six expected presentation residuals (no drawn list frame, `M`/`F` instead of `♂`/`♀`, unabbreviated item names, canonical names instead of rune sigils, no Pocket Watch row, no `Player:`/`Status:` console echo) are listed there so a tester does not file them as defects. **R-23 (Blackthorn roster compaction), Y-29 (Mic/`0` input reachability), Y-31 and Y-32 (pacing/presentation) and the `quest_parity` harness crash were explicitly not touched and all remain open.**
 
 **Status (post-Batch-13, R-21 adjudicated and closed):** `gameplay_parity`'s "Gameplay mismatch 2034" — open since Batch 2 and deliberately preserved through ten intervening batches — is **resolved, and it was a confirmed native defect**, not a harness or reference-expectation defect. "2034" was never a byte offset: `check-gameplay.ts` throws `Gameplay mismatch ${i}` with `i` the **sequence index**, and #2034 is the first `(U)se` of a scroll in the fixture. Native's `world_magic()` printed `Used Vas Lor Scroll.` where `CAST.OVL 0x11f0` prints the bare category word `Scroll` (DS `0x466a`), and the potion drinker printed an invented `No effect!` where `0x136e`'s handler prints nothing at all when it has no authored DS line. Both were introduced knowingly by the Alpha-20 forensic action-feedback pass — a device-UI decision that landed in the **core** command layer — in a session whose own write-up records that the Node/tsx reference generators were infrastructure-blocked and never ran. Proving it forced the parity fixture to state the reference's magic-feedback rules, which exposed two inseparable siblings of the same family, both fixed and both reported on their own evidence axis: the **potion ceremony fired after the effect line** (the binary puts it at `0x139b`, ahead of the reroll at `0x13a1`) and **dungeon casts raised no ceremony at all** (there is one cast dispatcher, `CAST.OVL 0x0f1a`, and `main.ts` emits the ceremony at all three of its cast mouths). What was **not** wrong: every `MagicCeremony` index and gate already matched `game/src/core/magic/ceremony.ts`'s derived jump tables — they merely showed as `unknown` because `gameplay_driver.cpp` had no name for the event and dropped its index. Production files changed: `native/core/src/world_magic.cpp`, `native/core/src/combat.cpp`, `native/core/src/dungeon_orchestration.cpp`; no name table was touched. The harness gained coverage rather than losing it: the driver now serialises the ceremony **with its index**, the fixture models it at all four magic mouths from the derived tables (~640 sequences newly asserted), and `action_feedback_regression` — which had been **asserting the fabrication** — was corrected, not weakened. New `batch13` CTest: RED **58 failing checks** → GREEN **0**, with groups E and F independently RED at 2 and 7 and each carrying a passing control; six mutations on clean rebuilt trees all caught, M1 reproducing `Gameplay mismatch 2034` exactly and M5 failing parity on a one-digit ceremony-index change that the suite could not see before this batch. The authoritative suite went from 80 total / 78 pass / 2 fail to **81 total / 80 pass / 1 fail** — the +1/+1 is the new `batch13` target, `gameplay_parity` moved fail → pass, and nothing else changed; the sole remaining failure is `quest_parity`'s MinGW/w64devkit `STATUS_ACCESS_VIOLATION` (exit `3221225477`) from Batch 8, present identically in this batch's own pre-edit baseline. T-Deck ESP-IDF 6.1 firmware **PASS** into `build-batch13`: `openu5_tdeck.bin` `0xd06f0` = **853,744 bytes**, **+32** over Batch 12B, **194,832 bytes (19%) free**, **zero warnings**. Hardware flash not performed; the device checklist is §16 Phase 6G. No new downstream parity mismatch was exposed — `gameplay_parity` passes outright.
 

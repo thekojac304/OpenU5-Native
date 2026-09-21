@@ -868,7 +868,10 @@ void AlphaRuntime::modal(const openu5::UiIntent&i){if(!i.value.accepted){if(i.re
     if(i.request==openu5::UiRequestId::FountainDrink)ui_->append(openu5::UiTextChannel::Message,openu5::fountain_drink_result(0,true));
     return;}openu5::Command c;
     if(i.request==openu5::UiRequestId::Party){if(pending_order_from_<0){pending_order_from_=int16_t(i.value.index);open_selection(openu5::UiMode::PartySelection,openu5::UiRequestId::Party);}else{c.kind=openu5::CommandKind::NewOrder;c.member=pending_order_from_;c.item=int16_t(i.value.index);pending_order_from_=-1;command(c);}}
-    else if(i.request==openu5::UiRequestId::Status&&i.value.index>=0&&size_t(i.value.index)<selection_count_){status_member_=selections_[i.value.index].value;open_selection(openu5::UiMode::PartySelection,openu5::UiRequestId::Status);}
+    // R-22. select_player (ZSTATS.OVL:0x0000) runs FIRST, and the member it
+    // returns opens the page axis at member*2. Before Batch 14 this arm
+    // reopened the very same picker, which is why (Z) had no pages at all.
+    else if(i.request==openu5::UiRequestId::Status&&i.value.index>=0&&size_t(i.value.index)<selection_count_)open_zstats(selections_[i.value.index].value);
     else if(i.request==openu5::UiRequestId::EquipmentMember&&i.value.index>=0&&size_t(i.value.index)<selection_count_){pending_ready_member_=selections_[i.value.index].value;open_selection(openu5::UiMode::EquipmentSelection,openu5::UiRequestId::Equipment);}
     else if(i.request==openu5::UiRequestId::Inventory&&i.value.index>=0&&size_t(i.value.index)<selection_count_){pending_use_item_=selections_[i.value.index].value;c.kind=openu5::CommandKind::UseItem;c.item=pending_use_item_;if(!context_.combat&&(c.item==6||(c.item>=8&&c.item<16))){open_selection(openu5::UiMode::PartySelection,openu5::UiRequestId::UseTarget);}else if(!context_.combat&&(c.item==1||c.item==17)){pending_use_item_=-1;ui_->begin_target(openu5::UiRequestId::UseTarget,"Direction?",c);dirty_=true;}else{pending_use_item_=-1;command(c);}}
     else if(i.request==openu5::UiRequestId::UseTarget&&pending_use_item_>=0){c.kind=openu5::CommandKind::UseItem;c.item=pending_use_item_;c.member=int16_t(i.value.index);pending_use_item_=-1;command(c);}
@@ -1243,6 +1246,13 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
         ESP_LOGI(kTag,"VIEW_RESULT result=closed view=zodiac deferred_turn=0 ui=%s",mode_name(ui_->mode()));
         dirty_=true;dirty_reason_="zodiac-view-close";return true;
     }
+    // R-22. cmd_zstats (0x0a3a) is a synchronous key loop: while it runs, the
+    // game reads no other input at all. Interception happens HERE, before any
+    // routing, so a direction can never reach dispatch_world_command() as a
+    // Move and a command letter can never arm a prompt behind the modal. The
+    // Alt-chorded shortcuts (Developer/Save/Load) and the system menu are left
+    // alone, exactly as they are for the gem and zodiac views above.
+    if(zstats_open_&&shortcut==DeviceShortcut::None)return handle_zstats_input(action);
     ESP_LOGD(kTag,"UI input mode=%s action=%s char=%u index=%ld pending=%d",mode_name(mode_before),action_name(action.kind),unsigned(action.character),long(action.index),mode_before==openu5::UiMode::TargetSelection);
     const auto before=game_.position;const bool dungeon_before=dungeon_.active;const auto dungeon_pos_before=dungeon_.pos;
     const uint32_t command_sequence_before=routed_command_sequence_;
@@ -1428,8 +1438,158 @@ const DeviceShopView *AlphaRuntime::compose_shop_view(){
     }
     return &shop_view_;
 }
+// R-22 -- the (Z)-stats page modal.
+//
+// cmd_zstats (ZSTATS.OVL:0x0a3a) is a synchronous key loop that owns the
+// keyboard until Space or ESC: it never dispatches a command, never advances
+// the clock and never draws an RNG roll. The three methods below reproduce
+// exactly that. open_zstats() arms the axis, handle_zstats_input() IS the key
+// loop (called from handle() before any routing, like the gem/zodiac views),
+// and zstats_view() composes the page the renderer paints through the shared,
+// ESP-free openu5::compose_zstats_page() seam that the host model tests drive.
+openu5::ZStatsInput AlphaRuntime::zstats_input() const{
+    openu5::ZStatsInput in{};in.game=&game_;
+    // The moonstones' carried/buried state has no GameState field --
+    // QuestWorldServices owns it -- so it is pushed in here from that same
+    // authoritative owner, exactly as open_selection() does for the (U)se picker.
+    for(size_t m=0;m<8&&m<quest_.moonstone_count;++m)
+        if(quest_.moonstones&&!quest_.moonstones[m].buried)in.moonstones_owned|=uint8_t(1u<<m);
+    return in;
+}
+openu5::ZStatsPage AlphaRuntime::zstats_view() const{
+    if(!zstats_open_)return {};
+    return openu5::compose_zstats_page(zstats_input(),zstats_page_,zstats_scroll_);
+}
+void AlphaRuntime::open_zstats(int member){
+    const int party=std::max(1,std::min<int>(game_.party.party_size,game_.party.character_count));
+    const int bounded=member>=0&&member<party?member:0;
+    zstats_open_=true;
+    zstats_page_=openu5::zstats_page_for_member(bounded);
+    zstats_scroll_=0;
+    status_member_=int16_t(bounded);
+    ESP_LOGI(kTag,"ZSTATS_OPEN member=%d page=%d party=%d",bounded,zstats_page_,party);
+}
+bool AlphaRuntime::handle_zstats_input(const openu5::UiAction &action){
+    if(!zstats_open_)return false;
+    const int party=std::max(1,std::min<int>(game_.party.party_size,game_.party.character_count));
+    // A roster that shrank while the modal was open can strand the axis in the
+    // unused window [party*2,0x0b]; fold it back before anything reads it.
+    zstats_page_=openu5::zstats_clamp_page(zstats_page_,party);
+    const int page_before=zstats_page_;
+
+    // Space (0x0a78) and ESC (0x0a81) are the ONLY keys that close. Back is the
+    // T-Deck's other dismissal gesture and is accepted alongside Cancel.
+    const bool close=action.kind==openu5::UiActionKind::Cancel||
+                     action.kind==openu5::UiActionKind::Back||
+                     (action.kind==openu5::UiActionKind::Character&&action.character==u' ');
+    if(close){
+        zstats_open_=false;zstats_page_=0;zstats_scroll_=0;
+        ESP_LOGI(kTag,"ZSTATS_CLOSE reason=%s ui=%s gameplay_command=none",
+                 action.kind==openu5::UiActionKind::Character?"space":"escape",mode_name(ui_->mode()));
+        dirty_=true;dirty_reason_="zstats-close";return true;
+    }
+
+    // '1'-'6' jump to a member's stats page (0x0b12, bounded by g_party_size);
+    // '0' jumps to the provisions page (0x0b37).
+    if(action.kind==openu5::UiActionKind::Character&&action.character>=u'0'&&action.character<=u'9'){
+        const int digit=int(action.character-u'0');
+        if(digit==0){zstats_page_=openu5::kZStatsPageProvisions;zstats_scroll_=0;}
+        else if(digit-1<party){zstats_page_=openu5::zstats_page_for_member(digit-1);zstats_scroll_=0;}
+        // A digit past the party size is bounded away, not honoured (jae 0x0b12).
+        if(zstats_page_!=page_before){dirty_=true;dirty_reason_="zstats-page";}
+        return true;
+    }
+
+    if(action.kind==openu5::UiActionKind::Direction||
+       action.kind==openu5::UiActionKind::Next||action.kind==openu5::UiActionKind::Previous||
+       action.kind==openu5::UiActionKind::PageUp||action.kind==openu5::UiActionKind::PageDown){
+        const bool vertical=action.kind==openu5::UiActionKind::PageUp||
+                            action.kind==openu5::UiActionKind::PageDown||
+                            (action.kind==openu5::UiActionKind::Direction&&
+                             (action.direction==openu5::Direction::North||
+                              action.direction==openu5::Direction::South));
+        const bool forward=action.kind==openu5::UiActionKind::Next||
+                           action.kind==openu5::UiActionKind::PageDown||
+                           (action.kind==openu5::UiActionKind::Direction&&
+                            (action.direction==openu5::Direction::South||
+                             action.direction==openu5::Direction::East));
+        // render_item_list's sub-loop (0x07d0): INSIDE a list that actually
+        // overflows, up/down SCROLL (0x081c/0x086c) and left/right leave to
+        // change page (0x0948). With nothing to scroll they fall through to the
+        // axis, exactly as ztats-layout.md section 8.5 refines section 3.
+        if(vertical&&openu5::zstats_page_kind(zstats_page_)==openu5::ZStatsPageKind::List){
+            const auto list=openu5::zstats_list(zstats_input(),zstats_page_);
+            const size_t max_scroll=openu5::zstats_max_scroll(list.count);
+            if(max_scroll){
+                // PgUp/PgDn step a literal 7 (mov [bp-2],7); an arrow steps 1.
+                const size_t step=action.kind==openu5::UiActionKind::PageUp||
+                                  action.kind==openu5::UiActionKind::PageDown
+                                      ?openu5::kZStatsListRows:size_t(1);
+                const size_t before=zstats_scroll_;
+                zstats_scroll_=forward?std::min(zstats_scroll_+step,max_scroll)
+                                      :(zstats_scroll_>step?zstats_scroll_-step:size_t(0));
+                if(zstats_scroll_!=before){dirty_=true;dirty_reason_="zstats-scroll";}
+                return true;
+            }
+        }
+        zstats_page_=forward?openu5::zstats_axis_next(zstats_page_,party)
+                            :openu5::zstats_axis_prev(zstats_page_,party);
+        zstats_scroll_=0;
+        if(zstats_page_!=page_before){dirty_=true;dirty_reason_="zstats-page";}
+        return true;
+    }
+
+    // Everything else -- including 'z' itself, which cmd_zstats' loop has no
+    // compare for -- is swallowed with no effect: the modal stays open and the
+    // key never reaches gameplay.
+    ESP_LOGD(kTag,"ZSTATS_INPUT action=%s effect=swallowed page=%d",action_name(action.kind),zstats_page_);
+    return true;
+}
+
 const DeviceSelectionView *AlphaRuntime::compose_selection_view(){
     if(!ui_)return nullptr;
+    // R-22. While the (Z)-stats modal owns the keyboard it also owns the right
+    // panel. It is painted with the SAME compact-selector primitive every other
+    // modal uses -- title band, two detail lines, eight text rows, context bar --
+    // rather than a second text renderer: the original's page is sixteen cells
+    // wide and eight rows tall, which is exactly what this panel already shows.
+    // The one thing deliberately NOT reproduced is the IBM.CH box frame around a
+    // list (glyphs 0x10/0x11/0x13-0x17): the T-Deck face is ASCII-only and the
+    // panel already carries its own cyan rules in the same place. See the R-22
+    // residuals in GAMEPLAY_INTEGRATION_AUDIT.md.
+    if(zstats_open_){
+        const auto page=zstats_view();
+        selection_view_={};selection_view_.active=true;selection_view_.detail_panel=true;
+        selection_view_.mode=uint8_t(openu5::UiMode::PartySelection);
+        // The banner (0x6c70) is the member's name, "Equipment", or the list title.
+        std::snprintf(selection_view_.title,sizeof(selection_view_.title),"%.23s",page.banner);
+        const int party=std::max(1,std::min<int>(game_.party.party_size,game_.party.character_count));
+        if(page.kind==openu5::ZStatsPageKind::List&&page.list_total){
+            const size_t first=page.list_scroll+1,last=page.list_scroll+page.row_count;
+            std::snprintf(selection_view_.detail,sizeof(selection_view_.detail),"%u-%u of %u%s%s",
+                          unsigned(first),unsigned(last),unsigned(page.list_total),
+                          page.more_above?" ^":"",page.more_below?" v":"");
+        }else if(page.member>=0)
+            std::snprintf(selection_view_.detail,sizeof(selection_view_.detail),"Member %d/%d",
+                          page.member+1,party);
+        std::snprintf(selection_view_.detail2,sizeof(selection_view_.detail2),"%s",
+                      page.kind==openu5::ZStatsPageKind::Stats?"Stats":
+                      page.kind==openu5::ZStatsPageKind::Arms?"Arms":
+                      page.kind==openu5::ZStatsPageKind::Provisions?"Provisions":"Inventory");
+        selection_view_.total=selection_view_.row_count=page.row_count;
+        selection_view_.page_start=0;
+        // No row is a cursor on a stats page: kSelectionVisibleRows is out of
+        // range for the highlight, the same sentinel the old detail panel used.
+        selection_view_.selected_row=kSelectionVisibleRows;
+        for(size_t row=0;row<page.row_count&&row<kSelectionVisibleRows;++row)
+            std::snprintf(selection_view_.rows[row],sizeof(selection_view_.rows[row]),"%.23s",page.rows[row].text);
+        selection_view_.context.active=true;
+        std::snprintf(selection_view_.context.status,sizeof(selection_view_.context.status),"Z-stats");
+        std::snprintf(selection_view_.context.actions,sizeof(selection_view_.context.actions),"%s",
+                      page.kind==openu5::ZStatsPageKind::List&&page.list_total>openu5::kZStatsListRows
+                          ?"L/R Page|U/D Scroll|Mic":"Move Page|0-6 Jump|Mic");
+        return &selection_view_;
+    }
     openu5::UiSelectionView current{};if(!ui_->selection_view(current))return nullptr;
     selection_view_={};selection_view_.active=true;selection_view_.mode=uint8_t(current.mode);selection_view_.total=current.count;
     const char *title=current.mode==openu5::UiMode::SpellSelection?(selection_request_==openu5::UiRequestId::Custom?"Mix Spell":"Cast Spell"):
