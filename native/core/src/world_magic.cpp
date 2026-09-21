@@ -46,7 +46,21 @@ WorldCommandResult world_magic(CommandContext &c,Command cmd,const ActiveMap &ma
     say(cast.message);if(!cast.ok){if(cast.consumed)say("Failed!");emit(GameEventKind::Sfx,"invalid-magic");return {};}
     static constexpr int no_ceremony[]={1,13,37,28,40,44,45};bool ceremonial=cmd.item!=46;for(int id:no_ceremony)ceremonial&=cmd.item!=id;if(ceremonial)ceremony(spell_definition(SpellId(cmd.item))->circle,"spell-cast");
     auto fx=cast.effect.kind;
-    if(fx==MagicEffect::Gate)return {CommandStatus::Success,false,false,false,true};
+    if(fx==MagicEffect::Gate){
+        // Y-33. CAST.OVL 0x0d2d pushes the literal ceremony index 8 into
+        // CAST2:0x0000 only AFTER the phase-gate ('1'-'8') has already
+        // passed; the ship check (0x0cf6) gates even earlier, before the
+        // phase is ever read, so it is checked here too rather than trusted
+        // to the UI alone (a caller that supplies cmd.hours directly, like
+        // the parity fixture, must get the same answer). Any abort path
+        // (ship, bad key, Cancel) leaves cmd.hours at the -1 sentinel the UI
+        // arms it with. The gate flag stays unconditional either way, so
+        // commands.cpp's existing phase<0/ship/bounds check still owns
+        // "Failed!" and the actual moonstone_teleport call.
+        const bool aboard_ship=(c.turn.transport_tile&240)==32;
+        if(cmd.hours>=0&&cmd.hours<=7&&!aboard_ship){static constexpr int kVasRelPorPhaseCeremonyIndex=8;ceremony(kVasRelPorPhaseCeremonyIndex,"spell-cast");}
+        return {CommandStatus::Success,false,false,false,true};
+    }
     if(fx==MagicEffect::Mani||fx==MagicEffect::FullHeal||fx==MagicEffect::Cure||fx==MagicEffect::Awaken||fx==MagicEffect::Resurrect){if(auto *p=target())say(apply_target_spell(*p,fx,g.karma,rand)?"Success!":"Failed!");return {};}
     if(fx==MagicEffect::DeathVision){emit(GameEventKind::MapReveal);return {};}
     if(fx==MagicEffect::Peer){char text[32];std::snprintf(text,sizeof(text),"\n%c'%c\", %c'%c\"\n",'A'+(g.position.xy.y>>4),'A'+(g.position.xy.y&15),'A'+(g.position.xy.x>>4),'A'+(g.position.xy.x&15));say(text);return {};}

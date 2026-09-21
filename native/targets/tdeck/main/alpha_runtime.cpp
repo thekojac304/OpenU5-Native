@@ -904,6 +904,13 @@ void AlphaRuntime::modal(const openu5::UiIntent&i){if(!i.value.accepted){if(i.re
 
 void AlphaRuntime::cast_selected_spell(int16_t spell){
     openu5::Command c;c.kind=openu5::CommandKind::Cast;c.caster=int16_t(active_member(game_));c.item=spell;
+    // Y-33. hours defaults to 0, a VALID Vas Rel Por phase -- every other
+    // spell ignores this field, so setting the "no phase chosen" sentinel
+    // unconditionally is harmless and closes the gap where an aboard-ship
+    // cast (cast_target_prompt returns None, skipping the WorldPhase case
+    // below entirely) would otherwise fall through to command(c) with
+    // hours=0 and fire the ceremony on a cast the ship should silently fail.
+    c.hours=-1;
     const auto *def=openu5::spell_definition(openu5::SpellId(spell));
     if(!def){command(c);return;}
     auto *actor=openu5::current_combat_actor(combat_context_);
@@ -921,7 +928,8 @@ void AlphaRuntime::cast_selected_spell(int16_t spell){
     // openu5::cast_target_prompt() seam (R-11 / Batch 5) rather than an
     // inline predicate, so the host suite can drive the same decision this
     // ESP-only function makes.
-    switch(openu5::cast_target_prompt(openu5::SpellId(spell),context_.combat,dungeon_.active)){
+    switch(openu5::cast_target_prompt(openu5::SpellId(spell),context_.combat,dungeon_.active,
+                                       game_.transport==openu5::TransportMode::Ship)){
     case openu5::CastTargetPrompt::CombatReticle:{
         const int16_t x=actor?actor->position.x:5,y=actor?actor->position.y:5;
         ui_->begin_target(openu5::UiRequestId::Target,"Spell aim",c,x,y);
@@ -933,6 +941,12 @@ void AlphaRuntime::cast_selected_spell(int16_t spell){
         // no reticle cell, so one direction press dispatches the Cast with
         // has_direction set and Cancel dispatches it without one.
         ui_->begin_target(openu5::UiRequestId::Direction,"Direction?",c,-1,-1);
+        dirty_=true;return;
+    case openu5::CastTargetPrompt::WorldPhase:
+        // Y-33. Vas Rel Por's bare "To phase:" getkey. c.hours is already
+        // the -1 "no phase chosen" sentinel set above; a valid '1'-'8'
+        // overwrites it, and any abort path (bad key, Cancel) leaves it be.
+        ui_->begin_target(openu5::UiRequestId::GatePhase,"To phase:",c,-1,-1);
         dirty_=true;return;
     case openu5::CastTargetPrompt::None:
         break;

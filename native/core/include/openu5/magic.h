@@ -141,8 +141,12 @@ struct CastContext {
 // selectedCombatPlayer / castingCombatPlayer spells are NOT described here:
 // they are party-picker / self-cast shapes resolved by the caller before this
 // is consulted.
-enum class CastTargetPrompt : uint8_t { None, CombatReticle, WorldDirection };
-CastTargetPrompt cast_target_prompt(SpellId, bool in_combat, bool in_dungeon);
+// WorldPhase (Y-33): Vas Rel Por's bare "To phase:" getkey -- CAST.OVL 0x0cf0
+// checks aboard-ship BEFORE ever printing the prompt (0x0cf6, ahead of the
+// 0x0cff print), so the ship gate lives in the aboard_ship parameter here
+// rather than inside the getkey's own cancel/invalid-key handling.
+enum class CastTargetPrompt : uint8_t { None, CombatReticle, WorldDirection, WorldPhase };
+CastTargetPrompt cast_target_prompt(SpellId, bool in_combat, bool in_dungeon, bool aboard_ship = false);
 // The caller supplies the active RNG stream; combat must use CombatState.rng.
 CastResult cast_spell(GameState &, TurnState &, CharacterState &, SpellId, CastContext, Rand);
 bool mix_spell(GameState &, SpellId, int32_t quantity);

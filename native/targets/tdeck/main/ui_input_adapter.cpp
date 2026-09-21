@@ -62,6 +62,19 @@ bool UiInputAdapter::translate(const RawInputEvent &raw, openu5::UiMode mode,
     // Match the physical matrix location, not the vendor '$' label.  Cancel is
     // emitted on a short release so a hold can be classified without leakage.
     if (raw.column == kMicrophoneKeyColumn && raw.row == kMicrophoneKeyRow) {
+        // Y-29: Symbol+Mic/0 is the hardware's own symbol-layer route to a
+        // literal '0' (kSymbol[0][6]=='0'). Bypass the short/long Cancel /
+        // Movement-Mode state machine entirely for this chord so the digit
+        // reaches the ordinary character path -- and thus SetActivePlayer's
+        // clear-active-player branch. A plain (unmodified) press keeps its
+        // existing short=Cancel / long=Movement-Mode contract unchanged.
+        if (raw.modifiers.symbol) {
+            if (raw.transition != KeyTransition::Pressed) return false;
+            action = {};
+            action.kind = openu5::UiActionKind::Character;
+            action.character = u'0';
+            return true;
+        }
         if (raw.transition == KeyTransition::Pressed) {
             if (!mic_down_) {
                 mic_down_ = true;

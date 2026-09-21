@@ -3,7 +3,7 @@ import {DungeonState} from '../../../game/src/core/dungeon/dungeon.js';
 import {castSpell,applyMani,applyVasMani,applyCure,applyAwaken,applyResurrect,inWisPeerText} from '../../../game/src/core/magic/cast.js';
 import {buildSpellDefs} from '../../../game/src/core/magic/spells.js';
 import {readScroll,windForDirection} from '../../../game/src/core/useScroll.js';
-import {scrollCeremonyIndex,potionCeremonyIndex,castCeremonyIndexOrNull,VAS_REL_POR_SPELL_INDEX} from '../../../game/src/core/magic/ceremony.js';
+import {scrollCeremonyIndex,potionCeremonyIndex,castCeremonyIndexOrNull,VAS_REL_POR_SPELL_INDEX,VAS_REL_POR_PHASE_CEREMONY_INDEX} from '../../../game/src/core/magic/ceremony.js';
 import {rerollPotionColor,applyPotionEffect,applyPotionCombatSync} from '../../../game/src/core/usePotion.js';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
@@ -60,7 +60,8 @@ function add(seed:number,tile:number,edit:(s:any)=>void,realMap=false,finish='fl
      // 41 of the 48 (C)ast handlers reach CAST2:0x0000 with their CIRCLE; the
      // weapon-spell and line-fan families do not (SPELLS_WITHOUT_CEREMONY), and
      // Vas Rel Por (46) fires its own literal-8 ceremony only after the phase
-     // key (CAST.OVL 0x0cf0), which this command does not model.
+     // key (CAST.OVL 0x0cf0) passes -- modelled below in the 'gateTravel'
+     // branch, not here (Y-33, native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md).
      if(r.ok&&a.item!==VAS_REL_POR_SPELL_INDEX)cue(castCeremonyIndexOrNull(a.item));
      const f=r.effect,target=s.characters[a.member];if(f){
        if(g.dungeonState){if(f.kind==='fieldWall')ev.push(...g.applyDungeonFieldWall(f.fieldTile));else if(f.kind==='dispelField')ev.push(...g.applyAnGravDispel());else if(f.kind==='disarmOrOpen')ev.push(...g.applyAnSanctOpenChest());else if(f.kind==='dungeonAscend')ev.push(...g.dungeonMagicChangeLevel(-1));else if(f.kind==='dungeonDescend')ev.push(...g.dungeonMagicChangeLevel(1));else ev.push(...g.dungeonSpellTurn());}
@@ -68,7 +69,7 @@ function add(seed:number,tile:number,edit:(s:any)=>void,realMap=false,finish='fl
        else if(f.kind==='peer')msg(inWisPeerText(s.position.x,s.position.y));
        else if(f.kind==='deathVision')reveal();
        else if(!scenario.dungeon&&(f.kind==='sealDoor'||f.kind==='disarmOrOpen')){if(a.dir===undefined)msg('Cancelled.');else ev.push(...(f.kind==='sealDoor'?g.applyDoorSpell(f,['north','south','east','west'][a.dir]):g.applyUnlockSpell(['north','south','east','west'][a.dir])));}
-       else if(f.kind==='gateTravel'){if((s.transportTile&240)===32||a.hours<0||a.hours>7||!g.moonstoneTeleport(a.hours,ev))msg('Failed!');}else if(f.kind==='blink')ev.push(...g.applyBlinkSpell(a.dir===undefined?null:['north','south','east','west'][a.dir]));
+       else if(f.kind==='gateTravel'){if((s.transportTile&240)!==32&&a.hours>=0&&a.hours<=7)cue(VAS_REL_POR_PHASE_CEREMONY_INDEX);if((s.transportTile&240)===32||a.hours<0||a.hours>7||!g.moonstoneTeleport(a.hours,ev))msg('Failed!');}else if(f.kind==='blink')ev.push(...g.applyBlinkSpell(a.dir===undefined?null:['north','south','east','west'][a.dir]));
      }
    } else if(a.kind==='use'&&a.item<16){
      if(a.item<8){if(s.scrollQuantities[a.item]>0)s.scrollQuantities[a.item]--;msg('Scroll');const r=readScroll(s,a.item,s.position.location);r.messages.forEach(msg);if(r.followup.kind==='windDir'&&a.dir!==undefined){s.wind=windForDirection(['north','south','east','west'][a.dir] as any);s.windDriftCtr=0;}else if(r.followup.kind==='resurrect'&&s.characters[a.member])applyResurrect(s.characters[a.member],s.karma);else if(r.followup.kind==='reveal')reveal();if(!r.messages.includes('No effect!'))cue(scrollCeremonyIndex(a.item));}

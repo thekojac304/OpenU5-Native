@@ -629,6 +629,7 @@ bool UiSession::handle_modal(const UiAction &a) {
             const bool klimb = pending_command_.kind == CommandKind::Klimb;
             const bool attack = pending_command_.kind == CommandKind::CombatAttack;
             const bool cast = pending_command_.kind == CommandKind::Cast;
+            const bool use_item = pending_command_.kind == CommandKind::UseItem;
             auto cancelled = pending_command_;
             mode_ = return_mode_; request_ = UiRequestId::None;
             prompt_[0]=0;pending_command_={};
@@ -639,8 +640,29 @@ bool UiSession::handle_modal(const UiAction &a) {
             // handheld UI contract.
             else if (attack) { }
             else if (cast) { cancelled.cancel_target=true; command(cancelled); }
+            // Y-31. The reference consumes the Rel Hur scroll (and the skull
+            // key) at item-selection time, before the getdir is even armed --
+            // readScroll()/the key decrement both run first, then the
+            // direction prompt opens. Native instead parks the same command
+            // behind the getdir, so cancelling must still dispatch it
+            // (direction unset) or the item is refunded. world_magic()'s
+            // consumption of both scroll ids 0-7 and the skull key (17) is
+            // unconditional on has_direction, so this reproduces the
+            // reference exactly.
+            else if (use_item) { cancelled.has_direction=false; command(cancelled); }
             else { UiIntent i; i.kind=UiIntentKind::ModalResponse; i.request=cancelled_request;
                    i.value.accepted=false; dispatch(i); }
+        } else if (a.kind == UiActionKind::Character && request_ == UiRequestId::GatePhase) {
+            // Y-33. CAST.OVL 0x0d06 is a bare, non-retrying getkey: exactly
+            // '1'-'8' dispatches the gate with that phase (0-7); any other
+            // key leaves pending_command_.hours at the -1 sentinel it was
+            // armed with, which world_magic.cpp's Gate handler and
+            // commands.cpp's phase<0 check both already treat as the
+            // reference's silent multi-way abort.
+            auto cmd = pending_command_;
+            if (a.character >= u'1' && a.character <= u'8') cmd.hours = int16_t(a.character - u'1');
+            mode_ = return_mode_; request_ = UiRequestId::None; prompt_[0]=0; pending_command_={};
+            command(cmd);
         } else if (a.kind == UiActionKind::Direction) {
             // R-11. The aim RETICLE belongs to combat, and combat marks itself
             // with UiRequestId::Target (AlphaRuntime::cast_selected_spell's

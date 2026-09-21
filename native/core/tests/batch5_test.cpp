@@ -44,9 +44,11 @@
 //   (game/src/core/magic/cast.ts case 26) still returns castAnimOnly --
 //   content-audit.md PENDIENTE(3) tracks that side separately; it is out of
 //   scope for this native-only batch.
+#include "openu5/commands.h"
 #include "openu5/magic.h"
 #include "openu5/outdoor.h"
 #include "openu5/quest_world.h"
+#include "openu5/transitions.h"
 #include "openu5/ui_session.h"
 #include "openu5/world_commands.h"
 
@@ -180,6 +182,26 @@ static void policy_tests() {
     check(cast_target_prompt(SpellId::InExPor, false, true) == CastTargetPrompt::None,
           "A4 guard (Batch 8B): In Ex Por underground must not prompt, matching An Ex Por's "
           "town/world-only scope");
+
+    // D1 Y-33 RED -- Vas Rel Por (Gate) must raise its own bare getkey prompt
+    // outdoors, not the fabricated silent phase=0 teleport the audit found.
+    check(cast_target_prompt(SpellId::VasRelPor, false, false) == CastTargetPrompt::WorldPhase,
+          "D1 (Y-33): Vas Rel Por in the world must raise the phase-gate getkey "
+          "(RED: the effect has no case in cast_target_prompt today)");
+    // D2 Y-33 -- CAST.OVL 0x0cf6 checks aboard-ship BEFORE ever printing "To
+    // phase:", so the prompt itself must not open at sea.
+    check(cast_target_prompt(SpellId::VasRelPor, false, false, true) == CastTargetPrompt::None,
+          "D2 (Y-33): aboard ship, no phase prompt is raised at all");
+    // D3 Y-33 guard -- underground follows the same rule as every other
+    // world-only effect (A4): no getdir, because Vas Rel Por is peace-time
+    // (time_bits excludes combat/dungeon) and never reaches this dispatch
+    // underground in the first place -- see F-group's dungeon control.
+    check(cast_target_prompt(SpellId::VasRelPor, false, true) == CastTargetPrompt::None,
+          "D3 (Y-33) guard: underground must not prompt");
+    // D4 Y-33 guard -- combat is moot (peace-time-only spell), and its
+    // noSelection target_type must not fabricate a combat reticle either.
+    check(cast_target_prompt(SpellId::VasRelPor, true, false) == CastTargetPrompt::None,
+          "D4 (Y-33) guard: combat must not prompt (noSelection target_type)");
 }
 
 // ---------------------------------------------------------------------------
@@ -274,6 +296,109 @@ static void session_tests() {
                   spy.intents.back().command.has_direction &&
                   spy.intents.back().command.direction == Direction::West,
               "B4 (Y-21): the Rel Hur getdir dispatches UseItem with a direction");
+    }
+
+    // B5 Y-31 ORDERING guard -- cancelling the Rel Hur getdir must still
+    // DISPATCH the UseItem (with no direction), the same B3 principle applied
+    // to (U)se instead of Cast: the reference's readScroll() consumes the
+    // scroll at item-selection time, before the getdir is even armed, so a
+    // bare ModalResponse on cancel (the pre-fix behaviour) never dispatches
+    // and the scroll survives -- a refund the reference does not give.
+    {
+        UiTextBlock blocks[8];
+        Spy spy;
+        UiSession ui{{blocks, 8}, {&spy, Spy::send}, {40, 8, 12}};
+        Command use; use.kind = CommandKind::UseItem; use.item = 1;
+        ui.begin_target(UiRequestId::UseTarget, "Direction?", use, -1, -1);
+        const auto before = spy.intents.size();
+        ui.handle_input(action(UiActionKind::Cancel));
+        check(spy.intents.size() > before && spy.intents.back().kind == UiIntentKind::Command &&
+                  spy.intents.back().command.kind == CommandKind::UseItem &&
+                  spy.intents.back().command.item == 1 &&
+                  !spy.intents.back().command.has_direction &&
+                  ui.mode() == UiMode::Exploration,
+              "B5 (Y-31) ordering guard: a cancelled Rel Hur getdir still dispatches UseItem, "
+              "so the scroll is spent exactly as the reference spends it before the getdir "
+              "(RED expected: the generic ModalResponse arm dispatches nothing on cancel)");
+    }
+
+    // B6 Y-31 -- the skull key getdir shares the Rel Hur route end to end (the
+    // same Inventory branch in AlphaRuntime::modal() opens UseTarget for both
+    // item 1 and item 17), and the reference decrements the key at selection
+    // time the same way ("la llave YA se decremento al seleccionar el item").
+    {
+        UiTextBlock blocks[8];
+        Spy spy;
+        UiSession ui{{blocks, 8}, {&spy, Spy::send}, {40, 8, 12}};
+        Command use; use.kind = CommandKind::UseItem; use.item = 17;
+        ui.begin_target(UiRequestId::UseTarget, "Direction?", use, -1, -1);
+        const auto before = spy.intents.size();
+        ui.handle_input(action(UiActionKind::Cancel));
+        check(spy.intents.size() > before && spy.intents.back().kind == UiIntentKind::Command &&
+                  spy.intents.back().command.kind == CommandKind::UseItem &&
+                  spy.intents.back().command.item == 17 &&
+                  !spy.intents.back().command.has_direction &&
+                  ui.mode() == UiMode::Exploration,
+              "B6 (Y-31): a cancelled skull-key getdir dispatches UseItem the same way B5 does "
+              "for the Rel Hur scroll");
+    }
+
+    // E1 Y-33 RED -- a digit '1'-'8' at the phase getkey dispatches Cast with
+    // hours = digit-1 (0-7), the phase index commands.cpp's existing gate
+    // consumption (Cast case, "int phase=cmd.hours") already expects. Today
+    // TargetSelection has no Character arm at all, so the prompt silently
+    // swallows the keypress and never dispatches.
+    {
+        UiTextBlock blocks[8];
+        Spy spy;
+        UiSession ui{{blocks, 8}, {&spy, Spy::send}, {40, 8, 12}};
+        Command cast; cast.kind = CommandKind::Cast; cast.item = 46; cast.caster = 0; cast.hours = -1;
+        ui.begin_target(UiRequestId::GatePhase, "To phase:", cast, -1, -1);
+        check(ui.mode() == UiMode::TargetSelection, "E1 (Y-33): the phase getkey opens");
+        const auto before = spy.intents.size();
+        UiAction key; key.kind = UiActionKind::Character; key.character = u'3';
+        ui.handle_input(key);
+        check(spy.intents.size() > before && spy.intents.back().kind == UiIntentKind::Command &&
+                  spy.intents.back().command.kind == CommandKind::Cast &&
+                  spy.intents.back().command.item == 46 &&
+                  spy.intents.back().command.hours == 2 &&
+                  ui.mode() == UiMode::Exploration,
+              "E1 (Y-33) RED: pressing '3' dispatches Cast with hours=2 "
+              "(RED expected: TargetSelection has no Character arm, so nothing dispatches)");
+    }
+
+    // E2 Y-33 -- any key outside '1'-'8' dispatches WITHOUT a valid phase
+    // (hours stays at the -1 sentinel the prompt was armed with), matching
+    // the reference's non-retrying getkey: a bad key aborts on the spot
+    // instead of waiting for a better one.
+    {
+        UiTextBlock blocks[8];
+        Spy spy;
+        UiSession ui{{blocks, 8}, {&spy, Spy::send}, {40, 8, 12}};
+        Command cast; cast.kind = CommandKind::Cast; cast.item = 46; cast.caster = 0; cast.hours = -1;
+        ui.begin_target(UiRequestId::GatePhase, "To phase:", cast, -1, -1);
+        UiAction key; key.kind = UiActionKind::Character; key.character = u'9';
+        ui.handle_input(key);
+        check(spy.intents.back().command.kind == CommandKind::Cast &&
+                  spy.intents.back().command.hours == -1 && ui.mode() == UiMode::Exploration,
+              "E2 (Y-33): '9' (outside 1-8) dispatches Cast with no phase, not a retry");
+    }
+
+    // E3 Y-33 -- Cancel/ESC at the phase getkey reaches the SAME cast
+    // ordering-guard arm B3/B5 already exercise (pending_command_.kind ==
+    // Cast), so it needs no new code: cancelled.hours is left at the -1
+    // sentinel the prompt was armed with, which is exactly what E2 proves
+    // world_magic.cpp/commands.cpp already treat as "no phase chosen."
+    {
+        UiTextBlock blocks[8];
+        Spy spy;
+        UiSession ui{{blocks, 8}, {&spy, Spy::send}, {40, 8, 12}};
+        Command cast; cast.kind = CommandKind::Cast; cast.item = 46; cast.caster = 0; cast.hours = -1;
+        ui.begin_target(UiRequestId::GatePhase, "To phase:", cast, -1, -1);
+        ui.handle_input(action(UiActionKind::Cancel));
+        check(spy.intents.back().command.kind == CommandKind::Cast &&
+                  spy.intents.back().command.hours == -1 && ui.mode() == UiMode::Exploration,
+              "E3 (Y-33): cancelling the phase getkey dispatches Cast with no phase");
     }
 }
 
@@ -528,12 +653,222 @@ static void effect_tests() {
         check(w.turn.wind == int(Direction::West) + 1,
               "C6 (Y-21): Rel Hur with a direction actually sets the wind");
     }
+
+    // C7 Y-31 -- world_magic() itself, given the has_direction=false dispatch
+    // B5's fixed cancel arm now produces: the scroll is consumed and the
+    // result line prints, but no wind is set. This is what B5's RED test
+    // alone cannot prove -- that dispatching on cancel actually reproduces
+    // "consume without applying effect" rather than double-consuming or
+    // no-opping.
+    {
+        TownWorld w;
+        w.game.scroll_quantities[1] = 1;
+        w.turn.wind = 0;
+        CommandContext c{w.game, w.turn, w.travel, w.commands, w.world};
+        c.quest_world = &w.quest;
+        const auto active = get_active_map(w.world, w.game.position.map);
+        std::vector<Seen> events; EventSink sink{&events, capture};
+        Command use; use.kind = CommandKind::UseItem; use.item = 1; use.has_direction = false;
+        world_magic(c, use, active.value, sink, rng_source(w.game.rng));
+        check(said(events, "Wind change!") && w.game.scroll_quantities[1] == 0,
+              "C7 (Y-31): a cancelled-getdir Rel Hur dispatch still spends the scroll");
+        check(w.turn.wind == 0,
+              "C7 (Y-31): a cancelled-getdir Rel Hur dispatch does not set the wind");
+    }
+
+    // C8 Y-31 -- the skull key side of the same fix: has_direction=false
+    // still decrements the key (its consumption never reads has_direction at
+    // all), matching the reference's "decremented at selection" behaviour.
+    {
+        TownWorld w;
+        w.game.skull_keys = 1;
+        CommandContext c{w.game, w.turn, w.travel, w.commands, w.world};
+        c.quest_world = &w.quest;
+        const auto active = get_active_map(w.world, w.game.position.map);
+        std::vector<Seen> events; EventSink sink{&events, capture};
+        Command use; use.kind = CommandKind::UseItem; use.item = 17; use.has_direction = false;
+        world_magic(c, use, active.value, sink, rng_source(w.game.rng));
+        check(said(events, "Skull Key") && w.game.skull_keys == 0,
+              "C8 (Y-31): a cancelled-getdir skull-key dispatch still spends the key");
+    }
+
+    // C9 Y-33 RED -- world_magic() itself: a VALID phase (hours=2, from E1's
+    // dispatch) must raise the ceremony (CAST.OVL 0x0d2d, literal index 8)
+    // and set the gate flag. Today fx==Gate always returns gate=true with no
+    // ceremony at all, for every hours value including the always-valid
+    // default of 0 -- this is the root of the "silent phase=0 teleport" bug.
+    {
+        TownWorld w;
+        w.game.spell_quantities[46] = 1;
+        CommandContext c{w.game, w.turn, w.travel, w.commands, w.world};
+        c.quest_world = &w.quest; // moonstone_count==0: the pre-flight guard passes trivially.
+        const auto active = get_active_map(w.world, w.game.position.map);
+        struct Noted { GameEventKind kind{}; int32_t note{}; };
+        std::vector<Noted> events;
+        EventSink sink{&events, [](void *ctx, const GameEvent &e) {
+                           static_cast<std::vector<Noted> *>(ctx)->push_back({e.kind, e.note});
+                       }};
+        Command cast; cast.kind = CommandKind::Cast; cast.item = 46; cast.caster = 0; cast.hours = 2;
+        const auto result = world_magic(c, cast, active.value, sink, rng_source(w.game.rng));
+        bool ceremony_8 = false;
+        for (auto &e : events)
+            if (e.kind == GameEventKind::MagicCeremony && e.note == 8) ceremony_8 = true;
+        check(result.gate, "C9 (Y-33): a valid phase still sets the gate flag");
+        check(ceremony_8,
+              "C9 (Y-33) RED: a valid phase (hours=2) raises the ceremony at index 8 "
+              "(RED expected: fx==Gate never raises a ceremony today)");
+    }
+
+    // C10 Y-33 -- the sentinel "no phase chosen" (hours=-1, from E2/E3's
+    // dispatch) must NOT raise the ceremony -- a cancelled or invalid getkey
+    // is a silent multi-way abort in the reference, not a successful cast.
+    {
+        TownWorld w;
+        w.game.spell_quantities[46] = 1;
+        CommandContext c{w.game, w.turn, w.travel, w.commands, w.world};
+        c.quest_world = &w.quest;
+        const auto active = get_active_map(w.world, w.game.position.map);
+        std::vector<Seen> events;
+        EventSink sink{&events, capture};
+        Command cast; cast.kind = CommandKind::Cast; cast.item = 46; cast.caster = 0; cast.hours = -1;
+        const auto result = world_magic(c, cast, active.value, sink, rng_source(w.game.rng));
+        check(result.gate && !emitted(events, GameEventKind::MagicCeremony),
+              "C10 (Y-33): no phase chosen (hours=-1) still sets gate (so commands.cpp prints "
+              "Failed!) but raises no ceremony");
+    }
+
+    // C10b Y-33 -- a caller that supplies a valid-looking phase directly
+    // (bypassing the UI's own ship gate at cast_target_prompt) must NOT get
+    // a ceremony while aboard ship either: CAST.OVL 0x0cf6 gates before the
+    // phase is ever read, so "aboard ship" always wins over "a phase value
+    // happens to be present," regardless of how that value got there. This
+    // is exactly the shape check-gameplay.ts's line-130 fixture dispatches
+    // (transport tile and hours chosen independently), so world_magic.cpp
+    // must not trust the UI alone to keep the two consistent.
+    {
+        TownWorld w;
+        w.game.spell_quantities[46] = 1;
+        w.turn.transport_tile = 0x20; // aboard ship
+        CommandContext c{w.game, w.turn, w.travel, w.commands, w.world};
+        c.quest_world = &w.quest;
+        const auto active = get_active_map(w.world, w.game.position.map);
+        std::vector<Seen> events;
+        EventSink sink{&events, capture};
+        Command cast; cast.kind = CommandKind::Cast; cast.item = 46; cast.caster = 0; cast.hours = 2;
+        const auto result = world_magic(c, cast, active.value, sink, rng_source(w.game.rng));
+        check(result.gate && !emitted(events, GameEventKind::MagicCeremony),
+              "C10b (Y-33) RED: aboard ship, even a valid-looking phase (hours=2) raises no "
+              "ceremony (RED expected: the fix only checked cmd.hours before this test was added)");
+    }
+
+    // C10c Y-33 -- hours=8 is out of the valid phase range: the gate reads
+    // exactly '1'-'8' (CAST.OVL 0x0d1d/0x0d23), which maps to phase 0-7, so a
+    // phase of 8 corresponds to a key that would have failed that gate and
+    // must raise no ceremony either -- caught by check-gameplay.ts's own
+    // line-130 fixture (mismatch 4514) when this upper bound was missing.
+    {
+        TownWorld w;
+        w.game.spell_quantities[46] = 1;
+        CommandContext c{w.game, w.turn, w.travel, w.commands, w.world};
+        c.quest_world = &w.quest;
+        const auto active = get_active_map(w.world, w.game.position.map);
+        std::vector<Seen> events;
+        EventSink sink{&events, capture};
+        Command cast; cast.kind = CommandKind::Cast; cast.item = 46; cast.caster = 0; cast.hours = 8;
+        const auto result = world_magic(c, cast, active.value, sink, rng_source(w.game.rng));
+        check(result.gate && !emitted(events, GameEventKind::MagicCeremony),
+              "C10c (Y-33): hours=8 (out of the valid 0-7 phase range) raises no ceremony");
+    }
+
+    // C11 Y-33 dungeon control -- Vas Rel Por is peace-time only (time_bits
+    // excludes both combat and dungeon, magic_tables.inc "peace"/"peace"), so
+    // cast_spell()'s own generic time-window gate already rejects it
+    // underground with "Not here!" before the effect switch is ever reached.
+    // This is a GREEN control, not a fix: it proves dungeon_orchestration.cpp
+    // needs no Gate-specific handling, confirming the audit's own suspicion.
+    {
+        TownWorld w;
+        w.game.spell_quantities[46] = 1;
+        w.game.position.map.location = 200; // dungeon range (>=128)
+        CommandContext c{w.game, w.turn, w.travel, w.commands, w.world};
+        c.quest_world = &w.quest;
+        const auto active = get_active_map(w.world, w.game.position.map);
+        std::vector<Seen> events;
+        EventSink sink{&events, capture};
+        Command cast; cast.kind = CommandKind::Cast; cast.item = 46; cast.caster = 0; cast.hours = 2;
+        world_magic(c, cast, active.value, sink, rng_source(w.game.rng));
+        check(said(events, "Not here!") && w.game.spell_quantities[46] == 1,
+              "C11 (Y-33) dungeon control: the generic time-window gate rejects Vas Rel Por "
+              "underground before any Gate-specific code runs, and does not consume the charge");
+    }
+}
+
+// ---------------------------------------------------------------------------
+// G. Y-33 full-stack integration -- through execute_command(), proving the
+//    phase E1 produces actually reaches commands.cpp's pre-existing
+//    moonstone_teleport gate (unmodified by this batch) and the reference's
+//    silent-success behaviour end to end.
+// ---------------------------------------------------------------------------
+static void gate_tests() {
+    // G1 -- a valid phase teleports the party to that moonstone's location
+    // and prints NOTHING on success (the dispatcher tail returns -1 silently;
+    // re/notes/vas-rel-por-341-derivacion.md SS3/SS7 video careo).
+    {
+        std::vector<uint8_t> terrain(65536, 5);
+        WorldData world{}; world.overworld = terrain.data(); world.overworld_size = terrain.size();
+        GameState game{}; TurnState turn{}; TravelState travel{}; CommandState commands{};
+        game.position = {{20, 20}, {0, 0}};
+        game.party.character_count = game.party.party_size = 1;
+        auto &m = game.party.characters[0];
+        m.party_status = 0; m.status = 'G'; m.current_hp = m.max_hp = 100; m.current_mp = 50; m.level = 8;
+        game.spell_quantities[46] = 1;
+        Moonstone stones[8]{}; stones[2] = {40, 41, 0, 0, true}; // phase 2 -> buried at (40,41), overworld
+        QuestWorldServices quest{}; quest.moonstones = stones; quest.moonstone_count = 8;
+        CommandContext c{game, turn, travel, commands, world};
+        c.quest_world = &quest;
+        std::vector<Seen> events; c.events = {&events, capture};
+        Command cast; cast.kind = CommandKind::Cast; cast.item = 46; cast.caster = 0; cast.hours = 2;
+        const auto r = execute_command(c, cast);
+        check(r.status == CommandStatus::Success, "G1 (Y-33): a valid phase reports Success");
+        check(game.position.xy.x == 40 && game.position.xy.y == 41,
+              "G1 (Y-33): the party actually lands on phase 2's buried moonstone");
+        check(!said(events, "Success!") && !said(events, "Failed!"),
+              "G1 (Y-33): a successful gate travel is silent, matching the dispatcher's -1 "
+              "return (no Success!/Failed! line)");
+    }
+
+    // G2 control -- being aboard ship blocks the teleport even if a phase
+    // value somehow reaches commands.cpp, exercising the same ship mask the
+    // reference's phase-gate routine itself checks. This is the pre-existing
+    // safety net at commands.cpp's Cast case, unmodified by this batch.
+    {
+        std::vector<uint8_t> terrain(65536, 5);
+        WorldData world{}; world.overworld = terrain.data(); world.overworld_size = terrain.size();
+        GameState game{}; TurnState turn{}; TravelState travel{}; CommandState commands{};
+        game.position = {{20, 20}, {0, 0}};
+        game.party.character_count = game.party.party_size = 1;
+        auto &m = game.party.characters[0];
+        m.party_status = 0; m.status = 'G'; m.current_hp = m.max_hp = 100; m.current_mp = 50; m.level = 8;
+        game.spell_quantities[46] = 1;
+        Moonstone stones[8]{}; stones[2] = {40, 41, 0, 0, true};
+        QuestWorldServices quest{}; quest.moonstones = stones; quest.moonstone_count = 8;
+        turn.transport_tile = 0x20; // aboard ship
+        CommandContext c{game, turn, travel, commands, world};
+        c.quest_world = &quest;
+        std::vector<Seen> events; c.events = {&events, capture};
+        Command cast; cast.kind = CommandKind::Cast; cast.item = 46; cast.caster = 0; cast.hours = 2;
+        execute_command(c, cast);
+        check(said(events, "Failed!") && game.position.xy.x == 20 && game.position.xy.y == 20,
+              "G2 (Y-33) control: aboard ship the teleport still fails and the party does not "
+              "move, even with a valid-looking phase");
+    }
 }
 
 int main() {
     policy_tests();
     session_tests();
     effect_tests();
+    gate_tests();
     std::cerr << "batch5: " << (checks - failures) << "/" << checks << " checks passed\n";
     return failures ? 1 : 0;
 }

@@ -136,6 +136,11 @@ enum class UiRequestId : uint8_t {
     // Batch 9B: the reference's "Will you drink?" beat (DS 0x7700) before a
     // dungeon fountain gulp.  Answering yes dispatches DungeonAction::Drink.
     DungeonDrink,
+    // Y-33: Vas Rel Por's bare "To phase:" getkey.  One keypress resolves
+    // immediately -- '1'-'8' dispatches the gate with that phase; any other
+    // key (including Cancel) dispatches it with no phase, matching the
+    // reference's non-retrying, silently-failing getkey (CAST.OVL 0x0d06).
+    GatePhase,
     Custom
 };
 

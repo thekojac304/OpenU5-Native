@@ -195,11 +195,16 @@ int main()
             action.kind!=openu5::UiActionKind::Cancel ||
             shortcut!=tdeck::DeviceShortcut::None) return __LINE__;
         time+=200000;
+        // Y-29: Symbol+Mic/0 must bypass the short/long special case entirely
+        // and produce the literal digit, since it is the only physical route
+        // to a literal '0' (and thus to SetActivePlayer's clear-active-player
+        // branch) on T-Deck hardware. A plain Mic press (above) is unaffected.
         auto symbol_mic=mic(KeyTransition::Pressed,time,0);symbol_mic.modifiers.symbol=true;
-        if(adapter.translate(symbol_mic,mode,action,shortcut))return __LINE__;
+        if(!adapter.translate(symbol_mic,mode,action,shortcut)||
+           action.kind!=openu5::UiActionKind::Character||action.character!=u'0'||
+           shortcut!=tdeck::DeviceShortcut::None) return __LINE__;
         symbol_mic.transition=KeyTransition::Released;symbol_mic.timestamp_us+=100000;
-        if (!adapter.translate(symbol_mic,mode,action,shortcut) ||
-            action.kind!=openu5::UiActionKind::Cancel) return __LINE__;
+        if (adapter.translate(symbol_mic,mode,action,shortcut)) return __LINE__;
         time+=200000;
     }
 

@@ -95,7 +95,7 @@ const char *spell_target_label(SpellId id) {
 // resolves An Sanct against the party's dungeon FACING (applyAnSanctOpenChest)
 // and has no seal or blink branch, and the dungeon command path never reaches
 // world_magic.
-CastTargetPrompt cast_target_prompt(SpellId id, bool in_combat, bool in_dungeon) {
+CastTargetPrompt cast_target_prompt(SpellId id, bool in_combat, bool in_dungeon, bool aboard_ship) {
     const auto *d = spell_definition(id);
     if (!d)
         return CastTargetPrompt::None;
@@ -114,6 +114,12 @@ CastTargetPrompt cast_target_prompt(SpellId id, bool in_combat, bool in_dungeon)
     case MagicEffect::Blink:
     case MagicEffect::Unlock:
         return CastTargetPrompt::WorldDirection;
+    case MagicEffect::Gate:
+        // Y-33. CAST.OVL 0x0cf6 checks aboard-ship BEFORE ever printing "To
+        // phase:" (the print is 0x0cff) -- the prompt itself never appears
+        // at sea, so the ship gate belongs here rather than inside the
+        // getkey's own cancel/invalid-key handling.
+        return aboard_ship ? CastTargetPrompt::None : CastTargetPrompt::WorldPhase;
     default:
         return CastTargetPrompt::None;
     }
