@@ -17,7 +17,9 @@ Evidence classes used below:
 
 ### Overall integration health: **NOT PLAYABLE END-TO-END**
 
-The **core is in far better shape than the device integration**. At the original audit baseline, 56 of 57 host tests pass, including deep byte-level parity suites for combat, commands, magic, items, shops, dialogue, dungeons, travel and persistence. **Post-Batch-1, the host suite was 58 total, 57 pass, with only the pre-existing `gameplay_parity` mismatch 59 (R-02/R-03/R-04) failing.** **Post-Batch-2, R-02/R-03/R-04 are GREEN and mismatch 59 is fixed.** The host suite is still 58 total, 57 pass, but the sole failure is now a *different*, newly-exposed mismatch — **`gameplay_parity` mismatch 2034 (R-21)**, hidden behind mismatch 59 until then. **Batch 13 adjudicated and fixed it**: "2034" is a sequence index, not a byte offset, and it was a confirmed native defect — the (U)se scroll/potion readers echoed a fabricated `Used <name>.` line where `CAST.OVL 0x11f0`/`0x136e` print the bare category word, plus an invented `No effect!` fallback. `gameplay_parity` now passes. Mismatch 2034 was reproduced byte-for-byte on the untouched pre-Batch-2 baseline with the Batch 2 changes removed, confirming it is pre-existing and unrelated to R-02/R-03/R-04; it is tracked separately (§3 R-21) and was **not** fixed in Batch 2. The remaining failures are almost entirely in the **glue layer**: `native/targets/tdeck/main/alpha_runtime.cpp` (1375 lines), `native/core/src/ui_session.cpp`, `native/core/src/presentation.cpp`, and the **asset pack**.
+The **core is in far better shape than the device integration**. At the original audit baseline, 56 of 57 host tests pass, including deep byte-level parity suites for combat, commands, magic, items, shops, dialogue, dungeons, travel and persistence. **Post-Batch-1, the host suite was 58 total, 57 pass, with only the pre-existing `gameplay_parity` mismatch 59 (R-02/R-03/R-04) failing.** **Post-Batch-2, R-02/R-03/R-04 are GREEN and mismatch 59 is fixed.** The host suite is still 58 total, 57 pass, but the sole failure is now a *different*, newly-exposed mismatch — **`gameplay_parity` mismatch 2034 (R-21)**, hidden behind mismatch 59 until then. **Batch 13 adjudicated and fixed it**: "2034" is a sequence index, not a byte offset, and it was a confirmed native defect — the (U)se scroll/potion readers echoed a fabricated `Used <name>.` line where `CAST.OVL 0x11f0`/`0x136e` print the bare category word, plus an invented `No effect!` fallback. `gameplay_parity` now passes. Mismatch 2034 was reproduced byte-for-byte on the untouched pre-Batch-2 baseline with the Batch 2 changes removed, confirming it is pre-existing and unrelated to R-02/R-03/R-04; it is tracked separately (§3 R-21) and was **not** fixed in Batch 2. **Batch 17 retired the other half of the "known baseline failures" convention.** From Batch 8 to Batch 16 every write-up below compared against two expected failures and set them aside. Batch 13 fixed the first (`gameplay_parity` mismatch 2034). Batch 17 adjudicated the second — `quest_parity`'s `STATUS_ACCESS_VIOLATION` / exit `3221225477` — and it was **not** the "MinGW/w64devkit environment finding" eight batches recorded it as: it was a `setjmp`/`longjmp` escape in the host harness invoking undefined behaviour against the Win64 SEH ABI, reproducing 100 % of the time and hiding **zero** parity divergence (the full 5377-case comparison was run to completion before the fix and matched the reference on every case). **The host suite is now 85 total, 85 pass, 0 fail — the first fully green run in this audit's recorded history.** Any failure a future batch sees is a real one, and must be treated as such. See §4 Y-34 and §14 Batch 17.
+
+The remaining failures are almost entirely in the **glue layer**: `native/targets/tdeck/main/alpha_runtime.cpp` (1375 lines), `native/core/src/ui_session.cpp`, `native/core/src/presentation.cpp`, and the **asset pack**.
 
 `AlphaRuntime` itself still has no host coverage — nothing in the repository instantiates it directly, and the on-device "smoke tests" are data-presence probes and isolated `UiSession` probes with a spy dispatcher that never exercise the adapter that consumes the intents. **Batch 1 added `ui_mode_regression`, an ESP-free seam (`ui_mode_policy.h`) that host-tests mode arbitration and `UiSession` mode ownership (28/28 GREEN)** — narrowing, but not closing, that blind spot. Most defects below still live in the parts of the blind spot that seam does not cover.
 
@@ -1610,6 +1612,7 @@ A design review of the freshly-landed R-30 work found two of the five Certificat
 | Y-31 | Cancelling the Rel Hur (and skull key) `(U)se` getdir refunds the item | **GREEN — RESOLVED (Batch 16).** The reference consumes at item-selection time, *before* the getdir: `readScroll()` runs and prints its messages, then `pendingScrollWind` is armed (`main.ts` `doCast`-adjacent `(U)se` branch), and cancelling leaves the scroll spent with the wind unchanged; the skull key is explicitly the same (`main.ts`: "la llave YA se decrementó al seleccionar el item (0x18c4 va ANTES del getdir)"). Native dispatched nothing on cancel — `UiSession`'s TargetSelection cancel arm sent a bare `ModalResponse{accepted=false}` for a `UseItem` pending command — so ESC at the Rel Hur prompt **refunded the scroll**. **Fix:** the seam turned out to live in `UiSession::handle_modal`'s TargetSelection cancel arm (host-testable, not `AlphaRuntime` as originally guessed — Batch 11 had already made `AlphaRuntime` host-testable too, but the actual pending state lives in `UiSession`), alongside the existing `Cast` cancel arm: a new `use_item` case dispatches the pending `UseItem` with `has_direction=false`, which `world_magic.cpp` already consumes unconditionally on `cmd.item` range for both scroll ids 0–7 and the skull key (17) — no `world_magic.cpp` change was needed, only the dispatch decision. | Discharged |
 | Y-32 | Scripted-event temporal / pacing parity | **OPEN — investigated and reclassified (Batch 16); still insufficiently evidenced for a numeric fix.** A manual comparison against original Ultima V footage found that native's **Blackthorn capture scene appears substantially faster and more collapsed than the original**. Batch 16 confirmed by direct archaeology that **no footage-derived timing evidence exists anywhere for this scene**: `re/notes/blackthorn-escena-324.md` §4 explicitly disclaims a witness for the capture scene's cadence ("sin testigo propio para esta escena"), and the TypeScript port's `PAUSE_UNIT_MS` (`game/src/skin/world-fx.ts:58`) is an admitted reuse of TrollSneak's calibration, not an independent Blackthorn measurement. Every frame count in `blackthorn_scene.cpp`'s script builders is the disassembled bytecode's own literal pause argument (cited instruction-by-instruction against `re/notes/blackthorn-escena-324.md` §2), so the numbers are not invented, but they were never checked against real footage for *this* scene the way Y-04's Quake channel was. Batch 16 also found and ruled out one candidate root cause: `BlackthornScenePacer` (unlike `NarrativeScenePacer`) enforces no reading-floor on `Message`/`Forward`/`Prompt` steps — but tracing the actual interleaving in `blackthorn.cpp` (the `event(...);build_*_script(...);emit_scene(...)` sequence) shows every message is already followed by either a genuine blocking `key_wait` or a frame-bearing beat, so this asymmetry does not currently manifest as a dropped or flashed message; it is recorded as an observation, not a diagnosis. **Batch 4.5D (R-32)**, which built the scene's presentation from nothing, explicitly did not attempt any independent pacing calibration either — it reused the same generic `kPresentationUnitMs`/`PAUSE_UNIT_MS`=55ms convention verbatim. | A frame-by-frame video comparison against original DOS footage, scene by scene, measuring the per-beat dwell each one actually holds rather than assuming the 55ms/tick DOS-timer convention transfers unmodified. `BlackthornScenePacer::resume_at_ms()`/`released_steps()` already expose the shape `batch7b_test.cpp`'s D8/E23-style assertions use for Refuge/TrollSneak (`blackthorn_scene_test.cpp`'s T4 already pins *relative* ordering); once real dwell numbers exist, the same absolute-ms assertion style can be added. Do not invent floor values for the Message/Forward/Prompt asymmetry without footage evidence, even though the architecture would support it cheaply. |
 | Y-33 | Vas Rel Por (spell 46) never raises its phase-gate ceremony | **GREEN — RESOLVED (Batch 16).** `CAST.OVL 0x0cf0` prints "To phase:", reads the key, and only after the exact `'1'..'8'` gate (`0x0d1d`/`0x0d23`) pushes the literal index 8 (`0x0d2d`) into `CAST2:0x0000`; the three early exits (aboard ship at `0x0cf6`, any non-`'1'..'8'` key) skip both the ceremony and the teleport. The native command modelled none of this — no prompt, no gate, and `Command.hours` (reserved for the phase) defaulted to 0, a *valid* phase, so casting the spell silently teleported to moonstone 0 with no keypress at all. **Fix, four layers deep, mirroring `game/src/main.ts`'s `castGateTravel`:** (1) `cast_target_prompt()` gained a `CastTargetPrompt::WorldPhase` case and an `aboard_ship` parameter (ship gates the prompt itself, matching 0x0cf6 firing before the print at 0x0cff); (2) `UiSession`'s `TargetSelection` mode gained a `Character` arm for the new `UiRequestId::GatePhase` request — exactly `'1'-'8'` sets the phase (0-7), anything else (including Cancel, via the existing `cast` arm) leaves the pre-armed `-1` sentinel; (3) `world_magic.cpp`'s `Gate` branch now fires the ceremony (literal index 8) only when a valid phase was chosen **and** the party is not aboard ship — checked independently of the UI, since a caller that supplies `hours` directly (the parity fixture) must get the same answer; (4) `commands.cpp`'s pre-existing (already-correct, unmodified) `phase<0`/ship/bounds gate and silent-success `moonstone_teleport` call now receive a real phase instead of an always-valid stale default. `dungeon_orchestration.cpp` needed **no** change: Vas Rel Por is peace-time-only (`time_bits` excludes both combat and dungeon), so `cast_spell()`'s own generic time-window gate already rejects it underground with "Not here!" before any Gate-specific code runs — proven as a control, not assumed. `check-gameplay.ts` (native's own copy of the parity fixture) was missing the ceremony cue in its `gateTravel` branch entirely — a real gap in the fixture, not the reference — and was corrected alongside the fix; its line-130 scenario (`hours` ∈ {-1,0,3,7,8} × six transport tiles) caught a native off-by-one (no upper bound on the valid phase range) that the new host tests had missed. `gameplay_parity` passes. |
+| Y-34 | `quest_parity` crashes the native driver with `STATUS_ACCESS_VIOLATION` (exit `3221225477`) | **GREEN — RESOLVED (Batch 17). Host-harness undefined behaviour, not a production defect and not environment flakiness.** Carried as "baseline noise" from Batch 8 through Batch 16. The driver dies on input line 3452 (`{"op":"theft","here":0,"seed":20}`, `keys=2`) — one of exactly two of the 1152 `theft` cases in which Faulinei's rejection-sampling re-roll (TALK.OVL `0x11c7`, `re/notes/shadowlord-urbano-acta.md` §2.3) does not terminate against the port's deterministic `OriginalRng`. Both parity sides bound the *observation* with a 65536-draw watchdog; the native side escaped it with `setjmp`/`longjmp` written inline in `quest_driver.cpp`'s `main()`. On `x86_64-w64-mingw32` with `__SEH__`, `setjmp(b)` expands to `_setjmp(b, __builtin_frame_address(0))` because GCC 16 dropped `__builtin_sponentry`, and GCC's frame base is not the Win64 SEH establisher frame — measured at `-O2`: TargetFrame `0x5AD89FFD30` against establisher frame `0x5AD89F62A0`, off by `main`'s ~39 KB frame. `ntdll!RtlUnwindEx` therefore never matches, walks past `main` and off the top of the thread stack into `MEM_RESERVE` pages, and the resulting AV recurses inside exception dispatch until the process dies. At `-O0` the two values coincide exactly and the identical source survives, which is why it read as flaky for eight batches. **Adjudication: zero parity divergence was hiding behind it** — the full 5377-case comparison was run to completion on an `-O0` driver *before* any change and matched the TypeScript reference on every case. **Fix is harness-only**: the escape moved to a shared seam (`native/core/tests/quest_theft_watchdog.h`) and became a C++ exception, the same escape `check-quests.ts` uses. No production translation unit touched; firmware byte-identical. | New `batch17_theft_watchdog` (33 checks) pins the budget, the untouched-state contract, the gate, the linear cascade, the exact non-terminating set, and — group D — that the escape unwinds rather than jumps, so a return to `longjmp` turns red cleanly instead of crashing. Host suite is now **85/85, zero failures**. See §14 Batch 17. |
 
 **Y-29 investigation detail — surveyed candidates for a device-reachable "clear active player" route:**
 
@@ -2799,6 +2802,209 @@ Traced `CAST.OVL 0x0cf0`'s full instruction sequence (`re/notes/vas-rel-por-341-
 
 ---
 
+### Batch 17 — `quest_parity`'s `STATUS_ACCESS_VIOLATION` adjudicated · risk: low, one-seam scope · **GREEN — HOST-HARNESS DEFECT (UNDEFINED BEHAVIOUR), FIXED; NO PRODUCTION CODE AND NO PARITY SEMANTICS CHANGED**
+
+From Batch 8 to Batch 16, every batch write-up in this section carried the same
+line: `quest_parity` fails with `STATUS_ACCESS_VIOLATION` / exit `3221225477`,
+"a MinGW/w64devkit environment finding", compared against and set aside as
+baseline noise. It was never noise, it was never environmental in the sense that
+word implied, and it was never a production defect. It was one line of the host
+harness invoking undefined behaviour, and it reproduced 100 % of the time.
+
+**The finding is registered as Y-34.**
+
+#### What the crash actually was
+
+`quest_parity` is `node --import tsx tools/check-quests.ts <quest_driver.exe>`:
+the TypeScript reference generates 5377 cases, the native `quest_driver.exe`
+replays them, and the two projections are compared. The driver died on **input
+line 3452** — `{"op":"theft","here":0,"seed":20}` with `keys = 2` — after
+writing 3450 output lines. Isolated, that single line crashes on its own, which
+is what made the bisect immediate once the run was looked at instead of
+compared.
+
+That case is one of exactly **two** of the 1152 `theft` cases in which
+Faulinei's theft loop **does not terminate**. TALK.OVL `0x11c7` is rejection
+sampling: `rand(0,2)` picks keys/gems/torches and the three `je` at
+`0x11e7`/`0x11fd`/`0x1209` jump **backwards** to `0x11c7` when the drawn
+category is empty (`re/notes/shadowlord-urbano-acta.md` §2.3). The original
+bounds nothing, and neither does the port — correctly. Against the port's own
+deterministic `OriginalRng`, whose stream replaces the original's
+`srand(rng_time_hash())` at `0x11AB` (a **declared parity ceiling**,
+`re/notes/rng.md` "Techos de paridad"), seed 20 orbits a cycle that never yields
+the stocked index. Both parity sides therefore *observe* the non-termination
+under a draw budget instead of hanging: `check-quests.ts` throws after 65536
+draws, and `quest_driver.cpp` used `setjmp`/`longjmp`.
+
+The `longjmp` is the whole bug. On `x86_64-w64-mingw32` with `__SEH__`,
+`<setjmp.h>` expands `setjmp(b)` to `_setjmp(b, __builtin_frame_address(0))`
+whenever `__builtin_sponentry` is unavailable — and GCC 16, this toolchain's
+compiler, no longer provides that builtin (verified by preprocessing: `c++ -E`
+yields exactly that expansion, and `__has_builtin(__builtin_sponentry)` is
+false). GCC's frame base is **not** the Win64 SEH establisher frame.
+Instrumenting the driver with `RtlLookupFunctionEntry`/`RtlVirtualUnwind` at the
+`longjmp` site measured both numbers directly:
+
+| build | `jmp_buf.Frame` (the `longjmp` TargetFrame) | `main`'s SEH establisher frame | result |
+|---|---|---|---|
+| `-O2` | `0x5AD89FFD30` | `0x5AD89F62A0` | **no match** — off by `0x9A90`, `main`'s ~39 KB frame |
+| `-O0` | `0xF8807FFE40` | `0xF8807FFE40` | **exact match**, unwind stops, watchdog works |
+
+`msvcrt!longjmp` hands the mismatched value to `ntdll!RtlUnwindEx`, nothing ever
+matches it, and the unwinder walks past `main`, past the CRT startup frames and
+off the top of the thread stack. A vectored exception handler caught the first
+fault precisely:
+
+```
+[B17] FIRST FAULT code=0xC0000005 addr=00007fffe3d95ae1 access=read target=0x8965009478
+[B17] stack limit=0000008964ff0000 base=0000008965000000 rsp=0000008964ff50b0
+[B17] faulting module: ntdll.dll+0x15AE1
+[B17] target query=48 state=0x2000 protect=0x0          <- MEM_RESERVE, PAGE_NOACCESS
+[B17]   frame[7]=ntdll.dll+0xCC67D                      <- RtlUnwindEx
+[B17]   frame[8]=msvcrt.dll+0x7ADBB                     <- longjmp
+[B17]   frame[9]=quest_driver.exe+0x1680                <- quest_driver.cpp:225
+[B17]  frame[10]=quest_driver.exe+0xB9AD                <- openu5::Rand::operator() (turn.h:24)
+[B17]  frame[11]=quest_driver.exe+0x1540E0              <- main (quest_driver.cpp:228)
+```
+
+The read target `0x8965009478` is `0x9478` **above** `StackBase`, in reserved
+uncommitted pages; the access violation is then raised *inside* exception
+dispatch and recurses until the process dies. That recursion is why the process
+reported a bare `0xC0000005` with no usable diagnostic, and why eight batches
+read it as environment flakiness.
+
+**And it is why `-O0` "worked":** at `-O0` GCC keeps a frame pointer, the two
+values coincide exactly, and the identical source survives. The defect is
+optimisation-sensitive, not environment-sensitive — the "it doesn't crash under
+`build-zig`" observation in Batch 8's write-up was the same coincidence wearing
+a different hat, and the crash also vanishes under `gdb`, which was the final
+reason nobody got a stack trace.
+
+#### Classification
+
+**Host-test defect, and specifically undefined behaviour.** [csetjmp.syn]/2
+already forbids `longjmp` wherever replacing it with `throw`/`catch` would run a
+non-trivial destructor; the harness carried a comment asserting the C++-level
+side of that condition was satisfied ("theft has no C++ objects requiring
+unwinding") and it was — but the Win64 SEH ABI breaks for a *different* reason
+the comment never considered. Not a production defect, not corrupted fixture
+data, and not a platform issue in the sense of "this host is broken": the same
+harness would be equally wrong on any toolchain whose `setjmp` records GCC's
+frame base.
+
+#### The evidence that there is no production defect behind it
+
+Before anything was changed, `quest_driver` was rebuilt at `-O0` — an
+independent build where the `longjmp` happens to work — and the **full
+`quest_parity` comparison was run to completion**: **5377 of 5377 cases match
+the TypeScript reference**, `nonterminatingObservations: 2`, every coverage
+counter as expected. So the eight-batch crash was hiding **zero** parity
+divergence. `apply_faulinei_theft` is byte-faithful, the unbounded re-roll is
+correct and stays unbounded, and **no parity expectation was weakened, no
+assertion relaxed, no test skipped and no platform excluded**.
+
+#### The fix
+
+The `setjmp`/`longjmp` escape was lifted out of `main` into a shared test-support
+seam, `native/core/tests/quest_theft_watchdog.h`, and re-expressed as a C++
+exception — the same escape the TypeScript side uses. `apply_faulinei_theft`
+holds only trivially destructible locals, so the unwind is well defined, and the
+`try`/`catch` sits one frame below it. `quest_driver.cpp` now calls that seam
+instead of open-coding a watchdog in `main`.
+
+The seam also records whether the escape **unwound**: the tripping path parks a
+scope guard in the callback frame, which a real unwind destroys and a jump would
+skip. That turns "do not reach for `longjmp` here again" from a comment into an
+assertion (group D below), so the next person who tries it gets a clean red test
+instead of a 0xC0000005 eight batches later.
+
+**Nothing in `native/core/src` or `native/core/include` was touched.** The
+firmware is byte-identical.
+
+#### Regression coverage — `batch17_theft_watchdog` (new, 33 checks)
+
+Drives the same `openu5_test::observe_faulinei_theft()` seam `quest_driver.cpp`
+itself calls, so the contract is pinned outside the 5377-case replay:
+
+- **Group A** — the two reference non-terminating cases (input lines 3452 and
+  3484) trip the watchdog, the tripping draw is the 65537th, the loot is empty,
+  the stocked categories and gold are untouched, and the RNG orbit from seed 20
+  closes back on 20 exactly as the reference records. Canaries prove control
+  returned to the caller's frame and a second observation ran after the first.
+- **Group B** — terminating observations are indistinguishable from an unwatched
+  call: the keys branch still applies its floor-0 decrement, the `0x1187` gate
+  consumes zero draws for `here != 0`, the `0x1210`/`0x1232`/`0x124a` linear
+  cascade consumes zero draws and takes the highest non-empty slot, and the gold
+  branch is exactly one `rand(1,15)` clamped at 0.
+- **Group C** — re-walks the fixture's own `4 × 9 × 32` theft axis (1152 cases)
+  and pins the non-terminating set **exactly** to the reference's two, so "the
+  loop now always terminates" and "the loop now never terminates" both turn this
+  red.
+- **Group D** — the escape must unwind, not jump.
+
+#### RED → GREEN
+
+| stage | result |
+|---|---|
+| **Baseline** (Batch 16 tree, clean configure+build) | 84 total, 83 pass, **1 fail** — `quest_parity`, `Native driver failed: 3221225477` |
+| **RED** — new test against the unmodified `setjmp`/`longjmp` escape | **exit 1, 33 checks, 2 failures**: group D1 ×2, *"the tripped watchdog unwinds the callback frame instead of jumping out of it"* — a clean assertion failure, not a crash |
+| **GREEN** — same test against the exception escape | **exit 0, 33 checks, 0 failures** |
+| `quest_driver.exe` on the two watchdog cases, directly | exit 0, both `{"nonterminating":true,"seed":20}`, inventory untouched |
+| `quest_parity` alone | **PASS** (4.86 s) — first time in this project's recorded history |
+
+#### Mutation check (false-green audit)
+
+| mutation | expected to break | measured |
+|---|---|---|
+| **M1** — `quest.cpp`: replace the `0x11c7` re-roll with "fall through to the next stocked category" (the plausible "cleanup") | the non-terminating set and the watchdog | **9 of 33 failed** — A1 ×3, A2, A4 ×2, C1, D1 ×2 |
+| **M2** — `quest.cpp`: widen the `0x1187` gate from `here != 0` to `here < 0` | the gate and the case census | **3 of 33 failed** — B2 (`here=1`, `here=2`), C1 |
+| **M3** — restore the `setjmp`/`longjmp` escape | the unwind contract | **2 of 33 failed** — D1 ×2 (this is the RED row above) |
+
+All three mutations were reverted; `quest.cpp` is byte-identical to `HEAD` and
+the suite re-verified green afterwards.
+
+**Host suite:** **85 total, 85 pass, 0 fail.** One registered test up from Batch
+16's 84 (the new `batch17_theft_watchdog`), and `quest_parity` moved
+**fail → pass**. No other result changed. **This is the first fully green host
+suite in the audit's recorded history** — the "two known baseline failures"
+convention that ran from Batch 8 through Batch 16 (`gameplay_parity` mismatch
+2034, fixed in Batch 13; `quest_parity` `3221225477`, fixed here) is now retired.
+Any failure in a future batch is a real one.
+
+**Firmware:** `idf.py -B build-batch17 build` **PASS**. `openu5_tdeck.bin` =
+`0xd1b10` = **858,896 bytes**, **±0 bytes** against Batch 16 — byte-identical, as
+expected for a change confined to host test sources. `0x2e4f0` (189,680 bytes,
+18 %) free of the `0x100000` app partition. The resource pack is unchanged; the
+SD card needs no repack.
+
+**Hardware:** **no device step is owed.** The change is confined to
+`native/core/tests/` and `native/core/CMakeLists.txt`; no production translation
+unit is touched, and the firmware binary is byte-identical to Batch 16's. There
+is nothing on-device that could observe this batch.
+
+**Files changed:** `native/core/tests/quest_theft_watchdog.h` (new seam),
+`native/core/tests/batch17_theft_watchdog_test.cpp` (new test),
+`native/core/tests/quest_driver.cpp` (calls the seam; `<csetjmp>` dropped),
+`native/core/CMakeLists.txt` (registers the test).
+
+**Audit:** this document — §14 (this section), §16 (Phase 6J). The Batch 8 and
+Batch 10 write-ups' "environment finding" framing is superseded by this section
+rather than rewritten, so the historical record of how the failure was read at
+the time is preserved.
+
+#### What this batch did NOT do
+
+- It did not touch production code. Not one line under `native/core/src` or
+  `native/core/include`.
+- It did not change any parity expectation, weaken an assertion, skip a test,
+  suppress a process error, catch an access violation or exclude a platform.
+- It did not "fix" the unbounded theft re-roll. That loop is the original's
+  (TALK.OVL `0x11c7`) and stays unbounded on both parity sides; only the
+  observation of it is bounded, and group C now guards that.
+- It did not start the comprehensive project audit or any Batch 18 work.
+
+---
+
 ## 15. PROPOSED REGRESSION TESTS
 
 ### Invariants worth asserting (cheap, high value)
@@ -3065,6 +3271,29 @@ R-23's divergence was only ever reachable on a roster holding **fewer than sixte
 What *is* still owed for this sequence is unchanged and belongs to the other findings, not to R-23: the capture/interrogation presentation and pacing checks (Y-31/Y-32) and the end-to-end walk of the Blackthorn ceremony itself. Those stay in the consolidated hardware batch.
 
 If a tester happens to run the Blackthorn ceremony while validating something else, one observation is worth recording because it is **correct** and looks wrong: after a companion is executed, the previously-set active character (`1`–`6`) is **not** re-pointed. If it named the executed companion, or anyone after them in the marching order, it now names a different party member. That is `BLCKTHRN 0x03ae-0x04d4`'s own behaviour — the inn (L)eave re-indexes, this routine does not — and it must **not** be filed as a defect. See §14 Batch 15.
+
+
+### Phase 6J — `quest_parity`'s host crash (Batch 17 / Y-34) · **NO HARDWARE STEP OWED** · *nothing to flash; the firmware binary is byte-identical*
+
+Batch 17 adds **no** steps to this plan, and unlike Phase 6I this is not even a
+judgement call.
+
+The batch changed four files, all of them host build inputs:
+`native/core/tests/quest_theft_watchdog.h`,
+`native/core/tests/batch17_theft_watchdog_test.cpp`,
+`native/core/tests/quest_driver.cpp` and `native/core/CMakeLists.txt`. No
+production translation unit under `native/core/src` or `native/core/include`
+was touched, `quest_driver` is a host-only replay harness that never ships, and
+`idf.py -B build-batch17 build` produced an `openu5_tdeck.bin` of `0xd1b10`
+bytes — **the same size, from the same sources, as Batch 16's**. There is no
+device-observable surface to check.
+
+The one thing a tester should *not* do is re-run any Faulinei theft scenario
+looking for a behaviour change. There isn't one: `apply_faulinei_theft` is
+unmodified, the unbounded `0x11c7` re-roll is unmodified, and the full 5377-case
+`quest_parity` comparison was run to completion **before** the fix (on an `-O0`
+driver) specifically to prove the eight-batch crash was hiding zero divergence.
+See §14 Batch 17.
 
 
 ## APPENDIX — Audit artifacts

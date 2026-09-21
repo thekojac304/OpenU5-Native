@@ -5,9 +5,9 @@
 #include "openu5/blackthorn.h"
 #include "openu5/dungeon.h"
 #include "quest_combat_fixture.h"
+#include "quest_theft_watchdog.h"
 #include <fstream>
 #include <iostream>
-#include <csetjmp>
 #include <memory>
 using namespace openu5;
 using openu5::save::Json;
@@ -180,16 +180,15 @@ int main(int argc,char **argv) {
                 shrine_restore(g,uint8_t(n("v")),q["virtue"].string,m,n("x"),n("y"),d));
         } else if (op==u"theft") {
             g.rng.seed(n("seed"));
-            struct Observe { OriginalRng &rng; int draws=0; std::jmp_buf stop; };
-            // Test-only watchdog: theft has no C++ objects requiring unwinding.
-            auto observe=std::make_unique<Observe>(Observe{g.rng,0,{}});
-            if (setjmp(observe->stop)==0) {
-                const auto a=apply_faulinei_theft(g,n("here"),{observe.get(),[](void *p,int32_t lo,int32_t hi)->int32_t {
-                    auto &o=*static_cast<Observe *>(p); if (++o.draws>65536) std::longjmp(o.stop,1);
-                    return o.rng.next(lo,hi).value;
-                }});
+            // The theft re-roll (TALK.OVL 0x11c7) is unbounded on both parity sides;
+            // the OBSERVATION is bounded. See tests/quest_theft_watchdog.h -- that
+            // escape must stay an unwind, never a longjmp out of this frame.
+            const auto observed=openu5_test::observe_faulinei_theft(g,n("here"));
+            if (observed.nonterminating) { r["nonterminating"]=Json(true); }
+            else {
+                const auto &a=observed.result;
                 r["kind"]=Json(int(a.kind)); r["index"]=Json(a.index); r["amount"]=Json(a.amount);
-            } else { r["nonterminating"]=Json(true); }
+            }
             r["seed"]=Json(g.rng.get_seed());
         } else if (op==u"playtime") { const auto a=endgame_playtime(g); r["years"]=Json(a.years); r["months"]=Json(a.months); r["days"]=Json(a.days); }
         else if (op==u"native-roundtrip") {

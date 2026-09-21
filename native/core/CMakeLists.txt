@@ -376,6 +376,15 @@ if(BUILD_TESTING)
   add_executable(batch15_sacrifice_tests tests/batch15_sacrifice_test.cpp)
   target_link_libraries(batch15_sacrifice_tests PRIVATE openu5_core)
   add_test(NAME batch15_sacrifice_roster COMMAND batch15_sacrifice_tests)
+
+  # Batch 17 / Y-34 -- the quest_parity host crash. Drives the same
+  # openu5_test::observe_faulinei_theft() seam quest_driver.cpp uses to observe
+  # Faulinei's unbounded rand(0,2) re-roll (TALK.OVL 0x11c7), so the watchdog
+  # escape, the draw budget, the untouched-state contract and the exact
+  # non-terminating set are all pinned outside the 5377-case parity replay.
+  add_executable(batch17_theft_watchdog_tests tests/batch17_theft_watchdog_test.cpp)
+  target_link_libraries(batch17_theft_watchdog_tests PRIVATE openu5_core)
+  add_test(NAME batch17_theft_watchdog COMMAND batch17_theft_watchdog_tests)
   # Batch 4.5B -- Blackthorn capture production-resource integration: proves
   # ShrineServices::record/::context are actually wired to the packed
   # MISCMSG.DAT resource the way AlphaRuntime wires it (real capture and
@@ -498,5 +507,5 @@ if(BUILD_TESTING)
     set(OPENU5_CTEST_CONFIG_ARGS)
   endif()
   add_custom_target(host-test COMMAND "${CMAKE_CTEST_COMMAND}" ${OPENU5_CTEST_CONFIG_ARGS} --output-on-failure
-  DEPENDS frontend_tests ui_session_tests display_names_tests quest_search_tests debug_labels_tests ${UI_DEBUG_TEST_TARGET} debug_map_picker_tests debug_developer_tests gameplay_integration_tests look_sign_tests gameplay_driver movement_flow_parity_tests quest_driver shop_parity_tests shop_flow_tests shop_adapter_tests persistence_driver dialogue_adapter_tests dialogue_parity_tests transport_flow_parity_tests world_flow_adapter_tests dungeon_flow_parity_tests world_flow_parity_tests dungeon_parity_tests advanced_combat_parity_tests magic_parity_tests combat_parity_tests core_parity_tests turn_parity_tests travel_parity_tests command_parity_tests item_parity_tests movement_regression presentation_regression dungeon_view_regression dungeon_art_regression gem_view_regression dungeon_input_regression combat_escape_regression combat_loot_open_regression batch12b_hardware_regression input_regression USES_TERMINAL)
+  DEPENDS batch17_theft_watchdog_tests frontend_tests ui_session_tests display_names_tests quest_search_tests debug_labels_tests ${UI_DEBUG_TEST_TARGET} debug_map_picker_tests debug_developer_tests gameplay_integration_tests look_sign_tests gameplay_driver movement_flow_parity_tests quest_driver shop_parity_tests shop_flow_tests shop_adapter_tests persistence_driver dialogue_adapter_tests dialogue_parity_tests transport_flow_parity_tests world_flow_adapter_tests dungeon_flow_parity_tests world_flow_parity_tests dungeon_parity_tests advanced_combat_parity_tests magic_parity_tests combat_parity_tests core_parity_tests turn_parity_tests travel_parity_tests command_parity_tests item_parity_tests movement_regression presentation_regression dungeon_view_regression dungeon_art_regression gem_view_regression dungeon_input_regression combat_escape_regression combat_loot_open_regression batch12b_hardware_regression input_regression USES_TERMINAL)
 endif()
