@@ -9,6 +9,7 @@
 #include "alpha_save.h"
 #include "asset_pack.h"
 #include "dungeon_art_cache.h"
+#include "openu5/command_char.h"
 #include "openu5/combat.h"
 #include "openu5/dialogue_orchestration.h"
 #include "openu5/dungeon_encounters.h"
@@ -212,6 +213,15 @@ class AlphaRuntime {
     int16_t pending_ready_member_ = -1;
     int16_t pending_use_item_ = -1;
     int16_t status_member_ = -1;
+    // R-25 (Batch 19). The two kernel 0x4988 callers whose picker has to span a
+    // modal: the (S)earch command is held whole (it already carries its
+    // direction from SJOG 0x097e, which the binary asks for BEFORE the picker
+    // at 0x09a0), and the (C)ast is held as "a spell menu is owed once a
+    // caster exists", because CAST.OVL 0x0dd5 resolves the caster BEFORE the
+    // "Spell name:" prompt.
+    openu5::Command pending_search_{};
+    bool pending_search_active_ = false;
+    int16_t pending_caster_ = -1;
     // R-22. The (Z)-stats page modal: the axis slot of ztats-layout.md
     // section 2 plus the current list's scroll offset. Presentation only --
     // while it is open nothing is dispatched, no turn is charged and no RNG
@@ -263,6 +273,20 @@ class AlphaRuntime {
     void consume_event(const openu5::GameEvent &);
     void dispatch(const openu5::UiIntent &);
     void command(openu5::Command);
+    // R-25 (Batch 19). The two halves of kernel 0x4988 that have to be spoken
+    // by whoever owns the roster and the modals. Both delegate every RULE to
+    // the shared openu5/command_char.h seam the host suite drives; what lives
+    // here is only the plumbing the seam must not know about.
+    //   resolve: branches 2/3/4, with the side effect each one owes already
+    //     applied. Resolved means `member` is settled and the caller proceeds
+    //     now; None means "None!" was printed and the command is over; Prompt
+    //     means the "Player: " roster modal is open under `request` and the
+    //     caller must park whatever it still needs to finish.
+    //   accept: the branch-4 post-pick gate at @0x4a2e -- false means
+    //     "Disabled!" was printed and the SAME prompt was reopened (@0x4a57),
+    //     which is a re-ask, not a rejection.
+    openu5::CommandCharOutcome resolve_command_char_or_prompt(openu5::UiRequestId request, int16_t &member);
+    bool accept_command_char_pick(openu5::UiRequestId request, int16_t member);
     void service_combat();
     void schedule_combat();
     bool combat_ai_turn();

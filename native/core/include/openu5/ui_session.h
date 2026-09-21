@@ -141,6 +141,14 @@ enum class UiRequestId : uint8_t {
     // key (including Cancel) dispatches it with no phase, matching the
     // reference's non-retrying, silently-failing getkey (CAST.OVL 0x0d06).
     GatePhase,
+    // R-25 (Batch 19): the other two kernel 0x4988 callers whose "Player: "
+    // branch native never had.  SearchMember is SJOG cmd_search 0x095c's call
+    // at 0x09a0 (after the direction, before the object scan); CastMember is
+    // CAST.OVL 0x0dd5, which runs BEFORE the "Spell name:" prompt.  Each keeps
+    // its own id because the caller-specific work after the pick differs; the
+    // picker's own rules live once, in openu5/command_char.h.
+    SearchMember,
+    CastMember,
     Custom
 };
 

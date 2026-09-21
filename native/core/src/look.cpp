@@ -6,6 +6,25 @@
 namespace openu5 {
 namespace {
 void emit(EventSink s,GameEventKind k,const char *text=nullptr){GameEvent e;e.kind=k;e.text=text;if(s.emit)s.emit(s.context,e);}
+// LOOKOBJ 0x09f6-0x0a3e: the tail of cmd_look's crystal-ball branch, once the
+// picker at 0x09ea has produced a member.  Defined once so the auto-resolved
+// route and the answered-prompt route cannot drift apart.
+CommandStatus crystal_ball_vision(CommandContext &c,int32_t member,EventSink sink,Rand rand){
+    auto &g=c.game;
+    // 0x0a08 reads intelligence at record +0x0E; 0x0a10's `ja` is UNSIGNED, so
+    // the tie loses -- INT must strictly exceed the 1..30 roll of 0x09f6.
+    if(g.party.characters[member].intelligence>rand(1,30)){
+        emit(sink,GameEventKind::Message,"Strange vision!");
+        // gem_view(x,y) at 0x0a3b.  The `dec [g_gems]` lives at 0x3428 inside
+        // the (V) case, OUTSIDE this route: the ball costs no gem.
+        GameEvent e;e.kind=GameEventKind::GemView;e.gem_from_crystal=true;if(sink.emit)sink.emit(sink.context,e);
+    }else{
+        apply_damage(g,member,1); // 0x0a19 apply_damage(idx,1) -- the PICKED member.
+        emit(sink,GameEventKind::Message,"Death vision!");
+        emit(sink,GameEventKind::PartyChanged); // 0x0a23 party panel redraw.
+    }
+    return CommandStatus::Success;
+}
 }
 LookSign resolve_look_sign(const LookSignRecord *records,size_t count,MapId map,int32_t x,int32_t y){
     if(!records||x<0||x>255||y<0||y>255)return {};
@@ -35,14 +54,29 @@ CommandStatus world_look(CommandContext &c,Command cmd,const ActiveMap &map,Even
         emit(sink,GameEventKind::PartyChanged);return CommandStatus::Success;
     }
     if(cmd.kind==CommandKind::DropCoin){say(cmd.member?"Yes\n":"No\n");if(cmd.member&&g.gold>0)emit(sink,GameEventKind::WellWishPrompt);return CommandStatus::Success;}
+    // R-25 (Batch 19).  The tail of LOOKOBJ's crystal-ball branch, reached once
+    // the kernel 0x4988 picker has produced a member.  The picker's OWN exits
+    // ("None!" on -1, "Disabled!" plus a re-ask on an ineligible pick) belong
+    // to the picker's caller-side seam, not here -- game.ts::crystalBall() has
+    // none of them either, and gameplay_parity drives this arm directly.  The
+    // range guard below is native's own safety net and stays as it was.
     if(cmd.kind==CommandKind::CrystalBall){
         if(cmd.member<0||cmd.member>=g.party.character_count)return CommandStatus::Rejected;
-        if(g.party.characters[cmd.member].intelligence>rand(1,30)){say("Strange vision!");GameEvent e;e.kind=GameEventKind::GemView;e.gem_from_crystal=true;if(sink.emit)sink.emit(sink.context,e);}
-        else{apply_damage(g,cmd.member,1);say("Death vision!");emit(sink,GameEventKind::PartyChanged);}return CommandStatus::Success;
+        return crystal_ball_vision(c,cmd.member,sink,rand);
     }
     auto d=direction_delta(cmd.direction);int x=g.position.xy.x+d.dx,y=g.position.xy.y+d.dy;if(map.geometry.wraps){x&=255;y&=255;}int tile=map.tile_at(x,y);
     if(c.actors)for(size_t i=0;i<c.actors->count;++i){auto &n=c.actors->actors[i];if(n.location==g.position.map.location&&n.z==g.position.map.floor&&n.x==x&&n.y==y){tile=n.schedule.type+256;break;}}
     if(tile<0){say("Thou dost see darkness.");return CommandStatus::Success;}
+    // R-25 (Batch 19).  Tile 0x29 is cmd_look's FIRST comparison in the
+    // reference (LOOKOBJ 0x09e4 `cmp [bp-2],0x29` / `jne 0xa40`), and the
+    // "Thou dost see" prefix plus the LOOK2.DAT phrase both live in the
+    // OPPOSITE branch -- so a crystal ball emits neither, only the vision.
+    // The kernel 0x4988 picker that 0x09ea calls is BLOCKING and owns a modal,
+    // so it lives at the caller/UI boundary, not here: this arm raises the
+    // prompt unconditionally and touches NEITHER the RNG nor any state, which
+    // is the same split the reference port makes (game.ts look() returns a
+    // bare crystal-ball-prompt; ui/pickers.ts runs the picker).  gameplay_parity
+    // pins that event stream sequence-for-sequence.
     if(tile==41||tile==161||(tile>=216&&tile<=219)){emit(sink,tile==41?GameEventKind::CrystalBallPrompt:tile==161?GameEventKind::WellDropPrompt:GameEventKind::FountainDrinkPrompt);return CommandStatus::Success;}
     if((tile==137||tile==138||tile==160||tile==164||tile==248)&&c.look&&c.look->sign){auto sign=c.look->sign(c.look->context,g.position.map,x,y);auto text=sign.text;if(text){
         std::string s(text);auto blank=[](const std::string &v){return v.find_first_not_of(" \t\r")==std::string::npos;};

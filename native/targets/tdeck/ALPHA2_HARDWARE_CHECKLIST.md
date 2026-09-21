@@ -6,7 +6,7 @@
 **This file is the single list to run in one device session.**
 
 > **Nothing in this file has been executed.** No physical T-Deck was available
-> during Batch 18. Every row's result column reads `UNTESTED`. Do not infer a
+> during Batch 18 or Batch 19. Every row's result column reads `UNTESTED`. Do not infer a
 > PASS from a host-suite green: the whole point of these rows is that they are
 > the checks host evidence cannot make.
 
@@ -14,8 +14,8 @@
 
 | Item | Value |
 |---|---|
-| Firmware image | `native/targets/tdeck/build-batch18/openu5_tdeck.bin` |
-| **SD resource pack** | **NO REFRESH REQUIRED.** Batch 18 changed no resource file. The last pack change was Batch 9C (`openu5-alpha1-resources.bin`, 2,039,545 B, payload CRC32 `0x2065ad91`, SHA-256 `434cd664…b4ea`). If the card already boots a Batch 9C-or-later image, leave it alone. |
+| Firmware image | `native/targets/tdeck/build-batch19/openu5_tdeck.bin` |
+| **SD resource pack** | **NO REFRESH REQUIRED.** Neither Batch 18 nor Batch 19 changed any resource file. The last pack change was Batch 9C (`openu5-alpha1-resources.bin`, 2,039,545 B, payload CRC32 `0x2065ad91`, SHA-256 `434cd664…b4ea`). If the card already boots a Batch 9C-or-later image, leave it alone. |
 | If the card is older than 9C | `npm run pack:alpha1`, then copy `native/assets/openu5-alpha1-resources.bin` over `<SD>:\ultima5\openu5-alpha1-resources.bin`. **Do not reformat**; saves and settings are separate files. A stale card stops at the identity screen with `match=0` — that is the gate working. |
 | Developer tools | Required for most rows (`Alt+D`). Built in when `OPENU5_ENABLE_DEVELOPER_TOOLS=ON`. |
 | Serial log | Capture it for the whole session. Several rows name the exact log line that proves them. |
@@ -129,7 +129,12 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 | H-47 | In combat | `U` a scroll, then a potion | same rules as H-42/H-46 inside the arena | — | — | UNTESTED |
 | H-48 | World, at a locked door | cast **An Sanct**; then **In Por** on the overworld; then **An Ex Por** at a town door | each raises `Direction?`, echoes the direction, and applies (R-11) | door/position change | Cancel refunds nothing — the reference consumes first | **PASS (Batch 5)** |
 | H-49 | Carrying gems | `V` | **photograph.** A legible map, the gem count decremented, and closing charges exactly one turn (`VIEW_EFFECT`/`VIEW_RESULT`) — ANCHOR 3 / R-17 | gem spent, 1 turn | any key closes | UNTESTED |
-| H-50 | At a crystal ball | `L` at it | **KNOWN OPEN — D-11/R-25.** Today a fabricated `Peer into it?` yes/no appears and answering Yes does nothing at all. **Record what you see; do not file a new ticket** | none | — | UNTESTED |
+| H-50 | At a crystal ball, party of 2+ all `G`/`P`, **no** active player set | `L` at it | **REWRITTEN IN BATCH 19 — R-25 is fixed; this row now flips an observation instead of recording a defect.** A `Player: ` roster picker opens (NOT the old `Peer into it?` yes/no, which is deleted), and **no** `Thou dost see` line appears | none yet | — | UNTESTED |
+| H-141 | Continuing H-50 | pick a member with **high** INT | `Strange vision!` and the 32x32 gem map opens. **Photograph.** The **gem count must NOT change** and closing must charge **no** turn (the `dec [g_gems]` lives in the `(V)` case, outside this route) | gems unchanged, no turn | any key closes | UNTESTED |
+| H-142 | At a crystal ball, a member with **low** INT | `L`, pick that member | `Death vision!` and **exactly 1 HP** off **that** member — not member 0, and not the active player if they differ | 1 HP | — | UNTESTED |
+| H-143 | At a crystal ball, party where one member is dead/`D` | `L`, pick the **disabled** member | `Disabled!` and the `Player: ` prompt **comes back** — a re-ask, not a rejection and not a silent no-op. Then cancel: `None!`, no vision, no HP change | none | Mic-short = cancel -> `None!` | UNTESTED |
+| H-144 | At a crystal ball with an **active player** set (arrow), or with exactly **one** `G`/`P` member left | `L` at it | **no prompt at all** — the vision fires immediately on that member. With **zero** `G`/`P` members: `None!` and nothing else | per branch | — | UNTESTED |
+| H-145 | Party of 2+, **no** active player | `S`earch a direction, then `C`ast | **both** raise the same `Player: ` picker. `S` asks **after** the direction; `C` asks **before** the spell list. Cancelling either prints `None!` and abandons the command (no search result, no spell menu). With an active player set, **neither** asks | per command | `None!` | UNTESTED |
 | H-51 | Cast Wis An Ylem, or read an In Quas Wis scroll | observe | the map reveals for ~1.1 s and input is swallowed for the same window (R-12) | 1 turn | — | UNTESTED |
 | H-52 | `U`se the Spyglass at night | observe | the zodiac view draws stars/signs/Shadowlord lines and closes on any key, charging no turn (R-13). *Expected residual: the view is clipped by the 9 px strips — D-12* | none | any key | UNTESTED |
 | H-53 | Any party | `M`ix a spell | the spell list opens and the mix resolves. *Expected residual: quantity is always 1 — D-6* | reagents spent | — | UNTESTED |
@@ -297,13 +302,13 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 | 3 — wishing well | 7 | 0 | 0 | 7 |
 | 4 — overworld / town | 8 | 0 | 0 | 8 |
 | 5 — combat / loot | 9 | 0 | 0 | 9 |
-| 6 — items / magic / views | 13 | 1 | 0 | 12 |
+| 6 — items / magic / views | 18 | 1 | 0 | 17 |
 | 7 — Z-stats | 16 | 0 | 0 | 16 |
 | 8 — transport | 3 | 0 | 0 | 3 |
 | 9 — dungeon | 45 | 3 | 0 | 42 |
 | 10 — quest / persistence | 7 | 0 | 0 | 7 |
 | 11 — reachability / feedback spot-checks | 16 | 0 | 0 | 16 |
-| **Total** | **140** | **4** | **0** | **136** |
+| **Total** | **145** | **4** | **0** | **141** |
 
 The four PASS rows are the only hardware evidence on record: H-48 (Batch 5's
 three world-cast checks, all passed first attempt) and H-85/H-86/H-88 (the Batch

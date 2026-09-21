@@ -105,7 +105,7 @@ answer or a product decision; none is scheduled in Alpha 2 unless marked.
 | D-8 | Combat Ready picker: empty-handed opens a disabled `"(None available)"` picker instead of charging immediately; `ItemResult::vanished` does not close the picker early | presentation | does not affect action cost; never adjudicated | Y-28 |
 | D-9 | World cast raises the getdir **before** `world_magic()`, the reference consumes first and prompts after | ordering | the fused `world_magic()` call makes the reference order awkward; deliberately not fixed | Y-30 |
 | D-10 | Blackthorn capture scene pacing feels collapsed against original footage | calibration | **no footage-derived timing evidence for this scene exists anywhere in the repository** (`re/notes/blackthorn-escena-324.md` §4 disclaims a witness; the TypeScript `PAUSE_UNIT_MS` is an admitted reuse of TrollSneak's calibration). Inventing a number is out of bounds | Y-32 |
-| D-11 | Crystal ball opens a fabricated `"Peer into it?"` yes/no; the reference opens the kernel 0x4988 character picker, and the native command is consequently dead | **production defect** | the faithful fix needs `resolve_command_char` as a shared seam, also owed to `(S)earch` and `(C)ast` | R-25 |
+| ~~D-11~~ | ~~Crystal ball opens a fabricated `"Peer into it?"` yes/no; the reference opens the kernel 0x4988 character picker, and the native command is consequently dead~~ **RESOLVED — Batch 19.** The fabricated prompt is deleted and `openu5::resolve_command_char()` (`native/core/include/openu5/command_char.h`) is the shared seam, used by the crystal ball, `(S)earch` and `(C)ast` alike. Row kept struck through rather than removed so the backlog's history stays readable | ~~production defect~~ **fixed** | — | R-25, §14 Batch 19 |
 | D-12 | The zodiac view is still clipped by the 9 px sky/wind strips | presentation | the gem view got `full_square_viewport` in Batch 10; zodiac was out of that scope | §6, R-13 |
 | D-13 | No `"Player: <name>"` / `"Status: "` console echo during Z-stats member selection | presentation | filed as a minor follow-up in Batch 14, never scheduled | Batch 14 residual 6 |
 | D-14 | Digit shortcuts work inside the Z-stats page loop but not inside the member picker | scope | the picker's digit selection is a kernel behaviour outside the overlay; wiring it changes digit handling for **every** party picker | Batch 14 residual 7 |
@@ -124,5 +124,11 @@ answer or a product decision; none is scheduled in Alpha 2 unless marked.
   candidate" column names the ones already isolated enough to switch without
   restructuring; A-1 through A-5 and A-13/A-14 are *not* restorable, because the
   hardware, not a preference, forced them.
-* **A future batch:** §4 is the backlog. D-11 is the only entry that is a live
-  production defect; the rest are decisions, calibration, or scope.
+* **A future batch:** §4 is the backlog. **As of Batch 19 no entry in it is a live
+  production defect** — D-11, which was the only one, is fixed and struck through.
+  Everything remaining is a decision, a calibration, or scope.
+* **On the word "intentional":** §2 and §3 are deliberate; **§4 is not**. An
+  unresolved divergence is an open question about fidelity, not a choice, and the
+  two must never be totalled together as "intentional divergences" — a summary row
+  in `GAMEPLAY_INTEGRATION_AUDIT.md` did exactly that until Batch 19 corrected it.
+  The split is 18 deliberate (14 + 4) and 18 unresolved, of which one is now closed.

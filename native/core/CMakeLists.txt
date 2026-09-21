@@ -349,6 +349,41 @@ if(BUILD_TESTING)
   endif()
   add_test(NAME batch18_well_ceremony COMMAND batch18_well_ceremony_regression)
 
+  # Batch 19 / R-25 -- the kernel 0x4988 command-character picker and its three
+  # callers (crystal ball, (S)earch, (C)ast). Same seam and same stub/shim set
+  # as the target above, for the same reason: R-25 is a defect in the GLUE that
+  # decides which member the (already-correct) core is handed, so only
+  # production routing can expose it.
+  add_executable(batch19_command_char_regression
+    ../targets/tdeck/host_tests/batch19_command_char_runtime_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_board_host_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_host_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(batch19_command_char_regression PRIVATE openu5_core)
+  target_include_directories(batch19_command_char_regression PRIVATE
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/main)
+  target_compile_features(batch19_command_char_regression PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(batch19_command_char_regression PRIVATE /Gy)
+    target_link_options(batch19_command_char_regression PRIVATE /OPT:REF)
+  else()
+    target_compile_options(batch19_command_char_regression PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(batch19_command_char_regression PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME batch19_command_char_runtime COMMAND batch19_command_char_regression)
+
   # Repair Batch 3 -- RED-only tests for R-06 (Ready), R-07/R-08 (Use
   # picker), R-19 (Yell/sails), R-20 (harpsichord), Y-20 (SetActivePlayer).
   # See native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md.
@@ -421,6 +456,14 @@ if(BUILD_TESTING)
   add_executable(batch17_theft_watchdog_tests tests/batch17_theft_watchdog_test.cpp)
   target_link_libraries(batch17_theft_watchdog_tests PRIVATE openu5_core)
   add_test(NAME batch17_theft_watchdog COMMAND batch17_theft_watchdog_tests)
+  # Batch 19 / R-25 -- the shared command-character picker (kernel 0x4988) and
+  # the crystal ball that is its first caller.  Drives world_look() and the
+  # CommandKind::CrystalBall arm, the two production entry points, so every
+  # branch of the picker is proven through a real caller rather than against a
+  # local copy of the resolver.
+  add_executable(batch19_command_char_tests tests/batch19_command_char_test.cpp)
+  target_link_libraries(batch19_command_char_tests PRIVATE openu5_core)
+  add_test(NAME batch19_command_char COMMAND batch19_command_char_tests)
   # Batch 4.5B -- Blackthorn capture production-resource integration: proves
   # ShrineServices::record/::context are actually wired to the packed
   # MISCMSG.DAT resource the way AlphaRuntime wires it (real capture and
@@ -543,5 +586,5 @@ if(BUILD_TESTING)
     set(OPENU5_CTEST_CONFIG_ARGS)
   endif()
   add_custom_target(host-test COMMAND "${CMAKE_CTEST_COMMAND}" ${OPENU5_CTEST_CONFIG_ARGS} --output-on-failure
-  DEPENDS batch17_theft_watchdog_tests frontend_tests ui_session_tests display_names_tests quest_search_tests debug_labels_tests ${UI_DEBUG_TEST_TARGET} debug_map_picker_tests debug_developer_tests gameplay_integration_tests look_sign_tests gameplay_driver movement_flow_parity_tests quest_driver shop_parity_tests shop_flow_tests shop_adapter_tests persistence_driver dialogue_adapter_tests dialogue_parity_tests transport_flow_parity_tests world_flow_adapter_tests dungeon_flow_parity_tests world_flow_parity_tests dungeon_parity_tests advanced_combat_parity_tests magic_parity_tests combat_parity_tests core_parity_tests turn_parity_tests travel_parity_tests command_parity_tests item_parity_tests movement_regression presentation_regression dungeon_view_regression dungeon_art_regression gem_view_regression dungeon_input_regression combat_escape_regression combat_loot_open_regression batch12b_hardware_regression input_regression USES_TERMINAL)
+  DEPENDS batch17_theft_watchdog_tests batch19_command_char_tests batch19_command_char_regression frontend_tests ui_session_tests display_names_tests quest_search_tests debug_labels_tests ${UI_DEBUG_TEST_TARGET} debug_map_picker_tests debug_developer_tests gameplay_integration_tests look_sign_tests gameplay_driver movement_flow_parity_tests quest_driver shop_parity_tests shop_flow_tests shop_adapter_tests persistence_driver dialogue_adapter_tests dialogue_parity_tests transport_flow_parity_tests world_flow_adapter_tests dungeon_flow_parity_tests world_flow_parity_tests dungeon_parity_tests advanced_combat_parity_tests magic_parity_tests combat_parity_tests core_parity_tests turn_parity_tests travel_parity_tests command_parity_tests item_parity_tests movement_regression presentation_regression dungeon_view_regression dungeon_art_regression gem_view_regression dungeon_input_regression combat_escape_regression combat_loot_open_regression batch12b_hardware_regression input_regression USES_TERMINAL)
 endif()

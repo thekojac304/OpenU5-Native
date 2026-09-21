@@ -15,6 +15,7 @@
 #include "freertos/task.h"
 #include "boot_trace.h"
 #include "native_renderer.h"
+#include "openu5/command_char.h"
 #include "openu5/debug_labels.h"
 #include "openu5/display_names.h"
 #include "openu5/inventory_picker.h"
@@ -526,6 +527,20 @@ void AlphaRuntime::dispatch(const openu5::UiIntent&i){
                  long(shop_.item),long(shop_.price),long(shop_.quantity),int(phase_before),int(shop_.phase),int(result.status));
         if(result.status!=openu5::CommandStatus::Success&&result.status!=openu5::CommandStatus::AwaitingResponse)ESP_LOGW(kTag,"Service action failed status=%s",status_name(result.status));}
     else if(i.kind==openu5::UiIntentKind::ModalResponse)modal(i);
+    // R-25 (Batch 19). The crystal ball's picker. look.cpp raises
+    // CrystalBallPrompt for EVERY tile 0x29, exactly as the reference core
+    // does, and the branch decision happens here because only this layer owns
+    // the roster: LOOKOBJ 0x09ea's picker asks in just one of its four
+    // branches, and on the other three it either hands the member straight
+    // back (active, or a single eligible) or prints "None!" and abandons the
+    // command. Resolving it here also keeps all three 0x4988 callers on one
+    // code path -- the same split ui/pickers.ts makes in the reference port.
+    else if(i.kind==openu5::UiIntentKind::OpenPartySelection&&i.request==openu5::UiRequestId::CrystalBall){
+        int16_t member=-1;
+        if(resolve_command_char_or_prompt(openu5::UiRequestId::CrystalBall,member)==openu5::CommandCharOutcome::Resolved){
+            openu5::Command ball;ball.kind=openu5::CommandKind::CrystalBall;ball.member=member;command(ball);
+        }
+    }
     else if(i.kind==openu5::UiIntentKind::OpenPartySelection)open_selection(openu5::UiMode::PartySelection,i.request);
     else if(i.kind==openu5::UiIntentKind::OpenInventorySelection)open_selection(openu5::UiMode::InventorySelection,i.request);
     else if(i.kind==openu5::UiIntentKind::OpenEquipmentSelection){
@@ -534,11 +549,40 @@ void AlphaRuntime::dispatch(const openu5::UiIntent&i){
         else if(game_.party.party_size>1)open_selection(openu5::UiMode::PartySelection,openu5::UiRequestId::EquipmentMember);
         else {pending_ready_member_=int16_t(active_member(game_));open_selection(openu5::UiMode::EquipmentSelection,openu5::UiRequestId::Equipment);}
     }
-    else if(i.kind==openu5::UiIntentKind::OpenSpellSelection)open_selection(openu5::UiMode::SpellSelection,i.request);
+    // R-25 (Batch 19). CAST.OVL:0x0dd5 resolves WHO casts before the
+    // "Spell name:" prompt of 0x11d9 -- the OCR corpus of 49 original
+    // Let's-Play routes shows 70 "Cast... Player: <name> Spell name:" rows and
+    // zero the other way round -- so the caster gate runs before the spell
+    // menu opens, not after it. Combat is branch 1 (no prompt, the acting
+    // combatant) and (M)ix is a different routine, so both keep the plain menu.
+    else if(i.kind==openu5::UiIntentKind::OpenSpellSelection){
+        if(i.request==openu5::UiRequestId::Spell&&!context_.combat){
+            pending_caster_=-1;
+            int16_t caster=-1;
+            if(resolve_command_char_or_prompt(openu5::UiRequestId::CastMember,caster)!=openu5::CommandCharOutcome::Resolved){dirty_=true;return;}
+            pending_caster_=caster;
+        }
+        open_selection(openu5::UiMode::SpellSelection,i.request);
+    }
     else if(i.kind==openu5::UiIntentKind::OpenStatusSelection){status_member_=int16_t(active_member(game_));open_selection(openu5::UiMode::PartySelection,i.request);}
     dirty_=true;
 }
 void AlphaRuntime::command(openu5::Command cmd){
+    // R-25 (Batch 19). SJOG cmd_search 0x095c asks for the direction at 0x097e
+    // and only THEN calls the picker at 0x09a0, so the command arrives here
+    // already aimed and the member is the one thing still missing. Command::
+    // member was never set, which left search_world() on its "active, else
+    // member 0" fallback -- and that member is the perceiver of every chest
+    // trap check. Combat (CombatSearch) and the dungeon corridor (SJOG 0x0646,
+    // a different routine that is only partly ported) are deliberately
+    // untouched.
+    if(cmd.kind==openu5::CommandKind::Search&&cmd.member<0&&!context_.combat){
+        int16_t searcher=-1;
+        const auto outcome=resolve_command_char_or_prompt(openu5::UiRequestId::SearchMember,searcher);
+        if(outcome==openu5::CommandCharOutcome::Prompt){pending_search_=cmd;pending_search_active_=true;dirty_=true;return;}
+        if(outcome==openu5::CommandCharOutcome::None){pending_search_active_=false;dirty_=true;return;}
+        cmd.member=searcher;
+    }
     const bool combat_before=context_.combat&&combat_.initialized;
     const bool dungeon_session_before=dungeon_.active;
     if(cmd.kind==openu5::CommandKind::Enter){
@@ -866,6 +910,16 @@ void AlphaRuntime::service_combat(){
 void AlphaRuntime::modal(const openu5::UiIntent&i){if(!i.value.accepted){if(i.request==openu5::UiRequestId::Party)pending_order_from_=-1;if(i.request==openu5::UiRequestId::EquipmentMember||i.request==openu5::UiRequestId::Equipment)pending_ready_member_=-1;if(i.request==openu5::UiRequestId::UseTarget||i.request==openu5::UiRequestId::Inventory)pending_use_item_=-1;if(i.request==openu5::UiRequestId::Target)pending_combat_spell_=-1;if(i.request==openu5::UiRequestId::ShrineVisit||i.request==openu5::UiRequestId::ShrineRestore){shrine_.visit=shrine_.restore=-1;shrine_virtue_length_=0;}
     // FountainDrink (R-09 E): pure flavour text, no command, no HP/state/turn.
     if(i.request==openu5::UiRequestId::FountainDrink)ui_->append(openu5::UiTextChannel::Message,openu5::fountain_drink_result(0,true));
+    // R-25 (Batch 19). Cancelling the kernel 0x4988 picker is not "nothing":
+    // the routine leaves with -1 and the common epilogue at @0x4a5f prints
+    // DS 0xa3da "None!" -- the SAME string and the same exit the zero-eligible
+    // branch takes. The command is then abandoned: no vision, the parked
+    // Search is dropped unaimed, and the spell menu never opens.
+    if(i.request==openu5::UiRequestId::CrystalBall||i.request==openu5::UiRequestId::SearchMember||i.request==openu5::UiRequestId::CastMember){
+        if(i.request==openu5::UiRequestId::SearchMember)pending_search_active_=false;
+        if(i.request==openu5::UiRequestId::CastMember)pending_caster_=-1;
+        ui_->append(openu5::UiTextChannel::Message,openu5::command_char_none());
+    }
     return;}openu5::Command c;
     if(i.request==openu5::UiRequestId::Party){if(pending_order_from_<0){pending_order_from_=int16_t(i.value.index);open_selection(openu5::UiMode::PartySelection,openu5::UiRequestId::Party);}else{c.kind=openu5::CommandKind::NewOrder;c.member=pending_order_from_;c.item=int16_t(i.value.index);pending_order_from_=-1;command(c);}}
     // R-22. select_player (ZSTATS.OVL:0x0000) runs FIRST, and the member it
@@ -882,10 +936,39 @@ void AlphaRuntime::modal(const openu5::UiIntent&i){if(!i.value.accepted){if(i.re
         open_selection(openu5::UiMode::EquipmentSelection,openu5::UiRequestId::Equipment);
     }
     else if(i.request==openu5::UiRequestId::Spell&&i.value.index>=0&&size_t(i.value.index)<selection_count_){cast_selected_spell(selections_[i.value.index].value);}
-    else if(i.request==openu5::UiRequestId::Target){if(pending_combat_spell_>=0){c.kind=openu5::CommandKind::Cast;c.caster=int16_t(active_member(game_));c.item=pending_combat_spell_;c.member=int16_t(i.value.index);pending_combat_spell_=-1;command(c);}}
+    // R-25 (Batch 19). "selectedCombatPlayer" only exists in combat, which is
+    // branch 1 of kernel 0x4988 (@0x4995): the caster is the ACTING combatant,
+    // never the arrow-marked active member. Same correction cast_selected_spell()
+    // carries; this arm rebuilds the command from scratch, so it needs it too.
+    else if(i.request==openu5::UiRequestId::Target){if(pending_combat_spell_>=0){auto *caster=openu5::current_combat_actor(combat_context_);c.kind=openu5::CommandKind::Cast;c.caster=caster&&caster->member!=255?int16_t(caster->member):int16_t(active_member(game_));c.item=pending_combat_spell_;c.member=int16_t(i.value.index);pending_combat_spell_=-1;command(c);}}
     else if(i.request==openu5::UiRequestId::Custom&&i.value.index>=0&&size_t(i.value.index)<selection_count_){c.kind=openu5::CommandKind::Mix;c.item=selections_[i.value.index].value;c.hours=1;auto*d=openu5::spell_definition(openu5::SpellId(c.item));c.reagent_mask=d?d->reagents:0;command(c);}
     else if(i.request==openu5::UiRequestId::TrollToll){c.kind=openu5::CommandKind::TrollToll;c.member=i.value.yes?1:0;command(c);}
-    else if(i.request==openu5::UiRequestId::CrystalBall&&i.value.yes){c.kind=openu5::CommandKind::CrystalBall;command(c);}
+    // R-25 (Batch 19). Was a yes/no arm that dispatched with Command::member
+    // left at its never-set -1, which look.cpp rejected outright -- the whole
+    // feature was dead. It is now the answer path of the 0x4988 roster picker,
+    // and it shares the branch-4 gate with the other two callers: an ineligible
+    // pick is a re-ask, so nothing is dispatched. What the CORE still owns is
+    // everything after the member exists -- the roll, the comparison, the
+    // damage and the gem view.
+    else if(i.request==openu5::UiRequestId::CrystalBall&&i.value.index>=0&&size_t(i.value.index)<selection_count_){
+        const int16_t member=selections_[i.value.index].value;
+        if(accept_command_char_pick(openu5::UiRequestId::CrystalBall,member)){c.kind=openu5::CommandKind::CrystalBall;c.member=member;command(c);}
+    }
+    // R-25 (Batch 19). The answer paths of the other two 0x4988 callers. Both
+    // apply the branch-4 gate first: an ineligible pick is a re-ask, so the
+    // parked work stays parked and nothing is dispatched.
+    else if(i.request==openu5::UiRequestId::SearchMember&&i.value.index>=0&&size_t(i.value.index)<selection_count_){
+        const int16_t member=selections_[i.value.index].value;
+        if(accept_command_char_pick(openu5::UiRequestId::SearchMember,member)&&pending_search_active_){
+            openu5::Command search=pending_search_;search.member=member;pending_search_active_=false;command(search);
+        }
+    }
+    else if(i.request==openu5::UiRequestId::CastMember&&i.value.index>=0&&size_t(i.value.index)<selection_count_){
+        const int16_t member=selections_[i.value.index].value;
+        if(accept_command_char_pick(openu5::UiRequestId::CastMember,member)){
+            pending_caster_=member;open_selection(openu5::UiMode::SpellSelection,openu5::UiRequestId::Spell);
+        }
+    }
     // R-26 (Batch 18). BOTH answers dispatch, and the answer travels in
     // Command::member -- the same shape the TrollToll arm above uses.
     // Previously only Yes dispatched (so game.ts dropCoin(false)'s "No" echo
@@ -907,8 +990,41 @@ void AlphaRuntime::modal(const openu5::UiIntent&i){if(!i.value.accepted){if(i.re
     }
 }
 
+openu5::CommandCharOutcome AlphaRuntime::resolve_command_char_or_prompt(openu5::UiRequestId request,int16_t &member){
+    const auto pick=openu5::resolve_command_char(game_.party);
+    if(pick.outcome==openu5::CommandCharOutcome::Resolved){member=int16_t(pick.member);return pick.outcome;}
+    if(pick.outcome==openu5::CommandCharOutcome::None){
+        // Zero eligible: the epilogue at @0x4a5f prints DS 0xa3da and the
+        // command is over -- no prompt, no effect, no turn.
+        ui_->append(openu5::UiTextChannel::Message,openu5::command_char_none());dirty_=true;return pick.outcome;
+    }
+    open_selection(openu5::UiMode::PartySelection,request); // @0x4a02 "Player: "
+    return pick.outcome;
+}
+
+bool AlphaRuntime::accept_command_char_pick(openu5::UiRequestId request,int16_t member){
+    if(openu5::command_char_accepts(game_.party,member))return true;
+    ui_->append(openu5::UiTextChannel::Message,openu5::command_char_disabled()); // @0x4a4e
+    open_selection(openu5::UiMode::PartySelection,request);                      // @0x4a57: di still 0.
+    dirty_=true;return false;
+}
+
 void AlphaRuntime::cast_selected_spell(int16_t spell){
-    openu5::Command c;c.kind=openu5::CommandKind::Cast;c.caster=int16_t(active_member(game_));c.item=spell;
+    openu5::Command c;c.kind=openu5::CommandKind::Cast;c.item=spell;
+    // R-25 (Batch 19). Branch 1 of kernel 0x4988 (@0x4995): in combat
+    // g_location is 0xFF, so the routine never asks -- the caster is the
+    // ACTING combatant, read as field +3 of g_combat_actor_records[g_cmb_actor]
+    // (COMBAT.OVL:0x08f0 sets si = g_cmb_actor, then 0x095e re-enters the same
+    // CAST.OVL:0x0dba handler the kernel's 'C' uses). Native used the ACTIVE
+    // member here, which is whoever the player marked with the arrow, not
+    // whose turn it is -- so a combat cast could spend the wrong character's
+    // magic points. Outside combat pending_caster_ carries the member the
+    // picker resolved before the spell menu opened (CAST.OVL:0x0dd5 runs
+    // BEFORE the "Spell name:" prompt).
+    auto *actor=openu5::current_combat_actor(combat_context_);
+    if(context_.combat)c.caster=actor&&actor->member!=255?int16_t(actor->member):int16_t(active_member(game_));
+    else c.caster=pending_caster_>=0?pending_caster_:int16_t(active_member(game_));
+    pending_caster_=-1;
     // Y-33. hours defaults to 0, a VALID Vas Rel Por phase -- every other
     // spell ignores this field, so setting the "no phase chosen" sentinel
     // unconditionally is harmless and closes the gap where an aboard-ship
@@ -918,7 +1034,6 @@ void AlphaRuntime::cast_selected_spell(int16_t spell){
     c.hours=-1;
     const auto *def=openu5::spell_definition(openu5::SpellId(spell));
     if(!def){command(c);return;}
-    auto *actor=openu5::current_combat_actor(combat_context_);
     const char *target=def->target_type?def->target_type:"";
     if(std::strcmp(target,"selectedCombatPlayer")==0){
         pending_combat_spell_=spell;
@@ -1030,7 +1145,9 @@ void AlphaRuntime::open_selection(openu5::UiMode mode,openu5::UiRequestId reques
     else if(mode==openu5::UiMode::EquipmentSelection){const int member=pending_ready_member_>=0?pending_ready_member_:active_member(game_);const auto ready=openu5::ready_items(game_,member);for(int n=0;n<ready.count;++n){const int i=ready.ids[n];add(i,openu5::equipment_display_name(i),game_.equipment_quantities[i],openu5::is_item_equipped(game_.party.characters[member],i));}}
     else if(mode==openu5::UiMode::SpellSelection){for(int i=0;i<48;++i)if(request==openu5::UiRequestId::Custom||game_.spell_quantities[i]>0)add(i,openu5::spell_display_name(i),game_.spell_quantities[i]);}
     if(!selection_count_){auto&s=selections_[selection_count_++];std::snprintf(s.label,sizeof(s.label),"(None available)");s.enabled=false;}
-    const char *prompt=mode==openu5::UiMode::PartySelection?(request==openu5::UiRequestId::EquipmentMember?"Ready whom?":request==openu5::UiRequestId::UseTarget?"Use on whom?":request==openu5::UiRequestId::FountainDrink?"Who will drink?":"Party"):mode==openu5::UiMode::InventorySelection?"Use item":mode==openu5::UiMode::EquipmentSelection?"Ready":"Spell";
+    // R-25 (Batch 19): the 0x4988 callers carry DS 0xa3c4 "Player: " from the
+    // shared seam, so device and host name the prompt from one definition.
+    const char *prompt=mode==openu5::UiMode::PartySelection?(request==openu5::UiRequestId::EquipmentMember?"Ready whom?":request==openu5::UiRequestId::UseTarget?"Use on whom?":request==openu5::UiRequestId::FountainDrink?"Who will drink?":request==openu5::UiRequestId::CrystalBall||request==openu5::UiRequestId::SearchMember||request==openu5::UiRequestId::CastMember?openu5::command_char_prompt():"Party"):mode==openu5::UiMode::InventorySelection?"Use item":mode==openu5::UiMode::EquipmentSelection?"Ready":"Spell";
     const size_t initial=mode==openu5::UiMode::PartySelection?size_t(request==openu5::UiRequestId::Status&&status_member_>=0?status_member_:active_member(game_)):0;
     ui_->begin_selection(mode,request,prompt,{this,selection_count,selection_item},initial);
 }

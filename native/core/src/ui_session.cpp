@@ -1208,7 +1208,18 @@ void UiSession::consume(const GameEvent &e) {
         begin_yes_no(UiRequestId::GuardArrest,"Wilt thou come quietly?",false);
         break;
     case GameEventKind::TrollTollPrompt: begin_yes_no(UiRequestId::TrollToll,"Pay toll?",false); break;
-    case GameEventKind::CrystalBallPrompt: begin_yes_no(UiRequestId::CrystalBall,"Peer into it?",false); break;
+    // R-25 (Batch 19).  "Peer into it?" was a native fabrication: LOOKOBJ's
+    // case 0x29 raises no yes/no at all, it calls the kernel 0x4988 picker at
+    // 0x09ea.  What is owed here is that picker, and UNLIKE the fountain below
+    // this arm does NOT enter a mode first: three of the picker's four
+    // branches resolve without asking anything, and only the roster owner can
+    // tell which branch applies.  So the request travels out and the owner
+    // decides whether a modal opens at all -- the same shape Party, Status and
+    // Inventory already use.
+    case GameEventKind::CrystalBallPrompt: {
+        UiIntent i; i.kind=UiIntentKind::OpenPartySelection; i.request=UiRequestId::CrystalBall; dispatch(i);
+        break;
+    }
     case GameEventKind::WellDropPrompt:
         // R-26 (Batch 18). Reference: hud.message("a well.\n\nDrop a coin?")
         // -- LOOKOBJ 0x0048 special-cases the well BEFORE the generic "Thou

@@ -15,6 +15,7 @@ set(OPENU5_CORE_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/world_terrain.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/world_commands.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/look.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/command_char.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/world_magic.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/gameplay_save.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/outdoor.cpp"
