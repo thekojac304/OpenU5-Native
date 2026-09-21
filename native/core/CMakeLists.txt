@@ -366,6 +366,16 @@ if(BUILD_TESTING)
   add_executable(batch14_zstats_model_tests tests/batch14_zstats_model_test.cpp)
   target_link_libraries(batch14_zstats_model_tests PRIVATE openu5_core)
   add_test(NAME batch14_zstats_model COMMAND batch14_zstats_model_tests)
+
+  # Batch 15 / R-23 -- the Blackthorn sacrifice roster compaction and the
+  # party-index parity downstream of it. Drives the production
+  # sacrifice_first_companion() seam, the real blackthorn_action()
+  # interrogation, the real execute_command() by-index party commands, the
+  # real inn_leave (the sibling routine that DOES re-index the active
+  # character) and the Batch 14 zstats page ring.
+  add_executable(batch15_sacrifice_tests tests/batch15_sacrifice_test.cpp)
+  target_link_libraries(batch15_sacrifice_tests PRIVATE openu5_core)
+  add_test(NAME batch15_sacrifice_roster COMMAND batch15_sacrifice_tests)
   # Batch 4.5B -- Blackthorn capture production-resource integration: proves
   # ShrineServices::record/::context are actually wired to the packed
   # MISCMSG.DAT resource the way AlphaRuntime wires it (real capture and

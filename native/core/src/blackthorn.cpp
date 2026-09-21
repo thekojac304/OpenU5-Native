@@ -8,6 +8,20 @@
 namespace openu5 {
 int32_t count_living(const GameState &g){int n=0;for(int i=0;i<g.party.party_size && i<g.party.character_count;++i)n+=g.party.characters[i].status!='D';return n;}
 int32_t pick_interrogation_shrine(const GameState &g){for(int i=0;i<8;++i)if(i>=g.quest.destroyed_count || !g.quest.shrine_destroyed[i])return i;return -1;}
+// R-23. BLCKTHRN.OVL 0x0438 `sacrifice_member`, whose only roster bound is
+// g_party_size (0x043d; no `cmp si,6` -- re/notes/blackthorn-cota-party-size.md):
+//   044c cmp byte [si],'D' / inc cx / cmp cx,2 -> the victim is the 2nd LIVING
+//   046c TEMP = record[victim]            (repne movsw cx=0x10, the whole 32 B)
+//   0487 cmp ax,0xf / jge                 -> a victim already at 15 skips the shift
+//   04ab record[i] = record[i+1] until si == 0x57a8 -- the end of ALL SIXTEEN
+//        records at DS 0x55a8, NOT the party bound
+//   04c2 record[15] = TEMP                (DS:0x5788 = 0x55a8 + 15*32)
+//   04cf byte [0x57A7] = 0x7f             (record +0x1F = partyStatus)
+//   04d4 dec [g_party_size]               -> last, and exactly once
+// Nothing here re-indexes g_active_char: that block is SHOPPES3 0x03dd-0x0400,
+// the inn (L)eave (inn_leave in shops.cpp), and this body has no counterpart --
+// the same faithful asymmetry the inn (P)ickup carries.
+std::string sacrifice_first_companion(GameState &g){int living=0;for(int i=0;i<g.party.party_size && i<g.party.character_count;++i)if(g.party.characters[i].status!='D' && ++living==2){auto victim=g.party.characters[i];std::string result=victim.name;for(int j=i+1;j<kRosterCapacity;++j)g.party.characters[j-1]=g.party.characters[j];victim.party_status=127;g.party.characters[15]=victim;g.party.character_count=kRosterCapacity;g.party.party_size=std::max<int32_t>(0,g.party.party_size-1);return result;}return "";}
 GuardDemand guard_demand(GameState &g,const TurnState &t,TalkText text,bool agree){
     if(g.position.map.location==18)return {0,t.time_spell=='\x1d'&&quest_text_equal(text.substr(0,4),u"IMPE")?0:1,0};
     int kind=g.position.map.location==5?1:2;if(!agree)return {kind,1,0};int amount=kind==1?g.gold-(g.gold/2):count_living(g)*10;if(g.gold<amount)return {kind,1,0};g.gold=uint16_t(g.gold-amount);return {kind,0,amount};
@@ -18,7 +32,6 @@ std::string str(TalkText s){std::string out;for(auto ch:s)out+=char(ch);return o
 std::string name(const CharacterState &c){std::string s=c.name;auto a=s.find_first_not_of(" \t\n\r\v\f"),b=s.find_last_not_of(" \t\n\r\v\f");return a==std::string::npos?"Avatar":s.substr(a,b-a+1);}
 const char *record(CommandContext &c,int i){return c.shrine_services&&c.shrine_services->record?c.shrine_services->record(c.shrine_services->context,i):nullptr;}
 void deposit(CommandContext &c){c.game.position={{10,7},{18,-1}};c.game.keys=0;c.game.transport=TransportMode::Foot;c.turn.transport_tile=28;}
-std::string sacrifice(GameState &g){int living=0;for(int i=0;i<g.party.party_size && i<g.party.character_count;++i)if(g.party.characters[i].status!='D' && ++living==2){auto victim=g.party.characters[i];std::string result=victim.name;for(int j=i+1;j<g.party.character_count;++j)g.party.characters[j-1]=g.party.characters[j];victim.party_status=127;g.party.characters[15]=victim;g.party.character_count=16;g.party.party_size=std::max<int32_t>(0,g.party.party_size-1);return result;}return "";}
 void question(CommandContext &c,EventSink sink){auto &s=*c.blackthorn;std::string q=record(c,s.round<3?s.round:3);if(s.round<3){if(c.shrine_services->data)q+=str(c.shrine_services->data->virtues[s.shrine]);q+="?\"";}event(sink,GameEventKind::BlackthornPrompt,q);}
 NpcActor *adjacent(CommandContext &c){NpcActor *winner=nullptr;if(!c.actors)return nullptr;for(size_t i=0;i<c.actors->count;++i){auto &a=c.actors->actors[i];if(a.location!=c.game.position.map.location||a.z!=c.game.position.map.floor||std::abs(a.x-c.game.position.xy.x)+std::abs(a.y-c.game.position.xy.y)!=1)continue;auto idx=schedule_index(a.schedule.times,uint8_t(c.game.time.hour));int ai=a.schedule.ai[idx];if(ai<=3||((ai==4||ai==5)&&!a.schedule.dialog))continue;if(!winner||a.schedule.slot>=winner->schedule.slot)winner=&a;}return winner;}
 // #324 / R-32 -- the staged half of the capture. Present only when the caller
@@ -106,7 +119,7 @@ CommandStatus blackthorn_action(CommandContext &c,BlackthornAction action,TalkTe
         // Escalation: the sand falls on a failed round 1 or 2 (0x05da/0x05e2).
         if(scene && s.round>=1 && build_hourglass_script(s.round,*scene->script))emit_scene(*scene,sink);
         ++s.round;question(c,sink);return CommandStatus::AwaitingResponse;}
-    if(matched){g.quest.shrine_destroyed[s.shrine]=255;g.quest.destroyed_count=std::max<uint8_t>(g.quest.destroyed_count,uint8_t(s.shrine+1));g.karma=uint8_t(g.karma<=5?0:g.karma-5);if(s.living>1)sacrifice(g);event(sink,GameEventKind::Message,record(c,s.living>1?5:9));
+    if(matched){g.quest.shrine_destroyed[s.shrine]=255;g.quest.destroyed_count=std::max<uint8_t>(g.quest.destroyed_count,uint8_t(s.shrine+1));g.karma=uint8_t(g.karma<=5?0:g.karma-5);if(s.living>1)sacrifice_first_companion(g);event(sink,GameEventKind::Message,record(c,s.living>1?5:9));
         if(scene){
             // Betrayal. With companions, rec5 is printed inside
             // sacrifice_member(0) before the siren (0x03c2); alone it is the
@@ -118,7 +131,7 @@ CommandStatus blackthorn_action(CommandContext &c,BlackthornAction action,TalkTe
         }}
     else if(s.living<2){event(sink,GameEventKind::Message,record(c,10));
         if(scene){key_wait(sink);build_finale_script(*scene->state,*scene->script);emit_scene(*scene,sink);}}
-    else{auto victim=sacrifice(g);event(sink,GameEventKind::Message,record(c,4));
+    else{auto victim=sacrifice_first_companion(g);event(sink,GameEventKind::Message,record(c,4));
         if(scene){build_sacrifice_script(*scene->state,*scene->script);emit_scene(*scene,sink);emit_sacrifice_explosion(*scene,sink);}
         event(sink,GameEventKind::Message,"\n\n"+victim+" is sliced in half! ");
         if(scene)key_wait(sink);                                          // 0x04f6
