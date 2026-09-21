@@ -516,7 +516,17 @@ void UiSession::finish_modal(bool accepted, bool yes, int32_t number, int32_t in
         i.command.member = yes ? 1 : 0;
     }
     dispatch(i);
-    input_[0] = 0; input_length_ = 0; prompt_[0] = 0;
+    // R-34 (Batch 18). This teardown runs AFTER the dispatch, and an answer is
+    // allowed to arm the next modal synchronously inside it -- the well's
+    // "Thy wish?", Blackthorn's next "Your response?", the shrine's
+    // "Virtue?"/"Mantra?", the (U)se picker's "Direction?"/"On whom?". Those
+    // all reach enter_modal(), which sets mode_ AND prompt_; clearing
+    // unconditionally here wiped the prompt while leaving the mode, so the
+    // follow-up modal rendered with an empty prompt row. mode_ was set to the
+    // non-modal return_mode_ above (enter_modal only records a non-modal
+    // return_mode_, so nesting cannot mask this), which makes is_modal(mode_)
+    // an exact test for "the dispatch armed something new".
+    if (!is_modal(mode_)) { input_[0] = 0; input_length_ = 0; prompt_[0] = 0; }
     settle_shrine_after_modal();
 }
 
@@ -1199,7 +1209,18 @@ void UiSession::consume(const GameEvent &e) {
         break;
     case GameEventKind::TrollTollPrompt: begin_yes_no(UiRequestId::TrollToll,"Pay toll?",false); break;
     case GameEventKind::CrystalBallPrompt: begin_yes_no(UiRequestId::CrystalBall,"Peer into it?",false); break;
-    case GameEventKind::WellDropPrompt: begin_yes_no(UiRequestId::WellDrop,"Drop a coin?",false); break;
+    case GameEventKind::WellDropPrompt:
+        // R-26 (Batch 18). Reference: hud.message("a well.\n\nDrop a coin?")
+        // -- LOOKOBJ 0x0048 special-cases the well BEFORE the generic "Thou
+        // dost see" and prints the description and the prompt in ONE print
+        // (DATA.OVL DS 0x720c). Native raised only the prompt. Same shape the
+        // FountainDrinkPrompt arm below already uses for DS 0x729c.
+        // The prompt type is "yesno-esc" (main.ts well-drop-prompt), so
+        // cancel_means_no is true: the binary's raw getkey at 0x0052 treats
+        // anything that is not Y as N, and game.ts dropCoin(false) prints "No".
+        append(UiTextChannel::Message,"a well.");
+        begin_yes_no(UiRequestId::WellDrop,"Drop a coin?",true);
+        break;
     case GameEventKind::FountainDrinkPrompt: {
         // Reference is pickMember("Who will drink?") with pure flavour text --
         // not a yes/no prompt (R-09 adjudication section A.2/G.3). UiSession
@@ -1214,7 +1235,11 @@ void UiSession::consume(const GameEvent &e) {
         UiIntent i; i.kind=UiIntentKind::OpenPartySelection; i.request=UiRequestId::FountainDrink; dispatch(i);
         break;
     }
-    case GameEventKind::WellWishPrompt: begin_text(UiRequestId::WellWish,"What dost thou wish?",12); break;
+    // R-26 (Batch 18). "What dost thou wish?" was a native fabrication: the
+    // literal is DATA.OVL DS 0x722c = "\nThy wish?", printed by LOOKOBJ
+    // 0x007f before the 12-character getstring at 0x0092 (max 0xC at 0x008e).
+    // The 12 was already right; only the wording was invented.
+    case GameEventKind::WellWishPrompt: begin_text(UiRequestId::WellWish,"Thy wish?",12); break;
     case GameEventKind::NpcInitiatesTalk:
     case GameEventKind::NpcInitiatesShop:
         // The core asking the frontend to run another command, not a modal

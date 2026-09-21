@@ -4,6 +4,31 @@
 **Scope:** end-to-end playability, not code presence.
 **Method:** input→adapter→UI→core→state→renderer→feedback→mode-return→persistence tracing, static reachability sweeps, reference (`game/src`, `re/`, `extractor/`) adjudication, host test-suite execution, and one purpose-built core probe.
 **Commit audited:** `c18f5b64` (branch `main`, clean tree).
+**Last comprehensive reconciliation:** **Batch 18**, from `83b2ed56` — see §14 Batch 18 for the authoritative current state, and the two documents it produced:
+[`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
+[`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
+
+> ### CURRENT STATE (Batch 18) — read this before any status claim below
+>
+> **Alpha 2: HOST-CLEAN — HARDWARE VALIDATION REMAINS.**
+>
+> | | |
+> |---|---|
+> | Host suite | **86 total · 86 pass · 0 fail · 0 skipped** · 0 project warnings |
+> | `gameplay_parity` | PASS, 5,058 sequences · `quest_parity` PASS, 5,377 cases |
+> | Firmware | PASS · `0xd1b30` = 858,928 B · 189,648 B (18 %) free · 0 project warnings · **SD pack unchanged** |
+> | Open production defects | **1** — R-25 (crystal ball), deferred with a scoped follow-up |
+> | Unresolved reference questions | **4** — Y-15, Y-28, Y-30, Y-32 |
+> | Missing features / undecided | **5** — Y-01, Y-02, Y-06, Y-17, Y-19 |
+> | Out of Alpha 2 scope | **2** — Y-03 (audio), the TypeScript-side R-16 residual |
+> | Findings implemented but hardware-unverified | **32** |
+> | Findings verified **on hardware** | **1** — R-11 |
+> | Intentional divergences | **36** catalogued — 14 T-Deck adaptations, 4 enhancements, 18 unresolved |
+> | Hardware rows | **4 PASS · 0 FAIL · 136 UNTESTED** |
+>
+> Per-identifier evidence for all of the above is the reconciliation table at §14 Batch 18 §3b.
+>
+> **Every "RED"/"OPEN"/"currently failing" statement below is historical unless its own heading says otherwise.** Sections 1–13 were written at the `c18f5b64` baseline and are preserved for their reasoning; §14's per-batch write-ups are the running correction, and §14 Batch 18 is the reconciled present.
 
 Evidence classes used below:
 - **[EXEC]** proven by running code during this audit
@@ -15,9 +40,11 @@ Evidence classes used below:
 
 ## 1. EXECUTIVE SUMMARY
 
-### Overall integration health: **NOT PLAYABLE END-TO-END**
+### Overall integration health: ~~**NOT PLAYABLE END-TO-END**~~ → **HOST-CLEAN, HARDWARE-UNVALIDATED** (Batch 18)
 
-The **core is in far better shape than the device integration**. At the original audit baseline, 56 of 57 host tests pass, including deep byte-level parity suites for combat, commands, magic, items, shops, dialogue, dungeons, travel and persistence. **Post-Batch-1, the host suite was 58 total, 57 pass, with only the pre-existing `gameplay_parity` mismatch 59 (R-02/R-03/R-04) failing.** **Post-Batch-2, R-02/R-03/R-04 are GREEN and mismatch 59 is fixed.** The host suite is still 58 total, 57 pass, but the sole failure is now a *different*, newly-exposed mismatch — **`gameplay_parity` mismatch 2034 (R-21)**, hidden behind mismatch 59 until then. **Batch 13 adjudicated and fixed it**: "2034" is a sequence index, not a byte offset, and it was a confirmed native defect — the (U)se scroll/potion readers echoed a fabricated `Used <name>.` line where `CAST.OVL 0x11f0`/`0x136e` print the bare category word, plus an invented `No effect!` fallback. `gameplay_parity` now passes. Mismatch 2034 was reproduced byte-for-byte on the untouched pre-Batch-2 baseline with the Batch 2 changes removed, confirming it is pre-existing and unrelated to R-02/R-03/R-04; it is tracked separately (§3 R-21) and was **not** fixed in Batch 2. **Batch 17 retired the other half of the "known baseline failures" convention.** From Batch 8 to Batch 16 every write-up below compared against two expected failures and set them aside. Batch 13 fixed the first (`gameplay_parity` mismatch 2034). Batch 17 adjudicated the second — `quest_parity`'s `STATUS_ACCESS_VIOLATION` / exit `3221225477` — and it was **not** the "MinGW/w64devkit environment finding" eight batches recorded it as: it was a `setjmp`/`longjmp` escape in the host harness invoking undefined behaviour against the Win64 SEH ABI, reproducing 100 % of the time and hiding **zero** parity divergence (the full 5377-case comparison was run to completion before the fix and matched the reference on every case). **The host suite is now 85 total, 85 pass, 0 fail — the first fully green run in this audit's recorded history.** Any failure a future batch sees is a real one, and must be treated as such. See §4 Y-34 and §14 Batch 17.
+> **This verdict is the `c18f5b64` baseline verdict and is superseded.** It was true when written: at that commit the glue layer dropped modal responses, destroyed shop/dialogue modes on every keypress, could not sail, could not Ready in combat, had no dungeon art and no Z-stats pages. Batches 1–18 closed all of it. The reconciled verdict is **HOST-CLEAN — HARDWARE VALIDATION REMAINS**: every system below is either host-verified, verified on hardware, or listed as one of the 136 outstanding device rows. The original text is kept because the *reasoning* under each heading is still the derivation for the fixes that followed.
+
+The **core is in far better shape than the device integration**. At the original audit baseline, 56 of 57 host tests pass, including deep byte-level parity suites for combat, commands, magic, items, shops, dialogue, dungeons, travel and persistence. **Post-Batch-1, the host suite was 58 total, 57 pass, with only the pre-existing `gameplay_parity` mismatch 59 (R-02/R-03/R-04) failing.** **Post-Batch-2, R-02/R-03/R-04 are GREEN and mismatch 59 is fixed.** The host suite is still 58 total, 57 pass, but the sole failure is now a *different*, newly-exposed mismatch — **`gameplay_parity` mismatch 2034 (R-21)**, hidden behind mismatch 59 until then. **Batch 13 adjudicated and fixed it**: "2034" is a sequence index, not a byte offset, and it was a confirmed native defect — the (U)se scroll/potion readers echoed a fabricated `Used <name>.` line where `CAST.OVL 0x11f0`/`0x136e` print the bare category word, plus an invented `No effect!` fallback. `gameplay_parity` now passes. Mismatch 2034 was reproduced byte-for-byte on the untouched pre-Batch-2 baseline with the Batch 2 changes removed, confirming it is pre-existing and unrelated to R-02/R-03/R-04; it is tracked separately (§3 R-21) and was **not** fixed in Batch 2. **Batch 17 retired the other half of the "known baseline failures" convention.** From Batch 8 to Batch 16 every write-up below compared against two expected failures and set them aside. Batch 13 fixed the first (`gameplay_parity` mismatch 2034). Batch 17 adjudicated the second — `quest_parity`'s `STATUS_ACCESS_VIOLATION` / exit `3221225477` — and it was **not** the "MinGW/w64devkit environment finding" eight batches recorded it as: it was a `setjmp`/`longjmp` escape in the host harness invoking undefined behaviour against the Win64 SEH ABI, reproducing 100 % of the time and hiding **zero** parity divergence (the full 5377-case comparison was run to completion before the fix and matched the reference on every case). **The host suite is now 85 total, 85 pass, 0 fail — the first fully green run in this audit's recorded history.** Any failure a future batch sees is a real one, and must be treated as such. See §4 Y-34 and §14 Batch 17. **Batch 18 re-measured this from a clean build directory and confirms it (85/85/0 on the unmodified Batch 17 tree), then closed at 86/86/0 with its own new target — the first batch to both open and close fully green.**
 
 The remaining failures are almost entirely in the **glue layer**: `native/targets/tdeck/main/alpha_runtime.cpp` (1375 lines), `native/core/src/ui_session.cpp`, `native/core/src/presentation.cpp`, and the **asset pack**.
 
@@ -34,7 +61,13 @@ The remaining failures are almost entirely in the **glue layer**: `native/target
 3. ~~**R-19 — Ships cannot sail.**~~ **RESOLVED in Batch 3.** `handle_exploration` now branches to `CommandKind::YellSails` when the party is aboard a frigate outside the Underworld, exactly as the reference's `yell()` dispatcher does, before the word prompt. See §3 R-19 and §14 Batch 3.
 4. ~~**R-07/R-08 — The endgame (U)se chain is unreachable.**~~ **RESOLVED in Batch 3.** `usable_item_display_name()` now has exactly one interpretation — the real canonical id — and the shared picker seam gates a row per canonical id from its authoritative possession owner. Grapple is gone from the picker (Klimb-only). Pocket Watch (35) remains the one deliberate omission: no field anywhere backs it. See §3 R-07/R-08 and §14 Batch 3.
 5. ~~**R-06 — `Ready` is rejected in combat and in dungeons.**~~ **RESOLVED in Batch 3.** Ready now routes in all three contexts, passes `battle = c.combat` to `equip_item()`, and refreshes the acting player's `CombatActor` equipment cache after a successful in-combat change. See §3 R-06 and §14 Batch 3.
-6. **R-09/R-10 — Five modal responses and both NPC-initiated events are silently discarded**, disabling Blackthorn, the Britannia guards, fountains, and every shopkeeper/guard that starts the conversation.
+6. ~~**R-09/R-10 — Five modal responses and both NPC-initiated events are silently discarded**, disabling Blackthorn, the Britannia guards, fountains, and every shopkeeper/guard that starts the conversation.~~ **RESOLVED in Batch 4.** Left unstruck for four batches; corrected in Batch 18. See §3 R-09/R-10 and §5, whose `BeginConversation`/`BlackthornAction` rows carried the same stale reading.
+
+**The remaining risk list, reconciled at Batch 18, is short:**
+
+1. **136 of 140 hardware rows have never been run** ([`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md)). This is the single Alpha 2 blocker.
+2. **R-25 — the crystal ball is 100 % non-functional** and its prompt is fabricated. The faithful fix needs the kernel `0x4988` command-character picker as a shared seam, also owed to `(S)earch` and `(C)ast`; deferred with a four-step scope in §3 R-25.
+3. **Y-32 — the Blackthorn scene's pacing has no reference witness.** Not fixable until someone records original footage; see the ledger D-10.
 
 ### Anchor verdicts
 
@@ -130,7 +163,7 @@ All routes are `UiSession::handle_exploration` → `UiIntent` → `AlphaRuntime:
 | `V` gem — world | **G** — host+firmware RESOLVED (Batch 10) | R-17/Y-14. Core (decrement, defer turn, `AfterGemView`) matches `game.ts::view()` byte-for-byte [REF]. Presentation now `build_world_gem_view()` (native/core, host-tested): reference `GEM_CATEGORY` classification, chunk-origin-anchored/full-town window, full 32×32 square. Hardware visual check pending. |
 | `V` gem — dungeon floor | **G** — host+firmware RESOLVED (Batch 10) | `build_dungeon_gem_view()` (native/core, host-tested) is the same 8-neighbour flood over the 22×22 display DNGLOOK performs (reference `buildGemView`'s dungeon branch), now blocker-correct (a *revealed* secret door still blocks the gem's flood, unlike movement passability). R-17. Hardware visual check pending. |
 | `V` gem — no gems | **G** | `"You have none!\n"` + immediate turn. Matches DS 0xa266 and the bug-for-bug turn charge [REF]. |
-| Crystal-ball "Strange vision!" gem view | **G** — host+firmware RESOLVED (Batch 10) | `look.cpp:40` sets `gem_from_crystal=true`; device correctly suppresses the deferred turn. Presentation shares R-17/Y-14, now resolved. |
+| Crystal-ball "Strange vision!" gem view | **R** — *presentation* resolved (Batch 10), *route* unreachable | **Corrected in Batch 18 — this row previously read a flat G and contradicted R-25.** The presentation half is genuinely done: `look.cpp:40` sets `gem_from_crystal=true` and the device correctly suppresses the deferred turn, sharing R-17/Y-14's resolved renderer. But **nothing can reach it**: the T-Deck raises a fabricated `"Peer into it?"` yes/no and then dispatches `CrystalBall` with `member == -1`, which `look.cpp:39` rejects outright. R-25 — open, deferred, device row H-50. |
 | `MapReveal` (Wis An Ylem, In Quas Wis scroll, Death Vision) | **G** — RESOLVED (Batch 7) | `compose_world_presentation`'s `reveal_all` bypasses the light/wall censorship for `note*PAUSE_UNIT_MS` (1100ms) wall-clock; the device swallows input for the same window, matching the reference's modal `revealViewport`/`cancelMapReveal`. R-12 |
 | `Zodiac` (Use Spyglass) | **G** — RESOLVED (Batch 7) | `render_zodiac_view` draws the already-computed `ZodiacView` (stars/signs/Shadowlord lines); closes on any key like View Gem, charging no turn. R-13 |
 
@@ -819,15 +852,80 @@ The fix is smaller than the original audit assumed: `CommandKind::BeginConversat
 
 ---
 
-### R-25 — `CrystalBall` dispatches with `member == -1` and is always rejected · **SEVERITY: unassessed** · **RED — OPEN, newly discovered (Batch 4 adjudication), not fixed**
+### R-25 — `CrystalBall` dispatches with `member == -1` and is always rejected · **SEVERITY 2** · **RED — OPEN, re-adjudicated and re-scoped (Batch 18); deliberately DEFERRED**
 
 Reference `main.ts` uses `pickCommandChar` (a character picker) before viewing a crystal ball; native opens a `YesNo` and, on Yes, dispatches `CommandKind::CrystalBall` with the default, never-set `Command::member == -1`. `look.cpp:39` rejects that outright: **zero events, zero HP change, always `Rejected`**, regardless of player input. Discovered while adjudicating R-09 (the original audit cited this as a correctly-handled precedent to copy for the Blackthorn/guard fix; it is not). Left unfixed per Batch 4's explicit scope boundary. **Files:** `native/targets/tdeck/main/alpha_runtime.cpp` (`modal()`, `CrystalBall` arm), `native/core/src/look.cpp:39`.
 
+#### Batch 18 re-adjudication — confirmed live, and severity raised
+
+Re-verified against the current tree, not the Batch 4 note. `look.cpp`'s guard is now `if(cmd.member<0||cmd.member>=g.party.character_count) return CommandStatus::Rejected;` and `alpha_runtime.cpp:888` still reads `else if(i.request==...::CrystalBall&&i.value.yes){c.kind=...::CrystalBall;command(c);}` with `c.member` untouched. **The crystal ball is 100 % non-functional on device**, which is a severity-2 dead feature, not "unassessed". Two separate divergences sit on top of each other:
+
+1. the **prompt is fabricated** — `ui_session.cpp:1201` raises `begin_yes_no(CrystalBall,"Peer into it?")`, and `LOOKOBJ cmd_look 0x09ea`'s case `0x29` raises **no yes/no at all**: it calls the command character picker (`call 0xffffa6f8` → kernel `0x4988`) directly, and only then rolls the die at `0x09f6`;
+2. the **member is never chosen**, so the already-correct core arm can never run.
+
+#### Why Batch 18 did NOT fix it
+
+The faithful fix is not "pass `active_member(game_)`". `pickCommandChar` (`game/src/ui/pickers.ts:92`, annotated instruction-by-instruction against kernel `0x4988`) is a four-branch resolver: active character valid → use it directly (`@0x49b2`); exactly one eligible `'G'`/`'P'` → auto-select (`@0x49fa`); zero eligible → `"None!"` (DS `0xa3da`, printed by the common epilogue at `@0x4a5f`); two or more → the `"Player: "` prompt (DS `0xa3c4`) with the chosen name echoed on the same row, a `"Disabled!"` re-ask loop for a member whose status byte is neither `'G'` nor `'P'` (`@0x4a4e`), and `"None!"` on cancel.
+
+Native implements **none** of it. `search_world()` takes a `searcher` parameter and every caller passes `-1`, falling back to "active, else member 0" (`quest_search.cpp:67`); `pickCaster` delegates to the same kernel routine in the reference, so `(C)ast` owes it too. Building it correctly means a new shared core seam plus a new `UiRequestId` plus re-pointing `(S)earch` and `(C)ast` at it — **three systems, architectural, and it changes the perceiver of every chest trap check**. That is squarely inside Batch 18's "defer instead" list, and a partial implementation would be a guess dressed as a fix.
+
+**Scoped follow-up (Batch 19 candidate, precisely bounded):**
+1. Add `openu5::resolve_command_char()` to the core as an ESP-free seam reproducing kernel `0x4988`'s four branches and its three strings, with the `"Disabled!"` re-ask loop.
+2. Add `UiRequestId::CommandChar` and route `CrystalBallPrompt` through it instead of `begin_yes_no`, deleting the fabricated `"Peer into it?"`.
+3. Re-point `search_world()`'s `searcher` and `cast_selected_spell()`'s caster at the same seam; `gameplay_parity` is the regression oracle for the trap-check perceiver change.
+4. Device row H-50 in the consolidated checklist already records the current broken behaviour so the fix has an observation to flip.
+
 ---
 
-### R-26 — `WellDrop` "No" dispatches nothing and ESC does not mean No · **SEVERITY: unassessed** · **RED — OPEN, newly discovered (Batch 4 adjudication), not fixed**
+### R-26 — `WellDrop` "No" dispatches nothing and ESC does not mean No · **SEVERITY 2** · **GREEN — RESOLVED (Batch 18), production fix**
 
 Reference `dropCoin(false)` (the "No" answer) prints `"No\n"`; native's `WellDrop` "No" arm dispatches nothing at all — it only "works" on Yes because `Command::member == -1` happens to be truthy in `look.cpp:37`. The reference also treats ESC as No (`yesno-esc`); native passes `cancel_means_no=false`, so ESC is ignored instead. Discovered while adjudicating R-09 (same reason as R-25 — cited as a correct precedent, only half true). Left unfixed per Batch 4's explicit scope boundary. **Files:** `native/targets/tdeck/main/alpha_runtime.cpp:645`, `native/core/src/ui_session.cpp` (`WellDropPrompt` case).
+
+#### Fix (Batch 18) — RESOLVED, and two adjacent fabrications closed with it
+
+Adjudicated against `LOOKOBJ.OVL` via `game/src` before any edit. The **core was always correct**: `look.cpp:37` is `say(cmd.member?"Yes\n":"No\n"); if(cmd.member&&g.gold>0) emit(WellWishPrompt);`, byte-for-byte `game.ts::dropCoin()` — the Yes echo precedes the gold check (`0x006e` before `0x0075`), and a Yes with no gold returns **silently** (there is no `"Thou hast no coin!"` in the binary). `gameplay_parity` drives that arm through its `coin` op and has always passed it. Everything below is the **glue** that decides what the core is handed, which no host test in the project reached until this batch.
+
+Four separate divergences, all confirmed RED first (see §14 Batch 18 for the run):
+
+1. **The "No" answer dispatched nothing.** `alpha_runtime.cpp`'s arm was gated on `&&i.value.yes`. Now it dispatches on both answers and carries the answer in `Command::member` (`c.member=i.value.yes?1:0`) — the exact shape the `TrollToll` arm one line above already uses. The Yes path is semantically unchanged (`-1` and `1` are both truthy in the core's test).
+2. **ESC was ignored.** The reference prompt type is `yesno-esc` (`main.ts` `well-drop-prompt`). `begin_yes_no(...,false)` → `begin_yes_no(...,true)`.
+3. **The object description was missing.** `LOOKOBJ 0x0048` special-cases the well *before* the generic "Thou dost see" and prints description and prompt in one print — `hud.message("a well.\n\nDrop a coin?")`, DATA.OVL DS `0x720c`. Native raised only the prompt. Added `append(UiTextChannel::Message,"a well.")`, the identical shape the `FountainDrinkPrompt` arm four lines below already uses for DS `0x729c`.
+4. **The wish row's prompt was fabricated.** Native printed `"What dost thou wish?"`; the literal is DS `0x722c` = `"\nThy wish?"` (`WELL_UI.wish`, printed by `LOOKOBJ 0x007f`, with the reference's own note that it deliberately carries **no** `:` cursor). The 12-character limit was already right.
+
+Fixing (4) exposed **R-34** below, which had to be fixed for the corrected prompt to be visible at all.
+
+**Tests:** new `batch18_well_ceremony` (19 checks) drives the whole ceremony through production routing — real `RawInputEvent`s into the real `UiInputAdapter`, the real `UiSession`, and the real, unmodified `alpha_runtime.cpp`. **RED 16/5 → GREEN 19/0.** Four mutations, each caught and reverted. **Files:** `native/core/src/ui_session.cpp`, `native/targets/tdeck/main/alpha_runtime.cpp`. **Hardware:** checklist rows H-17 – H-22.
+
+---
+
+### R-34 — `finish_modal()` wipes the prompt of any modal its own dispatch armed · **SEVERITY 2** · **GREEN — RESOLVED (Batch 18), production fix**
+
+Found while fixing R-26 item (4): the corrected `"Thy wish?"` string was in the source and the wish row was open in `UiMode::TextEntry`, but `UiSession::prompt()` returned the **empty string**.
+
+**Root cause.** `UiSession::finish_modal()` ends with
+```
+    dispatch(i);
+    input_[0] = 0; input_length_ = 0; prompt_[0] = 0;
+```
+The teardown runs **after** the dispatch, and an answer is allowed to arm the next modal *synchronously inside* that dispatch — every one of them reaching `enter_modal()`, which sets `mode_` **and** `prompt_`. The unconditional clear then wiped the new prompt while leaving the new mode, so the follow-up modal rendered with an empty prompt row. `cancel_modal()` does not have the bug: it clears **before** dispatching.
+
+**Blast radius — this was never well-specific.** Every chained modal in the project was affected, and the chain runs through `AlphaRuntime::modal()` as often as through `UiSession::consume()`:
+
+| Chain | Follow-up prompt that was blank |
+|---|---|
+| Well: Yes → `WellWishPrompt` | `Thy wish?` |
+| `(U)se` picker → Rel Hur scroll / skull key | `Direction?` (`begin_target`, `alpha_runtime.cpp` Inventory arm) |
+| `(U)se` picker → potion/consumable | `On whom?` party picker |
+| Shrine: `Visit?` → | `Virtue?`, then `Mantra?` |
+| Blackthorn interrogation: each answer re-emits the prompt | `Your response?` — the very row Batch 4 added for prompt fidelity |
+| `(R)eady`: member picked → | the equipment picker's prompt |
+
+**Fix.** One guard, keyed on the fact that `enter_modal()` only ever records a **non-modal** `return_mode_` — so after `mode_ = return_mode_` runs earlier in `finish_modal()`, `is_modal(mode_)` is an exact test for "the dispatch armed something new":
+```
+    if (!is_modal(mode_)) { input_[0] = 0; input_length_ = 0; prompt_[0] = 0; }
+```
+
+**Tests:** `batch18_well_ceremony` group W6 pins the invariant through a **second, independent** chain (the Rel Hur `Direction?` prompt) so no future change can fix the well without fixing the mechanism. **RED** against unmodified code (W4-3 and W6-3 both failing), **GREEN** after. Mutation M1 (clear unconditionally again) turns exactly those two RED. Full suite 86/86 confirms no chain relied on the old clearing. **File:** `native/core/src/ui_session.cpp`. **Hardware:** checklist row H-23.
 
 ---
 
@@ -1640,8 +1738,8 @@ A design review of the freshly-landed R-30 work found two of the five Certificat
 | `CombatYield` | **Live** — R-06 correction pass: `UiSession::cancel_modal()` dispatches it to spend the combat action when a combat (R)eady picker closes, the counterpart of the reference's `playerReady()` |
 | `ShopAction` | **Dead** — shops go through `UiIntentKind::Shop` → `execute_shop`. Candidate for deletion. |
 | `EnterDungeon` | Reachable only from `commands.cpp:561` (world `Enter`) and `debug_map_picker.cpp:323`. Correct — not player-constructed. |
-| `BeginConversation` | **Dead** — blocked by R-10 |
-| `BlackthornAction` | **Dead** — blocked by R-09 |
+| `BeginConversation` | **STALE ENTRY — corrected in Batch 18. Live.** R-10 was resolved in Batch 4; the value has had producers ever since at `ui_session.cpp:1228` (`NpcInitiatesTalk` → `Command{BeginConversation, member=npc slot}`) and `alpha_runtime.cpp:1064`. The "blocked by R-10" reading survived four batches after its cause was fixed. |
+| `BlackthornAction` | **STALE ENTRY — corrected in Batch 18. Live.** R-09 was resolved in Batch 4; produced at `ui_session.cpp:499/504/509/514` (Tribute, Arrest, Answer, Password) and handled at `commands.cpp:627`. |
 | `UseMoonstone` | **Live** — R-08 resolved (Batch 3): moonstone rows 21-28 are in the Use picker whenever carried |
 | `HarpsichordNote` | **Live** — R-20 resolved (Batch 3): digit keys at the harpsichord |
 | `YellSails` | **Live** — R-19 resolved (Batch 3): `(Y)ell` aboard a frigate |
@@ -1666,7 +1764,9 @@ A design review of the freshly-landed R-30 work found two of the five Certificat
 
 ### `DungeonAction` values
 
-`TurnAround` and `Drink` have no producer in `ui_session.cpp`, `alpha_runtime.cpp` or `dungeon_orchestration.cpp`. `MagicUp`/`MagicDown`/`Tick` are correctly core-internal (produced by the Cast handler).
+~~`TurnAround` and `Drink` have no producer in `ui_session.cpp`, `alpha_runtime.cpp` or `dungeon_orchestration.cpp`.~~ **STALE ENTRY — corrected in Batch 18. Both live since Batch 9B.** `TurnAround` is produced at `ui_session.cpp:866` (Confirm in the dungeon) and `:911` (the `.` key); `Drink` at `:479` (the `Will you drink?` answer) and `:906` (the `d` key, which answers `"No fountain here."` off a fountain). `MagicUp`/`MagicDown`/`Tick` are correctly core-internal (produced by the Cast handler).
+
+**Re-verified live at Batch 18 and still accurate:** `ShopAction` (handled at `commands.cpp:629`, no producer — shops route through `UiIntentKind::Shop`), `CommandKind::CombatEscape` (no reference anywhere but the enum; only `CombatEscapeQuick` is bound, at `ui_session.cpp:941`), `Unready` (handled at `commands.cpp:1114`, no producer — `equip_item` toggles). All three are deliberate and harmless; see the preservation ledger D-18.
 
 ### Renderer functions
 
@@ -1696,7 +1796,23 @@ A design review of the freshly-landed R-30 work found two of the five Certificat
 
 ## 7. TEST-GAP REPORT
 
-### Currently failing
+### Currently failing — **NOTHING. (Batch 18, re-measured from a clean build directory.)**
+
+> **Read this before the history below.** Every "currently failing" statement in the rest of this section is **archaeology**, kept for its reasoning and superseded by this box. As of Batch 18 the authoritative host suite is **86 total, 86 pass, 0 fail, 0 skipped**, measured twice: **85/85/0** from a clean `build-batch18` on the unmodified Batch 17 tree (the pre-edit baseline), and **86/86/0** after Batch 18's own fix and its new `batch18_well_ceremony` target.
+>
+> | Measure | Batch 18 baseline | Batch 18 final |
+> |---|---|---|
+> | registered tests | 85 | 86 |
+> | pass / fail / skipped | 85 / 0 / 0 | 86 / 0 / 0 |
+> | `gameplay_parity` | PASS, 5,058 sequences | PASS, 5,058 sequences |
+> | `quest_parity` | PASS, 5,377 cases, `nonterminatingObservations: 2` | PASS, same |
+> | project compiler warnings | 0 | 0 |
+>
+> The one warning the clean baseline build emits is **not** a project warning: it is GCC 16's `-Wstringop-overflow` firing inside `<bits/stl_uninitialized.h>` on a `std::vector::insert` inlined from `tests/command_parity_test.cpp:240` — test-harness code, a known false-positive shape for that diagnostic, and not present in any translation unit that ships.
+>
+> **The "compare against the known baseline failures" convention is retired and must not come back.** It was retired in two halves — `gameplay_parity` in Batch 13 (R-21) and `quest_parity` in Batch 17 (Y-34) — and Batch 18 is the first batch to open *and* close on a fully green suite. Any failure a future batch sees is real and is caused by the change under test.
+
+#### Historical record
 
 Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, mismatch 59, R-03).
 
@@ -1753,6 +1869,18 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 | Combat session | ✗ | cleared | ✓ | **N** (matches reference) |
 | Dialogue / shop / shrine / Blackthorn sessions | ✗ | cleared | ✓ | **N** (session-only, correct) |
 | Settings (brightness, movement mode, trackball, UI size) | ✓ (separate `settings.json`) | ✓ | ✓ | **G** |
+| **Persistent dungeon field spells** (In Flam/Nox/Zu/Sanct Grav) | ✓ | ✓ | n/a (re-derived from cells) | **G** — reconciled in Batch 18 |
+| **Hidden / search objects once found** | ✓ | ✓ | ✓ | **G** — reconciled in Batch 18 |
+| Reagent-patch "found on day N" latch | ✓ (`save_core.cpp:191` `reagentPatchFoundDay`) | ✓ (`:381`) | n/a | **G** — reconciled in Batch 18 |
+| Buried-moonstone state | ✓ (`persistence.cpp:308`) | ✓ (`:419`) | n/a | **G** — reconciled in Batch 18 |
+
+**Batch 18 persistence reconciliation.** The four rows above were not in this table and were audited directly rather than assumed:
+
+* **Dungeon field spells have no storage of their own and need none.** `dungeon_orchestration.cpp:176` writes the field straight into `d.cells[front]` (`cell = (cell&8) | 130/129/128/131` for Zu/Nox/Flam/Sanct). `DungeonState::cells[512]` is serialized in full by `save::capture_dungeon()` (`gameplay_save.cpp:90`) and validated element-by-element on restore (`restore_dungeon()` rejects any array that is not exactly 512 finite bytes in 0–255). A cast field therefore survives save/load for free, and so does every authored field — they are the same bytes. Device row H-115 checks it on glass.
+* **Found search objects** become ordinary `QuestObject`s via `quest_search.cpp`'s `place()` lambda and ride `objects_`, which R-14 made persistent in Batch 6.
+* Both remaining rows are plain `GameState`/`TurnState` fields with named serializers, cited above.
+
+**No persistence axis was found lacking a production-path test.** `persistence_parity` drives the real `persistence_driver`; `gameplay_integration_test.cpp:87` round-trips `capture_dungeon` against a live `DungeonState`. **No new save format was introduced, and none is needed.**
 
 **Transaction integrity: G.** Two-slot generation commit with per-file CRC, temp-file validation, atomic rename, `select_generation` recovery, and DMA headroom guarding. This is the best-engineered part of the device layer.
 
@@ -3005,6 +3133,266 @@ the time is preserved.
 
 ---
 
+### Batch 18 — Comprehensive Alpha 2 audit and reconciliation · risk: low (audit batch; two small production fixes) · **GREEN — HOST-CLEAN; TWO CONFIRMED NATIVE DEFECTS FIXED; ONE DEFERRED WITH A SCOPED FOLLOW-UP**
+
+**IDs:** R-26 (**GREEN — RESOLVED**), R-34 (**new, GREEN — RESOLVED**), R-25 (**OPEN — re-adjudicated, severity raised, deliberately deferred**). Plus four stale entries in this document corrected and four persistence axes reconciled.
+
+This is the first whole-project audit since the parity, dungeon, magic, UI, Blackthorn, save/load and harness-cleanup batches. Its deliverable is not code — it is an authoritative, contradiction-free answer to *what remains before Alpha 2 can be declared complete*. Two new sibling documents carry the parts that were previously scattered:
+
+* **[`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md)** — one deduplicated 140-row device list, executable in a single session. §16 below stays as the archaeology of which batch owed which step.
+* **[`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md)** — every knowing divergence from the reference, split into T-Deck adaptations, deliberate enhancements, and unresolved divergences, with a toggle-feasibility assessment for a future preservation profile. **No enhancement was reverted and no toggle was implemented.**
+
+---
+
+#### 1. Baseline
+
+Measured from a **clean** `native/core/build-batch18` on the unmodified Batch 17 tree, before any edit:
+
+| | |
+|---|---|
+| HEAD at entry | `83b2ed56` — *Batch 17: adjudicate and fix the quest_parity host crash (Y-34)* |
+| Latest tag at entry | `alpha2-batch17-quest-parity-crash` |
+| Host suite | **85 total · 85 pass · 0 fail · 0 skipped** |
+| `gameplay_parity` | PASS — 5,058 sequences |
+| `quest_parity` | PASS — 5,377 cases, `nonterminatingObservations: 2` (the two reference non-terminating theft cases, expected) |
+| Project compiler warnings | **0** |
+
+**Batch 17's exit state, verified from git and source rather than from its own prose.** The commit touches exactly five files, four of them host build inputs (`tests/quest_theft_watchdog.h`, `tests/batch17_theft_watchdog_test.cpp`, `tests/quest_driver.cpp`, `CMakeLists.txt`) plus this document. No translation unit under `native/core/src`, `native/core/include` or `native/targets/tdeck/main` was modified — confirmed by `git show --stat`. The classification stands: the former `quest_parity` `STATUS_ACCESS_VIOLATION` was **host-harness undefined behaviour** (a `setjmp`/`longjmp` escape invalid against the Win64 SEH ABI), not production code, not parity semantics, and not environment flakiness. Batch 17 did build firmware and reported it byte-identical to Batch 16 at `0xd1b10`; Batch 18's own baseline size measurement agrees.
+
+**One non-project warning exists and is recorded so it is not rediscovered as a finding.** The clean baseline build emits exactly one `-Wstringop-overflow` from GCC 16, inside `<bits/stl_uninitialized.h>`, on a `std::vector::insert` inlined from `native/core/tests/command_parity_test.cpp:240`. It is test-harness code, a known false-positive shape for that diagnostic, and absent from every translation unit that ships.
+
+---
+
+#### 2. Items closed during reconciliation
+
+| ID | Was | Now | Evidence |
+|---|---|---|---|
+| **R-26** | RED — OPEN since Batch 4 | **GREEN — RESOLVED** | `batch18_well_ceremony` 19/19; RED 16/5 first; 4 mutations caught |
+| **R-34** | not known to exist | **GREEN — RESOLVED** (found while fixing R-26) | same target, groups W4/W6; RED on two independent chains |
+
+**R-26 — the wishing well.** Four divergences, all in the T-Deck glue; the core arm (`look.cpp:37`) was byte-correct throughout and `gameplay_parity` had always passed it. (1) the "No" answer dispatched nothing, so `dropCoin(false)`'s `"No"` echo never printed; (2) ESC was ignored although the reference prompt type is `yesno-esc`; (3) the object description `"a well."` (DS `0x720c`) was missing, although the fountain arm four lines away already does exactly this for DS `0x729c`; (4) the wish row printed a fabricated `"What dost thou wish?"` instead of DS `0x722c` `"Thy wish?"`. Full derivation in §3 R-26.
+
+**R-34 — chained modals lost their prompt.** `UiSession::finish_modal()` cleared `prompt_`/`input_` **after** dispatching the answer, and an answer may arm the next modal synchronously inside that dispatch. The new modal's `mode_` survived and its prompt did not. This was **never well-specific**: the Rel Hur/skull-key `Direction?` row, the `(U)se` potion `On whom?` picker, the shrine `Virtue?`/`Mantra?` pair, the equipment picker, and — worst — Blackthorn's `Your response?` row, the very line Batch 4 added for prompt fidelity, were all rendering with a blank prompt. `cancel_modal()` never had the bug; it clears before dispatching. Fixed with one guard on `is_modal(mode_)`, which is exact here because `enter_modal()` only ever records a non-modal `return_mode_`. Full derivation in §3 R-34.
+
+---
+
+#### 3. Stale entries corrected
+
+Four statements in this document were **true when written and false now**, and had survived between four and nine batches past their cause:
+
+| Location | Stale claim | Corrected to |
+|---|---|---|
+| §5 `CommandKind` table | `BeginConversation` — "Dead — blocked by R-10" | **Live.** R-10 was fixed in Batch 4; producers at `ui_session.cpp:1228` and `alpha_runtime.cpp:1064` |
+| §5 `CommandKind` table | `BlackthornAction` — "Dead — blocked by R-09" | **Live.** R-09 was fixed in Batch 4; producers at `ui_session.cpp:499/504/509/514` |
+| §5 `DungeonAction` | "`TurnAround` and `Drink` have no producer" | **Both live since Batch 9B** — `:866`/`:911` and `:479`/`:906` |
+| §7 "Currently failing" | a chain of superseded per-batch tallies ending at "71 total, 69 pass, 2 fail" | **86 / 86 / 0**, with the retired-convention warning at the top of the section |
+
+**Re-verified and still accurate**, so left alone: `ShopAction`, `CombatEscape` and `Unready` are still handled with no producer; `render_active_view()` still has no caller and is still linked into the firmware (confirmed in `build/openu5_tdeck.map`).
+
+---
+
+#### 3b. The full reconciliation table
+
+Every R- and Y- identifier in this document, classified in exactly one bucket, with the concrete evidence behind the classification. Built by re-reading the current source and re-running the suite, **not** by copying prior status lines — which is how §3b caught the four stale entries in §3a above.
+
+Legend: **CH** = closed, host-verified · **CD** = closed, verified on hardware · **IH** = implemented, hardware verification still required · **OD** = open, real production defect · **OM** = open, missing feature/behaviour · **OE** = open, insufficient reference evidence · **INT** = intentional enhancement/divergence · **STALE** = superseded by later work · **OOS** = out of Alpha 2 scope.
+
+| ID | Class | Evidence | Device row |
+|---|---|---|---|
+| R-01 shop/dialogue mode destroyed | **IH** | `ui_mode_regression` 28/28 via `ui_mode_policy.h` (Batch 1) | H-26, H-28, H-31 |
+| R-02 chest renders as deep water | **IH** | `presentation_regression` R03-OUTDOOR (Batch 2) | H-37 |
+| R-03 arena chests promoted to world objects | **IH** | `gameplay_parity` mismatch 59 GREEN; `combat_loot_open_regression` R03-DIRECT | H-39 |
+| R-04 quest layer overdraws loot | **IH** | `presentation_regression` R04-OVERLAY, R04-LIFO | H-38 |
+| R-05 dungeon presentation | **IH** | `dungeon_view_regression` (logic, Batch 9); `typescript_dungeon_art_identity` (art, Batch 9C) | H-73 – H-84 |
+| R-06 Ready rejected in combat/dungeon | **IH** | `batch3_group_c` drives the real `execute_command()` in all three contexts | H-34, H-111 |
+| R-07 Grapple bound to id 18 | **IH** | `batch3_group_b` over `usable_item_picker_rows()` | H-41 |
+| R-08 endgame (U)se chain unreachable | **IH** | same seam; every owned id gated by its authoritative owner | H-41, H-118 |
+| R-09 five modal responses discarded | **IH** | `batch4_group_a` 32/32 (real trigger + real answer per family) | H-31, H-120 |
+| R-10 NPC-initiated Talk/Shop | **IH** | `batch4_group_b` 12/12 | H-25, H-26 |
+| R-11 world spells consume then do nothing | **CD** | `batch5` + **all three checks passed on the physical T-Deck, first attempt (Batch 5)** | **H-48 PASS** |
+| R-12 `MapReveal` has no renderer | **IH** | `presentation_regression` reveal window (Batch 7) | H-51 |
+| R-13 `Zodiac` has no renderer | **IH** | Batch 7; the 9 px clipping residual is ledger D-12 | H-52 |
+| R-14 world objects never serialized | **IH** | `persistence_parity`; sidecar round-trip (Batch 6) | H-40, H-124 |
+| R-15 `DungeonState` not serialized | **IH** | `gameplay_integration_test.cpp:87` round-trips `capture_dungeon` | H-115 |
+| R-16 spell metadata contradictions | **CH** | `display_names` 11 semantic assertions; `magic_parity` **25,088 cases byte-identical before and after**, proving no tracked field moved. Pure metadata — nothing to observe on glass | none owed |
+| R-16 residual: the TypeScript port still implements the disproven In Ex Por no-op | **OOS** | touches `game/src`, not the native port (`content-audit.md` PENDIENTE(3)) | n/a |
+| R-17 View Gem presentation fabricated | **IH** | `gem_view` host tests + `gem_category_table_drift` (Batch 10) | H-49 |
+| R-18 `pre_combat_mode_` stale register | **CH** | `ui_mode_regression`; the three return paths are separately owned and asserted | covered by H-35 |
+| R-19 ships cannot sail | **IH** | `batch3_group_a` A1/A2 | H-70 |
+| R-20 harpsichord unreachable | **IH** | `batch3_group_a` A3 | **H-125** (added in Batch 18 — it had no row) |
+| R-21 fabricated (U)se echo | **IH** | `gameplay_parity` mismatch 2034 GREEN (Batch 13) | H-42 – H-47 |
+| R-22 Z-stats pages missing | **IH** | `batch14_zstats_model` 97/0, `batch14_zstats_runtime` 54/0 | H-54 – H-69 |
+| R-23 sacrifice roster compaction | **CH** | `batch15_sacrifice_roster` 75/0 + 4 mutations. **No hardware step is owed**: every `.GAM` yields 16 records, at which count the old and reference bounds are the same expression | none owed, by proof |
+| R-24 `DebugPreset::Combat` engaged Set Active Player | **IH** | pre-Batch-4 Developer cleanup | **H-131** (added in Batch 18) |
+| **R-25 crystal ball always rejected** | **OD** | live at Batch 18: `alpha_runtime.cpp:888` never sets `member`; `look.cpp:39` rejects. Deferred — the fix needs kernel `0x4988` as a shared seam | **H-50** (records the broken behaviour) |
+| R-26 well "No" / ESC | **CH** *(+ IH for the visuals)* | `batch18_well_ceremony` 19/0, RED 16/5 first, 4 mutations | H-17 – H-22 |
+| R-27 Developer Default Entrance ordinal vs signed z | **IH** | Batch 4.5A-1 | **H-132** (added in Batch 18) |
+| R-28 Developer UI raw ordinals | **IH** | Batch 4.5A-2 | **H-133** (added in Batch 18) |
+| R-29 Developer Special/Quest Items unreachable | **IH** | Batch 4.5A-3 | **H-133** (added in Batch 18) |
+| R-30 Developer presets opaque | **IH** | Batch 4.5A-4 | **H-134** (added in Batch 18) |
+| R-31 transcript auto-scroll defeated review | **IH** | Batch 4.5C; `preserve_scroll_on_growth()`. Also ledger **E-1**, a deliberate enhancement | **H-130** (added in Batch 18) |
+| R-32 Blackthorn scene has no distinct presentation | **IH** | Batch 4.5D; `blackthorn_scene_test.cpp`. Its *pacing* is a separate, open question — Y-32 | H-120 |
+| R-33 basement search floor byte 255 vs −1 | **IH** | Batch 4.5C.1 | H-30 |
+| R-34 `finish_modal()` wipes chained prompts | **CH** *(+ IH for the visuals)* | `batch18_well_ceremony` W4/W6 on two independent chains; mutation M1 | H-23 |
+| Y-01 WASD in frontend menus | **OM** | product decision, never taken. Ledger **D-1** | n/a until decided |
+| Y-02 trackball centre click unbound | **OM** | GPIO 0 not wired. Ledger **D-2** | n/a until decided |
+| Y-03 audio | **OOS** | declared out of Alpha 2 scope; `Sfx` unconsumed, volume settings inert. Ledger **D-3** | n/a |
+| Y-04 feedback VFX | **IH** | all six channels consumed (Batches 7/7B); pacers and `WorldFxLayer` host-tested, the pixel work is not | H-33, **H-135 – H-138** (five of six channels had no row before Batch 18) |
+| Y-05 `AlphaRuntime` has no host coverage | **STALE** | superseded by Batches 11, 14 and 18: three targets now link the real, unmodified `alpha_runtime.cpp` and drive it through `UiInputAdapter` → `UiSession` → `dispatch()`. The gap is narrowed to the pixel layer, which is Y-07 | n/a |
+| Y-06 device smoke tests are data-presence probes | **OM** | still true; 37 scenarios, none validates a rendered frame or a full route. Superseded *in purpose* by the three AlphaRuntime targets | n/a |
+| Y-07 broad device presentation unproven | **IH** | this is the umbrella for the whole checklist | all 136 UNTESTED rows |
+| Y-14 gem view overdrawn by the strips | **IH** | resolved with R-17 via `full_square_viewport` (Batch 10) | H-49 |
+| Y-15 Mix unreachable in dungeons | **OE** | no derivation exists for the dungeon dispatcher's `m` slot; native's alias is a declared shared affordance. Ledger **A-7**/**D-4** | n/a until derived |
+| Y-17 Acknowledgements is one line | **OM** | low priority. Ledger **D-5** | n/a |
+| Y-18 developer entry from the frontend | **IH** | enters on whatever `INIT.GAM` booted; confirmed intended | **H-129** (added in Batch 18) |
+| Y-19 Mix quantity hard-coded to 1 | **OM** | needs a numeric modal. Ledger **D-6** | n/a |
+| Y-20 `SetActivePlayer` unreachable | **IH** | `batch3_group_a`; digits carry the literal character | **H-126** (added in Batch 18) |
+| Y-21 Rel Hur scroll claim | **STALE** | the claim was false when written; discharged in Batch 5 by direct reading of `alpha_runtime.cpp:684` | n/a |
+| Y-22 dungeon→combat→dungeon return | **IH** | `dungeon_flow_parity` at core level | H-113 |
+| Y-23 dungeon keyboard movement needs Movement Mode | **INT** | deliberate contract, now stated. Ledger **D-7** | H-107 exercises it |
+| Y-24 word-of-power Yell | **CH** | `batch3_group_a` A3 | H-119 |
+| Y-25 shrines | **IH** | mode lifecycle repaired in Batch 1; no known mode defect | H-31 |
+| Y-26 beds / auto-sleep | **CH** | confirmed core-internal (`commands.cpp:1163` via `townAutoSleepTurn`), which was the question | **H-128** (added in Batch 18, opportunistic) |
+| Y-27 System Menu over an open modal | **IH** | handled before gameplay routing and does not touch `ui_->mode()` | **H-127** (added in Batch 18) |
+| Y-28 combat Ready picker close timing | **OE** | two presentation gaps, never adjudicated; no action-cost effect. Ledger **D-8** | **H-139, H-140** (record, do not file) |
+| Y-29 Symbol+Mic/`0` | **IH** | `input_test.cpp` corrected from pinning the old behaviour, then RED→GREEN + mutation (Batch 16) | H-10, H-11 |
+| Y-30 world cast prompt/consumption ordering | **OE** | a consequence of the fused `world_magic()`; no tracked-field divergence demonstrated. Ledger **D-9** | n/a |
+| Y-31 Rel Hur / skull-key cancel refund | **IH** | `batch5` B5/B6 RED→GREEN, C7/C8 controls, mutation (Batch 16) | H-15, H-16 |
+| Y-32 scripted-event pacing | **OE** | **no footage-derived timing evidence exists in this repository.** Batch 16 proved that by archaeology and correctly refused to invent a number. Ledger **D-10** | H-122 (record video if possible — that recording *is* the missing evidence) |
+| Y-33 Vas Rel Por phase gate | **IH** | `batch5` D1-D4/E1-E3/C9-C11/G1-G2 + C10c (found by `gameplay_parity`, not by the unit tests), 3 mutations | H-12 – H-14 |
+| Y-34 `quest_parity` access violation | **CH** | `batch17_theft_watchdog` 33/0, RED 2, 3 mutations; **harness-only, firmware byte-identical, so no device step exists to owe** | none owed, by proof |
+
+**Totals:** 2 **CH**-only closures this batch plus 8 pre-existing **CH**; **1 CD** (R-11, the only hardware-verified finding in the project); **32 IH**; **1 OD** (R-25); **5 OM**; **5 OE**; **1 INT**; **2 STALE**; **2 OOS**.
+
+**The single most important number in this table is CD = 1.** Thirty-two findings are implemented and believed correct on host evidence alone. That is why the hardware checklist, not the code, is the Alpha 2 blocker.
+
+---
+
+#### 4. Unresolved production defects
+
+**One.** R-25 — the crystal ball.
+
+Re-adjudicated against the current tree rather than the Batch 4 note, and its severity raised from "unassessed" to **2**: the feature is 100 % non-functional on device. `alpha_runtime.cpp:888` dispatches `CommandKind::CrystalBall` with `Command::member` never set, and `look.cpp:39` rejects any member outside `[0, character_count)` — zero events, zero HP change, every time. On top of that the `"Peer into it?"` yes/no is a native fabrication: `LOOKOBJ cmd_look 0x09ea` case `0x29` raises no prompt at all, it calls the command-character picker (kernel `0x4988`) directly.
+
+**Deferred on purpose, against the batch's own fix policy.** The faithful fix is not "pass the active member". `pickCommandChar` is a four-branch resolver (active → direct; one eligible → auto; zero → `"None!"`; two or more → the `"Player: "` prompt with a `"Disabled!"` re-ask loop), native implements none of it, and the same kernel routine drives `(S)earch`'s trap-check perceiver and `(C)ast`'s caster. Three systems, architectural, and it moves an RNG-adjacent perceiver — exactly the "defer instead" profile. The scoped four-step follow-up is written out in §3 R-25, and device row H-50 records the current broken behaviour so a future fix has an observation to flip.
+
+---
+
+#### 5. Unresolved reference questions
+
+| Question | Why it is open | ID |
+|---|---|---|
+| Is Mix legal underground? Native aliases dungeon `(M)` to Cast | no derivation attempted for the dungeon dispatcher's `m` slot | Y-15 |
+| What is the true per-tick pause for the Blackthorn capture scene? | **no footage-derived timing evidence exists anywhere in the repository.** `re/notes/blackthorn-escena-324.md` §4 explicitly disclaims a witness for this scene, and the TypeScript `PAUSE_UNIT_MS` is an admitted reuse of TrollSneak's calibration. Batch 16 confirmed this by direct archaeology and correctly refused to invent a number | Y-32 |
+| Should the world cast consume before prompting, as the reference does, rather than prompt before the fused `world_magic()` call? | the ordering is a consequence of the fused call, not an oversight; no divergence has been demonstrated in a tracked field | Y-30 |
+| Does the empty-handed combat Ready picker charge without opening in the reference, and does `vanished` close it early? | never adjudicated; does not affect action cost | Y-28 |
+*(Listed for completeness but classified **out of Alpha 2 scope**, not as a reference question: whether the reference's In Ex Por door-unlock should also be wired on the **TypeScript** side. It touches `game/src`, not the native port — R-16 residual, `content-audit.md` PENDIENTE(3).)*
+
+---
+
+#### 6. Intentional divergences
+
+Now enumerated in one place for the first time: **[`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md)**. Counts: **14 T-Deck adaptations** (A-1 – A-14), **4 deliberate enhancements** (E-1 – E-4), **18 unresolved divergences** (D-1 – D-18, of which exactly one — D-11 — is a live production defect, R-25).
+
+Nothing was reverted. The ledger's purpose is to make a future preservation profile possible, and it records per row whether the difference is already isolated enough to become a compatibility toggle. Seven adaptations and two enhancements are assessed as isolated; A-1 – A-5, A-13 and A-14 are **not restorable**, because hardware and not preference forced them.
+
+---
+
+#### 7. Hardware-only checks
+
+**None were performed. No physical T-Deck was available in this session, and no hardware evidence is claimed.**
+
+All still-relevant device steps from every prior batch are consolidated and deduplicated into **[`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md)**: **140 rows**, each with setup, exact input, expected visible result, expected state change, cancel-path expectation, SD-refresh requirement and a PASS/FAIL/UNTESTED field.
+
+* **4 rows carry real PASS evidence** and are marked as such: H-48 (Batch 5's three world-cast checks) and H-85/H-86/H-88 (the Batch 9B dungeon-runtime gate).
+* **136 rows are UNTESTED.**
+* The three checks Batch 16 left outstanding are rows **H-10/H-11** (Symbol+Mic `0`), **H-12 – H-14** (Vas Rel Por), **H-15/H-16** (Rel Hur and skull-key cancel).
+* Batch 18 adds **H-17 – H-23** for its own fixes (the well ceremony and the R-34 general chained-modal check).
+* **Batch 18 also found sixteen resolved findings that owed a device check and had no row anywhere**, and added Group 11 (**H-125 – H-140**) for them. The reconciliation table at §3b is what surfaced them: R-20 (harpsichord), Y-20 (digits as Set Active Player), Y-27 (System Menu over a modal), Y-26, Y-18, R-31, R-24, R-27, R-28/R-29, R-30, Y-28's two record-only rows, and — the most substantial gap — **five of Y-04's six feedback channels**. Only `CellProjectile` had a row; Quake, CellExplosion, PoisonTick, Refuge and TrollSneak were all "GREEN — resolved (Batch 7B)" with nothing on any device list to confirm them. This is the clearest single justification for consolidating the checklist: the per-batch phase lists each covered their own batch and nobody had ever read them as one set.
+* **SD refresh: not required.** No resource file changed. The last pack change was Batch 9C.
+
+---
+
+#### 8. Firmware
+
+`idf.py -B build-batch18 build` — **PASS**, from a fresh build directory.
+
+| | |
+|---|---|
+| `openu5_tdeck.bin` | `0xd1b30` = **858,928 bytes** |
+| Delta vs Batch 16/17 (`0xd1b10`) | **+32 bytes** — the R-26/R-34 changes and the `"a well."` literal |
+| App partition free | `0x2e4d0` = **189,648 bytes (18 %)** of `0x100000` |
+| Project warnings | **0**. The 15 warning lines in the log are the five pre-existing ESP-IDF `component_validation.cmake` notices about `esp_wifi`/`wpa_supplicant` private includes, three lines each — third-party, not ours |
+| SD resource pack | **unchanged; no recopy required** |
+
+---
+
+#### 9. Alpha 2 readiness
+
+**HOST-CLEAN — HARDWARE VALIDATION REMAINS.**
+
+The software half is finished to the limit of what host evidence can establish: 86/86 with both parity corpora green, zero project warnings on host and firmware, no TODO/FIXME/stub in any production translation unit, no platform-macro-guarded gameplay branch that host tests cannot reach, no gameplay text constructed in the device layer, and no direct `GameState` mutation outside the core seams (all four re-verified by sweep this batch — see "Phase 18D result" below).
+
+It is **not** ALPHA 2 READY, and the blocker is nameable: **136 of 140 device rows have never been executed**, and one live production defect (R-25) is open with a deferred, scoped fix. Alpha 2 cannot be called validated until the checklist has no UNTESTED rows.
+
+---
+
+#### Phase 18D result — the search for untested production bypasses
+
+Run as a sweep, not a sample. What it found:
+
+| Sweep | Result |
+|---|---|
+| `TODO`/`FIXME`/`XXX`/`HACK`/`stub`/`temporary`/`placeholder` in `native/core/src`, `native/core/include`, `native/targets/tdeck/main` | **No actionable hit.** Every match is a descriptive comment (a "temporary per-cell override", a "temporary diagnostic file") or a variable name. No parked work, no commented-out behaviour |
+| `#ifdef ESP*` / `#if defined(ESP*)` / `#ifdef CONFIG_*` gameplay branches | **None.** There is no gameplay code that host tests cannot reach for platform reasons |
+| Gameplay text constructed in the device layer | **None.** The only string literals `AlphaRuntime` appends are on `UiTextChannel::System` (boot banner, "Load complete", "No valid save", "Developer tools disabled", "Shop selection unavailable"). The one flavour line it prints, the fountain result, comes from `openu5::fountain_drink_result()` in the core |
+| Direct `GameState` mutation outside core seams | **None.** Every `game_.party`/`gold`/`position`/`time` reference in `alpha_runtime.cpp` is a read or a log argument |
+| Duplicate command implementations | **None in production.** The duplication that exists is **test-side and self-declared**: `dungeon_combat_test.cpp` and `dungeon_input_test.cpp` mirror `AlphaRuntime`'s per-input tail and say so in their own file headers. Batch 11/14/18's host-linked `AlphaRuntime` targets are the answer to that, and they now cover three command families |
+| Old stub paths reachable in production | **None found.** The dead-but-handled command kinds (§5) are unreachable, not stale shims |
+| **Untested production seams** | **One, and it was the batch's fix.** The entire well ceremony — description, prompt type, answer dispatch, wish-row prompt — was reachable only through `AlphaRuntime`, and no host test touched it. That is precisely how R-26 survived fourteen batches while `gameplay_parity` drove the underlying core arm 5,058 sequences at a time. R-34 was hiding behind it |
+
+**One test was added, and only because a real uncovered production seam existed.** No test was written to inflate coverage.
+
+**One non-gameplay hygiene finding, recorded and deliberately not fixed.** A tracked 2,704-byte file literally named `-` sits at the repository root. It is a CMake compiler-detection preprocessor dump (`CXX-DetectStdlib.h` expanded against the zig libc++ headers) that was captured to a file named `-` instead of to stdout, and it was committed in `8a603f8f` ("Add native physical combat foundation"). It is inert — nothing reads it, no build references it — but it is tracked, it shows as modified in every `git status`, and its name breaks naive shell tooling (`head -c 400 -- -` reads stdin, not the file). Removing a tracked file is outside an audit batch's remit and has nothing to do with Alpha 2, so it is logged here rather than deleted. Suggested disposal: `git rm -- ./-` in any batch that is already touching build files.
+
+---
+
+#### Files changed
+
+**Production (2):** `native/core/src/ui_session.cpp` (R-26 items 2–4, R-34), `native/targets/tdeck/main/alpha_runtime.cpp` (R-26 item 1).
+
+**Test/harness (2):** `native/targets/tdeck/host_tests/batch18_well_ceremony_test.cpp` (new, 19 checks), `native/core/CMakeLists.txt` (the new target).
+
+**Documentation (3):** `native/targets/tdeck/ALPHA2_HARDWARE_CHECKLIST.md` (new), `native/targets/tdeck/ALPHA2_PRESERVATION_LEDGER.md` (new), this document (§1, §3 R-25/R-26/R-34, §5, §7, §8, §14, §16).
+
+#### RED → GREEN evidence
+
+| Stage | Result |
+|---|---|
+| RED, unmodified production code (first run, 16 checks) | **5 failures** — W1-3 (`a well.` missing), W2-1 (No never dispatched), W3-1 and W3-2 (ESC ignored), W4-3 (fabricated wish prompt) |
+| RED, after adding group W6 (19 checks) | **2 failures** — W4-3 and W6-3, both R-34, on two independent chains |
+| GREEN, after the fix | **19 / 0** |
+| Full suite | **86 total · 86 pass · 0 fail** |
+
+| Mutation | Effect |
+|---|---|
+| M1 — clear `prompt_`/`input_` unconditionally again (defeat R-34's guard) | **2 RED** (W4-3, W6-3), reverted |
+| M2 — restore the `&&i.value.yes` gate and drop `c.member` | **2 RED** (W2-1, W3-2), reverted |
+| M3 — `cancel_means_no` back to `false` | **2 RED** (W3-1, W3-2), reverted |
+| M4 — drop the `"a well."` description | **1 RED** (W1-3), reverted |
+
+#### What this batch did NOT do
+
+- It did not start Alpha 3, and it did not begin Batch 19.
+- It did not fix R-25. The scoped follow-up is written down instead (§3 R-25), because a partial `pickCommandChar` would be a guess.
+- It did not revert any intentional enhancement, and it did not implement any compatibility toggle — the ledger assesses feasibility only.
+- It did not close a single hardware check from host evidence. The three Batch 16 checks and every other device row remain **UNTESTED**.
+- It did not touch Y-32. No timing evidence has appeared since Batch 16 refused it, and none was invented here either.
+- It did not change the resource pack, so the flashed SD card needs no repack.
+- It did not modernize anything. Both production edits move the port **toward** the 1988 binary: one restores a missing echo and a missing description, the other stops a teardown from erasing a reference prompt.
+
+---
+
 ## 15. PROPOSED REGRESSION TESTS
 
 ### Invariants worth asserting (cheap, high value)
@@ -3041,6 +3429,10 @@ the time is preserved.
 ---
 
 ## 16. PHYSICAL T-DECK CERTIFICATION PLAN
+
+> **Superseded for execution by [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (Batch 18).** That file is the deduplicated 140-row list to actually run, in one session, with a PASS/FAIL/UNTESTED field per row. **This section is kept as archaeology** — it records which batch owed which step and why, which the flat checklist deliberately does not. If the two ever disagree about an expectation, this section is the derivation and the checklist is the instruction; fix the checklist.
+>
+> **Current tally: 4 PASS, 0 FAIL, 136 UNTESTED.** The only hardware evidence on record anywhere in this project is Batch 5's three world-cast checks and Batch 9B's three dungeon-runtime checks.
 
 Efficient broad-coverage pass using Developer tools. ~45 minutes. Each step names the log line that proves it.
 
@@ -3296,6 +3688,19 @@ driver) specifically to prove the eight-batch crash was hiding zero divergence.
 See §14 Batch 17.
 
 
+### Phase 6K — the wishing-well ceremony and chained-modal prompts (Batch 18 / R-26, R-34) · *firmware only; the SD card is unchanged*
+
+Flash `build-batch18/openu5_tdeck.bin`. **Do not touch the card** — Batch 18 changes no resource file.
+
+The executable rows are **H-17 – H-23** in [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md). In summary:
+
+* **The well (R-26).** `L`ook at a well: the transcript must read `a well.` and the prompt `Drop a coin?`. `N` echoes **`No`**; **the Mic/Cancel key must do the same** — before this build it was simply ignored and the prompt stayed open. `Y` with gold echoes `Yes` and opens a row prompted **`Thy wish?`** (not "What dost thou wish?"). `Y` with **zero** gold echoes `Yes` and stops **silently** — there is no `Thou hast no coin!` in the binary, and printing one would be the regression.
+* **Chained modals (R-34) — the general check, and the one that matters most.** Any modal whose answer opens another modal must now show the second modal's prompt text: the shrine's `Virtue?` then `Mantra?`, a Blackthorn interrogation round's `Your response?`, the Rel Hur/skull-key `Direction?` row, and the `(U)se`-a-potion `On whom?` picker. **Before this build every one of those rendered with an empty prompt row.** If any still does, the flashed image is not this build.
+
+**Gate.** H-19 (Cancel means No) and H-23 (chained prompts visible) are the two observations that cannot be made any other way. H-21 is the over-correction control: if it prints *anything* after `Yes`, stop and report.
+
+---
+
 ## APPENDIX — Audit artifacts
 
 **Test run (ORIGINAL AUDIT BASELINE RUN, pre-Batch-1):** `ctest` in `native/core/build-alpha20-host`, 57 tests, **56 passed / 1 failed** (`gameplay_parity`, 61.9 s). Mismatch artifact retained at `native/core/build-gameplay/mismatch.json`. This run predates Batch 1 and is preserved as historical evidence. At this point in the program, mismatch 2034 (R-21) had not yet been observed — it was unreachable behind mismatch 59 — and this record is preserved as-is rather than rewritten with knowledge that did not exist at the time.
@@ -3344,3 +3749,5 @@ See §14 Batch 17.
 **Status (post-Batch-13, R-21 adjudicated and closed):** `gameplay_parity`'s "Gameplay mismatch 2034" — open since Batch 2 and deliberately preserved through ten intervening batches — is **resolved, and it was a confirmed native defect**, not a harness or reference-expectation defect. "2034" was never a byte offset: `check-gameplay.ts` throws `Gameplay mismatch ${i}` with `i` the **sequence index**, and #2034 is the first `(U)se` of a scroll in the fixture. Native's `world_magic()` printed `Used Vas Lor Scroll.` where `CAST.OVL 0x11f0` prints the bare category word `Scroll` (DS `0x466a`), and the potion drinker printed an invented `No effect!` where `0x136e`'s handler prints nothing at all when it has no authored DS line. Both were introduced knowingly by the Alpha-20 forensic action-feedback pass — a device-UI decision that landed in the **core** command layer — in a session whose own write-up records that the Node/tsx reference generators were infrastructure-blocked and never ran. Proving it forced the parity fixture to state the reference's magic-feedback rules, which exposed two inseparable siblings of the same family, both fixed and both reported on their own evidence axis: the **potion ceremony fired after the effect line** (the binary puts it at `0x139b`, ahead of the reroll at `0x13a1`) and **dungeon casts raised no ceremony at all** (there is one cast dispatcher, `CAST.OVL 0x0f1a`, and `main.ts` emits the ceremony at all three of its cast mouths). What was **not** wrong: every `MagicCeremony` index and gate already matched `game/src/core/magic/ceremony.ts`'s derived jump tables — they merely showed as `unknown` because `gameplay_driver.cpp` had no name for the event and dropped its index. Production files changed: `native/core/src/world_magic.cpp`, `native/core/src/combat.cpp`, `native/core/src/dungeon_orchestration.cpp`; no name table was touched. The harness gained coverage rather than losing it: the driver now serialises the ceremony **with its index**, the fixture models it at all four magic mouths from the derived tables (~640 sequences newly asserted), and `action_feedback_regression` — which had been **asserting the fabrication** — was corrected, not weakened. New `batch13` CTest: RED **58 failing checks** → GREEN **0**, with groups E and F independently RED at 2 and 7 and each carrying a passing control; six mutations on clean rebuilt trees all caught, M1 reproducing `Gameplay mismatch 2034` exactly and M5 failing parity on a one-digit ceremony-index change that the suite could not see before this batch. The authoritative suite went from 80 total / 78 pass / 2 fail to **81 total / 80 pass / 1 fail** — the +1/+1 is the new `batch13` target, `gameplay_parity` moved fail → pass, and nothing else changed; the sole remaining failure is `quest_parity`'s MinGW/w64devkit `STATUS_ACCESS_VIOLATION` (exit `3221225477`) from Batch 8, present identically in this batch's own pre-edit baseline. T-Deck ESP-IDF 6.1 firmware **PASS** into `build-batch13`: `openu5_tdeck.bin` `0xd06f0` = **853,744 bytes**, **+32** over Batch 12B, **194,832 bytes (19%) free**, **zero warnings**. Hardware flash not performed; the device checklist is §16 Phase 6G. No new downstream parity mismatch was exposed — `gameplay_parity` passes outright.
 
 **Status (post-Batch-12B, hardware discrepancy investigation — two confirmed native defects, both fixed):** The device report that a Destard `In Flam Grav` logged `Cast` and showed nothing, and that an enemy stood in the black void beyond a combat wall, was traced to **two separate root causes plus one authored-data fact**, recorded on five separate evidence axes in §14 "Batch 12B" and deliberately **not** merged into the Batch 12 combat-field conclusion, which is unchanged. (1) **Dungeon field state and persistence were never broken** — the cast writes exactly one cell to the `DS:0x4596` tile, keeps bit 3, refuses a non-empty cell, survives turning, ticking and a step cycle, and fires `Fire!!` / `Sleep spell!` when walked into. (2) **The 3D renderer never drew it**: `dungeon_art_blits()` correctly returns 0 for cell kind 8 (ITEMS.16 has no field image) and the port had never carried what the original does instead, the procedural sparkle subsystem `magic_field_sparkle_drawer` @0x127e; it is now `openu5::dungeon_field_spark()` (tables DS `0x2e42`/`0x2e4a`/`0x2e52`/`0x2e5a`, colours from the `0x1292` switch plus `add ax,8`, derived in `re/notes/dungeon-decor-mazmorra.md` §§2/5/6·4 and matching the reference `fieldSparkRects`), painted by `render_dungeon_view`. That omission had also hidden the **55 authored** fields DUNGEON.DAT ships in Wrong (30) and Covetous (25) since Batch 9C. (3) **An enemy on a black cell is the original's own authored placement** — 50 of the 128 shipped `.CBT` boards do it, 403 slots in all, and `compose_combat_presentation` draws an actor at exactly `y*11 + x`, so nothing is displaced; asserted as a guard, not changed. (4) **But the board itself was the wrong one**: the alpha pack stores `combatmaps.json`'s per-territory index while `dungeon_encounter()` addresses arenas by the global index `dungeon_room_map()` produces, so every dungeon room loaded the **next dungeon's** room and Doom's 112..127 matched nothing at all (`MissingMap`, no fight); retagged at load in `alpha_resources.cpp`, which means **an already-flashed SD card needs no repack**. Production files changed: `native/core/include/openu5/dungeon_art.h`, `native/core/src/dungeon_art.cpp`, `native/targets/tdeck/main/native_renderer.cpp`, `native/targets/tdeck/main/alpha_resources.cpp`. The new `batch12b_hardware_regression` CTest — the first host suite to read the **real shipped resource pack** and link the **production device renderer** and **pack loader** — was written RED against unfixed production code (**38 failures**: 8 A2, 1 A2b, 29 B2; every A1 and B1 assertion already passing, which is the finding) and is **0 failures** after the fixes; `dungeon_art_regression`'s new A14 block was mutation-checked both ways and reverted (wrong stroke length → RED 1201; collapsed colour selector → RED 930). The authoritative suite grew from 79 to **80** registered tests and reports **80 total, 78 pass, 2 fail** — the same pre-existing pair as every batch since: `gameplay_parity` (R-21, "Gameplay mismatch 2034", deferred by instruction and untouched) and `quest_parity` (`STATUS_ACCESS_VIOLATION`, exit `3221225477`, the MinGW/w64devkit environment finding from Batch 8). All magic, dungeon and combat suites green, `batch12_combat_field` and `dungeon_combat_regression` included. T-Deck ESP-IDF 6.1 firmware was rebuilt fresh into `native/targets/tdeck/build-batch12b` and **passed**: `openu5_tdeck.bin` is `0xd06d0` bytes, `+0x2a0` over Batch 12's `0xd0430`, with 19% of the 1 MiB app partition free and no compiler warnings from project code. Hardware flash was not performed; the device checklist is §16 Phase 6F. R-21 was **not** investigated, as instructed.
+
+**Status (post-Batch-18, COMPREHENSIVE RECONCILIATION — this paragraph supersedes every status paragraph above it):** Batch 18 is the first whole-project audit since the parity, dungeon, magic, UI, Blackthorn, save/load and harness-cleanup batches, and it is an evidence batch, not a feature batch. Baseline, from a **clean** `native/core/build-batch18` on the unmodified Batch 17 tree `83b2ed56` (tag `alpha2-batch17-quest-parity-crash`), before any edit: **85 total, 85 pass, 0 fail, 0 skipped**, `gameplay_parity` PASS at 5,058 sequences, `quest_parity` PASS at 5,377 cases with the expected `nonterminatingObservations: 2`, and zero project compiler warnings. Batch 17's exit state was verified from `git show --stat` and from source rather than from its own prose: the commit touches five files, four of them host build inputs, and no production translation unit — the "host-harness undefined behaviour, not production, not environment" classification stands. Reconciliation then closed **two** confirmed native defects and deferred **one**. **R-26** (the wishing well, open since Batch 4) was four separate divergences, all in the T-Deck glue while the core arm was byte-correct throughout: the "No" answer dispatched nothing, ESC was ignored although the reference prompt type is `yesno-esc`, the `"a well."` object description (DS `0x720c`) was missing, and the wish row printed a fabricated `"What dost thou wish?"` instead of DS `0x722c` `"Thy wish?"`. Fixing the last of those exposed **R-34**, new and broader: `UiSession::finish_modal()` cleared `prompt_`/`input_` **after** dispatching the answer, so any modal the answer armed synchronously kept its mode and lost its prompt — the Rel Hur/skull-key `Direction?` row, the `(U)se` `On whom?` picker, the shrine `Virtue?`/`Mantra?` pair, the equipment picker, and Blackthorn's `Your response?` row all rendered blank. One guard on `is_modal(mode_)` fixes it, exact because `enter_modal()` only ever records a non-modal `return_mode_`. **R-25** (the crystal ball) was re-adjudicated against the current tree, its severity raised from "unassessed" to **2** — the feature is 100 % non-functional and its `"Peer into it?"` prompt is a fabrication — and then **deliberately deferred**, because the faithful fix needs kernel `0x4988`'s four-branch command-character picker as a shared core seam that `(S)earch` and `(C)ast` also owe, which is architectural, multi-system and moves a trap-check perceiver. Its four-step scope is written out in §3 R-25 instead of guessed at. Four **stale entries** in this document were corrected: §5's `BeginConversation` and `BlackthornAction` rows still read "dead — blocked by R-10/R-09" four batches after Batch 4 fixed both; §5's `DungeonAction` note still read "`TurnAround` and `Drink` have no producer" nine batches after Batch 9B gave them producers; and §7's "Currently failing" still ended at a post-Batch-9 tally. §2's crystal-ball row, which read a flat **G** while R-25 said the route was dead, was split into resolved-presentation / unreachable-route. Four **persistence axes** absent from §8 were audited rather than assumed and all four are **G**: persistent dungeon field spells need no storage of their own because `dungeon_orchestration.cpp:176` writes them into `DungeonState::cells[]`, which `capture_dungeon()` serializes in full and `restore_dungeon()` validates element-by-element; found search objects ride `objects_` (R-14); and the reagent-patch day latch and buried-moonstone state have named serializers. No persistence axis lacks a production-path test, and no new save format was introduced. The **Phase 18D bypass sweep** came back clean on five of six axes — no `TODO`/`FIXME`/stub/parked work in any production translation unit, no `#ifdef ESP*`/`CONFIG_*`-guarded gameplay branch, no gameplay text constructed in the device layer (every `AlphaRuntime` literal is on `UiTextChannel::System`; the one flavour line comes from `openu5::fountain_drink_result()`), no direct `GameState` mutation outside the core seams, and no duplicate command implementation in production (the mirrors that exist are test-side and self-declared) — and found exactly **one** untested production seam, which was the well ceremony itself, reachable only through `AlphaRuntime`. That is how R-26 survived fourteen batches while `gameplay_parity` drove the underlying core arm 5,058 sequences at a time. **One** test was added, for that one seam: `batch18_well_ceremony`, 19 checks, driving raw `RawInputEvent`s through the real `UiInputAdapter`, the real `UiSession` and the real, unmodified `alpha_runtime.cpp`. **RED 16/5 → RED 19/2 (after group W6 pinned R-34 on a second, independent chain) → GREEN 19/0**; four mutations — defeating the R-34 guard (2 RED), restoring the Yes-only dispatch (2 RED), reverting `cancel_means_no` (2 RED), dropping the `"a well."` line (1 RED) — each caught and reverted. Authoritative suite: **86 total, 86 pass, 0 fail, 0 skipped**, `gameplay_parity` still 5,058 and `quest_parity` still 5,377/2, zero project warnings. T-Deck ESP-IDF 6.1 firmware **PASS** into `build-batch18`: `openu5_tdeck.bin` `0xd1b30` = **858,928 bytes**, **+32** against Batch 16/17's `0xd1b10`, **189,648 bytes (18 %) free**, **zero project warnings** (the 15 warning lines are the five pre-existing ESP-IDF `component_validation.cmake` notices, three lines each). The **resource pack is unchanged, so the SD card needs no repack**. Two new documents carry what was previously scattered: **`ALPHA2_HARDWARE_CHECKLIST.md`**, one deduplicated **140-row** device list executable in a single session, each row with setup, exact input, expected visible result, expected state change, cancel-path expectation, SD-refresh requirement and a PASS/FAIL/UNTESTED field; and **`ALPHA2_PRESERVATION_LEDGER.md`**, cataloguing **14** intentional T-Deck adaptations, **4** deliberate enhancements and **18** unresolved divergences, with a per-row assessment of whether each is already isolated enough to become a future compatibility toggle. **No enhancement was reverted and no toggle was implemented.** **No hardware was run.** No physical T-Deck was available; **136 of the 140 rows are UNTESTED**, and the only hardware evidence on record anywhere in this project remains Batch 5's three world-cast checks (row H-48) and Batch 9B's three dungeon-runtime checks (rows H-85/H-86/H-88). The three device checks Batch 16 left owed — Symbol+Mic/`0`, Vas Rel Por, and the Rel Hur/skull-key cancel — are rows H-10/H-11, H-12–H-14 and H-15/H-16, and they are still owed. Batches 16 and 17 added no appendix status paragraph of their own; their write-ups are §14 Batch 16 and §14 Batch 17, and nothing in them is contradicted here. **Alpha 2 state: HOST-CLEAN — HARDWARE VALIDATION REMAINS.** The software half is finished to the limit of what host evidence can establish. It is **not** ALPHA 2 READY: the blocker is the 136 unexecuted device rows, plus one open production defect (R-25) with a deferred, scoped fix. **Alpha 2 must not be called validated until the hardware checklist has no UNTESTED rows.** **Batch 19 was not started and no Alpha 3 work was begun.**

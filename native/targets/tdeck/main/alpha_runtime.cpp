@@ -886,7 +886,12 @@ void AlphaRuntime::modal(const openu5::UiIntent&i){if(!i.value.accepted){if(i.re
     else if(i.request==openu5::UiRequestId::Custom&&i.value.index>=0&&size_t(i.value.index)<selection_count_){c.kind=openu5::CommandKind::Mix;c.item=selections_[i.value.index].value;c.hours=1;auto*d=openu5::spell_definition(openu5::SpellId(c.item));c.reagent_mask=d?d->reagents:0;command(c);}
     else if(i.request==openu5::UiRequestId::TrollToll){c.kind=openu5::CommandKind::TrollToll;c.member=i.value.yes?1:0;command(c);}
     else if(i.request==openu5::UiRequestId::CrystalBall&&i.value.yes){c.kind=openu5::CommandKind::CrystalBall;command(c);}
-    else if(i.request==openu5::UiRequestId::WellDrop&&i.value.yes){c.kind=openu5::CommandKind::DropCoin;command(c);}
+    // R-26 (Batch 18). BOTH answers dispatch, and the answer travels in
+    // Command::member -- the same shape the TrollToll arm above uses.
+    // Previously only Yes dispatched (so game.ts dropCoin(false)'s "No" echo
+    // never printed), and Yes only "worked" because the default member == -1
+    // happens to be truthy in look.cpp's `cmd.member ? "Yes\n" : "No\n"`.
+    else if(i.request==openu5::UiRequestId::WellDrop){c.kind=openu5::CommandKind::DropCoin;c.member=i.value.yes?1:0;command(c);}
     else if(i.request==openu5::UiRequestId::WellWish){c.kind=openu5::CommandKind::MakeWish;c.text=i.value.text;c.text_length=i.value.text_length;command(c);}
     else if(i.request==openu5::UiRequestId::ShrineVisit){shrine_virtue_length_=0;ui_->begin_text(openu5::UiRequestId::ShrineRestore,"Virtue?",15);}
     else if(i.request==openu5::UiRequestId::ShrineRestore){if(!shrine_virtue_length_){shrine_virtue_length_=std::min<size_t>(i.value.text_length,63);std::memcpy(shrine_virtue_,i.value.text,shrine_virtue_length_*sizeof(char16_t));shrine_virtue_[shrine_virtue_length_]=0;ui_->begin_text(openu5::UiRequestId::ShrineRestore,"Mantra?",15);}else{openu5::TalkText mantras[3]={{i.value.text,i.value.text_length},{i.value.text,i.value.text_length},{i.value.text,i.value.text_length}};openu5::ShrineInput input;input.action=shrine_.visit>=0?openu5::ShrineAction::SubmitVisit:openu5::ShrineAction::SubmitRestore;input.virtue={shrine_virtue_,shrine_virtue_length_};input.mantras={mantras,3};c.kind=openu5::CommandKind::ShrineAction;c.shrine=&input;shrine_virtue_length_=0;command(c);}}

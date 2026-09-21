@@ -313,6 +313,42 @@ if(BUILD_TESTING)
     target_link_options(batch14_zstats_runtime_regression PRIVATE -Wl,--gc-sections)
   endif()
   add_test(NAME batch14_zstats_runtime COMMAND batch14_zstats_runtime_regression)
+
+  # Batch 18 / R-26 -- the wishing-well ceremony. Same seam and same stub/shim
+  # set as the two targets above: it links the REAL, unmodified
+  # alpha_runtime.cpp, because R-26 is a defect in the GLUE that decides what
+  # the (already-correct) core is handed, and only production routing can
+  # expose it.
+  add_executable(batch18_well_ceremony_regression
+    ../targets/tdeck/host_tests/batch18_well_ceremony_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_board_host_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_host_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(batch18_well_ceremony_regression PRIVATE openu5_core)
+  target_include_directories(batch18_well_ceremony_regression PRIVATE
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/main)
+  target_compile_features(batch18_well_ceremony_regression PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(batch18_well_ceremony_regression PRIVATE /Gy)
+    target_link_options(batch18_well_ceremony_regression PRIVATE /OPT:REF)
+  else()
+    target_compile_options(batch18_well_ceremony_regression PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(batch18_well_ceremony_regression PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME batch18_well_ceremony COMMAND batch18_well_ceremony_regression)
+
   # Repair Batch 3 -- RED-only tests for R-06 (Ready), R-07/R-08 (Use
   # picker), R-19 (Yell/sails), R-20 (harpsichord), Y-20 (SetActivePlayer).
   # See native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md.
