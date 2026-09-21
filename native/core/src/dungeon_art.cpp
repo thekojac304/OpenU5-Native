@@ -287,8 +287,8 @@ size_t dungeon_art_blits(const DungeonDrawOp &op, const DungeonArtCatalog &catal
         if (op.bank >= kDungeonMonBanks || capacity < 2) return 0;
         const int di = int(op.depth) - 1;
         const int16_t y = kMonsterY[op.ceiling ? 1 : 0][di];
-        const uint8_t left_image = uint8_t((phase & 1u) * 3 + di);
-        const uint8_t right_image = uint8_t(((phase >> 1) & 1u) * 3 + di);
+        const uint8_t left_image = uint8_t((phase & 1u) * 3 + unsigned(di));
+        const uint8_t right_image = uint8_t(((phase >> 1) & 1u) * 3 + unsigned(di));
         const DungeonArtImage &left_dims = catalog.mon[left_image];
         const DungeonArtImage &right_dims = catalog.mon[right_image];
         if (left_dims.w == 0 || right_dims.w == 0) return 0;

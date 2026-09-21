@@ -72,8 +72,8 @@ constexpr const char *kTransportEffects[] = {
     "LIVE: Set Transport = Ship (changes real movement rules)",
     "Set sane Ship Hull (50) and Skiffs (2)",
     "Set deterministic Wind and Sail Direction",
-    "Does NOT grant HMS Cape (adjudicated PART 11 -- test that separately "
-    "via Special Items)",
+    ("Does NOT grant HMS Cape (adjudicated PART 11 -- test that separately "
+    "via Special Items)"),
 };
 constexpr const char *kEndgameEffects[] = {
     "Max Party", "Max Resources",
@@ -94,8 +94,8 @@ constexpr const char *kSaveLoadEffects[] = {
     "Set deterministic clock/resource/karma fixture values",
     "Grant Grapple and Wooden Box (fixture only)",
     "Set Transport = Horse; fixture transport_tile/wind/prev_hour",
-    "LIVE: Set active Quickness effect (time_spell='Q', 42 turns) -- "
-    "deliberate temporary-effect persistence fixture (PART 12)",
+    ("LIVE: Set active Quickness effect (time_spell='Q', 42 turns) -- "
+    "deliberate temporary-effect persistence fixture (PART 12)"),
     "LIVE: Set Word33 flag and FalsehoodDead flag (fixture)",
     "LIVE: Set NPC met/dead bits and one dungeon-room-cleared bit (fixture)",
 };
@@ -125,8 +125,8 @@ constexpr const char *kShipSailsEffects[] = {
     "LIVE: Set frigate transport tile (hoisted) -- required for real Yell/Sails routing",
     "Does NOT grant HMS Cape -- tests normal (unrigged) sail timing",
     "Teleport to Britain, ground floor / default entrance",
-    "Player must press Yell to trigger real sail behavior "
-    "(Board not needed -- already aboard)",
+    ("Player must press Yell to trigger real sail behavior "
+    "(Board not needed -- already aboard)"),
 };
 constexpr const char *kDungeonCertEffects[] = {
     "Compose Dungeon preset: Max Resources, Max Torch Turns",
@@ -140,14 +140,14 @@ constexpr const char *kBlackthornBadgeEffects[] = {
     "Does NOT wear the badge (time_spell unchanged)",
     "Teleport to Palace of Blackthorn, ground floor / default entrance",
     "Player must exit Developer, press U, select Black Badge to wear it",
-    "NOTE: Blackthorn capture text is still blocked by a separate MISCMSG "
-    "integration issue (informational only)",
+    ("NOTE: Blackthorn capture text is still blocked by a separate MISCMSG "
+    "integration issue (informational only)"),
 };
 constexpr const char *kFlameShardEffects[] = {
     "LIVE: Grant all three Shards (Falsehood/Hatred/Cowardice)",
     "Shadowlord/flame progression state left untouched",
-    "Teleport to Empath Abbey, floor 1, (15,3) -- the verified Hatred/"
-    "Astaroth Flame of Love ritual cell, not a default entrance",
+    ("Teleport to Empath Abbey, floor 1, (15,3) -- the verified Hatred/"
+    "Astaroth Flame of Love ritual cell, not a default entrance"),
     "Player must perform the real Use-Shard interaction at the flame",
 };
 constexpr const char *kShopNpcEffects[] = {

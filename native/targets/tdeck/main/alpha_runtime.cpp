@@ -1756,10 +1756,10 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
             e=openu5::render_zodiac_view(zodiac_view_,viewport_,openu5::kViewportPixelCount,report,dungeon_primitives);
             presentation_source="zodiac-view";
         } else if(dungeon_source&&gem_view_active_){
-            e=openu5::render_dungeon_gem_view(dungeon_,viewport_,openu5::kViewportPixelCount,report,dungeon_primitives);
+            e=openu5::render_dungeon_gem_view(dungeon_,tile_cache_,viewport_,openu5::kViewportPixelCount,report,dungeon_primitives);
             presentation_source="gem-view";
         } else if(gem_view_active_&&world_gem_map_ready){
-            e=openu5::render_world_gem_view(world_gem_map,game_.position.xy,viewport_,openu5::kViewportPixelCount,report,dungeon_primitives);
+            e=openu5::render_world_gem_view(world_gem_map,game_.position.xy,tile_cache_,viewport_,openu5::kViewportPixelCount,report,dungeon_primitives);
             presentation_source="gem-view";
         } else if(dungeon_source){
             // R-05. The wall variant is a pure function of the dungeon, so the
@@ -1799,13 +1799,16 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     }
     const auto hud=openu5::hud_world_state(game_,turn_,resources_.moon_phases,resources_.moon_phase_count,dungeon_.active);
     // R-05: while the dungeon3d source owns the viewport, the two strips carry
-    // the dungeon's level and facing.  The gem view and the zodiac view are
-    // full-square presentations of their own and keep the world bars.
+    // the dungeon's level and facing. R-17/Y-14: the gem view is instead its
+    // own full-square composition -- `full_square_viewport` below drops the
+    // strips entirely rather than overdrawing them across it. The zodiac view
+    // still keeps the world bars (unchanged, out of this batch's scope).
     const auto dungeon_bands=openu5::hud_dungeon_bands(dungeon_,dungeon_source&&!gem_view_active_&&!zodiac_view_active_);
     if(e==ESP_OK)e=board.show_alpha(viewport_,*ui_,game_,turn_,hud,resources_.runes_font,overlay(),report.animated_cells,
                                      animation_only,debug_ptr,
                                      input_.movement_mode_active(ui_->mode(),ui_->accepts_direction_input()),
-                                     settings_.ui_size,compose_shop_view(),compose_selection_view(),compose_context_bar(),compose_party_highlight(),report.viewport_crc32,&dungeon_bands);
+                                     settings_.ui_size,compose_shop_view(),compose_selection_view(),compose_context_bar(),compose_party_highlight(),report.viewport_crc32,&dungeon_bands,
+                                     gem_view_active_);
     const auto us=uint32_t(esp_timer_get_time()-start);render_high_us_=std::max(render_high_us_,us);
     if(dungeon_source){
         dungeon_render_high_us_=std::max(dungeon_render_high_us_,us);

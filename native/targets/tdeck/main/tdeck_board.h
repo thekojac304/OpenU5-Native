@@ -81,7 +81,12 @@ public:
                          // strips over the viewport carry the dungeon's own
                          // level and facing instead of a blank sky and
                          // "Wind: --".  Null or inactive = the world bars.
-                         const openu5::HudDungeonBands *dungeon_bands = nullptr);
+                         const openu5::HudDungeonBands *dungeon_bands = nullptr,
+                         // R-17/Y-14: true for the View Gem presentation (world
+                         // or dungeon) -- a full-square 176x176 composition
+                         // that must not lose its top/bottom 9 px to the sky
+                         // and wind strips, nor have them overdrawn across it.
+                         bool full_square_viewport = false);
     esp_err_t show_frontend(const openu5::FrontendView &, const uint16_t *preview = nullptr,
                             const uint16_t *title_art = nullptr,
                             const uint16_t *panel_art = nullptr,
@@ -142,6 +147,11 @@ private:
     uint32_t viewport_crc_ = 0;
     uint32_t sky_bar_signature_ = 0;
     bool sky_bar_cache_valid_ = false;
+    // R-17/Y-14: whether the last frame drew the gem view's own full-square
+    // 176x176 composition (no sky/wind strips). Toggling this forces both
+    // caches so neither a stale bar nor a stale clipped-viewport rectangle
+    // lingers across the transition either way.
+    bool full_square_active_ = false;
     char wind_bar_cache_[34]{};
     DeviceShopView shop_cache_{};
     bool shop_cache_valid_ = false;

@@ -109,7 +109,7 @@ All routes are `UiSession::handle_exploration` → `UiIntent` → `AlphaRuntime:
 | `s` | Search | **Y** | Trap reporting preserved as working. Y-07 |
 | `t` | Talk | **Y** | Player-initiated works; NPC-initiated does not. R-10 |
 | `u` | Use item | **G** (picker) | R-07, R-08 **GREEN** (Batch 3) — canonical real ids, complete owned set, no Grapple. Pocket Watch 35 still excluded (no backing state). |
-| `v` | View gem | **R** | ANCHOR 3. R-17 |
+| `v` | View gem | **G** — host+firmware RESOLVED (Batch 10); hardware visual check pending | ANCHOR 3. R-17/Y-14 |
 | `x` | X-it (Disembark) | **Y** | Y-07 |
 | `y` | Yell | **G** | R-19 **GREEN** (Batch 3) — frigate branch dispatches `YellSails`; word-of-power Yell unchanged (Y-24 both branches covered). |
 | `z` | Z-stats | **R** | Member picker and party highlight work; the Stats/Arms/Provisions/Reagents/Spells/Items/Armaments page family does not exist — selecting a member just reopens the picker. R-22 |
@@ -121,10 +121,10 @@ All routes are `UiSession::handle_exploration` → `UiIntent` → `AlphaRuntime:
 
 | Sub-command | Status | Reason / ID |
 |---|---|---|
-| `V` gem — world | **R** | R-17. Core (decrement, defer turn, `AfterGemView`) matches `game.ts::view()` byte-for-byte [REF]. Presentation fabricated. |
-| `V` gem — dungeon floor | **R** | `render_dungeon_gem_view` is an 8-neighbour flood over an 22×22 window; reference is the authored DNGLOOK 8×8 floor map. R-17 |
+| `V` gem — world | **G** — host+firmware RESOLVED (Batch 10) | R-17/Y-14. Core (decrement, defer turn, `AfterGemView`) matches `game.ts::view()` byte-for-byte [REF]. Presentation now `build_world_gem_view()` (native/core, host-tested): reference `GEM_CATEGORY` classification, chunk-origin-anchored/full-town window, full 32×32 square. Hardware visual check pending. |
+| `V` gem — dungeon floor | **G** — host+firmware RESOLVED (Batch 10) | `build_dungeon_gem_view()` (native/core, host-tested) is the same 8-neighbour flood over the 22×22 display DNGLOOK performs (reference `buildGemView`'s dungeon branch), now blocker-correct (a *revealed* secret door still blocks the gem's flood, unlike movement passability). R-17. Hardware visual check pending. |
 | `V` gem — no gems | **G** | `"You have none!\n"` + immediate turn. Matches DS 0xa266 and the bug-for-bug turn charge [REF]. |
-| Crystal-ball "Strange vision!" gem view | **Y** | `look.cpp:40` sets `gem_from_crystal=true`; device correctly suppresses the deferred turn. Presentation shares R-17. |
+| Crystal-ball "Strange vision!" gem view | **G** — host+firmware RESOLVED (Batch 10) | `look.cpp:40` sets `gem_from_crystal=true`; device correctly suppresses the deferred turn. Presentation shares R-17/Y-14, now resolved. |
 | `MapReveal` (Wis An Ylem, In Quas Wis scroll, Death Vision) | **G** — RESOLVED (Batch 7) | `compose_world_presentation`'s `reveal_all` bypasses the light/wall censorship for `note*PAUSE_UNIT_MS` (1100ms) wall-clock; the device swallows input for the same window, matching the reference's modal `revealViewport`/`cancelMapReveal`. R-12 |
 | `Zodiac` (Use Spyglass) | **G** — RESOLVED (Batch 7) | `render_zodiac_view` draws the already-computed `ZodiacView` (stars/signs/Shadowlord lines); closes on any key like View Gem, charging no turn. R-13 |
 
@@ -1094,7 +1094,7 @@ Fixed at the classification level: added `MagicEffect::Unlock` (`magic.h`) and r
 
 ---
 
-### R-17 — View Gem presentation is fabricated (ANCHOR 3) · **SEVERITY 2**
+### R-17 — View Gem presentation is fabricated (ANCHOR 3) · **SEVERITY 2** · **GREEN (host+firmware) — RESOLVED (Batch 10); HARDWARE VISUAL CHECK PENDING**
 
 The **mechanics are byte-correct** against `game.ts::view()` [REF]: echo before the gate, `"You have none!\n"` with an immediate turn when `gems==0`, decrement-before-paint, turn **deferred** to `AfterGemView` on close (`commands.cpp:754`, `alpha_runtime.cpp:262-268`, `:792-796`). The crystal-ball variant correctly suppresses the deferred turn via `gem_from_crystal`.
 
@@ -1109,6 +1109,26 @@ These are bit tests on raw tile ids, not a terrain classification — the output
 Secondary defect: `Board::show_alpha` blits the viewport only for rows `[kHudSkyBarH, 176 - kHudWindBarH)` (`tdeck_board.cpp:628-631`) and then overdraws the sky and wind bars. The gem map loses its top and bottom 9 px and gains two HUD strips across it.
 
 **Why "appears to do nothing" is plausible without a code bug:** noise that looks like static, clipped and straddled by two HUD bars, on a 176 px square, reads as "nothing happened" — especially since the world view underneath is also mostly green. **One device screenshot with `VIEW_EFFECT`/`VIEW_RESULT` in the log settles it.** Status stays RED per the audit contract until that proof exists.
+
+#### Resolution (Batch 10) — also closes Y-14
+
+**Root cause confirmed against the reference.** `buildGemView` (`game/src/core/world/gem-view.ts`) classifies every overworld/town tile through a static per-tile CATEGORY table (`GEM_CATEGORY`, `game/src/skin/fiel/gemmap-overworld.ts`, 17 categories 0-16, ported byte-for-byte from LOOKOBJ's `byte[tile+0x1d1a]`) before painting, and anchors its 32×32 window to a **chunk origin** quantized to 16 (`initChunkOrigin`, MAINOUT 0x0019) — the original never centres the overworld gem on the party, and a town's gem is the whole fixed 32×32 map at (0,0), never scrolled. The native implementation did neither: it bit-tested raw tile ids for colour and always centred a `center-16` window regardless of map kind, which for a town near a map edge would additionally have silently skipped (left black) any cell outside `[0, geometry.width)` — a second, previously undocumented instance of the Y-14 clipping defect, at the content level rather than the HUD-strip level.
+
+**Implemented fix — new portable semantic layer** (`native/core/include/openu5/gem_view.h`, `native/core/src/gem_view.cpp`, host-tested by `gem_view_regression`; ESP-free, no device/pixel code):
+- `gem_terrain_category(tile)` — the ported `GEM_CATEGORY` table (`gem_category.inc`, generated from and drift-checked against `gemmap-overworld.ts` by `gem_category_table_drift`).
+- `gem_chunk_origin(x,y)` — the entry-formula chunk anchor (`initChunkOrigin`). The original also keeps this origin hysteretically while walking (`scrollChunkOrigin`); reproducing that exactly would require new persistent overworld-movement state, which is out of this batch's scope (preserving overworld movement semantics unchanged) and which the reference itself treats as an accepted simplification when no persisted origin is fresh. The stateless entry formula already reproduces the essential, tested property: anchored to a 16-cell block, never centred.
+- `build_world_gem_view(map, party)` — large (wrapping) maps use the chunk-origin window with toroidal wrap; small maps (towns/castles) return the **whole** fixed 32×32 map at (0,0). Always populates all 1024 cells (Y-14).
+- `build_dungeon_gem_view(dungeon)` — the same 22×22 8-connected flood fill DNGLOOK performs, moved out of `native_renderer.cpp` into the host-tested core. This also fixes a second bug found while porting it: the old flood used `dungeon_wall()`, a **movement**-passability helper that treats a secret door (0xd) as passable once `revealed`; the gem view must never consult discovery state (`DUNGEON_GEM_BLOCKERS = {0xb,0xc,0xd}`, unconditionally) — a *revealed* secret door still blocked movement in this codebase already, but would have incorrectly stopped blocking the *gem's* flood, letting the gem see further than the reference does. `gem_view_test.cpp` case F3 drives this exact scenario.
+
+**Rendering** (`native/targets/tdeck/main/native_renderer.cpp`): `render_world_gem_view`/`render_dungeon_gem_view` now only paint — they consume the `GemView` the core builds and colour each cell through the live EGA palette (`PresentationTileCache::palette`, the same source every other view uses), by the reference's own per-category/per-type colour, not a raw-tile bit test. Micro-patterns (dots/lines/frames within a cell) are simplified to a solid fill — a disclosed Class-C simplification; every colour is still the original's own EGA index for that category/type, not an invented one. The marker is now painted at `GemView::marker_{x,y}`, not a hardcoded (16,16) — required once the window stopped being unconditionally centred.
+
+**Clipping (Y-14, HUD-strip half)** (`native/targets/tdeck/main/tdeck_board.{h,cpp}`, `alpha_runtime.cpp`): `Board::show_alpha` gained a `full_square_viewport` parameter, set from `gem_view_active_`. When true, the viewport blit covers the full 176 rows and the sky/wind strips are not drawn at all, instead of always reserving rows `[0,9)`/`[167,176)` for them and overdrawing the gem square — exactly the secondary defect this finding originally reported. Entering/leaving the mode forces both the viewport and sky-bar caches so neither a stale bar fragment nor a stale clipped rectangle survives the transition either way. The zodiac view is unchanged (still clipped) — it is not R-17/Y-14 and R-13 already marks it GREEN; touching it is out of this batch's scope.
+
+**Evidence:**
+- [REF] `game/src/core/world/gem-view.ts` (`buildGemView`), `game/src/core/world/chunk-origin.ts` (`initChunkOrigin`), `game/src/skin/fiel/gemmap-overworld.ts` (`GEM_CATEGORY`, `drawCell`), `game/src/skin/fiel/gemmap.ts` (dungeon `GLYPH`/`WALL_DENSE`/`FOUNTAIN_COLOR`/`FIELD_STRIPES`).
+- [EXEC] **RED → GREEN**: `gem_view_regression` (new, 6 groups A-F: terrain classification, mixed-map full-square + non-centred town marker, N/S/E/W + row/col orientation, marker-doesn't-alter-terrain, full-square/no-clipping for both variants, wall/door/room/revealed-secret-door blocker semantics + overworld-edge wrap) and `gem_category_table_drift` (new, guards the ported table against the reference) both pass. Full host suite **77 total, 75 pass, 2 fail** — the only failures are the pre-existing `gameplay_parity` mismatch **2034** (R-21, untouched) and a newly-*surfaced* (not newly-*introduced*) `frontend` struct-padding `memcmp` sensitivity, reproduced byte-for-byte on the untouched pre-Batch-10 tree with only an unrelated compiler-warning fix applied — see §14 Batch 10 for the isolation evidence. Pre-Batch-10 baseline (as originally compiled): 75 total, 73 pass, 2 fail (`gameplay_parity`, `quest_parity`); `quest_parity`'s known environment crash did not reproduce this run.
+- [BUILD] T-Deck `idf.py build` (`build-batch10`): **PASS**. Total image 852,916 bytes; app partition 19% free (`0x2fbd0` / `0x100000`); DIRAM 33.92% used.
+- [HARDWARE] **Not yet performed.** Host + firmware evidence proves the semantic layer is reference-faithful and the production integration compiles; only a physical `V` on real glass (overworld, town and dungeon) remains to confirm the pixels actually land as painted — see the Batch 10 hardware checklist in §14.
 
 ---
 
@@ -1615,7 +1635,7 @@ A design review of the freshly-landed R-30 work found two of the five Certificat
 |---|---|
 | **The device glue is the untested half** | 1375 lines of `alpha_runtime.cpp` + 1082 of `tdeck_board.cpp` + 569 of `tdeck_input.cpp` ≈ 3000 lines with no host test. Every SEVERITY-1 finding lives here or in the presentation/asset layer. |
 | **Mode ownership is split four ways** | `UiSession::consume` sets base mode from events; `AlphaRuntime::command()` forces Combat/Dungeon; `synchronize_after_debug` forced Combat/Dungeon/Exploration (root cause of R-01/R-18, **resolved in Batch 1** via the shared `ui_mode_policy.h` seam); `finish_combat_if_needed()` also rebinds base mode on the combat-teardown path (identified during Batch 1, left unchanged — redundant-but-harmless after the ownership fix). |
-| **Viewport blit clips 9 px top and bottom** | `tdeck_board.cpp:628` deliberately reserves those rows for the sky and wind bars. Correct for the world view; wrong for the dungeon view and the gem view, which are full-square compositions. |
+| **Viewport blit clips 9 px top and bottom** | `tdeck_board.cpp:628` deliberately reserves those rows for the sky and wind bars. Correct for the world view. The dungeon3d view repurposes the same two strips for its own level/facing bands (R-05, intentional, Batch 9) rather than dropping them. **RESOLVED for the gem view (Y-14, Batch 10):** `show_alpha`'s new `full_square_viewport` parameter (set from `gem_view_active_`) skips the strips entirely and blits the full 176 rows instead of overdrawing them across the gem square. The zodiac view is unchanged — still clipped, out of this batch's scope (R-13 already GREEN). |
 | **Dirty-region cache keyed only on `viewport_crc32`** | Sound, but it means any renderer that produces a constant image (e.g. an all-black dungeon frame) will suppress its own redraw. Worth a `force` on presentation-source changes — `dungeon_presentation_pending_` already does this for dungeon entry. |
 | **Double `render()` per loop iteration** | `main.cpp` calls `runtime.render(board)` twice per pass (once for `input_dirty`, once unconditionally). Harmless today because `dirty_` gates it, but it doubles the animation-tick path cost. |
 | **PSRAM budget** | A* 323 KB + transcript 15 KB + viewport 62 KB + creation canvas 97 KB + tile cache + 8 dungeon arenas. The DNG/ITEMS budget check is **done** (Batch 9): 217,792 B per DNG variant as RGB565 (653,376 B for all three) + 34,680 B for ITEMS.16; ≈163 KB for all three at 4 bpp. Only one variant is ever resident, so ≈213 KB + 34 KB. Affordable as a cache; a streaming reader is not forced. |
@@ -1732,7 +1752,7 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 | `PartySelection` / `InventorySelection` / `EquipmentSelection` / `SpellSelection` | none | viewport + `DeviceSelectionView` | `modal()` | `return_mode_` | **G** routing / **G** content (R-07/R-08 resolved, Batch 3) |
 | `TargetSelection` | combat for aim; world for Fire | viewport + reticle (`snapshot.target_*`) | direct command | `return_mode_` | **G** |
 | `DebugMenu` | developer build | `DeviceDebugScreen` (viewport suppressed) | `UiDebugMenu` | `debug_return_mode_` | **G** |
-| *gem view overlay* | `gem_view_active_` | `render_world_gem_view` / `render_dungeon_gem_view` | any key closes | prior mode + `AfterGemView` | **R-17** |
+| *gem view overlay* | `gem_view_active_` | `render_world_gem_view` / `render_dungeon_gem_view` | any key closes | prior mode + `AfterGemView` | **G** — R-17/Y-14 RESOLVED (Batch 10), hardware check pending |
 
 **Presentation source selection** (`alpha_runtime.cpp` `render()`) is a clean single decision — `combat ? combat : dungeon ? dungeon3d : world`, overridden by the gem view. It logs `PRESENTATION_DISPATCH` every frame. This part is well built; the problems are the *contents* of two of the branches and the *mode* that selects them.
 
@@ -1748,7 +1768,7 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 |---|---|---|---|---|---|---|
 | Gold | ✓ | n/a | n/a | Z-stats (R-22) | ✓ | **G** storage/use / R-22 view |
 | Food | ✓ | n/a (auto-consumed) | n/a | Z-stats (R-22) | ✓ | **G** storage/use / R-22 view |
-| Gems | ✓ | n/a | n/a | **`V`** | ✓ | **R-17** |
+| Gems | ✓ | n/a | n/a | **`V`** | ✓ | **G** — R-17/Y-14 RESOLVED (Batch 10), hardware check pending |
 | Keys | ✓ | via Jimmy/Open | n/a | Z-stats (R-22) | ✓ | **G** storage/use / R-22 view |
 | Torches | ✓ | `I`gnite | n/a | Z-stats (R-22) | ✓ | **G** storage/use / R-22 view |
 | Reagents ×8 | shop | `M`ix | n/a | Z-stats (R-22) | ✓ | **Y-19** storage/use / R-22 view |
@@ -1814,7 +1834,7 @@ Post-Batch-1 host suite was: **58 total, 57 pass, 1 fail** (`gameplay_parity`, m
 | 31. Trackball | **G** | up/down/left/right = forward/back/turn-left/turn-right |
 | 32. Keyboard (Movement Mode off) | **Y-23** | No movement keys; verbs only |
 | — | R-06 **G** | `Ready` offered and applied (RESOLVED, Batch 3) |
-| — | **R-17** | Dungeon gem view is a synthetic flood fill |
+| — | R-17 **G** | Dungeon gem view flood-fill moved to host-tested `build_dungeon_gem_view()` (RESOLVED, Batch 10); hardware check pending |
 
 **Bottom line (revised again after Batch 9B):** the dungeon was **three** gaps, not one or two. The **presentation logic** was genuinely defective in eight provable ways (§3 R-05 part 1) and is now fixed and host-tested behind `plan_dungeon_view()`. The **controls** were **not** already correct — that earlier reading was a false negative, taken from `dungeon_action()`'s completeness rather than from the UI dispatcher that a physical key actually reaches; (I)gnite, (D)rink, (H)ole up, Turn Around, the Klimb U/D choice, the Search Dir- choice and the digit keys were all unreachable, and three core APIs had zero callers. Batch 9B fixed the routing (§3 R-05 part 2) and added `dungeon_input_regression`, which drives the real input path. Batch 9C closed the **asset-pipeline gap** (part 3): the authored art is packed with per-image CRC identity, resident in PSRAM, and painted through a second portable seam — leaving only the final physical dungeon session to confirm on glass.
 
@@ -2243,12 +2263,24 @@ One fixture subtlety worth recording: Deceit floor 0 (5,3), the LadderDown, is r
 **Physical test:** §16 Phase 6D.
 **Model:** Opus 5.
 
-### Batch 10 — View Gem presentation · risk: low
+### Batch 10 — View Gem presentation · risk: low · **DONE (host+firmware); hardware check pending**
 **IDs:** R-17, Y-14
-**Files:** `native/targets/tdeck/main/native_renderer.cpp`, `tdeck_board.cpp` (bar overdraw)
-**Work:** replace the bit-test colouring with a real terrain-category map derived from the same classification the reference's `buildGemView` uses; stop clipping the gem view. **Do this after Batch 9** so both share the "full-square presentation sources must not be HUD-clipped" fix.
-**Physical test:** `V` with gems on the overworld and in a dungeon; confirm the map is legible and that closing it charges exactly one turn.
-**Model:** Sonnet.
+**Files:** `native/core/include/openu5/gem_view.h`, `native/core/src/gem_view.cpp` (new semantic layer), `native/core/src/gem_category.inc` (new, generated), `native/core/tools/generate-gem-category-table.ts` (new), `native/core/tests/gem_view_test.cpp` (new), `native/core/sources.cmake`, `native/core/CMakeLists.txt`; `native/targets/tdeck/main/native_renderer.{h,cpp}` (paint-only now), `tdeck_board.{h,cpp}` (`full_square_viewport`), `alpha_runtime.cpp` (call sites + `full_square_viewport`/palette plumbing).
+**Work:** replace the bit-test colouring with a real terrain-category map derived from the same classification the reference's `buildGemView` uses; stop clipping the gem view. **Done after Batch 9**, sharing its "full-square presentation sources must not be HUD-clipped" fix.
+**Physical test:** `V` with gems on the overworld and in a dungeon; confirm the map is legible and that closing it charges exactly one turn. See the Batch 10 hardware checklist below.
+**Model:** Sonnet 5.
+
+**Resolution:** see R-17's "Resolution (Batch 10)" write-up above for the full root-cause/fix/evidence account (also closes Y-14). Host suite RED→GREEN: `gem_view_regression` (new) and `gem_category_table_drift` (new); full suite **77 total, 75 pass, 2 fail** (pre-existing `gameplay_parity` R-21 mismatch 2034, and a `frontend` struct-padding `memcmp` sensitivity newly *surfaced* — not introduced — by this batch's from-scratch rebuild and reproduced identically on the untouched pre-Batch-10 tree; see the isolation evidence in R-17's write-up). Firmware `idf.py build` (`build-batch10/openu5_tdeck.bin`): **PASS**, total image **852,916 bytes** (+1,028 B over Batch 9E's 851,888 B — the new gem-view code), app partition **19% free**, DIRAM 33.92% used. Two unrelated pre-existing build-hygiene fixes (a `-Wsign-conversion` cast in `dungeon_art.cpp` and a `-Wstring-concatenation` parenthesization in `debug_labels.cpp`) were required to get any host build compiling at all in this environment's current toolchain — both are no-op for behavior, isolated and verified by rebuilding on an otherwise-untouched tree.
+
+**Hardware verification checklist** (not yet performed — see §16 for the project's physical-test log format):
+1. Activate/use the View Gem (`V`) in a known mixed-terrain overworld area (water, grass/forest, hills, road all visible if possible; a debug/developer teleport may establish the position).
+2. Confirm the complete 32×32 square is visible with no clipped/cropped edge and no sky/wind bar text drawn across it.
+3. Confirm the party marker is visible and lands on the correct cell (not necessarily centred — the overworld window is anchored to a 16-cell block, so the marker can sit anywhere in columns/rows 8-23).
+4. Move north/south/east/west, re-open the gem, and confirm the displayed terrain shifts in the corresponding direction (a west step should reveal new terrain to the west edge, etc.).
+5. Inspect several recognizable terrain features (coastline, a road, a hill range) against the actual overworld and confirm they read as visually distinct categories.
+6. Confirm returning from the View Gem (any key) leaves normal controls/rendering intact and charges exactly one turn (no charge from the crystal-ball variant).
+7. Enter a dungeon, use `V`, and confirm the connected-floor flood-fill is visible as a full square, walls/doors/rooms are distinguishable, and the party marker sits at the display's centre.
+8. Confirm Batch 9's dungeon 3D corridor presentation still renders normally (unaffected by this batch).
 
 ---
 

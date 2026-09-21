@@ -87,14 +87,27 @@ esp_err_t render_dungeon_view(const GameState &, const TurnState &, const Dungeo
                               uint16_t *rgb565, size_t pixel_count, RenderReport &report,
                               uint16_t &primitives);
 
-/** Render the reference-style 22x22 connected-floor map shown by View Gem. */
-esp_err_t render_dungeon_gem_view(const DungeonState &, uint16_t *rgb565,
-                                  size_t pixel_count, RenderReport &report,
+/**
+ * Render the reference-style 22x22 connected-floor map shown by View Gem.
+ * R-17/Y-14: the DECISIONS (the flood-fill reach, cell type/subtype, marker
+ * cell) come from openu5::build_dungeon_gem_view() in native/core, which is
+ * host-tested by `gem_view_regression`; this function only paints the
+ * EGA-palette colour for each cell -- the full 22x22 square, never cropped.
+ */
+esp_err_t render_dungeon_gem_view(const DungeonState &, const PresentationTileCache &cache,
+                                  uint16_t *rgb565, size_t pixel_count, RenderReport &report,
                                   uint16_t &primitives);
 
-/** Render the reference-style terrain overview shown by View Gem outside dungeons. */
-esp_err_t render_world_gem_view(const ActiveMap &, Position, uint16_t *rgb565,
-                                size_t pixel_count, RenderReport &report,
+/**
+ * Render the reference-style terrain overview shown by View Gem outside
+ * dungeons. R-17/Y-14: the DECISIONS (chunk-origin window vs. fixed town
+ * window, per-cell terrain CATEGORY, marker cell) come from
+ * openu5::build_world_gem_view() in native/core (`gem_view_regression`);
+ * this function only paints the EGA-palette colour for each category -- the
+ * full 32x32 square, never cropped.
+ */
+esp_err_t render_world_gem_view(const ActiveMap &, Position, const PresentationTileCache &cache,
+                                uint16_t *rgb565, size_t pixel_count, RenderReport &report,
                                 uint16_t &primitives);
 
 /**

@@ -1,6 +1,7 @@
 #include "native_renderer.h"
 
 #include "openu5/dungeon_view.h"
+#include "openu5/gem_view.h"
 #include "openu5/world_fx.h"
 
 #include <algorithm>
@@ -101,10 +102,6 @@ void expand_tile(const uint8_t (&indexed4)[128], const uint16_t (&palette)[16],
 }
 
 constexpr uint16_t kDungeonBlack = 0x0000;
-constexpr uint16_t kDungeonWall = 0x7a08;
-constexpr uint16_t kDungeonMortar = 0xce79;
-constexpr uint16_t kDungeonFeature = 0x07e0;
-constexpr uint16_t kDungeonDanger = 0xf800;
 
 void dungeon_pixel(uint16_t *pixels, int x, int y, uint16_t color, uint16_t &primitives) {
     if (x < 0 || y < 0 || x >= kViewportPixels || y >= kViewportPixels) return;
@@ -134,14 +131,6 @@ void dungeon_line(uint16_t *pixels, int x0, int y0, int x1, int y1,
         if (doubled >= dy) { error += dy; x0 += sx; }
         if (doubled <= dx) { error += dx; y0 += sy; }
     }
-}
-
-bool dungeon_wall(const DungeonState &d, int x, int y) {
-    const int type = dungeon_cell(d, d.pos.floor, (x + 8) & 7, (y + 8) & 7) >> 4;
-    if (type == 11 || type == 12) return true;
-    if (type != 13) return false;
-    const int n = int(d.pos.floor) * 64 + ((y + 8) & 7) * 8 + ((x + 8) & 7);
-    return (d.revealed[n >> 3] & (1U << (n & 7))) == 0;
 }
 
 void dungeon_report(RenderReport &report, const DungeonState &d, uint16_t *pixels) {
@@ -433,73 +422,111 @@ esp_err_t render_dungeon_view(const GameState &g, const TurnState &t, const Dung
     return ESP_OK;
 }
 
-esp_err_t render_dungeon_gem_view(const DungeonState &d, uint16_t *pixels, size_t count,
-                                  RenderReport &report, uint16_t &primitives) {
+/**
+ * EGA colour for one DUNGEON gem cell, ported from the reference's per-type
+ * jump-table (gemmap.ts GLYPH/WALL_DENSE/FOUNTAIN_COLOR/FIELD_STRIPES). The
+ * exact RUNES glyph shapes are simplified to a solid fill (Class-C: category
+ * parity over pixel parity), but the COLOR is the original's exact per-type
+ * EGA index, painted through the live asset palette so it matches the rest
+ * of the renderer. Returns false for the original's own un-painted cells
+ * (corridor 0x0, open chest 0x7, the marker's own seed cell) -- left black.
+ */
+bool gem_dungeon_color(const PresentationTileCache &cache, uint8_t type, uint16_t &color) {
+    switch (type) {
+    case 0x1: case 0x2: case 0x3: color = cache.palette[0x7]; return true; // stairs: gray
+    case 0x4: case 0xe: case 0xa: case 0xf: color = cache.palette[0xe]; return true; // chest/door/room: yellow
+    case 0x5: color = cache.palette[0x9]; return true;  // fountain: bright blue
+    case 0x6: color = cache.palette[0xc]; return true;  // trap: bright red
+    case 0x8: color = cache.palette[0xd]; return true;  // magic field: bright magenta (1st FIELD_STRIPES)
+    case 0xb: color = cache.palette[0xf]; return true;  // wall (solid or dense): white
+    case 0xc: case 0xd: color = cache.palette[0x1]; return true; // special wall / secret door: blue
+    default: return false; // 0x0 corridor, 0x7 open chest: the original leaves these black.
+    }
+}
+
+esp_err_t render_dungeon_gem_view(const DungeonState &d, const PresentationTileCache &cache,
+                                  uint16_t *pixels, size_t count, RenderReport &report,
+                                  uint16_t &primitives) {
     report = {}; primitives = 0;
     if (!d.active || !pixels || count < kViewportPixelCount) return ESP_ERR_INVALID_ARG;
     std::fill(pixels, pixels + kViewportPixelCount, kDungeonBlack);
-    constexpr int size = 22, cell = 8, center = 11;
-    std::array<uint8_t, size * size> reached{};
-    std::array<uint16_t, size * size> queue{};
-    size_t head = 0, tail = 0;
-    reached[center * size + center] = 1;
-    queue[tail++] = uint16_t(center * size + center);
-    constexpr int nx[] = {-1, 0, 1, -1, 1, -1, 0, 1};
-    constexpr int ny[] = {-1, -1, -1, 0, 0, 1, 1, 1};
-    auto type_at = [&](int col, int row) {
-        return int(dungeon_cell(d, d.pos.floor, (int(d.pos.x) + col - center + 8) & 7,
-                                (int(d.pos.y) + row - center + 8) & 7) >> 4);
-    };
-    while (head < tail) {
-        const int at = queue[head++], col = at % size, row = at / size;
-        for (int n = 0; n < 8; ++n) {
-            const int x = col + nx[n], y = row + ny[n];
-            if (x < 0 || x >= size || y < 0 || y >= size) continue;
-            const int next = y * size + x;
-            if (reached[next]) continue;
-            reached[next] = 1;
-            if (!dungeon_wall(d, int(d.pos.x) + x - center, int(d.pos.y) + y - center))
-                queue[tail++] = uint16_t(next);
+    const GemView v = build_dungeon_gem_view(d);
+    constexpr int cell = kViewportPixels / kGemDungeonDisplay; // 176 / 22 = 8
+    for (int row = 0; row < v.height; ++row) {
+        for (int col = 0; col < v.width; ++col) {
+            const uint8_t type = v.cells[row][col].value;
+            if (type == kGemDungeonUnreached) continue;
+            uint16_t color = 0;
+            if (!gem_dungeon_color(cache, type, color)) continue;
+            const int x = col * cell, y = row * cell;
+            dungeon_rect(pixels, x + 1, y + 1, x + cell - 2, y + cell - 2, color, primitives);
         }
     }
-    for (int row = 0; row < size; ++row) for (int col = 0; col < size; ++col) {
-        if (!reached[row * size + col]) continue;
-        const int type = type_at(col, row);
-        const int x = col * cell, y = row * cell;
-        if (type == 11) dungeon_rect(pixels, x, y, x + 7, y + 7, kDungeonMortar, primitives);
-        else if (type == 12 || type == 13) dungeon_rect(pixels, x + 1, y + 1, x + 6, y + 6, kDungeonWall, primitives);
-        else if (type == 8) dungeon_rect(pixels, x + 1, y + 2, x + 6, y + 5, kDungeonDanger, primitives);
-        else if (type >= 1 && type <= 7) dungeon_rect(pixels, x + 2, y + 2, x + 5, y + 5, kDungeonFeature, primitives);
-    }
-    dungeon_rect(pixels, center * cell + 2, center * cell + 2, center * cell + 5, center * cell + 5,
-                 kDungeonFeature, primitives);
+    // Party marker: RUNES rhombus in the reference, bright green, painted
+    // last so it is never occluded by a neighbouring cell's fill.
+    const int mx = v.marker_x * cell, my = v.marker_y * cell;
+    dungeon_rect(pixels, mx + 2, my + 2, mx + cell - 3, my + cell - 3, cache.palette[0xa], primitives);
     dungeon_report(report, d, pixels); report.map_context = "View Gem dungeon floor";
     return ESP_OK;
 }
 
-esp_err_t render_world_gem_view(const ActiveMap &map, Position center, uint16_t *pixels,
-                                size_t count, RenderReport &report, uint16_t &primitives) {
+/**
+ * EGA colour for one OVERWORLD/TOWN gem category, ported from the reference's
+ * per-category jump-table (gemmap-overworld.ts drawCell/GEM_CATEGORY). The
+ * exact per-tile micro-patterns (dots/lines/frames) are simplified to a
+ * solid fill (Class-C), but every colour below is the original's own EGA
+ * index for that category, painted through the live asset palette. Category
+ * 0 (void) and 16 (road, painted separately for its green+red identity) are
+ * handled by the caller.
+ */
+uint16_t gem_world_color(const PresentationTileCache &cache, uint8_t category) {
+    switch (category) {
+    case 1: case 2: case 9: return cache.palette[0xa]; // bright green: grass/fill/forest
+    case 3: return cache.palette[0x4]; // red
+    case 4: case 5: case 6: case 7: case 14: return cache.palette[0xf]; // white: hard terrain/signs
+    case 8: return cache.palette[0xe]; // yellow: hills
+    case 10: case 11: case 12: case 15: return cache.palette[0x9]; // bright blue: coast/water/fountain
+    default: return cache.palette[0xa];
+    }
+}
+
+esp_err_t render_world_gem_view(const ActiveMap &map, Position center, const PresentationTileCache &cache,
+                                uint16_t *pixels, size_t count, RenderReport &report,
+                                uint16_t &primitives) {
     report = {}; primitives = 0;
     if (!pixels || count < kViewportPixelCount) return ESP_ERR_INVALID_ARG;
     std::fill(pixels, pixels + kViewportPixelCount, kDungeonBlack);
-    constexpr int cells = 32, pixel = 5, origin = 8;
-    for (int row = 0; row < cells; ++row) for (int col = 0; col < cells; ++col) {
-        int x = int(center.x) + col - cells / 2, y = int(center.y) + row - cells / 2;
-        if (map.geometry.wraps) { x = wrap_coord(x); y = wrap_coord(y); }
-        else if (x < 0 || y < 0 || x >= map.geometry.width || y >= map.geometry.height) continue;
-        const int tile = map.tile_at(x, y);
-        // Gem view is a terrain-category map, not an object-layer snapshot.
-        const uint16_t color = (tile & 3) == 3 ? 0x001f : (tile & 7) == 0 ? 0x07e0 :
-                               (tile & 15) < 4 ? 0x7be0 : 0x8410;
-        dungeon_rect(pixels, origin + col * pixel, origin + row * pixel,
-                     origin + col * pixel + pixel - 1, origin + row * pixel + pixel - 1,
-                     color, primitives);
+    const GemView v = build_world_gem_view(map, center);
+    constexpr int pixel = 5, origin = 8; // 32*5 + 2*8 = 176: the full square, no crop.
+    for (int row = 0; row < v.height; ++row) {
+        for (int col = 0; col < v.width; ++col) {
+            const uint8_t cat = v.cells[row][col].value;
+            const int x = origin + col * pixel, y = origin + row * pixel;
+            if (cat == 0) continue; // void: leave black, as the original does.
+            if (cat == 13) { // swamp: fixed half green / half blue (Class-C).
+                dungeon_rect(pixels, x, y, x + pixel - 1, y + (pixel - 1) / 2, cache.palette[0xa], primitives);
+                dungeon_rect(pixels, x, y + (pixel - 1) / 2 + 1, x + pixel - 1, y + pixel - 1,
+                             cache.palette[0x9], primitives);
+                continue;
+            }
+            if (cat == 16) { // road: green background + red centre (Class-C: no edge-connectivity).
+                dungeon_rect(pixels, x, y, x + pixel - 1, y + pixel - 1, cache.palette[0xa], primitives);
+                dungeon_rect(pixels, x + 1, y + 1, x + pixel - 2, y + pixel - 2, cache.palette[0x4], primitives);
+                continue;
+            }
+            dungeon_rect(pixels, x, y, x + pixel - 1, y + pixel - 1, gem_world_color(cache, cat), primitives);
+        }
     }
-    dungeon_rect(pixels, origin + 16 * pixel, origin + 16 * pixel,
-                 origin + 16 * pixel + pixel - 1, origin + 16 * pixel + pixel - 1,
-                 kDungeonFeature, primitives);
-    report.left = int16_t(int(center.x) - 16); report.top = int16_t(int(center.y) - 16);
-    report.right = int16_t(int(center.x) + 15); report.bottom = int16_t(int(center.y) + 15);
+    const int mx = origin + v.marker_x * pixel, my = origin + v.marker_y * pixel;
+    dungeon_rect(pixels, mx, my, mx + pixel - 1, my + pixel - 1, cache.palette[0xf], primitives);
+
+    int32_t origin_x = 0, origin_y = 0;
+    if (map.geometry.wraps) {
+        const GemChunkOrigin o = gem_chunk_origin(center.x, center.y);
+        origin_x = o.x; origin_y = o.y;
+    }
+    report.left = int16_t(origin_x); report.top = int16_t(origin_y);
+    report.right = int16_t(origin_x + kGemWindow - 1); report.bottom = int16_t(origin_y + kGemWindow - 1);
     report.viewport_bytes = uint32_t(kViewportPixelCount * sizeof(uint16_t));
     report.viewport_crc32 = crc32_u16le(pixels, kViewportPixelCount);
     report.map_context = "View Gem world terrain";

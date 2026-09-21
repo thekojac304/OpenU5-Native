@@ -536,7 +536,8 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
                             const DeviceDebugScreen *debug,bool movement_mode,
                             uint8_t ui_size,const DeviceShopView *shop,const DeviceSelectionView *selection,
                             const DeviceContextActionBar *context_bar,DevicePartyHighlight party_highlight,
-                            uint32_t viewport_crc,const openu5::HudDungeonBands *dungeon_bands)
+                            uint32_t viewport_crc,const openu5::HudDungeonBands *dungeon_bands,
+                            bool full_square_viewport)
 {
     // R-05.  The T-Deck's 176x176 viewport has no 8 px margin to put the
     // original's dungeon bands in, so they are drawn over the same two 9 px
@@ -647,6 +648,13 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
                                 pixels+(row*openu5::kTilePixels+clip_top)*openu5::kViewportPixels+col*openu5::kTilePixels,openu5::kViewportPixels),kTag,"draw clipped animated Alpha cell");}
         return ESP_OK;
     }
+    // R-17/Y-14: the gem view is a full-square 176x176 composition, not the
+    // world/dungeon3d viewport that legitimately cedes its top/bottom 9 px to
+    // the sky and wind strips (or, for a mounted dungeon, their band-caption
+    // replacements). Toggling in or out of that mode must not leave a stale
+    // bar fragment or a stale clipped-rectangle behind, so force both caches
+    // on the transition either way.
+    if(full_square_viewport!=full_square_active_){viewport_cache_valid_=false;sky_bar_cache_valid_=false;full_square_active_=full_square_viewport;}
     // The band captions take part in the SAME cache signatures as the strips
     // they replace, so a Klimb (level) or a turn (direction) repaints its strip
     // on the very frame that produced it, and nothing else repaints.
@@ -658,13 +666,15 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
     else std::snprintf(wind_text,sizeof(wind_text)," Wind: %-16.16s",hud.wind_visible?hud.wind:"--");
     const bool viewport_changed=!viewport_cache_valid_||viewport_crc_!=viewport_crc;
     if(viewport_changed){
-        constexpr int top=openu5::kHudSkyBarH;
-        constexpr int height=openu5::kViewportPixels-openu5::kHudSkyBarH-openu5::kHudWindBarH;
-        ESP_RETURN_ON_ERROR(draw_rgb565_strided(openu5::kHudViewportX,openu5::kHudViewportY+top,openu5::kViewportPixels,height,pixels+top*openu5::kViewportPixels,openu5::kViewportPixels),kTag,"draw strip-clipped Alpha viewport");
+        const int top=full_square_viewport?0:openu5::kHudSkyBarH;
+        const int height=full_square_viewport?openu5::kViewportPixels:openu5::kViewportPixels-openu5::kHudSkyBarH-openu5::kHudWindBarH;
+        ESP_RETURN_ON_ERROR(draw_rgb565_strided(openu5::kHudViewportX,openu5::kHudViewportY+top,openu5::kViewportPixels,height,pixels+top*openu5::kViewportPixels,openu5::kViewportPixels),kTag,"draw Alpha viewport");
         debug_last_pixels_+=openu5::kViewportPixels*height;++debug_last_dirty_regions_;
     }
-    if(!sky_bar_cache_valid_||sky_bar_signature_!=sky_signature){ESP_RETURN_ON_ERROR(draw_sky_bar(),kTag,"compose authentic sky strip");sky_bar_signature_=sky_signature;sky_bar_cache_valid_=true;debug_last_pixels_+=openu5::kHudSkyBarW*openu5::kHudSkyBarH;++debug_last_dirty_regions_;}
-    if(!viewport_cache_valid_||std::strcmp(wind_bar_cache_,wind_text)!=0){ESP_RETURN_ON_ERROR(draw_wind_bar(),kTag,"compose lower strip");std::snprintf(wind_bar_cache_,sizeof(wind_bar_cache_),"%s",wind_text);debug_last_pixels_+=openu5::kHudWindBarW*openu5::kHudWindBarH;++debug_last_dirty_regions_;}
+    if(!full_square_viewport){
+        if(!sky_bar_cache_valid_||sky_bar_signature_!=sky_signature){ESP_RETURN_ON_ERROR(draw_sky_bar(),kTag,"compose authentic sky strip");sky_bar_signature_=sky_signature;sky_bar_cache_valid_=true;debug_last_pixels_+=openu5::kHudSkyBarW*openu5::kHudSkyBarH;++debug_last_dirty_regions_;}
+        if(!viewport_cache_valid_||std::strcmp(wind_bar_cache_,wind_text)!=0){ESP_RETURN_ON_ERROR(draw_wind_bar(),kTag,"compose lower strip");std::snprintf(wind_bar_cache_,sizeof(wind_bar_cache_),"%s",wind_text);debug_last_pixels_+=openu5::kHudWindBarW*openu5::kHudWindBarH;++debug_last_dirty_regions_;}
+    }
     viewport_crc_=viewport_crc;viewport_cache_valid_=true;
     if((!shop||!shop->active)&&(!selection||!selection->active)&&alpha_ui_size_cache_!=ui_size){
         ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudPartyFrameX,0,kDisplayWidth-openu5::kHudPartyFrameX,kDisplayHeight,kBlack),kTag,"reflow gameplay UI scale");
