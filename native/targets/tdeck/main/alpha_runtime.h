@@ -47,6 +47,25 @@ class AlphaRuntime {
     openu5::GameState &game() { return game_; }
     const openu5::UiSession *ui() const { return ui_; }
 
+    // Batch 11 host-test seam --------------------------------------------
+    // Wires this exact instance's CommandContext/CombatContext/
+    // DungeonContext and constructs its UiSession the same way initialize()
+    // does for production, except every buffer comes from ordinary `new`
+    // instead of heap_caps PSRAM, and Board/AlphaResourcePack are never
+    // touched. Callers set world/party/turn state afterward through
+    // game()/turn()/travel()/commands() and then drive the exact same
+    // handle()/command()/dispatch() production uses -- no gameplay routing
+    // is duplicated or mirrored. Production's initialize() is completely
+    // unchanged and never calls this; only the CMake target under
+    // native/targets/tdeck/host_tests links the .cpp that defines it, so it
+    // never ships in T-Deck firmware.
+    struct HostTestFixture { openu5::WorldData world{}; };
+    void attach_host_test_fixture(const HostTestFixture &);
+    openu5::TurnState &turn() { return turn_; }
+    openu5::TravelState &travel() { return travel_; }
+    openu5::CommandState &commands() { return commands_; }
+    openu5::NpcActors &actors() { return actors_; }
+
   private:
     struct Selection { char label[40]{}; int16_t value = -1; bool enabled = true; };
     openu5::GameState game_{};
