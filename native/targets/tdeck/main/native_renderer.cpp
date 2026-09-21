@@ -403,6 +403,33 @@ esp_err_t render_dungeon_view(const GameState &g, const TurnState &t, const Dung
     const auto catalog = dungeon_art_authored_catalog();
     uint16_t painted = 0;
     for (uint8_t i = 0; i < plan.count; ++i) {
+        // Batch 12B.  A magic field is the one feature with no ITEMS.16 image:
+        // the original paints it with the procedural sparkle subsystem
+        // `magic_field_sparkle_drawer` @0x127e, not with a blit.  The strokes,
+        // their box and their colour are decided by openu5::dungeon_field_spark()
+        // in native/core (host-tested by dungeon_art_regression and
+        // batch12b_hardware_regression); this only moves the pixels, exactly as
+        // it does for the authored banks.  It counts as ONE primitive because it
+        // is one feature drawn by one subsystem, whatever its stroke count.
+        if (plan.ops[i].kind == DungeonOpKind::Feature &&
+            plan.ops[i].cell_type == uint8_t(DungeonCellKind::MagicField)) {
+            const uint16_t strokes = dungeon_field_spark_count(plan.ops[i].depth);
+            bool drew = false;
+            for (uint16_t s = 0; s < strokes; ++s) {
+                const auto spark =
+                    dungeon_field_spark(plan.ops[i].depth, plan.ops[i].sub, phase, s);
+                if (!spark.w || spark.y < 0 || spark.y >= kViewportPixels) continue;
+                const uint16_t color = kDungeonEgaRgb565[spark.color & 15];
+                for (int dx = 0; dx < int(spark.w); ++dx) {
+                    const int x = int(spark.x) + dx;
+                    if (x < 0 || x >= kViewportPixels) continue;
+                    pixels[int(spark.y) * kViewportPixels + x] = color;
+                    drew = true;
+                }
+            }
+            if (drew) ++painted;
+            continue;
+        }
         DungeonArtBlit blits[kDungeonMaxBlitsPerOp]{};
         const size_t n = dungeon_art_blits(plan.ops[i], catalog, phase, blits, kDungeonMaxBlitsPerOp);
         for (size_t k = 0; k < n; ++k) {

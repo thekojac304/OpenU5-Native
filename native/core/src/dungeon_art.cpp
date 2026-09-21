@@ -314,4 +314,68 @@ size_t dungeon_art_blits(const DungeonDrawOp &op, const DungeonArtCatalog &catal
     return 0;
 }
 
+// ---------------------------------------------------------------------------
+// The magic field's procedural sparkles (`magic_field_sparkle_drawer` @0x127e).
+// Tables, argument order and colours are documented on the declarations in
+// dungeon_art.h; only the arithmetic lives here.
+// ---------------------------------------------------------------------------
+const uint16_t kDungeonFieldSparkCount[4] = {300, 100, 50, 15}; // DS 0x2e52
+const int16_t kDungeonFieldSparkLo[4] = {16, 56, 80, 92};       // DS 0x2e42
+const int16_t kDungeonFieldSparkHi[4] = {167, 135, 111, 99};    // DS 0x2e4a
+const int16_t kDungeonFieldSparkLen[4] = {7, 7, 5, 2};          // DS 0x2e5a
+const uint8_t kDungeonFieldSparkColor[4] = {10, 9, 10, 9};      // 0x1292 + 0x12b7
+
+namespace {
+
+/**
+ * The RENDER-only source of the two rolls per stroke.  It is deliberately a
+ * per-stroke hash of (phase, depth, type, index) rather than a running stream:
+ * the picture must be reproducible from its coordinates alone so a host test can
+ * assert it, and there is no sequential state to keep on device.  The binary's
+ * own consumption here is unbounded and wall-clock dependent (one full re-roll
+ * per key-poll redraw), so no stream position is being preserved by anyone --
+ * this is the sanctioned divergence of dungeon.md 12.11, and it never touches
+ * GameState::rng.
+ */
+uint32_t spark_hash(uint32_t phase, uint32_t depth, uint32_t type, uint32_t index,
+                    uint32_t roll) {
+    uint32_t h = 0x9e3779b9u;
+    for (uint32_t v : {phase, depth, type, index, roll}) {
+        h ^= v + 0x9e3779b9u + (h << 6) + (h >> 2);
+        h ^= h >> 15;
+        h *= 0x2c1b3c6du;
+        h ^= h >> 12;
+    }
+    return h;
+}
+
+/** `rand_range(lo, hi)` -- inclusive at both ends, as 0x9ec2 is. */
+int16_t spark_rand(uint32_t hash, int16_t lo, int16_t hi) {
+    if (hi <= lo) return lo;
+    const uint32_t span = uint32_t(hi - lo) + 1u;
+    return int16_t(lo + int16_t(hash % span));
+}
+
+} // namespace
+
+uint16_t dungeon_field_spark_count(uint8_t depth) {
+    return depth < 4 ? kDungeonFieldSparkCount[depth] : uint16_t(0);
+}
+
+DungeonFieldSpark dungeon_field_spark(uint8_t depth, uint8_t sub, uint32_t phase, uint16_t index) {
+    DungeonFieldSpark spark{};
+    if (depth >= 4 || index >= kDungeonFieldSparkCount[depth]) return spark;
+    // The caller at 0x19f6 pushes the depth first and `tile & 7` second, so the
+    // tables index by DEPTH and the colour switch conmutes on the field TYPE.
+    const uint8_t type = uint8_t(sub & 7);
+    const int16_t lo = kDungeonFieldSparkLo[depth], hi = kDungeonFieldSparkHi[depth],
+                  len = kDungeonFieldSparkLen[depth];
+    // Two rolls, x before y, exactly as the loop at 0x12fb-0x1323 spends them.
+    spark.x = spark_rand(spark_hash(phase, depth, type, index, 0), lo, int16_t(hi - len));
+    spark.y = spark_rand(spark_hash(phase, depth, type, index, 1), lo, hi);
+    spark.w = uint8_t(len + 1); // the hline is inclusive of its far end
+    spark.color = type < 4 ? kDungeonFieldSparkColor[type] : kDungeonFieldSparkColor[0];
+    return spark;
+}
+
 } // namespace openu5

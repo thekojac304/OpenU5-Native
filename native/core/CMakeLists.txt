@@ -202,6 +202,28 @@ if(BUILD_TESTING)
   add_test(NAME dungeon_combat_regression COMMAND dungeon_combat_regression
     "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dungeon-maps.txt"
     "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/fixed-maps.txt")
+  # Batch 12B -- the two hardware discrepancies Batch 12's combat verdict did
+  # not cover: the dungeon field that casts but never appears, and the enemy
+  # standing in the black void.  Unlike every suite above it reads the REAL
+  # shipped alpha resource pack (the exact bytes on the T-Deck's card), so the
+  # authored .CBT unit slots, the authored DUNGEON.DAT field cells and the
+  # dungeon-room arena catalog are the device's own data and not a fixture
+  # restatement.  It links the production device renderer and the production
+  # pack loader; ESP-IDF headers come from host_tests/esp_shims exactly as they
+  # do for alpha_runtime_integration_regression.
+  add_executable(batch12b_hardware_regression
+    ../targets/tdeck/host_tests/batch12b_hardware_test.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/main/asset_pack.cpp)
+  target_link_libraries(batch12b_hardware_regression PRIVATE openu5_core)
+  target_include_directories(batch12b_hardware_regression PRIVATE
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/main)
+  target_compile_features(batch12b_hardware_regression PRIVATE cxx_std_20)
+  add_test(NAME batch12b_hardware_regression COMMAND batch12b_hardware_regression
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
   add_executable(action_feedback_regression tests/action_feedback_test.cpp)
   target_link_libraries(action_feedback_regression PRIVATE openu5_core)
   add_test(NAME action_feedback_regression COMMAND action_feedback_regression)
@@ -420,5 +442,5 @@ if(BUILD_TESTING)
     set(OPENU5_CTEST_CONFIG_ARGS)
   endif()
   add_custom_target(host-test COMMAND "${CMAKE_CTEST_COMMAND}" ${OPENU5_CTEST_CONFIG_ARGS} --output-on-failure
-  DEPENDS frontend_tests ui_session_tests display_names_tests quest_search_tests debug_labels_tests ${UI_DEBUG_TEST_TARGET} debug_map_picker_tests debug_developer_tests gameplay_integration_tests look_sign_tests gameplay_driver movement_flow_parity_tests quest_driver shop_parity_tests shop_flow_tests shop_adapter_tests persistence_driver dialogue_adapter_tests dialogue_parity_tests transport_flow_parity_tests world_flow_adapter_tests dungeon_flow_parity_tests world_flow_parity_tests dungeon_parity_tests advanced_combat_parity_tests magic_parity_tests combat_parity_tests core_parity_tests turn_parity_tests travel_parity_tests command_parity_tests item_parity_tests movement_regression presentation_regression dungeon_view_regression dungeon_art_regression gem_view_regression dungeon_input_regression combat_escape_regression combat_loot_open_regression input_regression USES_TERMINAL)
+  DEPENDS frontend_tests ui_session_tests display_names_tests quest_search_tests debug_labels_tests ${UI_DEBUG_TEST_TARGET} debug_map_picker_tests debug_developer_tests gameplay_integration_tests look_sign_tests gameplay_driver movement_flow_parity_tests quest_driver shop_parity_tests shop_flow_tests shop_adapter_tests persistence_driver dialogue_adapter_tests dialogue_parity_tests transport_flow_parity_tests world_flow_adapter_tests dungeon_flow_parity_tests world_flow_parity_tests dungeon_parity_tests advanced_combat_parity_tests magic_parity_tests combat_parity_tests core_parity_tests turn_parity_tests travel_parity_tests command_parity_tests item_parity_tests movement_regression presentation_regression dungeon_view_regression dungeon_art_regression gem_view_regression dungeon_input_regression combat_escape_regression combat_loot_open_regression batch12b_hardware_regression input_regression USES_TERMINAL)
 endif()

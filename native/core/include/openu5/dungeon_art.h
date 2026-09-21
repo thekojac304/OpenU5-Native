@@ -212,4 +212,78 @@ bool dungeon_art_parse(const uint8_t *bytes, size_t length, size_t banks, size_t
 /** The 16 EGA entries every authored dungeon image is indexed against, as RGB565. */
 extern const uint16_t kDungeonEgaRgb565[16];
 
+// ---------------------------------------------------------------------------
+// Batch 12B -- the MAGIC FIELD, the one corridor feature with no authored image.
+//
+// `dungeon_art_blits()` returns 0 for cell kind 8 and always has: ITEMS.16 has
+// no field picture.  The original does not leave the cell blank either -- it
+// draws the field PROCEDURALLY, with `magic_field_sparkle_drawer` @0x127e,
+// reached from `feature_overlay_drawer_by_nibble` @0x19f6 when the tile's high
+// nibble is 8.  Until Batch 12B the port carried the gap rather than the
+// subsystem, so a cast In Flam/Nox/Zu/Sanct Grav changed the map and showed
+// nothing, and the 55 fields DUNGEON.DAT authors in Wrong and Covetous had
+// never been visible at all.
+//
+// The body (0x127e-0x1346, `ret 4`) draws `count[depth]` horizontal strokes
+// inside a square box, two `rand_range` rolls per stroke -- x first, then y:
+//
+//     x = rand(lo[depth], hi[depth] - len[depth])
+//     y = rand(lo[depth], hi[depth])
+//     hline(x, y, x + len[depth])            ; INCLUSIVE, so width = len + 1
+//
+// with the four tables living contiguously at DS 0x2e42 / 0x2e4a / 0x2e52 /
+// 0x2e5a, four words each, indexed by DEPTH; and the colour switch at 0x1292
+// selecting on the FIELD TYPE (`tile & 7`) from the shared procedural palette
+// globals DS 0x13b6/0x13b4/0x13ae/0x13b2 = 2/1/2/1, each +8 by the `add ax, 8`
+// at 0x12b7 -> 10/9/10/9.  Argument order and the depth/type split are settled
+// by the caller at 0x19f6 and cross-checked by the tables' own 8-byte stride;
+// both are derived in full in re/notes/dungeon-decor-mazmorra.md (sections 2, 5
+// and 6 ticket 4) and implemented in the accepted reference
+// game/src/skin/fiel/dungeon-decor.ts (`fieldSparkRects`).
+//
+// The randomness is RENDER randomness: the binary re-rolls the whole field on
+// every corridor redraw, which is one pass of its key poll, so the consumption
+// is unbounded and wall-clock dependent.  It is the sanctioned divergence class
+// of dungeon.md 12.11 (the same one the wanderer's animation frame uses) and it
+// must never touch GameState::rng.  `phase` is therefore the only entropy here,
+// exactly as it is for a Monster op.
+// ---------------------------------------------------------------------------
+
+/** One procedural stroke: the inclusive hline `(x, y) .. (x + w - 1, y)`. */
+struct DungeonFieldSpark {
+    int16_t x = 0, y = 0;
+    uint8_t w = 0;
+    /** EGA palette index, to be mapped through kDungeonEgaRgb565 by the painter. */
+    uint8_t color = 0;
+};
+
+/** Strokes per depth 0..3 (DS 0x2e52). */
+extern const uint16_t kDungeonFieldSparkCount[4];
+/** Low edge of the box per depth (DS 0x2e42). */
+extern const int16_t kDungeonFieldSparkLo[4];
+/** High edge of the box per depth (DS 0x2e4a). */
+extern const int16_t kDungeonFieldSparkHi[4];
+/** Stroke length per depth (DS 0x2e5a); the hline is inclusive, so width = len+1. */
+extern const int16_t kDungeonFieldSparkLen[4];
+/** Colour by field type `tile & 7` (0x1292 switch, palette globals +8). */
+extern const uint8_t kDungeonFieldSparkColor[4];
+
+/** How many strokes a field at `depth` draws; 0 outside 0..3. */
+uint16_t dungeon_field_spark_count(uint8_t depth);
+
+/**
+ * Stroke `index` of the field at `depth` whose tile low nibble is `sub`.  PURE:
+ * the same (depth, sub, phase, index) always yields the same stroke, so the
+ * picture is reproducible in a host test while still re-rolling per redraw on
+ * device, where `phase` advances.  `index` at or beyond
+ * `dungeon_field_spark_count(depth)` -- or a depth outside 0..3 -- yields a
+ * stroke of width 0, which paints nothing.
+ *
+ * A field type outside 0..3 cannot occur through the cast path (DS:0x4596 holds
+ * exactly four tiles) and the binary would paint it with whatever colour the
+ * brush last held; the port falls back to type 0's colour rather than inherit
+ * an undefined one, which is what the reference does too.
+ */
+DungeonFieldSpark dungeon_field_spark(uint8_t depth, uint8_t sub, uint32_t phase, uint16_t index);
+
 } // namespace openu5

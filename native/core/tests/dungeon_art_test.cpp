@@ -714,6 +714,93 @@ void a13_palette() {
             check(kDungeonEgaRgb565[i] != kDungeonEgaRgb565[j], "A13 no two EGA entries collide");
 }
 
+// A14 -- Batch 12B.  The magic field's PROCEDURAL strokes
+// (`magic_field_sparkle_drawer` @0x127e).  A field still has no ITEMS.16 image,
+// so a6 above still expects zero blits for it; what is proved here is that the
+// subsystem the original uses instead exists, carries the reference tables, and
+// stays inside its box.
+//   [REF-BIN] DUNGEON.OVL 0x127e-0x1346, tables DS 0x2e42/0x2e4a/0x2e52/0x2e5a,
+//             colour switch 0x1292 with the `add ax, 8` at 0x12b7, caller
+//             `feature_overlay_drawer_by_nibble` @0x19f6.
+//   [REF-TS]  game/src/skin/fiel/dungeon-decor.ts `fieldSparkRects` and its
+//             FIELD_SPARK_{COUNT,LO,HI,LEN,COLOR} tables.
+//   [NOTE]    re/notes/dungeon-decor-mazmorra.md sections 2, 5 and 6 ticket 4.
+void a14_field_sparks() {
+    const uint16_t counts[4] = {300, 100, 50, 15};
+    const int16_t lo[4] = {16, 56, 80, 92}, hi[4] = {167, 135, 111, 99}, len[4] = {7, 7, 5, 2};
+    const uint8_t colors[4] = {10, 9, 10, 9};
+    for (int d = 0; d < 4; ++d) {
+        check(kDungeonFieldSparkCount[d] == counts[d], "A14 stroke count matches DS 0x2e52");
+        check(kDungeonFieldSparkLo[d] == lo[d], "A14 box low edge matches DS 0x2e42");
+        check(kDungeonFieldSparkHi[d] == hi[d], "A14 box high edge matches DS 0x2e4a");
+        check(kDungeonFieldSparkLen[d] == len[d], "A14 stroke length matches DS 0x2e5a");
+        check(kDungeonFieldSparkColor[d] == colors[d], "A14 colour matches the 0x1292 switch");
+        check(dungeon_field_spark_count(uint8_t(d)) == counts[d],
+              "A14 the accessor reports the table's own count");
+    }
+    check(dungeon_field_spark_count(4) == 0, "A14 a depth past 3 draws nothing");
+    check(dungeon_field_spark(4, 2, 0, 0).w == 0, "A14 a depth past 3 yields an empty stroke");
+
+    // A field still has no authored image -- the blit layer must stay silent, or
+    // the two subsystems would both draw it.
+    {
+        DungeonDrawOp op{};
+        op.kind = DungeonOpKind::Feature;
+        op.depth = 1;
+        op.cell_type = 0x8;
+        op.sub = 2;
+        DungeonArtBlit blits[kDungeonMaxBlitsPerOp]{};
+        check(dungeon_art_blits(op, dungeon_art_authored_catalog(), 0, blits,
+                                kDungeonMaxBlitsPerOp) == 0,
+              "A14 a magic field still emits no ITEMS.16 blit");
+    }
+
+    for (uint8_t d = 0; d < 4; ++d) {
+        for (uint8_t sub = 0; sub < 4; ++sub) {
+            const uint16_t n = dungeon_field_spark_count(d);
+            for (uint16_t i = 0; i < n; ++i) {
+                const auto s = dungeon_field_spark(d, sub, 7, i);
+                check(s.w == uint8_t(len[d] + 1),
+                      "A14 the inclusive hline is len+1 pixels wide");
+                check(s.color == colors[sub], "A14 the colour is chosen by the field TYPE");
+                check(s.x >= lo[d] && s.x + int16_t(s.w) - 1 <= hi[d],
+                      "A14 the whole stroke stays inside the box");
+                check(s.y >= lo[d] && s.y <= hi[d], "A14 the stroke's row stays inside the box");
+            }
+            check(dungeon_field_spark(d, sub, 7, uint16_t(n)).w == 0,
+                  "A14 an index past the count yields an empty stroke");
+        }
+    }
+    // The bit-3 carrier the dungeon cast preserves must not change the colour:
+    // the binary passes `tile & 7` (caller @0x19f6), so 0x8a is type 2.
+    check(dungeon_field_spark(1, 0xa, 3, 0).color == dungeon_field_spark(1, 0x2, 3, 0).color,
+          "A14 bit 3 of the tile does not reach the colour switch");
+
+    // Pure: the same coordinates always reproduce the same stroke, so a host
+    // test can assert the picture; a new phase re-rolls it, as a redraw does.
+    check(dungeon_field_spark(0, 2, 11, 5).x == dungeon_field_spark(0, 2, 11, 5).x &&
+              dungeon_field_spark(0, 2, 11, 5).y == dungeon_field_spark(0, 2, 11, 5).y,
+          "A14 a stroke is reproducible from (depth, sub, phase, index)");
+    int moved = 0;
+    for (uint16_t i = 0; i < 100; ++i) {
+        const auto a = dungeon_field_spark(0, 2, 0, i);
+        const auto b = dungeon_field_spark(0, 2, 1, i);
+        if (a.x != b.x || a.y != b.y) ++moved;
+    }
+    check(moved > 50, "A14 advancing the phase re-rolls the field, as a redraw does");
+    // And the strokes are not all stacked on one row -- the box is really filled.
+    int distinct_rows = 0;
+    bool seen[256]{};
+    for (uint16_t i = 0; i < dungeon_field_spark_count(0); ++i) {
+        const auto s = dungeon_field_spark(0, 2, 0, i);
+        if (s.y >= 0 && s.y < 256 && !seen[s.y]) {
+            seen[s.y] = true;
+            ++distinct_rows;
+        }
+    }
+    check(distinct_rows > 50, "A14 the strokes spread across the box, not one row");
+}
+
 } // namespace
 
 int main() {
@@ -730,6 +817,7 @@ int main() {
     a11_packed_container();
     a12_surface_lookup();
     a13_palette();
+    a14_field_sparks();
     if (failures != 0) {
         std::cerr << failures << " dungeon_art regression failure(s)\n";
         return 1;

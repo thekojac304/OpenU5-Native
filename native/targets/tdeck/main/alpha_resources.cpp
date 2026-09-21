@@ -194,7 +194,23 @@ esp_err_t AlphaResourcePack::load(AlphaResourceOwners &o, AlphaResourceReport &r
     o.combat_enemy_views=static_cast<const openu5::CombatEnemy**>(heap_caps_calloc(cec,sizeof(void*),MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));
     if(!o.combat_maps||!o.combat_sprites||!o.combat_enemies||!o.combat_tables||!o.combat_map_views||!o.combat_enemy_views){o.release();return ESP_ERR_NO_MEM;}
     at=16;
-    for(uint32_t i=0;i<cmc;++i){uint8_t b[map_bytes]{};if(read(*combat,at,b,sizeof(b))!=ESP_OK){o.release();return ESP_FAIL;}at+=sizeof(b);size_t p=0;auto &m=o.combat_maps[i];m.index=int32_t(u32(b+p));p+=4;for(auto &v:m.tiles){v=i16(b+p);p+=2;}for(auto &direction:m.starts)for(auto &point:direction){point={i16(b+p),i16(b+p+2)};p+=4;}for(auto &point:m.units){point={i16(b+p),i16(b+p+2)};p+=4;}for(auto &v:m.start_count)v=b[p++];m.unit_count=b[p++];m.trigger_count=b[p++];for(auto &t:m.triggers){t.tile=i16(b+p);t.at={i16(b+p+2),i16(b+p+4)};t.first={i16(b+p+6),i16(b+p+8)};t.second={i16(b+p+10),i16(b+p+12)};p+=14;}for(int j=0;j<16;++j){o.combat_sprites[i*16+j]=uint8_t(i16(b+p));p+=2;}o.combat_map_views[i]=&m;}
+    // Batch 12B.  The record's own `index` word is combatmaps.json's PER-TERRITORY
+    // number: britannia boards count 0..15 and dungeon rooms restart at 0..111.
+    // openu5::dungeon_encounter() addresses an arena by the GLOBAL catalog index
+    // openu5::dungeon_room_map() produces -- 16..127, the 16 britannia boards
+    // followed by 7x16 dungeon rooms (DUNGEON.OVL 0x003a / DNGLOOK 0x0844, and
+    // `roomCombatMapIndex` in game/src/core/dungeon/dungeon.ts).  Those two
+    // numbers only agree for britannia, so searching the catalog by the stored
+    // word landed every dungeon room on the NEXT dungeon's room (Deceit served
+    // Destard's, Destard served Wrong's) and matched nothing at all for Doom's
+    // 112..127, where the search returned MissingMap instead of a fight.
+    // The pack's array IS that global catalog, written in order by
+    // native/tools/u5pack/alpha1.ts, so the global index is the record's own
+    // position; retag it here.  World combat is unaffected either way -- it
+    // indexes CombatResources::maps POSITIONALLY (combat.cpp encounter_preflight)
+    // and never reads this field.  Doing it at load also means an already
+    // flashed card needs no repack.
+    for(uint32_t i=0;i<cmc;++i){uint8_t b[map_bytes]{};if(read(*combat,at,b,sizeof(b))!=ESP_OK){o.release();return ESP_FAIL;}at+=sizeof(b);size_t p=0;auto &m=o.combat_maps[i];m.index=int32_t(i);p+=4;for(auto &v:m.tiles){v=i16(b+p);p+=2;}for(auto &direction:m.starts)for(auto &point:direction){point={i16(b+p),i16(b+p+2)};p+=4;}for(auto &point:m.units){point={i16(b+p),i16(b+p+2)};p+=4;}for(auto &v:m.start_count)v=b[p++];m.unit_count=b[p++];m.trigger_count=b[p++];for(auto &t:m.triggers){t.tile=i16(b+p);t.at={i16(b+p+2),i16(b+p+4)};t.first={i16(b+p+6),i16(b+p+8)};t.second={i16(b+p+10),i16(b+p+12)};p+=14;}for(int j=0;j<16;++j){o.combat_sprites[i*16+j]=uint8_t(i16(b+p));p+=2;}o.combat_map_views[i]=&m;}
     for(uint32_t i=0;i<cec;++i){uint8_t b[enemy_bytes]{};if(read(*combat,at,b,sizeof(b))!=ESP_OK){o.release();return ESP_FAIL;}at+=sizeof(b);auto &e=o.combat_enemies[i];const int32_t values[10]={int32_t(u32(b)),int32_t(u32(b+4)),int32_t(u32(b+8)),int32_t(u32(b+12)),int32_t(u32(b+16)),int32_t(u32(b+20)),int32_t(u32(b+24)),int32_t(u32(b+28)),int32_t(u32(b+32)),int32_t(u32(b+36))};e.index=values[0];e.strength=values[1];e.dexterity=values[2];e.intelligence=values[3];e.armor=values[4];e.damage=values[5];e.hp=values[6];e.range=values[7];e.treasure=values[8];e.max_per_map=values[9];e.abilities=u16(b+40);e.move_class=b[42];e.stationary=b[43]!=0;e.tile=i16(b+44);e.name=reinterpret_cast<const char*>(b+46);e.group_name=reinterpret_cast<const char*>(b+67);
         // Names in the stack record cannot be borrowed. They are copied into one stable PSRAM block below.
         o.combat_enemy_views[i]=&e;}
