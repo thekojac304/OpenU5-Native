@@ -61,12 +61,38 @@ class AlphaRuntime {
     // unchanged and never calls this; only the CMake target under
     // native/targets/tdeck/host_tests links the .cpp that defines it, so it
     // never ships in T-Deck firmware.
-    struct HostTestFixture { openu5::WorldData world{}; };
+    //
+    // Batch 21A adds the dungeon/room-combat resources. Production reads the
+    // identical four things out of the SD resource pack in initialize()
+    // (dungeon_context_.data/count, dungeon_arenas_, combat_context_.
+    // enemy_defs/enemy_def_count); leaving them null is exactly the quiescent
+    // pre-dungeon state, and supplying them lets a host test reach the real
+    // room-entry path instead of bouncing off CombatResult::MissingMap. No
+    // behaviour is added or branched on: the fields are copied into the same
+    // members initialize() assigns, and nothing else reads HostTestFixture.
+    struct HostTestFixture {
+        openu5::WorldData world{};
+        const openu5::DungeonData *dungeons = nullptr;
+        size_t dungeon_count = 0;
+        const openu5::DungeonArena *arenas = nullptr;
+        size_t arena_count = 0;
+        const openu5::CombatEnemy *const *enemy_defs = nullptr;
+        size_t enemy_def_count = 0;
+        const uint8_t *location_x = nullptr, *location_y = nullptr;
+        size_t location_count = 0;
+    };
     void attach_host_test_fixture(const HostTestFixture &);
     openu5::TurnState &turn() { return turn_; }
     openu5::TravelState &travel() { return travel_; }
     openu5::CommandState &commands() { return commands_; }
     openu5::NpcActors &actors() { return actors_; }
+    // Read-only windows on the two session states a dungeon/room regression has
+    // to assert against. Nothing here mutates; they exist so a test can read the
+    // SAME objects production commands wrote, never a copy.
+    const openu5::DungeonState &dungeon_state() const { return dungeon_; }
+    const openu5::CombatState &combat_state() const { return combat_; }
+    const openu5::CommandContext &command_context() const { return context_; }
+    openu5::DungeonState &dungeon_state_for_test() { return dungeon_; }
 
     // Batch 14 / R-22 host-test seam --------------------------------------
     // The (Z)-stats modal, observable without a Board. `zstats_view()` is the

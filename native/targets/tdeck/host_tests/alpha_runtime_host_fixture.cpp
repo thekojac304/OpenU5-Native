@@ -21,6 +21,8 @@
 // this method.
 #include "../main/alpha_runtime.h"
 #include "openu5/npc_path.h"
+#include <algorithm>
+#include <cstring>
 #include "openu5/rest.h"
 
 namespace tdeck {
@@ -47,6 +49,16 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     context_.npc_scratch = new openu5::NpcScanGrid();
     context_.npc_data = resources_.npc_locations;
     context_.npc_data_count = 32;
+    // Batch 21A: a fixture may supply the overworld location table so that the
+    // real (E)nter command path (commands.cpp's location_at -> EnterDungeon)
+    // can be driven from a host test. Supplying none keeps the previous
+    // resource-pack-derived (empty) table, so existing tests are unchanged.
+    if (fixture.location_x && fixture.location_y && fixture.location_count) {
+        const size_t n = std::min(fixture.location_count, sizeof(resources_.location_x));
+        std::memcpy(resources_.location_x, fixture.location_x, n);
+        std::memcpy(resources_.location_y, fixture.location_y, n);
+        resources_.location_count = n;
+    }
     context_.locations = {resources_.location_x, resources_.location_y,
                            resources_.location_count, resources_.location_count};
     context_.combat_context = &combat_context_;
@@ -95,10 +107,35 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     shrine_services_.context = this;
     shrine_services_.record = [](void *, int32_t) -> const char * { return nullptr; };
 
+    // Batch 21A. The SAME combat storage initialize() carves out of PSRAM
+    // (alpha_runtime.cpp: 32 overflow actors, 32 overflow loot piles, 32 arena
+    // fields), from `new` instead. Without it a host test runs combat on the
+    // bare inline kCombatActors(22) roster while the device has 22+32=54, and
+    // every capacity precondition in combat.cpp would be measured against the
+    // wrong number.
+    combat_actor_overflow_ = new openu5::CombatActor[32]();
+    combat_pile_overflow_ = new openu5::CombatLootPile[32]();
+    combat_fields_ = new openu5::CombatField[32]();
+    combat_.actors.overflow = combat_actor_overflow_;
+    combat_.actors.overflow_capacity = 32;
+    combat_.piles.overflow = combat_pile_overflow_;
+    combat_.piles.overflow_capacity = 32;
+    combat_.fields = combat_fields_;
+
+    // Batch 21A. Same four assignments initialize() makes from the SD resource
+    // pack (alpha_runtime.cpp: dungeon_context_.data/count, dungeon_arenas_ ->
+    // dungeon_encounters_.arenas/count, combat_context_.enemy_defs/count). A
+    // fixture that supplies none of them keeps the pre-Batch-21A behaviour
+    // exactly -- null arenas, zero counts -- so every existing host test is
+    // untouched.
     dungeon_encounters_.combat = &combat_context_;
-    dungeon_encounters_.arenas = nullptr;
-    dungeon_encounters_.count = 0;
+    dungeon_encounters_.arenas = fixture.arenas;
+    dungeon_encounters_.count = fixture.arena_count;
     dungeon_context_.encounters = &dungeon_encounters_;
+    dungeon_context_.data = fixture.dungeons;
+    dungeon_context_.count = fixture.dungeon_count;
+    combat_context_.enemy_defs = fixture.enemy_defs;
+    combat_context_.enemy_def_count = fixture.enemy_def_count;
 
     shop_services_.context = this;
     shop_services_.record_present = [](void *, int32_t) { return false; };

@@ -1,0 +1,9 @@
+-- The CXX compiler identification is GNU 16.2.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: C:/Dev/TamaPoke/.build-tools/w64devkit/bin/c++.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.8s)
+-- Generating done (0.2s)
+-- Build files have been written to: C:/Dev/OpenU5-Native/native/core/build-batch21a-green

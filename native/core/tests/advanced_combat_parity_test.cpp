@@ -314,8 +314,22 @@ int main(int argc, char **argv) {
     }
     if (!row)
         return 2;
+    // The three tail checks below are NATIVE ADAPTER checks, not reference
+    // snapshots: they pin combat.cpp's own storage precondition -- an action
+    // whose worst-case growth cannot fit is refused cleanly and mutates nothing.
+    //
+    // Batch 21A / H-151 recalibrated them.  They used to lean on
+    // combat_growth_reserve() short-circuiting to max(count,63)+1 for a
+    // divide-on-hit enemy, which no arena of ANY size could ever satisfy -- the
+    // very defect that froze the device.  Now that the reserve states the real
+    // per-action growth, the insufficiency has to be built honestly: variant 25
+    // fills the board with 16 enemies (count = 18 of the 22 inline slots) and
+    // every one of them divides, so one action could need 16 clones plus the
+    // cast path's own 4 summon slots against 4 free slots.  That is a genuine
+    // refusal, and it is a strictly stronger check than the old one.
     h.real_maps.clear();
-    h.setup(0, 1, 123);
+    h.setup(0, 25, 123);
+    h.definitions[20].abilities = 0x1000;   // divide-on-hit, like def 24 Slime
     h.events.clear();
     h.draws.clear();
     h.modes.clear();

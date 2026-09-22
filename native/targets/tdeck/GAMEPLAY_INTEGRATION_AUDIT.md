@@ -3954,3 +3954,137 @@ The executable rows are **H-50** (rewritten) and **H-141 – H-145** in [`ALPHA2
 **Required follow-up work for Batch 21, in priority order:** (1) the dungeon room-entry freeze family (#6) — top priority, blocks 9 checklist rows entirely and has no safe workaround; (2) the shard/movement-lock defect (#8), possibly related to #6 but not confirmed; (3) the dungeon save/load integrity gap (#7); (4) the four narrower confirmed defects (#1-3, #5); (5) H-30 retest at the corrected location, H-51 retest with blocked sightlines, and the remaining 19 UNTESTED rows once #6 has a fix.
 
 **Status (post-Batch-20 — this paragraph supersedes every status paragraph above it):** Batch 20 is the first physical-hardware validation pass of Alpha 2, executed interactively against `build-batch20`/`f5ca709e` (byte-identical to the Batch 19 artifact — no production code changed this batch, purely evidence-gathering). 133 of 152 checklist rows (145 original + 7 discovered this session) were attempted; 117 PASS, 12 FAIL, 1 BLOCKED, 3 INCONCLUSIVE, 19 UNTESTED. Batch 19's software-only optimism did not survive contact with real hardware: **eight confirmed production defects** were found, two of them CRITICAL (a dungeon room-entry defect family causing soft-locks and one total unrecoverable device freeze, and a shard-ritual interaction that permanently kills world movement until a power cycle), plus a save/load integrity gap specific to dungeons, and four narrower but real defects (Vas Rel Por's phase prompt, potion-cancel consumption, wishing-well case-sensitivity, and non-functional shop ship/horse purchases). One checklist row (H-30) had the wrong location documented and is corrected in place. One tester-reported behavior (H-148, a vault/chest respawn-on-rest exploit) is a real, previously-uncatalogued open reference question, deliberately not adjudicated this session per this project's rule against filing or fixing without disassembly-level verification. Three environmental test-state confounds (H-38, H-142/H-143/H-145) were investigated, understood, and resolved as non-defects on retest. The dungeon room-entry freeze family has **no known safe workaround** — room-number collisions in the cleared-room bitmap mean even a genuinely fresh room can trigger it — so the nine room-combat rows (H-98–H-106) were deliberately left UNTESTED rather than risk further device freezes, and this is the top priority for Batch 21. **Alpha 2 state: HARDWARE VALIDATION INCOMPLETE.** Substantial required rows remain unrun (19, plus 1 blocked and 3 inconclusive), and multiple confirmed production defects — two of them critical — block full sign-off. This is not a closeout batch: Batch 21 must fix the freeze family and the shard/movement-lock defect at minimum before hardware validation can be considered complete. **No Alpha 3 work was begun. No audio batch was begun. No preservation cleanup was begun.**
+
+---
+
+## Batch 21A — the dungeon room-entry freeze family (H-149 / H-150 / H-151 / H-152)
+
+**Source commit/tag:** `9e1dd6e6` / `alpha2-batch20-hardware-validation` (verified clean — the only working-tree "modification" was the same zero-content CRLF phantom on the tracked `-` file Batch 20 recorded).
+
+**Baseline before any edit:** a from-scratch `native/core/build-batch21a` reported **88 tests, 88 pass, 0 fail, 0 skipped**, and a from-scratch T-Deck firmware build produced `openu5_tdeck.bin` at `0xd20a0` (860,320 bytes) with zero project warnings — byte-for-byte the Batch 19/20 artifact. There was no baseline noise to excuse anything.
+
+**Scope:** H-149, H-150, H-151, H-152 only. No production change was made for H-118, H-115, H-12/H-13, H-22, H-45, H-63, H-146, H-122 or H-148.
+
+### The family is THREE separate things, and only ONE of them is a defect
+
+Batch 20 filed all four rows as one "freeze family" behind one root-cause lead — `dungeon_mark_room()` keying the cleared-room bitmap by `(dungeon, room & 15)` with no floor. That fact is **correct and it is ORIGINAL**, so it is preserved, and it is not what froze the device. Driving the real production runtime from raw input separated the four observations cleanly.
+
+#### 1. H-151 (Destard) — REAL DEFECT, CRITICAL. The divide-on-hit capacity dead end.
+
+`combat_growth_reserve()` (`native/core/src/combat.cpp`) returned
+
+```cpp
+if (a.enemy && (a.enemy->abilities & 0x1000))
+    return std::max<int32_t>(s.count, 63) + 1;   // = 64 for any ordinary arena
+```
+
+the moment ANY actor in the arena was an enemy carrying ability bit `0x1000` (divide-on-hit). Every entry point into the arena tests that value as
+
+```cpp
+if (actors.capacity() - count < combat_growth_reserve(state))   // + 4 on the cast paths
+    return CombatResult::NeedsActorStorage;
+```
+
+and `AlphaRuntime` owns `kCombatActors` (22 inline) + 32 PSRAM overflow = **54 slots**. `54 - count` can never reach 64. So the moment a divider joined an arena, **every** combat command was refused and did nothing — the player's, and the runtime's own `CombatEnemyStep` beat.
+
+The downstream chain is the hardware freeze, exactly:
+
+1. `combat_action()` returns `NeedsActorStorage` before it ever calls `Engine::current()`, so nothing mutates and no message is emitted.
+2. `Engine::current()` therefore keeps naming the same enemy actor forever.
+3. `AlphaRuntime::combat_ai_turn()` stays true (`actor->member == 255`), so `service_combat()`'s 400 ms enemy beat fires, dispatches `CombatEnemyStep`, is refused, and changes nothing — forever.
+4. `AlphaRuntime::handle()` reaches `else if (context_.combat && combat_ai_turn())` and pushes every translated action into `combat_input_queue_` (8 deep) instead of the session, where it is never drained (`service_combat()` only drains while `!combat_ai_turn()`).
+5. `combat_.ended` is never set, so `finish_combat_if_needed()` never tears down and `close_stranded_combat()` never fires (`Engine::current()` does return an actor — that Batch 9D escape hatch only covers a *null* actor).
+
+Result: a fully rendered arena that owns the screen and answers nothing — not movement, not `Alt+M` (a `UiActionKind::SystemMenu` action, queued and dropped), not the Mic key. `Alt+D` would still have answered, because Developer/Save/Load are `DeviceShortcut`s handled *above* the queue branch. Only a power cycle escapes. That is the H-151 report verbatim.
+
+**Blast radius, measured, not estimated.** Two shipped enemy definitions carry `0x1000`, read byte-for-byte out of `native/assets/openu5-alpha1-resources.bin`: def **24 Slime** (`abilities = 0x1100`) and def **30 Gargoyle** (`0x9000`). Seven of the 112 authored dungeon room boards place one, censused from `native/core/fixtures/fixed-maps.txt` (the same authored data `dungeon_parity` reads):
+
+| board | dungeon (by `dungeonOrderSkippingDespise`) | room | dividers |
+|---|---|---|---|
+| cm16 | Deceit | 0 | 11 Slimes |
+| cm23 | Deceit | 7 | 13 Slimes |
+| cm41 | Despise/Destard | 9 | 15 Slimes |
+| cm82 | Shame | 2 | 8 Slimes |
+| cm92 | Shame | 12 | 13 Slimes |
+| cm94 | Shame | 14 | 10 Slimes |
+| cm109 | Hythloth | 13 | 6 Gargoyles |
+
+— plus any corridor or overworld encounter that rolls a Slime or Gargoyle. **Destard is on that list**, which is where H-151 froze. Entering any of those rooms on Batch 20 firmware bricks the session.
+
+#### 2. H-150 / H-152 — NOT A DEFECT. Set Active Player.
+
+`Engine::current()`'s skip arm — auto-pass any player whose turn comes up while `g_active_char` names a *different, still-living* member — is a faithful clone of **COMBAT:0x063E @0666-067f** (`call 0xda86; ret`), and of the reference port's `skipsForActiveChar()` in `game/src/core/combat/combat.ts`. With an active character chosen, only that character is interpelled each round; leaving combat restores per-member commands. That is precisely the hardware observation ("only Shamino could act… on leaving the room, the other two characters' turns suddenly became available"). Reproduced on the production path (RED-6): with `active_character == 255` all three healthy members are scheduled; after the dungeon digit key sets member 2, exactly one is, and the arena stays live. `Blocked!` inside an arena comes from `Engine::move()`, not from the dungeon — a chosen character hemmed in by their own party and a wall reports it for every direction they try. **No production change.**
+
+#### 3. H-149 (Deceit L8) — NOT A DEFECT. An authored, pit-fed chest alcove.
+
+Deceit's **only** chest cell across all eight floors is floor index 7 (displayed L8) at **(5,5)**, cell `0x41` (locked chest). Its four cardinal neighbours in `DUNGEON.DAT` are wall, wall, wall, and the **unrevealed secret door** at (5,4) — and Deceit floor 6 (5,5) is a **pit trap** (`0x69`), which is how a party lands there without ever having revealed that door. `dungeon_action`'s `Forward`/`Back` correctly reports `Blocked!` for an unrevealed type-13 cell, so all four directions are blocked and turning stays responsive: the authored 1988 outcome. The way out is **(S)earch**, not movement. Verified against `native/core/fixtures/dungeon-maps.txt`; the geometry is reproduced end-to-end in RED-8, which pins both halves — the four-way block is real, and Search still reveals the door and lets the party walk out. **No production change.** (This also explains H-78's INCONCLUSIVE: it was interrupted by an authored alcove, not by a bug.)
+
+### The room-number collision: adjudicated ORIGINAL, preserved
+
+`dungeon.cpp`'s `cleared_bit()` — `i = loc - 0x21; if (i >= 1) --i; bit = i*16 + (room & 15)` — is a byte-exact clone of **DNGLOOK 0x0844 @0x088c-0x08c9 / 0x08d4**, mirrored in `game/src/core/dungeon/dungeon.ts` `dungeonClearedBitIndex()`. The 1988 bitmap is 14 bytes = 7 dungeons × 16 rooms, keyed by dungeon and a **4-bit room number only** — no floor, no X/Y — and it even collapses Deceit≡Despise onto one slot. Room numbers ARE reused across a dungeon's eight floors by construction, and clearing one really does mark the others. The six-room `ROOM_CLEAR_EXEMPT` table (`DATA.OVL 0x384a`) is cloned too. Entering an already-cleared room prints `"Entering room..."` and places no monsters (`dungeon.ts onEnterCell`; DUNGEON 0x0000:0x0008 unconditional, COMBAT 0xB94 places nothing) — which is exactly what `room()`'s message-only branch does. **All of this is original behaviour and none of it was touched.** RED-1 and RED-3 pin it; mutation M6 proves they would catch a change.
+
+### Production changes (2 files, core only — no T-Deck adapter change)
+
+1. **`native/core/src/combat.cpp` — `combat_growth_reserve()`.** Now states the growth **one action** can cause, instead of a fabricated 64 that no storage could satisfy: the number of live divide-on-hit enemies on the board, plus one slot if any enemy carries the `abilities & 4` daemon gate. `divide()` adds at most one clone per damaged divider, and every area sweep snapshots `s.count` before it runs (`combat_magic.inc`'s `int count = s.count;`), so no clone created during an action can divide within that same action. Dead/fled/absorbed actors no longer count. The cast/consumable call sites keep their own `+ 4` summon budget (`combat_cast_effect` already rejects a Swarms `extra` outside 0..4, so four is the whole summon budget).
+
+2. **`native/core/src/combat_magic.inc` — `Engine::spawn()`** now returns `CombatActor *` and refuses when `s.count >= s.actors.capacity()`, and its four callers no-op on null. This moves the roster ceiling to the one growth site instead of leaving it only in a per-action precondition. It is reference-faithful: the 1988 combatant table is a fixed **32 × 8 bytes at DS:0xBA14**, slots 0..5 party and 6..31 enemies (`re/notes/combat.md §1`), so a divide or summon with no free slot simply does not happen there — and native's 54 slots are strictly more generous, so no spawn the original would have made is ever refused. It also makes the previously unchecked `s.actors[s.count++]` on that line impossible to reach out of bounds whatever a caller does first. (The only other `s.count++` is in `initialize_combat()`, already bounded by party ≤ 6 plus `map.unit_count` ≤ 16 = `kCombatActors`.)
+
+No renderer was touched, no dungeon/floor/room was special-cased, no room-cleared behaviour was disabled, no room encounter was removed, and no "reset everything on room entry" hammer was added.
+
+### Test changes
+
+- **NEW `native/targets/tdeck/host_tests/batch21a_dungeon_room_test.cpp`**, registered as the `batch21a_dungeon_room_regression` CTest (suite 88 → **89**). It drives the REAL, unmodified `alpha_runtime.cpp`: `RawInputEvent → UiInputAdapter → UiSession → AlphaRuntime::command() → dispatch_world_command → execute_dungeon_command → dungeon_action → DungeonEventKind::Room → dungeon_encounter → start_fixed_combat → initialize_combat → Engine::current()`. Eight cases, 38 checks — RED-1 (room-number collision preserved), RED-2 (all healthy members scheduled), RED-3 (cleared-room message-only transition), RED-4 (loss/retreat → klimb → second same-numbered room), RED-5 (teardown invariants), RED-6 (Set Active Player), RED-7 (the divider arena), RED-8 (the Deceit chest alcove).
+- **`native/targets/tdeck/main/alpha_runtime.h` / `host_tests/alpha_runtime_host_fixture.cpp`** — the Batch 11 host-test seam gained the dungeon/room-combat resources production reads out of the SD pack at `initialize()` (dungeon data, room arenas, enemy definitions, the overworld location table) and the same PSRAM combat storage it allocates (32 overflow actors / 32 loot piles / 32 arena fields), plus read-only `dungeon_state()` / `combat_state()` / `command_context()` windows. Non-behavioural: a fixture that supplies none of it keeps the previous null/zero state exactly, so every pre-existing host test is unchanged. **This seam mattered**: before adding the combat storage the host measured capacity 22 instead of the device's 54, which would have made the verdict wrong.
+- **`native/core/tests/advanced_combat_parity_test.cpp`** — the three appended **native adapter checks** (not reference snapshots; all 125,440 parity rows were and are green) were recalibrated. They used to lean on the reserve short-circuiting to an unsatisfiable 64 — the very defect. The insufficiency is now built honestly: variant 25 fills the board with 16 enemies (count 18 of the 22 inline slots) and every one divides, so one action could need 16 clones plus the cast path's 4 summon slots against 4 free slots. Strictly stronger than the old check, and mutation M2 proves it still has teeth.
+
+### RED → GREEN evidence
+
+Pre-fix, against unmodified production code (`native/core/batch21a-red.log`): **6 of 38 checks RED.**
+
+- `RED-7 / R7-3` — `combat_growth_reserve` = **64** against `capacity 54, count 5`, unsatisfiable.
+- `RED-7 / R7-4` — a single production `CombatPass` returned **status 7 (NeedsStorage)**.
+- `RED-7 / R7-5` — `combat.current` stayed at **2 → 2**: the scheduler never advanced. The frozen arena, reproduced.
+- (Three further REDs were harness artifacts corrected before the baseline was recorded — the enemy beat is paced off the real wall clock, so a tight key loop only fills `combat_input_queue_`; `Fixture::play_out()` lets that time actually pass.)
+
+Post-fix (`native/core/batch21a-green-focused.log`): **38 checks, 0 failures.** The same `CombatPass` now reports `status=0 current=2->1 count=5 reserve=2 capacity=54`.
+
+### Mutation proof
+
+| # | Mutation | Caught by |
+|---|---|---|
+| M1 | restore `max(count, 63) + 1` for a divider — the original defect | `batch21a_dungeon_room_regression` **R7-3, R7-4, R7-5** |
+| M2 | make the reserve always 0 | `advanced_combat_parity` (adapter check 1/2) |
+| M3 | drop the additive daemon-gate slot | **nothing** — honestly reported below |
+| M4 | remove `spawn()`'s capacity refusal | **nothing** — honestly reported below |
+| M5 | drop the Set Active Player auto-pass | `combat_parity` **and** `batch21a` **R6-3** |
+| M6 | make cleared rooms re-fight (break `room()`'s gate) | `dungeon_parity`, `dungeon_combat_regression`, `batch21a` **R3-2/3/4** |
+
+M3 and M4 are **defence-in-depth, not load-bearing, and are not claimed as covered**: once the reserve is correct, the arithmetic guarantees headroom, so no public path can reach the growth site with a full roster. They are kept because an unchecked `s.actors[s.count++]` behind a now-thin computed margin is a buffer overflow waiting for the next caller, and trading a freeze for a possible memory stomp would be a bad bargain. M5 and M6 are recorded to prove the two **adjudications** are pinned, not merely asserted.
+
+### Full regression suite
+
+From a clean `native/core/build-batch21a-green`: **89 tests, 89 pass, 0 fail, 0 skipped** (`native/core/batch21a-green-ctest.log`). `gameplay_parity` PASS, `quest_parity` PASS, `dungeon_parity` PASS, `dungeon_combat_regression` PASS, `combat_parity` PASS, `advanced_combat_parity` PASS (125,440 snapshots + 3 adapter checks), `alpha_runtime_integration_regression` PASS, all TypeScript drift suites PASS. Zero project compiler warnings — the single warning line in the build log is the pre-existing GCC 16 `-Wstringop-overflow=` false positive inside w64devkit's own `bits/stl_uninitialized.h`, not project code.
+
+### Firmware
+
+From-scratch ESP-IDF 6.1 build into `native/targets/tdeck/build-batch21a`: `openu5_tdeck.bin` = **`0xd20c0` (860,352 bytes)**, **`0x2df40` (188,224 bytes, 18%) free** in the `0x100000` app partition. **+32 bytes** over Batch 19/20's `0xd20a0`. Zero errors, zero project warnings (the 15 `component_validation.cmake` notices are third-party). **Not flashed** — the user flashes manually.
+
+**SD resource pack unchanged; no SD recopy required.** Nothing under `native/assets/` or `extractor/` was touched; the fix is core C++ only.
+
+### Status
+
+**SOFTWARE FIXED — HARDWARE RETEST REQUIRED.** H-149, H-150, H-151 and H-152 do not become PASS until the user flashes this firmware and physically retests. H-150/H-152 and H-149 are additionally reclassified from "defect" to **adjudicated original behaviour**; their hardware rows remain open only so a tester can confirm the described original behaviour on the device.
+
+**Status (post-Batch-21A — this paragraph supersedes every status paragraph above it):** Batch 21A fixed the one real defect in Batch 20's "freeze family" and adjudicated the other three observations as faithful 1988 behaviour. The device-freezing defect was **not** the room-number collision Batch 20 suspected — that is original and preserved — but `combat_growth_reserve()` demanding 64 free actor slots out of 54 whenever a Slime or a Gargoyle was in the arena, which refused every combat command forever and left the runtime holding the screen and the keyboard. Seven authored dungeon rooms (Deceit 0/7, Despise/Destard 9, Shame 2/12/14, Hythloth 13) plus any encounter rolling those two definitions were affected. The host suite is **89/89** from a clean build and the T-Deck firmware builds clean at `0xd20c0`. **Alpha 2 state: HARDWARE VALIDATION STILL INCOMPLETE.** The nine room-combat rows H-98–H-106 that Batch 20 deferred are now believed safe to run, but the Batch 21A micro-retest below must pass first. H-118 (shard/movement lock) and H-115 (dungeon save/load) remain open and are the next priorities; no work on them was begun this batch. **No Alpha 3 work, no audio batch, no preservation cleanup was begun.**
+
+### Phase 6M — Batch 21A dungeon room-entry micro-gate · *firmware only; the SD card is unchanged*
+
+Run this **before** resuming the rest of the 152-row checklist. Capture the serial log for all of it.
+
+1. **Wrong** — reproduce the room entry that formerly produced the one-character turn loop. Press `0` first (Set Active Player → None). Expect every healthy party member to be interpelled in turn.
+2. Press a digit (e.g. `2`) to choose one member and confirm only that member now acts — this is **original behaviour**, not a bug. Press `0` to return to party mode.
+3. Enter a **second room with the same room number on a different floor**. Expect `"Entering room..."` with no combat if it is already marked cleared; expect movement out of the cell to keep working.
+4. **Destard** — repeat the exact H-151 sequence: lose or retreat from a fight (`BATTLE IS LOST!`), keep moving, then enter another room. Expect the arena to open and **accept input**.
+5. **Deceit room 0 or 7** (the Slime rooms) — enter one deliberately. Expect a playable arena: turns advance, enemies act, `divides!` may appear, and the fight can be won, lost or escaped.
+6. Confirm `Alt+M`, the Mic key, movement and combat all stay responsive throughout, with **no power cycle needed**.
+7. **Deceit L8** — revisit the H-149 area. Falling into the (5,5) chest alcove and finding all four directions `Blocked!` is **correct**; confirm **(S)earch** toward the wall reveals `"A hidden door!"` and the party can then walk out.

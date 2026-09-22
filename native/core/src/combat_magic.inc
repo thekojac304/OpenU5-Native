@@ -8,7 +8,22 @@ const CombatEnemy *definition(int index) {
     return c.enemy_defs && index >= 0 && size_t(index) < c.enemy_def_count ? c.enemy_defs[index]
                                                                            : nullptr;
 }
-CombatActor &spawn(const CombatEnemy &d, CombatPoint p) {
+// Batch 21A.  The roster ceiling lives HERE, at the one growth site, instead of
+// only in the per-action precondition that used to guard it.
+//
+// The 1988 combatant table is a fixed 32 x 8-byte array at DS:0xBA14 -- slots
+// 0..5 party, 6..31 enemies (re/notes/combat.md section 1).  It cannot hold a
+// 33rd combatant, so a divide or a summon with no free slot simply does not
+// happen.  CombatActorStorage gives the device 22 inline + 32 overflow = 54,
+// comfortably above that ceiling, so refusing here can never drop a spawn the
+// original would have made -- and it makes the unchecked `s.actors[s.count++]`
+// that used to live on this line impossible to reach out of bounds no matter
+// what any caller does first.  The only other `s.count++` is in
+// initialize_combat(), already bounded by party <= 6 plus map.unit_count <= 16
+// = kCombatActors.
+CombatActor *spawn(const CombatEnemy &d, CombatPoint p) {
+    if (s.count >= s.actors.capacity())
+        return nullptr;
     auto &a = s.actors[s.count++];
     a = CombatActor{};
     a.id = s.count;
@@ -24,7 +39,7 @@ CombatActor &spawn(const CombatEnemy &d, CombatPoint p) {
     int v = (d.dexterity + rand(0, 7) - 4) & 255;
     a.speed = uint8_t(v > 30 ? d.dexterity : v);
     a.counter = uint8_t(36 - a.speed);
-    return a;
+    return &a;
 }
 CombatPoint board_cell() {
     int x = rand(0, 15), y = rand(0, 15);
@@ -50,9 +65,11 @@ void divide(CombatActor &a) {
         } while (!inside(p.x, p.y));
         if (!free(a, p.x, p.y))
             continue;
-        auto &clone = spawn(*a.enemy, p);
-        clone.hp = a.hp;
-        clone.max_hp = a.max_hp;
+        auto *clone = spawn(*a.enemy, p);
+        if (!clone)
+            return;
+        clone->hp = a.hp;
+        clone->max_hp = a.max_hp;
         named(a, " divides!", a.id);
         return;
     }
@@ -271,9 +288,11 @@ void cast_effect(CombatActor &a, SpellEffect fx, const CombatPoint *aim) {
             return;
         int n = kind == MagicEffect::Swarms ? fx.extra : 1;
         for (int i = 0; i < n; ++i) {
-            auto &b = spawn(*d, p);
-            b.charmed = kind != MagicEffect::Daemon || fx.value != 0 || r30() < a.intelligence;
-            if (!b.charmed)
+            auto *b = spawn(*d, p);
+            if (!b)
+                break;
+            b->charmed = kind != MagicEffect::Daemon || fx.value != 0 || r30() < a.intelligence;
+            if (!b->charmed)
                 message("Oops...", a.id);
         }
     } else if (kind == MagicEffect::Blink) {

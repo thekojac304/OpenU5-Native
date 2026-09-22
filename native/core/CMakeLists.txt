@@ -280,6 +280,41 @@ if(BUILD_TESTING)
   endif()
   add_test(NAME alpha_runtime_integration_regression COMMAND alpha_runtime_integration_regression)
 
+  # Batch 21A -- the dungeon room-entry freeze / stuck-turn family
+  # (H-149/H-150/H-151/H-152). Same seam and same stub/shim set as
+  # alpha_runtime_integration_regression above: it links the REAL, unmodified
+  # alpha_runtime.cpp, so a room is reached only by feeding raw input through
+  # production routing.
+  add_executable(batch21a_dungeon_room_regression
+    ../targets/tdeck/host_tests/batch21a_dungeon_room_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_board_host_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_host_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(batch21a_dungeon_room_regression PRIVATE openu5_core)
+  target_include_directories(batch21a_dungeon_room_regression PRIVATE
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/main)
+  target_compile_features(batch21a_dungeon_room_regression PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(batch21a_dungeon_room_regression PRIVATE /Gy)
+    target_link_options(batch21a_dungeon_room_regression PRIVATE /OPT:REF)
+  else()
+    target_compile_options(batch21a_dungeon_room_regression PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(batch21a_dungeon_room_regression PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME batch21a_dungeon_room_regression COMMAND batch21a_dungeon_room_regression)
+
   # Batch 14 / R-22 -- (Z)-stats navigation. Same seam and same stub/shim set
   # as alpha_runtime_integration_regression above: it links the REAL,
   # unmodified alpha_runtime.cpp so the modal is reached only by feeding raw

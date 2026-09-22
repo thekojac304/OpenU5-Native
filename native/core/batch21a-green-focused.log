@@ -1,0 +1,1477 @@
+Batch 21A -- dungeon room-entry freeze / stuck-turn family
+
+RED-1  reused room-number collision (floor 0 room 1 clears floor 1 room 1)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=65 base=00 symbol=00 ui=explore emitted=character action_char=101 shortcut=none
+[I][AlphaRuntime] DUNGEON_ENTER_REQUEST source=normal dungeon=33 depth=0 entrance=1 x=128 y=128 facing=2
+[I][AlphaRuntime] DUNGEON_LOAD_BEGIN dungeon=33 depth=0
+[I][AlphaRuntime] DUNGEON_LOAD_RESULT result=success reason=normal-init
+[I][AlphaRuntime] DUNGEON_SESSION_STATE active=1 dungeon=33 depth=0 x=1 y=1 facing=2
+[I][AlphaRuntime] DUNGEON_CONTEXT dungeon=1
+[I][AlphaRuntime] DUNGEON_RENDERER active=1
+[I][AlphaRuntime] DUNGEON_ENTER_COMMAND result=success
+[I][AlphaRuntime] DUNGEON_RUN_COMMAND result=success
+[I][AlphaRuntime] combat command=2 status=success turns=0 events=3 time=45 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] UI_MODE from=explore to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=2 sequence=1
+  GREEN R1-1   clearing floor-0 room 1 sets the (dungeon, room) bit
+  GREEN R1-2   the floor-1 room cell is still authored 0xF1 -- it was never visited
+  GREEN R1-3   ...yet dungeon_room_cleared() reports the floor-1 room cleared too (ORIGINAL 4-bit collision, preserved)
+RED-3  cleared room emits the message only and stays walkable
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=65 base=00 symbol=00 ui=explore emitted=character action_char=101 shortcut=none
+[I][AlphaRuntime] DUNGEON_ENTER_REQUEST source=normal dungeon=33 depth=0 entrance=1 x=128 y=128 facing=2
+[I][AlphaRuntime] DUNGEON_LOAD_BEGIN dungeon=33 depth=0
+[I][AlphaRuntime] DUNGEON_LOAD_RESULT result=success reason=normal-init
+[I][AlphaRuntime] DUNGEON_SESSION_STATE active=1 dungeon=33 depth=0 x=1 y=1 facing=2
+[I][AlphaRuntime] DUNGEON_CONTEXT dungeon=1
+[I][AlphaRuntime] DUNGEON_RENDERER active=1
+[I][AlphaRuntime] DUNGEON_ENTER_COMMAND result=success
+[I][AlphaRuntime] DUNGEON_RUN_COMMAND result=success
+[I][AlphaRuntime] combat command=2 status=success turns=0 events=3 time=4 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] UI_MODE from=explore to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=2 sequence=1
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=10 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=2
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=3
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=4
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=2 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=5
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=6
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=2 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=7
+  GREEN R3-1   the party actually stepped onto the cleared room cell
+  GREEN R3-2   no combat was started (reference: a cleared room places no monsters)
+  GREEN R3-3   the session stays in Dungeon mode -- no phantom arena
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=8
+  GREEN R3-4   movement out of a cleared room still works (no four-way Blocked!)
+RED-2  every healthy party member gets a turn inside a room
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=65 base=00 symbol=00 ui=explore emitted=character action_char=101 shortcut=none
+[I][AlphaRuntime] DUNGEON_ENTER_REQUEST source=normal dungeon=33 depth=0 entrance=1 x=128 y=128 facing=2
+[I][AlphaRuntime] DUNGEON_LOAD_BEGIN dungeon=33 depth=0
+[I][AlphaRuntime] DUNGEON_LOAD_RESULT result=success reason=normal-init
+[I][AlphaRuntime] DUNGEON_SESSION_STATE active=1 dungeon=33 depth=0 x=1 y=1 facing=2
+[I][AlphaRuntime] DUNGEON_CONTEXT dungeon=1
+[I][AlphaRuntime] DUNGEON_RENDERER active=1
+[I][AlphaRuntime] DUNGEON_ENTER_COMMAND result=success
+[I][AlphaRuntime] DUNGEON_RUN_COMMAND result=success
+[I][AlphaRuntime] combat command=2 status=success turns=0 events=3 time=8 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] UI_MODE from=explore to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=2 sequence=1
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=2
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=3
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=4
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=5
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=6
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=3 time=22 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=4 definition=5 sprite_family=340 render_tile=-1 name_index=5 name="Wanderer" res=v0.0/00000000
+[I][AlphaRuntime] ENEMY_ID phase=create actor=5 definition=5 sprite_family=340 render_tile=-1 name_index=5 name="Wanderer" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=128,128 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=5 raw=5 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] UI_MODE from=dungeon to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=7
+  GREEN R2-1   a fresh room really did start room combat
+  GREEN R2-2   CombatState::room is set for an authored room
+  GREEN R2-3   the session switched to Combat mode with the arena
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=16 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=8
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=1 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=9
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=1 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=10
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+       distinct player actors scheduled=3 over 40 observations
+  GREEN R2-4   all three healthy party members are handed a turn inside the room
+RED-4  lost battle, keep moving, enter another room
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=65 base=00 symbol=00 ui=explore emitted=character action_char=101 shortcut=none
+[I][AlphaRuntime] DUNGEON_ENTER_REQUEST source=normal dungeon=33 depth=0 entrance=1 x=128 y=128 facing=2
+[I][AlphaRuntime] DUNGEON_LOAD_BEGIN dungeon=33 depth=0
+[I][AlphaRuntime] DUNGEON_LOAD_RESULT result=success reason=normal-init
+[I][AlphaRuntime] DUNGEON_SESSION_STATE active=1 dungeon=33 depth=0 x=1 y=1 facing=2
+[I][AlphaRuntime] DUNGEON_CONTEXT dungeon=1
+[I][AlphaRuntime] DUNGEON_RENDERER active=1
+[I][AlphaRuntime] DUNGEON_ENTER_COMMAND result=success
+[I][AlphaRuntime] DUNGEON_RUN_COMMAND result=success
+[I][AlphaRuntime] combat command=2 status=success turns=0 events=3 time=6 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] UI_MODE from=explore to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=2 sequence=1
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=2
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=3
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=4
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=5
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=6
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=3 time=1 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=4 definition=5 sprite_family=340 render_tile=-1 name_index=5 name="Wanderer" res=v0.0/00000000
+[I][AlphaRuntime] ENEMY_ID phase=create actor=5 definition=5 sprite_family=340 render_tile=-1 name_index=5 name="Wanderer" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=128,128 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=5 raw=5 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] UI_MODE from=dungeon to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=7
+  GREEN R4-0   the first room really started combat
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=13 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=4 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=8
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=5 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=3 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=9
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=10 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=2 scheduled=0
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=end
+[I][AlphaRuntime] COMBAT_END reason=party-escaped-or-lost
+[I][AlphaRuntime] WORLD_RESTORE_BEGIN loc=0 floor=0 origin=0,0
+[I][AlphaRuntime] combat finish result=0 victory=0
+[I][AlphaRuntime] WORLD_TILE_RESTORE x=0 y=0 source=authoritative-world+terrain before=5 after=5 unchanged=1
+[I][AlphaRuntime] WORLD_POST_COMBAT player=128,128 tile_under_player=24 loc=0 floor=0
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] UI_MODE from=combat to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=10
+  GREEN R4-1   combat ownership was released after the battle
+  GREEN R4-2   the session is back in Dungeon mode
+  GREEN R4-3   the dungeon session survived the encounter
+  GREEN R4-4   the encounter really ended as a loss/retreat
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=5 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=11
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=12
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=3 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=13
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=10 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=14
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6b base=00 symbol=00 ui=dungeon emitted=character action_char=107 shortcut=none
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=34 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=dungeon gameplay_command=24 sequence=15
+  GREEN R4-5   the party could still klimb after the loss
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=2 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=16
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=17
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=2 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=18
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=3 time=11 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=4 definition=5 sprite_family=340 render_tile=-1 name_index=5 name="Wanderer" res=v0.0/00000000
+[I][AlphaRuntime] ENEMY_ID phase=create actor=5 definition=5 sprite_family=340 render_tile=-1 name_index=5 name="Wanderer" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=128,128 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=5 raw=5 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] UI_MODE from=dungeon to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=19
+  GREEN R4-6   the party reached the second room's cell -- movement never locked up
+  GREEN R4-7   a second encounter, if armed, has a live roster
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=6 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=20
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=2 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=21
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=2 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=22
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+  GREEN R4-8   the second room's scheduler can advance
+RED-6  Set Active Player inside a room (H-150/H-152)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=65 base=00 symbol=00 ui=explore emitted=character action_char=101 shortcut=none
+[I][AlphaRuntime] DUNGEON_ENTER_REQUEST source=normal dungeon=33 depth=0 entrance=1 x=128 y=128 facing=2
+[I][AlphaRuntime] DUNGEON_LOAD_BEGIN dungeon=33 depth=0
+[I][AlphaRuntime] DUNGEON_LOAD_RESULT result=success reason=normal-init
+[I][AlphaRuntime] DUNGEON_SESSION_STATE active=1 dungeon=33 depth=0 x=1 y=1 facing=2
+[I][AlphaRuntime] DUNGEON_CONTEXT dungeon=1
+[I][AlphaRuntime] DUNGEON_RENDERER active=1
+[I][AlphaRuntime] DUNGEON_ENTER_COMMAND result=success
+[I][AlphaRuntime] DUNGEON_RUN_COMMAND result=success
+[I][AlphaRuntime] combat command=2 status=success turns=0 events=3 time=29 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] UI_MODE from=explore to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=2 sequence=1
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=00 symbol=00 ui=dungeon emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] combat command=60 status=success turns=0 events=1 time=30 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=dungeon gameplay_command=60 sequence=2
+  GREEN R6-1   the dungeon digit key really set the active character
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=3
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=4
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=5
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=6
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=7
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=3 time=7 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=4 definition=5 sprite_family=340 render_tile=-1 name_index=5 name="Wanderer" res=v0.0/00000000
+[I][AlphaRuntime] ENEMY_ID phase=create actor=5 definition=5 sprite_family=340 render_tile=-1 name_index=5 name="Wanderer" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=128,128 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=5 raw=5 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] UI_MODE from=dungeon to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=8
+  GREEN R6-2   the room started combat
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=8 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=9
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+       distinct player actors scheduled=1 over 40 observations
+  GREEN R6-3   ONLY the chosen member acts -- the 1988 Set Active Player auto-pass
+  GREEN R6-4   the arena is still live (the auto-pass is not a stall that ends combat)
+RED-7  an arena containing a divide-on-hit enemy stays playable (H-151)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=65 base=00 symbol=00 ui=explore emitted=character action_char=101 shortcut=none
+[I][AlphaRuntime] DUNGEON_ENTER_REQUEST source=normal dungeon=33 depth=0 entrance=1 x=128 y=128 facing=2
+[I][AlphaRuntime] DUNGEON_LOAD_BEGIN dungeon=33 depth=0
+[I][AlphaRuntime] DUNGEON_LOAD_RESULT result=success reason=normal-init
+[I][AlphaRuntime] DUNGEON_SESSION_STATE active=1 dungeon=33 depth=0 x=1 y=1 facing=2
+[I][AlphaRuntime] DUNGEON_CONTEXT dungeon=1
+[I][AlphaRuntime] DUNGEON_RENDERER active=1
+[I][AlphaRuntime] DUNGEON_ENTER_COMMAND result=success
+[I][AlphaRuntime] DUNGEON_RUN_COMMAND result=success
+[I][AlphaRuntime] combat command=2 status=success turns=0 events=3 time=26 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] UI_MODE from=explore to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=2 sequence=1
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=3 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=2
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=3
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=4
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=5
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=6
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=3 time=7 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=4 definition=5 sprite_family=340 render_tile=-1 name_index=5 name="Wanderer" res=v0.0/00000000
+[I][AlphaRuntime] ENEMY_ID phase=create actor=5 definition=5 sprite_family=340 render_tile=-1 name_index=5 name="Wanderer" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=128,128 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=5 raw=5 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] UI_MODE from=dungeon to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=7
+  GREEN R7-1   the room started combat
+  GREEN R7-2   the scheduler names an actor
+  GREEN R7-3   the per-action growth reserve is satisfiable with the storage the runtime owns
+       CombatPass status=0 current=2->1 count=5 reserve=2 capacity=54
+  GREEN R7-4   a combat command is not refused for storage before anything has divided
+  GREEN R7-5   the scheduler actually advanced -- the arena is not frozen
+RED-8  the pit-fed chest alcove blocks all four ways and Search opens it (H-149)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=65 base=00 symbol=00 ui=explore emitted=character action_char=101 shortcut=none
+[I][AlphaRuntime] DUNGEON_ENTER_REQUEST source=normal dungeon=33 depth=0 entrance=1 x=128 y=128 facing=2
+[I][AlphaRuntime] DUNGEON_LOAD_BEGIN dungeon=33 depth=0
+[I][AlphaRuntime] DUNGEON_LOAD_RESULT result=success reason=normal-init
+[I][AlphaRuntime] DUNGEON_SESSION_STATE active=1 dungeon=33 depth=0 x=1 y=1 facing=2
+[I][AlphaRuntime] DUNGEON_CONTEXT dungeon=1
+[I][AlphaRuntime] DUNGEON_RENDERER active=1
+[I][AlphaRuntime] DUNGEON_ENTER_COMMAND result=success
+[I][AlphaRuntime] DUNGEON_RUN_COMMAND result=success
+[I][AlphaRuntime] combat command=2 status=success turns=0 events=3 time=19 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] UI_MODE from=explore to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=2 sequence=1
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=2
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=3
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=4
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=5
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=6
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=7 time=4 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=7
+  GREEN R8-1   the pit dropped the party onto the sealed chest cell one floor down
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6f base=00 symbol=00 ui=dungeon emitted=character action_char=111 shortcut=none
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=3 time=10 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=dungeon gameplay_command=24 sequence=8
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=67 base=00 symbol=00 ui=dungeon emitted=character action_char=103 shortcut=none
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=3 time=4 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=dungeon gameplay_command=24 sequence=9
+  GREEN R8-2   the chest was opened and looted, exactly as on hardware
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=10
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=11
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=12
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=2 time=2 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=13
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=2 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=14
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=2 time=2 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=15
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=16
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=2 time=2 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=17
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=18
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=2 time=2 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=19
+  GREEN R8-3   all four directions are Blocked! -- the authored 1988 outcome, not a lock-up
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=73 base=00 symbol=00 ui=dungeon emitted=character action_char=115 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] UI_MODE from=dungeon to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=dungeon gameplay_command=none
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=2 time=3 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] UI_MODE from=target to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=24 sequence=20
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=2 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=21
+  GREEN R8-4   (S)earch reveals the hidden door and the party walks out -- the alcove is escapable
+RED-5  mutually exclusive states really are exclusive
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=65 base=00 symbol=00 ui=explore emitted=character action_char=101 shortcut=none
+[I][AlphaRuntime] DUNGEON_ENTER_REQUEST source=normal dungeon=33 depth=0 entrance=1 x=128 y=128 facing=2
+[I][AlphaRuntime] DUNGEON_LOAD_BEGIN dungeon=33 depth=0
+[I][AlphaRuntime] DUNGEON_LOAD_RESULT result=success reason=normal-init
+[I][AlphaRuntime] DUNGEON_SESSION_STATE active=1 dungeon=33 depth=0 x=1 y=1 facing=2
+[I][AlphaRuntime] DUNGEON_CONTEXT dungeon=1
+[I][AlphaRuntime] DUNGEON_RENDERER active=1
+[I][AlphaRuntime] DUNGEON_ENTER_COMMAND result=success
+[I][AlphaRuntime] DUNGEON_RUN_COMMAND result=success
+[I][AlphaRuntime] combat command=2 status=success turns=0 events=3 time=16 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] UI_MODE from=explore to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=2 sequence=1
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=2
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=3
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=4
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=5
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=6
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=3 time=3 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=4 definition=5 sprite_family=340 render_tile=-1 name_index=5 name="Wanderer" res=v0.0/00000000
+[I][AlphaRuntime] ENEMY_ID phase=create actor=5 definition=5 sprite_family=340 render_tile=-1 name_index=5 name="Wanderer" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=128,128 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=5 raw=5 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] UI_MODE from=dungeon to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=7
+  GREEN R5-1   combat ownership implies Combat mode
+  GREEN R5-2   combat ownership implies a live, un-ended CombatState
+  GREEN R5-3   a live arena has at least one actor
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=4 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=8
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=4 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=9
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=8 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=10
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] combat enemy-step actor-before=3 status=success actor-after=4 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] combat enemy-step actor-before=4 status=success actor-after=2 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=2 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=1 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=12
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=7 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] combat enemy-step actor-before=3 status=success actor-after=4 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] combat enemy-step actor-before=4 status=success actor-after=2 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=2 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=1 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=15
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=7 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] combat enemy-step actor-before=3 status=success actor-after=4 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] combat enemy-step actor-before=4 status=success actor-after=2 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=8 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=1 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=18
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=6 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=1 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=20
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] combat enemy-step actor-before=3 status=success actor-after=4 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] combat enemy-step actor-before=4 status=success actor-after=1 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=1 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=1 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=22
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=9 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=2 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=24
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] combat enemy-step actor-before=3 status=success actor-after=4 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] combat enemy-step actor-before=4 status=success actor-after=0 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=9 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=2 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=26
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=12 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] combat enemy-step actor-before=3 status=success actor-after=4 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] combat enemy-step actor-before=4 status=success actor-after=0 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=2 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=29
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=8 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=3 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=31
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] combat enemy-step actor-before=3 status=success actor-after=4 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] combat enemy-step actor-before=4 status=success actor-after=2 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=3 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=33
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=4 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=16 status=success turns=0 events=2 time=1 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=5 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=16 sequence=35
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=combat emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=128,128 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+  GREEN R5-4   context_.combat is never true over a torn-down CombatState
+  GREEN R5-5   Combat mode is never held without combat ownership
+
+38 checks, 0 failures

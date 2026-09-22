@@ -982,16 +982,44 @@ CombatPoint combat_cell_to_world(const CombatState &state, int32_t combat_x, int
     return {int16_t(wx), int16_t(wy)};
 }
 bool combat_over(const CombatState &s) { return s.ended || !any_side(s, true); }
+// How many actors ONE action can add, so a caller can refuse to start an action
+// it could not finish.  It is a per-action figure, not a roster ceiling: the
+// ceiling is enforced where the growth actually happens, in Engine::spawn().
+//
+// Batch 21A / H-151.  This used to short-circuit to `max(count, 63) + 1` for a
+// divide-on-hit enemy, and every caller tests it as
+// `actors.capacity() - count < reserve`.  AlphaRuntime owns kCombatActors(22)
+// plus 32 overflow = 54 slots, so `54 - count` can never reach 64: the moment a
+// divider joined the arena EVERY combat command -- the player's and the
+// runtime's own CombatEnemyStep beat -- was refused with NeedsActorStorage and
+// did nothing.  Engine::current() then kept naming the same enemy forever,
+// AlphaRuntime::combat_ai_turn() stayed true, and handle() queued and dropped
+// every keypress: a fully rendered arena that answered neither the keyboard nor
+// Alt+M, recoverable only by a power cycle.  Seven of the 112 authored dungeon
+// rooms carry def 24 Slime or def 30 Gargoyle, the two shipped definitions with
+// the bit.
+//
+// The true figure: divide() adds at most ONE clone per damaged divider, and
+// every area sweep snapshots s.count before it runs (combat_magic.inc's
+// `int count = s.count;`), so no clone made during an action can divide within
+// that same action -- the bound is the number of live dividers on the board.
+// The `abilities & 4` daemon gate can fire in the same enemy turn as an attack,
+// so it adds its own single spawn on top.  The cast/consumable call sites add
+// their own `+ 4` for summons (combat_cast_effect already rejects a Swarms
+// `extra` outside 0..4, so four is the whole summon budget).
 int32_t combat_growth_reserve(const CombatState &s) {
-    int reserve = 0;
+    int dividers = 0, daemon_gate = 0;
     for (int i = 0; i < s.count; ++i) {
         auto &a = s.actors[i];
-        if (a.enemy && (a.enemy->abilities & 0x1000))
-            return std::max<int32_t>(s.count, 63) + 1;
-        if (a.enemy && (a.enemy->abilities & 4))
-            reserve = 1;
+        if (!a.enemy || a.status == CombatStatus::Dead || a.status == CombatStatus::Fled ||
+            a.status == CombatStatus::Absorbed)
+            continue;
+        if (a.enemy->abilities & 0x1000)
+            ++dividers;
+        if (a.enemy->abilities & 4)
+            daemon_gate = 1;
     }
-    return reserve;
+    return dividers + daemon_gate;
 }
 CombatResult combat_cast_effect(CombatContext &c, SpellEffect fx, const CombatPoint *aim) {
     if (!c.combat.initialized || unsigned(fx.kind) > unsigned(MagicEffect::Illusion) ||
