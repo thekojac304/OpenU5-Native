@@ -1151,7 +1151,39 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
             r.result.status = CommandStatus::NoOp;
             break;
         }
-        RestContext ctx{c.game, c.turn, r.rand, r.sink(), *c.rest_services, c.sky};
+        // H-148. `snap_npcs` is the port's hook for TOWN.OVL:0x1694
+        // `town_populate_npcs`, which CMDS.OVL:0x0677 calls on every 10-minute
+        // tick of the bed hole-up loop (inside it -- 0x068d `je 0x634` jumps
+        // back). That is ONE routine over ONE 1988 table: 0x16a2-0x16b9 zeroes
+        // all 31 interior object slots and every live NPC objIdx, then
+        // 0x16c9-0x171b re-places every .NPC slot whose type byte is non-zero.
+        // Chests are .NPC type 1 (TOWN.OVL:0x1795), and nothing records that
+        // one was opened -- SJOG.OVL:0x112C only zeroes the slot -- so a looted
+        // vault refills while the party sleeps. The port splits that table into
+        // NpcActors and the quest-object pool, so the per-tick hook has to
+        // drive both halves; the host owns only the NPC half.
+        struct BedPopulate {
+            Runner *runner;
+            CommandContext *context;
+            RestServices host;
+        } populate{&r, &c, *c.rest_services};
+        RestServices bed = *c.rest_services;
+        if (e.bed) {
+            bed.context = &populate;
+            bed.snap_npcs = [](void *p) {
+                auto &b = *static_cast<BedPopulate *>(p);
+                if (b.host.snap_npcs)
+                    b.host.snap_npcs(b.host.context);
+                if (b.context->quest_world &&
+                    !hydrate_interior_objects(*b.context, b.context->game.position.map.location))
+                    b.runner->result.status = CommandStatus::NeedsStorage;
+            };
+            bed.occupied = [](void *p, int32_t x, int32_t y, int32_t z) {
+                auto &b = *static_cast<BedPopulate *>(p);
+                return b.host.occupied ? b.host.occupied(b.host.context, x, y, z) : false;
+            };
+        }
+        RestContext ctx{c.game, c.turn, r.rand, r.sink(), bed, c.sky};
         const auto result = e.bed ? bed_sleep(ctx, cmd.hours) : camp(ctx, cmd.hours, cmd.member);
         if (result.ambush) {
             auto *arena=c.outdoor?c.outdoor->combat:c.quest_world?c.quest_world->encounter:nullptr;

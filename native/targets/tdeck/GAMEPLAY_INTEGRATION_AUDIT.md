@@ -4422,3 +4422,185 @@ Flash the Batch 21A.3 firmware, then, with a party of three or more:
 7. In combat, press Symbol+`x` (`8`). Expect "What?" and no turn lost.
 
 **Pass criteria:** steps 3-5 change the scheduling mid-battle; step 5 never escapes; step 6 costs nothing.
+
+---
+
+## Batch 21B — H-148 chest-respawn fidelity + Original Behavior Gap Sweep
+
+**Scope:** H-148 only for production. Everything else below is classified and queued, not fixed. H-118 (shard ritual) and H-115 (dungeon save/load) were not touched.
+
+### How this batch could read the 1988 binaries at all
+
+Every `re/notes/*.md` cite of the form `re/disasm/CMDS.OVL.asm` refers to a listing that **is not in the tree** — `re/disasm/` does not exist, and `original/` is gitignored while the EA files sit there untracked. So this batch built the reading tools instead of trusting the notes:
+
+| Tool | What it does |
+|---|---|
+| `re/tools/dis16.py` | 16-bit capstone front-end over any shipped module; `--exe` skips ULTIMA.EXE's MZ header so offsets match the notes' CS:IP convention |
+| `re/tools/thunks.py` | dumps the kernel overlay-thunk table (11-byte `lcall 0x72e:0x2ec` + overlay id + `ljmp 0:target`) and derives each overlay's load base |
+| `re/tools/callers_banda.py` | exhaustive **by-band** call-site census: every `E8`/`E9` rel16 at **every** offset in every module, resolved through the overlay base. Over-reports rather than misses, which is the safe direction for a universal claim |
+
+Derived overlay bases (used throughout below): TOWN/OUTSUBS `0x81D0`, MAINOUT `0x8304`, NPC/TALK/SHOPPES `0xA290`, CMDS/SJOG `0xBF80`, COMBAT `0xBFEC`, DUNGEON `0xE1E0`. The first two reproduce `re/notes/npc-carga-partida-fresh-gate.md` §1 **byte for byte**, which is this batch's control that the tooling is reading the same bytes the notes read.
+
+---
+
+### H-148 — the reference behaviour, derived
+
+**The trigger is not "rest nearby". It is (H)ole up on a bed, and it is one routine.**
+
+1. `ULTIMA.EXE:0x329C` is the (H) handler. It prints `"Hole up- "` (DS `0xa170`), reads the tile under the party, and `0x32b9 cmp [bp-4],0xab / je 0x32c6` — **only tile `0xAB`, a bed**, reaches `cmd_camp_holeup`. Anything else prints `"Only in bed!\n"` (DS `0xa17a`). The by-band census finds exactly one caller of that thunk (`0x802E`), so this is the whole door.
+2. `CMDS.OVL:0x0552 cmd_camp_holeup` prompts `"For how many hours? "` (DS `0x4209`), sleeps the roster `'G'→'S'`, prints `"Zzzzzzz...\n"`, blanks the viewport, and enters its clock loop `0x0634-0x068d`. Each iteration advances the clock by **ten minutes** (`0x0647 push 0x0a` to kernel `0x4F7C kernel_advance_clock`) — six iterations per game hour.
+3. Inside that loop, `0x0677 call 0xffffbb0e` = kernel thunk `0x7A8E` = **`TOWN.OVL:0x1694 town_populate_npcs`**. `0x068d je 0x634` jumps back, so it runs on **every** tick.
+4. `town_populate_npcs` is a single routine over a single 1988 table. `0x16a2-0x16b9` calls kernel `0x3A74 set_actor_record` with six zero fields for slots 1..31 — wiping the whole interior object register at DS `0x5C5A` — and zeroes every live NPC `objIdx` (`0x16ae mov word [di],0`, `di` walking `0x5F7A` by `0x10`). `0x16c9-0x171b` then re-places **every** `.NPC` slot whose type byte at `0x659E` is non-zero, via `TOWN.OVL:0x1726 town_npc_place`.
+5. A chest is `.NPC` type **1**. `town_npc_place` at `0x178e cmp byte [bx+0x659e],1 / jne 0x179c` sends type 1 straight to `0x1795 mov word [bp-6],0x1e`, **skipping** the per-location killed bitmask at DS `0x28C2` that every other type is tested against. `[bp-6]` is pushed as the `+5` field of `set_actor_record` (push order verified against `0x3A74`'s `bp+6..bp+0x10` writes and `ret 0xe`), so the chest is recreated with contents byte **`0x1E`**, trap bit `0x80` clear.
+6. Nothing anywhere records that a chest was opened. `SJOG.OVL:0x112C open_chest_world` at `0x11d6-0x11e1` calls the same `0x3A74` with six zeros — it **blanks the slot and writes no flag**.
+
+**Answers to the batch's six questions:**
+
+| | Answer | Citation |
+|---|---|---|
+| **A. What respawns** | The entire interior object register: every `.NPC` slot with a non-zero type — chests, inert props, plot artifacts — re-placed at its schedule position for the current hour. Not map tiles, not search objects, not dungeon or combat state | TOWN.OVL `0x1694`/`0x1726` |
+| **B. Trigger** | `(H)`ole up on a bed tile `0xAB` inside a small map, once per 10-minute tick. **Not** outdoor camp (kernel `0x3C9A` never calls it), not an inn, not a save/load, not a map reload timer | census of thunk `0x7A8E` = 1 call site, CMDS `0x0677` |
+| **C. Minimum timing** | The prompt accepts 1–9 hours; the reset fires on the **first ten-minute tick**, so the documented "minimum rest" is one hour and the refill is already done before it elapses | CMDS `0x0631` to `0x063b` to `0x0647` to `0x0677` |
+| **D. Skull-key door** | **Stays unmagicked.** The reset writes only the object register; the door lives in the 0x400-byte map buffer at `0x6608`, which is re-read only by `town_load_town_map` `0x0408`. Changing floors (`town_use_ladder` `0x052e` to `0x0408` with `fresh=1`) re-reads it, **which is exactly why the community report says a second skull key is needed only after a floor change** | CAST `0x18f4` writes volatile terrain; TOWN `0x0408`/`0x052e` |
+| **E. Contents** | **Deterministic and identical every time: `+5 = 0x1E`, untrapped.** No RNG, no reroll, no table lookup, no trap re-arm, no preserved jimmy state | TOWN `0x1795` |
+| **F. Scope** | **Every interior small map** that runs the TOWN loop (town, castle, keep, dwelling) — *not* LB's castle specially. Not the overworld (no beds, and overworld objects persist in SAVED.OOL), not dungeons, not combat | the single call site plus the `0xAB` gate |
+
+**The authored vault is real data, and it matches the hardware report exactly.** `CASTLE.NPC` record `(17-1)&7 = 0` carries type `0x01` in slots **23, 24, 25** at (16,21), (17,22), (13,23), all with `z = 0xFF` — the basement, runtime floor -1 — plus a type `0x1E` dead body in slot 28 at (9,9). The same basement map carries beds (`0xAB`) at **(13,19) and (16,19)**, four tiles from the chests, and the magically sealed doors `0x98` at (8,12)/(12,12)/(16,12) and `0x97` at (15,24) that a skull key unmagics. The only ladder out of that basement is at (12,7). Every clause of the community report is confirmed.
+
+### H-148 — native root cause
+
+The port splits the 1988 table in two: NPCs live in `NpcActors`, objects in the quest-object pool. `rest.cpp::bed_sleep_step` drove only the NPC half, through `RestServices::snap_npcs`; the object half (`hydrate_interior_objects`) was wired **only** to `ReloadEffect::HydrateInterior`, which `transitions.cpp::load_small_map` emits on map entry. So a looted vault stayed looted until the party left the location entirely.
+
+The TypeScript reference port has the **same** split and the **same** omission — `game.ts::wakeSnapNpcs()` is `npcManager.enterMap(...)` and nothing else, hooked at `camp.ts:314` with a comment correctly citing `0x0677 -> TOWN 0x1694`. This is a **reference-port difference**: judged against DOS the reference is wrong here, so native was fixed against the binary, not against TypeScript.
+
+### H-148 — RED proof
+
+`native/core/tests/batch21b_chest_reset_test.cpp` (new ctest target `batch21b_chest_reset`), driven through the real `execute_command` / `hydrate_interior_objects` / `(O)pen` production paths with the authored `CASTLE.NPC` slots and the authored basement bed.
+
+Against unmodified production code (`native/core/batch21b-red.log`):
+
+```
+batch21b check failed: H148-C ** all three chests are back after the minimum hole up **
+exit=1
+```
+
+A and B passed — the vault hydrates with three chests at their authored cells, untrapped, and `(O)pen` empties it — and C failed at exactly the missing behaviour.
+
+### H-148 — the fix
+
+`native/core/src/commands.cpp`, the `CommandKind::Rest` case. For the **bed** path only, the host's `RestServices` is wrapped so the per-tick hook runs **both halves of `town_populate_npcs`**: the host's NPC snap, then `hydrate_interior_objects(c, location)`. `occupied` is forwarded through the same wrapper so the occupancy probe still reaches the host. Nothing else changed: no coordinates are hard-coded, no timer was invented, no chest system other than the interior `.NPC` register is touched, and `hydrate_interior_objects` is the *same* function map entry already used, so the reset inherits the authored contents, the taken-artifact gate and the discard-then-reseed order unchanged.
+
+Camp, dungeon rest, ship repair, save/load and R-14 terrain persistence are untouched.
+
+### H-148 — GREEN proof
+
+`batch21b_chest_reset`: **38/38 checks pass.**
+
+* **H148-A** three chests at (16,21)/(17,22)/(13,23) plus the slot-28 prop, all untrapped.
+* **H148-B** `(O)pen` removes each chest and leaves the prop alone.
+* **H148-C** one hour of hole-up = six ticks, and all three chests are back at their authored cells.
+* **H148-D** three consecutive loot-then-rest cycles, each refilling — no cooldown, no once-only bit, no duplicate props.
+* **H148-E** hole-up emits no `ClearTerrain`, `ResetDoors` or `HydrateInterior`, so an unmagicked skull-key door survives it.
+* **H148-E2** a chest authored onto the bed cell throws the party out on the **first** tick — pinning that the reset runs *before* the `0x0688` occupancy probe of the same iteration, and that the probe still reaches the host.
+* **H148-F1** camping outdoors refills nothing. **F2/F2b** a taken plot artifact is not resurrected while an untaken one is re-placed exactly once. **F3** a search find is never re-armed. **F4** un-collected floor loot **is** destroyed by the wipe half — faithful, and the reason the 1988 farm needs a `(G)et` before the rest.
+* **H148-G** the refilled vault is pool state (openable again), and a redundant map-entry hydrate on top of a reset does not duplicate.
+
+### H-148 — mutation proof
+
+Each load-bearing part mutated, built, run, reverted (`native/core/batch21b-mutation-m*.log`):
+
+| # | Mutation | Result | Killed by |
+|---|---|---|---|
+| M1 | object half removed from the per-tick hook | **DEAD** | H148-C chests back |
+| M2 | trigger inverted — repopulate on the camp path instead of the bed path | **DEAD** | H148-C chests back |
+| M3 | wipe half removed (`discard_interior_objects` dropped from hydration) | **DEAD** | H148-C chests back (duplicates) |
+| M4 | host NPC half dropped from the wrapper | **DEAD** | H148-C six ticks per hour |
+| M5 | occupancy probe no longer forwarded to the host | **DEAD** | H148-E2 first tick ends the sleep |
+| M6 | taken-artifact gate defeated | **DEAD** | H148-F2 taken plot artifact does not hydrate |
+
+All six died. The suite was re-confirmed green after the last revert.
+
+---
+
+## Batch 21B — Original Behavior Gap Sweep
+
+### Coverage, stated honestly
+
+Categories **A (loot/economy)**, **B (doors/locks/terrain)** and **C (rest/sleep/camp)** were swept from the binary, instruction by instruction, because H-148 lands in them. Categories **D-J** were swept only by (i) the exhaustive by-band census — which proves nothing outside CMDS `0x0677` reaches the reset routine — and (ii) re-reading `docs/bugs-del-original.md`, `re/deliberate-divergences.md` and this audit's open rows. **They did not get their own binary pass, and no row below claims otherwise.** A future batch that wants D-J swept properly should budget for it rather than inherit this one's confidence.
+
+### The matrix
+
+| ID | Subsystem | Behaviour | DOS evidence | TypeScript | Native | Player-visible impact | Sev | Repro | Classification | Follow-up | HW test? |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| — | Loot | Interior chests refill on a bed hole-up | CMDS `0x0677` to TOWN `0x1694` | omits the object half | **fixed this batch** | the LB-basement farm works | — | 100 % | **FAITHFUL** (as of this batch) | H-148 closed | yes |
+| — | Loot | Nothing else in the game refills chests: no dungeon, combat, overworld or shop path reaches the routine | by-band census: 1 call site for thunk `0x7A8E` | same | same | — | — | — | **FAITHFUL** | — | no |
+| — | Loot | Un-collected floor loot is destroyed by the reset | the wipe half zeroes slots 1..31 | n/a | pinned by H148-F4 | forces a `(G)et` before the rest | — | 100 % | **FAITHFUL** | — | no |
+| — | NPC | A killed NPC does not come back from the reset | `town_despawn_object` `0x00b0` zeroes the `.NPC` type byte at `0x659E` | modelled | `npc_dead` mask | — | — | — | **FAITHFUL** | — | no |
+| — | Doors | Doors do **not** auto-close during a hole-up | the per-tick call list (`0x20FA`, `0x4F7C`, `0x4A84`, `0x2AE8`, `0x2900`, `0x1694`, `0x368E`) contains no door housekeeping | same | same | — | — | — | **FAITHFUL** | — | no |
+| — | Doors | A skull-key-unmagicked door is volatile terrain, reverted only by a map reload | CAST `0x18f4`; TOWN `0x0408` re-reads the record | `setVolatileTerrain`, sealed in `doors.test.ts` | same | — | — | — | **FAITHFUL** (but see H-158) | — | no |
+| **H-154** | Rest | Bed hole-up does not snap NPCs to their schedule **on the device** | CMDS `0x0677` to TOWN `0x1694`, NPC half | modelled | `alpha_runtime.cpp:232` wires `snap_npcs` to `[](void*){}` | NPCs stand still through a night's sleep | med | 100 % | **CONFIRMED MISSING** | next rest batch | yes |
+| **H-155** | Rest | "Thrown out of bed!" can never fire on the device | CMDS `0x0688` to kernel `0x368E kernel_object_at` | modelled (`objectOrNpcAt`) | `occupied` wired to constant `false` | a whole reference outcome is unreachable | med | 100 % | **CONFIRMED MISSING** | with H-154 | yes |
+| **H-156** | Rest | Bed hole-up runs no per-tick turn housekeeping | CMDS `0x0671` to kernel `0x2AE8 kernel_turn_housekeeping`: poison 1 HP, meals at 6/12/18, `Starving!`, turn counter, Q/T expiry, regeneration ring | **also omits it** | `bed_sleep_step` only advances the clock | sleeping costs no food, never starves, never ticks poison, never regenerates | **high** | 100 % | **CONFIRMED MISSING** (both ports) | own batch — moves survival fixtures | yes |
+| **H-157** | Terrain | Hole-up does not run the day/night tile refresh | CMDS `0x0664` to TOWN `0x0170 town_schedule_tile_refresh` when the hour becomes 5 or 20 | omits it | `WorldTerrain::hourly` refreshed only on a town-turn hour change, map entry or klimb | sleep across 20:00/05:00 and the drawbridge-and-lamp overlay is stale until you leave | med | 100 % | **CONFIRMED MISSING** (both ports) | with H-156 | yes |
+| **H-158** | Terrain | Changing floors inside a small map does not reload the map record | `town_use_ladder` `0x052e` to `town_load_town_map(fresh=1)` `0x0408` (re-reads the 0x400 record **and** calls `0x1694`) | not modelled | `klimb_ladder`/`apply_stair_step` emit only `RefreshHourTiles` | an unmagicked skull-key door survives a floor change when 1988 relocks it; the vault does not refill on a floor round-trip | med | 100 % | **CONFIRMED MISSING** (both ports) | own batch — touches R-14 terrain persistence | yes |
+| **H-159** | Loot | Interior chest contents byte is 8; the binary seeds `0x1E` | TOWN `0x1795` `mov word [bp-6],0x1e` to `+5` via kernel `0x3A74` | `INTERIOR_CHEST_CONTENTS = 8` | `o.contents = 8` | every interior chest's loot roll is off the authored value | med | 100 % | **CONFIRMED MISSING** — closes oracle hole **O5** (`re/notes/objects.md`) | own batch: will move `gameplay_parity`/`quest_parity`, needs the TS side regenerated in step | no |
+| **H-160** | Camp | Outdoor camp guard walks through the fire and through sleepers | `camp_guard_walk` consumes `cell_free` | modelled (`campCellFree`) | `cell_free` wired to constant `true` | cosmetic on the device today | low | 100 % | **CONFIRMED MISSING** | with H-154 | no |
+| — | Rest | `snap_npcs` is an NPC-only hook, so the object half of one binary routine is unmodelled | TOWN `0x1694` is one routine | `wakeSnapNpcs` to `npcManager.enterMap` only | **corrected this batch** | — | — | — | **REFERENCE-PORT DIFFERENCE** — native is now right and TypeScript is not; no parity fixture encodes it (91/91 green) | flag before any fixture regeneration | no |
+| — | Rest | `bedSleepStep` omits `0x0671` and `0x0664` | as H-156/H-157 | omits | omits | — | — | — | **REFERENCE-PORT DIFFERENCE** compounding H-156/H-157 | with them | no |
+| — | Rest | Bed wake-up hour: the original subtracts 23, not 24, when crossing midnight | CMDS `0x05b0` | fixed | fixed | wakes on the hour requested | — | — | **DELIBERATE DIVERGENCE** | `bugs-del-original.md` §1.3 (WITNESSED) | no |
+| — | NPC | Loading a save inside a town: the binary does **not** re-read the `.NPC` (`fresh = 0`) | TOWN `0x11FF/0x1203`; `ULTIMA.EXE:0x00F4` | re-derives | re-derives | ports show a populated town where 1988 shows an empty one | — | — | **DELIBERATE DIVERGENCE** | `re/notes/npc-carga-partida-fresh-gate.md` §6/§8, `re/deliberate-divergences.md` | no |
+| — | NPC | The `+5` byte written for **non-chest** `.NPC` slots — `0xFF` or `0` from a per-location dword bitmask at DS `0x28C2` | TOWN `0x179c-0x17d4` | — | — | unknown | ? | — | **UNRESOLVED** — no note anywhere in the repo names DS `0x28C2`; chests bypass it, so H-148 is unaffected | needs a DS-map pass | no |
+| — | Rest | Whether the bed loop has any ambush/interruption roll beyond the occupancy probe | `0x0688` is the only gate decoded; kernel `0x2AE8`'s callees were **not** exhaustively walked | camp-only ambush | camp-only ambush | unknown | ? | — | **UNRESOLVED** — stated rather than assumed | with H-156 | no |
+| — | Ships | Frigate delivery price does not match and accepting does nothing | `bugs-del-original.md` §1.4 | pending | pending | — | — | — | **OUT OF ALPHA 2 SCOPE** | §1.4 | — |
+| — | Dungeon | A dungeon chest on floor 0 hangs the game | §1.5 | pending | pending | — | — | — | **OUT OF ALPHA 2 SCOPE** | §1.5 | — |
+| — | Quests | Wishing well's horse appears inside a wall | §1.7 | divergent | divergent | — | — | — | **OUT OF ALPHA 2 SCOPE** | §1.7 | — |
+| — | Items | Skull Key inside a dungeon is spent and opens nothing | §1.9 | pending | pending | — | — | — | **OUT OF ALPHA 2 SCOPE** | §1.9 | — |
+| — | Items | Passing at the Skull Key prompt spends it and blows up your own square | §1.10 | divergent | divergent | — | — | — | **OUT OF ALPHA 2 SCOPE** | §1.10 | — |
+
+### Counts
+
+| Classification | Rows |
+|---|---|
+| FAITHFUL | 6 |
+| DELIBERATE DIVERGENCE | 2 |
+| CONFIRMED MISSING ORIGINAL BEHAVIOR | 7 |
+| REFERENCE-PORT DIFFERENCE | 2 |
+| UNRESOLVED | 2 |
+| OUT OF ALPHA 2 SCOPE | 5 |
+
+**Nothing in the "confirmed missing" column was fixed.** H-148 is the only production change in this batch. H-154 is the *sibling half of the very routine H-148 restored* and was still left alone deliberately: the core now runs the object half for every host, while the NPC half remains a host-wiring gap whose fix moves NPCs on screen during sleep and deserves its own RED proof.
+
+### Full regression suite
+
+**91/91 from a clean, from-scratch build**, 0 fail, 0 skipped (`native/core/batch21b-final-ctest-rerun.log`) — the prior 90 plus `batch21b_chest_reset`. No parity corpus moved: `gameplay_parity`, `quest_parity` and all 14 `typescript_*_drift` checks pass unchanged, which says no fixture sequence exercises a bed hole-up in a location carrying `.NPC` objects. One warning, the pre-existing w64devkit `stl_uninitialized.h` `-Wstringop-overflow=` false positive; zero project warnings.
+
+⚠ **One run is declared rather than buried.** The *first* clean-build `ctest` (`batch21b-final-ctest.log`) was launched while the ESP-IDF firmware build was saturating the machine, and `quest_parity` failed there. The failure is an **I/O artifact, not a mismatch**: `check-quests.ts` choked on a *truncated* driver stdout line — `"scrollQuantities":[0,0,0,0,0,0,0,0,"potionQuantities"`, a missing `]` mid-array — with `SyntaxError: Expected ',' or ']' after array element in JSON at position 759`. It is not the Batch 17 signature either (that was exit `3221225477`, `STATUS_ACCESS_VIOLATION`). A targeted re-run passed immediately, and the full suite re-run on an idle machine passed 91/91. Both logs are kept. The lesson is mine: do not run the two toolchains concurrently and then read the result as a verdict.
+
+### Firmware
+
+Built clean with ESP-IDF 6.1: `openu5_tdeck.bin` = **0xd22d0** (860,880 bytes), up **160 bytes** from Batch 21A.3's 0xd2230 (860,720) — the `RestServices` wrapper and its two thunks. `0x2dd30` (187,696 bytes, **18 %**) of the app partition free. Bootloader 0x5850, 31 % free. **0 errors, 0 project warnings**; the five `component_validation.cmake` notices are third-party, as in every build. **Not flashed.**
+
+### SD card
+
+Unchanged. No resource pack, asset or fixture was touched — the fix is core logic over data the pack already carries.
+
+### Status
+
+H-148: **SOFTWARE FIXED — HARDWARE RETEST REQUIRED.** All other sweep rows are classification only. Batch 21A / 21A.1 / 21A.2 / 21A.3 conclusions are untouched.
+
+### Phase 6P — Batch 21B H-148 chest reset · *firmware only; the SD card is unchanged*
+
+Flash the Batch 21B firmware. Party needs at least one skull key.
+
+1. Enter Lord British's Castle (location 17) and klimb **down** to the basement.
+2. Unlock the vault normally: `(U)se` Skull Key at one of the magically sealed doors — `0x98` at (8,12), (12,12) or (16,12), or `0x97` at (15,24) — then `(O)pen` it.
+3. `(O)pen` and empty the three chests at **(16,21), (17,22) and (13,23)**. `(G)et` the loot off the floor — the 1988 reset destroys anything left lying there.
+4. Walk to the basement bed at **(16,19)** or **(13,19)** and `(H)`ole up for **1 hour** — the minimum the prompt accepts.
+5. **Expected:** all three chests are back at those exact cells and can be opened again for loot.
+6. **Expected:** the skull-key door is still open — **no second key is needed**.
+7. Repeat steps 3-5 once. It must refill again; there is no cooldown.
+8. Klimb **up** one floor and back down. Native will *not* relock the door here and 1988 would — that is **H-158**, already queued; note it but do not file it as new.
+
+**Pass criteria:** steps 5-7. **Fail** if the chests stay empty, if they come back trapped, if the door relocks, or if a chest appears anywhere other than those three cells.
+
+**Known-and-queued, do not file:** NPCs will not move while you sleep (H-154), "Thrown out of bed!" cannot fire (H-155), sleeping costs no food and does not tick poison (H-156), and sleeping past 20:00 leaves the drawbridge overlay stale (H-157). Serial is not required for a clean pass; capture it only if behaviour diverges.

@@ -18,6 +18,8 @@ future preservation-profile effort can restore original behaviour cleanly, and s
 that a tester never files an intentional difference as a defect.
 
 **Batch 18 changed none of these.** Making them explicit is the whole deliverable.
+
+**Batch 21B added D-19 through D-22** from the original-behaviour gap sweep. All four are unresolved divergences in the §4 sense — gaps, not choices — and none was fixed in that batch; only H-148 was.
 The "toggle candidate" column records how isolated each difference already is —
 it is an assessment, not a commitment, and **no toggle is implemented**.
 
@@ -113,6 +115,10 @@ answer or a product decision; none is scheduled in Alpha 2 unless marked.
 | D-16 | "Transfer from Ultima IV" is a notice, not a feature | explicit deferral | `frontend.cpp:88` | §2A |
 | D-17 | `render_active_view()` (~45 lines) has no caller but is still linked into the firmware | dead code | superseded by `render_snapshot()`; confirmed still present in `openu5_tdeck.map` at Batch 18 | §5 |
 | D-18 | `CommandKind::ShopAction`, `CommandKind::CombatEscape` and `CommandKind::Unready` are handled but have no producer | dead code | each is deliberate; re-verified at Batch 18 | §5 |
+| D-19 | Bed hole-up on the device snaps no NPCs, can never print `"Thrown out of bed!"`, and lets the watchman walk through the campfire — `AlphaRuntime` wires `RestServices::snap_npcs`, `occupied` and `cell_free` to an empty lambda / constant `false` / constant `true` | incomplete | host wiring never finished; the core side is complete and the TypeScript reference models all three | H-154, H-155, H-160 |
+| D-20 | Bed hole-up runs no per-tick turn housekeeping (poison, meals, `Starving!`, Q/T expiry, regeneration ring) and no day/night tile refresh | incomplete | 1988 calls kernel `0x2AE8` at `CMDS.OVL:0x0671` and `TOWN.OVL:0x0170` at `0x0664`, both inside the sleep loop; **the TypeScript reference omits both as well**, so this is a gap in the reference, not a native-only one | H-156, H-157 |
+| D-21 | Changing floors inside a small map does not reload the map record, so volatile terrain (an unmagicked skull-key door) survives a floor change | incomplete | 1988's `town_use_ladder` re-reads the record via `town_load_town_map(fresh=1)`; fixing it touches R-14 terrain persistence | H-158 |
+| D-22 | Interior chests are seeded with contents byte `8` where the binary seeds `0x1E` | incomplete | Class-C guess for oracle hole O5, **closed from the binary in Batch 21B** (`TOWN.OVL:0x1795`); correcting it moves `gameplay_parity`/`quest_parity` and must land together with the TypeScript generator | H-159 |
 
 ---
 
@@ -124,11 +130,13 @@ answer or a product decision; none is scheduled in Alpha 2 unless marked.
   candidate" column names the ones already isolated enough to switch without
   restructuring; A-1 through A-5 and A-13/A-14 are *not* restorable, because the
   hardware, not a preference, forced them.
-* **A future batch:** §4 is the backlog. **As of Batch 19 no entry in it is a live
-  production defect** — D-11, which was the only one, is fixed and struck through.
-  Everything remaining is a decision, a calibration, or scope.
+* **A future batch:** §4 is the backlog. As of Batch 19 no entry in it was a live
+  production defect — D-11, the only one, is fixed and struck through. **Batch 21B
+  changed that:** D-19 through D-22 *are* live gaps against the 1988 binary, derived
+  and cited, deliberately queued rather than fixed. Everything else remaining is a
+  decision, a calibration, or scope.
 * **On the word "intentional":** §2 and §3 are deliberate; **§4 is not**. An
   unresolved divergence is an open question about fidelity, not a choice, and the
   two must never be totalled together as "intentional divergences" — a summary row
   in `GAMEPLAY_INTEGRATION_AUDIT.md` did exactly that until Batch 19 corrected it.
-  The split is 18 deliberate (14 + 4) and 18 unresolved, of which one is now closed.
+  The split is 18 deliberate (14 + 4) and 22 unresolved, of which one is now closed.
