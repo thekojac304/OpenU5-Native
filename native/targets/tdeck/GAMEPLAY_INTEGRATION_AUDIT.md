@@ -4200,3 +4200,97 @@ The Batch 21A firmware already on the device is sufficient — no production cod
 10. Repeat steps 1–9 once.
 
 Serial capture is useful if convenient, but a clean visual/behavioural pass does not depend on it unless something unexpected recurs.
+
+---
+
+## Batch 21A.2 — adjacent dungeon-door perspective visibility (`bfc4e39e`+)
+
+**Verdict: REFERENCE-FAITHFUL VISUAL QUIRK — NO FIX. No production code was changed.**
+
+### The hardware observation
+
+During the same Deceit L8 session reached through the authored pit shaft (see § *Batch 21A.1*), the user met a cluster of roughly three adjacent doors near the bottom of the floor. Facing one door head-on, another door occupied an immediately neighbouring cell — and **no part of the neighbour's edge or frame was visible**. The frontal door filled the corridor end and the neighbouring cell read as ordinary masonry. The user found it extremely disorienting and asked whether the native renderer was dropping a side-door slice the original would draw.
+
+### The exact authored geometry
+
+Deceit (33) floor 7 carries **six** authored room cells — and a room cell (`0xF`) is door-family for both the front (`frontBase` → 12) and the side (`sideBase` → 4) tables:
+
+```
+        x0    x1    x2    x3    x4    x5    x6    x7
+  y3   Wall  r10   Wall  ....  ....  ....  ....  ....
+  y4   r12   ....  Wall  ....  Wall  Secr  Wall  r11
+  y5   r14   ....  Wall  Ladd  Wall  Ches  Wall  r13
+  y6   Wall  Wall  Wall  Secr  Wall  Wall  Wall  ....
+  y7   Wall  ....  Wall  ....  Wall  Ladd  Wall  r15
+```
+
+(1,3)=`0xFA` r10 · (0,4)=`0xFC` r12 · (7,4)=`0xFB` r11 · (0,5)=`0xFE` r14 · (7,5)=`0xFD` r13 · (7,7)=`0xFF` r15. Four of them — r11/r12/r13/r14 — form a **2×2 block straddling the x-wrap**, which is the "cluster of about three doors".
+
+Exactly **five** standable viewpoints on the floor put a door directly ahead with another door beside it. The hardware view is **(1,4) facing West**: frontal door r12 at (0,4), r10 at (1,3) beside the **party**, r14 at (0,5) beside the **frontal door**.
+
+### What the ORIGINAL emits
+
+[REF-BIN] `dng_draw_view` @0x1a90, as recorded in `re/notes/dungeon3d-audit.md` §7.5:
+
+> *"Marcha `si=0..3` … por celda llama `fn_150a(si)` (front: si `tile≥0xa0` dibuja muro de fondo y **PARA**) y, **si abierta**, `fn_1682` IZQ+DER"*
+
+The front test runs **first** and **stops the march**; the left/right pair is emitted **only when the cell is open**. So the blocking depth never contributes side slices. [REF-TS] `planDungeonView()` breaks on `blocksView(cell)` before its own side pair — identical.
+
+**The two adjacencies are therefore different questions, and only one of them was ever drawn:**
+
+| Neighbour of… | Ring | Emitted? |
+|---|---|---|
+| the **party's own** cell | 0 | **yes** — a side door, `sideBase` 4 |
+| the **frontal door** | 1 (the blocking depth) | **no** — the march has already stopped |
+
+### The resulting pixels — no occlusion is involved
+
+Authored slice widths (`dungeon_art.cpp kDungeonWallDims`) and the compositor's fixed X tables settle it arithmetically:
+
+| Piece | Image | Geometry | Covers |
+|---|---|---|---|
+| ring-0 side door, left | 4 | x = 16, w = 24 | **16 … 40** |
+| depth-1 front door | 13 | centred pair, w = 56, spans 96−w … 96+w | **40 … 152** |
+| ring-0 side door, right | 4 | x = 152, w = 24, mirrored | **152 … 176** |
+
+The three **abut exactly and never overlap**. So a door beside the party is drawn *and stays fully visible*; a door beside the frontal door produces **no op at all**. The invisibility is a **planning stop**, not an art or painter-order problem — which is why no amount of image-index or z-order work could reveal it without diverging from 1988.
+
+The hardware plan, from the real production planner (`batch21a2-plan-dump.log`, party (1,4) facing West) is three ops and nothing else:
+
+```
+#  depth side   family              image destX width covers
+0  0     left   side open passage   16    16    24    16..40
+1  0     right  SIDE DOOR           4     152   24    152..176  (mirrored)
+2  1     pair   FRONT door          13    40    56    40..152   (centred PAIR)
+```
+
+### Native vs reference
+
+Driven op-for-op on the same authored cells, `plan_dungeon_view()` (native) and `planDungeonView()` (TypeScript reference) produce **identical** plans for all six viewpoints — the five door-adjacency ones and an open-corridor control. This is case **D** of the adjudication matrix: *both render the same confusing view → confirmed non-defect.*
+
+The control is what proves the suppression is the blocker break and not a classification failure: from the very same cell **(1,4) facing South**, with the corridor open, the very same r14 at (0,5) **does** earn a ring-1 side-door slice (image 5 at x = 120).
+
+### Why it is spatially confusing, and why that is authentic
+
+The original's corridor is composed, not projected: each depth contributes a fixed-width pre-drawn slice, and a blocking cell is represented by its **face**, not by its surroundings. A door's face is opaque scenery — the geometry beside it lies behind the plane the player is looking at, and 1988 never had a piece for it. The result is that a T-junction of doors is indistinguishable from a single door in a wall until the party steps sideways. That is a real limitation of the 1988 raster and is preserved deliberately; adding a jamb, an outline or a partial side slice would be a modern perspective cue the original does not have.
+
+**Guidance for hardware testing:** this view is authored. Seeing no hint of a door that is adjacent to the door you are facing is not a defect and should not be filed as one.
+
+### Coverage added
+
+`dungeon_view_regression` gains **D14**, driven against the shipped `dungeon-maps.txt` (the test now takes the fixture path, exactly as the parity suites do). D4 only ever proved side-door *classification* down an open corridor; nothing proved what the blocker break does to it.
+
+D14 pins: the authored cluster identity; the hardware view's three-op plan; the frontal door image 13; the ring-0 side door emitted, mirrored, at its table X; **the blocking depth emitting no side slice**; the abutting-not-overlapping extents; the open-corridor control; and the other three cluster viewpoints.
+
+`game/tests/b21a2-door-adjacency.test.ts` does the same against the reference planner, so the two can never silently drift.
+
+### Mutation proof
+
+| # | Mutation | Result |
+|---|---|---|
+| **M1** | emit the blocking depth's side slices before the break — *the exact "obvious fix" this report invites* | 5 D14 assertions RED. **Across the whole 89-test suite, `dungeon_view_regression` was the only failure** — before D14, nothing would have caught it |
+| **M2** | drop `Room` from `dungeon_side_slice_base` | 4 RED: D4's classification case plus three D14 assertions, proving the *visible* half is load-bearing on authored data too |
+
+### Status
+
+Host suite **89/89** from a clean build, 0 fail, 0 skipped, zero project warnings. **No production change, so no firmware build and no hardware retest are required**; Batch 21A/21A.1 conclusions are untouched. **SD resource pack unchanged.**

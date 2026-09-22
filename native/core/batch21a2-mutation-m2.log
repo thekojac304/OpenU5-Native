@@ -1,0 +1,5 @@
+dungeon_view regression: D4 a room beside you is a SIDE DOOR (base 4)
+dungeon_view regression: D14 r10 beside the party IS a ring-0 SIDE DOOR (base 4)
+dungeon_view regression: D14 with the corridor OPEN, r14 at ring 1 is a side door (base 4 + 1)
+dungeon_view regression: D14 facing north, r12 beside the party is a ring-0 SIDE DOOR
+dungeon_view regression: 4 failing assertion(s)

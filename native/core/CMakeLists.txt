@@ -139,7 +139,11 @@ if(BUILD_TESTING)
   add_test(NAME presentation_regression COMMAND presentation_regression)
   add_executable(dungeon_view_regression tests/dungeon_view_test.cpp)
   target_link_libraries(dungeon_view_regression PRIVATE openu5_core)
-  add_test(NAME dungeon_view_regression COMMAND dungeon_view_regression)
+  # Batch 21A.2 -- D14 adjudicates the adjacent-door report on the SHIPPED
+  # DUNGEON.DAT cells (Deceit floor 7), so it reads the same fixture the parity
+  # suites do. D1-D13 are unchanged and still need no argument.
+  add_test(NAME dungeon_view_regression COMMAND dungeon_view_regression
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dungeon-maps.txt")
   # Batch 9C -- the AUTHORED-ART half of R-05.  dungeon_view_regression proves
   # the semantic plan; this proves the next step only: which authored image of
   # DNG*/ITEMS/MON*.16 each plan op blits, into which box, with which flips, in

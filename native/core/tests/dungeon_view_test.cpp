@@ -18,6 +18,9 @@
 // the Batch 9 matrix it exercises.
 #include "openu5/dungeon_view.h"
 #include "openu5/hud.h"
+#include "openu5/dungeon_art.h"
+
+#include <fstream>
 
 #include <cstdlib>
 #include <cstring>
@@ -657,9 +660,172 @@ void d13_mutation_is_immediately_visible() {
     }
 }
 
+// ---------------------------------------------------------------------------
+// D14 -- Batch 21A.2.  ADJACENT DOORS, on the AUTHORED map.  Characterization.
+//
+// Hardware report (Deceit L8, reached through the authored pit shaft): facing a
+// door head-on with ANOTHER door in the cell immediately beside that frontal
+// door, no part of the neighbouring door was visible -- the view read as plain
+// masonry and was badly disorienting.
+//
+// THAT IS THE ORIGINAL'S OWN RASTER.  [REF-BIN] dng_draw_view @0x1a90, quoted in
+// re/notes/dungeon3d-audit.md 7.5: the driver marches si=0..3 and "por celda
+// llama fn_150a(si) (front: si tile>=0xa0 dibuja muro de fondo y PARA) y, SI
+// ABIERTA, fn_1682 IZQ+DER".  The front test runs FIRST and stops the march, and
+// the side pair is emitted only when the cell is open -- so the blocking depth
+// NEVER contributes side slices.  [REF-TS] planDungeonView() breaks on
+// blocksView(cell) before its own side pair, identically.
+//
+// The two adjacencies are therefore not the same question:
+//   * a door beside the PARTY (ring 0) IS drawn, and the authored widths put it
+//     outside the front slice -- it is visible;
+//   * a door beside the FRONTAL door (ring 1, the blocking depth) is not drawn
+//     at all, by either implementation or by the binary.
+//
+// This case pins both against the shipped DUNGEON.DAT, because D4 only proves
+// side-door CLASSIFICATION down an open corridor and nothing proved what the
+// blocker break does to it.
+// ---------------------------------------------------------------------------
+void d14_authored_adjacent_doors(const char *fixture) {
+    if (!fixture) {
+        check(false, "D14 needs the authored dungeon-maps.txt path (CTest passes it)");
+        return;
+    }
+    std::ifstream mf(fixture);
+    if (!mf) {
+        check(false, "D14 could not open the authored dungeon-maps.txt");
+        return;
+    }
+    uint8_t deceit[512]{};
+    bool found = false;
+    int loc;
+    while (mf >> loc) {
+        uint8_t cells[512];
+        for (auto &c : cells) {
+            int v;
+            mf >> v;
+            c = uint8_t(v);
+        }
+        if (loc == 33) {
+            std::memcpy(deceit, cells, sizeof(deceit));
+            found = true;
+        }
+    }
+    check(found, "D14 the fixture carries Deceit (33)");
+    if (!found) return;
+
+    // The authored cluster: six room cells on floor 7, four of them a 2x2 block
+    // straddling the x-wrap.  If this ever changes, the viewpoints below are no
+    // longer the hardware's.
+    {
+        int rooms = 0;
+        for (int y = 0; y < 8; ++y)
+            for (int x = 0; x < 8; ++x)
+                if ((deceit[7 * 64 + y * 8 + x] >> 4) == 0xf) ++rooms;
+        check(rooms == 6, "D14 Deceit floor 7 carries exactly six authored room cells");
+        check(deceit[7 * 64 + 3 * 8 + 1] == 0xfa && deceit[7 * 64 + 4 * 8 + 0] == 0xfc &&
+                  deceit[7 * 64 + 5 * 8 + 0] == 0xfe,
+              "D14 r10 (1,3), r12 (0,4) and r14 (0,5) are the hardware cluster");
+    }
+
+    const GameState g = lit_game();
+    TurnState t{};
+    DungeonState d{};
+    d.active = true;
+    std::memcpy(d.cells, deceit, sizeof(d.cells));
+    d.wanderer = {};
+    d.wanderer.type = 255; // no monster: the plan is pure geometry
+
+    // ---- THE HARDWARE VIEW: (1,4) facing West. -----------------------------
+    // ahead  (0,4) r12  -- frontal door
+    // ring 0 right (1,3) r10 -- a door beside the PARTY
+    // ring 1 left  (0,5) r14 -- a door beside the FRONTAL door
+    d.pos = {33, 7, 1, 4, DungeonFacing::West};
+    {
+        const auto plan = plan_dungeon_view(g, t, d);
+        check(plan.count == 3, "D14 the hardware view plans exactly three ops");
+
+        const auto *front = find(plan, DungeonOpKind::Front, 1);
+        check(front && front->slice == 13,
+              "D14 the frontal room cell is a FRONT DOOR at depth 1 (base 12 + 1)");
+
+        const auto *r0 = find_side(plan, DungeonSide::Right, 0);
+        check(r0 && r0->slice == 4, "D14 r10 beside the party IS a ring-0 SIDE DOOR (base 4)");
+        check(r0 && r0->x == kDungeonSideXRight[0] && r0->mirror,
+              "D14 and it sits at the table's right X, mirrored");
+
+        // The whole report, in one assertion: the blocking depth contributes no
+        // side slice, so r14 next to the frontal door is never drawn.
+        check(find_side(plan, DungeonSide::Left, 1) == nullptr &&
+                  find_side(plan, DungeonSide::Right, 1) == nullptr,
+              "D14 the BLOCKING depth emits no side slice -- the door beside the "
+              "frontal door is never drawn (dng_draw_view @0x1a90 stops there)");
+
+        // ...and it is NOT an occlusion: with the authored widths the ring-0
+        // side door and the depth-1 front door ABUT and never overlap, so the
+        // neighbour that IS drawn stays fully visible.
+        const auto catalog = dungeon_art_authored_catalog();
+        const int side_w = int(catalog.wall[4].w);              // ring-0 side door
+        const int front_w = int(catalog.wall[13].w);            // depth-1 front door
+        const int front_l = kDungeonCenterX - front_w, front_r = kDungeonCenterX + front_w;
+        check(side_w == 24 && front_w == 56, "D14 authored widths are 24 (side 0) and 56 (front 1)");
+        check(front_l == kDungeonSideXLeft[0] + side_w,
+              "D14 the front door's left edge abuts the ring-0 LEFT slice exactly");
+        check(front_r == kDungeonSideXRight[0],
+              "D14 the front door's right edge abuts the ring-0 RIGHT slice exactly");
+        check(r0 && r0->x >= front_r,
+              "D14 so the visible side door is never covered by the front door");
+    }
+
+    // ---- CONTROL: the suppression is the BREAK, not the classification. ----
+    // Facing South from the same cell leaves the corridor open, and the very
+    // same (0,5) room cell then DOES earn a ring-1 side-door slice.
+    d.pos = {33, 7, 1, 4, DungeonFacing::South};
+    {
+        const auto plan = plan_dungeon_view(g, t, d);
+        const auto *r1 = find_side(plan, DungeonSide::Right, 1);
+        check(r1 && r1->slice == 5,
+              "D14 with the corridor OPEN, r14 at ring 1 is a side door (base 4 + 1)");
+        check(find(plan, DungeonOpKind::Front, 2) != nullptr,
+              "D14 and the march reaches the dead end at depth 2");
+    }
+
+    // ---- CASE B on its own: a door beside the party, wall beside the front. -
+    d.pos = {33, 7, 1, 4, DungeonFacing::North};
+    {
+        const auto plan = plan_dungeon_view(g, t, d);
+        const auto *l0 = find_side(plan, DungeonSide::Left, 0);
+        check(l0 && l0->slice == 4 && !l0->mirror,
+              "D14 facing north, r12 beside the party is a ring-0 SIDE DOOR");
+        check(find(plan, DungeonOpKind::Front, 1) != nullptr,
+              "D14 with r10 as the frontal door at depth 1");
+    }
+
+    // ---- The other three authored viewpoints of the same cluster. ----------
+    struct View {
+        uint8_t x, y;
+        DungeonFacing facing;
+        const char *what;
+    };
+    const View others[] = {
+        {1, 5, DungeonFacing::West, "D14 (1,5) W: r12 beside the frontal door is not drawn"},
+        {7, 3, DungeonFacing::South, "D14 (7,3) S: same across the x-wrap seam"},
+        {7, 6, DungeonFacing::North, "D14 (7,6) N: same again"},
+    };
+    for (const auto &v : others) {
+        d.pos = {33, 7, v.x, v.y, v.facing};
+        const auto plan = plan_dungeon_view(g, t, d);
+        const auto *front = find(plan, DungeonOpKind::Front, 1);
+        check(front && front->slice == 13, v.what);
+        check(find_side(plan, DungeonSide::Left, 1) == nullptr &&
+                  find_side(plan, DungeonSide::Right, 1) == nullptr,
+              v.what);
+    }
+}
+
 } // namespace
 
-int main() {
+int main(int argc, char **argv) {
     d1_light_gate();
     d2_sight_blocker();
     d3_front_classification();
@@ -673,6 +839,7 @@ int main() {
     d11_cone_depth();
     d12_bands();
     d13_mutation_is_immediately_visible();
+    d14_authored_adjacent_doors(argc > 1 ? argv[1] : nullptr);
     if (failures) {
         std::cerr << "dungeon_view regression: " << failures << " failing assertion(s)\n";
         return 1;
