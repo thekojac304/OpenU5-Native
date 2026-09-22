@@ -659,7 +659,15 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
     if(c.dungeon && !c.combat && cmd.kind==CommandKind::UseItem && (cmd.item==18 || cmd.item==19 || cmd.item==20 || cmd.item==33 || cmd.item==36 || (cmd.item>=29 && cmd.item<=31))){ActionResult r;r.status=use_quest_item(c,cmd.item,c.events);return r;}
     if (cmd.kind == CommandKind::EnterDungeon || cmd.kind == CommandKind::DungeonCommand || (c.dungeon&&!c.combat&&(cmd.kind==CommandKind::Cast||(cmd.kind==CommandKind::UseItem&&cmd.item>=0&&cmd.item<=37))))
         return execute_dungeon_command(c, cmd);
+    // Batch 21A.3: SetActivePlayer is a command in BOTH loops.  The overworld /
+    // dungeon arm below (kernel 0x4080) stays exactly as it was; in an arena the
+    // SAME digit command routes to COMBAT.OVL's own set-active (COMBAT:0x063E
+    // @0x09ec / @0x09fe -> SJOG.OVL 0x1F7A), which has different strings, a
+    // different validity rule and an action cost.  Without this arm the command
+    // fell through to the context gate below and was rejected as InvalidContext,
+    // so a selection made before a fight could never be cleared or changed.
     if ((cmd.kind >= CommandKind::CombatMove && cmd.kind < CommandKind::Cast) || (cmd.kind==CommandKind::Cast && c.combat) || (c.combat&&cmd.kind==CommandKind::UseItem&&cmd.item>=0&&cmd.item<=37) ||
+        (c.combat && cmd.kind == CommandKind::SetActivePlayer) ||
         (cmd.kind >= CommandKind::CombatKlimb && cmd.kind <= CommandKind::CombatSearch)) {
         ActionResult result;
         if (!c.combat || !c.combat_context || &c.combat_context->game != &c.game ||
@@ -692,6 +700,7 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
             : cmd.kind == CommandKind::CombatOpen
                 ? CombatAction::OpenAt
             : cmd.kind == CommandKind::CombatSearch ? CombatAction::Search
+            : cmd.kind == CommandKind::SetActivePlayer ? CombatAction::SetActive
                 : static_cast<CombatAction>(int(cmd.kind) - int(CommandKind::CombatMove));
         CombatPoint aim{cmd.combat_x, cmd.combat_y};
         EventSink use_events{&delivery,[](void *p,const GameEvent &e){auto &d=*static_cast<Delivery*>(p);++d.result.event_count;if(d.context.events.emit)d.context.events.emit(d.context.events.context,e);}};
@@ -706,6 +715,8 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
         };
         const int cast_qty_before=cmd.kind==CommandKind::Cast&&cmd.item>=0&&cmd.item<48?c.game.spell_quantities[cmd.item]:-1;
         int32_t combat_arg=cmd.combat_x;
+        // The digit travels in `member`, exactly as the overworld arm reads it.
+        if(action==CombatAction::SetActive)combat_arg=cmd.member;
         if((action==CombatAction::Get||action==CombatAction::Search)&&cmd.has_direction){
             combat_arg=cmd.direction==Direction::East?0:cmd.direction==Direction::West?1:cmd.direction==Direction::South?2:3;
         }

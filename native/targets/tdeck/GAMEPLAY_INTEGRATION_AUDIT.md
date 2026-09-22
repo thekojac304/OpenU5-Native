@@ -4294,3 +4294,131 @@ D14 pins: the authored cluster identity; the hardware view's three-op plan; the 
 ### Status
 
 Host suite **89/89** from a clean build, 0 fail, 0 skipped, zero project warnings. **No production change, so no firmware build and no hardware retest are required**; Batch 21A/21A.1 conclusions are untouched. **SD resource pack unchanged.**
+
+## Batch 21A.3 — Set Active Player reachability during combat (H-153)
+
+### The hardware observation
+
+On the physical T-Deck:
+
+- With Set Active Player engaged **before** a fight, only that party member receives manual combat turns.
+- If the player clears the selection with Symbol+Mic/0 **before** combat, multi-member turn rotation works.
+- Once combat begins, the selection can be neither cleared nor changed.
+- So a player who forgets to clear it is locked to one character for the whole battle.
+
+The scheduler half of that report is **not** a defect. `Engine::current()` (`native/core/src/combat.cpp:260-266`) auto-passes every party actor that is not `active_character` while a live actor with that member exists, which is COMBAT:0x0666-0x067f (`skipsForActiveChar`) exactly. The question this batch had to answer is the other half: **is Set Active Player supposed to be reachable from inside the arena?**
+
+### Native routing before this batch
+
+| Where | `1`-`9` | `0` | Symbol+Mic/0 on T-Deck |
+|---|---|---|---|
+| Exploration (`UiSession::handle_exploration`) | harpsichord intercept first, else `CommandKind::SetActivePlayer`, echo "Set Active Plr:" | same, member 0 -> "None!" | `UiInputAdapter` emits a literal `'0'` Character, so the ordinary digit route (Y-29) |
+| Dungeon (`handle_dungeon`) | `SetActivePlayer` (DUNGEON 0x07bc-0x07d6) | same | same |
+| **Combat (`handle_combat`)** | **no case — falls to `default:`, appends "What?" to the Combat channel** | **same** | **same: the chord produced a correct literal `'0'`, and `handle_combat` answered "What?"** |
+
+So the failure was **two-deep**, and either layer alone would have been enough to cause it:
+
+1. `handle_combat` **never constructed** `SetActivePlayer` — every digit was the unknown-key default.
+2. Even if it had, `commands.cpp`'s overworld arm is gated `!c.combat`, so the command would have fallen through to the context gate at `commands.cpp:764` (`c.combat && !ready_anywhere` -> `InvalidContext`) and been rejected silently.
+
+The T-Deck adapter was **not** at fault: `UiInputAdapter::translate` is mode-agnostic for the Symbol+Mic chord and already delivered a literal `'0'` in Combat. That matters, because a plain (unmodified) Mic press in Combat is `UiActionKind::Cancel` = `CombatEscapeQuick` — had the chord regressed to that path, trying to clear the selection would have attempted to **flee the battle**. C6 below now pins it.
+
+### What the ORIGINAL does — COMBAT.OVL 0x063E
+
+`re/notes/combat-commands.md` already had the dispatch row (`| 0-9 | 0x09ec/0x09fe | set-active | Set Active Plr (g_active_char) |`), and `re/notes/combate-hotfix-20260722.md` section 3 carries the full derivation — including the note that an earlier pass had the turn-cost semantics exactly **inverted**. The binary answer, key by key:
+
+| Key | Chain | Behaviour | Turn cost |
+|---|---|---|---|
+| `0` | COMBAT @0x0aa2 -> @0x09ec | `g_active_char = 0xFF`; prints "Set active plr:\nNone!\n" (DS 0x6e66) | **CEDES the turn** — falls to the tail @0x0b56 with `[bp-2]=0`; @0x0b79-0x0b83 sees the key in `'0'..'6'`, skips the end-of-action housekeeping (SJOG 0x2012) and returns |
+| `1`-`6` **valid** | @0x0aaa-0x0ab4 -> @0x09fe -> stub 0x7d46 -> **SJOG.OVL 0x1F7A** | prints "Set active plr:\n" (DS 0x8f3a) always, then `g_active_char = idx` + the NAME (COMSUBS 0x0094), ret 1 | **CEDES the turn** (same tail) |
+| `1`-`6` **invalid** | SJOG @0x2000-0x2004, ret 0 | prints "Invalid!\n" (DS 0x8f4c); COMBAT @0x0a11 -> @0x0a41 sets `[bp-2]=1` and jumps to 0x06F1 | **FREE** — the SAME actor is re-prompted with its banner |
+| `7`-`9` | default @0x0ab7 | "What?\n" (DS 0x6ee6), re-prompt without a banner | **FREE** |
+
+Validity is judged **against the ARENA, not the roster** (SJOG @0x1f9a-0x1fcd sweeps the 32 combat slots for a party slot with that `charIdx` and rejects `flags & 0x2c` = asleep/gone). The strings are COMBAT.OVL's **own** copy: lower-case "Set active plr:", *not* the kernel's "Set Active Plr:" (DS 0xa396) that the overworld loop prints — this is precisely the byte-identical-twin trap `re/notes/combat-commands.md` warns about.
+
+Answers to the five questions asked:
+
+- **A. Available during combat?** **Yes** — `0` and `1`-`6` are live dispatcher entries.
+- **B. What do digits do?** `1`-`6` select (or reject); `0` clears to 0xFF; `7`-`9` are "What?".
+- **C. Can the restriction be cleared?** **Yes**, with `0`; it writes `g_active_char = 0xFF`; it **costs the current actor's turn**; and it applies immediately to scheduling — the @0x0666 gate reads the same global every round.
+- **D. Can it be changed member-to-member?** **Yes**, with `1`-`6`, under the arena validity rule.
+- **E. Does combat inherit the pre-combat state?** **Yes** — `g_active_char` is one global; combat neither resets nor re-reads it from anywhere else.
+
+### Verdict
+
+**`CONFIRMED REACHABILITY DEFECT — FIXED`.** The original allows both clearing and changing during combat; native allowed neither. This is not a gameplay trap in the original: the escape hatch exists, native simply had no route to it.
+
+### Production changes (4 files)
+
+| File | Change |
+|---|---|
+| `native/core/include/openu5/combat.h` | `CombatAction::SetActive`, appended at the **end** of the enum. The combat parity fixtures encode actions as `CommandKind`/`CombatAction` ordinals (`combat_parity_test.cpp`: `CommandKind(int(CommandKind::CombatMove) + op)`), so no existing value may shift. |
+| `native/core/src/combat.cpp` | The handler, placed beside `CombatAction::Yield` and **ahead of `e.disabled()`**, because the reference dispatches the digit from the player turn loop before any action gate. Emits the Echo + result, applies the arena validity rule, and calls `e.advance()` on success (and on `0`) but not on rejection. Widened the action-bound check and added the `0..6` range guard. |
+| `native/core/src/commands.cpp` | One new disjunct, `(c.combat && cmd.kind == CommandKind::SetActivePlayer)`, on the existing combat-command arm; the action mapping and the `combat_arg = cmd.member` line. The `!c.combat` overworld/dungeon arm is untouched. |
+| `native/core/src/ui_session.cpp` | `handle_combat` gains `case '0' ... '6'` constructing the **same** `CommandKind::SetActivePlayer`. `'7'`-`'9'` deliberately stay with `default:` -> "What?". No `command_echo()`, because COMBAT.OVL prints its echo from inside the set-active routine, so `combat.cpp` emits it — the shape Pass and Ready already use. |
+
+Explicitly **not** done, per the batch's own prohibitions: no auto-clear or reset of `active_character` at combat start, no menu, no T-Deck-only command, no weakening of the `Engine::current()` filter (C1 guards it), and no change to the Symbol+Mic/0 adapter contract (C6 guards it).
+
+Two deliberate adjudications worth recording:
+
+- **The `advance()` seam.** The reference's tail *skips* the end-of-action housekeeping (SJOG 0x2012 spell-turn decay). Native models the housekeeping-free advance as `Engine::advance()` — the same seam `CombatAction::Yield` and the combat (R)eady close already use, and the declared native equivalent of the port's `Combat.playerYieldTurn()`/`playerReady()` pair. Reusing it is the consistent choice; changing what `advance()` means is out of scope for this batch.
+- **The invalid-case re-prompt.** The DOS re-prints the turn banner at 0x06F1. Native has no transcript banner — `CombatEventKind::Turn` carries no text and `UiSession::consume` ignores textless combat events — and `battle.current` still points at the same actor, so the HUD keeps showing them. Nothing is emitted, and nothing is missing.
+
+### Test changes
+
+One new target, **`batch21a3_combat_active_player`** (`native/core/tests/batch21a3_combat_active_player_test.cpp`, 23 checks). It links `ui_input_adapter.cpp` because the question is a routing one end to end, and it drives the **real** path throughout — `tdeck::UiInputAdapter` -> `UiSession::handle_combat` -> `dispatch` -> `execute_command` -> `combat_action` — with core events fed back into the same session's transcript. No spy stands in for routing anywhere.
+
+| Case | Pins |
+|---|---|
+| **C1** | CONTROL, green before and after: the pre-combat active member is inherited and is the only one scheduled, over six rounds |
+| **C2** | a digit in combat reaches `SetActivePlayer(member=2)` and is not "What?" |
+| **C3** | `0` clears to 0xFF, prints the **lower-case** arena echo + "None!", and the rest of the party is prompted again in the same battle |
+| **C4** | `2` re-points the selection, prints the chosen NAME, and only the new member is scheduled thereafter |
+| **C5a/b** | a valid selection, and `0`, each cede the current actor's turn |
+| **C5c** | an arena-invalid member prints "Invalid!", writes nothing, and costs **no** turn |
+| **C5d** | `'7'`-`'9'` construct no command, print "What?", cost no turn |
+| **C6** | Symbol+Mic in **Combat** still yields a literal `'0'` (not Cancel/Escape), fires no device shortcut, and clears the selection through the ordinary digit route |
+
+### RED to GREEN evidence
+
+Against unmodified production code: **14 of 23 checks RED** (`native/core/batch21a3-red.log`). The nine that passed are the controls — C1's two scheduler checks, C5c's "does not write" and "costs no turn", C5d's three, and C6's two adapter checks — which is exactly the shape the report predicts: the scheduler and the adapter were already right, the route did not exist. After the fix: **23/23 GREEN** (`native/core/batch21a3-green.log`).
+
+### Mutation proof
+
+| # | Mutation | Result |
+|---|---|---|
+| **M1** | drop `'0'` from the combat digit case, keeping `'1'`-`'6'` | **6 RED** — all four C3 checks, C5b, and C6's end-to-end check. The T-Deck clear route has its own guard |
+| **M2** | a valid selection no longer calls `e.advance()` | **2 RED** — C5a's cost check and C4's "only the new member is scheduled" |
+| **M3** | the rejected branch calls `e.advance()` | **1 RED** — C5c's cost check, the one the earlier reference derivation had inverted |
+| **M4** | validate against the ROSTER instead of the arena — the "obvious" shortcut of reusing the overworld criterion | **3 RED** — all three C5c checks |
+| **M5** | remove the `commands.cpp` combat routing disjunct (the defect itself) | **12 RED** |
+
+### Full regression suite
+
+**90/90 from a clean build**, 0 fail, 0 skipped (`native/core/batch21a3-verify-ctest.log`) — the prior 89 plus the new target. Targeted re-runs of `combat_parity`, `advanced_combat_parity`, `command_parity`, `dungeon_combat_regression` and `alpha_runtime_integration_regression` all pass; appending the action ordinal left every fixture trace byte-identical. One warning, the pre-existing w64devkit `stl_uninitialized.h` `-Wstringop-overflow=` false positive; zero project warnings.
+
+### Firmware
+
+Built clean with ESP-IDF 6.1: `openu5_tdeck.bin` = **0xd2230** (860,720 bytes), up 368 bytes from Batch 21A/21A.1/21A.2's 0xd20c0 (860,352) — the new combat handler and its strings. 18% of the app partition free. **Not flashed.** The five `component_validation.cmake` notices are third-party, as in every build.
+
+### SD card
+
+Unchanged. No resource pack, asset or fixture was touched.
+
+### Status
+
+`CONFIRMED REACHABILITY DEFECT — FIXED`. Batch 21A / 21A.1 / 21A.2 conclusions are untouched.
+
+### Phase 6N — Batch 21A.3 Set Active Player in combat · *firmware only; the SD card is unchanged*
+
+Flash the Batch 21A.3 firmware, then, with a party of three or more:
+
+1. Outside combat, press Symbol+`w` (`1`) to select member 1. Confirm the echo "Set Active Plr:" and the member's name.
+2. Start a multi-member fight. Confirm only member 1 is prompted — this is correct and unchanged.
+3. **In combat**, press Symbol+`e` (`2`). Expect the echo "**Set active plr:**" (lower case — it is a different string from step 1) followed by member 2's name, and the current actor's turn to end immediately.
+4. Confirm that from the next round on, only member 2 is prompted.
+5. **In combat**, press Symbol+Mic (`0`). Expect "Set active plr:" + "None!", the turn to be ceded, and normal multi-member rotation to resume in the same battle. **It must not flee** — that is the plain-Mic path and the chord must not reach it.
+6. In combat, select a member who is dead or asleep. Expect "Invalid!" and the **same** actor still prompted, with no turn lost.
+7. In combat, press Symbol+`x` (`8`). Expect "What?" and no turn lost.
+
+**Pass criteria:** steps 3-5 change the scheduling mid-battle; step 5 never escapes; step 6 costs nothing.

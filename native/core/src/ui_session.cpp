@@ -967,6 +967,21 @@ bool UiSession::handle_combat(const UiAction &a) {
     case 'r': { command_echo("Ready");UiIntent i; i.kind=UiIntentKind::OpenEquipmentSelection; i.request=UiRequestId::Equipment; dispatch(i); return true; }
     case 'u': { command_echo("Use item");UiIntent i; i.kind=UiIntentKind::OpenInventorySelection; i.request=UiRequestId::Inventory; dispatch(i); return true; }
     case ' ': c.kind=CommandKind::CombatPass; break;
+    // Digits are SET ACTIVE PLAYER in the arena too (Batch 21A.3).  COMBAT:0x063E
+    // dispatches '0' at 0x0aa2->0x09ec and '1'-'6' at 0x0aaa-0x0ab4->0x09fe; only
+    // '0'-'6' are a command, so '7'-'9' deliberately stay with the default below
+    // and print "What?" (DS 0x6ee6) with no banner and no turn, exactly as the
+    // dispatcher's own default arm (@0x0ab7) does.
+    //
+    // No command_echo() here: unlike the overworld handler, COMBAT.OVL prints its
+    // echo from inside the set-active routine itself (SJOG @0x1f87 / 0x09ec), so
+    // combat.cpp emits "Set active plr:" as a Combat Echo event and the result
+    // line right under it -- the same shape (R)eady and Pass already use.  A UI
+    // echo here would duplicate it and would use the WRONG string: the kernel's
+    // "Set Active Plr:" (DS 0xa396) is not the arena's "Set active plr:".
+    case '0': case '1': case '2': case '3': case '4': case '5': case '6':
+        c.kind=CommandKind::SetActivePlayer;
+        c.member=int16_t(lower_ascii(a.character) - '0'); break;
     default: append(UiTextChannel::Combat,"What?"); return true;
     }
     command(c); return true;

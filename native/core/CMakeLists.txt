@@ -167,6 +167,18 @@ if(BUILD_TESTING)
   add_executable(combat_loot_open_regression tests/combat_loot_open_regression_test.cpp)
   target_link_libraries(combat_loot_open_regression PRIVATE openu5_core)
   add_test(NAME combat_loot_open_regression COMMAND combat_loot_open_regression)
+  # Batch 21A.3 -- Set Active Player REACHABILITY during combat.  It links the
+  # T-Deck ui_input_adapter because the question is a routing one end to end:
+  # the handheld's only '0' is the Symbol+Mic chord, and in Combat a plain Mic
+  # is Escape, so the digit route has to be proven from the raw chord all the
+  # way to combat_action().
+  add_executable(batch21a3_combat_active_player tests/batch21a3_combat_active_player_test.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp)
+  target_link_libraries(batch21a3_combat_active_player PRIVATE openu5_core)
+  target_include_directories(batch21a3_combat_active_player PRIVATE ../targets/tdeck/main)
+  target_compile_features(batch21a3_combat_active_player PRIVATE cxx_std_20)
+  add_test(NAME batch21a3_combat_active_player COMMAND batch21a3_combat_active_player)
   # These exercise the unchanged semantic input controller without any board driver.
   add_executable(input_regression ../targets/tdeck/host_tests/input_test.cpp
     ../targets/tdeck/main/input_controller.cpp ../targets/tdeck/main/keyboard_matrix.cpp

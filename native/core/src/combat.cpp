@@ -1312,9 +1312,14 @@ CombatResult initialize_combat(CombatContext &c, const CombatMap &map, CombatDir
     return CombatResult::Ok;
 }
 CombatResult combat_action(CombatContext &c, CombatAction action, int32_t x, int32_t y) {
-    if (!c.combat.initialized || int(action) > int(CombatAction::OpenAt))
+    if (!c.combat.initialized || int(action) > int(CombatAction::SetActive))
         return CombatResult::Invalid;
     if (action == CombatAction::Move && (x < 0 || x > 7))
+        return CombatResult::Invalid;
+    // Only '0'-'6' reach SJOG 0x1F7A / COMBAT 0x09ec.  '7'-'9' fall to the
+    // dispatcher's own default (@0x0ab7, "What?") and never become an action at
+    // all, so UiSession never constructs one -- this is the defensive floor.
+    if (action == CombatAction::SetActive && (x < 0 || x > 6))
         return CombatResult::Invalid;
     if (action == CombatAction::Escape && (x < 0 || x > 3))
         return CombatResult::Invalid;
@@ -1379,6 +1384,46 @@ CombatResult combat_action(CombatContext &c, CombatAction action, int32_t x, int
         return CombatResult::Ok;
     }
     if (action == CombatAction::Yield) {
+        e.advance();
+        return CombatResult::Ok;
+    }
+    // SET ACTIVE PLAYER inside the arena (Batch 21A.3).  Sits beside Yield, ahead
+    // of e.disabled(), because the reference dispatches the digit from the player
+    // TURN loop (COMBAT:0x063E) before any action gate, and because ceding the
+    // turn is precisely what a successful selection does.
+    //
+    // Deliberately NOT the overworld handler in commands.cpp: COMBAT.OVL carries
+    // its OWN copy of the strings and its OWN validity rule.
+    //   * echo is "Set active plr:" (DS 0x6e66 / 0x8f3a), lower-case -- the
+    //     kernel's "Set Active Plr:" (DS 0xa396) belongs to the overworld loop.
+    //   * validity is judged against the ARENA (SJOG @0x1f9a-0x1fcd sweeps the 32
+    //     slots for a party slot with that charIdx and rejects flags&0x2c =
+    //     asleep/gone), not against the roster.
+    //   * a VALID selection -- and '0' -- CEDES the current actor's turn (tail
+    //     @0x0b56 -> @0x0b79-0x0b83 returns for keys '0'..'6'); an INVALID one
+    //     costs nothing and the same actor is re-prompted (@0x0a41 -> 0x06F1).
+    if (action == CombatAction::SetActive) {
+        e.message("Set active plr:", -1, -1, CombatEventKind::Echo);
+        if (!x) { // '0' @0x09ec
+            c.game.party.active_character = 255;
+            e.message("None!");
+            e.advance();
+            return CombatResult::Ok;
+        }
+        const int index = x - 1; // key - '1' (@0x09fe 0a03)
+        CombatActor *pick = nullptr;
+        for (int i = 0; i < c.combat.count; ++i)
+            if (player(c.combat.actors[i]) && c.combat.actors[i].member == index) {
+                pick = &c.combat.actors[i];
+                break;
+            }
+        if (index >= c.game.party.party_size || index >= c.game.party.character_count || !pick ||
+            pick->status != CombatStatus::Active || pick->sleeping) {
+            e.message("Invalid!"); // DS 0x8f4c; ret 0 -> re-prompt, no turn
+            return CombatResult::Ok;
+        }
+        c.game.party.active_character = uint8_t(index); // SJOG @0x1fdc
+        e.message(e.name(*pick));                       // COMSUBS 0x0094
         e.advance();
         return CombatResult::Ok;
     }

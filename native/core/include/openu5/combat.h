@@ -170,7 +170,14 @@ enum class CombatAction : uint8_t {
     Klimb, Get, Open, Search,
     // Internal UI route for an already-resolved adjacent Open target. The
     // legacy Open action retains its direction-ordinal API.
-    OpenAt
+    OpenAt,
+    // Batch 21A.3.  SET ACTIVE PLAYER from inside the arena: COMBAT:0x063E
+    // dispatches '0' (@0x09ec) and '1'-'6' (@0x0aaa-0x0ab4 -> SJOG.OVL 0x1F7A).
+    // `x` carries the LITERAL digit 0-6, exactly like the overworld command's
+    // member field.  Appended at the END on purpose: the combat parity fixtures
+    // encode actions as CommandKind/CombatAction ORDINALS, so no existing value
+    // may shift.
+    SetActive
 };
 CombatResult combat_action(CombatContext &, CombatAction, int32_t x = 0, int32_t y = 0);
 // Batch 9D.  Closes an arena that can never schedule another actor but was

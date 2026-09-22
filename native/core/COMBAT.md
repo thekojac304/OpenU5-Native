@@ -30,6 +30,7 @@ All native implementation below lives in `src/combat.cpp` with public types in
 | `poisonAttack`, `putToSleep`, `wakeUp`, `playerDraggedTurn`, `playerSleepTurn` | `Engine::poison`, `sleep`, `wake`, `disabled` |
 | `maybeLatchVictory`, `collapsePossessed`, `over`, `endEvent`, `playerEscape`, `playerEscapeQuick` | `Engine::latch`, `collapse`, `combat_over`, `end`, `escape`, `combat_action` |
 | `playerPass`, `playerAttackCancel`, `playerYieldTurn` | `CombatAction::Pass`, `AttackCancel`, `Yield` |
+| `Game.combatActivePlayer` (COMBAT:0x063E @0x09ec / @0x09fe -> SJOG.OVL 0x1F7A) | `CombatAction::SetActive`, reached by `CommandKind::SetActivePlayer` while `CommandContext::combat` is set |
 | `tickEnemyTurnStep`, `selectTarget`, `enemyTurn`, physical `enemyAttack`, non-teleport `enemyMove` | `CombatAction::EnemyStep`, `Engine::target`, `enemy_turn`, `enemy_attack`, `enemy_move` |
 | `combat/formulas.ts`: `initiativeReset`, `enemySpawnSpeed`, `rollHit`, `weaponBaseDamage`, `applyDefense`, `adjustEnemyDamage`, `xpForKill`, `woundClassify`, `chestRoll`, `combatDistance`, `randomAdjacentCell` | Inlined formulas in the corresponding routines; `combat_distance` is public |
 | `combat/encounters.ts`: `combatMapForTile`, `rollEncounterGroup` | Generated map-index table and `start_encounter_combat` |
@@ -84,6 +85,13 @@ this boolean). Supported semantic commands are `CombatMove`, `CombatAttack`,
 `CombatPass`, `CombatEscape`, `CombatEscapeQuick`, `CombatAttackCancel`,
 `CombatYield` and `CombatEnemyStep`. Move/escape use the `CombatDirection` ordinal
 in `combat_x`; Attack uses arena coordinates in `combat_x/combat_y`.
+
+`SetActivePlayer` is supported in BOTH loops and is the one command whose meaning
+changes with `combat`: outside an arena it is the kernel's set-active (0x4080),
+inside one it routes to `CombatAction::SetActive`, which is COMBAT.OVL's own --
+different echo string, arena-based validity, and an action cost: a successful
+selection or a `0` clear cedes the current actor's turn, a rejected one does not.
+The digit travels in `Command::member`, identically in both.
 These commands never call world turns or hardware input. `Success` means the
 reference method was dispatched: gameplay refusals such as `Blocked!` are events,
 because the TS methods return event arrays, not a success boolean.
