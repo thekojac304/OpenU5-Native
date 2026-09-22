@@ -41,15 +41,15 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 
 | # | Setup | Input | Expected visible result | Expected state change | Cancel path | Result |
 |---|---|---|---|---|---|---|
-| H-01 | Card per setup table | Power on | `IDENTITY … match=1`, then the identity screen, then the title | boots to frontend | — | UNTESTED |
-| H-02 | Title | wait 20 s, then any key | attract demo runs, then the menu | — | — | UNTESTED |
-| H-03 | Menu | `U` Introduction, page through; `A`; `R`; `S` (change brightness + trackball, Back) | each screen renders; settings persist across a power cycle | settings file written | Back returns to menu | UNTESTED |
-| H-04 | Menu | `C` Create New Character → name, gender, full questionnaire | enters gameplay as the new identity | `objects_` empty, party is the new identity | — | UNTESTED |
-| H-05 | Power-cycle after H-04 | `J` Journey Onward | the created save loads | position/party restored | — | UNTESTED |
-| H-06 | In world | Mic **short** press | Cancel/back | **no `0` appears in any text field** | — | UNTESTED |
-| H-07 | In world | Mic **hold ≈1.1 s** | `INPUT_HOLD … emitted=movement-toggle state=ON` | Movement Mode ON | — | UNTESTED |
-| H-08 | Movement Mode ON | WASD; then `Y` → type `wasd` | WASD moves; inside the Yell text row the **literal characters** appear | — | — | UNTESTED |
-| H-09 | In world | Trackball all four directions; `Alt+M` open and close | movement in four directions; System Menu opens and closes | — | `Alt+M` again closes | UNTESTED |
+| H-01 | Card per setup table | Power on | `IDENTITY … match=1`, then the identity screen, then the title | boots to frontend | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-02 | Title | wait 20 s, then any key | attract demo runs, then the menu | — | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-03 | Menu | `U` Introduction, page through; `A`; `R`; `S` (change brightness + trackball, Back) | each screen renders; settings persist across a power cycle | settings file written | Back returns to menu | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-04 | Menu | `C` Create New Character → name, gender, full questionnaire | enters gameplay as the new identity | `objects_` empty, party is the new identity | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-05 | Power-cycle after H-04 | `J` Journey Onward | the created save loads | position/party restored | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-06 | In world | Mic **short** press | Cancel/back | **no `0` appears in any text field** | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-07 | In world | Mic **hold ≈1.1 s** | `INPUT_HOLD … emitted=movement-toggle state=ON` | Movement Mode ON | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-08 | Movement Mode ON | WASD; then `Y` → type `wasd` | WASD moves; inside the Yell text row the **literal characters** appear | — | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-09 | In world | Trackball all four directions; `Alt+M` open and close | movement in four directions; System Menu opens and closes | — | `Alt+M` again closes | PASS (Batch 20, hardware, `a357e28c…`) |
 
 ---
 
@@ -59,13 +59,13 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 
 | # | Setup | Input | Expected visible result | Expected state change | Cancel path | Result |
 |---|---|---|---|---|---|---|
-| H-10 | World, party ≥2, an active player set via `1`–`6` | **`Symbol` held + Mic pressed and released** (do **not** hold past 1.1 s) | the `Set Active Plr:` echo, resolving to *no* active member | `active_character` returns to `255` | — | UNTESTED |
-| H-11 | Immediately after H-10 | plain Mic short press, then a plain 1.1 s hold | short = Cancel as before; hold = Movement Mode toggle as before | unchanged contract | — | UNTESTED |
-| H-12 | World, on foot, a caster with Vas Rel Por mixed and ≥ its mana | `C` → `Vas Rel Por` | the prompt **`To phase:`** appears | none yet | any non-`1`–`8` key, and the device Cancel, **fail silently** — no banner, no teleport | UNTESTED |
-| H-13 | At the H-12 prompt | a digit `1`–`8` | the ceremony flash, then the party is **elsewhere**, with **no** `Success!`/`Failed!` banner | moonstone teleport applied | — | UNTESTED |
-| H-14 | **Aboard a ship or skiff**, same caster | `C` → `Vas Rel Por` | **the `To phase:` prompt must not appear at all** — the ship check precedes the print (`CAST.OVL 0x0cf6`) | spell/mana still spent per the reference, no teleport | — | UNTESTED |
-| H-15 | World, carrying a **Rel Hur** scroll (count noted) | `U` → Rel Hur → **cancel** the `Direction?` prompt | the direction row appears and closes | **the scroll count is DOWN by one** — the reference consumes at selection, before the getdir | this *is* the cancel path | UNTESTED |
-| H-16 | World, carrying a **skull key** (count noted) | `U` → skull key → **cancel** the `Direction?` prompt | same shape | **the key count is DOWN by one** | this *is* the cancel path | UNTESTED |
+| H-10 | World, party ≥2, an active player set via `1`–`6` | **`Symbol` held + Mic pressed and released** (do **not** hold past 1.1 s) | the `Set Active Plr:` echo, resolving to *no* active member | `active_character` returns to `255` | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-11 | Immediately after H-10 | plain Mic short press, then a plain 1.1 s hold | short = Cancel as before; hold = Movement Mode toggle as before | unchanged contract | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-12 | World, on foot, a caster with Vas Rel Por mixed and ≥ its mana | `C` → `Vas Rel Por` | the prompt **`To phase:`** appears | none yet | any non-`1`–`8` key, and the device Cancel, **fail silently** — no banner, no teleport | **FAIL — confirmed production defect (Batch 20, hardware, `a357e28c…`).** Screen shows `Aim: empty (-1,-1)` with a `Move\|Confirm\|Mic Back` footer instead of `To phase:`. Root cause (proven): `AlphaRuntime::overlay()` (`alpha_runtime.cpp:1489`) unconditionally renders the generic combat-reticle overlay for ANY non-`Fire` `UiMode::TargetSelection` request, clobbering the real prompt text set by `begin_target(...,"To phase:",...)`. Confirmed NOT cosmetic-only for GatePhase specifically: a bare `2` and `e` (no Sym) both produced `"Failed!"` with no ceremony flash at all, even though `ui_session.cpp:665-673` correctly accepts `'1'`-`'8'` for `GatePhase` — the digit never reaches that handler, pointing to a T-Deck key-routing gap upstream, not yet localized. **Blast radius confirmed wider in H-15:** the same `overlay()` clobbering also hides the plain world `Direction?` getdir text (harmless there, since Move+Confirm is the correct interaction for a spatial direction pick — only `GatePhase`'s non-spatial digit entry is functionally broken by it). Deferred to Batch 21 (isolated to targeting-prompt presentation + this one spell's input path, does not block the rest of the checklist) |
+| H-13 | At the H-12 prompt | a digit `1`–`8` | the ceremony flash, then the party is **elsewhere**, with **no** `Success!`/`Failed!` banner | moonstone teleport applied | — | **FAIL — same defect as H-12.** Cannot be exercised; the phase digit never registers, so the ceremony/teleport never fires |
+| H-14 | **Aboard a ship or skiff**, same caster | `C` → `Vas Rel Por` | **the `To phase:` prompt must not appear at all** — the ship check precedes the print (`CAST.OVL 0x0cf6`) | spell/mana still spent per the reference, no teleport | — | PASS (Batch 20, hardware, `a357e28c…`) — immediate silent `Failed!`, no prompt shown at all, matching the aboard-ship abort path |
+| H-15 | World, carrying a **Rel Hur** scroll (count noted) | `U` → Rel Hur → **cancel** the `Direction?` prompt | the direction row appears and closes | **the scroll count is DOWN by one** — the reference consumes at selection, before the getdir | this *is* the cancel path | **PASS for the wind-change/consume-at-selection behavior (Batch 20, hardware, `a357e28c…`)** — wind changed correctly to match the selected direction. **FAIL (presentation-only, same defect as H-12):** no `Direction?` text appears in the transcript, only the generic `Aim: empty (x,y)` overlay — functionally harmless here since Move+Confirm is the right interaction for a direction pick. Enemies observed spawning near the party after use are **not related to Rel Hur** — `outdoor_turn()`'s `has_spawn`/`SpawnRoll` random-encounter check (`turn.h:48-55`) runs on every outdoor turn via the same shared `turn()` path any turn-consuming command goes through; Rel Hur's own effect code (`magic.cpp:176-181`) only touches wind. Not a defect |
+| H-16 | World, carrying a **skull key** (count noted) | `U` → skull key → **cancel** the `Direction?` prompt | same shape | **the key count is DOWN by one** | this *is* the cancel path | PASS (Batch 20, hardware, `a357e28c…`) |
 
 ---
 
@@ -75,13 +75,13 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 
 | # | Setup | Input | Expected visible result | Expected state change | Cancel path | Result |
 |---|---|---|---|---|---|---|
-| H-17 | Stand beside a well (tile 161) with gold > 0 | `L` + the direction of the well | transcript reads **`a well.`** and the prompt **`Drop a coin?`** | none | — | UNTESTED |
-| H-18 | At the H-17 prompt | `N` | the transcript echoes **`No`** and the prompt closes | no gold spent | — | UNTESTED |
-| H-19 | Re-open the prompt | **Mic short press (Cancel)** | identical to H-18 — it echoes **`No`** and closes. Before Batch 18 the key was simply ignored and the prompt stayed open | no gold spent | this *is* the cancel path | UNTESTED |
-| H-20 | Re-open the prompt, gold > 0 | `Y` | echoes **`Yes`**, then the wish row opens with the prompt **`Thy wish?`** (not "What dost thou wish?") and **the prompt text is visible** — R-34 | 1 gold spent on submitting the wish | Cancel closes the wish row | UNTESTED |
-| H-21 | Developer → set gold to **0**, then re-open the prompt | `Y` | echoes **`Yes`** and **stops** — no wish row, and **no** `Thou hast no coin!` (that line is a fabrication) | nothing | — | UNTESTED |
-| H-22 | At Paws or Empath Abbey, gold > 0 | `L` at the well → `Y` → type `Horse` | `Poof!` and a horse appears on the adjacent walkable cell | 1 gold spent, horse placed | — | UNTESTED |
-| H-23 | **R-34 general check.** Any chained modal: shrine `Visit?` → `Virtue?` → `Mantra?`; a Blackthorn interrogation round; `U` a potion → `On whom?` | run each | **every follow-up prompt shows its text.** Before Batch 18 the second modal in any chain rendered with an empty prompt row | — | each cancels normally | UNTESTED |
+| H-17 | Stand beside a well (tile 161) with gold > 0 | `L` + the direction of the well | transcript reads **`a well.`** and the prompt **`Drop a coin?`** | none | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-18 | At the H-17 prompt | `N` | the transcript echoes **`No`** and the prompt closes | no gold spent | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-19 | Re-open the prompt | **Mic short press (Cancel)** | identical to H-18 — it echoes **`No`** and closes. Before Batch 18 the key was simply ignored and the prompt stayed open | no gold spent | this *is* the cancel path | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-20 | Re-open the prompt, gold > 0 | `Y` | echoes **`Yes`**, then the wish row opens with the prompt **`Thy wish?`** (not "What dost thou wish?") and **the prompt text is visible** — R-34 | 1 gold spent on submitting the wish | Cancel closes the wish row | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-21 | Developer → set gold to **0**, then re-open the prompt | `Y` | echoes **`Yes`** and **stops** — no wish row, and **no** `Thou hast no coin!` (that line is a fabrication) | nothing | — | PASS (Batch 20, hardware, `a357e28c…`) — echoes `Yes` and stops, matching expectations |
+| H-22 | At Paws or Empath Abbey, gold > 0 | `L` at the well → `Y` → type `Horse` | `Poof!` and a horse appears on the adjacent walkable cell | 1 gold spent, horse placed | — | **FAIL — confirmed production defect (Batch 20, hardware, `a357e28c…`).** Tester confirmed testing at Paws (location 22, correctly gated) and got `No effect...`. Root cause (proven): `look.cpp:49`'s wish-word match is raw case-sensitive `wish.find(u"Horse")` — no case folding. This codebase's own established pattern for identical keyword matching (`quest.cpp:31-33`'s `contains()`, used for shrine mantras/NPC keywords) uppercases both sides first, matching the original's documented `and 0x5f` case-insensitive fold (`re/notes/shrines.md:146`). `look.cpp` never applies this folding, so any capitalization other than the exact literal fails silently with `No effect...`. Narrow, isolated, deferred to Batch 21 |
+| H-23 | **R-34 general check.** Any chained modal: shrine `Visit?` → `Virtue?` → `Mantra?`; a Blackthorn interrogation round; `U` a potion → `On whom?` | run each | **every follow-up prompt shows its text.** Before Batch 18 the second modal in any chain rendered with an empty prompt row | — | each cancels normally | PASS for the wishing-well/potion chains tested so far (Batch 20, hardware, `a357e28c…`). Shrine `Visit?→Virtue?→Mantra?` and the Blackthorn interrogation round not yet reached — will be covered in the dungeon/Blackthorn leg |
 
 ---
 
@@ -89,14 +89,15 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 
 | # | Setup | Input | Expected visible result | Expected state change | Cancel path | Result |
 |---|---|---|---|---|---|---|
-| H-24 | Debug → Teleport → Britannia | move around | day/night, wind bar, moon marks all change | clock advances | — | UNTESTED |
-| H-25 | Teleport → Britain | observe | NPCs visible and moving on schedule | — | — | UNTESTED |
-| H-26 | Beside an NPC | `T` → name / job / bye | **the conversation survives more than one keypress** (R-01) | — | Mic exits cleanly | UNTESTED |
-| H-27 | Town | `L` at a sign; `S`earch; `O`pen a door; `J`immy a locked door; `K`limb; `P`ush furniture | each reports its own authoritative result | as each command implies | direction prompts cancel free | UNTESTED |
-| H-28 | Town | enter a blacksmith, buy an item, back out one level at a time | the world view and Exploration verbs return (R-01) | gold/inventory change | — | UNTESTED |
-| H-29 | Repeat H-28 | at an inn (Rest), a healer (Heal), a tavern (Rations + Rumour), a reagent shop | same | same | — | UNTESTED |
-| H-30 | Lord British's castle basement, Gorn's brazier | `S`earch | the keys are **findable** (R-33: the basement floor byte fix) | keys granted | — | UNTESTED |
-| H-31 | A shrine | Visit → Virtue → Donate | the sequence completes and **the game is still playable afterwards** (R-01, Y-25) | shrine bitmap updated | — | UNTESTED |
+| H-24 | Debug → Teleport → Britannia | move around | day/night, wind bar, moon marks all change | clock advances | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-25 | Teleport → Britain | observe | NPCs visible and moving on schedule | — | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-26 | Beside an NPC | `T` → name / job / bye | **the conversation survives more than one keypress** (R-01) | — | Mic exits cleanly | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-27 | Town | `L` at a sign; `S`earch; `O`pen a door; `J`immy a locked door; `K`limb; `P`ush furniture | each reports its own authoritative result | as each command implies | direction prompts cancel free | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-28 | Town | enter a blacksmith, buy an item, back out one level at a time | the world view and Exploration verbs return (R-01) | gold/inventory change | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-29 | Repeat H-28 | at an inn (Rest), a healer (Heal), a tavern (Rations + Rumour), a reagent shop | same | same | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-30 | ~~Lord British's castle basement, Gorn's brazier~~ **CHECKLIST DEFECT (Batch 20) — corrected location: the Palace of Blackthorn's basement/jail (`smallmaps.json` location 18, floor -1), where Gorn is imprisoned, per `GAMEPLAY_INTEGRATION_AUDIT.md` R-33 and R-32's own location note. Not Lord British's castle** | `S`earch the brazier | the keys are **findable** (R-33: the basement floor byte fix) | keys granted | — | BLOCKED — tester searched the wrong location (LB castle's own basement storeroom, not Blackthorn's jail) per the checklist's incorrect original wording. Needs retest at the corrected location |
+| H-148 | **New in Batch 20 — open reference question, not yet adjudicated.** Skull-key-locked vault, LB castle basement, south/center | Loot all chests, then rest/camp for the minimum time nearby, then re-loot | Per a documented community report (external, cited in Batch 20's transcript): chest contents regenerate after a minimal rest and can be repeatedly farmed, without needing another skull key unless changing floors | — | — | REFERENCE UNCERTAINTY — real community-documented 1988 behavior reported by the tester (chests, not barrels, in a skull-key vault); zero existing coverage found in `docs/bugs-del-original.md`, `re/notes/*`, or the audit. Cannot adjudicate against the actual 1988 disassembly mid-hardware-session — needs a dedicated future adjudication pass before any classification or code change is considered. Native currently does not appear to respawn chest loot on rest (unconfirmed — not yet directly retested against chests specifically, only barrels were searched this session) |
+| H-31 | A shrine | Visit → Virtue → Donate | the sequence completes and **the game is still playable afterwards** (R-01, Y-25) | shrine bitmap updated | — | PASS (Batch 20, hardware, `a357e28c…`) — donated 5 cycles at Shrine of Justice, charged exactly 500gp (`shrine.cpp:151`'s `n*100` formula) and printed `ALAKAZAM!` (`shrine.cpp:68`, the genuine success line), game remained playable afterward |
 
 ---
 
@@ -104,15 +105,15 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 
 | # | Setup | Input | Expected visible result | Expected state change | Cancel path | Result |
 |---|---|---|---|---|---|---|
-| H-32 | Debug → Max Party, Max Resources, Equip Best Gear | trigger an overworld encounter | an arena opens | — | — | UNTESTED |
-| H-33 | In combat | move; `A`ttack with the reticle; `F`ire; `C`ast a combat spell | each resolves with a visible result; the `F`ire projectile flies cell by cell as a sub-cell dot, never a tile write (Y-04) | HP/ammo change | reticle cancels free | UNTESTED |
-| H-34 | In combat | `R` → select a weapon | **the weapon actually changes, and the character then attacks with it** (R-06 + the `CombatActor` cache resync) | equipment changed | closing the picker spends the combat action | UNTESTED |
-| H-35 | Win the fight | observe | **the arena stays open** | — | — | UNTESTED |
-| H-36 | In the open arena | `O`pen the chest, `S`earch it, `G` + direction repeatedly to zero | each `G` names an item | pile drains to 0 | — | UNTESTED |
-| H-37 | **ANCHOR 1b** — after H-36 | observe the emptied cell | **plain arena floor — no blue square, no leftover symbol** (R-02) | — | — | UNTESTED |
-| H-38 | **ANCHOR 2** — during H-36 | before each `G`, note the visible icon | **the message names the same item the icon showed** (R-04, two-layer composition) | — | — | UNTESTED |
-| H-39 | **ANCHOR 1a** — exit via Mic | look at the encounter coordinate on the overworld | **no blue tile-1 cell** (R-03, `gameplay_parity` mismatch 59) | — | — | UNTESTED |
-| H-40 | After H-39 | save, reload | **loot left behind is still there** (R-14) | `objects_` restored | — | UNTESTED |
+| H-32 | Debug → Max Party, Max Resources, Equip Best Gear | trigger an overworld encounter | an arena opens | — | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-33 | In combat | move; `A`ttack with the reticle; `F`ire; `C`ast a combat spell | each resolves with a visible result; the `F`ire projectile flies cell by cell as a sub-cell dot, never a tile write (Y-04) | HP/ammo change | reticle cancels free | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-34 | In combat | `R` → select a weapon | **the weapon actually changes, and the character then attacks with it** (R-06 + the `CombatActor` cache resync) | equipment changed | closing the picker spends the combat action | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-35 | Win the fight | observe | **the arena stays open** | — | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-36 | In the open arena | `O`pen the chest, `S`earch it, `G` + direction repeatedly to zero | each `G` names an item | pile drains to 0 | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-37 | **ANCHOR 1b** — after H-36 | observe the emptied cell | **plain arena floor — no blue square, no leftover symbol** (R-02) | — | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-38 | **ANCHOR 2** — during H-36 | before each `G`, note the visible icon | **the message names the same item the icon showed** (R-04, two-layer composition) | — | — | PASS (Batch 20, hardware, `a357e28c…`). Initial attempt was confounded by the "Combat Test Setup" preset's Max Resources maxing several categories to cap, legitimately triggering `Nothing to get!` (see `combat.cpp:1389-1399`/`loot.cpp:116-155` — not a defect). Retested with resources below cap: items are attainable and icon/message match confirmed |
+| H-39 | **ANCHOR 1a** — exit via Mic | look at the encounter coordinate on the overworld | **no blue tile-1 cell** (R-03, `gameplay_parity` mismatch 59) | — | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-40 | After H-39 | save, reload | **loot left behind is still there** (R-14) | `objects_` restored | — | PASS (Batch 20, hardware, `a357e28c…`) |
 
 ---
 
@@ -120,24 +121,24 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 
 | # | Setup | Input | Expected visible result | Expected state change | Cancel path | Result |
 |---|---|---|---|---|---|---|
-| H-41 | Carrying a spread of tools | `U`se | **every owned tool listed with the correct name; "Grapple" absent; the Amulet present** (R-07/R-08). Pocket Watch absent is expected | — | Mic closes the picker | UNTESTED |
-| H-42 | Party with a healthy member | `U` a **Blue** potion on them | exactly `Item: Potion` and **no second line** — in particular **not** `No effect!` (R-21) | potion spent | — | UNTESTED |
-| H-43 | Poison a member (Green potion), then | `U` a **Red** potion on them | `Item: Potion` then `Poison cured!` — this is the control for H-42 | poison cleared | — | UNTESTED |
-| H-44 | During H-43 | watch the screen | **the flash/inversion happens BEFORE the `Poison cured!` line** (`CAST.OVL 0x139b` precedes `0x13a1`) | — | — | UNTESTED |
-| H-45 | Any potion | `U` it and **cancel** the "On who" picker | `Item: Potion`, the count **down by one**, and **no flash** — the original's own behaviour | potion spent | this *is* the cancel path | UNTESTED |
-| H-46 | Carrying all eight scrolls | `U` each in turn | each echoes the bare word `Scroll`, then that scroll's own line (`Light!`, `Wind change!`, `Protection!`, `Negate magic!`, `View!`, `Summon Daemon!` + `Not here!`, `Resurrection!`, `Negate time!`). **No scroll echoes its own name** (R-21) | scroll spent | — | UNTESTED |
-| H-47 | In combat | `U` a scroll, then a potion | same rules as H-42/H-46 inside the arena | — | — | UNTESTED |
+| H-41 | Carrying a spread of tools | `U`se | **every owned tool listed with the correct name; "Grapple" absent; the Amulet present** (R-07/R-08). Pocket Watch absent is expected | — | Mic closes the picker | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-42 | Party with a healthy member | `U` a **Blue** potion on them | exactly `Item: Potion` and **no second line** — in particular **not** `No effect!` (R-21) | potion spent | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-43 | Poison a member (Green potion), then | `U` a **Red** potion on them | `Item: Potion` then `Poison cured!` — this is the control for H-42 | poison cleared | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-44 | During H-43 | watch the screen | **the flash/inversion happens BEFORE the `Poison cured!` line** (`CAST.OVL 0x139b` precedes `0x13a1`) | — | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-45 | Any potion | `U` it and **cancel** the "On who" picker | `Item: Potion`, the count **down by one**, and **no flash** — the original's own behaviour | potion spent | this *is* the cancel path | **FAIL — confirmed production defect (Batch 20, hardware, `a357e28c…`).** Potion count does NOT decrease on cancel. Root cause (proven): `alpha_runtime.cpp:910`'s modal-cancel handler for `UiRequestId::UseTarget`/`Inventory` only resets `pending_use_item_=-1` and never calls `command(c)`, so `world_magic.cpp:25`'s unconditional `consume_potion()` (confirmed correct — decrements before checking the target) never runs. Direction-based use-items (skull key, item 17) route through a different, working cancel path (see H-15/H-16 passing). Same class of bug as Y-31 (Batch 16), in the sibling PartySelection-cancel path that fix didn't reach. Narrow, isolated, deferred to Batch 21 |
+| H-46 | Carrying all eight scrolls | `U` each in turn | each echoes the bare word `Scroll`, then that scroll's own line (`Light!`, `Wind change!`, `Protection!`, `Negate magic!`, `View!`, `Summon Daemon!` + `Not here!`, `Resurrection!`, `Negate time!`). **No scroll echoes its own name** (R-21) | scroll spent | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-47 | In combat | `U` a scroll, then a potion | same rules as H-42/H-46 inside the arena | — | — | PASS (Batch 20, hardware, `a357e28c…`) |
 | H-48 | World, at a locked door | cast **An Sanct**; then **In Por** on the overworld; then **An Ex Por** at a town door | each raises `Direction?`, echoes the direction, and applies (R-11) | door/position change | Cancel refunds nothing — the reference consumes first | **PASS (Batch 5)** |
-| H-49 | Carrying gems | `V` | **photograph.** A legible map, the gem count decremented, and closing charges exactly one turn (`VIEW_EFFECT`/`VIEW_RESULT`) — ANCHOR 3 / R-17 | gem spent, 1 turn | any key closes | UNTESTED |
-| H-50 | At a crystal ball, party of 2+ all `G`/`P`, **no** active player set | `L` at it | **REWRITTEN IN BATCH 19 — R-25 is fixed; this row now flips an observation instead of recording a defect.** A `Player: ` roster picker opens (NOT the old `Peer into it?` yes/no, which is deleted), and **no** `Thou dost see` line appears | none yet | — | UNTESTED |
-| H-141 | Continuing H-50 | pick a member with **high** INT | `Strange vision!` and the 32x32 gem map opens. **Photograph.** The **gem count must NOT change** and closing must charge **no** turn (the `dec [g_gems]` lives in the `(V)` case, outside this route) | gems unchanged, no turn | any key closes | UNTESTED |
-| H-142 | At a crystal ball, a member with **low** INT | `L`, pick that member | `Death vision!` and **exactly 1 HP** off **that** member — not member 0, and not the active player if they differ | 1 HP | — | UNTESTED |
-| H-143 | At a crystal ball, party where one member is dead/`D` | `L`, pick the **disabled** member | `Disabled!` and the `Player: ` prompt **comes back** — a re-ask, not a rejection and not a silent no-op. Then cancel: `None!`, no vision, no HP change | none | Mic-short = cancel -> `None!` | UNTESTED |
-| H-144 | At a crystal ball with an **active player** set (arrow), or with exactly **one** `G`/`P` member left | `L` at it | **no prompt at all** — the vision fires immediately on that member. With **zero** `G`/`P` members: `None!` and nothing else | per branch | — | UNTESTED |
-| H-145 | Party of 2+, **no** active player | `S`earch a direction, then `C`ast | **both** raise the same `Player: ` picker. `S` asks **after** the direction; `C` asks **before** the spell list. Cancelling either prints `None!` and abandons the command (no search result, no spell menu). With an active player set, **neither** asks | per command | `None!` | UNTESTED |
-| H-51 | Cast Wis An Ylem, or read an In Quas Wis scroll | observe | the map reveals for ~1.1 s and input is swallowed for the same window (R-12) | 1 turn | — | UNTESTED |
-| H-52 | `U`se the Spyglass at night | observe | the zodiac view draws stars/signs/Shadowlord lines and closes on any key, charging no turn (R-13). *Expected residual: the view is clipped by the 9 px strips — D-12* | none | any key | UNTESTED |
-| H-53 | Any party | `M`ix a spell | the spell list opens and the mix resolves. *Expected residual: quantity is always 1 — D-6* | reagents spent | — | UNTESTED |
+| H-49 | Carrying gems | `V` | **photograph.** A legible map, the gem count decremented, and closing charges exactly one turn (`VIEW_EFFECT`/`VIEW_RESULT`) — ANCHOR 3 / R-17 | gem spent, 1 turn | any key closes | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-50 | At a crystal ball, party of 2+ all `G`/`P`, **no** active player set | `L` at it | **REWRITTEN IN BATCH 19 — R-25 is fixed; this row now flips an observation instead of recording a defect.** A `Player: ` roster picker opens (NOT the old `Peer into it?` yes/no, which is deleted), and **no** `Thou dost see` line appears | none yet | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-141 | Continuing H-50 | pick a member with **high** INT | `Strange vision!` and the 32x32 gem map opens. **Photograph.** The **gem count must NOT change** and closing must charge **no** turn (the `dec [g_gems]` lives in the `(V)` case, outside this route) | gems unchanged, no turn | any key closes | PASS (Batch 20, hardware, `a357e28c…`). Code-verified: `look.cpp:16-19`'s high-INT branch only ever emits `GemView`, never touches HP — the party's low HP visible in the retest screenshots predates this and is unrelated (see H-142) |
+| H-142 | At a crystal ball, a member with **low** INT | `L`, pick that member | `Death vision!` and **exactly 1 HP** off **that** member — not member 0, and not the active player if they differ | 1 HP | — | PASS (Batch 20, hardware) — retested with a healthy party member; earlier attempt was confounded by pre-existing low HP, not a defect |
+| H-143 | At a crystal ball, party where one member is dead/`D` | `L`, pick the **disabled** member | `Disabled!` and the `Player: ` prompt **comes back** — a re-ask, not a rejection and not a silent no-op. Then cancel: `None!`, no vision, no HP change | none | Mic-short = cancel -> `None!` | PASS (Batch 20, hardware) — retested with a party of 2+ eligible members; earlier attempt was confounded by having only one eligible member, not a defect |
+| H-144 | At a crystal ball with an **active player** set (arrow), or with exactly **one** `G`/`P` member left | `L` at it | **no prompt at all** — the vision fires immediately on that member. With **zero** `G`/`P` members: `None!` and nothing else | per branch | — | PASS (Batch 20, hardware, `a357e28c…`) — this is exactly what was observed in the H-143/H-145 attempts: single eligible member, no prompt, vision fired immediately |
+| H-145 | Party of 2+, **no** active player | `S`earch a direction, then `C`ast | **both** raise the same `Player: ` picker. `S` asks **after** the direction; `C` asks **before** the spell list. Cancelling either prints `None!` and abandons the command (no search result, no spell menu). With an active player set, **neither** asks | per command | `None!` | PASS (Batch 20, hardware) — retested with a healthy party of 2+ |
+| H-51 | Cast Wis An Ylem, or read an In Quas Wis scroll | observe | the map reveals for ~1.1 s and input is swallowed for the same window (R-12) | 1 turn | — | INCONCLUSIVE — likely test-location confound (Batch 20, hardware, `a357e28c…`). Tester saw the ceremony flash and cast confirmation but no visible map change. Code-verified real: `alpha_runtime.cpp:396` arms a timed window, and `presentation.cpp:76-77` force-fills the entire visibility buffer to "visible" during that window, overriding normal line-of-sight — a real, meaningful effect, but only visible where sightlines are normally obstructed. Tested near an open area (Lycaeum) where LOS may already be unobstructed, so there was nothing extra to reveal. Needs retest somewhere with normally blocked sightlines (forest/hills) |
+| H-52 | `U`se the Spyglass at night | observe | the zodiac view draws stars/signs/Shadowlord lines and closes on any key, charging no turn (R-13). *Expected residual: the view is clipped by the 9 px strips — D-12* | none | any key | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-53 | Any party | `M`ix a spell | the spell list opens and the mix resolves. *Expected residual: quantity is always 1 — D-6* | reagents spent | — | PASS (Batch 20, hardware, `a357e28c…`) |
 
 ---
 
@@ -147,22 +148,22 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 
 | # | Input | Expected visible result | Result |
 |---|---|---|---|
-| H-54 | `Z` | the **member picker**, with the roster highlight — `select_player` runs first | UNTESTED |
-| H-55 | move to member 2, Enter | the panel title becomes **that member's name**; body is their **Stats** page: `M`/`F`, `Lv-N`, class; the centred health word; `Str=`/`HP:`, `Int=`/`HM:`, `Dex=`/`Ex:`, `Magic:` | UNTESTED |
-| H-56 | `1`, `2`, `3` | each shows **its own member's distinct numbers**. `HM` is max HP and `Ex` is experience | UNTESTED |
-| H-57 | page right once | `Arms` page, equipped items **by real name**. The unequipped member reads `(None ready)`, not six blank rows | UNTESTED |
-| H-58 | read the Arms page of the fully-equipped member | every line a genuine item name. **Nothing may read `Equipment 12` or `Item 30`.** A helm named as a shield means the Batch 14 off-by-one is back | UNTESTED |
-| H-59 | page right past the last member's Arms; also press `0` from any page | the **`Equipment`** page: `Food:`, `Gold:`, then `Keys.......`, `Gems.......`, `Torches....`. A `Grapple` line only when one is carried | UNTESTED |
-| H-60 | page right four more times | **Reagents**, **Spells**, **Items**, **Armaments**, in that order. Each row is a 2-digit count, `-`, then the name | UNTESTED |
-| H-61 | inspect the lists | a reagent owned **none** of is **absent**; an empty list reads `(None owned!)` | UNTESTED |
-| H-62 | the **Items** page | carried scrolls/potions appear **with** counts; regalia/Shard/Spyglass/Sextant/Black Badge/Wooden Box appear **without** a number | UNTESTED |
-| H-63 | **Armaments** with >7 items: press down, then left/right | the detail line reads `1-7 of N` with `v`; down scrolls by one and the marker becomes `^ v`; **left/right still change page, not scroll** | UNTESTED |
-| H-64 | page right from Armaments; page left from member 1's Stats | wraps to member 1's Stats / to Armaments. **Never a blank page** between the last member and Provisions | UNTESTED |
-| H-65 | page around the ring twice, then press `i`, `p`, `k`, `e`, `s` | the modal stays open; **nothing happens** — no torch lit, no gem spent, no prompt armed behind the panel | UNTESTED |
-| H-66 | watch the clock and viewport during H-65 | the avatar does **not** move and the day/time does **not** advance | UNTESTED |
-| H-67 | press **Space**; then repeat and press **Mic** | the sheet closes and the world HUD returns; the **very next** trackball nudge moves the avatar and advances one turn | UNTESTED |
-| H-68 | press `Z` again | it opens the **picker**, not the last page; confirming opens a **Stats** page with no leftover scroll position. Repeat five times — nothing drifts | UNTESTED |
-| H-69 | Developer → poison or kill a member, then view their Stats | the centred health line reads **`Poisoned`** / **`Dead`**; the rest renders normally | UNTESTED |
+| H-54 | `Z` | the **member picker**, with the roster highlight — `select_player` runs first | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-55 | move to member 2, Enter | the panel title becomes **that member's name**; body is their **Stats** page: `M`/`F`, `Lv-N`, class; the centred health word; `Str=`/`HP:`, `Int=`/`HM:`, `Dex=`/`Ex:`, `Magic:` | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-56 | `1`, `2`, `3` | each shows **its own member's distinct numbers**. `HM` is max HP and `Ex` is experience | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-57 | page right once | `Arms` page, equipped items **by real name**. The unequipped member reads `(None ready)`, not six blank rows | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-58 | read the Arms page of the fully-equipped member | every line a genuine item name. **Nothing may read `Equipment 12` or `Item 30`.** A helm named as a shield means the Batch 14 off-by-one is back | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-59 | page right past the last member's Arms; also press `0` from any page | the **`Equipment`** page: `Food:`, `Gold:`, then `Keys.......`, `Gems.......`, `Torches....`. A `Grapple` line only when one is carried | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-60 | page right four more times | **Reagents**, **Spells**, **Items**, **Armaments**, in that order. Each row is a 2-digit count, `-`, then the name | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-61 | inspect the lists | a reagent owned **none** of is **absent**; an empty list reads `(None owned!)` | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-62 | the **Items** page | carried scrolls/potions appear **with** counts; regalia/Shard/Spyglass/Sextant/Black Badge/Wooden Box appear **without** a number | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-63 | **Armaments** with >7 items: press down, then left/right | the detail line reads `1-7 of N` with `v`; down scrolls by one and the marker becomes `^ v`; **left/right still change page, not scroll** | **FAIL — device-only rendering defect (Batch 20, hardware, `a357e28c…`).** Line reads `1-7 of N ?` instead of `1-7 of N ^ v`; deterministic, every attempt, survives reopening. Root cause (code inspection, not yet fixed): `native/targets/tdeck/main/tdeck_board.cpp`'s bitmap font switch has a `case 'v':` glyph but no `case '^':`; the caret falls to `default:`, which intentionally renders the same bitmap as `'?'`. Cosmetic only, does not block other rows — deferred to Batch 21 per Phase 20G (doesn't meet the "blocks large part of remaining validation" bar for an in-batch fix) |
+| H-64 | page right from Armaments; page left from member 1's Stats | wraps to member 1's Stats / to Armaments. **Never a blank page** between the last member and Provisions | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-65 | page around the ring twice, then press `i`, `p`, `k`, `e`, `s` | the modal stays open; **nothing happens** — no torch lit, no gem spent, no prompt armed behind the panel | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-66 | watch the clock and viewport during H-65 | the avatar does **not** move and the day/time does **not** advance | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-67 | press **Space**; then repeat and press **Mic** | the sheet closes and the world HUD returns; the **very next** trackball nudge moves the avatar and advances one turn | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-68 | press `Z` again | it opens the **picker**, not the last page; confirming opens a **Stats** page with no leftover scroll position. Repeat five times — nothing drifts | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-69 | Developer → poison or kill a member, then view their Stats | the centred health line reads **`Poisoned`** / **`Dead`**; the rest renders normally | PASS (Batch 20, hardware, `a357e28c…`) |
 
 ---
 
@@ -170,9 +171,11 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 
 | # | Setup | Input | Expected | Result |
 |---|---|---|---|---|
-| H-70 | Debug → Transport → Ship | `B`oard, then `Y`ell | **HOIST/FURL, not a word prompt** (R-19); the ship sails with the wind | UNTESTED |
-| H-71 | Aboard | `X`-it; board a horse, a carpet, a skiff | the avatar sprite changes each time | UNTESTED |
-| H-72 | Aboard a ship | save, reload | transport mode and hull survive | UNTESTED |
+| H-70 | Debug → Transport → Ship | `B`oard, then `Y`ell | **HOIST/FURL, not a word prompt** (R-19); the ship sails with the wind | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-71 | Aboard | `X`-it; board a horse, a carpet, a skiff | the avatar sprite changes each time | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-72 | Aboard a ship | save, reload | transport mode and hull survive | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-146 | **New in Batch 20 — no prior row covered this.** Shipwright or Horse Seller, gold ≥ price | `Y` to confirm the purchase | The ship/skiff/horse is granted, gold spent, transport placed at the dock/stable | **FAIL — confirmed production defect (Batch 20, hardware, `a357e28c…`).** `N` (decline) works; `Y` (confirm) does **nothing** — no message, no gold spent, no transport granted. Root cause (proven): `shop_orchestration.cpp`'s `ShipDeal` confirm handler (line 467-470) and `horse()` handler (line 285-288) both require the `v.ship`/`v.horse` and `v.reserve` callback hooks; `alpha_runtime.cpp:220-229` wires `shop_services_.record_present/record/tile/occupied/plate/hour_tiles/wake_npcs` but never assigns `.ship`, `.horse`, or `.reserve`, so they're null on this build and the confirm silently hits `CommandStatus::Unsupported`. Device-only adapter wiring gap; player-facing effect is that no shop can sell a ship, skiff, or horse. Workaround for the rest of this session: Debug → Presets → "Transport Test Setup" bypasses the shop. Deferred to Batch 21 (doesn't block remaining validation given the workaround) |
+| H-147 | **New in Batch 20 — expected non-defect, recorded to save future testers the investigation.** Aboard a ship, sails down | `H` (Hole up), enter any hours value, Enter | Hull increases by a random 1-3 (capped at 99); the clock advances by a **fixed 25 minutes regardless of the hours entered** — the "Hours (1-9)?" prompt (`ui_session.cpp:794`) is asked unconditionally for `H` in every context and this ship-repair path (`rest.cpp:232-240`) simply ignores the value. **Confirmed matches code exactly on hardware — not a bug.** Do not mistake this for a way to skip to daytime; it never was one |
 
 ---
 
@@ -184,18 +187,23 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 
 | # | Setup | Expected | Result |
 |---|---|---|---|
-| H-73 | Deceit floor 0, standard entry | `DUNGEON_SESSION_STATE active=1` **and** a usable view. **Photograph it.** Textured masonry with baked floor speckle and ceiling — **not** flat wedges, **not** outlines. Wireframe geometry means a stale card, not a code fault | UNTESTED |
-| H-74 | Torch **out**, no light spell | the viewport is **entirely black**. Ignite: the corridor appears **on that keypress** | UNTESTED |
-| H-75 | Read the strips | above the viewport: **`L1`**, not blank sky. Below: **`Dir:` + the facing**, not `Wind: --` | UNTESTED |
-| H-76 | Turn left then right (trackball, or `A`/`D` with Movement Mode **ON**) | the lower band changes on each turn | UNTESTED |
-| H-77 | Stand so a door or room entrance is **two cells ahead** down an open corridor | the corridor **stops** at it and shows a dead end with a door panel. Then stand **on** the door: the two nearest side slices drop away | UNTESTED |
-| H-78 | Stand so a ladder or chest is **one or two cells ahead** | it is **visible from there**, not only underfoot | UNTESTED |
-| H-79 | Let a wandering monster approach | drawn from **three cells out**; a ceiling-lurking type appears **high in the frame** | UNTESTED |
-| H-80 | Look at the depth rings | the four rings **abut** with no seams or black gaps (left edge 16→96, right 96→176). The only black in a lit view is the vanishing point | UNTESTED |
-| H-81 | Repeat H-77 looking at the art | a **dead end** and a **door** are visibly different images; the front wall reads as one symmetric piece with no overlap or gap at the centre column | UNTESTED |
-| H-82 | Find a **passage**, an **alcove** and a **side door** on side walls | all three visually distinct from plain masonry and from each other, each on the **correct side** — walk past and confirm | UNTESTED |
-| H-83 | Visit dungeons of different variants (1/4/5 → DNG3 grey; 6/7 → DNG2 red; rest → DNG1 olive) | the wall appearance changes, **on entry**, not after a step | UNTESTED |
+| H-73 | Deceit floor 0, standard entry | `DUNGEON_SESSION_STATE active=1` **and** a usable view. **Photograph it.** Textured masonry with baked floor speckle and ceiling — **not** flat wedges, **not** outlines. Wireframe geometry means a stale card, not a code fault | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-74 | Torch **out**, no light spell | the viewport is **entirely black**. Ignite: the corridor appears **on that keypress** | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-75 | Read the strips | above the viewport: **`L1`**, not blank sky. Below: **`Dir:` + the facing**, not `Wind: --` | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-76 | Turn left then right (trackball, or `A`/`D` with Movement Mode **ON**) | the lower band changes on each turn | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-77 | Stand so a door or room entrance is **two cells ahead** down an open corridor | the corridor **stops** at it and shows a dead end with a door panel. Then stand **on** the door: the two nearest side slices drop away | PASS (Batch 20, hardware, `a357e28c…`) — confirmed via H-81 exercising the same scenario |
+| H-78 | Stand so a ladder or chest is **one or two cells ahead** | it is **visible from there**, not only underfoot | INCONCLUSIVE — interrupted by a soft-lock (see H-149) before the visibility-at-distance check itself was confirmed. Needs retest |
+| H-79 | Let a wandering monster approach | drawn from **three cells out**; a ceiling-lurking type appears **high in the frame** | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-80 | Look at the depth rings | the four rings **abut** with no seams or black gaps (left edge 16→96, right 96→176). The only black in a lit view is the vanishing point | PASS (Batch 20, hardware) |
+| H-81 | Repeat H-77 looking at the art | a **dead end** and a **door** are visibly different images; the front wall reads as one symmetric piece with no overlap or gap at the centre column | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-82 | Find a **passage**, an **alcove** and a **side door** on side walls | all three visually distinct from plain masonry and from each other, each on the **correct side** — walk past and confirm | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-83 | Visit dungeons of different variants (1/4/5 → DNG3 grey; 6/7 → DNG2 red; rest → DNG1 olive) | the wall appearance changes, **on entry**, not after a step | PASS (Batch 20, hardware, `a357e28c…`) |
 | H-84 | Repeat H-79 against the art | a recognisable sprite with clean edges — **no** opaque rectangle around it, **no** holes punched through its dark interior | UNTESTED |
+| H-149 | **New in Batch 20 — CRITICAL, confirmed reproducible 3× across 2 dungeons.** Deceit floor 8 (displayed) = internal floor index 7 | Opened and looted a chest, then attempted to move | **CONFIRMED on hardware (Batch 20, `a357e28c…`):** all four cardinal directions reported `Blocked!` from the same cell; turning was fully responsive, recovered only via Debug → Teleport. See H-150/H-151 for two further reproductions with a strong shared root-cause lead |
+| H-150 | **New in Batch 20 — CRITICAL.** Wrong dungeon, walked through a door into a room | Attempted further movement/commands | **CONFIRMED on hardware (Batch 20, `a357e28c…`).** Transcript: `...Advance, Entering room..., Blocked! x6`. Screenshot shows a top-down arena-style view (purple/green field, no enemies) with only the active character (Shamino) able to act — **the turn never passes to the other two party members.** Party fully healthy (240/240 HP, all status `G`) — not a combat-loss artifact |
+| H-151 | **New in Batch 20 — CRITICAL, total unrecoverable freeze.** Destard, after retreating from a lost fight (`BATTLE IS LOST!`), continued moving and entered another room | Attempted further movement/commands | **CONFIRMED on hardware (Batch 20, `a357e28c…`): total freeze.** Nothing responds — not movement, not `Alt+M`, not Mic. Screenshot shows a fully-rendered combat arena (torches, chests, field tiles, 2 enemy sprites) frozen mid-frame, transcript's last line is `Entering room...`. **Requires a physical power cycle to recover — no software escape path exists.** |
+| H-152 | **New in Batch 20 — related turn-order defect, non-fatal.** A working (non-frozen) dungeon room combat encounter | Take actions across multiple turns | **CONFIRMED on hardware (Batch 20, `a357e28c…`):** only the first character to act gets turns for the entire room visit — the other two party members never get a turn while inside the room. On leaving the room, the other two characters' turns suddenly become available. Likely the same actor-cycling defect family as H-150/H-151, observed here without a freeze — valuable supporting evidence that the dungeon-room combat turn queue does not advance correctly. Location of this observation (corridor ambush vs. authored room) not yet confirmed |
+| — | **Root-cause lead for H-149/H-150/H-151 (unconfirmed mechanism, needs adjudication before any fix — but the trigger condition is now confirmed)** | `dungeon.cpp:125-129`'s `room()`: `if ((c>>4)==10 \|\| dungeon_room_cleared(...)) msg("Entering room..."); else event(DungeonEventKind::Room,...)` — the no-event message-only branch | **Confirmed why fresh rooms aren't safe:** `dungeon_mark_room()` (`dungeon.cpp:224-232`) keys the "cleared" bitmap purely by `(dungeon, room-number & 15)` — no floor, no X/Y. Room numbers are a 4-bit field reused across a dungeon's 8 floors by construction, so clearing/losing any one room marks every other room sharing that number — anywhere in the dungeon — as "already cleared," even on a genuine first visit. This is why the tester couldn't tell whether they'd "been there before": they hadn't, but the shared room-number made no difference. Every other cell-entry outcome in `dungeon.cpp` emits a `DungeonEventKind` event to drive a presentation transition; this is the one branch that doesn't, and all three reproductions' transcripts end on that exact message. The mechanism from "no event emitted" to "stuck one-actor turn loop" (Wrong) vs. "total freeze" (Destard) is still untraced. **Top priority for Batch 21 — no safe workaround exists**, since room-number collision means even a genuinely fresh room can trigger this |
 
 ### 9b — Dungeon runtime and input (Batch 9B)
 
@@ -203,22 +211,22 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 |---|---|---|---|
 | H-85 | Deceit, torch lit | turn left, turn right, advance, back up **with the trackball**: facing changes on each turn, the cell changes on each move. Then Enter = **Turn Around**: the `Dir:` band flips 180°, it does **not** pass the turn | **PASS (Batch 9B)** |
 | H-86 | Torch burnt out or entered without one | the viewport is black; press `I` — **a torch lights and the corridor appears on that keypress**. Before 9B this answered `"What?"` | **PASS (Batch 9B)** |
-| H-87 | Still dark | turn left twice, advance once: the viewport stays black but the `Dir:` band still changes. Relight with `I`: the corridor shown is the one those commands moved you to | UNTESTED |
+| H-87 | Still dark | turn left twice, advance once: the viewport stays black but the `Dir:` band still changes. Relight with `I`: the corridor shown is the one those commands moved you to | PASS (Batch 20, hardware, `a357e28c…`) |
 | H-88 | A cell with a ladder **up and down** | `K` shows `Klimb-U/D-`; answering down goes one level **deeper**. On a one-way ladder `K` resolves with **no prompt** | **PASS (Batch 9B)** |
-| H-89 | Any corridor cell | `S` shows `Dir-`; answering **down** (Here) searches the cell **underfoot**. `H` opens camp hours; `D` drinks or answers `"No fountain here."`; a digit sets the active player | UNTESTED |
-| H-90 | Standing in Deceit, reached **from another named map** (Serpent's Hold is the reported case) | the right-hand location strip reads **`Deceit`**; leaving returns it to the surface name. Check one more dungeon | UNTESTED |
+| H-89 | Any corridor cell | `S` shows `Dir-`; answering **down** (Here) searches the cell **underfoot**. `H` opens camp hours; `D` drinks or answers `"No fountain here."`; a digit sets the active player | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-90 | Standing in Deceit, reached **from another named map** (Serpent's Hold is the reported case) | the right-hand location strip reads **`Deceit`**; leaving returns it to the surface name. Check one more dungeon | PASS (Batch 20, hardware, `a357e28c…`) |
 
 ### 9c — Dungeon fields and rooms (Batches 12/12B)
 
 | # | Setup | Expected | Result |
 |---|---|---|---|
-| H-91 | Destard, a corridor cell whose **forward** cell is plain empty floor, level-4+ caster with mana | cast `In Flam Grav`: the log reads `Cast` (not `Failed!`) **and** a field is visible ahead — dense short horizontal **bright green** sparkle strokes. It shimmers on every redraw; that is the original's per-redraw re-roll | UNTESTED |
-| H-92 | After H-91 | **only** the cell directly ahead is affected — not the sides, not the cell beyond | UNTESTED |
-| H-93 | After H-91 | turn away and back: the field is still there. Pass several turns: unchanged (there is no field duration) | UNTESTED |
-| H-94 | Repeat H-91 with `In Nox Grav`, `In Zu Grav`, `In Sanct Grav` | each seeds its own one-cell field, each visible. `In Zu Grav`/`In Flam Grav` draw **EGA 10 bright green**; `In Nox Grav`/`In Sanct Grav` **EGA 9 bright blue**. **Only two colours across four spells is correct** | UNTESTED |
-| H-95 | Face a wall or an occupied cell | cast `In Flam Grav`: **`Failed!`**, nothing drawn, nothing changed | UNTESTED |
-| H-96 | Walk **into** an In Flam Grav field; then into an In Zu Grav field | `Fire!!` and HP loss, field **still there**. `Sleep spell!`, members may sleep, field **disappears** — a sleep field consumes itself, fire does not | UNTESTED |
-| H-97 | Walk the corridors of **Wrong** (30 authored fields) or **Covetous** (25) | authored magic fields appear at cells you never cast into | UNTESTED |
+| H-91 | Destard, a corridor cell whose **forward** cell is plain empty floor, level-4+ caster with mana | cast `In Flam Grav`: the log reads `Cast` (not `Failed!`) **and** a field is visible ahead — dense short horizontal **bright green** sparkle strokes. It shimmers on every redraw; that is the original's per-redraw re-roll | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-92 | After H-91 | **only** the cell directly ahead is affected — not the sides, not the cell beyond | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-93 | After H-91 | turn away and back: the field is still there. Pass several turns: unchanged (there is no field duration) | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-94 | Repeat H-91 with `In Nox Grav`, `In Zu Grav`, `In Sanct Grav` | each seeds its own one-cell field, each visible. `In Zu Grav`/`In Flam Grav` draw **EGA 10 bright green**; `In Nox Grav`/`In Sanct Grav` **EGA 9 bright blue**. **Only two colours across four spells is correct** | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-95 | Face a wall or an occupied cell | cast `In Flam Grav`: **`Failed!`**, nothing drawn, nothing changed | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-96 | Walk **into** an In Flam Grav field; then into an In Zu Grav field | `Fire!!` and HP loss, field **still there**. `Sleep spell!`, members may sleep, field **disappears** — a sleep field consumes itself, fire does not | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-97 | Walk the corridors of **Wrong** (30 authored fields) or **Covetous** (25) | authored magic fields appear at cells you never cast into | PASS (Batch 20, hardware, `a357e28c…`) |
 | H-98 | Enter **Destard**, step into a **room** cell (high nibble `F` or `A`) | the board you fight on is a **Destard** board, not Wrong's of the same number | UNTESTED |
 | H-99 | Enter **Doom**, step into a room cell | a fight **starts**. A command-failed/invalid-context line instead means the arena lookup regressed — capture the log | UNTESTED |
 | H-100 | Any dungeon room | an enemy standing on a **black** cell, possibly outside the wall boundary, **is correct** — 50 of the 128 shipped `.CBT` boards author slots on `BlackSquare`. **Negative gate: do not file it** | UNTESTED |
@@ -240,17 +248,17 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 
 | # | Setup | Expected | Result |
 |---|---|---|---|
-| H-107 | Movement Mode ON | `W` advances, `S` backs up, `A`/`D` turn. Walk into a wall: the blocked response | UNTESTED |
-| H-108 | Find stairs | `K`limb down: the depth readout changes and the top band reads **`L2` on the descent itself** | UNTESTED |
-| H-109 | Walk into a pit; walk into a field | the damage message and the feature art | UNTESTED |
-| H-110 | Corridor | `S`earch, `O`pen, `G`et, `J`immy each report their own result | UNTESTED |
-| H-111 | Corridor | cast `Uus Por` / `Des Por`; then `R`eady — **it applies and charges no turn** (R-06) | UNTESTED |
-| H-112 | Corridor | cast an ordinary spell (e.g. `In Lor`): **the same flash/inversion the overworld gives**. Then cast `Grav Por` or `Vas Flam` as the negative control — weapon-spells stay silent, above ground and below | UNTESTED |
-| H-113 | Trigger a dungeon encounter and win | **the return is to the same cell and facing** (Y-22) | UNTESTED |
-| H-114 | In a dungeon | `Alt+M` → close; `Alt+D` → Back | **the dungeon view returns both times** | UNTESTED |
-| H-115 | In a dungeon | save, reload | position, facing, revealed cells, wanderer **and any field you cast** resume exactly (R-15; fields ride in `DungeonState::cells`) | UNTESTED |
-| H-116 | Descend past floor 7 | the Underworld transition | UNTESTED |
-| H-117 | Walk out at the level-1 entrance | the surface world view and Exploration verbs return | UNTESTED |
+| H-107 | Movement Mode ON | `W` advances, `S` backs up, `A`/`D` turn. Walk into a wall: the blocked response | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-108 | Find stairs | `K`limb down: the depth readout changes and the top band reads **`L2` on the descent itself** | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-109 | Walk into a pit; walk into a field | the damage message and the feature art | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-110 | Corridor | `S`earch, `O`pen, `G`et, `J`immy each report their own result | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-111 | Corridor | cast `Uus Por` / `Des Por`; then `R`eady — **it applies and charges no turn** (R-06) | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-112 | Corridor | cast an ordinary spell (e.g. `In Lor`): **the same flash/inversion the overworld gives**. Then cast `Grav Por` or `Vas Flam` as the negative control — weapon-spells stay silent, above ground and below | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-113 | Trigger a dungeon encounter and win | **the return is to the same cell and facing** (Y-22) | PASS (Batch 20, hardware, `a357e28c…`) — tested via a corridor ambush, not a room encounter |
+| H-114 | In a dungeon | `Alt+M` → close; `Alt+D` → Back | **the dungeon view returns both times** | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-115 | In a dungeon | save, reload | position, facing, revealed cells, wanderer **and any field you cast** resume exactly (R-15; fields ride in `DungeonState::cells`) | **FAIL — confirmed production defect (Batch 20, hardware, `a357e28c…`).** Save reports success; reloading (same session, no power-cycle) resumes an older/prior save instead. Reproducible specifically in dungeons — never observed in the overworld. Root cause (proven architectural gap, exact trigger for this symptom not yet confirmed): `alpha_save.cpp`'s `candidate()` (used as the save's own "semantic-validation" self-check, line ~178) and `restore_candidate()` (the core of `load()`) both only call `restore_gameplay`/`restore_terrain`/`restore_npc_walk` — **neither ever calls `restore_dungeon`**. Dungeon state is restored as a separate step afterward (`alpha_runtime.cpp:2166`), and its failure just logs `DUNGEON_RESTORE_FAILED` and silently resets `dungeon_={}` with no player-visible indication. This means both the save-time and load-time integrity checks are blind to dungeon-payload corruption — a save/load can be reported fully successful while the dungeon-specific data is invalid. Needs live log confirmation (`DUNGEON_RESTORE_FAILED` at the moment of reload) to nail the exact mechanism, but the architectural gap itself is confirmed by code inspection. High priority for Batch 21 alongside H-149/H-150/H-151 |
+| H-116 | Descend past floor 7 | the Underworld transition | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-117 | Walk out at the level-1 entrance | the surface world view and Exploration verbs return | PASS (Batch 20, hardware, `a357e28c…`) |
 
 ---
 
@@ -258,13 +266,13 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 
 | # | Setup | Input | Expected | Result |
 |---|---|---|---|---|
-| H-118 | Debug → Quest → grant a shard | `U`se it in a Flame room | the shard's effect fires (R-08) | UNTESTED |
+| H-118 | Debug → Quest → grant a shard | `U`se it in a Flame room | the shard's effect fires (R-08) | **FAIL — CRITICAL, confirmed production defect (Batch 20, hardware, `a357e28c…`).** Used Debug → Certification → "Flame/Shard Test" (grants all 3 shards, teleports to the verified Empath Abbey (15,3) floor-1 ritual cell), then `U`sed a shard. Only the generic "Use item" echo appeared — no ritual text at all, even though `cast_shard_into_flame()` (`quest.cpp:89-107`) is unconditional: it always writes a header line first regardless of position match, so at minimum 1-2 lines of flavor text should always print. **Afterward, movement became permanently silent — no `Blocked!`, no echo, nothing — and did NOT recover after teleporting elsewhere or loading a save.** `Alt+M`/`Alt+D` (System Menu/Developer) still respond normally, ruling out a total device hang; teleport and load commands are themselves still processed (the destination/reload happens) but movement remains dead afterward regardless. Since Load only restores `GameState`/`TurnState`/quest data (confirmed via `alpha_save.cpp` review, see H-115) and never touches UI session mode, and this survives both teleport and load, the stuck state most likely lives in UI-session/input-mode state (e.g. a leftover `TargetSelection`-style mode silently swallowing movement input) rather than corrupted save data. **Narrowed further:** `L`ook and `Z`-stats both work normally (Look correctly resolves different directions per trackball/WASD input, confirming directional input hardware is fine) — only the world **Move** command path specifically is affected, producing no response at all (not even `Blocked!`). This rules out a broad UI/input freeze; it's a targeted lock on one command kind. Recovered via power cycle (teleport/reload were insufified). Root cause not yet isolated — needs dedicated investigation. **Top priority for Batch 21 alongside H-149/H-150/H-151/H-115** |
 | H-119 | At a dungeon entrance | `Y`ell a word of power | the quake and the flag toggle | UNTESTED |
 | H-120 | Blackthorn's palace, capture sequence | run the whole ceremony | the interrogation asks its questions, each with a visible **`Your response?`** row (see H-23), and the scene reads as a distinct scene, not the ordinary Palace lobby (R-32) | UNTESTED |
 | H-121 | During H-120, a companion is executed | observe the active character | **the previously-set active character is NOT re-pointed** — if it named the executed companion or anyone after them in the marching order, it now names someone else. That is `BLCKTHRN 0x03ae-0x04d4`'s own behaviour. **Do not file it** | UNTESTED |
-| H-122 | During H-120 | watch the pacing | **KNOWN OPEN — D-10/Y-32.** The scene may feel faster and more collapsed than the original. **If you can record video against original footage, that recording is the missing evidence.** Capture it rather than filing a ticket | UNTESTED |
+| H-122 | During H-120 | watch the pacing | **KNOWN OPEN — D-10/Y-32.** The scene may feel faster and more collapsed than the original. **If you can record video against original footage, that recording is the missing evidence.** Capture it rather than filing a ticket | Consistent with the known-open D-10/Y-32 pacing issue (fast, as expected — not filed separately). **Additional new observation (Batch 20):** the animation for Blackthorn teleporting in appears to be missing entirely, distinct from the general pacing issue. Recorded for Batch 21 follow-up, not yet root-caused |
 | H-123 | Falsehood / Abbey chain | run it | the chain completes and its quest objects register | UNTESTED |
-| H-124 | Overworld, town, dungeon, aboard a ship, mid-quest | save and reload in each | after each: position, party, inventory, equipment, time, transport, world objects, hidden/search objects, and the UI mode and renderer all match | UNTESTED |
+| H-124 | Overworld, town, dungeon, aboard a ship, mid-quest | save and reload in each | after each: position, party, inventory, equipment, time, transport, world objects, hidden/search objects, and the UI mode and renderer all match | PASS for overworld/town/ship contexts (Batch 20, hardware, `a357e28c…`). Dungeon context not independently retested — presumed to share H-115's confirmed defect given the identical save/reload mechanism |
 
 ---
 
@@ -274,44 +282,48 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 
 | # | Setup | Input | Expected | Audit ID | Result |
 |---|---|---|---|---|---|
-| H-125 | At the harpsichord (Lord British's castle / a tavern) | press digits `0`–`9` | each plays its note; the digits are intercepted **before** Set Active Player at the instrument, and only there | R-20 | UNTESTED |
-| H-126 | World, party ≥2, **away** from a harpsichord | press `1`…`6` | `Set Active Plr:` and the named member becomes active. A digit beyond the party size is bounded, not honoured | Y-20 | UNTESTED |
-| H-127 | Inside a selection or target modal | `Alt+M` → close | the System Menu opens over the modal and, on close, the **same modal is still open and still answerable** | Y-27 | UNTESTED |
+| H-125 | At the harpsichord (Lord British's castle / a tavern) | press digits `0`–`9` | each plays its note; the digits are intercepted **before** Set Active Player at the instrument, and only there | R-20 | PASS mechanically (Batch 20, hardware, `a357e28c…`) — digit interception confirmed correct (does not fall through to Set Active Player at the instrument). Actual note **audio** not verifiable — audio is not yet wired into this build, a known gap, not a regression |
+| H-126 | World, party ≥2, **away** from a harpsichord | press `1`…`6` | `Set Active Plr:` and the named member becomes active. A digit beyond the party size is bounded, not honoured | Y-20 | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-127 | Inside a selection or target modal | `Alt+M` → close | the System Menu opens over the modal and, on close, the **same modal is still open and still answerable** | Y-27 | PASS (Batch 20, hardware) |
 | H-128 | Town, on a bed | walk onto it | the auto-sleep turn fires from the town turn handler — no player-visible command, no `What?` | Y-26 | UNTESTED |
 | H-129 | From the frontend menu | item 7, Developer | gameplay opens on whatever `INIT.GAM` state booted, and the Developer screen is usable | Y-18 | UNTESTED |
-| H-130 | Long transcript (fight or a long conversation) | `Shift+Up` several times, then let new text arrive | the view **stays** where you scrolled it; it does **not** yank to newest. `Shift+Down` to the bottom re-enables auto-follow | R-31 (enhancement E-1) | UNTESTED |
-| H-131 | Debug → preset **Combat** | apply it | it does **not** silently engage Set Active Player, and other party members are **not** auto-passed | R-24 | UNTESTED |
-| H-132 | Debug → Default Entrance at a location with a basement (e.g. Lord British's castle) | enter | you arrive on the **ground floor**, not the basement — the ordinal-vs-signed-z fix | R-27 | UNTESTED |
-| H-133 | Debug menu, all pages | browse | every setter shows a **label**, not a raw ordinal, and the current value is readable without moving the cursor onto it. Special Items and Quest Items are reachable and named | R-28, R-29 | UNTESTED |
-| H-134 | Debug → any preset | select it | the effect list is **disclosed** before applying and a confirm gate is required. The Transport preset does **not** silently rig HMS Cape | R-30 | UNTESTED |
+| H-130 | Long transcript (fight or a long conversation) | `Shift+Up` several times, then let new text arrive | the view **stays** where you scrolled it; it does **not** yank to newest. `Shift+Down` to the bottom re-enables auto-follow | R-31 (enhancement E-1) | PASS (Batch 20, hardware) — works, tester notes it may benefit from UX tweaks in the future (not a functional defect) |
+| H-131 | Debug → preset **Combat** | apply it | it does **not** silently engage Set Active Player, and other party members are **not** auto-passed | R-24 | PASS (Batch 20, hardware, `a357e28c…`) — verified during Leg B's "Combat Test Setup" preset application |
+| H-132 | Debug → Default Entrance at a location with a basement (e.g. Lord British's castle) | enter | you arrive on the **ground floor**, not the basement — the ordinal-vs-signed-z fix | R-27 | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-133 | Debug menu, all pages | browse | every setter shows a **label**, not a raw ordinal, and the current value is readable without moving the cursor onto it. Special Items and Quest Items are reachable and named | R-28, R-29 | PASS (Batch 20, hardware) |
+| H-134 | Debug → any preset | select it | the effect list is **disclosed** before applying and a confirm gate is required. The Transport preset does **not** silently rig HMS Cape | R-30 | PASS (Batch 20, hardware, `a357e28c…`) — verified during Leg B's "Combat Test Setup" preset application (effect list disclosed, confirm gate present) |
 | H-135 | Trigger an earthquake event (Yell a word of power at a dungeon entrance, H-119) | observe | the **Quake** shake renders | Y-04 | UNTESTED |
 | H-136 | Combat: land a killing area-effect blow, or step a poisoned member through a turn | observe | **CellExplosion** draws on the cell; **PoisonTick** flashes the poisoned member's roster row by inversion, not by a tile write | Y-04 | UNTESTED |
-| H-137 | Enter a Refuge; separately, let a troll ambush you at a bridge | observe | the **Refuge** and **TrollSneak** narrative scenes both pace out as sequences with readable text, not as a single flashed frame | Y-04 | UNTESTED |
+| H-137 | Enter a Refuge; separately, let a troll ambush you at a bridge | observe | the **Refuge** and **TrollSneak** narrative scenes both pace out as sequences with readable text, not as a single flashed frame | Y-04 | PASS for TrollSneak (Batch 20, hardware) — confirmed via a bridge ambush. Refuge half not yet tested |
 | H-138 | Any combat where a summoned or field effect kills the last enemy while a member is poisoned | observe | the sprite on the cell stays put for the whole choreography (`under_tile`), and no committed state change is deferred past it | Y-04 (#243) | UNTESTED |
 | H-139 | Combat, a member with **nothing** in hand | `R`eady | **KNOWN OPEN — D-8/Y-28.** Today a disabled `(None available)` picker opens instead of the action being charged immediately. Record what you see; do not file | Y-28 | UNTESTED |
 | H-140 | Combat, `R`eady a ring that vanishes on use | observe | **KNOWN OPEN — D-8/Y-28.** `Ring vanishes!` does not close the picker early. Record; do not file | Y-28 | UNTESTED |
 
 ---
 
-## Result tally
+## Result tally (Batch 20 close-out)
 
-| Group | Rows | PASS | FAIL | UNTESTED |
-|---|---|---|---|---|
-| 1 — boot / input | 9 | 0 | 0 | 9 |
-| 2 — Y-series closeout | 7 | 0 | 0 | 7 |
-| 3 — wishing well | 7 | 0 | 0 | 7 |
-| 4 — overworld / town | 8 | 0 | 0 | 8 |
-| 5 — combat / loot | 9 | 0 | 0 | 9 |
-| 6 — items / magic / views | 18 | 1 | 0 | 17 |
-| 7 — Z-stats | 16 | 0 | 0 | 16 |
-| 8 — transport | 3 | 0 | 0 | 3 |
-| 9 — dungeon | 45 | 3 | 0 | 42 |
-| 10 — quest / persistence | 7 | 0 | 0 | 7 |
-| 11 — reachability / feedback spot-checks | 16 | 0 | 0 | 16 |
-| **Total** | **145** | **4** | **0** | **141** |
+Original 145 rows, plus 7 new rows discovered/added during Batch 20 (H-146–H-152) = **152 total rows**.
 
-The four PASS rows are the only hardware evidence on record: H-48 (Batch 5's
-three world-cast checks, all passed first attempt) and H-85/H-86/H-88 (the Batch
-9B dungeon-runtime gate). Everything else is owed.
+| Group | Rows | PASS | FAIL | BLOCKED | INCONCLUSIVE | UNTESTED |
+|---|---|---|---|---|---|---|
+| 1 — boot / input | 9 | 9 | 0 | 0 | 0 | 0 |
+| 2 — Y-series closeout | 7 | 4 | 3 | 0 | 0 | 0 |
+| 3 — wishing well | 7 | 6 | 1 | 0 | 0 | 0 |
+| 4 — overworld / town (+ H-148) | 9 | 7 | 0 | 1 | 1 | 0 |
+| 5 — combat / loot | 9 | 9 | 0 | 0 | 0 | 0 |
+| 6 — items / magic / views | 18 | 16 | 1 | 0 | 1 | 0 |
+| 7 — Z-stats | 16 | 16 | 0 | 0 | 0 | 0 |
+| 8 — transport (+ H-146, H-147) | 5 | 4 | 1 | 0 | 0 | 0 |
+| 9 — dungeon (+ H-149–H-152) | 49 | 33 | 5 | 0 | 1 | 10 |
+| 10 — quest / persistence | 7 | 4 | 1 | 0 | 0 | 2 (H-119, H-123) |
+| 11 — reachability / feedback spot-checks | 16 | 9 | 0 | 0 | 0 | 7 |
+| **Total** | **152** | **117** | **12** | **1** | **3** | **19** |
 
-**Alpha 2 cannot be declared validated until this table has no UNTESTED rows.**
+**Rows still UNTESTED (19):** H-84; H-98–H-106 (9 rows, deliberately deferred — freeze-family defect, no safe workaround exists); H-119, H-123 (directions given, not yet run); H-128, H-129, H-135, H-136, H-138, H-139, H-140 (Group 11 spot-checks not reached this session).
+
+**Rows BLOCKED (1):** H-30 (checklist itself had the wrong location; corrected, not yet retested at the real location).
+
+**Rows INCONCLUSIVE (3):** H-51 (likely test-location confound, needs retest with blocked sightlines), H-78 (interrupted by the H-149 soft-lock before confirmed), H-148 (real community-reported original-game behavior, not yet adjudicated against the 1988 disassembly).
+
+**Alpha 2 cannot be declared validated until this table has no UNTESTED/BLOCKED/INCONCLUSIVE rows and every FAIL is resolved.**
