@@ -4088,3 +4088,115 @@ Run this **before** resuming the rest of the 152-row checklist. Capture the seri
 5. **Deceit room 0 or 7** (the Slime rooms) — enter one deliberately. Expect a playable arena: turns advance, enemies act, `divides!` may appear, and the fight can be won, lost or escaped.
 6. Confirm `Alt+M`, the Mic key, movement and combat all stay responsive throughout, with **no power cycle needed**.
 7. **Deceit L8** — revisit the H-149 area. Falling into the (5,5) chest alcove and finding all four directions `Blocked!` is **correct**; confirm **(S)earch** toward the wall reveals `"A hidden door!"` and the party can then walk out.
+
+---
+
+## Batch 21A.1 — the "Deceit L1 → Klimb Down → L8" report (`236cfa34`+)
+
+**Verdict: NOT A DEFECT. No production code was changed. Every one of the reporter's six observations is authored Ultima V data behaving exactly as the 1988 binary does.**
+
+### The hardware observation, preserved verbatim
+
+After flashing Batch 21A and beginning the Phase 6M micro-retest, the user reported, in this order:
+
+1. Teleported/entered **Deceit**
+2. Was on displayed **L1**
+3. The only apparent route was a ladder
+4. Used `K` / Klimb **Down**
+5. This immediately entered a top-down dungeon room combat board with **Water Serpent** enemies
+6. User fled / lost the room encounter
+7. On return to the dungeon 3D view, the HUD now showed **Deceit L8**
+8. The corridor had many doors and clearly was not the expected immediate lower level from L1
+9. User then used Developer teleport to go back to the beginning of Deceit
+10. Teleport succeeded, but the dungeon now looked different from how it looked at the beginning of the test
+
+Two photographs exist: the room/arena state after `Klimb- Down!` / `Entering room...`, and the returned 3D view showing `Deceit`, `L8`, `BATTLE IS LOST!`, `Back up`, `Blocked!`.
+
+The user asked whether the dungeon is procedurally generated. **It is not** — and the answer to the report turned out to depend on exactly that fact.
+
+### Root cause: Deceit's authored six-deep pit shaft at (1,3)
+
+There is no floor corruption anywhere in this path. The party genuinely is on floor index **7**, and `L8` is the correct rendering of 7 (`hud.cpp`: `level = int(d.pos.floor) + 1`). What happened is a **pit shaft** authored into `DUNGEON.DAT`:
+
+| Step | Mechanism | Reference |
+|---|---|---|
+| 1 | Deceit floor 0 **(1,3)** is authored `0x60` — CellType `Trap`, sub 0. **Every trap cell is down-klimbable**, so `(K)` resolves DOWN with no U/D prompt. | `dungeon.cpp` `caps()` `down = t == 2 \|\| t == 3 \|\| t == 6`, a clone of DUNGEON:0x1E79-0x1E8B; `dungeon.ts` `klimbCaps()` `cell.type === CellType.Trap` |
+| 2 | `level()` steps to floor 1 and runs `enter()` on the **destination** cell. Deceit floor 1 (1,3) is `0x69` — a pit trap. | DUNGEON:0x1C6A `change_level`; `dungeon.ts` `klimb()` → `onEnterCell()` |
+| 3 | `enter()` therefore runs the **pit chain**, which falls one floor per pit and **keeps falling** while it lands on another pit. Deceit (1,3) is `0x61` on floors 2, 3, 4, 5 and 6. **Six falls: floor 1 → 7.** | DUNGEON:0x0A4C; `dungeon.ts` `pitFall()` |
+| 4 | The chain stops on floor 7 (1,3) = `0xFA` — **room 10**, uncleared — and its tail opens the room fight, the same gate `enter()` uses. | `pitFall()` tail, byte-identical to native |
+| 5 | `DUNGEON.CBT` #10 places **four units with sprite `0x88`**. `initialize_combat` resolves a sprite to `(sprite - 0x40) / 4` = **18**, and def 18 is the **Sea Serpent**. That is the reporter's "Water Serpent". | `enemies.ts:34` — `def.tile = 0x140 + defIndex*4` ⇒ `0x88` → def 18 |
+| 6 | Room 10's board carries **no in-arena klimb/grate tile**, so leaving it sets `escape_floor_delta = 0` and `dungeon_combat_return()` moves no floor at all. The party is left on floor 7 — **L8**. | `combat.cpp:1515`, `dungeon_orchestration.cpp:85` |
+
+**The route is unique.** Of all 64 Deceit floor-0 cells, exactly one — (1,3) — reaches floor 7 in a single Klimb Down. The other two authored LadderDowns, (5,3) and (5,7), each move exactly one floor into rooms 0 and 1.
+
+### Each observation, accounted for
+
+| # | Observation | Explanation |
+|---|---|---|
+| 2 | displayed **L1** | floor index 0. `hud_dungeon_bands` clamps `level` into 1..8, so L1 can only mean floor 0. |
+| 3 | "the only apparent route was a ladder" | Deceit's standard entry is floor 0 (1,1), the `0x10` entrance LadderUp. The shaft at (1,3) is two cells away. |
+| 4–5 | Klimb Down → room immediately | Steps 1–4 above. The intervening `Pit Trap!` / `Falling...` / `...splat!` messages scroll past in the six-fall chain. |
+| 5 | Water Serpent | Sprite `0x88` → enemy def 18, **Sea Serpent**, four of them. |
+| 7 | **L8** on return | floor index 7 + 1. Verified on the host: the stored floor byte is `0x07`, not `0xFF`. |
+| 8 | "many doors … not one level below L1" | Correct — it is **six** levels below. Floor 7 is a different, door-and-room-heavy floor. |
+| 10 | "the dungeon looked different" | **Two real, intended reasons.** (a) A same-dungeon developer teleport deliberately **preserves facing** (`debug_map_picker.cpp`) and does **not** re-run `dungeon_load`, so the same entrance cell is rendered down a different axis than on first entry. (b) The shaft is genuinely **spent**: the pit chain rewrites every pit it consumes (`0x60 \| (cur & 8)`, the reference's `curSub & 0xf8`), so a second Klimb Down at (1,3) now stops on floor 1. The map really has changed — that is authored mechanics, not corruption. |
+| — | `Back up` → `Blocked!` | Floor 7 (1,2) is authored wall. The landing cell is **not** sealed: (1,4) is corridor, so the party can walk out south. |
+
+### The wraparound hypothesis, disproved
+
+The report hypothesised a signed/unsigned slip, a `-1`/`0xff` sentinel or a wrap producing floor index 7. **It is not that**, and the new suite proves it two ways:
+
+- **Directly:** the stored floor byte after the whole sequence is `7` (`0x07`), the command path's own `pos.floor > 7` gate passes, and dungeon movement still dispatches. A wrapped floor would make every dungeon command return `InvalidContext`.
+- **By mutation (M3):** injecting exactly the hypothesised wrap — making the pit chain store `uint8_t(++f + 248)` so the floor byte becomes `255` — leaves the HUD **still reading `L8`**, because `hud.cpp` clamps `level > 8` to 8. Only `B21A1-3a/3b/3d` catch it. So the HUD reading alone can never distinguish a real floor 7 from a wrap; the new RED-C case is what does.
+
+### Production changes
+
+**None.** `native/core/src` and `native/targets/tdeck/main` are byte-for-byte identical to `236cfa34`.
+
+### Coverage added
+
+`dungeon_combat_regression` (`native/targets/tdeck/host_tests/dungeon_combat_test.cpp`) gains a **Batch 21A.1** section: 7 cases, 45 checks, taking the suite from 124 to **169 checks**. Every case drives the real device path — `RawInputEvent` → `tdeck::UiInputAdapter` → `UiSession` → `dispatch_world_command` → `execute_dungeon_command` → `dungeon_action` → the pit chain → `dungeon_encounter` → `start_fixed_combat` → `finish_encounter_combat` → `dungeon_combat_return` — against the **shipped** `dungeon-maps.txt` and `fixed-maps.txt` bytes.
+
+| Case | What it pins |
+|---|---|
+| **B21A1-0** | The authored census: `0x60` at floor 0 (1,3), six chaining pits on floors 1–6, `0xFA` room 10 on floor 7, four sprite-`0x88` Sea Serpents on CBT #10, no in-arena escape tile, and that (1,3) is the **only** floor-0 cell reaching floor 7. |
+| **B21A1-1** (RED-A) | The hardware sequence: HUD `L1` → Klimb Down → floor 7, six pits consumed, room 10 live, four def-18 Sea Serpents, HUD `L8`. |
+| **B21A1-2** (RED-B) | Leaving without a victory keeps floor 7: `escape_floor_delta == 0`, the room-entry cell 33:7:(1,3) restored, room still uncleared, session intact. |
+| **B21A1-3** (RED-C) | **No wrap.** Floor byte is exactly 7; `floor + 1 == 8` with nothing to clamp; movement still dispatches and is not `InvalidContext`; (1,4) is corridor and (1,2) is wall. |
+| **B21A1-4** (RED-D) | Control: the (5,3) LadderDown still moves exactly one floor into room 0, HUD `L2`, no pit consumed anywhere. |
+| **B21A1-5** (RED-E) | Control: room 0's authored in-arena `0xC8` Klimb still sets `escape_floor_delta = -1` and returns floor 1 → 0, HUD `L1`. |
+| **B21A1-6** | Observation 10: the teleport lands on 33:0:(1,1) reading `L1`, **preserves facing**, leaves the six consumed pits consumed, and a second Klimb Down at (1,3) now stops on floor 1. |
+
+### Mutation proof
+
+Because there is no fix to revert, the four mutations instead inject the defects the report hypothesised — and the "obvious fixes" a future batch might be tempted to apply — proving every new case is load-bearing.
+
+| # | Mutation | Kills |
+|---|---|---|
+| **M1** | `caps()` drops `t == 6`, so trap cells are no longer down-klimbable ("stop the pit being a ladder") | 12 checks |
+| **M2** | The pit chain stops after one fall (`f < 8` → `f < 2`) | 11 checks |
+| **M3** | The hypothesised wrap: the chain stores `uint8_t(++f + 248)`, floor byte → `255` | 6 checks — and **the HUD still reads `L8`**, which is the whole point |
+| **M4** | `finish_encounter_combat` forces `delta = -1` into `dungeon_combat_return` | 17 checks, across D9D, B9E **and** B21A1 |
+
+### Status
+
+**SOFTWARE FIXED — HARDWARE RETEST REQUIRED.** (Nothing needed fixing; the retest confirms the adjudication on the device.)
+
+Host suite **89/89** from a clean build, 0 fail, 0 skipped, zero project warnings. Firmware unchanged from Batch 21A — see the checklist addendum. **SD resource pack unchanged; no SD recopy required.**
+
+### Phase 6M.1 — Batch 21A.1 micro-retest · *no reflash needed if Batch 21A is already on the device*
+
+The Batch 21A firmware already on the device is sufficient — no production code changed. Run this short list; do **not** resume the 152-row checklist until it passes.
+
+1. Enter Deceit at the standard entry. Confirm the HUD reads **L1**.
+2. Walk to **(1,3)** — the plain-pit cell — and press `K`, choosing **Down** if prompted.
+3. Expect `Down!`, then a run of `Pit Trap!` / `Falling...` / `...splat!`, then `Entering room...`.
+4. Expect the room board with **four Sea Serpents**.
+5. Leave the room by walking off the board edge (`BATTLE IS LOST!`).
+6. Confirm the 3D view returns reading **L8** — **this is correct**. Confirm the party is at (1,3) on floor 7.
+7. Confirm movement and turning still respond. Walking **south** to (1,4) must work; north must report `Blocked!`.
+8. Developer-teleport back to Deceit's standard entry. Confirm **L1**, cell (1,1), and that level/cell are stable.
+9. Walk to (1,3) and press `K`/Down **again**. It must now stop on **L2** — the shaft is spent.
+10. Repeat steps 1–9 once.
+
+Serial capture is useful if convenient, but a clean visual/behavioural pass does not depend on it unless something unexpected recurs.

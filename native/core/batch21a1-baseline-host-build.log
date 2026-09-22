@@ -1,0 +1,320 @@
+ninja: Entering directory `build-batch21a1-baseline'
+[1/284] Building CXX object CMakeFiles/openu5_core.dir/src/poison_tick.cpp.obj
+[2/284] Building CXX object CMakeFiles/openu5_core.dir/src/dungeon_encounters.cpp.obj
+[3/284] Building CXX object CMakeFiles/openu5_core.dir/src/hud.cpp.obj
+[4/284] Building CXX object CMakeFiles/openu5_core.dir/src/display_names.cpp.obj
+[5/284] Building CXX object CMakeFiles/openu5_core.dir/src/world_fx.cpp.obj
+[6/284] Building CXX object CMakeFiles/openu5_core.dir/src/command_char.cpp.obj
+[7/284] Building CXX object CMakeFiles/openu5_core.dir/src/system_menu.cpp.obj
+[8/284] Building CXX object CMakeFiles/openu5_core.dir/src/dungeon_view.cpp.obj
+[9/284] Building CXX object CMakeFiles/openu5_core.dir/src/intro_view.cpp.obj
+[10/284] Building CXX object CMakeFiles/openu5_core.dir/src/dungeon_art.cpp.obj
+[11/284] Building CXX object CMakeFiles/openu5_core.dir/src/frontend.cpp.obj
+[12/284] Building CXX object CMakeFiles/openu5_core.dir/src/dungeon.cpp.obj
+[13/284] Building CXX object CMakeFiles/openu5_core.dir/src/narrative_scene.cpp.obj
+[14/284] Building CXX object CMakeFiles/openu5_core.dir/src/gem_view.cpp.obj
+[15/284] Building CXX object CMakeFiles/openu5_core.dir/src/world_terrain.cpp.obj
+[16/284] Building CXX object CMakeFiles/openu5_core.dir/src/rng.cpp.obj
+[17/284] Building CXX object CMakeFiles/openu5_core.dir/src/dungeon_orchestration.cpp.obj
+[18/284] Building CXX object CMakeFiles/openu5_core.dir/src/world.cpp.obj
+[19/284] Building CXX object CMakeFiles/openu5_core.dir/src/state.cpp.obj
+[20/284] Building CXX object CMakeFiles/openu5_core.dir/src/time.cpp.obj
+[21/284] Building CXX object CMakeFiles/openu5_core.dir/src/transport.cpp.obj
+[22/284] Building CXX object CMakeFiles/openu5_core.dir/src/world_magic.cpp.obj
+[23/284] Building CXX object CMakeFiles/openu5_core.dir/src/shrine.cpp.obj
+[24/284] Building CXX object CMakeFiles/openu5_core.dir/src/presentation.cpp.obj
+[25/284] Building CXX object CMakeFiles/openu5_core.dir/src/world_commands.cpp.obj
+[26/284] Building CXX object CMakeFiles/openu5_core.dir/src/look.cpp.obj
+[27/284] Building CXX object CMakeFiles/openu5_core.dir/src/scripted_encounter.cpp.obj
+[28/284] Building CXX object CMakeFiles/openu5_core.dir/src/quest_search.cpp.obj
+[29/284] Building CXX object CMakeFiles/openu5_core.dir/src/loot.cpp.obj
+[30/284] Building CXX object CMakeFiles/openu5_core.dir/src/blackthorn_scene.cpp.obj
+[31/284] Building CXX object CMakeFiles/openu5_core.dir/src/movement.cpp.obj
+[32/284] Building CXX object CMakeFiles/openu5_core.dir/src/shops.cpp.obj
+[33/284] Building CXX object CMakeFiles/openu5_core.dir/src/inventory_picker.cpp.obj
+[34/284] Building CXX object CMakeFiles/openu5_core.dir/src/transitions.cpp.obj
+[35/284] Building CXX object CMakeFiles/openu5_core.dir/src/quest.cpp.obj
+[36/284] Building CXX object CMakeFiles/openu5_core.dir/src/outdoor.cpp.obj
+[37/284] Building CXX object CMakeFiles/openu5_core.dir/src/pathfind.cpp.obj
+[38/284] Building CXX object CMakeFiles/openu5_core.dir/src/inventory.cpp.obj
+[39/284] Building CXX object CMakeFiles/openu5_core.dir/src/blackthorn.cpp.obj
+[40/284] Building CXX object CMakeFiles/openu5_core.dir/src/actors.cpp.obj
+[41/284] Building CXX object CMakeFiles/openu5_core.dir/src/ui_session.cpp.obj
+[42/284] Building CXX object CMakeFiles/openu5_core.dir/src/rest.cpp.obj
+[43/284] Building CXX object CMakeFiles/openu5_core.dir/src/magic.cpp.obj
+[44/284] Building CXX object CMakeFiles/openu5_core.dir/src/zstats.cpp.obj
+[45/284] Building CXX object CMakeFiles/openu5_core.dir/src/turn.cpp.obj
+[46/284] Building CXX object CMakeFiles/openu5_core.dir/src/debug_labels.cpp.obj
+[47/284] Building CXX object CMakeFiles/openu5_core.dir/src/npc_path.cpp.obj
+[48/284] Building CXX object CMakeFiles/openu5_core.dir/src/debug_map_picker.cpp.obj
+[49/284] Building CXX object CMakeFiles/openu5_core.dir/src/frontend_settings.cpp.obj
+[50/284] Building CXX object CMakeFiles/openu5_core.dir/src/quest_world.cpp.obj
+[51/284] Building CXX object CMakeFiles/openu5_core.dir/src/dialogue_effects.cpp.obj
+[52/284] Building CXX object CMakeFiles/openu5_core.dir/src/ui_debug_menu.cpp.obj
+[53/284] Building CXX object CMakeFiles/measure_ui_sizes.dir/tools/measure-ui-sizes.cpp.obj
+[54/284] Building CXX object CMakeFiles/debug_labels_tests.dir/tests/debug_labels_test.cpp.obj
+[55/284] Building CXX object CMakeFiles/quest_search_tests.dir/tests/quest_search_test.cpp.obj
+[56/284] Building CXX object CMakeFiles/display_names_tests.dir/tests/display_names_test.cpp.obj
+[57/284] Building CXX object CMakeFiles/openu5_core.dir/src/dialogue_orchestration.cpp.obj
+[58/284] Building CXX object CMakeFiles/openu5_core.dir/src/debug_developer.cpp.obj
+[59/284] Building CXX object CMakeFiles/openu5_core.dir/src/shop_orchestration.cpp.obj
+[60/284] Building CXX object CMakeFiles/openu5_core.dir/src/save_json.cpp.obj
+[61/284] Building CXX object CMakeFiles/look_sign_tests.dir/tests/look_sign_test.cpp.obj
+[62/284] Building CXX object CMakeFiles/ui_host_harness.dir/tools/ui_host_harness.cpp.obj
+[63/284] Building CXX object CMakeFiles/shop_parity_tests.dir/tests/shop_parity_test.cpp.obj
+[64/284] Building CXX object CMakeFiles/ui_debug_menu_tests.dir/tests/ui_debug_menu_test.cpp.obj
+[65/284] Building CXX object CMakeFiles/debug_map_picker_tests.dir/tests/debug_map_picker_test.cpp.obj
+[66/284] Building CXX object CMakeFiles/movement_flow_parity_tests.dir/tests/movement_flow_parity_test.cpp.obj
+[67/284] Building CXX object CMakeFiles/shop_adapter_tests.dir/tests/shop_adapter_test.cpp.obj
+[68/284] Building CXX object CMakeFiles/dialogue_adapter_tests.dir/tests/dialogue_adapter_test.cpp.obj
+[69/284] Building CXX object CMakeFiles/world_flow_adapter_tests.dir/tests/world_flow_adapter_test.cpp.obj
+[70/284] Building CXX object CMakeFiles/debug_developer_tests.dir/tests/debug_developer_test.cpp.obj
+[71/284] Building CXX object CMakeFiles/transport_flow_parity_tests.dir/tests/transport_flow_parity_test.cpp.obj
+[72/284] Building CXX object CMakeFiles/dungeon_parity_tests.dir/tests/dungeon_parity_test.cpp.obj
+[73/284] Building CXX object CMakeFiles/openu5_core.dir/src/commands.cpp.obj
+[74/284] Building CXX object CMakeFiles/movement_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/movement_test.cpp.obj
+[75/284] Building CXX object CMakeFiles/shop_flow_tests.dir/tests/shop_flow_test.cpp.obj
+[76/284] Building CXX object CMakeFiles/frontend_tests.dir/tests/frontend_test.cpp.obj
+[77/284] Building CXX object CMakeFiles/core_parity_tests.dir/tests/parity_test.cpp.obj
+[78/284] Building CXX object CMakeFiles/ui_session_tests.dir/tests/ui_session_test.cpp.obj
+[79/284] Building CXX object CMakeFiles/gameplay_integration_tests.dir/tests/gameplay_integration_test.cpp.obj
+[80/284] Building CXX object CMakeFiles/world_flow_parity_tests.dir/tests/world_flow_parity_test.cpp.obj
+[81/284] Building CXX object CMakeFiles/dungeon_flow_parity_tests.dir/tests/dungeon_flow_parity_test.cpp.obj
+[82/284] Building CXX object CMakeFiles/input_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/input_controller.cpp.obj
+[83/284] Building CXX object CMakeFiles/magic_parity_tests.dir/tests/magic_parity_test.cpp.obj
+[84/284] Building CXX object CMakeFiles/input_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/keyboard_matrix.cpp.obj
+[85/284] Building CXX object CMakeFiles/dungeon_input_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/input_controller.cpp.obj
+[86/284] Building CXX object CMakeFiles/gem_view_regression.dir/tests/gem_view_test.cpp.obj
+[87/284] Building CXX object CMakeFiles/openu5_core.dir/src/dialogue.cpp.obj
+[88/284] Building CXX object CMakeFiles/dungeon_input_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/ui_input_adapter.cpp.obj
+[89/284] Building CXX object CMakeFiles/combat_escape_regression.dir/tests/combat_escape_regression_test.cpp.obj
+[90/284] Building CXX object CMakeFiles/input_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/ui_input_adapter.cpp.obj
+[91/284] Building CXX object CMakeFiles/openu5_core.dir/src/gameplay_save.cpp.obj
+[92/284] Building CXX object CMakeFiles/dungeon_input_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/keyboard_matrix.cpp.obj
+[93/284] Building CXX object CMakeFiles/combat_loot_open_regression.dir/tests/combat_loot_open_regression_test.cpp.obj
+[94/284] Building CXX object CMakeFiles/dungeon_combat_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/input_controller.cpp.obj
+[95/284] Building CXX object CMakeFiles/input_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/input_test.cpp.obj
+[96/284] Building CXX object CMakeFiles/dungeon_art_regression.dir/tests/dungeon_art_test.cpp.obj
+[97/284] Building CXX object CMakeFiles/command_parity_tests.dir/tests/command_parity_test.cpp.obj
+In file included from C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/vector:67,
+                 from C:/Dev/OpenU5-Native/native/core/tests/command_parity_test.cpp:6:
+In function '_ForwardIterator std::uninitialized_copy(_InputIterator, _InputIterator, _ForwardIterator) [with _InputIterator = __gnu_cxx::__normal_iterator<const long long int*, vector<long long int> >; _ForwardIterator = long long int*]',
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_copy_a(_InputIterator, _Sentinel, _ForwardIterator, allocator<_Tp>&) [with _InputIterator = __gnu_cxx::__normal_iterator<const long long int*, vector<long long int> >; _Sentinel = __gnu_cxx::__normal_iterator<const long long int*, vector<long long int> >; _ForwardIterator = long long int*; _Tp = long long int]' at C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/stl_uninitialized.h:659:32,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_range_insert(iterator, _ForwardIterator, _ForwardIterator, std::forward_iterator_tag) [with _ForwardIterator = __gnu_cxx::__normal_iterator<const long long int*, std::vector<long long int> >; _Tp = long long int; _Alloc = std::allocator<long long int>]' at C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/vector.tcc:984:34,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::iterator std::vector<_Tp, _Alloc>::insert(const_iterator, _InputIterator, _InputIterator) [with _InputIterator = __gnu_cxx::__normal_iterator<const long long int*, std::vector<long long int> >; <template-parameter-2-2> = void; _Tp = long long int; _Alloc = std::allocator<long long int>]' at C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/stl_vector.h:1611:19,
+    inlined from 'V Harness::run(openu5::Command, bool)' at C:/Dev/OpenU5-Native/native/core/tests/command_parity_test.cpp:240:17,
+    inlined from 'int main(int, char**)' at C:/Dev/OpenU5-Native/native/core/tests/command_parity_test.cpp:270:20:
+C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/stl_uninitialized.h:294:31: warning: 'void* __builtin_memcpy(void*, const void*, long long unsigned int)' writing between 1 and 9223372036854775807 bytes into a region of size 0 overflows the destination [-Wstringop-overflow=]
+  294 |               __builtin_memcpy(std::__niter_base(__result),
+      |               ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  295 |                                std::__niter_base(__first),
+      |                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  296 |                                __n * sizeof(_ValT));
+      |                                ~~~~~~~~~~~~~~~~~~~~
+In file included from C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/x86_64-w64-mingw32/bits/c++allocator.h:33,
+                 from C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/allocator.h:46,
+                 from C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/string:46,
+                 from C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/locale_classes.h:43,
+                 from C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/ios_base.h:43,
+                 from C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/ios:46,
+                 from C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/istream:42,
+                 from C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/fstream:42,
+                 from C:/Dev/OpenU5-Native/native/core/tests/command_parity_test.cpp:4:
+In member function 'constexpr _Tp* std::__new_allocator<_Tp>::allocate(size_type, const void*) [with _Tp = long long int]',
+    inlined from 'constexpr _Tp* std::allocator< <template-parameter-1-1> >::allocate(std::size_t) [with _Tp = long long int]' at C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/allocator.h:206:40,
+    inlined from 'static constexpr _Tp* std::allocator_traits<std::allocator<_CharT> >::allocate(allocator_type&, size_type) [with _Tp = long long int]' at C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/alloc_traits.h:638:28,
+    inlined from 'constexpr std::_Vector_base<_Tp, _Alloc>::pointer std::_Vector_base<_Tp, _Alloc>::_M_allocate(std::size_t) [with _Tp = long long int; _Alloc = std::allocator<long long int>]' at C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/stl_vector.h:389:33,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_range_initialize_n(_Iterator, _Sentinel, size_type) [with _Iterator = const long long int*; _Sentinel = const long long int*; _Tp = long long int; _Alloc = std::allocator<long long int>]' at C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/stl_vector.h:1975:23,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(std::initializer_list<_Tp>, const allocator_type&) [with _Tp = long long int; _Alloc = std::allocator<long long int>]' at C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/stl_vector.h:702:23,
+    inlined from 'V Harness::run(openu5::Command, bool)' at C:/Dev/OpenU5-Native/native/core/tests/command_parity_test.cpp:239:84,
+    inlined from 'int main(int, char**)' at C:/Dev/OpenU5-Native/native/core/tests/command_parity_test.cpp:270:20:
+C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/new_allocator.h:162:75: note: at offset 40 into destination object of size 40 allocated by 'operator new'
+  162 |           return static_cast<_Tp*>(_GLIBCXX_OPERATOR_NEW(__n * sizeof(_Tp)));
+      |                                                                           ^
+[98/284] Building CXX object CMakeFiles/dungeon_view_regression.dir/tests/dungeon_view_test.cpp.obj
+[99/284] Building CXX object CMakeFiles/dungeon_combat_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/ui_input_adapter.cpp.obj
+[100/284] Building CXX object CMakeFiles/presentation_regression.dir/tests/presentation_test.cpp.obj
+[101/284] Building CXX object CMakeFiles/dungeon_combat_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/keyboard_matrix.cpp.obj
+[102/284] Building CXX object CMakeFiles/item_parity_tests.dir/tests/item_parity_test.cpp.obj
+[103/284] Building CXX object CMakeFiles/direct_troll_handoff_regression.dir/tests/direct_troll_handoff_test.cpp.obj
+[104/284] Building CXX object CMakeFiles/openu5_core.dir/src/save_core.cpp.obj
+[105/284] Building CXX object CMakeFiles/alpha_runtime_integration_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp.obj
+[106/284] Building CXX object CMakeFiles/combat_parity_tests.dir/tests/combat_parity_test.cpp.obj
+[107/284] Building CXX object CMakeFiles/alpha_runtime_integration_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/input_controller.cpp.obj
+[108/284] Building CXX object CMakeFiles/openu5_core.dir/src/persistence.cpp.obj
+[109/284] Building CXX object CMakeFiles/travel_parity_tests.dir/tests/travel_parity_test.cpp.obj
+[110/284] Building CXX object CMakeFiles/alpha_runtime_integration_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/tdeck_board_host_stub.cpp.obj
+[111/284] Building CXX object CMakeFiles/alpha_runtime_integration_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/ui_input_adapter.cpp.obj
+[112/284] Building CXX object CMakeFiles/alpha_runtime_integration_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/keyboard_matrix.cpp.obj
+[113/284] Building CXX object CMakeFiles/alpha_runtime_integration_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/alpha_save_host_stub.cpp.obj
+[114/284] Building CXX object CMakeFiles/alpha_runtime_integration_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp.obj
+[115/284] Building CXX object CMakeFiles/persistence_driver.dir/tests/persistence_driver.cpp.obj
+[116/284] Building CXX object CMakeFiles/action_feedback_regression.dir/tests/action_feedback_test.cpp.obj
+[117/284] Building CXX object CMakeFiles/batch12b_hardware_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/asset_pack.cpp.obj
+[118/284] Building CXX object CMakeFiles/batch21a_dungeon_room_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/tdeck_board_host_stub.cpp.obj
+[119/284] Building CXX object CMakeFiles/batch21a_dungeon_room_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp.obj
+[120/284] Building CXX object CMakeFiles/alpha_runtime_integration_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp.obj
+[121/284] Building CXX object CMakeFiles/batch21a_dungeon_room_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/input_controller.cpp.obj
+[122/284] Building CXX object CMakeFiles/ui_mode_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/ui_mode_test.cpp.obj
+[123/284] Building CXX object CMakeFiles/dialogue_parity_tests.dir/tests/dialogue_parity_test.cpp.obj
+[124/284] Building CXX object CMakeFiles/advanced_combat_parity_tests.dir/tests/advanced_combat_parity_test.cpp.obj
+[125/284] Building CXX object CMakeFiles/batch12b_hardware_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/native_renderer.cpp.obj
+[126/284] Building CXX object CMakeFiles/openu5_core.dir/src/combat.cpp.obj
+[127/284] Building CXX object CMakeFiles/alpha_runtime_integration_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/alpha_runtime_integration_test.cpp.obj
+[128/284] Building CXX object CMakeFiles/dungeon_input_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/dungeon_input_test.cpp.obj
+[129/284] Building CXX object CMakeFiles/batch21a_dungeon_room_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/ui_input_adapter.cpp.obj
+[130/284] Building CXX object CMakeFiles/alpha_runtime_integration_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/asset_pack.cpp.obj
+[131/284] Building CXX object CMakeFiles/batch12b_hardware_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/dungeon_art_cache.cpp.obj
+[132/284] Building CXX object CMakeFiles/batch12b_hardware_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_resources.cpp.obj
+[133/284] Building CXX object CMakeFiles/batch21a_dungeon_room_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/keyboard_matrix.cpp.obj
+[134/284] Building CXX object CMakeFiles/batch12b_hardware_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/batch12b_hardware_test.cpp.obj
+[135/284] Building CXX object CMakeFiles/batch21a_dungeon_room_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/alpha_save_host_stub.cpp.obj
+[136/284] Building CXX object CMakeFiles/batch21a_dungeon_room_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp.obj
+[137/284] Building CXX object CMakeFiles/batch14_zstats_runtime_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp.obj
+[138/284] Building CXX object CMakeFiles/batch14_zstats_runtime_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/input_controller.cpp.obj
+[139/284] Linking CXX static library libopenu5_core.a
+[140/284] Building CXX object CMakeFiles/batch14_zstats_runtime_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/ui_input_adapter.cpp.obj
+[141/284] Building CXX object CMakeFiles/alpha_runtime_integration_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_resources.cpp.obj
+[142/284] Building CXX object CMakeFiles/alpha_runtime_integration_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/dungeon_art_cache.cpp.obj
+[143/284] Building CXX object CMakeFiles/batch14_zstats_runtime_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/tdeck_board_host_stub.cpp.obj
+[144/284] Building CXX object CMakeFiles/alpha_runtime_integration_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/native_renderer.cpp.obj
+[145/284] Building CXX object CMakeFiles/alpha_runtime_integration_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_dialogue.cpp.obj
+[146/284] Building CXX object CMakeFiles/batch14_zstats_runtime_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/keyboard_matrix.cpp.obj
+[147/284] Building CXX object CMakeFiles/batch21a_dungeon_room_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp.obj
+[148/284] Building CXX object CMakeFiles/batch18_well_ceremony_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp.obj
+[149/284] Building CXX object CMakeFiles/batch14_zstats_runtime_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/alpha_save_host_stub.cpp.obj
+[150/284] Building CXX object CMakeFiles/dungeon_combat_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/dungeon_combat_test.cpp.obj
+[151/284] Building CXX object CMakeFiles/batch14_zstats_runtime_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp.obj
+[152/284] Building CXX object CMakeFiles/batch18_well_ceremony_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/input_controller.cpp.obj
+[153/284] Building CXX object CMakeFiles/batch21a_dungeon_room_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/asset_pack.cpp.obj
+[154/284] Building CXX object CMakeFiles/batch18_well_ceremony_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/ui_input_adapter.cpp.obj
+[155/284] Building CXX object CMakeFiles/batch18_well_ceremony_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/tdeck_board_host_stub.cpp.obj
+[156/284] Building CXX object CMakeFiles/batch21a_dungeon_room_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_dialogue.cpp.obj
+[157/284] Building CXX object CMakeFiles/batch18_well_ceremony_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/keyboard_matrix.cpp.obj
+[158/284] Building CXX object CMakeFiles/batch21a_dungeon_room_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/dungeon_art_cache.cpp.obj
+[159/284] Building CXX object CMakeFiles/batch18_well_ceremony_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/alpha_save_host_stub.cpp.obj
+[160/284] Building CXX object CMakeFiles/batch21a_dungeon_room_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_resources.cpp.obj
+[161/284] Building CXX object CMakeFiles/batch14_zstats_runtime_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp.obj
+[162/284] Building CXX object CMakeFiles/batch21a_dungeon_room_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/native_renderer.cpp.obj
+[163/284] Building CXX object CMakeFiles/batch14_zstats_runtime_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/asset_pack.cpp.obj
+[164/284] Building CXX object CMakeFiles/batch18_well_ceremony_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp.obj
+[165/284] Building CXX object CMakeFiles/batch19_command_char_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp.obj
+[166/284] Building CXX object CMakeFiles/batch14_zstats_runtime_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/batch14_zstats_runtime_test.cpp.obj
+[167/284] Building CXX object CMakeFiles/batch19_command_char_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/input_controller.cpp.obj
+[168/284] Building CXX object CMakeFiles/gameplay_driver.dir/tests/gameplay_driver.cpp.obj
+[169/284] Building CXX object CMakeFiles/batch14_zstats_runtime_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/dungeon_art_cache.cpp.obj
+[170/284] Building CXX object CMakeFiles/batch18_well_ceremony_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp.obj
+[171/284] Building CXX object CMakeFiles/batch14_zstats_runtime_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_dialogue.cpp.obj
+[172/284] Building CXX object CMakeFiles/batch19_command_char_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/ui_input_adapter.cpp.obj
+[173/284] Building CXX object CMakeFiles/batch14_zstats_runtime_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_resources.cpp.obj
+[174/284] Building CXX object CMakeFiles/batch14_zstats_runtime_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/native_renderer.cpp.obj
+[175/284] Building CXX object CMakeFiles/batch19_command_char_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/keyboard_matrix.cpp.obj
+[176/284] Building CXX object CMakeFiles/batch19_command_char_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/tdeck_board_host_stub.cpp.obj
+[177/284] Building CXX object CMakeFiles/batch18_well_ceremony_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/asset_pack.cpp.obj
+[178/284] Building CXX object CMakeFiles/batch18_well_ceremony_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/batch18_well_ceremony_test.cpp.obj
+[179/284] Building CXX object CMakeFiles/batch19_command_char_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/alpha_save_host_stub.cpp.obj
+[180/284] Building CXX object CMakeFiles/batch19_command_char_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp.obj
+[181/284] Building CXX object CMakeFiles/batch18_well_ceremony_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/dungeon_art_cache.cpp.obj
+[182/284] Building CXX object CMakeFiles/batch18_well_ceremony_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/native_renderer.cpp.obj
+[183/284] Building CXX object CMakeFiles/batch18_well_ceremony_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_resources.cpp.obj
+[184/284] Building CXX object CMakeFiles/batch18_well_ceremony_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_dialogue.cpp.obj
+[185/284] Building CXX object CMakeFiles/batch19_command_char_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp.obj
+[186/284] Building CXX object CMakeFiles/batch14_zstats_model_tests.dir/tests/batch14_zstats_model_test.cpp.obj
+[187/284] Building CXX object CMakeFiles/batch19_command_char_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/asset_pack.cpp.obj
+[188/284] Building CXX object CMakeFiles/batch19_command_char_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/batch19_command_char_runtime_test.cpp.obj
+[189/284] Building CXX object CMakeFiles/batch3_group_a_tests.dir/tests/batch3_group_a_test.cpp.obj
+[190/284] Building CXX object CMakeFiles/batch21a_dungeon_room_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/batch21a_dungeon_room_test.cpp.obj
+[191/284] Building CXX object CMakeFiles/batch3_group_b_tests.dir/tests/batch3_group_b_test.cpp.obj
+[192/284] Building CXX object CMakeFiles/batch19_command_char_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_resources.cpp.obj
+[193/284] Building CXX object CMakeFiles/quest_driver.dir/tests/quest_driver.cpp.obj
+[194/284] Building CXX object CMakeFiles/alpha_resource_capacity_tests.dir/tests/alpha_resource_capacity_test.cpp.obj
+[195/284] Building CXX object CMakeFiles/batch19_command_char_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/dungeon_art_cache.cpp.obj
+[196/284] Building CXX object CMakeFiles/batch4_group_a_tests.dir/tests/batch4_group_a_test.cpp.obj
+[197/284] Building CXX object CMakeFiles/batch19_command_char_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/native_renderer.cpp.obj
+[198/284] Building CXX object CMakeFiles/batch19_command_char_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_dialogue.cpp.obj
+[199/284] Building CXX object CMakeFiles/batch4_group_b_tests.dir/tests/batch4_group_b_test.cpp.obj
+[200/284] Building CXX object CMakeFiles/alpha_runtime_integration_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_runtime.cpp.obj
+[201/284] Building CXX object CMakeFiles/batch3_group_c_tests.dir/tests/batch3_group_c_test.cpp.obj
+[202/284] Building CXX object CMakeFiles/batch7b_tests.dir/tests/batch7b_test.cpp.obj
+[203/284] Linking CXX executable frontend_tests.exe
+[204/284] Linking CXX executable ui_session_tests.exe
+[205/284] Linking CXX executable debug_labels_tests.exe
+[206/284] Linking CXX executable display_names_tests.exe
+[207/284] Linking CXX executable measure_ui_sizes.exe
+[208/284] Linking CXX executable ui_host_harness.exe
+[209/284] Linking CXX executable ui_debug_menu_tests.exe
+[210/284] Linking CXX executable debug_map_picker_tests.exe
+[211/284] Linking CXX executable debug_developer_tests.exe
+[212/284] Linking CXX executable gameplay_integration_tests.exe
+[213/284] Linking CXX executable look_sign_tests.exe
+[214/284] Building CXX object CMakeFiles/batch21a_dungeon_room_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_runtime.cpp.obj
+[215/284] Linking CXX executable gameplay_driver.exe
+[216/284] Linking CXX executable movement_flow_parity_tests.exe
+[217/284] Linking CXX executable quest_search_tests.exe
+[218/284] Linking CXX executable quest_driver.exe
+[219/284] Building CXX object CMakeFiles/batch5_tests.dir/tests/batch5_test.cpp.obj
+[220/284] Building CXX object CMakeFiles/batch17_theft_watchdog_tests.dir/tests/batch17_theft_watchdog_test.cpp.obj
+[221/284] Linking CXX executable shop_parity_tests.exe
+[222/284] Building CXX object CMakeFiles/batch19_command_char_tests.dir/tests/batch19_command_char_test.cpp.obj
+[223/284] Linking CXX executable core_parity_tests.exe
+[224/284] Linking CXX executable dialogue_adapter_tests.exe
+[225/284] Linking CXX executable shop_flow_tests.exe
+[226/284] Linking CXX executable shop_adapter_tests.exe
+[227/284] Building CXX object CMakeFiles/batch14_zstats_runtime_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_runtime.cpp.obj
+[228/284] Linking CXX executable movement_regression.exe
+[229/284] Linking CXX executable persistence_driver.exe
+[230/284] Linking CXX executable dialogue_parity_tests.exe
+[231/284] Linking CXX executable world_flow_adapter_tests.exe
+[232/284] Linking CXX executable transport_flow_parity_tests.exe
+[233/284] Building CXX object CMakeFiles/batch45b_tests.dir/tests/batch45b_test.cpp.obj
+[234/284] Building CXX object CMakeFiles/batch15_sacrifice_tests.dir/tests/batch15_sacrifice_test.cpp.obj
+[235/284] Linking CXX executable magic_parity_tests.exe
+[236/284] Linking CXX executable dungeon_parity_tests.exe
+[237/284] Linking CXX executable combat_parity_tests.exe
+[238/284] Linking CXX executable world_flow_parity_tests.exe
+[239/284] Linking CXX executable dungeon_flow_parity_tests.exe
+[240/284] Linking CXX executable item_parity_tests.exe
+[241/284] Linking CXX executable advanced_combat_parity_tests.exe
+[242/284] Linking CXX executable command_parity_tests.exe
+[243/284] Building CXX object CMakeFiles/batch12_combat_field_tests.dir/tests/batch12_combat_field_test.cpp.obj
+[244/284] Linking CXX executable dungeon_art_regression.exe
+[245/284] Linking CXX executable travel_parity_tests.exe
+[246/284] Linking CXX executable dungeon_view_regression.exe
+[247/284] Linking CXX executable presentation_regression.exe
+[248/284] Linking CXX executable input_regression.exe
+[249/284] Linking CXX executable ui_mode_regression.exe
+[250/284] Building CXX object CMakeFiles/batch18_well_ceremony_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_runtime.cpp.obj
+[251/284] Linking CXX executable dungeon_input_regression.exe
+[252/284] Linking CXX executable gem_view_regression.exe
+[253/284] Linking CXX executable alpha_runtime_integration_regression.exe
+[254/284] Linking CXX executable batch14_zstats_runtime_regression.exe
+[255/284] Linking CXX executable batch21a_dungeon_room_regression.exe
+[256/284] Linking CXX executable combat_escape_regression.exe
+[257/284] Linking CXX executable combat_loot_open_regression.exe
+[258/284] Linking CXX executable batch14_zstats_model_tests.exe
+[259/284] Linking CXX executable direct_troll_handoff_regression.exe
+[260/284] Linking CXX executable alpha_resource_capacity_tests.exe
+[261/284] Linking CXX executable batch12b_hardware_regression.exe
+[262/284] Linking CXX executable action_feedback_regression.exe
+[263/284] Linking CXX executable dungeon_combat_regression.exe
+[264/284] Linking CXX executable batch3_group_b_tests.exe
+[265/284] Linking CXX executable batch3_group_a_tests.exe
+[266/284] Building CXX object CMakeFiles/batch13_tests.dir/tests/batch13_test.cpp.obj
+[267/284] Linking CXX executable batch18_well_ceremony_regression.exe
+[268/284] Building CXX object CMakeFiles/blackthorn_scene_tests.dir/tests/blackthorn_scene_test.cpp.obj
+[269/284] Linking CXX executable batch4_group_b_tests.exe
+[270/284] Linking CXX executable batch3_group_c_tests.exe
+[271/284] Linking CXX executable batch4_group_a_tests.exe
+[272/284] Linking CXX executable batch5_tests.exe
+[273/284] Linking CXX executable batch12_combat_field_tests.exe
+[274/284] Linking CXX executable batch7b_tests.exe
+[275/284] Linking CXX executable batch15_sacrifice_tests.exe
+[276/284] Linking CXX executable batch17_theft_watchdog_tests.exe
+[277/284] Linking CXX executable batch19_command_char_tests.exe
+[278/284] Linking CXX executable batch45b_tests.exe
+[279/284] Linking CXX executable batch13_tests.exe
+[280/284] Building CXX object CMakeFiles/batch19_command_char_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_runtime.cpp.obj
+[281/284] Linking CXX executable blackthorn_scene_tests.exe
+[282/284] Linking CXX executable batch19_command_char_regression.exe
+[283/284] Building CXX object CMakeFiles/turn_parity_tests.dir/tests/turn_parity_test.cpp.obj
+[284/284] Linking CXX executable turn_parity_tests.exe

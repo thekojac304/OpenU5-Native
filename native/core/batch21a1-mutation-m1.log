@@ -1,0 +1,250 @@
+Batch 9D -- non-overworld combat transition regressions
+
+D9D-1 -- overworld combat entry routes the next key to combat
+  GREEN  D9D-1a       overworld encounter starts combat
+      [overworld-entry   ] count=7 current=5 actor=player member=5 ai=0 beat=0 victory=0
+      [overworld-entry   ] ui.mode=Combat         ui.base=Combat         ctx.combat=1 ctx.dungeon=0 initialized=1 ended=0 dungeon.active=0 queued=0
+  GREEN  D9D-1b       UiSession is in UiMode::Combat after overworld entry
+  GREEN  D9D-1c       space translates
+  GREEN  D9D-1d       the next key reaches a combat command, not the world
+D9D-2 -- dungeon (A)ttack opens combat AND routes the next key to it
+  GREEN  D9D-2a       the party is in a corridor before the fight
+  GREEN  D9D-2b       (A)ttack translates
+      [dungeon-attack    ] count=8 current=5 actor=player member=5 ai=0 beat=0 victory=0
+      [dungeon-attack    ] ui.mode=Combat         ui.base=Combat         ctx.combat=1 ctx.dungeon=1 initialized=1 ended=0 dungeon.active=1 queued=0
+  GREEN  D9D-2c       (A)ttack against an adjacent wanderer starts a corridor combat
+  GREEN  D9D-2d       UiSession is in UiMode::Combat after dungeon entry
+      [dungeon-settled   ] count=8 current=5 actor=player member=5 ai=0 beat=0 victory=0
+      [dungeon-settled   ] ui.mode=Combat         ui.base=Combat         ctx.combat=1 ctx.dungeon=1 initialized=1 ended=0 dungeon.active=1 queued=0
+  GREEN  D9D-2e       the next key translates
+      [dungeon-after-key ] count=8 current=4 actor=player member=4 ai=0 beat=0 victory=0
+      [dungeon-after-key ] ui.mode=Combat         ui.base=Combat         ctx.combat=1 ctx.dungeon=1 initialized=1 ended=0 dungeon.active=1 queued=0
+  GREEN  D9D-2f       the next mapped combat key reaches the COMBAT handler
+  GREEN  D9D-2g       the next mapped combat key does NOT reach the dungeon handler
+D9D-3 -- a ladder into a combat room routes the next key to combat
+  GREEN  D9D-3a       the party starts in the corridor
+  GREEN  D9D-3b       (K)limb translates
+      [room-entry        ] count=8 current=5 actor=player member=5 ai=0 beat=0 victory=0
+      [room-entry        ] ui.mode=Combat         ui.base=Combat         ctx.combat=1 ctx.dungeon=1 initialized=1 ended=0 dungeon.active=1 queued=0
+  GREEN  D9D-3c       the ladder lands the party on floor 1
+  GREEN  D9D-3d       the room cell starts a ROOM combat
+  GREEN  D9D-3e       UiSession is in UiMode::Combat after room entry
+      [room-settled      ] count=8 current=5 actor=player member=5 ai=0 beat=0 victory=0
+      [room-settled      ] ui.mode=Combat         ui.base=Combat         ctx.combat=1 ctx.dungeon=1 initialized=1 ended=0 dungeon.active=1 queued=0
+  GREEN  D9D-3f       the next key translates
+      [room-after-key    ] count=8 current=4 actor=player member=4 ai=0 beat=0 victory=0
+      [room-after-key    ] ui.mode=Combat         ui.base=Combat         ctx.combat=1 ctx.dungeon=1 initialized=1 ended=0 dungeon.active=1 queued=0
+  GREEN  D9D-3g       the next mapped combat key reaches the COMBAT handler
+  GREEN  D9D-3h       the next mapped combat key does NOT reach the dungeon handler
+D9D-4 -- the combat command set works after a dungeon entry
+  GREEN  D9D-4a       corridor combat is live
+  GREEN  D9D-4b       (A)ttack opens the combat aim reticle
+  GREEN  D9D-4c       cancelling the reticle returns to Combat, not Dungeon
+  GREEN  D9D-4d       a direction is a combat MOVE while combat is live
+D9D-5 -- combat exit restores dungeon mode and immediate input
+  GREEN  D9D-5a       corridor combat is live
+  GREEN  D9D-5a2      the corridor fight is not stuck on entry
+      [after-escape      ] count=8 current=-1 actor=NULL member=-1 ai=0 beat=0 victory=0
+      [after-escape      ] ui.mode=Dungeon        ui.base=Dungeon        ctx.combat=0 ctx.dungeon=1 initialized=0 ended=1 dungeon.active=1 queued=0
+  GREEN  D9D-5b       walking the party off the arena edge ends the corridor fight
+  GREEN  D9D-5c       the dungeon session survives the fight
+  GREEN  D9D-5d       UiSession returns to UiMode::Dungeon
+  GREEN  D9D-5e       the first key after the fight translates
+  GREEN  D9D-5f       the FIRST key after combat reaches the dungeon -- no wake-up press
+D9D-6 -- room combat exit restores dungeon mode and immediate input
+  GREEN  D9D-6a       room combat is live
+  GREEN  D9D-6a2      the room fight is not stuck on entry
+      [after-room-escape ] count=8 current=-1 actor=NULL member=-1 ai=0 beat=0 victory=0
+      [after-room-escape ] ui.mode=Dungeon        ui.base=Dungeon        ctx.combat=0 ctx.dungeon=1 initialized=0 ended=1 dungeon.active=1 queued=0
+  GREEN  D9D-6b       the room fight ends
+  GREEN  D9D-6c       the party is back in the dungeon in UiMode::Dungeon
+  GREEN  D9D-6d       the FIRST key after the room reaches the dungeon
+D9D-7 -- an ambush during a move routes the next key to combat
+      [ambush            ] count=8 current=5 actor=player member=5 ai=0 beat=0 victory=0
+      [ambush            ] ui.mode=Combat         ui.base=Combat         ctx.combat=1 ctx.dungeon=1 initialized=1 ended=0 dungeon.active=1 queued=0
+  GREEN  D9D-7a       the wanderer's ambush starts a corridor combat with no key of its own
+  GREEN  D9D-7b       UiSession is in UiMode::Combat after an ambush
+  GREEN  D9D-7c       the ambush fight is not stuck
+  GREEN  D9D-7d       the next key after an ambush reaches the COMBAT handler
+D9D-8 -- no dungeon modal survives combat entry
+  GREEN  D9D-8a       (S)earch opens the dungeon Dir- prompt
+  GREEN  D9D-8b       answering Dir- closes the dungeon prompt before dispatch
+      [attack-after-prompt] count=7 current=5 actor=player member=5 ai=0 beat=0 victory=0
+      [attack-after-prompt] ui.mode=Combat         ui.base=Combat         ctx.combat=1 ctx.dungeon=1 initialized=1 ended=0 dungeon.active=1 queued=0
+  GREEN  D9D-8c       combat entry after a dungeon prompt still lands in UiMode::Combat
+  GREEN  D9D-8d       no dungeon TargetSelection survives into combat
+D9D-9 -- the dungeon prompt mirrors reach UiSession on the device path
+  GREEN  D9D-9a       the per-input refresh publishes the Klimb up/down choice
+  GREEN  D9D-9b       the per-input refresh publishes the fountain-underfoot fact
+D9D-10 -- developer teleport is refused while an arena is live
+  GREEN  D9D-10a      corridor combat is live
+      [after-teleport-out] count=8 current=5 actor=player member=5 ai=0 beat=0 victory=0
+      [after-teleport-out] ui.mode=Combat         ui.base=Combat         ctx.combat=1 ctx.dungeon=1 initialized=1 ended=0 dungeon.active=1 queued=0
+  GREEN  D9D-10b      teleport OUT of a live arena is refused as ActiveCombat
+  GREEN  D9D-10c      the refused teleport leaves the dungeon session intact
+  GREEN  D9D-10d      the refused teleport mutates no world position
+  GREEN  D9D-10e      the arena is untouched and still playable after the refusal
+  GREEN  D9D-10f      a same-dungeon teleport is refused while an arena is live
+  GREEN  D9D-10g      the refused same-dungeon teleport mutates no dungeon position
+  GREEN  D9D-10h      the fight ends normally
+  GREEN  D9D-10i      teleport works again once combat is over -- the guard is not a ban
+D9D-11 -- a stranded arena closes itself instead of wedging
+  GREEN  D9D-11a      corridor combat is live
+      [stranded          ] count=8 current=-1 actor=NULL member=-1 ai=0 beat=0 victory=0
+      [stranded          ] ui.mode=Combat         ui.base=Combat         ctx.combat=1 ctx.dungeon=1 initialized=1 ended=0 dungeon.active=1 queued=0
+  GREEN  D9D-11b      the arena is live but can never schedule another actor
+      [after-service     ] count=8 current=-1 actor=NULL member=-1 ai=0 beat=0 victory=0
+      [after-service     ] ui.mode=Dungeon        ui.base=Dungeon        ctx.combat=0 ctx.dungeon=1 initialized=0 ended=1 dungeon.active=1 queued=0
+  GREEN  D9D-11c      the service tick closes the stranded arena through normal teardown
+  GREEN  D9D-11d      the party is returned to the dungeon
+  GREEN  D9D-11e      dungeon input works immediately after the recovery
+
+Batch 9E -- dungeon combat-room escape (adjudication + coverage)
+
+B9E-0 -- the authored sealed-room census and the hardware room
+      sealed room cells=14  with an in-arena klimb/grate escape=12
+      without one: 40:2:(5,5) r6 40:7:(5,7) r15 
+  GREEN  B9E-0a       DUNGEON.DAT holds exactly 14 sealed room cells
+  GREEN  B9E-0b       12 of the 14 carry an authored in-arena klimb/grate escape on their own board
+  GREEN  B9E-0c       and the two that do not are Doom room 6 and the Doom ENDGAME room
+      Deceit 1 (5,3): cell=F0 ladder above=20 board=16 chests=2 slimes=11 0xC8@(5,2)=1
+  GREEN  B9E-0d       Deceit 33:1:(5,3) is authored room 0 (0xF0)
+  GREEN  B9E-0e       and Deceit floor 0 (5,3) is the 0x20 LadderDown above it
+  GREEN  B9E-0f       its board is the 'slimes and a chest' room the hardware session used
+  GREEN  B9E-0g       and the board carries the authored 0xC8 up-ladder at (5,2)
+B9E-1 -- Deceit room 0: the edge-walk exit returns to the sealed cell, as it must
+      [deceit-room-entry   ] dungeon=33 floor=1 x=5 y=3 facing=0 cell=F0 nbrs=0 delta=0 victory=0
+  GREEN  B9E-1a       the ladder down from Deceit floor 0 (5,3) starts the authored room fight
+      [deceit-edge-walk    ] dungeon=33 floor=1 x=5 y=3 facing=0 cell=F0 nbrs=0 delta=0 victory=0
+  GREEN  B9E-1b       the party leaves by the board edge
+  GREEN  B9E-1c       an edge-walk sets NO escape_floor_delta -- the border never moves the party
+  GREEN  B9E-1d       so the party is restored to the room-entry cell, 33:1:(5,3)
+  GREEN  B9E-1e       the fled room keeps its authored 0xF0 -- it is not cleared
+  GREEN  B9E-1f       and the room-cleared bit stays unset
+  GREEN  B9E-1g       all four dungeon neighbours are wall -- the sealed cell of the report
+  GREEN  B9E-1h       no dungeon-side Klimb choice is offered on an uncleared room cell
+  GREEN  B9E-1i       EXPECTED: dungeon-side (K)limb does not lift the party out of a FLED room
+  GREEN  B9E-1j       EXPECTED: ordinary movement stays Blocked! -- this is 1988, not a defect
+  GREEN  B9E-1k       the dungeon session and UiMode are intact throughout
+B9E-2 -- Deceit room 0: the authored in-arena (K)limb escape
+  GREEN  B9E-2a       the same authored room fight is live
+  GREEN  B9E-2b       the arena carries the authored 0xC8 up-ladder at board (5,2)
+      [deceit-in-arena-K   ] dungeon=33 floor=0 x=5 y=3 facing=0 cell=20 nbrs=1 delta=-1 victory=0
+  GREEN  B9E-2c       combat ends without a victory
+  GREEN  B9E-2d       the 0xC8 tile sets escape_floor_delta = -1 (Klimb-Up!)
+  GREEN  B9E-2e       dungeon_combat_return() applies that delta on a FLEE: floor 1 -> 0
+  GREEN  B9E-2f       x/y are the saved room-entry coordinates, restored unchanged
+  GREEN  B9E-2g       so the party stands back on the very LadderDown cell they came down
+  GREEN  B9E-2h       the room is still UNCLEARED -- fleeing wins nothing
+  GREEN  B9E-2i       and its cleared bit stays unset
+  GREEN  B9E-2j       the ladder cell is served by the authored 0xD0 secret door to the south
+  GREEN  B9E-2j2      with that door found, the party is back somewhere navigable
+  GREEN  B9E-2j3      and can walk back out through it -- the escape is a real exit
+  GREEN  B9E-2k       UiSession is back in UiMode::Dungeon
+  GREEN  B9E-2l       and the FIRST key after the escape reaches the dungeon
+B9E-3 -- Destard room 0: the room-gated 0x86 grate escape goes DOWN
+  GREEN  B9E-3a       Destard floor 1 (3,1) is the authored 0x18 LadderUp
+  GREEN  B9E-3b       klimbing UP lands in the authored room on floor 0 and starts its fight
+  GREEN  B9E-3c       the arena carries the authored 0x86 grate
+  GREEN  B9E-3d       and no 0xC8/0xC9 -- so a pass here really is the grate arm
+      [destard-grate       ] dungeon=35 floor=1 x=3 y=1 facing=0 cell=18 nbrs=1 delta=1 victory=0
+  GREEN  B9E-3e       combat ends without a victory
+  GREEN  B9E-3f       the grate sets escape_floor_delta = +1 (Klimb-Down!), like 0xC9
+  GREEN  B9E-3g       the party drops back to floor 1, the way they came up
+  GREEN  B9E-3h       onto the same 0x18 LadderUp cell
+  GREEN  B9E-3i       the fled room stays uncleared here too
+  GREEN  B9E-3j       first key after the escape reaches the dungeon
+B9E-4 -- Deceit room 0: victory clears the room, fleeing does not
+  GREEN  B9E-4a       the authored room fight is live
+      [deceit-victory      ] dungeon=33 floor=1 x=5 y=3 facing=0 cell=A0 nbrs=0 delta=0 victory=1
+  GREEN  B9E-4b       the room is won
+  GREEN  B9E-4c       victory restores the same entry cell -- the border moves nobody here either
+  GREEN  B9E-4d       but the victory latch degrades the authored cell 0xF0 -> 0xA0
+  GREEN  B9E-4e       and records the room as cleared
+  GREEN  B9E-4f       the authored geometry is untouched -- the cell is still walled in
+  GREEN  B9E-4g       the LadderDown above is still there
+  GREEN  B9E-4h       and on a CLEARED room the port-authorized ladder-pair de-seal lifts the party out
+  GREEN  B9E-4i       first key after the return reaches the dungeon
+  GREEN  B9E-4j       klimbing back down into a CLEARED room starts no fight
+B9E-5 -- a fled room is still owed a fight
+  GREEN  B9E-5a       the party klimbed out of the room without clearing it
+  GREEN  B9E-5b       re-entering an UNCLEARED room fights it again
+B9E-6 -- an unentered sealed room is not klimbable
+  GREEN  B9E-6a       33:2:(1,1) is authored room 2, sealed and unfought
+  GREEN  B9E-6b       no fight has happened on this cell
+  GREEN  B9E-6c       it is walled in
+  GREEN  B9E-6d       and a ladder pair DOES straddle it, so the gate is what holds
+  GREEN  B9E-6e       (K)limb still refuses -- an unfought room is not a staircase
+  GREEN  B9E-6f       and movement stays blocked
+B9E-7 -- corridor returns keep their own, different rules
+  GREEN  B9E-7a       the ambush opens a CORRIDOR fight
+  GREEN  B9E-7b       an ambush escape steps one cell through the exit border
+  GREEN  B9E-7c       and the corridor return re-arms the wanderer
+  GREEN  B9E-7d       (A)ttack opens a CORRIDOR fight
+  GREEN  B9E-7e       an attack escape does NOT reposition the party
+
+Batch 21A.1 -- the Deceit L1 -> Klimb Down -> L8 report (adjudication)
+
+B21A1-0 -- the authored Deceit pit shaft and the room it lands in
+  GREEN  B21A1-0a     Deceit floor 0 (1,3) is the authored 0x60 -- a Trap cell, not a ladder
+      shaft cells floors 1..6 at (1,3): 6  floor 7 cell=0xFA
+  GREEN  B21A1-0b     floors 1..6 at (1,3) are ALL chaining pit traps -- a six-deep shaft
+  GREEN  B21A1-0c     and floor 7 (1,3) is authored room 10 (0xFA) -- what the shaft lands on
+  GREEN  B21A1-0d     DUNGEON.CBT #10 places four sprite-0x88 units -- enemy def 18, the Sea Serpent
+  GREEN  B21A1-0e     and initialize_combat's own sprite->def rule resolves 0x88 to def 18
+  GREEN  B21A1-0f     room 10's board carries NO in-arena klimb/grate tile -- leaving it moves no floor
+      floor-0 cells whose Klimb Down reaches floor 7: 1  (1,3) 
+  GREEN  B21A1-0g     exactly one Deceit floor-0 cell reaches floor 7 in a single Klimb Down: (1,3)
+B21A1-1 -- Deceit L1 (1,3): Klimb Down falls the authored shaft into room 10
+  GREEN  B21A1-1a     the HUD reads L1 before the klimb -- floor index 0, as the reporter saw
+  GREEN  B21A1-1b     the party stands on the authored 0x60 Trap cell
+  GREEN  B21A1-1c     a Trap cell is down-only, so (K) resolves with no U/D prompt
+      [shaft-klimb-down    ] dungeon=33 floor=0 x=1 y=3 facing=0 cell=60 nbrs=3 delta=0 victory=0
+  RED    B21A1-1d     one Klimb Down ends on floor index 7 -- the pit chain, not the ladder
+  RED    B21A1-1e     all six shaft pits were consumed: exactly six falls, floor 1 -> 7
+  GREEN  B21A1-1f     the fall is straight down -- (1,3) throughout
+  RED    B21A1-1g     and the landing cell's room fight opens immediately
+  RED    B21A1-1h     the arena holds the board's four def-18 Sea Serpents -- the reported enemy
+  RED    B21A1-1i     so the HUD legitimately reads L8: floor index 7 + 1, not a clamp
+B21A1-2 -- Deceit room 10: leaving without a victory keeps floor 7
+  RED    B21A1-2a     the shaft fight is live on floor 7
+      [room-10-flee        ] dungeon=33 floor=0 x=1 y=3 facing=0 cell=60 nbrs=3 delta=0 victory=0
+  GREEN  B21A1-2b     the party leaves by the board edge -- BATTLE IS LOST!, the reporter's message
+  GREEN  B21A1-2c     room 10 has no in-arena klimb tile, so escape_floor_delta stays 0
+  RED    B21A1-2d     dungeon_combat_return() restores the room-entry cell, 33:7:(1,3)
+  RED    B21A1-2e     the 3D view comes back on L8 -- the authored result, not a corruption
+  GREEN  B21A1-2f     the fled room keeps its authored 0xFA -- it is not cleared
+  GREEN  B21A1-2g     the dungeon session and UiMode survive the whole trip
+B21A1-3 -- no wrap: the floor is an honest 7, never -1/0xff/255
+      floor byte = 0 (0x00)  hud = L1
+  RED    B21A1-3a     the stored floor byte is exactly 7 -- not 255, not 0xff, not a masked -1
+  RED    B21A1-3b     so the HUD level arithmetic yields 8 directly, with nothing to clamp
+  GREEN  B21A1-3c     movement still reaches the dungeon -- the floor>7 gate in the command path passes
+  GREEN  B21A1-3d     and it is not refused as InvalidContext, which a wrapped floor would force
+  GREEN  B21A1-3e     floor 7 (1,4) is authored corridor -- the party is not sealed in
+  GREEN  B21A1-3f     while (1,2) is authored wall -- the reported Blocked! going north
+B21A1-4 -- control: the (5,3) LadderDown still moves exactly one floor
+      [ladder-room-control ] dungeon=33 floor=1 x=5 y=3 facing=0 cell=F0 nbrs=0 delta=0 victory=0
+  GREEN  B21A1-4a     a LadderDown is one floor and no more: floor 0 -> 1
+  GREEN  B21A1-4b     and no pit anywhere was consumed -- the shaft is specific to (1,3)
+  GREEN  B21A1-4c     room 0's fight opens as before
+  GREEN  B21A1-4d     the HUD reads L2 -- the ordinary one-level result Batch 9E already pins
+B21A1-5 -- control: room 0's authored in-arena Klimb still returns to floor 0
+  GREEN  B21A1-5a     room 0's fight is live on floor 1
+  GREEN  B21A1-5b     its board carries the authored 0xC8 up-ladder
+      [in-arena-klimb-control] dungeon=33 floor=0 x=5 y=3 facing=0 cell=20 nbrs=1 delta=-1 victory=0
+  GREEN  B21A1-5c     0xC8 sets escape_floor_delta = -1, unchanged by this batch
+  GREEN  B21A1-5d     and dungeon_combat_return() applies it: floor 1 -> 0
+  GREEN  B21A1-5e     the HUD is back to L1 -- the authored escape is intact
+B21A1-6 -- why the standard entry looks different after the fall
+      [teleport-standard-entry] dungeon=33 floor=0 x=1 y=1 facing=1 cell=10 nbrs=1 delta=0 victory=0
+  GREEN  B21A1-6a     the developer teleport back to Deceit's standard entry succeeds
+  GREEN  B21A1-6b     it lands on the authored entrance stair, 33:0:(1,1)
+  GREEN  B21A1-6c     the HUD reads L1 again -- the entry level is correct and stable
+  GREEN  B21A1-6d     facing is preserved, as debug_map_picker documents for same-dungeon moves
+  GREEN  B21A1-6e     and it differs from the facing dungeon_load gave on first entry -- a different view
+  RED    B21A1-6f     the six consumed pits stay consumed -- the teleport does not reload the map
+      [second-klimb-down   ] dungeon=33 floor=0 x=1 y=3 facing=0 cell=60 nbrs=3 delta=0 victory=0
+  RED    B21A1-6g     so a SECOND Klimb Down at (1,3) now stops on floor 1 -- the shaft is spent
+
+169 checks, 12 failures

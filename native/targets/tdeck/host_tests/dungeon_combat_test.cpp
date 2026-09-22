@@ -43,6 +43,7 @@
 #include "openu5/debug_map_picker.h"
 #include "openu5/dungeon.h"
 #include "openu5/dungeon_encounters.h"
+#include "openu5/hud.h"
 #include "openu5/ui_session.h"
 
 #include <cstdio>
@@ -1457,6 +1458,368 @@ void b9e_7_corridor_return_unchanged() {
     }
 }
 
+// ===========================================================================
+// Batch 21A.1 -- the "Klimb Down from Deceit L1 came back on L8" report.
+// ADJUDICATION.
+//
+// Physical testing after Batch 21A reported, in this order: entered Deceit,
+// HUD read L1, the only apparent route was a ladder, (K)limb Down, a top-down
+// room board with "Water Serpent" enemies opened immediately, the party left
+// the room without winning, and the 3D view came back reading DECEIT L8 on a
+// corridor full of doors that was plainly not one level below L1.
+//
+// THAT IS THE AUTHORED OUTCOME.  There is no floor corruption anywhere in the
+// path -- no signed/unsigned slip, no 0xff or -1 sentinel, no wrap, no stale
+// snapshot.  The party really is on floor index 7, and L8 is the correct
+// rendering of 7.  What actually happened is a six-deep authored PIT SHAFT:
+//
+//   1. Deceit floor 0 (1,3) is authored 0x60 -- CellType Trap, sub 0.  Every
+//      trap cell is down-klimbable: caps() takes `t == 6`, which is exactly
+//      DUNGEON:0x1E79-0x1E8B ("escalera-abajo O ambas O hoyo (0x6)"), cloned
+//      in game/src/core/dungeon/dungeon.ts klimbCaps() as `cell.type ===
+//      CellType.Trap`.  So (K) resolves DOWN with no U/D prompt.
+//   2. level() steps to floor 1 and runs enter() on the DESTINATION cell,
+//      as change_level does (DUNGEON:0x1C6A, klimb() -> onEnterCell()).
+//      Deceit floor 1 (1,3) is 0x69 -- a pit trap.
+//   3. enter() therefore runs the pit chain (DUNGEON:0x0A4C, dungeon.ts
+//      pitFall()), which falls one floor per pit and KEEPS FALLING while it
+//      lands on another pit.  Deceit (1,3) is 0x61 on floors 2, 3, 4, 5 and 6.
+//      Six falls: floor 1 -> 7.  Each consumed pit is rewritten 0x6n -> 0x60.
+//   4. The chain stops on floor 7 (1,3) = 0xFA -- room 10, uncleared -- and
+//      the pit tail opens its fight, the same gate enter() uses.
+//   5. DUNGEON.CBT #10 holds four units with sprite 0x88.  initialize_combat
+//      resolves a sprite to (sprite - 0x40) / 4 = 18, and def 18 is the SEA
+//      SERPENT (game/src/core/world/enemies.ts:34, `def.tile = 0x140 +
+//      defIndex*4`).  That is the reporter's "Water Serpent".
+//   6. Room 10's board carries NO in-arena escape tile, so leaving it sets
+//      escape_floor_delta = 0 and dungeon_combat_return() moves no floor at
+//      all.  The party is left on floor 7 -- L8.
+//
+// So every one of the six observations is authored data doing its job, and
+// the one thing that WOULD be a defect -- a floor that left 0..7 -- provably
+// never happens.  These cases pin the whole trajectory so that it can never
+// be "fixed" into a clamp, and so that a real wrap would fail loudly.
+// ===========================================================================
+
+constexpr int kShaftX = 1, kShaftY = 3;          // Deceit's pit shaft column.
+constexpr int kShaftRoom = 10, kShaftRoomFloor = 7;
+constexpr int kSeaSerpentSprite = 0x88, kSeaSerpentDef = 18;
+
+const char *hud_level(const DungeonState &d) {
+    static char text[8];
+    const auto bands = hud_dungeon_bands(d, true);
+    std::snprintf(text, sizeof(text), "%s", bands.level);
+    return text;
+}
+
+// How many of the shaft's six pit cells have been consumed.  A consumed pit
+// keeps its CellType (6) and drops only the PitFall subtype: the write is
+// `0x60 | (cur & 8)`, i.e. the reference's `curSub & 0xf8`, which PRESERVES
+// the lit bit.  Deceit's floor-1 pit is 0x69, so it lands on 0x68, not 0x60 --
+// matching on the whole byte would quietly miss it.
+int consumed_shaft_cells(const DungeonState &d) {
+    int n = 0;
+    for (int f = 1; f <= 6; ++f) {
+        const uint8_t v = dungeon_cell(d, f, kShaftX, kShaftY);
+        if ((v >> 4) == 6 && (v & 7) == 0)
+            ++n;
+    }
+    return n;
+}
+
+// ---------------------------------------------------------------------------
+// B21A1-0  The authored census.  Evidence, not gameplay logic: this reads the
+//          shipped DUNGEON.DAT and DUNGEON.CBT bytes and nothing else.
+// ---------------------------------------------------------------------------
+void b21a1_0_pit_shaft_census(const Authored &a) {
+    std::printf("B21A1-0 -- the authored Deceit pit shaft and the room it lands in\n");
+    if (!a.ok) { expect(false, "B21A1-0", a.why); return; }
+
+    expect(a.cell(kDeceit, 0, kShaftX, kShaftY) == 0x60, "B21A1-0a",
+           "Deceit floor 0 (1,3) is the authored 0x60 -- a Trap cell, not a ladder");
+
+    int shaft = 0;
+    for (int f = 1; f <= 6; ++f) {
+        const uint8_t v = a.cell(kDeceit, f, kShaftX, kShaftY);
+        if ((v >> 4) == 6 && (v & 7) == 1) ++shaft;
+    }
+    std::printf("      shaft cells floors 1..6 at (1,3): %d  floor 7 cell=0x%02X\n",
+                shaft, a.cell(kDeceit, kShaftRoomFloor, kShaftX, kShaftY));
+    expect(shaft == 6, "B21A1-0b",
+           "floors 1..6 at (1,3) are ALL chaining pit traps -- a six-deep shaft");
+    expect(a.cell(kDeceit, kShaftRoomFloor, kShaftX, kShaftY) == 0xfa, "B21A1-0c",
+           "and floor 7 (1,3) is authored room 10 (0xFA) -- what the shaft lands on");
+
+    const auto &board = a.boards[size_t(dungeon_room_map(kDeceit, kShaftRoom))];
+    int serpents = 0;
+    for (int i = 0; i < board.map.unit_count; ++i)
+        if (board.sprites[i] == kSeaSerpentSprite) ++serpents;
+    expect(serpents == 4, "B21A1-0d",
+           "DUNGEON.CBT #10 places four sprite-0x88 units -- enemy def 18, the Sea Serpent");
+    expect((kSeaSerpentSprite - 0x40) / 4 == kSeaSerpentDef, "B21A1-0e",
+           "and initialize_combat's own sprite->def rule resolves 0x88 to def 18");
+    expect(count_tile(board.map, kLadderUpTile) == 0 &&
+               count_tile(board.map, kLadderDownTile) == 0 &&
+               count_tile(board.map, kGrateTile) == 0,
+           "B21A1-0f",
+           "room 10's board carries NO in-arena klimb/grate tile -- leaving it moves no floor");
+
+    // The route is unique: no other Deceit floor-0 cell can reach floor 7 in
+    // one (K)limb Down.  If a second one existed, the repro would be ambiguous.
+    int deep = 0;
+    std::string where;
+    for (int y = 0; y < 8; ++y)
+        for (int x = 0; x < 8; ++x) {
+            const int t = a.cell(kDeceit, 0, x, y) >> 4;
+            if (!(t == 2 || t == 3 || t == 6)) continue;      // caps(): down-capable
+            int f = 1;
+            uint8_t cur = a.cell(kDeceit, 1, x, y);
+            while ((cur >> 4) == 6 && (cur & 7) == 1 && f < 8) {
+                ++f;
+                if (f >= 8) break;
+                cur = a.cell(kDeceit, f, x, y);
+            }
+            if (f == kShaftRoomFloor) {
+                ++deep;
+                char buf[16];
+                std::snprintf(buf, sizeof(buf), "(%d,%d) ", x, y);
+                where += buf;
+            }
+        }
+    std::printf("      floor-0 cells whose Klimb Down reaches floor 7: %d  %s\n", deep,
+                where.c_str());
+    expect(deep == 1 && where == "(1,3) ", "B21A1-0g",
+           "exactly one Deceit floor-0 cell reaches floor 7 in a single Klimb Down: (1,3)");
+}
+
+// ---------------------------------------------------------------------------
+// B21A1-1  RED-A.  The hardware sequence, through the real device path:
+//          L1 -> (K)limb Down -> a room fight, six floors lower.
+// ---------------------------------------------------------------------------
+void b21a1_1_klimb_down_falls_to_floor_7(const Authored &a) {
+    std::printf("B21A1-1 -- Deceit L1 (1,3): Klimb Down falls the authored shaft into room 10\n");
+    if (!a.ok) { expect(false, "B21A1-1", a.why); return; }
+    auto r = std::make_unique<Runtime>();
+    r->install_authored(a, kDeceit, kShaftRoom);
+    r->enter_dungeon(kDeceit);
+    r->dungeon.pos.floor = 0;
+    r->put_at(kShaftX, kShaftY, DungeonFacing::North);
+
+    expect(std::string(hud_level(r->dungeon)) == "L1", "B21A1-1a",
+           "the HUD reads L1 before the klimb -- floor index 0, as the reporter saw");
+    expect(dungeon_cell(r->dungeon, 0, kShaftX, kShaftY) == 0x60, "B21A1-1b",
+           "the party stands on the authored 0x60 Trap cell");
+    expect(!dungeon_klimb_choice(r->g, r->dungeon), "B21A1-1c",
+           "a Trap cell is down-only, so (K) resolves with no U/D prompt");
+
+    r->press('k');
+    dump_dungeon("shaft-klimb-down", *r);
+
+    expect(r->dungeon.pos.floor == kShaftRoomFloor, "B21A1-1d",
+           "one Klimb Down ends on floor index 7 -- the pit chain, not the ladder");
+    expect(consumed_shaft_cells(r->dungeon) == 6, "B21A1-1e",
+           "all six shaft pits were consumed: exactly six falls, floor 1 -> 7");
+    expect(r->dungeon.pos.x == kShaftX && r->dungeon.pos.y == kShaftY, "B21A1-1f",
+           "the fall is straight down -- (1,3) throughout");
+    expect(r->c.combat && r->combat.room, "B21A1-1g",
+           "and the landing cell's room fight opens immediately");
+
+    int serpents = 0;
+    for (int i = 0; i < r->combat.count; ++i)
+        if (r->combat.actors[i].enemy && r->combat.actors[i].enemy->index == kSeaSerpentDef)
+            ++serpents;
+    expect(serpents == 4, "B21A1-1h",
+           "the arena holds the board's four def-18 Sea Serpents -- the reported enemy");
+    expect(std::string(hud_level(r->dungeon)) == "L8", "B21A1-1i",
+           "so the HUD legitimately reads L8: floor index 7 + 1, not a clamp");
+}
+
+// ---------------------------------------------------------------------------
+// B21A1-2  RED-B.  Leaving that room without winning returns the party to the
+//          landing cell on floor 7 -- it does not move the floor again.
+// ---------------------------------------------------------------------------
+void b21a1_2_room_10_flee_returns_to_floor_7(const Authored &a) {
+    std::printf("B21A1-2 -- Deceit room 10: leaving without a victory keeps floor 7\n");
+    if (!a.ok) { expect(false, "B21A1-2", a.why); return; }
+    auto r = std::make_unique<Runtime>();
+    r->install_authored(a, kDeceit, kShaftRoom);
+    r->enter_dungeon(kDeceit);
+    r->dungeon.pos.floor = 0;
+    r->put_at(kShaftX, kShaftY, DungeonFacing::North);
+    r->press('k');
+    expect(r->c.combat && r->combat.room && r->dungeon.pos.floor == kShaftRoomFloor, "B21A1-2a",
+           "the shaft fight is live on floor 7");
+
+    r->walk_party_off_north();
+    dump_dungeon("room-10-flee", *r);
+
+    expect(!r->c.combat && !r->combat.victory, "B21A1-2b",
+           "the party leaves by the board edge -- BATTLE IS LOST!, the reporter's message");
+    expect(r->combat.escape_floor_delta == 0, "B21A1-2c",
+           "room 10 has no in-arena klimb tile, so escape_floor_delta stays 0");
+    expect(r->dungeon.pos.floor == kShaftRoomFloor && r->dungeon.pos.x == kShaftX &&
+               r->dungeon.pos.y == kShaftY,
+           "B21A1-2d", "dungeon_combat_return() restores the room-entry cell, 33:7:(1,3)");
+    expect(std::string(hud_level(r->dungeon)) == "L8", "B21A1-2e",
+           "the 3D view comes back on L8 -- the authored result, not a corruption");
+    expect(dungeon_cell(r->dungeon, kShaftRoomFloor, kShaftX, kShaftY) == 0xfa, "B21A1-2f",
+           "the fled room keeps its authored 0xFA -- it is not cleared");
+    expect(r->dungeon.active && r->ui.mode() == UiMode::Dungeon, "B21A1-2g",
+           "the dungeon session and UiMode survive the whole trip");
+}
+
+// ---------------------------------------------------------------------------
+// B21A1-3  RED-C.  The floor never leaves 0..7.  This is the case that would
+//          catch the wrap/sentinel defect the report hypothesised, so it must
+//          fail loudly if one is ever introduced.
+// ---------------------------------------------------------------------------
+void b21a1_3_no_floor_wrap(const Authored &a) {
+    std::printf("B21A1-3 -- no wrap: the floor is an honest 7, never -1/0xff/255\n");
+    if (!a.ok) { expect(false, "B21A1-3", a.why); return; }
+    auto r = std::make_unique<Runtime>();
+    r->install_authored(a, kDeceit, kShaftRoom);
+    r->enter_dungeon(kDeceit);
+    r->dungeon.pos.floor = 0;
+    r->put_at(kShaftX, kShaftY, DungeonFacing::North);
+    r->press('k');
+    r->walk_party_off_north();
+
+    const unsigned floor = r->dungeon.pos.floor;
+    std::printf("      floor byte = %u (0x%02X)  hud = %s\n", floor, floor,
+                hud_level(r->dungeon));
+    expect(floor == 7, "B21A1-3a",
+           "the stored floor byte is exactly 7 -- not 255, not 0xff, not a masked -1");
+    expect(int(floor) + 1 == 8, "B21A1-3b",
+           "so the HUD level arithmetic yields 8 directly, with nothing to clamp");
+
+    // The decisive wrap detector: run_dungeon_command refuses EVERY command
+    // when pos.floor > 7.  A wrapped floor would make the dungeon unplayable,
+    // which is emphatically not what the hardware showed.
+    const int before = r->dungeon_dispatches;
+    r->ball(tdeck::RawInputKind::TrackballUp);
+    expect(r->dungeon_dispatches > before, "B21A1-3c",
+           "movement still reaches the dungeon -- the floor>7 gate in the command path passes");
+    expect(r->last_status != CommandStatus::InvalidContext, "B21A1-3d",
+           "and it is not refused as InvalidContext, which a wrapped floor would force");
+
+    // The landing cell is NOT sealed: (1,4) on floor 7 is corridor, so the
+    // party can walk out.  The reporter's "Blocked!" is the north wall at
+    // (1,2), which is authored wall.
+    expect(dungeon_cell(r->dungeon, kShaftRoomFloor, kShaftX, kShaftY + 1) == 0x00, "B21A1-3e",
+           "floor 7 (1,4) is authored corridor -- the party is not sealed in");
+    expect((dungeon_cell(r->dungeon, kShaftRoomFloor, kShaftX, kShaftY - 1) >> 4) == 11,
+           "B21A1-3f", "while (1,2) is authored wall -- the reported Blocked! going north");
+}
+
+// ---------------------------------------------------------------------------
+// B21A1-4  RED-D.  Control: the OTHER Deceit ladder-into-room transition is
+//          untouched.  (5,3) is a real 0x20 LadderDown and still moves exactly
+//          one floor, into room 0's slimes.
+// ---------------------------------------------------------------------------
+void b21a1_4_ladder_room_control(const Authored &a) {
+    std::printf("B21A1-4 -- control: the (5,3) LadderDown still moves exactly one floor\n");
+    if (!a.ok) { expect(false, "B21A1-4", a.why); return; }
+    auto r = std::make_unique<Runtime>();
+    r->install_authored(a, kDeceit, kDeceitRoom);
+    r->enter_dungeon(kDeceit);
+    r->dungeon.pos.floor = uint8_t(kDeceitLadderFloor);
+    r->reveal(kDeceitLadderFloor, kDeceitRoomX, kDeceitRoomY + 1);
+    r->put_at(kDeceitRoomX, kDeceitRoomY, DungeonFacing::North);
+    r->press('k');
+    dump_dungeon("ladder-room-control", *r);
+
+    expect(r->dungeon.pos.floor == kDeceitRoomFloor, "B21A1-4a",
+           "a LadderDown is one floor and no more: floor 0 -> 1");
+    expect(consumed_shaft_cells(r->dungeon) == 0, "B21A1-4b",
+           "and no pit anywhere was consumed -- the shaft is specific to (1,3)");
+    expect(r->c.combat && r->combat.room, "B21A1-4c", "room 0's fight opens as before");
+    expect(std::string(hud_level(r->dungeon)) == "L2", "B21A1-4d",
+           "the HUD reads L2 -- the ordinary one-level result Batch 9E already pins");
+}
+
+// ---------------------------------------------------------------------------
+// B21A1-5  RED-E.  Control: the authored in-arena (K)limb out of Deceit room 0
+//          still lands the party back on floor 0, exactly as Batch 9E proved.
+// ---------------------------------------------------------------------------
+void b21a1_5_in_arena_klimb_control(const Authored &a) {
+    std::printf("B21A1-5 -- control: room 0's authored in-arena Klimb still returns to floor 0\n");
+    if (!a.ok) { expect(false, "B21A1-5", a.why); return; }
+    auto r = std::make_unique<Runtime>();
+    r->install_authored(a, kDeceit, kDeceitRoom);
+    r->enter_dungeon(kDeceit);
+    r->dungeon.pos.floor = uint8_t(kDeceitLadderFloor);
+    r->reveal(kDeceitLadderFloor, kDeceitRoomX, kDeceitRoomY + 1);
+    r->put_at(kDeceitRoomX, kDeceitRoomY, DungeonFacing::North);
+    r->press('k');
+    expect(r->c.combat && r->combat.room, "B21A1-5a", "room 0's fight is live on floor 1");
+
+    int kx = 0, ky = 0;
+    expect(find_tile(r->room_map, kLadderUpTile, kx, ky), "B21A1-5b",
+           "its board carries the authored 0xC8 up-ladder");
+    r->klimb_party_out(kx, ky);
+    dump_dungeon("in-arena-klimb-control", *r);
+    expect(r->combat.escape_floor_delta == -1, "B21A1-5c",
+           "0xC8 sets escape_floor_delta = -1, unchanged by this batch");
+    expect(r->dungeon.pos.floor == kDeceitLadderFloor, "B21A1-5d",
+           "and dungeon_combat_return() applies it: floor 1 -> 0");
+    expect(std::string(hud_level(r->dungeon)) == "L1", "B21A1-5e",
+           "the HUD is back to L1 -- the authored escape is intact");
+}
+
+// ---------------------------------------------------------------------------
+// B21A1-6  The LAST observation: "I teleported back to the beginning of Deceit
+//          and the dungeon looked different."  It does, and both reasons are
+//          real and intended -- neither is a corruption.
+// ---------------------------------------------------------------------------
+void b21a1_6_teleport_back_looks_different(const Authored &a) {
+    std::printf("B21A1-6 -- why the standard entry looks different after the fall\n");
+    if (!a.ok) { expect(false, "B21A1-6", a.why); return; }
+    auto r = std::make_unique<Runtime>();
+    r->install_authored(a, kDeceit, kShaftRoom);
+    r->enter_dungeon(kDeceit);
+    const auto facing_on_entry = r->dungeon.pos.facing;
+    r->dungeon.pos.floor = 0;
+    r->put_at(kShaftX, kShaftY, DungeonFacing::North);
+    r->press('k');
+    r->walk_party_off_north();
+    // Turn on the spot the way a player orienting themselves on L8 would.
+    r->ball(tdeck::RawInputKind::TrackballRight);
+    const auto facing_before_teleport = r->dungeon.pos.facing;
+
+    DebugTeleportRequest back{};
+    back.kind = DebugDestinationKind::Dungeon;
+    back.location = kDeceit;
+    back.floor = 0;
+    back.standard_entry = true;
+    const auto teleport = apply_debug_teleport(r->c, back);
+    dump_dungeon("teleport-standard-entry", *r);
+
+    expect(teleport.status == DebugTeleportStatus::Applied, "B21A1-6a",
+           "the developer teleport back to Deceit's standard entry succeeds");
+    expect(r->dungeon.pos.floor == 0 && r->dungeon.pos.x == 1 && r->dungeon.pos.y == 1,
+           "B21A1-6b", "it lands on the authored entrance stair, 33:0:(1,1)");
+    expect(std::string(hud_level(r->dungeon)) == "L1", "B21A1-6c",
+           "the HUD reads L1 again -- the entry level is correct and stable");
+
+    // Reason 1: a same-dungeon teleport deliberately PRESERVES facing, so the
+    // same cell is rendered down a different axis than on first entry.
+    expect(r->dungeon.pos.facing == facing_before_teleport, "B21A1-6d",
+           "facing is preserved, as debug_map_picker documents for same-dungeon moves");
+    expect(facing_before_teleport != facing_on_entry, "B21A1-6e",
+           "and it differs from the facing dungeon_load gave on first entry -- a different view");
+
+    // Reason 2: the shaft is genuinely spent.  The pit chain rewrites every pit
+    // it consumes, and a same-dungeon teleport does NOT re-run dungeon_load, so
+    // the map really has changed.  Walking back onto (1,3) no longer falls.
+    expect(consumed_shaft_cells(r->dungeon) == 6, "B21A1-6f",
+           "the six consumed pits stay consumed -- the teleport does not reload the map");
+    r->put_at(kShaftX, kShaftY, DungeonFacing::North);
+    r->press('k');
+    dump_dungeon("second-klimb-down", *r);
+    expect(r->dungeon.pos.floor == 1 && !r->c.combat, "B21A1-6g",
+           "so a SECOND Klimb Down at (1,3) now stops on floor 1 -- the shaft is spent");
+}
+
 } // namespace
 
 int main(int argc, char **argv) {
@@ -1484,6 +1847,15 @@ int main(int argc, char **argv) {
     b9e_5_fled_room_refights(authored);
     b9e_6_unentered_room_gate(authored);
     b9e_7_corridor_return_unchanged();
+
+    std::printf("\nBatch 21A.1 -- the Deceit L1 -> Klimb Down -> L8 report (adjudication)\n\n");
+    b21a1_0_pit_shaft_census(authored);
+    b21a1_1_klimb_down_falls_to_floor_7(authored);
+    b21a1_2_room_10_flee_returns_to_floor_7(authored);
+    b21a1_3_no_floor_wrap(authored);
+    b21a1_4_ladder_room_control(authored);
+    b21a1_5_in_arena_klimb_control(authored);
+    b21a1_6_teleport_back_looks_different(authored);
     std::printf("\n%d checks, %d failures\n", g_checks, g_failures);
     return g_failures ? 1 : 0;
 }

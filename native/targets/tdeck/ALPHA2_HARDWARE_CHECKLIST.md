@@ -346,3 +346,29 @@ The Batch 20 tally above is left exactly as it was recorded; this addendum super
 **Still open and untouched this batch:** H-118 (shard ritual / permanent movement lock, CRITICAL), H-115 (dungeon save/load), H-12/H-13, H-22, H-45, H-63, H-146, H-122, H-148.
 
 **Host suite:** 89/89 from a clean build (88 before, +1 for the new `batch21a_dungeon_room_regression`). **Firmware:** `openu5_tdeck.bin` `0xd20c0` (860,352 bytes), `0x2df40` (188,224 / 18%) free, zero project warnings. **SD resource pack unchanged; no SD recopy required.**
+
+---
+
+## Batch 21A.1 addendum (`236cfa34`+, firmware unchanged at `0xd20c0`) — the Deceit L1 → Klimb Down → L8 report
+
+Raised during the Phase 6M micro-retest, **before it could complete**. The Batch 20 tally and the Batch 21A addendum above are left exactly as recorded; this addendum adds one row and supersedes nothing.
+
+**Verdict: NOT A DEFECT — no production code changed.** The full derivation is in `GAMEPLAY_INTEGRATION_AUDIT.md` § *Batch 21A.1*.
+
+### The observation, preserved verbatim
+
+1. Teleported/entered **Deceit** · 2. Was on displayed **L1** · 3. The only apparent route was a ladder · 4. Used `K` / Klimb **Down** · 5. This immediately entered a top-down dungeon room combat board with **Water Serpent** enemies · 6. User fled / lost the room encounter · 7. On return to the dungeon 3D view, the HUD now showed **Deceit L8** · 8. The corridor had many doors and clearly was not the expected immediate lower level from L1 · 9. User then used Developer teleport to go back to the beginning of Deceit · 10. Teleport succeeded, but the dungeon now looked different from how it looked at the beginning of the test.
+
+Photographs: the arena after `Klimb- Down!` / `Entering room...`, and the returned 3D view showing `Deceit`, `L8`, `BATTLE IS LOST!`, `Back up`, `Blocked!`.
+
+| Row | Status | Disposition |
+|---|---|---|
+| H-153 | **New in Batch 21A.1** — Deceit, displayed L1, `K`/Klimb Down → immediate Sea Serpent room → fled → 3D view returned reading **L8** on an unfamiliar door-heavy corridor; a later developer teleport back to the Deceit entrance looked different from the start of the session | **ADJUDICATED ORIGINAL — hardware retest required.** Deceit floor 0 **(1,3)** is authored `0x60`, a **Trap** cell, and every trap cell is down-klimbable (`caps()` `t == 6`, DUNGEON:0x1E79-0x1E8B; `dungeon.ts` `klimbCaps()`). `(K)`Down steps to floor 1, whose (1,3) is `0x69` — a pit trap — so `enter()` runs the pit chain (DUNGEON:0x0A4C, `pitFall()`), which keeps falling while it lands on another pit. Deceit (1,3) is `0x61` on floors 2–6: **six falls, floor 1 → 7.** The chain stops on floor 7 (1,3) = `0xFA`, **room 10**, and opens its fight. `DUNGEON.CBT` #10 places **four sprite-`0x88`** units; `initialize_combat` resolves `(0x88 - 0x40)/4` = def **18 = Sea Serpent** — the reporter's "Water Serpent". Room 10's board has **no in-arena klimb/grate tile**, so leaving sets `escape_floor_delta = 0` and `dungeon_combat_return()` moves no floor: the party stays on floor 7, and `L8` is the correct rendering of index 7. **There is no wrap:** the stored floor byte is `0x07`, and the command path's own `pos.floor > 7` gate passes. The post-teleport difference is also real and intended — a same-dungeon developer teleport **preserves facing** and does not re-run `dungeon_load`, and the pit chain **permanently** rewrites each pit it consumes (`0x60 \| (cur & 8)`), so a second Klimb Down at (1,3) now stops on floor 1. Pinned end-to-end on the production path by `dungeon_combat_regression` **B21A1-0 … B21A1-6** (7 cases, 45 checks). Retest per audit **Phase 6M.1**. |
+
+### Retest gate
+
+Run audit **Phase 6M.1** (10 short steps) *before* resuming Phase 6M or the rest of the 152-row checklist. **No reflash is required** — the Batch 21A firmware already on the device is the firmware this adjudication was made against.
+
+**Host suite:** 89/89 from a clean build, 0 fail, 0 skipped (`dungeon_combat_regression` grows from 124 to 169 checks). **Firmware:** unchanged from Batch 21A — `openu5_tdeck.bin` `0xd20c0` (860,352 bytes), zero project warnings. **SD resource pack unchanged; no SD recopy required.**
+
+**Still open and untouched this batch:** H-118 (shard ritual / permanent movement lock, CRITICAL), H-115 (dungeon save/load), H-12/H-13, H-22, H-45, H-63, H-146, H-122, H-148.
