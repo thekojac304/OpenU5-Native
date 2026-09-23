@@ -1,0 +1,23 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch32-final
+    Start  2: ui_session
+1/9 Test  #2: ui_session .......................   Passed    0.09 sec
+    Start 10: gameplay_integration
+2/9 Test #10: gameplay_integration .............   Passed    0.15 sec
+    Start 23: advanced_combat_parity
+3/9 Test #23: advanced_combat_parity ...........   Passed    1.12 sec
+    Start 25: combat_parity
+4/9 Test #25: combat_parity ....................   Passed    0.40 sec
+    Start 55: batch29_rest_wiring
+5/9 Test #55: batch29_rest_wiring ..............   Passed    0.19 sec
+    Start 56: batch30_sleep_parity
+6/9 Test #56: batch30_sleep_parity .............   Passed    0.12 sec
+    Start 57: batch31_h165_dungeon_entry
+7/9 Test #57: batch31_h165_dungeon_entry .......   Passed    0.08 sec
+    Start 58: batch32_camp_watch
+8/9 Test #58: batch32_camp_watch ...............   Passed    0.09 sec
+    Start 61: batch19_command_char_runtime
+9/9 Test #61: batch19_command_char_runtime .....   Passed    0.23 sec
+
+100% tests passed out of 9
+
+Total Test time (real) =   2.49 sec

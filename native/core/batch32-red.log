@@ -1,0 +1,105 @@
+[I][AlphaResources] Alpha resource pack v2.0 valid: 2039545 bytes, 39 entries, payload CRC=2065ad91, expected SHA-256=434cd664b4b9, firmware_match=1
+[I][AlphaResources] Loaded owners: 64 small floors, 8 dungeons, 1024 NPC records; PSRAM=1185451
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=00 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=11 status=success turns=0 events=3 time=43 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=11 sequence=1
+RED W1 two ready members reach watch question after hours
+RED W2 original watch text
+RED W3 prompt consumes no time or RNG
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=79 base=00 symbol=00 ui=explore emitted=character action_char=121 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=text
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+RED W4 yes enters member picker
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=00 symbol=00 ui=text emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=text gameplay_command=none
+GREEN W5 one hour camp completes
+RED W6 returns to world command state
+RED W7 watcher excluded from partial heal
+GREEN W8 camp wake result appears
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=00 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=11 status=success turns=0 events=3 time=2 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=11 sequence=1
+RED I1 G plus P still offers watch
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=79 base=00 symbol=00 ui=explore emitted=character action_char=121 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=text
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=00 symbol=00 ui=text emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=text gameplay_command=none
+RED I2 poisoned watcher is declined once
+RED I3 invalid choice still camps without guard
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=00 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=11 status=success turns=0 events=3 time=2 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=11 sequence=1
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=79 base=00 symbol=00 ui=explore emitted=character action_char=121 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=text
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=1b base=00 symbol=00 ui=text emitted=character action_char=27 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=text gameplay_command=none
+RED C1 picker cancel posts nobody
+RED C2 picker cancel still camps
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=00 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=11 status=success turns=0 events=3 time=2 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=11 sequence=1
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6e base=00 symbol=00 ui=explore emitted=character action_char=110 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=party
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+RED N1 No camps without picker
+GREEN N2 No does not report a failed guard
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=00 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=11 status=success turns=0 events=11 time=9 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=11 sequence=1
+GREEN S1 one ready member bypasses watch question
+GREEN S2 no optional watch prompt for one member
+H-167: 5/17 checks

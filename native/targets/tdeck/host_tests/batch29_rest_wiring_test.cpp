@@ -389,22 +389,20 @@ void test_object_on_bed() {
 }
 
 // ---------------------------------------------------------------------------
-// H-160, reclassified: the device never posts a watch, so no guard walks.
+// H-160 remains reclassified. Batch 32 adds the optional watch; declining it
+// still takes the old unwatched path and leaves the Batch 29 bed checks alone.
 // ---------------------------------------------------------------------------
 void test_camp_posts_no_watch() {
     std::printf("H160-R outdoor (H)ole up on the device: no watch prompt, no guard\n");
     Harness h(12);
     h.hole_up(2);
+    const bool offered = h.ui().mode() == UiMode::YesNo &&
+                         std::strstr(h.ui().prompt(),"Wilt thou set a watch?");
+    h.raw_key('n');
     const bool slept = h.saw("Zzzzzz...") && (h.saw("Party rested!") || h.saw("Ambushed!"));
     if (!expect(slept, "R1", "the device camp ran")) h.show();
-    // CMDS 0x3ea5-0x3eac: "Wilt thou set a watch?" then "Who will stand
-    // guard? " (DS 0xa36e) and select_party_member. The device asks only for
-    // hours (UiSession 'h' -> RestHours -> Command::member = -1), so camp()
-    // gets guard -1 and CMDS 0x0337 skips the walk -- RestServices::cell_free
-    // has no caller on hardware. H-167 tracks the missing prompt; this check
-    // records today's device flow and is expected to change with it.
-    expect(!h.saw("watch") && !h.saw("stand guard"), "R2",
-           "no \"Wilt thou set a watch?\" / \"Who will stand guard?\" on the device (H-167)");
+    expect(offered && !h.saw("Who will stand guard?"), "R2",
+           "declining the newly available watch uses the old unwatched camp");
 }
 
 } // namespace

@@ -1,0 +1,13 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch32-final
+    Start 26: item_parity
+1/4 Test #26: item_parity ......................   Passed    0.52 sec
+    Start 55: batch29_rest_wiring
+2/4 Test #55: batch29_rest_wiring ..............   Passed    0.17 sec
+    Start 56: batch30_sleep_parity
+3/4 Test #56: batch30_sleep_parity .............   Passed    0.09 sec
+    Start 58: batch32_camp_watch
+4/4 Test #58: batch32_camp_watch ...............   Passed    0.09 sec
+
+100% tests passed out of 4
+
+Total Test time (real) =   0.87 sec

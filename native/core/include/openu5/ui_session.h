@@ -123,6 +123,8 @@ enum class UiRequestId : uint8_t {
     FountainDrink,
     WellWish,
     RestHours,
+    CampWatch,
+    CampGuard,
     YellText,
     Status,
     Party,
@@ -281,6 +283,11 @@ class UiSession {
     // openu5::dungeon_klimb_choice() predicate these mirror.
     bool dungeon_klimb_prompt() const { return dungeon_klimb_choice_; }
     bool dungeon_fountain_prompt() const { return dungeon_fountain_here_; }
+    // The owner derives this from camp_context + camp_watch_count immediately
+    // before input; only the core Rest command applies the chosen member.
+    void set_camp_prompt_context(bool camp, bool watch_available) {
+        camp_eligible_ = camp; camp_watch_available_ = watch_available;
+    }
     // Convenience wrapper that derives both predicates from the authoritative
     // owners, so a caller cannot get the derivation subtly wrong.  A cleared
     // context (no live session) resets both.
@@ -412,6 +419,8 @@ class UiSession {
     bool sail_context_frigate_ = false, sail_context_location_ok_ = false;
     bool harpsichord_active_ = false;
     bool dungeon_klimb_choice_ = false, dungeon_fountain_here_ = false;
+    bool camp_eligible_ = false, camp_watch_available_ = false;
+    int16_t camp_hours_ = 0;
     size_t transcript_columns_ = 0, transcript_rows_ = 0;
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
     UiDebugMenu *debug_menu_ = nullptr;

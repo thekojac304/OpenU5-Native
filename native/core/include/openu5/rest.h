@@ -10,7 +10,7 @@ struct RestServices {
     void *context = nullptr;
     void (*snap_npcs)(void *) = nullptr;
     bool (*occupied)(void *, int32_t, int32_t, int32_t) = nullptr;
-    bool (*cell_free)(void *, int32_t, int32_t) = nullptr;
+    bool (*cell_free)(void *, int32_t guard, int32_t col, int32_t row) = nullptr;
     CampCell (*guard_start)(void *, int32_t) = nullptr;
     // Borrowed, already quoted KARMA.DAT record; required for camp/wake.
     const char *(*karma_record)(void *, int32_t) = nullptr;
@@ -37,11 +37,13 @@ struct RestResult {
 RestEligibility camp_context(const GameState &, const TurnState &, int32_t tile,
                              bool dungeon = false);
 int32_t camp_watch_count(const GameState &);
-CampCell camp_guard_walk(CampCell, Rand, RestServices = {});
+bool camp_watch_offer(const GameState &, const TurnState &, int32_t tile, bool dungeon = false);
+int32_t camp_guard_choice(const GameState &, int32_t selected);
+CampCell camp_guard_walk(CampCell, Rand, RestServices = {}, int32_t guard = -1);
 bool camp_hole_up(GameState &, Rand, int32_t guard = -1);
 bool camp_wake(RestContext &,
                int32_t guard = -1); // false, no mutation if record provider is absent
-RestResult camp_sleep_step(RestContext &, int32_t hour, int32_t hours, CampCell = {});
+RestResult camp_sleep_step(RestContext &, int32_t hour, int32_t hours, CampCell = {}, int32_t guard = -1);
 RestResult camp(RestContext &, int32_t hours, int32_t guard = -1);
 void bed_sleep_begin(RestContext &);
 bool bed_sleep_step(RestContext &);

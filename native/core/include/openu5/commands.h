@@ -50,6 +50,7 @@ struct Command {
     EquipSlot slot = EquipSlot::None;
     int16_t combat_x = 0, combat_y = 0; // Move/escape: CombatDirection ordinal in x.
     bool has_target = false, cancel_target = false; // Cast: item=SpellId, member=party target.
+    bool watch_requested = false; // Rest: guard picker was attempted, even if cancelled.
     const char16_t *text = nullptr;
     size_t text_length = 0; // Borrowed UTF-16, no UI length limit. BeginConversation: member=NPC slot.
     const ShrineInput *shrine = nullptr;

@@ -534,3 +534,24 @@ The original town-exit Y/N/Esc loop blocks the command dispatcher; an ordinary d
 No device flash or hardware check was performed for Batch 31. The production fix is in the shared Developer path exercised on host with authentic dungeon data, and H-165 has no remaining device-only uncertainty. The existing physical checks 6T, 6U, 6V, 6W and 6X remain pending. H-167–H-170 remain queued and untouched.
 
 The fresh Release host suite adds one CTest and passes **101/101**. The clean T-Deck firmware build is **867,184 bytes (`0xd3b70`)**, +64 bytes against Batch 30; the SD pack and save format are unchanged.
+
+## Batch 32 — H-167 camp watch / core rest API
+
+The 1988 Camp route asks for a watch only when at least two party members are `G` or `P`. Y opens "Who will stand guard?"; only a member in `G` posts a watch. A disabled choice or picker cancellation prints "None posted!" and continues unwatched. N continues unwatched without that message. The guard starts at the CampFire arena's south formation cell, cannot walk through the fire or sleepers, skips the partial heal, and consumes watch RNG during each five-minute step. Before Batch 32 the device went directly from hours to an unwatched camp because no guard was passed and the rest service had neither a start cell nor a guard-aware occupancy callback.
+
+The shipped-pack raw-key test is **35/35 GREEN**; six mutations are killed. The fresh Release host suite is **102/102 PASS**, versus Batch 31's 101/101. The T-Deck firmware is **869,024 bytes (`0xd42a0`)**, **+1,840 bytes**; its final commit-stamped Launcher SHA-256 is recorded in the Batch 32 annotated tag. The SD pack and save format are unchanged. No hardware was flashed.
+
+| Row | Behavior | Status |
+|---|---|---|
+| H-167 | Optional watch prompt, one valid `G` guard, invalid/cancel fallback, guard walk and RNG | **HOST FIXED / DEVICE RETEST PENDING — Phase 6Y** |
+| H-171 | Separate five-minute camp world/housekeeping calls absent from native | **QUEUED, UNFIXED** |
+
+### Phase 6Y — Batch 32 camp watch · *PENDING*
+
+Use the Batch 32 Launcher after the existing flash plan. Keep the SD resource pack as is. The host test proves the underlying choice and walk mechanics; this physical check proves the handheld prompt, picker and return presentation.
+
+1. On outdoor land, on foot, with Avatar and Iolo in the party and both at status `G`, note HP and clock. Press `h`, `1`, Enter. Expect **"Wilt thou set a watch?"** before time advances.
+2. Answer `Y`. Expect **"Who will stand guard?"**; select Iolo (`2`). Expect the one-hour camp to finish at the next hour and return to ordinary movement controls. If no apparition occurs, Iolo receives no partial camp heal while the other eligible member does. An apparition can fully heal everyone; repeat if it occurs.
+3. Repeat from the same outdoor state, answer `Y`, then cancel the guard picker. Expect **"None posted!"**, followed by normal camp completion and ordinary movement controls. Answer `N` on a third camp: no guard picker and no "None posted!".
+
+**Pass:** all prompt/choice paths and the normal command return appear in that order. **Fail:** hours immediately start the camp with two eligible members, the picker refuses a valid `G` member, cancellation abandons camp, or input remains trapped after waking. Do not use this phase to adjudicate the separate H-171 camp housekeeping gap. Pending phases **6T, 6U, 6V, 6W, 6X** keep their existing meanings.

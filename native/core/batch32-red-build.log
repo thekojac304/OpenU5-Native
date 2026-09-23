@@ -1,0 +1,6 @@
+[1/6] Building CXX object CMakeFiles/batch32_camp_watch.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/native_renderer.cpp.obj
+[2/6] Building CXX object CMakeFiles/batch32_camp_watch.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_dialogue.cpp.obj
+[3/6] Building CXX object CMakeFiles/batch32_camp_watch.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp.obj
+[4/6] Building CXX object CMakeFiles/batch32_camp_watch.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/batch32_camp_watch_test.cpp.obj
+[5/6] Building CXX object CMakeFiles/batch32_camp_watch.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/dungeon_art_cache.cpp.obj
+[6/6] Linking CXX executable batch32_camp_watch.exe

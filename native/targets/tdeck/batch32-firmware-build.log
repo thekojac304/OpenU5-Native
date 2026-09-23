@@ -1,0 +1,52 @@
+[1/21] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/ui_input_adapter.cpp.obj
+[2/21] Performing build step for 'bootloader'
+[1/1] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch32\bootloader && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch32/bootloader/bootloader.bin"
+
+Bootloader binary size 0x5850 bytes. 0x27b0 bytes (31%) free.
+
+
+[3/21] No install step for 'bootloader'
+[4/21] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/system_menu.cpp.obj
+[5/21] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/frontend.cpp.obj
+[6/21] Completed 'bootloader'
+[7/21] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/ui_debug_menu.cpp.obj
+[8/21] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/rest.cpp.obj
+[9/21] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/frontend_settings.cpp.obj
+[10/21] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/device_smoke_tests.cpp.obj
+[11/21] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/main.cpp.obj
+[12/21] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/alpha_save.cpp.obj
+[13/21] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/tdeck_board.cpp.obj
+[14/21] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/ui_session.cpp.obj
+[15/21] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/commands.cpp.obj
+[16/21] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/alpha_runtime.cpp.obj
+[17/21] Linking C static library esp-idf\main\libmain.a
+[18/21] Generating esp-idf/esp_system/ld/sections.ld
+Skipping linker script generation, section names unchanged
+
+[19/21] Linking CXX executable openu5_tdeck.elf
+[20/21] Generating binary image from built executable
+esptool v5.4.0
+
+Creating ESP32-S3 image...
+
+Merged 3 ELF sections.
+
+Successfully created ESP32-S3 image.
+
+Generated C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch32/openu5_tdeck.bin
+[21/21] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch32 && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch32/partition_table/partition-table.bin C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch32/openu5_tdeck.bin"
+openu5_tdeck.bin binary size 0xd42a0 bytes. Smallest app partition is 0x100000 bytes. 0x2bd60 bytes (17%) free.
+
+Executing action: all (aliases: build)
+Running ninja in directory C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch32
+Executing "ninja all"...
+
+
+Project build complete. To flash, run:
+ idf.py flash
+or
+ idf.py -p PORT flash
+or
+ python -m esptool --chip esp32s3 -b 460800 --before default-reset --after hard-reset write-flash --flash-mode dio --flash-size 16MB --flash-freq 80m 0x0 build-batch32\bootloader\bootloader.bin 0x8000 build-batch32\partition_table\partition-table.bin 0x10000 build-batch32\openu5_tdeck.bin
+or from the "C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch32" directory
+ python -m esptool --chip esp32s3 -b 460800 --before default-reset --after hard-reset write-flash "@flash_args"

@@ -125,7 +125,7 @@ struct Harness {
         rest.context = this;
         rest.snap_npcs = [](void *p) { ++static_cast<Harness *>(p)->snaps; };
         rest.occupied = [](void *, int32_t, int32_t, int32_t) { return false; };
-        rest.cell_free = [](void *, int32_t, int32_t) { return true; };
+        rest.cell_free = [](void *, int32_t, int32_t, int32_t) { return true; };
         rest.karma_record = [](void *, int32_t) { return "\"TEST KARMA\""; };
         context.actors = &actors;
         context.npc_scratch = &scratch;

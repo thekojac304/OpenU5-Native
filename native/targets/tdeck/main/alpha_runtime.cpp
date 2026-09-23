@@ -1099,6 +1099,11 @@ void AlphaRuntime::refresh_session_context(){
     // Sails: the frigate transport range 0x20-0x27 and the Underworld cut-off,
     // the same pair CommandKind::YellSails re-checks in commands.cpp.
     ui_->set_sail_context((turn_.transport_tile&0xf8)==0x20,game_.position.map.location<0x80);
+    const auto &p=game_.position;
+    const int tile=context_.dungeon?0:terrain_.effective(resources_.world,p.map,p.xy.x,p.xy.y);
+    const auto rest=openu5::camp_context(game_,turn_,tile,context_.dungeon);
+    ui_->set_camp_prompt_context(rest.ok&&!rest.bed&&!rest.ship,
+        openu5::camp_watch_offer(game_,turn_,tile,context_.dungeon));
     // Harpsichord: small map only, never in combat or a dungeon, with the
     // harpsichord tile (141 / 0x8D) immediately SOUTH of the party -- the
     // party sits on the chair north of the instrument facing it.  Matches
@@ -1162,7 +1167,7 @@ void AlphaRuntime::open_selection(openu5::UiMode mode,openu5::UiRequestId reques
     if(!selection_count_){auto&s=selections_[selection_count_++];std::snprintf(s.label,sizeof(s.label),"(None available)");s.enabled=false;}
     // R-25 (Batch 19): the 0x4988 callers carry DS 0xa3c4 "Player: " from the
     // shared seam, so device and host name the prompt from one definition.
-    const char *prompt=mode==openu5::UiMode::PartySelection?(request==openu5::UiRequestId::EquipmentMember?"Ready whom?":request==openu5::UiRequestId::UseTarget?"Use on whom?":request==openu5::UiRequestId::FountainDrink?"Who will drink?":request==openu5::UiRequestId::CrystalBall||request==openu5::UiRequestId::SearchMember||request==openu5::UiRequestId::CastMember?openu5::command_char_prompt():"Party"):mode==openu5::UiMode::InventorySelection?"Use item":mode==openu5::UiMode::EquipmentSelection?"Ready":"Spell";
+    const char *prompt=mode==openu5::UiMode::PartySelection?(request==openu5::UiRequestId::CampGuard?"Who will stand guard?":request==openu5::UiRequestId::EquipmentMember?"Ready whom?":request==openu5::UiRequestId::UseTarget?"Use on whom?":request==openu5::UiRequestId::FountainDrink?"Who will drink?":request==openu5::UiRequestId::CrystalBall||request==openu5::UiRequestId::SearchMember||request==openu5::UiRequestId::CastMember?openu5::command_char_prompt():"Party"):mode==openu5::UiMode::InventorySelection?"Use item":mode==openu5::UiMode::EquipmentSelection?"Ready":"Spell";
     const size_t initial=mode==openu5::UiMode::PartySelection?size_t(request==openu5::UiRequestId::Status&&status_member_>=0?status_member_:active_member(game_)):0;
     ui_->begin_selection(mode,request,prompt,{this,selection_count,selection_item},initial);
 }
@@ -2386,13 +2391,28 @@ bool AlphaRuntime::object_or_npc_at(int32_t x,int32_t y,int32_t floor) const{
 // the NPC half (H-154) and the probe (H-155). snap_npcs_to_schedule is the
 // reposition 0x1694 does -- live schedule, every floor, dead slots absent --
 // the same primitive ReloadEffect::SnapNpcs uses for a floor change.
-// cell_free stays unconstrained: the device never posts a camp watch (H-167),
-// so CMDS 0x0337 skips the guard walk and nothing calls it (H-160).
+// H-167: the watch walks in the shipped CampFire arena. The original uses
+// its south formation starts; sleepers and impassable cells block the guard.
 void AlphaRuntime::bind_rest_services(){
     static openu5::RestServices rest_owner;rest_owner.context=this;
     rest_owner.snap_npcs=[](void *p){auto&r=*static_cast<AlphaRuntime*>(p);const auto loc=r.game_.position.map.location;if(loc>=1&&loc<=32)openu5::snap_npcs_to_schedule(r.actors_,uint8_t(loc),uint8_t(r.game_.time.hour));};
     rest_owner.occupied=[](void *p,int32_t x,int32_t y,int32_t floor){return static_cast<AlphaRuntime*>(p)->object_or_npc_at(x,y,floor);};
-    rest_owner.cell_free=[](void*,int32_t,int32_t){return true;};
+    rest_owner.guard_start=[](void*p,int32_t guard){auto&r=*static_cast<AlphaRuntime*>(p);
+        if(guard<0||guard>=6||r.resources_.combat_map_count<1||!r.resources_.combat_map_views||!r.resources_.combat_map_views[0])return openu5::CampCell{};
+        const auto&m=*r.resources_.combat_map_views[0];
+        if(guard>=m.start_count[int(openu5::CombatDirection::South)])return openu5::CampCell{};
+        const auto cell=m.starts[int(openu5::CombatDirection::South)][guard];
+        return openu5::CampCell{cell.x,cell.y,true};};
+    rest_owner.cell_free=[](void*p,int32_t guard,int32_t col,int32_t row){auto&r=*static_cast<AlphaRuntime*>(p);
+        if(col<0||col>=openu5::kCombatGrid||row<0||row>=openu5::kCombatGrid||
+           r.resources_.combat_map_count<1||!r.resources_.combat_map_views||!r.resources_.combat_map_views[0])return false;
+        const auto&m=*r.resources_.combat_map_views[0];
+        if(!openu5::is_passable(m.tiles[row*openu5::kCombatGrid+col],openu5::TransportMode::Foot).value)return false;
+        const int south=int(openu5::CombatDirection::South);
+        for(int i=0;i<r.game_.party.party_size&&i<r.game_.party.character_count&&i<6;++i){
+            if(i==guard||r.game_.party.characters[i].status=='D'||i>=m.start_count[south])continue;
+            const auto start=m.starts[south][i];if(start.x==col&&start.y==row)return false;}
+        return true;};
     rest_owner.karma_record=[](void*,int32_t){return "\"Rest well, Avatar. Continue upon the path of virtue.\"";};context_.rest_services=&rest_owner;
 }
 void AlphaRuntime::start_smoke(void*p,int group){auto&r=*static_cast<AlphaRuntime*>(p);r.smoke_.start(group);r.dirty_=true;r.dirty_reason_="smoke-test-start";}

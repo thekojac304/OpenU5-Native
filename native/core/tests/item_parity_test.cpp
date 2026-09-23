@@ -180,7 +180,7 @@ struct Harness {
             h.calls.insert(h.calls.end(), {2, x, y, z});
             return h.throw_at > 0 && h.snaps >= h.throw_at;
         };
-        s.cell_free = [](void *p, int32_t x, int32_t y) {
+        s.cell_free = [](void *p, int32_t, int32_t x, int32_t y) {
             auto &h = *static_cast<Harness *>(p);
             h.calls.insert(h.calls.end(), {3, x, y});
             return (x + y) % 3 != 0;

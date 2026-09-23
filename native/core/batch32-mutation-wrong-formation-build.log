@@ -1,0 +1,4 @@
+[1/4] Building CXX object CMakeFiles/openu5_core.dir/src/rest.cpp.obj
+[2/4] Linking CXX static library libopenu5_core.a
+[3/4] Building CXX object CMakeFiles/batch32_camp_watch.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_runtime.cpp.obj
+[4/4] Linking CXX executable batch32_camp_watch.exe

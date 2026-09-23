@@ -1,0 +1,4 @@
+[1/4] Building CXX object CMakeFiles/openu5_core.dir/src/rest.cpp.obj
+[2/4] Building CXX object CMakeFiles/openu5_core.dir/src/commands.cpp.obj
+[3/4] Linking CXX static library libopenu5_core.a
+[4/4] Linking CXX executable batch32_camp_watch.exe

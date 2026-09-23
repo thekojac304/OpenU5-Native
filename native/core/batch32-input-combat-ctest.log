@@ -1,0 +1,19 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch32-final
+    Start 36: combat_escape_regression
+1/7 Test #36: combat_escape_regression ...............   Passed    0.08 sec
+    Start 38: combat_loot_open_regression
+2/7 Test #38: combat_loot_open_regression ............   Passed    0.12 sec
+    Start 39: batch21a3_combat_active_player
+3/7 Test #39: batch21a3_combat_active_player .........   Passed    0.09 sec
+    Start 40: input_regression
+4/7 Test #40: input_regression .......................   Passed    0.03 sec
+    Start 41: dungeon_input_regression
+5/7 Test #41: dungeon_input_regression ...............   Passed    0.08 sec
+    Start 42: dungeon_combat_regression
+6/7 Test #42: dungeon_combat_regression ..............   Passed    0.18 sec
+    Start 46: alpha_runtime_integration_regression
+7/7 Test #46: alpha_runtime_integration_regression ...   Passed    0.11 sec
+
+100% tests passed out of 7
+
+Total Test time (real) =   0.71 sec

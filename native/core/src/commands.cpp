@@ -1186,7 +1186,14 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
             };
         }
         RestContext ctx{c.game, c.turn, r.rand, r.sink(), bed, c.sky, c.terrain, &c.world};
-        const auto result = e.bed ? bed_sleep(ctx, cmd.hours) : camp(ctx, cmd.hours, cmd.member);
+        // The low-level Rest command has long accepted an already resolved
+        // member (parity drivers and noninteractive callers). Only a choice
+        // coming from the kernel-style watch picker needs its 'G' gate here.
+        const auto guard = e.bed ? -1 : cmd.watch_requested
+            ? camp_guard_choice(c.game, cmd.member) : cmd.member;
+        if (!e.bed && cmd.watch_requested && guard < 0)
+            r.message("None posted!\n\n");
+        const auto result = e.bed ? bed_sleep(ctx, cmd.hours) : camp(ctx, cmd.hours, guard);
         if (result.ambush) {
             auto *arena=c.outdoor?c.outdoor->combat:c.quest_world?c.quest_world->encounter:nullptr;
             auto *assets=c.outdoor?c.outdoor->resources:c.quest_world?c.quest_world->combat_resources:nullptr;

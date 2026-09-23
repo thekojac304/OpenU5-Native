@@ -418,6 +418,14 @@ void UiSession::cancel_modal() {
         return;
     }
     const auto request = request_;
+    if (request == UiRequestId::CampGuard) {
+        const auto hours = camp_hours_; camp_hours_ = 0;
+        mode_ = return_mode_; request_ = UiRequestId::None; selection_ = {};
+        input_[0] = 0; input_length_ = 0; prompt_[0] = 0;
+        Command c; c.kind = CommandKind::Rest; c.hours = hours; c.watch_requested = true;
+        command(c);
+        return;
+    }
     // R-06 combat (R)eady action cost. The reference charges the acting
     // combatant's turn ONCE PER 'R' INTERACTION, when the equipment picker
     // CLOSES -- never per item equipped, and whether or not anything was
@@ -465,6 +473,31 @@ void UiSession::finish_modal(bool accepted, bool yes, int32_t number, int32_t in
     UiIntent i;
     i.kind = UiIntentKind::ModalResponse; i.request = request;
     i.value = {accepted, yes, number, index, input_, input_length_};
+    if (request == UiRequestId::RestHours && old_mode == UiMode::NumericEntry &&
+        accepted && camp_watch_available_) {
+        camp_hours_ = int16_t(number);
+        input_[0]=0; input_length_=0;
+        begin_yes_no(UiRequestId::CampWatch,"Wilt thou set a watch?");
+        return;
+    }
+    if (request == UiRequestId::CampWatch && old_mode == UiMode::YesNo) {
+        if (yes) {
+            input_[0]=0; input_length_=0;
+            enter_modal(UiMode::PartySelection,UiRequestId::CampGuard,"Who will stand guard?");
+            UiIntent pick; pick.kind=UiIntentKind::OpenPartySelection; pick.request=UiRequestId::CampGuard;
+            dispatch(pick);
+            return;
+        }
+        Command c; c.kind=CommandKind::Rest; c.hours=camp_hours_; camp_hours_=0;
+        command(c); input_[0]=0; input_length_=0; prompt_[0]=0;
+        return;
+    }
+    if (request == UiRequestId::CampGuard && old_mode == UiMode::PartySelection) {
+        Command c; c.kind=CommandKind::Rest; c.hours=camp_hours_; c.member=int16_t(index);
+        c.watch_requested=true; camp_hours_=0;
+        command(c); input_[0]=0; input_length_=0; prompt_[0]=0;
+        return;
+    }
     if (request == UiRequestId::TownExit) {
         i.kind = UiIntentKind::Command;
         i.command.kind = yes ? CommandKind::Exit : CommandKind::DeclineExit;
@@ -561,6 +594,15 @@ bool UiSession::accepts_direction_input() const {
 
 bool UiSession::handle_modal(const UiAction &a) {
     if (mode_ == UiMode::TextEntry || mode_ == UiMode::NumericEntry) {
+        if (mode_ == UiMode::NumericEntry && request_ == UiRequestId::RestHours && camp_eligible_) {
+            // Kernel 0x3ddc/0x3de5: zero or Space abandons Camp before any
+            // watch choice, turn, or random draw. Escape is the device Cancel.
+            if (a.kind == UiActionKind::Character &&
+                (a.character == u'0' || a.character == u' ' || a.character == 27)) {
+                cancel_modal(); return true;
+            }
+            if (a.kind == UiActionKind::Confirm && !input_length_) return true;
+        }
         if (a.kind == UiActionKind::Confirm) {
             if (mode_ == UiMode::NumericEntry) {
                 int64_t n = 0;
@@ -605,6 +647,23 @@ bool UiSession::handle_modal(const UiAction &a) {
     }
     if (is_selection(mode_)) {
         const auto count = selection_.count ? selection_.count(selection_.context) : 0;
+        if (request_ == UiRequestId::CampGuard && a.kind == UiActionKind::Character) {
+            if (a.character == 27) { cancel_modal(); return true; }
+            if (a.character >= u'1' && a.character <= u'9') {
+                const size_t selected = size_t(a.character - u'1');
+                if (selected < count) {
+                    selection_cursor_ = selected;
+                    const auto item = selection_.item ? selection_.item(selection_.context,selected)
+                                                      : UiSelectionItem{};
+                    if (item.enabled) finish_modal(true,false,0,int32_t(selected));
+                }
+                return true;
+            }
+            if (a.character == u'0' || a.character == u' ') {
+                if (count) finish_modal(true,false,0,int32_t(selection_cursor_));
+                return true;
+            }
+        }
         if (a.kind == UiActionKind::Cancel || a.kind == UiActionKind::Back) cancel_modal();
         else if (count && (a.kind == UiActionKind::Next || a.kind == UiActionKind::Direction)) {
             const bool forward = a.kind == UiActionKind::Next || a.direction == Direction::South ||
@@ -798,7 +857,8 @@ bool UiSession::handle_exploration(const UiAction &a) {
     case 'f': c.kind=CommandKind::Fire; command_echo("Fire-");
               begin_target(UiRequestId::Direction,"Fire-",c,5,5); return true;
     case 'g': direction_request(CommandKind::Get, "Get-"); return true;
-    case 'h': command_echo("Hole up"); begin_number(UiRequestId::RestHours,"Hours (1-9)?",1,9,1); return true;
+    case 'h': command_echo(camp_eligible_?"Hole up & camp!":"Hole up");
+              begin_number(UiRequestId::RestHours,camp_eligible_?"For how many hours? (1-9) ":"Hours (1-9)?",1,9,1); return true;
     case 'i': command_echo("Ignite torch!"); c.kind=CommandKind::Ignite; break;
     case 'j': direction_request(CommandKind::Jimmy, "Jimmy-"); return true;
     case 'k': command_echo("Klimb"); c.kind=CommandKind::Klimb; break;
@@ -924,7 +984,8 @@ bool UiSession::handle_dungeon(const UiAction &a) {
     // (H)ole up & camp is legal in a dungeon (kernel 0x3C9A branch loc>=0x21);
     // commands.cpp's `dungeon_camp` exists for exactly this and had no caller.
     // Same hours prompt the overworld uses.
-    case 'h': command_echo("Hole up"); begin_number(UiRequestId::RestHours,"Hours (1-9)?",1,9,1); return true;
+    case 'h': command_echo(camp_eligible_?"Hole up & camp!":"Hole up");
+              begin_number(UiRequestId::RestHours,camp_eligible_?"For how many hours? (1-9) ":"Hours (1-9)?",1,9,1); return true;
     case '.': command_echo("Turn around"); c.item=int16_t(DungeonAction::TurnAround); break;
     case 'c': { command_echo("Cast");UiIntent i; i.kind=UiIntentKind::OpenSpellSelection; i.request=UiRequestId::Spell; dispatch(i); return true; }
     // The dungeon has its own command context, but these menus are deliberately

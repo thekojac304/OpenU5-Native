@@ -56,7 +56,16 @@ int32_t camp_watch_count(const GameState &g) {
     }
     return n;
 }
-CampCell camp_guard_walk(CampCell c, Rand rand, RestServices s) {
+bool camp_watch_offer(const GameState &g, const TurnState &t, int32_t tile, bool dungeon) {
+    const auto e = camp_context(g, t, tile, dungeon);
+    return e.ok && !e.bed && !e.ship && camp_watch_count(g) >= 2;
+}
+int32_t camp_guard_choice(const GameState &g, int32_t selected) {
+    return selected >= 0 && selected < g.party.party_size &&
+                   selected < g.party.character_count && g.party.characters[selected].status == 'G'
+               ? selected : -1;
+}
+CampCell camp_guard_walk(CampCell c, Rand rand, RestServices s, int32_t guard) {
     if (rand(0, 3) != 2)
         return c;
     auto next = c;
@@ -71,7 +80,7 @@ CampCell camp_guard_walk(CampCell c, Rand rand, RestServices s) {
         --next.col;
     if (next.col < 0 || next.col > 10 || next.row < 0 || next.row > 10)
         return c;
-    if (s.cell_free && !s.cell_free(s.context, next.col, next.row))
+    if (s.cell_free && !s.cell_free(s.context, guard, next.col, next.row))
         return c;
     return next;
 }
@@ -145,7 +154,7 @@ bool camp_wake(RestContext &c, int32_t guard) {
     emit(c, GameEventKind::PartyChanged);
     return true;
 }
-RestResult camp_sleep_step(RestContext &c, int32_t h, int32_t hours, CampCell cell) {
+RestResult camp_sleep_step(RestContext &c, int32_t h, int32_t hours, CampCell cell, int32_t guard) {
     for (int step = 0; step < 12; ++step) {
         advance_clock(c.game, c.turn, 5, &c.rand, c.sky);
         for (int32_t i = 0;
@@ -155,7 +164,7 @@ RestResult camp_sleep_step(RestContext &c, int32_t h, int32_t hours, CampCell ce
                 m.current_hp = uint16_t(std::min<int32_t>(m.max_hp, m.current_hp + 1));
         }
         if (cell.present)
-            cell = camp_guard_walk(cell, c.rand, c.services);
+            cell = camp_guard_walk(cell, c.rand, c.services, guard);
     }
     RestResult r;
     r.guard = cell;
@@ -178,7 +187,7 @@ RestResult camp(RestContext &c, int32_t hours, int32_t guard) {
     if (guard >= 0 && c.services.guard_start)
         r.guard = c.services.guard_start(c.services.context, guard);
     for (int32_t h = 0; h < hours; ++h) {
-        r = camp_sleep_step(c, h, hours, r.guard);
+        r = camp_sleep_step(c, h, hours, r.guard, guard);
         if (r.ambush)
             return r;
     }
