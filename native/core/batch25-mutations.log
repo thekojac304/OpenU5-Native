@@ -1,0 +1,18 @@
+=== M1 guard removed: the pre-fix unconditional write
+    batch25_shard_ritual: 24/42 checks GREEN, 18 RED
+    killed by: R3 R4 R6 R8 R9 R11 Y3 Y4 Y5 Y6 Y7 U1 U2 U3 U4 U5 U7 U8
+=== M2 guard reads the live mode_ (always DebugMenu) instead of the parked one
+    batch25_shard_ritual: 24/42 checks GREEN, 18 RED
+    killed by: R3 R4 R6 R8 R9 R11 Y3 Y4 Y5 Y6 Y7 U1 U2 U3 U4 U5 U7 U8
+=== M3 guard protects yes/no questions only
+    batch25_shard_ritual: 39/42 checks GREEN, 3 RED
+    killed by: U5 U7 U8
+=== M4 guard protects every modal except TargetSelection
+    batch25_shard_ritual: 40/42 checks GREEN, 2 RED
+    killed by: U7 U8
+=== M5 no guard; clear awaiting_exit whenever the Developer menu closes (symptom reset)
+    batch25_shard_ritual: 32/42 checks GREEN, 10 RED
+    killed by: R3 Y3 Y5 U1 U2 U3 U4 U5 U7 U8
+=== control (restored fix)
+    batch25_shard_ritual: 42/42 checks GREEN, 0 RED
+    RED: none

@@ -168,7 +168,14 @@ void UiSession::dispatch(const UiIntent &i) const {
 void UiSession::set_base_mode(UiMode m) {
     base_mode_ = m;
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
-    if (mode_ == UiMode::DebugMenu) debug_return_mode_ = m;
+    // H-118 (Batch 25). The Developer menu parks whatever it interrupted in
+    // debug_return_mode_, and a base-mode change must not replace a parked
+    // modal any more than it replaces a live one (the line below). The
+    // device calls this after EVERY input, Alt+D included, so the unguarded
+    // write dropped a pending "Leave this place?" (TOWN 0x07ac's getkey loop)
+    // while CommandState::awaiting_exit stayed set: every world command was
+    // then refused in silence until a power cycle.
+    if (mode_ == UiMode::DebugMenu) { if (!is_modal(debug_return_mode_)) debug_return_mode_ = m; }
     else if (!is_modal(mode_)) mode_ = m;
 #else
     if (!is_modal(mode_)) mode_ = m;

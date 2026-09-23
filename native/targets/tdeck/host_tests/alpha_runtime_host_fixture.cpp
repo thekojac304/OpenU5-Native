@@ -212,6 +212,16 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
 
     terrain_.refresh(resources_.world, game_);
 
+#if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
+    // Batch 25: the Developer menu initialize() constructs over the same
+    // context_ (alpha_runtime.cpp: new UiDebugMenu(context_), attach_
+    // diagnostics, ui_->attach_debug_menu), so Alt+D opens the real menu and a
+    // host test can walk it with raw keys. No existing host test sends Alt+D.
+    debug_ = new openu5::UiDebugMenu(context_);
+    debug_->attach_diagnostics({this, start_smoke});
+    ui_->attach_debug_menu(debug_);
+#endif
+
     // Production's initialize() calls frontend_.start(...), which leaves the
     // session on the title screen until a real Continue/New-Game menu flow
     // runs (frontend_.active()==true, and handle()'s very first branch routes

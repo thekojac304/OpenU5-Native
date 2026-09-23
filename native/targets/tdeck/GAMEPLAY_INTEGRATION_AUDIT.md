@@ -4988,3 +4988,105 @@ Flash the Batch 24 firmware (the image named in the tag). A New Journey with a f
 **Pass:** steps 3, 5 and 7. **Fail** if NPCs stay mid-walk after a floor change, if an open door survives a load, or if the vault stays unlocked after a town fight.
 
 **Known and queued, do not file:** NPCs do not jump to their schedule positions when you sleep (H-154); `Alt+L` may leak world objects from before the load (H-164).
+
+## Batch 25 — H-118: the "shard ritual → permanent world Move lock"
+
+Scope: H-118 only. H-115 (dungeon save/load) was not touched and remains the next planned batch. One neighbouring gap is queued at the end.
+
+### The hardware observation (Batch 20, CRITICAL)
+
+Developer → Certification → "Flame/Shard Test" (grants the three shards, teleports to Empath Abbey floor 1 (15,3)), then `(U)se` a shard. Only the generic `Use item` echo appeared — **no ritual text at all**. From then on a direction produced nothing (no `Blocked!`, no echo), across a Developer Teleport and a Load; `(L)ook` "resolved directions" and `(Z)`-stats, `Alt+M` and `Alt+D` still answered; only a power cycle recovered. Classified CRITICAL because it permanently removes the player's ability to move without a reboot and blocks preservation sign-off.
+
+### Baseline
+
+HEAD `caa6488a` (tag `alpha2-batch24-state-reload-parity`), branch `main`, working tree clean. From-scratch build `native/core/build-batch25-baseline`, serial: **94/94 PASS, 0 fail, 0 skipped** (`batch25-baseline-ctest.log`).
+
+### Reference behaviour (recovered from the binaries)
+
+Re-read with `re/tools/dis16.py`; strings decoded at `DATA.OVL` `DS+0x10`.
+
+- **The ritual, `CAST.OVL` dispatcher `0x1a2c` → `0x15b4`** (`re/notes/shadowlord-ritual.md`, cross-checked): `idx = itemId − 0x1d`; step 1 prints `"Gem Shard\n\nThou dost hold above thee the evil Shard of "` + name **before any gate**; off the cell (`0x162f-0x1654`, tables DS `0x4882/0x4886/0x488a/0x488e`) → `"\n\nNo effect!\n"` and `ret`; on it → `"...and cast it into the Flame of "` + flame; then only if the tile north is `0xFC` and `[0x58cb] == idx` the doom (`0x1708`: Shadowlord gone, shard consumed, doom bit). **No `getdir`, no modal, no retained state**: control returns to the command loop on `ret`, so an immediate Move is ordinary. Native `cast_shard_into_flame` / `use_quest_item` already implement this exactly (Batch 25 section S below, GREEN on unmodified code).
+- **The town-exit question, `TOWN.OVL:0x0798`**: pushes DS `0x2690` = `"\nDost thou wish to leave? "`, then `0x07ac-0x07b4` loops `call 0xa49c` (getkey) until the key is `Y` (0x59), `N` (0x4e) or ESC (0x1b). A closed loop: the 1988 game **cannot** return to its command loop with that question unanswered.
+
+REFERENCE FACT: a shard Use always prints its header; nothing in it can disable movement. REFERENCE FACT: a pending "leave?" question always owns the keyboard until answered.
+
+### Root cause
+
+NATIVE OBSERVATION (host, real `AlphaRuntime`, real Developer menu, raw keys — `batch25-red.log`): the same route from a clean world does **not** lock (S1–S14 GREEN before the fix). The signature appears only when a core-owned question is pending as `Alt+D` is pressed:
+
+1. The port splits `TOWN 0x07ac`'s synchronous loop into core state `CommandState::awaiting_exit` plus a UiSession yes/no modal; the modal is the **only** thing that can send `Exit`/`DeclineExit`.
+2. `Alt+D` → `UiSession::open_debug_menu()` parks the modal in `debug_return_mode_`.
+3. `AlphaRuntime::synchronize_after_debug()` runs after **every** input (the `Alt+D` keystroke included) and calls `ui_->set_base_mode(resolve_synchronized_base_mode(...))`. `UiSession::set_base_mode()`'s ordinary branch never replaces a modal (`else if (!is_modal(mode_)) mode_ = m;`), but its Developer branch did: `if (mode_ == UiMode::DebugMenu) debug_return_mode_ = m;` — unconditionally.
+4. Closing the menu restored Exploration. The question vanished; `awaiting_exit` stayed `true`.
+5. From then on `commands.cpp`'s gate `exit != c.commands.awaiting_exit` returned `InvalidContext` — silently — for **every** world command.
+
+Why exactly this signature: the shard `UseItem` is refused before `use_quest_item` runs (hence no header, the one thing CAST `0x15b4` always prints); Move is refused before `Runner::move` emits its `WalkEcho`; `(L)ook`'s `"Look-"` and direction echoes are UiSession text, but its core half ("Thou dost see …") is refused too — the hardware note records Look "resolving directions", which is exactly what survives; `(Z)`-stats, `Alt+M`, `Alt+D`, the Developer Teleport and `Alt+L` are all device-level and never pass through `dispatch_world_command`. Neither a teleport nor a load touches `CommandState`, so the lock survived both; a power cycle rebuilt it. The same drop affects every core-owned question the overlay can interrupt: `awaiting_troll` ("Pay toll?"), Blackthorn's tribute/arrest/password flags.
+
+Timing: the bad state exists **before** the ritual code executes (class A). The ritual is not involved; it was simply the first core command after the Certification, which is only reachable through `Alt+D`.
+
+INFERENCE: which prompt was on the T-Deck screen when the tester pressed `Alt+D` is not recoverable from the Batch 20 notes. The deduction that it was *a* pending core question rests on three facts: (a) a silent shard Use is impossible unless `dispatch_world_command` refused it, since `pool()` is wired identically in `initialize()` and the fixture; (b) a refusal of Use and Move that survives teleport and load while the UI stays in Exploration can only be one of the `CommandState`/Blackthorn awaiting flags; (c) the only path in the tree that returns the UI to Exploration with such a flag still set is this register clobber, and the tester provably opened the Developer menu immediately before the Use.
+
+### Fix (minimal)
+
+| File | Change |
+|---|---|
+| `native/core/src/ui_session.cpp` | `set_base_mode()`: the Developer branch now writes `debug_return_mode_` only when it does not hold a modal — the same rule the ordinary branch already applies to `mode_`. One condition; comment cites H-118 and `TOWN 0x07ac` |
+
+Why this layer: `UiSession` owns both the modal and the return register, and `open_debug_menu()` already intends "return to what I interrupted". `synchronize_after_debug()` is correct to publish authoritative Combat/Dungeon changes on every input and is left alone (U9 proves a Dungeon change made under the menu still wins). Not done, deliberately: no reset of `awaiting_exit` on menu close (mutation M5 below shows why that is a symptom fix), no change to Move, no global modal clear.
+
+Behavioural consequence, by design: after `Alt+D` → Back the interrupted prompt is back on screen. If a Developer Teleport moved the party meanwhile, the question is answered where the party now stands — `Y` leaves that town (Y5), `N` stays (R5) — exactly like any other answer to the kernel's loop.
+
+### Tests — `batch25_shard_ritual` (42 checks, real `AlphaRuntime` + shipped pack + real Developer menu)
+
+Seam: Batch 24's, plus the Developer menu `initialize()` constructs (`alpha_runtime_host_fixture.cpp`: `new UiDebugMenu(context_)`, `attach_diagnostics`, `ui_->attach_debug_menu`; no existing host test sends `Alt+D`). Every step is a raw keyboard/trackball event through `AlphaRuntime::handle()`; Cancel is a real short Mic press/release; the only staging line stands the party on Lord British's Castle's west edge.
+
+- **R1–R11** (the hardware route, answer N): castle edge → "Leave this place?" → `Alt+D` → Certification → Flame/Shard → Back, Back → **the question is back** (R3) → `N` clears `awaiting_exit` (R4) → `(U)se` Shard of Hatred prints the `0x15b4` header and "…Flame of Love!" (R6), no doom, shard kept (R7) → **immediate Move (15,3)→(15,4)** (R8) → Look reaches the core (R9) → Z-stats round trip (R10) → Move back (R11).
+- **Y1–Y8** (answer Y): the party leaves the town it now stands in; overworld Move, Look, Z-stats answer.
+- **S1–S14** (shard exit paths from a clean world): Mic inside the (U)se list (S2–S3); wrong shard for this flame → header + "No effect!" (S4), no direction prompt (S5 — reference has none), Move (S6); wrong cell → "No effect!" (S7–S8); full success — `(Y)ell ASTAROTH` one cell south (S9), step on, Shard of Hatred → "The doom of the Shadowlord Astaroth is wrought!", shard consumed, summon cleared (S10); immediate Move (S11), Look (S12), Z-stats (S13), Move (S14).
+- **U1–U9** (the overlay against every core-owned question, raised through the production event sink): "Leave this place?", "Pay toll?", "Pay tribute?", "Wilt thou come quietly?", "Password?" each come back after `Alt+D` → Back (U1–U5); controls: Exploration → Exploration (U6); an armed `Look-` comes back and completes into a core Look (U7–U8); an authoritative Dungeon change made under the menu still wins (U9).
+
+**RED → GREEN.** Unmodified production: **24/42 GREEN, 18 RED** — R3 R4 R6 R8 R9 R11, Y3–Y7, U1–U5, U7, U8 (`native/core/batch25-red.log`). The RED R-series is the hardware signature verbatim: R6's transcript holds only `Use item`; R8/R11 Move does nothing; R9 has only the `Look-`/direction echoes; **R10 Z-stats is GREEN** — selective, not a dead device. S1–S14 are GREEN before the fix: the ritual itself was never defective. After the fix: **42/42** (`batch25-green.log`).
+
+**Mutation proof** (`native/core/batch25-mutations.log`; each applied, built, run and reverted; production restored byte-exact):
+
+| | Mutation | Result | Killed by |
+|---|---|---|---|
+| M1 | guard removed (the pre-fix write) | 24/42 | R3 R4 R6 R8 R9 R11 Y3–Y7 U1–U5 U7 U8 |
+| M2 | guard reads the live `mode_` (always DebugMenu) instead of the parked mode | 24/42 | same 18 |
+| M3 | guard protects yes/no questions only | 39/42 | U5 (password text entry), U7, U8 |
+| M4 | guard protects every modal except TargetSelection | 40/42 | U7, U8 |
+| M5 | no guard; clear `awaiting_exit` whenever the Developer menu closes (symptom reset) | 32/42 | R3 Y3 Y5 U1–U5 U7 U8 — Move works again under M5, but the question still vanishes and the troll/guard questions are still dropped |
+
+### Full regression suite
+
+From-scratch build (`native/core/build-batch25-final`), serial: **95/95, 0 fail, 0 skipped** (`batch25-final-ctest.log`) — the prior 94 plus `batch25_shard_ritual`. One warning, the pre-existing w64devkit `stl_uninitialized.h` false positive; zero project warnings. No fixture moved.
+
+### Firmware
+
+ESP-IDF 6.1, `native/targets/tdeck/build-batch25`: `openu5_tdeck.bin` = **0xd39a0** (866,720 bytes) — unchanged from Batch 24 (one added compare fits the existing alignment); `0x2c660` (17 %) of the app partition free; **0 errors, 0 compiler warnings** (`batch25-firmware-build.log`). The Launcher image is rebuilt after the commit (`idf.py reconfigure build`, `package_launcher.py`); its path and SHA-256 are in the annotated tag `alpha2-batch25-h118-shard-move-lock`. **Not flashed.** SD card unchanged.
+
+### Status
+
+H-118: **HOST FIXED / DEVICE RETEST PENDING** (Phase 6T). Root cause: native Developer-overlay defect (not a 1988 behaviour, not the ritual). Not HARDWARE VERIFIED until the user runs Phase 6T.
+
+### Queued, not fixed
+
+- **H-165 — a pending "Leave this place?" plus a Developer teleport *into a dungeon*.** After the fix the question comes back, but by code reading its answer is refused there: `Exit`/`DeclineExit` hit `commands.cpp`'s `c.dungeon && !dungeon_camp` context gate (`InvalidContext`), so `awaiting_exit` would survive until the party surfaces and then lock world commands. Requires a pending question **and** a dev-tool dungeon teleport; not reproduced (the host fixture carries no dungeon data, so the Dungeon Certification does not activate a dungeon there). Workaround for testers: answer any on-screen question before opening the Developer menu.
+
+### Phase 6T — Batch 25 H-118 retest · *firmware only; the SD card is unchanged*
+
+Flash the Batch 25 firmware (the image named in the tag). Any save in a town is fine. No serial capture is needed.
+
+1. **Baseline:** in any town, walk a few steps with the trackball. Each step echoes a direction.
+2. Walk into a town's outer edge until **"Leave this place?"** appears. **Do not answer it.**
+3. Press `Alt+D` → Certification → **Flame / Shard Test** → Confirm → Run Certification, then Mic/Back until the Developer menu is closed.
+4. **Expected:** "Leave this place?" is **back on screen**. Answer **N**.
+5. `U`se → **Shard of Hatred**. **Expected:** "Gem Shard … Thou dost hold above thee the evil Shard of Hatred…" then "…and cast it into the Flame of Love!" (no doom line — no Shadowlord is present). A short sweep sound may play.
+6. Immediately move **South** with the trackball. **Expected:** the party steps to (15,4) with the "South" echo.
+7. `L`ook North. **Expected:** a description line ("Thou dost see …"), not just "Look- north".
+8. `Z`-stats, open and close. Then move **North**. **Expected:** the party steps back onto the ritual cell.
+9. `U`se → **Shard of Falsehood** here. **Expected:** the header, then "No effect!". Then `U`se and cancel the list with a short Mic press. Move once. **Expected:** the party moves both times.
+
+**Pass:** steps 4–9 with **no power cycle**. **Fail** if the question does not return in step 4, if any Use prints only "Use item", or if a direction stops producing a step/echo.
+
+**Known and queued, do not file:** H-165 (a question left pending across a Developer teleport *into a dungeon*); H-115 dungeon save/load (next batch).

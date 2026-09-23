@@ -1,0 +1,48 @@
+R pending "Leave this place?" -> Alt+D Flame/Shard Certification -> answer N
+  GREEN R1    precondition: the castle's west edge raised "Leave this place?"
+  GREEN R2    the real menu route granted the three shards and teleported to Empath Abbey F1 (15,3)
+  GREEN R3    ** leaving the Developer menu returns to the question it interrupted (TOWN 0x07ac loop) **
+  GREEN R4    ** the answer reaches the core: awaiting_exit clears, Exploration owns input **
+  GREEN R5    'N' kept the party on the ritual cell
+  GREEN R6    ** (U)se Shard of Hatred prints the CAST 0x15b4 header and the Flame line **
+  GREEN R7    no Shadowlord above: no doom, the shard is kept, control returns to Exploration
+  GREEN R8    ** the very next direction is an ordinary world Move: (15,3) -> (15,4), echo "South" **
+  GREEN R9    Look reaches the core ("Thou dost see ..."), not just its echoes
+  GREEN R10   Z-stats opens and closes
+  GREEN R11   Move after Z-stats: back to the ritual cell (15,3)
+Y pending "Leave this place?" -> Alt+D Flame/Shard Certification -> answer Y
+  GREEN Y1    precondition: the castle's west edge raised "Leave this place?"
+  GREEN Y2    the real menu route granted the three shards and teleported to Empath Abbey F1 (15,3)
+  GREEN Y3    ** leaving the Developer menu returns to the question it interrupted (TOWN 0x07ac loop) **
+  GREEN Y4    ** the answer reaches the core: awaiting_exit clears, Exploration owns input **
+  GREEN Y5    'Y' left the town the party now stands in (overworld)
+  GREEN Y6    ** an ordinary overworld Move answers at once (echo "South") **
+  GREEN Y7    Look reaches the core ("Thou dost see ...")
+  GREEN Y8    Z-stats opens and closes
+S shard (U)se exit paths at the Flame of Love, each followed by Move/Look/Z-stats
+  GREEN S1    precondition: the Certification from a clean world ends in Exploration on (15,3)
+  GREEN S2    Mic inside the (U)se list closes it; nothing is used
+  GREEN S3    Move answers after the cancelled list
+  GREEN S4    Shard of Falsehood at the Flame of Love: header + "No effect!"
+  GREEN S5    no direction/target prompt follows a shard (reference: none)
+  GREEN S6    Move answers after the wrong-flame attempt
+  GREEN S7    Shard of Hatred one cell south of the ritual cell: header + "No effect!"
+  GREEN S8    Move answers after the wrong-place attempt
+  GREEN S9    (Y)ell ASTAROTH one cell south summons idx 1 onto the Flame
+  GREEN S10   Shard of Hatred under Astaroth: doom wrought, shard consumed, summon cleared
+  GREEN S11   ** Move answers immediately after the successful ritual **
+  GREEN S12   Look reaches the core after the ritual
+  GREEN S13   Z-stats opens and closes after the ritual
+  GREEN S14   Move answers after closing Z-stats
+U Alt+D -> Back returns to whatever it interrupted
+  GREEN U1    Leave this place?: Alt+D, Back -> the same prompt is back on screen
+  GREEN U2    Pay toll?: Alt+D, Back -> the same prompt is back on screen
+  GREEN U3    Pay tribute?: Alt+D, Back -> the same prompt is back on screen
+  GREEN U4    Wilt thou come quietly?: Alt+D, Back -> the same prompt is back on screen
+  GREEN U5    Password?: Alt+D, Back -> the same prompt is back on screen
+  GREEN U6    control: Exploration -> Alt+D, Back -> Exploration
+  GREEN U7    an armed "Look-" -> Alt+D, Back -> "Look-" again
+  GREEN U8    the restored "Look-" completes into a core Look
+  GREEN U9    control: an authoritative Dungeon change made under the menu still wins
+
+batch25_shard_ritual: 42/42 checks GREEN, 0 RED
