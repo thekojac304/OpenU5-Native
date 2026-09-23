@@ -478,3 +478,25 @@ A save generation is now accepted or refused whole. Before, the generation gate 
 **Host suite:** 98/98, 0 fail, 0 skipped, from a clean build: the prior 97 plus `batch28_save_validation` (51 checks). No fixture moved.
 
 **Still open:** H-154–H-157, H-160, H-165. Hardware verification of H-115 (Phase 6U), H-118 (Phase 6T) and H-164 (Phase 6V) awaits the user's reports.
+
+## Batch 29 — rest services: H-154 bed NPC snap, H-155 "Thrown out of bed!", H-160 reclassified
+
+The device bound two of the three rest callbacks to stubs, so the core's correct bed loop was fed nothing: NPCs never moved while the party slept, and nobody could ever throw it out of bed. Both callbacks are now bound in one production function, `AlphaRuntime::bind_rest_services()`, which the host fixture also calls. The snap uses the Batch 24 reposition primitive. The probe uses one occupancy helper that counts NPCs and objects on the party's floor, as kernel `0x368E` does. H-160 was re-derived and is **not** a device defect as written: the device never posts a camp watch, so no guard walks and `cell_free` is never called. The real gap is H-167. Full derivation, side-by-side call flow, RED/GREEN and the nine-mutation proof: `GAMEPLAY_INTEGRATION_AUDIT.md` §"Batch 29".
+
+| Row | Behaviour | Status |
+|---|---|---|
+| H-154 | While the party sleeps in a bed, every NPC of the location is moved to its post for the current hour on every 10-minute tick, on every floor, from its live (alarm-rewritten) schedule. Killed NPCs and guards slain in a fight do not come back | **HOST FIXED / DEVICE RETEST PENDING** (Phase 6W) |
+| H-155 | If an NPC (or object) lands on the party's bed cell after a tick's snap: "Thrown out of bed!", the sleep ends on that tick, the party wakes one step east. A free bed still gives the full rest | **HOST FIXED / DEVICE RETEST PENDING** (Phase 6W) |
+| H-160 | Camp watchman collision | **RECLASSIFIED — UNREACHABLE ON DEVICE** (no watch is ever posted; superseded by H-167). No change |
+| H-167 | Outdoor (H)ole up never asks "Wilt thou set a watch?" / "Who will stand guard?": every device camp is unwatched | **CONFIRMED MISSING — queued.** Do not file |
+| H-168 | An NPC killed by a ship's cannon keeps walking until you re-enter the map (both ports) | **CONFIRMED MISSING — queued.** Do not file |
+| H-169 | 1988 runs up to 16 NPC passes before "Zzzzzzz..." that can cancel the sleep; neither port does | **OBSERVED, NOT ADJUDICATED — queued.** Do not file |
+| H-118 | unchanged by this batch | **HOST FIXED / DEVICE RETEST PENDING** (Phase 6T), separate |
+| H-115 | unchanged by this batch | **HOST FIXED / DEVICE RETEST PENDING** (Phase 6U), separate |
+| H-164 | unchanged by this batch | **HOST FIXED / DEVICE RETEST PENDING** (Phase 6V), separate |
+
+**Retest gate:** audit **Phase 6W** (4 short steps in Lord British's Castle). **A reflash is required** (runtime change): the image named in the tag `alpha2-batch29-rest-wiring`. The same image serves Phases 6T, 6U and 6V. **The SD resource pack is unchanged; no SD recopy is required.** No save-format change.
+
+**Host suite:** 99/99, 0 fail, 0 skipped, from a clean build: the prior 98 plus `batch29_rest_wiring` (26 checks). No fixture moved.
+
+**Still open:** H-156 and H-157 (**reserved for Batch 30**), H-165, H-167, H-168, H-169. Hardware verification of H-115 (Phase 6U), H-118 (Phase 6T), H-164 (Phase 6V) and H-154/H-155 (Phase 6W) awaits the user's reports.

@@ -237,14 +237,14 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
     shop_services_.record_present=[](void *p,int32_t index){auto&r=*static_cast<AlphaRuntime*>(p);return index>=0&&size_t(index)<r.resources_.shop_text_record_count;};
     shop_services_.record=[](void *p,int32_t index)->const char*{auto&r=*static_cast<AlphaRuntime*>(p);return index>=0&&size_t(index)<r.resources_.shop_text_record_count?r.resources_.shop_text_records+r.resources_.shop_text_offsets[index]:nullptr;};
     shop_services_.tile=[](void *p,int32_t x,int32_t y){return tile_at(p,x,y);};
-    shop_services_.occupied=[](void *p,int32_t x,int32_t y){auto&r=*static_cast<AlphaRuntime*>(p);for(size_t i=0;i<r.actors_.count;++i)if(r.actors_.actors[i].location==r.game_.position.map.location&&r.actors_.actors[i].z==r.game_.position.map.floor&&r.actors_.actors[i].x==x&&r.actors_.actors[i].y==y)return true;for(const auto&o:r.objects_)if(o.location==r.game_.position.map.location&&o.floor==r.game_.position.map.floor&&o.x==x&&o.y==y)return true;return false;};
+    shop_services_.occupied=[](void *p,int32_t x,int32_t y){auto&r=*static_cast<AlphaRuntime*>(p);return r.object_or_npc_at(x,y,r.game_.position.map.floor);};
     shop_services_.plate=[](void *p,int32_t x,int32_t y,int32_t tile){volatile_tile(p,x,y,tile);};
     shop_services_.hour_tiles=[](void *p){auto&r=*static_cast<AlphaRuntime*>(p);r.terrain_.refresh(r.resources_.world,r.game_);};
     shop_services_.wake_npcs=[](void *p){auto&r=*static_cast<AlphaRuntime*>(p);const auto loc=r.game_.position.map.location;if(loc>=1&&loc<=32){auto&n=r.resources_.npc_locations[loc-1];openu5::enter_npc_map(r.actors_,n.slots,n.count,uint8_t(loc),uint8_t(r.game_.time.hour),r.game_.npc_dead[loc-1]);}};
     shop_services_.transactional_services=true;
     dungeon_context_.data=resources_.dungeons;dungeon_context_.count=report.dungeon_count;
     auto transport=openu5::world_transport_services(context_);static openu5::TransportServices transport_owner;transport_owner=transport;context_.transport_services=&transport_owner;
-    static openu5::RestServices rest_owner;rest_owner.context=this;rest_owner.snap_npcs=[](void*){};rest_owner.occupied=[](void*,int32_t,int32_t,int32_t){return false;};rest_owner.cell_free=[](void*,int32_t,int32_t){return true;};rest_owner.karma_record=[](void*,int32_t){return "\"Rest well, Avatar. Continue upon the path of virtue.\"";};context_.rest_services=&rest_owner;
+    bind_rest_services();
     {
         debug51::Step trace("terrain-refresh");
         terrain_.refresh(resources_.world,game_);
@@ -2374,5 +2374,26 @@ void AlphaRuntime::u5obj_trace_render(const openu5::PresentationSnapshot&s){
     u5obj_render_pending_=0;
 }
 const char *AlphaRuntime::banner(void*,uint8_t loc){return location_display_name(loc);}
+bool AlphaRuntime::object_or_npc_at(int32_t x,int32_t y,int32_t floor) const{
+    const auto loc=game_.position.map.location;
+    for(size_t i=0;i<actors_.count;++i)if(actors_.actors[i].location==loc&&actors_.actors[i].z==floor&&actors_.actors[i].x==x&&actors_.actors[i].y==y)return true;
+    for(const auto&o:objects_)if(o.location==loc&&o.floor==floor&&o.x==x&&o.y==y)return true;
+    return false;
+}
+// Batch 29. The bed hole-up (CMDS.OVL:0x0552) calls TOWN.OVL:0x1694 on every
+// 10-minute tick (0x0677) and then probes the party's own cell with 0x368E
+// (0x0688). The core already runs 0x1694's object half itself; the device owns
+// the NPC half (H-154) and the probe (H-155). snap_npcs_to_schedule is the
+// reposition 0x1694 does -- live schedule, every floor, dead slots absent --
+// the same primitive ReloadEffect::SnapNpcs uses for a floor change.
+// cell_free stays unconstrained: the device never posts a camp watch (H-167),
+// so CMDS 0x0337 skips the guard walk and nothing calls it (H-160).
+void AlphaRuntime::bind_rest_services(){
+    static openu5::RestServices rest_owner;rest_owner.context=this;
+    rest_owner.snap_npcs=[](void *p){auto&r=*static_cast<AlphaRuntime*>(p);const auto loc=r.game_.position.map.location;if(loc>=1&&loc<=32)openu5::snap_npcs_to_schedule(r.actors_,uint8_t(loc),uint8_t(r.game_.time.hour));};
+    rest_owner.occupied=[](void *p,int32_t x,int32_t y,int32_t floor){return static_cast<AlphaRuntime*>(p)->object_or_npc_at(x,y,floor);};
+    rest_owner.cell_free=[](void*,int32_t,int32_t){return true;};
+    rest_owner.karma_record=[](void*,int32_t){return "\"Rest well, Avatar. Continue upon the path of virtue.\"";};context_.rest_services=&rest_owner;
+}
 void AlphaRuntime::start_smoke(void*p,int group){auto&r=*static_cast<AlphaRuntime*>(p);r.smoke_.start(group);r.dirty_=true;r.dirty_reason_="smoke-test-start";}
 } // namespace tdeck

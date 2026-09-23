@@ -1,0 +1,48 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-b29
+      Start  5: batch21b_chest_reset
+ 1/17 Test  #5: batch21b_chest_reset ...................   Passed    0.11 sec
+      Start 10: gameplay_integration
+ 2/17 Test #10: gameplay_integration ...................   Passed    0.16 sec
+      Start 26: item_parity
+ 3/17 Test #26: item_parity ............................   Passed    0.55 sec
+      Start 27: command_parity
+ 4/17 Test #27: command_parity .........................   Passed    0.25 sec
+      Start 29: travel_parity
+ 5/17 Test #29: travel_parity ..........................   Passed    0.26 sec
+      Start 46: alpha_runtime_integration_regression
+ 6/17 Test #46: alpha_runtime_integration_regression ...   Passed    0.11 sec
+      Start 48: batch22_basement_objects
+ 7/17 Test #48: batch22_basement_objects ...............   Passed    0.08 sec
+      Start 49: batch23_vault_parity
+ 8/17 Test #49: batch23_vault_parity ...................   Passed    0.10 sec
+      Start 50: batch24_reload_parity
+ 9/17 Test #50: batch24_reload_parity ..................   Passed    0.16 sec
+      Start 51: batch25_shard_ritual
+10/17 Test #51: batch25_shard_ritual ...................   Passed    0.11 sec
+      Start 52: batch26_dungeon_save
+11/17 Test #52: batch26_dungeon_save ...................   Passed    0.14 sec
+      Start 53: batch27_alt_load
+12/17 Test #53: batch27_alt_load .......................   Passed    0.17 sec
+      Start 54: batch28_save_validation
+13/17 Test #54: batch28_save_validation ................   Passed    0.31 sec
+      Start 55: batch29_rest_wiring
+14/17 Test #55: batch29_rest_wiring ....................   Passed    0.11 sec
+      Start 75: gameplay_parity
+15/17 Test #75: gameplay_parity ........................   Passed    9.51 sec
+      Start 79: quest_parity
+16/17 Test #79: quest_parity ...........................   Passed    4.76 sec
+      Start 85: persistence_parity
+17/17 Test #85: persistence_parity .....................   Passed    0.94 sec
+
+100% tests passed out of 17
+
+Total Test time (real) =  17.85 sec
+batch21b_chest_reset         batch21b chest reset: 38 checks passed
+batch22_basement_objects     batch22_basement_objects: 23/23 checks GREEN, 0 RED
+batch23_vault_parity         batch23_vault_parity: 45/45 checks GREEN, 0 RED
+batch24_reload_parity        batch24_reload_parity: 47/47 checks GREEN, 0 RED
+batch25_shard_ritual         batch25_shard_ritual: 42/42 checks GREEN, 0 RED
+batch26_dungeon_save         batch26_dungeon_save: 34/34 checks GREEN, 0 RED
+batch27_alt_load             batch27_alt_load: 37/37 checks GREEN, 0 RED
+batch28_save_validation      batch28_save_validation: 51/51 checks GREEN, 0 RED
+batch29_rest_wiring          batch29_rest_wiring: 26/26 checks GREEN, 0 RED

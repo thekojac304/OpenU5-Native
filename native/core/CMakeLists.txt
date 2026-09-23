@@ -582,6 +582,42 @@ if(BUILD_TESTING)
   add_test(NAME batch28_save_validation COMMAND batch28_save_validation
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
 
+  # Batch 29 -- the device's RestServices (H-154 bed NPC snap, H-155 the
+  # "Thrown out of bed!" probe, H-160 reclassified). Same seam and data as
+  # batch24_reload_parity; the fixture now binds production's own
+  # AlphaRuntime::bind_rest_services(), so the device callbacks are tested.
+  add_executable(batch29_rest_wiring
+    ../targets/tdeck/host_tests/batch29_rest_wiring_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_board_host_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(batch29_rest_wiring PRIVATE openu5_core)
+  target_include_directories(batch29_rest_wiring PRIVATE
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/main)
+  target_compile_features(batch29_rest_wiring PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(batch29_rest_wiring PRIVATE /Gy)
+    target_link_options(batch29_rest_wiring PRIVATE /OPT:REF)
+  else()
+    target_compile_options(batch29_rest_wiring PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(batch29_rest_wiring PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME batch29_rest_wiring COMMAND batch29_rest_wiring
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+
   # Batch 14 / R-22 -- (Z)-stats navigation. Same seam and same stub/shim set
   # as alpha_runtime_integration_regression above: it links the REAL,
   # unmodified alpha_runtime.cpp so the modal is reached only by feeding raw

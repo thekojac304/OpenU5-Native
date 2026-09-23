@@ -4540,13 +4540,13 @@ Categories **A (loot/economy)**, **B (doors/locks/terrain)** and **C (rest/sleep
 | — | NPC | A killed NPC does not come back from the reset | `town_despawn_object` `0x00b0` zeroes the `.NPC` type byte at `0x659E` | modelled | `npc_dead` mask | — | — | — | **FAITHFUL** | — | no |
 | — | Doors | Doors do **not** auto-close during a hole-up | the per-tick call list (`0x20FA`, `0x4F7C`, `0x4A84`, `0x2AE8`, `0x2900`, `0x1694`, `0x368E`) contains no door housekeeping | same | same | — | — | — | **FAITHFUL** | — | no |
 | — | Doors | A skull-key-unmagicked door is volatile terrain, reverted only by a map reload | CAST `0x18f4`; TOWN `0x0408` re-reads the record | `setVolatileTerrain`, sealed in `doors.test.ts` | same | — | — | — | **FAITHFUL** (but see H-158) | — | no |
-| **H-154** | Rest | Bed hole-up does not snap NPCs to their schedule **on the device** | CMDS `0x0677` to TOWN `0x1694`, NPC half | modelled | `alpha_runtime.cpp:232` wires `snap_npcs` to `[](void*){}` | NPCs stand still through a night's sleep | med | 100 % | **CONFIRMED MISSING** | next rest batch | yes |
-| **H-155** | Rest | "Thrown out of bed!" can never fire on the device | CMDS `0x0688` to kernel `0x368E kernel_object_at` | modelled (`objectOrNpcAt`) | `occupied` wired to constant `false` | a whole reference outcome is unreachable | med | 100 % | **CONFIRMED MISSING** | with H-154 | yes |
+| **H-154** | Rest | Bed hole-up does not snap NPCs to their schedule **on the device** | CMDS `0x0677` to TOWN `0x1694`, NPC half | modelled | `alpha_runtime.cpp:232` wires `snap_npcs` to `[](void*){}` | NPCs stand still through a night's sleep | med | 100 % | **CONFIRMED MISSING** → **HOST FIXED in Batch 29** (`bind_rest_services()`: `snap_npcs_to_schedule`; `batch29_rest_wiring`). TS "modelled" is a rebuild, not 1988's reposition: see the Batch 29 row below | device retest Phase 6W | yes |
+| **H-155** | Rest | "Thrown out of bed!" can never fire on the device | CMDS `0x0688` to kernel `0x368E kernel_object_at` | modelled (`objectOrNpcAt`) | `occupied` wired to constant `false` | a whole reference outcome is unreachable | med | 100 % | **CONFIRMED MISSING** → **HOST FIXED in Batch 29** (`occupied` → `object_or_npc_at`, NPCs + objects; `batch29_rest_wiring`) | device retest Phase 6W | yes |
 | **H-156** | Rest | Bed hole-up runs no per-tick turn housekeeping | CMDS `0x0671` to kernel `0x2AE8 kernel_turn_housekeeping`: poison 1 HP, meals at 6/12/18, `Starving!`, turn counter, Q/T expiry, regeneration ring | **also omits it** | `bed_sleep_step` only advances the clock | sleeping costs no food, never starves, never ticks poison, never regenerates | **high** | 100 % | **CONFIRMED MISSING** (both ports) | own batch — moves survival fixtures | yes |
 | **H-157** | Terrain | Hole-up does not run the day/night tile refresh | CMDS `0x0664` to TOWN `0x0170 town_schedule_tile_refresh` when the hour becomes 5 or 20 | omits it | `WorldTerrain::hourly` refreshed only on a town-turn hour change, map entry or klimb | sleep across 20:00/05:00 and the drawbridge-and-lamp overlay is stale until you leave | med | 100 % | **CONFIRMED MISSING** (both ports) | with H-156 | yes |
 | **H-158** | Terrain | Changing floors inside a small map does not reload the map record | `town_use_ladder` `0x052e` to `town_load_town_map(fresh=1)` `0x0408` (re-reads the 0x400 record **and** calls `0x1694`) | not modelled | `klimb_ladder`/`apply_stair_step` emit only `RefreshHourTiles` | an unmagicked skull-key door survives a floor change when 1988 relocks it; the vault does not refill on a floor round-trip | med | 100 % | **CONFIRMED MISSING** (both ports) → **FIXED in Batch 23** (both ports; the chest refill on a floor change is part of it) | own batch — touches R-14 terrain persistence | yes |
 | **H-159** | Loot | Interior chest contents byte is 8; the binary seeds `0x1E` | TOWN `0x1795` `mov word [bp-6],0x1e` to `+5` via kernel `0x3A74` | `INTERIOR_CHEST_CONTENTS = 8` | `o.contents = 8` | every interior chest's loot roll is off the authored value | med | 100 % | **CONFIRMED MISSING** — closes oracle hole **O5** (`re/notes/objects.md`) → **FIXED in Batch 23** (both ports) | own batch: will move `gameplay_parity`/`quest_parity`, needs the TS side regenerated in step | no |
-| **H-160** | Camp | Outdoor camp guard walks through the fire and through sleepers | `camp_guard_walk` consumes `cell_free` | modelled (`campCellFree`) | `cell_free` wired to constant `true` | cosmetic on the device today | low | 100 % | **CONFIRMED MISSING** | with H-154 | no |
+| **H-160** | Camp | Outdoor camp guard walks through the fire and through sleepers | `camp_guard_walk` consumes `cell_free` | modelled (`campCellFree`) | `cell_free` wired to constant `true` | cosmetic on the device today | low | 100 % | **CONFIRMED MISSING** → **RECLASSIFIED in Batch 29: UNREACHABLE ON DEVICE.** The device never posts a watch (`member = -1`, `guard_start` unbound), so CMDS `0x0337` skips the walk and `cell_free` has no caller (mutation M5x survives). No watchman exists to walk through the fire; the real gap is H-167 | with H-167 | no |
 | **H-161** | NPC | A floor change does not reposition NPCs to their schedule | `0x052E` → `0x0408(1)` → `0x1694`, NPC half `0x1841-0x1856` (every slot with a type byte, every floor, live schedule) | not modelled (`enterMap` only on map entry) | `reload_floor` emitted no NPC effect | NPCs stay mid-walk across stairs/ladders | med | 100 % | **CONFIRMED MISSING** (both ports) → **FIXED in Batch 24** (both ports; `snap_npcs_to_schedule` / `snapToSchedule`) | — | yes |
 | **H-162** | Doors | An Open door survives a load | `0x00f7` → `0x11F0(fresh=0)` → `0x0408(0)`, `0x041d` zeroes `[0x594f]` | `main.ts` restored `openDoors` | load paths restored `CommandState::door` | a door open at save time is open after the load | low | 100 % | **CONFIRMED MISSING** (both ports) → **FIXED in Batch 24** (both load paths in each port) | — | yes |
 | **H-163** | Terrain | Town-fight end does not re-read the floor | `0x09BC` → `0x6150` → `0xb0` → `0x0408(0)` (`0x09d9-0x09dc`), no branch | `endCombat` did not | `finish_encounter_combat` did not | a skull-keyed lock stays unlocked after a town fight; open door / NPCs / chests already matched | low | 100 % | **CONFIRMED DIVERGENCE** (transient terrain; both ports) → **FIXED in Batch 24** | — | yes |
@@ -4556,8 +4556,12 @@ Categories **A (loot/economy)**, **B (doors/locks/terrain)** and **C (rest/sleep
 | — | Rest | `bedSleepStep` omits `0x0671` and `0x0664` | as H-156/H-157 | omits | omits | — | — | — | **REFERENCE-PORT DIFFERENCE** compounding H-156/H-157 | with them | no |
 | — | Rest | Bed wake-up hour: the original subtracts 23, not 24, when crossing midnight | CMDS `0x05b0` | fixed | fixed | wakes on the hour requested | — | — | **DELIBERATE DIVERGENCE** | `bugs-del-original.md` §1.3 (WITNESSED) | no |
 | — | NPC | Loading a save inside a town: the binary does **not** re-read the `.NPC` (`fresh = 0`) | TOWN `0x11FF/0x1203`; `ULTIMA.EXE:0x00F4` | re-derives | re-derives | ports show a populated town where 1988 shows an empty one | — | — | **DELIBERATE DIVERGENCE** | `re/notes/npc-carga-partida-fresh-gate.md` §6/§8, `re/deliberate-divergences.md` | no |
-| — | NPC | The `+5` byte written for **non-chest** `.NPC` slots — `0xFF` or `0` from a per-location dword bitmask at DS `0x28C2` | TOWN `0x179c-0x17d4` | — | — | unknown | ? | — | **UNRESOLVED** — no note anywhere in the repo names DS `0x28C2`; chests bypass it, so H-148 is unaffected | needs a DS-map pass | no |
-| — | Rest | Whether the bed loop has any ambush/interruption roll beyond the occupancy probe | `0x0688` is the only gate decoded; kernel `0x2AE8`'s callees were **not** exhaustively walked | camp-only ambush | camp-only ambush | unknown | ? | — | **UNRESOLVED** — stated rather than assumed | with H-156 | no |
+| — | NPC | The `+5` byte written for **non-chest** `.NPC` slots — `0xFF` or `0` from a per-location dword bitmask at DS `0x28C2` | TOWN `0x179c-0x17d4` | — | — | unknown | ? | — | **UNRESOLVED** — no note anywhere in the repo names DS `0x28C2`; chests bypass it, so H-148 is unaffected. **Batch 29, partly resolved:** a static DATA.OVL table (file `0x28D2`), one dword per `g_location`, **not** the dead bitmap (`0x5B56`); non-zero only at locations 4, 5, 28, 29 (and index 0). The meaning of `+5 = 0xFF` is still open; `0x368E` does not read `+5` | needs a DS-map pass | no |
+| — | Rest | Whether the bed loop has any ambush/interruption roll beyond the occupancy probe | `0x0688` is the only gate decoded; kernel `0x2AE8`'s callees were **not** exhaustively walked | camp-only ambush | camp-only ambush | unknown | ? | — | **UNRESOLVED** — stated rather than assumed. **Batch 29:** inside the loop, still only `0x0688`; *before* it, `0x05b4-0x05d4` can cancel the sleep, see H-169 | with H-156 | no |
+| **H-167** | Camp | The device camp never posts a watch | kernel `0x3ea5-0x3eac` "Who will stand guard? " after "Wilt thou set a watch?"; guard skips the heal (`0x0461`) and walks (`0x0337`) | modelled (`campPrompt.ts`, `campGuardStartCell`, `campCellFree`) | (H)ole up asks only for hours: `member = -1`, `guard_start` unbound | no watch prompt; everyone heals; the camp's RNG stream differs from a watched camp | med | 100 % | **CONFIRMED MISSING** (device only; Batch 29) | own batch: prompt + `guard_start` + a `cell_free` that knows the guard (API change) | yes |
+| **H-168** | NPC | An NPC killed by a ship's cannon keeps walking until the next map entry | CMDS `0x0d47-0x0d82`: clear object (`0x3A74`), slot lookup TOWN `0x011e`, mark dead `0x0052`, despawn `0x00b0` | sets the dead bit only | sets the dead bit only (`commands.cpp` cannon arm) | a "killed" NPC stays on the map | low | 100 % | **CONFIRMED MISSING** (both ports; Batch 29, by disassembly and code reading) | own batch | yes |
+| **H-169** | Rest | The pre-sleep NPC passes are unmodelled | CMDS `0x05b4-0x05d4`: up to 16 NPC passes (NPC.OVL `0x0db4` + kernel `0x5910`) before "Zzzzzzz...", sleep cancelled if `[0x65be] == 0x61` | omits | omits | unknown until the trigger is known | ? | — | **OBSERVED, NOT ADJUDICATED** (both ports; Batch 29) | derive what sets `0x61` | no |
+| — | Rest | The TypeScript bed snap is a `.NPC` rebuild, not 1988's reposition | TOWN `0x1694` repositions type≠0 slots from the live schedule, stuck kept | `wakeSnapNpcs` → `npcManager.enterMap`: re-reads the file (dead bits honoured), resets stuck | `snap_npcs_to_schedule` (Batch 29) | TS only: an `0x00B0`-cleared guard returns after a sleep; an alarmed guard goes to its file post | — | 100 % | **REFERENCE-PORT DIFFERENCE** (Batch 29 mutation M2b = the TS shape, killed by A4/B2d/B2e). No fixture pins it | fix in TS only with a `--check` control | no |
 | — | Ships | Frigate delivery price does not match and accepting does nothing | `bugs-del-original.md` §1.4 | pending | pending | — | — | — | **OUT OF ALPHA 2 SCOPE** | §1.4 | — |
 | — | Dungeon | A dungeon chest on floor 0 hangs the game | §1.5 | pending | pending | — | — | — | **OUT OF ALPHA 2 SCOPE** | §1.5 | — |
 | — | Quests | Wishing well's horse appears inside a wall | §1.7 | divergent | divergent | — | — | — | **OUT OF ALPHA 2 SCOPE** | §1.7 | — |
@@ -5517,3 +5521,151 @@ Unchanged by this batch and still separate: H-118 (Phase 6T), H-115 (Phase 6U), 
 **Still open:** H-154–H-157, H-160, H-165.
 
 **Known and queued, do not file:** H-165 (a question left pending across a Developer teleport into a dungeon).
+
+## Batch 29 — the device's rest services: H-154 bed NPC snap, H-155 "Thrown out of bed!", H-160 reclassified
+
+Scope: H-154, H-155 and H-160 only. Not touched: H-156 (per-tick housekeeping in bed) and H-157 (the 05:00/20:00 tile refresh), both **reserved for Batch 30**; H-165; H-118 (Phase 6T), H-115 (Phase 6U), H-164 (Phase 6V); the TypeScript reference; the SD pack; the save format.
+
+### Baseline
+
+HEAD `f964df19` (tag `alpha2-batch28-h166-save-validation`), branch `main`, working tree clean. From-scratch build `native/core/build-b29-base`, serial: **98/98 PASS, 0 fail, 0 skipped** (`native/core/batch29-baseline-ctest.log`). GCC 16.2.0 and CMake 4.4.2 from w64devkit. One warning, the known w64devkit `stl_uninitialized.h` false positive.
+
+### The 1988 bed hole-up, re-derived
+
+Read from `original/u5/ultima5/*.OVL` with `re/tools/dis16.py`, not from the earlier notes. CMDS positive near calls are kernel calls too: `(target + 0xBF80) & 0xFFFF`.
+
+| CMDS `0x0552`… | What it does |
+|---|---|
+| `0x055a` | "For how many hours? " (DS `0x4209`); one digit, `0` or space aborts |
+| `0x059e-0x05b0` | target = `g_hour + n`, minus **23** if above 23 (the declared wake-hour divergence, `bugs-del-original.md` §1.3) |
+| `0x05b4-0x05d4` | **up to 16 NPC passes** (`0xffffbb32` → stub `0x7ab2` → NPC.OVL `0x0db4`, then kernel `0x5910`); if `[0x65be] == 0x61` after a pass, **return without sleeping** (see H-169) |
+| `0x05e6-0x0607` | every party `'G'` → `'S'` |
+| `0x060d` | "Zzzzzzz...\n" (DS `0x421e`) |
+| **loop** `0x0634` | `0x20FA` frame delay (not on the first entry) |
+| `0x063b` | `g_hour == target` → leave |
+| `0x0647` | `advance_clock(10)`, kernel `0x4F7C` |
+| `0x064e-0x0664` | hour changed to 20 or 5 → `0xffffbb1a` (day/night tiles, **H-157**) |
+| `0x066e` / `0x0671` / `0x0674` | kernel `0x4A84`; kernel **`0x2AE8` turn housekeeping (H-156)**; `0x2900` status panel |
+| **`0x0677`** | `0xffffbb0e` → stub `0x7a8e` → **TOWN.OVL `0x1694`**, every tick |
+| **`0x067a-0x0688`** | push `[0x5896]` x, `[0x5897]` y, `[0x5895]` g_floor; **kernel `0x368E` `find_object_at_xy`** |
+| `0x068b` | zero → next tick; non-zero → `si = -1`, leave |
+| `0x069d` | only when `si == -1`: **"Thrown out of bed!\n"** (DS `0x422a`) |
+| `0x06a4-0x06e5` | both exits: `'S'` → `'G'`, restore `[0x587b]`, `inc [g_party_x]`, repaint flag, `inc [0x5c5c]` (slot 0's mirror of the same step), redraw |
+
+`re/tools/callers_banda.py 0x7a8e` finds exactly one caller of the stub in every module, CMDS `0x0677` (the positive control: that is the site read above). Only the bed loop runs `0x1694` through the stub. The TypeScript comment that the inn shares it (`game.ts` `wakeSnapNpcs` docblock) is not supported by the census; the inn was not adjudicated here.
+
+**H-154 — the snap.** `0x1694` runs once per 10-minute tick, inside the loop. It is one routine over the 32-slot actor table. `0x16a2-0x16b9` clears object-register slots 1..31 and every live `objIdx`; `0x16c9-0x171b` then walks slots 1..31 whose type byte (DS `0x659E`) is non-zero and, through `0x1726`, (a) places an object in the register **only if the slot's schedule z equals `g_floor`** (`0x176c`), and (b) for **every** such slot, on every floor, writes the period's X/Y/Z from the **live** schedule (DS `0x5D5E`, `+3/+6/+9`) into the live record (`0x1841-0x1853`), state 1 (`0x1856`), servedSlot = period (`0x1705`), pathIdx −1 (`0x170c`). The stuck counter (DS `0x65C2`) is not written. `0x1694` never reads the dead bitmap (DS `0x5B56`). A dead NPC is absent because its type byte is 0: the map loader despawns every slot `is_npc_dead` (TOWN `0x0000`) reports (`0x123c-0x124e` → `0x00B0`), and the kill path `0x09BC` marks the bit (`0x0052`) and despawns (`0x00B0`). A guard cleared by `0x00B0` without a dead bit is equally absent until the `.NPC` is re-read. The object half and the NPC half are one routine in 1988, but in the port they are separate services: the core already runs the object half from this hook (H-148, `hydrate_interior_objects`), and the device owns the NPC half.
+
+**H-155 — the probe.** Kernel `0x368E` scans object-register slots 1..31 (slot 0 is the party's own record), compares `+2`/`+3`/`+4` with the three arguments (x, y, floor) and returns the matched slot's `+0` byte. The floor comparison is skipped only when `g_location > 0x7f` (`0x36c0`); the flags byte `+5` is not read. The cell tested is the **party's own cell** on the current floor. After `0x1694` the register holds that floor's NPCs **and** its objects, so both count. The probe runs after the tick's clock (`0x0647`), housekeeping (`0x0671`) and snap (`0x0677`). When it fires, the loop ends at once: the remaining hours are not slept, "Thrown out of bed!" prints, and the common epilogue still wakes everyone and steps the party one cell east (onto the RightBed; 264/264 LeftBeds have one there, `camp.ts` docblock). **Shipped data:** of the 32 locations, no `.NPC` object slot (types 1, 14, 27, 30, `0xB5`, `0xB6`) is ever authored onto a LeftBed. Many NPC periods are (Lord British's Castle alone: slots 1, 2, 5–14, 18–20, 26, 27, 29, 30). The object half of the probe is faithful but cannot fire on shipped data; every real "Thrown out of bed!" is an NPC coming to its bed.
+
+**H-160 — the camp watch.** Outdoor camp is a different routine (CMDS `0x0000`). The guard walk (`0x0337-0x03e8`) starts with `cmp [bp+6], -1`: **with no guard posted, the whole walk is skipped and no random number is drawn.** With a guard: `rand(0,3)`, move only on 2; `rand(0,3)` for the direction; bounds 0..10 (kernel `0x6d82`, `0x038e`); then the free-cell test at `0x03a6`, stub `0x7d76` → overlay 7 `0x0000`. That test blocks on impassable terrain (the fire, tile 179), tile `0xFF`, an object-register occupant (some families excepted) or a live combat actor (the sleepers). TS `campCellFree` models the same set. The guard is chosen by kernel `0x3ea5-0x3eac`, "Who will stand guard? " (DS `0xa36e`), after "Wilt thou set a watch?". **On the device, (H)ole up asks only for hours** (`UiSession` `'h'` → `RestHours` → `Command::member = -1`), and `RestServices::guard_start` is unbound. So `camp()` always gets guard −1, the walk never runs, and `cell_free` has no caller on hardware. The Batch 21B row ("the watchman walks through the campfire") describes a watchman the device never posts. It is **reclassified**: the constant `cell_free` is unreachable wiring, not a player-visible defect, and the real gap is the missing watch (**H-167**, new). A faithful `cell_free` also needs the guard's index (the guard does not block itself, `campCellFree`), which `RestServices::cell_free(ctx, col, row)` does not carry. That is a core API change, which belongs with H-167.
+
+### Side by side
+
+| | DOS | TypeScript | native core | device before Batch 29 |
+|---|---|---|---|---|
+| per-tick NPC snap | `0x0677` → `0x1694`: reposition every live slot, every floor, live schedule, stuck kept | `snapNpcsToSchedule` → `wakeSnapNpcs` → `npcManager.enterMap`: a **rebuild** from the `.NPC` file (dead bits honoured) | `bed_sleep_step` calls `snap_npcs` every tick; the Rest arm adds `hydrate_interior_objects` | `snap_npcs = [](void*){}` |
+| object half | same routine | not called from the bed (Batch 21B row) | `hydrate_interior_objects` every tick (H-148) | core-owned, ran |
+| occupancy probe | `0x0688` → `0x368E` (x, y, g_floor), objects + NPCs | `objectOrNpcAt(x, y, floor)`: `worldObjects` + `npcManager.npcAt` | `bed_sleep_step` calls `occupied` after the snap, every tick | `occupied` → `false` |
+| thrown out | message, loop ends, epilogue runs | same | same (`bed_sleep` breaks, `bed_sleep_end`) | unreachable |
+| camp watch | "Wilt thou set a watch?" / "Who will stand guard?" | `campPrompt.ts`, `campGuardStartCell`, `campCellFree` | `camp(ctx, hours, member)`, `camp_guard_walk` | no prompt, `member = -1`, `guard_start` unbound, `cell_free` → `true` (never called) |
+
+### Corrections to the Batch 21B text
+
+- **H-160** is inaccurate as written. See above: reclassified to **UNREACHABLE ON DEVICE**, superseded by H-167.
+- **H-154's "TypeScript: modelled"** is only half true. TS snaps on every tick, but by *rebuilding* the list from the `.NPC` file, not by 1988's reposition. That has three observable consequences, each pinned by a check below (mutation M2b = that shape): a guard cleared in a fight without a dead bit comes back (B2d); an alarmed guard goes to its file schedule instead of its live one (B2e); the stuck counter is reset (A4). **REFERENCE-PORT DIFFERENCE**, new row below. No parity fixture pins bed-snap NPC state (`item_parity` pins only the callback order and arguments), so native follows the binary here and the reference was not changed.
+- The matrix row "`+5` byte from a per-location dword bitmask at DS `0x28C2`": DS `0x28C2` is a **static DATA.OVL table** (file offset `0x28D2`), one dword per location, indexed by `g_location`. It is **not** the dead bitmap (`0x5B56`). Non-zero at locations 4 (`0x00028000`), 5 (`0x00000002`), 28 (`0x000003F8`), 29 (`0x000001E0`), and at index 0 (`0x00000A3F`, unused by towns). What `+5 = 0xFF` means for those slots is still unresolved; it does not affect the probe (`+5` is not read).
+- The matrix row "Whether the bed loop has any ambush/interruption roll beyond the occupancy probe": the per-tick call list is as recorded, but *before* the loop `0x05b4-0x05d4` runs up to 16 NPC passes that can cancel the sleep (**H-169**, new, not adjudicated).
+
+### Root causes
+
+- **H-154:** `AlphaRuntime::initialize()` bound `RestServices::snap_npcs` to `[](void*){}`. The core called it on every tick and got nothing. Native defect (device wiring); the core and the primitive (`snap_npcs_to_schedule`, Batch 24) were already right.
+- **H-155:** `RestServices::occupied` was bound to `[](...){return false;}`. The core probed on every tick after the snap and was always told "empty". Native defect (device wiring). The device already had the right predicate, as `shop_services_.occupied` (actors + pool, current location/floor).
+- **Why no test caught it:** the host fixture (`alpha_runtime_host_fixture.cpp`) re-declared the same three stubs lambda for lambda, and the core rest tests (`item_parity`, `batch21b_chest_reset`) bind their own recording callbacks. Nothing ran the device's binding.
+
+### Fix (minimal)
+
+| File | Change |
+|---|---|
+| `native/targets/tdeck/main/alpha_runtime.{h,cpp}` | new `bind_rest_services()`: the one place the device's `RestServices` are bound, called by `initialize()` (and by the host fixture). `snap_npcs` → `openu5::snap_npcs_to_schedule(actors_, location, hour)` for locations 1–32, the same primitive `ReloadEffect::SnapNpcs` uses for a floor change. `occupied` → new `object_or_npc_at(x, y, floor)`: `actors_` and `objects_` of the current location on that floor. `shop_services_.occupied` now calls the same helper with the current floor (identical behaviour), so there is one occupancy predicate. `cell_free` and `karma_record` unchanged |
+| `native/targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp` | the fixture's copy of the rest stubs is replaced by a call to production's `bind_rest_services()` |
+| `native/targets/tdeck/host_tests/batch29_rest_wiring_test.cpp`, `native/core/CMakeLists.txt` | new ctest `batch29_rest_wiring` |
+
+The seam was moved first, with the three stubs carried over unchanged, so the RED run below measures production's binding with production's old behaviour. The object half is **not** run by the new callback. The core's Rest arm already runs `hydrate_interior_objects` from the same hook (H-148), and running it twice would double the pool work for nothing. Dead NPCs: `NpcActors` holds no dead or `0x00B0`-cleared slot (map entry filters the dead bitmap; kills erase the actor, but see H-168 for the cannon), and `snap_npcs_to_schedule` only moves what is there, exactly like `0x1694` over type-0 slots. The live schedule (`NpcActor::schedule`, rewritten by the alarm) is what it reads.
+
+Not done, deliberately: H-156 and H-157 (Batch 30); no guard prompt, `guard_start` or `cell_free` change (H-160/H-167); no change to TypeScript or to any fixture.
+
+### Tests — `batch29_rest_wiring` (26 checks, real `AlphaRuntime` + shipped pack)
+
+Raw keys through `AlphaRuntime::handle()`: `e` to enter Lord British's Castle, `h`, a digit, `Enter`. The fixture binds production's `bind_rest_services()`. Expected NPC cells come from the test's own transcription of NPC.OVL `0x12E0` over the pack's `.NPC` tables, never from the port's `schedule_index`.
+
+- **H154-C** C1: `context_.rest_services` is the runtime's own owner with all four callbacks bound. The proof that the tests reach production's callbacks is M1 below: mutating production turns them RED.
+- **H154-A / H155-C** (quiet bed (9,7,0), 12:00 + 2 h; slot 1 displaced on floor 0, slot 5 on floor 1, both mid-walk with stuck 7): A1 the full 12 ticks to 14:00; **A2** slot 1 and **A3** slot 5 at their 14:00 cells, state 1, served = period, path −1; A4 stuck still 7; C2 no "Thrown out"; C3 everyone `'G'`, one step east.
+- **H154-B1** (dead bit on slot 29 before entry): absent at entry, **absent after twelve snaps** (B1c).
+- **H154-B2** ((A)ttack guard slot 2 at (13,28), walk off the arena; family `0x70`, so no dead bit): **slot 2 not resurrected** (B2d); **B2e** slot 1, whose live schedule the alarm rewrote (times 0, AI 7), snapped from the live schedule, not from the file.
+- **H155-A** (slot 14's bed (12,10,0), 22:00 + 2 h; slot 14 is elsewhere at 22:00 and on the bed from 23:00): **A1** "Thrown out of bed!"; **A2** the sleep ended on the 23:00 tick; **A3** slot 14 is on the bed (snap before probe); A4 epilogue.
+- **H155-B** (object occupant): a copy of the castle table whose first chest has period 0 = (9,7,0) from 13:00; rest from 12:50. **B1** the 13:00 tick's re-seed puts the chest on the bed and the probe throws. No shipped slot does this (see above). It is arranged because `0x368E` counts the object half too. The first RED run also recorded a device fact: an object already standing on the bed hides the `0xAB` tile, and (H)ole up then refuses with "Hole up- Only in bed!".
+- **H160-R** (outdoor (H)ole up): the camp runs, and no watch prompt appears. This records today's device flow for H-167 and is expected to change with it.
+
+**RED → GREEN.** Against the moved seam with the old stubs (production behaviour at `f964df19`): **19/26 GREEN, 7 RED** (`native/core/batch29-red.log`). RED: H154-A A2, A3; B2e; H155-A A1 (slept to 00:00), A2, A3 (slot 14 still at (9,22)); H155-B B1 (slept to 14:50 with the chest on the bed). The first RED run also exposed a test-setup error in H155-B (the chest was placed on the bed before (H)ole up, which refused); B was rearranged before any production change. After the fix: **26/26** (`batch29-green.log`).
+
+### Mutation proof (`native/core/batch29-mutations.log`)
+
+Driver as in Batch 28: one mutation of `alpha_runtime.cpp`, touch, rebuild through cmake by absolute path, run, restore byte for byte, touch. After the last restore: 26/26, and the file compares identical to the fixed source.
+
+| | Mutation | Result | Killed by |
+|---|---|---|---|
+| M1 | `snap_npcs` back to a no-op | 20/26 | H154 A2 A3, B2e; H155-A A1 A2 A3 (no snap → slot 14 never reaches its bed) |
+| M2a | snap → `.NPC` rebuild ignoring the dead bitmap | 22/26 | A4, **B1c**, **B2d**, B2e |
+| M2b | snap → rebuild **with** the dead bitmap (the TS `wakeSnapNpcs` shape) | 23/26 | A4, **B2d**, B2e |
+| M3 | `occupied` back to constant `false` | 23/26 | H155 A1 A2, B1 |
+| M4a | occupancy blind to objects | 25/26 | H155 **B1** |
+| M4b | occupancy blind to NPCs | 24/26 | H155 **A1 A2** |
+| M5x | `cell_free` made fatal (`std::abort()`) | **26/26, survived** | nothing, by design: the device never calls it (H-160) |
+| M6x | `occupied` over-constrained to constant `true` | 18/26 | **C2**, and every check that needs a full rest (A1–A3, B1b, B2c) |
+| M7 | snap only the party's floor | 25/26 | A3 |
+
+Every assertion that was already GREEN before the fix and guards new behaviour is killed by at least one mutation: A4 (M2a, M2b), C2 (M6x), B1c (M2a), B2d (M2a, M2b). C3/A4-of-H155 pin the unchanged epilogue. The prompt's M5 ("restore `cell_free` to constant true") and M6 ("over-constrain `cell_free`") do not apply as written: `cell_free` was never changed, and M5x shows it has no caller. M6x is the same over-constraint aimed at the predicate that does run.
+
+### Regression
+
+Targeted, in `native/core/build-b29` (`batch29-targeted-ctest.log`), serial, all PASS: `batch29_rest_wiring` 26/26, `batch21b_chest_reset` 38, `batch22_basement_objects` 23/23, `batch23_vault_parity` 45/45, `batch24_reload_parity` 47/47, `batch25_shard_ritual` 42/42, `batch26_dungeon_save` 34/34, `batch27_alt_load` 37/37, `batch28_save_validation` 51/51, `item_parity`, `command_parity`, `travel_parity`, `gameplay_integration`, `gameplay_parity`, `quest_parity`, `persistence_parity`, `alpha_runtime_integration_regression`. Every earlier runtime batch keeps its exact check count. H-148's chest reset (21B/22/23) is unchanged: the object half still runs once per tick from the core. Batch 24's floor/load/fight semantics are unchanged: the same primitive, a different caller. No parity fixture moved.
+
+### Full regression suite
+
+From-scratch build (`native/core/build-b29-final`), serial: **99/99, 0 fail, 0 skipped** (`native/core/batch29-final-ctest.log`): the prior 98 plus `batch29_rest_wiring`. One warning, the pre-existing w64devkit `stl_uninitialized.h` false positive; zero project warnings (`batch29-final-host-build.log`).
+
+### Firmware
+
+ESP-IDF 6.1, from scratch in `native/targets/tdeck/build-batch29`: `openu5_tdeck.bin` = **0xd3a70** (866,928 bytes), **+0x50 (80 bytes)** against Batch 28's `0xd3a20`: two real callbacks and the shared `object_or_npc_at()` in place of two empty lambdas. `0x2c590` (181,648 bytes, 17 %) of the app partition is free; bootloader `0x5850`, 31 % free. **0 errors, 0 compiler warnings** (`batch29-firmware-build.log`, built before the commit; the five ESP-IDF `component_validation.cmake` notices are third-party). The Launcher image is rebuilt (`idf.py reconfigure build`, `package_launcher.py`) **after** the Batch 29 commit so it embeds that commit; its path and SHA-256 are recorded in the annotated tag `alpha2-batch29-rest-wiring`. **Not flashed.** SD card unchanged; no SD recopy.
+
+### Status
+
+- **H-154: HOST FIXED / DEVICE RETEST PENDING** (Phase 6W). Native defect (device wiring). The bed snap is now 1988's reposition: live schedule, every floor, stuck kept, dead and `0x00B0`-cleared slots stay gone.
+- **H-155: HOST FIXED / DEVICE RETEST PENDING** (Phase 6W). Native defect (device wiring). "Thrown out of bed!" fires on the tick an NPC (or, in principle, an object) lands on the party's cell.
+- **H-160: RECLASSIFIED — UNREACHABLE ON DEVICE.** No change. The device posts no camp watch, so the guard walk and `cell_free` never run (M5x). The player-visible gap is H-167.
+- **H-156, H-157: OPEN, reserved for Batch 30.** Per-tick housekeeping (`0x2AE8` at `0x0671`) and the 05:00/20:00 tile refresh (`0x0664`) are still absent from the bed loop in both ports. Note for Batch 30: in 1988 the tick that throws you out has already run its housekeeping (`0x0671` precedes `0x0677`/`0x0688`).
+- **H-165: OPEN**, untouched.
+- **H-118 (Phase 6T), H-115 (Phase 6U), H-164 (Phase 6V):** unchanged, **HOST FIXED / DEVICE RETEST PENDING**.
+
+Hardware validation is warranted for H-154/H-155, but only as a smoke test. The code that decides both runs on host exactly as on the device (the runtime, the pack, the raw-key route). What only the device shows is the player's view: an NPC visibly in the bed, the message, the clock. Phase 6W is one short pass.
+
+### Queued, not fixed (found during this batch's archaeology)
+
+- **H-167 — the device camp never posts a watch.** 1988 asks "Wilt thou set a watch?" then "Who will stand guard? " (kernel `0x3ea5-0x3eac`, `select_party_member`; a member not in `'G'` gives "None posted!"). The guard is excluded from the partial heal (`0x0461`), walks the camp (`0x0337-0x03e8`, 1–2 draws per 5-minute step) and is drawn in the scene. The device asks only for hours (`Command::member = -1`, `guard_start` unbound), so every camp is an unwatched camp: everyone heals and **the RNG stream differs from a watched camp**. The TypeScript reference has the whole flow (`campPrompt.ts`, `campGuardStartCell`, `campCellFree`). Closing it needs the prompt, `guard_start` from the CampFire arena's south starts, and a `cell_free` that knows the guard's index (a `RestServices` signature change). Missing original behaviour, device only. Medium.
+- **H-168 — an NPC killed by a ship's cannon keeps walking.** 1988's hit (CMDS `0x0d47-0x0d82`) clears the object (`0x3A74`), finds its slot (TOWN `0x011e`), marks it dead (`0x0052`) and despawns it (`0x00b0`). Both ports only set the dead bit and karma (`commands.cpp` cannon arm; `game.ts` "(1) Ocupante") and leave the actor in `NpcActors`/`NpcManager` until the next map entry. The bed snap now moves such an actor like any other, which is harmless because it was never removed. Both ports, low.
+- **H-169 — the pre-sleep NPC passes are unmodelled.** Before "Zzzzzzz...", CMDS `0x05b4-0x05d4` runs up to 16 NPC passes at the current hour (NPC.OVL `0x0db4` + kernel `0x5910`) and returns without sleeping if a pass leaves `[0x65be] == 0x61`. Neither port does this. What sets `0x61` (an NPC reaching the party?) was **not adjudicated**. Both ports; severity unknown until it is.
+- **TypeScript bed snap is a rebuild** (REFERENCE-PORT DIFFERENCE, see Corrections). To fix in the reference only with a `--check` control, if a fixture ever pins it.
+
+### Phase 6W — Batch 29 bed rest · *firmware only; the SD card is unchanged*
+
+Flash the Batch 29 firmware (the image named in the tag). No serial capture is needed. Close the Developer menu with nothing on screen before each (H)ole up (H-165).
+
+1. `Alt+D` → **Time** → Hour **22**, Minute **0**. Then **Teleport** → Destination **Lord British's Castle**, Floor **0**, X **12**, Y **10**, Use default entrance **off** → **Teleport**. Close the menu. You stand on the left half of a bed.
+2. Press `h`, `2`, `Enter`. **Expect** "Zzzzzzz...", then **"Thrown out of bed!"** with the clock at **23:00** (not 00:00). The party stands one cell east, on the right half of the bed, awake; **an NPC is now lying on the left half**, where you slept.
+3. `Alt+D` → **Time** → Hour **12**, Minute **0**. **Teleport** → Lord British's Castle, Floor **0**, X **9**, Y **7**. Close the menu. Note two or three NPCs in view, then Pass until some have walked.
+4. Press `h`, `2`, `Enter`. **Expect** "Zzzzzzz..." and **no** "Thrown out": the clock reaches **14:00**, the party steps one cell east, and the NPCs you watched are no longer where they had walked to. They have jumped to their 14:00 posts.
+
+**Pass:** steps 2 and 4 as stated. **Fail** if step 2 sleeps to 00:00 with no message or leaves the bed empty, if step 4 throws you out, or if NPCs stand exactly where they were before the sleep.
+
+**Known and queued, do not file:** sleeping costs no food, ticks no poison and does not regenerate (H-156, Batch 30); the drawbridge and lamps do not change when a sleep crosses 05:00/20:00 (H-157, Batch 30); outdoor (H)ole up never asks "Wilt thou set a watch?" (H-167); H-165.

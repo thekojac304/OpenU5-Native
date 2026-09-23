@@ -1,0 +1,56 @@
+M1: H-154 snap_npcs back to a no-op
+  verdict: KILLED (exit 1)
+  batch29_rest_wiring: 20/26 checks GREEN, 6 RED
+    RED   A2     ** slot 1 is at its 14:00 schedule cell: state 1, served = period, path -1 **
+    RED   A3     ** slot 5, displaced to floor 1, is snapped too: 0x1694 ignores the party's floor **
+    RED   B2e    ** slot 1 snapped from its LIVE (alarmed) schedule, not the .NPC file's **
+    RED   A1     ** "Thrown out of bed!" (DS 0x422a) **
+    RED   A2     ** the sleep ended on the 23:00 tick: that tick's clock had already run **
+    RED   A3     slot 14 is in its bed (the snap came first, 0x0677 < 0x0688)
+M2a: snap replaced by a .NPC rebuild that ignores the dead bitmap
+  verdict: KILLED (exit 1)
+  batch29_rest_wiring: 22/26 checks GREEN, 4 RED
+    RED   A4     the stuck counter (DS 0x65C2) is untouched: a reposition, not a rebuild
+    RED   B1c    ** slot 29 is NOT resurrected by twelve per-tick snaps **
+    RED   B2d    ** slot 2 is NOT resurrected: 0x1694 skips type-0 slots **
+    RED   B2e    ** slot 1 snapped from its LIVE (alarmed) schedule, not the .NPC file's **
+M2b: snap replaced by a blind .NPC rebuild WITH the dead bitmap (the TS wakeSnapNpcs shape)
+  verdict: KILLED (exit 1)
+  batch29_rest_wiring: 23/26 checks GREEN, 3 RED
+    RED   A4     the stuck counter (DS 0x65C2) is untouched: a reposition, not a rebuild
+    RED   B2d    ** slot 2 is NOT resurrected: 0x1694 skips type-0 slots **
+    RED   B2e    ** slot 1 snapped from its LIVE (alarmed) schedule, not the .NPC file's **
+M3: H-155 occupied back to constant false
+  verdict: KILLED (exit 1)
+  batch29_rest_wiring: 23/26 checks GREEN, 3 RED
+    RED   A1     ** "Thrown out of bed!" (DS 0x422a) **
+    RED   A2     ** the sleep ended on the 23:00 tick: that tick's clock had already run **
+    RED   B1     ** an object occupant throws too: the 13:00 tick re-seeded the chest onto the bed **
+M4a: occupancy blind to objects (NPCs still seen)
+  verdict: KILLED (exit 1)
+  batch29_rest_wiring: 25/26 checks GREEN, 1 RED
+    RED   B1     ** an object occupant throws too: the 13:00 tick re-seeded the chest onto the bed **
+M4b: occupancy blind to NPCs (objects still seen)
+  verdict: KILLED (exit 1)
+  batch29_rest_wiring: 24/26 checks GREEN, 2 RED
+    RED   A1     ** "Thrown out of bed!" (DS 0x422a) **
+    RED   A2     ** the sleep ended on the 23:00 tick: that tick's clock had already run **
+M5x: cell_free made fatal (std::abort): proves the device has no caller (expected to SURVIVE)
+  verdict: SURVIVED (exit 0)
+  batch29_rest_wiring: 26/26 checks GREEN, 0 RED
+M6x: occupied over-constrained to constant true (every bed occupied)
+  verdict: KILLED (exit 1)
+  batch29_rest_wiring: 18/26 checks GREEN, 8 RED
+    RED   A1     slept the full two hours: 12 ticks to 14:00
+    RED   A2     ** slot 1 is at its 14:00 schedule cell: state 1, served = period, path -1 **
+    RED   A3     ** slot 5, displaced to floor 1, is snapped too: 0x1694 ignores the party's floor **
+    RED   C2     H155-C an unoccupied bed never throws
+    RED   B1b    the rest ran two hours
+    RED   B2c    the rest ran two hours
+    RED   A2     ** the sleep ended on the 23:00 tick: that tick's clock had already run **
+    RED   A3     slot 14 is in its bed (the snap came first, 0x0677 < 0x0688)
+M7: snap only the party's floor
+  verdict: KILLED (exit 1)
+  batch29_rest_wiring: 25/26 checks GREEN, 1 RED
+    RED   A3     ** slot 5, displaced to floor 1, is snapped too: 0x1694 ignores the party's floor **
+RESTORED production: batch29_rest_wiring: 26/26 checks GREEN, 0 RED (exit 0)

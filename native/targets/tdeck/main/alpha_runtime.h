@@ -392,6 +392,12 @@ class AlphaRuntime {
     static bool command_effect(void *, openu5::CommandEffect, openu5::EventSink);
     static void command_reload(void *, openu5::ReloadEffect, uint8_t, openu5::EventSink);
     static const char *banner(void *, uint8_t);
+    // Batch 29: the device's RestServices, bound in ONE place so initialize()
+    // and the host-test fixture share the exact callbacks (H-154/H-155).
+    void bind_rest_services();
+    /** ULTIMA.EXE 0x368E find_object_at_xy != 0: an NPC or an object of the
+     *  current location at (x, y, floor) -- the 1988 table holds both. */
+    bool object_or_npc_at(int32_t x, int32_t y, int32_t floor) const;
 
     // Batch 22 -- temporary U5OBJ trace of Lord British's Castle basement
     // objects (location 17, floor -1). Silent for every other location. It

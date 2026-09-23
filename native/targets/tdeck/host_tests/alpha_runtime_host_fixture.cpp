@@ -174,15 +174,9 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     static openu5::TransportServices transport_owner;
     transport_owner = openu5::world_transport_services(context_);
     context_.transport_services = &transport_owner;
-    static openu5::RestServices rest_owner;
-    rest_owner.context = this;
-    rest_owner.snap_npcs = [](void *) {};
-    rest_owner.occupied = [](void *, int32_t, int32_t, int32_t) { return false; };
-    rest_owner.cell_free = [](void *, int32_t, int32_t) { return true; };
-    rest_owner.karma_record = [](void *, int32_t) {
-        return "\"Rest well, Avatar. Continue upon the path of virtue.\"";
-    };
-    context_.rest_services = &rest_owner;
+    // Batch 29: production's own binding, not a copy -- H-154/H-155 were a
+    // device-only wiring defect, so a fixture-side duplicate would test itself.
+    bind_rest_services();
 
     // Batch 24: the pack-derived members initialize() assigns for the Save
     // template and for town combat (alpha_runtime.cpp, the combat_context_/

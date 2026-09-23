@@ -75,9 +75,14 @@ Paths below are relative to `game/src/core/`.
 `RestServices` borrows pure core callbacks. The bed path invokes `snap_npcs`
 before `occupied` on **every** step. These correspond to `Game.wakeSnapNpcs`
 (`NpcManager.enterMap`) and `Game.objectOrNpcAt` (objects plus actors), not to
-an ordinary NPC movement tick. A host can bind existing `enter_npc_map` and
-its object/actor ownership layer. The fixture records callback order and
+an ordinary NPC movement tick. The fixture records callback order and
 arguments. No terrain-only approximation of occupancy is supplied.
+
+Batch 29: bind `snap_npcs` to `snap_npcs_to_schedule`, not `enter_npc_map`.
+1988's `TOWN.OVL:0x1694` repositions the live list (live schedule, stuck
+counter kept, cleared slots stay gone); a `.NPC` rebuild resurrects a guard
+cleared in a fight and forgets an alarm. The T-Deck binding is
+`AlphaRuntime::bind_rest_services()`; `occupied` is its `object_or_npc_at`.
 
 Guard start/free-cell callbacks represent the CampFire arena formation and
 passability. No callback means no guard start cell, or an unrestricted free-cell
