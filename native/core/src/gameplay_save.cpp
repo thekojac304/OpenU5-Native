@@ -91,7 +91,7 @@ void capture_dungeon(const DungeonState &d,Json &out){
     if(!d.active){out.erase("dungeon");return;}
     Json v=Json::object();
     v["dungeon"]=Json(int(d.pos.dungeon));v["floor"]=Json(int(d.pos.floor));v["x"]=Json(int(d.pos.x));v["y"]=Json(int(d.pos.y));
-    v["facing"]=Json(int(d.pos.facing));v["quickness"]=Json(int(d.quickness_toggle));
+    v["facing"]=Json(int(d.pos.facing));
     auto &cells=v["cells"];cells=Json::array();cells.values.reserve(512);for(auto c:d.cells)cells.values.emplace_back(int(c));
     auto &revealed=v["revealed"];revealed=Json::array();revealed.values.reserve(64);for(auto b:d.revealed)revealed.values.emplace_back(int(b));
     Json w=Json::object();
@@ -106,12 +106,15 @@ void capture_dungeon(const DungeonState &d,Json &out){
 // array indices downstream (dungeon.cpp `offset()`, quest_world.cpp's
 // facing-delta lookup), so an out-of-range value would be an OOB access, not
 // just a domain oddity like the other fields below.
+// The Rel Tym every-other-turn toggle is not saved: in 1988 it is the local
+// [bp-4] of the dungeon loop, zeroed at DUNGEON.OVL:0x0E40 whenever the session
+// is (re)entered, a load included (Batch 26).
 Error restore_dungeon(const Json &state,DungeonState &d){
     const auto &v=state["dungeon"];
     if(v.kind==Json::Null){d=DungeonState{};return Error::None;}
     if(v.kind!=Json::Object)return Error::NativeDomain;
     if(!finite_int(v["dungeon"],0,255)||!finite_int(v["floor"],0,7)||!finite_int(v["x"],0,7)||!finite_int(v["y"],0,7)||
-       !finite_int(v["facing"],0,3)||!finite_int(v["quickness"],0,255))return Error::NativeDomain;
+       !finite_int(v["facing"],0,3))return Error::NativeDomain;
     if(v["cells"].kind!=Json::Array||v["cells"].values.size()!=512)return Error::NativeDomain;
     for(auto &c:v["cells"].values)if(!finite_int(c,0,255))return Error::NativeDomain;
     if(v["revealed"].kind!=Json::Array||v["revealed"].values.size()!=64)return Error::NativeDomain;
@@ -121,7 +124,7 @@ Error restore_dungeon(const Json &state,DungeonState &d){
     if(w["hidden"].kind!=Json::Bool)return Error::NativeDomain;
     DungeonState out;
     out.pos.dungeon=uint8_t(v["dungeon"].integer());out.pos.floor=uint8_t(v["floor"].integer());out.pos.x=uint8_t(v["x"].integer());out.pos.y=uint8_t(v["y"].integer());
-    out.pos.facing=DungeonFacing(v["facing"].integer());out.quickness_toggle=uint8_t(v["quickness"].integer());
+    out.pos.facing=DungeonFacing(v["facing"].integer());
     for(size_t i=0;i<512;++i)out.cells[i]=uint8_t(v["cells"].at(i).integer());
     for(size_t i=0;i<64;++i)out.revealed[i]=uint8_t(v["revealed"].at(i).integer());
     out.wanderer.bank=uint8_t(w["bank"].integer());out.wanderer.type=uint8_t(w["type"].integer());out.wanderer.x=uint8_t(w["x"].integer());out.wanderer.y=uint8_t(w["y"].integer());

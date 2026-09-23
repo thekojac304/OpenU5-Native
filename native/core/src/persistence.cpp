@@ -42,11 +42,15 @@ constexpr Field optional_bytes[] = {{"transportTile", 0x2d6, 1},     {"prevHour"
                                     {"shrineQuestBitmap", 0x326, 1}, {"shrineVisitedBitmap", 0x328, 1}};
 constexpr Field optional_arrays[] = {
     {"shrineDestroyed", 0x332, 8}, {"dungeonRoomsCleared", 0x33a, 14}, {"shadowlordLocs", 0x322, 3}};
+// "dungeon" is native-only (Batch 26, H-115): the live session capture_dungeon()
+// writes. The 1988 save window carries it (g_location 0x5893, floor/x/y
+// 0x5895-0x5897, facing 0x6603, g_dng_map 0x595A); the reference keeps its
+// dungeonState outside the save, so its sidecars never have the key.
 constexpr const char *extras[] = {
     "openDoors",      "mapOverrides",       "skullTreeFoundDay", "reagentPatchFoundDay", "overworldEnemies",
     "worldObjects",   "lightSpellMins",     "timeSpell",         "timeSpellTurns",       "wind",
     "sailDir",        "windDriftCtr",       "shipHull",          "shipSkiffs",           "hmsCapeToggle",
-    "shadowlordLocs", "shadowlordSummoned", "shadowlordDoomBits"};
+    "shadowlordLocs", "shadowlordSummoned", "shadowlordDoomBits", "dungeon"};
 int n(const J &j) { return int(j.integer()); }
 bool eq(const J &j, const char *s) { return j.kind == J::String && j.string == J(s).string; }
 J arr(const uint8_t *b, size_t count) {

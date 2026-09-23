@@ -20,6 +20,8 @@ that a tester never files an intentional difference as a defect.
 **Batch 18 changed none of these.** Making them explicit is the whole deliverable.
 
 **Batch 21B added D-19 through D-22** from the original-behaviour gap sweep. All four are unresolved divergences in the §4 sense — gaps, not choices — and none was fixed in that batch; only H-148 was.
+
+**Batch 26 changed no row.** H-115 was a defect, not a divergence: 1988 saves underground and resumes in place (`CAST2.OVL:0x10FE`, no location gate), and the port now does too. The session rides the A-14 sidecar as `gameState.dungeon`, native-only, because the TypeScript reference does not save it. The Rel Tym toggle resets on load, as `DUNGEON 0x0E40` does. D-23 (H-164) is now reproduced on host for the dungeon session and stays open.
 The "toggle candidate" column records how isolated each difference already is —
 it is an assessment, not a commitment, and **no toggle is implemented**.
 

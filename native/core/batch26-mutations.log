@@ -1,0 +1,59 @@
+### M1 -- drop "dungeon" from the sidecar key list (pre-Batch-26 exporter)
+  RED   C1    ** the sidecar written to the card carries the "dungeon" object (window 0x5893/0x595A/0x6603) **
+  RED   C2    ** load_native_state + restore_dungeon give back that exact session (pos, facing, 512 cells, reveal, wanderer) **
+  RED   C3    ** the Rel Tym toggle is 0 after a load: DUNGEON 0x0E40 zeroes [bp-4] on every session entry **
+  RED   D1f   ** the party is back in Deceit on floor 2 (3,2) facing N with the saved map, reveal and wanderer **
+  RED   D1g   ** the sprung traps stay sprung (0x60): the map comes from the save, not a DUNGEON.DAT re-read **
+  RED   D1i   the session is live the moment the load ends: dungeon context and Dungeon UI mode
+  RED   D2b   ** the whole Deceit session comes back from storage alone **
+  RED   D2c   Dungeon UI mode the moment the load ends
+  RED   D2d   the very next trackball input turns the restored party (North -> East) where it stands
+  RED   D3b   precondition: saved and reloaded in the dungeon
+batch26_dungeon_save: 24/34 checks GREEN, 10 RED
+exit=1
+
+### M2 -- carry the Rel Tym toggle across the load (Batch 6 behaviour)
+  RED   C3    ** the Rel Tym toggle is 0 after a load: DUNGEON 0x0E40 zeroes [bp-4] on every session entry **
+batch26_dungeon_save: 33/34 checks GREEN, 1 RED
+exit=1
+
+### M3 -- no context/base-mode resync at the end of synchronize_loaded_world()
+  RED   D2c   Dungeon UI mode the moment the load ends
+  RED   D2d   the very next trackball input turns the restored party (North -> East) where it stands
+  RED   D3e   ** loading the surface save ends the dungeon session: no stale "dungeon" object rode along **
+batch26_dungeon_save: 31/34 checks GREEN, 3 RED
+exit=1
+
+### M4 -- stop serializing the object pool (drop "worldObjects" from the sidecar)
+  RED   L1d   ** the object pool is exactly the saved one, entry for entry and field for field **
+  RED   L1e   (17,22) and (13,23) are closed again, once each; (16,21) is open with its loot, not refilled
+  RED   L2c   ** after the load the pool is the saved one exactly -- from storage **
+  RED   L2d   no stale pre-load loot at (13,23), no duplicate chest anywhere
+batch26_dungeon_save: 30/34 checks GREEN, 4 RED
+exit=1
+
+### M5 -- keep the pre-load pool: omit objects_.clear() on load
+  RED   L1d   ** the object pool is exactly the saved one, entry for entry and field for field **
+  RED   L1e   (17,22) and (13,23) are closed again, once each; (16,21) is open with its loot, not refilled
+  RED   L2c   ** after the load the pool is the saved one exactly -- from storage **
+  RED   L2d   no stale pre-load loot at (13,23), no duplicate chest anywhere
+batch26_dungeon_save: 30/34 checks GREEN, 4 RED
+exit=1
+
+### M6 -- a surface save keeps a stale "dungeon" object (no erase when inactive)
+  RED   D3e   ** loading the surface save ends the dungeon session: no stale "dungeon" object rode along **
+batch26_dungeon_save: 33/34 checks GREEN, 1 RED
+exit=1
+
+### M7 -- restore the dungeon position but not its map (cells left as authored)
+  RED   C2    ** load_native_state + restore_dungeon give back that exact session (pos, facing, 512 cells, reveal, wanderer) **
+  RED   D1f   ** the party is back in Deceit on floor 2 (3,2) facing N with the saved map, reveal and wanderer **
+  RED   D1g   ** the sprung traps stay sprung (0x60): the map comes from the save, not a DUNGEON.DAT re-read **
+  RED   D2b   ** the whole Deceit session comes back from storage alone **
+  RED   D3c   precondition: (K)limb at (1,1) exits to Britannia
+  RED   D3e   ** loading the surface save ends the dungeon session: no stale "dungeon" object rode along **
+batch26_dungeon_save: 28/34 checks GREEN, 6 RED
+exit=1
+
+### restored production
+batch26_dungeon_save: 34/34 checks GREEN, 0 RED

@@ -90,7 +90,8 @@ int main(){
         DungeonState restored;restored.active=true;restored.pos.dungeon=40;// stale prior session
         check(save::restore_dungeon(ddecoded,restored)==save::Error::None);
         check(restored.active&&restored.pos.dungeon==35&&restored.pos.floor==3&&restored.pos.x==4&&restored.pos.y==6&&restored.pos.facing==DungeonFacing::East);
-        check(restored.quickness_toggle==1&&restored.cells[0]==0&&restored.cells[300]==uint8_t(300&0xff)&&restored.revealed[10]==uint8_t(30));
+        // Batch 26: the Rel Tym toggle is not saved (DUNGEON 0x0E40 zeroes it on session entry).
+        check(restored.quickness_toggle==0&&restored.cells[0]==0&&restored.cells[300]==uint8_t(300&0xff)&&restored.revealed[10]==uint8_t(30));
         check(restored.wanderer.type==0x16&&restored.wanderer.hidden&&restored.wanderer.bank==2);
         // Domain-invalid facing (would index the 4-entry direction-delta table
         // out of bounds downstream): rejected without mutating the live session...

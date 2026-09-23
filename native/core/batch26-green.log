@@ -1,0 +1,44 @@
+C  the dungeon session through the device's storage chain
+  GREEN C0    export_native_state + encode_json accept a dungeon save
+  GREEN C1    ** the sidecar written to the card carries the "dungeon" object (window 0x5893/0x595A/0x6603) **
+  GREEN C2    ** load_native_state + restore_dungeon give back that exact session (pos, facing, 512 cells, reveal, wanderer) **
+  GREEN C3    ** the Rel Tym toggle is 0 after a load: DUNGEON 0x0E40 zeroes [bp-4] on every session entry **
+  GREEN C4    a sidecar without "dungeon" (surface save, or any pre-Batch-26 save) loads as no session, no error
+D1 save on Deceit floor 2, change everything, System Menu load
+  GREEN D1a   precondition: (E)nter with the Word of Passage opens Deceit at floor 0 (1,1)
+  GREEN D1b   precondition: the (3,2) traps on floors 0 and 1 fired (0x61 -> 0x60); party on floor 2 (3,2) facing N
+  GREEN D1c   the System Menu Save reports "Save complete" underground (CAST2 0x10FE has no location gate)
+  GREEN D1d   precondition: after the save the party turned and moved and time passed
+  GREEN D1e   the load really happened: gold 999 -> 321, clock back
+  GREEN D1f   ** the party is back in Deceit on floor 2 (3,2) facing N with the saved map, reveal and wanderer **
+  GREEN D1g   ** the sprung traps stay sprung (0x60): the map comes from the save, not a DUNGEON.DAT re-read **
+  GREEN D1h   the surface return position is the Deceit entrance, as saved
+  GREEN D1i   the session is live the moment the load ends: dungeon context and Dungeon UI mode
+D2 power cycle: a fresh runtime on the surface, System Menu Continue Latest
+  GREEN D2a   precondition: nothing in RAM -- no dungeon session, standing outside the castle
+  GREEN D2b   ** the whole Deceit session comes back from storage alone **
+  GREEN D2c   Dungeon UI mode the moment the load ends
+  GREEN D2d   the very next trackball input turns the restored party (North -> East) where it stands
+  GREEN D2e   and the surface return position did not change
+D3 surface saves are unaffected, and a surface save made after a dungeon load stays a surface save
+  GREEN D3a   precondition: in Deceit floor 0 at the (1,1) up ladder
+  GREEN D3b   precondition: saved and reloaded in the dungeon
+  GREEN D3c   precondition: (K)limb at (1,1) exits to Britannia
+  GREEN D3d   precondition: back underground after the surface save
+  GREEN D3e   ** loading the surface save ends the dungeon session: no stale "dungeon" object rode along **
+  GREEN D3f   the party stands where the surface save was made
+L1 opened chest and spilled loot in the castle basement, pool changed after the save
+  GREEN L1a   precondition: Lord British's basement
+  GREEN L1b   precondition: chest (16,21) opened onto the floor; (17,22) and (13,23) closed
+  GREEN L1c   precondition: after the save the other two chests were opened too
+  GREEN L1d   ** the object pool is exactly the saved one, entry for entry and field for field **
+  GREEN L1e   (17,22) and (13,23) are closed again, once each; (16,21) is open with its loot, not refilled
+L2 power cycle with a different pool live: nothing from before the load survives it
+  GREEN L2a   precondition: a fresh runtime in the basement (chests hydrated)
+  GREEN L2b   precondition: (13,23) opened before the load
+  GREEN L2c   ** after the load the pool is the saved one exactly -- from storage **
+  GREEN L2d   no stale pre-load loot at (13,23), no duplicate chest anywhere
+Q  observation (H-164, queued, not asserted): Alt+L underground
+  INFO  H-164 Alt+L: dungeon session does NOT match the save (saved facing 0, now 2)
+
+batch26_dungeon_save: 34/34 checks GREEN, 0 RED

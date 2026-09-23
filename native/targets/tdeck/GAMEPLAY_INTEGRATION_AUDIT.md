@@ -1132,6 +1132,8 @@ Whether U5 permits saving inside a dungeon at all is a reference question worth 
 
 **Not fixed here:** the underlying `DungeonEncounters`/combat-arena wiring for a restored session is unchanged — this batch persists the *session*, it doesn't add new dungeon combat behavior.
 
+**Correction (Batch 26, 2026-09-22).** This resolution never reached the SD card. `export_native()` (`persistence.cpp`) copies only the sidecar keys named in its `extras` list, and `"dungeon"` was not on it, so `capture_dungeon()`'s object was dropped on every save and every dungeon save loaded at the entrance on the surface — the H-115 hardware FAIL. The test above round-tripped the in-memory JSON document only, never `export_native_state`/`load_native_state`, so it could not see the drop. Two further corrections: `quickness_toggle` is not part of the 1988 save (DUNGEON `0x0E40` zeroes it on session entry), and a load must also re-derive the dungeon context and UI mode. See §"Batch 26".
+
 ---
 
 ### R-16 — Spell descriptions contradict spell effects · **SEVERITY 3**
@@ -5090,3 +5092,139 @@ Flash the Batch 25 firmware (the image named in the tag). Any save in a town is 
 **Pass:** steps 4–9 with **no power cycle**. **Fail** if the question does not return in step 4, if any Use prints only "Use item", or if a direction stops producing a step/echo.
 
 **Known and queued, do not file:** H-165 (a question left pending across a Developer teleport *into a dungeon*); H-115 dungeon save/load (next batch).
+
+## Batch 26 — H-115: save and load inside a dungeon
+
+Scope: H-115 only, including the loose-world-object half of the save it depends on. Not touched: H-154–H-160, H-164 (`Alt+L`), H-165, presentation/audio. New findings are queued at the end.
+
+### The hardware observation (Batch 20)
+
+In a dungeon, Save reported success; a reload in the same session (no power cycle) resumed "an older/prior save instead". Never seen on the surface. Batch 20 blamed `candidate()`/`restore_candidate()` in `alpha_save.cpp` for not calling `restore_dungeon` (§14 item 7). That gap is real, but it is **not** the cause; see H-166 below.
+
+### Baseline
+
+HEAD `60581138` (tag `alpha2-batch25-h118-shard-move-lock`, which follows `alpha2-batch24-state-reload-parity`), branch `main`, working tree clean. From-scratch build `native/core/build-batch26-baseline`, serial: **95/95 PASS, 0 fail, 0 skipped** (`batch26-baseline-ctest.log`).
+
+### Reference behaviour (recovered from the binaries)
+
+Re-read with `re/tools/dis16.py` and `re/tools/thunks.py`. Strings decoded at `DATA.OVL` `DS+0x10`.
+
+- **Saving underground is allowed.** `DUNGEON.OVL:0x06C4` (the dungeon key handler) handles only the arrows 1–4, `5`, `0x0B`, Enter/`.`, `^S`/`^V` and the digits. Every other key, `Q` included, falls through `0x07BC`/`0x07C0` to `0x07A0` → `call 0xafa8` = kernel `0x3178` (`kernel_cmd_dispatch`, base `0x81D0`). There `0x34C0 cmp ax,0x51` → `0x338C`: prints `"Quit:"` (DS `0xA1EA`), then `call 0x81AE`, a thunk to overlay 18 = `CAST2.OVL:0x10FE`. That routine asks `"\nSave game? "` (`0x9658`), prints `"Yes\nSaving...\n"` (`0x966A`), writes `SAVED.GAM` (`0x9698`) from `0x55A6` for `0x6606−0x55A6 = 0x1060` bytes in one `write_whole_file` (`0x1185-0x1194`), then the 512-byte `.OOL`, then `"Done.\n"` (`0x96AC`). **There is no `g_location` (DS `0x5893`) test anywhere on that path.** Control returns to the dungeon loop (`0x3396 jmp 0x31e9`). There is no refusal message, because nothing refuses.
+- **What the dump holds.** The window `[0x55A6, 0x6606)` contains `g_location` `0x5893` (`0x21..0x28` underground), `g_floor` `0x5895`, x/y `0x5896`/`0x5897`, `g_dng_facing` `0x6603`, and the **whole** 8-floor map `g_dng_map` `0x595A` (512 B), which carries every sprung trap, opened chest and cast field. It also holds the rooms-cleared bits `0x58E0` and the object table `0x5C5A`, which holds the dungeon wanderer.
+- **Loading.** `INTRO.OVL:0x0EB4` reads the window back verbatim. The kernel loop (`ULTIMA.EXE 0x00DB`: `g_location >= 0x21` → `0x0104`) re-enters the session at `DUNGEON.OVL:0x0E2E` with no file read, so the map is the saved one, not `DUNGEON.DAT`.
+- **One thing is not carried.** `0x0E40 mov [bp-4],0` then `0x0F15 mov di,[bp-4]`: the Rel Tym every-other-turn toggle (`0x0F25 xor di,1`) is a local of the session loop, zeroed on every entry, a load included.
+- **Loose objects.** The object register `0x5C5A` is inside the window and loads verbatim. A load goes `0x11F0(fresh=0)` → `0x0408(0)`, which never reaches `0x1694`, so the current map's objects (opened chests, spilled loot) come back exactly as saved (Batch 24, H-162).
+
+REFERENCE FACT: saving in a dungeon is permitted and silent-path identical to the surface; reloading resumes in the dungeon at the saved floor, cell and facing, with the saved map. REFERENCE FACT: the Rel Tym toggle restarts at 0 after a load.
+
+### Native behaviour before the fix
+
+NATIVE OBSERVATION (host, real `AlphaRuntime`, shipped pack, real `(E)nter` and System Menu, `batch26-red.log`). A save made on Deceit floor 3 (L3) loaded back with `DUNGEON_RESTORE active=0`: the party stood on the overworld at the Deceit entrance, where the surface-return position always is, with the clock rolled back. That is the "older save" the hardware saw.
+
+Root cause, one line: `persistence.cpp`'s sidecar exporter copies only the keys in `extras[]`, and `"dungeon"` was not among them. So `capture_dungeon()`'s object (Batch 6, R-15) never reached the card, and `restore_dungeon()` always found no key and cleanly returned "no session". Batch 6's test round-tripped the in-memory JSON only (see the correction under R-15). `"worldObjects"` **is** on the list, so the loose-object half was already persisted.
+
+Two further gaps, found while proving the fix:
+- `restore_dungeon()` restored `quickness_toggle`, which 1988 resets (`0x0E40`).
+- The System Menu branch of `AlphaRuntime::handle()` (and the frontend Continue branch) returns before `synchronize_after_debug()`. After a load, `context_.dungeon` and the UI base mode therefore kept their **pre-load** values until the next input, and that first input was routed by the stale mode. Before the fix, this was visible as D3e: loading a surface save while underground left the Dungeon UI mode live over a dead session. With a restored session it would have been the inverse: the first trackball press after loading a dungeon save would go to the world instead of turning the party.
+
+The `.GAM` of a dungeon save keeps the surface-return position (location 0, entrance x/y) and the INIT template's bytes at `0x3B4`. The live session rides the JSON sidecar, as Batch 6 chose and as ledger A-14 (sidecar persistence) already declares. Batch 26 does not change that layout.
+
+### Fix (minimal)
+
+| File | Change |
+|---|---|
+| `native/core/src/persistence.cpp` | `"dungeon"` appended to `extras[]` (exported to and imported from `sidecar.gameState`). Native-only key; the TypeScript reference keeps `dungeonState` outside its save, so its sidecars never carry it and `persistence_parity` is unaffected |
+| `native/core/src/gameplay_save.cpp` | `capture_dungeon()` no longer writes `"quickness"`; `restore_dungeon()` no longer requires it and leaves the toggle 0 (`0x0E40`) |
+| `native/targets/tdeck/main/alpha_runtime.cpp` | end of `synchronize_loaded_world()`: `context_.dungeon`/`context_.combat` and the UI base mode are derived from the restored owners by the same `resolve_synchronized_base_mode()` rule `synchronize_after_debug()` uses; `dungeon_presentation_pending_` set when a session was restored (the full redraw the entry path gets) |
+| `native/core/tests/gameplay_integration_test.cpp` | the Batch 6 round-trip now expects the toggle at 0 |
+
+Not done, deliberately: no new `.GAM` offsets, no save-format version bump, no refusal path, no change to the `Alt+L` arm (H-164), no change to `alpha_save.cpp`'s generation/semantic-validation logic (H-166).
+
+**Save compatibility.**
+- A pre-Batch-26 save, taken anywhere, has no `"dungeon"` key: it loads exactly as it did before (C4). A dungeon save made on older firmware still loads at the dungeon entrance on the surface, because that is all the file ever contained.
+- A Batch-26 save carries `sidecar.gameState.dungeon`. Older firmware ignores the key, since its import copies only listed keys.
+- The `"quickness"` field was never on disk, so dropping it breaks nothing.
+- The `.GAM` bytes are unchanged for every save.
+
+### Tests — `batch26_dungeon_save` (34 checks, real `AlphaRuntime` + shipped pack)
+
+Seam: Batch 24's in-memory save generation (`alpha_save_memory_host_stub.cpp`, the same serialization chain as `alpha_save.cpp`), plus the pack's eight `DUNGEON.DAT` maps in the host fixture. Staging is limited to fixture setup, each marked in the source:
+- a one-member party;
+- standing on an entrance or ladder cell;
+- Deceit's Word of Passage (entrances draw sealed, tile 223, until it is known — `quest_world_tile`).
+
+Every behaviour under test goes through production input: `(E)nter`, `(K)limb`, the trackball, `Alt+M` menus. The one exception is `(O)pen`, which runs through `execute_command` as in Batch 24.
+
+- **C1–C4** (storage chain, the calls `AlphaSaveService` makes): the sidecar carries `"dungeon"` (C1). `load_native_state` + `restore_dungeon` return the exact session: position, facing, 512 cells, reveal and wanderer (C2). The toggle is 0 after the load (C3). A sidecar without the key, i.e. a surface or pre-26 save, loads as "no session" with no error (C4).
+- **D1** (same session): `(E)nter` Deceit → S,S,turn,E,E,turn,N onto the `0x61` at (3,2). The trap on L1 and the one under it on L2 both fire (`0x61→0x60`, DUNGEON `0x0A9F`); the party lands on L3 (3,2) facing North. System Menu Save prints "Save complete" (D1c). Then turn, move and let time pass, change gold, and System Menu Load. Checks: gold and clock come back (D1e); the whole session matches the snapshot (D1f); the sprung traps are still `0x60` (D1g — the map came from the save, not a `DUNGEON.DAT` re-read); the surface-return position is the entrance (D1h); dungeon context and UI mode are live at once (D1i).
+- **D2** (power cycle): a fresh `AlphaRuntime` standing outside the castle, then System Menu → Continue Latest. The whole session comes back from storage alone (D2b). Dungeon UI mode is set the moment the load ends (D2c). The very next trackball press turns the party North→East in place (D2d) and does not touch the surface position (D2e).
+- **D3** (surface control / stale key): save in the dungeon and reload it, so the retained document now holds `"dungeon"`. Then `(K)limb` out at (1,1), make a **surface** save, go back underground, and load. The session ends, mode is not Dungeon (D3e), and the party stands where the surface save was made (D3f).
+- **L1** (loose objects, same session): Lord British's basement. Open chest (16,21) so its loot spills, then save. Open the other two chests, then load. The pool is the saved one entry for entry and field for field (L1d). The two chests are closed again, once each, and (16,21) is open with its loot, not refilled (L1e).
+- **L2** (loose objects, power cycle, different pool live): a fresh runtime in the basement opens (13,23), then loads. The pool is exactly the saved one (L2c), with no stale pre-load loot and no duplicate chest (L2d).
+- **Q** (observation only, not a check): `Alt+L` underground restores `GameState` but not the session — H-164, queued, printed as `INFO`.
+
+**RED → GREEN.** Unmodified production: **23/34 GREEN, 11 RED** (`native/core/batch26-red.log`): C1 C2 C3 D1f D1g D1i D2b D2c D2d D3b D3e. All L checks were GREEN before the fix: R-14's `worldObjects` persistence works, and the L checks now pin it with post-save mutation and a power cycle. After the fix: **34/34** (`batch26-green.log`).
+
+**Mutation proof** (`native/core/batch26-mutations.log`): each mutation was applied, built, run and reverted, and production was rebuilt at the end (34/34). A first pass was discarded: restoring the backups left source timestamps older than the mutated objects, so ninja kept stale objects and each mutation leaked into the next. The recorded pass touches every restored file.
+
+| | Mutation | Result | Killed by |
+|---|---|---|---|
+| M1 | `"dungeon"` dropped from `extras[]` (the pre-26 exporter) | 24/34 | C1 C2 C3 D1f D1g D1i D2b D2c D2d D3b |
+| M2 | the Rel Tym toggle carried across the load (Batch 6 behaviour) | 33/34 | C3 |
+| M3 | no context/base-mode resync at the end of `synchronize_loaded_world()` | 31/34 | D2c D2d D3e |
+| M4 | `"worldObjects"` dropped from the sidecar (no pool persistence) | 30/34 | L1d L1e L2c L2d |
+| M5 | `objects_.clear()` omitted on load (stale pre-load pool) | 30/34 | L1d L1e L2c L2d |
+| M6 | an inactive session does not erase `"dungeon"` (stale key in a surface save) | 33/34 | D3e |
+| M7 | position restored but not the map (cells left zero) | 28/34 | C2 D1f D1g D2b D3c D3e |
+
+### Full regression suite
+
+From-scratch build (`native/core/build-batch26-final`), serial: **96/96, 0 fail, 0 skipped** (`batch26-final-ctest.log`) — the prior 95 plus `batch26_dungeon_save`. One warning, the pre-existing w64devkit `stl_uninitialized.h` false positive; zero project warnings. `gameplay_integration` passes with its one updated expectation. No parity fixture moved: `persistence_parity`'s TypeScript-generated states never carry a `"dungeon"` key.
+
+### Firmware
+
+ESP-IDF 6.1, `native/targets/tdeck/build-batch26`: `openu5_tdeck.bin` = **0xd3970** (866,672 bytes), −0x30 against Batch 25 (the `"quickness"` key strings are gone); `0x2c690` (17 %) of the app partition free. **0 errors, 0 compiler warnings** (`batch26-firmware-build.log`, built before the commit). The image embeds the commit id at configure time, so the Launcher image is rebuilt (`idf.py reconfigure build`, `package_launcher.py`) **after** the Batch 26 commit; its path and SHA-256 are recorded in the annotated tag `alpha2-batch26-h115-dungeon-save-load`. **Not flashed.** SD card unchanged.
+
+### Status
+
+H-115: **HOST FIXED / DEVICE RETEST PENDING** (Phase 6U). Classification: native defect (serialization seam), not a 1988 behaviour. The 1988 contract (save allowed underground, resume in place) is now what the port does on the System Menu and frontend load paths. H-124's dungeon context rides the same retest. Not HARDWARE VERIFIED until the user runs Phase 6U.
+
+### Queued, not fixed
+
+- **H-164 (existing) — now reproduced on host.** `Alt+L` underground restores `GameState` but leaves the live dungeon session untouched (`batch26_dungeon_save` Q: "does NOT match the save"). The Batch 26 fix lives in `synchronize_loaded_world()`, which that arm skips. Use the System Menu load until H-164's batch.
+- **H-166 — the save's semantic validation does not cover the dungeon session or the object pool.** `alpha_save.cpp`'s `candidate()` (the post-write self-check and the load-time generation pick) runs `load_native_state`, `restore_gameplay`, `restore_terrain` and `restore_npc_walk` only. A newest generation whose `"dungeon"` or `"worldObjects"` payload is domain-invalid is therefore selected; `synchronize_loaded_world()` then drops the session to the surface (log line `DUNGEON_RESTORE_FAILED`) or empties the pool, instead of falling back to the older generation. Not the cause of H-115, since the payload never existed, and not reachable by play, since only a corrupted card produces an invalid payload. Robustness, not parity. By code reading.
+
+### Phase 6U — Batch 26 dungeon save/load and loose loot · *firmware only; the SD card is unchanged*
+
+Flash the Batch 26 firmware (the image named in the tag). No serial capture is needed. **Use the System Menu for every save and load in this phase — not `Alt+S`/`Alt+L`** (`Alt+L` is H-164, queued). Before opening the Developer menu, make sure no question is on screen (H-165).
+
+System Menu keys: `Alt+M` opens it. Trackball up/down moves the cursor, `Enter` selects, a short Mic press goes back or closes. Root items: Resume · **Save** · **Load / Save Management** · Settings · Developer / Debug · Return to Title. **Save** is one step down from the top. **Load / Save Management** is two steps down; inside it the first item is **Continue Latest**.
+
+**A. Dungeon save**
+
+1. Load or start any game, standing on the surface with nothing on screen. `Alt+M` → **Save** → `Enter`. Expect `Save complete`. Short Mic to close. (This surface save is used in step 11.)
+2. `Alt+D` → **Certification** → **Dungeon Test** → Confirm → Run Certification, then Mic/Back until the Developer menu is closed. Expect the 3-D view of **Deceit**, the HUD showing **L1** and **Dir: South**, standing on the up ladder. (The certification only grants the Words of Passage and performs the ordinary `(E)nter`; from here on everything is normal play.)
+3. With the trackball: **Up**, **Up** (two steps south), **Left** (HUD `Dir: East`), **Up**, **Up**, **Left** (HUD `Dir: North`), **Up**. Expect the pit-trap / falling messages and the HUD at **L3**, **Dir: North** (the trap under you on L2 fires too). *If a fight starts on the way, win or flee it and continue; if you cannot reach L3, save anywhere on L2 or deeper and note the HUD level, direction and view instead.*
+4. Note exactly what the screen shows (level, direction, the corridor in front). `Alt+M` → **Save** → `Enter`. **Expect `Save complete`** — there is no refusal underground in the original either. Short Mic to close the menu.
+5. Change things: trackball **Right** twice (HUD `Dir: South`), then **Up** once or twice if the way is open.
+6. `Alt+M` → trackball Down twice to **Load / Save Management** → `Enter` → **Continue Latest** → `Enter`. **Expect `Load complete`, still in Deceit, HUD L3 / Dir: North, the same view as in step 4.** Not the overworld, not the entrance, not L1.
+7. Immediately press trackball **Right** once. **Expect the HUD to read `Dir: East` at once** (the first input after the load turns the party; it does not walk on the overworld).
+8. Power cycle the T-Deck. At the title screen choose **Continue**. **Expect Deceit, L3, Dir: North** (the step-4 save; step 7 was not saved).
+9. `(L)ook` once to confirm the dungeon answers normally, then `Z`-stats open/close.
+10. **Surface control:** `Alt+M` → **Load / Save Management**. The two **Generation** rows are the two newest saves: one is step 4 (the dungeon), the other step 1 (the surface). Load **each** in turn with `Enter`. **Expect:** the dungeon generation puts you in Deceit L3 / Dir: North; the surface generation puts you on the overworld where step 1 was saved, the HUD without L/Dir, and the first trackball press is an ordinary overworld move (a step, or `Blocked`).
+
+**Pass A:** steps 4, 6, 7, 8 and 10 as stated. **Fail** if the save is refused or fails, if any load in step 6/8 lands on the overworld or at the Deceit entrance, if the level/direction differ from step 4, or if the first press after a load does nothing or moves on the overworld.
+
+**B. Loose loot persistence**
+
+1. Enter **Lord British's Castle**, go down the ladder at (1,1) to the basement.
+2. Stand at (16,22) and `(O)pen` north: the chest at (16,21). Its contents spill onto the floor. Note what lies there.
+3. `Alt+M` → **Save**. Short Mic to close.
+4. `(O)pen` the chests at (17,22) and (13,23) too (standing at (17,23) and (13,24), opening north).
+5. `Alt+M` → **Load / Save Management** → **Continue Latest**.
+6. **Expect:** (16,21) still open with exactly the loot noted in step 2, not refilled, not doubled. (17,22) and (13,23) are **closed chests again**, one each, with **no loot** in front of them.
+7. Power cycle → title **Continue**. Expect the same as step 6.
+
+**Pass B:** steps 6 and 7. **Fail** if a chest refills, a loot pile is doubled or missing, or a chest opened after the save is still open after the load.
+
+**Known and queued, do not file:** H-164 (`Alt+L` does not restore the dungeon or the object pool — use the System Menu); H-165 (a question left pending across a Developer teleport into a dungeon); H-166 (a corrupt dungeon/object payload is not rejected by the save's self-check).

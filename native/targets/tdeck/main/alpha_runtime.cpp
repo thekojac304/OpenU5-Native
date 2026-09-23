@@ -2190,6 +2190,15 @@ void AlphaRuntime::synchronize_loaded_world(){
     // fall back to no active session rather than leaking the prior one.
     if(openu5::save::restore_dungeon(retained_,dungeon_)!=openu5::save::Error::None){dungeon_={};ESP_LOGW(kTag,"DUNGEON_RESTORE_FAILED domain-invalid sidecar; dungeon session left inactive");}
     ESP_LOGI(kTag,"DUNGEON_RESTORE active=%d dungeon=%u depth=%u",dungeon_.active,unsigned(dungeon_.pos.dungeon),unsigned(dungeon_.pos.floor));
+    // Batch 26 (H-115). A 1988 load resumes straight into the restored
+    // context's loop (ULTIMA.EXE 0x00DB: g_location >= 0x21 -> DUNGEON.OVL
+    // 0x0E2E). The System Menu branch of handle() returns before
+    // synchronize_after_debug(), so derive the context and base mode here, by
+    // the same rule, or the first input after the load is routed by the
+    // pre-load mode (a world command instead of the dungeon turn/step).
+    context_.dungeon=dungeon_.active;context_.combat=combat_.initialized&&!combat_.ended;
+    ui_->set_base_mode(resolve_synchronized_base_mode(ui_->base_mode(),context_.combat,dungeon_.active));
+    dungeon_presentation_pending_=dungeon_.active;
 }
 
 void AlphaRuntime::service_frontend_intent(){
