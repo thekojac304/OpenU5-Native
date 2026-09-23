@@ -18,6 +18,10 @@ enum class ActorError : uint8_t { None, Capacity, NeedsPathfinding, InvalidMap }
 // Fresh entry only. Save restoration is not part of this interface.
 ActorError enter_npc_map(NpcActors &, const NpcSlot *, size_t count, uint8_t location, uint8_t hour, uint32_t dead_slots);
 int32_t npc_check_schedule(NpcActor &, uint8_t hour, int16_t visible_floor);
+// NPC half of TOWN.OVL:0x1694 town_populate_npcs: every live NPC of the
+// location to its schedule period for `hour`. A reposition, not a rebuild --
+// cleared slots stay gone, the stuck counter is left alone.
+void snap_npcs_to_schedule(NpcActors &, uint8_t location, uint8_t hour);
 bool npc_occupied(const NpcActors &, const WorldPosition &party, uint8_t location, int16_t floor, int16_t x, int16_t y, uint8_t except_slot);
 // Caller supplies the effective map (door overrides already applied, as in TS).
 void npc_ai_step(NpcActor &, uint8_t schedule_index, NpcActors &, const GameState &, const ActiveMap &, Rand);

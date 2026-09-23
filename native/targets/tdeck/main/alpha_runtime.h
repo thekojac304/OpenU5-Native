@@ -83,6 +83,12 @@ class AlphaRuntime {
         // Batch 22: the 32 per-location .NPC tables initialize() takes from
         // the pack (resources_.npc_locations). Null keeps the empty tables.
         const openu5::NpcLocationData *npc_locations = nullptr;
+        // Batch 24: the loaded pack itself, for the INIT.GAM/.OOL templates
+        // the Save path exports over and the combat maps/enemies/tables a
+        // town fight (TOWN.OVL:0x09BC) needs. attach copies exactly the
+        // members initialize() assigns from them, then runs the one
+        // load_native_state(INIT.GAM) a New Journey runs. Null keeps both out.
+        const AlphaResourceOwners *pack = nullptr;
     };
     void attach_host_test_fixture(const HostTestFixture &);
     openu5::TurnState &turn() { return turn_; }

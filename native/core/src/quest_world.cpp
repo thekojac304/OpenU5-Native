@@ -290,6 +290,7 @@ CommandStatus town_attack_commit(CommandContext &c,const NpcActor &actor,bool ho
     auto result=start_encounter_combat(c,s->encounter->combat,resources,enemy,tile,arena,CombatDirection::South,false,reclaim?"The Sceptre is reclaimed!\n":nullptr);
     c.events=saved;
     if(result!=CombatResult::Ok)return CommandStatus::InvalidContext;
+    s->encounter->combat.town_fight=true; // 0x09dc: town_load_map_chunk(0) once the fight returns
     c.combat_context=s->encounter;return CommandStatus::Success;
 }
 CommandStatus use_moonstone(CommandContext &c,int32_t phase,EventSink sink){

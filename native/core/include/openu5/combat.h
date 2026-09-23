@@ -127,6 +127,9 @@ struct CombatState {
     bool queue_live = false, ended = false, victory = false, room = false, initialized = false,
          has_world_loot_origin = false;
     bool absorbed_any = false;
+    // Batch 24 (H-163): a TOWN.OVL:0x09BC town fight. When 0x6150 returns,
+    // 0x09BC re-reads the floor with 0x0408(0); finish_encounter_combat does.
+    bool town_fight = false;
 };
 struct CombatTables {
     const int32_t *attack = nullptr, *range = nullptr, *defense = nullptr,

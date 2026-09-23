@@ -119,6 +119,7 @@ answer or a product decision; none is scheduled in Alpha 2 unless marked.
 | D-20 | Bed hole-up runs no per-tick turn housekeeping (poison, meals, `Starving!`, Q/T expiry, regeneration ring) and no day/night tile refresh | incomplete | 1988 calls kernel `0x2AE8` at `CMDS.OVL:0x0671` and `TOWN.OVL:0x0170` at `0x0664`, both inside the sleep loop; **the TypeScript reference omits both as well**, so this is a gap in the reference, not a native-only one | H-156, H-157 |
 | D-21 | Changing floors inside a small map does not reload the map record, so volatile terrain (an unmagicked skull-key door) survives a floor change | incomplete | 1988's `town_use_ladder` re-reads the record via `town_load_town_map(fresh=1)`; fixing it touches R-14 terrain persistence | H-158 |
 | D-22 | Interior chests are seeded with contents byte `8` where the binary seeds `0x1E` | incomplete | Class-C guess for oracle hole O5, **closed from the binary in Batch 21B** (`TOWN.OVL:0x1795`); correcting it moves `gameplay_parity`/`quest_parity` and must land together with the TypeScript generator | H-159 |
+| D-23 | `Alt+L` quick load does not go through `synchronize_loaded_world()`: the world-object pool is neither cleared nor restored from the save, the dungeon session is not restored, live scenes/fx are not cancelled | incomplete | found by code reading in Batch 24, not reproduced; Batch 24 gave both load arms the `0x0408(0)` door reset (H-162) rather than rerouting `Alt+L` | H-164 |
 
 ---
 

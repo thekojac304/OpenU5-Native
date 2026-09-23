@@ -859,6 +859,13 @@ export class Game {
    */
   private roomCombatEntryCell: { floor: number; x: number; y: number } | null = null;
   /**
+   * ¿El combate en curso es un combate URBANO de `town_attack_engine_commit` (TOWN
+   * 0x09BC)? Al volver de `enter_combat_vs_actor` 0x6150 el commit relee la planta con
+   * `0x0408(0)` (0x09d9-0x09dc) — sin ramas, gane o huya la party —, así que `endCombat`
+   * lo aplica. Sólo lo fija `townAttackCommit`. Batch 24, H-163.
+   */
+  private townFightReload = false;
+  /**
    * ¿Hay una escena de refuge (party-wipe) EMITIDA y aún sin resolver? El death-check
    * (`checkRefuge`) emite el guión UNA vez y arma este flag para no re-emitirlo cada
    * turno mientras el party sigue caído (main.ts bloquea el input durante la escena y
@@ -4193,10 +4200,13 @@ export class Game {
     // DS:0x6608 (muere el terreno volátil: la 0x97 desmagiada vuelve a 0x97), pone
     // g_unk_594f=0 (0x041d), reja/puente (0x0170) y, por el argumento, town_populate_npcs
     // 0x1694 (0x0517/0x051d) borra y re-coloca los objetos de interior. Batch 23 nativo.
+    // La misma 0x1694 re-coloca además cada NPC de la location en su tramo horario
+    // (0x1841-0x1856) — Batch 24, H-161.
     this.doors?.reset();
     this.volatileTerrainWipe = null;
     this.clearVolatileTerrain();
     this.hydrateInteriorObjects(pos.location);
+    this.npcManager?.snapToSchedule(pos.location, this.state);
     this.refreshHourTiles();
     events.push(...this.runContextTurn({ consumed: true }));
     events.push({ kind: "message", text: delta > 0 ? "Klimb-Up!" : "Klimb-Down!" });
@@ -4233,10 +4243,13 @@ export class Game {
     // DS:0x6608 (muere el terreno volátil: la 0x97 desmagiada vuelve a 0x97), pone
     // g_unk_594f=0 (0x041d), reja/puente (0x0170) y, por el argumento, town_populate_npcs
     // 0x1694 (0x0517/0x051d) borra y re-coloca los objetos de interior. Batch 23 nativo.
+    // La misma 0x1694 re-coloca además cada NPC de la location en su tramo horario
+    // (0x1841-0x1856) — Batch 24, H-161.
     this.doors?.reset();
     this.volatileTerrainWipe = null;
     this.clearVolatileTerrain();
     this.hydrateInteriorObjects(pos.location);
+    this.npcManager?.snapToSchedule(pos.location, this.state);
     this.refreshHourTiles();
     events.push({ kind: "message", text: delta > 0 ? "Up!" : "Down!" });
     events.push({ kind: "map-changed" });
@@ -7187,6 +7200,7 @@ export class Game {
     if (!res || this.combat) return [];
     const def = res.enemyDefs[enemy.defIndex];
     if (!def) return [];
+    this.townFightReload = false; // sólo townAttackCommit lo vuelve a fijar
     this.doors?.reset(); // entrada en combate: limpia el tracker (COMBAT 0x0bcf), §5d
     const tile = this.activeMap.tileAt(this.state.position.x, this.state.position.y);
     const mapIndex = opts.combatMapIndex ?? Math.max(0, combatMapForTile(tile) as number);
@@ -7459,12 +7473,15 @@ export class Game {
       x: npc.x,
       y: npc.y,
     };
-    return this.startCombat(enemy, "south", {
+    const events = this.startCombat(enemy, "south", {
       combatMapIndex: arena,
       intro: "none", // la pre-línea (si toca) la pone el llamador
       removeFromMap: false,
       postGroupLines, // D3 (0x6209): entre «SHADOW LORD» y «*** CONFLICT ***»
     });
+    // 0x09dc: al volver del combate, `town_load_map_chunk(0)` — lo aplica endCombat.
+    if (this.combat) this.townFightReload = true;
+    return events;
   }
 
   /**
@@ -8073,6 +8090,8 @@ export class Game {
   endCombat(): GameEvent[] {
     const events: GameEvent[] = [];
     if (!this.combat) return events;
+    const townFight = this.townFightReload;
+    this.townFightReload = false;
     // #179 — EL CENTINELA DEL DESENLACE SE MIRA ANTES DE RESTAURAR NADA. Calco de los
     // DOS lectores del binario (DUNGEON 0x00cb y SJOG 0x2046): con g_unk_58a0==0x4d el
     // teardown salta al stub del overlay 13 (`endgame_main`), QUE NO RETORNA — ni sync
@@ -8155,6 +8174,17 @@ export class Game {
     // línea del último miembro.
     this.combat = null;
     events.push({ kind: "combat-ended" });
+    if (townFight) {
+      // TOWN 0x09BC, tras volver de 0x6150: `push 0; call 0x408` (0x09d9-0x09dc) relee la
+      // planta sobre DS:0x6608 — muere el terreno volátil (la 0x97 desmagiada vuelve a 0x97)
+      // y el tracker de puerta (0x041d; COMBAT 0x0bcf ya lo puso a 0 al entrar) — y rehace
+      // reja/puente (0x0508). Argumento 0: sin 0x1694, ni cofres ni NPCs se re-colocan
+      // (0x5F86 respaldó el registro de objetos alrededor del combate). Batch 24, H-163.
+      this.doors?.reset();
+      this.volatileTerrainWipe = null;
+      this.clearVolatileTerrain();
+      this.refreshHourTiles();
+    }
     if (this.dungeonState && corridorCause) {
       // PASILLO — códigos 58a0 (re/notes/dungeon-wanderer.md §8). El switch del
       // binario corre INCONDICIONAL (también tras victoria: salir andando por un

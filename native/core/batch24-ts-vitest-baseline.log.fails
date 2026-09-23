@@ -1,0 +1,104 @@
+   × #126 (B) — LINT: ninguna plantilla catalogada se compone con ${} nativo > las nativas SIN key del santuario siguen ahí (control NEGATIVO del lint)
+   × #26 — acumulador de validación-ventana > CONTROL DE POBLACIÓN: el barrido ve ficheros y el registro tiene entradas
+   × #26 — acumulador de validación-ventana > toda entrada del acumulador sigue teniendo marca (sin entradas muertas)
+   × #26 — acumulador de validación-ventana > una exención por SUJETO AJENO no puede silenciar algo que SÍ espera
+   × #261 — lint: expect.poll(...).not no prueba ausencias > ningún spec e2e afirma una ausencia con un poll negado
+   × (M)ix — CABLEADO en main.ts (la lógica sellada no vale si nadie la llama) > el selector de reagentes emite el pie ANTES de publicar el panel
+   × --check INFORMA y NO rompe (ruling #94), pero ya no calla las pérdidas > ★ control: sobre un corpus sin tombstone, --check no inventa pérdidas
+   × --check INFORMA y NO rompe (ruling #94), pero ya no calla las pérdidas > ★★ nombra la pérdida, NO escribe, y conserva exit 0
+   × CI público — la cadena de imports del runner NO puede leer assets/ en carga de módulo > CONTROL DE POBLACIÓN: el cierre tiene módulos de verdad (si no, el verde no valdría nada)
+   × F3b — CENSO: «~397 compras» cuenta menciones, no transacciones > el bucket ANCHO (`Done!` sin atribución) mete el menú de mezcla: ad18-g05 NO es una venta
+   × F3b — CENSO: «~397 compras» cuenta menciones, no transacciones > en los DOS corpus juntos hay 9 segmentos con al menos una transacción CERRADA
+   × F3b — GUARDA: todo delta ≠ 0 tiene teclas de transacción en SU segmento > los 6 deltas con signo del proyecto conducen teclas; ninguno es un cero vacío por guion
+   × F3b — ad09-g04: −274 (Regen Ring del herrero de Bordermarch), derivado del BINARIO > el OCR trae UN solo cierre en todo el segmento, en ocrLn 370
+   × F3b — ad09-g04: −274 (Regen Ring del herrero de Bordermarch), derivado del BINARIO > el precio 274 lo REPRODUCE la fórmula del PORT con la base del binario e INT 21
+   × F3b — ad09-g04: −274 (Regen Ring del herrero de Bordermarch), derivado del BINARIO > ★ la fila ENTERA a INT 21 reproduce los CINCO precios que el OCR canta — el 274 no viaja solo
+   × F3b — ad09-g04: −274 (Regen Ring del herrero de Bordermarch), derivado del BINARIO > ★★ la letra `f` la fija el BINARIO, no el OCR: el Regen Ring es el 6º de la fila de stock
+   × F3b — ad09-g04: −274 (Regen Ring del herrero de Bordermarch), derivado del BINARIO > ★★ los OTROS ítems se RECHAZAN: por eso el agregado del segmento es −274 y no más
+   × F3b — ad21-g26: el PRIMER delta CON SIGNO del corpus AD, derivado del OCR y careado con el binario > el OCR trae CUATRO cierres de compra a 256 gold
+   × F3b — ad21-g26: el PRIMER delta CON SIGNO del corpus AD, derivado del OCR y careado con el binario > la posada de 4918 NO entra en el delta: el OCR dice `due at check-out`
+   × F3b — ad21-g26: el PRIMER delta CON SIGNO del corpus AD, derivado del OCR y careado con el binario > −1024 y +16 son 4 × (precio, concesión) — ninguna de las dos cifras es libre
+   × F3b — el poblado del ledger vivo está en las rutas, con su cita > NINGÚN delta del proyecto queda sin cita (salvo los dos verdes heredados de LP1)
+   × F3b — el poblado del ledger vivo está en las rutas, con su cita > cada delta poblado lleva su `ledgerCite` con la ocrLn que lo justifica
+   × F3b — el poblado del ledger vivo está en las rutas, con su cita > los 11 segmentos poblados declaran EXACTAMENTE los deltas pre-registrados (pin por identidad)
+   × F3b — los CEROS están justificados por el OCR: el LP rechazó > ad01-g07: son TRES rechazos, no dos — la resurrección de 237 también
+   × F3b — los CEROS están justificados por el OCR: el LP rechazó > ad01/ad01-g04: el OCR 2308..2316 contiene la NEGATIVA (/Dost thou pay\?\s*N/i)
+   × F3b — los CEROS están justificados por el OCR: el LP rechazó > ad01/ad01-g07: el OCR 3146..3195 contiene la NEGATIVA (/take it\?"?\s*No/i)
+   × F3b — los CEROS están justificados por el OCR: el LP rechazó > ad04/ad04-g10: el OCR 1490..1500 contiene la NEGATIVA (/Dost thou pay\?\s*N/i)
+   × F3b — los CEROS están justificados por el OCR: el LP rechazó > ad04/ad04-g17: el OCR 2746..2756 contiene la NEGATIVA (/Dost thou pay\?\s*N/i)
+   × F3b — los CEROS están justificados por el OCR: el LP rechazó > ad05/ad05-g03: el OCR 245..255 contiene la NEGATIVA (/Dost thou pay\?\s*N/i)
+   × F3b — los CEROS están justificados por el OCR: el LP rechazó > ad08-g19: los TRES ítems del gremio se rechazan, y el mercader lo confirma al despedir
+   × F3b — los CEROS están justificados por el OCR: el LP rechazó > ad08/ad08-g19: el OCR 2647..2695 contiene la NEGATIVA (/Interested\?"?\s*No/i)
+   × G8 — inventario de mundo-cerrado de assets (corpus i18n) > #235: un subdirectorio SYMLINKEADO no produce stale en falso (worktrees enlazan por entradas)
+   × G8 — inventario de mundo-cerrado de assets (corpus i18n) > todo .json de assets/ está CUBIERTO o EXCLUIDO-con-razón; sin entradas stale
+   × `main.ts` dispara la ceremonia en las siete bocas del binario > emite el cue de la ceremonia: (U)se pergamino
+   × `main.ts` dispara la ceremonia en las siete bocas del binario > los pergaminos ya NO llevan la lista 2/3/7 cableada
+   × alcance_sellos — ¿hay que mirar? > analiza() reparte dentro/fuera sobre una lista mezclada
+   × alcance_sellos — ¿hay que mirar? > el cierre alcanza el RELOJ y las tácticas, que son los otros dos vehículos del riesgo
+   × alcance_sellos — ¿hay que mirar? > ★ el cierre DISCRIMINA: no se traga game/src entero
+   × alcance_sellos — ¿hay que mirar? > ★★ EL FALSO NEGATIVO QUE IMPORTA: F-6 tocó grandtour/nav.ts y TIENE que caer dentro
+   × botonera de combate — contra el bucle de turno de COMBAT.OVL:0x0838 > el hueco de MOTOR J/S/P/Y está CERRADO (fix-121): los cuatro se despachan y tienen botón
+   × botonera de combate — contra el bucle de turno de COMBAT.OVL:0x0838 > toda orden ACEPTADA que el motor del port ya resuelve TIENE vía táctil
+   × botonera de mazmorra — contra kernel_cmd_dispatch 0x3178 + gate por localización > las RECHAZADAS no tienen orden de motor propia (sólo ecoan la cadena del binario)
+   × botonera de mazmorra — contra kernel_cmd_dispatch 0x3178 + gate por localización > toda orden ACEPTADA que el motor del port ya resuelve TIENE vía táctil
+   × cacheDirAislado > basta con que escape UNO de los dos node_modules (sólo el de game/)
+   × cacheDirAislado > en un WORKTREE (node_modules symlink) NO cae dentro del enlace
+   × cacheDirAislado > y la variable, cuando está, sigue mandando sobre todo lo demás
+   × careos ACOPLADOS a turn.ts — corren dentro de `npm test` (hueco de proceso #44) > re/tools/test_blackthorn_parity.py: exit 0 y >= 56 tests REALMENTE corridos
+   × careos ACOPLADOS a turn.ts — corren dentro de `npm test` (hueco de proceso #44) > re/tools/test_cmds_parity.py: exit 0 y >= 22 tests REALMENTE corridos
+   × careos ACOPLADOS a turn.ts — corren dentro de `npm test` (hueco de proceso #44) > re/tools/test_loops_parity.py: exit 0 y >= 20 tests REALMENTE corridos
+   × el trono (castle.json label 4) — conversación completa > con nombre REAL (save nativo Barnabas), el trono reconoce «Barnabas»
+   × ficha relpaths — censo por-fichero de emisores del shell (default-DENY) > control positivo del censo: la población medida no colapsa (≥10 emisores, ≥7 listados)
+   × ficha relpaths — censo por-fichero de emisores del shell (default-DENY) > ninguna exclusión está rancia (su fichero sigue siendo emisor — el ledger refleja el código)
+   × ficha relpaths — censo por-fichero de emisores del shell (default-DENY) > todo fichero emisor está clasificado: en SHELL_FILE_RELPATHS o excluido con razón
+   × guarda: la constante no puede quedarse rancia > si aparece un consumidor de `.partida`, la constante DEBE estar en true
+   × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ad03/ad03-g11: conducir las teclas COMMITEADAS por el flujo del port vende exactamente lo previsto y suma 3
+   × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ad04/ad04-g08: conducir las teclas COMMITEADAS por el flujo del port vende exactamente lo previsto y suma 58
+   × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ad04/ad04-g08: la fórmula del PORT reproduce los importes que el OCR CANTA
+   × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ad06/ad06-g34: conducir las teclas COMMITEADAS por el flujo del port vende exactamente lo previsto y suma 220
+   × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ad06/ad06-g34: la fórmula del PORT reproduce los importes que el OCR CANTA
+   × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ★ el rechazo de ad06 es del Throwing Axe (22): se OFERTA y no se vende — el `n` está cableado
+   × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ★ en los TRES queda lista no vacía al final: el `Escape` del guion es lo que cierra, no `afterDeal`
+   × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ★★ ad03-g11: el Halberd de 357 el LP lo RECHAZA — no entra en el agregado
+   × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ★★ ad03-g11: el importe es ILEGIBLE pero el +3 es INSENSIBLE al INT en toda la banda medida
+   × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ★★ ad06-g34: el par CONTROLADO interno ata el Short Sword ilegible — mismo ítem, misma visita
+   × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ★★ el ALCANCE se declara: qué parte del agregado confirma el OCR y qué parte sólo la fórmula
+   × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > 🔴 CENSO: el criterio SELLADO de cierre es un DETECTOR, no un censo — ve 1/1/5 y las ventas son 1/4/7
+   × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > 🔴 …y se EXHIBE el mecanismo: hay bloques con `"Done!"` cuyo `says` vive en el bloque siguiente
+   × registro de teclas — NADA sale del dispositivo en esta entrega > el directorio existe y tiene ficheros (la guarda no se absuelve por vacío)
+   × resuelveSavesDir > con una ruta redirige a ella, absolutizada (control positivo)
+   × sidecars sellados — qol normalizado (#28) > NINGUNO arrastra ya diario ni minimapa legados
+   × sidecars sellados — qol normalizado (#28) > un checkpoint normalizado CARGA: importNativeSave no revienta y deja el estado usable
+   × vía (a) — el parser del save nativo NO lee vacío donde el save trae nombre > ad01.gam: registro 0 = Barnabas, compañeros exactos
+   × ★ el corpus SINTÉTICO: `--check` limpio, sin escribir y en punto fijo > ★★ las 6 partes sintéticas: exit 0, ni un CAMPO PERDIDO, ni un byte movido
+   × ★ flags desconocidas: ya no se tragan CON la escritura hecha > ★ control: las flags que SÍ existen no se rechazan
+   × ★ la FAMILIA `overlay*` protege lo puesto a mano (alineado con curate.mjs §172) > ★ `overlay-timing` (la etiqueta que curate documenta) SOBREVIVE la pasada
+   × ★ la FAMILIA `overlay*` protege lo puesto a mano (alineado con curate.mjs §172) > ★ control: el mismo op SIN `src` sí cae en la purga (y el cinturón lo para)
+   × ★★ `--claves`: curar un campo sin arrastrar la deriva de curate > ★ control: sin nada que curar, `--claves` no inventa una CURACIÓN
+   × ★★ `--claves`: curar un campo sin arrastrar la deriva de curate > ★★ SIN la flag, las claves ni se miran: la conducta histórica queda intacta
+   × ★★ `--claves`: curar un campo sin arrastrar la deriva de curate > ★★ aplica la clave al segmento NOMBRADO y la ENUMERA (la curación no se esconde en el diff)
+   × ★★ `--claves`: curar un campo sin arrastrar la deriva de curate > ★★ un BORRADO aborta con exit 3 AUNQUE el segmento esté nombrado (nombrar ≠ autorizar bajas)
+   × ★★ curate en ESCRITURA no puede borrar un campo de la ruta > ★ el cinturón mira el SEGMENTO ENTERO, no sólo `skip` (una baja de `ctx` también aborta)
+   × ★★ curate en ESCRITURA no puede borrar un campo de la ruta > ★★ `--allow-desskip`: escribe A SABIENDAS y ENUMERA lo que se pierde (para el commit)
+   × ★★ curate en ESCRITURA no puede borrar un campo de la ruta > ★★ control: sin tombstone la pasada escribe con normalidad (exit 0) y hace su trabajo
+   × ★★ curate en ESCRITURA no puede borrar un campo de la ruta > ★★ tombstone → ABORTA (exit 3), NOMBRA la pérdida y deja la ruta INTACTA en disco
+   × ★★ derive-anchors en ESCRITURA no puede llevarse un ancla de la ruta > ★ `--dry` INFORMA y no rompe (no escribe → no hay daño donde poner la fatalidad)
+   × ★★ derive-anchors en ESCRITURA no puede llevarse un ancla de la ruta > ★★ CAMPO: un ancla derivada que pisa `expectDelta` también aborta
+   × ★★ derive-anchors en ESCRITURA no puede llevarse un ancla de la ruta > ★★ `--allow-purga`: escribe A SABIENDAS y ENUMERA lo que se pierde (para el commit)
+   × ★★ derive-anchors en ESCRITURA no puede llevarse un ancla de la ruta > ★★ ancla a mano no re-derivada → ABORTA (exit 3), la NOMBRA y deja la ruta INTACTA
+   × ★★ derive-anchors en ESCRITURA no puede llevarse un ancla de la ruta > ★★ control: sin pérdidas escribe (exit 0) y DERIVA — el cinturón no congela el productor
+   × ★★ el corpus REAL: alcance medido y 0 falsos positivos > ★★ `--dry` sobre las 49 rutas: 0 pérdidas, y el corpus versionado no se toca
+   × ★★ el corpus REAL: alcance medido y 0 falsos positivos > ★★ `camposPerdidos` es 0 por CONSTRUCCIÓN: las claves vigiladas no incluyen el guion
+   × ★★ el modo --verify del CLI (la deuda: ANTES era una flag rechazada) > ★★ --verify sale con exit≠0 y NOMBRA el campo que la regeneración perdería
+   × ★★ el modo --verify del CLI (la deuda: ANTES era una flag rechazada) > ★★ --verify sobre las 6 partes SINTÉTICAS: reconciliación LIMPIA (exit 0)
+   × ★★ el modo --verify del CLI (la deuda: ANTES era una flag rechazada) > ★★ control con dientes: sobre un corpus SIN tombstone, --verify sale 0
+   × ★★ el modo de ESCRITURA no puede borrar un skip de la ruta > ★ y AVISA de la divergencia pendiente aunque escriba (no la deja muda)
+   × ★★ el modo de ESCRITURA no puede borrar un skip de la ruta > ★★ aplica el overlay Y conserva el skip que sólo vive en la ruta
+   × ★★ flags desconocidas: la que se tragaba era la que APAGA la escritura > ★ control: las flags que SÍ existen no se rechazan
+   ✓ endgameDissolveOrder — permutación completa (GAP 5, orden fn34) > cubre cada píxel del frame 320×200 exactamente una vez 
+ FAIL  tests/espejo-ledger-poblado.test.ts > F3b — ad21-g26: el PRIMER delta CON SIGNO del corpus AD, derivado del OCR y careado con el binario > −1024 y +16 son 4 × (precio, concesión) — ninguna de las dos cifras es libre
+stderr | tests/miniatura-nativa.test.ts > §A la piel fiel declara su búfer nativo > monta un canvas 320×200 y lo MARCA (M1: sin la marca, muere §B entero)
+stderr | tests/miniatura-nativa.test.ts > §B el búfer declarado gana en TODOS los layouts > escritorio (shader) (visible 960×600) captura 320×200
+stderr | tests/miniatura-nativa.test.ts > §B el búfer declarado gana en TODOS los layouts > móvil APAISADO (visible 1700×1020) captura 320×200
+stderr | tests/miniatura-nativa.test.ts > §B el búfer declarado gana en TODOS los layouts > móvil CLÁSICO (visible 960×600) captura 320×200
+stderr | tests/miniatura-nativa.test.ts > §B el búfer declarado gana en TODOS los layouts > móvil PARTIDO (de fábrica) (visible 1170×1696) captura 320×200

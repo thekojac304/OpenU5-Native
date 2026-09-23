@@ -20,7 +20,10 @@ enum class ReloadEffect : uint8_t {
     UrbanEffects,
     DiscardInterior,
     HydrateUnderworld,
-    ContextTurn
+    ContextTurn,
+    // Batch 24: the NPC half of TOWN.OVL:0x1694 -- reposition every NPC of the
+    // location to its schedule. Appended: fixtures record these ordinals.
+    SnapNpcs
 };
 struct TransitionServices {
     void *context = nullptr;

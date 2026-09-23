@@ -1424,7 +1424,9 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
         ui_->append(openu5::UiTextChannel::System,"Developer tools disabled");
 #endif
     }else if(shortcut==DeviceShortcut::Save){uint32_t ms=0;bool ok=save_.save(context_,outdoor_,terrain_,actors_,retained_,resources_.initial_gam,resources_.initial_gam_size,resources_.initial_ool,resources_.initial_ool_size,ms);if(ok)trace_direct_troll_save("SAVE_WORLD_OVERRIDE");ui_->append(openu5::UiTextChannel::System,ok?"Save complete":"Save failed; prior kept");}
-    else if(shortcut==DeviceShortcut::Load){uint32_t ms=0;bool ok=save_.load(context_,outdoor_,terrain_,actors_,retained_,ms);if(ok){const auto loc=game_.position.map.location;if(loc>=1&&loc<=32){auto &n=resources_.npc_locations[loc-1];openu5::enter_npc_map(actors_,n.slots,n.count,uint8_t(loc),uint8_t(game_.time.hour),game_.npc_dead[loc-1]);openu5::save::restore_npc_walk(retained_,uint8_t(loc),true,actors_);}terrain_.refresh(resources_.world,game_);trace_direct_troll_save("LOAD_WORLD_OVERRIDE");}ui_->append(openu5::UiTextChannel::System,ok?"Load complete":"No valid save");}
+    else if(shortcut==DeviceShortcut::Load){uint32_t ms=0;bool ok=save_.load(context_,outdoor_,terrain_,actors_,retained_,ms);if(ok){
+        commands_.door.turns=0; // Batch 24 (H-162): 0x0408(0) on load, as synchronize_loaded_world()
+        const auto loc=game_.position.map.location;if(loc>=1&&loc<=32){auto &n=resources_.npc_locations[loc-1];openu5::enter_npc_map(actors_,n.slots,n.count,uint8_t(loc),uint8_t(game_.time.hour),game_.npc_dead[loc-1]);openu5::save::restore_npc_walk(retained_,uint8_t(loc),true,actors_);}terrain_.refresh(resources_.world,game_);trace_direct_troll_save("LOAD_WORLD_OVERRIDE");}ui_->append(openu5::UiTextChannel::System,ok?"Load complete":"No valid save");}
     else if(context_.combat&&combat_ai_turn()){
         if(combat_input_count_<sizeof(combat_input_queue_)/sizeof(combat_input_queue_[0]))combat_input_queue_[combat_input_count_++]=action;
         ESP_LOGD(kTag,"combat queued action=%s count=%u",action_name(action.kind),unsigned(combat_input_count_));
@@ -2168,6 +2170,12 @@ void AlphaRuntime::synchronize_loaded_world(){
     // pacer is cancelled WITHOUT reporting a completion, so a load can never
     // trigger the resurrection the scene would otherwise have applied.
     narrative_pacer_.cancel();world_fx_.clear();poison_.cancel();
+    // Batch 24 (H-162). Loading is ULTIMA.EXE 0x00f7 -> TOWN.OVL:0x11F0 with
+    // fresh=0 -> 0x0408(0): the floor loader zeroes the open-door tracker
+    // [0x594f] (0x041d) and re-reads the floor, so a door open at save time
+    // is closed after the load. The save still records it, as the 1988 save
+    // window holds [0x594f]; only the load discards it.
+    commands_.door.turns=0;
     actors_={};const auto loc=game_.position.map.location;if(loc>=1&&loc<=32){auto &n=resources_.npc_locations[loc-1];openu5::enter_npc_map(actors_,n.slots,n.count,uint8_t(loc),uint8_t(game_.time.hour),game_.npc_dead[loc-1]);openu5::save::restore_npc_walk(retained_,uint8_t(loc),true,actors_);}terrain_.refresh(resources_.world,game_);combat_.initialized=false;
     // R-14: the pool has no owner-side backing store to diff against the new
     // document, so a load must clear it before reconstructing -- otherwise a

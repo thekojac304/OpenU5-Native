@@ -20,6 +20,20 @@ ActorError enter_npc_map(NpcActors &out, const NpcSlot *slots, size_t count, uin
     }
     out = next; return ActorError::None;
 }
+// 0x16c9-0x171b walks slots 1..31 whose type byte (DS 0x659E) is non-zero; a
+// slot cleared by 0x00B0 has type 0 and is simply absent from NpcActors. Per
+// slot: period from NPC.OVL:0x12E0 (0x16d7), X/Y/Z from the schedule into the
+// live record (0x1841-0x1856), state 1, servedSlot = period (0x1705), pathIdx
+// -1 (0x170c). DS 0x65C2 (stuck) is not written.
+void snap_npcs_to_schedule(NpcActors &list, uint8_t location, uint8_t hour) {
+    for (size_t i = 0; i < list.count; ++i) {
+        auto &n = list.actors[i];
+        if (n.location != location) continue;
+        const uint8_t idx = schedule_index(n.schedule.times, hour);
+        n.x = n.schedule.x[idx]; n.y = n.schedule.y[idx]; n.z = norm_z(n.schedule.z[idx]);
+        n.state = 1; n.served_slot = idx; n.path_index = -1;
+    }
+}
 int32_t npc_check_schedule(NpcActor &n, uint8_t hour, int16_t v) {
     const auto &s = n.schedule;
     if (std::find(std::begin(s.times),std::end(s.times),hour) == std::end(s.times)) return 0;

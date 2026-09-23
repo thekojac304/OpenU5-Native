@@ -83,7 +83,7 @@ for(let scenario=0;scenario<240;scenario++) {
    floorExists:(id:number,z:number)=>world.smallMaps.get(id)?.floors.some(f=>f.z===z)??false,
    refreshHourTiles:()=>fx(5),runContextTurn:()=>{fx(10);return [];},
    locationNameBanner:(id:number,e:any[])=>{if(!(id>=14&&id<=18)&&id!==40)e.push({kind:'message',text:'\n\nTEST\n'});},
-   npcManager:{enterMap:()=>fx(0)},overworldEnemies:{clear:()=>fx(1)},doors:{reset:()=>fx(2)},clearVolatileTerrain:()=>fx(3),
+   npcManager:{enterMap:()=>fx(0),snapToSchedule:()=>fx(11)},overworldEnemies:{clear:()=>fx(1)},doors:{reset:()=>fx(2)},clearVolatileTerrain:()=>fx(3),
    hydrateInteriorObjects:()=>fx(4),applyUrbanShadowlord:()=>fx(7),discardInteriorObjects:()=>fx(8),hydrateUnderworldPlot:()=>fx(9),
    activeMap:{tileAt:()=>196+Math.floor(scenario/6)%4},
  };

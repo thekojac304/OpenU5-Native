@@ -398,3 +398,18 @@ Run audit **Phase 6P** (8 short steps in Lord British's Castle basement). **A re
 **Host suite:** 91/91 from a clean build, 0 fail, 0 skipped — the prior 90 plus `batch21b_chest_reset`. No parity corpus moved. **SD resource pack unchanged.**
 
 **Still open and untouched this batch:** H-118 (shard ritual / permanent movement lock, CRITICAL), H-115 (dungeon save/load), H-12/H-13, H-22, H-45, H-63, H-146, H-122, plus the seven rows queued above.
+
+## Batch 24 — state/reload parity (H-161, H-162, H-163)
+
+All three are one 1988 routine, `TOWN.OVL:0x0408` (the floor loader), reached with argument 1 from stairs/ladders and argument 0 from a load and from the end of a town fight. Full derivation, RED/GREEN and the seven-mutation proof: `GAMEPLAY_INTEGRATION_AUDIT.md` §"Batch 24".
+
+| Row | Behaviour | Status |
+|---|---|---|
+| H-161 | Changing floors repositions every NPC of the location to its current schedule cell (`0x0408(1)` → `0x1694`, `0x1841-0x1856`), on every floor, from the live schedule | **SOFTWARE FIXED — HARDWARE RETEST REQUIRED** (Phase 6S steps 1–3) |
+| H-162 | An open door is closed after a load (`0x11F0(fresh=0)` → `0x0408(0)` zeroes `[0x594f]`); chests, NPC positions and inventory load as saved | **SOFTWARE FIXED — HARDWARE RETEST REQUIRED** (Phase 6S steps 4–5) |
+| H-163 | After a town fight (`0x09BC` → `0x0408(0)`) transient terrain is re-read: a skull-keyed vault door is magically locked again. The open door (`COMBAT 0x0bcf`), NPC positions and chests already matched | **CONFIRMED DIVERGENCE — CORRECTED** (transient terrain); verified native match for the rest (Phase 6S steps 6–7) |
+| H-164 | `Alt+L` quick load skips `synchronize_loaded_world()`: the world-object pool is neither cleared nor restored, the dungeon session is not restored, live scenes are not cancelled (System Menu / frontend loads do all of that) | **CONFIRMED BY CODE READING — queued, not reproduced.** Use the System Menu load for testing |
+
+**Retest gate:** audit **Phase 6S**. **A reflash is required** (core and runtime changes). **The SD resource pack is unchanged; no SD recopy is required.**
+
+**Host suite:** 94/94 from a clean build, 0 fail, 0 skipped — the prior 93 plus `batch24_reload_parity`. `commands.txt`/`travel.txt` regenerated from the corrected reference (token-level proof in the audit).

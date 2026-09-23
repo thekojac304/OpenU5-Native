@@ -605,6 +605,32 @@ export class NpcManager {
   }
 
   /**
+   * La mitad NPC de `town_populate_npcs` (TOWN.OVL:0x1694), la que corre el cargador de
+   * planta 0x0408 con argumento 1 (escalera/escala 0x052E → `push 1; call 0x408`,
+   * 0x0517/0x051d). NO relee el `.NPC` ni reconstruye la lista: recorre los slots 1..31
+   * cuyo byte de tipo (DS 0x659E) no es 0 —un slot vaciado por `npc_clear_slot` 0x00B0
+   * tiene tipo 0 y sigue fuera— y para cada uno toma el tramo que `schedule_index`
+   * (NPC.OVL:0x12E0) elige para `g_hour` (0x16d1), copia X/Y/Z del horario (+3/+6/+9) al
+   * registro vivo (0x1841-0x1856, en TODAS las plantas), estado = 1 (0x1856/0x16fc),
+   * servedSlot = tramo (0x1705) y pathIdx = −1 (0x170c). El contador de atasco (DS 0x65C2),
+   * el diálogo y los AI del horario no se tocan. Batch 24 (H-161).
+   */
+  snapToSchedule(location: number, state: GameState): void {
+    const list = this.npcs.get(location);
+    if (!list) return;
+    for (const n of list) {
+      const idx = scheduleIndex(n.times, state.time.hour);
+      n.x = n.schedX[idx]!;
+      n.y = n.schedY[idx]!;
+      n.z = normZ(n.schedZ[idx]!);
+      n.state = 1;
+      n.servedSlot = idx;
+      n.pathIdx = -1;
+    }
+    this.syncWalkToState(location, state);
+  }
+
+  /**
    * Vuelca la máquina de caminata (cinco piezas + x/y/z) a `state.npcWalk` para
    * que viaje en el save — el espejo del bloque 0x55A6..0x6605 del .GAM. Se llama
    * al entrar al mapa y al final de cada tick (como `tickDoors` → `openDoors`).

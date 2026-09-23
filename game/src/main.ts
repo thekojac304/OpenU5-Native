@@ -648,7 +648,10 @@ async function boot(): Promise<void> {
       if (game.state.position.location !== 0) {
         game.npcManager?.enterMap(game.state.position.location, game.state, true); // #108: rehidrata la maquina de caminata del save (npcWalk)
       }
-      game.doors?.restore(game.state.openDoors);
+      // Cargar = `town_load_map(fresh=0)` → `0x0408(0)` (ULTIMA.EXE 0x00f7 → TOWN 0x11F0): el
+      // cargador pone el tracker de puerta abierta [0x594f] a 0 (0x041d) y relee la planta, así
+      // que una puerta abierta al guardar vuelve CERRADA. Batch 24, H-162.
+      game.doors?.reset();
       // Save restaurado in-place: resincroniza reja/puente por hora (TOWN 0x0170).
       game.refreshHourTiles();
       // Miniatura vieja (jpeg de antes del 08-08, o el teléfono entero de los layouts
@@ -3833,7 +3836,10 @@ async function boot(): Promise<void> {
       if (game.state.position.location !== 0) {
         game.npcManager?.enterMap(game.state.position.location, game.state, true); // #108: rehidrata la maquina de caminata del save (npcWalk)
       }
-      if (game.doors) game.doors.restore(game.state.openDoors);
+      // Cargar = `town_load_map(fresh=0)` → `0x0408(0)` (ULTIMA.EXE 0x00f7 → TOWN 0x11F0): el
+      // cargador pone el tracker de puerta abierta [0x594f] a 0 (0x041d) y relee la planta, así
+      // que una puerta abierta al guardar vuelve CERRADA. Batch 24, H-162.
+      game.doors?.reset();
       game.refreshHourTiles(); // reja/puente por hora (TOWN 0x0170) tras cargar
       view.notifyTurn([{ kind: "map-changed" }]); // pieles: snap de cámara
       updateMusic();

@@ -308,6 +308,8 @@ struct Runner {
                         r.result.status=urban_shadowlord(r.c,r.sink(),r.rand);
                     if(e==ReloadEffect::HydrateInterior && r.c.quest_world && !hydrate_interior_objects(r.c,id))r.result.status=CommandStatus::NeedsStorage;
                     if(e==ReloadEffect::DiscardInterior && r.c.quest_world)discard_interior_objects(r.c.game,*r.c.quest_world,id);
+                    // Batch 24: consumed here, on the table the device shares (context_.actors).
+                    if(e==ReloadEffect::SnapNpcs && r.c.actors)snap_npcs_to_schedule(*r.c.actors,id,uint8_t(r.c.game.time.hour));
                     if (r.c.services.reload)
                         r.c.services.reload(r.c.services.context, e, id, r.sink());
                     if (e == ReloadEffect::EnterNpcs && r.c.actors) {

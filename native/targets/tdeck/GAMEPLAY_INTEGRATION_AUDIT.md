@@ -4545,6 +4545,10 @@ Categories **A (loot/economy)**, **B (doors/locks/terrain)** and **C (rest/sleep
 | **H-158** | Terrain | Changing floors inside a small map does not reload the map record | `town_use_ladder` `0x052e` to `town_load_town_map(fresh=1)` `0x0408` (re-reads the 0x400 record **and** calls `0x1694`) | not modelled | `klimb_ladder`/`apply_stair_step` emit only `RefreshHourTiles` | an unmagicked skull-key door survives a floor change when 1988 relocks it; the vault does not refill on a floor round-trip | med | 100 % | **CONFIRMED MISSING** (both ports) → **FIXED in Batch 23** (both ports; the chest refill on a floor change is part of it) | own batch — touches R-14 terrain persistence | yes |
 | **H-159** | Loot | Interior chest contents byte is 8; the binary seeds `0x1E` | TOWN `0x1795` `mov word [bp-6],0x1e` to `+5` via kernel `0x3A74` | `INTERIOR_CHEST_CONTENTS = 8` | `o.contents = 8` | every interior chest's loot roll is off the authored value | med | 100 % | **CONFIRMED MISSING** — closes oracle hole **O5** (`re/notes/objects.md`) → **FIXED in Batch 23** (both ports) | own batch: will move `gameplay_parity`/`quest_parity`, needs the TS side regenerated in step | no |
 | **H-160** | Camp | Outdoor camp guard walks through the fire and through sleepers | `camp_guard_walk` consumes `cell_free` | modelled (`campCellFree`) | `cell_free` wired to constant `true` | cosmetic on the device today | low | 100 % | **CONFIRMED MISSING** | with H-154 | no |
+| **H-161** | NPC | A floor change does not reposition NPCs to their schedule | `0x052E` → `0x0408(1)` → `0x1694`, NPC half `0x1841-0x1856` (every slot with a type byte, every floor, live schedule) | not modelled (`enterMap` only on map entry) | `reload_floor` emitted no NPC effect | NPCs stay mid-walk across stairs/ladders | med | 100 % | **CONFIRMED MISSING** (both ports) → **FIXED in Batch 24** (both ports; `snap_npcs_to_schedule` / `snapToSchedule`) | — | yes |
+| **H-162** | Doors | An Open door survives a load | `0x00f7` → `0x11F0(fresh=0)` → `0x0408(0)`, `0x041d` zeroes `[0x594f]` | `main.ts` restored `openDoors` | load paths restored `CommandState::door` | a door open at save time is open after the load | low | 100 % | **CONFIRMED MISSING** (both ports) → **FIXED in Batch 24** (both load paths in each port) | — | yes |
+| **H-163** | Terrain | Town-fight end does not re-read the floor | `0x09BC` → `0x6150` → `0xb0` → `0x0408(0)` (`0x09d9-0x09dc`), no branch | `endCombat` did not | `finish_encounter_combat` did not | a skull-keyed lock stays unlocked after a town fight; open door / NPCs / chests already matched | low | 100 % | **CONFIRMED DIVERGENCE** (transient terrain; both ports) → **FIXED in Batch 24** | — | yes |
+| **H-164** | Save | `Alt+L` skips `synchronize_loaded_world()` | — (device routing) | n/a | object pool / dungeon session / scenes not reset by the `DeviceShortcut::Load` arm | stale world objects can survive a quick load | med | code reading | **CONFIRMED BY CODE READING — queued** (Batch 24) | own batch | yes |
 | — | Rest | `snap_npcs` is an NPC-only hook, so the object half of one binary routine is unmodelled | TOWN `0x1694` is one routine | `wakeSnapNpcs` to `npcManager.enterMap` only | **corrected this batch** | — | — | — | **REFERENCE-PORT DIFFERENCE** — native is now right and TypeScript is not; no parity fixture encodes it (91/91 green) | flag before any fixture regeneration | no |
 | — | Rest | `bedSleepStep` omits `0x0671` and `0x0664` | as H-156/H-157 | omits | omits | — | — | — | **REFERENCE-PORT DIFFERENCE** compounding H-156/H-157 | with them | no |
 | — | Rest | Bed wake-up hour: the original subtracts 23, not 24, when crossing midnight | CMDS `0x05b0` | fixed | fixed | wakes on the hour requested | — | — | **DELIBERATE DIVERGENCE** | `bugs-del-original.md` §1.3 (WITNESSED) | no |
@@ -4868,3 +4872,119 @@ Flash the Batch 23 firmware, start a **New Journey**, and give the party a few s
 **Pass:** steps 3, 5 and 7. **Fail** if step 3 still shows only gold/torches/food across several chests, if the chests or the lock do not come back in step 5, or if the bed relocks the door in step 7.
 
 **Known and queued, do not file:** NPCs do not jump to their schedule positions when you change floors (H-161) or sleep (H-154).
+
+## Batch 24 — state/reload parity: floor change, save/load, end of a town fight (H-161, H-162, H-163)
+
+Scope: the three queued items that concern **when the 1988 game rebuilds or refreshes local world state**. Nothing else was fixed; newly noticed gaps are queued at the end.
+
+### Baseline
+
+HEAD `5adae63f` (tag `alpha2-batch23-vault-loot-floor-reset` at `93ef488b`), branch `main`, working tree clean. From-scratch build `native/core/build-batch24-baseline`, serial: **93/93 PASS, 0 fail, 0 skipped** (`batch24-baseline-ctest.log`); one warning, the known w64devkit `stl_uninitialized.h` `-Wstringop-overflow=` false positive. Controls on the unmodified reference: `generate-command-fixtures.ts --check` and `generate-travel-fixtures.ts --check` byte-identical (`batch24-fixture-check-control.log`); TypeScript unit suite 97 pre-existing failures (`batch24-ts-vitest-baseline.log(.fails)`).
+
+### Original behaviour (recovered from the binaries)
+
+Every citation was re-read with `re/tools/dis16.py`; call-site claims use `re/tools/callers_banda.py` (positive control: it finds `TOWN.OVL:0x09d0 → kernel 0x6150`, read independently) plus an in-module near-call scan of `TOWN.OVL`.
+
+**One routine: `TOWN.OVL:0x0408`, the floor loader.** It zeroes the open-door tracker `[0x594f]` (`0x041d`), re-reads the floor's 0x400 bytes from the location's `.DAT` into the map buffer DS `0x6608` (`0x045c-0x046f`), rebuilds the tile caches, refreshes the hour tiles (`0x0508 call 0x170`) and **only if its argument is non-zero** calls `0x1694 town_populate_npcs` (`0x0517 cmp [bp+4],0` / `0x051d`). The map buffer lies outside the save window `0x55A6..0x6605`, so nothing written into it — an Open door, a skull-keyed `0x97 → 0xB8` — survives any re-read. Its four callers: `0x0574` (in `0x052E`, argument 1), `0x1236` (in `0x11F0`, its own `fresh`), `0x1044` (scripted floor drop, 1) and `0x09dc` (in `0x09BC`, **0**).
+
+**`0x1694`, the NPC half** (the object half was Batch 23). `0x16c9-0x171b` walks slots 1..31 whose type byte (DS `0x659E`) is non-zero — `npc_clear_slot 0x00B0` zeroes that byte, so a slot cleared during the visit stays gone — and for each takes the period `schedule_index` (`NPC.OVL:0x12E0`, via kernel thunk `0x7B36`, `0x16d7`) picks for `g_hour` (`0x16d1`). `0x1726` places the slot's object only when the period's Z equals the current floor, but **`0x1841-0x1856` write X/Y/Z into the live record unconditionally**, then state = 1 (`0x1856`, again `0x16fc`), servedSlot = period (`0x1705`), pathIdx = −1 (`0x170c`). The stuck counter (DS `0x65C2`), the dialog byte and the schedule's AI bytes are never written. It reads the **live** schedule table DS `0x5D5E`, not the `.NPC` file: the guard alarm `0x958 → 0x85e` zeroes a guard's four times in that table (`0x0890-0x0896`, DS `0x5D6A`) and sets its AI to 7 (`0x08c2`), and a later `0x1694` honours that.
+
+**`0x12E0 schedule_index`.** `d_i = (hour − t_i) & 0xff`; period 0; `d0 > d1` → 1; `> d2` → 2; `> d3` → 1 (without updating the minimum). Both ports implement exactly this (`time.ts scheduleIndex`, `time.cpp schedule_index`); `re/tools/npc_schedule_oracle.py` (new) transcribes it and reads the `.NPC` records itself.
+
+**Load.** Journey Onward is `ULTIMA.EXE 0x00f7 → 0x11F0(fresh=0)` inside a town (`re/notes/npc-carga-partida-fresh-gate.md` §1): no `.NPC` read, no activation, and `0x0408(0)` — the door tracker is zeroed and the floor re-read, but the NPC band, the object register (DS `0x5C5A`), the schedules and the dead bits come back from the save window verbatim.
+
+**End of a town fight.** Both town fights — the player's (A)ttack (`0x09e6 → 0x0b3a`) and a hostile NPC's `"Attacked!"` (`0x13fb → 0x1408`) — go through `0x09BC town_attack_engine_commit`, 17 instructions without a branch: dead bit (`0x52`), `enter_combat_vs_actor` (kernel `0x6150`, which returns only when the fight is over, won or fled), `npc_clear_slot` (`0xb0`), **`0x0408(0)`** (`0x09d9-0x09dc`), `0x2ae`. `0x6150`'s only callers are `TOWN 0x09d0` and `ENDGAME 0x0051`. The kernel combat mainline `0x5F86` copies the object register `0x5C5A → 0xA9FC` before the fight (`0x5fbe-0x5fd8`) and back after, and `COMBAT.OVL:0x0bcf mov byte [0x594f],0` zeroes the door tracker as every fight starts.
+
+| Trigger | Floor re-read (`0x0408`) | Door tracker / transient terrain | NPC schedule reposition (`0x1694`) | Objects (chests) | Persistent state |
+|---|---|---|---|---|---|
+| stairs / ladder (`0x052E`) | yes, argument **1** | reset / reset | **yes**, every NPC of the location, every floor | wiped and re-placed (Batch 23) | untouched |
+| load (`0x00f7 → 0x11F0(0)`) | yes, argument **0** | reset / reset (map buffer is not saved) | **no** — the saved NPC band loads verbatim | as saved | as saved |
+| end of a town fight (`0x09BC`) | yes, argument **0** | reset (already at `0x0bcf`) / reset | **no** | as before the fight (`0x5F86`) | the attacked slot is cleared; persons get a dead bit |
+
+**The three items are one mechanism** — `0x0408` — and differ only in its argument. The fixes stay separate because the three call sites are separate in both ports; nothing was abstracted beyond one new core primitive.
+
+### Native behaviour before the fix
+
+- **H-161 — CONFIRMED DIVERGENCE.** `klimb_ladder`/`apply_stair_step` → `reload_floor()` emitted `ResetDoors`, `ClearTerrain`, `HydrateInterior`, `RefreshHourTiles` and nothing for NPCs; a floor change left every NPC where its walk had taken it, mid-walk machine included. The TypeScript reference had the same gap (`klimbLadder`/`applyStairStep`; the only 0x1694 analogue in the port was `NpcManager.enterMap`, a full `.NPC` rebuild).
+- **H-162 — CONFIRMED DIVERGENCE.** `capture_gameplay` saves `openDoors` with its countdown (correct: the 1988 save window holds `[0x594f]`), and `restore_gameplay` puts it back (correct as a deserializer — `gameplay_driver` round-trips every parity step through it). What was missing is the load *operation*: neither `AlphaRuntime::synchronize_loaded_world()` (System Menu / frontend loads) nor the `Alt+L` arm zeroed the tracker, so the door was still drawn open with 3 turns left after a load. The TypeScript reference did the same (`main.ts`, both load paths, `doors.restore`). The skull-key lock already matched — `WorldTerrain::transient` is not saved.
+- **H-163 — CONFIRMED DIVERGENCE (transient terrain only).** `finish_encounter_combat` / `AlphaRuntime::finish_combat_if_needed` recomputed the hour tiles but never cleared transient terrain, so a skull-keyed `0xB8` stayed unlocked after a town fight where 1988 relocks it. **The open door already matched** (both ports zero the tracker at combat entry, `COMBAT 0x0bcf`), and so did "no NPC reposition" and "no chest refill". The TypeScript reference had the same gap (`endCombat`).
+
+### Fixes
+
+| File | Change |
+|---|---|
+| `native/core/include/openu5/actors.h`, `src/actors.cpp` | `snap_npcs_to_schedule(NpcActors&, location, hour)` — the NPC half of `0x1694`: position from the period, state 1, served period, path −1; stuck untouched; a reposition, not a rebuild |
+| `native/core/include/openu5/transitions.h` | `ReloadEffect::SnapNpcs`, **appended** (fixtures record the ordinals) |
+| `native/core/src/transitions.cpp` | `reload_floor()` emits `SnapNpcs` right after `HydrateInterior` (the two halves of `0x1694`) |
+| `native/core/src/commands.cpp` | `Runner::transitions()` consumes `SnapNpcs` on `c.actors` — the table the device shares (`context_.actors = &actors_`), so no device arm is needed |
+| `native/targets/tdeck/main/alpha_runtime.cpp` | `synchronize_loaded_world()` and the `Alt+L` arm zero `commands_.door.turns` after a successful load |
+| `native/core/include/openu5/combat.h`, `src/quest_world.cpp`, `src/combat.cpp` | `CombatState::town_fight`, set by `town_attack_commit` (the native `0x09BC`) once its combat starts; `finish_encounter_combat` then does `0x0408(0)`: door tracker 0, terrain wipe off, `clear_residence()` + hour-tile `refresh()` — no objects, no NPCs |
+| `game/src/core/npc/manager.ts` (reference) | `NpcManager.snapToSchedule` — same contract |
+| `game/src/core/game.ts` (reference) | `klimbLadder`/`applyStairStep` call it after `hydrateInteriorObjects`; `townAttackCommit` sets `townFightReload` (cleared at every `startCombat`); `endCombat` performs the `0x0408(0)` re-read for it |
+| `game/src/main.ts` (reference) | both load paths `doors.reset()` instead of `doors.restore(state.openDoors)` |
+| `native/core/tools/generate-{command,travel}-fixtures.ts` | the mocks observe the new operation (command: `fx(31)` wrapping the real `snapToSchedule`; travel: `snapToSchedule: () => fx(11)`) |
+| `native/core/fixtures/commands.txt`, `travel.txt` | regenerated from the corrected reference |
+
+Not done, deliberately: `0x09BC`'s trailing `0x2ae` (the Shadowlord re-seed double-run, `re/notes/rng-186-acta.md` T6, queued as #197) and the bed hook's NPC half (H-154, device wiring) — `snap_npcs_to_schedule` is now the faithful primitive H-154 can use.
+
+**Fixture regeneration, controlled** (`batch24-fixture-diff.log`, token level). `travel.txt`: 26 rows changed, every one differing **only** by `[10 11 loc floor x y]` records (1 or 2 per row), each inserted between `10 4` (HydrateInterior) and `10 5` (RefreshHourTiles) at the same position, output length +6 per record; input, result, position and drunk/wipe/Shadowlord fields identical. `commands.txt`: 992 of 13,824 rows changed, in 112 of 1,152 sequences; in **every** changed sequence the first changed row is a floor change, and all 112 floor-change rows carry exactly one `31` record right after `24` at the same position with the rest of the effect list unchanged. Rows after it differ in NPC state (the repositioned actors) and, through the NPC wander draws on the shared kernel RNG, in RNG seeds/draws, the regeneration roll (`c2.hp`, 27 rows) and wind (11 rows); no party-field change occurs without a preceding RNG-stream difference, and no event or status field changed. `gameplay_parity` and `quest_parity` (live against the corrected reference) stayed green without edits. TypeScript unit suite: identical failing set before and after (97; `batch24-ts-vitest*.log.fails`).
+
+### Tests — `batch24_reload_parity` (47 checks, real `AlphaRuntime` + shipped pack)
+
+Same seam as Batches 22/23, extended: `HostTestFixture::pack` copies the INIT.GAM/.OOL templates and the town-combat maps/enemies/tables into the members `initialize()` assigns and runs the New Journey's `load_native_state`; `host_stubs/alpha_save_memory_host_stub.cpp` replaces only the SD card — it runs `alpha_save.cpp`'s own chain (`capture_*` → `export_native_state` over INIT.GAM → `encode_json`; `load_native_state` → `restore_gameplay`/`restore_terrain`/`restore_npc_walk` into scratch copies, then commit). Every state change is a real command or key: `(E)nter`, `(K)limb`, `Move`, `(O)pen`, `(U)se` skull key, `(A)ttack`, `Alt+S`/`Alt+L`, `Alt+M` → Save / Continue Latest, and arena walk-offs through the runtime's wall-clock service loop. Positions are placed by hand only to stand next to a target, and NPCs are displaced by hand to model "where its walk took it". Expected cells come from `npc_schedule_oracle.py 17 12`.
+
+- **N1/N2 (H-161)** — ladder down and stairs up in Lord British's Castle at noon: the landing floor's NPC, the one left behind and one on a third floor are each at the oracle cell with state 1, the period and path −1; every NPC off the landing floor stands where `0x12E0` puts it; no NPC added or removed; the stuck counter untouched.
+- **N3** — two `(P)asses` do not reposition.
+- **S1/S2 (H-162)** — `Alt+S`/`Alt+L`, and System Menu Save / Continue Latest: gold changed after the save comes back (the load really happened); the Open door (20,16) is closed with tracker 0; the skull-keyed lock is `0x97`; **persistent state survives** — the opened vault chest stays opened with its loot, the other two stay, a displaced NPC is still displaced (no `0x1694` on load), skull keys and karma as saved.
+- **F1 (H-163)** — basement fight with slot 21 and a walk-off: the vault lock is `0x97` again; the door is closed (already by `0x0bcf`); no refill, no wipe; no NPC reposition.
+- **F2** — a guard fight on floor 0: the alarm rewrites slot 1's live schedule (times 0, AI 7); the next ladder step repositions slot 1 **from the live schedule**, to (17,7,0), not the file's (17,28,0); the fought guard (family `0x70`, no dead bit) is **not** resurrected.
+
+**RED → GREEN.** Against pre-Batch-24 production (the nine production files stashed, test seams kept): **35/47 GREEN, 12 RED** — N1c–f, N2c–f, S1e, S2e, F1d, F2d (`native/core/batch24-red.log`). After the fix: **47/47** (`batch24-green.log`). All green-before rows are characterizations or anti-fake guards; none carries a fix alone.
+
+An earlier draft of F2 expected (17,28,0) and failed against the fixed code: the binary (`0x85e`) showed the alarm rewrites the live schedule, so the expectation was wrong, not the snap. It was corrected and now also proves the snap reads the live table.
+
+**Mutation proof** (`native/core/batch24-mutation-m*.log`, each reverted; production restored byte-exact):
+
+| | Mutation | RED |
+|---|---|---|
+| M1 | `reload_floor` without `SnapNpcs` | 9 — N1c–f, N2c–f, F2d; `command_parity` (row 4224) and `travel_parity` (case 19322) also fail |
+| M2 | `SnapNpcs` as a blind `.NPC` rebuild (`enter_npc_map`) | 4 — N1h, N2h, F2d, F2e. `command_parity`/`travel_parity` **pass** under M2: only the runtime test catches a rebuild |
+| M3 | `synchronize_loaded_world` without the door reset | 1 — S2e |
+| M4 | `Alt+L` arm without the door reset | 1 — S1e |
+| M5 | no post-fight re-read | 1 — F1d |
+| M6 | over-reach: the post-fight re-read also repositions NPCs | 1 — F1g |
+| M7 | over-reach: a load repositions NPCs | 1 — S2h |
+
+### Full regression suite
+
+From-scratch build (`native/core/build-batch24-final`), serial: **94/94, 0 fail, 0 skipped** (`batch24-final-ctest.log`) — the prior 93 plus `batch24_reload_parity`. One warning, the pre-existing w64devkit false positive; zero project warnings.
+
+### Firmware
+
+ESP-IDF 6.1, `native/targets/tdeck/build-batch24`: `openu5_tdeck.bin` = **0xd39a0** (866,720 bytes), +0xd0 over Batch 23; `0x2c660` (17 %) of the app partition free. **0 errors, 0 compiler warnings** (`batch24-firmware-build.log`). The image embeds the commit id at configure time, so the Launcher image is rebuilt (`idf.py reconfigure build`, `package_launcher.py`) **after** the Batch 24 commit; its path and SHA-256 are recorded in the annotated tag `alpha2-batch24-state-reload-parity`. **Not flashed.** SD card unchanged.
+
+### Status
+
+H-161: **SOFTWARE FIXED — HARDWARE RETEST REQUIRED.** H-162: **SOFTWARE FIXED — HARDWARE RETEST REQUIRED.** H-163: **CONFIRMED DIVERGENCE — CORRECTED** for transient terrain (skull-keyed lock); **verified native match** for the open door, NPC positions and chests. Hardware retest: Phase 6S.
+
+### Queued, not fixed
+
+- **H-164 — `Alt+L` quick load bypasses `synchronize_loaded_world()`.** The `DeviceShortcut::Load` arm (`alpha_runtime.cpp`) re-enters the NPC map and refreshes terrain itself but does not clear and restore the world-object pool (`objects_.clear()` / `restore_world_objects`), restore the dungeon session, or cancel live scenes/fx — all of which the System Menu and frontend loads do. By code reading only; not reproduced (S1 saves and loads with an unchanged pool, so it cannot show the leak). Batch 24 added the door reset to both arms rather than rerouting `Alt+L`.
+- H-154 (bed NPC half on the device) and #197 (`0x09BC → 0x2ae` Shadowlord re-seed) remain queued; see above.
+- Documentation drift noticed, not edited: `ALPHA2_HARDWARE_CHECKLIST.md` rows H-158/H-159 and `ALPHA2_PRESERVATION_LEDGER.md` D-21/D-22 still read "queued", although Batch 23 fixed them in software.
+
+### Phase 6S — Batch 24 floor change, load and town fight · *firmware only; the SD card is unchanged*
+
+Flash the Batch 24 firmware (the image named in the tag). A New Journey with a few skull keys is enough; no serial capture is needed.
+
+1. Enter Lord British's Castle. Note where two or three NPCs on the ground floor stand; wait (Pass) until some of them have walked somewhere else.
+2. Go down the ladder at (1,1) and straight back up.
+3. **Expected:** the NPCs you watched are back at their posts for the current hour (not where they had walked to). Guards at their stations, not mid-walk.
+4. In the basement, `(O)pen` an ordinary door (e.g. the one at (20,16)) and immediately **Save** (`Alt+S` or System Menu), then **Load** (`Alt+L`, and once more via System Menu → Continue Latest).
+5. **Expected:** after each load the door is **closed**. Everything else is as saved: an opened chest stays opened, gold/keys unchanged, NPCs where they were when you saved.
+6. Unlock the vault door (15,24) with a skull key (do not open it), then attack an NPC in the basement (or let one attack you) and walk out of the arena.
+7. **Expected:** after the fight the vault door is **magically locked again**; chests you had opened stay opened; NPCs are not moved.
+
+**Pass:** steps 3, 5 and 7. **Fail** if NPCs stay mid-walk after a floor change, if an open door survives a load, or if the vault stays unlocked after a town fight.
+
+**Known and queued, do not file:** NPCs do not jump to their schedule positions when you sleep (H-154); `Alt+L` may leak world objects from before the load (H-164).

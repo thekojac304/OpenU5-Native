@@ -1,0 +1,15 @@
+rows 13824; changed rows 992; sequences changed 112/1152
+floor-change rows carrying the new record: 112/112 well-formed (one 31 right after 24, same position and seed, nothing else moved in the effect list)
+sequences whose FIRST changed row is a floor change: 112/112
+changed field groups (row counts): {'after:rng-seed': 177, 'after:actors': 960, 'fx': 178, 'draws': 78, 'before:rng-seed': 162, 'before:actors': 880, 'after:party': 36, 'before:party': 32}
+violations: [] 0
+party fields changed in 'after': {'c2.hp': 27, 'wind': 11, 'windCtr': 11}
+   ((11, 0, 6, 0, 0, 0), 'c2.hp', 101, 100, True, (0, 1, 1, 4), (0, 1, 1, 4))
+   ((11, 0, 10, 0, 0, 0), 'c2.hp', 101, 102, True, (0, 1, 1, 4), (0, 1, 1, 4))
+   ((11, 0, 11, 1, 0, 0), 'c2.hp', 101, 102, True, (0, 1, 1, 1), (0, 1, 1, 1))
+   ((11, 4, 2, 0, 0, 0), 'c2.hp', 100, 101, True, (0, 1, 0, 4), (0, 1, 0, 4))
+   ((11, 4, 3, 1, 0, 0), 'c2.hp', 100, 101, True, (0, 1, 1, 1), (0, 1, 1, 1))
+   ((11, 4, 4, 0, 0, 0), 'c2.hp', 100, 101, True, (0, 1, 0, 4), (0, 1, 0, 4))
+party-field changes NOT preceded by a different RNG stream (seed or draws), or with different events/status: 0
+travel.txt: 26 rows changed; 26 differ ONLY by [10 11 loc floor x y] records, each inserted between 10 4 (HydrateInterior) and 10 5 (RefreshHourTiles) at the same position; output length +6 per record; input, result, position, drunk/wipe/shadowlord fields identical
+insertions per changed row: {2: 11, 1: 15}

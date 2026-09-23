@@ -184,6 +184,32 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     };
     context_.rest_services = &rest_owner;
 
+    // Batch 24: the pack-derived members initialize() assigns for the Save
+    // template and for town combat (alpha_runtime.cpp, the combat_context_/
+    // combat_resources_/quest_ block), then the New Journey's own
+    // load_native_state over INIT.GAM, so Save exports over a real document.
+    if (const auto *pack = fixture.pack) {
+        resources_.initial_gam = pack->initial_gam; resources_.initial_gam_size = pack->initial_gam_size;
+        resources_.initial_ool = pack->initial_ool; resources_.initial_ool_size = pack->initial_ool_size;
+        resources_.combat_map_views = pack->combat_map_views; resources_.combat_map_count = pack->combat_map_count;
+        resources_.combat_enemy_views = pack->combat_enemy_views; resources_.combat_enemy_count = pack->combat_enemy_count;
+        resources_.combat_tables = pack->combat_tables; resources_.combat_table_count = pack->combat_table_count;
+        combat_context_.tables = {resources_.combat_tables, resources_.combat_tables + resources_.combat_table_count,
+                                  resources_.combat_tables + resources_.combat_table_count * 2,
+                                  resources_.combat_tables + resources_.combat_table_count * 3,
+                                  resources_.combat_table_count};
+        combat_context_.enemy_defs = resources_.combat_enemy_views;
+        combat_context_.enemy_def_count = resources_.combat_enemy_count;
+        combat_resources_.maps = resources_.combat_map_views; combat_resources_.map_count = resources_.combat_map_count;
+        combat_resources_.enemies = resources_.combat_enemy_views; combat_resources_.enemy_count = resources_.combat_enemy_count;
+        combat_resources_.tables = combat_context_.tables;
+        outdoor_.combat = &combat_context_; outdoor_.resources = &combat_resources_; outdoor_.prize_owner = &quest_;
+        quest_.encounter = &combat_context_; quest_.combat_resources = &combat_resources_;
+        openu5::save::SidecarSource source;
+        openu5::save::load_native_state(resources_.initial_gam, resources_.initial_gam_size, nullptr, game_, turn_,
+                                        retained_, source, true);
+    }
+
     terrain_.refresh(resources_.world, game_);
 
     // Production's initialize() calls frontend_.start(...), which leaves the

@@ -19,11 +19,15 @@ static void changed(TransitionServices s) {
 // refreshes the hour tiles (0x0170) and, with its argument set, calls 0x1694
 // town_populate_npcs (0x0517/0x051d), which wipes and re-places the interior
 // objects. Same effects, same order, as load_small_map.
+// Batch 24 (H-161): 0x1694 also repositions every NPC of the location, on
+// every floor, to its current schedule period (0x1841-0x1856) -- SnapNpcs,
+// right after the object half it shares the routine with.
 static void reload_floor(TravelState &v, TransitionServices s, uint8_t id) {
     effect(s, ReloadEffect::ResetDoors, id);
     v.volatile_terrain_wipe = false;
     effect(s, ReloadEffect::ClearTerrain, id);
     effect(s, ReloadEffect::HydrateInterior, id);
+    effect(s, ReloadEffect::SnapNpcs, id);
     effect(s, ReloadEffect::RefreshHourTiles, id);
 }
 int32_t location_at(LocationTable t, int32_t x, int32_t y) {

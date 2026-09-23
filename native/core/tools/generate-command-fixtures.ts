@@ -57,6 +57,7 @@ for (let scenario=0;scenario<36;scenario++) for (let seed=0;seed<32;seed++) {
  };
  // Observe reload operations while retaining actual actor entry mutation.
  const enter=manager.enterMap.bind(manager);manager.enterMap=(id:number,state:GameState)=>{fx(20);enter(id,state);};
+ const snap=manager.snapToSchedule.bind(manager);manager.snapToSchedule=(id:number,state:GameState)=>{fx(31);snap(id,state);};
  doors.reset=()=>fx(22);
  for (const name of ['move','moveEcho','targetCoord','npcAtTarget','runContextTurn','applyStairStep','floorExists','klimbLadder','klimbTown','klimb','klimbCancel','pass','enter','confirmTownExit','exitToOverworld','loadSmallMap','npcEngineSecondTurn','townAutoSleepTurn']) g[name]=(...args:any[])=>proto[name].apply(g,args);
  g.commandDrunkIntercept=()=>proto.commandDrunkIntercept.call(g);

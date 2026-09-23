@@ -1,0 +1,66 @@
+N1 floor change by ladder (1,1) down repositions NPCs from their noon schedule
+  GREEN N1a   precondition: slots 1, 26 and 30 are off their schedule cells
+  GREEN N1b   real (K)limb on the 0xC9 ladder: floor 0 -> -1
+  RED   N1c   ** the landing floor's NPC is at its schedule cell, state 1, period, path -1 **
+         slot 26: (14,17,-1) state=2 served=0 path=3 stuck=7
+  RED   N1d   ** so is the NPC on the floor just left **
+         slot 1: (17,25,0) state=2 served=0 path=3 stuck=7
+  RED   N1e   ** and the NPC on a third floor: 0x1694 walks every slot of the location **
+         slot 30: (18,16,1) state=2 served=0 path=3 stuck=7
+  RED   N1f   every NPC off the landing floor (23) stands where 0x12E0 puts it
+  GREEN N1g   a reposition: no NPC added, none removed
+  GREEN N1h   the stuck counter (DS 0x65C2) is left alone -- not a rebuild
+N2 floor change by stairs (12,7) up repositions NPCs from their noon schedule
+  GREEN N2a   precondition: slots 1, 26 and 30 are off their schedule cells
+  GREEN N2b   real Move onto 0xC5 heading East: "Up!" to floor 0
+  RED   N2c   ** the landing floor's NPC is at its schedule cell, state 1, period, path -1 **
+         slot 1: (17,25,0) state=2 served=0 path=3 stuck=7
+  RED   N2d   ** so is the NPC on the floor just left **
+         slot 26: (14,17,-1) state=2 served=0 path=3 stuck=7
+  RED   N2e   ** and the NPC on a third floor: 0x1694 walks every slot of the location **
+         slot 30: (18,16,1) state=2 served=0 path=3 stuck=7
+  RED   N2f   every NPC off the landing floor (14) stands where 0x12E0 puts it
+  GREEN N2g   a reposition: no NPC added, none removed
+  GREEN N2h   the stuck counter (DS 0x65C2) is left alone -- not a rebuild
+N3 an ordinary turn does not reposition (0x1694 is reached from 0x0408(1) and the bed only)
+  GREEN N3a   two (P)asses on floor 0 leave slot 30 where it was
+S1 open door across Alt+S / Alt+L
+  GREEN S1a   precondition: chest (16,21) opened, its loot on the floor, the other two closed
+  GREEN S1b   skull key on (15,24): 0x97 -> 0xB8 (transient terrain)
+  GREEN S1c   (O)pen the ordinary door (20,16): drawn open
+  GREEN S1d   the load really happened: gold 999 -> 321, same floor and cell
+  RED   S1e   ** 0x0408(0): the open door is closed again (tracker [0x594f] = 0) **
+         door (20,16) drawn 0x44, tracker turns=3
+  GREEN S1f   the skull-keyed lock is 0x97 again (map buffer not saved)
+  GREEN S1g   the opened chest stays opened with its loot; no refill (fresh = 0 skips 0x1694)
+  GREEN S1h   slot 1 is still where it walked: the NPC band loads verbatim
+  GREEN S1i   skull keys (one used) and karma as saved
+S2 open door across System Menu Save / Continue Latest (synchronize_loaded_world)
+  GREEN S2a   precondition: chest (16,21) opened, its loot on the floor, the other two closed
+  GREEN S2b   skull key on (15,24): 0x97 -> 0xB8 (transient terrain)
+  GREEN S2c   (O)pen the ordinary door (20,16): drawn open
+  GREEN S2d   the load really happened: gold 999 -> 321, same floor and cell
+  RED   S2e   ** 0x0408(0): the open door is closed again (tracker [0x594f] = 0) **
+         door (20,16) drawn 0x44, tracker turns=3
+  GREEN S2f   the skull-keyed lock is 0x97 again (map buffer not saved)
+  GREEN S2g   the opened chest stays opened with its loot; no refill (fresh = 0 skips 0x1694)
+  GREEN S2h   slot 1 is still where it walked: the NPC band loads verbatim
+  GREEN S2i   skull keys (one used) and karma as saved
+F1 a basement fight (Attack slot 21 at (12,10)) ends in 0x0408(0)
+  GREEN F1a   precondition: vault unlocked to 0xB8, door (20,16) open
+  GREEN F1b   (A)ttack slot 21: the arena is up
+  GREEN F1c   the party walked off; slot 21 is gone either way (0x09BC is unconditional)
+  RED   F1d   ** the floor re-read restores the authored 0x97 lock **
+         vault door drawn 0xb8
+  GREEN F1e   the open door is closed (COMBAT 0x0bcf already zeroed [0x594f] on entry)
+  GREEN F1f   no refill and no wipe: 0x0408(0) skips 0x1694 and 0x5F86 restored the object register
+  GREEN F1g   no NPC reposition either (argument 0)
+F2 a guard killed-or-fled from in a fight stays gone across the next floor change
+  GREEN F2a   (A)ttack the guard slot 2 at (13,28): the arena is up
+  GREEN F2b   out of the arena; slot 2 cleared by 0x00B0 (no dead bit: family 0x70)
+  GREEN F2c   the alarm rewrote slot 1's live schedule: times 0, AI 7 (0x85e)
+  RED   F2d   (K)limb down: slot 1 repositioned from the LIVE schedule, to (17,7,0) -- not the file's (17,28,0)
+         slot 1: (17,25,0) state=2 served=0 path=3 stuck=7
+  GREEN F2e   ** slot 2 is NOT resurrected: 0x1694 skips type-0 slots; a .NPC re-read would not **
+
+batch24_reload_parity: 35/47 checks GREEN, 12 RED

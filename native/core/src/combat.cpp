@@ -3,6 +3,7 @@
 #include "openu5/dungeon.h"
 #include "openu5/loot.h"
 #include "openu5/quest_world.h"
+#include "openu5/world_terrain.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -1819,6 +1820,23 @@ CombatResult finish_encounter_combat(CommandContext &world, CombatState &state) 
     world.combat_context = nullptr;
     state.initialized = false;
     emit(GameEventKind::CombatEnded);
+    // Batch 24 (H-163). TOWN.OVL:0x09BC, after enter_combat_vs_actor (0x6150)
+    // returns -- victory or not, it has no branch -- ends in `push 0; call
+    // 0x408` (0x09d9-0x09dc): the floor is re-read into DS 0x6608, so transient
+    // terrain (a skull-keyed 0x97 is 0x97 again) and the open-door tracker
+    // (0x041d; COMBAT 0x0bcf already zeroed it on entry) are gone, and the
+    // hour tiles are redone (0x0508). Argument 0: no 0x1694, so neither the
+    // interior objects (0x5F86 backed the register up around the fight) nor
+    // the NPCs are re-placed.
+    if (state.town_fight) {
+        state.town_fight = false;
+        world.commands.door.turns = 0;
+        world.travel.volatile_terrain_wipe = false;
+        if (world.terrain) {
+            world.terrain->clear_residence();
+            world.terrain->refresh(world.world, world.game);
+        }
+    }
     if (world.dungeon_context)
         dungeon_combat_return(world, state.escape_floor_delta, state.escape_border, state.victory);
     if (world.quest_world)
