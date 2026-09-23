@@ -295,6 +295,16 @@ DebugTeleportResult apply_debug_teleport(CommandContext &c, const DebugTeleportR
     if (out.status != DebugTeleportStatus::Applied)
         return out;
 
+    // TOWN.OVL 0x0798-0x07b4 blocks in its exit-answer loop. The Developer
+    // menu is native-only, so do not let it carry that question into a
+    // dungeon, where Exit/DeclineExit cannot reach the world command path.
+    // Leave the prompt and all gameplay owners untouched for the player to
+    // answer on the town map before trying again.
+    if (r.kind == DebugDestinationKind::Dungeon && c.commands.awaiting_exit) {
+        out.status = DebugTeleportStatus::PendingQuestion;
+        return out;
+    }
+
     // Batch 9D.  A live arena owns the screen, the keys and a CombatState whose
     // return bookkeeping (encounter_location/floor, loot_x/y, the dungeon room
     // latch) describes the place the party left.  Every arm below rewrites

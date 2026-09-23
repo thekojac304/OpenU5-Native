@@ -1,0 +1,239 @@
+UpdateCTestConfiguration  from :C:/Dev/OpenU5-Native/native/core/build-batch31/DartConfiguration.tcl
+Parse Config file:C:/Dev/OpenU5-Native/native/core/build-batch31/DartConfiguration.tcl
+Test project C:/Dev/OpenU5-Native/native/core/build-batch31
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 57
+    Start 57: batch31_h165_dungeon_entry
+
+57: Test command: C:\Dev\OpenU5-Native\native\core\build-batch31\batch31_h165_dungeon_entry.exe "C:/Dev/OpenU5-Native/native/core/../assets/openu5-alpha1-resources.bin"
+57: Working Directory: C:/Dev/OpenU5-Native/native/core/build-batch31
+57: Test timeout computed to be: 1500
+57: [I][AlphaResources] Alpha resource pack v2.0 valid: 2039545 bytes, 39 entries, payload CRC=2065ad91, expected SHA-256=434cd664b4b9, firmware_match=1
+57: [I][AlphaResources] Loaded owners: 64 small floors, 8 dungeons, 1024 NPC records; PSRAM=1185451
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=65 base=00 symbol=00 ui=explore emitted=character action_char=101 shortcut=none
+57: [I][AlphaRuntime] DUNGEON_ENTER_REQUEST source=normal dungeon=17 depth=0 entrance=1 x=86 y=107 facing=2
+57: [I][AlphaRuntime] U5OBJ RELOAD effect=EnterNpcs loc=17 hydrate_calls=0 pool_size=0 player=L17/F0
+57: [I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=12 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x00000000 pool_before=0
+57: [I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+57: [I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+57: [I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+57: [I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+57: [I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=0 current_capacity=0 object_bytes=68 need_bytes=2176 target_bytes=2176 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+57: [I][AlphaRuntime] U5OBJ RESERVE_DONE size=0 capacity=32 storage_heap=internal
+57: [I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+57: [I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+57: [I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+57: [I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+57: [I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+57: [I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+57: [I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+57: [I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=1
+57: [I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+57: [I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+57: [I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+57: [I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+57: [I][AlphaRuntime] U5OBJ RELOAD effect=HydrateInterior loc=17 hydrate_calls=1 pool_size=6 player=L17/F0
+57: [I][AlphaRuntime] DUNGEON_ENTER_COMMAND result=success
+57: [I][AlphaRuntime] combat command=2 status=success turns=0 events=2 time=125 us
+57: [I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=17 floor=0 xy=15,30 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=2 sequence=1
+57: [I][AlphaRuntime] combat command=0 status=awaiting response turns=0 events=2 time=9 us
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] UI_MODE from=explore to=yes/no
+57: [I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=2
+57: GREEN H165-1 authentic castle exit question is pending
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=64 base=00 symbol=00 ui=yes/no emitted=confirm action_char=0 shortcut=developer
+57: [I][AlphaRuntime] DEBUG_OPEN count=1 called=1 opened=1 mode_before=yes/no mode_after=debug reconstructed=1
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] UI_MODE from=yes/no to=debug
+57: [I][AlphaRuntime] INPUT_ROUTE action=confirm ui=yes/no gameplay_command=none
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=debug emitted=confirm action_char=0 shortcut=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=confirm prior_depth=0 prior_category=-1 prior_index=0 new_depth=1 new_category=0 new_index=0 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=confirm ui=debug gameplay_command=none
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=debug emitted=confirm action_char=0 shortcut=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=confirm prior_depth=1 prior_category=0 prior_index=0 new_depth=2 new_category=0 new_index=0 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=confirm ui=debug gameplay_command=none
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=33 base=00 symbol=00 ui=debug emitted=character action_char=51 shortcut=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=character prior_depth=2 prior_category=0 prior_index=0 new_depth=2 new_category=0 new_index=0 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=character ui=debug gameplay_command=none
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=34 base=00 symbol=00 ui=debug emitted=character action_char=52 shortcut=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=character prior_depth=2 prior_category=0 prior_index=0 new_depth=2 new_category=0 new_index=0 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=character ui=debug gameplay_command=none
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=debug emitted=confirm action_char=0 shortcut=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=confirm prior_depth=2 prior_category=0 prior_index=0 new_depth=1 new_category=0 new_index=0 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=confirm ui=debug gameplay_command=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=direction prior_depth=1 prior_category=0 prior_index=0 new_depth=1 new_category=0 new_index=1 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=direction ui=debug gameplay_command=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=direction prior_depth=1 prior_category=0 prior_index=1 new_depth=1 new_category=0 new_index=2 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=direction ui=debug gameplay_command=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=direction prior_depth=1 prior_category=0 prior_index=2 new_depth=1 new_category=0 new_index=3 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=direction ui=debug gameplay_command=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=direction prior_depth=1 prior_category=0 prior_index=3 new_depth=1 new_category=0 new_index=4 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=direction ui=debug gameplay_command=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=direction prior_depth=1 prior_category=0 prior_index=4 new_depth=1 new_category=0 new_index=5 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=direction ui=debug gameplay_command=none
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=debug emitted=confirm action_char=0 shortcut=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=confirm prior_depth=1 prior_category=0 prior_index=5 new_depth=1 new_category=0 new_index=5 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] DEBUG_TELEPORT type=3 id=33 floor/depth=0 entrance=1 requested_xy=0,0 result=Answer pending question game_before=L17/F0/0,15 game_after=L17/F0/0,15 dungeon_before=active0/F0/1,1 dungeon_after=active0/F0/1,1 context_before=dungeon0 context_after=dungeon0,combat0
+57: [E][AlphaRuntime] DEBUG_DUNGEON_TELEPORT_RESULT result=failure reason=Answer pending question session_active=0 context_dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=confirm ui=debug gameplay_command=none
+57: GREEN H165-2 dungeon teleport is refused while exit answer is pending
+57: GREEN H165-3 refusal preserves world, dungeon, RNG and turn
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=08 base=00 symbol=00 ui=debug emitted=back action_char=0 shortcut=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=back prior_depth=1 prior_category=0 prior_index=5 new_depth=0 new_category=-1 new_index=0 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=back ui=debug gameplay_command=none
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=08 base=00 symbol=00 ui=debug emitted=back action_char=0 shortcut=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=back prior_depth=0 prior_category=-1 prior_index=0 new_depth=0 new_category=-1 new_index=0 mode=debug->yes/no
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] UI_MODE from=debug to=yes/no
+57: [I][AlphaRuntime] INPUT_ROUTE action=back ui=debug gameplay_command=none
+57: GREEN H165-4 original question is still answerable
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6e base=00 symbol=00 ui=yes/no emitted=character action_char=110 shortcut=none
+57: [I][AlphaRuntime] combat command=4 status=success turns=1 events=0 time=19 us
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] UI_MODE from=yes/no to=explore
+57: [I][AlphaRuntime] INPUT_ROUTE action=character ui=yes/no gameplay_command=4 sequence=3
+57: GREEN H165-5 declined answer clears original lock
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=64 base=00 symbol=00 ui=explore emitted=confirm action_char=0 shortcut=developer
+57: [I][AlphaRuntime] DEBUG_OPEN count=2 called=1 opened=1 mode_before=explore mode_after=debug reconstructed=1
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] UI_MODE from=explore to=debug
+57: [I][AlphaRuntime] INPUT_ROUTE action=confirm ui=explore gameplay_command=none
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=debug emitted=confirm action_char=0 shortcut=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=confirm prior_depth=0 prior_category=-1 prior_index=0 new_depth=1 new_category=0 new_index=0 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=confirm ui=debug gameplay_command=none
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=debug emitted=confirm action_char=0 shortcut=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=confirm prior_depth=1 prior_category=0 prior_index=0 new_depth=2 new_category=0 new_index=0 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=confirm ui=debug gameplay_command=none
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=33 base=00 symbol=00 ui=debug emitted=character action_char=51 shortcut=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=character prior_depth=2 prior_category=0 prior_index=0 new_depth=2 new_category=0 new_index=0 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=character ui=debug gameplay_command=none
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=34 base=00 symbol=00 ui=debug emitted=character action_char=52 shortcut=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=character prior_depth=2 prior_category=0 prior_index=0 new_depth=2 new_category=0 new_index=0 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=character ui=debug gameplay_command=none
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=debug emitted=confirm action_char=0 shortcut=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=confirm prior_depth=2 prior_category=0 prior_index=0 new_depth=1 new_category=0 new_index=0 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=confirm ui=debug gameplay_command=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=direction prior_depth=1 prior_category=0 prior_index=0 new_depth=1 new_category=0 new_index=1 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=direction ui=debug gameplay_command=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=direction prior_depth=1 prior_category=0 prior_index=1 new_depth=1 new_category=0 new_index=2 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=direction ui=debug gameplay_command=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=direction prior_depth=1 prior_category=0 prior_index=2 new_depth=1 new_category=0 new_index=3 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=direction ui=debug gameplay_command=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=direction prior_depth=1 prior_category=0 prior_index=3 new_depth=1 new_category=0 new_index=4 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=direction ui=debug gameplay_command=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=direction prior_depth=1 prior_category=0 prior_index=4 new_depth=1 new_category=0 new_index=5 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=direction ui=debug gameplay_command=none
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=debug emitted=confirm action_char=0 shortcut=none
+57: [I][AlphaRuntime] DUNGEON_LOAD_BEGIN dungeon=33 depth=0
+57: [I][AlphaRuntime] DUNGEON_LOAD_RESULT result=success reason=normal-init
+57: [I][AlphaRuntime] DUNGEON_SESSION_STATE active=1 dungeon=33 depth=0 x=1 y=1 facing=2
+57: [I][AlphaRuntime] DUNGEON_CONTEXT dungeon=1
+57: [I][AlphaRuntime] DUNGEON_RENDERER active=1
+57: [I][AlphaRuntime] DEBUG_ACTION action=confirm prior_depth=1 prior_category=0 prior_index=5 new_depth=1 new_category=0 new_index=5 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=1
+57: [I][AlphaRuntime] DEBUG_TELEPORT type=3 id=33 floor/depth=0 entrance=1 requested_xy=0,0 result=Applied game_before=L17/F0/0,15 game_after=L17/F0/0,15 dungeon_before=active0/F0/1,1 dungeon_after=active1/F0/1,1 context_before=dungeon0 context_after=dungeon1,combat0
+57: [I][AlphaRuntime] DUNGEON_ENTER_REQUEST source=debug dungeon=33 depth=0 entrance=1 x=1 y=1 facing=2
+57: [I][AlphaRuntime] DUNGEON_ENTER_COMMAND result=success
+57: [I][AlphaRuntime] DUNGEON_RUN_COMMAND result=success
+57: [I][AlphaRuntime] DEBUG_DUNGEON_TELEPORT dungeon=33 depth=0 entrance=1 x=1 y=1 facing=2
+57: [I][AlphaRuntime] DUNGEON_SESSION active=1 dungeon=33 depth=0 x=1 y=1 facing=2
+57: [I][AlphaRuntime] UI_MODE debug -> dungeon
+57: [I][AlphaRuntime] DUNGEON_RENDERER active=1 dungeon=33 depth=0
+57: [I][AlphaRuntime] DEBUG_DUNGEON_TELEPORT_RESULT result=success reason=normal-dungeon-init
+57: [I][AlphaRuntime] INPUT_ROUTE action=confirm ui=debug gameplay_command=none
+57: GREEN H165-6 answered route enters the real dungeon session
+57: GREEN H165-7 Developer entry uses authentic Deceit data and entry state
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=65 base=00 symbol=00 ui=explore emitted=character action_char=101 shortcut=none
+57: [I][AlphaRuntime] DUNGEON_ENTER_REQUEST source=normal dungeon=33 depth=0 entrance=1 x=240 y=73 facing=2
+57: [I][AlphaRuntime] DUNGEON_LOAD_BEGIN dungeon=33 depth=0
+57: [I][AlphaRuntime] DUNGEON_LOAD_RESULT result=success reason=normal-init
+57: [I][AlphaRuntime] DUNGEON_SESSION_STATE active=1 dungeon=33 depth=0 x=1 y=1 facing=2
+57: [I][AlphaRuntime] DUNGEON_CONTEXT dungeon=1
+57: [I][AlphaRuntime] DUNGEON_RENDERER active=1
+57: [I][AlphaRuntime] DUNGEON_ENTER_COMMAND result=success
+57: [I][AlphaRuntime] DUNGEON_RUN_COMMAND result=success
+57: [I][AlphaRuntime] combat command=2 status=success turns=0 events=3 time=9 us
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=240,73 dungeon=1
+57: [I][AlphaRuntime] UI_MODE from=explore to=dungeon
+57: [I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=2 sequence=1
+57: GREEN H165-8 answered Developer entry matches normal E dungeon entry
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=08 base=00 symbol=00 ui=debug emitted=back action_char=0 shortcut=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=back prior_depth=1 prior_category=0 prior_index=5 new_depth=0 new_category=-1 new_index=0 mode=debug->debug
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=17 floor=0 xy=0,15 dungeon=1
+57: [I][AlphaRuntime] INPUT_ROUTE action=back ui=debug gameplay_command=none
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=08 base=00 symbol=00 ui=debug emitted=back action_char=0 shortcut=none
+57: [I][AlphaRuntime] DEBUG_ACTION action=back prior_depth=0 prior_category=-1 prior_index=0 new_depth=0 new_category=-1 new_index=0 mode=debug->dungeon
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=17 floor=0 xy=0,15 dungeon=1
+57: [I][AlphaRuntime] UI_MODE from=debug to=dungeon
+57: [I][AlphaRuntime] INPUT_ROUTE action=back ui=debug gameplay_command=none
+57: GREEN H165-9 resolved Developer entry yields dungeon controls
+57: [I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=65 base=00 symbol=00 ui=explore emitted=character action_char=101 shortcut=none
+57: [I][AlphaRuntime] DUNGEON_ENTER_REQUEST source=normal dungeon=17 depth=0 entrance=1 x=86 y=107 facing=2
+57: [I][AlphaRuntime] U5OBJ RELOAD effect=EnterNpcs loc=17 hydrate_calls=0 pool_size=0 player=L17/F0
+57: [I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=12 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x00000000 pool_before=0
+57: [I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+57: [I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+57: [I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+57: [I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+57: [I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=0 current_capacity=0 object_bytes=68 need_bytes=2176 target_bytes=2176 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+57: [I][AlphaRuntime] U5OBJ RESERVE_DONE size=0 capacity=32 storage_heap=internal
+57: [I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+57: [I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+57: [I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+57: [I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+57: [I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+57: [I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+57: [I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+57: [I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=1
+57: [I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+57: [I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+57: [I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+57: [I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+57: [I][AlphaRuntime] U5OBJ RELOAD effect=HydrateInterior loc=17 hydrate_calls=1 pool_size=6 player=L17/F0
+57: [I][AlphaRuntime] DUNGEON_ENTER_COMMAND result=success
+57: [I][AlphaRuntime] combat command=2 status=success turns=0 events=2 time=107 us
+57: [I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=17 floor=0 xy=15,30 dungeon=0
+57: [I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=2 sequence=1
+57: [I][AlphaRuntime] combat command=0 status=awaiting response turns=0 events=2 time=3 us
+57: [I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=0,15 dungeon=0
+57: [I][AlphaRuntime] UI_MODE from=explore to=yes/no
+57: [I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=2
+57: GREEN H165-10 independent pending town question
+57: GREEN H165-11 non-dungeon Developer relocation retains Batch 25 policy
+57: batch31_h165_dungeon_entry: 11/11 GREEN
+1/1 Test #57: batch31_h165_dungeon_entry .......   Passed    0.13 sec
+
+The following tests passed:
+	batch31_h165_dungeon_entry
+
+100% tests passed out of 1
+
+Total Test time (real) =   0.18 sec

@@ -28,6 +28,9 @@ enum class DebugTeleportStatus : uint8_t {
     MissingMapData,
     MissingDungeonContext,
     ActiveCombat,
+    // The 1988 town-exit Y/N/Esc loop must finish before another command can
+    // enter a dungeon. Developer teleport has no original-game equivalent.
+    PendingQuestion,
     CoreRejected,
     // Standard-entry (Default Entrance) refusal: the resolved destination cell
     // is known and not walkable. GameState is not mutated and no MapChanged

@@ -1,0 +1,27 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch31-final
+      Start  8: debug_map_picker
+ 1/11 Test  #8: debug_map_picker .................   Passed    0.13 sec
+      Start 10: gameplay_integration
+ 2/11 Test #10: gameplay_integration .............   Passed    0.13 sec
+      Start 20: dungeon_flow_parity
+ 3/11 Test #20: dungeon_flow_parity ..............   Passed    0.10 sec
+      Start 22: dungeon_parity
+ 4/11 Test #22: dungeon_parity ...................   Passed    0.57 sec
+      Start 29: travel_parity
+ 5/11 Test #29: travel_parity ....................   Passed    0.30 sec
+      Start 42: dungeon_combat_regression
+ 6/11 Test #42: dungeon_combat_regression ........   Passed    0.19 sec
+      Start 51: batch25_shard_ritual
+ 7/11 Test #51: batch25_shard_ritual .............   Passed    0.12 sec
+      Start 52: batch26_dungeon_save
+ 8/11 Test #52: batch26_dungeon_save .............   Passed    0.12 sec
+      Start 53: batch27_alt_load
+ 9/11 Test #53: batch27_alt_load .................   Passed    0.15 sec
+      Start 54: batch28_save_validation
+10/11 Test #54: batch28_save_validation ..........   Passed    0.29 sec
+      Start 57: batch31_h165_dungeon_entry
+11/11 Test #57: batch31_h165_dungeon_entry .......   Passed    0.12 sec
+
+100% tests passed out of 11
+
+Total Test time (real) =   2.24 sec

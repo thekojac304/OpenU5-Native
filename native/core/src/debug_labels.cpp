@@ -218,6 +218,7 @@ const char *debug_teleport_status_name(DebugTeleportStatus status) {
     case DebugTeleportStatus::MissingMapData: return "Missing map data";
     case DebugTeleportStatus::MissingDungeonContext: return "Missing dungeon context";
     case DebugTeleportStatus::ActiveCombat: return "Blocked by active combat";
+    case DebugTeleportStatus::PendingQuestion: return "Answer pending question";
     case DebugTeleportStatus::CoreRejected: return "Core rejected";
     case DebugTeleportStatus::ImpassableDestination: return "Impassable destination";
     }

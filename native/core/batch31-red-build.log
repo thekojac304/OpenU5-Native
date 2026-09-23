@@ -1,0 +1,5 @@
+[1/5] Building CXX object CMakeFiles/batch31_h165_dungeon_entry.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/native_renderer.cpp.obj
+[2/5] Building CXX object CMakeFiles/batch31_h165_dungeon_entry.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp.obj
+[3/5] Building CXX object CMakeFiles/batch31_h165_dungeon_entry.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_dialogue.cpp.obj
+[4/5] Building CXX object CMakeFiles/batch31_h165_dungeon_entry.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/batch31_h165_dungeon_entry_test.cpp.obj
+[5/5] Linking CXX executable batch31_h165_dungeon_entry.exe

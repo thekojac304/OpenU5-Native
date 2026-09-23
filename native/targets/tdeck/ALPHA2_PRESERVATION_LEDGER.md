@@ -91,6 +91,8 @@ reference behaviour.
 | E-3 | Dungeon `(D)rink` away from a fountain answers `"No fountain here."` instead of silence | silence | inherited from the TypeScript port's declared QoL shortcut | `ui_session.cpp` `case 'd'` | Yes — one branch |
 | E-4 | Settings surface (brightness, trackball debounce, UI size, movement mode) persisted separately from the save | none | device ergonomics | `AlphaSettingsService` | No |
 
+**Batch 31 / H-165 clarification to E-2.** The 1988 `TOWN.OVL:0x0798–0x07b4` exit question blocks its command loop until Y/N/Esc, so ordinary `MAINOUT.OVL:0x0790` dungeon entry cannot run under that question. Developer teleport is an E-2 native enhancement with no original equivalent. It now refuses a dungeon destination while `awaiting_exit` is pending, leaving the question answerable; after the answer it uses the normal dungeon loader. This is a native-only preservation policy, proven with the shipped dungeon pack and raw-menu runtime test `batch31_h165_dungeon_entry` (11/11). Other Developer destinations keep their established Batch 25 behavior. H-115 save/resume remains distinct and unchanged.
+
 **Not enhancements, despite looking like them:** the Blackthorn capture scene
 presentation (R-32) and the dungeon authored art (Batch 9C) are *fidelity* work —
 they move the port toward the original, not away from it. Their open questions are

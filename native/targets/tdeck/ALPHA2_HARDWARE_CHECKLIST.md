@@ -421,7 +421,7 @@ The ritual was never defective (CAST `0x15b4` always prints its header; the nati
 | Row | Behaviour | Status |
 |---|---|---|
 | H-118 | After `Alt+D` → Back, the interrupted question returns; a shard Use prints its text; Move/Look/Z-stats answer immediately after, with no power cycle | **HOST FIXED / DEVICE RETEST PENDING** (Phase 6T) |
-| H-165 | A question left pending across a Developer teleport *into a dungeon* cannot be answered there (`Exit`/`DeclineExit` are refused by the dungeon context gate), so the lock could return on surfacing | **CONFIRMED BY CODE READING — queued, not reproduced.** Answer on-screen questions before opening the Developer menu |
+| H-165 | A question left pending across a Developer teleport *into a dungeon* cannot be answered there (`Exit`/`DeclineExit` are refused by the dungeon context gate), so the lock could return on surfacing | **SUPERSEDED by Batch 31: HOST FIXED.** The real shipped-data runtime reproduced the lock (RED 5/8); Developer now refuses that dungeon teleport until the question is answered (GREEN 11/11). No new physical phase required. |
 
 **Retest gate:** audit **Phase 6T** (9 short steps). **A reflash is required** (core change). **The SD resource pack is unchanged; no SD recopy is required.**
 
@@ -522,3 +522,15 @@ Use the Batch 30 firmware. Close Developer before each sleep and keep enough HP 
 3. Developer → Time **19:50**, teleport to a free castle bed, `h`, `1`, Enter; inspect the castle lamp at **(15,10)** and the tile south at **(15,11)**. Repeat from **04:50** on a free bed. Expect the night overlay after 20:00 and the day tile after 05:00. Host evidence pins that the change occurred during the first boundary tick, before NPC snap.
 
 **Status:** 6X not performed. Do not use a Q-duration observation to judge H-156; H-170 is separate and queued. H-165 and all other queued issues remain out of scope.
+
+## Batch 31 — H-165 pending question / Developer dungeon teleport
+
+The original town-exit Y/N/Esc loop blocks the command dispatcher; an ordinary dungeon `(E)nter` cannot occur while it is pending. The Developer menu is native-only. Before this batch it entered a real Deceit session under the parked question; the returning N answer was refused underground, leaving the core latch set. The shipped-pack, raw-key host test reproduces this and proves the fix: a dungeon teleport is refused with **"Answer pending question"**, the question remains answerable, and the same teleport works after answering. Normal `(E)nter` and the successful Developer route yield the same authored Deceit entry state and 512 map cells. The focused suite is 11/11; the two mutation cases are killed. Full evidence: `GAMEPLAY_INTEGRATION_AUDIT.md` §"Batch 31".
+
+| Row | Behavior | Status |
+|---|---|---|
+| H-165 | With "Leave this place?" pending, Developer → Teleport → Deceit refuses the move, leaves the town question on return, and N clears it; a retry enters Deceit with normal dungeon controls | **HOST FIXED — no new physical phase required** |
+
+No device flash or hardware check was performed for Batch 31. The production fix is in the shared Developer path exercised on host with authentic dungeon data, and H-165 has no remaining device-only uncertainty. The existing physical checks 6T, 6U, 6V, 6W and 6X remain pending. H-167–H-170 remain queued and untouched.
+
+The fresh Release host suite adds one CTest and passes **101/101**. The clean T-Deck firmware build is **867,184 bytes (`0xd3b70`)**, +64 bytes against Batch 30; the SD pack and save format are unchanged.
