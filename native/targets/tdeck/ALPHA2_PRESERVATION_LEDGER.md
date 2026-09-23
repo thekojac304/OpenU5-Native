@@ -136,6 +136,8 @@ answer or a product decision; none is scheduled in Alpha 2 unless marked.
 | ~~D-25~~ | ~~A cannon-killed NPC kept walking until map re-entry~~ **HOST FIXED — Batch 33.** The hit immediately clears the live NPC slot in both ports; the original type-gated dead bit persists a person but allows a guard to return on re-entry. | ~~incomplete~~ **host fixed** | CMDS `0x0d47-0x0d82` → `0x3A74`, TOWN `0x011e`/`0x0052`/`0x00b0`; shipped Ararat/castle host 19/19, five killed mutations, gameplay parity | H-168 |
 | D-26 | With Q active or expiring during bed sleep, the port uses `hours * 6` ticks and can stop before the original target hour | incomplete, queued | CMDS `0x063b` compares the current hour to the requested target; native `bed_sleep` uses a fixed loop. Batch 30 observed 12:00 → 12:50 after six ticks when Q expires after two; no production change | H-170 |
 | D-27 | Camp's five-minute loop omits original world and housekeeping calls; time advances but poison, food, timed effects and local progression do not follow the same call path | incomplete, queued | CMDS `0x0204`→kernel `0x5910`, `0x020a`→`0x2900`, `0x0314` clock +5, `0x031b`→`0x20fa`; native `camp_sleep_step` calls `advance_clock` and a ring sweep only. Distinct from H-167; no Batch 32 production change | H-171 |
+| ~~D-28~~ | ~~Bed sleep skips the original 16 NPC passes and hostile pre-sleep abort~~ **HOST FIXED — Batch 34.** Full local NPC pass/redraw at the current hour, up to 16; AI 6/7 adjacency cancels before sleep. | ~~incomplete~~ **host fixed** | CMDS `0x05b4-0x05d4`; shipped Iolo's Hut/castle raw-key 21/21, eight killed mutations, full 104/104 | H-169 |
+| D-29 | Original bed entry clears viewport rectangle after `Zzz` and before the first ten-minute tick; native has no matching bed-specific fill | presentation, queued | CMDS `0x0614` set color 0 (`0x0a70`), `0x0624` fill (8,8)-(183,183) (`0x0aa6`); distinct from NPC processing and from the already-modelled `G`→`S` status | H-172 |
 
 ---
 
@@ -157,3 +159,5 @@ answer or a product decision; none is scheduled in Alpha 2 unless marked.
   two must never be totalled together as "intentional divergences" — a summary row
   in `GAMEPLAY_INTEGRATION_AUDIT.md` did exactly that until Batch 19 corrected it.
   The split is 18 deliberate (14 + 4) and 22 unresolved, of which one is now closed.
+
+**Batch 34 / H-169.** The original pre-sleep passes are restored only for accepted bed sleep. They run before status `S`, `Zzz`, and the first ten-minute tick, and can cancel when the final per-pass marker is hostile; a later talker may overwrite it. The 16/16 focused regression subset and 104/104 fresh host suite pass. H-172 records the separate original bed-entry viewport fill; H-170 and H-171 remain queued. No new hardware phase was allocated.

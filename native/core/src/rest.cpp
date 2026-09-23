@@ -195,12 +195,12 @@ RestResult camp(RestContext &c, int32_t hours, int32_t guard) {
     return r;
 }
 void bed_sleep_begin(RestContext &c) {
-    msg(c, "Zzzzzzz...\n");
     for (int32_t i = 0; i < count(c.game); ++i) {
         auto &m = c.game.party.characters[i];
         if (m.status == 'G')
             m.status = 'S';
     }
+    msg(c, "Zzzzzzz...\n");
 }
 bool bed_sleep_step(RestContext &c) {
     const auto old_hour = c.game.time.hour;

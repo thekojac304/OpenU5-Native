@@ -1,0 +1,37 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch34-final
+      Start  55: batch29_rest_wiring
+      Start  83: movement_flow_drift
+      Start 102: typescript_travel_fixture_drift
+      Start 101: typescript_command_fixture_drift
+      Start  60: batch34_pre_sleep_npc
+      Start  27: command_parity
+      Start  29: travel_parity
+      Start  50: batch24_reload_parity
+ 1/16 Test  #27: command_parity .....................   Passed    0.37 sec
+      Start  12: movement_flow_parity
+ 2/16 Test  #29: travel_parity ......................   Passed    0.43 sec
+      Start  56: batch30_sleep_parity
+ 3/16 Test  #60: batch34_pre_sleep_npc ..............   Passed    0.73 sec
+      Start  58: batch32_camp_watch
+ 4/16 Test  #12: movement_flow_parity ...............   Passed    0.41 sec
+      Start  59: batch33_cannon_npc_death
+ 5/16 Test  #58: batch32_camp_watch .................   Passed    0.24 sec
+      Start  30: turn_parity
+ 6/16 Test  #55: batch29_rest_wiring ................   Passed    1.38 sec
+      Start  63: batch19_command_char_runtime
+ 7/16 Test  #59: batch33_cannon_npc_death ...........   Passed    0.73 sec
+ 8/16 Test  #30: turn_parity ........................   Passed    0.62 sec
+      Start  31: movement_regression
+      Start  76: batch19_command_char
+ 9/16 Test  #31: movement_regression ................   Passed    0.22 sec
+10/16 Test  #63: batch19_command_char_runtime .......   Passed    0.53 sec
+11/16 Test  #56: batch30_sleep_parity ...............   Passed    1.21 sec
+12/16 Test  #76: batch19_command_char ...............   Passed    0.20 sec
+13/16 Test  #50: batch24_reload_parity ..............   Passed    1.57 sec
+14/16 Test #101: typescript_command_fixture_drift ...   Passed    2.13 sec
+15/16 Test #102: typescript_travel_fixture_drift ....   Passed    2.79 sec
+16/16 Test  #83: movement_flow_drift ................   Passed    5.57 sec
+
+100% tests passed out of 16
+
+Total Test time (real) =   5.65 sec

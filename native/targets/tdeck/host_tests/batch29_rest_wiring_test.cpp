@@ -185,7 +185,7 @@ struct Harness {
         auto *n = npc(slot);
         if (!n) return;
         n->x = int16_t(x); n->y = int16_t(y); n->z = int16_t(z);
-        n->state = 2; n->served_slot = 0; n->path_index = 3; n->stuck = 7;
+        n->state = 2; n->served_slot = 0; n->path_index = 2; n->stuck = 7;
     }
     void describe(uint8_t slot) {
         auto *n = npc(slot);

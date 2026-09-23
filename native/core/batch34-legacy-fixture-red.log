@@ -1,0 +1,722 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch34-final
+    Start 55: batch29_rest_wiring
+1/1 Test #55: batch29_rest_wiring ..............***Failed    0.16 sec
+[I][AlphaResources] Alpha resource pack v2.0 valid: 2039545 bytes, 39 entries, payload CRC=2065ad91, expected SHA-256=434cd664b4b9, firmware_match=1
+[I][AlphaResources] Loaded owners: 64 small floors, 8 dungeons, 1024 NPC records; PSRAM=1185451
+H154-C the fixture reaches production's bind_rest_services()
+  GREEN C1     context_.rest_services is the runtime's own owner, all four callbacks bound
+H154-A/H155-C 2 h in the quiet bed (9,7,0) from 12:00; guards displaced
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=65 base=00 symbol=00 ui=explore emitted=character action_char=101 shortcut=none
+[I][AlphaRuntime] DUNGEON_ENTER_REQUEST source=normal dungeon=17 depth=0 entrance=1 x=86 y=107 facing=2
+[I][AlphaRuntime] U5OBJ RELOAD effect=EnterNpcs loc=17 hydrate_calls=0 pool_size=0 player=L17/F0
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=12 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x00000000 pool_before=0
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=0 current_capacity=0 object_bytes=68 need_bytes=2176 target_bytes=2176 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=0 capacity=32 storage_heap=internal
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ RELOAD effect=HydrateInterior loc=17 hydrate_calls=1 pool_size=6 player=L17/F0
+[I][AlphaRuntime] DUNGEON_ENTER_COMMAND result=success
+[I][AlphaRuntime] combat command=2 status=success turns=0 events=2 time=72 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=17 floor=0 xy=15,30 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=2 sequence=1
+  GREEN A0     precondition: in the castle; (9,7) LeftBed, (10,7) RightBed
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=9,7 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=00 symbol=00 ui=number emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=9,7 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=11 status=core error turns=0 events=0 time=3 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=9,7 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=11 sequence=2
+  RED   A1     slept the full two hours: 12 ticks to 14:00
+         clock 12:00, party (9,7,0)
+         | Hole up
+  RED   A2     ** slot 1 is at its 14:00 schedule cell: state 1, served = period, path -1 **
+         slot 1: (20,20,0) state=2 served=0 path=3 stuck=7
+  RED   A3     ** slot 5, displaced to floor 1, is snapped too: 0x1694 ignores the party's floor **
+         slot 5: (20,20,1) state=2 served=0 path=3 stuck=7
+  GREEN A4     the stuck counter (DS 0x65C2) is untouched: a reposition, not a rebuild
+  GREEN C2     H155-C an unoccupied bed never throws
+  RED   C3     epilogue 0x06a4-0x06d5: everyone 'G', one step east onto the RightBed
+         clock 12:00, party (9,7,0)
+H154-B1 slot 29 carries a dead bit (DS 0x5B56): absent at entry, absent after 2 h
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=65 base=00 symbol=00 ui=explore emitted=character action_char=101 shortcut=none
+[I][AlphaRuntime] DUNGEON_ENTER_REQUEST source=normal dungeon=17 depth=0 entrance=1 x=86 y=107 facing=2
+[I][AlphaRuntime] U5OBJ RELOAD effect=EnterNpcs loc=17 hydrate_calls=0 pool_size=0 player=L17/F0
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=12 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x20000000 pool_before=0
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=0 current_capacity=0 object_bytes=68 need_bytes=2176 target_bytes=2176 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=0 capacity=32 storage_heap=internal
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ RELOAD effect=HydrateInterior loc=17 hydrate_calls=1 pool_size=6 player=L17/F0
+[I][AlphaRuntime] DUNGEON_ENTER_COMMAND result=success
+[I][AlphaRuntime] combat command=2 status=success turns=0 events=2 time=77 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=17 floor=0 xy=15,30 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=2 sequence=1
+  GREEN B1a    precondition: the loader dropped slot 29, slot 1 is here
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=9,7 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=00 symbol=00 ui=number emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=9,7 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=12 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x20000000 pool_before=6
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=6 current_capacity=32 object_bytes=68 need_bytes=2176 target_bytes=2584 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=6 capacity=38 storage_heap=internal
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=2
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=12 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x20000000 pool_before=6
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=6 current_capacity=38 object_bytes=68 need_bytes=2176 target_bytes=2584 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=6 capacity=38 storage_heap=internal
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=3
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=12 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x20000000 pool_before=6
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=6 current_capacity=38 object_bytes=68 need_bytes=2176 target_bytes=2584 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=6 capacity=38 storage_heap=internal
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=12 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x20000000 pool_before=6
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=6 current_capacity=38 object_bytes=68 need_bytes=2176 target_bytes=2584 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=6 capacity=38 storage_heap=internal
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=5
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=12 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x20000000 pool_before=6
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=6 current_capacity=38 object_bytes=68 need_bytes=2176 target_bytes=2584 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=6 capacity=38 storage_heap=internal
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=6
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=13 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x20000000 pool_before=6
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=6 current_capacity=38 object_bytes=68 need_bytes=2176 target_bytes=2584 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=6 capacity=38 storage_heap=internal
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=7
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=13 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x20000000 pool_before=6
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=6 current_capacity=38 object_bytes=68 need_bytes=2176 target_bytes=2584 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=6 capacity=38 storage_heap=internal
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=8
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=13 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x20000000 pool_before=6
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=6 current_capacity=38 object_bytes=68 need_bytes=2176 target_bytes=2584 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=6 capacity=38 storage_heap=internal
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=9
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=13 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x20000000 pool_before=6
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=6 current_capacity=38 object_bytes=68 need_bytes=2176 target_bytes=2584 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=6 capacity=38 storage_heap=internal
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=10
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=13 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x20000000 pool_before=6
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=6 current_capacity=38 object_bytes=68 need_bytes=2176 target_bytes=2584 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=6 capacity=38 storage_heap=internal
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=11
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=13 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x20000000 pool_before=6
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=6 current_capacity=38 object_bytes=68 need_bytes=2176 target_bytes=2584 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=6 capacity=38 storage_heap=internal
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=12
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=14 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x20000000 pool_before=6
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=6 current_capacity=38 object_bytes=68 need_bytes=2176 target_bytes=2584 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=6 capacity=38 storage_heap=internal
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=13
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] combat command=11 status=success turns=12 events=18 time=715 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=17 floor=0 xy=10,7 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=11 sequence=2
+  GREEN B1b    the rest ran two hours
+  GREEN B1c    ** slot 29 is NOT resurrected by twelve per-tick snaps **
+H154-B2 guard slot 2 cleared by 0x00B0 in a fight (no dead bit: family 0x70)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=65 base=00 symbol=00 ui=explore emitted=character action_char=101 shortcut=none
+[I][AlphaRuntime] DUNGEON_ENTER_REQUEST source=normal dungeon=17 depth=0 entrance=1 x=86 y=107 facing=2
+[I][AlphaRuntime] U5OBJ RELOAD effect=EnterNpcs loc=17 hydrate_calls=0 pool_size=0 player=L17/F0
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=12 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x00000000 pool_before=0
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=0 current_capacity=0 object_bytes=68 need_bytes=2176 target_bytes=2176 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=0 capacity=32 storage_heap=internal
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ RELOAD effect=HydrateInterior loc=17 hydrate_calls=1 pool_size=6 player=L17/F0
+[I][AlphaRuntime] DUNGEON_ENTER_COMMAND result=success
+[I][AlphaRuntime] combat command=2 status=success turns=0 events=2 time=60 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=17 floor=0 xy=15,30 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=2 sequence=1
+  GREEN B2a    (A)ttack guard slot 2 at (13,28): the arena is up
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=14 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=8 escaped=0 dead=0 active=9 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=13,29 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=2
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=7 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=8 escaped=0 dead=0 active=8 scheduled=0
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=end
+[I][AlphaRuntime] COMBAT_END reason=party-escaped-or-lost
+[I][AlphaRuntime] WORLD_RESTORE_BEGIN loc=0 floor=0 origin=0,0
+[I][AlphaRuntime] combat finish result=0 victory=0
+[I][AlphaRuntime] WORLD_TILE_RESTORE x=0 y=0 source=authoritative-world+terrain before=-1 after=1 unchanged=0
+[I][AlphaRuntime] WORLD_POST_COMBAT player=13,29 tile_under_player=5 loc=17 floor=0
+[I][AlphaRuntime] CHEST_POST_COMBAT loc=17 floor=-1 x=16 y=21 object_id=1 present=1 player_loc=17 player_floor=0 player_x=13 player_y=29
+[I][AlphaRuntime] CHEST_POST_COMBAT loc=17 floor=-1 x=17 y=22 object_id=2 present=1 player_loc=17 player_floor=0 player_x=13 player_y=29
+[I][AlphaRuntime] CHEST_POST_COMBAT loc=17 floor=-1 x=13 y=23 object_id=3 present=1 player_loc=17 player_floor=0 player_x=13 player_y=29
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=13,29 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=3
+  GREEN B2b    out of the arena; slot 2 absent and carries NO dead bit
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=9,7 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=00 symbol=00 ui=number emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=9,7 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=11 status=core error turns=0 events=0 time=3 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=9,7 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=11 sequence=4
+  RED   B2c    the rest ran two hours
+  GREEN B2d    ** slot 2 is NOT resurrected: 0x1694 skips type-0 slots **
+  RED   B2e    ** slot 1 snapped from its LIVE (alarmed) schedule, not the .NPC file's **
+         slot 1: (20,20,0) state=2 served=0 path=3 stuck=7
+H155-A 2 h in slot 14's bed (12,10,0) from 22:00; it is slot 14's from 23:00
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=65 base=00 symbol=00 ui=explore emitted=character action_char=101 shortcut=none
+[I][AlphaRuntime] DUNGEON_ENTER_REQUEST source=normal dungeon=17 depth=0 entrance=1 x=86 y=107 facing=2
+[I][AlphaRuntime] U5OBJ RELOAD effect=EnterNpcs loc=17 hydrate_calls=0 pool_size=0 player=L17/F0
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=22 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x00000000 pool_before=0
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=0 current_capacity=0 object_bytes=68 need_bytes=2176 target_bytes=2176 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=0 capacity=32 storage_heap=internal
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ RELOAD effect=HydrateInterior loc=17 hydrate_calls=1 pool_size=6 player=L17/F0
+[I][AlphaRuntime] DUNGEON_ENTER_COMMAND result=success
+[I][AlphaRuntime] combat command=2 status=success turns=0 events=2 time=70 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=17 floor=0 xy=15,30 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=2 sequence=1
+  GREEN A0     precondition: (12,10) LeftBed; slot 14 is elsewhere at 22:00 and on it at 23:00
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=12,10 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=00 symbol=00 ui=number emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=12,10 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=22 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x00000000 pool_before=6
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=6 current_capacity=32 object_bytes=68 need_bytes=2176 target_bytes=2584 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=6 capacity=38 storage_heap=internal
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=2
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=22 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x00000000 pool_before=6
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=6 current_capacity=38 object_bytes=68 need_bytes=2176 target_bytes=2584 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=6 capacity=38 storage_heap=internal
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=3
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=22 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x00000000 pool_before=6
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=6 current_capacity=38 object_bytes=68 need_bytes=2176 target_bytes=2584 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=6 capacity=38 storage_heap=internal
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=22 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x00000000 pool_before=6
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=6 current_capacity=38 object_bytes=68 need_bytes=2176 target_bytes=2584 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=6 capacity=38 storage_heap=internal
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=5
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=22 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x00000000 pool_before=6
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=6 current_capacity=38 object_bytes=68 need_bytes=2176 target_bytes=2584 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=6 capacity=38 storage_heap=internal
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=6
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=23 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x00000000 pool_before=6
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=6 current_capacity=38 object_bytes=68 need_bytes=2176 target_bytes=2584 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=6 capacity=38 storage_heap=internal
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=7
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] combat command=11 status=success turns=6 events=19 time=395 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=17 floor=0 xy=13,10 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=11 sequence=2
+  GREEN A1     ** "Thrown out of bed!" (DS 0x422a) **
+  GREEN A2     ** the sleep ended on the 23:00 tick: that tick's clock had already run **
+  GREEN A3     slot 14 is in its bed (the snap came first, 0x0677 < 0x0688)
+  GREEN A4     the common epilogue still ran: everyone 'G', one step east onto the RightBed
+H155-B an object slot re-placed on the bed by 0x1694 (no shipped slot does this)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=65 base=00 symbol=00 ui=explore emitted=character action_char=101 shortcut=none
+[I][AlphaRuntime] DUNGEON_ENTER_REQUEST source=normal dungeon=17 depth=0 entrance=1 x=86 y=107 facing=2
+[I][AlphaRuntime] U5OBJ RELOAD effect=EnterNpcs loc=17 hydrate_calls=0 pool_size=0 player=L17/F0
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=12 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x00000000 pool_before=0
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=9,16,16 y=7,21,21 z=0,255,255 schedule=13,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=0 current_capacity=0 object_bytes=68 need_bytes=2176 target_bytes=2176 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=0 capacity=32 storage_heap=internal
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ RELOAD effect=HydrateInterior loc=17 hydrate_calls=1 pool_size=6 player=L17/F0
+[I][AlphaRuntime] DUNGEON_ENTER_COMMAND result=success
+[I][AlphaRuntime] combat command=2 status=success turns=0 events=2 time=61 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=17 floor=0 xy=15,30 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=2 sequence=1
+  GREEN B0     precondition: the arranged chest is off the bed at 12:xx, due on it at 13:00
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=9,7 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=00 symbol=00 ui=number emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=0 xy=9,7 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=13 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x00000000 pool_before=6
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=9,16,16 y=7,21,21 z=0,255,255 schedule=13,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=6 current_capacity=32 object_bytes=68 need_bytes=2176 target_bytes=2584 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=6 capacity=38 storage_heap=internal
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ ERASE_BY_HYDRATION_DISCARD_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=0 x=9 y=7 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=0 world_x=9 world_y=7 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=2
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ x=16 y=21 none
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] combat command=11 status=success turns=1 events=19 time=76 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=17 floor=0 xy=10,7 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=11 sequence=2
+  GREEN B1     ** an object occupant throws too: the 13:00 tick re-seeded the chest onto the bed **
+  GREEN B2     epilogue: awake, one step east
+H160-R outdoor (H)ole up on the device: no watch prompt, no guard
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=86,107 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=00 symbol=00 ui=number emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=86,107 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=86,107 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=yes/no
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6e base=00 symbol=00 ui=yes/no emitted=character action_char=110 shortcut=none
+[I][AlphaRuntime] combat command=11 status=success turns=0 events=13 time=2 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=86,107 dungeon=0
+[I][AlphaRuntime] UI_MODE from=yes/no to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=yes/no gameplay_command=11 sequence=1
+  GREEN R1     the device camp ran
+  GREEN R2     declining the newly available watch uses the old unwatched camp
+
+batch29_rest_wiring: 20/26 checks GREEN, 6 RED
+
+
+0% tests passed, 1 tests failed out of 1
+
+Total Test time (real) =   0.20 sec
+
+The following tests FAILED:
+	 55 - batch29_rest_wiring (Failed)
+Errors while running CTest

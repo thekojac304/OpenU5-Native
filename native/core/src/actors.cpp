@@ -58,13 +58,25 @@ bool npc_occupied(const NpcActors &list, const WorldPosition &p, uint8_t loc, in
     return false;
 }
 static int32_t distance(int32_t x, int32_t y, int32_t px, int32_t py) { return std::abs(x-px)+std::abs(y-py); }
-void npc_ai_step(NpcActor &n, uint8_t idx, NpcActors &list, const GameState &g, const ActiveMap &map, Rand rand) {
+void npc_ai_step(NpcActor &n, uint8_t idx, NpcActors &list, const GameState &g, const ActiveMap &map, Rand rand, uint8_t *action_marker) {
     if (n.z != g.position.map.floor || idx >= 3) return;
     const auto &s = n.schedule; const auto &p = g.position;
     const auto cur = distance(n.x,n.y,p.xy.x,p.xy.y);
     const bool same = p.map.location == n.location && p.map.floor == n.z;
     const bool near = same && cur < 4;
     const uint8_t ai = s.ai[idx];
+    // NPC.OVL:0x0723-0x07be writes one shared per-pass action marker.
+    // A later slot can replace attack ('a') with talk ('t'), or vice versa.
+    if (action_marker && same && cur == 1 && ai > 3) {
+        if ((ai == 4 || ai == 5) && s.dialog) {
+            *action_marker = 't';
+            return;
+        }
+        if (ai >= 6) {
+            *action_marker = 'a';
+            return;
+        }
+    }
     auto allowed = [&](int16_t x, int16_t y) {
         return x >= 0 && y >= 0 && x < 32 && y < 32 &&
             is_passable(map.tile_at(x,y),TransportMode::Foot).value &&

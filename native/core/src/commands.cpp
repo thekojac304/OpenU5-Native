@@ -1193,6 +1193,29 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
             ? camp_guard_choice(c.game, cmd.member) : cmd.member;
         if (!e.bed && cmd.watch_requested && guard < 0)
             r.message("None posted!\n\n");
+        // CMDS.OVL:0x05b4-0x05d4: 16 full local NPC passes at the current
+        // hour, each followed by a redraw. An adjacent hostile ('a') ends
+        // this command before status S, Zzz, or the first sleep tick.
+        bool pre_sleep_cancelled = false;
+        if (e.bed) {
+            for (int pass = 0; pass < 16; ++pass) {
+                uint8_t action_marker = 0;
+                if (c.actors && c.npc_scratch) {
+                    const auto error = tick_npcs(*c.actors, c.game,
+                                                 {c.world, r.map(), *c.npc_scratch},
+                                                 r.rand, &action_marker);
+                    if (error != ActorError::None) {
+                        r.result.actor_error = error;
+                        r.result.status = CommandStatus::CoreError;
+                        pre_sleep_cancelled = true;
+                        break;
+                    }
+                }
+                r.event(GameEventKind::MapChanged); // kernel 0x5910
+                if (action_marker == 'a') { pre_sleep_cancelled = true; break; }
+            }
+        }
+        if (pre_sleep_cancelled) break;
         const auto result = e.bed ? bed_sleep(ctx, cmd.hours) : camp(ctx, cmd.hours, guard);
         if (result.ambush) {
             auto *arena=c.outdoor?c.outdoor->combat:c.quest_world?c.quest_world->encounter:nullptr;

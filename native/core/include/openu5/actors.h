@@ -24,7 +24,7 @@ int32_t npc_check_schedule(NpcActor &, uint8_t hour, int16_t visible_floor);
 void snap_npcs_to_schedule(NpcActors &, uint8_t location, uint8_t hour);
 bool npc_occupied(const NpcActors &, const WorldPosition &party, uint8_t location, int16_t floor, int16_t x, int16_t y, uint8_t except_slot);
 // Caller supplies the effective map (door overrides already applied, as in TS).
-void npc_ai_step(NpcActor &, uint8_t schedule_index, NpcActors &, const GameState &, const ActiveMap &, Rand);
+void npc_ai_step(NpcActor &, uint8_t schedule_index, NpcActors &, const GameState &, const ActiveMap &, Rand, uint8_t *action_marker = nullptr);
 // Exact NpcManager.tick domain with no active/new scheduled walk. Unsupported
 // walks return BEFORE mutation/RNG, never silently run simplified pathfinding.
 ActorError tick_idle_npcs(NpcActors &, const GameState &, const ActiveMap &, Rand);

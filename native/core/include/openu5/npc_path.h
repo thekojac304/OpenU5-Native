@@ -15,5 +15,5 @@ struct NpcTravelContext {
     const ActiveMap &map;
     NpcScanGrid &scratch;
 };
-ActorError tick_npcs(NpcActors &, const GameState &, const NpcTravelContext &, Rand);
+ActorError tick_npcs(NpcActors &, const GameState &, const NpcTravelContext &, Rand, uint8_t *action_marker = nullptr);
 } // namespace openu5

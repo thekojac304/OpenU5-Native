@@ -1,0 +1,95 @@
+[1/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/ui_input_adapter.cpp.obj
+[2/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/hud.cpp.obj
+[3/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/world_fx.cpp.obj
+[4/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/dungeon_encounters.cpp.obj
+[5/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/system_menu.cpp.obj
+[6/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/native_renderer.cpp.obj
+[7/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/frontend.cpp.obj
+[8/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/blackthorn_scene.cpp.obj
+[9/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/dungeon_art_cache.cpp.obj
+[10/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/narrative_scene.cpp.obj
+[11/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/shrine.cpp.obj
+[12/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/frontend_settings.cpp.obj
+[13/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/presentation.cpp.obj
+[14/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/world_terrain.cpp.obj
+[15/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/world_magic.cpp.obj
+[16/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/dungeon.cpp.obj
+[17/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/alpha_save_generation.cpp.obj
+[18/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/device_smoke_tests.cpp.obj
+[19/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/look.cpp.obj
+[20/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/quest_search.cpp.obj
+[21/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/world_commands.cpp.obj
+[22/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/alpha_resources.cpp.obj
+[23/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/blackthorn.cpp.obj
+[24/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/quest_world.cpp.obj
+[25/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/ui_session.cpp.obj
+[26/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/outdoor.cpp.obj
+[27/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/main.cpp.obj
+[28/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/dungeon_view.cpp.obj
+[29/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/tdeck_board.cpp.obj
+[30/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/alpha_save.cpp.obj
+[31/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/gem_view.cpp.obj
+[32/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/dungeon_art.cpp.obj
+[33/60] Performing build step for 'bootloader'
+[1/1] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch34\bootloader && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch34/bootloader/bootloader.bin"
+
+Bootloader binary size 0x5850 bytes. 0x27b0 bytes (31%) free.
+
+
+[34/60] No install step for 'bootloader'
+[35/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/transport.cpp.obj
+[36/60] Completed 'bootloader'
+[37/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/movement.cpp.obj
+[38/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/gameplay_save.cpp.obj
+[39/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/transitions.cpp.obj
+[40/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/scripted_encounter.cpp.obj
+[41/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/debug_labels.cpp.obj
+[42/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/shop_orchestration.cpp.obj
+[43/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/dungeon_orchestration.cpp.obj
+[44/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/actors.cpp.obj
+[45/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/npc_path.cpp.obj
+[46/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/rest.cpp.obj
+[47/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/ui_debug_menu.cpp.obj
+[48/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/save_core.cpp.obj
+[49/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/debug_map_picker.cpp.obj
+[50/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/alpha_runtime.cpp.obj
+[51/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/persistence.cpp.obj
+[52/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/dialogue_orchestration.cpp.obj
+[53/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/debug_developer.cpp.obj
+[54/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/commands.cpp.obj
+[55/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/combat.cpp.obj
+[56/60] Linking C static library esp-idf\main\libmain.a
+[57/60] Generating esp-idf/esp_system/ld/sections.ld
+NOTE: C:/esp/v6.1/esp-idf/components/bt/host/nimble/Kconfig.in:1428: BT_NIMBLE_MESH_PROVISIONER: 'default 0' is not a valid bool value (only 'y' and 'n' are allowed). Value is treated as 'n'.
+NOTE: C:/esp/v6.1/esp-idf/components/fatfs/Kconfig:240: FATFS_PRINT_LLI: 'default 0' is not a valid bool value (only 'y' and 'n' are allowed). Value is treated as 'n'.
+NOTE: C:/esp/v6.1/esp-idf/components/fatfs/Kconfig:245: FATFS_PRINT_FLOAT: 'default 0' is not a valid bool value (only 'y' and 'n' are allowed). Value is treated as 'n'.
+
+Skipping linker fragment parsing, fragment files unchanged
+
+[58/60] Linking CXX executable openu5_tdeck.elf
+[59/60] Generating binary image from built executable
+esptool v5.4.0
+
+Creating ESP32-S3 image...
+
+Merged 3 ELF sections.
+
+Successfully created ESP32-S3 image.
+
+Generated C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch34/openu5_tdeck.bin
+[60/60] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch34 && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch34/partition_table/partition-table.bin C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch34/openu5_tdeck.bin"
+openu5_tdeck.bin binary size 0xd43f0 bytes. Smallest app partition is 0x100000 bytes. 0x2bc10 bytes (17%) free.
+
+Executing action: all (aliases: build)
+Running ninja in directory C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch34
+Executing "ninja all"...
+
+
+Project build complete. To flash, run:
+ idf.py flash
+or
+ idf.py -p PORT flash
+or
+ python -m esptool --chip esp32s3 -b 460800 --before default-reset --after hard-reset write-flash --flash-mode dio --flash-size 16MB --flash-freq 80m 0x0 build-batch34\bootloader\bootloader.bin 0x8000 build-batch34\partition_table\partition-table.bin 0x10000 build-batch34\openu5_tdeck.bin
+or from the "C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch34" directory
+ python -m esptool --chip esp32s3 -b 460800 --before default-reset --after hard-reset write-flash "@flash_args"

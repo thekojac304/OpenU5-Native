@@ -1,0 +1,27 @@
+[I][AlphaResources] Alpha resource pack v2.0 valid: 2039545 bytes, 39 entries, payload CRC=2065ad91, expected SHA-256=434cd664b4b9, firmware_match=1
+[I][AlphaResources] Loaded owners: 64 small floors, 8 dungeons, 1024 NPC records; PSRAM=1185451
+GREEN A1 Iolo's Hut authored LeftBed
+GREEN A2 authored hostile on ground floor
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=65 base=00 symbol=00 ui=explore emitted=character action_char=101 shortcut=none
+[I][AlphaRuntime] DUNGEON_ENTER_REQUEST source=normal dungeon=13 depth=0 entrance=1 x=45 y=62 facing=2
+[I][AlphaRuntime] DUNGEON_ENTER_COMMAND result=success
+[I][AlphaRuntime] combat command=2 status=success turns=0 events=3 time=57 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=13 floor=0 xy=15,30 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=2 sequence=1
+GREEN A3 real Enter loads local map and NPC
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=13 floor=0 xy=12,14 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=00 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=13 floor=0 xy=12,14 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=11 status=success turns=6 events=2 time=14 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=13 floor=0 xy=13,14 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=11 sequence=2
+RED C1 first NPC pass detects adjacent hostile and cancels before Zzz
+RED C2 cancelled sleep runs no ten-minute tick or housekeeping
+RED C3 cancelled sleep never settles or ejects party
+batch34_pre_sleep_npc: 3/6 GREEN, 3 RED

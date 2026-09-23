@@ -240,7 +240,8 @@ static void follow(NpcActor &n, uint8_t idx, NpcActors &list, const GameState &g
         n.path_index = -1;
     }
 }
-ActorError tick_npcs(NpcActors &list, const GameState &g, const NpcTravelContext &ctx, Rand r) {
+ActorError tick_npcs(NpcActors &list, const GameState &g, const NpcTravelContext &ctx, Rand r, uint8_t *action_marker) {
+    if (action_marker) *action_marker = 0;
     if (!g.position.map.location || !list.count)
         return ActorError::None;
     if (list.count > 32)
@@ -276,7 +277,7 @@ ActorError tick_npcs(NpcActors &list, const GameState &g, const NpcTravelContext
             return npc_scan(grid, sy, sx);
         };
         if (n.state <= 1 && !npc_check_schedule(n, uint8_t(g.time.hour), g.position.map.floor)) {
-            npc_ai_step(n, idx, list, g, m, r);
+            npc_ai_step(n, idx, list, g, m, r, action_marker);
             continue;
         }
         if (n.state <= 3) {
@@ -289,7 +290,7 @@ ActorError tick_npcs(NpcActors &list, const GameState &g, const NpcTravelContext
                 return ActorError::None;
             }
             if (budget) {
-                npc_ai_step(n, n.served_slot, list, g, m, r);
+                npc_ai_step(n, n.served_slot, list, g, m, r, action_marker);
                 continue;
             }
             if (n.state == 1)
