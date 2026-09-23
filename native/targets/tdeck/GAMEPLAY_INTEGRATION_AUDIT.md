@@ -4550,7 +4550,7 @@ Categories **A (loot/economy)**, **B (doors/locks/terrain)** and **C (rest/sleep
 | **H-161** | NPC | A floor change does not reposition NPCs to their schedule | `0x052E` → `0x0408(1)` → `0x1694`, NPC half `0x1841-0x1856` (every slot with a type byte, every floor, live schedule) | not modelled (`enterMap` only on map entry) | `reload_floor` emitted no NPC effect | NPCs stay mid-walk across stairs/ladders | med | 100 % | **CONFIRMED MISSING** (both ports) → **FIXED in Batch 24** (both ports; `snap_npcs_to_schedule` / `snapToSchedule`) | — | yes |
 | **H-162** | Doors | An Open door survives a load | `0x00f7` → `0x11F0(fresh=0)` → `0x0408(0)`, `0x041d` zeroes `[0x594f]` | `main.ts` restored `openDoors` | load paths restored `CommandState::door` | a door open at save time is open after the load | low | 100 % | **CONFIRMED MISSING** (both ports) → **FIXED in Batch 24** (both load paths in each port) | — | yes |
 | **H-163** | Terrain | Town-fight end does not re-read the floor | `0x09BC` → `0x6150` → `0xb0` → `0x0408(0)` (`0x09d9-0x09dc`), no branch | `endCombat` did not | `finish_encounter_combat` did not | a skull-keyed lock stays unlocked after a town fight; open door / NPCs / chests already matched | low | 100 % | **CONFIRMED DIVERGENCE** (transient terrain; both ports) → **FIXED in Batch 24** | — | yes |
-| **H-164** | Save | `Alt+L` skips `synchronize_loaded_world()` | — (device routing) | n/a | object pool / dungeon session / scenes not reset by the `DeviceShortcut::Load` arm | stale world objects can survive a quick load | med | code reading | **CONFIRMED BY CODE READING — queued** (Batch 24) | own batch | yes |
+| **H-164** | Save | `Alt+L` skips `synchronize_loaded_world()` | — (device routing) | n/a | object pool / dungeon session / scenes not reset by the `DeviceShortcut::Load` arm | stale world objects can survive a quick load | med | code reading | **CONFIRMED BY CODE READING — queued** (Batch 24) → reproduced on host (Batch 26) → **FIXED in Batch 27** (the arm calls `synchronize_loaded_world()`; `batch27_alt_load`) | — | yes |
 | — | Rest | `snap_npcs` is an NPC-only hook, so the object half of one binary routine is unmodelled | TOWN `0x1694` is one routine | `wakeSnapNpcs` to `npcManager.enterMap` only | **corrected this batch** | — | — | — | **REFERENCE-PORT DIFFERENCE** — native is now right and TypeScript is not; no parity fixture encodes it (91/91 green) | flag before any fixture regeneration | no |
 | — | Rest | `bedSleepStep` omits `0x0671` and `0x0664` | as H-156/H-157 | omits | omits | — | — | — | **REFERENCE-PORT DIFFERENCE** compounding H-156/H-157 | with them | no |
 | — | Rest | Bed wake-up hour: the original subtracts 23, not 24, when crossing midnight | CMDS `0x05b0` | fixed | fixed | wakes on the hour requested | — | — | **DELIBERATE DIVERGENCE** | `bugs-del-original.md` §1.3 (WITNESSED) | no |
@@ -5228,3 +5228,130 @@ System Menu keys: `Alt+M` opens it. Trackball up/down moves the cursor, `Enter` 
 **Pass B:** steps 6 and 7. **Fail** if a chest refills, a loot pile is doubled or missing, or a chest opened after the save is still open after the load.
 
 **Known and queued, do not file:** H-164 (`Alt+L` does not restore the dungeon or the object pool — use the System Menu); H-165 (a question left pending across a Developer teleport into a dungeon); H-166 (a corrupt dungeon/object payload is not rejected by the save's self-check).
+
+## Batch 27 — H-164: `Alt+L` restores what Continue Latest restores
+
+Scope: H-164 only. Not touched: H-154–H-160, H-165, H-166 (see the boundary check below), H-118's device retest, persistence formats, A-14, the renderer.
+
+### Baseline
+
+HEAD `0a2c1978` (tag `alpha2-batch26-h115-dungeon-save-load`), branch `main`, working tree clean. From-scratch build `native/core/build-batch27-baseline`, serial: **96/96 PASS, 0 fail, 0 skipped** (`batch27-baseline-ctest.log`).
+
+Batch 26's evidence for H-164 was observation Q in `batch26_dungeon_save`: a printed `INFO`, not a check. It saved on Deceit L3 (3,2) facing North, turned twice, pressed `Alt+L` and printed "dungeon session does NOT match the save (saved facing 0, now 2)". That showed the live session survives `Alt+L`. It did not show that the session is never restored from disk, because the stale session happened to be in the same dungeon.
+
+### What `Alt+L` is supposed to mean
+
+1988 has one load. `INTRO.OVL 0x0EB4` reads the whole save window back, and the kernel loop (`ULTIMA.EXE 0x00DB`) resumes in whatever context it holds, the dungeon included (Batch 26). The device's `Alt+L` (`ui_input_adapter.cpp`: Alt + `l` → `DeviceShortcut::Load`, announced by the runtime as "Alt+L load") is a keyboard affordance for that same load of the newest generation. So is System Menu → Load / Save Management → Continue Latest. Neither is a lighter "quick" load in the original, so both must end in the same state.
+
+1. **What is read from disk:** identical for both. Each calls `AlphaSaveService::load(context_, outdoor_, terrain_, actors_, retained_, ms)` (`alpha_save.cpp`): `candidate()` for both slots, `select_generation`, then `restore_candidate()`. That is transactional. `load_native_state` plus `restore_gameplay`/`restore_terrain`/`restore_npc_walk` run into scratch copies, and the live `GameState`, `TurnState`, `CommandState`, outdoor, terrain, actors and retained document are replaced only if all of them succeed. It falls back to the older generation. The dungeon session and the object pool are **not** restored here; they stay in the retained document (`gameState.dungeon`, `worldObjects`).
+2. **What must be rebuilt afterwards:** everything `synchronize_loaded_world()` (`alpha_runtime.cpp`) does. That covers cancelling the scenes and fx, the `0x0408(0)` door reset, the NPC re-entry, the terrain refresh, clearing live combat, clearing and restoring the object pool, restoring the dungeon session (Rel Tym toggle at 0), re-deriving the context and base mode, and the dungeon redraw request.
+
+### The two paths, side by side
+
+| Step | System Menu → Continue Latest | `Alt+L` (Batch 26) |
+|---|---|---|
+| input | `handle()` → `system_menu_.active()` branch → `system_menu_.handle` → `service_system_menu_intent()` | `handle()` → past the modal gates (all require `shortcut==None`) → the `DeviceShortcut::Load` arm |
+| read | `save_.load(...)` | `save_.load(...)`, the same call |
+| on failure | "No valid save", nothing else | "No valid save", nothing else |
+| scenes/fx/poison cancelled | ✓ | ✗ |
+| `commands_.door.turns=0` (H-162) | ✓ | ✓ (a hand copy) |
+| `actors_={}`, `enter_npc_map`, `restore_npc_walk` | ✓ | ✓ without the `actors_={}` |
+| `terrain_.refresh` | ✓ | ✓ |
+| `combat_.initialized=false` | ✓ | ✗ |
+| `objects_.clear()` + `restore_world_objects` (R-14) | ✓ | **✗** |
+| `restore_dungeon` (R-15 / H-115) | ✓ | **✗ ← first semantic divergence that matters** |
+| `context_`/base mode from the restored owners | ✓ (Batch 26) | via the trailing `synchronize_after_debug()` |
+| `dungeon_presentation_pending_` | ✓ | ✗ |
+| after | `trace_direct_troll_save`, `system_menu_.close()`, "Load complete", return (no `synchronize_after_debug`) | `trace_direct_troll_save`, "Load complete", then the ordinary tail: `synchronize_after_debug()`, `drain_pending_npc_initiation()` |
+
+The first divergence is at the first statement after a successful read. The System Menu calls the canonical helper; the `Alt+L` arm runs its own inline subset. The subset was written before R-14/R-15 existed and was extended piecemeal (Batch 24 added the door reset to both arms instead of routing `Alt+L` through the helper; D-23). It never gained the two sidecar-owned restores. Frontend Continue/LoadSlot and System Menu LoadLatest/LoadSlot all call `synchronize_loaded_world()`. `Alt+L` was the only load route that did not.
+
+Root cause, one line: **the `Alt+L` arm duplicated part of `synchronize_loaded_world()` instead of calling it, and the duplicate never restored the dungeon session or the object pool.** Persistence itself was correct.
+
+### Fix (minimal)
+
+| File | Change |
+|---|---|
+| `native/targets/tdeck/main/alpha_runtime.cpp` | the `DeviceShortcut::Load` arm, on a successful `save_.load`, calls `synchronize_loaded_world()` (then the same `trace_direct_troll_save` it already had). The hand-copied door reset / NPC re-entry / terrain refresh lines are removed; the helper already does all three. A failed read still does nothing but print "No valid save" |
+
+Why this is the minimal architectural fix: the canonical successful-load finalization already existed, and four of the five load routes already used it. Nothing new is abstracted. No format, no `alpha_save.cpp`, no core file, and no dungeon-specific branch is touched. The shortcut simply stops being a special case. The helper's own comment ("the System Menu branch returns before `synchronize_after_debug()`") remains true; `Alt+L` still runs that tail afterwards. It re-derives the context and base mode by the same rule from the same owners, so the result is idempotent, and it refreshes terrain again.
+
+Host-only test seams, never linked into firmware (`alpha_save_memory_host_stub.cpp`): `host_memory_save_forget_for_test()` (no generation, i.e. a missing save) and `host_memory_save_damage_for_test()` (the stored sidecar cut in half, so `load_native_state`'s parse rejects it, i.e. a corrupt save).
+
+### Tests — `batch27_alt_load` (37 checks, real `AlphaRuntime` + shipped pack)
+
+This is the same seam and fixture as `batch26_dungeon_save`: the in-memory generation, real `(E)nter`/`(K)limb`/trackball, real `Alt+S`/`Alt+L` raw keys and real `Alt+M` menus. `(O)pen` goes through `execute_command` as in Batches 24 and 26. Rel Tym is staged by setting `TurnState::time_spell='Q'` and taking one dungeon turn.
+
+- **X** (failure behaviour, run first while the store is empty). X1a–c: no save; `Alt+L` and Continue Latest both report "No valid save" and change no observable field. X2–X2c: a fresh runtime makes a real save, plays on, then the stored sidecar is damaged. Both routes reject it and synchronize nothing; gold stays 999 and the session and pool stay untouched.
+- **S** (same session): save on Deceit L3 (3,2) N with the L1/L2 traps sprung. Turn, move, cast Rel Tym (toggle 1), then `Alt+L`. S2: "Load complete", gold and clock back. H164-A1: session active, Deceit. **H164-B1**: floor 2 (3,2) N with the saved map, reveal and wanderer. **H164-G**: the Rel Tym toggle is 0. H164-C1: dungeon context and Dungeon UI and base mode at once. **H164-C2**: the next trackball press turns the *restored* party N→E.
+- **K** (leave, then quick load): `Alt+S` at the Deceit L1 ladder, `(K)limb` out to Britannia, `Alt+L`. **H164-A2**: underground at the saved cell, not at the surface entrance. **H164-C3**: in the dungeon loop at once.
+- **P** (power cycle): a fresh runtime outside the castle, `Alt+L` of the L3 save. **H164-B2**: the whole session from storage alone. **H164-D**: the sprung traps are still `0x60` and the map/reveal/wanderer are the saved ones, not `DUNGEON.DAT`. **H164-C4/C5**: Dungeon mode at once; the next press turns the restored party.
+- **E** (loose objects): Lord British's basement. Open (16,21), `Alt+S`, open the other two, `Alt+L`. **H164-E1/E2**: the pool is exactly the saved one; two chests are closed again, once each, and (16,21) is open with its loot. **H164-E3**: a fresh runtime with a different pool live, then `Alt+L`, keeps no pre-load object.
+- **F** (surface). H164-F1: an ordinary surface save loads through `Alt+L` as before (position, gold, Exploration). **H164-F2**: `Alt+L` of a surface save while underground ends the live dungeon session.
+- **Q** (cross-path equivalence, below).
+
+**RED → GREEN.** Unmodified Batch 26 production (`alpha_runtime.cpp` from `0a2c1978`, with only the test, stub seams and CMake target added): **21/37 GREEN, 16 RED** (`native/core/batch27-red.log`). The REDs are H164-B1 G C2 A2 C3 B2 D C4 C5 E1 E2 E3 F2 and Q1 Q2 Q3. Every one is a dungeon-session or object-pool field that `synchronize_loaded_world()` restores and the arm did not. The controls were GREEN before the fix: the failure checks X*, S2 (the `.GAM` half always loaded), H164-F1 (surface), and H164-A1/C1. A1 and C1 are only GREEN before the fix because the *stale* session is still in Deceit; K and P show the real failure. After the fix: **37/37** (`batch27-green.log`).
+
+**Mutation proof** (`native/core/batch27-mutations.log`). Each mutation was applied to the fixed source, built, run and reverted; every restore was `touch`ed so ninja rebuilt it. Production was rebuilt at the end: 37/37.
+
+| | Mutation | Result | Killed by |
+|---|---|---|---|
+| M1 | `Alt+L` arm without `synchronize_loaded_world()` | 21/37 | H164-B1 G C2 A2 C3 B2 D C4 C5 E1 E2 E3 F2, Q1 Q2 Q3 |
+| M2 | the arm finalizes a **failed** read too (`if(ok)` dropped) | 33/37 | X1b X1c X2b X2c |
+| M3 | `synchronize_loaded_world()` without `restore_dungeon` | 26/37 | H164-A1 B1 G C1 C2 A2 C3 B2 D C4 C5 |
+| M4 | `synchronize_loaded_world()` without the pool clear + restore | 34/37 | H164-E1 E2 E3 |
+| M5 | `synchronize_loaded_world()` without the context/base-mode resync | 36/37 | Q1 |
+
+M5 is killed only by Q1. `Alt+L` itself still passes the C checks under M5 because its trailing `synchronize_after_debug()` re-derives the same values; the System Menu route has no such tail, which is why Batch 26's D2c/D2d/D3e pin it. A first mutation pass ran X1 and X2 in one runtime, and M2 survived X2 there: X1's failed-read finalization had already cleared the session, so X2 compared two surface states. The recorded test runs X2 in a fresh runtime, and M2 now dies at X2b/X2c.
+
+### Cross-path equivalence
+
+`Snapshot` (in the test) covers: the `GameState` position (map/floor/x/y), clock, gold/karma, dungeon active, id/level/cell/facing, map/reveal/wanderer, the Rel Tym toggle, the loose-object pool, command context dungeon/combat, live combat, UI mode and base mode, every NPC actor's x/y/z/state, and the open-door tracker. It is compared field by field.
+
+- **Q1**: one dungeon save; two fresh runtimes, one `Alt+L` and one Continue Latest. Identical. Before the fix it differed in five fields: dungeon active; id/level/cell/facing; map/reveal/wanderer; context; UI mode.
+- **Q2**: one castle-basement save (objects and NPCs); two fresh runtimes. Identical. Before the fix it differed in the pool.
+- **Q3**: one runtime. Save, perturb, `Alt+L`, snapshot; perturb differently, Continue Latest, snapshot. Identical. Before the fix it differed in the dungeon position and the map.
+
+**Intentional differences, none gameplay-visible:**
+- The System Menu route closes the menu it was opened from; `Alt+L` never opened one.
+- `Alt+L` then runs the ordinary input tail. `synchronize_after_debug()` is idempotent here: the same `resolve_synchronized_base_mode()` rule over the same owners, plus a second `terrain_.refresh` of the same `game_`. `drain_pending_npc_initiation()` has nothing to drain, since an initiation is queued and drained inside the same `handle()` call, and it drops any initiation for another location in any case.
+- The frontend Continue path (title screen) also skips `trace_direct_troll_save`, which is a log line only.
+
+### Failure behaviour
+
+`save_.load` is unchanged and still transactional, and the arm still finalizes only when it returns `true`. X1/X2 show that a missing or corrupt save leaves every snapshot field unchanged through both routes. M2 shows those checks would catch a finalization on failure.
+
+### H-166 boundary check
+
+H-166 (the `candidate()` self-check does not validate `"dungeon"`/`"worldObjects"`, so a domain-invalid newest generation is selected rather than falling back) is **unchanged and still queued**. Its evidence is code reading (Batch 26 §"Queued"); no test demonstrates it, and none was added or altered. `alpha_save.cpp` and the generation logic are untouched, and the damage seam used here produces a *parse* failure, which `load_native_state` already rejects. That is the handled path, not H-166's domain-invalid-but-well-formed one. The refactor does not hide H-166; `DUNGEON_RESTORE_FAILED`/`WORLD_OBJECTS_RESTORE_FAILED` still log from the one helper. It does widen H-166's reach by one route. Before, `Alt+L` ignored the payload entirely and kept whatever session and pool were live. Now, like the other four routes, it applies the helper's fallback (no session, empty pool) to an invalid payload. That is the same outcome as Continue Latest, which is the point of this batch. The fix for choosing the older generation instead stays with Batch 28.
+
+### Full regression suite
+
+From-scratch build (`native/core/build-batch27-final`), serial: **97/97, 0 fail, 0 skipped** (`batch27-final-ctest.log`). That is the prior 96 plus `batch27_alt_load`. The build has one warning, the pre-existing w64devkit `stl_uninitialized.h` false positive; there are zero project warnings. `batch24_reload_parity` (S1, the `Alt+L` door reset now reached through the helper), `batch25_shard_ritual` (`Alt+L` leaves `CommandState` alone, as before) and `batch26_dungeon_save` all pass unchanged. Batch 26's observation Q now prints "dungeon session matches the save". No parity fixture moved.
+
+### Firmware
+
+ESP-IDF 6.1, from scratch in `native/targets/tdeck/build-batch27`: `openu5_tdeck.bin` = **0xd3920** (866,592 bytes), −0x50 against Batch 26 (the inline copy is gone); `0x2c6e0` (17 %) of the app partition is free. **0 errors, 0 compiler warnings** (`batch27-firmware-build.log`, built before the commit). The Launcher image is rebuilt (`idf.py reconfigure build`, `package_launcher.py`) **after** the Batch 27 commit so it embeds that commit. Its path and SHA-256 are recorded in the annotated tag `alpha2-batch27-h164-alt-load`. **Not flashed.** SD card unchanged.
+
+### Status
+
+H-164: **HOST FIXED / DEVICE RETEST PENDING** (Phase 6V). Classification: native defect (device routing), not a 1988 behaviour and not a reference-port difference. D-23 is resolved. H-118/shard movement: unchanged. It was fixed on host in Batch 25 and its device retest (Phase 6T) is still the user's, separate from this batch. H-115: unchanged by this batch (host fixed, Phase 6U).
+
+**Still open:** H-154–H-160 (H-158/H-159 were fixed in Batch 23; H-154–H-157 and H-160 remain), H-165, H-166.
+
+### Phase 6V — Batch 27 `Alt+L` quick load · *firmware only; the SD card is unchanged*
+
+Flash the Batch 27 firmware (the image named in the tag). No serial capture is needed. Before opening the Developer menu, make sure no question is on screen (H-165).
+
+1. On the surface with nothing on screen: `Alt+M` → **Save** → `Enter`. Expect `Save complete`. Short Mic to close. Note where you stand.
+2. Walk three steps. Press `Alt+L`. **Expect `Load complete` and the party back where step 1 saved, with the overworld HUD.** Press one direction: an ordinary overworld step (or `Blocked`).
+3. `Alt+D` → **Certification** → **Dungeon Test** → Confirm → Run Certification, then Mic/Back until the Developer menu is closed. Expect Deceit, HUD **L1**, **Dir: South**.
+4. Trackball **Up**, **Up**, **Left**, **Up**, **Up**, **Left**, **Up**. Expect the trap messages and HUD **L3**, **Dir: North**. *If a fight intervenes, finish it; if L3 is out of reach, use any level ≥ L2 and note the HUD.*
+5. Note the level, direction and view. `Alt+M` → **Save** → `Enter`. Expect `Save complete`. Short Mic to close.
+6. Trackball **Right** twice (HUD `Dir: South`), then **Up** once if the way is open.
+7. Press `Alt+L`. **Expect `Load complete` and, with no other key, the step-5 level, direction and view.** Not the overworld, not the entrance.
+8. Trackball **Right** once. **Expect `Dir: East` at once**: the controls are live in the dungeon.
+
+**Pass:** steps 2, 7 and 8 as stated. **Fail** if `Alt+L` lands on the overworld or at the Deceit entrance after step 7, keeps the step-6 facing, or needs an extra key before the view or controls update.
+
+**Known and queued, do not file:** H-165 (a question left pending across a Developer teleport into a dungeon); H-166 (a corrupt dungeon/object payload is not rejected by the save's self-check).

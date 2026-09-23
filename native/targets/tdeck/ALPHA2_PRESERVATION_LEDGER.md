@@ -22,6 +22,8 @@ that a tester never files an intentional difference as a defect.
 **Batch 21B added D-19 through D-22** from the original-behaviour gap sweep. All four are unresolved divergences in the §4 sense — gaps, not choices — and none was fixed in that batch; only H-148 was.
 
 **Batch 26 changed no row.** H-115 was a defect, not a divergence: 1988 saves underground and resumes in place (`CAST2.OVL:0x10FE`, no location gate), and the port now does too. The session rides the A-14 sidecar as `gameState.dungeon`, native-only, because the TypeScript reference does not save it. The Rel Tym toggle resets on load, as `DUNGEON 0x0E40` does. D-23 (H-164) is now reproduced on host for the dungeon session and stays open.
+
+**Batch 27 resolved D-23** (H-164): `Alt+L` is the same 1988 load as Continue Latest and now ends in the same `synchronize_loaded_world()`. It was a native routing defect, not a divergence, so no §2/§3 row changed.
 The "toggle candidate" column records how isolated each difference already is —
 it is an assessment, not a commitment, and **no toggle is implemented**.
 
@@ -121,7 +123,7 @@ answer or a product decision; none is scheduled in Alpha 2 unless marked.
 | D-20 | Bed hole-up runs no per-tick turn housekeeping (poison, meals, `Starving!`, Q/T expiry, regeneration ring) and no day/night tile refresh | incomplete | 1988 calls kernel `0x2AE8` at `CMDS.OVL:0x0671` and `TOWN.OVL:0x0170` at `0x0664`, both inside the sleep loop; **the TypeScript reference omits both as well**, so this is a gap in the reference, not a native-only one | H-156, H-157 |
 | D-21 | Changing floors inside a small map does not reload the map record, so volatile terrain (an unmagicked skull-key door) survives a floor change | incomplete | 1988's `town_use_ladder` re-reads the record via `town_load_town_map(fresh=1)`; fixing it touches R-14 terrain persistence | H-158 |
 | D-22 | Interior chests are seeded with contents byte `8` where the binary seeds `0x1E` | incomplete | Class-C guess for oracle hole O5, **closed from the binary in Batch 21B** (`TOWN.OVL:0x1795`); correcting it moves `gameplay_parity`/`quest_parity` and must land together with the TypeScript generator | H-159 |
-| D-23 | `Alt+L` quick load does not go through `synchronize_loaded_world()`: the world-object pool is neither cleared nor restored from the save, the dungeon session is not restored, live scenes/fx are not cancelled | incomplete | found by code reading in Batch 24, not reproduced; Batch 24 gave both load arms the `0x0408(0)` door reset (H-162) rather than rerouting `Alt+L` | H-164 |
+| ~~D-23~~ | ~~`Alt+L` quick load does not go through `synchronize_loaded_world()`: the world-object pool is neither cleared nor restored from the save, the dungeon session is not restored, live scenes/fx are not cancelled~~ **RESOLVED — Batch 27.** The `Alt+L` arm now calls `synchronize_loaded_world()`, the one post-load finalization every other load route uses; `batch27_alt_load` compares it field by field with Continue Latest. Row kept struck through, as D-11 | ~~incomplete~~ **fixed** | found by code reading in Batch 24; reproduced on host in Batch 26 | H-164 |
 
 ---
 

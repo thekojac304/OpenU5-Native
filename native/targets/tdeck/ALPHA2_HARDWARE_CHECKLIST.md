@@ -445,3 +445,19 @@ Saving underground is allowed in 1988: `Q` reaches `CAST2.OVL:0x10FE` through th
 **Host suite:** 96/96, 0 fail, 0 skipped, from a clean build — the prior 95 plus `batch26_dungeon_save`. No fixture moved.
 
 **Still open:** H-154–H-160, H-164, H-165, H-166. Hardware verification of H-115 awaits the user's Phase 6U report.
+
+## Batch 27 — H-164 `Alt+L` quick load
+
+`Alt+L` and System Menu → Load / Save Management → Continue Latest read the same generation through the same `AlphaSaveService::load`. Only Continue Latest then ran `synchronize_loaded_world()`. The `Alt+L` arm ran its own partial copy, which never restored the dungeon session or the loose-object pool. It now calls the same helper. Full derivation, the side-by-side call flow, RED/GREEN, the five-mutation proof and the field-by-field cross-path comparison: `GAMEPLAY_INTEGRATION_AUDIT.md` §"Batch 27".
+
+| Row | Behaviour | Status |
+|---|---|---|
+| H-164 | `Alt+L` of a dungeon save puts the party back on the saved level, cell and facing with the saved map, at once, and the next input acts in the dungeon. `Alt+L` of a surface save behaves as before. Opened chests and loot come back exactly as saved. A missing or corrupt save changes nothing | **HOST FIXED / DEVICE RETEST PENDING** (Phase 6V, 8 steps) |
+| H-166 | unchanged by this batch | **CONFIRMED BY CODE READING — queued** (Batch 28) |
+| H-118 | unchanged by this batch | **HOST FIXED / DEVICE RETEST PENDING** (Phase 6T), separate |
+
+**Retest gate:** audit **Phase 6V**. **A reflash is required** (runtime change). **The SD resource pack is unchanged; no SD recopy is required.** No save-format change: every existing save loads as before, now identically through both routes.
+
+**Host suite:** 97/97, 0 fail, 0 skipped, from a clean build — the prior 96 plus `batch27_alt_load`. No fixture moved.
+
+**Still open:** H-154–H-157, H-160, H-165, H-166. Hardware verification of H-115 (Phase 6U), H-118 (Phase 6T) and H-164 (Phase 6V) awaits the user's reports.

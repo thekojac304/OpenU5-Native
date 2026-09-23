@@ -1,0 +1,139 @@
+X  failed loads leave the live world exactly as it was (both frontends)
+  GREEN X0    precondition: live in Deceit floor 2 (3,2), no save exists
+  GREEN X1a   missing save: Alt+L reports "No valid save"
+  GREEN X1b   missing save: Alt+L changed nothing (session, pool, mode, clock)
+  GREEN X1c   missing save: Continue Latest reports it and changes nothing either
+  GREEN X2    precondition: a real save on Deceit floor 2 (3,2)
+  GREEN X2a   damaged save: Alt+L reports "No valid save"
+  GREEN X2b   ** damaged save: Alt+L rejected it and synchronized nothing (gold 999 kept, session and pool untouched) **
+  GREEN X2c   damaged save: Continue Latest rejects it the same way
+S  save on Deceit floor 2, turn/move/Rel Tym after it, Alt+L in the same session
+  GREEN S0    precondition: Deceit floor 2 (3,2) facing N, the floor-0/1 (3,2) traps sprung (0x61 -> 0x60)
+  GREEN S1    precondition: after the save the party moved and turned, time passed, and the Rel Tym toggle is 1
+  GREEN S2    Alt+L loaded: "Load complete", gold 999 -> 321, clock back to the save
+  GREEN H164-A1 the dungeon session is active and it is Deceit
+  RED   H164-B1 ** Alt+L puts the party back on floor 2 (3,2) facing N with the saved map, reveal and wanderer **
+         saved: active=1 dungeon=33 floor=2 (3,2) facing=0 quick=0
+         loaded: active=1 dungeon=33 floor=2 (3,3) facing=1 quick=1
+  RED   H164-G ** the Rel Tym toggle is 0 after Alt+L, as after any load (DUNGEON 0x0E40) **
+  GREEN H164-C1 dungeon context and Dungeon UI mode the moment Alt+L returns
+  RED   H164-C2 the very next trackball input turns the RESTORED party (N -> E) where the save left it
+K  save at the Deceit floor-0 ladder, (K)limb out to Britannia, Alt+L
+  GREEN K0    precondition: Deceit floor 0 (1,1)
+  GREEN K1    precondition: (K)limb left the dungeon; on the surface
+  RED   H164-A2 ** Alt+L resumes underground at the saved cell, not at the surface entrance **
+         loaded: active=0 dungeon=33 floor=0 (1,1) facing=2 quick=0
+  RED   H164-C3 and the device is in the dungeon loop at once
+P  power cycle: a fresh runtime on the surface, Alt+L the floor-2 save
+  GREEN P0    precondition: nothing in RAM -- no dungeon session
+  RED   H164-B2 ** the Deceit floor-2 (3,2) N session comes back from storage alone **
+         loaded: active=0 dungeon=33 floor=0 (1,1) facing=2 quick=0
+  RED   H164-D ** the sprung traps stay sprung (0x60) and map/reveal/wanderer are the saved ones, not DUNGEON.DAT **
+  RED   H164-C4 Dungeon UI mode the moment Alt+L returns
+  RED   H164-C5 the next trackball input turns the restored party
+E  castle basement: one chest opened, save, two more opened, Alt+L
+  GREEN E0    precondition: Lord British's basement
+  GREEN E1    precondition: (16,21) opened before the save, (17,22) and (13,23) after it
+  RED   H164-E1 ** after Alt+L the object pool is exactly the saved one **
+         saved: 15 objects
+           loc=17 floor=2 (15,18) tile=283 chest=0 loot=0 item=0/0
+           loc=17 floor=-1 (17,22) tile=257 chest=1 loot=0 item=0/0
+           loc=17 floor=-1 (13,23) tile=257 chest=1 loot=0 item=0/0
+           loc=17 floor=-1 (9,9) tile=286 chest=0 loot=0 item=0/0
+           loc=17 floor=2 (18,12) tile=14 chest=0 loot=0 item=0/0
+           loc=17 floor=-1 (16,21) tile=15 chest=0 loot=1 item=15/1
+           loc=17 floor=-1 (16,21) tile=13 chest=0 loot=1 item=13/1
+           loc=17 floor=-1 (16,21) tile=7 chest=0 loot=1 item=7/1
+           loc=17 floor=-1 (16,21) tile=3 chest=0 loot=1 item=3/7
+           loc=17 floor=-1 (16,21) tile=2 chest=0 loot=1 item=2/89
+           loc=17 floor=-1 (16,21) tile=5 chest=0 loot=1 item=5/33
+           loc=17 floor=-1 (16,21) tile=11 chest=0 loot=1 item=11/13
+           loc=17 floor=-1 (16,21) tile=9 chest=0 loot=1 item=9/0
+           loc=17 floor=-1 (16,21) tile=5 chest=0 loot=1 item=5/20
+           loc=17 floor=-1 (16,21) tile=6 chest=0 loot=1 item=6/5
+         loaded: 30 objects
+           loc=17 floor=2 (15,18) tile=283 chest=0 loot=0 item=0/0
+           loc=17 floor=-1 (9,9) tile=286 chest=0 loot=0 item=0/0
+           loc=17 floor=2 (18,12) tile=14 chest=0 loot=0 item=0/0
+           loc=17 floor=-1 (16,21) tile=15 chest=0 loot=1 item=15/1
+           loc=17 floor=-1 (16,21) tile=13 chest=0 loot=1 item=13/1
+           loc=17 floor=-1 (16,21) tile=7 chest=0 loot=1 item=7/1
+           loc=17 floor=-1 (16,21) tile=3 chest=0 loot=1 item=3/7
+           loc=17 floor=-1 (16,21) tile=2 chest=0 loot=1 item=2/89
+           loc=17 floor=-1 (16,21) tile=5 chest=0 loot=1 item=5/33
+           loc=17 floor=-1 (16,21) tile=11 chest=0 loot=1 item=11/13
+           loc=17 floor=-1 (16,21) tile=9 chest=0 loot=1 item=9/0
+           loc=17 floor=-1 (16,21) tile=5 chest=0 loot=1 item=5/20
+           loc=17 floor=-1 (16,21) tile=6 chest=0 loot=1 item=6/5
+           loc=17 floor=-1 (17,22) tile=15 chest=0 loot=1 item=15/2
+           loc=17 floor=-1 (17,22) tile=13 chest=0 loot=1 item=13/2
+           loc=17 floor=-1 (17,22) tile=7 chest=0 loot=1 item=7/1
+           loc=17 floor=-1 (17,22) tile=2 chest=0 loot=1 item=2/79
+           loc=17 floor=-1 (17,22) tile=6 chest=0 loot=1 item=6/7
+           loc=17 floor=-1 (17,22) tile=5 chest=0 loot=1 item=5/36
+           loc=17 floor=-1 (17,22) tile=11 chest=0 loot=1 item=11/10
+           loc=17 floor=-1 (17,22) tile=5 chest=0 loot=1 item=5/27
+           loc=17 floor=-1 (17,22) tile=5 chest=0 loot=1 item=5/16
+           loc=17 floor=-1 (17,22) tile=5 chest=0 loot=1 item=5/34
+           loc=17 floor=-1 (13,23) tile=15 chest=0 loot=1 item=15/1
+           loc=17 floor=-1 (13,23) tile=13 chest=0 loot=1 item=13/1
+           loc=17 floor=-1 (13,23) tile=7 chest=0 loot=1 item=7/1
+           loc=17 floor=-1 (13,23) tile=4 chest=0 loot=1 item=4/1
+           loc=17 floor=-1 (13,23) tile=2 chest=0 loot=1 item=2/20
+           loc=17 floor=-1 (13,23) tile=5 chest=0 loot=1 item=5/20
+           loc=17 floor=-1 (13,23) tile=9 chest=0 loot=1 item=9/1
+  RED   H164-E2 (17,22) and (13,23) closed again once each; (16,21) open with its loot
+E' power cycle: a fresh runtime with a different pool live, Alt+L
+  GREEN E3    precondition: fresh runtime in the basement
+  RED   H164-E3 ** no pre-load object survives Alt+L; the pool is the saved one **
+         saved: 15 objects
+           loc=17 floor=2 (15,18) tile=283 chest=0 loot=0 item=0/0
+           loc=17 floor=-1 (17,22) tile=257 chest=1 loot=0 item=0/0
+           loc=17 floor=-1 (13,23) tile=257 chest=1 loot=0 item=0/0
+           loc=17 floor=-1 (9,9) tile=286 chest=0 loot=0 item=0/0
+           loc=17 floor=2 (18,12) tile=14 chest=0 loot=0 item=0/0
+           loc=17 floor=-1 (16,21) tile=15 chest=0 loot=1 item=15/1
+           loc=17 floor=-1 (16,21) tile=13 chest=0 loot=1 item=13/1
+           loc=17 floor=-1 (16,21) tile=7 chest=0 loot=1 item=7/1
+           loc=17 floor=-1 (16,21) tile=3 chest=0 loot=1 item=3/7
+           loc=17 floor=-1 (16,21) tile=2 chest=0 loot=1 item=2/89
+           loc=17 floor=-1 (16,21) tile=5 chest=0 loot=1 item=5/33
+           loc=17 floor=-1 (16,21) tile=11 chest=0 loot=1 item=11/13
+           loc=17 floor=-1 (16,21) tile=9 chest=0 loot=1 item=9/0
+           loc=17 floor=-1 (16,21) tile=5 chest=0 loot=1 item=5/20
+           loc=17 floor=-1 (16,21) tile=6 chest=0 loot=1 item=6/5
+         loaded: 15 objects
+           loc=17 floor=2 (15,18) tile=283 chest=0 loot=0 item=0/0
+           loc=17 floor=-1 (16,21) tile=257 chest=1 loot=0 item=0/0
+           loc=17 floor=-1 (17,22) tile=257 chest=1 loot=0 item=0/0
+           loc=17 floor=-1 (9,9) tile=286 chest=0 loot=0 item=0/0
+           loc=17 floor=2 (18,12) tile=14 chest=0 loot=0 item=0/0
+           loc=17 floor=-1 (13,23) tile=15 chest=0 loot=1 item=15/1
+           loc=17 floor=-1 (13,23) tile=13 chest=0 loot=1 item=13/1
+           loc=17 floor=-1 (13,23) tile=7 chest=0 loot=1 item=7/1
+           loc=17 floor=-1 (13,23) tile=3 chest=0 loot=1 item=3/7
+           loc=17 floor=-1 (13,23) tile=2 chest=0 loot=1 item=2/89
+           loc=17 floor=-1 (13,23) tile=5 chest=0 loot=1 item=5/33
+           loc=17 floor=-1 (13,23) tile=11 chest=0 loot=1 item=11/13
+           loc=17 floor=-1 (13,23) tile=9 chest=0 loot=1 item=9/0
+           loc=17 floor=-1 (13,23) tile=5 chest=0 loot=1 item=5/20
+           loc=17 floor=-1 (13,23) tile=6 chest=0 loot=1 item=6/5
+F  surface saves through Alt+L
+  GREEN H164-F1 an ordinary surface save loads through Alt+L as before: position, gold, Exploration mode
+  GREEN F2    precondition: underground after the surface save
+  RED   H164-F2 ** Alt+L of a surface save taken underground ends the live dungeon session **
+         loaded: active=1 dungeon=33 floor=0 (1,2) facing=2 quick=0
+Q  the same stored generation through Alt+L and through System Menu Continue Latest
+         Alt+L vs Continue Latest: differs in dungeon active
+         Alt+L vs Continue Latest: differs in dungeon id/level/cell/facing
+         Alt+L vs Continue Latest: differs in dungeon map/reveal/wanderer
+         Alt+L vs Continue Latest: differs in command context (dungeon/combat)
+         Alt+L vs Continue Latest: differs in UI mode / base mode
+  RED   Q1    ** dungeon save, two fresh runtimes: every observable field identical **
+         Alt+L vs Continue Latest: differs in loose-object pool
+  RED   Q2    ** castle-basement save (objects, NPCs), two fresh runtimes: identical **
+         same runtime: differs in dungeon id/level/cell/facing
+         same runtime: differs in dungeon map/reveal/wanderer
+  RED   Q3    ** one runtime: Alt+L and then Continue Latest land on the identical state **
+
+batch27_alt_load: 21/37 checks GREEN, 16 RED

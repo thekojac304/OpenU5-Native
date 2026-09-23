@@ -1,0 +1,22 @@
+### M1 -- Alt+L arm without synchronize_loaded_world() (trace only)
+batch27_alt_load: 21/37 checks GREEN, 16 RED
+killed by: H164-B1 H164-G H164-C2 H164-A2 H164-C3 H164-B2 H164-D H164-C4 H164-C5 H164-E1 H164-E2 H164-E3 H164-F2 Q1 Q2 Q3
+
+### M2 -- Alt+L arm finalizes even a failed read (if(ok) dropped)
+batch27_alt_load: 33/37 checks GREEN, 4 RED
+killed by: X1b X1c X2b X2c
+
+### M3 -- synchronize_loaded_world() without restore_dungeon (session always cleared)
+batch27_alt_load: 26/37 checks GREEN, 11 RED
+killed by: H164-A1 H164-B1 H164-G H164-C1 H164-C2 H164-A2 H164-C3 H164-B2 H164-D H164-C4 H164-C5
+
+### M4 -- synchronize_loaded_world() without the object-pool clear + restore
+batch27_alt_load: 34/37 checks GREEN, 3 RED
+killed by: H164-E1 H164-E2 H164-E3
+
+### M5 -- synchronize_loaded_world() without the context/base-mode resync
+batch27_alt_load: 36/37 checks GREEN, 1 RED
+killed by: Q1
+
+### restored production
+batch27_alt_load: 37/37 checks GREEN, 0 RED

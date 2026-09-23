@@ -36,6 +36,15 @@ struct Generation {
 Generation g_generation;
 } // namespace
 
+// Batch 27 (H-164) failure seams. A test declares these itself; nothing in
+// production or in the other host targets calls them.
+//   forget -- no generation at all (a missing save);
+//   damage -- the stored sidecar cut in half, so load_native_state's parse
+//             rejects it (a corrupt save). Not H-166: a domain-invalid but
+//             well-formed payload is a different path and is not exercised.
+void host_memory_save_forget_for_test() { g_generation = Generation{}; }
+void host_memory_save_damage_for_test() { g_generation.sidecar.resize(g_generation.sidecar.size() / 2); }
+
 bool AlphaSaveService::reserve_dma_headroom() { return true; }
 
 bool AlphaSaveService::save(openu5::CommandContext &c, openu5::OutdoorServices &o, openu5::WorldTerrain &t,

@@ -1,0 +1,47 @@
+X  failed loads leave the live world exactly as it was (both frontends)
+  GREEN X0    precondition: live in Deceit floor 2 (3,2), no save exists
+  GREEN X1a   missing save: Alt+L reports "No valid save"
+  GREEN X1b   missing save: Alt+L changed nothing (session, pool, mode, clock)
+  GREEN X1c   missing save: Continue Latest reports it and changes nothing either
+  GREEN X2    precondition: a real save on Deceit floor 2 (3,2)
+  GREEN X2a   damaged save: Alt+L reports "No valid save"
+  GREEN X2b   ** damaged save: Alt+L rejected it and synchronized nothing (gold 999 kept, session and pool untouched) **
+  GREEN X2c   damaged save: Continue Latest rejects it the same way
+S  save on Deceit floor 2, turn/move/Rel Tym after it, Alt+L in the same session
+  GREEN S0    precondition: Deceit floor 2 (3,2) facing N, the floor-0/1 (3,2) traps sprung (0x61 -> 0x60)
+  GREEN S1    precondition: after the save the party moved and turned, time passed, and the Rel Tym toggle is 1
+  GREEN S2    Alt+L loaded: "Load complete", gold 999 -> 321, clock back to the save
+  GREEN H164-A1 the dungeon session is active and it is Deceit
+  GREEN H164-B1 ** Alt+L puts the party back on floor 2 (3,2) facing N with the saved map, reveal and wanderer **
+  GREEN H164-G ** the Rel Tym toggle is 0 after Alt+L, as after any load (DUNGEON 0x0E40) **
+  GREEN H164-C1 dungeon context and Dungeon UI mode the moment Alt+L returns
+  GREEN H164-C2 the very next trackball input turns the RESTORED party (N -> E) where the save left it
+K  save at the Deceit floor-0 ladder, (K)limb out to Britannia, Alt+L
+  GREEN K0    precondition: Deceit floor 0 (1,1)
+  GREEN K1    precondition: (K)limb left the dungeon; on the surface
+  GREEN H164-A2 ** Alt+L resumes underground at the saved cell, not at the surface entrance **
+  GREEN H164-C3 and the device is in the dungeon loop at once
+P  power cycle: a fresh runtime on the surface, Alt+L the floor-2 save
+  GREEN P0    precondition: nothing in RAM -- no dungeon session
+  GREEN H164-B2 ** the Deceit floor-2 (3,2) N session comes back from storage alone **
+  GREEN H164-D ** the sprung traps stay sprung (0x60) and map/reveal/wanderer are the saved ones, not DUNGEON.DAT **
+  GREEN H164-C4 Dungeon UI mode the moment Alt+L returns
+  GREEN H164-C5 the next trackball input turns the restored party
+E  castle basement: one chest opened, save, two more opened, Alt+L
+  GREEN E0    precondition: Lord British's basement
+  GREEN E1    precondition: (16,21) opened before the save, (17,22) and (13,23) after it
+  GREEN H164-E1 ** after Alt+L the object pool is exactly the saved one **
+  GREEN H164-E2 (17,22) and (13,23) closed again once each; (16,21) open with its loot
+E' power cycle: a fresh runtime with a different pool live, Alt+L
+  GREEN E3    precondition: fresh runtime in the basement
+  GREEN H164-E3 ** no pre-load object survives Alt+L; the pool is the saved one **
+F  surface saves through Alt+L
+  GREEN H164-F1 an ordinary surface save loads through Alt+L as before: position, gold, Exploration mode
+  GREEN F2    precondition: underground after the surface save
+  GREEN H164-F2 ** Alt+L of a surface save taken underground ends the live dungeon session **
+Q  the same stored generation through Alt+L and through System Menu Continue Latest
+  GREEN Q1    ** dungeon save, two fresh runtimes: every observable field identical **
+  GREEN Q2    ** castle-basement save (objects, NPCs), two fresh runtimes: identical **
+  GREEN Q3    ** one runtime: Alt+L and then Continue Latest land on the identical state **
+
+batch27_alt_load: 37/37 checks GREEN, 0 RED
