@@ -4847,6 +4847,8 @@ From-scratch build (`native/core/build-batch23-final`), serial: **93/93, 0 fail*
 
 ESP-IDF 6.1, `native/targets/tdeck/build-batch23`: `openu5_tdeck.bin` = **0xd38d0** (866,512 bytes), +0x40 over Batch 22; `0x2c730` (17 %) of the app partition free. **0 errors, 0 compiler warnings** (`batch23-firmware-build.log`). Launcher image (`package_launcher.py`): `build-batch23/launcher/OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`, SHA-256 `e4efc721ff717e70e28e79734d918233ad2ade80ecb418f4ad1da1b76fb923bf`. **Not flashed.** SD card unchanged.
 
+**Correction (after the Batch 22/23 split) — the image to flash is a different file.** The image above was built before Batch 23 was committed, so it identifies itself as `FW b6705142ee31`: `main/CMakeLists.txt` stamps `git rev-parse --short=12 HEAD` at configure time. The final artifact was reconfigured and rebuilt at the Batch 23 commit: `build-batch23-split/launcher/OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`, SHA-256 `86bcc09ee2553f1d1a50d44a83d21647dd3cb0d2101a9c9be7a72b26e177a781`, `FW 93ef488b57bb`, same size `0xd38d0`, 0 errors, 0 warnings. The two images differ only in build timestamps, that embedded commit id and the image/descriptor hashes; the code is identical. **Flash the `build-batch23-split` image.**
+
 ### Status
 
 H-158 and H-159: **SOFTWARE FIXED — HARDWARE RETEST REQUIRED.** H-148 (Batch 21B bed reset) is unchanged and still owed its hardware pass; Phase 6R below covers it too.
