@@ -67,6 +67,10 @@ struct QuestWorldServices {
     const InteriorHydrationTrace *hydration_trace=nullptr; // Diagnostics only.
 };
 bool hydrate_underworld_plot(GameState &,QuestWorldServices &);
+// Batch 23. The +5 byte TOWN.OVL:0x1726 gives a placed .NPC type-1 chest
+// (0x1795 `mov word [bp-6],0x1e`). SJOG.OVL:0x112C rolls the loot from it at
+// (O)pen time, so it is the only per-chest input to the loot tables.
+constexpr int32_t kInteriorChestContents=0x1e;
 bool hydrate_interior_objects(CommandContext &,int32_t);
 void discard_interior_objects(GameState &,QuestWorldServices &,int32_t);
 // Returns turn consumption separately so the command runner owns clock/RNG.

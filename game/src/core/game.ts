@@ -669,13 +669,14 @@ const ENTER_WHAT_INTERIOR = "Enter what?";
 
 /**
  * Contenido (byte +5) sembrado en cada cofre-objeto de INTERIOR al rehidratar un mapa
- * (task #3). El .NPC estático no codifica este byte (8 B de horario + type + dialog), así
- * que su origen exacto es el hueco de oráculo **O5** (re/notes/objects.md). Valor **Clase C
- * DOCUMENTADO**: 8 = sin trampa (bit 0x80 limpio) y `contents & 0x7f = 8` alimenta el botín
- * REAL vía `chestLoot` (loot_fixed/loot_random, SJOG 0x1040/0x10B8) — NO una tabla de ítems
- * fabricada. Pendiente de BP DOSBox (leer el byte +5 de los slots 23/24/25 al entrar a loc 17).
+ * (task #3). El .NPC estático no codifica este byte (8 B de horario + type + dialog): lo
+ * pone el colocador. **Hueco O5 CERRADO (Batch 23 nativo)**: TOWN.OVL:0x1726, rama type 1,
+ * `0x1795 mov word [bp-6],0x1e` → kernel 0x3A74 lo escribe en el byte +5 del objeto; sin
+ * trampa (bit 0x80 limpio). `open_chest_world` (SJOG 0x112C) lo lee al ABRIR y alimenta
+ * loot_fixed/loot_random (0x1040/0x10B8). El 8 anterior era Clase C y recortaba la tabla
+ * a comida/antorchas/oro (+ la daga, guarda 5).
  */
-export const INTERIOR_CHEST_CONTENTS = 8;
+export const INTERIOR_CHEST_CONTENTS = 0x1e;
 
 /** Tiles de escalera/escala (K)limb. */
 /** Flame of … por location (LOOKOBJ 0x05fd): 0x1e Truth, 0x1f Love, 0x20 Courage. */
@@ -4187,8 +4188,15 @@ export class Game {
       return events;
     }
     pos.floor = target;
-    // Cambio de planta = recarga de mapa en el original (0x052E → 0x0408): recalcula
-    // reja/puente para la planta nueva (TOWN 0x0170).
+    // Cambio de planta = recarga de mapa en el original (0x052E → 0x0408(1)).
+    // TOWN 0x0408(1), el mismo cargador de loadSmallMap: relee la planta del .DAT sobre
+    // DS:0x6608 (muere el terreno volátil: la 0x97 desmagiada vuelve a 0x97), pone
+    // g_unk_594f=0 (0x041d), reja/puente (0x0170) y, por el argumento, town_populate_npcs
+    // 0x1694 (0x0517/0x051d) borra y re-coloca los objetos de interior. Batch 23 nativo.
+    this.doors?.reset();
+    this.volatileTerrainWipe = null;
+    this.clearVolatileTerrain();
+    this.hydrateInteriorObjects(pos.location);
     this.refreshHourTiles();
     events.push(...this.runContextTurn({ consumed: true }));
     events.push({ kind: "message", text: delta > 0 ? "Klimb-Up!" : "Klimb-Down!" });
@@ -4220,7 +4228,15 @@ export class Game {
     const target = pos.floor + delta;
     if (!this.floorExists(pos.location, target)) return;
     pos.floor = target;
-    // Recarga de mapa por escalera (0x052E → 0x0408): recalcula reja/puente.
+    // Recarga de mapa por escalera (0x052E → 0x0408(1)).
+    // TOWN 0x0408(1), el mismo cargador de loadSmallMap: relee la planta del .DAT sobre
+    // DS:0x6608 (muere el terreno volátil: la 0x97 desmagiada vuelve a 0x97), pone
+    // g_unk_594f=0 (0x041d), reja/puente (0x0170) y, por el argumento, town_populate_npcs
+    // 0x1694 (0x0517/0x051d) borra y re-coloca los objetos de interior. Batch 23 nativo.
+    this.doors?.reset();
+    this.volatileTerrainWipe = null;
+    this.clearVolatileTerrain();
+    this.hydrateInteriorObjects(pos.location);
     this.refreshHourTiles();
     events.push({ kind: "message", text: delta > 0 ? "Up!" : "Down!" });
     events.push({ kind: "map-changed" });

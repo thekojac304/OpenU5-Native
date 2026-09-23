@@ -42,8 +42,9 @@ Error load_small_map(GameState &, TurnState &, TravelState &, uint8_t id, const 
                      TransitionServices);
 Error exit_to_overworld(GameState &, LocationTable, TransitionServices);
 Error confirm_town_exit(GameState &, bool yes, LocationTable, TransitionServices);
-bool apply_stair_step(GameState &, const WorldData &, int32_t tile, Direction, TransitionServices);
-bool klimb_ladder(GameState &, const WorldData &, int16_t delta, TransitionServices);
+// Both are TOWN.OVL:0x052E and reload the floor exactly as load_small_map does.
+bool apply_stair_step(GameState &, TravelState &, const WorldData &, int32_t tile, Direction, TransitionServices);
+bool klimb_ladder(GameState &, TravelState &, const WorldData &, int16_t delta, TransitionServices);
 struct Moonstone {
     uint8_t x = 0, y = 0;
     int16_t z = 0; // Interior basements use -1; underworld uses 255.

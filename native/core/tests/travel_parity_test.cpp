@@ -100,8 +100,9 @@ int main(int argc, char **argv) {
             g.position = {{uint8_t(px), uint8_t(py)}, {2, floor}};
             g.time.hour = hour;
             OriginalRng rng{uint16_t(seed)};
+            TravelState travel;
             if (delta)
-                apply_stair_step(g, world, 196, delta > 0 ? Direction::North : Direction::South,
+                apply_stair_step(g, travel, world, 196, delta > 0 ? Direction::North : Direction::South,
                                  {&event_count, nullptr,
                                   [](void *p, GameEventKind, const char *) { ++*static_cast<int *>(p); }});
             ScheduledTurnBinding binding{list, g, world, grid, rng_source(rng)};
@@ -205,10 +206,10 @@ int main(int argc, char **argv) {
             Moonstone stone{9, 11, uint8_t(scenario % 2 ? 255 : 1), stone_locs[(scenario / 6) % 3], false};
             for (int repeat = 0; repeat < 3; ++repeat) {
                 if (mode == 0)
-                    apply_stair_step(g, w, 196 + (scenario / 6) % 4, Direction((scenario / 24) % 4),
+                    apply_stair_step(g, v, w, 196 + (scenario / 6) % 4, Direction((scenario / 24) % 4),
                                      services);
                 if (mode == 1)
-                    klimb_ladder(g, w, scenario % 12 < 6 ? 1 : -1, services);
+                    klimb_ladder(g, v, w, scenario % 12 < 6 ? 1 : -1, services);
                 if (mode == 2)
                     load_small_map(g, t, v, ids[(scenario / 6) % 3], "\n\nTEST\n", services);
                 if (mode == 3 && exit_to_overworld(g, table, services) != Error::None)

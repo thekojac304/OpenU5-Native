@@ -44,7 +44,7 @@ bool hydrate_interior_objects(CommandContext &c,int32_t loc){
         auto drop=[&](const char *reason){if(t && t->slot)t->slot(t->context,i,n,idx,reason,nullptr);};
         if(!n.slot){drop("empty-slot");continue;}auto item=plot_item_for_npc_type(n.type);if(item==PlotItem::None && n.type!=1 && n.type!=30){drop("npc-type-not-object");continue;}
         bool taken=item==PlotItem::Crown?c.game.quest.artifacts[1]:item==PlotItem::Sceptre?c.game.quest.artifacts[2]:item==PlotItem::WoodenBox?c.game.wooden_box:false;if(taken){drop("plot-item-already-taken");continue;}
-        QuestObject o;o.location=loc;o.floor=n.z[idx]==255?-1:n.z[idx];o.x=n.x[idx];o.y=n.y[idx];o.tile=item==PlotItem::None || item==PlotItem::Carpet?n.type+256:n.type;o.item=item;o.plot=item!=PlotItem::None;o.chest=n.type==1;o.prop=n.type==30;o.contents=8;
+        QuestObject o;o.location=loc;o.floor=n.z[idx]==255?-1:n.z[idx];o.x=n.x[idx];o.y=n.y[idx];o.tile=item==PlotItem::None || item==PlotItem::Carpet?n.type+256:n.type;o.item=item;o.plot=item!=PlotItem::None;o.chest=n.type==1;o.prop=n.type==30;o.contents=kInteriorChestContents;
         if(t && t->slot){t->slot(t->context,i,n,idx,nullptr,&o);}
         s->append(s->context,o);
     }return done(true,"ok");

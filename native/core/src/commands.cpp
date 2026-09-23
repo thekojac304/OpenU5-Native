@@ -509,7 +509,7 @@ struct Runner {
         if (!c.game.position.map.location)
             effect(CommandEffect::ShrineGuardian);
         else
-            apply_stair_step(c.game, c.world, tile(), dir, transitions());
+            apply_stair_step(c.game, c.travel, c.world, tile(), dir, transitions());
         turn(true, &s);
         effect(CommandEffect::Moongate);
         effect(CommandEffect::ShrineEntry);
@@ -598,7 +598,7 @@ struct Runner {
         }
         const auto under = tile();
         if (under == 200 || under == 201 || under == 134) {
-            if (!klimb_ladder(c.game, c.world, under == 200 ? 1 : -1, transitions()))
+            if (!klimb_ladder(c.game, c.travel, c.world, under == 200 ? 1 : -1, transitions()))
                 result.status = CommandStatus::Rejected;
             return;
         }

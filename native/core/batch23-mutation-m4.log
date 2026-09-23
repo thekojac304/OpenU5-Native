@@ -1,0 +1,49 @@
+mutation m4: floor change no longer re-reads the map (door relock dropped)
+src/transitions.cpp: '    effect(s, ReloadEffect::ClearTerrain, id);\n    effect(s, ReloadEffect::HydrateInterior, id);' -> '    effect(s, ReloadEffect::HydrateInterior, id);'
+build rc=0
+  GREEN V1a   seed 0x0073: 42 draws with exactly the original (lo,hi) ranges, in order
+  GREEN V1b   seed 0x0073: final RNG state 0xe0fc, as the oracle
+  GREEN V1c   seed 0x0073: pieces equal the oracle's
+  GREEN V1d   all three oracle vectors: pieces and final RNG state match
+  GREEN V2a   food, torches, gems, keys, scroll 7, potion 7, 90 gold, nested chest (contents 30)
+  GREEN V2b   and the RNG was asked exactly 34 times: no roll for a 255 guard
+  GREEN V3a   each index yields (RAND_ITEM[idx], idx) sixteen times, or nothing if guard 255
+  GREEN V3b   41 of 48 equipment rows reachable; 8,15,35,39,40,41,47 never
+  GREEN V4a   walk-in: (E)nter, (K)limb down to floor -1
+  GREEN V4b   all three chests: contents 0x1E, untrapped
+  GREEN V5a   chest (16,21) seed 0x0073: floor pieces equal the oracle's
+  GREEN V5b   chest (17,22) seed 0x00d0: floor pieces equal the oracle's
+  GREEN V5c   chest (13,23) seed 0x0181: floor pieces equal the oracle's
+  GREEN V6a   the pile at (16,21) is empty after the (G)ets
+  GREEN V6b   a Mace (equipment 24)
+  GREEN V6c   a scroll of index 1
+  GREEN V6d   1 key, 53 gold, 1 food, 1 torch
+  GREEN L1a   precondition: three chests on entry
+  GREEN L1b   all three opened; loot left on the floor
+  GREEN L1c   up to floor 0 and back down to floor -1
+  GREEN L1d   ** 0x408(1) -> 0x1694: all three chests back, contents 0x1E, no duplicates **
+  GREEN L1e   uncollected floor loot is gone (the object register was wiped)
+  GREEN L1f   the refilled chest rolls anew: seed 0x00d0 gives the oracle's pieces
+  GREEN L2a   precondition: three chests on entry
+  GREEN L2b   all three opened; loot left on the floor
+  GREEN L2c   up to floor 0 and back down to floor -1
+  GREEN L2d   ** 0x408(1) -> 0x1694: all three chests back, contents 0x1E, no duplicates **
+  GREEN L2e   uncollected floor loot is gone (the object register was wiped)
+  GREEN L2f   the refilled chest rolls anew: seed 0x00d0 gives the oracle's pieces
+  GREEN L3a   five (P)asses in the basement leave the vault empty
+  GREEN L4a   out on the overworld
+  GREEN L4b   re-entry: three chests again
+  GREEN D1a   (15,24) is authored 0x97 MagicLockDoor and drawn as such
+  GREEN D1b   skull key: 0x97 -> 0xB8; (O)pen: drawn open
+  GREEN D1d   the open-door tracker is cleared by the first floor change ([0x594f] = 0)
+  GREEN D1c   and back down to floor -1
+  RED   D1e   ** the floor re-read restores the authored 0x97: closed AND magically locked **
+  GREEN D2a   (15,24) is authored 0x97 MagicLockDoor and drawn as such
+  GREEN D2b   skull key: 0x97 -> 0xB8; (O)pen: drawn open
+  GREEN D2d   the open-door tracker is cleared by the first floor change ([0x594f] = 0)
+  GREEN D2c   and back down to floor -1
+  RED   D2e   ** the floor re-read restores the authored 0x97: closed AND magically locked **
+  GREEN D3a   CMDS 0x0677 -> 0x1694: chests are back (Batch 21B)
+  GREEN D3b   and the door is still unlocked (0x1694 never touches DS 0x6608)
+  GREEN D4a   re-entry: the door is 0x97 again
+batch23_vault_parity: 43/45 checks GREEN, 2 RED

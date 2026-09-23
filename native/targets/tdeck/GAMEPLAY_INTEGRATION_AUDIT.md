@@ -4542,8 +4542,8 @@ Categories **A (loot/economy)**, **B (doors/locks/terrain)** and **C (rest/sleep
 | **H-155** | Rest | "Thrown out of bed!" can never fire on the device | CMDS `0x0688` to kernel `0x368E kernel_object_at` | modelled (`objectOrNpcAt`) | `occupied` wired to constant `false` | a whole reference outcome is unreachable | med | 100 % | **CONFIRMED MISSING** | with H-154 | yes |
 | **H-156** | Rest | Bed hole-up runs no per-tick turn housekeeping | CMDS `0x0671` to kernel `0x2AE8 kernel_turn_housekeeping`: poison 1 HP, meals at 6/12/18, `Starving!`, turn counter, Q/T expiry, regeneration ring | **also omits it** | `bed_sleep_step` only advances the clock | sleeping costs no food, never starves, never ticks poison, never regenerates | **high** | 100 % | **CONFIRMED MISSING** (both ports) | own batch — moves survival fixtures | yes |
 | **H-157** | Terrain | Hole-up does not run the day/night tile refresh | CMDS `0x0664` to TOWN `0x0170 town_schedule_tile_refresh` when the hour becomes 5 or 20 | omits it | `WorldTerrain::hourly` refreshed only on a town-turn hour change, map entry or klimb | sleep across 20:00/05:00 and the drawbridge-and-lamp overlay is stale until you leave | med | 100 % | **CONFIRMED MISSING** (both ports) | with H-156 | yes |
-| **H-158** | Terrain | Changing floors inside a small map does not reload the map record | `town_use_ladder` `0x052e` to `town_load_town_map(fresh=1)` `0x0408` (re-reads the 0x400 record **and** calls `0x1694`) | not modelled | `klimb_ladder`/`apply_stair_step` emit only `RefreshHourTiles` | an unmagicked skull-key door survives a floor change when 1988 relocks it; the vault does not refill on a floor round-trip | med | 100 % | **CONFIRMED MISSING** (both ports) | own batch — touches R-14 terrain persistence | yes |
-| **H-159** | Loot | Interior chest contents byte is 8; the binary seeds `0x1E` | TOWN `0x1795` `mov word [bp-6],0x1e` to `+5` via kernel `0x3A74` | `INTERIOR_CHEST_CONTENTS = 8` | `o.contents = 8` | every interior chest's loot roll is off the authored value | med | 100 % | **CONFIRMED MISSING** — closes oracle hole **O5** (`re/notes/objects.md`) | own batch: will move `gameplay_parity`/`quest_parity`, needs the TS side regenerated in step | no |
+| **H-158** | Terrain | Changing floors inside a small map does not reload the map record | `town_use_ladder` `0x052e` to `town_load_town_map(fresh=1)` `0x0408` (re-reads the 0x400 record **and** calls `0x1694`) | not modelled | `klimb_ladder`/`apply_stair_step` emit only `RefreshHourTiles` | an unmagicked skull-key door survives a floor change when 1988 relocks it; the vault does not refill on a floor round-trip | med | 100 % | **CONFIRMED MISSING** (both ports) → **FIXED in Batch 23** (both ports; the chest refill on a floor change is part of it) | own batch — touches R-14 terrain persistence | yes |
+| **H-159** | Loot | Interior chest contents byte is 8; the binary seeds `0x1E` | TOWN `0x1795` `mov word [bp-6],0x1e` to `+5` via kernel `0x3A74` | `INTERIOR_CHEST_CONTENTS = 8` | `o.contents = 8` | every interior chest's loot roll is off the authored value | med | 100 % | **CONFIRMED MISSING** — closes oracle hole **O5** (`re/notes/objects.md`) → **FIXED in Batch 23** (both ports) | own batch: will move `gameplay_parity`/`quest_parity`, needs the TS side regenerated in step | no |
 | **H-160** | Camp | Outdoor camp guard walks through the fire and through sleepers | `camp_guard_walk` consumes `cell_free` | modelled (`campCellFree`) | `cell_free` wired to constant `true` | cosmetic on the device today | low | 100 % | **CONFIRMED MISSING** | with H-154 | no |
 | — | Rest | `snap_npcs` is an NPC-only hook, so the object half of one binary routine is unmodelled | TOWN `0x1694` is one routine | `wakeSnapNpcs` to `npcManager.enterMap` only | **corrected this batch** | — | — | — | **REFERENCE-PORT DIFFERENCE** — native is now right and TypeScript is not; no parity fixture encodes it (91/91 green) | flag before any fixture regeneration | no |
 | — | Rest | `bedSleepStep` omits `0x0671` and `0x0664` | as H-156/H-157 | omits | omits | — | — | — | **REFERENCE-PORT DIFFERENCE** compounding H-156/H-157 | with them | no |
@@ -4685,3 +4685,184 @@ Developer-Teleport route: **SOFTWARE FIXED — HARDWARE RETEST REQUIRED.** Walk-
 ### Phase 6Q — Batch 22 basement chests · *firmware only; the SD card is unchanged*
 
 Flash the Batch 22 firmware, start a New Journey, go to Lord British's Castle basement **however you normally do** and look at the vault. Capture every serial line containing `U5OBJ`. Pass: three chests drawn at (16,21), (17,22), (13,23).
+
+## Batch 23 — Lord British's vault: chest loot and the floor-change reset (H-158, H-159)
+
+**Scope:** the three authored basement chests of location 17 and the `0x97` vault door at (15,24). Production changes close **H-159** (chest contents byte) and **H-158** (a floor change must reload the floor). Nothing else was fixed; every other finding below is queued.
+
+### The two hardware observations (Batch 22 firmware, confirmed by the user)
+
+1. Repeatedly looting/resetting the vault yields only gold, torches and food.
+2. Loot the chests, go upstairs, come back down: the chests stay looted and the magically locked vault door stays unlocked. Sleeping in the basement bed does refill the chests.
+
+Batch 22's hydration fix is confirmed on hardware (the chests appear). It was not revisited.
+
+### Baseline
+
+HEAD `b6705142` (tag `alpha2-batch21b-original-behavior-sweep`). ⚠ **Batch 22 is not committed**: it exists only as working-tree changes (the firmware that was flashed). Batch 23 was built on top of that working tree; the Batch 22 diff was snapshotted before any edit. Clean from-scratch baseline (`native/core/build-batch23-baseline`), serial: **92/92, 0 fail** (`batch23-baseline-ctest.log`). No known-flaky test was hit; the Batch 22 `gameplay_parity` crash under `ctest -j 6` remains queued and was not reproduced serially.
+
+### Original loot contract (recovered from the binaries)
+
+Every citation below was re-read with `re/tools/dis16.py`; the tables were dumped from `DATA.OVL` (`fileoff = DS + 0x10`).
+
+**When.** The contents byte is fixed when the chest is placed; the loot is rolled when the chest is **opened**.
+
+- Placement: `TOWN.OVL:0x1726 town_npc_place`, type-1 branch `0x178e cmp byte [bx+0x659e],1` → `0x1795 mov word [bp-6],0x1e`, written as object byte `+5` by kernel `0x3A74` (verified: `[bp+6]` → `+5`). Untrapped (bit `0x80` clear). The byte is a constant: no RNG, no table, no location input.
+- Open: `SJOG.OVL:0x112C open_chest_world` reads `+5` (`0x11cf mov al,[bx+0x5c5f]`) *before* blanking the slot (`0x11e1`), applies town karma (−2, floor 0), and if bit `0x80` is set prints `Trapped!` and runs kernel `0x2FD0`, masking the byte to `& 0x7f`. It then calls **`0x1040 loot_fixed(contents)`** and **`0x10B8 loot_random(contents)`**; if neither placed anything it prints `Chest empty!`.
+- Kernel `rand(lo,hi)` is `ULTIMA.EXE:0x2092` (SJOG `call 0x6112` + base `0xBF80`): `state = ror3(state + 0x9248) ^ 0x9248 + 0x11`; result `lo + (state & 0x7fff) % (hi − lo + 1)`. Native `OriginalRng::next` is the same function.
+
+**Stage 1 — `loot_fixed` (`0x1040`), rows `si = 7 … 0` (DS `0x4124` item / `0x412C` guard / `0x4134` max):**
+
+```
+if guard[si] > contents: skip, no roll                 (0x1083)
+if guard[si] > rand(1,30): skip                          (0x1090/0x1099)
+base = max[si] == 1 ? 1 : rand(1, max[si])               (0x109d/0x1050)
+loot_place(item[si], base, contents)
+```
+
+**Stage 2 — `loot_random` (`0x10B8`), `contents/2 + 1` draws (DS `0x413C` item / `0x416C` guard, 48 rows):**
+
+```
+idx = rand(0,47)                                         (0x10db)
+if guard[idx] > contents: skip, no roll                  (0x10e6)
+if guard[idx] > rand(1,30): skip                         (0x10f2/0x10fb)
+loot_place(item[idx], base = idx, contents)
+```
+
+**Quantity — `loot_place` (`0x0F88`):** id 1 (nested chest) → `rand(1, contents)` becomes the new chest's contents; id 2 (gold) → `rand(1, 3·contents)` (the `rand(1,90)` base is drawn and discarded); ids 3/4 (potion/scroll) → `base − 1` = the potion/scroll index; every other id → `base` (for equipment, the equipment index). Each piece takes a free actor slot (`call 0` = SJOG `find_free_actor_slot`, 31 → 1, shared with the location's NPCs and objects); a piece that finds no slot is rolled but not placed.
+
+**Complete outcome table at contents `0x1E` (30):**
+
+| Stage | RNG / range | Result (object id) | Quantity | P per Open |
+|---|---|---|---|---|
+| fixed row 7 | `rand(1,30) ≥ 7` | food (15) | `rand(1,2)` | 24/30 |
+| fixed row 6 | `rand(1,30) ≥ 7` | torches (13) | `rand(1,2)` | 24/30 |
+| fixed row 5 | `rand(1,30) ≥ 15` | gems (8) | `rand(1,2)` | 16/30 |
+| fixed row 4 | `rand(1,30) ≥ 9` | keys (7) | `rand(1,2)` | 22/30 |
+| fixed row 3 | `rand(1,30) ≥ 17` | scroll (4) | index `rand(1,8) − 1` | 14/30 |
+| fixed row 2 | `rand(1,30) ≥ 17` | potion (3) | index `rand(1,8) − 1` | 14/30 |
+| fixed row 1 | `rand(1,30) ≥ 3` | gold (2) | `rand(1,90)` (after a discarded `rand(1,90)`) | 28/30 |
+| fixed row 0 | `rand(1,30) ≥ 25` | nested chest (1) | contents `rand(1,30)` (after a discarded `rand(1,10)`) | 6/30 |
+| random ×16 | `rand(0,47)` = idx, then `rand(1,30) ≥ guard[idx]` | equipment id `item[idx]` ∈ {5 weapon, 6 shield, 9 helm, 10 ring, 11 armour, 12 amulet} | 1 piece of equipment index `idx` | per draw `1/48 × (31 − guard)/30` |
+
+Equipment rows (index: guard) — helms 0–3: 10,10,15,20 · shields 4–8: 10,15,20,**28**,255 · armour 9–15: 15,15,20,20,20,24,255 · weapons 16–41: 5,10,10,10,10,10,10,10,15,15,15,10,15,10,20,20,20,20,20,255,23,23,23,255,255,255 · rings 42–44: 23,23,23 · amulets 45–47: 23,15,255. Names by index follow the project's equipment table (`longEquipNames.json`; `DATA.OVL` stores them through a shared-string pointer table, so the **index** is the binary fact).
+
+**Equipment is possible — 41 of the 48 rows.** Never: 8 Jewel Shield, 15 Mystic Armour, 35 Sword of Chaos, 39 Glass Sword, 40 Jeweled Sword, 41 Mystic Sword, 47 Ankh (guard 255). Reachable high-value rows include 7 Magic Shield (guard 28), 36 Magic Bow, 37 Silver Sword, 38 Magic Axe, the three rings and the Amulet of Turning (guard 23). Expected equipment per Open, before the slot cap: **6.64** at contents 30.
+
+**Generic, not location-specific.** The routines are the world-chest routines (combat chests use the same `0x112C` with the enemy's treasure rating as contents). What makes the vault what it is, is the constant `0x1E` given to every `.NPC` type-1 slot — and the three basement chests are the only type-1 `.NPC` slots in the game (`re/notes/npc-object-actors.md` census). Nothing in the chain reads the location except the town karma penalty and the trap-type band.
+
+Independent oracle: `re/tools/chest_loot_oracle.py` transcribes `0x2092`/`0x1040`/`0x10B8`/`0x0F88` and reads the four tables out of `DATA.OVL` on every run. Every vector in the tests comes from it.
+
+### Original reset contract (recovered from the binaries)
+
+**Census.** `0x1694 town_populate_npcs` has exactly two callers: kernel thunk `0x7A8E` (only caller `CMDS.OVL:0x0677`, the bed hole-up loop — Batch 21B) **and `TOWN.OVL:0x051d`, a near call inside `0x0408`** (`0x0517 cmp word [bp+4],0 / je 0x520 / call 0x1694`). `0x0408` is the floor loader: it re-reads the floor's 0x400 bytes from the location's `.DAT` into the map buffer DS `0x6608` (`0x045c-0x046f`, file offset `(base + floor) << 10`), zeroes the open-door tracker (`0x041d mov byte [0x594f],0`), refreshes the hour tiles (`0x0508 call 0x170`) and only then, if its argument is non-zero, repopulates. It has four callers (exhaustive near-call scan of `TOWN.OVL`; it has no kernel thunk):
+
+| Caller | Argument | What reaches it |
+|---|---|---|
+| `0x0574` in `0x052E stair_transition` | **1** | every stair step (`0x0835`, the movement handler) and every `(K)limb` of a ladder or grate (`0x0bd5`) |
+| `0x1236` in `0x11F0 town_load_town_map` | its own `fresh` | map entry `TOWN 0x12d1` (1), Blackthorn exit `BLCKTHRN 0x0c5d` (1), moonstone teleport `ULTIMA.EXE 0x4876` (1), boot/Journey Onward `ULTIMA.EXE 0x00f7` (**0** when the save is inside a town — `npc-carga-partida-fresh-gate.md`) |
+| `0x1044` | 1 | a scripted floor drop (fills the buffer with `0x8f`, wipes the object table, `dec [0x5895]`) — not part of this batch |
+| `0x09dc` in `0x09bc` | 0 | after a town-NPC fight (`"Attacked!"` path) — map re-read, no repopulate; not part of this batch |
+
+`0x1726` places an object **only when the schedule z equals the current floor** (`0x176c-0x1785`), so the register only ever holds the current floor's objects; `0x16a2-0x16b9` zeroes all 31 slots first, which also destroys uncollected floor loot.
+
+**The door.** `0x97` is `MagicLockDoor`. A skull key (CAST `0x18f4`) writes `0xB8` into the live buffer; `(O)pen` then shows it open for four turns via the tracker `[0x594f]`. **Closed and magically locked are one stored state — the authored map byte `0x97`** — and it is restored by exactly one thing: a re-read of the floor by `0x0408`.
+
+| Player action (original) | Chests reset | Door closes | Magic lock restored | Loot rerolls |
+|---|---|---|---|---|
+| Go upstairs (stairs or ladder), in the new floor | the new floor's objects are re-placed; the basement's are no longer in the register | — | — | — |
+| **Return downstairs** | **yes** — `0x052E → 0x0408(1) → 0x1694`, contents `0x1E` | **yes** | **yes** — `0x0408` re-reads `0x97` | yes (every Open rolls from the fresh `0x1E`) |
+| (H)ole up in the basement bed | **yes** — `CMDS 0x0677 → 0x1694` each 10-minute tick | no | **no** — `0x1694` never touches `0x6608`, and the hole-up has no path to `0x0408` | yes |
+| Leave the castle and come back | **yes** — `town_load_town_map(1)` | yes | yes | yes |
+| Ordinary turns / clock ticks | **no** — neither routine is reached | (only the 4-turn Open countdown) | no | — |
+| Load a game saved in the basement | **no** — `fresh = 0`: no repopulate; the saved object register (DS `0x5C5A` is in the save window) comes back as it was | yes — `0x0408(0)` re-reads the floor and zeroes `[0x594f]` | yes | no |
+
+**Correction to Batch 21B.** Batch 21B's answer table, row **B**, states the refill trigger is the bed hole-up only, from a census of kernel thunk `0x7A8E`. That census could not see `TOWN.OVL`'s own near call at `0x051d`: every stair step, ladder, map entry and moonstone arrival also re-seeds the interior objects. Batch 21B's row **D** and its H-158 row already described the floor-change reload correctly; row B is superseded here, not edited.
+
+### Native behaviour and root causes — two independent defects
+
+**H-159 — loot.** Native call chain on the device: `UiSession` → `AlphaRuntime::command` → `execute_command` → `world_interaction(Open)` → `open_chest` → `chest_loot(contents & 127)` → `QuestObject{loot}` appended per piece → `(G)et` → `apply_loot_grant`. `chest_loot`'s tables and control flow are **byte-identical to the original** (all five tables compared to `DATA.OVL`; call sequence proven by V1). The only divergence is its input: `hydrate_interior_objects` seeded every interior chest with `o.contents = 8`, inherited from the TypeScript reference's documented Class-C placeholder `INTERIOR_CHEST_CONTENTS = 8` (oracle hole O5). With contents 8, fixed rows with guards 25/17/17/15/9 are skipped without a roll, leaving only food, torches and gold, and `loot_random` makes 5 draws of which only index 16 (Dagger, guard 5) can succeed — about one Dagger per eleven chests. That is the hardware observation exactly. Not a table, RNG, item-id, category or inventory defect; `(G)et` of equipment already works (V6).
+
+**H-158 — lifecycle.** `klimb_ladder` and `apply_stair_step` (`transitions.cpp`) emitted only `RefreshHourTiles`. The TypeScript reference had the same gap: both methods cite `0x052E → 0x0408` but implement only the hour-tile refresh. So a floor change never cleared the transient terrain layer holding the skull-keyed `0xB8`, never reset the open-door tracker, and never re-hydrated interior objects. The bed path was already right (Batch 21B), which is why sleeping refilled the chests while the stairs did not. The Batch 22 queue items (`ResetDoors`/`HydrateUnderworld` dropped on the Developer-Teleport and dungeon-exit routes) do **not** intersect: stair and ladder effects flow through `Runner::transitions()`, which consumes `ResetDoors`, `ClearTerrain` and `HydrateInterior` itself before notifying the device.
+
+### Fixes (minimal)
+
+| File | Change |
+|---|---|
+| `native/core/include/openu5/quest_world.h`, `src/quest_world.cpp` | `kInteriorChestContents = 0x1e`, cited to `TOWN 0x1795`; the hydrated chest uses it |
+| `native/core/src/transitions.cpp`, `include/openu5/transitions.h` | `reload_floor()`: `ResetDoors`, `ClearTerrain` (and `volatile_terrain_wipe = false`), `HydrateInterior`, `RefreshHourTiles` — the same effects, in the same order, as `load_small_map`. `klimb_ladder` and `apply_stair_step` call it and now take the `TravelState&` that `load_small_map` already takes |
+| `native/core/src/commands.cpp` | the two call sites pass `c.travel` |
+| `game/src/core/game.ts` (reference) | `INTERIOR_CHEST_CONTENTS = 0x1e` (closes O5); `klimbLadder`/`applyStairStep` run the same `doors.reset` / `clearVolatileTerrain` / `hydrateInteriorObjects` sequence as its own `loadSmallMap`, before `refreshHourTiles` |
+| `native/core/fixtures/commands.txt`, `fixtures/travel.txt` | regenerated from the corrected reference (see below) |
+| `native/core/tools/generate-travel-fixtures.ts` | its minimal kind-0 mock gains no-op `clearVolatileTerrain`/`hydrateInteriorObjects` (the native side of that case passes no effect sink at all) |
+| `native/core/tests/travel_parity_test.cpp` | the new `TravelState&` argument at three call sites |
+
+Nothing is special-cased to location 17 and no timer was invented. The fix lives in the transition layer because that is where the reference draws the line: `command_parity` and `travel_parity` pin exactly which reload operations `Game.klimbLadder`/`applyStairStep` perform, so a native-only fix in `Runner` (tried first) moved `command_parity` row 4224 and was withdrawn in favour of correcting the reference at its own layer.
+
+**Fixture regeneration, controlled.** Both generators were first run in `--check` mode against the *unmodified* reference: byte-identical (no drift). After the reference fix: `commands.txt` 112 rows changed, `travel.txt` 26 rows changed, nothing else. A token-level check proves every changed `commands.txt` row differs *only* by three records (`22 ResetDoors`, `23 ClearTerrain`, `24 HydrateInterior`) inserted immediately before the existing `RefreshHourTiles` record with its identical position and RNG seed, plus the grown length counters. Every changed `travel.txt` row is the same insertion (`2`,`3`,`4` before `5`) plus `volatile_terrain_wipe` 1 → 0 (the floor re-read clears the wipe, as `loadSmallMap` does). No RNG draw, event, position or state value moved in either corpus.
+
+`quest_parity` (live against the reference) moved only in the expected place — sequence 4941, `world-flow` `{interior}` at location 17: `contents` 8 → 30 on the three chests — and is green again with the reference constant corrected. The reference's own unit suite has the identical failing set before and after (97 pre-existing failures: lints and undistributed material; `batch23-ts-vitest*.log`); the 13 files that exercise the changed code pass 228/228.
+
+### Tests — `batch23_vault_parity` (45 checks, real `AlphaRuntime` + shipped resource pack, Batch 22 seam)
+
+- **V1–V3 loot mechanism** (core `chest_loot` with a recording RNG): the exact 42-draw `(lo,hi)` sequence and final RNG state of oracle seed `0x0073`; pieces and final state of seeds `0x0073`/`0x00d0`/`0x0181`; every fixed row reachable with the original quantity rules and no roll for a guard over contents; all 48 equipment rows index by index (41 reachable, 7 never).
+- **V4–V6 through the runtime**: hydrated chests carry `0x1E`; real `(O)pen` with seeded `game.rng` places exactly the oracle's pieces for all three chests (a Mace, Quarrels, Arrows, Flaming Oil, a potion, scrolls, keys, gems, a nested chest); real `(G)et` carries a Mace and scroll into the inventory. Against contents 8 the runtime produced exactly the oracle's contents-8 prediction for each seed, which also proves no stray draw precedes the loot roll.
+- **L1/L2 lifecycle** by ladder and by stairs (all legs real `(K)limb` keys / `Move` commands): three chests back, contents `0x1E`, no duplicates, uncollected loot gone, and the refilled chest rolls anew.
+- **D1/D2 door**: `(15,24)` authored and drawn `0x97`; skull key → `0xB8`; `(O)pen` → open; the first floor change clears the tracker; back downstairs it is `0x97`.
+- **Negatives, each from the census:** L3 five `(P)asses` do not refill; L4/D4 leaving and re-entering refills and relocks (already correct); D3 a bed hole-up refills the chests but leaves the door `0xB8`.
+
+Positions are placed by hand only to stand next to a chest (the vault is barrels around three floor cells), next to the door, or on a ladder; every state change is a real command.
+
+**RED → GREEN.** Against pre-Batch-23 production (Batch 22 tree, `transitions`/`commands` at HEAD, contents 8): **28/45 GREEN, 17 RED** — V4b, V5a–c, V6b–d, L1d–f, L2d–f, D1d–e, D2d–e (`native/core/batch23-red.log`). After the fix: **45/45** (`batch23-green.log`).
+
+**Mutation proof** (`native/core/batch23-mutation-m*.log`, each reverted):
+
+| | Mutation | RED |
+|---|---|---|
+| M1 | `loot_random` loop disabled | 12 — V1a–d, V2b, V3a, V5a–c, V6b, L1f, L2f |
+| M2 | contents back to 8 | 11 — V4b, V5a–c, V6b–d, L1d, L1f, L2d, L2f |
+| M3 | floor change without `HydrateInterior` | 6 — L1d–f, L2d–f |
+| M4 | floor change without `ClearTerrain` | 2 — D1e, D2e |
+| M5 | floor change without `ResetDoors` | 3 — D1d, D1e, D2d |
+| M6 | bed hole-up also clears terrain | 1 — D3b |
+
+M6 first *survived* against an earlier D3 that opened the door before sleeping: the Open countdown overlay masked the tile underneath. D3 was tightened to unlock without opening and to require exactly `0xB8`; M6 then died.
+
+### Regression sweep
+
+Covered by the full suite and the new target: Batch 21B bed reset (38 checks), Batch 22 hydration, other chests (combat and dungeon chests use their own contents — `combat_loot_open_regression`, dungeon parity), inventory insertion (V6), doors (`command_parity`, `world_flow_*`), interior floor transitions (`travel_parity`, `movement_flow_*`), rest (`batch21b_chest_reset`), save/load (`persistence_*`), Developer Teleport (`debug_map_picker`, `batch22`). Nothing else moved.
+
+### Queued, not fixed
+
+- **H-161 — NPC half of `0x1694` on a floor change.** The original also snaps every NPC of the location to its schedule position (`0x1841-0x1856`) on every stair/ladder step. Neither port does; not reported on hardware. Same split as H-154.
+- **H-162 — an Open door survives a load.** The original's load path `0x0408(0)` zeroes `[0x594f]` and re-reads the floor; native restores `openDoors` with its countdown (so does the reference). The **magic lock** already matches — `WorldTerrain::transient` is not saved.
+- **H-163 — `0x09bc` post-fight reload.** After a town-NPC fight the original re-reads the floor without repopulating (doors relock, chests do not refill). Native behaviour not examined.
+- The Batch 22 `U5OBJ` trace is still compiled in and still owed its removal.
+
+### Full regression suite
+
+From-scratch build (`native/core/build-batch23-final`), serial: **93/93, 0 fail** (`batch23-final-ctest.log`) — the prior 92 plus `batch23_vault_parity`. `command_parity` and `travel_parity` run against the regenerated fixtures; `gameplay_parity` and `quest_parity` run live against the corrected reference. One warning, the pre-existing w64devkit `stl_uninitialized.h` `-Wstringop-overflow=` false positive; zero project warnings.
+
+### Firmware
+
+ESP-IDF 6.1, `native/targets/tdeck/build-batch23`: `openu5_tdeck.bin` = **0xd38d0** (866,512 bytes), +0x40 over Batch 22; `0x2c730` (17 %) of the app partition free. **0 errors, 0 compiler warnings** (`batch23-firmware-build.log`). Launcher image (`package_launcher.py`): `build-batch23/launcher/OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`, SHA-256 `e4efc721ff717e70e28e79734d918233ad2ade80ecb418f4ad1da1b76fb923bf`. **Not flashed.** SD card unchanged.
+
+### Status
+
+H-158 and H-159: **SOFTWARE FIXED — HARDWARE RETEST REQUIRED.** H-148 (Batch 21B bed reset) is unchanged and still owed its hardware pass; Phase 6R below covers it too.
+
+### Phase 6R — Batch 23 vault loot and floor-change reset · *firmware only; the SD card is unchanged*
+
+Flash the Batch 23 firmware, start a **New Journey**, and give the party a few skull keys. No serial capture is needed.
+
+1. Enter Lord British's Castle normally and go down to the basement (the ladder at (1,1) or the stairs at (12,7)).
+2. `(U)se` a skull key on the vault door at **(15,24)**, `(O)pen` it, and open the three chests.
+3. **Expected:** the `Found:` lists are no longer only gold, torches and food. Over the three chests expect weapons, armour, shields, helms and often rings/amulets, plus potions, scrolls, keys, gems and sometimes a nested chest. (Each chest averages over six pieces of equipment before the slot limit.)
+4. `(G)et` a few pieces, leave the rest on the floor, then go **up** one floor and straight back **down**.
+5. **Expected:** all three chests are back and unopened; the loot left on the floor is gone; the door is **magically locked again** — another skull key is needed.
+6. Unlock the door again (do not open it), loot the chests, `(H)`ole up 1 hour in the bed at (16,19).
+7. **Expected:** the chests are back; the door is **still unlocked** (no second key).
+
+**Pass:** steps 3, 5 and 7. **Fail** if step 3 still shows only gold/torches/food across several chests, if the chests or the lock do not come back in step 5, or if the bed relocks the door in step 7.
+
+**Known and queued, do not file:** NPCs do not jump to their schedule positions when you change floors (H-161) or sleep (H-154).

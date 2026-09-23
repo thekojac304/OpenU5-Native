@@ -12,6 +12,20 @@ static void changed(TransitionServices s) {
     if (s.event)
         s.event(s.context, GameEventKind::MapChanged, nullptr);
 }
+// Batch 23. Every town stair or ladder step is TOWN.OVL:0x052E, which ends in
+// `push 1; call 0x408` -- the floor loader town_load_town_map also uses. 0x408
+// re-reads the floor from disk into the map buffer DS 0x6608 (a skull-keyed
+// 0x97 door is 0x97 again), zeroes the open-door tracker [0x594f] (0x041d),
+// refreshes the hour tiles (0x0170) and, with its argument set, calls 0x1694
+// town_populate_npcs (0x0517/0x051d), which wipes and re-places the interior
+// objects. Same effects, same order, as load_small_map.
+static void reload_floor(TravelState &v, TransitionServices s, uint8_t id) {
+    effect(s, ReloadEffect::ResetDoors, id);
+    v.volatile_terrain_wipe = false;
+    effect(s, ReloadEffect::ClearTerrain, id);
+    effect(s, ReloadEffect::HydrateInterior, id);
+    effect(s, ReloadEffect::RefreshHourTiles, id);
+}
 int32_t location_at(LocationTable t, int32_t x, int32_t y) {
     for (size_t i = 0; i < t.x_count && i < t.y_count; ++i)
         if (t.x[i] == x && t.y[i] == y)
@@ -68,7 +82,7 @@ Error confirm_town_exit(GameState &g, bool yes, LocationTable t, TransitionServi
     effect(s, ReloadEffect::ContextTurn, g.position.map.location);
     return Error::None;
 }
-bool apply_stair_step(GameState &g, const WorldData &w, int32_t tile, Direction dir, TransitionServices s) {
+bool apply_stair_step(GameState &g, TravelState &v, const WorldData &w, int32_t tile, Direction dir, TransitionServices s) {
     if ((tile & 252) != 196)
         return false;
     int32_t d = 0;
@@ -93,12 +107,12 @@ bool apply_stair_step(GameState &g, const WorldData &w, int32_t tile, Direction 
     if (!delta || !floor_exists(w, target))
         return false;
     g.position.map = target;
-    effect(s, ReloadEffect::RefreshHourTiles, target.location);
+    reload_floor(v, s, target.location);
     message(s, delta > 0 ? "Up!" : "Down!");
     changed(s);
     return true;
 }
-bool klimb_ladder(GameState &g, const WorldData &w, int16_t delta, TransitionServices s) {
+bool klimb_ladder(GameState &g, TravelState &v, const WorldData &w, int16_t delta, TransitionServices s) {
     MapId target = g.position.map;
     target.floor = int16_t(target.floor + delta);
     if (!floor_exists(w, target)) {
@@ -106,7 +120,7 @@ bool klimb_ladder(GameState &g, const WorldData &w, int16_t delta, TransitionSer
         return false;
     }
     g.position.map = target;
-    effect(s, ReloadEffect::RefreshHourTiles, target.location);
+    reload_floor(v, s, target.location);
     effect(s, ReloadEffect::ContextTurn, target.location);
     message(s, delta > 0 ? "Klimb-Up!" : "Klimb-Down!");
     changed(s);

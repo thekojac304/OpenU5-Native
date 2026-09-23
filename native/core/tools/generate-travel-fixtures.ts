@@ -36,7 +36,7 @@ for(let scenario=0;scenario<24;scenario++)for(let seed=0;seed<16;seed++){
    const delta=step===10?1:step===20?-1:0;
    const input=[scenario,s.time.hour,s.position.x,s.position.y,rng.getSeed(),list.length,...list.flatMap(actor),s.position.floor,delta];
    const e:any[]=[];
-   if(delta)(Game.prototype as any).applyStairStep.call({state:s,activeMap:{tileAt:()=>196},floorExists:(id:number,z:number)=>world.smallMaps.get(id)?.floors.some(f=>f.z===z),refreshHourTiles:()=>{}},delta>0?'north':'south',e);
+   if(delta)(Game.prototype as any).applyStairStep.call({state:s,activeMap:{tileAt:()=>196},floorExists:(id:number,z:number)=>world.smallMaps.get(id)?.floors.some(f=>f.z===z),refreshHourTiles:()=>{},clearVolatileTerrain:()=>{},hydrateInteriorObjects:()=>{}},delta>0?'north':'south',e);
    manager.tick(s,world,doors);
    const walk=s.npcWalk!;
    // Validate the authoritative manager's persisted projection too.
