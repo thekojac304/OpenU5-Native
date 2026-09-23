@@ -168,3 +168,29 @@ game/tools/careo-visual/_out
 native/targets/tdeck/build/
 native/targets/tdeck/build-*/
 /native/core/build-shops/
+
+# Scratch build/ctest/export logs from before the evidence-log convention settled (Batches
+# 5-19, 21A.3, 21B), never committed. Listed by batch on purpose: Batches 20-23 commit their
+# evidence logs under the same names, so there is no blanket batch*.log rule.
+/native/core/batch1[5-9]-*.log
+/native/core/batch17-driver-direct.err
+/native/core/batch17-driver-direct.out
+/native/core/batch21a-red-build.log
+/native/core/batch21a-red-configure.log
+/native/core/batch21a3-*.log
+/native/core/batch21b-*.log
+/native/core/red-model.log
+/native/core/red-runtime.log
+/native/targets/tdeck/build-batch[5-8]-*.log
+/native/targets/tdeck/build-batch9e-*.log
+/native/targets/tdeck/build-batch1[1-9]*-*.log
+/native/targets/tdeck/build-batch21a3-firmware.log
+/native/targets/tdeck/build-batch45*-*.log
+/native/targets/tdeck/export-batch1[47].log
+/native/targets/tdeck/export-batch21a*.log
+/native/targets/tdeck/export_log*.txt
+# Verbatim .NPC records for location 17 lifted from the shipped pack (EA data, like
+# loot_names.inc): read by tests/batch21b_lb_basement_probe.cpp, never distributed.
+/native/core/loc17_slots.inc
+# A stray CMake stdlib-detect dump that a tool wrote to a file literally named "-".
+/-
