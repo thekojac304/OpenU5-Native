@@ -32,15 +32,22 @@ void discard_interior_objects(GameState &g,QuestWorldServices &s,int32_t loc){
     bool summoned=false;for(size_t i=0;i<s.count(s.context);++i)summoned|=s.read(s.context,i).shadowlord;if(!summoned){g.quest.summoned=-1;g.quest.optional_present&=uint8_t(~8u);}
 }
 bool hydrate_interior_objects(CommandContext &c,int32_t loc){
-    if(!loc || !c.actors)return true;
-    auto *s=c.quest_world;if(!pool(s))return false;
+    const InteriorHydrationTrace *t=c.quest_world?c.quest_world->hydration_trace:nullptr;
+    auto done=[&](bool result,const char *reason){if(t && t->end)t->end(t->context,loc,result,reason);return result;};
+    if(!loc || !c.actors)return done(true,!loc?"no-location":"no-actor-owner");
+    auto *s=c.quest_world;if(!pool(s))return done(false,"pool-services-missing");
     const NpcLocationData *data=nullptr;for(size_t i=0;i<c.npc_data_count;++i)if(c.npc_data[i].location==loc)data=&c.npc_data[i];
-    if(!s->reserve(s->context,data?data->count:0))return false;
-    discard_interior_objects(c.game,*s,loc);if(!data)return true;
-    for(size_t i=0;i<data->count;++i){const auto &n=data->slots[i];if(!n.slot)continue;auto item=plot_item_for_npc_type(n.type);if(item==PlotItem::None && n.type!=1 && n.type!=30)continue;
-        bool taken=item==PlotItem::Crown?c.game.quest.artifacts[1]:item==PlotItem::Sceptre?c.game.quest.artifacts[2]:item==PlotItem::WoodenBox?c.game.wooden_box:false;if(taken)continue;
-        auto idx=schedule_index(n.times,uint8_t(c.game.time.hour));QuestObject o;o.location=loc;o.floor=n.z[idx]==255?-1:n.z[idx];o.x=n.x[idx];o.y=n.y[idx];o.tile=item==PlotItem::None || item==PlotItem::Carpet?n.type+256:n.type;o.item=item;o.plot=item!=PlotItem::None;o.chest=n.type==1;o.prop=n.type==30;o.contents=8;s->append(s->context,o);
-    }return true;
+    if(t && t->begin)t->begin(t->context,loc,data,c.npc_data_count);
+    if(!s->reserve(s->context,data?data->count:0))return done(false,"reserve-failed");
+    discard_interior_objects(c.game,*s,loc);if(!data)return done(true,"no-source-table");
+    for(size_t i=0;i<data->count;++i){const auto &n=data->slots[i];auto idx=schedule_index(n.times,uint8_t(c.game.time.hour));
+        auto drop=[&](const char *reason){if(t && t->slot)t->slot(t->context,i,n,idx,reason,nullptr);};
+        if(!n.slot){drop("empty-slot");continue;}auto item=plot_item_for_npc_type(n.type);if(item==PlotItem::None && n.type!=1 && n.type!=30){drop("npc-type-not-object");continue;}
+        bool taken=item==PlotItem::Crown?c.game.quest.artifacts[1]:item==PlotItem::Sceptre?c.game.quest.artifacts[2]:item==PlotItem::WoodenBox?c.game.wooden_box:false;if(taken){drop("plot-item-already-taken");continue;}
+        QuestObject o;o.location=loc;o.floor=n.z[idx]==255?-1:n.z[idx];o.x=n.x[idx];o.y=n.y[idx];o.tile=item==PlotItem::None || item==PlotItem::Carpet?n.type+256:n.type;o.item=item;o.plot=item!=PlotItem::None;o.chest=n.type==1;o.prop=n.type==30;o.contents=8;
+        if(t && t->slot){t->slot(t->context,i,n,idx,nullptr,&o);}
+        s->append(s->context,o);
+    }return done(true,"ok");
 }
 QuestCommandResult yell_in_world(CommandContext &c,TalkText word,EventSink sink) {
     auto *s=c.quest_world;

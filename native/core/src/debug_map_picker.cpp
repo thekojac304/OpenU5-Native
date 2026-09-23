@@ -1,6 +1,7 @@
 #include "openu5/debug_map_picker.h"
 
 #include "openu5/dungeon.h"
+#include "openu5/quest_world.h"
 
 #include <limits>
 
@@ -102,6 +103,15 @@ void emit_map_changed(CommandContext &c) {
 }
 
 void reload(CommandContext &c, ReloadEffect effect, uint8_t location) {
+    // Batch 22. HydrateInterior is core-owned: commands.cpp's
+    // Runner::transitions() runs hydrate_interior_objects() itself and only
+    // then notifies the host, and the device's AlphaRuntime::command_reload()
+    // has no arm for it. Forwarding it alone therefore seeded nothing on the
+    // T-Deck -- a Developer Teleport into Lord British's Castle left the
+    // authored basement chests out of the pool. DebugApi.goToLocation /
+    // teleportSmallMap call game.hydrateInteriorObjects(location) directly.
+    if (effect == ReloadEffect::HydrateInterior && c.quest_world)
+        hydrate_interior_objects(c, location);
     if (c.services.reload)
         c.services.reload(c.services.context, effect, location, c.events);
 }

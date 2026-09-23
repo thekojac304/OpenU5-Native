@@ -80,6 +80,9 @@ class AlphaRuntime {
         size_t enemy_def_count = 0;
         const uint8_t *location_x = nullptr, *location_y = nullptr;
         size_t location_count = 0;
+        // Batch 22: the 32 per-location .NPC tables initialize() takes from
+        // the pack (resources_.npc_locations). Null keeps the empty tables.
+        const openu5::NpcLocationData *npc_locations = nullptr;
     };
     void attach_host_test_fixture(const HostTestFixture &);
     openu5::TurnState &turn() { return turn_; }
@@ -93,6 +96,12 @@ class AlphaRuntime {
     const openu5::CombatState &combat_state() const { return combat_; }
     const openu5::CommandContext &command_context() const { return context_; }
     openu5::DungeonState &dungeon_state_for_test() { return dungeon_; }
+    // Batch 22: the SAME context the device's UiDebugMenu is constructed
+    // over (initialize(): new UiDebugMenu(context_)), so a host test can make
+    // the identical apply_debug_teleport(context_, ...) call, and the SAME
+    // pool QuestWorldServices writes.
+    openu5::CommandContext &command_context_for_test() { return context_; }
+    const std::vector<openu5::QuestObject> &objects_for_test() const { return objects_; }
 
     // Batch 14 / R-22 host-test seam --------------------------------------
     // The (Z)-stats modal, observable without a Board. `zstats_view()` is the
@@ -377,6 +386,24 @@ class AlphaRuntime {
     static bool command_effect(void *, openu5::CommandEffect, openu5::EventSink);
     static void command_reload(void *, openu5::ReloadEffect, uint8_t, openu5::EventSink);
     static const char *banner(void *, uint8_t);
+
+    // Batch 22 -- temporary U5OBJ trace of Lord British's Castle basement
+    // objects (location 17, floor -1). Silent for every other location. It
+    // observes the pool, the hydration decisions and the first snapshots; it
+    // never changes what any of them do.
+    openu5::InteriorHydrationTrace hydration_trace_{};
+    bool u5obj_hydrating_ = false;
+    bool u5obj_in_basement_ = false;
+    uint8_t u5obj_present_seen_ = 0, u5obj_render_pending_ = 0;
+    uint32_t u5obj_hydrate_calls_ = 0, u5obj_accepted_ = 0, u5obj_dropped_ = 0;
+    static void u5obj_begin(void *, int32_t, const openu5::NpcLocationData *, size_t);
+    static void u5obj_slot(void *, size_t, const openu5::NpcSlot &, uint8_t, const char *,
+                           const openu5::QuestObject *);
+    static void u5obj_end(void *, int32_t, bool, const char *);
+    void u5obj_dump_pool(const char *stage) const;
+    void u5obj_trace_present(const openu5::PresentationSnapshot &);
+    void u5obj_trace_render(const openu5::PresentationSnapshot &);
+    void u5obj_bind();
     static void start_smoke(void *, int group);
 };
 

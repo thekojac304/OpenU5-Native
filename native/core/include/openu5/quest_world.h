@@ -22,6 +22,18 @@ struct QuestObject {
 };
 struct SearchObject { int32_t id=0,quality=0,location=0,floor=0,x=0,y=0; };
 struct ShardSpawn { int32_t x=0,y=0,z=0; };
+// Batch 22 diagnostic observer for hydrate_interior_objects(). Every hook is
+// optional and none can change the outcome: the core reports what it decided,
+// in order, and the owner chooses what to print. `slot` reports each .NPC
+// slot once, with the schedule entry it used and either a drop reason or the
+// object it is about to append; `end` reports every return path, including
+// the early ones that never reach the slot loop.
+struct InteriorHydrationTrace {
+    void *context=nullptr;
+    void (*begin)(void *,int32_t location,const NpcLocationData *source,size_t table_count)=nullptr;
+    void (*slot)(void *,size_t index,const NpcSlot &,uint8_t schedule,const char *drop_reason,const QuestObject *accepted)=nullptr;
+    void (*end)(void *,int32_t location,bool result,const char *reason)=nullptr;
+};
 struct QuestWorldServices {
     // Borrowed services and assets must remain valid throughout a command.
     // reserve(n) must guarantee n subsequent appends without failure. Erase
@@ -52,6 +64,7 @@ struct QuestWorldServices {
     const char *(*karma_record)(void *,int32_t)=nullptr; // Quoted KARMA.DAT, shared with rest.
     void (*write)(void *,size_t,const QuestObject &)=nullptr;
     void (*persistent_tile)(void *,int32_t,int32_t,int32_t)=nullptr;
+    const InteriorHydrationTrace *hydration_trace=nullptr; // Diagnostics only.
 };
 bool hydrate_underworld_plot(GameState &,QuestWorldServices &);
 bool hydrate_interior_objects(CommandContext &,int32_t);

@@ -4604,3 +4604,84 @@ Flash the Batch 21B firmware. Party needs at least one skull key.
 **Pass criteria:** steps 5-7. **Fail** if the chests stay empty, if they come back trapped, if the door relocks, or if a chest appears anywhere other than those three cells.
 
 **Known-and-queued, do not file:** NPCs will not move while you sleep (H-154), "Thrown out of bed!" cannot fire (H-155), sleeping costs no food and does not tick poison (H-156), and sleeping past 20:00 leaves the drawbridge overlay stale (H-157). Serial is not required for a clean pass; capture it only if behaviour diverges.
+
+## Batch 22 — Lord British's Castle basement chests missing on the T-Deck (diagnostic batch)
+
+### The device observation
+
+On the real T-Deck, newest firmware, brand-new save: Lord British's Castle basement (location 17, floor -1) loads and renders, but the three authored vault chests at **(16,21), (17,22), (13,23)** are absent and plain floor is drawn in their cells. Host probes from Batch 21B had already shown the core *can* hydrate them — but both probes supplied their own `QuestWorldServices` and their own reload callback, so neither ever ran `AlphaRuntime`'s object callbacks or `AlphaRuntime::command_reload()`.
+
+### The two real runtime paths into the basement
+
+**A. Walk in — (E)nter, then (K)limb down.**
+`UiInputAdapter` → `UiSession` → `AlphaRuntime::command()` → `execute_command()` → `Runner::enter()` → `transitions.cpp::load_small_map(17)` emits, in order, `EnterNpcs`, `ClearEnemies`, `ResetDoors`, `ClearTerrain`, **`HydrateInterior`**, `RefreshHourTiles`, `UrbanEffects` → each goes to `Runner::transitions()` (`commands.cpp:294`), which **runs `hydrate_interior_objects(r.c, 17)` itself** (`commands.cpp:309`) and only then forwards the effect to the host (`AlphaRuntime::command_reload`). Hydration: select `context_.npc_data[16]` (= `resources_.npc_locations[16]`, from `npcs.bin`) → `quest_.reserve` = `AlphaRuntime::object_reserve` → `discard_interior_objects(17)` → per slot `quest_.append` = `AlphaRuntime::object_append` (`objects_.push_back`). All floors of the location are seeded at once, basement slots with `z=0xFF → floor -1`. `(K)limb` on the floor-0 ladder (tile 201) → `klimb_ladder(-1)` → `RefreshHourTiles` + `ContextTurn`; nothing touches the pool. First frame: `AlphaRuntime::render()` → `get_active_map(resources_.world, L17/F-1)` → `compose_world_presentation(context_, …)` → layer-1 object pass reads `quest_.count/read` = `objects_` → actor clock → world fx → `render_snapshot(tile_cache_, snapshot, …)`.
+
+**B. Developer Teleport** (developer tools are compiled into the Alpha firmware: `OPENU5_ENABLE_DEVELOPER_TOOLS=ON`).
+`UiDebugMenu::apply_action()` → `apply_debug_teleport(context_, r)` (`debug_map_picker.cpp`, SmallMap arm) sets the position, then calls the file-local `reload()` for `ResetDoors`, `EnterNpcs`, **`HydrateInterior`** — and that helper only forwards to `c.services.reload`, i.e. **straight to `AlphaRuntime::command_reload()`, bypassing `Runner::transitions()`**. `command_reload()` has arms for `EnterNpcs`, `ClearEnemies`, `ClearTerrain` and `RefreshHourTiles` only. **`HydrateInterior` is dropped on the floor.** NPCs appear (the device handles `EnterNpcs` itself), the pool stays empty, and the composer paints terrain.
+
+### Root cause (proven on host, with the device's own runtime and data)
+
+`debug_map_picker.cpp::reload()` treated `HydrateInterior` as a host effect. It is core-owned everywhere else: `Runner::transitions()` consumes it before notifying the host, and the reference recipe the picker claims to copy (`DebugApi.goToLocation` / `teleportSmallMap`, `game/src/debug/debugApi.ts:310-343`) calls `game.hydrateInteriorObjects(location)` directly. `debug_map_picker_test.cpp` only asserted that the effect was *emitted* to a recording host, and the Batch 21B probes consumed it in their own callback — so no test ever ran the device's consumer. **Classification: port defect in the device glue (a core effect with no device consumer), not reference behaviour and not authored data.**
+
+### RED proof
+
+New ctest target `batch22_basement_objects` (`native/targets/tdeck/host_tests/batch22_basement_objects_test.cpp`). It links the **real, unmodified `alpha_runtime.cpp`** (Batch 11 seam) and loads the **real shipped `native/assets/openu5-alpha1-resources.bin`** through the production `AlphaResourcePack` (payload CRC `0x2065ad91`), so the `.NPC` tables, castle floors, overworld and location table are the device's own bytes. Against the pre-fix picker: **17/23 GREEN, 6 RED** (`native/core/batch22-red.log`) — T1 (source table) and T2 (walk-in, hours 12 and 3) GREEN; **T3b/T3c/T3d RED on both Developer Teleport variants**, pool size 0, and the snapshot drawing tile **68 (floor)** on all three chest cells — the device symptom exactly.
+
+### The fix (one production statement)
+
+`debug_map_picker.cpp::reload()` now runs `hydrate_interior_objects(c, location)` for `HydrateInterior` when `c.quest_world` is bound, then forwards as before. `hydrate_interior_objects()` discards the location's interior objects before re-seeding, so a repeat teleport cannot stack a second vault (T3d). The walk-in path is untouched. `ResetDoors` has the same shape on this route (the device has no arm for it) — **not changed here**, queued below.
+
+### GREEN and mutation proof
+
+After the fix: **23/23 GREEN** (`batch22-green.log`). T1/T2 were green on first run, so they were mutation-validated against production code and reverted:
+- **M1** — drop the `0xFF → -1` floor decode in `hydrate_interior_objects`: **12 RED** (T2b/T2e/T2f at both hours, T3b/c/d on both variants) (`batch22-mutation-m1.log`).
+- **M2** — remove `Runner::transitions()`'s `HydrateInterior` consumer: **6 RED** (T2b/T2e/T2f at both hours) (`batch22-mutation-m2.log`).
+
+### Other Phase E questions, answered separately
+
+| Question | Answer | Evidence |
+|---|---|---|
+| Which heap backs `objects_`? | `std::vector` default allocator → `operator new` → `malloc`. With `CONFIG_SPIRAM_USE_MALLOC=y`, `SPIRAM_MALLOC_ALWAYSINTERNAL=4096`, a block of 4 KiB or less is tried in **internal RAM first**. Location 17 reserves 32 × 68 = 2,176 bytes. | `sdkconfig`; `sizeof(QuestObject)=68` from the host trace. The device heap is **not yet observed** — `U5OBJ RESERVE_DONE storage_heap=` reports it. |
+| Does the PSRAM guard match the allocator? | **No.** `object_reserve()` gates on `heap_caps_get_free_size(PSRAM) >= need + 32 KiB`, but the storage is most likely internal. The guard is merely conservative; with ~7 MB of PSRAM it cannot plausibly fail. Left unchanged, as instructed. | code reading; `U5OBJ RESERVE … result=` on device |
+| Can `reserve()` fail or throw? | The guard can return `false` → `hydrate_interior_objects` returns `false` **before** its discard, so nothing is cleared first. `CONFIG_COMPILER_CXX_EXCEPTIONS` is off, so a real allocation failure inside `vector::reserve` **aborts** (panic + reboot); it cannot fail silently. | `sdkconfig`; `quest_world.cpp` order |
+| Is a hydration failure surfaced? | Walk-in: `NeedsStorage` → the existing `Command failed status=NeedsStorage` warning. Teleport: the picker still ignores the `bool`, but `U5OBJ POST_HYDRATE result=0 reason=…` now reports it. | code |
+| Does later initialization wipe the pool? | Not on the walk-in path (T2e: intact after `(K)limb`). The only `objects_.clear()` calls are load/restore and New Journey, both now logged (`U5OBJ CLEAR site=…`). | T2e; code |
+| Does save restore replace hydrated objects? | Restore is verbatim from the sidecar, chests included — **but** a save taken after a Developer Teleport under the old firmware captured the empty pool; loading it still shows no chests until the party re-enters the castle. | `gameplay_save.cpp:45-62` |
+| Basement floor/z on device? | Same code, same bytes: slots 23/24/25 (and 28, the `(9,9)` control) are `z=255,255,255`, decoded to floor -1. | `U5OBJ SRC`/`HYDRATE` lines, T1b/T1c |
+
+### What is proven vs. not
+
+- **Proven:** the Developer Teleport route never hydrated interior objects on the device runtime; the fix restores them in the pool and in the composed snapshot, on the device's own data.
+- **Strong hypothesis:** the hardware session reached the basement via Developer Teleport. Not established — the report does not say how the party got there.
+- **Unproven:** that the walk-in route is also healthy **on hardware** (it is healthy on host with the real runtime and data). If the chests are still missing after this firmware, the `U5OBJ` trace will name the stage.
+
+### Diagnostic instrumentation (temporary; remove after the hardware run)
+
+All `U5OBJ` lines are gated on location 17 and the four tracked cells; every other location is silent. Core gains one behaviour-neutral observer, `QuestWorldServices::hydration_trace` (`InteriorHydrationTrace`: `begin`/`slot`/`end`), which the device binds in `initialize()` and the host fixture binds identically. Checkpoints: `SOURCE`/`SRC` (table selected, tracked slots with all three schedule positions), `RESERVE`/`RESERVE_DONE` (request, size/capacity, internal/PSRAM/default free + largest block, guard result, actual storage heap), `HYDRATE … ACCEPT|DROP reason=` (`empty-slot`, `npc-type-not-object`, `plot-item-already-taken`), `POST_HYDRATE result= reason=` (`ok`, `no-location`, `no-actor-owner`, `pool-services-missing`, `reserve-failed`, `no-source-table`) + `_OBJ` dump of the tracked cells on **any** floor, `RELOAD effect= hydrate_calls=` (the device being notified — if `hydrate_calls` did not move, nothing hydrated), `APPEND`/`ERASE`/`ERASE_BY_HYDRATION_DISCARD`/`WRITE`/`CLEAR site=`, `PRE_PRESENT` + `_OBJ` dump at the first basement snapshot, `PRESENT` per tracked cell (terrain, NPC tile, object presence/tile, final tile, visibility, which layer won) at entry and again the first time each cell enters the 11×11 window, and `RENDER` (the tile handed to `render_snapshot`).
+
+### Queued, not fixed (same defect class)
+
+- `debug_map_picker.cpp::reload()` forwards `ResetDoors` to a device consumer that has no arm for it: a Developer Teleport does not reset door timers on the T-Deck.
+- `dungeon_orchestration.cpp::reload()` forwards `HydrateUnderworld` the same way on dungeon exit to the Underworld; `AlphaRuntime::command_reload()` has no arm for it, so the Underworld plot objects are not re-seeded on that route on the device.
+
+### Full regression suite
+
+Baseline before any edit, clean build (`native/core/build-batch22-baseline`): **91/91 serially** (`batch22-baseline-ctest-serial.log`). ⚠ Declared, not buried: the first baseline run used `ctest -j 6` and `gameplay_parity` died with **SEGFAULT** (`batch22-baseline-ctest.log`); it passed 3/3 in isolation and in the serial run, on unmodified code. A crash under load is not a parity mismatch, so it is queued for its own investigation rather than excused.
+
+Final, from-scratch build (`native/core/build-batch22-final`): **92/92**, 0 fail (`batch22-final-ctest.log`) — the prior 91 plus `batch22_basement_objects`. No parity corpus moved. One warning, the pre-existing w64devkit `stl_uninitialized.h` `-Wstringop-overflow=` false positive; zero project warnings.
+
+### Firmware
+
+Built with ESP-IDF 6.1 into `native/targets/tdeck/build-batch22`: `openu5_tdeck.bin` = **0xd3890** (866,448 bytes), up 0x15c0 (5,568 bytes) from Batch 21B's 0xd22d0 — almost all of it the temporary `U5OBJ` format strings. `0x2c770` (17 %) of the app partition free; bootloader 0x5850, 31 % free. **0 errors, 0 warnings.** Launcher image: `build-batch22/launcher/OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`, SHA-256 `d0d0d32989f6eb4d6e60a4dbd6903fba09175b91fd60020b92d0a79989c5f545`. **Not flashed.** The first firmware attempt failed on three `-Werror=misleading-indentation` one-liners in the new trace code — the host targets compile `alpha_runtime.cpp` without `-Werror`, so only the firmware build catches that class.
+
+### SD card
+
+Unchanged.
+
+### Status
+
+Developer-Teleport route: **SOFTWARE FIXED — HARDWARE RETEST REQUIRED.** Walk-in route: **HOST-VERIFIED, HARDWARE UNVERIFIED.** H-148 (Batch 21B chest reset) stays **HARDWARE RETEST REQUIRED** — its premise, that the chests are there to begin with, is itself unverified on hardware.
+
+### Phase 6Q — Batch 22 basement chests · *firmware only; the SD card is unchanged*
+
+Flash the Batch 22 firmware, start a New Journey, go to Lord British's Castle basement **however you normally do** and look at the vault. Capture every serial line containing `U5OBJ`. Pass: three chests drawn at (16,21), (17,22), (13,23).

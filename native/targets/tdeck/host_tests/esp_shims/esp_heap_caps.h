@@ -20,3 +20,4 @@ inline void *heap_caps_malloc(size_t size, uint32_t /*caps*/) { return std::mall
 inline void *heap_caps_calloc(size_t n, size_t size, uint32_t /*caps*/) { return std::calloc(n, size); }
 inline void heap_caps_free(void *p) { std::free(p); }
 inline size_t heap_caps_get_free_size(uint32_t /*caps*/) { return size_t(64) * 1024 * 1024; }
+inline size_t heap_caps_get_largest_free_block(uint32_t /*caps*/) { return size_t(64) * 1024 * 1024; }

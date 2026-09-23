@@ -8,6 +8,7 @@
 #include <new>
 
 #include "esp_heap_caps.h"
+#include "esp_memory_utils.h"
 #include "esp_check.h"
 #include "esp_log.h"
 #include "esp_timer.h"
@@ -28,6 +29,20 @@
 namespace tdeck {
 namespace {
 constexpr char kTag[]="AlphaRuntime";
+// Batch 22 -- U5OBJ. The four Lord British's Castle basement cells the device
+// report is about: the three authored chests and the (9,9) control object.
+// Slots are matched by these coordinates in ANY schedule entry, never by an
+// assumed slot number.
+constexpr int32_t kU5ObjLocation=17,kU5ObjFloor=-1;
+constexpr int32_t kU5ObjX[4]={16,17,13,9},kU5ObjY[4]={21,22,23,9};
+int u5obj_cell(int32_t x,int32_t y){for(int i=0;i<4;++i)if(kU5ObjX[i]==x&&kU5ObjY[i]==y)return i;return -1;}
+bool u5obj_tracked(const openu5::NpcSlot&n){for(int k=0;k<3;++k)if(u5obj_cell(n.x[k],n.y[k])>=0)return true;return false;}
+bool u5obj_tracked(const openu5::QuestObject&o){return o.location==kU5ObjLocation&&u5obj_cell(o.x,o.y)>=0;}
+const char *u5obj_heap(const void *p){return !p?"none":esp_ptr_external_ram(p)?"psram":esp_ptr_internal(p)?"internal":"other";}
+void u5obj_object(const char *stage,size_t i,const openu5::QuestObject&o){
+    ESP_LOGI(kTag,"U5OBJ %s_OBJ index=%u loc=%ld floor=%ld x=%ld y=%ld tile=%ld chest=%d prop=%d plot=%d item=%d loot=%d search=%d shadowlord=%d trapped=%d contents=%ld slot=%ld",
+             stage,unsigned(i),long(o.location),long(o.floor),long(o.x),long(o.y),long(o.tile),o.chest,o.prop,o.plot,int(o.item),o.loot,o.search,o.shadowlord,o.trapped,long(o.contents),long(o.slot));
+}
 constexpr uint32_t kInternal=MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT,kPsram=MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT;
 constexpr size_t kAstarBytes=323084,kTranscriptBlocks=96;
 constexpr size_t kCreationWidth=320,kCreationHeight=152,kCreationPixels=kCreationWidth*kCreationHeight;
@@ -191,7 +206,7 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
     poison_.set_blip_ms(openu5::kPoisonBlipMs);
     look_services_.context=this;look_services_.describe=[](void*p,int32_t tile){auto&r=*static_cast<AlphaRuntime*>(p);return tile>=0&&size_t(tile)<r.resources_.look_count?r.resources_.look_text+r.resources_.look_offsets[tile]:"something";};look_services_.sign=[](void*p,openu5::MapId map,int32_t x,int32_t y){auto&r=*static_cast<AlphaRuntime*>(p);return openu5::resolve_look_sign(r.resources_.signs,r.resources_.sign_count,map,x,y);};context_.look=&look_services_;
     context_.services={this,command_effect,command_reload,banner};context_.events={this,dispatch_event};
-    quest_.context=this;quest_.count=object_count;quest_.read=object_read;quest_.reserve=object_reserve;quest_.append=object_append;quest_.erase=object_erase;quest_.write=object_write;
+    quest_.context=this;quest_.count=object_count;quest_.read=object_read;quest_.reserve=object_reserve;quest_.append=object_append;quest_.erase=object_erase;quest_.write=object_write;u5obj_bind();
     quest_.tile_at=tile_at;quest_.volatile_tile=volatile_tile;quest_.persistent_tile=persistent_tile;
     quest_.search_objects=resources_.search_objects;quest_.search_count=resources_.search_count;quest_.spawns=resources_.shard_spawns;quest_.spawn_count=resources_.shard_spawn_count;
     quest_.moon_phases=resources_.moon_phases;quest_.moon_phase_count=resources_.moon_phase_count;
@@ -2006,7 +2021,7 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
         ESP_LOGE(kTag,"WORLD_MAP_MISSING location=%u floor=%d xy=%u,%u",unsigned(game_.position.map.location),
                  int(game_.position.map.floor),unsigned(game_.position.xy.x),unsigned(game_.position.xy.y));
         return ESP_FAIL;
-    }const int avatar=turn_.transport_tile>=0?turn_.transport_tile+0x100:tile_report_.avatar_tile;snapshot=openu5::compose_world_presentation(context_,active.value,game_.position.xy,avatar,map_reveal_active);if(gem_view_active_){world_gem_map=active.value;world_gem_map_ready=true;}}
+    }const int avatar=turn_.transport_tile>=0?turn_.transport_tile+0x100:tile_report_.avatar_tile;snapshot=openu5::compose_world_presentation(context_,active.value,game_.position.xy,avatar,map_reveal_active);u5obj_trace_present(snapshot);if(gem_view_active_){world_gem_map=active.value;world_gem_map_ready=true;}}
     ESP_LOGI(kTag,"PRESENTATION_DISPATCH ui=%s combat=%d dungeon=%d source=%s",mode_name(ui_->mode()),combat_source,dungeon_source,presentation_source);
     int16_t open_marker_x=-1,open_marker_y=-1;
     if(snapshot.combat&&ui_->take_target_render_marker(open_marker_x,open_marker_y)){
@@ -2066,8 +2081,9 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
             e=openu5::render_dungeon_view(game_,turn_,dungeon_,dungeon_art_.surfaces(),tick,
                                           viewport_,openu5::kViewportPixelCount,report,dungeon_primitives);
         }
-        else e=openu5::render_snapshot(tile_cache_,snapshot,tick,game_.turns_since_start,
-                                       viewport_,openu5::kViewportPixelCount,report);
+        else{u5obj_trace_render(snapshot);
+            e=openu5::render_snapshot(tile_cache_,snapshot,tick,game_.turns_since_start,
+                                       viewport_,openu5::kViewportPixelCount,report);}
     }
     // The cannon ball lives BETWEEN cells, so it is painted into the rasterized
     // window rather than composed into the snapshot (a cell blit cannot place
@@ -2157,6 +2173,7 @@ void AlphaRuntime::synchronize_loaded_world(){
     // document, so a load must clear it before reconstructing -- otherwise a
     // save taken while save B's world objects are live would leak them into
     // save A's world (see object_append/object_erase; capture_world_objects).
+    ESP_LOGI(kTag,"U5OBJ CLEAR site=load-restore pool_before=%u",unsigned(objects_.size()));
     objects_.clear();
     if(openu5::save::restore_world_objects(retained_,quest_)!=openu5::save::Error::None)ESP_LOGW(kTag,"WORLD_OBJECTS_RESTORE_FAILED domain-invalid sidecar; world objects left empty");
     ESP_LOGI(kTag,"WORLD_OBJECTS_RESTORE count=%u",unsigned(objects_.size()));
@@ -2188,6 +2205,7 @@ void AlphaRuntime::service_frontend_intent(){
         commands_={};travel_={};dialogue_={};shop_={};shrine_={};blackthorn_={};
         outdoor_.enemies.clear();outdoor_.enemy_view.clear();outdoor_.object_view.clear();
         outdoor_.has_chunk_origin=false;terrain_.persistent.clear();terrain_.clear_residence();
+        ESP_LOGI(kTag,"U5OBJ CLEAR site=new-journey pool_before=%u",unsigned(objects_.size()));
         objects_.clear();actors_={};dungeon_={};combat_.initialized=false;actor_animation_.reset();
         openu5::apply_new_journey_identity(game_,intent.identity);synchronize_loaded_world();
         ok=save_.save(context_,outdoor_,terrain_,actors_,retained_,resources_.initial_gam,resources_.initial_gam_size,resources_.initial_ool,resources_.initial_ool_size,ms,true);
@@ -2229,7 +2247,19 @@ void AlphaRuntime::log_metrics(const char*where)const{const auto stack=uxTaskGet
 
 size_t AlphaRuntime::object_count(void*p){return static_cast<AlphaRuntime*>(p)->objects_.size();}
 openu5::QuestObject AlphaRuntime::object_read(void*p,size_t i){auto&r=*static_cast<AlphaRuntime*>(p);return i<r.objects_.size()?r.objects_[i]:openu5::QuestObject{};}
-bool AlphaRuntime::object_reserve(void*p,size_t n){auto&r=*static_cast<AlphaRuntime*>(p);const size_t need=n*sizeof(openu5::QuestObject);if(heap_caps_get_free_size(kPsram)<need+32768)return false;r.objects_.reserve(r.objects_.size()+n);return true;}
+bool AlphaRuntime::object_reserve(void*p,size_t n){auto&r=*static_cast<AlphaRuntime*>(p);const size_t need=n*sizeof(openu5::QuestObject);const size_t free_psram=heap_caps_get_free_size(kPsram);const bool ok=free_psram>=need+32768;
+    // Batch 22 (C3). objects_ is a std::vector with the default allocator, so
+    // it is operator new -> malloc, NOT heap_caps_malloc(kPsram): with
+    // CONFIG_SPIRAM_USE_MALLOC=y and SPIRAM_MALLOC_ALWAYSINTERNAL=4096 a block
+    // of <= 4 KiB is taken from internal RAM first. RESERVE_DONE reports
+    // which heap the vector's storage actually landed in.
+    if(r.u5obj_hydrating_)ESP_LOGI(kTag,"U5OBJ RESERVE request=%u current_size=%u current_capacity=%u object_bytes=%u need_bytes=%u target_bytes=%u free_internal=%u largest_internal=%u free_psram=%u largest_psram=%u free_default=%u guard=free_psram>=need+32768 result=%d",
+        unsigned(n),unsigned(r.objects_.size()),unsigned(r.objects_.capacity()),unsigned(sizeof(openu5::QuestObject)),unsigned(need),unsigned((r.objects_.size()+n)*sizeof(openu5::QuestObject)),
+        unsigned(heap_caps_get_free_size(kInternal)),unsigned(heap_caps_get_largest_free_block(kInternal)),unsigned(free_psram),unsigned(heap_caps_get_largest_free_block(kPsram)),unsigned(heap_caps_get_free_size(MALLOC_CAP_DEFAULT)),ok);
+    if(!ok)return false;
+    r.objects_.reserve(r.objects_.size()+n);
+    if(r.u5obj_hydrating_)ESP_LOGI(kTag,"U5OBJ RESERVE_DONE size=%u capacity=%u storage_heap=%s",unsigned(r.objects_.size()),unsigned(r.objects_.capacity()),u5obj_heap(r.objects_.data()));
+    return true;}
 void AlphaRuntime::object_append(void*p,const openu5::QuestObject&o){
     auto&r=*static_cast<AlphaRuntime*>(p);const auto before=r.objects_.size();
     const bool direct=o.chest&&r.context_.combat&&r.direct_troll_.active&&r.combat_.victory_context!=&r.outdoor_;
@@ -2239,6 +2269,7 @@ void AlphaRuntime::object_append(void*p,const openu5::QuestObject&o){
         ESP_LOGI(kTag,"CHEST_INSERT_OBJECT id=%u type=chest flags=%s trap=%d contents=%ld",unsigned(before),o.trapped?"trapped":"none",o.trapped,long(o.contents));
     }
     r.objects_.push_back(o);
+    if(!r.u5obj_hydrating_&&u5obj_tracked(o))u5obj_object("APPEND",before,o);
     if(o.chest)ESP_LOGI(kTag,"CHEST_INSERT source=%s loc=%ld floor=%ld world_x=%ld world_y=%ld object_id=%u type=chest flags=%s trap=%d contents=%ld collection_count_before=%u after=%u",r.context_.combat?(r.combat_.victory_context==&r.outdoor_?"roaming-victory-latch":"direct-combat-teardown"):"authored/hydrated",long(o.location),long(o.floor),long(o.x),long(o.y),unsigned(before),o.trapped?"trapped":"none",o.trapped,long(o.contents),unsigned(before),unsigned(r.objects_.size()));
     if(direct){
         r.direct_troll_.inserted_x=o.x;r.direct_troll_.inserted_y=o.y;
@@ -2247,12 +2278,82 @@ void AlphaRuntime::object_append(void*p,const openu5::QuestObject&o){
         ESP_LOGI(kTag,"CHEST_VERIFY_POSTINSERT found=%d index=%u loc=%ld floor=%ld x=%ld y=%ld type=%s",found.chest,unsigned(before),long(found.location),long(found.floor),long(found.x),long(found.y),found.chest?"chest":"other");
     }
 }
-void AlphaRuntime::object_erase(void*p,size_t i){auto&r=*static_cast<AlphaRuntime*>(p);if(i<r.objects_.size())r.objects_.erase(r.objects_.begin()+ptrdiff_t(i));}
-void AlphaRuntime::object_write(void*p,size_t i,const openu5::QuestObject&o){auto&r=*static_cast<AlphaRuntime*>(p);if(i<r.objects_.size())r.objects_[i]=o;}
+void AlphaRuntime::object_erase(void*p,size_t i){auto&r=*static_cast<AlphaRuntime*>(p);if(i<r.objects_.size()){if(u5obj_tracked(r.objects_[i]))u5obj_object(r.u5obj_hydrating_?"ERASE_BY_HYDRATION_DISCARD":"ERASE",i,r.objects_[i]);r.objects_.erase(r.objects_.begin()+ptrdiff_t(i));}}
+void AlphaRuntime::object_write(void*p,size_t i,const openu5::QuestObject&o){auto&r=*static_cast<AlphaRuntime*>(p);if(i<r.objects_.size()){if(u5obj_tracked(r.objects_[i])||u5obj_tracked(o))u5obj_object("WRITE",i,o);r.objects_[i]=o;}}
 int32_t AlphaRuntime::tile_at(void*p,int32_t x,int32_t y){auto&r=*static_cast<AlphaRuntime*>(p);return r.terrain_.effective(r.resources_.world,r.game_.position.map,x,y);}
 void AlphaRuntime::volatile_tile(void*p,int32_t x,int32_t y,int32_t tile){auto&r=*static_cast<AlphaRuntime*>(p);r.terrain_.set(r.game_.position.map,x,y,tile,false,"quest.volatile_tile");}
 void AlphaRuntime::persistent_tile(void*p,int32_t x,int32_t y,int32_t tile){auto&r=*static_cast<AlphaRuntime*>(p);r.terrain_.set(r.game_.position.map,x,y,tile,true,"quest.persistent_tile");}
-bool AlphaRuntime::command_effect(void*,openu5::CommandEffect,openu5::EventSink){return false;}void AlphaRuntime::command_reload(void*p,openu5::ReloadEffect e,uint8_t loc,openu5::EventSink){auto&r=*static_cast<AlphaRuntime*>(p);if(e==openu5::ReloadEffect::EnterNpcs&&loc>=1&&loc<=32){auto&n=r.resources_.npc_locations[loc-1];openu5::enter_npc_map(r.actors_,n.slots,n.count,loc,uint8_t(r.game_.time.hour),r.game_.npc_dead[loc-1]);}else if(e==openu5::ReloadEffect::ClearEnemies)r.outdoor_.enemies.clear();else if(e==openu5::ReloadEffect::ClearTerrain)r.terrain_.clear_residence();else if(e==openu5::ReloadEffect::RefreshHourTiles)r.terrain_.refresh(r.resources_.world,r.game_);}
+bool AlphaRuntime::command_effect(void*,openu5::CommandEffect,openu5::EventSink){return false;}void AlphaRuntime::command_reload(void*p,openu5::ReloadEffect e,uint8_t loc,openu5::EventSink){auto&r=*static_cast<AlphaRuntime*>(p);
+    // Batch 22 (C2/C4). The device has no HydrateInterior/DiscardInterior arm
+    // here: the core consumes those before forwarding. hydrate_calls counts
+    // the core hydrations of location 17 so far; if it did not move since the
+    // previous RELOAD line, nothing hydrated the pool for this entry.
+    if(loc==kU5ObjLocation&&(e==openu5::ReloadEffect::HydrateInterior||e==openu5::ReloadEffect::DiscardInterior||e==openu5::ReloadEffect::EnterNpcs))
+        ESP_LOGI(kTag,"U5OBJ RELOAD effect=%s loc=%u hydrate_calls=%u pool_size=%u player=L%u/F%d",e==openu5::ReloadEffect::HydrateInterior?"HydrateInterior":e==openu5::ReloadEffect::DiscardInterior?"DiscardInterior":"EnterNpcs",
+                 unsigned(loc),unsigned(r.u5obj_hydrate_calls_),unsigned(r.objects_.size()),unsigned(r.game_.position.map.location),int(r.game_.position.map.floor));
+    if(e==openu5::ReloadEffect::EnterNpcs&&loc>=1&&loc<=32){auto&n=r.resources_.npc_locations[loc-1];openu5::enter_npc_map(r.actors_,n.slots,n.count,loc,uint8_t(r.game_.time.hour),r.game_.npc_dead[loc-1]);}else if(e==openu5::ReloadEffect::ClearEnemies)r.outdoor_.enemies.clear();else if(e==openu5::ReloadEffect::ClearTerrain)r.terrain_.clear_residence();else if(e==openu5::ReloadEffect::RefreshHourTiles)r.terrain_.refresh(r.resources_.world,r.game_);}
+// Batch 22 -- U5OBJ checkpoints, in the order a basement visit reaches them:
+// SOURCE/SRC (table selected) -> RESERVE -> HYDRATE (per tracked slot) ->
+// POST_HYDRATE (pool right after hydration) -> RELOAD (device notified) ->
+// PRE_PRESENT (pool at the first basement snapshot) -> PRESENT (composer) ->
+// RENDER (tile handed to render_snapshot). Everything is gated on location 17.
+void AlphaRuntime::u5obj_bind(){hydration_trace_={this,u5obj_begin,u5obj_slot,u5obj_end};quest_.hydration_trace=&hydration_trace_;}
+void AlphaRuntime::u5obj_begin(void*p,int32_t loc,const openu5::NpcLocationData*src,size_t tables){
+    auto&r=*static_cast<AlphaRuntime*>(p);r.u5obj_hydrating_=loc==kU5ObjLocation;r.u5obj_accepted_=r.u5obj_dropped_=0;if(!r.u5obj_hydrating_)return;
+    ESP_LOGI(kTag,"U5OBJ SOURCE loc=%ld floor=%d hour=%u table=%s table_loc=%u count=%u slots=%s tables=%u npc_dead=0x%08lx pool_before=%u",long(loc),int(r.game_.position.map.floor),unsigned(r.game_.time.hour),
+             src?"found":"missing",src?unsigned(src->location):0u,src?unsigned(src->count):0u,src&&src->slots?"present":"null",unsigned(tables),(unsigned long)(loc>=1&&loc<=32?r.game_.npc_dead[loc-1]:0),unsigned(r.objects_.size()));
+    if(src&&src->slots)for(size_t i=0;i<src->count;++i){const auto&n=src->slots[i];if(!u5obj_tracked(n))continue;
+        ESP_LOGI(kTag,"U5OBJ SRC slot=%u index=%u type=%u(0x%02x) tile=%u dialog=%u x=%u,%u,%u y=%u,%u,%u z=%u,%u,%u schedule=%u,%u,%u,%u ai=%u,%u,%u",unsigned(n.slot),unsigned(i),unsigned(n.type),unsigned(n.type),unsigned(n.type)+256u,unsigned(n.dialog),
+                 unsigned(n.x[0]),unsigned(n.x[1]),unsigned(n.x[2]),unsigned(n.y[0]),unsigned(n.y[1]),unsigned(n.y[2]),unsigned(n.z[0]),unsigned(n.z[1]),unsigned(n.z[2]),
+                 unsigned(n.times[0]),unsigned(n.times[1]),unsigned(n.times[2]),unsigned(n.times[3]),unsigned(n.ai[0]),unsigned(n.ai[1]),unsigned(n.ai[2]));}
+}
+void AlphaRuntime::u5obj_slot(void*p,size_t i,const openu5::NpcSlot&n,uint8_t schedule,const char*drop,const openu5::QuestObject*o){
+    auto&r=*static_cast<AlphaRuntime*>(p);if(!r.u5obj_hydrating_)return;if(drop)++r.u5obj_dropped_;else ++r.u5obj_accepted_;if(!u5obj_tracked(n))return;
+    if(drop||!o)ESP_LOGI(kTag,"U5OBJ HYDRATE slot=%u index=%u DROP reason=%s type=%u schedule=%u",unsigned(n.slot),unsigned(i),drop?drop:"no-object",unsigned(n.type),unsigned(schedule));
+    else ESP_LOGI(kTag,"U5OBJ HYDRATE slot=%u index=%u ACCEPT schedule=%u loc=%ld floor=%ld x=%ld y=%ld tile=%ld chest=%d prop=%d plot=%d item=%d contents=%ld pool_index=%u",unsigned(n.slot),unsigned(i),unsigned(schedule),
+                  long(o->location),long(o->floor),long(o->x),long(o->y),long(o->tile),o->chest,o->prop,o->plot,int(o->item),long(o->contents),unsigned(r.objects_.size()));
+}
+void AlphaRuntime::u5obj_end(void*p,int32_t loc,bool result,const char*reason){
+    auto&r=*static_cast<AlphaRuntime*>(p);r.u5obj_hydrating_=false;if(loc!=kU5ObjLocation)return;++r.u5obj_hydrate_calls_;
+    ESP_LOGI(kTag,"U5OBJ POST_HYDRATE result=%d reason=%s pool_size=%u accepted=%u dropped=%u hydrate_calls=%u",result,reason?reason:"?",unsigned(r.objects_.size()),unsigned(r.u5obj_accepted_),unsigned(r.u5obj_dropped_),unsigned(r.u5obj_hydrate_calls_));
+    r.u5obj_dump_pool("POST_HYDRATE");
+}
+void AlphaRuntime::u5obj_dump_pool(const char*stage)const{
+    // Tracked x/y on ANY floor of location 17, so a floor-encoding slip (e.g.
+    // 255 instead of -1) shows up as an object at the right cell, wrong floor.
+    for(int c=0;c<4;++c){bool any=false;for(size_t i=0;i<objects_.size();++i){const auto&o=objects_[i];if(o.location!=kU5ObjLocation||o.x!=kU5ObjX[c]||o.y!=kU5ObjY[c])continue;any=true;u5obj_object(stage,i,o);}
+        if(!any)ESP_LOGI(kTag,"U5OBJ %s_OBJ x=%ld y=%ld none",stage,long(kU5ObjX[c]),long(kU5ObjY[c]));}
+}
+void AlphaRuntime::u5obj_trace_present(const openu5::PresentationSnapshot&s){
+    const auto m=game_.position.map;if(m.location!=kU5ObjLocation||m.floor!=kU5ObjFloor){u5obj_in_basement_=false;return;}
+    const bool entry=!u5obj_in_basement_;const int half=openu5::kPresentationWindow/2;
+    if(entry){u5obj_in_basement_=true;u5obj_present_seen_=0;size_t here=0,basement=0;for(const auto&o:objects_)if(o.location==kU5ObjLocation){++here;if(o.floor==kU5ObjFloor)++basement;}
+        ESP_LOGI(kTag,"U5OBJ PRE_PRESENT pool_size=%u loc17_objects=%u loc17_basement_objects=%u hydrate_calls=%u player=L%u/F%d xy=%u,%u hour=%u",unsigned(objects_.size()),unsigned(here),unsigned(basement),unsigned(u5obj_hydrate_calls_),
+                 unsigned(m.location),int(m.floor),unsigned(game_.position.xy.x),unsigned(game_.position.xy.y),unsigned(game_.time.hour));
+        u5obj_dump_pool("PRE_PRESENT");}
+    for(int i=0;i<4;++i){const int col=kU5ObjX[i]-int(s.center.x)+half,row=kU5ObjY[i]-int(s.center.y)+half;
+        const bool in=col>=0&&row>=0&&col<openu5::kPresentationWindow&&row<openu5::kPresentationWindow;const uint8_t bit=uint8_t(1u<<i);
+        // After the entry line, a cell is reported once more: the first
+        // snapshot that actually has it inside the 11x11 window.
+        if(!entry&&(!in||(u5obj_present_seen_&bit)))continue;
+        if(in)u5obj_present_seen_|=bit;
+        int index=-1;long object_tile=-1;for(size_t k=0;k<objects_.size();++k){const auto&o=objects_[k];if(o.loot||o.search||o.location!=m.location||o.floor!=m.floor||o.x!=kU5ObjX[i]||o.y!=kU5ObjY[i])continue;index=int(k);object_tile=long(o.shadowlord?o.tile+256:o.tile);break;}
+        int npc=-1;for(size_t k=0;k<actors_.count;++k){const auto&a=actors_.actors[k];if(a.location==m.location&&a.z==m.floor&&a.x==kU5ObjX[i]&&a.y==kU5ObjY[i]&&a.schedule.dialog){npc=a.schedule.type+256;break;}}
+        const long terrain=long(terrain_.inspect(resources_.world,m,kU5ObjX[i],kU5ObjY[i]).effective);
+        const int at=in?row*openu5::kPresentationWindow+col:-1;const int final_tile=in?int(s.tiles[at]):int(openu5::kPresentationOffMap);
+        const char *winner=!in?"off-window":col==half&&row==half?"avatar":final_tile==openu5::kPresentationHidden?"hidden":index>=0&&final_tile==object_tile?"object":npc>=0&&final_tile==npc?"npc":final_tile==terrain?"terrain":"other";
+        ESP_LOGI(kTag,"U5OBJ PRESENT x=%ld y=%ld in_window=%d cell=%d,%d visible=%d terrain=%ld npc_tile=%d object_present=%d object_index=%d object_tile=%ld final_tile=%d winner=%s center=%u,%u",long(kU5ObjX[i]),long(kU5ObjY[i]),in,col,row,in?int(s.visible[at]):-1,
+                 terrain,npc,index>=0,index,object_tile,final_tile,winner,unsigned(s.center.x),unsigned(s.center.y));
+        if(in)u5obj_render_pending_|=bit;}
+}
+void AlphaRuntime::u5obj_trace_render(const openu5::PresentationSnapshot&s){
+    if(!u5obj_render_pending_)return;
+    const int half=openu5::kPresentationWindow/2;
+    for(int i=0;i<4;++i){if(!(u5obj_render_pending_&(1u<<i)))continue;const int col=kU5ObjX[i]-int(s.center.x)+half,row=kU5ObjY[i]-int(s.center.y)+half;
+        if(col<0||row<0||col>=openu5::kPresentationWindow||row>=openu5::kPresentationWindow)continue;
+        ESP_LOGI(kTag,"U5OBJ RENDER x=%ld y=%ld cell=%d,%d tile=%d",long(kU5ObjX[i]),long(kU5ObjY[i]),col,row,int(s.tiles[row*openu5::kPresentationWindow+col]));}
+    u5obj_render_pending_=0;
+}
 const char *AlphaRuntime::banner(void*,uint8_t loc){return location_display_name(loc);}
 void AlphaRuntime::start_smoke(void*p,int group){auto&r=*static_cast<AlphaRuntime*>(p);r.smoke_.start(group);r.dirty_=true;r.dirty_reason_="smoke-test-start";}
 } // namespace tdeck

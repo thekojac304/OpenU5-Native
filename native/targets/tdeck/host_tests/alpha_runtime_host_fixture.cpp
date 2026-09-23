@@ -47,6 +47,10 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     // same combination production's initialize() never produces (it always
     // binds npc_scratch to astar_scratch_ in the same breath as actors).
     context_.npc_scratch = new openu5::NpcScanGrid();
+    // Batch 22: a fixture may supply the pack's 32 .NPC tables, copied into
+    // the same resources_.npc_locations initialize() fills from npcs.bin.
+    if (fixture.npc_locations)
+        std::copy(fixture.npc_locations, fixture.npc_locations + 32, resources_.npc_locations);
     context_.npc_data = resources_.npc_locations;
     context_.npc_data_count = 32;
     // Batch 21A: a fixture may supply the overworld location table so that the
@@ -95,6 +99,7 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     quest_.context = this;
     quest_.count = object_count; quest_.read = object_read; quest_.reserve = object_reserve;
     quest_.append = object_append; quest_.erase = object_erase; quest_.write = object_write;
+    u5obj_bind(); // Batch 22: same diagnostic observer initialize() binds.
     quest_.tile_at = tile_at; quest_.volatile_tile = volatile_tile; quest_.persistent_tile = persistent_tile;
     quest_.search_objects = nullptr; quest_.search_count = 0;
     quest_.spawns = nullptr; quest_.spawn_count = 0;
