@@ -461,3 +461,20 @@ Saving underground is allowed in 1988: `Q` reaches `CAST2.OVL:0x10FE` through th
 **Host suite:** 97/97, 0 fail, 0 skipped, from a clean build — the prior 96 plus `batch27_alt_load`. No fixture moved.
 
 **Still open:** H-154–H-157, H-160, H-165, H-166. Hardware verification of H-115 (Phase 6U), H-118 (Phase 6T) and H-164 (Phase 6V) awaits the user's reports.
+
+## Batch 28 — H-166 save-generation validation
+
+A save generation is now accepted or refused whole. Before, the generation gate (`candidate()`/`restore_candidate()`) checked the CRCs, the parse and the gameplay/terrain/NPC data, but not the `"dungeon"` or `"worldObjects"` sidecar. Those were decoded only after the load had committed, and dropped on error. A well-formed but invalid newest generation therefore won over a good older one and loaded with the session or the pool silently missing. The gate now runs both decoders before anything is committed, in one place (`alpha_save_generation.cpp` `stage_generation()`) that every load route, the Generation rows and the save self-check share. Full trace, invariants, RED/GREEN, six-mutation proof, atomicity and cross-path coverage: `GAMEPLAY_INTEGRATION_AUDIT.md` §"Batch 28".
+
+| Row | Behaviour | Status |
+|---|---|---|
+| H-166 | A newest save whose dungeon or loose-object data is well-formed but invalid is refused whole: Continue Latest, `Alt+L` and title Continue load the older generation, complete; with no usable generation they report it and change nothing. The refused generation is listed **corrupt** in Load / Save Management. Unusual but legal data still loads verbatim. A save whose own data would be refused reports "Save failed; prior kept" | **FIXED ON HOST** — no device phase (host-certified; audit §"Batch 28" Status) |
+| H-118 | unchanged by this batch | **HOST FIXED / DEVICE RETEST PENDING** (Phase 6T), separate |
+| H-115 | unchanged by this batch | **HOST FIXED / DEVICE RETEST PENDING** (Phase 6U), separate |
+| H-164 | unchanged by this batch | **HOST FIXED / DEVICE RETEST PENDING** (Phase 6V), separate |
+
+**Retest gate:** no new phase. The Batch 28 image contains runtime and core changes, so flash it (the image named in the tag `alpha2-batch28-h166-save-validation`) before running Phases 6T, 6U and 6V; their save/load steps also exercise the unchanged SD half of this code. **The SD resource pack is unchanged; no SD recopy is required.** No save-format change, and no save any firmware has written is refused.
+
+**Host suite:** 98/98, 0 fail, 0 skipped, from a clean build: the prior 97 plus `batch28_save_validation` (51 checks). No fixture moved.
+
+**Still open:** H-154–H-157, H-160, H-165. Hardware verification of H-115 (Phase 6U), H-118 (Phase 6T) and H-164 (Phase 6V) awaits the user's reports.

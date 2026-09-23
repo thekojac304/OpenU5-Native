@@ -4551,6 +4551,7 @@ Categories **A (loot/economy)**, **B (doors/locks/terrain)** and **C (rest/sleep
 | **H-162** | Doors | An Open door survives a load | `0x00f7` → `0x11F0(fresh=0)` → `0x0408(0)`, `0x041d` zeroes `[0x594f]` | `main.ts` restored `openDoors` | load paths restored `CommandState::door` | a door open at save time is open after the load | low | 100 % | **CONFIRMED MISSING** (both ports) → **FIXED in Batch 24** (both load paths in each port) | — | yes |
 | **H-163** | Terrain | Town-fight end does not re-read the floor | `0x09BC` → `0x6150` → `0xb0` → `0x0408(0)` (`0x09d9-0x09dc`), no branch | `endCombat` did not | `finish_encounter_combat` did not | a skull-keyed lock stays unlocked after a town fight; open door / NPCs / chests already matched | low | 100 % | **CONFIRMED DIVERGENCE** (transient terrain; both ports) → **FIXED in Batch 24** | — | yes |
 | **H-164** | Save | `Alt+L` skips `synchronize_loaded_world()` | — (device routing) | n/a | object pool / dungeon session / scenes not reset by the `DeviceShortcut::Load` arm | stale world objects can survive a quick load | med | code reading | **CONFIRMED BY CODE READING — queued** (Batch 24) → reproduced on host (Batch 26) → **FIXED in Batch 27** (the arm calls `synchronize_loaded_world()`; `batch27_alt_load`) | — | yes |
+| **H-166** | Save | The generation gate does not validate the `"dungeon"` / `"worldObjects"` sidecar | — (device persistence; one 1988 save window, `CAST2.OVL:0x10FE` / `INTRO.OVL:0x0EB4`) | n/a | `candidate()`/`restore_candidate()` checked CRC, parse, gameplay/terrain/NPC walk only; the two sidecar owners were decoded after the commit, falling back to no session / an empty pool | a well-formed but invalid newest generation wins over a good older one; the load is a mixture no save held | low | only a corrupted card | **CONFIRMED BY CODE READING** (Batch 26) → **reproduced on host and FIXED in Batch 28** (one gate, `stage_generation()`; `batch28_save_validation`) | — | no (host-certified) |
 | — | Rest | `snap_npcs` is an NPC-only hook, so the object half of one binary routine is unmodelled | TOWN `0x1694` is one routine | `wakeSnapNpcs` to `npcManager.enterMap` only | **corrected this batch** | — | — | — | **REFERENCE-PORT DIFFERENCE** — native is now right and TypeScript is not; no parity fixture encodes it (91/91 green) | flag before any fixture regeneration | no |
 | — | Rest | `bedSleepStep` omits `0x0671` and `0x0664` | as H-156/H-157 | omits | omits | — | — | — | **REFERENCE-PORT DIFFERENCE** compounding H-156/H-157 | with them | no |
 | — | Rest | Bed wake-up hour: the original subtracts 23, not 24, when crossing midnight | CMDS `0x05b0` | fixed | fixed | wakes on the hour requested | — | — | **DELIBERATE DIVERGENCE** | `bugs-del-original.md` §1.3 (WITNESSED) | no |
@@ -5355,3 +5356,164 @@ Flash the Batch 27 firmware (the image named in the tag). No serial capture is n
 **Pass:** steps 2, 7 and 8 as stated. **Fail** if `Alt+L` lands on the overworld or at the Deceit entrance after step 7, keeps the step-6 facing, or needs an extra key before the view or controls update.
 
 **Known and queued, do not file:** H-165 (a question left pending across a Developer teleport into a dungeon); H-166 (a corrupt dungeon/object payload is not rejected by the save's self-check).
+
+## Batch 28 — H-166: a save generation is validated whole before it may replace the live world
+
+Scope: H-166 only. Not touched: H-118 (Phase 6T), H-115 (Phase 6U), H-164 (Phase 6V), H-154–H-157, H-160, H-165, pacing, audio, the renderer, the Windows frontend, the save format, A-14.
+
+### Baseline
+
+HEAD `e5692ae0` (tag `alpha2-batch27-h164-alt-load`), branch `main`, working tree clean. From-scratch build `native/core/build-batch28-baseline`, serial: **97/97 PASS, 0 fail, 0 skipped** (`batch28-baseline-ctest.log`).
+
+### What H-166 actually was
+
+The Batch 26 hypothesis held, and it is now reproduced on host. `alpha_save.cpp` checked a generation's CRCs, its parse and three of its owners (gameplay, terrain, NPC walk) before letting it replace the live world. The other two sidecar owners, `"worldObjects"` (R-14) and `"dungeon"` (R-15/H-115), were decoded only **after** the commit, by `synchronize_loaded_world()`, whose fallback on a bad payload is "empty pool" / "no session". So a newest generation that was well-formed and CRC-consistent but carried a dungeon or object payload the runtime refuses:
+
+- was listed **valid** in Load / Save Management;
+- **won** generation selection over a good older generation;
+- loaded as the newest generation's party, clock and gold with the dungeon session dropped (party on the surface) or the object pool emptied. No save ever held that mixture.
+
+The same gap let the post-write self-check certify a save the loader would refuse ("Save complete"). Only a corrupted card, a foreign writer or a firmware bug produces such a payload; it is robustness, not parity.
+
+### The flow before Batch 28 (traced, not taken from comments)
+
+A generation is `alpha1-g<slot>.{gam,ool,json}` plus `alpha1-g<slot>.commit` = `{magic 0x31533555, version 1, sequence, CRC(gam), CRC(ool), CRC(json)}`, two slots, `slot = sequence & 1`.
+
+| Step | Code | What it checks / does |
+|---|---|---|
+| save | `AlphaSaveService::save` | capture every owner into `retained_`, `export_native_state`, `build_ool`, `encode_json`; write three temps; CRC read-back; rename the three; write + rename the commit — **the generation now exists**; then `stage("semantic-validation", candidate(slot))`. A failed self-check prints "Save failed; prior kept" but the committed generation stays on the card as the newest; only the load's fallback made "prior kept" true |
+| per-slot check | `candidate(slot)` | read commit + three files; `complete_generation` (committed, sizes, three CRCs, JSON parse, `sane_sidecar`); `load_native_state` into zeroed scratch; `restore_gameplay`; `restore_terrain`; `restore_npc_walk`. **Not** `worldObjects`, **not** `dungeon` |
+| used by | `load` (fills both `Generation`s, result ignored), `load_slot` (must pass), `inspect` (the "valid"/"corrupt" rows), the save self-check | |
+| choice | `select_generation` | highest sequence among `complete_generation` ones (CRC + parse only) |
+| restore | `restore_candidate` | the same chain over **copies** of the live owners; commits `GameState`, `TurnState`, `CommandState`, outdoor, terrain, actors and the retained document only when all pass. On failure `load` drops that slot and selects again (one fallback) |
+| after `true` | `synchronize_loaded_world()` (every route since Batch 27) | clears the pool, `restore_world_objects(retained_)` → on error `WORLD_OBJECTS_RESTORE_FAILED`, pool empty; `restore_dungeon(retained_)` → on error `DUNGEON_RESTORE_FAILED`, no session |
+
+Parsed vs checked, per sidecar component, before the fix: the `.GAM` fields and `transport`/`questFlags` (`load_native_state`), `overworldEnemies`/`openDoors`/`chunkOrigin` (`restore_gameplay`), `mapOverrides` (`restore_terrain`) and `npcWalk` (`restore_npc_walk`) were checked at the gate. `worldObjects` and `dungeon` were only parsed there and checked after the commit.
+
+Answers to the batch questions: `candidate()` validated CRC/parse/gameplay/terrain/NPC walk. A generation was "usable" once `restore_candidate` succeeded, i.e. before its two sidecar owners were looked at. Invalid `dungeon` and invalid `worldObjects` data could each make a newer generation win, and one bad component poisoned the load by being *dropped* rather than refused. The older generation was available and the fallback loop already existed; it was never asked, because nothing failed before the commit.
+
+### The correct contract
+
+- **A generation is all or nothing.** The 1988 save is one window (`CAST2.OVL:0x10FE` writes `0x55A6..0x6606` in one call; `INTRO.OVL:0x0EB4` reads it back whole). The dungeon registers, `g_dng_map` (`0x595A`) and the object register (`0x5C5A`) are inside it (Batch 26). Mixing one generation's party with an empty pool or a dropped session is a state the original can never be in; it is worse than the older, complete save.
+- **Newest refused, older complete → the older loads, whole.** This is what A-14's two-slot commit is for, and `load`'s fallback loop already does it for gameplay/terrain/NPC failures. H-166 only extends the gate to the two owners it missed.
+- **No usable generation → nothing changes.** Continue Latest and `Alt+L` print "No valid save"; the title screen shows its existing error. No live owner, pool or session is touched.
+- **An explicit Generation row does not fall back.** The player named that generation: `inspect` lists a refused one as **corrupt** and the row does nothing (System Menu); the title Load page says "No valid save in this slot". Unchanged behaviour, now also applied to sidecar corruption.
+- **Save self-check:** a save whose own sidecar would be refused reports "Save failed; prior kept", and the next load really does restore the prior generation.
+- **No recovery UI, no repair, no sanitising.** A refused generation is left on the card untouched.
+
+### The fix — one validation boundary
+
+`alpha_save.cpp` needs ESP-IDF's VFS/FATFS and never built on host, so the host seam re-implemented its semantic chain, and no test could reach H-166. Batch 28 first split the storage-independent half **unchanged** into `alpha_save_generation.cpp` (`verify_candidate`, `restore_candidate`, `restore_newest`, and the one staging function under them), which both the firmware and the host stub compile. Batches 24–27 pass unchanged on the split (47/42/34/37). Then the gate:
+
+```
+stage_generation()            alpha_save_generation.cpp: the only step between "parsed" and "may replace live state"
+  load_native_state            .GAM + sidecar parse
+  restore_gameplay             enemies / doors / chunk origin
+  restore_terrain              map overrides
+  restore_npc_walk             NPC walk
+  validate_world_objects       NEW: restore_world_objects' own decoder, no pool touched
+  restore_dungeon -> scratch   NEW: into AlphaSaveStage::dungeon, never the live session
+callers: verify_candidate  -> save self-check, load_slot, inspect, load's per-slot pass
+         restore_candidate -> load_slot, restore_newest (Continue Latest, Alt+L, title Continue)
+```
+
+Every load route, the Generation rows and the self-check pass through it; none validates on its own. `synchronize_loaded_world()` is unchanged. Its two fallbacks stay as defence in depth. For a generation that passed the gate they cannot fire on content, because the same decoders already accepted the same document; the pool one can still fire if `object_reserve` finds no PSRAM, which is a memory condition, not a property of the save.
+
+| File | Change |
+|---|---|
+| `native/targets/tdeck/main/alpha_save_generation.{h,cpp}` | new; the storage-independent half of `alpha_save.cpp`, moved unchanged, plus the two gate lines in `stage_generation()` |
+| `native/targets/tdeck/main/alpha_save.cpp` | file I/O, timing, logging only; calls the functions above (`Commit`/`Candidate` become aliases, the scratch holds one `AlphaSaveStage`) |
+| `native/targets/tdeck/main/CMakeLists.txt` | firmware compiles `alpha_save_generation.cpp` |
+| `native/core/src/gameplay_save.cpp`, `include/openu5/gameplay_save.h` | `restore_world_objects`' per-entry rules moved into `decode_world_object` (same rules); new `validate_world_objects`; `restore_dungeon` accepts `dungeon` 33–40 instead of 0–255 |
+| `native/targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp` | two slots with commit + CRCs; `load`/`load_slot`/`inspect`/self-check call the production functions; new seam `host_memory_save_edit_for_test`; `damage` now tears the newest generation (CRC) |
+| `native/targets/tdeck/host_tests/batch28_save_validation_test.cpp`, `native/core/CMakeLists.txt` | new ctest; the four existing memory-stub targets also compile the new TU |
+
+### Invariants enforced
+
+**`"dungeon"`** (`restore_dungeon`, run into scratch at the gate):
+
+| Field | Rule | Why |
+|---|---|---|
+| key absent | valid: no session | a surface save, or any pre-Batch-26 save |
+| key present | must be an object | |
+| `dungeon` | integer **33–40** (new in Batch 28) | see below |
+| `floor`, `x`, `y` | 0–7 | unguarded indices into the 8×8×8 grid (`dungeon.cpp` `offset()`) |
+| `facing` | 0–3 | unguarded index into the 4-entry delta tables |
+| `cells` | array of exactly 512 integers 0–255 | the grid is 512 bytes |
+| `revealed` | array of exactly 64 integers 0–255 | 64 bytes |
+| `wanderer` | object; `bank`, `type`, `x`, `y`, `floor`, `attr`, `prevX`, `prevY` integers 0–255; `hidden` bool | `uint8_t` storage |
+
+The dungeon id rule is the only new domain rule. `pos.dungeon` is the session's location. Every producer of a live session gives it 33–40: `dungeon_load()` takes the id from the pack's eight `DUNGEON.DAT` maps, and `EnterDungeon` is only issued for `location_at()` 33–40, the underground `g_location` range `0x21..0x28` (Batch 26). The runtime keys four things off it: the room maps (`dungeon_room_map`), the rooms-cleared bits (`cleared_bit`), the exit position (`exit_dungeon`: `locations[dungeon-1]`) and the wall variant. Below 33 a room cell hands `dungeon_encounter` a negative map index, which it runs as a **corridor** fight; above 40 the index names no arena and the encounter is refused as an invalid context. `(K)limb`ing out lands at (0,0) (id 0 or ≥ 41, past the 40-entry location table) or at a town's entrance (ids 1–32). That is concrete misbehaviour, not an improbable value.
+
+Deliberately **not** enforced (preservation): any cell value 0–255 (`P1` loads a floor of `0xFF` cells verbatim); any reveal byte; the wanderer's full `uint8_t` range (type 255 = none, x/y 255 = unset; every consumer already bounds-checks: `dungeon_cell`'s range guard, the movement wrap, `kDungeonMonBanks`, `enemy_def_count`); and no cross-check between the session and the `.GAM` surface position, because a Developer teleport into a dungeon legitimately leaves that position in a town.
+
+**`"worldObjects"`** (`validate_world_objects` = `restore_world_objects`' rules, unchanged since R-14, now shared through `decode_world_object`): key absent → valid, empty pool; present → an array; each entry an object with `location`/`x`/`y` 0–255, `floor` −1–255, `tile` 0–2047, `plotZ` −1–255, `item` 0–8 (`PlotItem`, 8 = None), `plot`/`shadowlord`/`search`/`loot`/`chest`/`prop`/`trapped`/`ship`/`torch` bools, `itemId`/`quality`/`contents` 0–1023, `slot` −1–255, `hull`/`skiffs` 0–255. Not enforced: the count (bounded by `kMaxJsonBytes`; a failed `reserve` at sync is a memory condition, not a property of the save), coordinates against map size, and cross-object consistency. No new object rule was added: there was no evidence that any in-range value misbehaves.
+
+**Compatibility.** No save a device ever wrote is refused. `capture_dungeon` runs only for a live session, and every session is 33–40. `capture_world_objects` has written all 22 fields since its one introducing commit (`94cda853`), with the same rules. Before R-14 the retained `worldObjects` could only come from `import_native`. `INIT.GAM` starts at location 13 with an empty object table, so `read_objects` (the reference's ship/horse entry format, which the native decoder does not accept) never ran on a New Journey, and every device sidecar has carried the key, which overrides the `.GAM` list on import. No format, `.GAM` or version change.
+
+### Tests — `batch28_save_validation` (51 checks, real `AlphaRuntime` + shipped pack)
+
+Seam: the memory stub now holds **two** generation slots with commit records and CRCs. Its `load`, `load_slot`, `inspect` and post-write self-check call the **production** `alpha_save_generation.cpp`, so CRC, parse, semantic gate, choice and fallback are the device's code. `host_memory_save_edit_for_test(newest|older, edit)` parses one generation's sidecar, applies an edit to `sidecar.gameState`, re-encodes it and **re-seals its CRC**. The result is exactly H-166's class: well-formed and CRC-consistent, with wrong content. Staging: a one-member party, Deceit's Word, and three marker loot objects appended through the runtime's own `QuestWorldServices`.
+
+Every case starts from two real System Menu saves: **OLD** (seq 1: Deceit L1 (1,1) South, gold 111, pool {1}) and **NEW** (seq 2: Deceit L3 (3,2) North after the two traps, gold 222, pool {1,2}); then the live world moves on (turned East, gold 999, pool {1,2,3}). The oracles are each generation loaded on its own through its production Generation row in a fresh runtime (`O1`).
+
+- **A** (control): NEW valid → Continue Latest restores NEW, field for field equal to NEW's own row.
+- **B** (control, unreadable newest): NEW torn → listed corrupt, Continue Latest restores OLD whole. Already handled by the CRC before Batch 28.
+- **C1–C6** (NEW's `dungeon` invalid, its `worldObjects` valid): level 8; 511 cells; facing 4; dungeon id 0; id 41; `wanderer.hidden` a number. Each checks that Continue Latest restores **OLD whole** (C*n*), that `inspect` lists NEW corrupt and OLD valid (C*n*i), and that NEW's *valid* pool was not kept beside OLD (C*n*m, the **mixed-corruption** check).
+- **D1–D4** (NEW's `worldObjects` invalid, its `dungeon` valid): `item` 9; an entry that is a number; `floor` −2; the array replaced by an object. D*n*, D*n*i and D*n*m as above (D*n*m: NEW's valid floor-2 session not kept).
+- **P1–P4** (valid but unusual, must load **NEW** verbatim): a floor of `0xFF` cells, all-`0xFF` reveal, a dormant wanderer at x 200 with bank 255, dungeon 40; an object at tile 2047 / slot, hull, skiffs 255 / floor −1 / contents 1023 / item 8; no `dungeon` key (surface or pre-26 save); no `worldObjects` key (pre-R-14 save).
+- **F** (routes): `Alt+L` (F1d, F1o) and the title screen, System Menu → Return to Title → Journey Onward → Continue (F2d, F2o), each with a dungeon and an object corruption, restore OLD whole. F3: NEW's Generation row, once refused, loads nothing and changes nothing.
+- **G** (no usable generation: NEW's dungeon and OLD's objects both invalid): Continue Latest (G1), `Alt+L` (G2) and title Continue (G3), live in Deceit with a session, pool {1,2,3}, gold 999, facing East. G4: live in Lord British's castle among its NPCs, gold 777. Every snapshot field is unchanged.
+- **S** (self-check): a live object with `item` 9 is staged, then saved: "Save failed; prior kept" (S1); Continue Latest then restores NEW, not gold 555 with an emptied pool (S2).
+
+**RED → GREEN.** Against the behaviour-preserving split with no gate (production semantics at `e5692ae0`): **10/51 GREEN, 41 RED** (`native/core/batch28-red.log`). The ten GREENs are the controls and preservation cases: O0 O1 A0 A1 B1 B2 P1–P4. Every C/D/F/G/S check is RED. Typical failures: C1 "got gold=222 session=0" (NEW's party, session dropped); C4 "gold=222 session=1 floor=2" (dungeon id 0 accepted); D1 "gold=222 pool=0" (pool emptied). The log carries 18 `DUNGEON_RESTORE_FAILED`/`WORLD_OBJECTS_RESTORE_FAILED` lines, the post-commit fallbacks firing. After the fix: **51/51** (`batch28-green.log`).
+
+### Mutation proof (`native/core/batch28-mutations.log`)
+
+A Python driver applied each mutation to production, rebuilt, ran the test, restored the file byte for byte and touched it (Batch 26's stale-object lesson); cmake was called by absolute path. After the last restore: 51/51.
+
+| | Mutation | Result | Killed by |
+|---|---|---|---|
+| M1 | the Batch 28 gate removed (both lines) | 10/51 | the exact RED set: C1–C6 (×3), D1–D4 (×3), F1d F1o F2d F2o F3, G1–G4, S1 S2 |
+| M2 | dungeon validated, `worldObjects` not | 32/51 | D1–D4 (×3), F1o F2o, G1–G3, S1 S2 |
+| M3 | `worldObjects` validated, dungeon not | 26/51 | C1–C6 (×3), F1d F2d F3, G1–G4 |
+| M4 | no fallback: stop at the first refused generation | 26/51 | C*n*/C*n*m, D*n*/D*n*m, F1d F1o F2d F2o, S2 |
+| M5 | a refused generation still commits its `GameState` | 47/51 | G1–G4 |
+| M6 | dungeon id back to 0–255 | 45/51 | C4, C5 (×3 each) |
+
+M1 reproducing the RED set exactly shows the RED was measuring this gate and nothing else in the split. M5 survives the fallback cases by design: there the older generation is committed over the leak. G is what pins atomicity.
+
+### Atomicity
+
+`restore_candidate` stages into copies (`AlphaSaveStage`) and moves them into the live owners only after `stage_generation()` returns true. The dungeon session and the pool are live only in `AlphaRuntime` and are touched only by `synchronize_loaded_world()`, which runs only after a `true`. So a refused generation cannot write anything. G1–G4 prove it end to end with recognisable live state in two contexts: position, clock, gold/karma, the dungeon session (id/level/cell/facing/map/reveal/wanderer), the pool, the command context, the UI base mode, every NPC actor's x/y/z/state (G4: the castle) and the open-door tracker, all unchanged after each route's failed load. M5 shows those checks catch a partial commit. With a fallback, the result is field-for-field equal to OLD's own row (C/D/F): nothing from the live state or from NEW survives (the markers and the C*n*m/D*n*m checks name the source of the pool and the session).
+
+### Cross-path coverage
+
+| Route | Entry | Function | Checks |
+|---|---|---|---|
+| System Menu → Continue Latest | `service_system_menu_intent` | `load` → `restore_newest` | A1 B2 C* D* P* G1 G4 S2 |
+| `Alt+L` | `DeviceShortcut::Load` arm | `load` → `restore_newest` | F1d F1o G2 |
+| Title → Journey Onward → Continue | `service_frontend_intent` | `load` → `restore_newest` | F2d F2o G3 |
+| System Menu Generation row | `inspect` → `load_slot` | `verify_candidate` / `restore_candidate` | C*i D*i B1 F3, oracles O1 |
+| Title Load page (slot) | `service_frontend_intent` | the same `inspect`/`load_slot` | not driven separately: same functions as the row |
+| Save self-check | `save` | `verify_candidate` | S1 S2 |
+
+No route validates on its own and none bypasses `stage_generation()`. Batch 27's post-load unification is untouched.
+
+### Full regression suite
+
+From-scratch build (`native/core/build-batch28-final`), serial: **98/98, 0 fail, 0 skipped** (`batch28-final-ctest.log`): the prior 97 plus `batch28_save_validation`. The build has one warning, the pre-existing w64devkit `stl_uninitialized.h` false positive; zero project warnings. Targeted before that: `batch28_save_validation` 51/51, `batch27_alt_load` 37/37, `batch26_dungeon_save` 34/34, `batch25_shard_ritual` 42/42, `batch24_reload_parity` 47/47. `gameplay_integration` (Batch 6's `restore_dungeon` round trip, dungeon 35) and `persistence_parity` also pass. Batch 27's X2 (a torn save) now fails at the CRC rather than the parse, since the stub stores CRCs as the card does; same outcome. No parity fixture moved.
+
+### Firmware
+
+ESP-IDF 6.1, from scratch in `native/targets/tdeck/build-batch28`: `openu5_tdeck.bin` = **0xd3a20** (866,848 bytes), +0x100 (256 bytes) against Batch 27's `0xd3920`: the new translation unit, `validate_world_objects` and the scratch `DungeonState`. `0x2c5e0` (181,728 bytes, 17 %) of the app partition is free; bootloader `0x5850`, 31 % free. **0 errors, 0 compiler warnings** (`batch28-firmware-build.log`, built before the commit; the five ESP-IDF `component_validation.cmake` notices are third-party). The `AlphaSaveScratch` PSRAM workspace grows by one `DungeonState` (about 600 bytes). The Launcher image is rebuilt (`idf.py reconfigure build`, `package_launcher.py`) **after** the Batch 28 commit so it embeds that commit; its path and SHA-256 are recorded in the annotated tag `alpha2-batch28-h166-save-validation`. **Not flashed.** SD card unchanged; no SD recopy.
+
+### Status
+
+H-166: **FIXED ON HOST** (`batch28_save_validation`). Classification: native defect (device persistence gate), not a 1988 behaviour and not a reference-port difference; robustness, reachable only from a corrupted card. **No new hardware phase:** everything H-166 decides happens in `alpha_save_generation.cpp`, which the host test runs as the device does, over the device's own sidecar bytes. The device-only parts (file I/O, temp+rename, CRC read-back, the PSRAM scratch) are unchanged, and the next flash exercises them in Phases 6T/6U/6V anyway. Staging a corrupt-but-CRC-valid generation on a real card would need a hand-edited file and a recomputed commit record: busywork that certifies nothing the host test does not.
+
+Unchanged by this batch and still separate: H-118 (Phase 6T), H-115 (Phase 6U), H-164 (Phase 6V), all **HOST FIXED / DEVICE RETEST PENDING**.
+
+**Still open:** H-154–H-157, H-160, H-165.
+
+**Known and queued, do not file:** H-165 (a question left pending across a Developer teleport into a dungeon).

@@ -20,6 +20,10 @@ Error restore_terrain(const Json &,WorldTerrain &);
 // first so a failed/absent restore leaves it empty rather than stale.
 void capture_world_objects(const QuestWorldServices &,Json &);
 Error restore_world_objects(const Json &,QuestWorldServices &);
+// H-166: restore_world_objects' own rules, with no pool to write. The save
+// generation gate runs this (and restore_dungeon into scratch) BEFORE a load
+// commits, because the two restores themselves only run afterwards.
+Error validate_world_objects(const Json &);
 // R-15: a dungeon session (`DungeonState`) is caller-owned runtime state, not
 // part of GameState/CommandState. Absent from the document (surface save, the
 // common case) restores to an inactive default. Present-but-invalid is a

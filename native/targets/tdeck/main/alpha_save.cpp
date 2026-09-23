@@ -1,4 +1,5 @@
 #include "alpha_save.h"
+#include "alpha_save_generation.h"
 
 #include <array>
 #include <cerrno>
@@ -47,14 +48,14 @@ struct SdHeadroomGuard{
         if(locked)sdlog::end_storage_transaction();
     }
 };
-struct Commit { uint32_t magic=0x31533555,version=1;uint64_t sequence=0;uint32_t gam=0,ool=0,json=0; };
+using Commit=AlphaSaveCommit;
 std::string path(int slot,const char *ext,bool temp=false){char out[96];std::snprintf(out,sizeof(out),"%s/alpha1-g%d.%s%s",AlphaSaveService::kDirectory,slot,ext,temp?".tmp":"");return out;}
 bool write_file(const std::string&p,const void*data,size_t n){FILE*f=std::fopen(p.c_str(),"wb");if(!f)return false;bool ok=std::fwrite(data,1,n,f)==n&&std::fflush(f)==0&&fsync(fileno(f))==0;const bool closed=std::fclose(f)==0;return ok&&closed;}
 bool read_file(const std::string&p,std::vector<uint8_t>&out){FILE*f=std::fopen(p.c_str(),"rb");if(!f)return false;if(std::fseek(f,0,SEEK_END)||std::ftell(f)<0){std::fclose(f);return false;}auto n=size_t(std::ftell(f));out.resize(n);std::rewind(f);const bool read=std::fread(out.data(),1,n,f)==n;const bool closed=std::fclose(f)==0;return read&&closed;}
 bool validate_temp(int slot,const char*ext,size_t size,uint32_t crc){std::vector<uint8_t>b;return read_file(path(slot,ext,true),b)&&b.size()==size&&openu5::save::save_crc32(b.data(),b.size())==crc;}
 bool read_commit(int slot,Commit&c){std::vector<uint8_t>b;if(!read_file(path(slot,"commit"),b)||b.size()!=sizeof(c))return false;std::memcpy(&c,b.data(),sizeof(c));return c.magic==0x31533555&&c.version==1;}
 bool move_temp(int slot,const char*ext){const auto from=path(slot,ext,true),to=path(slot,ext);unlink(to.c_str());return rename(from.c_str(),to.c_str())==0;}
-struct Candidate{Commit commit{};std::vector<uint8_t>gam,ool,json;std::string side;openu5::save::Generation generation{};};
+using Candidate=AlphaSaveCandidate;
 }
 
 // One main-task-owned workspace holds every large persistence temporary. The
@@ -63,13 +64,7 @@ struct Candidate{Commit commit{};std::vector<uint8_t>gam,ool,json;std::string si
 struct AlphaSaveScratch {
     Candidate candidates[2]{};
     Candidate verified{};
-    openu5::GameState game{};
-    openu5::TurnState turn{};
-    openu5::CommandState commands{};
-    openu5::OutdoorServices outdoor{};
-    openu5::WorldTerrain terrain{};
-    openu5::NpcActors actors{};
-    openu5::save::Json document{};
+    AlphaSaveStage stage{};
     openu5::save::Gam gam{};
     openu5::save::Ool ool{};
     openu5::save::Json side{};
@@ -78,30 +73,11 @@ struct AlphaSaveScratch {
 };
 
 namespace {
+// Read one slot's commit and files, then the shared semantic check.
 bool candidate(int slot,Candidate&v,AlphaSaveScratch&scratch){
     v=Candidate{};
     if(!read_commit(slot,v.commit)||!read_file(path(slot,"gam"),v.gam)||!read_file(path(slot,"ool"),v.ool)||!read_file(path(slot,"json"),v.json))return false;
-    v.side.assign(reinterpret_cast<const char*>(v.json.data()),v.json.size());auto &g=v.generation;g.sequence=v.commit.sequence;g.committed=true;g.identity_matches=true;g.gam=v.gam.data();g.gam_size=v.gam.size();g.ool=v.ool.data();g.ool_size=v.ool.size();g.sidecar=&v.side;g.requires_ool=g.requires_sidecar=true;g.gam_crc=v.commit.gam;g.ool_crc=v.commit.ool;g.sidecar_crc=v.commit.json;if(!openu5::save::complete_generation(g))return false;
-    scratch.game={};scratch.turn={};scratch.document={};scratch.commands={};scratch.outdoor={};scratch.terrain={};scratch.actors={};
-    openu5::save::SidecarSource source;
-    if(openu5::save::load_native_state(v.gam.data(),v.gam.size(),&v.side,scratch.game,scratch.turn,scratch.document,source,true)!=openu5::save::Error::None)return false;
-    return openu5::save::restore_gameplay(scratch.document,scratch.commands,scratch.outdoor)==openu5::save::Error::None&&
-           openu5::save::restore_terrain(scratch.document,scratch.terrain)==openu5::save::Error::None&&
-           openu5::save::restore_npc_walk(scratch.document,scratch.game.position.map.location,true,scratch.actors)==openu5::save::Error::None;
-}
-bool restore_candidate(Candidate&pick,openu5::CommandContext&c,openu5::OutdoorServices&o,openu5::WorldTerrain&t,openu5::NpcActors&a,openu5::save::Json&retained,AlphaSaveScratch&scratch){
-    // Validate and restore transactionally. A newer generation with a valid
-    // commit/CRC but incompatible semantic payload must not partially replace
-    // live state or prevent recovery from the older generation.
-    scratch.game=c.game;scratch.turn=c.turn;scratch.commands=c.commands;scratch.outdoor=o;scratch.terrain=t;scratch.actors=a;scratch.document={};
-    openu5::save::SidecarSource source;
-    auto err=openu5::save::load_native_state(pick.gam.data(),pick.gam.size(),&pick.side,scratch.game,scratch.turn,scratch.document,source,true);
-    if(err==openu5::save::Error::None)err=openu5::save::restore_gameplay(scratch.document,scratch.commands,scratch.outdoor);
-    if(err==openu5::save::Error::None)err=openu5::save::restore_terrain(scratch.document,scratch.terrain);
-    if(err==openu5::save::Error::None)err=openu5::save::restore_npc_walk(scratch.document,scratch.game.position.map.location,true,scratch.actors);
-    if(err!=openu5::save::Error::None)return false;
-    c.game=std::move(scratch.game);c.turn=std::move(scratch.turn);c.commands=std::move(scratch.commands);
-    o=std::move(scratch.outdoor);t=std::move(scratch.terrain);a=std::move(scratch.actors);retained=std::move(scratch.document);return true;
+    return verify_candidate(v,scratch.stage);
 }
 }
 
@@ -186,16 +162,13 @@ bool AlphaSaveService::load(openu5::CommandContext &c,openu5::OutdoorServices&o,
                             openu5::WorldTerrain&t,openu5::NpcActors&a,openu5::save::Json&retained,
                             uint32_t &ms){
     const int64_t start=esp_timer_get_time();SdHeadroomGuard sd_window("load-latest");auto *workspace=scratch();if(!workspace){ms=0;return false;}auto &s=*workspace;for(int i=0;i<2;++i)candidate(i,s.candidates[i],s);
-    openu5::save::Generation list[2]={s.candidates[0].generation,s.candidates[1].generation};
-    for(int pass=0;pass<2;++pass){const int selected=openu5::save::select_generation(list,2);if(selected<0)break;
-        auto &pick=s.candidates[selected];if(restore_candidate(pick,c,o,t,a,retained,s)){ms=uint32_t((esp_timer_get_time()-start+999)/1000);ESP_LOGI(kTag,"load generation=%llu slot=%d time=%lu ms status=0",(unsigned long long)pick.commit.sequence,selected,(unsigned long)ms);return true;}
-        ESP_LOGW(kTag,"generation=%llu slot=%d failed semantic restore; trying fallback",(unsigned long long)pick.commit.sequence,selected);list[selected]={};
-    }
-    ms=uint32_t((esp_timer_get_time()-start+999)/1000);ESP_LOGW(kTag,"no restorable save generation");return false;
+    const int selected=restore_newest(s.candidates,c,o,t,a,retained,s.stage);ms=uint32_t((esp_timer_get_time()-start+999)/1000);
+    if(selected>=0)ESP_LOGI(kTag,"load generation=%llu slot=%d time=%lu ms status=0",(unsigned long long)s.candidates[selected].commit.sequence,selected,(unsigned long)ms);
+    return selected>=0;
 }
 
-bool AlphaSaveService::load_slot(int slot,openu5::CommandContext&c,openu5::OutdoorServices&o,openu5::WorldTerrain&t,openu5::NpcActors&a,openu5::save::Json&retained,uint32_t&ms){const int64_t start=esp_timer_get_time();SdHeadroomGuard sd_window("load-slot");auto *workspace=scratch();if(!workspace||slot<0||slot>1){ms=uint32_t((esp_timer_get_time()-start+999)/1000);return false;}auto&s=*workspace;auto&pick=s.candidates[slot];if(!candidate(slot,pick,s)){ms=uint32_t((esp_timer_get_time()-start+999)/1000);return false;}const bool ok=restore_candidate(pick,c,o,t,a,retained,s);ms=uint32_t((esp_timer_get_time()-start+999)/1000);return ok;}
-void AlphaSaveService::inspect(openu5::FrontendSaveSlot(&slots)[2]){SdHeadroomGuard sd_window("save-inspect");auto*workspace=scratch();for(auto&slot:slots)slot={};if(!workspace)return;auto&s=*workspace;for(int i=0;i<2;++i){auto&v=s.candidates[i];if(!candidate(i,v,s)){Commit c{};slots[i].present=read_commit(i,c);continue;}slots[i].present=slots[i].valid=true;slots[i].sequence=v.commit.sequence;if(s.game.party.character_count)std::snprintf(slots[i].name,sizeof(slots[i].name),"%.9s",s.game.party.characters[0].name);}}
+bool AlphaSaveService::load_slot(int slot,openu5::CommandContext&c,openu5::OutdoorServices&o,openu5::WorldTerrain&t,openu5::NpcActors&a,openu5::save::Json&retained,uint32_t&ms){const int64_t start=esp_timer_get_time();SdHeadroomGuard sd_window("load-slot");auto *workspace=scratch();if(!workspace||slot<0||slot>1){ms=uint32_t((esp_timer_get_time()-start+999)/1000);return false;}auto&s=*workspace;auto&pick=s.candidates[slot];if(!candidate(slot,pick,s)){ms=uint32_t((esp_timer_get_time()-start+999)/1000);return false;}const bool ok=restore_candidate(pick,c,o,t,a,retained,s.stage);ms=uint32_t((esp_timer_get_time()-start+999)/1000);return ok;}
+void AlphaSaveService::inspect(openu5::FrontendSaveSlot(&slots)[2]){SdHeadroomGuard sd_window("save-inspect");auto*workspace=scratch();for(auto&slot:slots)slot={};if(!workspace)return;auto&s=*workspace;for(int i=0;i<2;++i){auto&v=s.candidates[i];if(!candidate(i,v,s)){Commit c{};slots[i].present=read_commit(i,c);continue;}slots[i].present=slots[i].valid=true;slots[i].sequence=v.commit.sequence;if(s.stage.game.party.character_count)std::snprintf(slots[i].name,sizeof(slots[i].name),"%.9s",s.stage.game.party.characters[0].name);}}
 
 bool AlphaSettingsService::load(openu5::FrontendSettings&s)const{SdHeadroomGuard sd_window("settings-load");std::vector<uint8_t>b;if(!read_file(kPath,b))return false;return openu5::decode_settings(std::string(reinterpret_cast<const char*>(b.data()),b.size()),s);}
 bool AlphaSettingsService::save(const openu5::FrontendSettings&s)const{SdHeadroomGuard sd_window("settings-save");mkdir("/sd/ultima5",0777);std::string text;if(!openu5::encode_settings(s,text))return false;const std::string tmp=std::string(kPath)+".tmp";if(!write_file(tmp,text.data(),text.size()))return false;unlink(kPath);return rename(tmp.c_str(),kPath)==0;}

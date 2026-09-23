@@ -24,6 +24,8 @@ that a tester never files an intentional difference as a defect.
 **Batch 26 changed no row.** H-115 was a defect, not a divergence: 1988 saves underground and resumes in place (`CAST2.OVL:0x10FE`, no location gate), and the port now does too. The session rides the A-14 sidecar as `gameState.dungeon`, native-only, because the TypeScript reference does not save it. The Rel Tym toggle resets on load, as `DUNGEON 0x0E40` does. D-23 (H-164) is now reproduced on host for the dungeon session and stays open.
 
 **Batch 27 resolved D-23** (H-164): `Alt+L` is the same 1988 load as Continue Latest and now ends in the same `synchronize_loaded_world()`. It was a native routing defect, not a divergence, so no §2/§3 row changed.
+
+**Batch 28 changed no row** (H-166). 1988 writes and reads the save window as one piece (`CAST2.OVL:0x10FE`, `INTRO.OVL:0x0EB4`), dungeon map and object register included. A-14's two-slot generation gate now matches that: a generation whose `"dungeon"` or `"worldObjects"` sidecar the runtime would refuse is refused whole and the older generation loads, instead of loading with that part silently dropped. A native defect in the A-14 mechanism, not a divergence. Legal-but-unusual payloads are still accepted verbatim. The one new domain rule (a dungeon session's id must be a dungeon, 33–40) is recorded with its evidence in the audit.
 The "toggle candidate" column records how isolated each difference already is —
 it is an assessment, not a commitment, and **no toggle is implemented**.
 
