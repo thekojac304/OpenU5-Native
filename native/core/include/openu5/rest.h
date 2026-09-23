@@ -1,6 +1,7 @@
 #pragma once
 #include "commands.h"
 namespace openu5 {
+struct WorldTerrain;
 struct CampCell {
     int32_t col = 0, row = 0;
     bool present = false;
@@ -21,6 +22,8 @@ struct RestContext {
     EventSink events{};
     RestServices services{};
     const SkyRefresh *sky = nullptr;
+    WorldTerrain *terrain = nullptr;
+    const WorldData *world = nullptr;
 };
 struct RestEligibility {
     bool ok = true, ship = false, bed = false, in_town = false;

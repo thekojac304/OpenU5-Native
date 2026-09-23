@@ -1,0 +1,36 @@
+M1 skip housekeeping
+  verdict: KILLED (exit 1)
+  RED H156-A2 exactly six housekeeping turns, no extra begin/end tick
+  RED H156-A3 poison damages once per sleep tick
+  RED H156-B1 Q halves first two clock advances; six housekeeping calls
+  RED H156-B2 Q expires after two housekeeping calls; poison continues for all six
+  RED H156-M1 06:00 meal consumes only the poisoned awake eater
+  RED H156-C2 ejecting tick already ran housekeeping, with no later tick
+  RED H156-D1 hour crossing emits starvation through production event route
+  batch30_sleep_parity: 17/24 GREEN, 7 RED
+M2 double housekeeping
+  verdict: KILLED (exit 1)
+  RED H156-A2 exactly six housekeeping turns, no extra begin/end tick
+  RED H156-A3 poison damages once per sleep tick
+  RED H156-B1 Q halves first two clock advances; six housekeeping calls
+  RED H156-B2 Q expires after two housekeeping calls; poison continues for all six
+  RED H156-C2 ejecting tick already ran housekeeping, with no later tick
+  batch30_sleep_parity: 19/24 GREEN, 5 RED
+M3 skip ejecting tick housekeeping
+  verdict: KILLED (exit 1)
+  RED H156-C2 ejecting tick already ran housekeeping, with no later tick
+  batch30_sleep_parity: 23/24 GREEN, 1 RED
+M4 skip 05:00 refresh
+  verdict: KILLED (exit 1)
+  RED H157-05 scheduled lamp-adjacent tile is changed inside the boundary tick, before NPC snap
+  batch30_sleep_parity: 23/24 GREEN, 1 RED
+M5 skip 20:00 refresh
+  verdict: KILLED (exit 1)
+  RED H157-20 scheduled lamp-adjacent tile is changed inside the boundary tick, before NPC snap
+  batch30_sleep_parity: 23/24 GREEN, 1 RED
+M6 refresh every sleep tick
+  verdict: KILLED (exit 1)
+  RED H157-N2 no unconditional refresh on ordinary sleep ticks
+  batch30_sleep_parity: 23/24 GREEN, 1 RED
+RESTORED production (exit 0)
+  batch30_sleep_parity: 24/24 GREEN, 0 RED

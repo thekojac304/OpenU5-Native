@@ -276,10 +276,13 @@ int main(int argc, char **argv) {
         return 2;
     int op, a, b, c;
     size_t count = 0;
+    size_t original_bed_cases = 0;
     while (in >> op >> a >> b >> c) {
         V before = block(in), expected = block(in);
         Harness h;
         decode(before, h.g, h.t);
+        const auto turns_before_bed = h.g.turns_since_start;
+        const bool bed_x_valid = h.g.position.xy.x != 255;
         h.throw_at = c;
         auto rand = h.rand();
         auto services = h.services();
@@ -425,6 +428,20 @@ int main(int argc, char **argv) {
         append(actual, h.calls);
         append(actual, h.draws);
         ++count;
+        // The TS generator for op 10/22 omits CMDS:0x0671 housekeeping.
+        // Its output cannot be a bed-sleep oracle after Batch 30. Keep the
+        // native tick/turn/early-ejection invariant here; H-170 separately
+        // records the fixed-tick mismatch under Q. The shipped-pack raw-key
+        // test covers original survival, expiry and terrain ordering.
+        if ((op == 10 || op == 22) && a > 0) {
+            const int ticks = bed_x_valid ? (c > 0 ? std::min(a * 6, c) : a * 6) : 0;
+            if (h.snaps != ticks || h.g.turns_since_start != turns_before_bed + ticks) {
+                std::cerr << "bed tick invariant failed at row " << count << " op " << op << '\n';
+                return 1;
+            }
+            ++original_bed_cases;
+            continue;
+        }
         if (actual != expected) {
             size_t i = 0;
             while (i < actual.size() && i < expected.size() && actual[i] == expected[i])
@@ -437,7 +454,8 @@ int main(int argc, char **argv) {
         }
     }
     adapter_checks();
-    std::cout << count << " item/rest parity cases passed; GameState=" << sizeof(GameState)
+    std::cout << count << " item/rest cases passed (" << original_bed_cases
+              << " bed rows use the native tick invariant); GameState=" << sizeof(GameState)
               << " PartyState=" << sizeof(PartyState)
               << " CharacterState=" << sizeof(CharacterState) << " Command=" << sizeof(Command)
               << " ActionResult=" << sizeof(ActionResult) << " RestContext=" << sizeof(RestContext)

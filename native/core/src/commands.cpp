@@ -1185,7 +1185,7 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
                 return b.host.occupied ? b.host.occupied(b.host.context, x, y, z) : false;
             };
         }
-        RestContext ctx{c.game, c.turn, r.rand, r.sink(), bed, c.sky};
+        RestContext ctx{c.game, c.turn, r.rand, r.sink(), bed, c.sky, c.terrain, &c.world};
         const auto result = e.bed ? bed_sleep(ctx, cmd.hours) : camp(ctx, cmd.hours, cmd.member);
         if (result.ambush) {
             auto *arena=c.outdoor?c.outdoor->combat:c.quest_world?c.quest_world->encounter:nullptr;

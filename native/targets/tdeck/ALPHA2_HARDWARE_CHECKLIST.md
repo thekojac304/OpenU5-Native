@@ -389,8 +389,8 @@ Run audit **Phase 6P** (8 short steps in Lord British's Castle basement). **A re
 |---|---|---|
 | H-154 | Bed hole-up does not snap NPCs to their schedule **on the device**: `alpha_runtime.cpp:232` wires `RestServices::snap_npcs` to an empty lambda. This is the *sibling half* of `TOWN.OVL:0x1694`, the routine H-148 restored — the core now always runs the object half, but the NPC half is host wiring and was deliberately left for its own batch | **CONFIRMED MISSING ORIGINAL BEHAVIOR — queued.** Do not file |
 | H-155 | `"Thrown out of bed!"` can never fire on hardware: `RestServices::occupied` is wired to a constant `false`, so the `CMDS.OVL:0x0688` occupancy probe (kernel `0x368E`) always answers no | **CONFIRMED MISSING — queued.** Do not file |
-| H-156 | Bed hole-up runs **no** per-tick turn housekeeping. 1988 calls kernel `0x2AE8 kernel_turn_housekeeping` at `CMDS.OVL:0x0671` every ten minutes: poison 1 HP, meals at 06:00/12:00/18:00, `Starving!`, turn counter, Q/T spell expiry, regeneration-ring roll. Sleeping in the port costs no food, never starves you, never ticks poison and never regenerates. The TypeScript reference omits it too | **CONFIRMED MISSING (both ports) — queued, highest severity of the sweep.** Do not file |
-| H-157 | Sleeping across 20:00 or 05:00 leaves the day/night tile overlay stale (drawbridge planks `0x48/0x49`, lamp `0x87`). 1988 calls `TOWN.OVL:0x0170 town_schedule_tile_refresh` from inside the sleep loop at `CMDS.OVL:0x0664` | **CONFIRMED MISSING (both ports) — queued.** Do not file |
+| H-156 | Bed hole-up must run kernel `0x2AE8 kernel_turn_housekeeping` at `CMDS.OVL:0x0671` every ten-minute tick: poison, meals, starvation, turn counter, Q/T expiry, regeneration. The TypeScript reference omits it | **HOST FIXED — Batch 30 / DEVICE RETEST PENDING** (Phase 6X) |
+| H-157 | Sleeping across 20:00 or 05:00 must refresh the town's day/night overlay *inside the tick*, before housekeeping/NPC snap, via `TOWN.OVL:0x0170` at `CMDS.OVL:0x0664`. The TypeScript reference omits it | **HOST FIXED — Batch 30 / DEVICE RETEST PENDING** (Phase 6X) |
 | H-158 | Changing floors inside a small map does not reload the map record. 1988's `town_use_ladder` (`TOWN.OVL:0x052e`) calls `town_load_town_map(fresh=1)`, which re-reads the 0x400-byte record for the new floor **and** re-seeds the object register. Consequence a tester will see: a skull-key-unmagicked door stays open across a floor change where 1988 relocks it | **CONFIRMED MISSING (both ports) — queued.** Expected during Phase 6P step 8; do not file |
 | H-159 | Interior chests are seeded with contents byte `8`; the binary seeds `0x1E` (`TOWN.OVL:0x1795`). Closes oracle hole **O5**. Affects every interior chest's loot at map entry, not just after a reset, so fixing it will move `gameplay_parity`/`quest_parity` and must be done together with the TypeScript side | **CONFIRMED MISSING — queued.** Do not file |
 | H-160 | Outdoor camp: the watchman walks through the campfire and through sleeping members, because `RestServices::cell_free` is a constant `true` on the device | **CONFIRMED MISSING — queued, cosmetic.** Do not file |
@@ -500,3 +500,25 @@ The device bound two of the three rest callbacks to stubs, so the core's correct
 **Host suite:** 99/99, 0 fail, 0 skipped, from a clean build: the prior 98 plus `batch29_rest_wiring` (26 checks). No fixture moved.
 
 **Still open:** H-156 and H-157 (**reserved for Batch 30**), H-165, H-167, H-168, H-169. Hardware verification of H-115 (Phase 6U), H-118 (Phase 6T), H-164 (Phase 6V) and H-154/H-155 (Phase 6W) awaits the user's reports.
+
+## Batch 30 — H-156 / H-157 sleep ticks and day/night tiles
+
+The 1988 bed loop advances ten minutes, refreshes town terrain if the resulting hour is 05:00 or 20:00, runs kernel housekeeping, then snaps NPCs and checks the bed occupant. The native loop omitted housekeeping and the in-loop refresh; both are now wired to existing routines. The shipped-pack/raw-key host test is 24/24 GREEN, six meaningful mutations are killed, and the fresh complete host suite is **100/100 PASS** (99 prior plus `batch30_sleep_parity`). Full evidence and the separate H-170 Q-duration finding are in `GAMEPLAY_INTEGRATION_AUDIT.md` §"Batch 30".
+
+| Row | Behaviour | Status |
+|---|---|---|
+| H-156 | One normal housekeeping call per ten-minute bed tick, including the tick that ejects the party; poison, meals, starvation and Q expiry use the existing kernel-derived turn routine | **HOST FIXED / DEVICE RETEST PENDING** (Phase 6X) |
+| H-157 | The shipped-map lamp-adjacent terrain changes at 05:00/20:00 inside the boundary tick, before NPC snap; no refresh on ordinary ticks | **HOST FIXED / DEVICE RETEST PENDING** (Phase 6X) |
+| H-170 | Q can make a fixed `hours * 6` native sleep stop short of the original target hour | **CONFIRMED MISSING — queued, unchanged** |
+
+**Retest gate:** Phase **6X** below, after a later device flash. Phase 6W is already assigned to Batch 29; Phases 6T, 6U and 6V remain pending. The SD pack and save format are unchanged. No hardware was flashed or SD card modified in Batch 30.
+
+### Phase 6X — Batch 30 bed survival and day/night · *PENDING*
+
+Use the Batch 30 firmware. Close Developer before each sleep and keep enough HP to survive starvation. These steps check device presentation and state. The host observer establishes the exact in-loop terrain ordering; a final device screenshot alone cannot, because the runtime also refreshes terrain after input.
+
+1. Developer → Time **12:50**, Food **0**, heal the party; teleport to **Lord British's Castle**, floor **0**, bed **(9,7)**. Close Developer, press `h`, `1`, Enter. Expect `Starving!` when the clock crosses 13:00 and lower HP on waking. Record clock and HP.
+2. Developer → Time **05:50**, Food **5**, heal the party, set one member's Status to **P**, leave the others **G**; teleport to a free castle bed. Press `h`, `1`, Enter. Expect one HP of poison damage per completed sleep tick on P and food reduced by **one** at 06:00 (the G members are asleep during the meal). Record before/after HP, food and clock. If an occupant ejects the party, its final tick must still damage P.
+3. Developer → Time **19:50**, teleport to a free castle bed, `h`, `1`, Enter; inspect the castle lamp at **(15,10)** and the tile south at **(15,11)**. Repeat from **04:50** on a free bed. Expect the night overlay after 20:00 and the day tile after 05:00. Host evidence pins that the change occurred during the first boundary tick, before NPC snap.
+
+**Status:** 6X not performed. Do not use a Q-duration observation to judge H-156; H-170 is separate and queued. H-165 and all other queued issues remain out of scope.

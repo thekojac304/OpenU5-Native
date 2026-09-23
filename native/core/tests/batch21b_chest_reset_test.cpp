@@ -109,6 +109,10 @@ struct Harness {
         g.party.party_size = 1;
         g.party.character_count = 1;
         g.party.characters[0].status = 'G';
+        // This fixture tests chest resets, not survival. Bed sleep now runs
+        // original turn housekeeping, so give its sole member provisions.
+        g.party.characters[0].current_hp = g.party.characters[0].max_hp = 500;
+        g.food = 100;
         g.time.hour = 12;
         g.time.minute = 0;
         quest.context = &objects;

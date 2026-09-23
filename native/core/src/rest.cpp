@@ -1,4 +1,5 @@
 #include "openu5/rest.h"
+#include "openu5/world_terrain.h"
 #include <algorithm>
 #include <cstdio>
 namespace openu5 {
@@ -193,7 +194,22 @@ void bed_sleep_begin(RestContext &c) {
     }
 }
 bool bed_sleep_step(RestContext &c) {
+    const auto old_hour = c.game.time.hour;
     advance_clock(c.game, c.turn, 10, &c.rand, c.sky);
+    if (c.terrain && c.world && c.game.time.hour != old_hour &&
+        (c.game.time.hour == 5 || c.game.time.hour == 20))
+        c.terrain->refresh(*c.world, c.game);
+    const auto tick = turn_housekeeping(c.game, c.turn, c.rand);
+    if (tick.poison_ticks.count) {
+        GameEvent e;
+        e.kind = GameEventKind::PoisonTick;
+        e.slot_count = tick.poison_ticks.count;
+        for (uint8_t i = 0; i < e.slot_count; ++i)
+            e.slots[i] = tick.poison_ticks.values[i];
+        if (c.events.emit) c.events.emit(c.events.context, e);
+    }
+    for (uint8_t i = 0; i < tick.message_count; ++i)
+        msg(c, turn_message_text(tick.messages[i]));
     c.services.snap_npcs(c.services.context);
     const auto &p = c.game.position;
     if (c.services.occupied(c.services.context, p.xy.x, p.xy.y, p.map.floor)) {

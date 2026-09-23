@@ -1,0 +1,17 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-b30-final
+    Start  5: batch21b_chest_reset
+1/6 Test  #5: batch21b_chest_reset .............   Passed    0.01 sec
+    Start 26: item_parity
+2/6 Test #26: item_parity ......................   Passed    0.46 sec
+    Start 30: turn_parity
+3/6 Test #30: turn_parity ......................   Passed    0.04 sec
+    Start 55: batch29_rest_wiring
+4/6 Test #55: batch29_rest_wiring ..............   Passed    0.11 sec
+    Start 56: batch30_sleep_parity
+5/6 Test #56: batch30_sleep_parity .............   Passed    0.05 sec
+    Start 76: gameplay_parity
+6/6 Test #76: gameplay_parity ..................   Passed   10.28 sec
+
+100% tests passed out of 6
+
+Total Test time (real) =  10.96 sec
