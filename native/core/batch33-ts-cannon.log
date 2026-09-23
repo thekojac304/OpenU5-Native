@@ -1,0 +1,9 @@
+
+ RUN  v3.2.7 C:/Dev/OpenU5-Native
+
+ ✓ game/tests/cannon.test.ts (17 tests) 33ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  17:58:43
+   Duration  5.21s (transform 531ms, setup 0ms, collect 760ms, tests 33ms, environment 0ms, prepare 370ms)

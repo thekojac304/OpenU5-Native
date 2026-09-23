@@ -5310,10 +5310,10 @@ export class Game {
    * adyacente (0x0BDE → DS 0x42EB). Los tres imprimen literalmente "What?\n".
    *
    * PUREZA: esta rama del binario NO llama a rand() en su código visible — muta mundo
-   * (tile→0x44, npcDead, karma) SIN tocar el stream RNG. El daño/muerte exacto del NPC
-   * (kernel opaco 0x7AF4 + 0xffffBB9E/86/92) y el world-turn que consume el disparo
-   * (g_unk_24e6=1) quedan Clase C: el clon mata al ocupante alcanzado (resultado visible)
-   * y aplica el karma-5 derivable (0x0D5A), sin modelar la tirada de HP ni el tick de turno.
+   * (tile→0x44, npcDead, karma) SIN tocar el stream RNG. En impacto a NPC,
+   * 0x7AF4 = kernel 0x3A74: borra el registro de objeto; TOWN 0x011e/0x0052/0x00b0
+   * hallan el NPC, marcan el bit elegible y vacían su slot de inmediato. No hay tirada
+   * de HP. El world-turn activado por g_unk_24e6 queda fuera de esta rama del port.
    */
   fireCannon(): GameEvent[] {
     const events: GameEvent[] = [];
@@ -5371,7 +5371,8 @@ export class Game {
       const npc = this.npcManager?.npcAt(loc, pos.floor, bx, by) ?? null;
       if (npc) {
         this.state.karma = this.state.karma > 5 ? this.state.karma - 5 : 0; // 0x0D5A
-        (this.state.npcDead[loc - 1] ??= [])[npc.slot] = true;
+        this.townNpcDeadBitSet(npc); // 0x0D6x -> TOWN 0x0052, with original type gate
+        this.npcManager?.clearSlot(loc, npc.slot, this.state); // TOWN 0x00B0: immediate despawn
         events.push({ kind: "party-changed" }); // karma cambió
         changed = true;
         break;

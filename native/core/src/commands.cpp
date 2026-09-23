@@ -59,7 +59,7 @@ struct Runner {
         if(!q||!q->volatile_tile){result.status=CommandStatus::InvalidContext;return;}
         message("BOOOM!");event(GameEventKind::Sfx,"cannon-fire");int ox=dx[found],oy=dy[found],dir=tile&3;bool changed=false;
         for(int n=0;n<4;++n){cx=(cx+dx[dir])&255;cy=(cy+dy[dir])&255;ox+=dx[dir];oy+=dy[dir];const NpcActor *npc=nullptr;if(c.actors)for(size_t i=0;i<c.actors->count;++i){auto &a=c.actors->actors[i];if(a.location==g.position.map.location&&a.z==g.position.map.floor&&a.x==cx&&a.y==cy){npc=&a;break;}}
-            if(npc){g.karma=uint8_t(g.karma>5?g.karma-5:0);if(g.position.map.location<=32&&npc->schedule.slot<32)g.npc_dead[g.position.map.location-1]|=uint32_t(1)<<npc->schedule.slot;event(GameEventKind::PartyChanged);changed=true;break;}
+            if(npc){g.karma=uint8_t(g.karma>5?g.karma-5:0);auto killed=*npc;dialogue_despawn(g,c.actors,killed);event(GameEventKind::PartyChanged);changed=true;break;}
             int t=raw(cx,cy);if((t>=151&&t<=153)||(t>=184&&t<=187)){q->volatile_tile(q->context,cx,cy,68);message("Door destroyed!");changed=true;break;}
         }
         projectile(dx[found],dy[found],ox,oy);if(changed)event(GameEventKind::MapChanged);

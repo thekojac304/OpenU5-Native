@@ -717,6 +717,38 @@ if(BUILD_TESTING)
   add_test(NAME batch32_camp_watch COMMAND batch32_camp_watch
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
 
+  # Batch 33 H-168: shipped Ararat map/NPC, raw Fire and subsequent NPC updates.
+  add_executable(batch33_cannon_npc_death
+    ../targets/tdeck/host_tests/batch33_cannon_npc_death_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_board_host_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(batch33_cannon_npc_death PRIVATE openu5_core)
+  target_include_directories(batch33_cannon_npc_death PRIVATE
+    ../targets/tdeck/host_tests/esp_shims ../targets/tdeck/main)
+  target_compile_features(batch33_cannon_npc_death PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(batch33_cannon_npc_death PRIVATE /Gy)
+    target_link_options(batch33_cannon_npc_death PRIVATE /OPT:REF)
+  else()
+    target_compile_options(batch33_cannon_npc_death PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(batch33_cannon_npc_death PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME batch33_cannon_npc_death COMMAND batch33_cannon_npc_death
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+
   # Batch 14 / R-22 -- (Z)-stats navigation. Same seam and same stub/shim set
   # as alpha_runtime_integration_regression above: it links the REAL,
   # unmodified alpha_runtime.cpp so the modal is reached only by feeding raw

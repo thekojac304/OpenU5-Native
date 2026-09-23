@@ -1,0 +1,81 @@
+[I][AlphaResources] Alpha resource pack v2.0 valid: 2039545 bytes, 39 entries, payload CRC=2065ad91, expected SHA-256=434cd664b4b9, firmware_match=1
+[I][AlphaResources] Loaded owners: 64 small floors, 8 dungeons, 1024 NPC records; PSRAM=1185451
+GREEN A1 shipped Ararat north cannon at (12,11)
+GREEN A2 authored Ararat NPC slot 1
+GREEN A3 entry loads authentic live NPC
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=66 base=00 symbol=00 ui=explore emitted=character action_char=102 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=25 floor=0 xy=12,12 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=25 floor=0 xy=12,12 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] CELL_PROJECTILE from=(0,-1) to=(0,-2) cells=1 duration_ms=55
+[I][AlphaRuntime] combat command=55 status=success turns=0 events=5 time=31 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=25 floor=0 xy=12,12 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=55 sequence=1
+GREEN K1 shipped Fire command kills slot and charges karma
+RED K2 death clears live slot immediately
+RED K3 dead NPC no longer collides
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=66 base=00 symbol=00 ui=explore emitted=character action_char=102 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=25 floor=0 xy=12,12 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=25 floor=0 xy=12,12 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] CELL_PROJECTILE from=(0,-1) to=(0,-2) cells=1 duration_ms=55
+[I][AlphaRuntime] combat command=55 status=success turns=0 events=5 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=25 floor=0 xy=12,12 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=55 sequence=2
+RED K3a a second cannon ball cannot target the dead NPC
+GREEN K3b death creates no world corpse object
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=22 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=25 floor=0 xy=12,12 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=3
+RED K4 subsequent world turn cannot update killed NPC
+RED_WITNESS dead slot still moved to (15,14) on schedule update
+RED K5 schedule update cannot move killed NPC
+GREEN K6 map reload preserves, rather than repairs, death
+GREEN M1 fresh authored actor available for miss control
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=66 base=00 symbol=00 ui=explore emitted=character action_char=102 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=25 floor=0 xy=12,12 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=25 floor=0 xy=12,12 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] CELL_PROJECTILE from=(0,-1) to=(0,-5) cells=4 duration_ms=220
+[I][AlphaRuntime] combat command=55 status=success turns=0 events=3 time=2 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=25 floor=0 xy=12,12 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=55 sequence=1
+GREEN M2 empty cannon line does not kill NPC
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=25 floor=0 xy=12,12 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=2
+GREEN M3 ordinary NPC remains in update list
+GREEN G1 shipped castle south cannon at (15,26) on floor 2
+GREEN G2 authored castle guard slot 27
+GREEN G3 guard occupies a live NPC slot
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=66 base=00 symbol=00 ui=explore emitted=character action_char=102 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=2 xy=14,26 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=2 xy=14,26 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] CELL_PROJECTILE from=(1,0) to=(1,1) cells=1 duration_ms=55
+[I][AlphaRuntime] combat command=55 status=success turns=0 events=5 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=17 floor=2 xy=14,26 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=55 sequence=1
+RED G4 cannon despawns guard immediately without persistent dead bit
+[I][AlphaRuntime] U5OBJ RELOAD effect=EnterNpcs loc=17 hydrate_calls=0 pool_size=0 player=L17/F0
+[I][AlphaRuntime] U5OBJ RELOAD effect=HydrateInterior loc=17 hydrate_calls=0 pool_size=0 player=L17/F0
+RED G5 authored guard reappears only after map re-entry
+H-168: 12/19 checks

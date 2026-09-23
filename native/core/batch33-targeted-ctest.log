@@ -1,0 +1,41 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch33-final
+      Start  5: batch21b_chest_reset
+ 1/18 Test  #5: batch21b_chest_reset .............   Passed    0.01 sec
+      Start 10: gameplay_integration
+ 2/18 Test #10: gameplay_integration .............   Passed    0.01 sec
+      Start 12: movement_flow_parity
+ 3/18 Test #12: movement_flow_parity .............   Passed    0.12 sec
+      Start 16: dialogue_adapters
+ 4/18 Test #16: dialogue_adapters ................   Passed    0.01 sec
+      Start 17: dialogue_parity
+ 5/18 Test #17: dialogue_parity ..................   Passed    0.42 sec
+      Start 25: combat_parity
+ 6/18 Test #25: combat_parity ....................   Passed    0.34 sec
+      Start 27: command_parity
+ 7/18 Test #27: command_parity ...................   Passed    0.17 sec
+      Start 29: travel_parity
+ 8/18 Test #29: travel_parity ....................   Passed    0.20 sec
+      Start 30: turn_parity
+ 9/18 Test #30: turn_parity ......................   Passed    0.03 sec
+      Start 31: movement_regression
+10/18 Test #31: movement_regression ..............   Passed    0.01 sec
+      Start 32: presentation_regression
+11/18 Test #32: presentation_regression ..........   Passed    0.01 sec
+      Start 48: batch22_basement_objects
+12/18 Test #48: batch22_basement_objects .........   Passed    0.04 sec
+      Start 49: batch23_vault_parity
+13/18 Test #49: batch23_vault_parity .............   Passed    0.04 sec
+      Start 50: batch24_reload_parity
+14/18 Test #50: batch24_reload_parity ............   Passed    0.11 sec
+      Start 55: batch29_rest_wiring
+15/18 Test #55: batch29_rest_wiring ..............   Passed    0.11 sec
+      Start 58: batch32_camp_watch
+16/18 Test #58: batch32_camp_watch ...............   Passed    0.04 sec
+      Start 59: batch33_cannon_npc_death
+17/18 Test #59: batch33_cannon_npc_death .........   Passed    0.04 sec
+      Start 69: batch7b
+18/18 Test #69: batch7b ..........................   Passed    0.01 sec
+
+100% tests passed out of 18
+
+Total Test time (real) =   1.73 sec

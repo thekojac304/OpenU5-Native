@@ -81,12 +81,15 @@ function townGame(
   const world: WorldData = { overworld, underworld: overworld, smallMaps };
   const st = makeState(over);
   // Stub mínimo del NpcManager: sólo lo que toca fireCannon + el constructor.
+  let npcAlive = true;
   const npcManager = npc
     ? {
         setRng() {},
         enterMap() {},
         npcAt: (_l: number, _f: number, x: number, y: number) =>
-          x === npc.x && y === npc.y ? { slot: npc.slot } : null,
+          npcAlive && x === npc.x && y === npc.y
+            ? { slot: npc.slot, type: 0x40, location: WEST_WINDS } : null,
+        clearSlot: () => { npcAlive = false; },
       }
     : undefined;
   const systems = { combatResources, npcManager } as unknown as ConstructorParameters<
@@ -188,6 +191,8 @@ describe("Game.fireCannon — rama pueblo (CMDS 0x0B16)", () => {
     expect(kinds(evs)).toContain("party-changed");
     expect(g.state.karma).toBe(45);
     expect(g.state.npcDead[WEST_WINDS - 1]![7]).toBe(true);
+    expect(g.fireCannon().some((e) => e.kind === "party-changed")).toBe(false);
+    expect(g.state.karma).toBe(45); // no second kill on the cleared slot
   });
 
   it("karma-5 con clamp a 0 (0x0D5A: si karma>5 resta, si no 0)", () => {

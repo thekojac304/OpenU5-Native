@@ -489,7 +489,7 @@ The device bound two of the three rest callbacks to stubs, so the core's correct
 | H-155 | If an NPC (or object) lands on the party's bed cell after a tick's snap: "Thrown out of bed!", the sleep ends on that tick, the party wakes one step east. A free bed still gives the full rest | **HOST FIXED / DEVICE RETEST PENDING** (Phase 6W) |
 | H-160 | Camp watchman collision | **RECLASSIFIED — UNREACHABLE ON DEVICE** (no watch is ever posted; superseded by H-167). No change |
 | H-167 | Outdoor (H)ole up never asks "Wilt thou set a watch?" / "Who will stand guard?": every device camp is unwatched | **CONFIRMED MISSING — queued.** Do not file |
-| H-168 | An NPC killed by a ship's cannon keeps walking until you re-enter the map (both ports) | **CONFIRMED MISSING — queued.** Do not file |
+| H-168 | Cannon-killed NPC immediately leaves movement, collision and targeting; person remains dead on re-entry, guard may return | **HOST FIXED — Batch 33.** No new device phase; shipped-pack raw-key test covers the production path. |
 | H-169 | 1988 runs up to 16 NPC passes before "Zzzzzzz..." that can cancel the sleep; neither port does | **OBSERVED, NOT ADJUDICATED — queued.** Do not file |
 | H-118 | unchanged by this batch | **HOST FIXED / DEVICE RETEST PENDING** (Phase 6T), separate |
 | H-115 | unchanged by this batch | **HOST FIXED / DEVICE RETEST PENDING** (Phase 6U), separate |
@@ -499,7 +499,7 @@ The device bound two of the three rest callbacks to stubs, so the core's correct
 
 **Host suite:** 99/99, 0 fail, 0 skipped, from a clean build: the prior 98 plus `batch29_rest_wiring` (26 checks). No fixture moved.
 
-**Still open:** H-156 and H-157 (**reserved for Batch 30**), H-165, H-167, H-168, H-169. Hardware verification of H-115 (Phase 6U), H-118 (Phase 6T), H-164 (Phase 6V) and H-154/H-155 (Phase 6W) awaits the user's reports.
+**At Batch 29 exit, still open:** H-156 and H-157 (**reserved for Batch 30**), H-165, H-167, H-168, H-169. Hardware verification of H-115 (Phase 6U), H-118 (Phase 6T), H-164 (Phase 6V) and H-154/H-155 (Phase 6W) awaits the user's reports.
 
 ## Batch 30 — H-156 / H-157 sleep ticks and day/night tiles
 
@@ -555,3 +555,9 @@ Use the Batch 32 Launcher after the existing flash plan. Keep the SD resource pa
 3. Repeat from the same outdoor state, answer `Y`, then cancel the guard picker. Expect **"None posted!"**, followed by normal camp completion and ordinary movement controls. Answer `N` on a third camp: no guard picker and no "None posted!".
 
 **Pass:** all prompt/choice paths and the normal command return appear in that order. **Fail:** hours immediately start the camp with two eligible members, the picker refuses a valid `G` member, cancellation abandons camp, or input remains trapped after waking. Do not use this phase to adjudicate the separate H-171 camp housekeeping gap. Pending phases **6T, 6U, 6V, 6W, 6X** keep their existing meanings.
+
+## Batch 33 — H-168 cannon NPC lifecycle
+
+The 1988 hit immediately clears the NPC's live slot after the eligible dead-bit setter. Batch 33 now does that through the existing native despawn routine and the corresponding TypeScript clear-slot routine. The shipped Ararat/castle raw-key host test is 19/19; five lifecycle mutations are killed; the fresh full host suite is 103/103. A killed person cannot move, block or take a second cannon hit before reload. An authored type-`0x70` guard despawns immediately and can return on re-entry because the original setter does not persist its dead bit.
+
+**Hardware status:** no device check or flash was performed for Batch 33, and no new phase was allocated. Host exercises the actual T-Deck command and NPC update path; H-168 has no remaining device-specific question. Phases **6T, 6U, 6V, 6W, 6X and 6Y** remain pending with their existing meanings. H-169, H-170 and H-171 remain out of scope.

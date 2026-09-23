@@ -83,12 +83,14 @@ cada celda:
 **Resolución** (tras el loop, 0x0CEE):
 - **Muro/puerta** (`[bp-2]`): `[bx]=0x44` (0x0D2E) → el tile se vuelve **0x44 BrickFloor**;
   imprime `"Door destroyed!\n"` (DS 0x42FA); `g_unk_24E6=1` (consume turno).
-- **NPC** (`[bp-0x18]` y bp-8≠0, 0x0D3B): `call 0x7AF4(idx)` (daño, kernel opaco);
+- **NPC** (`[bp-0x18]` y bp-8≠0, 0x0D3B): `call 0x7AF4` = kernel `0x3A74`
+  / `set_actor_record`, con siete campos cero: borra el registro-objeto alcanzado;
   `g_unk_24E6|=2`; **KARMA −5 con clamp** (0x0D5A: `karma = karma>5 ? karma-5 : 0`); luego
-  `0xffffBB9E/86/92(idx)` (bookkeeping de NPC alcanzado, kernel opaco).
+  `0xffffBB9E/86/92(idx)` = TOWN `0x011e` busca el slot por índice-objeto,
+  `0x0052` marca el bit elegible y `0x00b0` vacía la ranura viva.
 
 **RNG:** el código visible de esta rama **NO llama a rand()**. La aleatoriedad (si la hay)
-vive en el daño de NPC opaco `0x7AF4` y en el world-turn que dispara `g_unk_24E6` DESPUÉS
+puede vivir en el world-turn que dispara `g_unk_24E6` DESPUÉS
 de que el handler retorna.
 
 ## 2. Andanada de fragata — exterior (CMDS 0x0962)
@@ -117,10 +119,11 @@ Implementado:
 - Tests: `game/tests/cannon.test.ts` (15) — primitivas, orientación, destrucción de muro,
   alcance 4, no-cañón/mazmorra/exterior→"What?", karma-5+muerte de NPC, `fireWantsDirection`.
 
-**Clase C declarada** (no modelado, kernel opaco): la tirada de HP/daño exacto del NPC
-(`0x7AF4` + `0xffffBB9E/86/92`) y el world-turn que consume el disparo (`g_unk_24E6`). El
-clon mata al ocupante alcanzado (resultado visible) y aplica el karma-5 derivable, SIN tocar
-el stream RNG (rama RNG-neutral). Alcance restante mínimo; el caso del usuario (cañón a pie
+**Corrección Batch 33 (H-168):** el impacto no tira HP/daño. `0x7AF4` es el setter de
+registro-objeto `0x3A74`; los argumentos cero borran el objeto alcanzado. Los thunks
+posteriores hallan el slot, marcan su bit si el tipo es elegible y lo vacían inmediatamente.
+La rama visible sigue sin tirar RNG. El world-turn disparado por `g_unk_24E6` permanece
+fuera de esta adjudicación de ciclo de vida. Alcance restante mínimo; el caso del usuario (cañón a pie
 que revienta muros/puertas) queda fiel y cubierto por tests.
 
 ---
