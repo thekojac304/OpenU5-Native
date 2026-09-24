@@ -1,0 +1,29 @@
+ULTIMA.EXE: bytes=36592 sha256=e904215f43f45080b499a6de683dddce6f3b0466f25bdce067388ea50a7ac5b0
+TOWN.OVL: bytes=6256 sha256=0deb3ef891e538cd3a53700e43ede2cda6372e4298fbff11ca8310ad2acce062
+CASTLE.NPC: bytes=4608 sha256=6327fbbc9934a020400fa8cc6ba4e56e17dc5f4734589da1d2e48c5eb34e2a1b
+CASTLE.DAT: bytes=16384 sha256=52de7aee874ac02c57886846e4545f5aceeaec85fb3da83b6662d115190a481a
+FONT.OVL: bytes=3744 sha256=4dc05e8d75181246151e398b32f9c786897d828fa3cd229809dbc5dcea21d74d
+ULTIMA.EXE MZ image offset=0x800
+selector actor-0x1c gate 51bf: 837e041c
+selector >=0x40 enters lookup 51d1: 837e04407d12
+selector terrain lookup 0x4402 51e9: ff7608ff7606e810f2
+selector terrain byte zero extension 51f4: 8a072ae48946fe
+selector signed <0x80 gate 524a: 817e0480007c03
+terrain >0x9e reaches 0x5356 531a: 3d9e007f37
+terrain 0xab jumps to pose 5356: 3dab007503e93cff
+pose writes local argument 0x1a 529a: c746041a00e9ce00
+composite writes low actor byte 537a: 8a4604888064ac
+terrain accessor entry 4402: 558bec83ec04
+terrain accessor town branch 4420: 803e9358007557
+town DS:6608+y*32+x 449e: 8b4604b105d3e0034606050866
+object record copies type argument 3a7f: 8a461088845a5c
+ordinary object caller coordinates 55e6: 8a46fa2ae4508a46f850
+ordinary caller loads actor with AH already zero 55f8: 8b5eda8a0750e8b7fb
+NPC type pushed unchanged twice 17d9: 8b5e0a8a879e652ae48bf05656
+NPC placement invokes object writer 17e6: ff7608ff7606ff7604ff76faff76fce8aca0
+actor bank adds 0x100 02e3: 2ae480c401
+castle loc=17 slot=13 at 23:45: schedule=000000090b0907171a000000170b0f11 period=0 position=(9,7,0) authored_type=0x5c dialog=0x01 CASTLE.DAT[0x04e9]=0xab/0xac
+  predicted unchanged placement/render byte=0x5c; IF live DS:6608 cell remains 0xab, selector output=0x1a, actor-bank tile=0x11a
+castle loc=17 slot=1 at 23:45: schedule=000000111109071c1a00000013060d0f period=0 position=(17,7,0) authored_type=0x70 dialog=0x00 CASTLE.DAT[0x04f1]=0xab/0xac
+  predicted unchanged placement/render byte=0x70; IF live DS:6608 cell remains 0xab, selector output=0x1a, actor-bank tile=0x11a
+LIMIT: no live actor/terrain memory or original framebuffer is observed here

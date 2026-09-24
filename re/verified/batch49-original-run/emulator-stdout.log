@@ -1,0 +1,73 @@
+LOG: Early LOG Init complete
+LOG: DOSBox-X's working directory: C:\Users\lawma\AppData\Local\Temp\openu5-batch49-original-run
+LOG: Logging init: beginning logging proper. This is the end of the early init logging
+LOG: Logging: No logfile was given. All further logging will be discarded.
+LOG: DOSBox-X version 2024.03.01 Commit 199aa35 (MinGW Low-end 9x SDL1 32-bit)
+LOG: EXPERIMENTAL: Debugger enabled for MinGW build, DOSBox-X crashes depending on the terminal software you use. Launching from command prompt (cmd.exe) is recommended.
+LOG: Windows keyboard layout ID is 0x0409
+LOG: Host keyboard layout is now us (US English)
+LOG: Mapper keyboard layout is now us (US English)
+LOG: SDL(sdlmain.cpp): TTF activated
+LOG: LOG: freetype version 2.13.1
+LOG: SDL: TTF activated
+LOG: Configured windowposition:
+LOG: SDL: Windows 11 round corners will be disabled.
+LOG: Screen report: Method 'None' (-1.000 x -1.000 pixels) at (0.000 x 0.000) (-1.000 x -1.000 mm) (-0.039 x -0.039 in) (-1.000 x -1.000 DPI)
+LOG: SDL_mapper: US keyboard detected, set usescancodes=false
+LOG: ISA BCLK: 8333333.333Hz (25000000/3)
+LOG: monopal: green,
+LOG: Active save slot: 1 [Empty]
+LOG: USING AVI+ZMBV
+LOG: Max 1048576 sz 16384
+LOG: Final 16384
+LOG: MIDI:Opened device:win32
+LOG: Pentium CMPXCHG8B emulation is enabled
+LOG: VOODOO LFB now at d0000000
+LOG: Serial1: BASE 3f8h
+LOG: Serial2: BASE 2f8h
+LOG: Invalid type for LPT1.
+LOG: MPU-401 Registering I/O ports as if IBM PC MPU-401 at base 330h
+LOG: Memory I/O complexity optimization enabled aka option 'memory io optimization 1'. If the game or demo is unable to draw to the screen properly, set the option to false.
+LOG: The 'scanline render on demand' option is available and may provide a modest boost in video render performance if set to true.
+LOG: Screen report: Method 'None' (-1.000 x -1.000 pixels) at (0.000 x 0.000) (-1.000 x -1.000 mm) (-0.039 x -0.039 in) (-1.000 x -1.000 DPI)
+LOG: Allocated APM BIOS pm entry point at f000:ce40
+LOG: Writing code to fce40
+LOG: Writing code to fce60
+LOG: Screen report: Method 'None' (-1.000 x -1.000 pixels) at (0.000 x 0.000) (-1.000 x -1.000 mm) (-0.039 x -0.039 in) (-1.000 x -1.000 DPI)
+LOG: ISA Plug & Play BIOS enabled
+LOG: VGA ROM BIOS init callback
+LOG: Screen report: Method 'None' (-1.000 x -1.000 pixels) at (0.000 x 0.000) (-1.000 x -1.000 mm) (-0.039 x -0.039 in) (-1.000 x -1.000 DPI)
+LOG: pixratio 1.350, dw false, dh false
+LOG: Aspect ratio: 720 x 540  xToY=1.333 yToX=0.750
+LOG: Screen report: Method 'None' (-1.000 x -1.000 pixels) at (0.000 x 0.000) (-1.000 x -1.000 mm) (-0.039 x -0.039 in) (-1.000 x -1.000 DPI)
+LOG: LOG: freetype version 2.13.1
+LOG: SDL: TTF activated
+LOG: WARNING: No translation support (to host) for code page 0
+LOG: Loaded system codepage: 437
+LOG: XMS: 50 handles allocated for use by the DOS environment
+LOG: EMS page frame at 0xe000-0xefff
+LOG: COMMAND.COM env size:             720 bytes
+LOG: COMMAND.COM environment block:    0x0701 sz=0x002d
+LOG: COMMAND.COM main body (PSP):      0x072f sz=0x009a
+LOG: COMMAND.COM stack:                0x0749
+LOG:    1601029       ALL:Sysex message size 11
+LOG:    1839041       ALL:Sysex message size 19
+LOG:    1924216       ALL:Sysex message size 19
+LOG:    2009226       ALL:Sysex message size 13
+LOG: Screen report: Method 'None' (-1.000 x -1.000 pixels) at (0.000 x 0.000) (-1.000 x -1.000 mm) (-0.039 x -0.039 in) (-1.000 x -1.000 DPI)
+LOG: Screen report: Method 'None' (-1.000 x -1.000 pixels) at (0.000 x 0.000) (-1.000 x -1.000 mm) (-0.039 x -0.039 in) (-1.000 x -1.000 DPI)
+LOG: Aspect ratio: 720 x 540  xToY=1.333 yToX=0.750
+LOG: Screen report: Method 'None' (-1.000 x -1.000 pixels) at (0.000 x 0.000) (-1.000 x -1.000 mm) (-0.039 x -0.039 in) (-1.000 x -1.000 DPI)
+LOG: Screen report: Method 'None' (-1.000 x -1.000 pixels) at (0.000 x 0.000) (-1.000 x -1.000 mm) (-0.039 x -0.039 in) (-1.000 x -1.000 DPI)
+LOG: Aspect ratio: 720 x 540  xToY=1.333 yToX=0.750
+LOG: Screen report: Method 'None' (-1.000 x -1.000 pixels) at (0.000 x 0.000) (-1.000 x -1.000 mm) (-0.039 x -0.039 in) (-1.000 x -1.000 DPI)
+LOG: Screen report: Method 'None' (-1.000 x -1.000 pixels) at (0.000 x 0.000) (-1.000 x -1.000 mm) (-0.039 x -0.039 in) (-1.000 x -1.000 DPI)
+LOG: Screen report: Method 'None' (-1.000 x -1.000 pixels) at (0.000 x 0.000) (-1.000 x -1.000 mm) (-0.039 x -0.039 in) (-1.000 x -1.000 DPI)
+LOG: Screen report: Method 'None' (-1.000 x -1.000 pixels) at (0.000 x 0.000) (-1.000 x -1.000 mm) (-0.039 x -0.039 in) (-1.000 x -1.000 DPI)
+LOG: Aspect ratio: 720 x 540  xToY=1.333 yToX=0.750
+LOG: Screen report: Method 'None' (-1.000 x -1.000 pixels) at (0.000 x 0.000) (-1.000 x -1.000 mm) (-0.039 x -0.039 in) (-1.000 x -1.000 DPI)
+LOG: Screen report: Method 'None' (-1.000 x -1.000 pixels) at (0.000 x 0.000) (-1.000 x -1.000 mm) (-0.039 x -0.039 in) (-1.000 x -1.000 DPI)
+LOG: pixratio 1.228, dw true, dh false
+LOG: Aspect ratio: 640 x 491  xToY=1.303 yToX=0.767
+LOG: Screen report: Method 'None' (-1.000 x -1.000 pixels) at (0.000 x 0.000) (-1.000 x -1.000 mm) (-0.039 x -0.039 in) (-1.000 x -1.000 DPI)
+LOG: Screen report: Method 'None' (-1.000 x -1.000 pixels) at (0.000 x 0.000) (-1.000 x -1.000 mm) (-0.039 x -0.039 in) (-1.000 x -1.000 DPI)
