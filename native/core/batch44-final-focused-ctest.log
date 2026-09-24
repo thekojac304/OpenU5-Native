@@ -1,0 +1,13 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch44
+    Start 62: batch36_camp_housekeeping
+1/4 Test #62: batch36_camp_housekeeping ........   Passed    0.15 sec
+    Start 67: batch43_sleep_scene
+2/4 Test #67: batch43_sleep_scene ..............   Passed    0.90 sec
+    Start 68: batch44_camp_ring_entry
+3/4 Test #68: batch44_camp_ring_entry ..........   Passed    0.08 sec
+    Start 69: batch38_camp_duration
+4/4 Test #69: batch38_camp_duration ............   Passed    0.06 sec
+
+100% tests passed out of 4
+
+Total Test time (real) =   1.26 sec

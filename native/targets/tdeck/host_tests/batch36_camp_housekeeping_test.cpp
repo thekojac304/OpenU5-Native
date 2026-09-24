@@ -54,16 +54,16 @@ void watched_cadence(){
         if(d.lo==0&&d.hi==63)wind.push_back(i);
         if(d.lo==0&&d.hi==7)ring.push_back(i);}
     check(wind.size()==12,"C3","one redraw wind roll per five-minute step, no start or final pass");
-    check(ring.size()==12,"C4","one ring roll per step, including the guard's ring");
-    bool order=wind.size()==12&&ring.size()==12, survival=ring.size()==12;
+    check(ring.size()==13&&wind.size()==12&&ring[0]<wind[0],"C4","scene entry adds one ring pass; twelve steps still roll including the guard");
+    bool order=wind.size()==12&&ring.size()==13, survival=ring.size()==13;
     for(const auto index:ring){const auto &d=h.draws[index];survival &= d.hp==100&&d.food==80&&d.turns==7;}
     for(size_t step=0;step<wind.size()&&step<12;++step){
         const auto &d=h.draws[wind[step]];
-        order &= ring.size()==12&&wind[step]<ring[step]&&
+        order &= ring.size()==13&&wind[step]<ring[step+1]&&
                  d.hour==5&&d.minute==int(step*5)&&
-                 h.draws[ring[step]].hour==5&&h.draws[ring[step]].minute==int(step*5);
+                 h.draws[ring[step+1]].hour==5&&h.draws[ring[step+1]].minute==int(step*5);
         bool watch_after=false;
-        if(ring.size()==12)for(size_t k=ring[step]+1;k<h.draws.size();++k){
+        if(ring.size()==13)for(size_t k=ring[step+1]+1;k<h.draws.size();++k){
             const auto &w=h.draws[k];
             if(w.lo==0&&w.hi==3&&w.hour==(step==11?6:5)&&
                w.minute==int((step+1)*5%60)){watch_after=true;break;}
@@ -81,6 +81,8 @@ void watched_cadence(){
 void hourly_encounter_order(){
     int seed=0;
     for(int i=1;i<65536;++i){OriginalRng oracle(i);bool quiet=true;
+        if(oracle.next(0,15).value==11)continue;
+        oracle.next(0,7); // 0x6794 calls 0x400c once at scene entry.
         for(int step=0;step<12;++step){quiet &= oracle.next(0,63).value!=0;oracle.next(0,7);}
         quiet &= oracle.next(0,63).value!=0;oracle.next(0,7);
         quiet &= oracle.next(0,63).value!=0;
@@ -93,8 +95,8 @@ void hourly_encounter_order(){
     for(const auto &d:h.draws){if(d.lo==0&&d.hi==63)++wind_or_encounter;
         if(d.lo==0&&d.hi==7)++ring;
         if(d.hour==6&&d.minute==0)boundary.push_back(d);}
-    check(h.g().time.hour==7&&h.g().time.minute==0&&wind_or_encounter==25&&ring==24,
-          "E1","two-hour Camp has 24 wind/ring steps and one hourly encounter roll");
+    check(h.g().time.hour==7&&h.g().time.minute==0&&wind_or_encounter==25&&ring==25,
+          "E1","two-hour Camp has one entry ring pass, 24 wind/ring steps and one encounter");
     check(boundary.size()>=3&&boundary[0].lo==0&&boundary[0].hi==63&&
           boundary[1].lo==0&&boundary[1].hi==7&&
           boundary[2].lo==0&&boundary[2].hi==63,

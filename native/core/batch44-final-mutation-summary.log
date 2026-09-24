@@ -1,0 +1,15 @@
+omit_expiry exit=1 red=15 Batch 44 ring entry: 5/20 checks
+double_expiry exit=1 red=12 Batch 44 ring entry: 8/20 checks
+injured_only exit=1 red=15 Batch 44 ring entry: 5/20 checks
+include_dead exit=1 red=1 Batch 44 ring entry: 19/20 checks
+skip_guard exit=1 red=2 Batch 44 ring entry: 18/20 checks
+reverse_roster exit=1 red=4 Batch 44 ring entry: 16/20 checks
+wrong_expiry exit=1 red=2 Batch 44 ring entry: 18/20 checks
+omit_entry_regen exit=1 red=8 Batch 44 ring entry: 12/20 checks
+actor_only_regen exit=1 red=3 Batch 44 ring entry: 17/20 checks
+trigger_sleeping exit=1 red=1 Batch 44 ring entry: 19/20 checks
+double_entry_regen exit=1 red=8 Batch 44 ring entry: 12/20 checks
+regen_before_expiry exit=1 red=7 Batch 44 ring entry: 13/20 checks
+once_global exit=1 red=2 Batch 44 ring entry: 18/20 checks
+after_first_step exit=1 red=13 Batch 44 ring entry: 7/20 checks
+before_gate exit=1 red=13 Batch 44 ring entry: 7/20 checks

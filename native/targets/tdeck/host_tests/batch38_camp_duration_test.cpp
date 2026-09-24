@@ -28,7 +28,7 @@ struct Run {
         s.party.active_character=255;s.time.hour=hour;s.time.minute=minute;
         s.food=80;s.turns_since_start=7;s.position.map={0,0};s.position.xy={80,80};
         s.rng.seed(12345);
-        // One ring draw is made during each loop iteration, before clock advance.
+        // Scene entry calls the ring helper once; each later loop iteration calls it before clock.
         s.party.characters[0].ring=44;
         ctx().rng_trace={this,[](void*p,const char*,int32_t lo,int32_t hi,int32_t){
             auto &h=*static_cast<Run*>(p);const auto &s=h.g();
@@ -50,13 +50,15 @@ void case_one(int start_hour,int start_minute,int hours,int end_hour,int steps,c
     Run h(start_hour,start_minute);h.camp(hours);
     check(h.ui().mode()==UiMode::Exploration&&h.g().time.hour==end_hour&&
           h.g().time.minute==end_minute,id,"raw-key Camp stops at the original target hour");
-    check(h.count(0,7)==steps,id,"ring rolls prove the exact five-minute step count");
+    check(h.count(0,7)==steps+1&&h.count(0,15)==1,id,
+          "one scene-entry ring pass plus one pass per five-minute step");
     check(h.count(0,63)==steps+hours-1,id,
           "one wind draw per step and one encounter check per intervening hour");
     check(h.g().food==80&&h.g().turns_since_start==7,id,
           "duration does not introduce ordinary turn housekeeping");
-    bool ordered=true;int n=0;
-    for(size_t i=0;i<h.draws.size();++i)if(h.draws[i].lo==0&&h.draws[i].hi==7){
+    bool ordered=h.draws.size()>=2&&h.draws[0].lo==0&&h.draws[0].hi==15&&
+                 h.draws[1].lo==0&&h.draws[1].hi==7;int n=0;
+    for(size_t i=2;i<h.draws.size();++i)if(h.draws[i].lo==0&&h.draws[i].hi==7){
         const int total=start_minute+n*5;
         ordered &= h.draws[i].hour==(start_hour+total/60)%24&&
                    h.draws[i].minute==total%60;
@@ -66,7 +68,7 @@ void case_one(int start_hour,int start_minute,int hours,int end_hour,int steps,c
 }
 void watched_final_step(){
     Run h(12,55,2);h.camp(1,true);
-    check(h.g().time.hour==13&&h.g().time.minute==0&&h.count(0,7)==1,
+    check(h.g().time.hour==13&&h.g().time.minute==0&&h.count(0,7)==2&&h.count(0,15)==1,
           "W0","watched Camp completes after the single boundary step");
     int guard_at_target=0;for(const auto &d:h.draws)
         if(d.lo==0&&d.hi==3&&d.hour==13&&d.minute==0)++guard_at_target;

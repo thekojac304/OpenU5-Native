@@ -1,4 +1,5 @@
 #include "openu5/rest.h"
+#include "openu5/inventory.h"
 #include "openu5/world_terrain.h"
 #include <algorithm>
 #include <cstdio>
@@ -196,18 +197,21 @@ bool camp_advance_resume(RestContext &c) {
     }
     return false;
 }
-static RestResult camp_sleep_step(RestContext &c, int32_t &previous_hour, CampCell cell, int32_t guard) {
-    RestResult r;
-    r.guard = cell;
-    // CMDS.OVL:0x0204 redraws before 0x0207 ring regeneration.
-    // Its 0x5910 -> 0x2f62 path rolls wind when time is not stopped.
-    if (c.turn.time_spell != 'T') maybe_change_wind(c.turn, c.rand);
+static void camp_regeneration_pass(RestContext &c) {
     for (int32_t i = 0;
          i < c.game.party.party_size && i < c.game.party.character_count && i < 6; ++i) {
         auto &m = c.game.party.characters[i];
         if (m.status != 'D' && m.ring == 44 && c.rand(0, 7) == 7)
             m.current_hp = uint16_t(std::min<int32_t>(m.max_hp, m.current_hp + 1));
     }
+}
+static RestResult camp_sleep_step(RestContext &c, int32_t &previous_hour, CampCell cell, int32_t guard) {
+    RestResult r;
+    r.guard = cell;
+    // CMDS.OVL:0x0204 redraws before 0x0207 ring regeneration.
+    // Its 0x5910 -> 0x2f62 path rolls wind when time is not stopped.
+    if (c.turn.time_spell != 'T') maybe_change_wind(c.turn, c.rand);
+    camp_regeneration_pass(c);
     // CMDS.OVL:0x0212/0x021d tests the changed hour after redraw and
     // ring regeneration, before this five-minute clock advance.
     if (c.game.time.hour != previous_hour) {
@@ -243,6 +247,23 @@ RestResult camp(RestContext &c, int32_t hours, int32_t guard) {
     // compares only the live hour at each loop head, before redraw.
     const int32_t target_hour = (int32_t(c.game.time.hour) + hours) % 24;
     int32_t previous_hour = c.game.time.hour;
+    // ULTIMA.EXE:0x69e1-0x6b6e: each living actor can roll expiry before
+    // placement; each surviving Regeneration wearer then calls the global
+    // 0x400c pass through 0x6794, before the next actor's expiry roll.
+    for (int32_t i = 0; i < count(c.game) && i < 6; ++i) {
+        auto &m = c.game.party.characters[i];
+        if (m.status == 'D') continue;
+        if (m.ring == 42 || m.ring == 44) {
+            const uint8_t ring = m.ring;
+            if (c.rand(0, 15) == 11) {
+                msg(c, "A ring has vanished!\n");
+                emit(c, GameEventKind::Sfx, "ring-vanishes");
+                unequip_item_by_id(c.game, i, ring);
+                emit(c, GameEventKind::PartyChanged);
+            }
+        }
+        if (m.status != 'S' && m.ring == 44) camp_regeneration_pass(c);
+    }
     // CMDS 0x005e mounts the CampFire actors before its sleep loop; 0x6880
     // puts every live non-guard member into S and redraws the party panel.
     char prior_status[6]{};
