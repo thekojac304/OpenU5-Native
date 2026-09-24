@@ -15,6 +15,16 @@ el sub-evento de **guardia** (watch), no la mecánica del disparo.
 (`re/notes/oracle-camp-event.md`), la fila ya abierta en
 `re/deliberate-divergences.md:580`.
 
+> **Batch 36 correction (H-171, original CMDS/EXE bytes).** The old name
+> "housekeeping" for `0x2900` and `0x20fa` was wrong: these are status-panel
+> redraw and one timer-tick delay. The true turn housekeeping entry is
+> `0x2ae8`, absent from Camp. `0x5910` is viewport redraw, which calls the
+> gated wind routine. CMDS `0x001c/0x001f` clears Q/T at Camp entry. The
+> first redraw/ring of a new hour precedes that hour’s encounter roll.
+> The target-hour check can end a Camp begun at nonzero minutes before twelve
+> steps in its first hour (queued H-173). See the raw original bytes in
+> `native/core/batch36-original-camp-bytes.log`.
+
 ---
 
 ## 0. Aritmética de direcciones (para leer los call-targets)
@@ -31,9 +41,9 @@ Identidad de cada call del bucle (todos resuelven a KERNEL residente):
 |---|---|---|
 | `call 0x6112` | **0x2092** | `rand(lo,hi)` inclusivo (mismo stream que el gate 25 %) |
 | `call 0x58d0` | 0x1850 | print string (DS ptr en AX) |
-| `call 0x5910` (0x0204) | 0x5910... → ver nota¹ | world-turn tick (viento/anim) |
+| `call 0x5910` (0x0204) | 0x5910... → ver nota¹ | viewport redraw (animation and gated wind RNG) |
 | `call 0x808c` (0x0207) | **0x400c** | `kernel_ring_regen` (rand(0,7) por miembro con el ANILLO equipado 0x2c=44=Ring of Regeneration → +1 HP; NO un "status", oráculo 2026-07-18 — cableado en camp, 12×/hora) |
-| `call 0x6980` (0x020a,0x02be) | 0x2900 | housekeeping por tick (comida/veneno) |
+| `call 0x6980` (0x020a,0x02be) | 0x2900 | status-panel redraw; no food/poison processing |
 | `call 0x60d6` (0x022b) | **0x2056** | `rng_time_hash()` — hash de la hora DOS (`int 21h AH=2Ch`), rng.md |
 | `call 0x60fe` (0x022b) | **0x207e** | `rng_srand(ax)` — **SOBRESCRIBE `g_rng_seed`** con el reloj de pared |
 
@@ -48,7 +58,7 @@ Identidad de cada call del bucle (todos resuelven a KERNEL residente):
 | `call 0xffffac42` (0x02fa) | **0x6BC2** | combat-init sembrado con `enemyType` (ruta sin flag&2) |
 | `call 0xffffae02` (0x038e) | 0x6D82 | ¿tile transitable? (sub-evento de guardia) |
 | `call 0xffffbdf6` (0x03a6) | 0x7D76 | avanza/coloca el monstruo que se acerca (guardia) |
-| `call 0x617a` (0x031b) | 0x20fa | housekeeping por tick |
+| `call 0x617a` (0x031b) | 0x20fa | one INT 1Ch timer-tick delay |
 | `call 0x8ffc` (0x0318) | advance_clock(5) | avance de reloj de 5 min |
 
 ¹ `0x5910` es el único caller de `maybe_change_wind` 0x2F62 (`rand(0,63)`, 1/64 cambia
@@ -75,9 +85,9 @@ Bucle (cada vuelta = 1 paso de 5 min):
 0x01ee  al = g_hour
 0x01f3  if (g_hour == target_hour) → jmp 0x2fd        ; SALE del bucle (fin normal)
 0x01ff  if (g_hour >= 24) g_hour -= 24                ; rollover
-0x0204  call 0x5910   ; world-turn tick (viento: rand(0,63))     ── RAND (1/64 viento)
+0x0204  call 0x5910    ; redraw, gated wind rand(0,63)     ── RAND (1/64 viento)
 0x0207  call 0x400c   ; ring_regen: rand(0,7)/miembro con anillo  ── RAND (si aplica)
-0x020a  call 0x2900   ; housekeeping (comida/veneno)
+0x020a  call 0x2900    ; status-panel redraw, no survival tick
 0x0212  if (g_hour == bp-0x1e)  → jmp 0x30c           ; la hora NO cambió → sin roll
         ; --- LA HORA CAMBIÓ (se cruzó un límite de hora) ---
 0x021d  rand(0,63)                                    ── RAND: ROLL DE EMBOSCADA
@@ -87,8 +97,8 @@ Bucle (cada vuelta = 1 paso de 5 min):
 ------------------------------------------------------------------------------
 0x030c  bp-0x1e = g_hour                              ; recuerda la hora
 0x0314  advance_clock(5)                              ; +5 min
-0x031b  call 0x20fa   ; housekeeping
-0x0322  if (g_unk_5894 < 0x21): dispara evento de localización (0x329-0x332)
+0x031b  call 0x20fa    ; delay(1), no survival tick
+0x0322  if (location < 0x21): call 0x4a84 sky/time status display (0x329-0x332)
 0x0337  if (guardIdx == -1)     → jmp 0x1ee           ; sin guardia → siguiente paso
         ; --- HAY GUARDIA: sub-evento de watch (§4) ---
 0x0340  rand(0,3)                                     ── RAND: roll de watch
@@ -118,7 +128,7 @@ cruzado**. Para `hours=N` la última vuelta coincide con `target_hour` y sale po
 0247: print "Ambushed!"      ; DS 0x41e0 (fileoff 0x41f0, byte-exacto)
 024e: if (guardIdx > -1):    ; SÓLO si hay guardia → estampa estado del party (§2.2)
 0254-02bc:  loop j=0..5  sobre los 6 slots de party  → roster[k].status = 'G'|'P'
-02be: call 0x2900            ; housekeeping
+02be: call 0x2900            ; status-panel redraw
 02c1: if (flags & 2):        ; ── selección de la vía de combate (§2.3)
 02c7:    mapTile = mapa[party_y*..+party_x + 0x595a]
 02ef:    call 0x7C3E(1, mapTile)     ; combate con arena de TERRENO
@@ -287,7 +297,7 @@ patrón CRITICAL-1 de la review de #7).
 
 ⚠️ **NO paridad seed-exacta de `camp()`**: sigue **excluido** del set (cero `camp*.json`
 en `re/parity/cmds/`; `re/verified/cmds.md`). El bucle de sueño consume por tick el
-viento (0x5910/rand 1/64), ring_regen (0x400c) y housekeeping que `advanceClock` **no**
+viento (0x5910/rand 1/64), ring_regen (0x400c) y los redibujos/delays que `advanceClock` **no**
 reproduce paso a paso → el stream del `camp()` completo diverge por diseño
 (`deliberate-divergences.md:580`). El port modela el **resultado observable** (emboscada
 ~1/64 por hora + tipo correcto), no el stream interno. Tests = conductuales, no de seed.

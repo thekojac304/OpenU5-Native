@@ -1,0 +1,41 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch36-certified
+      Start 10: gameplay_integration
+ 1/18 Test #10: gameplay_integration ...................   Passed    0.11 sec
+      Start 19: world_flow_adapters
+ 2/18 Test #19: world_flow_adapters ....................   Passed    0.07 sec
+      Start 21: world_flow_parity
+ 3/18 Test #21: world_flow_parity ......................   Passed    0.27 sec
+      Start 25: combat_parity
+ 4/18 Test #25: combat_parity ..........................   Passed    0.42 sec
+      Start 26: item_parity
+ 5/18 Test #26: item_parity ............................   Passed    0.56 sec
+      Start 27: command_parity
+ 6/18 Test #27: command_parity .........................   Passed    0.23 sec
+      Start 30: turn_parity
+ 7/18 Test #30: turn_parity ............................   Passed    0.21 sec
+      Start 31: movement_regression
+ 8/18 Test #31: movement_regression ....................   Passed    0.03 sec
+      Start 40: input_regression
+ 9/18 Test #40: input_regression .......................   Passed    0.03 sec
+      Start 46: alpha_runtime_integration_regression
+10/18 Test #46: alpha_runtime_integration_regression ...   Passed    0.11 sec
+      Start 55: batch29_rest_wiring
+11/18 Test #55: batch29_rest_wiring ....................   Passed    0.15 sec
+      Start 56: batch30_sleep_parity
+12/18 Test #56: batch30_sleep_parity ...................   Passed    0.08 sec
+      Start 58: batch32_camp_watch
+13/18 Test #58: batch32_camp_watch .....................   Passed    0.09 sec
+      Start 59: batch33_cannon_npc_death
+14/18 Test #59: batch33_cannon_npc_death ...............   Passed    0.08 sec
+      Start 60: batch34_pre_sleep_npc
+15/18 Test #60: batch34_pre_sleep_npc ..................   Passed    0.09 sec
+      Start 61: batch35_q_sleep_target
+16/18 Test #61: batch35_q_sleep_target .................   Passed    0.08 sec
+      Start 62: batch36_camp_housekeeping
+17/18 Test #62: batch36_camp_housekeeping ..............   Passed    0.10 sec
+      Start 82: gameplay_parity
+18/18 Test #82: gameplay_parity ........................   Passed    8.99 sec
+
+100% tests passed out of 18
+
+Total Test time (real) =  11.72 sec

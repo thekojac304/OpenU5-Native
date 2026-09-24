@@ -1,0 +1,107 @@
+[I][AlphaResources] Alpha resource pack v2.0 valid: 2039545 bytes, 39 entries, payload CRC=2065ad91, expected SHA-256=434cd664b4b9, firmware_match=1
+[I][AlphaResources] Loaded owners: 64 small floors, 8 dungeons, 1024 NPC records; PSRAM=1185451
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=00 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=yes/no
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=none
+GREEN C0 accepted hours reach watch question without a step or RNG
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=79 base=00 symbol=00 ui=yes/no emitted=character action_char=121 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=yes/no to=party
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=yes/no gameplay_command=none
+GREEN C1 watch picker adds no step or RNG
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=00 symbol=00 ui=party emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] combat command=11 status=success turns=0 events=13 time=35 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=party to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=party gameplay_command=11 sequence=1
+GREEN C2 watched hour completes at 06:00 and returns to command state
+GREEN C3 one redraw wind roll per five-minute step, no start or final pass
+GREEN C4 one ring roll per step, including the guard's ring
+GREEN C5 each step orders wind then ring before clock, guard roll after clock
+GREEN C6 poison, meal and turn counter stay idle throughout camp steps
+GREEN C7 06:00 completion adds no meal or final housekeeping pass
+GREEN C8 watcher is excluded from the partial-heal roll
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=00 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=11 status=success turns=0 events=3 time=2 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=11 sequence=1
+GREEN U0 unwatched camp also redraws before every five-minute step
+GREEN U1 unwatched camp adds no guard movement rolls
+GREEN U2 unwatched completion has no housekeeping turn
+GREEN W0 fixed original RNG stream can trigger one Camp wind change
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=00 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=11 status=success turns=0 events=3 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=11 sequence=1
+GREEN W1 first Camp redraw takes the original wind-change branch
+GREEN W2 Camp redraw changes world wind and resets drift
+GREEN E0 fixed original stream avoids the first hourly encounter
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=00 symbol=00 ui=number emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=11 status=success turns=0 events=3 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=11 sequence=1
+GREEN E1 two-hour Camp has 24 wind/ring steps and one hourly encounter roll
+RED E2 at 06:00 redraw wind then ring precede the hourly encounter roll
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=00 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=11 status=success turns=0 events=3 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=11 sequence=1
+GREEN Q accepted Camp clears Q/T and its finite counter before the loop
+GREEN Q cleared Q/T gives twelve ordinary five-minute wind/clock steps
+GREEN Q spell clear is independent of turn housekeeping and meals
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=00 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=11 status=success turns=0 events=3 time=1 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=11 sequence=1
+GREEN T accepted Camp clears Q/T and its finite counter before the loop
+GREEN T cleared Q/T gives twelve ordinary five-minute wind/clock steps
+GREEN T spell clear is independent of turn housekeeping and meals
+H-171: 23/24 checks

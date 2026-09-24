@@ -544,7 +544,7 @@ The shipped-pack raw-key test is **35/35 GREEN**; six mutations are killed. The 
 | Row | Behavior | Status |
 |---|---|---|
 | H-167 | Optional watch prompt, one valid `G` guard, invalid/cancel fallback, guard walk and RNG | **HOST FIXED / DEVICE RETEST PENDING — Phase 6Y** |
-| H-171 | Separate five-minute camp world/housekeeping calls absent from native | **QUEUED, UNFIXED** |
+| H-171 | Camp entry Q/T clear, per-step redraw wind, and hourly encounter RNG order; no survival turn housekeeping | **HOST FIXED — Batch 36; no new device phase** |
 
 ### Phase 6Y — Batch 32 camp watch · *PENDING*
 
@@ -554,7 +554,7 @@ Use the Batch 32 Launcher after the existing flash plan. Keep the SD resource pa
 2. Answer `Y`. Expect **"Who will stand guard?"**; select Iolo (`2`). Expect the one-hour camp to finish at the next hour and return to ordinary movement controls. If no apparition occurs, Iolo receives no partial camp heal while the other eligible member does. An apparition can fully heal everyone; repeat if it occurs.
 3. Repeat from the same outdoor state, answer `Y`, then cancel the guard picker. Expect **"None posted!"**, followed by normal camp completion and ordinary movement controls. Answer `N` on a third camp: no guard picker and no "None posted!".
 
-**Pass:** all prompt/choice paths and the normal command return appear in that order. **Fail:** hours immediately start the camp with two eligible members, the picker refuses a valid `G` member, cancellation abandons camp, or input remains trapped after waking. Do not use this phase to adjudicate the separate H-171 camp housekeeping gap. Pending phases **6T, 6U, 6V, 6W, 6X** keep their existing meanings.
+**Pass:** all prompt/choice paths and the normal command return appear in that order. **Fail:** hours immediately start the camp with two eligible members, the picker refuses a valid `G` member, cancellation abandons camp, or input remains trapped after waking. This phase remains limited to watch presentation; Batch 36 resolved H-171 on the host. Pending phases **6T, 6U, 6V, 6W, 6X** keep their existing meanings.
 
 ## Batch 33 — H-168 cannon NPC lifecycle
 
@@ -573,3 +573,9 @@ The original accepted bed command runs up to 16 full NPC passes at the current h
 The original compares a local target hour before each bed tick; Q halves clock advances until its separate turn counter expires. Native now stops at that original target, including the 23 subtraction when the requested hour crosses midnight. The shipped-pack raw-key host fixture passes 42/42 and the fresh full host suite passes 105/105. Terrain refresh, housekeeping, NPC snap and ejection still run on the target tick. Host evidence fully proves this logic, so no new device phase is allocated. **No flash or physical check was performed.** Pending phases **6T, 6U, 6V, 6W, 6X and 6Y** keep their existing assignments; H-171 and H-172 remain queued.
 
 The clean Batch 35 ESP-IDF 6.1 image is **869,376 bytes (`0xd4400`)**, +16 bytes against Batch 34 (`native/targets/tdeck/batch35-firmware-build.log`). The Launcher is packaged only after the commit so its embedded revision matches the annotated tag; it is a build artifact, not a flash instruction.
+
+## Batch 36 — H-171 Camp redraw and spell clearing
+
+Original-byte disassembly corrects the Batch 32 H-171 queue: `0x2900` is status drawing, `0x20fa(1)` is a timer delay, and Camp never calls turn housekeeping `0x2ae8`. Accepted Camp clears Q/T and its counter; each five-minute iteration redraws (including wind RNG), rolls regeneration rings, then advances the clock, with guard movement afterward. The hourly encounter roll follows the next-hour redraw and ring sweep. Poison, meals, starvation and turn counter do not progress while camping. The raw-key shipped-pack fixture and host regressions exercise the production runtime path. The focused fixture is 24/24, eight mutations are killed, the affected subset is 18/18, and the clean full host suite is 106/106. Item parity defers 432 Camp comparison rows and gameplay parity retains 4,802 non-Camp sequences; the original-backed fixture owns Camp. The clean ESP-IDF 6.1 image is **869,456 bytes (`0xd4450`)**, **+80 bytes** from Batch 35 (`batch36-firmware-build.log`). There is no H-171 device-specific question, so no new phase is assigned. **No hardware check or flash was performed.** Pending **6T, 6U, 6V, 6W, 6X and 6Y** retain their meanings. H-172 is untouched.
+
+**Separate queue:** H-173/D-30 records nonzero-minute Camp duration (original target-hour stop versus native fixed twelve steps per hour). It was not changed in Batch 36. H-172 bed-entry presentation is also still queued.

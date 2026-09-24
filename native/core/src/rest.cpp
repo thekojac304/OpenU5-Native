@@ -155,25 +155,32 @@ bool camp_wake(RestContext &c, int32_t guard) {
     return true;
 }
 RestResult camp_sleep_step(RestContext &c, int32_t h, int32_t hours, CampCell cell, int32_t guard) {
+    RestResult r;
+    r.guard = cell;
     for (int step = 0; step < 12; ++step) {
-        advance_clock(c.game, c.turn, 5, &c.rand, c.sky);
+        // CMDS.OVL:0x0204 redraws before 0x0207 ring regeneration.
+        // Its 0x5910 -> 0x2f62 path rolls wind when time is not stopped.
+        if (c.turn.time_spell != 'T') maybe_change_wind(c.turn, c.rand);
         for (int32_t i = 0;
              i < c.game.party.party_size && i < c.game.party.character_count && i < 6; ++i) {
             auto &m = c.game.party.characters[i];
             if (m.status != 'D' && m.ring == 44 && c.rand(0, 7) == 7)
                 m.current_hp = uint16_t(std::min<int32_t>(m.max_hp, m.current_hp + 1));
         }
+        // CMDS.OVL:0x0212/0x021d tests the changed hour after redraw and
+        // ring regeneration, before this five-minute clock advance.
+        if (step == 0 && h > 0 && h < hours && c.rand(0, 63) == 0) {
+            constexpr int32_t enemies[] = {41, 20, 21, 24, 22, 25, 36, 20};
+            r.ambush = true;
+            r.enemy = enemies[c.rand(0, 7)];
+            msg(c, "Ambushed!\n\n");
+            return r;
+        }
+        advance_clock(c.game, c.turn, 5, &c.rand, c.sky);
         if (cell.present)
             cell = camp_guard_walk(cell, c.rand, c.services, guard);
     }
-    RestResult r;
     r.guard = cell;
-    if (h < hours - 1 && c.rand(0, 63) == 0) {
-        constexpr int32_t enemies[] = {41, 20, 21, 24, 22, 25, 36, 20};
-        r.ambush = true;
-        r.enemy = enemies[c.rand(0, 7)];
-        msg(c, "Ambushed!\n\n");
-    }
     return r;
 }
 RestResult camp(RestContext &c, int32_t hours, int32_t guard) {
@@ -182,6 +189,9 @@ RestResult camp(RestContext &c, int32_t hours, int32_t guard) {
         r.invalid_context = true;
         return r;
     }
+    // CMDS.OVL:0x001a-0x001f clears the timed spell at Camp entry.
+    c.turn.spell_turns = 0;
+    c.turn.time_spell = 0;
     msg(c, "Zzzzzz...\n\n");
     RestResult r;
     if (guard >= 0 && c.services.guard_start)

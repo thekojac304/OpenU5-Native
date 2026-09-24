@@ -179,7 +179,9 @@ recalcular" (lo usan las mazmorras).
 ```
 
 Después (0x514A): si cambió la hora y no estamos en mazmorra → call 0x4A84
-(refresco de schedules NPC); 0x5884 = hora en formato 12h para el display.
+(sky/time status display, not an NPC schedule pass); 0x5884 = hora en
+formato 12h para el display. Batch 36 re-read the complete 0x4a84 body
+from the original EXE.
 
 ## 5. Movimiento y coste de tiempo por contexto
 
