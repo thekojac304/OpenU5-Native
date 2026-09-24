@@ -1,0 +1,12 @@
+omit-actor: KILLED
+wrong-tile: KILLED
+wrong-cell: KILLED
+short-xor: KILLED
+wrong-mask: KILLED
+omit-restore: KILLED
+invert-after-chord: KILLED
+flash-dead: KILLED
+wake-later-early: KILLED
+full-ui-redraw: KILLED
+early-party-panel: KILLED
+restoration build: PASS

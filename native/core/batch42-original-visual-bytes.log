@@ -1,0 +1,112 @@
+OUTSUBS.OVL bytes 2464 SHA256 2e8db7d79e81221b8cdb90bb78692913e0906aebb1605ff43cb5b8fade23e184
+--- 06a4-06cd ---
+06a4: c746feaa5c           mov word ptr [bp - 2], 0x5caa
+06a9: b005                 mov al, 5
+06ab: a2ad5c               mov byte ptr [0x5cad], al
+06ae: a2ac5c               mov byte ptr [0x5cac], al
+06b1: b016                 mov al, 0x16
+06b3: a2ab5c               mov byte ptr [0x5cab], al
+06b6: a2aa5c               mov byte ptr [0x5caa], al
+06b9: b87401               mov ax, 0x174
+06bc: 50                   push ax
+06bd: b80500               mov ax, 5
+06c0: 50                   push ax
+06c1: 50                   push ax
+06c2: e81367               call 0x6dd8
+06c5: b074                 mov al, 0x74
+06c7: a2ab5c               mov byte ptr [0x5cab], al
+06ca: a2aa5c               mov byte ptr [0x5caa], al
+--- 07fb-08db ---
+07fb: a05b58               mov al, byte ptr [0x585b]
+07fe: 2ae4                 sub ah, ah
+0800: 3946fa               cmp word ptr [bp - 6], ax
+0803: 7203                 jb 0x808
+0805: e90601               jmp 0x90e
+0808: 8b5efa               mov bx, word ptr [bp - 6]
+080b: b105                 mov cl, 5
+080d: d3e3                 shl bx, cl
+080f: 80bfb35544           cmp byte ptr [bx + 0x55b3], 0x44
+0814: 7486                 je 0x79c
+0816: 8b46fa               mov ax, word ptr [bp - 6]
+0819: d3e0                 shl ax, cl
+081b: 8946ee               mov word ptr [bp - 0x12], ax
+081e: 8bd8                 mov bx, ax
+0820: 8b87ba55             mov ax, word ptr [bx + 0x55ba]
+0824: 8987b855             mov word ptr [bx + 0x55b8], ax
+0828: c687b35547           mov byte ptr [bx + 0x55b3], 0x47
+082d: 2bd2                 sub dx, dx
+082f: bf17ba               mov di, 0xba17
+0832: be18ba               mov si, 0xba18
+0835: 8a05                 mov al, byte ptr [di]
+0837: 2ae4                 sub ah, ah
+0839: 3b46fa               cmp ax, word ptr [bp - 6]
+083c: 7403                 je 0x841
+083e: e995fe               jmp 0x6d6
+0841: 8a04                 mov al, byte ptr [si]
+0843: b103                 mov cl, 3
+0845: d3e0                 shl ax, cl
+0847: 055a5c               add ax, 0x5c5a
+084a: 8946fe               mov word ptr [bp - 2], ax
+084d: 8956f8               mov word ptr [bp - 8], dx
+0850: b86077               mov ax, 0x7760
+0853: 50                   push ax
+0854: 8b5efa               mov bx, word ptr [bp - 6]
+0857: b105                 mov cl, 5
+0859: d3e3                 shl bx, cl
+085b: 8a87b255             mov al, byte ptr [bx + 0x55b2]
+085f: 2ae4                 sub ah, ah
+0861: 50                   push ax
+0862: e881a2               call 0xffffaae6
+0865: 8946fc               mov word ptr [bp - 4], ax
+0868: 8b5efe               mov bx, word ptr [bp - 2]
+086b: 8bf8                 mov di, ax
+086d: 8a85de1a             mov al, byte ptr [di + 0x1ade]
+0871: 884701               mov byte ptr [bx + 1], al
+0874: 8807                 mov byte ptr [bx], al
+0876: c606b05c00           mov byte ptr [0x5cb0], 0
+087b: b80100               mov ax, 1
+087e: 50                   push ax
+087f: e8d48f               call 0xffff9856
+0882: b87c15               mov ax, 0x157c
+0885: 50                   push ax
+0886: b80100               mov ax, 1
+0889: 50                   push ax
+088a: b88813               mov ax, 0x1388
+088d: 50                   push ax
+088e: b8c800               mov ax, 0xc8
+0891: 50                   push ax
+0892: b80d00               mov ax, 0xd
+0895: 50                   push ax
+0896: e86976               call 0x7f02
+0899: ff36b013             push word ptr [0x13b0]
+089d: e8405f               call 0x67e0
+08a0: b80800               mov ax, 8
+08a3: 50                   push ax
+08a4: 50                   push ax
+08a5: b8b700               mov ax, 0xb7
+08a8: 50                   push ax
+08a9: 50                   push ax
+08aa: e84960               call 0x68f6
+08ad: b87c15               mov ax, 0x157c
+08b0: 50                   push ax
+08b1: b80100               mov ax, 1
+08b4: 50                   push ax
+08b5: b860ea               mov ax, 0xea60
+08b8: 50                   push ax
+08b9: b8c409               mov ax, 0x9c4
+08bc: 50                   push ax
+08bd: b80100               mov ax, 1
+08c0: 50                   push ax
+08c1: e83e76               call 0x7f02
+08c4: c746f80300           mov word ptr [bp - 8], 3
+08c9: be0300               mov si, 3
+08cc: c606b05c01           mov byte ptr [0x5cb0], 1
+08d1: b80100               mov ax, 1
+08d4: 50                   push ax
+08d5: e87e8f               call 0xffff9856
+08d8: 4e                   dec si
+08d9: 75f1                 jne 0x8cc
+DATA.OVL bytes 48464 SHA256 d4c1c9f2d80fec95972f5d2a4dcfe65f7dae37169d56a9c78f388e9733b90b98
+DS 0x1ade (file offset 0x1aee), class standing frame bytes: 4c 40 44 48 4c 4c 4c 4c 4c
+DS 0x7760 (file offset 0x7770), class lookup: b'AMBFDTPRS\x00'
+Relocated call 0x68f6 resolves to resident 0x0b86; original wrapper/driver XOR proof is in re/notes/fx-lineaoe-negate-derivation.md section 2.

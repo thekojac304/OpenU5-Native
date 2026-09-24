@@ -287,6 +287,34 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
 void AlphaRuntime::dispatch_ui(void *p,const openu5::UiIntent&i){static_cast<AlphaRuntime*>(p)->dispatch(i);}
 void AlphaRuntime::dispatch_event(void *p,const openu5::GameEvent&e){static_cast<AlphaRuntime*>(p)->consume_event(e);}
 void AlphaRuntime::consume_event(const openu5::GameEvent&e){
+    // OUTSUBS 0x06b9/0x0850/0x08aa: all scene pixels are transient. The
+    // shipped CampFire map supplies the south formation; no world actor moves.
+    if(e.kind==openu5::GameEventKind::CampSceneBegin ||
+       e.kind==openu5::GameEventKind::CampActorWake ||
+       e.kind==openu5::GameEventKind::CampViewportXor ||
+       e.kind==openu5::GameEventKind::CampViewportRestore ||
+       e.kind==openu5::GameEventKind::CampSceneEnd){
+        switch(e.kind){
+        case openu5::GameEventKind::CampSceneBegin:
+            camp_scene_active_=true;camp_scene_inverted_=false;
+            camp_awake_mask_=0;camp_guard_=int8_t(e.note);break;
+        case openu5::GameEventKind::CampActorWake:
+            if(e.note>=0&&e.note<6)camp_awake_mask_|=uint8_t(1U<<e.note);
+            break;
+        case openu5::GameEventKind::CampViewportXor:
+            camp_scene_inverted_=true;break;
+        case openu5::GameEventKind::CampViewportRestore:
+            camp_scene_inverted_=false;break;
+        case openu5::GameEventKind::CampSceneEnd:
+            camp_scene_active_=false;camp_scene_inverted_=false;
+            camp_awake_mask_=0;camp_guard_=-1;break;
+        default:break;
+        }
+        if(board_){dirty_=true;dirty_reason_="camp-scene";
+            camp_viewport_only_=e.kind!=openu5::GameEventKind::CampSceneEnd;
+            render(*board_,true);camp_viewport_only_=false;}
+        return;
+    }
     if(e.kind==openu5::GameEventKind::BedStatusRefresh ||
        e.kind==openu5::GameEventKind::CampStatusRefresh){
         if(board_){
@@ -2037,14 +2065,42 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     // capture scene it outranks the world: while the party sleeps in the
     // nothingness the ordinary map must NOT be what the viewport shows.
     const bool refuge_source=!blackthorn_source&&narrative_pacer_.mounted();
-    const bool combat_source=!blackthorn_source&&!refuge_source&&context_.combat&&combat_.initialized;
-    const bool dungeon_source=!blackthorn_source&&!refuge_source&&!combat_source&&context_.dungeon&&dungeon_.active;
+    const bool camp_source=!blackthorn_source&&!refuge_source&&camp_scene_active_&&
+        resources_.combat_map_count>0&&resources_.combat_map_views&&resources_.combat_map_views[0];
+    const bool combat_source=!blackthorn_source&&!refuge_source&&!camp_source&&context_.combat&&combat_.initialized;
+    const bool dungeon_source=!blackthorn_source&&!refuge_source&&!camp_source&&!combat_source&&context_.dungeon&&dungeon_.active;
     // One source decision owns gameplay presentation.  In particular, the
     // surface return coordinate is deliberately absent from the dungeon arm.
-    const char *presentation_source=blackthorn_source?"blackthorn-scene":refuge_source?"refuge-scene":combat_source?"combat":dungeon_source?"dungeon3d":"world";
+    const char *presentation_source=blackthorn_source?"blackthorn-scene":refuge_source?"refuge-scene":camp_source?"camp-scene":combat_source?"combat":dungeon_source?"dungeon3d":"world";
     if(blackthorn_source)snapshot=openu5::compose_blackthorn_presentation(blackthorn_pacer_.view());
     else if(refuge_source)snapshot=openu5::compose_refuge_presentation(narrative_pacer_.phase(),
         turn_.transport_tile>=0?int16_t(turn_.transport_tile+0x100):int16_t(tile_report_.avatar_tile));
+    else if(camp_source){
+        const auto &arena=*resources_.combat_map_views[0];
+        snapshot.center={5,5};
+        for(int cell=0;cell<openu5::kPresentationCells;++cell){
+            snapshot.tiles[cell]=arena.tiles[cell];
+            snapshot.visible[cell]=1;
+        }
+        snapshot.tiles[5*11+5]=0x174; // apparition remains over the fire
+        const int n=std::min({6,int(game_.party.party_size),int(game_.party.character_count)});
+        for(int slot=0;slot<n;++slot){
+            const auto &member=game_.party.characters[slot];
+            if(member.status=='D')continue;
+            const auto pos=arena.starts[int(openu5::CombatDirection::South)][slot];
+            if(pos.x<0||pos.x>=11||pos.y<0||pos.y>=11)continue;
+            int tile=0x11e;
+            if(slot==camp_guard_||(camp_awake_mask_&(1U<<slot))){
+                switch(member.character_class){
+                case 'M':tile=0x140;break;
+                case 'B':tile=0x144;break;
+                case 'F':tile=0x148;break;
+                default:tile=0x14c;break;
+                }
+            }
+            snapshot.tiles[pos.y*11+pos.x]=int16_t(tile);
+        }
+    }
     else if(combat_source)snapshot=openu5::compose_combat_presentation(combat_,game_);
     else if(dungeon_source)snapshot.center={dungeon_.pos.x,dungeon_.pos.y};
     else{auto active=openu5::get_active_map(resources_.world,game_.position.map);if(active.error!=openu5::Error::None){
@@ -2083,7 +2139,7 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
         int(snapshot.center.x),int(snapshot.center.y),snapshot.combat,dungeon_.active);teleport_snapshot_pending_=false;}
     // The scene bakes its own cast into the window at fixed reference cells;
     // the actor-program clock would wander them off their staged positions.
-    if(!debug_mode&&!dungeon_source&&!blackthorn_source&&!refuge_source)actor_animation_.render(snapshot,tick,turn_.time_spell=='T');
+    if(!debug_mode&&!dungeon_source&&!blackthorn_source&&!refuge_source&&!camp_source)actor_animation_.render(snapshot,tick,turn_.time_spell=='T');
     // Y-04 (#201/#243/#313). The world fx are a TEMPORARY per-cell override of
     // the already-composed window: no world tile, object table or save is
     // touched to show them. They go on last so the burst lands over whatever
@@ -2133,7 +2189,7 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
             report.viewport_crc32=openu5::recompute_viewport_crc32(viewport_,openu5::kViewportPixelCount);
         }
     }
-    if(e==ESP_OK&&magic_inverted&&!debug_mode){
+    if(e==ESP_OK&&(magic_inverted||camp_scene_inverted_)&&!debug_mode){
         for(size_t p=0;p<openu5::kViewportPixelCount;++p)
             viewport_[p]=magic_xor_palette_pixel(viewport_[p],tile_cache_.palette);
         report.viewport_crc32^=0xa5c35a3cU;
@@ -2153,11 +2209,17 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     // strips entirely rather than overdrawing them across it. The zodiac view
     // still keeps the world bars (unchanged, out of this batch's scope).
     const auto dungeon_bands=openu5::hud_dungeon_bands(dungeon_,dungeon_source&&!gem_view_active_&&!zodiac_view_active_);
-    if(e==ESP_OK)e=board.show_alpha(viewport_,*ui_,game_,turn_,hud,resources_.runes_font,overlay(),report.animated_cells,
-                                     animation_only,debug_ptr,
-                                     input_.movement_mode_active(ui_->mode(),ui_->accepts_direction_input()),
-                                     settings_.ui_size,compose_shop_view(),compose_selection_view(),compose_context_bar(),compose_party_highlight(),report.viewport_crc32,&dungeon_bands,
-                                     gem_view_active_);
+    if(e==ESP_OK){
+        if(camp_viewport_only_&&camp_source)
+            e=board.show_camp_viewport(viewport_,report.viewport_crc32);
+        else
+            e=board.show_alpha(viewport_,*ui_,game_,turn_,hud,resources_.runes_font,overlay(),report.animated_cells,
+                               animation_only,debug_ptr,
+                               input_.movement_mode_active(ui_->mode(),ui_->accepts_direction_input()),
+                               settings_.ui_size,compose_shop_view(),compose_selection_view(),compose_context_bar(),
+                               compose_party_highlight(),report.viewport_crc32,&dungeon_bands,
+                               gem_view_active_||camp_source,camp_source);
+    }
     const auto us=uint32_t(esp_timer_get_time()-start);render_high_us_=std::max(render_high_us_,us);
     if(dungeon_source){
         dungeon_render_high_us_=std::max(dungeon_render_high_us_,us);

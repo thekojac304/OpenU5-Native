@@ -9,11 +9,12 @@ int32_t count(const GameState &g) {
     return g.party.party_size < 0 ? std::max<int32_t>(0, n + g.party.party_size)
                                   : std::min(n, g.party.party_size);
 }
-void emit(RestContext &c, GameEventKind kind, const char *s = nullptr) {
+void emit(RestContext &c, GameEventKind kind, const char *s = nullptr, int32_t note = 0) {
     if (c.events.emit) {
         GameEvent e;
         e.kind = kind;
         e.text = s;
+        e.note = note;
         c.events.emit(c.events.context, e);
     }
 }
@@ -99,6 +100,7 @@ using CampAdvance = CommandState::CampAdvance;
 void camp_finish(RestContext &c, CampAdvance &state) {
     msg(c, "\n\nThe strangely familiar old man vanishes...\n");
     msg(c, "Party rested!\n");
+    emit(c, GameEventKind::CampSceneEnd);
     emit(c, GameEventKind::PartyChanged);
     state.phase = CampAdvance::Phase::None;
     state.slot = 0;
@@ -109,8 +111,11 @@ void camp_next_member(RestContext &c, CampAdvance &state, bool hold) {
         if (m.status != 'D') {
             m.current_hp = m.max_hp;
             m.status = 'G';
+            emit(c, GameEventKind::CampActorWake, nullptr, state.slot);
             emit(c, GameEventKind::Sfx, "apparition-heal-chime");
+            emit(c, GameEventKind::CampViewportXor);
             emit(c, GameEventKind::Sfx, "apparition-chord");
+            emit(c, GameEventKind::CampViewportRestore);
             int32_t level = 1;
             for (int32_t x = m.exp / 100; x > 0; x >>= 1)
                 ++level;
@@ -158,6 +163,7 @@ bool camp_wake(RestContext &c, int32_t guard) {
         msg(c, "An apparition!\n");
         emit(c, GameEventKind::Sfx, "apparition-materialize");
         emit(c, GameEventKind::Sfx, "apparition-arpeggio");
+        emit(c, GameEventKind::CampSceneBegin, nullptr, guard);
         CampAdvance local{};
         auto &state = c.advancement ? *c.advancement : local;
         state.slot = 0;

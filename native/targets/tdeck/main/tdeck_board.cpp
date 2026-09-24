@@ -529,6 +529,15 @@ esp_err_t Board::show_view(const uint16_t *pixels, int width, int height,
     return ESP_OK;
 }
 
+esp_err_t Board::show_camp_viewport(const uint16_t *pixels,uint32_t)
+{
+    if(!display_initialized_||!alpha_drawn_||!pixels)return ESP_ERR_INVALID_STATE;
+    const auto result=draw_rgb565(openu5::kHudViewportX,openu5::kHudViewportY,
+                                  openu5::kViewportPixels,openu5::kViewportPixels,pixels);
+    if(result==ESP_OK){viewport_cache_valid_=false;full_square_active_=true;}
+    return result;
+}
+
 esp_err_t Board::fill_bed_viewport()
 {
     // Original (8,8)-(183,183) is the entire 176x176 gameplay window.
@@ -568,7 +577,7 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
                             uint8_t ui_size,const DeviceShopView *shop,const DeviceSelectionView *selection,
                             const DeviceContextActionBar *context_bar,DevicePartyHighlight party_highlight,
                             uint32_t viewport_crc,const openu5::HudDungeonBands *dungeon_bands,
-                            bool full_square_viewport)
+                            bool full_square_viewport,bool preserve_party_panel)
 {
     // R-05.  The T-Deck's 176x176 viewport has no 8 px margin to put the
     // original's dungeon bands in, so they are drawn over the same two 9 px
@@ -792,16 +801,20 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
         ESP_RETURN_ON_ERROR(draw_context_bar(selection->context,182,137,first),kTag,"selector context action bar");account(137*25);
         selection_cache_=*selection;selection_cache_valid_=true;alpha_ui_cache_valid_=true;return ESP_OK;
     }
-    ESP_RETURN_ON_ERROR(draw_party_rows(game,party_highlight),kTag,"draw party rows");
+    if(!preserve_party_panel) {
+        ESP_RETURN_ON_ERROR(draw_party_rows(game,party_highlight),kTag,"draw party rows");
+    }
     // Batch 9B.  While a dungeon session is mounted the caption is the DUNGEON's
     // name, not game.position's -- that field holds the surface RETURN context
     // for the whole descent and is stale by design (see hud_location_caption()).
     char location[24]{};const char*name=hud_location_caption(game.position.map.location,game.position.map.floor,bands_active,bands_active?dungeon_bands->dungeon_id:uint8_t(0));std::snprintf(location,sizeof(location),"%.22s",name);
     char clock[24]{};std::snprintf(clock,sizeof(clock),"Day %ld  %02ld:%02ld",long(game.time.day),long(game.time.hour),long(game.time.minute));
-    const char*world[]={location,clock};for(int i=0;i<2;++i)ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudRightX,58+i*10,openu5::kHudRightW,8,world[i],i==0?kCyan:kWhite),kTag,"draw world status");
-    ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudRightX,78,openu5::kHudRightW,8,
-                        movement_mode?"MOVE MODE: ON":"",movement_mode?kGreen:kWhite),
-                        kTag,"draw movement mode indicator");
+    if(!preserve_party_panel){
+        const char*world[]={location,clock};for(int i=0;i<2;++i)ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudRightX,58+i*10,openu5::kHudRightW,8,world[i],i==0?kCyan:kWhite),kTag,"draw world status");
+        ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudRightX,78,openu5::kHudRightW,8,
+                            movement_mode?"MOVE MODE: ON":"",movement_mode?kGreen:kWhite),
+                            kTag,"draw movement mode indicator");
+    }
 
     // Transcript history and active modal state have separate retained regions.
     // Every user size maps to distinct, aspect-correct raster metrics.

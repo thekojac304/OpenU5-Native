@@ -1,0 +1,11 @@
+omit-actor: KILLED
+GREEN shipped CampFire south formation is in the viewport
+GREEN raw Camp reaches the apparition
+GREEN first Hail holds later member unchanged
+RED Camp presents scene, standing tile, XOR and restored frames before Hail
+GREEN visual actor placement leaves world coordinates untouched
+GREEN acknowledgement redraws panel then advances the next member
+RED second member has its own standing, XOR and restore frames
+GREEN dead and ineligible slots add no Hail wait
+RED dead slot emits no scene frames; ineligible live slot still flashes
+Batch 42 visual: 6/9 checks

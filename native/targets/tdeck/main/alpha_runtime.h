@@ -91,6 +91,7 @@ class AlphaRuntime {
         const AlphaResourceOwners *pack = nullptr;
         // Host framebuffer tests may compose deterministic all-white map tiles.
         bool render_pixels = false;
+        bool indexed_test_tiles = false;
     };
     void attach_host_test_fixture(const HostTestFixture &);
     openu5::TurnState &turn() { return turn_; }
@@ -292,6 +293,11 @@ class AlphaRuntime {
     bool teleport_snapshot_pending_ = false;
     int64_t magic_invert_start_us_ = 0, magic_invert_end_us_ = 0;
     bool magic_was_inverted_ = false;
+    bool camp_scene_active_ = false;
+    bool camp_viewport_only_ = false;
+    bool camp_scene_inverted_ = false;
+    uint8_t camp_awake_mask_ = 0;
+    int8_t camp_guard_ = -1;
     // R-12: Wis An Ylem / In Quas Wis / Death Vision. Wall-clock, not
     // turn-gated -- matches the reference's revealViewport(ms) timer, not a
     // per-turn counter. Input is swallowed while active (see handle()) and

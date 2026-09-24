@@ -42,6 +42,12 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
         tile_cache_storage_ = new uint8_t[openu5::kCachedTileBytes]();
         tile_cache_.tiles = tile_cache_storage_;
         std::fill(std::begin(tile_cache_.palette), std::end(tile_cache_.palette), uint16_t(0xffff));
+        if (fixture.indexed_test_tiles) {
+            for (int i=0;i<16;++i) tile_cache_.palette[i]=uint16_t(i*0x1111);
+            for (int tile=0;tile<512;++tile)
+                std::fill(tile_cache_storage_+tile*128,tile_cache_storage_+(tile+1)*128,
+                          uint8_t((tile&15)*0x11));
+        }
     }
 
     transcript_ = new openu5::UiTextBlock[kHostTestTranscriptBlocks]();

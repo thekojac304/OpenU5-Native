@@ -40,7 +40,7 @@ esp_err_t Board::show_alpha(const uint16_t *, const openu5::UiSession &, const o
                              const char *, const uint8_t *, bool, const DeviceDebugScreen *, bool,
                              uint8_t, const DeviceShopView *, const DeviceSelectionView *,
                              const DeviceContextActionBar *, DevicePartyHighlight, uint32_t,
-                             const openu5::HudDungeonBands *, bool) {
+                             const openu5::HudDungeonBands *, bool, bool) {
     return ESP_OK;
 }
 
@@ -50,6 +50,7 @@ esp_err_t Board::show_frontend(const openu5::FrontendView &, const uint16_t *, c
 }
 
 esp_err_t Board::refresh_bed_status_panel(const openu5::GameState &, DevicePartyHighlight) { return ESP_OK; }
+esp_err_t Board::show_camp_viewport(const uint16_t *,uint32_t) { return ESP_OK; }
 esp_err_t Board::fill_bed_viewport() { return ESP_OK; }
 esp_err_t Board::set_brightness(uint8_t) { return ESP_OK; }
 

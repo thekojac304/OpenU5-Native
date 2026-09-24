@@ -1,0 +1,56 @@
+Your environment is not configured to handle Unicode characters.
+
+Recommended fix (persistent):
+ - Enable "Beta: Use Unicode UTF-8 for worldwide language support" in Windows language/region settings.
+
+If you still see issues or this warning persists, you can also try one of these workarounds:
+ - Run "chcp 65001" in the current console before running idf.py.
+ - Set PYTHONUTF8=1 before running idf.py (or set it globally).
+
+Note: "chcp 65001" must be run in each new console session unless your console/profile is configured to apply it automatically.
+[1/11] Performing build step for 'bootloader'
+[1/1] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch42\bootloader && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch42/bootloader/bootloader.bin"
+
+Bootloader binary size 0x5850 bytes. 0x27b0 bytes (31%) free.
+
+
+[2/11] No install step for 'bootloader'
+[3/11] Completed 'bootloader'
+[4/11] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/main.cpp.obj
+[5/11] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/tdeck_board.cpp.obj
+[6/11] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/alpha_runtime.cpp.obj
+[7/11] Linking C static library esp-idf\main\libmain.a
+[8/11] Generating esp-idf/esp_system/ld/sections.ld
+NOTE: C:/esp/v6.1/esp-idf/components/bt/host/nimble/Kconfig.in:1428: BT_NIMBLE_MESH_PROVISIONER: 'default 0' is not a valid bool value (only 'y' and 'n' are allowed). Value is treated as 'n'.
+NOTE: C:/esp/v6.1/esp-idf/components/fatfs/Kconfig:240: FATFS_PRINT_LLI: 'default 0' is not a valid bool value (only 'y' and 'n' are allowed). Value is treated as 'n'.
+NOTE: C:/esp/v6.1/esp-idf/components/fatfs/Kconfig:245: FATFS_PRINT_FLOAT: 'default 0' is not a valid bool value (only 'y' and 'n' are allowed). Value is treated as 'n'.
+
+Skipping linker fragment parsing, fragment files unchanged
+
+[9/11] Linking CXX executable openu5_tdeck.elf
+[10/11] Generating binary image from built executable
+esptool v5.4.0
+
+Creating ESP32-S3 image...
+
+Merged 3 ELF sections.
+
+Successfully created ESP32-S3 image.
+
+Generated C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch42/openu5_tdeck.bin
+[11/11] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch42 && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch42/partition_table/partition-table.bin C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch42/openu5_tdeck.bin"
+openu5_tdeck.bin binary size 0xd4ff0 bytes. Smallest app partition is 0x100000 bytes. 0x2b010 bytes (17%) free.
+
+Executing action: all (aliases: build)
+Running ninja in directory C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch42
+Executing "ninja all"...
+
+
+Project build complete. To flash, run:
+ idf.py flash
+or
+ idf.py -p PORT flash
+or
+ python -m esptool --chip esp32s3 -b 460800 --before default-reset --after hard-reset write-flash --flash-mode dio --flash-size 16MB --flash-freq 80m 0x0 build-batch42\bootloader\bootloader.bin 0x8000 build-batch42\partition_table\partition-table.bin 0x10000 build-batch42\openu5_tdeck.bin
+or from the "C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch42" directory
+ python -m esptool --chip esp32s3 -b 460800 --before default-reset --after hard-reset write-flash "@flash_args"

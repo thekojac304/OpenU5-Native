@@ -7,7 +7,7 @@
 using namespace openu5;
 void batch37_reset_screen();
 int batch37_panel_draw_count();
-int batch37_draw_count();
+int batch37_world_draw_count();
 namespace {
 int checks=0,failures=0;
 void check(bool good,const char *label){
@@ -71,23 +71,23 @@ int main(int argc,char **argv){
     check(seed>0,"a shipped-pack raw Camp reaches an apparition");
     if(seed<0)return 1;
     Run h(seed);
-    const int map_draws=batch37_draw_count();
+    const int map_draws=batch37_world_draw_count();
     h.camp();
     const auto &g=h.rt->game();
     check(h.waiting()&&g.party.characters[0].level==2&&
           g.party.characters[1].level==1,"first raw-key pause leaves second member old");
-    check(batch37_panel_draw_count()==0&&batch37_draw_count()==map_draws,
+    check(batch37_panel_draw_count()==0&&batch37_world_draw_count()==map_draws,
           "first Hail pauses before the status redraw and leaves map untouched");
     h.key('x');
     check(h.waiting()&&g.party.characters[1].level==3,
           "one raw key releases only the first member and presents the second");
-    check(batch37_panel_draw_count()==1&&batch37_draw_count()==map_draws,
-          "first acknowledgement redraws one status panel without map redraw");
+    check(batch37_panel_draw_count()==1&&batch37_world_draw_count()==map_draws,
+          "first acknowledgement redraws one status panel without ordinary world redraw");
     h.key('s',true); // Alt+S is a getkey, not a save inside the original scene.
     check(h.waiting()&&
           h.rt->commands().camp_advance.phase==CommandState::CampAdvance::Phase::KarmaKey,
           "save shortcut acknowledges the second Hail without opening save");
-    check(batch37_panel_draw_count()==2&&batch37_draw_count()==map_draws,
+    check(batch37_panel_draw_count()==2&&batch37_world_draw_count()==map_draws,
           "second acknowledgement redraws its panel before karma speech");
     h.key('\b');
     check(h.rt->ui()->mode()==UiMode::Exploration&&

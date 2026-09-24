@@ -92,7 +92,8 @@ public:
                          // or dungeon) -- a full-square 176x176 composition
                          // that must not lose its top/bottom 9 px to the sky
                          // and wind strips, nor have them overdrawn across it.
-                         bool full_square_viewport = false);
+                         bool full_square_viewport = false,
+                         bool preserve_party_panel = false);
     esp_err_t show_frontend(const openu5::FrontendView &, const uint16_t *preview = nullptr,
                             const uint16_t *title_art = nullptr,
                             const uint16_t *panel_art = nullptr,
@@ -102,6 +103,8 @@ public:
     // CMDS bed entry: fill only the map image; the relocated sky/wind strips
     // and viewport frame remain visible. The next normal draw restores it.
     esp_err_t fill_bed_viewport();
+    // OUTSUBS Camp apparition writes only the 176x176 game window.
+    esp_err_t show_camp_viewport(const uint16_t *pixels, uint32_t viewport_crc);
     // CMDS 0x060a/0x0674: update the status panel without touching the map.
     esp_err_t refresh_bed_status_panel(const openu5::GameState &, DevicePartyHighlight);
     bool debug_last_full_redraw() const { return debug_last_full_redraw_; }

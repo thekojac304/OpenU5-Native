@@ -1,0 +1,20 @@
+wake-later-early: KILLED
+GREEN shipped CampFire south formation is in the viewport
+GREEN raw Camp reaches the apparition
+GREEN first Hail holds later member unchanged
+GREEN Camp presents scene, standing tile, XOR and restored frames before Hail
+RED scene starts with both live members on sleeping tile 0x11e
+RED first member wakes to Fighter tile 0x148 at authored cell
+GREEN one XOR pass inverts every CampFire viewport pixel
+GREEN first post-chord repaint restores the pre-XOR scene
+GREEN visual actor placement leaves world coordinates untouched
+GREEN acknowledgement redraws panel then advances the next member
+GREEN second member has its own standing, XOR and restore frames
+GREEN second member uses Mage tile 0x140; first remains standing
+GREEN second member receives exactly one reversible XOR pulse
+GREEN dead and ineligible slots add no Hail wait
+GREEN dead slot emits no scene frames; ineligible live slot still flashes
+GREEN ineligible live member wakes to Mage tile
+GREEN dead member cell retains its scene background
+GREEN ineligible live member has one XOR pulse before karma speech
+Batch 42 visual: 16/18 checks
