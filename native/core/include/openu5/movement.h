@@ -40,7 +40,7 @@ Result<StepGeometry> resolve_world_step(GameState &, const ActiveMap &, Directio
 struct NpcActor;
 enum class GameEventKind : uint8_t { Message, Moved, MapChanged, PartyChanged, TownExitPrompt,
     WalkEcho, Sfx, PoisonTick, Quake, NeedsDirection, CombatStarted, CombatEnded, Combat, DungeonEntered, DungeonExited, Dialogue, Shop,
-    ShrineVisitPrompt, ShrineRestorePrompt, ShrineDonatePrompt, ShrineKeyWait, RitualInvert, CellExplosion, GameWon, Endgame, BlackthornPrompt, GuardPasswordPrompt, GuardTributePrompt, GuardArrestPrompt, NpcInitiatesTalk, NpcInitiatesShop, Refuge, TrollSneak, TrollTollPrompt, CrystalBallPrompt, WellDropPrompt, FountainDrinkPrompt, WellWishPrompt, Zodiac, GemView, MapReveal, CellProjectile, MagicCeremony, BlackthornScene, BedViewportFill, BedStatusRefresh };
+    ShrineVisitPrompt, ShrineRestorePrompt, ShrineDonatePrompt, ShrineKeyWait, RitualInvert, CellExplosion, GameWon, Endgame, BlackthornPrompt, GuardPasswordPrompt, GuardTributePrompt, GuardArrestPrompt, NpcInitiatesTalk, NpcInitiatesShop, Refuge, TrollSneak, TrollTollPrompt, CrystalBallPrompt, WellDropPrompt, FountainDrinkPrompt, WellWishPrompt, Zodiac, GemView, MapReveal, CellProjectile, MagicCeremony, BlackthornScene, BedViewportFill, BedStatusRefresh, CampStatusRefresh, CampKeyWait };
 struct GameEvent {
     GameEventKind kind = GameEventKind::Moved;
     StepMessage message = StepMessage::None; // Legacy movement vocabulary.

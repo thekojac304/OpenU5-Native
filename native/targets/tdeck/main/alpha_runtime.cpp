@@ -102,7 +102,7 @@ void log_loot_stack(const openu5::CombatState &combat,int x,int y,const char *ph
     if(visible>=0){const auto &pile=combat.piles[visible];const auto decoded=openu5::decode_loot({pile.id,pile.quantity});char name[96]{};openu5::loot_item_name({pile.id,pile.quantity},name,sizeof(name));ESP_LOGI(kTag,"LOOT_STACK_VISIBLE x=%d y=%d chosen_index=%d type=%s name=%s",x,y,visible,openu5::loot_category_name(decoded.category),name);}
 }
 const char *status_name(openu5::CommandStatus s){static const char*n[]={"success","rejected","no-op","awaiting response","unsupported","invalid context","core error","needs storage"};return n[std::min<size_t>(size_t(s),7)];}
-const char *mode_name(openu5::UiMode m){static const char*n[]={"explore","dungeon","combat","dialogue","shop","special","text","number","yes/no","party","inventory","equipment","spell","target","debug"};return n[std::min<size_t>(size_t(m),14)];}
+const char *mode_name(openu5::UiMode m){static const char*n[]={"explore","dungeon","combat","dialogue","shop","special","text","number","yes/no","party","inventory","equipment","spell","target","debug","key-wait"};return n[std::min<size_t>(size_t(m),15)];}
 const char *action_name(openu5::UiActionKind k){static const char*n[]={"direction","character","confirm","cancel","back","next","previous","page-up","page-down","select-index","text","delete","system-menu"};return n[std::min<size_t>(size_t(k),12)];}
 const char *frontend_state_name(openu5::FrontendState s){static const char*n[]={"title","intro","attract","menu","new-journey","character-creation","continue","load","settings","credits","enter-game","error"};return n[std::min<size_t>(size_t(s),11)];}
 const char *creation_phase_name(openu5::FrontendCreationPhase p){static const char*n[]={"name","gender","questionnaire"};return n[std::min<size_t>(size_t(p),2)];}
@@ -287,7 +287,8 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
 void AlphaRuntime::dispatch_ui(void *p,const openu5::UiIntent&i){static_cast<AlphaRuntime*>(p)->dispatch(i);}
 void AlphaRuntime::dispatch_event(void *p,const openu5::GameEvent&e){static_cast<AlphaRuntime*>(p)->consume_event(e);}
 void AlphaRuntime::consume_event(const openu5::GameEvent&e){
-    if(e.kind==openu5::GameEventKind::BedStatusRefresh){
+    if(e.kind==openu5::GameEventKind::BedStatusRefresh ||
+       e.kind==openu5::GameEventKind::CampStatusRefresh){
         if(board_){
             const auto result=board_->refresh_bed_status_panel(game_,compose_party_highlight());
             if(result!=ESP_OK)ESP_LOGE(kTag,"BED_STATUS_REFRESH failed: %s",esp_err_to_name(result));
@@ -1345,6 +1346,16 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
         observed_frontend_state_=state_after;
         if(!accepted)return false;
         service_frontend_intent();dirty_=true;dirty_reason_="frontend-input";return true;
+    }
+    // The original apparition is inside getkey: saving, loading and menus
+    // cannot interrupt a partly advanced roster.
+    if(commands_.camp_advance.phase!=openu5::CommandState::CampAdvance::Phase::None &&
+       (action.kind==openu5::UiActionKind::SystemMenu || shortcut!=DeviceShortcut::None)){
+        openu5::UiAction key{};
+        key.kind=openu5::UiActionKind::Character;
+        key.character=u' ';
+        ui_->handle_input(key);
+        dirty_=true;dirty_reason_="camp-key-wait";return true;
     }
     if(action.kind==openu5::UiActionKind::SystemMenu){
         if(system_menu_.active()){settings_=system_menu_.settings();input_.set_movement_mode_enabled(settings_.movement_mode);input_.set_trackball_responsiveness(settings_.trackball_responsiveness);settings_store_.save(settings_);system_menu_.close();}else{openu5::FrontendSaveSlot slots[2]{};save_.inspect(slots);system_menu_.open(settings_,slots);}

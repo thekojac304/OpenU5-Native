@@ -40,7 +40,10 @@ struct Run {
     void key(uint8_t c){tdeck::RawInputEvent e{};e.kind=tdeck::RawInputKind::Keyboard;
         e.code=c;e.transition=tdeck::KeyTransition::Pressed;e.timestamp_us=(us+=100000);rt->handle(e);}
     void camp(int hours,bool watched=false){key('h');key(uint8_t('0'+hours));key('\r');
-        if(watched){key('y');key('2');}}
+        if(watched){key('y');key('2');}
+        // An apparition can now stop at one or more original getkey points.
+        for(int i=0;i<16&&ui().mode()==UiMode::KeyWait;++i)key(' ');
+    }
     int count(int lo,int hi)const{int n=0;for(const auto &d:draws)if(d.lo==lo&&d.hi==hi)++n;return n;}
 };
 void case_one(int start_hour,int start_minute,int hours,int end_hour,int steps,const char *id,int end_minute=0){

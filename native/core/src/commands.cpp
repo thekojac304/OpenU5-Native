@@ -751,6 +751,24 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
                              ctx.rng_trace.emit(ctx.rng_trace.context, "command", lo, hi, value);
                          return value;
                      }}};
+    // Camp's original getkey suspends the command inside the apparition scene.
+    // No other command may observe or alter a partly presented party.
+    if (c.commands.camp_advance.phase != CommandState::CampAdvance::Phase::None) {
+        if (cmd.kind != CommandKind::CampAcknowledge || !c.rest_services) {
+            r.result.status = CommandStatus::AwaitingResponse;
+            return r.result;
+        }
+        RestContext ctx{c.game, c.turn, r.rand, r.sink(), *c.rest_services,
+                        c.sky, c.terrain, &c.world, &c.commands.camp_advance};
+        if (!camp_advance_resume(ctx)) r.result.status = CommandStatus::InvalidContext;
+        else if (c.commands.camp_advance.phase != CommandState::CampAdvance::Phase::None)
+            r.result.status = CommandStatus::AwaitingResponse;
+        return r.result;
+    }
+    if (cmd.kind == CommandKind::CampAcknowledge) {
+        r.result.status = CommandStatus::InvalidContext;
+        return r.result;
+    }
     if(!c.combat&&(cmd.kind==CommandKind::NewOrder||cmd.kind==CommandKind::SetActivePlayer)){
         auto &g=c.game;auto &party=g.party;if(party.character_count>kRosterCapacity||party.party_size<0||party.party_size>kMaxParty){r.result.status=CommandStatus::InvalidContext;return r.result;}
         if(cmd.kind==CommandKind::NewOrder){
@@ -1185,7 +1203,8 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
                 return b.host.occupied ? b.host.occupied(b.host.context, x, y, z) : false;
             };
         }
-        RestContext ctx{c.game, c.turn, r.rand, r.sink(), bed, c.sky, c.terrain, &c.world};
+        RestContext ctx{c.game, c.turn, r.rand, r.sink(), bed, c.sky, c.terrain, &c.world,
+                        &c.commands.camp_advance};
         // The low-level Rest command has long accepted an already resolved
         // member (parity drivers and noninteractive callers). Only a choice
         // coming from the kernel-style watch picker needs its 'G' gate here.
@@ -1217,6 +1236,8 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
         }
         if (pre_sleep_cancelled) break;
         const auto result = e.bed ? bed_sleep(ctx, cmd.hours) : camp(ctx, cmd.hours, guard);
+        if (c.commands.camp_advance.phase != CommandState::CampAdvance::Phase::None)
+            r.result.status = CommandStatus::AwaitingResponse;
         if (result.ambush) {
             auto *arena=c.outdoor?c.outdoor->combat:c.quest_world?c.quest_world->encounter:nullptr;
             auto *assets=c.outdoor?c.outdoor->resources:c.quest_world?c.quest_world->combat_resources:nullptr;

@@ -40,12 +40,13 @@ struct Run {
     void key(uint8_t c){tdeck::RawInputEvent e{};e.kind=tdeck::RawInputKind::Keyboard;
         e.code=c;e.transition=tdeck::KeyTransition::Pressed;e.timestamp_us=(us+=100000);rt->handle(e);}
     void hours(int count=1){key('h');key(uint8_t('0'+count));key('\r');}
+    void finish_camp(){for(int i=0;i<16&&ui().mode()==UiMode::KeyWait;++i)key(' ');}
 };
 void watched_cadence(){
     Run h;h.g().party.characters[0].status='P';h.g().party.characters[1].ring=44;
     h.hours();check(h.ui().request()==UiRequestId::CampWatch&&h.draws.empty(),
                     "C0","accepted hours reach watch question without a step or RNG");
-    h.key('y');check(h.draws.empty(),"C1","watch picker adds no step or RNG");h.key('2');
+    h.key('y');check(h.draws.empty(),"C1","watch picker adds no step or RNG");h.key('2');h.finish_camp();
     check(h.ui().mode()==UiMode::Exploration&&h.g().time.hour==6&&h.g().time.minute==0,
           "C2","watched hour completes at 06:00 and returns to command state");
     std::vector<size_t> wind,ring;

@@ -38,7 +38,7 @@ enum class CommandKind : uint8_t {
     Talk, BeginConversation, DialogueText, DialogueYes, DialogueNo, EndConversation, ShopAction,
     ShrineAction, Yell, HarpsichordNote, Get, Search, UseMoonstone, BlackthornAction, YellSails, TrollToll,
     Open, Jimmy, Push, Look, CrystalBall, DropCoin, MakeWish, Attack, Fire, Mix,
-    ViewGem, AfterGemView, NewOrder, SetActivePlayer
+    ViewGem, AfterGemView, NewOrder, SetActivePlayer, CampAcknowledge
 };
 struct Command {
     CommandKind kind = CommandKind::Pass;
@@ -100,6 +100,11 @@ struct CommandServices {
     const char *(*banner)(void *, uint8_t) = nullptr;
 };
 struct CommandState {
+    struct CampAdvance {
+        enum class Phase : uint8_t { None, MemberKey, KarmaKey };
+        Phase phase = Phase::None;
+        uint8_t slot = 0; // Member awaiting a key, then the next roster slot.
+    } camp_advance{};
     struct Door { MapId map{}; int32_t x=0,y=0,tile=184,turns=0; } door;
     TurnPhases town_phases{}, outdoor_phases{};
     int16_t town_location = -1;

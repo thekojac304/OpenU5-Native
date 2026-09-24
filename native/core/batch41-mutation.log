@@ -1,0 +1,9 @@
+all_members_up_front: KILLED exit=1 RED apparition seed has two eligible live members
+early_second_rng: KILLED exit=1 Batch 41 staged advancement: 15/18 checks
+dead_member_processed: KILLED exit=1 Batch 41 staged advancement: 9/18 checks
+missing_member_wait: KILLED exit=1 RED apparition seed has two eligible live members
+missing_panel_refresh: KILLED exit=1 Batch 41 staged advancement: 14/18 checks
+wrong_next_slot: KILLED exit=1 Batch 41 staged advancement: 16/18 checks
+next_member_before_prior_panel: KILLED exit=1 Batch 41 staged advancement: 16/18 checks
+wrong_first_slot: KILLED exit=1 RED apparition seed has two eligible live members
+ignore_acknowledgement: KILLED exit=1 RED apparition seed has two eligible live members

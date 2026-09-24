@@ -94,24 +94,23 @@ bool camp_hole_up(GameState &g, Rand rand, int32_t guard) {
     }
     return rand(0, 99) < 25;
 }
-bool camp_wake(RestContext &c, int32_t guard) {
-    if (!c.services.karma_record)
-        return false;
-    if (camp_hole_up(c.game, c.rand, guard)) {
-        msg(c, "An apparition!\n");
-        emit(c, GameEventKind::Sfx, "apparition-materialize");
-        emit(c, GameEventKind::Sfx, "apparition-arpeggio");
-        // State/RNG for every member is committed BEFORE the per-member event loop,
-        // as campApparition returns its steps to campWake.
-        uint8_t rolls[16]{};
-        for (int32_t i = 0; i < count(c.game); ++i) {
-            auto &m = c.game.party.characters[i];
-            if (m.status == 'D') {
-                mp(m);
-                continue;
-            }
+namespace {
+using CampAdvance = CommandState::CampAdvance;
+void camp_finish(RestContext &c, CampAdvance &state) {
+    msg(c, "\n\nThe strangely familiar old man vanishes...\n");
+    msg(c, "Party rested!\n");
+    emit(c, GameEventKind::PartyChanged);
+    state.phase = CampAdvance::Phase::None;
+    state.slot = 0;
+}
+void camp_next_member(RestContext &c, CampAdvance &state, bool hold) {
+    for (; state.slot < count(c.game); ++state.slot) {
+        auto &m = c.game.party.characters[state.slot];
+        if (m.status != 'D') {
             m.current_hp = m.max_hp;
             m.status = 'G';
+            emit(c, GameEventKind::Sfx, "apparition-heal-chime");
+            emit(c, GameEventKind::Sfx, "apparition-chord");
             int32_t level = 1;
             for (int32_t x = m.exp / 100; x > 0; x >>= 1)
                 ++level;
@@ -121,38 +120,73 @@ bool camp_wake(RestContext &c, int32_t guard) {
                 m.max_hp = uint16_t(30 * level);
                 m.current_hp = m.max_hp;
                 const auto roll = c.rand(1, 3);
-                rolls[i] = uint8_t(roll);
                 auto &stat = roll == 1 ? m.strength : roll == 2 ? m.dexterity : m.intelligence;
                 stat = uint8_t(std::min<int32_t>(30, stat + 1));
-            }
-            mp(m);
-        }
-        for (int32_t i = 0; i < count(c.game); ++i) {
-            const auto &m = c.game.party.characters[i];
-            if (m.status == 'D')
-                continue;
-            emit(c, GameEventKind::Sfx, "apparition-heal-chime");
-            emit(c, GameEventKind::Sfx, "apparition-chord");
-            if (rolls[i]) {
                 char text[192];
                 const char *words[] = {"stronger!", "quicker!", "wiser!"};
                 std::snprintf(text, sizeof(text),
                               "\n\"Hail, %s!\nFor thy valiant deeds, I shall reward thee!\nThou "
                               "art now level %u, and\n%s\" \n",
-                              m.name, unsigned(m.level), words[rolls[i] - 1]);
+                              m.name, unsigned(m.level), words[roll - 1]);
                 msg(c, text);
+                if (hold) {
+                    state.phase = CampAdvance::Phase::MemberKey;
+                    emit(c, GameEventKind::CampKeyWait);
+                    return;
+                }
             }
         }
-        msg(c, "\n");
-        const int32_t idx = c.game.karma / 20;
-        // Record text is streamed in one event, with quotes supplied by the caller's
-        // record adapter. No owned string buffer or truncation of asset prose.
-        msg(c, c.services.karma_record(c.services.context, idx < 4 ? idx : 5));
-        msg(c, "\n\nThe strangely familiar old man vanishes...\n");
+        // OUTSUBS 0x079c-0x07f8: MP and status draw follow the member getkey.
+        mp(m);
+        if (hold) emit(c, GameEventKind::CampStatusRefresh);
     }
-    msg(c, "Party rested!\n");
-    emit(c, GameEventKind::PartyChanged);
+    msg(c, "\n");
+    const int32_t idx = c.game.karma / 20;
+    msg(c, c.services.karma_record(c.services.context, idx < 4 ? idx : 5));
+    if (hold) {
+        state.phase = CampAdvance::Phase::KarmaKey;
+        emit(c, GameEventKind::CampKeyWait);
+        return;
+    }
+    camp_finish(c, state);
+}
+} // namespace
+bool camp_wake(RestContext &c, int32_t guard) {
+    if (!c.services.karma_record)
+        return false;
+    if (camp_hole_up(c.game, c.rand, guard)) {
+        msg(c, "An apparition!\n");
+        emit(c, GameEventKind::Sfx, "apparition-materialize");
+        emit(c, GameEventKind::Sfx, "apparition-arpeggio");
+        CampAdvance local{};
+        auto &state = c.advancement ? *c.advancement : local;
+        state.slot = 0;
+        state.phase = CampAdvance::Phase::None;
+        camp_next_member(c, state, c.advancement != nullptr);
+    } else {
+        msg(c, "Party rested!\n");
+        emit(c, GameEventKind::PartyChanged);
+    }
     return true;
+}
+bool camp_advance_resume(RestContext &c) {
+    if (!c.advancement || !c.services.karma_record)
+        return false;
+    auto &state = *c.advancement;
+    if (state.phase == CampAdvance::Phase::MemberKey) {
+        auto &m = c.game.party.characters[state.slot];
+        mp(m);
+        emit(c, GameEventKind::CampStatusRefresh);
+        ++state.slot;
+        state.phase = CampAdvance::Phase::None;
+        camp_next_member(c, state, true);
+        return true;
+    }
+    if (state.phase == CampAdvance::Phase::KarmaKey) {
+        camp_finish(c, state);
+        return true;
+    }
+    return false;
 }
 static RestResult camp_sleep_step(RestContext &c, int32_t &previous_hour, CampCell cell, int32_t guard) {
     RestResult r;

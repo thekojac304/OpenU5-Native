@@ -27,7 +27,8 @@ enum class UiMode : uint8_t {
     EquipmentSelection,
     SpellSelection,
     TargetSelection,
-    DebugMenu
+    DebugMenu,
+    KeyWait // Original blocking getkey; any physical key acknowledges one beat.
 };
 
 enum class UiActionKind : uint8_t {
@@ -125,6 +126,7 @@ enum class UiRequestId : uint8_t {
     RestHours,
     CampWatch,
     CampGuard,
+    CampAdvance,
     YellText,
     Status,
     Party,

@@ -1,0 +1,19 @@
+GREEN apparition seed has two eligible live members
+GREEN first advancement opens one blocking getkey
+GREEN member one changed while member two remains at old level and HP
+GREEN first stat draw and continuation belong to member one
+GREEN first message holds before its panel draw and next member cue
+GREEN first cue contains only the first member
+GREEN world commands cannot run during the getkey
+GREEN one directional key reaches only the next member wait
+GREEN second member mutates only after first acknowledgement
+GREEN second stat draw is deferred until second member's cue
+GREEN first member and dead slot redraw before second member's message
+GREEN second cue follows roster order and dead member has no Hail
+GREEN second key reaches the separate karma speech wait
+GREEN all four slots redraw; dead and ineligible slots consume no stat draw
+GREEN karma speech holds before the apparition vanishes
+GREEN Escape is a getkey acknowledgement and completes Camp
+GREEN final key returns to Camp completion without another RNG draw
+GREEN XP survives staged presentation
+Batch 41 staged advancement: 18/18 checks

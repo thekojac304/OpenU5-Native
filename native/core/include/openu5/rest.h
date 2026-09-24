@@ -24,6 +24,7 @@ struct RestContext {
     const SkyRefresh *sky = nullptr;
     WorldTerrain *terrain = nullptr;
     const WorldData *world = nullptr;
+    CommandState::CampAdvance *advancement = nullptr; // Transient Camp key wait.
 };
 struct RestEligibility {
     bool ok = true, ship = false, bed = false, in_town = false;
@@ -43,6 +44,7 @@ CampCell camp_guard_walk(CampCell, Rand, RestServices = {}, int32_t guard = -1);
 bool camp_hole_up(GameState &, Rand, int32_t guard = -1);
 bool camp_wake(RestContext &,
                int32_t guard = -1); // false, no mutation if record provider is absent
+bool camp_advance_resume(RestContext &); // One original getkey; false if no cue is pending.
 RestResult camp(RestContext &, int32_t hours, int32_t guard = -1);
 void bed_sleep_begin(RestContext &);
 bool bed_sleep_step(RestContext &);

@@ -40,7 +40,7 @@ bool is_selection(UiMode m) {
 }
 bool is_modal(UiMode m) {
     return m == UiMode::TextEntry || m == UiMode::NumericEntry || m == UiMode::YesNo ||
-           is_selection(m) || m == UiMode::TargetSelection;
+           is_selection(m) || m == UiMode::TargetSelection || m == UiMode::KeyWait;
 }
 UiTextChannel event_channel(GameEventKind k) {
     switch (k) {
@@ -517,6 +517,9 @@ void UiSession::finish_modal(bool accepted, bool yes, int32_t number, int32_t in
         i.kind = UiIntentKind::Command;
         i.command.kind = CommandKind::DungeonCommand;
         i.command.item = int16_t(DungeonAction::Drink);
+    } else if (request == UiRequestId::CampAdvance && old_mode == UiMode::KeyWait) {
+        i.kind = UiIntentKind::Command;
+        i.command.kind = CommandKind::CampAcknowledge;
     } else if (request == UiRequestId::RestHours && old_mode == UiMode::NumericEntry) {
         i.kind = UiIntentKind::Command;
         i.command.kind = accepted ? CommandKind::Rest : CommandKind::RestCancel;
@@ -581,7 +584,8 @@ bool UiSession::selection_view(UiSelectionView &out) const {
 bool UiSession::accepts_direction_input() const {
     if (mode_ == UiMode::Exploration || mode_ == UiMode::Dungeon ||
         mode_ == UiMode::Combat || mode_ == UiMode::TargetSelection ||
-        mode_ == UiMode::DebugMenu || is_selection(mode_)) return true;
+        mode_ == UiMode::DebugMenu || mode_ == UiMode::KeyWait ||
+        is_selection(mode_)) return true;
     if (mode_ != UiMode::Shop) return false;
     return shop_phase_ == ShopPhase::Buy || shop_phase_ == ShopPhase::Sell ||
            shop_phase_ == ShopPhase::Reagent || shop_phase_ == ShopPhase::Guild ||
@@ -593,6 +597,11 @@ bool UiSession::accepts_direction_input() const {
 }
 
 bool UiSession::handle_modal(const UiAction &a) {
+    if (mode_ == UiMode::KeyWait) {
+        // One input event consumes exactly one getkey, including arrows and Escape.
+        finish_modal(true);
+        return true;
+    }
     if (mode_ == UiMode::TextEntry || mode_ == UiMode::NumericEntry) {
         if (mode_ == UiMode::NumericEntry && request_ == UiRequestId::RestHours && camp_eligible_) {
             // Kernel 0x3ddc/0x3de5: zero or Space abandons Camp before any
@@ -1112,6 +1121,7 @@ bool UiSession::handle_shop(const UiAction &a) {
 }
 
 bool UiSession::handle_input(const UiAction &a) {
+    if (mode_ == UiMode::KeyWait) return handle_modal(a);
     if (a.kind == UiActionKind::PageUp || a.kind == UiActionKind::PageDown) {
         const size_t page=transcript_rows_?transcript_rows_:config_.page_rows;
         if (a.kind == UiActionKind::PageUp) {
@@ -1257,6 +1267,9 @@ void UiSession::consume(const GameEvent &e) {
             else if(shop_phase_==ShopPhase::RationsQuantity)
                 begin_number(UiRequestId::Shop,"How many?",0,std::numeric_limits<int32_t>::max(),10);
         }
+        break;
+    case GameEventKind::CampKeyWait:
+        enter_modal(UiMode::KeyWait, UiRequestId::CampAdvance, "");
         break;
     case GameEventKind::NeedsDirection:
         direction_request(e.text && std::strcmp(e.text,"klimb")==0?CommandKind::Klimb:CommandKind::Pass,

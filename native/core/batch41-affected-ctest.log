@@ -1,0 +1,37 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch41
+      Start  2: ui_session
+ 1/16 Test  #2: ui_session .......................   Passed    0.01 sec
+      Start 26: item_parity
+ 2/16 Test #26: item_parity ......................   Passed    1.30 sec
+      Start 40: input_regression
+ 3/16 Test #40: input_regression .................   Passed    0.01 sec
+      Start 41: dungeon_input_regression
+ 4/16 Test #41: dungeon_input_regression .........   Passed    0.01 sec
+      Start 52: batch26_dungeon_save
+ 5/16 Test #52: batch26_dungeon_save .............   Passed    0.29 sec
+      Start 54: batch28_save_validation
+ 6/16 Test #54: batch28_save_validation ..........   Passed    1.43 sec
+      Start 55: batch29_rest_wiring
+ 7/16 Test #55: batch29_rest_wiring ..............   Passed    0.13 sec
+      Start 58: batch32_camp_watch
+ 8/16 Test #58: batch32_camp_watch ...............   Passed    0.06 sec
+      Start 62: batch36_camp_housekeeping
+ 9/16 Test #62: batch36_camp_housekeeping ........   Passed    0.06 sec
+      Start 63: batch37_bed_viewport
+10/16 Test #63: batch37_bed_viewport .............   Passed    0.06 sec
+      Start 64: batch39_party_panel
+11/16 Test #64: batch39_party_panel ..............   Passed    0.05 sec
+      Start 65: batch41_raw_key
+12/16 Test #65: batch41_raw_key ..................   Passed    0.05 sec
+      Start 66: batch38_camp_duration
+13/16 Test #66: batch38_camp_duration ............   Passed    0.07 sec
+      Start 67: batch40_advancement
+14/16 Test #67: batch40_advancement ..............   Passed    0.01 sec
+      Start 68: batch41_staged_advancement
+15/16 Test #68: batch41_staged_advancement .......   Passed    0.01 sec
+      Start 98: persistence_parity
+16/16 Test #98: persistence_parity ...............   Passed    2.55 sec
+
+100% tests passed out of 16
+
+Total Test time (real) =   6.11 sec

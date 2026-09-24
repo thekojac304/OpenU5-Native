@@ -57,7 +57,7 @@ struct Fixture {
         rest.occupied = [](void *, int32_t, int32_t, int32_t) { return false; };
         rest.karma_record = [](void *, int32_t) { return "\"Karma record\""; };
     }
-    ActionResult run(CommandKind kind, int hours = 0) {
+    ActionResult run(CommandKind kind, int hours = 0, bool complete = true) {
         draws.clear(); messages.clear(); party_changes = 0; later_level_at_first_chime = -1;
         CommandContext context{game, turn, travel, commands, world};
         context.rest_services = &rest;
@@ -76,7 +76,13 @@ struct Fixture {
         Command cmd{};
         cmd.kind = kind;
         cmd.hours = int16_t(hours);
-        return execute_command(context, cmd);
+        auto result = execute_command(context, cmd);
+        while (complete && commands.camp_advance.phase != CommandState::CampAdvance::Phase::None) {
+            Command acknowledgement{};
+            acknowledgement.kind = CommandKind::CampAcknowledge;
+            result = execute_command(context, acknowledgement);
+        }
+        return result;
     }
     bool apparition() const {
         return std::any_of(messages.begin(), messages.end(), [](const auto &s) {
@@ -185,7 +191,7 @@ int main(int argc, char **argv) {
             f.game.rng.seed(seed);
             f.game.party.characters[0].exp = 100;
             f.game.party.characters[2].exp = 200;
-            f.run(CommandKind::Rest, 1);
+            f.run(CommandKind::Rest, 1, false);
             if (!f.apparition()) continue;
             check(f.later_level_at_first_chime == 1,
                   "H-175 RED: second member remains unadvanced at first member chime");
