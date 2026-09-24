@@ -1,0 +1,3 @@
+original/u5/ultima5/TILES.16
+SHA-256 bc5d33bdb92a9f054cabf95fc34293d65b181e23eabf041a08edf88027ea4f83
+512 tiles, 16x16, canonical EGA palette, 4x nearest-neighbor; labels hex and decimal.
