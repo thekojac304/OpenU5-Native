@@ -1,0 +1,16 @@
+GREEN deterministic Camp seeds reach both gate outcomes
+GREEN 99 XP remains below L2 threshold
+GREEN level, XP, and HP
+RED one stat draw only on change
+GREEN 100 XP reaches L2 exactly
+GREEN level, XP, and HP
+RED one stat draw only on change
+GREEN 450 XP jumps directly to L4
+GREEN level, XP, and HP
+RED one stat draw only on change
+RED four-member fixture reaches apparition
+GREEN crossed XP threshold does not advance on an ordinary turn
+GREEN completed Camp without apparition does not advance
+GREEN 64 town bed Rest commands reach sleep path
+GREEN town bed sleep never advances eligible XP
+Batch 40 advancement: 11/15 checks

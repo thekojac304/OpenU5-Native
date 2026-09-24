@@ -607,3 +607,15 @@ Original CMDS calls the status renderer after eligible G-to-S, before Zzz and bl
 | 7A | Empty LeftBed in Lord British's Castle; one selected awake G member, a poisoned second member with visible HP, and the clock | H -> 1 -> Enter; observe before Zzz, through six sleep ticks, and at the next ordinary redraw | The intermediate panel first shows S with no active selection while the map is still visible. Zzz and black fill follow. Each tick updates right-panel HP/clock while the map remains black. The sleeping panel persists through wake, then ordinary redraw restores G and the map. | Poison HP loses one per tick; clock reaches 13:00; party wakes and steps east. | **UNTESTED** |
 
 Use the Batch 39 commit-stamped Launcher when this phase is eventually run. Phase 6Z remains the separate map-blackout TFT check. The SD pack is unchanged.
+
+## Batch 40 — advancement audit
+
+Original-byte tracing and a real Rest-command host test establish that level evaluation occurs only in the successful Camp apparition. It does not run on XP award, an ordinary turn or bed sleep. The existing native progression formula, HP/stat/MP mutations and roster RNG order pass 21/21 focused checks and eight targeted mutations; the affected subset passes 15/15 and the fresh full host suite passes 110/110. No production logic changed, no firmware was built for this audit, and no hardware was flashed or tested. Existing pending phases 6T-6Z and 7A are unchanged.
+
+### Phase 7B — H-175 Camp apparition member staging — *RESERVED, PENDING FIX*
+
+This phase is for a future build that corrects H-175/D-32. The present native scene changes later members before the first member's cue; the Batch 40 opt-in host probe records that defect. Do not mark this phase passed with the Batch 39 Launcher.
+
+| # | Setup | Input | Expected visible result after H-175 correction | Expected state change | Result |
+|---|---|---|---|---|---|
+| 7B | Outdoor on foot; at least two live party members at an XP threshold, one poisoned member, and a visible roster. Prepare a deterministic or repeatable apparition gate. | Camp until the apparition occurs; observe each member's cue and acknowledge each advancement message. | Materialization precedes slot-order wake/chime/flash/chord. Each eligible member's Hail, level and stat word appears in that member's turn and holds for input. The roster updates after each member, before the next; karma speech holds separately, then the old man vanishes. | At each pause only members already visited have the apparition's healing/level effect; after completion all live members match the original formula. | **UNTESTED; BLOCKED ON H-175 FIX** |

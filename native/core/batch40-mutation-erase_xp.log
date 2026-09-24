@@ -1,0 +1,22 @@
+GREEN deterministic Camp seeds reach both gate outcomes
+GREEN 99 XP remains below L2 threshold
+GREEN level, XP, and HP
+GREEN one stat draw only on change
+GREEN 100 XP reaches L2 exactly
+RED level, XP, and HP
+GREEN one stat draw only on change
+GREEN 450 XP jumps directly to L4
+RED level, XP, and HP
+GREEN one stat draw only on change
+GREEN four-member fixture reaches apparition
+GREEN all live eligible slots advance; dead slot is skipped
+GREEN direct jumps use 30 times computed level
+GREEN class MP reset includes dead
+RED one draw per live changed slot; XP and death preserved
+GREEN stat draws map to eligible roster slots in order, including capped INT
+GREEN advancement messages follow roster order
+GREEN crossed XP threshold does not advance on an ordinary turn
+GREEN completed Camp without apparition does not advance
+GREEN 64 town bed Rest commands reach sleep path
+GREEN town bed sleep never advances eligible XP
+Batch 40 advancement: 18/21 checks

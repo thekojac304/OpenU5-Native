@@ -939,6 +939,10 @@ if(BUILD_TESTING)
   add_test(NAME batch38_camp_duration COMMAND batch38_camp_duration
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
 
+  # Batch 40 -- original OUTSUBS advancement through the live Rest command.
+  add_executable(batch40_advancement tests/batch40_advancement_test.cpp)
+  target_link_libraries(batch40_advancement PRIVATE openu5_core)
+  add_test(NAME batch40_advancement COMMAND batch40_advancement)
   # Batch 14 / R-22 -- (Z)-stats navigation. Same seam and same stub/shim set
   # as alpha_runtime_integration_regression above: it links the REAL,
   # unmodified alpha_runtime.cpp so the modal is reached only by feeding raw
