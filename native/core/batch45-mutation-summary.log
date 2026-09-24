@@ -1,0 +1,5 @@
+dialog_gate: KILLED build=0 test=8
+party_sleep_tile: KILLED build=0 test=8
+hidden_guard: KILLED build=0 test=8
+lost_actor_identity: KILLED build=0 test=8
+restored: build=0 test=0

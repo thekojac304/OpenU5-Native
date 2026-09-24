@@ -41,6 +41,7 @@
 #include "../main/alpha_runtime.h"
 
 #include "openu5/combat.h"
+#include "openu5/presentation.h"
 #include "openu5/rest.h"
 #include "openu5/world.h"
 #include "openu5/world_commands.h"
@@ -405,6 +406,69 @@ void test_camp_posts_no_watch() {
            "declining the newly available watch uses the old unwatched camp");
 }
 
+// Batch 45: shipped CASTLE.NPC, not an invented sleeper. TOWN 0x1726
+// places every nonzero type regardless of dialog. EXE 0x5394 paints the
+// object over terrain and does not exchange its tile for 0x11e on a bed.
+void test_night_bed_presentation() {
+    Harness h(23);
+    expect(h.enter_castle(), "P0", "enter the authored castle at 23:00");
+    auto map = get_active_map(h.ctx().world, {kCastle, 0});
+    expect(map.error == Error::None && h.drawn({17, 7}) == kLeftBed &&
+           h.drawn(kQuietBed) == kLeftBed, "P1", "guard and named NPC both occupy authored LeftBeds");
+    auto *guard = h.npc(kGuard1), *sleeper = h.npc(13);
+    expect(guard && guard->schedule.dialog == 0 && guard->schedule.type == 0x70 &&
+           guard->x == 17 && guard->y == 7 && sleeper && sleeper->schedule.type == 0x5c &&
+           sleeper->x == 9 && sleeper->y == 7, "P2", "both retain live identity and their schedule cells");
+    h.stand(16, 7);
+    auto frame = compose_world_presentation(h.ctx(), map.value, h.g().position.xy, 0x11c, true);
+    expect(frame.tiles[5*11+6] == 0x170 && frame.actor_ids[5*11+6] == 0x20000U+kGuard1,
+           "P3", "silent guard is visible above the bed with its own tile and identity");
+    // The Batch 11 host seam copies NPCs and maps, but not LOOK2 text.
+    // Bind the same shipped pack's 512-entry description table explicitly.
+    LookServices look{};
+    look.context = const_cast<tdeck::AlphaResourceOwners *>(g_owners);
+    look.describe = [](void *p, int32_t tile) {
+        const auto &o = *static_cast<tdeck::AlphaResourceOwners *>(p);
+        return tile >= 0 && size_t(tile) < o.look_count
+            ? o.look_text + o.look_offsets[tile] : "something";
+    };
+    h.ctx().look = &look;
+    h.set_mark();
+    h.raw_key('l'); h.ball(tdeck::RawInputKind::TrackballRight);
+    if (!expect(h.saw("Thou dost see a guard"), "P3a", "Look retains the silent guard's identity on the bed")) h.show();
+    expect(npc_occupied(h.rt->actors(), h.g().position, kCastle, 0, 17, 7, 255),
+           "P3b", "guard on bed remains a blocking occupant");
+    h.stand(8, 7);
+    frame = compose_world_presentation(h.ctx(), map.value, h.g().position.xy, 0x11c, true);
+    expect(frame.tiles[5*11+6] == 0x15c && frame.actor_ids[5*11+6] == 0x20000U+13,
+           "P4", "scheduled bed occupant uses original standing tile, not Camp tile 0x11e");
+    h.g().time.hour = 6;
+    snap_npcs_to_schedule(h.rt->actors(), kCastle, 6);
+    expect(guard->x == 17 && guard->y == 28 && sleeper->x == 9 && sleeper->y == 7,
+           "P5", "wake schedule repositions guard; slot 13 remains on its bed until 11:00");
+    h.stand(16, 7);
+    frame = compose_world_presentation(h.ctx(), map.value, h.g().position.xy, 0x11c, true);
+    expect(frame.tiles[5*11+6] == kLeftBed && frame.actor_ids[5*11+6] == 0,
+           "P6", "bed is exposed when the guard leaves; no persistent sleep graphic");
+    Harness crossing(18);
+    expect(crossing.enter_castle(), "P7a", "enter before guard's authored 19:00 bed period");
+    crossing.stand(16, 7);
+    auto before = compose_world_presentation(crossing.ctx(), map.value, crossing.g().position.xy, 0x11c, true);
+    expect(before.tiles[5*11+6] == kLeftBed, "P7b", "bed is empty before its guard's period");
+    crossing.g().time.hour = 19;
+    snap_npcs_to_schedule(crossing.rt->actors(), kCastle, 19);
+    auto after = compose_world_presentation(crossing.ctx(), map.value, crossing.g().position.xy, 0x11c, true);
+    expect(after.tiles[5*11+6] == 0x170 && after.actor_ids[5*11+6] == 0x20000U+kGuard1,
+           "P7c", "in-place original bed-loop snap displays the guard immediately");
+    Harness reentered(19);
+    expect(reentered.enter_castle(), "P8a", "re-enter at the same sleeping hour");
+    reentered.stand(16, 7);
+    auto reload = compose_world_presentation(reentered.ctx(), map.value, reentered.g().position.xy, 0x11c, true);
+    expect(reload.tiles[5*11+6] == after.tiles[5*11+6] &&
+           reload.actor_ids[5*11+6] == after.actor_ids[5*11+6],
+           "P8b", "re-entry and in-place snap have identical tile and actor identity");
+}
+
 } // namespace
 
 int main(int argc, char **argv) {
@@ -419,6 +483,12 @@ int main(int argc, char **argv) {
     if (pack.load(owners, report) != ESP_OK) { std::fprintf(stderr, "cannot load the resource pack\n"); return 2; }
     g_owners = &owners;
 
+    if (argc >= 3 && std::strcmp(argv[2], "--batch45-only") == 0) {
+        test_night_bed_presentation();
+        std::printf("\nbatch45_npc_beds: %d/%d checks GREEN, %d RED\n",
+                    g_checks - g_failures, g_checks, g_failures);
+        return g_failures ? 1 : 0;
+    }
     test_binding();
     test_quiet_bed();
     test_dead_stay_dead();

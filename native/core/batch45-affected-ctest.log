@@ -1,0 +1,39 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch45
+      Start 10: gameplay_integration
+ 1/17 Test #10: gameplay_integration .............   Passed    0.22 sec
+      Start 11: look_sign
+ 2/17 Test #11: look_sign ........................   Passed    0.10 sec
+      Start 31: movement_regression
+ 3/17 Test #31: movement_regression ..............   Passed    0.02 sec
+      Start 32: presentation_regression
+ 4/17 Test #32: presentation_regression ..........   Passed    0.13 sec
+      Start 40: input_regression
+ 5/17 Test #40: input_regression .................   Passed    0.04 sec
+      Start 50: batch24_reload_parity
+ 6/17 Test #50: batch24_reload_parity ............   Passed    0.27 sec
+      Start 55: batch29_rest_wiring
+ 7/17 Test #55: batch29_rest_wiring ..............   Passed    0.23 sec
+      Start 56: batch45_npc_beds
+ 8/17 Test #56: batch45_npc_beds .................   Passed    0.05 sec
+      Start 57: batch30_sleep_parity
+ 9/17 Test #57: batch30_sleep_parity .............   Passed    0.17 sec
+      Start 60: batch33_cannon_npc_death
+10/17 Test #60: batch33_cannon_npc_death .........   Passed    0.14 sec
+      Start 61: batch34_pre_sleep_npc
+11/17 Test #61: batch34_pre_sleep_npc ............   Passed    0.16 sec
+      Start 62: batch35_q_sleep_target
+12/17 Test #62: batch35_q_sleep_target ...........   Passed    0.16 sec
+      Start 64: batch37_bed_viewport
+13/17 Test #64: batch37_bed_viewport .............   Passed    0.16 sec
+      Start 65: batch39_party_panel
+14/17 Test #65: batch39_party_panel ..............   Passed    0.17 sec
+      Start 67: batch42_advancement_flash
+15/17 Test #67: batch42_advancement_flash ........   Passed    0.29 sec
+      Start 68: batch43_sleep_scene
+16/17 Test #68: batch43_sleep_scene ..............   Passed    0.97 sec
+      Start 69: batch44_camp_ring_entry
+17/17 Test #69: batch44_camp_ring_entry ..........   Passed    0.17 sec
+
+100% tests passed out of 17
+
+Total Test time (real) =   3.48 sec

@@ -1,0 +1,9 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch44
+    Start 55: batch29_rest_wiring
+1/2 Test #55: batch29_rest_wiring ..............   Passed    0.24 sec
+    Start 56: batch45_npc_beds
+2/2 Test #56: batch45_npc_beds .................   Passed    0.05 sec
+
+100% tests passed out of 2
+
+Total Test time (real) =   0.36 sec

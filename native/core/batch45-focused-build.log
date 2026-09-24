@@ -1,0 +1,6 @@
+[0/1] Re-running CMake...
+-- Configuring done (0.2s)
+-- Generating done (0.1s)
+-- Build files have been written to: C:/Dev/OpenU5-Native/native/core/build-batch44
+[1/3] Building CXX object CMakeFiles/batch29_rest_wiring.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/batch29_rest_wiring_test.cpp.obj
+[2/3] Linking CXX executable batch29_rest_wiring.exe

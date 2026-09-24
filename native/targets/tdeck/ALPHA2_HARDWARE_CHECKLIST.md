@@ -636,3 +636,15 @@ Shipped-byte tracing places the CampFire party scene, sleeping status and guard 
 
 The original CampFire actor builder first rolls expiry for each living wearer of ring 42 or 44. A result of 11 removes that ring with its vanish cue. A surviving, non-sleeping ring-44 actor then runs the party-wide regeneration helper before the next actor's expiry roll. This can immediately heal an injured member and always shifts later RNG, even at full HP. Dead slots do not roll; poisoned members and posted guards do, while an already sleeping member can receive another actor's regeneration pass without triggering its own. Native now follows that order before the Batch 43 sleep scene. The shipped-pack host fixture is RED 4/20 against Batch 43 and GREEN 20/20 after correction; fifteen mutations are killed. Phase 7B retains the Camp scene, expiry cue, and subsequent apparition presentation. H-179/D-36 separately queues the standing ring-42 invisible actor rendering before that phase can fully close. No new physical phase is allocated. Phases 6T–6Z, 7A, and 7B remain pending and untested; no device was flashed.
 Final host evidence: focused 20/20, affected CTest subset 21/21, full fresh host suite 115/115, and 15/15 mutations killed. Clean app size is 873,152 bytes (+224 against Batch 43). No physical testing or flash occurred.
+
+## Batch 45 — H-180/D-37 scheduled NPC bed presentation
+
+The physical 23:45 report included an upright named bed occupant and a visually empty bed whose Look result was a guard. Shipped original code and CASTLE.NPC show the upright pose is original; native's dialog-zero actor filter caused the empty guard bed. Host correction is complete. H-179/D-36 remains the separate Camp ring-42 visual gap. No hardware was flashed or checked. Existing 6T–6Z, 7A and 7B checks remain pending.
+
+### Phase 7C — nighttime NPC beds and silent guard — *RESERVED, UNTESTED*
+
+| # | Setup | Input | Expected visible result | Expected logical result | Result |
+|---|---|---|---|---|---|
+| 7C | Lord British's Castle after 23:00; named slot 13's (9,7,0) bed and guard slot 1's (17,7,0) bed. | View both, Look east at the guard from (16,7), then cross 06:00 or leave/re-enter after wake. | Named occupant shows original 0x15c upright graphic; guard shows 0x170 above its bed. After the guard leaves, its 0xab bed is exposed. No invisible logical occupant or lingering sleep tile. | Look identifies “a guard”; the guard blocks its cell and remains in its ordinary actor slot. | **UNTESTED; HOST FIXED** |
+
+Batch 45 host evidence: focused 14/14, affected 17/17, fresh full suite 116/116 and four killed mutations. Clean app 873,136 bytes (−16 from Batch 44). Phase 7C remains untested; no flash or physical check occurred.
