@@ -1,0 +1,20 @@
+Batch 35 H-170 raw shipped CMDS.OVL bytes
+source: original/u5/ultima5/CMDS.OVL
+SHA-256: 56dccb08f88957383f3dbb6765e5e86049ac6b765cef3e18a3b1da209234a258
+Offsets are overlay file offsets.
+059e-05b3 target: hour + ASCII digit - 0x30; if >23 subtract 0x17
+059e: a0 7f 58 2a e4 03 c6 2d 30 00 89 46 fa 3d 17 00
+05ae: 7e 04 83 6e fa 17
+062e-064e load target to SI; compare SI with zero-extended live hour before clock +10
+062e: 8b 76 fa eb 08 90 b8 01 00 50 e8 3f 5b 8b c6 8a
+063e: 0e 7f 58 2a ed 3b c1 74 4b b8 0a 00 50 e8 ae 89
+064e: 8b
+065c-068c hour refresh, housekeeping, NPC snap and occupancy probe
+065c: 14 74 05 80 f9 05 75 03 e8 b3 b4 a0 7f 58 2a e4
+066c: 8b f8 e8 93 84 e8 f4 64 e8 09 63 e8 94 b4 a0 96
+067c: 58 2a e4 50 a0 97 58 50 a0 95 58 50 e8 83 70 0b
+068c: c0
+
+CAST2.OVL state writer (status and duration are separate bytes)
+SHA-256: 7ececd3fb12211f3a90bf732c88b10f078a406099431fa24257f24d408659425
+08f8-0906: 55 8b ec 8a 46 08 a2 7a 58 8a 46 06 a2 8e 58

@@ -509,7 +509,7 @@ The 1988 bed loop advances ten minutes, refreshes town terrain if the resulting 
 |---|---|---|
 | H-156 | One normal housekeeping call per ten-minute bed tick, including the tick that ejects the party; poison, meals, starvation and Q expiry use the existing kernel-derived turn routine | **HOST FIXED / DEVICE RETEST PENDING** (Phase 6X) |
 | H-157 | The shipped-map lamp-adjacent terrain changes at 05:00/20:00 inside the boundary tick, before NPC snap; no refresh on ordinary ticks | **HOST FIXED / DEVICE RETEST PENDING** (Phase 6X) |
-| H-170 | Q can make a fixed `hours * 6` native sleep stop short of the original target hour | **CONFIRMED MISSING — queued, unchanged** |
+| H-170 | Q can make a fixed `hours * 6` native sleep stop short of the original target hour; CMDS stores a wrapped target hour with its subtract-23 midnight quirk | **HOST FIXED — Batch 35; no new physical phase** (42/42 raw-key runtime, six mutations killed, 105/105 full host) |
 
 **Retest gate:** Phase **6X** below, after a later device flash. Phase 6W is already assigned to Batch 29; Phases 6T, 6U and 6V remain pending. The SD pack and save format are unchanged. No hardware was flashed or SD card modified in Batch 30.
 
@@ -567,3 +567,9 @@ The 1988 hit immediately clears the NPC's live slot after the eligible dead-bit 
 The original accepted bed command runs up to 16 full NPC passes at the current hour before `Zzzzzzz...` or the first ten-minute tick; an adjacent AI-6/7 hostile stops sleep after that pass and its redraw if no later talk NPC overwrites the shared marker. The production raw-key shipped-map host test passes **21/21**: one-pass and two-pass cancellation, visible first-pass NPC movement, exactly 16 uninterrupted passes, clock/housekeeping separation, Camp and zero-hour controls. Eight mutations were killed; the regression subset is 16/16 and the fresh full host suite is 104/104. H-172 separately queues the original viewport fill after `Zzz`. H-170 and H-171 are unchanged.
 
 **Hardware status:** no flash or device check was performed, and no new phase was allocated for H-169. The production T-Deck input and runtime path is exercised on host with authentic local maps. Pending phases **6T, 6U, 6V, 6W, 6X and 6Y** retain their existing meanings. The Batch 34 Launcher is a build artifact, not a flash instruction.
+
+## Batch 35 — H-170 Q sleep target hour
+
+The original compares a local target hour before each bed tick; Q halves clock advances until its separate turn counter expires. Native now stops at that original target, including the 23 subtraction when the requested hour crosses midnight. The shipped-pack raw-key host fixture passes 42/42 and the fresh full host suite passes 105/105. Terrain refresh, housekeeping, NPC snap and ejection still run on the target tick. Host evidence fully proves this logic, so no new device phase is allocated. **No flash or physical check was performed.** Pending phases **6T, 6U, 6V, 6W, 6X and 6Y** keep their existing assignments; H-171 and H-172 remain queued.
+
+The clean Batch 35 ESP-IDF 6.1 image is **869,376 bytes (`0xd4400`)**, +16 bytes against Batch 34 (`native/targets/tdeck/batch35-firmware-build.log`). The Launcher is packaged only after the commit so its embedded revision matches the annotated tag; it is a build artifact, not a flash instruction.

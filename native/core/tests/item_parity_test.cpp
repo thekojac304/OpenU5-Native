@@ -282,6 +282,7 @@ int main(int argc, char **argv) {
         Harness h;
         decode(before, h.g, h.t);
         const auto turns_before_bed = h.g.turns_since_start;
+        const int start_hour = h.g.time.hour;
         const bool bed_x_valid = h.g.position.xy.x != 255;
         h.throw_at = c;
         auto rand = h.rand();
@@ -428,14 +429,16 @@ int main(int argc, char **argv) {
         append(actual, h.calls);
         append(actual, h.draws);
         ++count;
-        // The TS generator for op 10/22 omits CMDS:0x0671 housekeeping.
-        // Its output cannot be a bed-sleep oracle after Batch 30. Keep the
-        // native tick/turn/early-ejection invariant here; H-170 separately
-        // records the fixed-tick mismatch under Q. The shipped-pack raw-key
-        // test covers original survival, expiry and terrain ordering.
+        // The TypeScript generator omits CMDS:0x0671 housekeeping and uses
+        // a fixed tick count. The original-derived runtime fixture in Batch
+        // 35 checks the exact target and tick count. These legacy rows still
+        // protect one housekeeping call per snap and the early-ejection cap.
         if ((op == 10 || op == 22) && a > 0) {
-            const int ticks = bed_x_valid ? (c > 0 ? std::min(a * 6, c) : a * 6) : 0;
-            if (h.snaps != ticks || h.g.turns_since_start != turns_before_bed + ticks) {
+            int target = start_hour + a;
+            if (target > 23) target -= 23; // CMDS.OVL:0x05b0
+            if (h.snaps != (bed_x_valid ? int(h.g.turns_since_start - turns_before_bed) : 0) ||
+                (c > 0 && h.snaps > c) ||
+                (bed_x_valid && (c <= 0 || h.snaps < c) && h.g.time.hour != target)) {
                 std::cerr << "bed tick invariant failed at row " << count << " op " << op << '\n';
                 return 1;
             }

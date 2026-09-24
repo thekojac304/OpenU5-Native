@@ -245,12 +245,19 @@ RestResult bed_sleep(RestContext &c, int32_t hours) {
         r.invalid_context = true;
         return r;
     }
+    // CMDS.OVL:0x059e-0x05b0 stores a target hour, subtracting 23 (not
+    // 24) if the requested hour crosses midnight. 0x063b compares only
+    // g_hour before each 0x0647 ten-minute tick. Q can slow those ticks;
+    // housekeeping can expire Q during the loop.
+    int32_t target_hour = c.game.time.hour + hours;
+    if (target_hour > 23) target_hour -= 23;
     bed_sleep_begin(c);
-    for (int32_t i = 0; i < hours * 6; ++i)
-        if (bed_sleep_step(c)) {
-            r.thrown_out = true;
-            break;
-        }
+    if (hours > 0)
+        while (c.game.time.hour != target_hour)
+            if (bed_sleep_step(c)) {
+                r.thrown_out = true;
+                break;
+            }
     bed_sleep_end(c);
     return r;
 }

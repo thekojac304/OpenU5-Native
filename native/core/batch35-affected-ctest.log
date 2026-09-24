@@ -1,0 +1,9 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch35-red
+    Start 26: item_parity
+1/2 Test #26: item_parity ......................   Passed    1.32 sec
+    Start 56: batch30_sleep_parity
+2/2 Test #56: batch30_sleep_parity .............   Passed    0.15 sec
+
+100% tests passed out of 2
+
+Total Test time (real) =   1.47 sec

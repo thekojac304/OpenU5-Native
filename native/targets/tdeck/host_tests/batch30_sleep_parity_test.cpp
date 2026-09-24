@@ -79,9 +79,9 @@ void housekeeping_full(){Harness h(12,0);check(h.g().position.map.location==17&&
 void timed_expiry(){Harness h(12,0);check(h.free_bed_at(13),"H156-B0","free bed through Q expiry");
     h.g().party.characters[0].status='P';h.g().food=5;h.c().turn.time_spell='Q';h.c().turn.spell_turns=2;
     auto start=h.g().turns_since_start;h.hole(1);
-    check(h.g().time.hour==12&&h.g().time.minute==50&&h.g().turns_since_start==start+6,"H156-B1","Q halves first two clock advances; six housekeeping calls");
-    check(h.c().turn.time_spell==0&&h.c().turn.spell_turns==0&&h.g().party.characters[0].current_hp==494,"H156-B2","Q expires after two housekeeping calls; poison continues for all six");
-    check(h.g().food==5,"H156-B3","no meal without an hour change");}
+    check(h.g().time.hour==13&&h.g().time.minute==0&&h.g().turns_since_start==start+7,"H156-B1","Q halves first two clock advances; sleep continues to target hour");
+    check(h.c().turn.time_spell==0&&h.c().turn.spell_turns==0&&h.g().party.characters[0].current_hp==493,"H156-B2","Q expires after two housekeeping calls; poison continues for all seven");
+    check(h.g().food==5,"H156-B3","no meal at the 13:00 hour change");}
 void meal(){Harness h(5,50);check(h.free_bed_at(6),"H156-M0","free bed at six");
     h.g().party.characters[0].status='P';h.g().food=5;h.hole(1);
     check(h.g().time.hour==6&&h.g().food==4,"H156-M1","06:00 meal consumes only the poisoned awake eater");}
@@ -95,9 +95,9 @@ void boundary(int before,int after,const char *id){Harness h(before,50);int x=0,
     check(lamp_cell(h,x,y)&&h.free_bed_at(after),id,"shipped castle lamp and free bed");
     const int old=h.tile(x,y),raw=h.c().terrain->raw(owners->world,{17,0},x,y);
     h.watch(x,y);h.hole(1);const int expected=after==20?(raw^221):raw;
-    check(h.g().time.hour==after&&h.g().time.minute==50&&h.seen.size()==6&&h.seen[0].hour==after&&h.seen[0].minute==0,
-          id,"first of six sleep ticks crosses the requested hour");
-    check(old==(before==19?raw:(raw^221))&&h.seen.size()==6&&h.seen[0].tile==expected&&h.seen[5].tile==expected,
+    check(h.g().time.hour==after&&h.g().time.minute==0&&h.seen.size()==1&&h.seen[0].hour==after&&h.seen[0].minute==0,
+          id,"target-hour tick crosses the requested hour");
+    check(old==(before==19?raw:(raw^221))&&h.seen.size()==1&&h.seen[0].tile==expected,
           id,"scheduled lamp-adjacent tile is changed inside the boundary tick, before NPC snap");}
 void stable(){Harness h(12,0);check(h.free_bed_at(13),"H157-N0","free bed with no 05:00/20:00 crossing");
     int x=0,y=0;check(lamp_cell(h,x,y),"H157-N1","shipped lamp exists");

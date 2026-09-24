@@ -1,0 +1,39 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch35-final
+      Start  2: ui_session
+ 1/17 Test  #2: ui_session .............................   Passed    0.13 sec
+      Start  5: batch21b_chest_reset
+ 2/17 Test  #5: batch21b_chest_reset ...................   Passed    0.09 sec
+      Start 10: gameplay_integration
+ 3/17 Test #10: gameplay_integration ...................   Passed    0.15 sec
+      Start 24: magic_parity
+ 4/17 Test #24: magic_parity ...........................   Passed    0.13 sec
+      Start 25: combat_parity
+ 5/17 Test #25: combat_parity ..........................   Passed    0.41 sec
+      Start 26: item_parity
+ 6/17 Test #26: item_parity ............................   Passed    0.52 sec
+      Start 27: command_parity
+ 7/17 Test #27: command_parity .........................   Passed    0.24 sec
+      Start 28: core_parity
+ 8/17 Test #28: core_parity ............................   Passed    0.03 sec
+      Start 30: turn_parity
+ 9/17 Test #30: turn_parity ............................   Passed    0.16 sec
+      Start 46: alpha_runtime_integration_regression
+10/17 Test #46: alpha_runtime_integration_regression ...   Passed    0.10 sec
+      Start 55: batch29_rest_wiring
+11/17 Test #55: batch29_rest_wiring ....................   Passed    0.15 sec
+      Start 56: batch30_sleep_parity
+12/17 Test #56: batch30_sleep_parity ...................   Passed    0.08 sec
+      Start 58: batch32_camp_watch
+13/17 Test #58: batch32_camp_watch .....................   Passed    0.08 sec
+      Start 60: batch34_pre_sleep_npc
+14/17 Test #60: batch34_pre_sleep_npc ..................   Passed    0.09 sec
+      Start 61: batch35_q_sleep_target
+15/17 Test #61: batch35_q_sleep_target .................   Passed    0.09 sec
+      Start 69: batch4_group_b
+16/17 Test #69: batch4_group_b .........................   Passed    0.12 sec
+      Start 71: batch7b
+17/17 Test #71: batch7b ................................   Passed    0.09 sec
+
+100% tests passed out of 17
+
+Total Test time (real) =   2.67 sec
