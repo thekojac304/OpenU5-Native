@@ -1,0 +1,343 @@
+ULTIMA.EXE bytes=36592 SHA256=e904215f43f45080b499a6de683dddce6f3b0466f25bdce067388ea50a7ac5b0 image_shift=0x800
+SPAN 0x6794-0x6800
+6794: 55                   push bp
+6795: 8bec                 mov bp, sp
+6797: 83ec02               sub sp, 2
+679a: 56                   push si
+679b: 8b4604               mov ax, word ptr [bp + 4]
+679e: b103                 mov cl, 3
+67a0: d3e0                 shl ax, cl
+67a2: 0514ba               add ax, 0xba14
+67a5: 8946fe               mov word ptr [bp - 2], ax
+67a8: 8bd8                 mov bx, ax
+67aa: f6470280             test byte ptr [bx + 2], 0x80
+67ae: 7449                 je 0x67f9
+67b0: f6470228             test byte ptr [bx + 2], 0x28
+67b4: 7543                 jne 0x67f9
+67b6: 8a5f03               mov bl, byte ptr [bx + 3]
+67b9: 2aff                 sub bh, bh
+67bb: b105                 mov cl, 5
+67bd: d3e3                 shl bx, cl
+67bf: 80bfc5552a           cmp byte ptr [bx + 0x55c5], 0x2a
+67c4: 7518                 jne 0x67de
+67c6: 8bd8                 mov bx, ax
+67c8: 8a5f04               mov bl, byte ptr [bx + 4]
+67cb: 2aff                 sub bh, bh
+67cd: b103                 mov cl, 3
+67cf: d3e3                 shl bx, cl
+67d1: c6875b5c1d           mov byte ptr [bx + 0x5c5b], 0x1d
+67d6: 8bd8                 mov bx, ax
+67d8: 804f0210             or byte ptr [bx + 2], 0x10
+67dc: eb1b                 jmp 0x67f9
+67de: 8b5efe               mov bx, word ptr [bp - 2]
+67e1: 8a4703               mov al, byte ptr [bx + 3]
+67e4: 2ae4                 sub ah, ah
+67e6: 8bf0                 mov si, ax
+67e8: 8bde                 mov bx, si
+67ea: b105                 mov cl, 5
+67ec: d3e3                 shl bx, cl
+67ee: 80bfc5552c           cmp byte ptr [bx + 0x55c5], 0x2c
+67f3: 7504                 jne 0x67f9
+67f5: 56                   push si
+67f6: e813d8               call 0x400c
+67f9: 5e                   pop si
+67fa: 8be5                 mov sp, bp
+67fc: 5d                   pop bp
+67fd: c20200               ret 2
+
+SPAN 0x6800-0x6878
+6800: 55                   push bp
+6801: 8bec                 mov bp, sp
+6803: 83ec02               sub sp, 2
+6806: 56                   push si
+6807: 8b4604               mov ax, word ptr [bp + 4]
+680a: b103                 mov cl, 3
+680c: d3e0                 shl ax, cl
+680e: 0514ba               add ax, 0xba14
+6811: 8946fe               mov word ptr [bp - 2], ax
+6814: 8bd8                 mov bx, ax
+6816: f6470208             test byte ptr [bx + 2], 8
+681a: 7459                 je 0x6875
+681c: f6470280             test byte ptr [bx + 2], 0x80
+6820: 743e                 je 0x6860
+6822: 8a5f03               mov bl, byte ptr [bx + 3]
+6825: 2aff                 sub bh, bh
+6827: b105                 mov cl, 5
+6829: d3e3                 shl bx, cl
+682b: c687b35547           mov byte ptr [bx + 0x55b3], 0x47
+6830: 8bd8                 mov bx, ax
+6832: f6470210             test byte ptr [bx + 2], 0x10
+6836: 7410                 je 0x6848
+6838: 8a5f04               mov bl, byte ptr [bx + 4]
+683b: 2aff                 sub bh, bh
+683d: b103                 mov cl, 3
+683f: d3e3                 shl bx, cl
+6841: c6875b5c1d           mov byte ptr [bx + 0x5c5b], 0x1d
+6846: eb26                 jmp 0x686e
+6848: 8b5efe               mov bx, word ptr [bp - 2]
+684b: 8a4704               mov al, byte ptr [bx + 4]
+684e: 2ae4                 sub ah, ah
+6850: 8bf0                 mov si, ax
+6852: b103                 mov cl, 3
+6854: d3e6                 shl si, cl
+6856: 8a845a5c             mov al, byte ptr [si + 0x5c5a]
+685a: 88845b5c             mov byte ptr [si + 0x5c5b], al
+685e: eb0e                 jmp 0x686e
+6860: 8a5f04               mov bl, byte ptr [bx + 4]
+6863: 2aff                 sub bh, bh
+6865: b103                 mov cl, 3
+6867: d3e3                 shl bx, cl
+6869: c687605c00           mov byte ptr [bx + 0x5c60], 0
+686e: 8b5efe               mov bx, word ptr [bp - 2]
+6871: 806702f7             and byte ptr [bx + 2], 0xf7
+6875: e888c0               call 0x2900
+
+SPAN 0x6880-0x6916
+6880: 55                   push bp
+6881: 8bec                 mov bp, sp
+6883: 56                   push si
+6884: 8b7604               mov si, word ptr [bp + 4]
+6887: b103                 mov cl, 3
+6889: d3e6                 shl si, cl
+688b: f68416ba80           test byte ptr [si - 0x45ea], 0x80
+6890: 7411                 je 0x68a3
+6892: 8a9c17ba             mov bl, byte ptr [si - 0x45e9]
+6896: 2aff                 sub bh, bh
+6898: b105                 mov cl, 5
+689a: d3e3                 shl bx, cl
+689c: 80bfb35550           cmp byte ptr [bx + 0x55b3], 0x50
+68a1: 7406                 je 0x68a9
+68a3: ff7604               push word ptr [bp + 4]
+68a6: e80500               call 0x68ae
+68a9: 5e                   pop si
+68aa: 5d                   pop bp
+68ab: c20200               ret 2
+68ae: 55                   push bp
+68af: 8bec                 mov bp, sp
+68b1: 83ec02               sub sp, 2
+68b4: 56                   push si
+68b5: 8b4604               mov ax, word ptr [bp + 4]
+68b8: b103                 mov cl, 3
+68ba: d3e0                 shl ax, cl
+68bc: 0514ba               add ax, 0xba14
+68bf: 8946fe               mov word ptr [bp - 2], ax
+68c2: 8bd8                 mov bx, ax
+68c4: f6470280             test byte ptr [bx + 2], 0x80
+68c8: 7448                 je 0x6912
+68ca: 8a4703               mov al, byte ptr [bx + 3]
+68cd: 2ae4                 sub ah, ah
+68cf: 8bf0                 mov si, ax
+68d1: b105                 mov cl, 5
+68d3: d3e6                 shl si, cl
+68d5: 81c6b355             add si, 0x55b3
+68d9: 803c44               cmp byte ptr [si], 0x44
+68dc: 7451                 je 0x692f
+68de: c60453               mov byte ptr [si], 0x53
+68e1: 804f0208             or byte ptr [bx + 2], 8
+68e5: 8a5f04               mov bl, byte ptr [bx + 4]
+68e8: 2aff                 sub bh, bh
+68ea: b103                 mov cl, 3
+68ec: d3e3                 shl bx, cl
+68ee: c6875b5c1e           mov byte ptr [bx + 0x5c5b], 0x1e
+68f3: a07b58               mov al, byte ptr [0x587b]
+68f6: 394604               cmp word ptr [bp + 4], ax
+68f9: 7505                 jne 0x6900
+68fb: c6067b58ff           mov byte ptr [0x587b], 0xff
+6900: c606a25804           mov byte ptr [0x58a2], 4
+6905: e8f8bf               call 0x2900
+6908: f606a15804           test byte ptr [0x58a1], 4
+690d: 7520                 jne 0x692f
+690f: eb1b                 jmp 0x692c
+6911: 90                   nop
+6912: 8b5efe               mov bx, word ptr [bp - 2]
+
+SPAN 0x69da-0x6a4f
+69da: 8b5efc               mov bx, word ptr [bp - 4]
+69dd: b105                 mov cl, 5
+69df: d3e3                 shl bx, cl
+69e1: 80bfb35544           cmp byte ptr [bx + 0x55b3], 0x44
+69e6: 7503                 jne 0x69eb
+69e8: e98301               jmp 0x6b6e
+69eb: 8b5efc               mov bx, word ptr [bp - 4]
+69ee: d3e3                 shl bx, cl
+69f0: 80bfc5552a           cmp byte ptr [bx + 0x55c5], 0x2a
+69f5: 7504                 jne 0x69fb
+69f7: c646f22a             mov byte ptr [bp - 0xe], 0x2a
+69fb: 8b5efc               mov bx, word ptr [bp - 4]
+69fe: b105                 mov cl, 5
+6a00: d3e3                 shl bx, cl
+6a02: 80bfc5552c           cmp byte ptr [bx + 0x55c5], 0x2c
+6a07: 7504                 jne 0x6a0d
+6a09: c646f22c             mov byte ptr [bp - 0xe], 0x2c
+6a0d: 807ef200             cmp byte ptr [bp - 0xe], 0
+6a11: 743c                 je 0x6a4f
+6a13: 2bc0                 sub ax, ax
+6a15: 50                   push ax
+6a16: b80f00               mov ax, 0xf
+6a19: 50                   push ax
+6a1a: e875b6               call 0x2092
+6a1d: 8946f8               mov word ptr [bp - 8], ax
+6a20: 3d0b00               cmp ax, 0xb
+6a23: 7526                 jne 0x6a4b
+6a25: b822a4               mov ax, 0xa422
+6a28: 50                   push ax
+6a29: e824ae               call 0x1850
+6a2c: b8b004               mov ax, 0x4b0
+6a2f: 50                   push ax
+6a30: b8d007               mov ax, 0x7d0
+6a33: 50                   push ax
+6a34: b80100               mov ax, 1
+6a37: 50                   push ax
+6a38: b82800               mov ax, 0x28
+6a3b: 50                   push ax
+6a3c: e86fd9               call 0x43ae
+6a3f: ff76fc               push word ptr [bp - 4]
+6a42: 8a46f2               mov al, byte ptr [bp - 0xe]
+6a45: 2ae4                 sub ah, ah
+6a47: 50                   push ax
+6a48: e81504               call 0x6e60
+6a4b: c646f200             mov byte ptr [bp - 0xe], 0
+
+SPAN 0x6b52-0x6b7e
+6b52: 8b5efc               mov bx, word ptr [bp - 4]
+6b55: b105                 mov cl, 5
+6b57: d3e3                 shl bx, cl
+6b59: 80bfb35553           cmp byte ptr [bx + 0x55b3], 0x53
+6b5e: 7508                 jne 0x6b68
+6b60: ff76f8               push word ptr [bp - 8]
+6b63: e848fd               call 0x68ae
+6b66: eb06                 jmp 0x6b6e
+6b68: ff76f8               push word ptr [bp - 8]
+6b6b: e826fc               call 0x6794
+6b6e: ff46fc               inc word ptr [bp - 4]
+6b71: a05b58               mov al, byte ptr [0x585b]
+6b74: 2ae4                 sub ah, ah
+6b76: 3946fc               cmp word ptr [bp - 4], ax
+6b79: 7303                 jae 0x6b7e
+6b7b: e95cfe               jmp 0x69da
+
+SPAN 0x56ca-0x56e5
+56ca: 80b802ab00           cmp byte ptr [bx + si - 0x54fe], 0
+56cf: 7515                 jne 0x56e6
+56d1: 8b5ef2               mov bx, word ptr [bp - 0xe]
+56d4: 80b864ac16           cmp byte ptr [bx + si - 0x539c], 0x16
+56d9: 7446                 je 0x5721
+56db: 8a8064ac             mov al, byte ptr [bx + si - 0x539c]
+56df: 2ae4                 sub ah, ah
+56e1: 80c401               add ah, 1
+
+OUTSUBS.OVL bytes=2464 SHA256=2e8db7d79e81221b8cdb90bb78692913e0906aebb1605ff43cb5b8fade23e184 image_shift=0x0
+SPAN 0x0808-0x0876
+0808: 8b5efa               mov bx, word ptr [bp - 6]
+080b: b105                 mov cl, 5
+080d: d3e3                 shl bx, cl
+080f: 80bfb35544           cmp byte ptr [bx + 0x55b3], 0x44
+0814: 7486                 je 0x79c
+0816: 8b46fa               mov ax, word ptr [bp - 6]
+0819: d3e0                 shl ax, cl
+081b: 8946ee               mov word ptr [bp - 0x12], ax
+081e: 8bd8                 mov bx, ax
+0820: 8b87ba55             mov ax, word ptr [bx + 0x55ba]
+0824: 8987b855             mov word ptr [bx + 0x55b8], ax
+0828: c687b35547           mov byte ptr [bx + 0x55b3], 0x47
+082d: 2bd2                 sub dx, dx
+082f: bf17ba               mov di, 0xba17
+0832: be18ba               mov si, 0xba18
+0835: 8a05                 mov al, byte ptr [di]
+0837: 2ae4                 sub ah, ah
+0839: 3b46fa               cmp ax, word ptr [bp - 6]
+083c: 7403                 je 0x841
+083e: e995fe               jmp 0x6d6
+0841: 8a04                 mov al, byte ptr [si]
+0843: b103                 mov cl, 3
+0845: d3e0                 shl ax, cl
+0847: 055a5c               add ax, 0x5c5a
+084a: 8946fe               mov word ptr [bp - 2], ax
+084d: 8956f8               mov word ptr [bp - 8], dx
+0850: b86077               mov ax, 0x7760
+0853: 50                   push ax
+0854: 8b5efa               mov bx, word ptr [bp - 6]
+0857: b105                 mov cl, 5
+0859: d3e3                 shl bx, cl
+085b: 8a87b255             mov al, byte ptr [bx + 0x55b2]
+085f: 2ae4                 sub ah, ah
+0861: 50                   push ax
+0862: e881a2               call 0xffffaae6
+0865: 8946fc               mov word ptr [bp - 4], ax
+0868: 8b5efe               mov bx, word ptr [bp - 2]
+086b: 8bf8                 mov di, ax
+086d: 8a85de1a             mov al, byte ptr [di + 0x1ade]
+0871: 884701               mov byte ptr [bx + 1], al
+0874: 8807                 mov byte ptr [bx], al
+
+CMDS.OVL bytes=7440 SHA256=56dccb08f88957383f3dbb6765e5e86049ac6b765cef3e18a3b1da209234a258 image_shift=0x0
+SPAN 0x001a-0x0066
+001a: 2ac0                 sub al, al
+001c: a28e58               mov byte ptr [0x588e], al
+001f: a27a58               mov byte ptr [0x587a], al
+0022: a07b58               mov al, byte ptr [0x587b]
+0025: 8846e6               mov byte ptr [bp - 0x1a], al
+0028: c6067b58ff           mov byte ptr [0x587b], 0xff
+002d: f6460802             test byte ptr [bp + 8], 2
+0031: 742b                 je 0x5e
+0033: 8b369558             mov si, word ptr [0x5895]
+0037: 81e6ff00             and si, 0xff
+003b: b106                 mov cl, 6
+003d: d3e6                 shl si, cl
+003f: a09758               mov al, byte ptr [0x5897]
+0042: b103                 mov cl, 3
+0044: d3e0                 shl ax, cl
+0046: 03f0                 add si, ax
+0048: 8a1e9658             mov bl, byte ptr [0x5896]
+004c: 2aff                 sub bh, bh
+004e: 8a805a59             mov al, byte ptr [bx + si + 0x595a]
+0052: 2ae4                 sub ah, ah
+0054: 50                   push ax
+0055: 2bc0                 sub ax, ax
+0057: 50                   push ax
+0058: e863bc               call 0xffffbcbe
+005b: eb04                 jmp 0x61
+005d: 90                   nop
+005e: e855a9               call 0xffffa9b6
+0061: c6069e58ff           mov byte ptr [0x589e], 0xff
+
+SPAN 0x01ee-0x0229
+01ee: a07f58               mov al, byte ptr [0x587f]
+01f1: 2ae4                 sub ah, ah
+01f3: 3946d8               cmp word ptr [bp - 0x28], ax
+01f6: 7503                 jne 0x1fb
+01f8: e90201               jmp 0x2fd
+01fb: 3c18                 cmp al, 0x18
+01fd: 7205                 jb 0x204
+01ff: 802e7f5818           sub byte ptr [0x587f], 0x18
+0204: e88997               call 0xffff9990
+0207: e8827e               call 0x808c
+020a: e87367               call 0x6980
+020d: a07f58               mov al, byte ptr [0x587f]
+0210: 2ae4                 sub ah, ah
+0212: 3946e2               cmp word ptr [bp - 0x1e], ax
+0215: 7503                 jne 0x21a
+0217: e9f200               jmp 0x30c
+021a: 2bc0                 sub ax, ax
+021c: 50                   push ax
+021d: b83f00               mov ax, 0x3f
+0220: 50                   push ax
+0221: e8ee5e               call 0x6112
+0224: 0bc0                 or ax, ax
+0226: 7403                 je 0x22b
+
+SPAN 0x04e7-0x0505
+04e7: f6460882             test byte ptr [bp + 8], 0x82
+04eb: 7518                 jne 0x505
+04ed: 2bc0                 sub ax, ax
+04ef: 50                   push ax
+04f0: b86300               mov ax, 0x63
+04f3: 50                   push ax
+04f4: e81b5c               call 0x6112
+04f7: 3d1900               cmp ax, 0x19
+04fa: 7d09                 jge 0x505
+04fc: a07d58               mov al, byte ptr [0x587d]
+04ff: a28d58               mov byte ptr [0x588d], al
+0502: e8d1ba               call 0xffffbfd6
+
+Interpretation: 0x6794 sets actor render byte 0x1d and invisible flag 0x10 only for living spawned non-S ring-0x2a actors after the 0x6a13 expiry roll. The actor compositor reads render byte from the sprite layer and uses bank 0x100, so the visible tile is 0x11d. 0x68ae writes 0x1e for S sleepers (tile 0x11e) after the ring pass; D actors are skipped. P and posted G actors retain 0x1d through sleep-scene mount and redraw. OUTSUBS 0x086d writes the class standing tile during each live apparition wake, before the viewport XOR; this overwrites the outline presentation while the equipped ring remains. Status rows are drawn separately; no Camp interaction command runs during sleep.

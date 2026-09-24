@@ -1,0 +1,20 @@
+Batch 46 H-179 focused mutation results
+normal_standing build=0 ctest=8
+all_standing build=0 ctest=8
+wrong_tile build=0 ctest=8
+skip_guard build=0 ctest=8
+skip_poisoned build=0 ctest=8
+after_first_step build=0 ctest=8
+suppress_wake build=0 ctest=8
+renderer_rng build=0 ctest=8
+hide_sleepers build=0 ctest=8
+First killed assertion for each mutant:
+normal_standing : 68: RED surviving ring guard and poisoned actor show outline tile 0x11d at mount
+all_standing : 68: RED control: sleeper, ordinary guard, poisoned actor and dead background
+wrong_tile : 68: RED surviving ring guard and poisoned actor show outline tile 0x11d at mount
+skip_guard : 68: RED surviving ring guard and poisoned actor show outline tile 0x11d at mount
+skip_poisoned : 68: RED surviving ring guard and poisoned actor show outline tile 0x11d at mount
+after_first_step : 68: RED surviving ring guard and poisoned actor show outline tile 0x11d at mount
+suppress_wake : 68: RED apparition overwrites outline with Mage standing tile then XORs it; ring persists
+renderer_rng : 68: RED poisoned ring wearer keeps outline through guard-move redraw and exact RNG
+hide_sleepers : 68: RED control: sleeper, ordinary guard, poisoned actor and dead background

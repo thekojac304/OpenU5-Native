@@ -2108,7 +2108,11 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
             if(pos.x<0||pos.x>=11||pos.y<0||pos.y>=11)continue;
             int tile=0x11e;
             if(slot==camp_guard_||member.status=='P'||(camp_awake_mask_&(1U<<slot))){
-                switch(member.character_class){
+                // ULTIMA.EXE 0x6794 renders surviving ring-42 standing actors
+                // as sprite 0x11d. Sleep (0x68ae) and apparition wake
+                // (OUTSUBS 0x086d) replace that render tile in order.
+                if(!(camp_awake_mask_&(1U<<slot))&&member.ring==42)tile=0x11d;
+                else switch(member.character_class){
                 case 'M':tile=0x140;break;
                 case 'B':tile=0x144;break;
                 case 'F':tile=0x148;break;

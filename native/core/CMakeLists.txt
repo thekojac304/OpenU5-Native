@@ -1005,6 +1005,37 @@ if(BUILD_TESTING)
   endif()
   add_test(NAME batch43_sleep_scene COMMAND batch43_sleep_scene
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+  # Batch 46 H-179: Ring of Invisibility in the CampFire framebuffer.
+  add_executable(batch46_camp_invisibility
+    ../targets/tdeck/host_tests/batch46_camp_invisibility_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/batch37_board_capture_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(batch46_camp_invisibility PRIVATE openu5_core)
+  target_include_directories(batch46_camp_invisibility PRIVATE
+    ../targets/tdeck/host_tests/esp_shims ../targets/tdeck/main)
+  target_compile_features(batch46_camp_invisibility PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(batch46_camp_invisibility PRIVATE /Gy)
+    target_link_options(batch46_camp_invisibility PRIVATE /OPT:REF)
+  else()
+    target_compile_options(batch46_camp_invisibility PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(batch46_camp_invisibility PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME batch46_camp_invisibility COMMAND batch46_camp_invisibility
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
   # Batch 44 H-178: equipped-ring Camp scene-entry expiry.
   add_executable(batch44_camp_ring_entry
     ../targets/tdeck/host_tests/batch44_camp_ring_entry_test.cpp

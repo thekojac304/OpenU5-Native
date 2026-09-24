@@ -1,0 +1,49 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch46
+      Start 23: advanced_combat_parity
+ 1/22 Test #23: advanced_combat_parity .................   Passed    4.06 sec
+      Start 24: magic_parity
+ 2/22 Test #24: magic_parity ...........................   Passed    0.17 sec
+      Start 25: combat_parity
+ 3/22 Test #25: combat_parity ..........................   Passed    1.40 sec
+      Start 26: item_parity
+ 4/22 Test #26: item_parity ............................   Passed    1.41 sec
+      Start 32: presentation_regression
+ 5/22 Test #32: presentation_regression ................   Passed    0.18 sec
+      Start 46: alpha_runtime_integration_regression
+ 6/22 Test #46: alpha_runtime_integration_regression ...   Passed    0.16 sec
+      Start 55: batch29_rest_wiring
+ 7/22 Test #55: batch29_rest_wiring ....................   Passed    0.26 sec
+      Start 56: batch45_npc_beds
+ 8/22 Test #56: batch45_npc_beds .......................   Passed    0.05 sec
+      Start 57: batch30_sleep_parity
+ 9/22 Test #57: batch30_sleep_parity ...................   Passed    0.15 sec
+      Start 59: batch32_camp_watch
+10/22 Test #59: batch32_camp_watch .....................   Passed    0.19 sec
+      Start 61: batch34_pre_sleep_npc
+11/22 Test #61: batch34_pre_sleep_npc ..................   Passed    0.15 sec
+      Start 63: batch36_camp_housekeeping
+12/22 Test #63: batch36_camp_housekeeping ..............   Passed    0.14 sec
+      Start 64: batch37_bed_viewport
+13/22 Test #64: batch37_bed_viewport ...................   Passed    0.17 sec
+      Start 65: batch39_party_panel
+14/22 Test #65: batch39_party_panel ....................   Passed    0.16 sec
+      Start 66: batch41_raw_key
+15/22 Test #66: batch41_raw_key ........................   Passed    0.14 sec
+      Start 67: batch42_advancement_flash
+16/22 Test #67: batch42_advancement_flash ..............   Passed    0.27 sec
+      Start 68: batch43_sleep_scene
+17/22 Test #68: batch43_sleep_scene ....................   Passed    1.01 sec
+      Start 69: batch46_camp_invisibility
+18/22 Test #69: batch46_camp_invisibility ..............   Passed    0.20 sec
+      Start 70: batch44_camp_ring_entry
+19/22 Test #70: batch44_camp_ring_entry ................   Passed    0.21 sec
+      Start 71: batch38_camp_duration
+20/22 Test #71: batch38_camp_duration ..................   Passed    0.18 sec
+      Start 72: batch40_advancement
+21/22 Test #72: batch40_advancement ....................   Passed    0.25 sec
+      Start 73: batch41_staged_advancement
+22/22 Test #73: batch41_staged_advancement .............   Passed    0.13 sec
+
+100% tests passed out of 22
+
+Total Test time (real) =  11.06 sec
