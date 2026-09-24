@@ -469,6 +469,66 @@ void test_night_bed_presentation() {
            "P8b", "re-entry and in-place snap have identical tile and actor identity");
 }
 
+void test_dynamic_bed_pose() {
+    Harness h(12);
+    expect(h.enter_castle(), "B0", "enter shipped castle map");
+    auto map = get_active_map(h.ctx().world, {kCastle, 0});
+    expect(map.error == Error::None && h.drawn(kQuietBed) == kLeftBed &&
+           h.drawn({10, 7}) == kRightBed, "B1", "authored 0xab/0xac bed pair");
+    h.stand(8, 7);
+    auto frame = compose_world_presentation(h.ctx(), map.value, h.g().position.xy, 0x11c, true);
+    expect(frame.tiles[5*11+5] == 0x11c, "B2", "ordinary tile before entering bed");
+    h.stand(9, 7);
+    frame = compose_world_presentation(h.ctx(), map.value, h.g().position.xy, 0x11c, true);
+    expect(frame.tiles[5*11+5] == 0x11a, "B3", "on-foot actor uses 0x11a on bed head");
+    expect(h.g().position.xy.x == 9 && h.drawn(kQuietBed) == kLeftBed,
+           "B4", "pose leaves state and terrain intact");
+    QuestObject stacked{};
+    stacked.location = kCastle; stacked.floor = 0;
+    stacked.x = 9; stacked.y = 7; stacked.tile = 0x140; stacked.prop = true;
+    auto *q = h.ctx().quest_world;
+    expect(q && q->append, "B4a",
+           "object service is available");
+    if (q && q->append) q->append(q->context, stacked);
+    frame = compose_world_presentation(h.ctx(), map.value, h.g().position.xy, 0x11c, true);
+    expect(frame.tiles[5*11+5] == 0x11a, "B4b",
+           "object stack does not replace underlying terrain predicate");
+    frame = compose_world_presentation(h.ctx(), map.value, h.g().position.xy, 0x11d, true);
+    expect(frame.tiles[5*11+5] == 0x11d, "B5", "invisible outline wins");
+    frame = compose_world_presentation(h.ctx(), map.value, h.g().position.xy, 0x11e, true);
+    expect(frame.tiles[5*11+5] == 0x11e, "B6", "Camp tile remains distinct");
+    frame = compose_world_presentation(h.ctx(), map.value, h.g().position.xy, 0x140, true);
+    expect(frame.tiles[5*11+5] == 0x11a, "B7", "class actor byte enters original selector");
+    for (int tile : {0x112, 0x115, 0x128, 0x12b}) {
+        frame = compose_world_presentation(h.ctx(), map.value, h.g().position.xy, tile, true);
+        expect(frame.tiles[5*11+5] == 0x11a, "B7a", "admitted original actor byte selects fixed pose");
+    }
+    for (int tile : {0x116, 0x127, 0x12c, 0x180, 0x1fc}) {
+        frame = compose_world_presentation(h.ctx(), map.value, h.g().position.xy, tile, true);
+        expect(frame.tiles[5*11+5] == tile, "B7b", "excluded actor byte retains standing tile");
+    }
+    for (int tile : {0x15c, 0x170}) {
+        frame = compose_world_presentation(h.ctx(), map.value, h.g().position.xy, tile, true);
+        expect(frame.tiles[5*11+5] == 0x11a, "B7c", "0x40-0x7f reaches original terrain selector");
+    }
+    h.stand(10, 7);
+    frame = compose_world_presentation(h.ctx(), map.value, h.g().position.xy, 0x11c, true);
+    expect(frame.tiles[5*11+5] == 0x11c, "B8", "right half 0xac does not trigger");
+    h.stand(8, 7);
+    frame = compose_world_presentation(h.ctx(), map.value, h.g().position.xy, 0x11c, true);
+    expect(frame.tiles[5*11+5] == 0x11c, "B9", "leaving immediately restores tile");
+    h.stand(9, 7);
+    frame = compose_world_presentation(h.ctx(), map.value, h.g().position.xy, 0x11c, true);
+    expect(frame.tiles[5*11+5] == 0x11a, "B10", "re-entry needs no reload");
+    Harness reentered(12);
+    expect(reentered.enter_castle(), "B11", "reload same authored map");
+    reentered.stand(9, 7);
+    auto reloaded_map = get_active_map(reentered.ctx().world, {kCastle, 0});
+    frame = compose_world_presentation(reentered.ctx(), reloaded_map.value,
+                                       reentered.g().position.xy, 0x11c, true);
+    expect(frame.tiles[5*11+5] == 0x11a, "B12", "reload and live redraw agree");
+    test_night_bed_presentation();
+}
 } // namespace
 
 int main(int argc, char **argv) {
@@ -483,6 +543,12 @@ int main(int argc, char **argv) {
     if (pack.load(owners, report) != ESP_OK) { std::fprintf(stderr, "cannot load the resource pack\n"); return 2; }
     g_owners = &owners;
 
+    if (argc >= 3 && std::strcmp(argv[2], "--batch48-only") == 0) {
+        test_dynamic_bed_pose();
+        std::printf("\nbatch48_bed_pose: %d/%d checks GREEN, %d RED\n",
+                    g_checks - g_failures, g_checks, g_failures);
+        return g_failures ? 1 : 0;
+    }
     if (argc >= 3 && std::strcmp(argv[2], "--batch45-only") == 0) {
         test_night_bed_presentation();
         std::printf("\nbatch45_npc_beds: %d/%d checks GREEN, %d RED\n",

@@ -621,6 +621,8 @@ if(BUILD_TESTING)
   add_test(NAME batch45_npc_beds COMMAND batch29_rest_wiring
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin" --batch45-only)
 
+  add_test(NAME batch48_bed_pose COMMAND batch29_rest_wiring
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin" --batch48-only)
   # Batch 30 -- sleep housekeeping and the 05:00 / 20:00 terrain transition.
   add_executable(batch30_sleep_parity
     ../targets/tdeck/host_tests/batch30_sleep_parity_test.cpp

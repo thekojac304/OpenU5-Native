@@ -7,6 +7,7 @@
 #include "openu5/outdoor.h"
 #include "openu5/quest_world.h"
 #include "openu5/world_commands.h"
+#include "openu5/world_terrain.h"
 
 namespace openu5 {
 namespace {
@@ -238,7 +239,21 @@ PresentationSnapshot compose_world_presentation(CommandContext &c,const ActiveMa
             place(o.x,o.y,o.tile+256,o.shadowlord?0x30000U+uint32_t(o.slot>=0?o.slot:int(i)):0,uint8_t(o.tile&0xfc));
         }
     }
-    s.tiles[kHalf*kPresentationWindow+kHalf]=int16_t(avatar_tile);s.visible[kHalf*kPresentationWindow+kHalf]=1;
+    // ULTIMA.EXE 0x51bf-0x51e9 admits these controlled-actor bytes to
+    // terrain pose selection; 0x5356 tests exactly the bed head (0xab).
+    // The selector also admits 0x40-0x7f; invisibility 0x1d and Camp 0x1e
+    // bypass it. FONT.OVL adds the actor bank to selected byte 0x1a.
+    const int actor_byte = avatar_tile & 0xff;
+    const bool bed_actor = avatar_tile >= 0x100 && avatar_tile < 0x200 &&
+        (actor_byte == 0x1c || (actor_byte >= 0x12 && actor_byte <= 0x15) ||
+         (actor_byte >= 0x28 && actor_byte <= 0x2b) ||
+         (actor_byte >= 0x40 && actor_byte < 0x80));
+    // Read the live terrain layer, before object/NPC composition.
+    const int under_actor = c.terrain ?
+        c.terrain->effective(c.world,map.id,center.x,center.y) :
+        map.tile_at(center.x,center.y);
+    const int center_tile = bed_actor && under_actor == 0xab ? 0x11a : avatar_tile;
+    s.tiles[kHalf*kPresentationWindow+kHalf]=int16_t(center_tile);s.visible[kHalf*kPresentationWindow+kHalf]=1;
     for(int i=0;i<kPresentationCells;++i){if(!s.visible[i]&&s.tiles[i]!=kPresentationOffMap){s.tiles[i]=kPresentationHidden;s.actor_ids[i]=0;}const auto k=tile_animation_kind(s.tiles[i]);s.animated[i]=k==TileAnimationKind::TileCycle||k==TileAnimationKind::WaterScroll||k==TileAnimationKind::WaterComposite||k==TileAnimationKind::FireNoise||k==TileAnimationKind::ActorProgram;s.any_animated|=s.animated[i]!=0;}
     return s;
 }

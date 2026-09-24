@@ -1,0 +1,39 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch48
+      Start  11: look_sign
+ 1/17 Test  #11: look_sign .............................   Passed    0.16 sec
+      Start  12: movement_flow_parity
+ 2/17 Test  #12: movement_flow_parity ..................   Passed    0.39 sec
+      Start  19: world_flow_adapters
+ 3/17 Test  #19: world_flow_adapters ...................   Passed    0.10 sec
+      Start  21: world_flow_parity
+ 4/17 Test  #21: world_flow_parity .....................   Passed    0.39 sec
+      Start  31: movement_regression
+ 5/17 Test  #31: movement_regression ...................   Passed    0.02 sec
+      Start  32: presentation_regression
+ 6/17 Test  #32: presentation_regression ...............   Passed    0.14 sec
+      Start  50: batch24_reload_parity
+ 7/17 Test  #50: batch24_reload_parity .................   Passed    0.34 sec
+      Start  55: batch29_rest_wiring
+ 8/17 Test  #55: batch29_rest_wiring ...................   Passed    0.24 sec
+      Start  56: batch45_npc_beds
+ 9/17 Test  #56: batch45_npc_beds ......................   Passed    0.05 sec
+      Start  57: batch48_bed_pose
+10/17 Test  #57: batch48_bed_pose ......................   Passed    0.05 sec
+      Start  60: batch32_camp_watch
+11/17 Test  #60: batch32_camp_watch ....................   Passed    0.17 sec
+      Start  64: batch36_camp_housekeeping
+12/17 Test  #64: batch36_camp_housekeeping .............   Passed    0.15 sec
+      Start  70: batch46_camp_invisibility
+13/17 Test  #70: batch46_camp_invisibility .............   Passed    0.19 sec
+      Start  71: batch44_camp_ring_entry
+14/17 Test  #71: batch44_camp_ring_entry ...............   Passed    0.19 sec
+      Start  72: batch38_camp_duration
+15/17 Test  #72: batch38_camp_duration .................   Passed    0.14 sec
+      Start  97: movement_flow_drift
+16/17 Test  #97: movement_flow_drift ...................   Passed    4.50 sec
+      Start 109: typescript_world_flow_fixture_drift
+17/17 Test #109: typescript_world_flow_fixture_drift ...   Passed    0.91 sec
+
+100% tests passed out of 17
+
+Total Test time (real) =   8.16 sec
