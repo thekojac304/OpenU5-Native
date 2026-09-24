@@ -1,0 +1,4 @@
+[1/4] Building CXX object CMakeFiles/batch37_bed_viewport.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/native_renderer.cpp.obj
+[2/4] Building CXX object CMakeFiles/batch37_bed_viewport.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp.obj
+[3/4] Building CXX object CMakeFiles/batch37_bed_viewport.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/batch37_bed_viewport_test.cpp.obj
+[4/4] Linking CXX executable batch37_bed_viewport.exe

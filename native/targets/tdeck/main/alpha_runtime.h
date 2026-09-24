@@ -89,6 +89,8 @@ class AlphaRuntime {
         // members initialize() assigns from them, then runs the one
         // load_native_state(INIT.GAM) a New Journey runs. Null keeps both out.
         const AlphaResourceOwners *pack = nullptr;
+        // Host framebuffer tests may compose deterministic all-white map tiles.
+        bool render_pixels = false;
     };
     void attach_host_test_fixture(const HostTestFixture &);
     openu5::TurnState &turn() { return turn_; }
@@ -196,6 +198,7 @@ class AlphaRuntime {
 #endif
     openu5::UiTextBlock *transcript_ = nullptr;
     uint16_t *viewport_ = nullptr;
+    Board *board_ = nullptr; // Bound by render(); bed fill occurs inside handle().
     uint16_t *creation_canvas_ = nullptr;
     uint8_t *tile_cache_storage_ = nullptr;
     openu5::PresentationTileCache tile_cache_{};

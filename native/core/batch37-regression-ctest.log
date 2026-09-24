@@ -1,0 +1,43 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch37-final
+      Start  2: ui_session
+ 1/19 Test  #2: ui_session .............................   Passed    0.17 sec
+      Start  5: batch21b_chest_reset
+ 2/19 Test  #5: batch21b_chest_reset ...................   Passed    0.13 sec
+      Start 10: gameplay_integration
+ 3/19 Test #10: gameplay_integration ...................   Passed    0.22 sec
+      Start 26: item_parity
+ 4/19 Test #26: item_parity ............................   Passed    1.47 sec
+      Start 27: command_parity
+ 5/19 Test #27: command_parity .........................   Passed    0.37 sec
+      Start 28: core_parity
+ 6/19 Test #28: core_parity ............................   Passed    0.21 sec
+      Start 30: turn_parity
+ 7/19 Test #30: turn_parity ............................   Passed    0.31 sec
+      Start 31: movement_regression
+ 8/19 Test #31: movement_regression ....................   Passed    0.03 sec
+      Start 32: presentation_regression
+ 9/19 Test #32: presentation_regression ................   Passed    0.17 sec
+      Start 44: action_feedback_regression
+10/19 Test #44: action_feedback_regression .............   Passed    0.11 sec
+      Start 45: ui_mode_regression
+11/19 Test #45: ui_mode_regression .....................   Passed    0.14 sec
+      Start 46: alpha_runtime_integration_regression
+12/19 Test #46: alpha_runtime_integration_regression ...   Passed    0.22 sec
+      Start 55: batch29_rest_wiring
+13/19 Test #55: batch29_rest_wiring ....................   Passed    0.26 sec
+      Start 56: batch30_sleep_parity
+14/19 Test #56: batch30_sleep_parity ...................   Passed    0.15 sec
+      Start 58: batch32_camp_watch
+15/19 Test #58: batch32_camp_watch .....................   Passed    0.14 sec
+      Start 60: batch34_pre_sleep_npc
+16/19 Test #60: batch34_pre_sleep_npc ..................   Passed    0.20 sec
+      Start 61: batch35_q_sleep_target
+17/19 Test #61: batch35_q_sleep_target .................   Passed    0.19 sec
+      Start 62: batch36_camp_housekeeping
+18/19 Test #62: batch36_camp_housekeeping ..............   Passed    0.17 sec
+      Start 63: batch37_bed_viewport
+19/19 Test #63: batch37_bed_viewport ...................   Passed    0.15 sec
+
+100% tests passed out of 19
+
+Total Test time (real) =   4.81 sec

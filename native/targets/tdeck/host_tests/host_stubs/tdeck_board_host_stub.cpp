@@ -49,6 +49,7 @@ esp_err_t Board::show_frontend(const openu5::FrontendView &, const uint16_t *, c
     return ESP_OK;
 }
 
+esp_err_t Board::fill_bed_viewport() { return ESP_OK; }
 esp_err_t Board::set_brightness(uint8_t) { return ESP_OK; }
 
 } // namespace tdeck

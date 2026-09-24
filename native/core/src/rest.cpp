@@ -211,6 +211,9 @@ void bed_sleep_begin(RestContext &c) {
             m.status = 'S';
     }
     msg(c, "Zzzzzzz...\n");
+    // CMDS.OVL:0x0614-0x0624: color zero, copy-fill (8,8)-(183,183).
+    // This is raster-only; the party status and NPC schedules are untouched.
+    emit(c, GameEventKind::BedViewportFill);
 }
 bool bed_sleep_step(RestContext &c) {
     const auto old_hour = c.game.time.hour;

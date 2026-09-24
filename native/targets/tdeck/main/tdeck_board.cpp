@@ -529,6 +529,16 @@ esp_err_t Board::show_view(const uint16_t *pixels, int width, int height,
     return ESP_OK;
 }
 
+esp_err_t Board::fill_bed_viewport()
+{
+    // Original (8,8)-(183,183) is the entire 176x176 gameplay window.
+    // Native's sky and wind strips live inside that window, so preserve them.
+    const auto r=bed_viewport_rect();
+    const auto result=fill_rect(r.x,r.y,r.width,r.height,kBlack);
+    if(result==ESP_OK)viewport_cache_valid_=false;
+    return result;
+}
+
 esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
                             const openu5::GameState &game,const openu5::TurnState &turn,
                             const openu5::HudWorldState &hud,const uint8_t *runes_font,const char *overlay,

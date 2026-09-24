@@ -1,0 +1,6 @@
+[1/6] Building CXX object CMakeFiles/batch37_bed_viewport.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/batch37_board_capture_stub.cpp.obj
+[2/6] Building CXX object CMakeFiles/openu5_core.dir/src/rest.cpp.obj
+[3/6] Linking CXX static library libopenu5_core.a
+[4/6] Building CXX object CMakeFiles/batch37_bed_viewport.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/batch37_bed_viewport_test.cpp.obj
+[5/6] Building CXX object CMakeFiles/batch37_bed_viewport.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_runtime.cpp.obj
+[6/6] Linking CXX executable batch37_bed_viewport.exe

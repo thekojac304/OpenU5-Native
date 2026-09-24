@@ -37,6 +37,12 @@ constexpr size_t kHostTestTranscriptBlocks = 256;
 
 void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     resources_.world = fixture.world;
+    if (fixture.render_pixels) {
+        viewport_ = new uint16_t[openu5::kViewportPixelCount]();
+        tile_cache_storage_ = new uint8_t[openu5::kCachedTileBytes]();
+        tile_cache_.tiles = tile_cache_storage_;
+        std::fill(std::begin(tile_cache_.palette), std::end(tile_cache_.palette), uint16_t(0xffff));
+    }
 
     transcript_ = new openu5::UiTextBlock[kHostTestTranscriptBlocks]();
     ui_ = new openu5::UiSession({transcript_, kHostTestTranscriptBlocks}, {this, dispatch_ui}, {11, 12, 63});

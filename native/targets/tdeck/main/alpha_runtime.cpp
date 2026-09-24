@@ -287,6 +287,15 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
 void AlphaRuntime::dispatch_ui(void *p,const openu5::UiIntent&i){static_cast<AlphaRuntime*>(p)->dispatch(i);}
 void AlphaRuntime::dispatch_event(void *p,const openu5::GameEvent&e){static_cast<AlphaRuntime*>(p)->consume_event(e);}
 void AlphaRuntime::consume_event(const openu5::GameEvent&e){
+    if(e.kind==openu5::GameEventKind::BedViewportFill){
+        // The original writes the rectangle synchronously before the first
+        // ten-minute tick. The normal post-command render restores the map.
+        if(board_){
+            const auto result=board_->fill_bed_viewport();
+            if(result!=ESP_OK)ESP_LOGE(kTag,"BED_VIEWPORT_FILL failed: %s",esp_err_to_name(result));
+        }
+        return;
+    }
     // R-10: NpcInitiatesTalk/NpcInitiatesShop fire from inside the still-live
     // outer command() call (blackthorn_turn_effect, reached from the town
     // turn tail). UiSession::consume() would translate these into an
@@ -1858,6 +1867,7 @@ void AlphaRuntime::compose_creation_art(){
 }
 
 esp_err_t AlphaRuntime::render(Board&board,bool force){
+    board_=&board;
     if(applied_brightness_!=settings_.brightness){ESP_RETURN_ON_ERROR(board.set_brightness(settings_.brightness),kTag,"apply persistent display brightness");applied_brightness_=settings_.brightness;}
     if(frontend_.active()){
         const int64_t now=esp_timer_get_time();

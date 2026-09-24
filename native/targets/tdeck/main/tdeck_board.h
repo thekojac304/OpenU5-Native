@@ -53,6 +53,12 @@ struct SdStatus {
     esp_err_t error = ESP_FAIL;
 };
 
+struct BedViewportRect { int x, y, width, height; };
+constexpr BedViewportRect bed_viewport_rect() {
+    return {openu5::kHudViewportX, openu5::kHudViewportY+openu5::kHudSkyBarH,
+            openu5::kHudViewportW,
+            openu5::kHudViewportH-openu5::kHudSkyBarH-openu5::kHudWindBarH};
+}
 class Board {
 public:
     esp_err_t initialize_display();
@@ -93,6 +99,9 @@ public:
                             const uint16_t *creation_art = nullptr,
                             uint8_t ui_size = 1);
     esp_err_t set_brightness(uint8_t percent);
+    // CMDS bed entry: fill only the map image; the relocated sky/wind strips
+    // and viewport frame remain visible. The next normal draw restores it.
+    esp_err_t fill_bed_viewport();
     bool debug_last_full_redraw() const { return debug_last_full_redraw_; }
     size_t debug_last_dirty_regions() const { return debug_last_dirty_regions_; }
     size_t debug_last_pixels() const { return debug_last_pixels_; }
