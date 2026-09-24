@@ -154,33 +154,33 @@ bool camp_wake(RestContext &c, int32_t guard) {
     emit(c, GameEventKind::PartyChanged);
     return true;
 }
-RestResult camp_sleep_step(RestContext &c, int32_t h, int32_t hours, CampCell cell, int32_t guard) {
+static RestResult camp_sleep_step(RestContext &c, int32_t &previous_hour, CampCell cell, int32_t guard) {
     RestResult r;
     r.guard = cell;
-    for (int step = 0; step < 12; ++step) {
-        // CMDS.OVL:0x0204 redraws before 0x0207 ring regeneration.
-        // Its 0x5910 -> 0x2f62 path rolls wind when time is not stopped.
-        if (c.turn.time_spell != 'T') maybe_change_wind(c.turn, c.rand);
-        for (int32_t i = 0;
-             i < c.game.party.party_size && i < c.game.party.character_count && i < 6; ++i) {
-            auto &m = c.game.party.characters[i];
-            if (m.status != 'D' && m.ring == 44 && c.rand(0, 7) == 7)
-                m.current_hp = uint16_t(std::min<int32_t>(m.max_hp, m.current_hp + 1));
-        }
-        // CMDS.OVL:0x0212/0x021d tests the changed hour after redraw and
-        // ring regeneration, before this five-minute clock advance.
-        if (step == 0 && h > 0 && h < hours && c.rand(0, 63) == 0) {
+    // CMDS.OVL:0x0204 redraws before 0x0207 ring regeneration.
+    // Its 0x5910 -> 0x2f62 path rolls wind when time is not stopped.
+    if (c.turn.time_spell != 'T') maybe_change_wind(c.turn, c.rand);
+    for (int32_t i = 0;
+         i < c.game.party.party_size && i < c.game.party.character_count && i < 6; ++i) {
+        auto &m = c.game.party.characters[i];
+        if (m.status != 'D' && m.ring == 44 && c.rand(0, 7) == 7)
+            m.current_hp = uint16_t(std::min<int32_t>(m.max_hp, m.current_hp + 1));
+    }
+    // CMDS.OVL:0x0212/0x021d tests the changed hour after redraw and
+    // ring regeneration, before this five-minute clock advance.
+    if (c.game.time.hour != previous_hour) {
+        if (c.rand(0, 63) == 0) {
             constexpr int32_t enemies[] = {41, 20, 21, 24, 22, 25, 36, 20};
             r.ambush = true;
             r.enemy = enemies[c.rand(0, 7)];
             msg(c, "Ambushed!\n\n");
             return r;
         }
-        advance_clock(c.game, c.turn, 5, &c.rand, c.sky);
-        if (cell.present)
-            cell = camp_guard_walk(cell, c.rand, c.services, guard);
+        previous_hour = c.game.time.hour;
     }
-    r.guard = cell;
+    advance_clock(c.game, c.turn, 5, &c.rand, c.sky);
+    if (cell.present)
+        r.guard = camp_guard_walk(cell, c.rand, c.services, guard);
     return r;
 }
 RestResult camp(RestContext &c, int32_t hours, int32_t guard) {
@@ -192,12 +192,16 @@ RestResult camp(RestContext &c, int32_t hours, int32_t guard) {
     // CMDS.OVL:0x001a-0x001f clears the timed spell at Camp entry.
     c.turn.spell_turns = 0;
     c.turn.time_spell = 0;
+    // CMDS.OVL:0x0066-0x0079 stores a wrapped target hour; 0x01ee
+    // compares only the live hour at each loop head, before redraw.
+    const int32_t target_hour = (int32_t(c.game.time.hour) + hours) % 24;
+    int32_t previous_hour = c.game.time.hour;
     msg(c, "Zzzzzz...\n\n");
     RestResult r;
     if (guard >= 0 && c.services.guard_start)
         r.guard = c.services.guard_start(c.services.context, guard);
-    for (int32_t h = 0; h < hours; ++h) {
-        r = camp_sleep_step(c, h, hours, r.guard, guard);
+    while (c.game.time.hour != target_hour) {
+        r = camp_sleep_step(c, previous_hour, r.guard, guard);
         if (r.ambush)
             return r;
     }

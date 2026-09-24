@@ -1,0 +1,23 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch38
+    Start 55: batch29_rest_wiring
+    Start 61: batch35_q_sleep_target
+    Start 60: batch34_pre_sleep_npc
+    Start 63: batch37_bed_viewport
+    Start 46: alpha_runtime_integration_regression
+    Start 64: batch38_camp_duration
+    Start 58: batch32_camp_watch
+    Start 56: batch30_sleep_parity
+1/9 Test #46: alpha_runtime_integration_regression ...   Passed    0.02 sec
+    Start 62: batch36_camp_housekeeping
+2/9 Test #61: batch35_q_sleep_target .................   Passed    0.07 sec
+3/9 Test #60: batch34_pre_sleep_npc ..................   Passed    0.07 sec
+4/9 Test #63: batch37_bed_viewport ...................   Passed    0.07 sec
+5/9 Test #64: batch38_camp_duration ..................   Passed    0.07 sec
+6/9 Test #58: batch32_camp_watch .....................   Passed    0.06 sec
+7/9 Test #62: batch36_camp_housekeeping ..............   Passed    0.06 sec
+8/9 Test #56: batch30_sleep_parity ...................   Passed    0.07 sec
+9/9 Test #55: batch29_rest_wiring ....................   Passed    0.13 sec
+
+100% tests passed out of 9
+
+Total Test time (real) =   0.14 sec

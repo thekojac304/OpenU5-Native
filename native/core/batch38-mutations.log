@@ -1,0 +1,6 @@
+fixed_steps: exit 1; H-173: 13/38 checks
+preserve_minute: exit 1; H-173: 13/38 checks
+one_step_early: exit 1; H-173: 8/38 checks
+extra_final_step: exit 1; H-173: 9/38 checks
+wrong_midnight_wrap: exit 1; H-173: 30/38 checks
+skip_final_guard: exit 1; H-173: 37/38 checks

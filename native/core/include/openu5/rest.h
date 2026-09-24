@@ -43,7 +43,6 @@ CampCell camp_guard_walk(CampCell, Rand, RestServices = {}, int32_t guard = -1);
 bool camp_hole_up(GameState &, Rand, int32_t guard = -1);
 bool camp_wake(RestContext &,
                int32_t guard = -1); // false, no mutation if record provider is absent
-RestResult camp_sleep_step(RestContext &, int32_t hour, int32_t hours, CampCell = {}, int32_t guard = -1);
 RestResult camp(RestContext &, int32_t hours, int32_t guard = -1);
 void bed_sleep_begin(RestContext &);
 bool bed_sleep_step(RestContext &);

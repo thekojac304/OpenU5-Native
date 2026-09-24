@@ -875,6 +875,38 @@ if(BUILD_TESTING)
   add_test(NAME batch37_bed_viewport COMMAND batch37_bed_viewport
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
 
+  # Batch 38 H-173: original target-hour Camp stop through shipped-pack raw keys.
+  add_executable(batch38_camp_duration
+    ../targets/tdeck/host_tests/batch38_camp_duration_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_board_host_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(batch38_camp_duration PRIVATE openu5_core)
+  target_include_directories(batch38_camp_duration PRIVATE
+    ../targets/tdeck/host_tests/esp_shims ../targets/tdeck/main)
+  target_compile_features(batch38_camp_duration PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(batch38_camp_duration PRIVATE /Gy)
+    target_link_options(batch38_camp_duration PRIVATE /OPT:REF)
+  else()
+    target_compile_options(batch38_camp_duration PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(batch38_camp_duration PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME batch38_camp_duration COMMAND batch38_camp_duration
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+
   # Batch 14 / R-22 -- (Z)-stats navigation. Same seam and same stub/shim set
   # as alpha_runtime_integration_regression above: it links the REAL,
   # unmodified alpha_runtime.cpp so the modal is reached only by feeding raw
