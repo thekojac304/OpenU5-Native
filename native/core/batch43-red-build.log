@@ -1,0 +1,17 @@
+[1/17] Building CXX object CMakeFiles/batch43_sleep_scene.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp.obj
+[2/17] Building CXX object CMakeFiles/batch43_sleep_scene.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/input_controller.cpp.obj
+[3/17] Building CXX object CMakeFiles/batch43_sleep_scene.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/ui_input_adapter.cpp.obj
+[4/17] Building CXX object CMakeFiles/batch43_sleep_scene.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/keyboard_matrix.cpp.obj
+[5/17] Building CXX object CMakeFiles/batch43_sleep_scene.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/batch37_board_capture_stub.cpp.obj
+[6/17] Building CXX object CMakeFiles/batch43_sleep_scene.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp.obj
+[7/17] Building CXX object CMakeFiles/batch43_sleep_scene.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp.obj
+[8/17] Building CXX object CMakeFiles/batch43_sleep_scene.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_save_generation.cpp.obj
+[9/17] Building CXX object CMakeFiles/batch43_sleep_scene.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/batch43_sleep_scene_test.cpp.obj
+[10/17] Building CXX object CMakeFiles/batch43_sleep_scene.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_resources.cpp.obj
+[11/17] Building CXX object CMakeFiles/batch43_sleep_scene.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/asset_pack.cpp.obj
+[12/17] Building CXX object CMakeFiles/batch43_sleep_scene.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_dialogue.cpp.obj
+[13/17] Building CXX object CMakeFiles/batch43_sleep_scene.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/native_renderer.cpp.obj
+[14/17] Building CXX object CMakeFiles/batch43_sleep_scene.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp.obj
+[15/17] Building CXX object CMakeFiles/batch43_sleep_scene.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/dungeon_art_cache.cpp.obj
+[16/17] Building CXX object CMakeFiles/batch43_sleep_scene.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_runtime.cpp.obj
+[17/17] Linking CXX executable batch43_sleep_scene.exe

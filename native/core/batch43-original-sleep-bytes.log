@@ -1,0 +1,507 @@
+Batch 43 H-177/D-34 original shipped-byte trace
+Offsets for OVL files are file offsets; ULTIMA.EXE offsets follow the MZ header.
+Disassembly generated from original/u5/ultima5 shipped binaries via Capstone 16-bit mode.
+
+ULTIMA.EXE file_bytes=36592 image_bytes=34544 header_shift=0x800 sha256=e904215f43f45080b499a6de683dddce6f3b0466f25bdce067388ea50a7ac5b0
+--- ULTIMA.EXE 0x3e5e-0x3e9b ---
+3e5e: 803e935820           cmp byte ptr [0x5893], 0x20
+3e63: 7677                 jbe 0x3edc
+3e65: c606a15806           mov byte ptr [0x58a1], 6
+3e6a: e8953d               call 0x7c02
+3e6d: e8b63d               call 0x7c26
+3e70: a0a158               mov al, byte ptr [0x58a1]
+3e73: 2ae4                 sub ah, ah
+3e75: 50                   push ax
+3e76: ff76fa               push word ptr [bp - 6]
+3e79: ff76f2               push word ptr [bp - 0xe]
+3e7c: e9e7cf               jmp 0xe66
+3e7f: b80200               mov ax, 2
+3e82: 50                   push ax
+3e83: e898e6               call 0x251e
+3e86: e8853d               call 0x7c0e
+3e89: bf625c               mov di, 0x5c62
+3e8c: be04aa               mov si, 0xaa04
+3e8f: 1e                   push ds
+3e90: 07                   pop es
+3e91: a5                   movsw word ptr es:[di], word ptr [si]
+3e92: a5                   movsw word ptr es:[di], word ptr [si]
+3e93: a5                   movsw word ptr es:[di], word ptr [si]
+3e94: a5                   movsw word ptr es:[di], word ptr [si]
+3e95: 2bc0                 sub ax, ax
+3e97: 50                   push ax
+3e98: e8df3d               call 0x7c7a
+--- ULTIMA.EXE 0x5f86-0x5f9c ---
+5f86: 55                   push bp
+5f87: 8bec                 mov bp, sp
+5f89: 83ec12               sub sp, 0x12
+5f8c: 57                   push di
+5f8d: 56                   push si
+5f8e: 8a4608               mov al, byte ptr [bp + 8]
+5f91: a2a158               mov byte ptr [0x58a1], al
+5f94: a09658               mov al, byte ptr [0x5896]
+5f97: 2ae4                 sub ah, ah
+5f99: 8946fa               mov word ptr [bp - 6], ax
+--- ULTIMA.EXE 0x602e-0x606c ---
+602e: f6460804             test byte ptr [bp + 8], 4
+6032: 7412                 je 0x6046
+6034: ff7608               push word ptr [bp + 8]
+6037: ff7606               push word ptr [bp + 6]
+603a: ff7604               push word ptr [bp + 4]
+603d: e83620               call 0x8076
+6040: 0bc0                 or ax, ax
+6042: 7428                 je 0x606c
+6044: eb16                 jmp 0x605c
+6046: f6460802             test byte ptr [bp + 8], 2
+604a: 7420                 je 0x606c
+604c: 8b4606               mov ax, word ptr [bp + 6]
+604f: 8946fc               mov word ptr [bp - 4], ax
+6052: 2bc0                 sub ax, ax
+6054: 50                   push ax
+6055: b80200               mov ax, 2
+6058: 50                   push ax
+6059: e8e21b               call 0x7c3e
+605c: b0ff                 mov al, 0xff
+605e: a27b58               mov byte ptr [0x587b], al
+6061: a29e58               mov byte ptr [0x589e], al
+6064: c606a35800           mov byte ptr [0x58a3], 0
+6069: e8ddad               call 0xe49
+--- ULTIMA.EXE 0x607f-0x60aa ---
+607f: 8a46fa               mov al, byte ptr [bp - 6]
+6082: a29658               mov byte ptr [0x5896], al
+6085: 8a46f6               mov al, byte ptr [bp - 0xa]
+6088: a29758               mov byte ptr [0x5897], al
+608b: 8a46f8               mov al, byte ptr [bp - 8]
+608e: a29558               mov byte ptr [0x5895], al
+6091: a09458               mov al, byte ptr [0x5894]
+6094: a29358               mov byte ptr [0x5893], al
+6097: c606e62401           mov byte ptr [0x24e6], 1
+609c: e861c8               call 0x2900
+609f: 8b5efe               mov bx, word ptr [bp - 2]
+60a2: b105                 mov cl, 5
+60a4: d3e3                 shl bx, cl
+60a6: 8a87b355             mov al, byte ptr [bx + 0x55b3]
+--- ULTIMA.EXE 0x60ec-0x6124 ---
+60ec: 55                   push bp
+60ed: 8bec                 mov bp, sp
+60ef: 83ec04               sub sp, 4
+60f2: 57                   push di
+60f3: 56                   push si
+60f4: b8f0a3               mov ax, 0xa3f0
+60f7: 50                   push ax
+60f8: b814ad               mov ax, 0xad14
+60fb: 50                   push ax
+60fc: b86001               mov ax, 0x160
+60ff: 50                   push ax
+6100: f76e04               imul word ptr [bp + 4]
+6103: 50                   push ax
+6104: e867c4               call 0x256e
+6107: c746fe0000           mov word ptr [bp - 2], 0
+610c: b90300               mov cx, 3
+610f: bf2417               mov di, 0x1724
+6112: be7fad               mov si, 0xad7f
+6115: 1e                   push ds
+6116: 07                   pop es
+6117: f2a5                 repne movsw word ptr es:[di], word ptr [si]
+6119: b90300               mov cx, 3
+611c: bf2c17               mov di, 0x172c
+611f: be85ad               mov si, 0xad85
+6122: f2a5                 repne movsw word ptr es:[di], word ptr [si]
+--- ULTIMA.EXE 0x6880-0x6908 ---
+6880: 55                   push bp
+6881: 8bec                 mov bp, sp
+6883: 56                   push si
+6884: 8b7604               mov si, word ptr [bp + 4]
+6887: b103                 mov cl, 3
+6889: d3e6                 shl si, cl
+688b: f68416ba80           test byte ptr [si - 0x45ea], 0x80
+6890: 7411                 je 0x68a3
+6892: 8a9c17ba             mov bl, byte ptr [si - 0x45e9]
+6896: 2aff                 sub bh, bh
+6898: b105                 mov cl, 5
+689a: d3e3                 shl bx, cl
+689c: 80bfb35550           cmp byte ptr [bx + 0x55b3], 0x50
+68a1: 7406                 je 0x68a9
+68a3: ff7604               push word ptr [bp + 4]
+68a6: e80500               call 0x68ae
+68a9: 5e                   pop si
+68aa: 5d                   pop bp
+68ab: c20200               ret 2
+68ae: 55                   push bp
+68af: 8bec                 mov bp, sp
+68b1: 83ec02               sub sp, 2
+68b4: 56                   push si
+68b5: 8b4604               mov ax, word ptr [bp + 4]
+68b8: b103                 mov cl, 3
+68ba: d3e0                 shl ax, cl
+68bc: 0514ba               add ax, 0xba14
+68bf: 8946fe               mov word ptr [bp - 2], ax
+68c2: 8bd8                 mov bx, ax
+68c4: f6470280             test byte ptr [bx + 2], 0x80
+68c8: 7448                 je 0x6912
+68ca: 8a4703               mov al, byte ptr [bx + 3]
+68cd: 2ae4                 sub ah, ah
+68cf: 8bf0                 mov si, ax
+68d1: b105                 mov cl, 5
+68d3: d3e6                 shl si, cl
+68d5: 81c6b355             add si, 0x55b3
+68d9: 803c44               cmp byte ptr [si], 0x44
+68dc: 7451                 je 0x692f
+68de: c60453               mov byte ptr [si], 0x53
+68e1: 804f0208             or byte ptr [bx + 2], 8
+68e5: 8a5f04               mov bl, byte ptr [bx + 4]
+68e8: 2aff                 sub bh, bh
+68ea: b103                 mov cl, 3
+68ec: d3e3                 shl bx, cl
+68ee: c6875b5c1e           mov byte ptr [bx + 0x5c5b], 0x1e
+68f3: a07b58               mov al, byte ptr [0x587b]
+68f6: 394604               cmp word ptr [bp + 4], ax
+68f9: 7505                 jne 0x6900
+68fb: c6067b58ff           mov byte ptr [0x587b], 0xff
+6900: c606a25804           mov byte ptr [0x58a2], 4
+6905: e8f8bf               call 0x2900
+--- ULTIMA.EXE 0x6936-0x6951 ---
+6936: 55                   push bp
+6937: 8bec                 mov bp, sp
+6939: 83ec1e               sub sp, 0x1e
+693c: 57                   push di
+693d: 56                   push si
+693e: c646f200             mov byte ptr [bp - 0xe], 0
+6942: c746fc2000           mov word ptr [bp - 4], 0x20
+6947: c746f014ba           mov word ptr [bp - 0x10], 0xba14
+694c: c746ee5a5c           mov word ptr [bp - 0x12], 0x5c5a
+--- ULTIMA.EXE 0x69d1-0x69eb ---
+69d1: c746fc0000           mov word ptr [bp - 4], 0
+69d6: e99801               jmp 0x6b71
+69d9: 90                   nop
+69da: 8b5efc               mov bx, word ptr [bp - 4]
+69dd: b105                 mov cl, 5
+69df: d3e3                 shl bx, cl
+69e1: 80bfb35544           cmp byte ptr [bx + 0x55b3], 0x44
+69e6: 7503                 jne 0x69eb
+69e8: e98301               jmp 0x6b6e
+--- ULTIMA.EXE 0x6a4f-0x6a73 ---
+6a4f: 8b5efc               mov bx, word ptr [bp - 4]
+6a52: 8a872417             mov al, byte ptr [bx + 0x1724]
+6a56: 8846fa               mov byte ptr [bp - 6], al
+6a59: 8a872c17             mov al, byte ptr [bx + 0x172c]
+6a5d: 8846f4               mov byte ptr [bp - 0xc], al
+6a60: 53                   push bx
+6a61: b80100               mov ax, 1
+6a64: 50                   push ax
+6a65: 8a46fa               mov al, byte ptr [bp - 6]
+6a68: 2ae4                 sub ah, ah
+6a6a: 50                   push ax
+6a6b: 8a46f4               mov al, byte ptr [bp - 0xc]
+6a6e: 50                   push ax
+6a6f: a09558               mov al, byte ptr [0x5895]
+6a72: 50                   push ax
+--- ULTIMA.EXE 0x6b52-0x6bc1 ---
+6b52: 8b5efc               mov bx, word ptr [bp - 4]
+6b55: b105                 mov cl, 5
+6b57: d3e3                 shl bx, cl
+6b59: 80bfb35553           cmp byte ptr [bx + 0x55b3], 0x53
+6b5e: 7508                 jne 0x6b68
+6b60: ff76f8               push word ptr [bp - 8]
+6b63: e848fd               call 0x68ae
+6b66: eb06                 jmp 0x6b6e
+6b68: ff76f8               push word ptr [bp - 8]
+6b6b: e826fc               call 0x6794
+6b6e: ff46fc               inc word ptr [bp - 4]
+6b71: a05b58               mov al, byte ptr [0x585b]
+6b74: 2ae4                 sub ah, ah
+6b76: 3946fc               cmp word ptr [bp - 4], ax
+6b79: 7303                 jae 0x6b7e
+6b7b: e95cfe               jmp 0x69da
+6b7e: 803eb9addc           cmp byte ptr [0xadb9], 0xdc
+6b83: 7536                 jne 0x6bbb
+6b85: b80100               mov ax, 1
+6b88: 50                   push ax
+6b89: b80200               mov ax, 2
+6b8c: 50                   push ax
+6b8d: b80500               mov ax, 5
+6b90: 50                   push ax
+6b91: 50                   push ax
+6b92: a09558               mov al, byte ptr [0x5895]
+6b95: 2ae4                 sub ah, ah
+6b97: 50                   push ax
+6b98: e86bf9               call 0x6506
+6b9b: 8846f6               mov byte ptr [bp - 0xa], al
+6b9e: 8ad8                 mov bl, al
+6ba0: 2aff                 sub bh, bh
+6ba2: b103                 mov cl, 3
+6ba4: d3e3                 shl bx, cl
+6ba6: a09558               mov al, byte ptr [0x5895]
+6ba9: 8bc8                 mov cx, ax
+6bab: d0e0                 shl al, 1
+6bad: 02c1                 add al, cl
+6baf: 0407                 add al, 7
+6bb1: 88875f5c             mov byte ptr [bx + 0x5c5f], al
+6bb5: a015bb               mov al, byte ptr [0xbb15]
+6bb8: a2b9ad               mov byte ptr [0xadb9], al
+6bbb: 5e                   pop si
+6bbc: 5f                   pop di
+6bbd: 8be5                 mov sp, bp
+6bbf: 5d                   pop bp
+6bc0: c3                   ret
+
+CMDS.OVL file_bytes=7440 image_bytes=7440 header_shift=0x0 sha256=56dccb08f88957383f3dbb6765e5e86049ac6b765cef3e18a3b1da209234a258
+--- CMDS.OVL 0x002d-0x0066 ---
+002d: f6460802             test byte ptr [bp + 8], 2
+0031: 742b                 je 0x5e
+0033: 8b369558             mov si, word ptr [0x5895]
+0037: 81e6ff00             and si, 0xff
+003b: b106                 mov cl, 6
+003d: d3e6                 shl si, cl
+003f: a09758               mov al, byte ptr [0x5897]
+0042: b103                 mov cl, 3
+0044: d3e0                 shl ax, cl
+0046: 03f0                 add si, ax
+0048: 8a1e9658             mov bl, byte ptr [0x5896]
+004c: 2aff                 sub bh, bh
+004e: 8a805a59             mov al, byte ptr [bx + si + 0x595a]
+0052: 2ae4                 sub ah, ah
+0054: 50                   push ax
+0055: 2bc0                 sub ax, ax
+0057: 50                   push ax
+0058: e863bc               call 0xffffbcbe
+005b: eb04                 jmp 0x61
+005d: 90                   nop
+005e: e855a9               call 0xffffa9b6
+0061: c6069e58ff           mov byte ptr [0x589e], 0xff
+--- CMDS.OVL 0x00d7-0x0155 ---
+00d7: 894edc               mov word ptr [bp - 0x24], cx
+00da: 8b5ed0               mov bx, word ptr [bp - 0x30]
+00dd: 8a07                 mov al, byte ptr [bx]
+00df: 2ae4                 sub ah, ah
+00e1: 3d4700               cmp ax, 0x47
+00e4: 741f                 je 0x105
+00e6: 3d5000               cmp ax, 0x50
+00e9: 7415                 je 0x100
+00eb: 3d5300               cmp ax, 0x53
+00ee: 7415                 je 0x105
+00f0: eb3e                 jmp 0x130
+00f2: 83c608               add si, 8
+00f5: 83c708               add di, 8
+00f8: 41                   inc cx
+00f9: 83f920               cmp cx, 0x20
+00fc: 7dd6                 jge 0xd4
+00fe: ebc9                 jmp 0xc9
+0100: 8b5ece               mov bx, word ptr [bp - 0x32]
+0103: ff07                 inc word ptr [bx]
+0105: 8b4606               mov ax, word ptr [bp + 6]
+0108: 3946e0               cmp word ptr [bp - 0x20], ax
+010b: 7406                 je 0x113
+010d: ff76dc               push word ptr [bp - 0x24]
+0110: e8eda7               call 0xffffa900
+0113: 8b5ecc               mov bx, word ptr [bp - 0x34]
+0116: 803f42               cmp byte ptr [bx], 0x42
+0119: 7515                 jne 0x130
+011b: 8b4606               mov ax, word ptr [bp + 6]
+011e: 3946e0               cmp word ptr [bp - 0x20], ax
+0121: 750d                 jne 0x130
+0123: 803ecea900           cmp byte ptr [0xa9ce], 0
+0128: 7406                 je 0x130
+012a: 8b46dc               mov ax, word ptr [bp - 0x24]
+012d: 8946fc               mov word ptr [bp - 4], ax
+0130: 8346d020             add word ptr [bp - 0x30], 0x20
+0134: 8346ce02             add word ptr [bp - 0x32], 2
+0138: 8346cc20             add word ptr [bp - 0x34], 0x20
+013c: ff46e0               inc word ptr [bp - 0x20]
+013f: a05b58               mov al, byte ptr [0x585b]
+0142: 2ae4                 sub ah, ah
+0144: 3946e0               cmp word ptr [bp - 0x20], ax
+0147: 7303                 jae 0x14c
+0149: e972ff               jmp 0xbe
+014c: e84198               call 0xffff9990
+014f: 837efcff             cmp word ptr [bp - 4], -1
+0153: 745b                 je 0x1b0
+--- CMDS.OVL 0x01a0-0x01b0 ---
+01a0: 2ae4                 sub ah, ah
+01a2: 3b4606               cmp ax, word ptr [bp + 6]
+01a5: 7406                 je 0x1ad
+01a7: ff76fc               push word ptr [bp - 4]
+01aa: e853a7               call 0xffffa900
+01ad: e8e097               call 0xffff9990
+--- CMDS.OVL 0x01ee-0x022b ---
+01ee: a07f58               mov al, byte ptr [0x587f]
+01f1: 2ae4                 sub ah, ah
+01f3: 3946d8               cmp word ptr [bp - 0x28], ax
+01f6: 7503                 jne 0x1fb
+01f8: e90201               jmp 0x2fd
+01fb: 3c18                 cmp al, 0x18
+01fd: 7205                 jb 0x204
+01ff: 802e7f5818           sub byte ptr [0x587f], 0x18
+0204: e88997               call 0xffff9990
+0207: e8827e               call 0x808c
+020a: e87367               call 0x6980
+020d: a07f58               mov al, byte ptr [0x587f]
+0210: 2ae4                 sub ah, ah
+0212: 3946e2               cmp word ptr [bp - 0x1e], ax
+0215: 7503                 jne 0x21a
+0217: e9f200               jmp 0x30c
+021a: 2bc0                 sub ax, ax
+021c: 50                   push ax
+021d: b83f00               mov ax, 0x3f
+0220: 50                   push ax
+0221: e8ee5e               call 0x6112
+0224: 0bc0                 or ax, ax
+0226: 7403                 je 0x22b
+0228: e9e100               jmp 0x30c
+--- CMDS.OVL 0x02f4-0x0314 ---
+02f4: ff7608               push word ptr [bp + 8]
+02f7: ff76e4               push word ptr [bp - 0x1c]
+02fa: e845a9               call 0xffffac42
+02fd: 837ee4ff             cmp word ptr [bp - 0x1c], -1
+0301: 7f03                 jg 0x306
+0303: e9e400               jmp 0x3ea
+0306: b80100               mov ax, 1
+0309: e93d02               jmp 0x549
+030c: a07f58               mov al, byte ptr [0x587f]
+030f: 2ae4                 sub ah, ah
+0311: 8946e2               mov word ptr [bp - 0x1e], ax
+--- CMDS.OVL 0x0314-0x0340 ---
+0314: b80500               mov ax, 5
+0317: 50                   push ax
+0318: e8e18c               call 0xffff8ffc
+031b: b80100               mov ax, 1
+031e: 50                   push ax
+031f: e8585e               call 0x617a
+0322: 803e945821           cmp byte ptr [0x5894], 0x21
+0327: 730e                 jae 0x337
+0329: a09458               mov al, byte ptr [0x5894]
+032c: a29358               mov byte ptr [0x5893], al
+032f: e8d287               call 0xffff8b04
+0332: c6069358ff           mov byte ptr [0x5893], 0xff
+0337: 837e06ff             cmp word ptr [bp + 6], -1
+033b: 7503                 jne 0x340
+033d: e9aefe               jmp 0x1ee
+--- CMDS.OVL 0x04e7-0x0513 ---
+04e7: f6460882             test byte ptr [bp + 8], 0x82
+04eb: 7518                 jne 0x505
+04ed: 2bc0                 sub ax, ax
+04ef: 50                   push ax
+04f0: b86300               mov ax, 0x63
+04f3: 50                   push ax
+04f4: e81b5c               call 0x6112
+04f7: 3d1900               cmp ax, 0x19
+04fa: 7d09                 jge 0x505
+04fc: a07d58               mov al, byte ptr [0x587d]
+04ff: a28d58               mov byte ptr [0x588d], al
+0502: e8d1ba               call 0xffffbfd6
+0505: c6068c580e           mov byte ptr [0x588c], 0xe
+050a: eb07                 jmp 0x513
+050c: b8fb41               mov ax, 0x41fb
+050f: 50                   push ax
+0510: e8bd53               call 0x58d0
+--- CMDS.OVL 0x0518-0x054e ---
+0518: a05b58               mov al, byte ptr [0x585b]
+051b: 2ae4                 sub ah, ah
+051d: 0bc0                 or ax, ax
+051f: 741d                 je 0x53e
+0521: 8bd0                 mov dx, ax
+0523: beb355               mov si, 0x55b3
+0526: 8b4ee0               mov cx, word ptr [bp - 0x20]
+0529: 803c53               cmp byte ptr [si], 0x53
+052c: 7503                 jne 0x531
+052e: c60447               mov byte ptr [si], 0x47
+0531: 83c620               add si, 0x20
+0534: 41                   inc cx
+0535: 8bc1                 mov ax, cx
+0537: 3bc2                 cmp ax, dx
+0539: 72ee                 jb 0x529
+053b: 894ee0               mov word ptr [bp - 0x20], cx
+053e: 8a46e6               mov al, byte ptr [bp - 0x1a]
+0541: a27b58               mov byte ptr [0x587b], al
+0544: e83964               call 0x6980
+0547: 2bc0                 sub ax, ax
+0549: 5e                   pop si
+054a: 5f                   pop di
+054b: 8be5                 mov sp, bp
+054d: 5d                   pop bp
+
+OUTSUBS.OVL file_bytes=2464 image_bytes=2464 header_shift=0x0 sha256=2e8db7d79e81221b8cdb90bb78692913e0906aebb1605ff43cb5b8fade23e184
+--- OUTSUBS.OVL 0x0658-0x06cd ---
+0658: 55                   push bp
+0659: 8bec                 mov bp, sp
+065b: 83ec14               sub sp, 0x14
+065e: 57                   push di
+065f: 56                   push si
+0660: b85077               mov ax, 0x7750
+0663: 50                   push ax
+0664: e8596f               call 0x75c0
+0667: b83c0a               mov ax, 0xa3c
+066a: 50                   push ax
+066b: b80100               mov ax, 1
+066e: 50                   push ax
+066f: b81027               mov ax, 0x2710
+0672: 50                   push ax
+0673: b8c409               mov ax, 0x9c4
+0676: 50                   push ax
+0677: b80600               mov ax, 6
+067a: 50                   push ax
+067b: e88478               call 0x7f02
+067e: c746fa0600           mov word ptr [bp - 6], 6
+0683: be263a               mov si, 0x3a26
+0686: ff34                 push word ptr [si]
+0688: b80100               mov ax, 1
+068b: 50                   push ax
+068c: b88813               mov ax, 0x1388
+068f: 50                   push ax
+0690: b8c800               mov ax, 0xc8
+0693: 50                   push ax
+0694: b80d00               mov ax, 0xd
+0697: 50                   push ax
+0698: e86778               call 0x7f02
+069b: 83c602               add si, 2
+069e: 81fe323a             cmp si, 0x3a32
+06a2: 72e2                 jb 0x686
+06a4: c746feaa5c           mov word ptr [bp - 2], 0x5caa
+06a9: b005                 mov al, 5
+06ab: a2ad5c               mov byte ptr [0x5cad], al
+06ae: a2ac5c               mov byte ptr [0x5cac], al
+06b1: b016                 mov al, 0x16
+06b3: a2ab5c               mov byte ptr [0x5cab], al
+06b6: a2aa5c               mov byte ptr [0x5caa], al
+06b9: b87401               mov ax, 0x174
+06bc: 50                   push ax
+06bd: b80500               mov ax, 5
+06c0: 50                   push ax
+06c1: 50                   push ax
+06c2: e81367               call 0x6dd8
+06c5: b074                 mov al, 0x74
+06c7: a2ab5c               mov byte ptr [0x5cab], al
+06ca: a2aa5c               mov byte ptr [0x5caa], al
+--- OUTSUBS.OVL 0x07fb-0x082d ---
+07fb: a05b58               mov al, byte ptr [0x585b]
+07fe: 2ae4                 sub ah, ah
+0800: 3946fa               cmp word ptr [bp - 6], ax
+0803: 7203                 jb 0x808
+0805: e90601               jmp 0x90e
+0808: 8b5efa               mov bx, word ptr [bp - 6]
+080b: b105                 mov cl, 5
+080d: d3e3                 shl bx, cl
+080f: 80bfb35544           cmp byte ptr [bx + 0x55b3], 0x44
+0814: 7486                 je 0x79c
+0816: 8b46fa               mov ax, word ptr [bp - 6]
+0819: d3e0                 shl ax, cl
+081b: 8946ee               mov word ptr [bp - 0x12], ax
+081e: 8bd8                 mov bx, ax
+0820: 8b87ba55             mov ax, word ptr [bx + 0x55ba]
+0824: 8987b855             mov word ptr [bx + 0x55b8], ax
+0828: c687b35547           mov byte ptr [bx + 0x55b3], 0x47
+--- OUTSUBS.OVL 0x0850-0x0876 ---
+0850: b86077               mov ax, 0x7760
+0853: 50                   push ax
+0854: 8b5efa               mov bx, word ptr [bp - 6]
+0857: b105                 mov cl, 5
+0859: d3e3                 shl bx, cl
+085b: 8a87b255             mov al, byte ptr [bx + 0x55b2]
+085f: 2ae4                 sub ah, ah
+0861: 50                   push ax
+0862: e881a2               call 0xffffaae6
+0865: 8946fc               mov word ptr [bp - 4], ax
+0868: 8b5efe               mov bx, word ptr [bp - 2]
+086b: 8bf8                 mov di, ax
+086d: 8a85de1a             mov al, byte ptr [di + 0x1ade]
+0871: 884701               mov byte ptr [bx + 1], al
+0874: 8807                 mov byte ptr [bx], al

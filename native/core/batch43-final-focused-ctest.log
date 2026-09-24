@@ -1,0 +1,13 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch43
+    Start 65: batch41_raw_key
+1/4 Test #65: batch41_raw_key ..................   Passed    0.35 sec
+    Start 66: batch42_advancement_flash
+2/4 Test #66: batch42_advancement_flash ........   Passed    0.52 sec
+    Start 67: batch43_sleep_scene
+3/4 Test #67: batch43_sleep_scene ..............   Passed    1.61 sec
+    Start 70: batch41_staged_advancement
+4/4 Test #70: batch41_staged_advancement .......   Passed    0.27 sec
+
+100% tests passed out of 4
+
+Total Test time (real) =   2.81 sec

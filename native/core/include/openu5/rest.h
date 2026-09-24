@@ -43,7 +43,7 @@ int32_t camp_guard_choice(const GameState &, int32_t selected);
 CampCell camp_guard_walk(CampCell, Rand, RestServices = {}, int32_t guard = -1);
 bool camp_hole_up(GameState &, Rand, int32_t guard = -1);
 bool camp_wake(RestContext &,
-               int32_t guard = -1); // false, no mutation if record provider is absent
+               int32_t guard = -1, bool *apparition = nullptr); // false, no mutation if record provider is absent
 bool camp_advance_resume(RestContext &); // One original getkey; false if no cue is pending.
 RestResult camp(RestContext &, int32_t hours, int32_t guard = -1);
 void bed_sleep_begin(RestContext &);

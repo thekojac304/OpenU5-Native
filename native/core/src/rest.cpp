@@ -156,10 +156,12 @@ void camp_next_member(RestContext &c, CampAdvance &state, bool hold) {
     camp_finish(c, state);
 }
 } // namespace
-bool camp_wake(RestContext &c, int32_t guard) {
+bool camp_wake(RestContext &c, int32_t guard, bool *apparition) {
     if (!c.services.karma_record)
         return false;
-    if (camp_hole_up(c.game, c.rand, guard)) {
+    const bool appeared = camp_hole_up(c.game, c.rand, guard);
+    if (apparition) *apparition = appeared;
+    if (appeared) {
         msg(c, "An apparition!\n");
         emit(c, GameEventKind::Sfx, "apparition-materialize");
         emit(c, GameEventKind::Sfx, "apparition-arpeggio");
@@ -219,8 +221,13 @@ static RestResult camp_sleep_step(RestContext &c, int32_t &previous_hour, CampCe
         previous_hour = c.game.time.hour;
     }
     advance_clock(c.game, c.turn, 5, &c.rand, c.sky);
-    if (cell.present)
+    if (cell.present) {
         r.guard = camp_guard_walk(cell, c.rand, c.services, guard);
+        if (r.guard.col != cell.col || r.guard.row != cell.row)
+            emit(c, GameEventKind::CampGuardMove, nullptr,
+                 (r.guard.row << 8) | r.guard.col);
+    }
+    emit(c, GameEventKind::CampStatusRefresh);
     return r;
 }
 RestResult camp(RestContext &c, int32_t hours, int32_t guard) {
@@ -236,16 +243,36 @@ RestResult camp(RestContext &c, int32_t hours, int32_t guard) {
     // compares only the live hour at each loop head, before redraw.
     const int32_t target_hour = (int32_t(c.game.time.hour) + hours) % 24;
     int32_t previous_hour = c.game.time.hour;
+    // CMDS 0x005e mounts the CampFire actors before its sleep loop; 0x6880
+    // puts every live non-guard member into S and redraws the party panel.
+    char prior_status[6]{};
+    for (int32_t i = 0; i < count(c.game) && i < 6; ++i) {
+        auto &m = c.game.party.characters[i];
+        prior_status[i] = m.status;
+        if (i != guard && (m.status == 'G' || m.status == 'S')) m.status = 'S';
+    }
+    emit(c, GameEventKind::CampSleepSceneBegin, nullptr, guard);
+    emit(c, GameEventKind::CampStatusRefresh);
     msg(c, "Zzzzzz...\n\n");
     RestResult r;
     if (guard >= 0 && c.services.guard_start)
         r.guard = c.services.guard_start(c.services.context, guard);
     while (c.game.time.hour != target_hour) {
         r = camp_sleep_step(c, previous_hour, r.guard, guard);
-        if (r.ambush)
+        if (r.ambush) {
+            for (int32_t i = 0; i < count(c.game) && i < 6; ++i)
+                c.game.party.characters[i].status = prior_status[i];
+            emit(c, GameEventKind::CampSceneEnd);
             return r;
+        }
     }
-    camp_wake(c, guard);
+    bool appeared = false;
+    camp_wake(c, guard, &appeared);
+    if (!appeared) {
+        for (int32_t i = 0; i < count(c.game) && i < 6; ++i)
+            c.game.party.characters[i].status = prior_status[i];
+        emit(c, GameEventKind::CampSceneEnd);
+    }
     return r;
 }
 void bed_sleep_begin(RestContext &c) {

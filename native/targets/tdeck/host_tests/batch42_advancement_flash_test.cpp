@@ -106,64 +106,64 @@ int main(int argc,char **argv) {
     check(h.waiting()&&g.party.characters[0].level==2&&
           g.party.characters[1].level==1,
           "first Hail holds later member unchanged");
-    check(batch37_frame_count()>=5,
+    check(batch37_frame_count()>=6,
           "Camp presents scene, standing tile, XOR and restored frames before Hail");
-    check(batch37_ui_draw_count()==1&&batch37_panel_draw_count()==0,
+    check(batch37_ui_draw_count()==1&&batch37_panel_draw_count()==2,
           "flash frames do not repaint party panel before Hail acknowledgement");
-    if(batch37_frame_count()>=5) {
+    if(batch37_frame_count()>=6) {
         check(px(1,first.x,first.y)==0xeeee&&
               px(1,second.x,second.y)==0xeeee&&
               px(1,unchanged.x,unchanged.y)==0xeeee,
               "scene starts with both live members on sleeping tile 0x11e");
-        check(px(2,first.x,first.y)==0x8888&&
-              px(2,second.x,second.y)==0xeeee&&
-              px(2,unchanged.x,unchanged.y)==0xeeee,
+        check(px(3,first.x,first.y)==0x8888&&
+              px(3,second.x,second.y)==0xeeee&&
+              px(3,unchanged.x,unchanged.y)==0xeeee,
               "first member wakes to Fighter tile 0x148 at authored cell");
-        check(inverted(2,3),"one XOR pass inverts every CampFire viewport pixel");
-        check(equal(2,4),"first post-chord repaint restores the pre-XOR scene");
+        check(inverted(3,4),"one XOR pass inverts every CampFire viewport pixel");
+        check(equal(3,5),"first post-chord repaint restores the pre-XOR scene");
     }
     check(g.position.xy.x==80&&g.position.xy.y==80,
           "visual actor placement leaves world coordinates untouched");
     h.rt->render(h.board,true); // the regular pump presents Hail text after the command
-    check(batch37_ui_draw_count()==2&&batch37_panel_draw_count()==0&&
+    check(batch37_ui_draw_count()==2&&batch37_panel_draw_count()==2&&
           batch37_pixel(201,4)==5&&batch37_pixel(201,12)==5,
           "Hail render changes transcript without repainting pre-key party HP");
     const auto later_pre_advance_hp=g.party.characters[1].current_hp;
     h.key('x');
     check(h.waiting()&&g.party.characters[1].level==3&&
-          batch37_panel_draw_count()==1&&batch37_ui_draw_count()==2,
+          batch37_panel_draw_count()==3&&batch37_ui_draw_count()==2,
           "acknowledgement redraws one panel then advances the next member");
     check(batch37_pixel(201,4)==60&&batch37_pixel(201,12)==later_pre_advance_hp,
           "acknowledged member HP appears before next member panel update");
-    check(batch37_frame_count()>=9,
+    check(batch37_frame_count()>=10,
           "second member has its own standing, XOR and restore frames");
-    if(batch37_frame_count()>=9) {
-        check(px(6,second.x,second.y)==0x0000&&
-              px(6,first.x,first.y)==0x8888,
+    if(batch37_frame_count()>=10) {
+        check(px(7,second.x,second.y)==0x0000&&
+              px(7,first.x,first.y)==0x8888,
               "second member uses Mage tile 0x140; first remains standing");
-        check(inverted(6,7)&&equal(6,8),
+        check(inverted(7,8)&&equal(7,9),
               "second member receives exactly one reversible XOR pulse");
     }
     h.key('x');
     check(h.waiting()&&g.party.characters[3].level==1&&
           h.rt->commands().camp_advance.phase==CommandState::CampAdvance::Phase::KarmaKey,
           "dead and ineligible slots add no Hail wait");
-    check(batch37_frame_count()==12&&batch37_panel_draw_count()==4,
+    check(batch37_frame_count()==13&&batch37_panel_draw_count()==6,
           "dead slot emits no scene frames; ineligible live slot still flashes");
-    if(batch37_frame_count()==12) {
-        check(px(9,unchanged.x,unchanged.y)==0x0000,
+    if(batch37_frame_count()==13) {
+        check(px(10,unchanged.x,unchanged.y)==0x0000,
               "ineligible live member wakes to Mage tile");
-        check(px(9,dead.x,dead.y)==px(1,dead.x,dead.y),
+        check(px(10,dead.x,dead.y)==px(1,dead.x,dead.y),
               "dead member cell retains its scene background");
-        check(inverted(9,10)&&equal(9,11),
+        check(inverted(10,11)&&equal(10,12),
               "ineligible live member has one XOR pulse before karma speech");
     }
     h.key('x');
     check(h.rt->commands().camp_advance.phase==CommandState::CampAdvance::Phase::None&&
           h.rt->ui()->mode()==UiMode::Exploration,
           "karma acknowledgement finishes the scene and resumes commands");
-    check(batch37_frame_count()==13&&batch37_world_draw_count()==2&&
-          batch37_frame_pixel(12,88,88)==batch37_frame_pixel(0,88,88),
+    check(batch37_frame_count()==14&&batch37_world_draw_count()==2&&
+          batch37_frame_pixel(13,88,88)==batch37_frame_pixel(0,88,88),
           "scene exit repaints the ordinary world viewport at the original position");
     std::printf("Batch 42 visual: %d/%d checks\n",checks-failures,checks);
     return failures?1:0;

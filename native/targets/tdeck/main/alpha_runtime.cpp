@@ -289,15 +289,27 @@ void AlphaRuntime::dispatch_event(void *p,const openu5::GameEvent&e){static_cast
 void AlphaRuntime::consume_event(const openu5::GameEvent&e){
     // OUTSUBS 0x06b9/0x0850/0x08aa: all scene pixels are transient. The
     // shipped CampFire map supplies the south formation; no world actor moves.
-    if(e.kind==openu5::GameEventKind::CampSceneBegin ||
+    if(e.kind==openu5::GameEventKind::CampSleepSceneBegin ||
+       e.kind==openu5::GameEventKind::CampSceneBegin ||
+       e.kind==openu5::GameEventKind::CampGuardMove ||
        e.kind==openu5::GameEventKind::CampActorWake ||
        e.kind==openu5::GameEventKind::CampViewportXor ||
        e.kind==openu5::GameEventKind::CampViewportRestore ||
        e.kind==openu5::GameEventKind::CampSceneEnd){
         switch(e.kind){
+        case openu5::GameEventKind::CampSleepSceneBegin:
+            camp_scene_active_=true;camp_scene_apparition_=false;
+            camp_scene_inverted_=false;camp_awake_mask_=0;
+            camp_guard_=int8_t(e.note);
+            camp_guard_col_=camp_guard_row_=-1;break;
+        case openu5::GameEventKind::CampGuardMove:
+            camp_guard_col_=int8_t(e.note & 0xff);
+            camp_guard_row_=int8_t((e.note >> 8) & 0xff);break;
         case openu5::GameEventKind::CampSceneBegin:
-            camp_scene_active_=true;camp_scene_inverted_=false;
-            camp_awake_mask_=0;camp_guard_=int8_t(e.note);break;
+            if(!camp_scene_active_)camp_guard_col_=camp_guard_row_=-1;
+            camp_scene_active_=true;camp_scene_apparition_=true;
+            camp_scene_inverted_=false;camp_awake_mask_=0;
+            camp_guard_=int8_t(e.note);break;
         case openu5::GameEventKind::CampActorWake:
             if(e.note>=0&&e.note<6)camp_awake_mask_|=uint8_t(1U<<e.note);
             break;
@@ -306,8 +318,10 @@ void AlphaRuntime::consume_event(const openu5::GameEvent&e){
         case openu5::GameEventKind::CampViewportRestore:
             camp_scene_inverted_=false;break;
         case openu5::GameEventKind::CampSceneEnd:
-            camp_scene_active_=false;camp_scene_inverted_=false;
-            camp_awake_mask_=0;camp_guard_=-1;break;
+            camp_scene_active_=false;camp_scene_apparition_=false;
+            camp_scene_inverted_=false;
+            camp_awake_mask_=0;camp_guard_=-1;
+            camp_guard_col_=camp_guard_row_=-1;break;
         default:break;
         }
         if(board_){dirty_=true;dirty_reason_="camp-scene";
@@ -2082,15 +2096,18 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
             snapshot.tiles[cell]=arena.tiles[cell];
             snapshot.visible[cell]=1;
         }
-        snapshot.tiles[5*11+5]=0x174; // apparition remains over the fire
+        if(camp_scene_apparition_)snapshot.tiles[5*11+5]=0x174; // materializes over the fire
         const int n=std::min({6,int(game_.party.party_size),int(game_.party.character_count)});
         for(int slot=0;slot<n;++slot){
             const auto &member=game_.party.characters[slot];
             if(member.status=='D')continue;
-            const auto pos=arena.starts[int(openu5::CombatDirection::South)][slot];
+            auto pos=arena.starts[int(openu5::CombatDirection::South)][slot];
+            if(slot==camp_guard_&&camp_guard_col_>=0&&camp_guard_row_>=0){
+                pos.x=camp_guard_col_;pos.y=camp_guard_row_;
+            }
             if(pos.x<0||pos.x>=11||pos.y<0||pos.y>=11)continue;
             int tile=0x11e;
-            if(slot==camp_guard_||(camp_awake_mask_&(1U<<slot))){
+            if(slot==camp_guard_||member.status=='P'||(camp_awake_mask_&(1U<<slot))){
                 switch(member.character_class){
                 case 'M':tile=0x140;break;
                 case 'B':tile=0x144;break;

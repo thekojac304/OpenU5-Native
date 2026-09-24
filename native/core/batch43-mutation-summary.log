@@ -1,0 +1,9 @@
+omit_sleep_scene: KILLED exit=1 red=7 first=RED sleep scene precedes apparition and standing/XOR frames
+early_apparition: KILLED exit=1 red=3 first=RED sleep scene has empty dead cell and original fire tile
+standing_sleepers: KILLED exit=1 red=4 first=RED pre-apparition CampFire shows sleeping living members
+omit_sleep_status: KILLED exit=1 red=4 first=RED sleep scene presents S in the party panel
+omit_miss_restore: KILLED exit=1 red=2 first=RED missed gate still displays the pre-apparition sleep scene
+extra_gate_rng: KILLED exit=1 red=1 first=RED Camp and gate RNG order matches unchanged Batch 42
+omit_guard_move: KILLED exit=1 red=1 first=RED posted guard movement repaints the CampFire sleep scene (fixture tightened after initial survivor)
+omit_sleep_panel: KILLED exit=1 red=2 first=RED sleep scene presents S in the party panel
+poison_sleeps: KILLED exit=1 red=1 first=RED poisoned Mage remains standing and P through a missed gate

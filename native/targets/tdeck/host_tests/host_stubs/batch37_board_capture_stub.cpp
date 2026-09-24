@@ -7,6 +7,7 @@
 namespace {
 std::array<uint16_t, 320 * 240> screen{};
 std::vector<std::array<uint16_t,176*176>> frames;
+std::vector<std::array<uint16_t,7>> camp_panels;
 int fills = 0;
 int draws = 0;
 int world_draws = 0;
@@ -26,6 +27,7 @@ void capture_panel(const openu5::GameState &game, tdeck::DevicePartyHighlight hi
 void batch37_reset_screen() {
     screen.fill(0x1357);
     frames.clear();
+    camp_panels.clear();
     fills = draws = panel_draws = world_draws = ui_draws = 0;
     first_panel_map_pixel = 0;
 }
@@ -40,6 +42,9 @@ int batch37_draw_count() { return draws; }
 int batch37_world_draw_count() { return world_draws; }
 int batch37_ui_draw_count() { return ui_draws; }
 int batch37_panel_draw_count() { return panel_draws; }
+uint16_t batch37_panel_value(size_t draw,int slot) {
+    return draw<camp_panels.size()&&slot>=0&&slot<7?camp_panels[draw][slot]:0xffff;
+}
 uint16_t batch37_first_panel_map_pixel() { return first_panel_map_pixel; }
 bool batch37_map_black() {
     const auto r=tdeck::bed_viewport_rect();
@@ -81,6 +86,10 @@ esp_err_t Board::show_frontend(const openu5::FrontendView &, const uint16_t *, c
 esp_err_t Board::refresh_bed_status_panel(const openu5::GameState &game,DevicePartyHighlight highlight) {
     if(panel_draws==0)first_panel_map_pixel=screen[92 * 320 + 92];
     ++panel_draws;
+    std::array<uint16_t,7> sample{};
+    for(int slot=0;slot<6;++slot)sample[slot]=uint16_t(game.party.characters[slot].status);
+    sample[6]=uint16_t(game.time.hour*60+game.time.minute);
+    camp_panels.push_back(sample);
     capture_panel(game,highlight);
     return ESP_OK;
 }

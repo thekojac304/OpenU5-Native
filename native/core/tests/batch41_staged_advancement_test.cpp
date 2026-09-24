@@ -122,8 +122,8 @@ int main() {
     check(a.stat_draws==1&&f.draws.back().lo==1&&f.draws.back().hi==3&&
           a.phase==CommandState::CampAdvance::Phase::MemberKey&&a.slot==0,
           "first stat draw and continuation belong to member one");
-    check(a.panels==0&&a.chimes==1&&f.first_chime_second_level==1,
-          "first message holds before its panel draw and next member cue");
+    check(a.panels==2&&a.chimes==1&&f.first_chime_second_level==1,
+          "first message holds before its advancement panel draw and next cue");
     check(f.text.find("Hail, Member0!")!=std::string::npos&&
           f.text.find("Hail, Member2!")==std::string::npos&&
           f.text.find("Karma record")==std::string::npos,
@@ -145,7 +145,7 @@ int main() {
     check(b.stat_draws==2&&b.draws==a.draws+1&&b.seed==expected.get_seed()&&b.slot==2&&
           f.second_chime_second_level==1,
           "second stat draw is deferred until second member's cue");
-    check(b.panels==2&&b.chimes==2,
+    check(b.panels==4&&b.chimes==2,
           "first member and dead slot redraw before second member's message");
     check(f.text.find("Hail, Member2!")!=std::string::npos&&
           f.text.find("Hail, Member1!")==std::string::npos,
@@ -154,7 +154,7 @@ int main() {
     check(f.waits.size()==3&&f.ui.mode()==UiMode::KeyWait&&
           f.waits[2].phase==CommandState::CampAdvance::Phase::KarmaKey,
           "second key reaches the separate karma speech wait");
-    check(f.waits[2].panels==4&&f.waits[2].stat_draws==2&&
+    check(f.waits[2].panels==6&&f.waits[2].stat_draws==2&&
           f.waits[2].draws==b.draws&&
           f.game.party.characters[1].level==1&&f.game.party.characters[3].level==1,
           "all four slots redraw; dead and ineligible slots consume no stat draw");

@@ -1,0 +1,43 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch43
+      Start 10: gameplay_integration
+ 1/19 Test #10: gameplay_integration .............   Passed    0.01 sec
+      Start 26: item_parity
+ 2/19 Test #26: item_parity ......................   Passed    1.32 sec
+      Start 28: core_parity
+ 3/19 Test #28: core_parity ......................   Passed    0.09 sec
+      Start 30: turn_parity
+ 4/19 Test #30: turn_parity ......................   Passed    0.08 sec
+      Start 32: presentation_regression
+ 5/19 Test #32: presentation_regression ..........   Passed    0.01 sec
+      Start 55: batch29_rest_wiring
+ 6/19 Test #55: batch29_rest_wiring ..............   Passed    0.12 sec
+      Start 56: batch30_sleep_parity
+ 7/19 Test #56: batch30_sleep_parity .............   Passed    0.06 sec
+      Start 58: batch32_camp_watch
+ 8/19 Test #58: batch32_camp_watch ...............   Passed    0.07 sec
+      Start 60: batch34_pre_sleep_npc
+ 9/19 Test #60: batch34_pre_sleep_npc ............   Passed    0.06 sec
+      Start 61: batch35_q_sleep_target
+10/19 Test #61: batch35_q_sleep_target ...........   Passed    0.06 sec
+      Start 62: batch36_camp_housekeeping
+11/19 Test #62: batch36_camp_housekeeping ........   Passed    0.06 sec
+      Start 63: batch37_bed_viewport
+12/19 Test #63: batch37_bed_viewport .............   Passed    0.06 sec
+      Start 64: batch39_party_panel
+13/19 Test #64: batch39_party_panel ..............   Passed    0.05 sec
+      Start 65: batch41_raw_key
+14/19 Test #65: batch41_raw_key ..................   Passed    0.06 sec
+      Start 66: batch42_advancement_flash
+15/19 Test #66: batch42_advancement_flash ........   Passed    0.17 sec
+      Start 67: batch43_sleep_scene
+16/19 Test #67: batch43_sleep_scene ..............   Passed    0.91 sec
+      Start 68: batch38_camp_duration
+17/19 Test #68: batch38_camp_duration ............   Passed    0.06 sec
+      Start 69: batch40_advancement
+18/19 Test #69: batch40_advancement ..............   Passed    0.01 sec
+      Start 70: batch41_staged_advancement
+19/19 Test #70: batch41_staged_advancement .......   Passed    0.01 sec
+
+100% tests passed out of 19
+
+Total Test time (real) =   3.30 sec
