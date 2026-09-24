@@ -165,7 +165,7 @@ struct Harness {
                     auto &h = *static_cast<Harness *>(p);
                     // The raster-only CMDS bed fill has no TypeScript event
                     // counterpart; the Batch 37 framebuffer fixture owns it.
-                    if (e.kind == GameEventKind::BedViewportFill) return;
+                    if (e.kind == GameEventKind::BedViewportFill || e.kind == GameEventKind::BedStatusRefresh) return;
                     h.events.push_back(int(e.kind));
                     text(h.events, e.text);
                 }};

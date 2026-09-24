@@ -1,0 +1,223 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch39
+        Start  26: item_parity
+        Start  55: batch29_rest_wiring
+        Start  30: turn_parity
+        Start  63: batch37_bed_viewport
+  1/109 Test  #63: batch37_bed_viewport .......................   Passed    0.06 sec
+        Start   2: ui_session
+  2/109 Test   #2: ui_session .................................   Passed    0.01 sec
+        Start  27: command_parity
+  3/109 Test  #30: turn_parity ................................   Passed    0.08 sec
+        Start  61: batch35_q_sleep_target
+  4/109 Test  #55: batch29_rest_wiring ........................   Passed    0.12 sec
+        Start  32: presentation_regression
+  5/109 Test  #32: presentation_regression ....................   Passed    0.01 sec
+        Start  60: batch34_pre_sleep_npc
+  6/109 Test  #61: batch35_q_sleep_target .....................   Passed    0.06 sec
+        Start  56: batch30_sleep_parity
+  7/109 Test  #60: batch34_pre_sleep_npc ......................   Passed    0.06 sec
+        Start  44: action_feedback_regression
+  8/109 Test  #44: action_feedback_regression .................   Passed    0.01 sec
+        Start  45: ui_mode_regression
+  9/109 Test  #45: ui_mode_regression .........................   Passed    0.01 sec
+        Start  65: batch38_camp_duration
+ 10/109 Test  #56: batch30_sleep_parity .......................   Passed    0.07 sec
+        Start  64: batch39_party_panel
+ 11/109 Test  #65: batch38_camp_duration ......................   Passed    0.07 sec
+        Start  46: alpha_runtime_integration_regression
+ 12/109 Test  #46: alpha_runtime_integration_regression .......   Passed    0.01 sec
+        Start  39: batch21a3_combat_active_player
+ 13/109 Test  #64: batch39_party_panel ........................   Passed    0.06 sec
+        Start  10: gameplay_integration
+ 14/109 Test  #39: batch21a3_combat_active_player .............   Passed    0.01 sec
+        Start  79: batch15_sacrifice_roster
+ 15/109 Test  #10: gameplay_integration .......................   Passed    0.01 sec
+        Start  62: batch36_camp_housekeeping
+ 16/109 Test  #79: batch15_sacrifice_roster ...................   Passed    0.01 sec
+        Start  58: batch32_camp_watch
+ 17/109 Test  #62: batch36_camp_housekeeping ..................   Passed    0.06 sec
+        Start   1: frontend
+ 18/109 Test  #27: command_parity .............................   Passed    0.41 sec
+        Start   3: display_names
+ 19/109 Test   #1: frontend ...................................   Passed    0.23 sec
+        Start   4: quest_search
+ 20/109 Test   #3: display_names ..............................   Passed    0.20 sec
+        Start   5: batch21b_chest_reset
+ 21/109 Test  #58: batch32_camp_watch .........................   Passed    0.53 sec
+        Start   6: debug_labels
+ 22/109 Test   #4: quest_search ...............................   Passed    0.34 sec
+        Start   7: ui_debug_menu
+ 23/109 Test   #5: batch21b_chest_reset .......................   Passed    0.35 sec
+        Start   8: debug_map_picker
+ 24/109 Test   #6: debug_labels ...............................   Passed    0.34 sec
+        Start   9: debug_developer
+ 25/109 Test   #7: ui_debug_menu ..............................   Passed    0.53 sec
+        Start  11: look_sign
+ 26/109 Test   #8: debug_map_picker ...........................   Passed    0.53 sec
+ 27/109 Test  #26: item_parity ................................   Passed    1.58 sec
+        Start  12: movement_flow_parity
+        Start  13: shop_adapters
+ 28/109 Test   #9: debug_developer ............................   Passed    0.67 sec
+        Start  14: shop_flow
+ 29/109 Test  #11: look_sign ..................................   Passed    0.46 sec
+        Start  15: shop_parity
+ 30/109 Test  #13: shop_adapters ..............................   Passed    0.28 sec
+        Start  16: dialogue_adapters
+ 31/109 Test  #12: movement_flow_parity .......................   Passed    0.54 sec
+        Start  17: dialogue_parity
+ 32/109 Test  #16: dialogue_adapters ..........................   Passed    0.26 sec
+        Start  18: transport_flow_parity
+ 33/109 Test  #18: transport_flow_parity ......................   Passed    0.12 sec
+        Start  19: world_flow_adapters
+ 34/109 Test  #19: world_flow_adapters ........................   Passed    0.15 sec
+        Start  20: dungeon_flow_parity
+ 35/109 Test  #15: shop_parity ................................   Passed    0.72 sec
+        Start  21: world_flow_parity
+ 36/109 Test  #20: dungeon_flow_parity ........................   Passed    0.23 sec
+        Start  22: dungeon_parity
+ 37/109 Test  #21: world_flow_parity ..........................   Passed    0.39 sec
+        Start  23: advanced_combat_parity
+ 38/109 Test  #14: shop_flow ..................................   Passed    2.24 sec
+        Start  24: magic_parity
+ 39/109 Test  #17: dialogue_parity ............................   Passed    2.08 sec
+        Start  25: combat_parity
+ 40/109 Test  #24: magic_parity ...............................   Passed    0.24 sec
+        Start  28: core_parity
+ 41/109 Test  #22: dungeon_parity .............................   Passed    1.71 sec
+        Start  29: travel_parity
+ 42/109 Test  #28: core_parity ................................   Passed    0.24 sec
+        Start  31: movement_regression
+ 43/109 Test  #31: movement_regression ........................   Passed    0.03 sec
+        Start  33: dungeon_view_regression
+ 44/109 Test  #33: dungeon_view_regression ....................   Passed    0.10 sec
+        Start  34: dungeon_art_regression
+ 45/109 Test  #34: dungeon_art_regression .....................   Passed    0.11 sec
+        Start  35: gem_view_regression
+ 46/109 Test  #35: gem_view_regression ........................   Passed    0.11 sec
+        Start  36: combat_escape_regression
+ 47/109 Test  #36: combat_escape_regression ...................   Passed    0.15 sec
+        Start  37: direct_troll_handoff_regression
+ 48/109 Test  #29: travel_parity ..............................   Passed    0.73 sec
+        Start  38: combat_loot_open_regression
+ 49/109 Test  #37: direct_troll_handoff_regression ............   Passed    0.25 sec
+        Start  40: input_regression
+ 50/109 Test  #38: combat_loot_open_regression ................   Passed    0.15 sec
+        Start  41: dungeon_input_regression
+ 51/109 Test  #40: input_regression ...........................   Passed    0.18 sec
+        Start  42: dungeon_combat_regression
+ 52/109 Test  #25: combat_parity ..............................   Passed    1.45 sec
+        Start  43: batch12b_hardware_regression
+ 53/109 Test  #41: dungeon_input_regression ...................   Passed    0.43 sec
+        Start  47: batch21a_dungeon_room_regression
+ 54/109 Test  #43: batch12b_hardware_regression ...............   Passed    0.45 sec
+        Start  48: batch22_basement_objects
+ 55/109 Test  #42: dungeon_combat_regression ..................   Passed    0.74 sec
+        Start  49: batch23_vault_parity
+ 56/109 Test  #48: batch22_basement_objects ...................   Passed    0.19 sec
+        Start  50: batch24_reload_parity
+ 57/109 Test  #49: batch23_vault_parity .......................   Passed    0.19 sec
+        Start  51: batch25_shard_ritual
+ 58/109 Test  #51: batch25_shard_ritual .......................   Passed    0.15 sec
+        Start  52: batch26_dungeon_save
+ 59/109 Test  #50: batch24_reload_parity ......................   Passed    0.41 sec
+        Start  53: batch27_alt_load
+ 60/109 Test  #52: batch26_dungeon_save .......................   Passed    0.47 sec
+        Start  54: batch28_save_validation
+ 61/109 Test  #23: advanced_combat_parity .....................   Passed    4.18 sec
+        Start  57: batch31_h165_dungeon_entry
+ 62/109 Test  #57: batch31_h165_dungeon_entry .................   Passed    0.15 sec
+        Start  59: batch33_cannon_npc_death
+ 63/109 Test  #59: batch33_cannon_npc_death ...................   Passed    0.14 sec
+        Start  66: batch14_zstats_runtime
+ 64/109 Test  #53: batch27_alt_load ...........................   Passed    0.97 sec
+        Start  67: batch18_well_ceremony
+ 65/109 Test  #66: batch14_zstats_runtime .....................   Passed    0.34 sec
+        Start  68: batch19_command_char_runtime
+ 66/109 Test  #67: batch18_well_ceremony ......................   Passed    0.38 sec
+        Start  69: batch3_group_a
+ 67/109 Test  #68: batch19_command_char_runtime ...............   Passed    0.35 sec
+        Start  70: batch3_group_b
+ 68/109 Test  #69: batch3_group_a .............................   Passed    0.22 sec
+        Start  71: batch3_group_c
+ 69/109 Test  #70: batch3_group_b .............................   Passed    0.24 sec
+        Start  72: batch4_group_a
+ 70/109 Test  #71: batch3_group_c .............................   Passed    0.33 sec
+        Start  73: batch4_group_b
+ 71/109 Test  #72: batch4_group_a .............................   Passed    0.33 sec
+        Start  74: batch5
+ 72/109 Test  #73: batch4_group_b .............................   Passed    0.29 sec
+        Start  75: batch7b
+ 73/109 Test  #74: batch5 .....................................   Passed    0.24 sec
+        Start  76: batch12_combat_field
+ 74/109 Test  #75: batch7b ....................................   Passed    0.27 sec
+        Start  77: batch13
+ 75/109 Test  #76: batch12_combat_field .......................   Passed    0.39 sec
+        Start  78: batch14_zstats_model
+ 76/109 Test  #77: batch13 ....................................   Passed    0.27 sec
+        Start  80: batch17_theft_watchdog
+ 77/109 Test  #78: batch14_zstats_model .......................   Passed    0.14 sec
+        Start  81: batch19_command_char
+ 78/109 Test  #80: batch17_theft_watchdog .....................   Passed    0.23 sec
+        Start  82: batch45b
+ 79/109 Test  #81: batch19_command_char .......................   Passed    0.25 sec
+        Start  83: blackthorn_scene
+ 80/109 Test  #82: batch45b ...................................   Passed    0.21 sec
+        Start  84: alpha_resource_capacity
+ 81/109 Test  #83: blackthorn_scene ...........................   Passed    0.12 sec
+        Start  85: gameplay_parity
+ 82/109 Test  #84: alpha_resource_capacity ....................   Passed    0.03 sec
+        Start  86: outdoor_table_drift
+ 83/109 Test  #86: outdoor_table_drift ........................   Passed    0.09 sec
+        Start  87: gem_category_table_drift
+ 84/109 Test  #87: gem_category_table_drift ...................   Passed    0.08 sec
+        Start  88: movement_flow_drift
+ 85/109 Test  #54: batch28_save_validation ....................   Passed    3.69 sec
+        Start  89: quest_parity
+ 86/109 Test  #47: batch21a_dungeon_room_regression ...........   Passed    6.66 sec
+        Start  90: quest_case_table_drift
+ 87/109 Test  #90: quest_case_table_drift .....................   Passed    0.14 sec
+        Start  91: typescript_shop_fixture_drift
+ 88/109 Test  #91: typescript_shop_fixture_drift ..............   Passed    1.40 sec
+        Start  92: typescript_shop_flow_drift
+ 89/109 Test  #88: movement_flow_drift ........................   Passed    6.92 sec
+        Start  93: typescript_shop_tables_drift
+ 90/109 Test  #93: typescript_shop_tables_drift ...............   Passed    0.09 sec
+        Start  94: typescript_shop_greetings_drift
+ 91/109 Test  #94: typescript_shop_greetings_drift ............   Passed    0.09 sec
+        Start  95: persistence_parity
+ 92/109 Test  #92: typescript_shop_flow_drift .................   Passed    5.48 sec
+        Start  96: typescript_dialogue_fixture_drift
+ 93/109 Test  #95: persistence_parity .........................   Passed    2.71 sec
+        Start  97: typescript_transport_flow_fixture_drift
+ 94/109 Test  #97: typescript_transport_flow_fixture_drift ....   Passed    0.29 sec
+        Start  98: typescript_dungeon_flow_fixture_drift
+ 95/109 Test  #98: typescript_dungeon_flow_fixture_drift ......   Passed    4.07 sec
+        Start  99: typescript_dungeon_art_identity
+ 96/109 Test  #99: typescript_dungeon_art_identity ............   Passed    0.15 sec
+        Start 100: typescript_world_flow_fixture_drift
+ 97/109 Test #100: typescript_world_flow_fixture_drift ........   Passed    1.09 sec
+        Start 101: typescript_dungeon_fixture_drift
+ 98/109 Test  #96: typescript_dialogue_fixture_drift ..........   Passed   11.58 sec
+        Start 102: typescript_advanced_combat_fixture_drift
+ 99/109 Test #102: typescript_advanced_combat_fixture_drift ...   Passed    4.51 sec
+        Start 103: typescript_magic_fixture_drift
+100/109 Test #103: typescript_magic_fixture_drift .............   Passed    0.22 sec
+        Start 104: typescript_combat_fixture_drift
+101/109 Test #104: typescript_combat_fixture_drift ............   Passed    2.78 sec
+        Start 105: typescript_item_fixture_drift
+102/109 Test  #89: quest_parity ...............................   Passed   28.50 sec
+        Start 106: typescript_command_fixture_drift
+103/109 Test #105: typescript_item_fixture_drift ..............   Passed    2.28 sec
+        Start 107: typescript_travel_fixture_drift
+104/109 Test #106: typescript_command_fixture_drift ...........   Passed    1.70 sec
+        Start 108: typescript_fixture_drift
+105/109 Test #108: typescript_fixture_drift ...................   Passed    0.13 sec
+        Start 109: typescript_turn_fixture_drift
+106/109 Test #109: typescript_turn_fixture_drift ..............   Passed    0.87 sec
+107/109 Test #107: typescript_travel_fixture_drift ............   Passed    2.13 sec
+108/109 Test #101: typescript_dungeon_fixture_drift ...........   Passed   35.91 sec
+109/109 Test  #85: gameplay_parity ............................   Passed   65.38 sec
+
+100% tests passed out of 109
+
+Total Test time (real) =  75.29 sec

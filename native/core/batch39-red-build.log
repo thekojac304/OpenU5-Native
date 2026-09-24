@@ -1,0 +1,14 @@
+[1/14] Building CXX object CMakeFiles/batch39_party_panel.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp.obj
+[2/14] Building CXX object CMakeFiles/batch39_party_panel.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/ui_input_adapter.cpp.obj
+[3/14] Building CXX object CMakeFiles/batch39_party_panel.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/input_controller.cpp.obj
+[4/14] Building CXX object CMakeFiles/batch39_party_panel.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/keyboard_matrix.cpp.obj
+[5/14] Building CXX object CMakeFiles/batch39_party_panel.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_save_generation.cpp.obj
+[6/14] Building CXX object CMakeFiles/batch39_party_panel.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/batch39_party_panel_test.cpp.obj
+[7/14] Building CXX object CMakeFiles/batch39_party_panel.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_resources.cpp.obj
+[8/14] Building CXX object CMakeFiles/batch39_party_panel.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/asset_pack.cpp.obj
+[9/14] Building CXX object CMakeFiles/batch39_party_panel.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_dialogue.cpp.obj
+[10/14] Building CXX object CMakeFiles/batch39_party_panel.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_runtime.cpp.obj
+[11/14] Building CXX object CMakeFiles/batch39_party_panel.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/native_renderer.cpp.obj
+[12/14] Building CXX object CMakeFiles/batch39_party_panel.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/dungeon_art_cache.cpp.obj
+[13/14] Building CXX object CMakeFiles/batch39_party_panel.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp.obj
+[14/14] Linking CXX executable batch39_party_panel.exe

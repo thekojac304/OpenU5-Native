@@ -102,11 +102,14 @@ public:
     // CMDS bed entry: fill only the map image; the relocated sky/wind strips
     // and viewport frame remain visible. The next normal draw restores it.
     esp_err_t fill_bed_viewport();
+    // CMDS 0x060a/0x0674: update the status panel without touching the map.
+    esp_err_t refresh_bed_status_panel(const openu5::GameState &, DevicePartyHighlight);
     bool debug_last_full_redraw() const { return debug_last_full_redraw_; }
     size_t debug_last_dirty_regions() const { return debug_last_dirty_regions_; }
     size_t debug_last_pixels() const { return debug_last_pixels_; }
 
 private:
+    esp_err_t draw_party_rows(const openu5::GameState &, DevicePartyHighlight);
     esp_err_t initialize_shared_spi();
     esp_err_t write_display_command(uint8_t command, const uint8_t *data = nullptr,
                                     size_t data_length = 0);

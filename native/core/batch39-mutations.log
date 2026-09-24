@@ -1,0 +1,11 @@
+Batch 39 H-174 mutation proof; temporary source changes restored before final build
+omit_entry: 12/17 GREEN, 5 RED - KILLED
+before_sleep_status: 16/17 GREEN, 1 RED - KILLED
+after_zzz: 15/17 GREEN, 2 RED - KILLED
+after_blackout: 14/17 GREEN, 3 RED - KILLED
+omit_tick: 13/17 GREEN, 4 RED - KILLED
+extra_tick: 15/17 GREEN, 2 RED - KILLED
+before_housekeeping: 14/17 GREEN, 3 RED - KILLED
+keep_active_character: 16/17 GREEN, 1 RED - KILLED
+full_redraw: 10/17 GREEN, 7 RED - KILLED
+Restored production: 17/17 GREEN, 0 RED

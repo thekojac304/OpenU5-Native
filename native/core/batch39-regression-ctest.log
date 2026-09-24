@@ -1,0 +1,45 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch39
+      Start  2: ui_session
+      Start 10: gameplay_integration
+      Start 26: item_parity
+      Start 27: command_parity
+ 1/20 Test  #2: ui_session .............................   Passed    0.50 sec
+ 2/20 Test #10: gameplay_integration ...................   Passed    0.36 sec
+      Start 30: turn_parity
+      Start 32: presentation_regression
+ 3/20 Test #27: command_parity .........................   Passed    0.50 sec
+      Start 39: batch21a3_combat_active_player
+ 4/20 Test #30: turn_parity ............................   Passed    0.54 sec
+      Start 44: action_feedback_regression
+ 5/20 Test #32: presentation_regression ................   Passed    0.47 sec
+      Start 45: ui_mode_regression
+ 6/20 Test #39: batch21a3_combat_active_player .........   Passed    0.37 sec
+      Start 46: alpha_runtime_integration_regression
+ 7/20 Test #44: action_feedback_regression .............   Passed    0.40 sec
+      Start 55: batch29_rest_wiring
+ 8/20 Test #45: ui_mode_regression .....................   Passed    0.40 sec
+      Start 56: batch30_sleep_parity
+ 9/20 Test #46: alpha_runtime_integration_regression ...   Passed    0.39 sec
+      Start 58: batch32_camp_watch
+10/20 Test #26: item_parity ............................   Passed    1.46 sec
+      Start 60: batch34_pre_sleep_npc
+11/20 Test #58: batch32_camp_watch .....................   Passed    0.21 sec
+      Start 61: batch35_q_sleep_target
+12/20 Test #56: batch30_sleep_parity ...................   Passed    0.42 sec
+      Start 62: batch36_camp_housekeeping
+13/20 Test #55: batch29_rest_wiring ....................   Passed    0.66 sec
+      Start 63: batch37_bed_viewport
+14/20 Test #60: batch34_pre_sleep_npc ..................   Passed    0.44 sec
+      Start 64: batch39_party_panel
+15/20 Test #62: batch36_camp_housekeeping ..............   Passed    0.25 sec
+      Start 65: batch38_camp_duration
+16/20 Test #61: batch35_q_sleep_target .................   Passed    0.47 sec
+      Start 79: batch15_sacrifice_roster
+17/20 Test #64: batch39_party_panel ....................   Passed    0.39 sec
+18/20 Test #79: batch15_sacrifice_roster ...............   Passed    0.26 sec
+19/20 Test #63: batch37_bed_viewport ...................   Passed    0.52 sec
+20/20 Test #65: batch38_camp_duration ..................   Passed    0.40 sec
+
+100% tests passed out of 20
+
+Total Test time (real) =   2.64 sec

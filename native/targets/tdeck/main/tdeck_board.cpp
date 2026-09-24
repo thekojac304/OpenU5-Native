@@ -539,6 +539,27 @@ esp_err_t Board::fill_bed_viewport()
     return result;
 }
 
+esp_err_t Board::draw_party_rows(const openu5::GameState &game,DevicePartyHighlight party_highlight) {
+    const auto members=openu5::party_members(game.party);
+    // Y-04 (#213): `damage_flash` puts ONE row in reverse video -- the binary's
+    // 0x2a28, an XOR of the row's rectangle, shared with the picker cursor and
+    // the combat hit. It is the top of openu5::roster_invert_row's precedence.
+    for(size_t row=0;row<6;++row){char line[24]{};uint16_t color=kWhite;bool invert=false;if(row<members.count){const auto index=members.indices[row];const auto&a=game.party.characters[index];const bool selected=index==party_highlight.selected,actor=index==party_highlight.actor;std::snprintf(line,sizeof(line),"%c%u %-7.7s %3u/%3u %c",selected?'>':actor?'*':' ',unsigned(row+1),a.name,unsigned(std::min<uint16_t>(a.current_hp,999)),unsigned(std::min<uint16_t>(a.max_hp,999)),a.status?a.status:'G');color=selected?kGreen:actor?kCyan:kWhite;invert=index==party_highlight.damage_flash;}ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudRightX,4+int(row)*8,openu5::kHudRightW,8,line,color,1,1,invert),kTag,"draw party row");}
+    return ESP_OK;
+}
+
+esp_err_t Board::refresh_bed_status_panel(const openu5::GameState &game,DevicePartyHighlight party_highlight) {
+    if(!display_initialized_||!alpha_drawn_)return ESP_ERR_INVALID_STATE;
+    ESP_RETURN_ON_ERROR(draw_party_rows(game,party_highlight),kTag,"refresh bed party rows");
+    char location[24]{};
+    const char *name=hud_location_caption(game.position.map.location,game.position.map.floor,false,0);
+    std::snprintf(location,sizeof(location),"%.22s",name);
+    ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudRightX,58,openu5::kHudRightW,8,location,kCyan),kTag,"refresh bed location");
+    char clock[24]{};
+    std::snprintf(clock,sizeof(clock),"Day %ld  %02ld:%02ld",long(game.time.day),long(game.time.hour),long(game.time.minute));
+    return draw_text_box(openu5::kHudRightX,68,openu5::kHudRightW,8,clock,kWhite);
+}
+
 esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
                             const openu5::GameState &game,const openu5::TurnState &turn,
                             const openu5::HudWorldState &hud,const uint8_t *runes_font,const char *overlay,
@@ -771,11 +792,7 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
         ESP_RETURN_ON_ERROR(draw_context_bar(selection->context,182,137,first),kTag,"selector context action bar");account(137*25);
         selection_cache_=*selection;selection_cache_valid_=true;alpha_ui_cache_valid_=true;return ESP_OK;
     }
-    const auto members=openu5::party_members(game.party);
-    // Y-04 (#213): `damage_flash` puts ONE row in reverse video -- the binary's
-    // 0x2a28, an XOR of the row's rectangle, shared with the picker cursor and
-    // the combat hit. It is the top of openu5::roster_invert_row's precedence.
-    for(size_t row=0;row<6;++row){char line[24]{};uint16_t color=kWhite;bool invert=false;if(row<members.count){const auto index=members.indices[row];const auto&a=game.party.characters[index];const bool selected=index==party_highlight.selected,actor=index==party_highlight.actor;std::snprintf(line,sizeof(line),"%c%u %-7.7s %3u/%3u %c",selected?'>':actor?'*':' ',unsigned(row+1),a.name,unsigned(std::min<uint16_t>(a.current_hp,999)),unsigned(std::min<uint16_t>(a.max_hp,999)),a.status?a.status:'G');color=selected?kGreen:actor?kCyan:kWhite;invert=index==party_highlight.damage_flash;}ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudRightX,4+int(row)*8,openu5::kHudRightW,8,line,color,1,1,invert),kTag,"draw party row");}
+    ESP_RETURN_ON_ERROR(draw_party_rows(game,party_highlight),kTag,"draw party rows");
     // Batch 9B.  While a dungeon session is mounted the caption is the DUNGEON's
     // name, not game.position's -- that field holds the surface RETURN context
     // for the whole descent and is stale by design (see hud_location_caption()).

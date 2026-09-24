@@ -287,6 +287,13 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
 void AlphaRuntime::dispatch_ui(void *p,const openu5::UiIntent&i){static_cast<AlphaRuntime*>(p)->dispatch(i);}
 void AlphaRuntime::dispatch_event(void *p,const openu5::GameEvent&e){static_cast<AlphaRuntime*>(p)->consume_event(e);}
 void AlphaRuntime::consume_event(const openu5::GameEvent&e){
+    if(e.kind==openu5::GameEventKind::BedStatusRefresh){
+        if(board_){
+            const auto result=board_->refresh_bed_status_panel(game_,compose_party_highlight());
+            if(result!=ESP_OK)ESP_LOGE(kTag,"BED_STATUS_REFRESH failed: %s",esp_err_to_name(result));
+        }
+        return;
+    }
     if(e.kind==openu5::GameEventKind::BedViewportFill){
         // The original writes the rectangle synchronously before the first
         // ten-minute tick. The normal post-command render restores the map.

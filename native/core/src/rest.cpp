@@ -214,6 +214,14 @@ void bed_sleep_begin(RestContext &c) {
         if (m.status == 'G')
             m.status = 'S';
     }
+    // CMDS.OVL:0x060a calls the status renderer after G->S. Its row
+    // helper clears an active selection when that member is asleep.
+    const auto selected = c.game.party.active_character;
+    if (selected < c.game.party.character_count &&
+        (c.game.party.characters[selected].status == 'S' ||
+         c.game.party.characters[selected].status == 'D'))
+        c.game.party.active_character = 255;
+    emit(c, GameEventKind::BedStatusRefresh);
     msg(c, "Zzzzzzz...\n");
     // CMDS.OVL:0x0614-0x0624: color zero, copy-fill (8,8)-(183,183).
     // This is raster-only; the party status and NPC schedules are untouched.
@@ -236,6 +244,8 @@ bool bed_sleep_step(RestContext &c) {
     }
     for (uint8_t i = 0; i < tick.message_count; ++i)
         msg(c, turn_message_text(tick.messages[i]));
+    // CMDS.OVL:0x0674 redraws status after 0x0671 housekeeping.
+    emit(c, GameEventKind::BedStatusRefresh);
     c.services.snap_npcs(c.services.context);
     const auto &p = c.game.position;
     if (c.services.occupied(c.services.context, p.xy.x, p.xy.y, p.map.floor)) {
