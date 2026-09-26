@@ -188,6 +188,19 @@ MusicContext music_context_for_location(const LocationMusicInput &in) {
     return MusicContext::Silence;                                                                // 0x021d
 }
 
+MusicContext intro_page_music_context(uint8_t page) {
+    if (page <= 0x07) return MusicContext::IntroStones;
+    if (page <= 0x0e) return MusicContext::IntroHalls;
+    if (page <= 0x15) return MusicContext::IntroGreyson;
+    return MusicContext::Silence;
+}
+
+MusicContext endgame_scene_music_context(uint8_t scene) {
+    if (scene <= 0x03) return MusicContext::EndgameStones;
+    if (scene <= 0x07) return MusicContext::EndgameLadyNan;
+    return MusicContext::Silence;
+}
+
 const char *music_capability_name(MusicCapability c) {
     switch (c) {
     case MusicCapability::StockNoMusic: return "stock-no-music";

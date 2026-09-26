@@ -93,11 +93,28 @@ struct AudioPackInfo {
 };
 
 /**
+ * Alpha 3 A3-04. Pointers INTO the caller's `data` for the payload a music
+ * player needs: filled by inspect_audio_pack only when the pack is Valid and
+ * its capability is SupportedMusicPatch (otherwise every field stays null/0
+ * -- there is nothing to play, by construction, not by omission). The
+ * pointers alias `data` and are only valid as long as the caller keeps it.
+ */
+struct AudioPackPayload {
+    const uint8_t *song[kMusicSongCount]{};
+    size_t song_length[kMusicSongCount]{};
+    const uint8_t *bank = nullptr;
+    size_t bank_length = 0;
+};
+
+/**
  * Validate a whole audio pack held in memory. PURE: no I/O, no allocation.
  * A pack that claims the supported patch is Valid only if it really carries
  * all 16 songs (each a structurally valid XMI) and a valid timbre bank.
+ * `payload`, if given, is filled with pointers to that song/bank data (see
+ * AudioPackPayload) -- the validation walk already finds them, so a caller
+ * that wants to actually play the pack does not need a second scan.
  */
-AudioPackInfo inspect_audio_pack(const uint8_t *data, size_t size);
+AudioPackInfo inspect_audio_pack(const uint8_t *data, size_t size, AudioPackPayload *payload = nullptr);
 /** The run-time availability a pack gives; anything not Valid gives no music. */
 MusicAvailability music_availability(const AudioPackInfo &);
 

@@ -93,7 +93,7 @@ bool validate_timbre_bank(const uint8_t *d, size_t n) {
     return timbres > 0;
 }
 
-AudioPackInfo inspect_audio_pack(const uint8_t *d, size_t n) {
+AudioPackInfo inspect_audio_pack(const uint8_t *d, size_t n, AudioPackPayload *payload) {
     AudioPackInfo info{};
     if (!d || n == 0) return info; // Missing
     info.file_size = uint32_t(n > 0xffffffffu ? 0xffffffffu : n);
@@ -182,6 +182,14 @@ AudioPackInfo inspect_audio_pack(const uint8_t *d, size_t n) {
                         validate_timbre_bank(bank, bank_length);
         for (size_t s = 0; complete && s < kMusicSongCount; ++s) complete = validate_xmi(songs[s], song_lengths[s]);
         if (!complete) return fail(AudioPackState::Inconsistent);
+        if (payload) {
+            for (size_t s = 0; s < kMusicSongCount; ++s) {
+                payload->song[s] = songs[s];
+                payload->song_length[s] = song_lengths[s];
+            }
+            payload->bank = bank;
+            payload->bank_length = bank_length;
+        }
     } else if (song_mask != 0 || bank) {
         // Our packer never ships music data it could not vouch for.
         return fail(AudioPackState::Inconsistent);

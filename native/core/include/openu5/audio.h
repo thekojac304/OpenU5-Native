@@ -144,6 +144,19 @@ struct LocationMusicInput {
  */
 MusicContext music_context_for_location(const LocationMusicInput &);
 
+/**
+ * The intro's page-range table, mid.drv 0x223 (selector 0x06), indexed by
+ * the cinematic page INTRO.OVL 0x0adc passes in BL. Pages outside 0..0x15
+ * are Silence (game/src/ui/music.ts introPageContext, ported). PURE.
+ */
+MusicContext intro_page_music_context(uint8_t page);
+/**
+ * The endgame's scene-range table, mid.drv 0x24a (selector 0x18), indexed by
+ * the scene ENDGAME.OVL 0x0aee passes in BL. Scenes outside 0..7 are Silence
+ * (game/src/ui/music.ts endgameSceneContext, ported). PURE.
+ */
+MusicContext endgame_scene_music_context(uint8_t scene);
+
 // ---------------------------------------------------------------------------
 // Capability. What the user's own asset set supports (decided by the packer,
 // recorded in the audio pack) and what the device can therefore offer.

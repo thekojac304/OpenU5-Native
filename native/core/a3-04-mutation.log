@@ -1,0 +1,48 @@
+# A3-04 mutation validation (2026-09-26 17:23)
+
+M1 an absent program falls silent instead of the melodic-0 fallback [native/core/src/music_synth.cpp]: KILLED
+    synth          exit=1  1 RED
+        RED B4b the fallback is really melodic program 0, not whichever timbre the index lists first
+M2 velocity 0 is treated as a real note-on (the corpus never sends 0x8n) [native/core/src/music_synth.cpp]: KILLED
+    synth          exit=1  1 RED
+        RED V3 note_on with velocity 0 releases the voice (the XMI corpus never sends 0x8n)
+M3 the sustain pedal never actually holds a note (CC64 always reads as released) [native/core/src/music_synth.cpp]: KILLED
+    synth          exit=1  2 RED
+        RED V6 note_off under a held sustain pedal (CC64) does not release the voice
+        RED V7 lifting the sustain pedal (CC64 off) releases every voice it was holding
+M4 end_tick is the FIRST event, not the true maximum [native/core/src/music_synth.cpp]: KILLED
+    synth          exit=1  3 RED
+        RED X5 end_tick is the true maximum tick (the expanded note-off), not the EOT's own tick 0
+        RED L4 song durations span the documented range (Reunion ~11.9 s .. Stones ~144.8 s)
+        RED L5 every song reaches ended() within its own length plus a 4 s tail
+M5 a looping track never restarts (the loop branch is dead code) [native/core/src/music_synth.cpp]: KILLED
+    synth          exit=1  1 RED
+        RED M5 a looping track never reports ended(), even 6 s past its own 1 s length
+M6 the capacity jitter bug returns (exact read_pos_, not the stable upper bound) [native/core/src/music_synth.cpp]: KILLED
+    synth          exit=1  1 RED
+        RED M6 200 render() calls at a steady frame count perform zero heap allocations
+M7 OPL2 and OPL3 channel counts are swapped [native/core/src/music_synth.cpp]: KILLED
+    synth          exit=1  2 RED
+        RED C5 OPL2 kind reports 9 channels
+        RED C6 OPL3 kind reports 18 channels
+M8 an unrecognised XMI status byte is accepted instead of rejected [native/core/src/music_synth.cpp]: KILLED
+    synth          exit=1  1 RED
+        RED X7 an unrecognised status byte is rejected, never guessed at as N data bytes
+M9 intro page 7 falls in the wrong range (off-by-one) [native/core/src/audio.cpp]: KILLED
+    synth          exit=1  1 RED
+        RED I1 intro_page_music_context covers every page 0..0xff exactly as mid.drv 0x223 (music.ts introPageContext)
+M10 the endgame scene table boundary is off by one [native/core/src/audio.cpp]: KILLED
+    synth          exit=1  1 RED
+        RED I2 endgame_scene_music_context covers every scene 0..0xff exactly as mid.drv 0x24a (music.ts endgameSceneContext)
+M11 the frigate sentinel never reaches the selector (transport_tile always 0) [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    runtime        exit=1  1 RED
+        RED G7 aboard a frigate wins over the location -> Cap'n Johne's Hornpipe
+M12 the Camp freeze is never checked (location always wins) [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    runtime        exit=1  1 RED
+        RED CAMP1 hole-up freezes the location switch and plays Stones
+M13 the victory flag is dropped from the combat/victory branch (source-scan guard) [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    runtime        exit=1  1 RED
+        RED WIRE1 sync_music() reads the real base_mode and the real victory flag for the combat/victory branch (a3_01's music_context_for_location M1-M3 already prove the pure function exhaustively)
+
+restored build exit=0; synth exit=0, runtime exit=0
+mutations: 13, killed: 13, survived: 0

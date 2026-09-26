@@ -130,8 +130,14 @@ extern "C" void app_main(void) {
                 // A3-01. The optional audio pack: read once, never part of the
                 // identity gate above. Missing/stale/corrupt only means no music.
                 debug51::Step trace("audio-pack-load");
-                const auto audio_pack=tdeck::load_audio_pack_info(tdeck::kAudioPackPath);
+                // A3-04. `retained` keeps the pack's song/bank bytes resident
+                // (PSRAM-backed `static`) only when they are actually the
+                // supported patch -- load_audio_pack_info frees everything
+                // else, same as before A3-04.
+                static tdeck::RetainedAudioPayload retained;
+                const auto audio_pack=tdeck::load_audio_pack_info(tdeck::kAudioPackPath,&retained);
                 static tdeck::TdeckAudioBackend audio_backend;
+                audio_backend.set_music_library(retained.bytes?&retained.payload:nullptr);
                 ESP_LOGI(kTag,"AUDIO_PACK path=%s state=%s size=%lu crc=%08lx capability=%s songs=%u bank=%d",
                          tdeck::kAudioPackPath,openu5::audio_pack_state_name(audio_pack.state),
                          (unsigned long)audio_pack.file_size,(unsigned long)audio_pack.payload_crc32,

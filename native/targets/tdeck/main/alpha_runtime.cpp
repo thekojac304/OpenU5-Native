@@ -1437,7 +1437,7 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
             (unsigned long)frontend_state_change_count_,frontend_state_name(state_before),frontend_state_name(state_after));}
         observed_frontend_state_=state_after;
         if(!accepted)return false;
-        service_frontend_intent();dirty_=true;dirty_reason_="frontend-input";return true;
+        service_frontend_intent();sync_music();dirty_=true;dirty_reason_="frontend-input";return true;
     }
     // Batch 51. While a paced Camp point is on screen the original is inside a
     // tone_sweep / run_n_frames busy-wait: no getkey is running, so nothing it
@@ -1474,7 +1474,7 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
         ESP_LOGI(kTag,"SYSTEM_MENU action=toggle open=%d gameplay_command=none",system_menu_.active());dirty_=true;dirty_reason_="system-menu";return true;
     }
     if(system_menu_.active()){
-        const bool accepted=system_menu_.handle(action);if(accepted){settings_=system_menu_.settings();apply_device_settings();}service_system_menu_intent();
+        const bool accepted=system_menu_.handle(action);if(accepted){settings_=system_menu_.settings();apply_device_settings();}service_system_menu_intent();sync_music();
         ESP_LOGI(kTag,"SYSTEM_MENU action=%s accepted=%d open=%d gameplay_command=none",action_name(action.kind),accepted,system_menu_.active());
         dirty_=true;dirty_reason_="system-menu";return accepted;
     }
@@ -1646,7 +1646,7 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
     if(routed_command_sequence_!=command_sequence_before)
         ESP_LOGI(kTag,"INPUT_ROUTE action=%s ui=%s gameplay_command=%d sequence=%lu",action_name(action.kind),mode_name(mode_before),int(last_routed_command_),(unsigned long)routed_command_sequence_);
     else ESP_LOGI(kTag,"INPUT_ROUTE action=%s ui=%s gameplay_command=none",action_name(action.kind),mode_name(mode_before));
-    transcript_high_water_=std::max<uint32_t>(transcript_high_water_,uint32_t(ui_->transcript_size()));dirty_=true;return true;
+    transcript_high_water_=std::max<uint32_t>(transcript_high_water_,uint32_t(ui_->transcript_size()));sync_music();dirty_=true;return true;
 }
 
 const char *AlphaRuntime::overlay() const {static char text[64]{};text[0]=0;
@@ -2715,6 +2715,7 @@ void AlphaRuntime::configure_audio(const openu5::AudioPackInfo &pack,openu5::Aud
     frontend_.set_music_availability(availability);
     apply_device_settings();
     audio_.attach(backend);
+    sync_music(); // starts the title/frontend track immediately, without waiting for the first key poll
     ESP_LOGI(kTag,"AUDIO_CONFIG pack=%s capability=%s music=%s sfx_volume=%u music_volume=%u output=%s",
              openu5::audio_pack_state_name(pack.state),
              pack.state==openu5::AudioPackState::Valid?openu5::music_capability_name(pack.record.capability):"none",
@@ -2794,6 +2795,49 @@ void AlphaRuntime::present_audio(const openu5::GameEvent &e){
     // A3-03: the "quake" cue is sounded by its Quake event (above).
     if(id==openu5::SfxId::Quake)return;
     audio_.play_sfx(id,e.note);
+}
+
+void AlphaRuntime::sync_music(){
+    // Priority order, highest first (ALPHA3_AUDIO.md section 17.6):
+    //   1. the Blackthorn capture/sacrifice cutscene -- silence (the doc's
+    //      "Blackthorn capture, death"; the pacer's ONLY scene is that one,
+    //      general palace visits never mount it);
+    //   2. the Refuge dream -- silence; Camp / TrollSneak (hole-up) -- Stones;
+    //   3. the terminal ending screen -- Rule Britannia (Finale). The
+    //      original's own Stones -> Lady Nan -> Reunion -> Rule Britannia
+    //      chain steps through ENDGAME.OVL's scene table, which this port
+    //      does not animate yet (D-54): Finale is the correct STATIC choice
+    //      for "the quest is complete", not a guess at scenes this build
+    //      cannot step through;
+    //   4. the shrine meditation screen -- Stones;
+    //   5. the frontend (title/menus/creation/intro) -- by FrontendState;
+    //   6. gameplay -- the driver's own location/combat switch.
+    // Everything else (System Menu, gem/zodiac views, modal key-waits) is
+    // deliberately NOT a case here: those are overlays on whatever already
+    // plays, and the original's own selector never touches music for them.
+    if(blackthorn_pacer_.mounted()){audio_.play_music(openu5::MusicContext::Silence);return;}
+    if(narrative_pacer_.mounted()&&narrative_pacer_.scene()==openu5::NarrativeScene::Refuge){
+        audio_.play_music(openu5::MusicContext::Silence);return;}
+    if(camp_scene_active_||(narrative_pacer_.mounted()&&
+       (narrative_pacer_.scene()==openu5::NarrativeScene::Camp||narrative_pacer_.scene()==openu5::NarrativeScene::TrollSneak))){
+        audio_.play_music(openu5::MusicContext::Camp);return;}
+    if(ui_&&ui_->ending_active()){audio_.play_music(openu5::MusicContext::Finale);return;}
+    if(ui_&&ui_->base_mode()==openu5::UiMode::ShrineSpecial){audio_.play_music(openu5::MusicContext::Shrine);return;}
+    if(frontend_.active()){
+        switch(frontend_.state()){
+        case openu5::FrontendState::CharacterCreation:audio_.play_music(openu5::MusicContext::Creation);return;
+        case openu5::FrontendState::IntroAnimation:audio_.play_music(openu5::intro_page_music_context(intro_frame_.scene));return;
+        case openu5::FrontendState::EnterGame:break; // the transition instant: fall through to gameplay below
+        default:audio_.play_music(openu5::MusicContext::Title);return; // Title/AttractDemo/MainMenu/NewJourney/Continue/Load/Settings/Credits/Error
+        }
+    }
+    openu5::LocationMusicInput pos;
+    pos.location=uint8_t(game_.position.map.location);
+    pos.floor=uint8_t(game_.position.map.floor);
+    pos.transport_tile=uint8_t(turn_.transport_tile);
+    pos.in_combat=ui_&&ui_->base_mode()==openu5::UiMode::Combat;
+    pos.combat_victory=combat_.victory;
+    audio_.play_music(openu5::music_context_for_location(pos));
 }
 
 bool AlphaRuntime::combat_actor_is_player(int32_t id) const{

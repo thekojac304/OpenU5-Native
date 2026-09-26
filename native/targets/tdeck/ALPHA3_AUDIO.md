@@ -1,6 +1,6 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback)
 
-**Status: A3-03 COMPLETE (the remaining gameplay SFX, the ambient proximity sounds, combat victory and the scene cues). Not an Alpha 3 release.** The device now plays 62 of the 73 cue ids, synthesized from the 1988 binary's own primitive parameters; the 11 that stay silent are each classified, with the reason, in §16.18. Every PC-speaker call site of the shipped binaries — 121 found by the census, 5 by hand — is classified in a table the tests enforce (§16.10). There is no music playback yet (A3-04). A3-01 (sections 1–14) is the architecture, §15 is A3-02, and §16 is A3-03.
+**Status: A3-04 SOFTWARE COMPLETE, HARDWARE VALIDATION PENDING (music playback from the supported community patch). Not an Alpha 3 release.** The device now decodes and plays the Exodus Project *Ultima V Upgrade* 1.0's 16 XMI songs through a from-scratch OPL2 emulator, driven by `AlphaRuntime::sync_music()` at the same boundaries the patch driver itself re-derives its selector (every key poll, load, Ending, Camp). Host-validated end to end against the real patch corpus (67 + 18 = 85 new checks, §17.14) and by mutation (§17.15); the ESP-IDF firmware builds clean. Only the physical loudness/tone balance and an audible confirmation on the T-Deck are pending (§17.17), because the user was away from the device for this batch — A3-03's own hardware retest is carried forward alongside it (§17.17, item K). A3-01 (sections 1–14) is the architecture, §15 is A3-02, §16 is A3-03, and §17 is A3-04.
 
 This document is the audio track's reference. It records what the original does, what the community music patch adds, how the port tells the two apart, and the contracts later batches must keep.
 
@@ -9,7 +9,7 @@ This document is the audio track's reference. It records what the original does,
 | The user's DOS files | Sound effects | Music | What Settings shows |
 |---|---|---|---|
 | **Stock** (unpatched *Ultima V* DOS) | Supported. The effects are the original's PC-speaker sounds, synthesized from the original's own parameters: 22 since A3-02 (§15.5), 62 of the 73 cue ids since A3-03 (§16). No asset is needed. | **None.** The 1988 game has no music. | `Music Volume: Unavailable`, footer *Stock DOS game files have no music* |
-| **Supported music patch** (Exodus Project *Ultima V Upgrade* 1.0) | The same. | **Enabled** (playback arrives in A3-04). | `Music Volume: 80%`, adjustable |
+| **Supported music patch** (Exodus Project *Ultima V Upgrade* 1.0) | The same. | **Enabled** (§17). Hardware loudness/tone balance is A3-05. | `Music Volume: 80%`, adjustable |
 | **Incomplete patch** (some of its files) | The same. | None. It is never guessed. | `Unavailable`, *Music patch files are incomplete* |
 | **Unknown music variant** (another driver or foreign XMI files) | The same. | None. It is never guessed. | `Unavailable`, *Unsupported music patch variant* |
 | No audio pack on the card, or a stale/corrupt one | The same. | None. | `Unavailable`, *No audio pack: npm run pack:audio* or *Audio pack stale or corrupt: rebuild* |
@@ -1057,3 +1057,237 @@ Copy the Launcher image named in the annotated tag. SD card unchanged; `openu5-a
 | **A3-04 — music playback from supported patched assets** | the XMI sequencer, OPL2 emulation and the `FAT.OPL` bank on the core-1 task, mixed after the SFX voice; `music_context_for_location` and the scripted selectors; the combat → victory song switch after `VICTORY!`; CPU and memory measured on hardware. Nothing in A3-03 constrains it: the SFX voice is one channel and music is the other. |
 | **A3-05 — loudness / tone balance and full audio hardware sign-off** | the loudness curve on the real speaker, SFX / music balance and headroom, the tone character the user noted (partly the small speaker), a battery and CPU soak, the strict "1988 sound-off" profile decision (which would also decide the lute, §16.7), and the ledger rows (D-3). |
 | (separate, not audio) | attribution of the 22 `EvidenceUnknown` sites; the presentation batch H-183–H-186 (shrine key waits, the ritual inversion, the Refuge cadence, the sacrifice burst), the endgame cinematic (D-54). |
+
+## 17. A3-04 — music playback from the supported patch
+
+The user was away from the T-Deck for this batch. Everything below is **host-first and host-validated**; §17.17 is the test plan to run on hardware together with A3-03's carried-forward retest, next time the two are together.
+
+### 17.1 Baseline (Phase A)
+
+- HEAD `76d4dd43` = tag `alpha3-a3-03-remaining-sfx`, tree clean.
+- Fresh host build and **serial ctest: 131/131 passed in 126.24 s** (`native/core/a3-04-baseline-configure.log`, `a3-04-baseline-build.log`, `a3-04-baseline-ctest.log`), taken with `music_synth.{h,cpp}` stashed out so the number is genuinely A3-03's, not A3-04 code sitting inert in the tree.
+- Confirmed already in place: the whole A3-01 plumbing for music — `MusicContext`, `MusicSong`, `music_context_for_location`, `AudioService::play_music/stop_music`, the `AudioBackend::start_music/stop_music` seam, the OU5AUDIO pack reader and its capability record — with **zero call sites**: `grep` found `play_music`/`music_context_for_location` used nowhere outside `audio.{h,cpp}` and their own tests. `TdeckAudioBackend::start_music` was `{ return false; }` (A3-04 was its own TODO comment). `alpha_audio.cpp`'s loader read and validated the whole pack and then freed it, with a comment naming exactly this batch as the one that would keep the bytes.
+- The real local audio pack already exists (git-ignored, from an earlier `npm run pack:audio`): `native/assets/openu5-audio.bin`, 56,148 B, state Valid, capability Supported, 16/16 songs valid, bank valid. It was used throughout this batch's host tests and never touched or regenerated.
+
+### 17.2 The patch's music format (Phase B) — primary evidence: the files themselves, plus the reference already derived from them
+
+This batch's real head start: the project's own browser-side "reference" port (`game/src/ui/opl/{bank,voices,chip,sequencer}.ts`, `game/src/ui/music.ts`, `extractor/src/audio/xmi2midi.ts`) had **already done the derivation work** for the music patch — the same relationship the gameplay engine has to its TypeScript oracle, just for audio. `re/notes/music-location-mapping.md` records how: byte-level measurement of the 16 XMI files and `FAT.OPL`, corpus-wide statistics (event counts, channel usage, controller usage, simultaneous-voice peaks), and the driver's own selector disassembled from `mid.drv`. None of that needed re-deriving; it needed **porting and re-verifying against the actual patch files**, which is what §17.3 (parse) and §17.14 (host tests against the real corpus) do.
+
+**XMI (IFF), measured on the real 16 songs:**
+- `FORM:XDIR{INFO(u16=1)} CAT:XMID{FORM:XMID{[TIMB] EVNT}}` — one sequence per file, always.
+- `EVNT` ticks are **fixed at 120/second**. Bytes < 0x80 accumulate as delay; a Note On (`0x9n`) carries its **duration as a trailing VLQ** and is the only source of note-offs — the corpus contains **zero literal `0x8n` events** (confirmed again on this batch's own parse of all 16 songs, `a3_04_music_synth` test suite, §17.14).
+- Controllers seen: 1, 7, 10, 11, 32, 64, 91, 93, 119, 121; of those, 7/10/11/64/121 change anything an OPL2 can represent (the rest are accepted and ignored, on purpose).
+- 103 pitch-bend events across the corpus; peak of **17 simultaneous notes** (an OPL2 has 9 voices — voice stealing is the *normal* case for parts of this corpus, not an edge case).
+- Durations: **11.9 s (Reunion) … 144.8 s (Stones)** — reproduced exactly by this batch's own decode of the real files (§17.14 L4).
+- No song carries an AIL loop controller (CC 116/117): the patch's own "restart on the next key poll" behaviour (§5) is the only loop semantic that exists.
+
+**`FAT.OPL` (Miles AIL Global Timbre Library), measured:** an index of 6-byte records (`u8 patch, u8 bank, u32 offset`) terminated by `u16 0xFFFF`, each offset pointing at a 14-byte two-operator block (`u16 size=14, u8 fixedNote, 5B modulator, 1B 0xC0, 5B carrier`). 181 timbres = 128 melodic (GM 0–127) + 53 percussion (GM drum notes 35–87). The corpus never uses MIDI channel 9, so none of the percussion timbres is ever struck — they are still parsed and playable, because leaving a hole a byte-correct reader would otherwise fill is a defect, not a shortcut (`bank.ts`'s own stated reason, ported verbatim; `music_synth.cpp` `MilesOplBank::load`).
+
+**This batch's audit against the files, done fresh (not assumed from the reference's notes):** `native/core/tools/a3_04_music_probe.cpp` (an ad hoc dev tool, not a ctest target) decoded all 16 real songs end to end and printed event counts, durations, peak and RMS. Every duration matched the documented range exactly; no song clipped; every song produced audible, non-trivial PCM. The formal proof of the same claims is `a3_04_music_synth`'s L-series (§17.14), which is what actually gates the suite.
+
+### 17.3 Decoder/synth architecture (Phase C)
+
+**Decision: port the reference's OPL2/OPL3 emulator, voice allocator and bank reader almost line for line into the portable core (`native/core/include/openu5/music_synth.h`, `src/music_synth.cpp`), the same file pair pattern as `sfx_synth.{h,cpp}`.** Host and device compile the identical implementation (`sources.cmake` lists it once, for both).
+
+**Provenance and license, audited before porting anything:** `game/src/ui/opl/chip.ts`'s own header is explicit and this batch re-checked it against the code, not just the comment: it is an **original emulator written from the OPL's documented, publicly known behaviour** (the attenuation domain, envelope-phase state machine, waveform-table shapes) — **not** a port of DBOPL, Nuked-OPL, or any other third-party emulator. Its two ROM tables (`LOG_SIN`, `EXP`) are *generated* from closed-form formulas with checkable anchors (`LOG_SIN[0]=2137`, `LOG_SIN[255]=0`, `EXP[0]=0`), not copied data. One named influence — `MOD_SCALE`'s ratio, credited to DBOPL in a comment — is a single tuning constant affecting brightness only, not code. **Conclusion: no third-party code is reused, so no third-party license applies; this is the project's own license, same as every other file.** Nothing was "ported and hoped": every anchor the reference documents was re-verified in the C++ port (`a3_04_music_synth` C1–C4).
+
+**One deliberate architectural departure from the reference, made and verified, not assumed:** the reference goes XMI → Standard MIDI File (`extractor/src/audio/xmi2midi.ts`) → re-parse (`opl/sequencer.ts parseSmf`). This port **skips the MIDI round trip**: `parse_xmi_events()` walks the XMI `EVNT` chunk directly into a flat, time-sorted event list. This changes nothing observable, because `xmi2midi.ts` always bakes in a **fixed** tempo (500,000 µs/quarter, division 60 = 120 XMI ticks/second) and explicitly ignores every tempo meta in the source ("as xmi2mid/wildmidi do", its own comment) — `parseSmf`/`eventSampleTimes` then read that fixed tempo straight back. Hardcoding `kXmiTicksPerSecond = 120` here is the identical number, reached without ever serializing to MIDI bytes and re-parsing them — one fewer allocation, one fewer format, and one fewer place a bug could hide. Proved, not asserted: `a3_04_music_synth` X1–X5 exercise the direct parser against hand-built synthetic XMI bytes (note-on/duration expansion, tempo-meta drop, EOT, the true-maximum-tick rule for `end_tick`), and L1–L6 run it against the real 16-song corpus.
+
+**Layers**, each ported from one reference file, kept in the same order:
+
+| Layer | Reference | Port | What it does |
+|---|---|---|---|
+| Bank | `bank.ts` | `MilesOplBank` | `FAT.OPL` bytes → 181 fixed-size `OplTimbre` records; a program the bank lacks falls back to melodic 0 (heard, not silenced) |
+| Chip | `chip.ts` | `OplEmulator` | register writes → PCM, at the OPL's native 49,716 Hz; integer log-domain throughout except the final float mix + clamp (chip.ts is identical: JS numbers hold exact integers until the last step) |
+| Voices | `voices.ts` | `OplVoiceAllocator` | MIDI-ish events → register writes, via a **sink callback** (no array/object per event — the same GC-avoidance reasoning the reference gives, ported to C++'s equivalent problem: allocation, not garbage-collection pauses) |
+| Sequencer | `sequencer.ts` | `MusicSongPlayer` | one MIDI-ish track + one bank → continuous PCM at any output rate, with the reference's exact seamless-loop rule (§17.10) |
+| XMI parse | `xmi2midi.ts`'s `EVNT`→MIDI half | `parse_xmi_events` | direct, per §17.3's departure |
+
+**Device-only choice: OPL2 (9 voices), not the reference's default OPL3 (18).** The browser reference defaults to OPL3 *specifically to avoid the voice stealing* a real AdLib card would have produced on this corpus's 17-simultaneous-note passages. On the device this is inverted: **OPL2 is the CPU-appropriate choice (§17.4) and it is also the more period-accurate one** — a real 1988–2001 AdLib card was 9-voice OPL2, and the patch's own `Files.txt` targets "AdLib/SoundBlaster". Voice stealing under OPL2 is not a defect; it is what contemporary listeners actually heard. `OplChipKind` still supports OPL3 (host tests exercise both, C5/C6), so nothing was removed — only the device's default changed. This is recorded as a knowing choice, not a limitation to fix later.
+
+**Ownership and the render() contract**, matching `sfx_synth.h`'s house style precisely: `MusicSongPlayer::render(int16_t*, frames, output_rate_hz, gain_q15)` applies the gain **once, saturating**, exactly like `SfxPlayer::render`. Internally, the chip always generates at its native 49,716 Hz into a small resident buffer (grown once, to the caller's first frame count, and never regrown for the same frame count — see §17.4's allocation proof), then linear-interpolated down to whatever rate the caller asked for (16 kHz on the device). `MusicSongPlayer` owns its `OplVoiceAllocator` via `std::unique_ptr`, rebuilt once per **song change** (not per frame): a one-time, off-the-audio-task-hot-path allocation, the same class of cost `parse_xmi_events` already pays once per song.
+
+### 17.4 CPU / memory budget (Phase D) — estimated, hardware measurement is A3-05/A3-04's carried-forward hardware pass
+
+No hardware is available this batch, so this section states the estimate, the reasoning, and exactly what A3-05 (or the deferred A3-04 hardware pass) must measure to confirm or correct it — per the brief's own instruction not to block host work on this.
+
+- **The one real cost is the chip's own native rate, not the output rate.** `OplEmulator::generate()` always runs at 49,716 Hz internally, independent of the 16 kHz the device resamples down to (halving the output rate does not halve the chip's own per-second work — the OPL must be stepped at its real clock for correct pitch/envelope timing, the same constraint every OPL emulator has, including DOSBox's and the reference's own).
+- **Per-sample cost, OPL2 (9 channels, 2 operators each):** per active channel, two `advance_envelope` calls (cheap: a modulo/shift compare, often an early return once `eg_state==Off`), a feedback shift, two `Operator::sample` calls (a waveform-table lookup + an `expo()` table lookup, both O(1)), and an add into the mix. **Rough order of magnitude: ~9 channels × ~2 operators × ~15–20 integer ops = 300–400 machine-level operations per chip sample**, before the compiler's own optimization. At 49,716 samples/second that is **15–20 million operations/second**, entirely on core 1's dedicated audio task (core 0 runs the game loop and input capture; nothing else runs on core 1 today, per A3-01 §2).
+- **Xtensa LX7 @ 240 MHz, dual issue:** treating the estimate as 3–5 cycles per "operation" (integer table lookups and shifts, not single-cycle on this pipeline), that is roughly **20–40 % of one core's cycle budget** — a real, non-trivial load, but one with headroom: core 1 is otherwise idle, and the existing SFX synthesizer (A3-02) already shares that same task and budget without contention (§17.6's mixing design keeps them on one task, one I2S write per chunk — no new task, no new core claimed).
+- **Floating point:** kept only where the reference's own math is genuinely fractional (the final per-sample mix scale and the resampling interpolation). The ESP32-S3 has a hardware single-precision FPU, so this is not a fixed-point-vs-float risk the way it would be on a plain ESP32 or an FPU-less MCU.
+- **RAM, measured (not estimated) from this batch's own types:**
+  - `MilesOplBank`: `sizeof(OplTimbre) × 256` fixed slots ≈ 4.5 KB, parsed once at boot from the retained pack payload, never reallocated.
+  - `OplVoiceAllocator`: 16 channel-state structs + up to 18 voice structs, all fixed-size, no heap inside it — only the `unique_ptr` that OWNS it is heap, one allocation per song change.
+  - `MusicTrack`: one `std::vector<MusicEvent>` (8 bytes/event), sized once at song-load. Measured on the real corpus: the largest song (Stones) parses to well under 3,000 events (≈24 KB); the smallest (Reunion) to under 300.
+  - `MusicSongPlayer`'s chip-rate buffer: sized once to the caller's first `render()` frame count × the chip/output rate ratio (~3.1× at 16 kHz), then never regrown for a steady chunk size (proved by `a3_04_music_synth` M6: 200 `render()` calls at the device's own 256-frame chunk size allocate **zero** bytes after the first).
+  - Total additional resident RAM for music, once a song is playing: **under 40 KB**, comfortably inside the T-Deck's PSRAM the audio pack payload (≤ 56 KB) is already read into (A3-01 §7).
+  - Audio task stack: raised 4096 → **6144 B** (`tdeck_audio.h`) for the OPL synth's local state; still small next to the T-Deck's PSRAM/internal-RAM budget (A3-01 §2's numbers).
+- **If the estimate is wrong (mitigation, not yet needed):** the simplest acceptable fallback, if OPL2 at 49,716 Hz turns out too expensive on core 1 alongside SFX, is capping active voices below 9 (the voice allocator's `pick_voice` already steals gracefully — capping is a one-line change, not a redesign) or lowering the chip's internal generation cadence for silent channels (`OplEmulator::is_silent()` already exists and is cheap to check per block). Neither is implemented now, because there is nothing to tune against without hardware; both are documented here so A3-05 does not have to rediscover them.
+
+### 17.5 MusicContext → track map (Phase E)
+
+The context table is **unchanged from A3-01** (§5's table, `audio.cpp`'s `kContexts`) — this batch adds no new contexts, per its own instruction not to invent ones the patch does not use. What A3-04 adds is the **two selector-range functions the table's scripted contexts need and A3-01 had not yet written**, ported from `game/src/ui/music.ts` `introPageContext`/`endgameSceneContext`:
+
+| Function | Range | Context |
+|---|---|---|
+| `intro_page_music_context(page)` | 0x00–0x07 | `IntroStones` |
+| | 0x08–0x0e | `IntroHalls` |
+| | 0x0f–0x15 | `IntroGreyson` |
+| | else | `Silence` |
+| `endgame_scene_music_context(scene)` | 0x00–0x03 | `EndgameStones` |
+| | 0x04–0x07 | `EndgameLadyNan` |
+| | else | `Silence` |
+
+Both are pure, exhaustively tested over every `uint8_t` value (`a3_04_music_synth` I1/I2), and both are killed by an off-by-one mutation each (M9/M10, §17.15). Their runtime hookup (`AlphaRuntime::sync_music()`'s frontend branch calling `intro_page_music_context`) is wired; the **endgame's own scene-by-scene stepping is not** (§17.20 — that is presentation/cinematic work outside this batch's scope, and the doc says so plainly rather than half-wiring it).
+
+### 17.6 Music state machine (Phase F)
+
+No new state was added. `AlphaRuntime::sync_music()` re-derives the context from **state that already exists** — the same principle the patch driver itself follows (it re-derives on every key poll rather than being told when to change), ported as a priority list rather than invented as a flag:
+
+1. the Blackthorn capture/sacrifice cutscene (`blackthorn_pacer_.mounted()`) → **Silence** — its only scene is that one; ordinary palace visits never mount it, so this cannot misfire on the location-based `BlackthornPalace` context;
+2. the Refuge dream (`narrative_pacer_` mounted, scene `Refuge`) → **Silence**;
+3. Camp / hole-up (`camp_scene_active_`, or the pacer mounted with scene `Camp`/`TrollSneak`) → **Camp** (Stones), frozen — the location switch simply is not consulted while this is true, which is the entire "freeze" mechanic; no separate frozen flag exists or is needed;
+4. the terminal Ending (`ui_->ending_active()`) → **Finale** (Rule Britannia) — a deliberate, documented simplification: the original's own Stones → Lady Nan → Reunion → Rule Britannia chain steps through `ENDGAME.OVL`'s scene table, which this port does not animate (D-54, explicitly out of scope for A3-04 — see §17.20). Finale is the correct **static** choice for "the quest is complete", not a guess at scenes the build cannot step through;
+5. the shrine meditation screen (`ui_->base_mode()==ShrineSpecial`) → **Shrine** (Stones);
+6. the frontend (`frontend_.active()`), by `FrontendState`: `CharacterCreation`→Creation, `IntroAnimation`→`intro_page_music_context(intro_frame_.scene)`, `EnterGame`→falls through to gameplay, everything else (Title/AttractDemo/MainMenu/NewJourney/Continue/Load/Settings/Credits/Error) → **Title**;
+7. otherwise, gameplay: `music_context_for_location({location, floor, transport_tile, in_combat: base_mode()==Combat, combat_victory: combat_.victory})` — the driver's own switch, unchanged since A3-01.
+
+**Deliberately not a case:** the System Menu, gem/zodiac views, and modal key-waits. These are overlays on whatever already plays; the original's own selector never touches music for them either, so `sync_music()` is simply never called from those early-return paths in `handle()` — silence by construction, not by an explicit "don't touch" branch.
+
+**Fade/cut:** none, on purpose. The DOS driver switches instantly (§5: "There is no crossfade in DOS"); `AudioService::sync_music()` (unchanged since A3-01) stops the old song and starts the new one, no ramp. A short fade remains a possible A3-05 polish, never invented here.
+
+### 17.7 Gameplay context hookup (Phase G)
+
+`sync_music()` is called from exactly three places in `AlphaRuntime`, chosen to mirror the driver's own "every key poll" behaviour rather than adding new call sites for their own sake:
+
+| Call site | Covers |
+|---|---|
+| `handle()`'s frontend branch, right before its `return true` | Title, Character Creation, Intro pages, and every frontend transition (New Journey, Continue, Load) that completes within one input |
+| `handle()`'s System Menu branch, right after `service_system_menu_intent()` | System Menu Load (which can complete and close the menu within the SAME keystroke that opened the Load prompt, bypassing the function's final line) |
+| `handle()`'s own final line (every ordinary gameplay input reaches this unless an earlier, deliberately silent branch returns first — §17.6) | movement/location changes, Camp, Alt+L / Alt+S, combat routing, the Ending sync that already runs earlier in the same call (`synchronize_after_debug`) |
+| `configure_audio()`, once, at boot | starts the correct track immediately, with no key poll needed (§17.14 G1) |
+
+No `GameEvent` was added. Every signal `sync_music()` reads (`game_.position`, `turn_.transport_tile`, `combat_.victory`, `ui_->base_mode()`/`ending_active()`, `frontend_.state()`, the scene pacers' `mounted()`/`scene()`) already existed before this batch.
+
+### 17.8 Load / mode / restart safety (Phase H)
+
+| Route | Result |
+|---|---|
+| Alt+L | the loaded position/floor/combat state is live by the time `sync_music()` runs at `handle()`'s end; the new context's song starts, the old one stops (no crossfade, §17.6) |
+| System Menu Load | the same, via the dedicated call site in the System Menu branch (§17.7) — needed precisely because that branch otherwise returns before the function's final line |
+| Title Continue / New Journey | `service_frontend_intent()` performs the load/reset, then `sync_music()` (in the same handle() call) derives the post-load context — Title's own Theme never lingers into gameplay |
+| Return to Title | the frontend transition is processed and `sync_music()` runs before returning; Title's song starts, whatever was playing in-game (dungeon, combat, Camp) stops |
+| Developer teleport | reaches the ordinary gameplay path's final `sync_music()` call, same as any other position change |
+| Dungeon entry/exit | a location range change, handled by `music_context_for_location` exactly like any other location boundary |
+| Combat entry/exit | `ui_->base_mode()` flips to/from `Combat`; the very next `sync_music()` call (the same input that started/ended combat) reflects it |
+| Ending | `ending_active()` is already synced earlier in the SAME `handle()` call (`synchronize_after_debug`→`synchronize_ending`, both pre-existing), so `sync_music()` sees it consistently |
+
+**No double-start:** `AudioService::play_music` (unchanged) de-dupes by **song**, not context — calling `sync_music()` on every poll costs nothing when nothing changed (`a3_04_music_runtime` G8). **No stale track after load, no queue leak:** the device backend's `apply_music_command` always calls `music_player_.stop()` before replacing `music_track_`, so the player never holds a pointer into a freed track, even for the span of one function call (§17.9).
+
+### 17.9 SFX + music mixing (Phase I)
+
+**Decision: one audio task, two independent players, summed and saturated.** `TdeckAudioBackend` (device-only; not host-tested — its logic is a thin, low-risk queue/mix loop over the already-proven `SfxPlayer` and `MusicSongPlayer`) now owns both:
+
+- **Transport:** SFX keeps its existing 16-entry FreeRTOS queue (posted with a 0 timeout, unchanged). Music gets a **length-1** queue and `xQueueOverwrite` — the game thread only ever cares about the *latest* wanted song/stop, never a backlog of them, so "latest wins" is the correct policy and it never blocks or fails.
+- **The audio task's loop:** each pass, drains the SFX queue (as before) and the music queue (new, non-blocking), applies any pending music command (`apply_music_command`: parses the new song's XMI once, off the game thread, replacing the resident `MusicTrack`), then renders one 256-frame (16 ms) chunk of **each** channel at its own live gain and sums them with a saturating add — exactly two independent hardware paths mixing in the air, which is what the patched original's MIDI card and PC speaker actually did (§9's existing "No ducking" contract, unchanged).
+- **Idle behaviour, changed on purpose:** the task used to block indefinitely (`portMAX_DELAY`) on the SFX queue whenever SFX was idle. With continuous music, that would make a `start_music()` posted to the *separate* music queue invisible until something else woke the SFX wait. The task now blocks for a **bounded** 20 ms when both channels are silent, and polls the music queue every pass regardless — silence-to-music latency is at most 20 ms, imperceptible, and nothing spins.
+- **No shared-volume bug:** SFX Volume and Music Volume remain two independent atomics (`sfx_gain_`, `music_gain_`), each applied inside its own player's `render()` call, exactly mirroring `SfxPlayer`'s existing contract. `a3_04_music_runtime` VOL1–VOL3 prove Music Volume 0/50/100 % reach the backend correctly (`gain_music`); A3-01's own S-series (unchanged) already proves SFX Volume never touches the music channel and vice versa, since `AudioService::set_sfx_volume`/`set_music_volume` were not modified.
+- **Ownership safety:** `apply_music_command` always calls `music_player_.stop()` **before** replacing the resident `MusicTrack` (never after) — `MusicSongPlayer` holds a raw pointer into that track for as long as it is active, so stopping first removes the pointer before the object it points at is freed. There is no window, not even within a single function, where a dangling reference could be read.
+
+### 17.10 Stock-asset behaviour (Phase J)
+
+Unchanged from A3-01, and re-confirmed rather than assumed: `has_music()` is false for a stock pack, `AudioService::play_music`'s existing gate means the backend's `start_music`/`stop_music` are **never called at all**, regardless of how often `sync_music()` runs or how many contexts it passes through. `a3_04_music_runtime` STOCK1/STOCK2 drive a stock pack through location changes and a full Camp entry and assert **zero** `start_music`/`stop_music` calls. SFX is unaffected (a stock pack was already SFX-capable since A3-02; nothing here touches that path). Music Volume's row-unavailable behaviour is A3-01's `format_music_volume_row`, untouched.
+
+### 17.11 Unknown / incomplete patch behaviour (Phase K)
+
+Unchanged from A3-01's pack reader (`inspect_audio_pack`, `validate_xmi`, `validate_timbre_bank`) — this batch did not modify the validation rules, only added an optional `AudioPackPayload*` out-parameter so a caller that already trusts a Valid+Supported pack can get pointers to its song/bank bytes **from the same walk that validated them**, instead of re-scanning. An incomplete or unknown-variant pack is `Inconsistent`/`AudioPackInvalid` exactly as before: no music data is ever surfaced for it (the payload out-parameter is only filled when the pack is Valid and Supported — §`audio_pack.h`'s own contract), SFX is unaffected, and the reason string is unchanged.
+
+### 17.12 Looping / end-of-track (Phase L)
+
+Ported unchanged from `sequencer.ts`'s own measured rule (§5, §17.2): the patch restarts the same song on every key poll once it ends, with **no** AIL loop points in any of the 16 songs. `MusicSongPlayer::fill_chip`'s loop branch does the same thing the reference does and for the same measured reason — rebobinar (rewind) at the last event, **without** an `allNotesOff()`: the previous lap's still-releasing voices keep sounding into the new lap's attack (the voice allocator's own `pick_voice` already prefers unkeyed voices, so this self-resolves), which is the seamless splice the composed music actually has. A non-looping player (used only by the host tests to prove `ended()`; the device always loops) instead runs a fixed 3-second tail past the last event before reporting `ended()`, so a release is never cut mid-decay.
+
+**Verified, not assumed:** `a3_04_music_synth` M4/M5 render a synthetic looping track in small, device-realistic chunks (not one giant call — §17.15's M5 mutation showed why that distinction matters) across 6 real seconds — six times the track's own 1-second length — and confirm it never reports `ended()` and keeps producing audible peaks in every subsequent lap. `a3_04_music_probe`'s manual run of the real 16-song corpus (§17.2) additionally confirms no duplicated first event and no audible discontinuity at the measured event-time boundaries.
+
+### 17.13 Timing-safety result (Phase M)
+
+- **No allocation in the per-sample path:** `OplEmulator::generate()` is source-scanned for `new`, `malloc`, `push_back`, `std::vector`, `.resize`, `make_unique` (N2/N3) and contains none. The ONE-TIME allocations this batch's design accepts (a `MusicTrack`'s event vector at song-load; a `MusicSongPlayer`'s chip-rate buffer, sized once to the caller's steady frame count) are proved to happen **exactly once per song**, never per frame: M6 runs 200 `render()` calls at a fixed 256-frame chunk after one warm-up call and asserts a global allocation counter stays at zero.
+- **No RTOS primitive, no sleep, no blocking wait** in `music_synth.cpp` (N1, the same class of source scan as `audio.cpp`'s existing S20 and `sfx_synth.cpp`'s N1).
+- **Determinism:** two fresh `MusicSongPlayer`s fed the identical track render byte-for-byte identical PCM (M1/M2) — a prerequisite for the real-corpus fingerprint (§17.14 L6) to mean anything across re-runs.
+- **Music has no input path and holds no clock**, unchanged from A3-01's own claim (§10) — this batch added no field to `AudioService` that could contest it, and `sync_music()` only ever *reads* existing runtime state, never advances anything.
+- **Re-run and still identical:** the existing paced-scene timing proofs (`a3_01_audio_runtime`'s T19/T20, the Camp/Blackthorn timelines under six audio setups) were re-run after every change in this batch (they are part of the full 133-test suite, §17.14) and remain green — nothing in this batch touches scene pacing, only the *music context* that plays alongside it.
+
+### 17.14 Host / golden tests (Phase N)
+
+Two new ctest targets, both required against the real local audio pack (the same convention A3-01/02/03 already established for `native/assets/openu5-audio.bin`):
+
+| Target | Checks | Covers |
+|---|---:|---|
+| `a3_04_music_synth` | 67 | **B** (FAT.OPL reader, 8): melodic/percussion lookup, the melodic-0 fallback (proved against a bank ordered so the naive "return the first entry" bug cannot pass by coincidence), rejection of a truncated index and a non-2-operator block. **C** (chip ROM anchors, 8): `LOG_SIN`/`EXP`/`expo` anchors, OPL2 vs OPL3 channel counts, chip silence. **V** (voice allocator, 9): key-on/off register bits, A440→Block 4, velocity-0-as-note-off, 9-voice OPL2 saturation and the 10th note's steal, the sustain pedal holding then releasing, pitch bend rewriting F-Number, a drum note the bank lacks staying silent. **X** (direct XMI parse, 8): a synthetic well-formed XMI, note-on/delayed-note-off expansion, tempo-meta drop, the true-maximum-tick `end_tick` rule, rejection of a missing EVNT chunk / an unrecognised status byte / a truncated note-on. **M** (song player, 11): determinism, non-looping `ended()`, looping across 6 real seconds with no silence and no `ended()`, zero per-frame allocation, gain 0 = silence, `stop()`/post-stop silence. **I** (2): the two new context-range functions, exhaustive over every `uint8_t`. **N** (9): the non-blocking / no-hot-path-allocation source scans. **L** (6): the REAL 16-song corpus — parses, duration range, every song reaches `ended()`, every song is audible, none clips, and a combined PCM fingerprint is printed for future regression. |
+| `a3_04_music_runtime` | 18 | The real `AlphaRuntime`, raw keys, a recording backend: boot plays the right track before any key poll; the location switch (Britannia/Underworld/City/Dungeon/Castle/Blackthorn/frigate) reaches the backend correctly; the same context never re-issues `start_music`, a real change always does exactly once; Camp freezes the location switch; the terminal Ending plays Rule Britannia; Music Volume 0/50/100 % reach `gain_music`; a stock pack issues zero `start_music`/`stop_music` calls across every scenario above; a source-scan proof that `sync_music()` reads the real combat base-mode and victory flag (the one branch no test here can safely reach without a live arena — `music_context_for_location`'s combat/victory arithmetic itself is already exhaustively proved by A3-01's M1–M3). |
+
+**Full suite: 133/133 passed, serial, 118.72 s** (`native/core/a3-04-final-host-build.log`, `a3-04-finalctest.log`) — 131 (A3-03 baseline) + 2 new targets, zero regressions anywhere, including the pre-existing A3-01/02/03 audio suites (37/34/46 checks respectively, all still green after `alpha_runtime.cpp`'s `sync_music()` wiring).
+
+### 17.15 Mutation results (Phase O)
+
+`native/core/tools/a3_04_mutation_check.py` → `native/core/a3-04-mutation.log`: **13 one-line mutations of production code; all 13 killed, 0 survivors**, after two rounds of hardening the tests themselves (the honest process, kept rather than smoothed over):
+
+- Two mutations (M1, an absent-program fallback; M8, an unrecognised status byte) initially **survived** because the test's own synthetic bank/byte happened to make the mutated and correct code produce the same result for that specific input — not a flaw in the mutation, a blind spot in the fixture. Both fixed by choosing a fixture that actually exercises the distinguishing code path (a bank ordered so timbres_[0] ≠ melodic-0; a status byte whose high nibble has no other handler).
+- One mutation (M5, forcing the loop branch dead) survived a **first fix attempt** for a subtler reason: a single giant `render()` call synthesizes its entire request in one inner pass before ever re-checking the "has the track ended" condition, so the bug was invisible to a test that rendered 6 seconds in one call. Fixed by rendering in small, device-realistic chunks (matching how the real audio task actually calls it) — which is also a better test on its own merits, independent of this mutation.
+- Two mutations (M3, M5) initially caused a **build failure** (a switch-case value out of range; an unused parameter) rather than exercising behaviour — not a real kill. Rewritten to mutate a value read at runtime instead of a declaration, so the kill is functional.
+
+The other 9 killed cleanly on the first pass: the melodic-0 fallback (B4b), velocity-0-as-note-off (V3), the sustain pedal (V6/V7), `end_tick`'s true-maximum rule (X5, plus two real-corpus checks), the render() allocation-jitter regression (M6), OPL2/OPL3 channel counts swapped (C5/C6), the intro/endgame context-table boundaries (I1/I2), the frigate sentinel losing its signal (G7), the Camp freeze being skipped (CAMP1), and the victory flag being dropped from `sync_music()` (WIRE1, a source-scan kill — the honest limit of what a mutation test can prove without a live combat arena, stated rather than hidden).
+
+### 17.16 Audio-pack changes (Phase P)
+
+**None to the wire format.** `OU5AUDIO` stays version 1.0; the packer (`native/tools/u5pack/audio.ts`) is unchanged. The only change is on the **reading** side, and it is additive: `inspect_audio_pack()` gained an optional `AudioPackPayload*` out-parameter (default `nullptr`, so every existing call site is untouched) that returns pointers to the song/bank bytes it already found while validating — no second scan, no format change. `alpha_audio.cpp`'s `load_audio_pack_info` gained a matching optional `RetainedAudioPayload*` (again default `nullptr`) that keeps the pack's bytes resident (instead of freeing them, as before) **only** when the pack is Valid and Supported; every other outcome still frees everything, exactly as A3-01 designed it.
+
+- Stock pack size: **112 B**, unchanged.
+- Patched pack size: **56,148 B**, unchanged.
+- Format version: **1.0**, unchanged — no regeneration needed for any existing pack on any card.
+- Capability metadata: unchanged.
+- **The user does not need to regenerate or re-copy `openu5-audio.bin`.** The existing file already carries everything this batch plays; only the firmware needed rebuilding.
+
+### 17.17 Firmware build (Phase Q)
+
+Fresh ESP-IDF 6.1 build, `native/targets/tdeck/build-a3-04` (`native/targets/tdeck/a3-04-firmware-build.log`, `a3-04-firmware-retry.log`). The first `idf.py build` compiled every one of this batch's changed files clean — including `music_synth.cpp`'s full OPL2 synth for the xtensa target and `tdeck_audio.cpp`'s new mixing loop — then died inside the **bootloader subproject's own build**, no line of project code involved: the same class of transient ESP-IDF/toolchain flakiness the project has hit before (host-and-firmware-toolchain notes on fresh-build-dir crashes in third-party files). `idf.py reconfigure` + `ninja -j 4 all` (the documented workaround) completed clean on the retry.
+
+- **Zero project warnings** under `-Werror` in both runs — the only warning lines in either log are the five stock `component_validation.cmake` notices every build emits (third-party, not project code).
+- **Size:** `openu5_tdeck.bin` = **0xe6a90 = 945,808 B**, **+25,680 B against A3-03's 920,128 B**. **0x19570 = 103,280 B (10 %) free** in the 1 MiB app partition (down from A3-03's 12 %).
+- **What grew:** the OPL2 emulator, voice allocator, bank reader and XMI parser (`music_synth.cpp`, new), `TdeckAudioBackend`'s music command queue and mixing loop (`tdeck_audio.cpp`), and the two new context-range functions (`audio.cpp`). Nothing in the game/resource packs changed (§17.16).
+- **RAM/stack/CPU:** §17.4's estimates stand; the audio task's stack was raised 4096 → 6144 B in this build. Not measured on hardware this batch (no device available) — A3-05/the carried-forward hardware pass measures it for real.
+- **Flash pressure:** materially changed (10 % free vs 12 %), but not critically — there is still comfortable headroom, and nothing in this batch's design (fixed-size bank/voice arrays, no new large tables) suggests future audio batches would consume flash at a similar rate.
+- Not flashed. The post-commit image (built after the commit, in a fresh directory without ccache, per project convention) is what the annotated tag names, with its own SHA-256 and embedded `Git`.
+
+### 17.18 Hardware test plan (Phase R) — for later, together with A3-03's carried-forward retest
+
+The user is away from the device; nothing below has been run. Copy the Launcher image named in this batch's annotated tag onto the T-Deck's SD card structure as usual (`/sd/ultima5/…`), keep the existing `openu5-audio.bin` (§17.16: no regeneration needed).
+
+**A. Patched assets, boot.** Boot with the existing supported `openu5-audio.bin`. The identity screen shows this batch's `FW`/`Git`; `AUDIO_PACK … capability=supported-music-patch` in the log. Settings shows `Music Volume: 80%`, adjustable.
+
+**B. Title.** At the title screen (before New Journey / Continue), the Ultima V Theme should be audible.
+
+**C. Overworld.** Journey Onward / Continue into Britannia: Britannic Lands plays. Descend to the Underworld (a moongate or a dungeon's lower reach): Worlds Below plays.
+
+**D. Town.** Enter any City of Virtue: Villager Tarantella starts **once** on entry, and does not restart while walking around inside the same town.
+
+**E. Dungeon.** Enter any dungeon: Halls of Doom plays.
+
+**F. Combat.** Start a fight: Engagement and Melee plays. Win it: the Ultima V Theme plays (the driver's own victory switch, §5); leave the arena back to the prior location: that location's own track resumes (not a restart of the pre-combat track from its beginning, unless the driver's own dedupe-by-song rule says otherwise — see §17.8's "no double-start").
+
+**G. SFX overlay.** While music plays, take a step (footstep SFX) and win/lose a fight (combat SFX): both the music and the SFX should be audible together, neither muting or replacing the other.
+
+**H. Volume.** Music Volume 100 % → 50 % → 0 %: progressively quieter, then silent, while SFX Volume is left alone and SFX loudness is unaffected. Then the reverse: change SFX Volume and confirm the music's loudness is unaffected.
+
+**I. Load.** Save in one context (e.g. a dungeon), walk into a different one (e.g. overworld), then load the save: the overworld track stops and the dungeon track resumes — not a restart of the overworld track, not both playing at once.
+
+**J. Stock pack (optional).** Boot with a stock (unpatched) `openu5-audio.bin`, or none at all: Settings reads `Music Volume: Unavailable` with the documented reason; no music plays anywhere; SFX is unaffected.
+
+**K. Carried forward from A3-03 (§16.17), to run in the same session:** the fountain's proximity crackle, the troll-fight victory fanfare, the Word of Power quake rumble, and Alt+L's load flush. A3-03's software is unchanged by this batch; only its hardware confirmation is still outstanding, for the same reason as A3-04's (§0's header).
+
+### 17.19 Documentation (Phase S)
+
+This file (`ALPHA3_AUDIO.md` §17, and the header/status line at the top). The audit ledger entry (batch record) is this report itself; A3-03's hardware line is recorded as **SOFTWARE COMPLETE — HARDWARE RETEST PENDING**, not re-run, because the user is away from the device.
+
+### 17.20 Next batch (Phase T) — not started
+
+**A3-05 — hardware music validation, loudness/tone balance, SFX/music balance, final audio polish and sign-off.** At minimum: run §17.18's plan together with A3-03's carried-forward retest; measure the OPL2 synth's actual CPU cost on-device against §17.4's estimate and adjust the mitigation there only if the measurement says to; tune absolute loudness and the SFX/music balance; decide whether a short crossfade is worth adding (§17.6 leaves the DOS-exact instant switch as the default); the endgame's own scene-by-scene music chain (Stones → Lady Nan → Reunion → Rule Britannia) waits on the endgame cinematic itself (D-54), which is explicitly not this batch's or A3-05's scope — a presentation batch, not an audio one.

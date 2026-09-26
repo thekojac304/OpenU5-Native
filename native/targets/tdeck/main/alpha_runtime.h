@@ -530,6 +530,13 @@ class AlphaRuntime {
      * the arena hit/death bursts (the reference's sfxForCombatEvent).
      */
     void present_audio(const openu5::GameEvent &);
+    // A3-04. Re-derives the music context from EXISTING runtime state (no
+    // new gameplay events) and hands it to AudioService::play_music(), which
+    // itself de-dupes by song -- so calling this liberally costs nothing
+    // when nothing changed. Mirrors the patch driver's own behaviour: it
+    // re-derives on every key poll (handle()) rather than being told when to
+    // change. See ALPHA3_AUDIO.md section 17.6 for the priority order.
+    void sync_music();
     /** True when combat actor `id` is a party member (the 0x35ac side test). */
     bool combat_actor_is_player(int32_t id) const;
     /** A3-02: the Blackthorn pacer's beat cues, released with their beat. */

@@ -1289,6 +1289,16 @@ if(BUILD_TESTING)
   target_link_libraries(a3_03_sfx_inventory PRIVATE openu5_core)
   target_compile_features(a3_03_sfx_inventory PRIVATE cxx_std_17)
   add_test(NAME a3_03_sfx_inventory COMMAND a3_03_sfx_inventory "${CMAKE_CURRENT_SOURCE_DIR}")
+  # Alpha 3 A3-04 -- the music decoder/synth (FAT.OPL bank, OPL2 emulator,
+  # voice allocator, direct XMI event parse, song player determinism and
+  # looping, the intro/endgame context tables) against synthetic fixtures
+  # and the real local patch corpus.
+  add_executable(a3_04_music_synth tests/a3_04_music_synth_test.cpp)
+  target_link_libraries(a3_04_music_synth PRIVATE openu5_core)
+  target_compile_features(a3_04_music_synth PRIVATE cxx_std_17)
+  add_test(NAME a3_04_music_synth COMMAND a3_04_music_synth
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
   # A3-01 -- the same seam through the REAL AlphaRuntime: the settings rows by
   # raw keys, reboot/load persistence, the Developer test tone, presentation-
   # time cue routing, and scene timing / game state identical with audio on,
@@ -1402,6 +1412,43 @@ if(BUILD_TESTING)
   add_test(NAME a3_03_sfx_runtime COMMAND a3_03_sfx_runtime
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
+  # Alpha 3 A3-04 -- music context routing through the REAL AlphaRuntime:
+  # boot, location switches, Camp freeze, Ending, Settings Music Volume, and
+  # a stock pack's silence, all by raw keys against a recording backend.
+  add_executable(a3_04_music_runtime
+    ../targets/tdeck/host_tests/a3_04_music_runtime_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/batch37_board_capture_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_audio.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(a3_04_music_runtime PRIVATE openu5_core)
+  target_include_directories(a3_04_music_runtime PRIVATE
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/main)
+  target_compile_features(a3_04_music_runtime PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(a3_04_music_runtime PRIVATE /Gy)
+    target_link_options(a3_04_music_runtime PRIVATE /OPT:REF)
+  else()
+    target_compile_options(a3_04_music_runtime PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(a3_04_music_runtime PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME a3_04_music_runtime COMMAND a3_04_music_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/a3-01-audio-stock.bin")
   # Batch 14 / R-22 -- (Z)-stats navigation. Same seam and same stub/shim set
   # as alpha_runtime_integration_regression above: it links the REAL,
   # unmodified alpha_runtime.cpp so the modal is reached only by feeding raw
