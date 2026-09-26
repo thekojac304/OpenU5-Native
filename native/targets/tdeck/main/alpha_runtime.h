@@ -92,8 +92,31 @@ class AlphaRuntime {
         // Host framebuffer tests may compose deterministic all-white map tiles.
         bool render_pixels = false;
         bool indexed_test_tiles = false;
+        // Batch 51: the scene pacers get the same storage and binder as
+        // initialize(). `false` is the pacers' own harness contract (a zero
+        // unit drains every beat synchronously -- set_paced(false) /
+        // set_unit_ms(0)); `true` is the device's real cadence, driven by the
+        // host esp_timer shim's virtual clock.
+        bool paced_scenes = false;
     };
     void attach_host_test_fixture(const HostTestFixture &);
+    // Batch 51 read-only windows on the scene pacers, for timing assertions.
+    const openu5::NarrativeScenePacer &narrative_pacer() const { return narrative_pacer_; }
+    const openu5::BlackthornScenePacer &blackthorn_pacer() const { return blackthorn_pacer_; }
+    bool camp_scene_inverted() const { return camp_scene_inverted_; }
+    bool system_menu_open() const { return system_menu_.active(); }
+    uint32_t routed_command_count() const { return routed_command_sequence_; }
+    // Scene pacer storage (#324 / Y-04). Class constants so initialize() and
+    // the host fixture size the same queues.
+    // The longest real Blackthorn turn is the capture entry: 15 events and 51
+    // scene beats (Batch 51 split the materialization into sweep + circle +
+    // arrival); the escorted finale is 44 beats. The arena holds the copied
+    // narrative for one turn.
+    static constexpr size_t kBlackthornSceneSteps = 96, kBlackthornSceneTextBytes = 4096;
+    // The troll crossing is 1 + 6*5 + 1 = 32 beats, the refuge script 16, and
+    // the Camp apparition's longest paced segment (six members, none levelling)
+    // 2 + 1 + 6*6 + 3 = 42 steps; each can be followed by the rest of its turn.
+    static constexpr size_t kNarrativeSceneSteps = 64, kNarrativeSceneTextBytes = 2048;
     openu5::TurnState &turn() { return turn_; }
     openu5::TravelState &travel() { return travel_; }
     openu5::CommandState &commands() { return commands_; }
@@ -374,8 +397,18 @@ class AlphaRuntime {
     bool service_blackthorn_scene();
     /** ms of this device's own shake window still owed at `now_us`. */
     int64_t quake_remaining_ms(int64_t now_us) const;
-    /** Release whatever of the deferred Refuge/TrollSneak scene is due. */
+    /** Release whatever of the deferred Refuge/TrollSneak/Camp scene is due. */
     bool service_narrative_scene();
+    /**
+     * Batch 51. The one place the scene pacers are attached to their storage
+     * and given their cadence -- initialize() and the host fixture both call
+     * it, so a host test can never run a differently wired pacer.
+     */
+    void bind_scene_pacers(bool paced);
+    /** Apply a Camp scene visual event to the CampFire stage; false = not one. */
+    bool apply_camp_scene_event(const openu5::GameEvent &);
+    /** Forward sink of the narrative pacer: Camp stage, status panel, or session. */
+    static void release_scene_event(void *, const openu5::GameEvent &);
     /** Advance the poison roster flash; true = redraw. */
     bool service_poison_flash();
     /** Beat sink for the narrative pacer (append / continue / cue / phase). */

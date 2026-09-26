@@ -1,0 +1,29 @@
+GREEN C0: the bytes fix the chord at twelve chimes (0x08b5 a2=0xea60 vs 0x088a a2=0x1388) -- the one ratio two independent witnesses measured (re/notes/cadencia-delay-pit.md 3)
+GREEN C0: the arpeggio loop runs si=0x3a26..<0x3a32 step 2 -- six sweeps, not three
+GREEN C0: a seed exists whose one-hour Camp brings the apparition
+GREEN C1: pacing is presentation only -- RNG, member state and the Camp phase after the command are identical to the unpaced run
+RED C2: the apparition is STAGED: after the command the Hail getkey has not yet reached the session and the pacer holds the rest of the turn (modal, input swallowed)
+RED C2: no apparition visual was released synchronously inside the command
+GREEN C3: the paced scene reaches the first Hail getkey on its own clock
+GREEN C4: release order is the original's: figure, wake, chime, XOR, chord, restore, Hail, getkey
+RED C5: the figure cannot appear before the materialize sweep and the six-note arpeggio (0x067b + 0x0686-0x06a2) have held the sleeping camp
+RED C6: the figure's own frame survives at least one presentation tick before the first member stands (fizzle 0x06c2 is not collapsed into the wake)
+RED C7: the standing member is shown for run_n_frames(1) + the heal chime before the viewport inverts (0x087f, 0x0896)
+RED C8: the XOR frame is held for the whole chord -- the restore cannot replace it early (0x08aa XOR, 0x08c1 chord, 0x08d5 first repaint)
+RED C9: the Hail text waits for the three restore frames (0x08c4-0x08d9) -- it cannot replace the inverted frame immediately
+GREEN C10: and the hold is the chord, not an open-ended stall (released within one device loop of its deadline)
+GREEN C11: ten seconds with no key release nothing -- the Hail getkey still blocks
+RED C12: the key advances the core, and the NEXT member is staged again rather than dumped
+RED C13: the second member gets its own full chord hold after the acknowledgement
+GREEN C13: and the scene ends on the karma getkey, as the unpaced run does
+GREEN C14: set_paced(false) keeps the synchronous delivery every existing harness relies on
+GREEN C15: a six-member segment (42 steps) fits the pacer: no step dropped, six pulses, then the karma getkey
+RED B1: the holy circle (slot 8 = 0x116, 0x0854) is actually presented -- it was staged and replaced inside a single pump, so no frame ever showed it
+RED B2: Blackthorn's cell stays EMPTY for the whole materialization sweep (tone_sweep a2=0x32c8 @0x083f precedes the 0x0854 placement)
+RED B3: the circle survives at least one presentation tick before the fizzle resolves to Blackthorn (0x0860 fizzle_in 0x178)
+GREEN B4: precondition -- the victim is seated in the mounted room when the sacrifice's pause(10) begins
+RED B4: the victim stays in place through pause(10) AND the whole siren (460+460 sweeps of a2=0xc8, 0x03d0-0x040f) before going dark
+GREEN B5: a zero unit still drains every beat synchronously (harness contract unchanged)
+GREEN T1: TrollSneak's deferred tail follows its pause(10)+pause(5) exactly -- no Camp hold leaks into another scene's forwarded events
+Batch 51 scene pacing: 14/27 checks
+exit=1

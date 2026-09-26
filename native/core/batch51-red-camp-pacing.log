@@ -1,0 +1,172 @@
+[I][AlphaResources] Alpha resource pack v2.0 valid: 2039545 bytes, 39 entries, payload CRC=2065ad91, expected SHA-256=434cd664b4b9, firmware_match=1
+[I][AlphaResources] Loaded owners: 64 small floors, 8 dungeons, 1024 NPC records; PSRAM=1185451
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=f7f740f8
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=00 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=yes/no
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6e base=00 symbol=00 ui=yes/no emitted=character action_char=110 shortcut=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=camp-scene
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=7a0f9f03
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=camp-scene
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=537a99fd
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=camp-scene
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=05711410
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=camp-scene
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=a0b24e2c
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=camp-scene
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=05711410
+[I][AlphaRuntime] combat command=11 status=awaiting response turns=0 events=15 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=yes/no to=key-wait
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=yes/no gameplay_command=11 sequence=1
+GREEN P0: a shipped-pack raw Camp reaches the apparition
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=f7f740f8
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=00 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=yes/no
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6e base=00 symbol=00 ui=yes/no emitted=character action_char=110 shortcut=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=camp-scene
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=7a0f9f03
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=camp-scene
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=537a99fd
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=camp-scene
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=05711410
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=camp-scene
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=a0b24e2c
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=camp-scene
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=05711410
+[I][AlphaRuntime] combat command=11 status=awaiting response turns=0 events=15 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=yes/no to=key-wait
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=yes/no gameplay_command=11 sequence=1
+GREEN P1: unpaced harness still presents every Camp frame inside the command (Batch 42)
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=f7f740f8
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=00 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=00 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=yes/no
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6e base=00 symbol=00 ui=yes/no emitted=character action_char=110 shortcut=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=camp-scene
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=7a0f9f03
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=camp-scene
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=537a99fd
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=camp-scene
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=05711410
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=camp-scene
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=a0b24e2c
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=camp-scene
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=05711410
+[I][AlphaRuntime] combat command=11 status=awaiting response turns=0 events=15 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=yes/no to=key-wait
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=yes/no gameplay_command=11 sequence=1
+GREEN P2: the core has already resolved member one (the pacer only defers presentation)
+RED P2: the Hail getkey has NOT reached the session and the XOR is not yet up -- the scene is staged, not played inside the command
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=key-wait combat=0 dungeon=0 source=camp-scene
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=05711410
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=78 base=00 symbol=00 ui=key-wait emitted=character action_char=120 shortcut=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=camp-scene
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=1c5df6fa
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=camp-scene
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=b99eacc6
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=camp-scene
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=1c5df6fa
+[I][AlphaRuntime] combat command=61 status=awaiting response turns=0 events=10 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=key-wait gameplay_command=61 sequence=2
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=key-wait emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=0 crc=f7f740f8
+[I][AlphaRuntime] combat command=61 status=success turns=0 events=4 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] UI_MODE from=key-wait to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=key-wait gameplay_command=61 sequence=3
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=explore emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=explore emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=00 symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=64 base=00 symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=developer
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=73 base=00 symbol=00 ui=explore emitted=confirm action_char=0 shortcut=save
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6c base=00 symbol=00 ui=explore emitted=confirm action_char=0 shortcut=load
+[I][AlphaRuntime] U5OBJ CLEAR site=load-restore pool_before=0
+[I][AlphaRuntime] WORLD_OBJECTS_RESTORE count=0
+[I][AlphaRuntime] DUNGEON_RESTORE active=0 dungeon=33 depth=0
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=explore gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=78 base=00 symbol=00 ui=explore emitted=character action_char=120 shortcut=none
+[I][AlphaRuntime] combat command=26 status=rejected turns=0 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=26 sequence=4
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=78 base=00 symbol=00 ui=explore emitted=character action_char=120 shortcut=none
+[I][AlphaRuntime] combat command=26 status=rejected turns=0 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=26 sequence=5
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=78 base=00 symbol=00 ui=explore emitted=character action_char=120 shortcut=none
+[I][AlphaRuntime] combat command=26 status=rejected turns=0 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=26 sequence=6
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=78 base=00 symbol=00 ui=explore emitted=character action_char=120 shortcut=none
+[I][AlphaRuntime] combat command=26 status=rejected turns=0 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=26 sequence=7
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=78 base=00 symbol=00 ui=explore emitted=character action_char=120 shortcut=none
+[I][AlphaRuntime] combat command=26 status=rejected turns=0 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=26 sequence=8
+RED P3: while an original wait is on screen, ordinary keys, Enter, Mic, Alt+M, Alt+D, save, load and a held key are all swallowed -- no menu, no save/load, no advance
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=system-menu animated=0 crc=f7f740f8
+RED P4: the paced scene reaches the Hail getkey by itself
+RED P5: the viewport cannot invert before materialize + arpeggio + figure + wake + chime
+RED P6: the XOR pulse stays on the glass for the whole chord (tone_sweep a2=0xea60, B-class floor) -- no longer a single-transfer flash
+RED P6: and it comes down on the chord's deadline, within one device loop
+RED P7: the Hail getkey follows the three restore frames, never the XOR directly
+RED P8: an inverted frame and a restored frame were both actually presented
+GREEN P10: the member's new HP is already resolved in the core while it is withheld from the panel
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=73 base=00 symbol=00 ui=explore emitted=confirm action_char=0 shortcut=save
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=explore gameplay_command=none
+RED P11: at the live getkey Alt+S acknowledges the Hail (Batch 41) and never saves
+RED P11: and the second member is staged again rather than presented at once
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=f7f740f8
+RED P12: the second member's pulse plays out and the scene waits on the karma getkey
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=08 base=00 symbol=00 ui=explore emitted=back action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=80,80 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=back ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=f7f740f8
+GREEN P13: the karma key ends the scene and commands resume
+Batch 51 Camp pacing: 5/16 checks
+exit=1

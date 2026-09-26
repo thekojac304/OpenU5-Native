@@ -94,6 +94,16 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     blackthorn_scene_services_.script = nullptr;
     context_.blackthorn = &blackthorn_;
     context_.blackthorn_scene = &blackthorn_scene_services_;
+    // Batch 51: the scene pacers' storage, sized by the same class constants
+    // initialize() uses and attached by the same production binder. Before
+    // this the fixture attached none, so a Refuge/TrollSneak event reaching
+    // the host runtime was taken by the pacer and silently dropped.
+    blackthorn_steps_ = new openu5::BlackthornSceneStep[kBlackthornSceneSteps]();
+    blackthorn_scene_text_ = new char[kBlackthornSceneTextBytes]();
+    blackthorn_scene_grid_ = new int16_t[openu5::kBlackthornSceneCells]();
+    narrative_steps_ = new openu5::NarrativeSceneStep[kNarrativeSceneSteps]();
+    narrative_text_ = new char[kNarrativeSceneTextBytes]();
+    bind_scene_pacers(fixture.paced_scenes);
 
     look_services_.context = this;
     look_services_.describe = [](void *p, int32_t tile) {

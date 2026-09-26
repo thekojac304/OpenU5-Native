@@ -1,0 +1,71 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-batch51-final
+      Start   2: ui_session
+ 1/33 Test   #2: ui_session .............................   Passed    0.13 sec
+      Start  26: item_parity
+ 2/33 Test  #26: item_parity ............................   Passed    0.55 sec
+      Start  27: command_parity
+ 3/33 Test  #27: command_parity .........................   Passed    0.25 sec
+      Start  32: presentation_regression
+ 4/33 Test  #32: presentation_regression ................   Passed    0.16 sec
+      Start  40: input_regression
+ 5/33 Test  #40: input_regression .......................   Passed    0.05 sec
+      Start  41: dungeon_input_regression
+ 6/33 Test  #41: dungeon_input_regression ...............   Passed    0.10 sec
+      Start  45: ui_mode_regression
+ 7/33 Test  #45: ui_mode_regression .....................   Passed    0.09 sec
+      Start  46: alpha_runtime_integration_regression
+ 8/33 Test  #46: alpha_runtime_integration_regression ...   Passed    0.12 sec
+      Start  51: batch25_shard_ritual
+ 9/33 Test  #51: batch25_shard_ritual ...................   Passed    0.11 sec
+      Start  55: batch29_rest_wiring
+10/33 Test  #55: batch29_rest_wiring ....................   Passed    0.16 sec
+      Start  56: batch45_npc_beds
+11/33 Test  #56: batch45_npc_beds .......................   Passed    0.04 sec
+      Start  57: batch48_bed_pose
+12/33 Test  #57: batch48_bed_pose .......................   Passed    0.04 sec
+      Start  58: batch30_sleep_parity
+13/33 Test  #58: batch30_sleep_parity ...................   Passed    0.10 sec
+      Start  60: batch32_camp_watch
+14/33 Test  #60: batch32_camp_watch .....................   Passed    0.10 sec
+      Start  64: batch36_camp_housekeeping
+15/33 Test  #64: batch36_camp_housekeeping ..............   Passed    0.12 sec
+      Start  65: batch37_bed_viewport
+16/33 Test  #65: batch37_bed_viewport ...................   Passed    0.09 sec
+      Start  66: batch39_party_panel
+17/33 Test  #66: batch39_party_panel ....................   Passed    0.09 sec
+      Start  67: batch41_raw_key
+18/33 Test  #67: batch41_raw_key ........................   Passed    0.11 sec
+      Start  68: batch42_advancement_flash
+19/33 Test  #68: batch42_advancement_flash ..............   Passed    0.15 sec
+      Start  69: batch43_sleep_scene
+20/33 Test  #69: batch43_sleep_scene ....................   Passed    0.35 sec
+      Start  70: batch46_camp_invisibility
+21/33 Test  #70: batch46_camp_invisibility ..............   Passed    0.13 sec
+      Start  71: batch44_camp_ring_entry
+22/33 Test  #71: batch44_camp_ring_entry ................   Passed    0.11 sec
+      Start  72: batch38_camp_duration
+23/33 Test  #72: batch38_camp_duration ..................   Passed    0.10 sec
+      Start  74: batch41_staged_advancement
+24/33 Test  #74: batch41_staged_advancement .............   Passed    0.10 sec
+      Start  75: batch51_scene_pacing
+25/33 Test  #75: batch51_scene_pacing ...................   Passed    0.12 sec
+      Start  76: batch51_camp_pacing
+26/33 Test  #76: batch51_camp_pacing ....................   Passed    0.10 sec
+      Start  78: batch18_well_ceremony
+27/33 Test  #78: batch18_well_ceremony ..................   Passed    0.14 sec
+      Start  86: batch7b
+28/33 Test  #86: batch7b ................................   Passed    0.10 sec
+      Start  90: batch15_sacrifice_roster
+29/33 Test  #90: batch15_sacrifice_roster ...............   Passed    0.16 sec
+      Start  93: batch45b
+30/33 Test  #93: batch45b ...............................   Passed    0.08 sec
+      Start  94: blackthorn_scene
+31/33 Test  #94: blackthorn_scene .......................   Passed    0.08 sec
+      Start  96: gameplay_parity
+32/33 Test  #96: gameplay_parity ........................   Passed    9.35 sec
+      Start 100: quest_parity
+33/33 Test #100: quest_parity ...........................   Passed    4.93 sec
+
+100% tests passed out of 33
+
+Total Test time (real) =  18.46 sec

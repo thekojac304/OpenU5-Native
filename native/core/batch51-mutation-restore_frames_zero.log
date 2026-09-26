@@ -1,0 +1,90 @@
+[1/7] Building CXX object CMakeFiles/openu5_core.dir/src/scene_timing.cpp.obj
+[2/7] Linking CXX static library libopenu5_core.a
+[3/7] Linking CXX executable batch51_scene_pacing.exe
+[4/7] Linking CXX executable batch51_camp_pacing.exe
+[5/7] Linking CXX executable batch42_advancement_flash.exe
+[6/7] Linking CXX executable batch7b_tests.exe
+[7/7] Linking CXX executable blackthorn_scene_tests.exe
+
+==== batch51_scene_pacing exit=1 red=1
+GREEN C0: the bytes fix the chord at twelve chimes (0x08b5 a2=0xea60 vs 0x088a a2=0x1388) -- the one ratio two independent witnesses measured (re/notes/cadencia-delay-pit.md 3)
+GREEN C0: the arpeggio loop runs si=0x3a26..<0x3a32 step 2 -- six sweeps, not three
+GREEN C0: a seed exists whose one-hour Camp brings the apparition
+GREEN C1: pacing is presentation only -- RNG, member state and the Camp phase after the command are identical to the unpaced run
+GREEN C2: the apparition is STAGED: after the command the Hail getkey has not yet reached the session and the pacer holds the rest of the turn (modal, input swallowed)
+GREEN C2: no apparition visual was released synchronously inside the command
+GREEN C3: the paced scene reaches the first Hail getkey on its own clock
+GREEN C4: release order is the original's: figure, wake, chime, XOR, chord, restore, Hail, getkey
+GREEN C5: the figure cannot appear before the materialize sweep and the six-note arpeggio (0x067b + 0x0686-0x06a2) have held the sleeping camp
+GREEN C6: the figure's own frame survives at least one presentation tick before the first member stands (fizzle 0x06c2 is not collapsed into the wake)
+GREEN C7: the standing member is shown for run_n_frames(1) + the heal chime before the viewport inverts (0x087f, 0x0896)
+GREEN C8: the XOR frame is held for the whole chord -- the restore cannot replace it early (0x08aa XOR, 0x08c1 chord, 0x08d5 first repaint)
+RED C9: the Hail text waits for the three restore frames (0x08c4-0x08d9) -- it cannot replace the inverted frame immediately
+GREEN C10: and the hold is the chord, not an open-ended stall (released within one device loop of its deadline)
+GREEN C11: ten seconds with no key release nothing -- the Hail getkey still blocks
+GREEN C12: the key advances the core, and the NEXT member is staged again rather than dumped
+GREEN C13: the second member gets its own full chord hold after the acknowledgement
+GREEN C13: and the scene ends on the karma getkey, as the unpaced run does
+GREEN C14: set_paced(false) keeps the synchronous delivery every existing harness relies on
+GREEN C15: a six-member segment (42 steps) fits the pacer: no step dropped, six pulses, then the karma getkey
+GREEN B1: the holy circle (slot 8 = 0x116, 0x0854) is actually presented -- it was staged and replaced inside a single pump, so no frame ever showed it
+GREEN B2: Blackthorn's cell stays EMPTY for the whole materialization sweep (tone_sweep a2=0x32c8 @0x083f precedes the 0x0854 placement)
+GREEN B3: the circle survives at least one presentation tick before the fizzle resolves to Blackthorn (0x0860 fizzle_in 0x178)
+GREEN B4: precondition -- the victim is seated in the mounted room when the sacrifice's pause(10) begins
+GREEN B4: the victim stays in place through pause(10) AND the whole siren (460+460 sweeps of a2=0xc8, 0x03d0-0x040f) before going dark
+GREEN B5: a zero unit still drains every beat synchronously (harness contract unchanged)
+GREEN T1: TrollSneak's deferred tail follows its pause(10)+pause(5) exactly -- no Camp hold leaks into another scene's forwarded events
+Batch 51 scene pacing: 26/27 checks
+==== batch51_camp_pacing exit=1 red=1
+GREEN P0: a shipped-pack raw Camp reaches the apparition
+GREEN P1: unpaced harness still presents every Camp frame inside the command (Batch 42)
+GREEN P2: the core has already resolved member one (the pacer only defers presentation)
+GREEN P2: the Hail getkey has NOT reached the session and the XOR is not yet up -- the scene is staged, not played inside the command
+GREEN P3: while an original wait is on screen, ordinary keys, Enter, Mic, Alt+M, Alt+D, save, load and a held key are all swallowed -- no menu, no save/load, no advance
+GREEN P3: and not one of them reaches the core as a command -- nothing reads the keyboard inside tone_sweep, so no getkey stand-in may be synthesized for a Hail not yet shown
+GREEN P4: the paced scene reaches the Hail getkey by itself
+GREEN P5: the viewport cannot invert before materialize + arpeggio + figure + wake + chime
+GREEN P6: the XOR pulse stays on the glass for the whole chord (tone_sweep a2=0xea60, B-class floor) -- no longer a single-transfer flash
+GREEN P6: and it comes down on the chord's deadline, within one device loop
+RED P7: the Hail getkey follows the three restore frames, never the XOR directly
+GREEN P8: an inverted frame and a restored frame were both actually presented
+GREEN P8: the frame before the pulse shows member one standing (Fighter 0x148, OUTSUBS 0x086d)
+GREEN P8: every frame presented during the chord is the XOR of that frame
+GREEN P8: the first frame after the chord restores the pre-XOR scene
+GREEN P9: the standing frame was held for the chime before the XOR replaced it
+GREEN P10: the member's new HP is resolved in the core but the paced renders still show the pre-apparition HP on the party panel until the getkey (OUTSUBS 0x07f5, Batch 39/42)
+GREEN P11: at the live getkey Alt+S acknowledges the Hail (Batch 41) and never saves
+GREEN P11: and the second member is staged again rather than presented at once
+GREEN P12: the second member's pulse plays out and the scene waits on the karma getkey
+GREEN P13: the karma key ends the scene and commands resume
+Batch 51 Camp pacing: 20/21 checks
+==== batch42_advancement_flash exit=0 red=0
+GREEN shipped CampFire south formation is in the viewport
+GREEN raw Camp reaches the apparition
+GREEN first Hail holds later member unchanged
+GREEN Camp presents scene, standing tile, XOR and restored frames before Hail
+GREEN flash frames do not repaint party panel before Hail acknowledgement
+GREEN scene starts with both live members on sleeping tile 0x11e
+GREEN first member wakes to Fighter tile 0x148 at authored cell
+GREEN one XOR pass inverts every CampFire viewport pixel
+GREEN first post-chord repaint restores the pre-XOR scene
+GREEN visual actor placement leaves world coordinates untouched
+GREEN Hail render changes transcript without repainting pre-key party HP
+GREEN acknowledgement redraws one panel then advances the next member
+GREEN acknowledged member HP appears before next member panel update
+GREEN second member has its own standing, XOR and restore frames
+GREEN second member uses Mage tile 0x140; first remains standing
+GREEN second member receives exactly one reversible XOR pulse
+GREEN dead and ineligible slots add no Hail wait
+GREEN dead slot emits no scene frames; ineligible live slot still flashes
+GREEN ineligible live member wakes to Mage tile
+GREEN dead member cell retains its scene background
+GREEN ineligible live member has one XOR pulse before karma speech
+GREEN karma acknowledgement finishes the scene and resumes commands
+GREEN scene exit repaints the ordinary world viewport at the original position
+Batch 42 visual: 23/23 checks
+==== blackthorn_scene exit=0 red=0
+blackthorn_scene: 57 checks, 0 failures
+==== batch7b exit=0 red=0
+batch7b: 264 checks passed
+MUTATION restore_frames_zero: KILLED

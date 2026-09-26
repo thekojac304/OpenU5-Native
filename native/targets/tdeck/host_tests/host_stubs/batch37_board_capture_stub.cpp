@@ -1,5 +1,6 @@
 #include "../../main/tdeck_board.h"
 #include "../../main/native_renderer.h"
+#include "esp_timer.h"
 #include <algorithm>
 #include <array>
 #include <vector>
@@ -7,6 +8,8 @@
 namespace {
 std::array<uint16_t, 320 * 240> screen{};
 std::vector<std::array<uint16_t,176*176>> frames;
+// Batch 51: the (virtual) presentation instant of every captured frame.
+std::vector<int64_t> frame_times;
 std::vector<std::array<uint16_t,7>> camp_panels;
 int fills = 0;
 int draws = 0;
@@ -27,12 +30,14 @@ void capture_panel(const openu5::GameState &game, tdeck::DevicePartyHighlight hi
 void batch37_reset_screen() {
     screen.fill(0x1357);
     frames.clear();
+    frame_times.clear();
     camp_panels.clear();
     fills = draws = panel_draws = world_draws = ui_draws = 0;
     first_panel_map_pixel = 0;
 }
 uint16_t batch37_pixel(int x, int y) { return screen[size_t(y) * 320 + size_t(x)]; }
 size_t batch37_frame_count() { return frames.size(); }
+int64_t batch37_frame_time_us(size_t frame) { return frame<frame_times.size()?frame_times[frame]:-1; }
 uint16_t batch37_frame_pixel(size_t frame,int x,int y) {
     return frame<frames.size()&&x>=0&&x<176&&y>=0&&y<176
         ?frames[frame][size_t(y)*176+size_t(x)]:0xffff;
@@ -72,6 +77,7 @@ esp_err_t Board::show_alpha(const uint16_t *pixels, const openu5::UiSession &, c
     ++ui_draws;
     if(!full_square_viewport)++world_draws;
     frames.emplace_back();
+    frame_times.push_back(esp_timer_get_time());
     std::copy(pixels,pixels+176*176,frames.back().begin());
     if(!preserve_party_panel)capture_panel(game, highlight);
     // Mirror Board's physical viewport placement and the sky/wind overlays.
@@ -97,6 +103,7 @@ esp_err_t Board::show_camp_viewport(const uint16_t *pixels,uint32_t) {
     if(!pixels)return ESP_ERR_INVALID_ARG;
     ++draws;
     frames.emplace_back();
+    frame_times.push_back(esp_timer_get_time());
     std::copy(pixels,pixels+176*176,frames.back().begin());
     for(int y=0;y<176;++y)for(int x=0;x<176;++x)
         screen[size_t(y+4)*320+size_t(x+4)]=pixels[size_t(y)*176+size_t(x)];

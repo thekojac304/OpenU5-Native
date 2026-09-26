@@ -27,7 +27,11 @@
 // anim_vm's time unit is run-n-frames (kernel 0x3AE6), one INT 1Ch tick,
 // which the port calibrates at 55 ms -- the same PAUSE_UNIT_MS the shrine
 // and endgame pacers use, and the same 55 000 us tick AlphaRuntime::render()
-// already derives for tile animation.
+// already derives for tile animation. Batch 51 re-derived it from the bytes:
+// delay (0x20fa) counts real BIOS ticks and the binary never reprograms the
+// PIT, so every frame count below is exact [A]. The scene's other waits --
+// the materialization and siren tone_sweeps, and the fizzle -- are not ticks;
+// a beat carries them separately (sweep_samples / fizzle, scene_timing.h).
 namespace openu5 {
 
 /** The throne room is the ordinary 11x11 presentation window. */
@@ -96,6 +100,15 @@ struct BlackthornBeat {
     /** Room grid to mount on this beat (the packed MISCMAPS record). */
     const int16_t *tiles = nullptr;
     int16_t frames = 0;
+    /**
+     * Batch 51. Blocking waits the original spends in primitives that are NOT
+     * run-n-frames: `sweep_samples` of tone_sweep 0x2192 (B, see
+     * scene_timing.h) and a fizzle_in 0x1068 (C, held for kFizzleFloorMs). A
+     * paced pacer adds them to `frames`; a zero unit ignores them, as it does
+     * `frames`.
+     */
+    uint32_t sweep_samples = 0;
+    bool fizzle = false;
     BlackthornSfx sfx = BlackthornSfx::None;
     bool has_stage = false;
     bool footstep = false;

@@ -1,0 +1,1314 @@
+# Batch 51 staged scenes, calls resolved through each overlay base
+
+==== OUTSUBS.OVL Camp apparition camp_results  [0658, 099b)  near-call base a290
+0658: 55                 push bp
+0659: 8bec               mov bp, sp
+065b: 83ec14             sub sp, 0x14
+065e: 57                 push di
+065f: 56                 push si
+0660: b85077             mov ax, 0x7750
+0663: 50                 push ax
+0664: e8596f             call 0x75c0  -> k1850 print_ds
+0667: b83c0a             mov ax, 0xa3c
+066a: 50                 push ax
+066b: b80100             mov ax, 1
+066e: 50                 push ax
+066f: b81027             mov ax, 0x2710
+0672: 50                 push ax
+0673: b8c409             mov ax, 0x9c4
+0676: 50                 push ax
+0677: b80600             mov ax, 6
+067a: 50                 push ax
+067b: e88478             call 0x7f02  -> k2192 TONE_SWEEP
+067e: c746fa0600         mov word ptr [bp - 6], 6
+0683: be263a             mov si, 0x3a26
+0686: ff34               push word ptr [si]
+0688: b80100             mov ax, 1
+068b: 50                 push ax
+068c: b88813             mov ax, 0x1388
+068f: 50                 push ax
+0690: b8c800             mov ax, 0xc8
+0693: 50                 push ax
+0694: b80d00             mov ax, 0xd
+0697: 50                 push ax
+0698: e86778             call 0x7f02  -> k2192 TONE_SWEEP
+069b: 83c602             add si, 2
+069e: 81fe323a           cmp si, 0x3a32
+06a2: 72e2               jb 0x686
+06a4: c746feaa5c         mov word ptr [bp - 2], 0x5caa
+06a9: b005               mov al, 5
+06ab: a2ad5c             mov byte ptr [0x5cad], al
+06ae: a2ac5c             mov byte ptr [0x5cac], al
+06b1: b016               mov al, 0x16
+06b3: a2ab5c             mov byte ptr [0x5cab], al
+06b6: a2aa5c             mov byte ptr [0x5caa], al
+06b9: b87401             mov ax, 0x174
+06bc: 50                 push ax
+06bd: b80500             mov ax, 5
+06c0: 50                 push ax
+06c1: 50                 push ax
+06c2: e81367             call 0x6dd8  -> k1068 FIZZLE_IN
+06c5: b074               mov al, 0x74
+06c7: a2ab5c             mov byte ptr [0x5cab], al
+06ca: a2aa5c             mov byte ptr [0x5caa], al
+06cd: c746fa0000         mov word ptr [bp - 6], 0
+06d2: e92601             jmp 0x7fb
+06d5: 90                 nop 
+06d6: 83c708             add di, 8
+06d9: 83c608             add si, 8
+06dc: 42                 inc dx
+06dd: 81fe18bb           cmp si, 0xbb18
+06e1: 7203               jb 0x6e6
+06e3: e96701             jmp 0x84d
+06e6: e94c01             jmp 0x835
+06e9: 90                 nop 
+06ea: 42                 inc dx
+06eb: d1f9               sar cx, 1
+06ed: 0bc9               or cx, cx
+06ef: 7ff9               jg 0x6ea
+06f1: 8956f4             mov word ptr [bp - 0xc], dx
+06f4: 894ef8             mov word ptr [bp - 8], cx
+06f7: 8b76fa             mov si, word ptr [bp - 6]
+06fa: b105               mov cl, 5
+06fc: d3e6               shl si, cl
+06fe: 8a84be55           mov al, byte ptr [si + 0x55be]
+0702: 2ae4               sub ah, ah
+0704: 3bc2               cmp ax, dx
+0706: 7503               jne 0x70b
+0708: e99100             jmp 0x79c
+070b: 8a46f4             mov al, byte ptr [bp - 0xc]
+070e: 8884be55           mov byte ptr [si + 0x55be], al
+0712: b81e00             mov ax, 0x1e
+0715: f7ea               imul dx
+0717: 8984ba55           mov word ptr [si + 0x55ba], ax
+071b: 8984b855           mov word ptr [si + 0x55b8], ax
+071f: b86a77             mov ax, 0x776a
+0722: 50                 push ax
+0723: e89a6e             call 0x75c0  -> k1850 print_ds
+0726: 8bc6               mov ax, si
+0728: 05a855             add ax, 0x55a8
+072b: 50                 push ax
+072c: e8916e             call 0x75c0  -> k1850 print_ds
+072f: b87477             mov ax, 0x7774
+0732: 50                 push ax
+0733: e88a6e             call 0x75c0  -> k1850 print_ds
+0736: b8a477             mov ax, 0x77a4
+0739: 50                 push ax
+073a: e8836e             call 0x75c0  -> k1850 print_ds
+073d: ff76f4             push word ptr [bp - 0xc]
+0740: b80100             mov ax, 1
+0743: 50                 push ax
+0744: b82000             mov ax, 0x20
+0747: 50                 push ax
+0748: e86370             call 0x77ae  -> k1a3e 
+074b: b8b877             mov ax, 0x77b8
+074e: 50                 push ax
+074f: e86e6e             call 0x75c0  -> k1850 print_ds
+0752: b80100             mov ax, 1
+0755: 50                 push ax
+0756: b80300             mov ax, 3
+0759: 50                 push ax
+075a: e8a576             call 0x7e02  -> k2092 rand
+075d: 3d0100             cmp ax, 1
+0760: 740c               je 0x76e
+0762: 3d0200             cmp ax, 2
+0765: 7457               je 0x7be
+0767: 3d0300             cmp ax, 3
+076a: 7466               je 0x7d2
+076c: eb1d               jmp 0x78b
+076e: b8c077             mov ax, 0x77c0
+0771: 50                 push ax
+0772: e84b6e             call 0x75c0  -> k1850 print_ds
+0775: 8b46fa             mov ax, word ptr [bp - 6]
+0778: b105               mov cl, 5
+077a: d3e0               shl ax, cl
+077c: 05b455             add ax, 0x55b4
+077f: 50                 push ax
+0780: b80100             mov ax, 1
+0783: 50                 push ax
+0784: b81e00             mov ax, 0x1e
+0787: 50                 push ax
+0788: e8d594             call 0xffff9c60  -> k3ef0 
+078b: b8dc77             mov ax, 0x77dc
+078e: 50                 push ax
+078f: e82e6e             call 0x75c0  -> k1850 print_ds
+0792: e8477c             call 0x83dc  -> k266c GETKEY
+0795: b80a00             mov ax, 0xa
+0798: 50                 push ax
+0799: e88e6c             call 0x742a  -> k16ba putchar
+079c: 8b5efa             mov bx, word ptr [bp - 6]
+079f: b105               mov cl, 5
+07a1: d3e3               shl bx, cl
+07a3: 8a87b255           mov al, byte ptr [bx + 0x55b2]
+07a7: 2ae4               sub ah, ah
+07a9: 3d4100             cmp ax, 0x41
+07ac: 7438               je 0x7e6
+07ae: 3d4200             cmp ax, 0x42
+07b1: 7503               jne 0x7b6
+07b3: e94601             jmp 0x8fc
+07b6: 3d4d00             cmp ax, 0x4d
+07b9: 742b               je 0x7e6
+07bb: eb38               jmp 0x7f5
+07bd: 90                 nop 
+07be: b8ca77             mov ax, 0x77ca
+07c1: 50                 push ax
+07c2: e8fb6d             call 0x75c0  -> k1850 print_ds
+07c5: 8b46fa             mov ax, word ptr [bp - 6]
+07c8: b105               mov cl, 5
+07ca: d3e0               shl ax, cl
+07cc: 05b555             add ax, 0x55b5
+07cf: ebae               jmp 0x77f
+07d1: 90                 nop 
+07d2: b8d477             mov ax, 0x77d4
+07d5: 50                 push ax
+07d6: e8e76d             call 0x75c0  -> k1850 print_ds
+07d9: 8b46fa             mov ax, word ptr [bp - 6]
+07dc: b105               mov cl, 5
+07de: d3e0               shl ax, cl
+07e0: 05b655             add ax, 0x55b6
+07e3: eb9a               jmp 0x77f
+07e5: 90                 nop 
+07e6: 8b76fa             mov si, word ptr [bp - 6]
+07e9: b105               mov cl, 5
+07eb: d3e6               shl si, cl
+07ed: 8a84b655           mov al, byte ptr [si + 0x55b6]
+07f1: 8884b755           mov byte ptr [si + 0x55b7], al
+07f5: e8787e             call 0x8670  -> k2900 status_redraw
+07f8: ff46fa             inc word ptr [bp - 6]
+07fb: a05b58             mov al, byte ptr [0x585b]
+07fe: 2ae4               sub ah, ah
+0800: 3946fa             cmp word ptr [bp - 6], ax
+0803: 7203               jb 0x808
+0805: e90601             jmp 0x90e
+0808: 8b5efa             mov bx, word ptr [bp - 6]
+080b: b105               mov cl, 5
+080d: d3e3               shl bx, cl
+080f: 80bfb35544         cmp byte ptr [bx + 0x55b3], 0x44
+0814: 7486               je 0x79c
+0816: 8b46fa             mov ax, word ptr [bp - 6]
+0819: d3e0               shl ax, cl
+081b: 8946ee             mov word ptr [bp - 0x12], ax
+081e: 8bd8               mov bx, ax
+0820: 8b87ba55           mov ax, word ptr [bx + 0x55ba]
+0824: 8987b855           mov word ptr [bx + 0x55b8], ax
+0828: c687b35547         mov byte ptr [bx + 0x55b3], 0x47
+082d: 2bd2               sub dx, dx
+082f: bf17ba             mov di, 0xba17
+0832: be18ba             mov si, 0xba18
+0835: 8a05               mov al, byte ptr [di]
+0837: 2ae4               sub ah, ah
+0839: 3b46fa             cmp ax, word ptr [bp - 6]
+083c: 7403               je 0x841
+083e: e995fe             jmp 0x6d6
+0841: 8a04               mov al, byte ptr [si]
+0843: b103               mov cl, 3
+0845: d3e0               shl ax, cl
+0847: 055a5c             add ax, 0x5c5a
+084a: 8946fe             mov word ptr [bp - 2], ax
+084d: 8956f8             mov word ptr [bp - 8], dx
+0850: b86077             mov ax, 0x7760
+0853: 50                 push ax
+0854: 8b5efa             mov bx, word ptr [bp - 6]
+0857: b105               mov cl, 5
+0859: d3e3               shl bx, cl
+085b: 8a87b255           mov al, byte ptr [bx + 0x55b2]
+085f: 2ae4               sub ah, ah
+0861: 50                 push ax
+0862: e881a2             call 0xffffaae6  -> k4d76 
+0865: 8946fc             mov word ptr [bp - 4], ax
+0868: 8b5efe             mov bx, word ptr [bp - 2]
+086b: 8bf8               mov di, ax
+086d: 8a85de1a           mov al, byte ptr [di + 0x1ade]
+0871: 884701             mov byte ptr [bx + 1], al
+0874: 8807               mov byte ptr [bx], al
+0876: c606b05c00         mov byte ptr [0x5cb0], 0
+087b: b80100             mov ax, 1
+087e: 50                 push ax
+087f: e8d48f             call 0xffff9856  -> k3ae6 RUN_N_FRAMES(n)
+0882: b87c15             mov ax, 0x157c
+0885: 50                 push ax
+0886: b80100             mov ax, 1
+0889: 50                 push ax
+088a: b88813             mov ax, 0x1388
+088d: 50                 push ax
+088e: b8c800             mov ax, 0xc8
+0891: 50                 push ax
+0892: b80d00             mov ax, 0xd
+0895: 50                 push ax
+0896: e86976             call 0x7f02  -> k2192 TONE_SWEEP
+0899: ff36b013           push word ptr [0x13b0]
+089d: e8405f             call 0x67e0  -> k0a70 set_color
+08a0: b80800             mov ax, 8
+08a3: 50                 push ax
+08a4: 50                 push ax
+08a5: b8b700             mov ax, 0xb7
+08a8: 50                 push ax
+08a9: 50                 push ax
+08aa: e84960             call 0x68f6  -> k0b86 RECT_XOR
+08ad: b87c15             mov ax, 0x157c
+08b0: 50                 push ax
+08b1: b80100             mov ax, 1
+08b4: 50                 push ax
+08b5: b860ea             mov ax, 0xea60
+08b8: 50                 push ax
+08b9: b8c409             mov ax, 0x9c4
+08bc: 50                 push ax
+08bd: b80100             mov ax, 1
+08c0: 50                 push ax
+08c1: e83e76             call 0x7f02  -> k2192 TONE_SWEEP
+08c4: c746f80300         mov word ptr [bp - 8], 3
+08c9: be0300             mov si, 3
+08cc: c606b05c01         mov byte ptr [0x5cb0], 1
+08d1: b80100             mov ax, 1
+08d4: 50                 push ax
+08d5: e87e8f             call 0xffff9856  -> k3ae6 RUN_N_FRAMES(n)
+08d8: 4e                 dec si
+08d9: 75f1               jne 0x8cc
+08db: c746f40100         mov word ptr [bp - 0xc], 1
+08e0: 8b5efa             mov bx, word ptr [bp - 6]
+08e3: b105               mov cl, 5
+08e5: d3e3               shl bx, cl
+08e7: 8b87bc55           mov ax, word ptr [bx + 0x55bc]
+08eb: 99                 cdq 
+08ec: b96400             mov cx, 0x64
+08ef: f7f9               idiv cx
+08f1: 8946f8             mov word ptr [bp - 8], ax
+08f4: 8b56f4             mov dx, word ptr [bp - 0xc]
+08f7: 8bc8               mov cx, ax
+08f9: e9f1fd             jmp 0x6ed
+08fc: 8b76fa             mov si, word ptr [bp - 6]
+08ff: b105               mov cl, 5
+0901: d3e6               shl si, cl
+0903: 8a84b655           mov al, byte ptr [si + 0x55b6]
+0907: 2ae4               sub ah, ah
+0909: d1e8               shr ax, 1
+090b: e9e3fe             jmp 0x7f1
+090e: b8e077             mov ax, 0x77e0
+0911: 50                 push ax
+0912: e8ab6c             call 0x75c0  -> k1850 print_ds
+0915: a08858             mov al, byte ptr [0x5888]
+0918: 2ae4               sub ah, ah
+091a: b114               mov cl, 0x14
+091c: f6f1               div cl
+091e: 2ae4               sub ah, ah
+0920: 8946f6             mov word ptr [bp - 0xa], ax
+0923: 3d0400             cmp ax, 4
+0926: 7d18               jge 0x940
+0928: b8e477             mov ax, 0x77e4
+092b: 50                 push ax
+092c: b81eb2             mov ax, 0xb21e
+092f: 50                 push ax
+0930: b8d007             mov ax, 0x7d0
+0933: 50                 push ax
+0934: 8b5ef6             mov bx, word ptr [bp - 0xa]
+0937: d1e3               shl bx, 1
+0939: ffb7741a           push word ptr [bx + 0x1a74]
+093d: eb11               jmp 0x950
+093f: 90                 nop 
+0940: b8ee77             mov ax, 0x77ee
+0943: 50                 push ax
+0944: b81eb2             mov ax, 0xb21e
+0947: 50                 push ax
+0948: b8d007             mov ax, 0x7d0
+094b: 50                 push ax
+094c: b89f02             mov ax, 0x29f
+094f: 50                 push ax
+0950: e88b79             call 0x82de  -> k256e load_record
+0953: b81eb2             mov ax, 0xb21e
+0956: 50                 push ax
+0957: e8666c             call 0x75c0  -> k1850 print_ds
+095a: b82200             mov ax, 0x22
+095d: 50                 push ax
+095e: e8c96a             call 0x742a  -> k16ba putchar
+0961: e8787a             call 0x83dc  -> k266c GETKEY
+0964: b8f877             mov ax, 0x77f8
+0967: 50                 push ax
+0968: e8556c             call 0x75c0  -> k1850 print_ds
+096b: b016               mov al, 0x16
+096d: a2ab5c             mov byte ptr [0x5cab], al
+0970: a2aa5c             mov byte ptr [0x5caa], al
+0973: a0b9ad             mov al, byte ptr [0xadb9]
+0976: 2ae4               sub ah, ah
+0978: 50                 push ax
+0979: b80500             mov ax, 5
+097c: 50                 push ax
+097d: 50                 push ax
+097e: e85764             call 0x6dd8  -> k1068 FIZZLE_IN
+0981: 2ac0               sub al, al
+0983: a2ab5c             mov byte ptr [0x5cab], al
+0986: a2aa5c             mov byte ptr [0x5caa], al
+0989: b80100             mov ax, 1
+098c: 50                 push ax
+098d: e8c68e             call 0xffff9856  -> k3ae6 RUN_N_FRAMES(n)
+0990: 2bc0               sub ax, ax
+0992: 50                 push ax
+0993: e856a3             call 0xffffacec  -> k4f7c advance_clock
+0996: 5e                 pop si
+0997: 5f                 pop di
+0998: 8be5               mov sp, bp
+099a: 5d                 pop bp
+
+==== BLCKTHRN.OVL Blackthorn sacrifice_member: pause(10) + mirrored siren  [03c4, 0440)  near-call base a290
+03c4: b350               mov bl, 0x50
+03c6: e8f771             call 0x75c0  -> k1850 print_ds
+03c9: b80a00             mov ax, 0xa
+03cc: 50                 push ax
+03cd: e88694             call 0xffff9856  -> k3ae6 RUN_N_FRAMES(n)
+03d0: bed007             mov si, 0x7d0
+03d3: b8500a             mov ax, 0xa50
+03d6: 50                 push ax
+03d7: b80100             mov ax, 1
+03da: 50                 push ax
+03db: b8c800             mov ax, 0xc8
+03de: 50                 push ax
+03df: 56                 push si
+03e0: 2bc0               sub ax, ax
+03e2: 50                 push ax
+03e3: e81c7b             call 0x7f02  -> k2192 TONE_SWEEP
+03e6: 83c632             add si, 0x32
+03e9: 81fea861           cmp si, 0x61a8
+03ed: 7ce4               jl 0x3d3
+03ef: 8976de             mov word ptr [bp - 0x22], si
+03f2: bea861             mov si, 0x61a8
+03f5: b8500a             mov ax, 0xa50
+03f8: 50                 push ax
+03f9: b80100             mov ax, 1
+03fc: 50                 push ax
+03fd: b8c800             mov ax, 0xc8
+0400: 50                 push ax
+0401: 56                 push si
+0402: 2bc0               sub ax, ax
+0404: 50                 push ax
+0405: e8fa7a             call 0x7f02  -> k2192 TONE_SWEEP
+0408: 83ee32             sub si, 0x32
+040b: 81fed007           cmp si, 0x7d0
+040f: 7fe4               jg 0x3f5
+0411: 8976de             mov word ptr [bp - 0x22], si
+0414: a0645c             mov al, byte ptr [0x5c64]
+0417: 2ae4               sub ah, ah
+0419: 50                 push ax
+041a: a0655c             mov al, byte ptr [0x5c65]
+041d: 50                 push ax
+041e: e8718e             call 0xffff9292  -> k3522 explosion_fx_at_cell
+0421: 2ac0               sub al, al
+0423: a2635c             mov byte ptr [0x5c63], al
+0426: a2625c             mov byte ptr [0x5c62], al
+0429: c606f9ad80         mov byte ptr [0xadf9], 0x80
+042e: c746dc0000         mov word ptr [bp - 0x24], 0
+0433: c746da0000         mov word ptr [bp - 0x26], 0
+0438: a05b58             mov al, byte ptr [0x585b]
+043b: 2ae4               sub ah, ah
+043d: 0bc0               or ax, ax
+
+==== BLCKTHRN.OVL Blackthorn entry: guards, 0x3702, materialize sweep, circle, fizzle  [07cc, 08e8)  near-call base a290
+07cc: 7efa               jle 0x7c8
+07ce: 8976fe             mov word ptr [bp - 2], si
+07d1: b81000             mov ax, 0x10
+07d4: 50                 push ax
+07d5: e87e90             call 0xffff9856  -> k3ae6 RUN_N_FRAMES(n)
+07d8: b82470             mov ax, 0x7024
+07db: 50                 push ax
+07dc: e8e16d             call 0x75c0  -> k1850 print_ds
+07df: b83200             mov ax, 0x32
+07e2: 50                 push ax
+07e3: e87090             call 0xffff9856  -> k3ae6 RUN_N_FRAMES(n)
+07e6: b84c70             mov ax, 0x704c
+07e9: 50                 push ax
+07ea: e8d36d             call 0x75c0  -> k1850 print_ds
+07ed: b80800             mov ax, 8
+07f0: 50                 push ax
+07f1: e80cf8             call 0
+07f4: b87000             mov ax, 0x70
+07f7: 50                 push ax
+07f8: 50                 push ax
+07f9: b80400             mov ax, 4
+07fc: 50                 push ax
+07fd: b80a00             mov ax, 0xa
+0800: 50                 push ax
+0801: 2bc0               sub ax, ax
+0803: 50                 push ax
+0804: 50                 push ax
+0805: b80600             mov ax, 6
+0808: 50                 push ax
+0809: e8d88f             call 0xffff97e4  -> k3a74 write_object_record
+080c: b87000             mov ax, 0x70
+080f: 50                 push ax
+0810: 50                 push ax
+0811: b80600             mov ax, 6
+0814: 50                 push ax
+0815: b80a00             mov ax, 0xa
+0818: 50                 push ax
+0819: 2bc0               sub ax, ax
+081b: 50                 push ax
+081c: 50                 push ax
+081d: b80700             mov ax, 7
+0820: 50                 push ax
+0821: e8c08f             call 0xffff97e4  -> k3a74 write_object_record
+0824: b80237             mov ax, 0x3702
+0827: 50                 push ax
+0828: e893f8             call 0xbe  -> ka34e 
+082b: b8f00a             mov ax, 0xaf0
+082e: 50                 push ax
+082f: b80100             mov ax, 1
+0832: 50                 push ax
+0833: b8c832             mov ax, 0x32c8
+0836: 50                 push ax
+0837: b86400             mov ax, 0x64
+083a: 50                 push ax
+083b: b80500             mov ax, 5
+083e: 50                 push ax
+083f: e8c076             call 0x7f02  -> k2192 TONE_SWEEP
+0842: b81600             mov ax, 0x16
+0845: 50                 push ax
+0846: 50                 push ax
+0847: b80500             mov ax, 5
+084a: 50                 push ax
+084b: 50                 push ax
+084c: 2bc0               sub ax, ax
+084e: 50                 push ax
+084f: 50                 push ax
+0850: b80800             mov ax, 8
+0853: 50                 push ax
+0854: e88d8f             call 0xffff97e4  -> k3a74 write_object_record
+0857: b87801             mov ax, 0x178
+085a: 50                 push ax
+085b: b80500             mov ax, 5
+085e: 50                 push ax
+085f: 50                 push ax
+0860: e87565             call 0x6dd8  -> k1068 FIZZLE_IN
+0863: b87800             mov ax, 0x78
+0866: 50                 push ax
+0867: 50                 push ax
+0868: b80500             mov ax, 5
+086b: 50                 push ax
+086c: 50                 push ax
+086d: 2bc0               sub ax, ax
+086f: 50                 push ax
+0870: 50                 push ax
+0871: b80800             mov ax, 8
+0874: 50                 push ax
+0875: e86c8f             call 0xffff97e4  -> k3a74 write_object_record
+0878: b80800             mov ax, 8
+087b: 50                 push ax
+087c: e8d78f             call 0xffff9856  -> k3ae6 RUN_N_FRAMES(n)
+087f: b85a70             mov ax, 0x705a
+0882: 50                 push ax
+0883: e83a6d             call 0x75c0  -> k1850 print_ds
+0886: b8a855             mov ax, 0x55a8
+0889: 50                 push ax
+088a: e8336d             call 0x75c0  -> k1850 print_ds
+088d: b87470             mov ax, 0x7074
+0890: 50                 push ax
+0891: e82c6d             call 0x75c0  -> k1850 print_ds
+0894: e8457b             call 0x83dc  -> k266c GETKEY
+0897: b8a470             mov ax, 0x70a4
+089a: 50                 push ax
+089b: e8226d             call 0x75c0  -> k1850 print_ds
+089e: 803eb1550c         cmp byte ptr [0x55b1], 0xc
+08a3: 7505               jne 0x8aa
+08a5: b8c070             mov ax, 0x70c0
+08a8: eb0a               jmp 0x8b4
+08aa: 803eb1550b         cmp byte ptr [0x55b1], 0xb
+08af: 7507               jne 0x8b8
+08b1: b8c870             mov ax, 0x70c8
+08b4: 50                 push ax
+08b5: e8086d             call 0x75c0  -> k1850 print_ds
+08b8: b8ce70             mov ax, 0x70ce
+08bb: 50                 push ax
+08bc: e8016d             call 0x75c0  -> k1850 print_ds
+08bf: b80e37             mov ax, 0x370e
+08c2: 50                 push ax
+08c3: e8f8f7             call 0xbe  -> ka34e 
+08c6: b84ab5             mov ax, 0xb54a
+08c9: 50                 push ax
+08ca: e8f36c             call 0x75c0  -> k1850 print_ds
+08cd: e80c7b             call 0x83dc  -> k266c GETKEY
+08d0: ff76f6             push word ptr [bp - 0xa]
+08d3: ff76f8             push word ptr [bp - 8]
+08d6: e871fc             call 0x54a  -> ka7da 
+08d9: 803e9a5c00         cmp byte ptr [0x5c9a], 0
+08de: 7407               je 0x8e7
+08e0: b81637             mov ax, 0x3716
+08e3: 50                 push ax
+08e4: e8d7f7             call 0xbe  -> ka34e 
+
+==== BLCKTHRN.OVL party_refuge  [0910, 0c20)  near-call base a290
+0910: 55                 push bp
+0911: 8bec               mov bp, sp
+0913: 83ec12             sub sp, 0x12
+0916: 57                 push di
+0917: 56                 push si
+0918: b80100             mov ax, 1
+091b: 50                 push ax
+091c: e86f79             call 0x828e  -> k251e 
+091f: b8d870             mov ax, 0x70d8
+0922: 50                 push ax
+0923: e8be6a             call 0x73e4  -> k1674 
+0926: 0bc0               or ax, ax
+0928: 74f5               je 0x91f
+092a: a0a658             mov al, byte ptr [0x58a6]
+092d: 2ae4               sub ah, ah
+092f: 50                 push ax
+0930: e83fd3             call 0xffffdc72  -> k7f02 
+0933: c6067c581e         mov byte ptr [0x587c], 0x1e
+0938: 803e935821         cmp byte ptr [0x5893], 0x21
+093d: 7303               jae 0x942
+093f: e83ead             call 0xffffb680  -> k5910 render/compositor
+0942: b80a00             mov ax, 0xa
+0945: 50                 push ax
+0946: e82175             call 0x7e6a  -> k20fa DELAY_TICKS(n)
+0949: a09358             mov al, byte ptr [0x5893]
+094c: 2ae4               sub ah, ah
+094e: 8946f6             mov word ptr [bp - 0xa], ax
+0951: c6069358ff         mov byte ptr [0x5893], 0xff
+0956: c6069e58ff         mov byte ptr [0x589e], 0xff
+095b: b8e270             mov ax, 0x70e2
+095e: 50                 push ax
+095f: e85e6c             call 0x75c0  -> k1850 print_ds
+0962: b80100             mov ax, 1
+0965: 50                 push ax
+0966: e82960             call 0x6992  -> k0c22 
+0969: 2bc0               sub ax, ax
+096b: 50                 push ax
+096c: e8715e             call 0x67e0  -> k0a70 set_color
+096f: b80800             mov ax, 8
+0972: 50                 push ax
+0973: 50                 push ax
+0974: b8b700             mov ax, 0xb7
+0977: 50                 push ax
+0978: 50                 push ax
+0979: e89a5e             call 0x6816  -> k0aa6 
+097c: 2bc0               sub ax, ax
+097e: 50                 push ax
+097f: e81060             call 0x6992  -> k0c22 
+0982: b80800             mov ax, 8
+0985: 50                 push ax
+0986: 50                 push ax
+0987: b8b700             mov ax, 0xb7
+098a: 50                 push ax
+098b: 50                 push ax
+098c: e82763             call 0x6cb6  -> k0f46 RECT_DISSOLVE
+098f: c746fa0b00         mov word ptr [bp - 6], 0xb
+0994: 2bf6               sub si, si
+0996: 2bff               sub di, di
+0998: b8ffff             mov ax, 0xffff
+099b: b90500             mov cx, 5
+099e: 57                 push di
+099f: 8dbc14ad           lea di, [si - 0x52ec]
+09a3: 1e                 push ds
+09a4: 07                 pop es
+09a5: f2ab               repne stosw word ptr es:[di], ax
+09a7: aa                 stosb byte ptr es:[di], al
+09a8: 5f                 pop di
+09a9: bf0b00             mov di, 0xb
+09ac: 83c620             add si, 0x20
+09af: 81fe6001           cmp si, 0x160
+09b3: 72e1               jb 0x996
+09b5: 897ef8             mov word ptr [bp - 8], di
+09b8: 2bf6               sub si, si
+09ba: 2bc0               sub ax, ax
+09bc: 50                 push ax
+09bd: 50                 push ax
+09be: 50                 push ax
+09bf: 50                 push ax
+09c0: 50                 push ax
+09c1: 50                 push ax
+09c2: 56                 push si
+09c3: e81e8e             call 0xffff97e4  -> k3a74 write_object_record
+09c6: 46                 inc si
+09c7: 83fe20             cmp si, 0x20
+09ca: 72ee               jb 0x9ba
+09cc: 8976fa             mov word ptr [bp - 6], si
+09cf: e8aeac             call 0xffffb680  -> k5910 render/compositor
+09d2: b80871             mov ax, 0x7108
+09d5: 50                 push ax
+09d6: e8e76b             call 0x75c0  -> k1850 print_ds
+09d9: b80e00             mov ax, 0xe
+09dc: 50                 push ax
+09dd: e88a74             call 0x7e6a  -> k20fa DELAY_TICKS(n)
+09e0: b82271             mov ax, 0x7122
+09e3: 50                 push ax
+09e4: e8d96b             call 0x75c0  -> k1850 print_ds
+09e7: b81c00             mov ax, 0x1c
+09ea: 50                 push ax
+09eb: e87c74             call 0x7e6a  -> k20fa DELAY_TICKS(n)
+09ee: b85271             mov ax, 0x7152
+09f1: 50                 push ax
+09f2: e8cb6b             call 0x75c0  -> k1850 print_ds
+09f5: c606b9ad00         mov byte ptr [0xadb9], 0
+09fa: b01c               mov al, 0x1c
+09fc: a25b5c             mov byte ptr [0x5c5b], al
+09ff: a25a5c             mov byte ptr [0x5c5a], al
+0a02: b005               mov al, 5
+0a04: a25d5c             mov byte ptr [0x5c5d], al
+0a07: a25c5c             mov byte ptr [0x5c5c], al
+0a0a: e873ac             call 0xffffb680  -> k5910 render/compositor
+0a0d: c746fa0600         mov word ptr [bp - 6], 6
+0a12: bf2037             mov di, 0x3720
+0a15: c746f42c37         mov word ptr [bp - 0xc], 0x372c
+0a1a: c746f03837         mov word ptr [bp - 0x10], 0x3738
+0a1f: be4437             mov si, 0x3744
+0a22: ff35               push word ptr [di]
+0a24: b80100             mov ax, 1
+0a27: 50                 push ax
+0a28: 8b5ef4             mov bx, word ptr [bp - 0xc]
+0a2b: ff37               push word ptr [bx]
+0a2d: 8b5ef0             mov bx, word ptr [bp - 0x10]
+0a30: ff37               push word ptr [bx]
+0a32: ff34               push word ptr [si]
+0a34: e8cb74             call 0x7f02  -> k2192 TONE_SWEEP
+0a37: 83c702             add di, 2
+0a3a: 8346f402           add word ptr [bp - 0xc], 2
+0a3e: 8346f002           add word ptr [bp - 0x10], 2
+0a42: 83c602             add si, 2
+0a45: 81fe5037           cmp si, 0x3750
+0a49: 72d7               jb 0xa22
+0a4b: b87271             mov ax, 0x7172
+0a4e: 50                 push ax
+0a4f: e86e6b             call 0x75c0  -> k1850 print_ds
+0a52: b80600             mov ax, 6
+0a55: 50                 push ax
+0a56: e81174             call 0x7e6a  -> k20fa DELAY_TICKS(n)
+0a59: b016               mov al, 0x16
+0a5b: a2635c             mov byte ptr [0x5c63], al
+0a5e: a2625c             mov byte ptr [0x5c62], al
+0a61: c606645c02         mov byte ptr [0x5c64], 2
+0a66: c606655c07         mov byte ptr [0x5c65], 7
+0a6b: c606f6ad00         mov byte ptr [0xadf6], 0
+0a70: b85e00             mov ax, 0x5e
+0a73: 50                 push ax
+0a74: b80200             mov ax, 2
+0a77: 50                 push ax
+0a78: b80700             mov ax, 7
+0a7b: 50                 push ax
+0a7c: e85963             call 0x6dd8  -> k1068 FIZZLE_IN
+0a7f: c606f6ad5e         mov byte ptr [0xadf6], 0x5e
+0a84: c606625c00         mov byte ptr [0x5c62], 0
+0a89: e8f4ab             call 0xffffb680  -> k5910 render/compositor
+0a8c: b80400             mov ax, 4
+0a8f: 50                 push ax
+0a90: e8d773             call 0x7e6a  -> k20fa DELAY_TICKS(n)
+0a93: c606625c16         mov byte ptr [0x5c62], 0x16
+0a98: c606645c08         mov byte ptr [0x5c64], 8
+0a9d: c606fcad00         mov byte ptr [0xadfc], 0
+0aa2: b85f00             mov ax, 0x5f
+0aa5: 50                 push ax
+0aa6: b80800             mov ax, 8
+0aa9: 50                 push ax
+0aaa: b80700             mov ax, 7
+0aad: 50                 push ax
+0aae: e82763             call 0x6dd8  -> k1068 FIZZLE_IN
+0ab1: c606fcad5f         mov byte ptr [0xadfc], 0x5f
+0ab6: c606625c00         mov byte ptr [0x5c62], 0
+0abb: e8c2ab             call 0xffffb680  -> k5910 render/compositor
+0abe: b80400             mov ax, 4
+0ac1: 50                 push ax
+0ac2: e8a573             call 0x7e6a  -> k20fa DELAY_TICKS(n)
+0ac5: b89e71             mov ax, 0x719e
+0ac8: 50                 push ax
+0ac9: e8f46a             call 0x75c0  -> k1850 print_ds
+0acc: e81383             call 0xffff8de2  -> k3072 
+0acf: e81083             call 0xffff8de2  -> k3072 
+0ad2: c60659ad00         mov byte ptr [0xad59], 0
+0ad7: b016               mov al, 0x16
+0ad9: a2635c             mov byte ptr [0x5c63], al
+0adc: a2625c             mov byte ptr [0x5c62], al
+0adf: c606645c05         mov byte ptr [0x5c64], 5
+0ae4: c606655c02         mov byte ptr [0x5c65], 2
+0ae9: b87401             mov ax, 0x174
+0aec: 50                 push ax
+0aed: b80500             mov ax, 5
+0af0: 50                 push ax
+0af1: b80200             mov ax, 2
+0af4: 50                 push ax
+0af5: e8e062             call 0x6dd8  -> k1068 FIZZLE_IN
+0af8: b074               mov al, 0x74
+0afa: a2635c             mov byte ptr [0x5c63], al
+0afd: a2625c             mov byte ptr [0x5c62], al
+0b00: e87dab             call 0xffffb680  -> k5910 render/compositor
+0b03: a08858             mov al, byte ptr [0x5888]
+0b06: 2ae4               sub ah, ah
+0b08: b114               mov cl, 0x14
+0b0a: f6f1               div cl
+0b0c: 2ae4               sub ah, ah
+0b0e: 8946fe             mov word ptr [bp - 2], ax
+0b11: b8be71             mov ax, 0x71be
+0b14: 50                 push ax
+0b15: e8a86a             call 0x75c0  -> k1850 print_ds
+0b18: b8c271             mov ax, 0x71c2
+0b1b: 50                 push ax
+0b1c: b81eb2             mov ax, 0xb21e
+0b1f: 50                 push ax
+0b20: b8d007             mov ax, 0x7d0
+0b23: 50                 push ax
+0b24: 8b5efe             mov bx, word ptr [bp - 2]
+0b27: d1e3               shl bx, 1
+0b29: ffb7741a           push word ptr [bx + 0x1a74]
+0b2d: e8ae77             call 0x82de  -> k256e load_record
+0b30: b81eb2             mov ax, 0xb21e
+0b33: 50                 push ax
+0b34: e8896a             call 0x75c0  -> k1850 print_ds
+0b37: b82200             mov ax, 0x22
+0b3a: 50                 push ax
+0b3b: e8ec68             call 0x742a  -> k16ba putchar
+0b3e: e89b78             call 0x83dc  -> k266c GETKEY
+0b41: b8cc71             mov ax, 0x71cc
+0b44: 50                 push ax
+0b45: e8786a             call 0x75c0  -> k1850 print_ds
+0b48: b80400             mov ax, 4
+0b4b: 50                 push ax
+0b4c: e81b73             call 0x7e6a  -> k20fa DELAY_TICKS(n)
+0b4f: c746fa0000         mov word ptr [bp - 6], 0
+0b54: a05b58             mov al, byte ptr [0x585b]
+0b57: 2ae4               sub ah, ah
+0b59: 0bc0               or ax, ax
+0b5b: 7459               je 0xbb6
+0b5d: bfb855             mov di, 0x55b8
+0b60: c746f0ba55         mov word ptr [bp - 0x10], 0x55ba
+0b65: 8b76fa             mov si, word ptr [bp - 6]
+0b68: 8d4407             lea ax, [si + 7]
+0b6b: 2bc9               sub cx, cx
+0b6d: 51                 push cx
+0b6e: 50                 push ax
+0b6f: b8308e             mov ax, 0x8e30
+0b72: 2bd2               sub dx, dx
+0b74: 52                 push dx
+0b75: 50                 push ax
+0b76: e89755             call 0x6110  -> k03a0 
+0b79: 8946fc             mov word ptr [bp - 4], ax
+0b7c: 50                 push ax
+0b7d: b80100             mov ax, 1
+0b80: 50                 push ax
+0b81: b83075             mov ax, 0x7530
+0b84: 50                 push ax
+0b85: b8d007             mov ax, 0x7d0
+0b88: 50                 push ax
+0b89: b80200             mov ax, 2
+0b8c: 50                 push ax
+0b8d: e87273             call 0x7f02  -> k2192 TONE_SWEEP
+0b90: 56                 push si
+0b91: b8ff00             mov ax, 0xff
+0b94: 50                 push ax
+0b95: e8ced0             call 0xffffdc66  -> k7ef6 
+0b98: 8b5ef0             mov bx, word ptr [bp - 0x10]
+0b9b: 8b07               mov ax, word ptr [bx]
+0b9d: 8905               mov word ptr [di], ax
+0b9f: e8ce7a             call 0x8670  -> k2900 status_redraw
+0ba2: 83c720             add di, 0x20
+0ba5: 8346f020           add word ptr [bp - 0x10], 0x20
+0ba9: 46                 inc si
+0baa: a05b58             mov al, byte ptr [0x585b]
+0bad: 2ae4               sub ah, ah
+0baf: 3bf0               cmp si, ax
+0bb1: 72b5               jb 0xb68
+0bb3: 8976fa             mov word ptr [bp - 6], si
+0bb6: b8ea71             mov ax, 0x71ea
+0bb9: 50                 push ax
+0bba: e8036a             call 0x75c0  -> k1850 print_ds
+0bbd: b80400             mov ax, 4
+0bc0: 50                 push ax
+0bc1: e8a672             call 0x7e6a  -> k20fa DELAY_TICKS(n)
+0bc4: b80100             mov ax, 1
+0bc7: 50                 push ax
+0bc8: e8c75d             call 0x6992  -> k0c22 
+0bcb: 2bc0               sub ax, ax
+0bcd: 50                 push ax
+0bce: e80f5c             call 0x67e0  -> k0a70 set_color
+0bd1: b80800             mov ax, 8
+0bd4: 50                 push ax
+0bd5: 50                 push ax
+0bd6: b8b700             mov ax, 0xb7
+0bd9: 50                 push ax
+0bda: 50                 push ax
+0bdb: e8385c             call 0x6816  -> k0aa6 
+0bde: b81c01             mov ax, 0x11c
+0be1: 50                 push ax
+0be2: b80500             mov ax, 5
+0be5: 50                 push ax
+0be6: 50                 push ax
+0be7: e86662             call 0x6e50  -> k10e0 blit_tile
+0bea: 2bc0               sub ax, ax
+0bec: 50                 push ax
+0bed: e8a25d             call 0x6992  -> k0c22 
+0bf0: b80800             mov ax, 8
+0bf3: 50                 push ax
+0bf4: 50                 push ax
+0bf5: b8b700             mov ax, 0xb7
+0bf8: 50                 push ax
+0bf9: 50                 push ax
+0bfa: e8b960             call 0x6cb6  -> k0f46 RECT_DISSOLVE
+0bfd: 803e88584b         cmp byte ptr [0x5888], 0x4b
+0c02: 7305               jae 0xc09
+0c04: c60688584b         mov byte ptr [0x5888], 0x4b
+0c09: c606935811         mov byte ptr [0x5893], 0x11
+0c0e: c606955801         mov byte ptr [0x5895], 1
+0c13: c6067c581c         mov byte ptr [0x587c], 0x1c
+0c18: b00a               mov al, 0xa
+0c1a: a29758             mov byte ptr [0x5897], al
+0c1d: a29658             mov byte ptr [0x5896], al
+
+==== MAINOUT.OVL TrollSneak  [1c00, 1caa)  near-call base 81d0
+1c00: 00803e7c           add byte ptr [bx + si + 0x7c3e], al
+1c04: 58                 pop ax
+1c05: 1c74               sbb al, 0x74
+1c07: 03e9               add bp, cx
+1c09: 9e                 sahf 
+1c0a: 00e8               add al, ch
+1c0c: 32bbb864           xor bh, byte ptr [bp + di + 0x64b8]
+1c10: 6b50e86b           imul dx, word ptr [bx + si - 0x18], 0x6b
+1c14: 7ab8               jp 0x1bce
+1c16: 0a00               or al, byte ptr [bx + si]
+1c18: 50                 push ax
+1c19: e8fa9c             call 0xffffb916  -> k3ae6 RUN_N_FRAMES(n)
+1c1c: c746fe0000         mov word ptr [bp - 2], 0
+1c21: a05b58             mov al, byte ptr [0x585b]
+1c24: 2ae4               sub ah, ah
+1c26: 0bc0               or ax, ax
+1c28: 7478               je 0x1ca2
+1c2a: bfb355             mov di, 0x55b3
+1c2d: c746f6a855         mov word ptr [bp - 0xa], 0x55a8
+1c32: c746f4b555         mov word ptr [bp - 0xc], 0x55b5
+1c37: 803d44             cmp byte ptr [di], 0x44
+1c3a: 744e               je 0x1c8a
+1c3c: 803d53             cmp byte ptr [di], 0x53
+1c3f: 7449               je 0x1c8a
+1c41: ff76f6             push word ptr [bp - 0xa]
+1c44: e8397a             call 0x9680  -> k1850 print_ds
+1c47: b88c6b             mov ax, 0x6b8c
+1c4a: 50                 push ax
+1c4b: e8327a             call 0x9680  -> k1850 print_ds
+1c4e: c746fc0300         mov word ptr [bp - 4], 3
+1c53: be0300             mov si, 3
+1c56: b80500             mov ax, 5
+1c59: 50                 push ax
+1c5a: e8b99c             call 0xffffb916  -> k3ae6 RUN_N_FRAMES(n)
+1c5d: b82e00             mov ax, 0x2e
+1c60: 50                 push ax
+1c61: e88678             call 0x94ea  -> k16ba putchar
+1c64: 4e                 dec si
+1c65: 75ef               jne 0x1c56
+1c67: b89c6b             mov ax, 0x6b9c
+1c6a: 50                 push ax
+1c6b: e8127a             call 0x9680  -> k1850 print_ds
+1c6e: b80100             mov ax, 1
+1c71: 50                 push ax
+1c72: b81e00             mov ax, 0x1e
+1c75: 50                 push ax
+1c76: e84982             call 0xffff9ec2  -> k2092 rand
+1c79: 8b5ef4             mov bx, word ptr [bp - 0xc]
+1c7c: 8a0f               mov cl, byte ptr [bx]
+1c7e: 2aed               sub ch, ch
+1c80: 3bc8               cmp cx, ax
+1c82: 7306               jae 0x1c8a
+1c84: e8b7fe             call 0x1b3e  -> k9d0e 
+1c87: eb20               jmp 0x1ca9
+1c89: 90                 nop 
+1c8a: 83c720             add di, 0x20
+1c8d: 8346f620           add word ptr [bp - 0xa], 0x20
+1c91: 8346f420           add word ptr [bp - 0xc], 0x20
+1c95: ff46fe             inc word ptr [bp - 2]
+1c98: a05b58             mov al, byte ptr [0x585b]
+1c9b: 2ae4               sub ah, ah
+1c9d: 3946fe             cmp word ptr [bp - 2], ax
+1ca0: 7295               jb 0x1c37
+1ca2: b8a06b             mov ax, 0x6ba0
+1ca5: 50                 push ax
+1ca6: e8d779             call 0x9680  -> k1850 print_ds
+1ca9: 5e                 pop si
+
+==== CMDS.OVL Camp sleep loop and bard lute run_n_frames(0x34)  [0140, 0250)  near-call base bf80
+0140: 5b                 pop bx
+0141: 58                 pop ax
+0142: 2ae4               sub ah, ah
+0144: 3946e0             cmp word ptr [bp - 0x20], ax
+0147: 7303               jae 0x14c
+0149: e972ff             jmp 0xbe
+014c: e84198             call 0xffff9990  -> k5910 render/compositor
+014f: 837efcff           cmp word ptr [bp - 4], -1
+0153: 745b               je 0x1b0
+0155: 8b76fc             mov si, word ptr [bp - 4]
+0158: b103               mov cl, 3
+015a: d3e6               shl si, cl
+015c: 8a8418ba           mov al, byte ptr [si - 0x45e8]
+0160: 2ae4               sub ah, ah
+0162: d3e0               shl ax, cl
+0164: 055a5c             add ax, 0x5c5a
+0167: 8946fe             mov word ptr [bp - 2], ax
+016a: 8bd8               mov bx, ax
+016c: 8a07               mov al, byte ptr [bx]
+016e: 8846cc             mov byte ptr [bp - 0x34], al
+0171: 8846da             mov byte ptr [bp - 0x26], al
+0174: 8a4701             mov al, byte ptr [bx + 1]
+0177: 8846d6             mov byte ptr [bp - 0x2a], al
+017a: 8bfb               mov di, bx
+017c: b05f               mov al, 0x5f
+017e: 884501             mov byte ptr [di + 1], al
+0181: 8807               mov byte ptr [bx], al
+0183: c606086a01         mov byte ptr [0x6a08], 1
+0188: b83400             mov ax, 0x34
+018b: 50                 push ax
+018c: e8d779             call 0x7b66  -> k3ae6 RUN_N_FRAMES(n)
+018f: 8bdf               mov bx, di
+0191: 8a46da             mov al, byte ptr [bp - 0x26]
+0194: 8807               mov byte ptr [bx], al
+0196: 8a46d6             mov al, byte ptr [bp - 0x2a]
+0199: 884701             mov byte ptr [bx + 1], al
+019c: 8a8417ba           mov al, byte ptr [si - 0x45e9]
+01a0: 2ae4               sub ah, ah
+01a2: 3b4606             cmp ax, word ptr [bp + 6]
+01a5: 7406               je 0x1ad
+01a7: ff76fc             push word ptr [bp - 4]
+01aa: e853a7             call 0xffffa900  -> k6880 
+01ad: e8e097             call 0xffff9990  -> k5910 render/compositor
+01b0: b8d441             mov ax, 0x41d4
+01b3: 50                 push ax
+01b4: e81957             call 0x58d0  -> k1850 print_ds
+01b7: 837e06ff           cmp word ptr [bp + 6], -1
+01bb: 7431               je 0x1ee
+01bd: 2bc9               sub cx, cx
+01bf: be17ba             mov si, 0xba17
+01c2: bf14ba             mov di, 0xba14
+01c5: 8b56e8             mov dx, word ptr [bp - 0x18]
+01c8: 8a04               mov al, byte ptr [si]
+01ca: 2ae4               sub ah, ah
+01cc: 3b4606             cmp ax, word ptr [bp + 6]
+01cf: 7403               je 0x1d4
+01d1: e98800             jmp 0x25c
+01d4: 8bd7               mov dx, di
+01d6: 8956e8             mov word ptr [bp - 0x18], dx
+01d9: 894edc             mov word ptr [bp - 0x24], cx
+01dc: 8bda               mov bx, dx
+01de: 8a5f04             mov bl, byte ptr [bx + 4]
+01e1: 2aff               sub bh, bh
+01e3: b103               mov cl, 3
+01e5: d3e3               shl bx, cl
+01e7: 8a875a5c           mov al, byte ptr [bx + 0x5c5a]
+01eb: 8846ea             mov byte ptr [bp - 0x16], al
+01ee: a07f58             mov al, byte ptr [0x587f]
+01f1: 2ae4               sub ah, ah
+01f3: 3946d8             cmp word ptr [bp - 0x28], ax
+01f6: 7503               jne 0x1fb
+01f8: e90201             jmp 0x2fd
+01fb: 3c18               cmp al, 0x18
+01fd: 7205               jb 0x204
+01ff: 802e7f5818         sub byte ptr [0x587f], 0x18
+0204: e88997             call 0xffff9990  -> k5910 render/compositor
+0207: e8827e             call 0x808c  -> k400c 
+020a: e87367             call 0x6980  -> k2900 status_redraw
+020d: a07f58             mov al, byte ptr [0x587f]
+0210: 2ae4               sub ah, ah
+0212: 3946e2             cmp word ptr [bp - 0x1e], ax
+0215: 7503               jne 0x21a
+0217: e9f200             jmp 0x30c
+021a: 2bc0               sub ax, ax
+021c: 50                 push ax
+021d: b83f00             mov ax, 0x3f
+0220: 50                 push ax
+0221: e8ee5e             call 0x6112  -> k2092 rand
+0224: 0bc0               or ax, ax
+0226: 7403               je 0x22b
+0228: e9e100             jmp 0x30c
+022b: e8a85e             call 0x60d6  -> k2056 
+022e: 50                 push ax
+022f: e8cc5e             call 0x60fe  -> k207e 
+0232: 2bc0               sub ax, ax
+0234: 50                 push ax
+0235: b80700             mov ax, 7
+0238: 50                 push ax
+0239: e8d65e             call 0x6112  -> k2092 rand
+023c: 8bd8               mov bx, ax
+023e: 8a873417           mov al, byte ptr [bx + 0x1734]
+0242: 2ae4               sub ah, ah
+0244: 8946e4             mov word ptr [bp - 0x1c], ax
+0247: b8e041             mov ax, 0x41e0
+024a: 50                 push ax
+024b: e88256             call 0x58d0  -> k1850 print_ds
+
+==== CAST2.OVL shrine donation / WELL DONE / Codex ceremony  [0bc0, 0e80)  near-call base e1e0
+0bc0: e8cd1c             call 0x2890  -> k0a70 set_color
+0bc3: b80800             mov ax, 8
+0bc6: 50                 push ax
+0bc7: 50                 push ax
+0bc8: b8b700             mov ax, 0xb7
+0bcb: 50                 push ax
+0bcc: 50                 push ax
+0bcd: e8d61d             call 0x29a6  -> k0b86 RECT_XOR
+0bd0: bed007             mov si, 0x7d0
+0bd3: b88c0a             mov ax, 0xa8c
+0bd6: 50                 push ax
+0bd7: b80100             mov ax, 1
+0bda: 50                 push ax
+0bdb: b8c800             mov ax, 0xc8
+0bde: 50                 push ax
+0bdf: 56                 push si
+0be0: 2bc0               sub ax, ax
+0be2: 50                 push ax
+0be3: e8cc33             call 0x3fb2  -> k2192 TONE_SWEEP
+0be6: 83c632             add si, 0x32
+0be9: 81fea861           cmp si, 0x61a8
+0bed: 7ce4               jl 0xbd3
+0bef: 8976fa             mov word ptr [bp - 6], si
+0bf2: bea861             mov si, 0x61a8
+0bf5: b88c0a             mov ax, 0xa8c
+0bf8: 50                 push ax
+0bf9: b80100             mov ax, 1
+0bfc: 50                 push ax
+0bfd: b8c800             mov ax, 0xc8
+0c00: 50                 push ax
+0c01: 56                 push si
+0c02: 2bc0               sub ax, ax
+0c04: 50                 push ax
+0c05: e8aa33             call 0x3fb2  -> k2192 TONE_SWEEP
+0c08: 83ee32             sub si, 0x32
+0c0b: 81fed007           cmp si, 0x7d0
+0c0f: 7fe4               jg 0xbf5
+0c11: 8976fa             mov word ptr [bp - 6], si
+0c14: e9ff00             jmp 0xd16
+0c17: 90                 nop 
+0c18: b001               mov al, 1
+0c1a: 8a4ef8             mov cl, byte ptr [bp - 8]
+0c1d: d2e0               shl al, cl
+0c1f: 2206cc58           and al, byte ptr [0x58cc]
+0c23: 34ff               xor al, 0xff
+0c25: 2006cc58           and byte ptr [0x58cc], al
+0c29: b8d7b6             mov ax, 0xb6d7
+0c2c: 50                 push ax
+0c2d: e8402a             call 0x3670  -> k1850 print_ds
+0c30: ff36b013           push word ptr [0x13b0]
+0c34: e8591c             call 0x2890  -> k0a70 set_color
+0c37: b80800             mov ax, 8
+0c3a: 50                 push ax
+0c3b: 50                 push ax
+0c3c: b8b700             mov ax, 0xb7
+0c3f: 50                 push ax
+0c40: 50                 push ax
+0c41: e8621d             call 0x29a6  -> k0b86 RECT_XOR
+0c44: bed007             mov si, 0x7d0
+0c47: b81c0c             mov ax, 0xc1c
+0c4a: 50                 push ax
+0c4b: b80100             mov ax, 1
+0c4e: 50                 push ax
+0c4f: b89600             mov ax, 0x96
+0c52: 50                 push ax
+0c53: 56                 push si
+0c54: 2bc0               sub ax, ax
+0c56: 50                 push ax
+0c57: e85833             call 0x3fb2  -> k2192 TONE_SWEEP
+0c5a: 83c632             add si, 0x32
+0c5d: 81fea861           cmp si, 0x61a8
+0c61: 7ce4               jl 0xc47
+0c63: 8976fa             mov word ptr [bp - 6], si
+0c66: bea861             mov si, 0x61a8
+0c69: b81c0c             mov ax, 0xc1c
+0c6c: 50                 push ax
+0c6d: b80100             mov ax, 1
+0c70: 50                 push ax
+0c71: b89600             mov ax, 0x96
+0c74: 50                 push ax
+0c75: 56                 push si
+0c76: 2bc0               sub ax, ax
+0c78: 50                 push ax
+0c79: e83633             call 0x3fb2  -> k2192 TONE_SWEEP
+0c7c: 83ee32             sub si, 0x32
+0c7f: 81fed007           cmp si, 0x7d0
+0c83: 7fe4               jg 0xc69
+0c85: 8976fa             mov word ptr [bp - 6], si
+0c88: e80742             call 0x4e92  -> k3072 
+0c8b: 8006885803         add byte ptr [0x5888], 3
+0c90: 803e885863         cmp byte ptr [0x5888], 0x63
+0c95: 7605               jbe 0xc9c
+0c97: c606885863         mov byte ptr [0x5888], 0x63
+0c9c: 8b5ef8             mov bx, word ptr [bp - 8]
+0c9f: 80bf7e4b00         cmp byte ptr [bx + 0x4b7e], 0
+0ca4: 7417               je 0xcbd
+0ca6: fe06b455           inc byte ptr [0x55b4]
+0caa: 803eb4551e         cmp byte ptr [0x55b4], 0x1e
+0caf: 7605               jbe 0xcb6
+0cb1: c606b4551e         mov byte ptr [0x55b4], 0x1e
+0cb6: b8b895             mov ax, 0x95b8
+0cb9: 50                 push ax
+0cba: e8b329             call 0x3670  -> k1850 print_ds
+0cbd: 8b5ef8             mov bx, word ptr [bp - 8]
+0cc0: 80bf864b00         cmp byte ptr [bx + 0x4b86], 0
+0cc5: 7417               je 0xcde
+0cc7: fe06b555           inc byte ptr [0x55b5]
+0ccb: 803eb5551e         cmp byte ptr [0x55b5], 0x1e
+0cd0: 7605               jbe 0xcd7
+0cd2: c606b5551e         mov byte ptr [0x55b5], 0x1e
+0cd7: b8c695             mov ax, 0x95c6
+0cda: 50                 push ax
+0cdb: e89229             call 0x3670  -> k1850 print_ds
+0cde: 8b5ef8             mov bx, word ptr [bp - 8]
+0ce1: 80bf8e4b00         cmp byte ptr [bx + 0x4b8e], 0
+0ce6: 7417               je 0xcff
+0ce8: fe06b655           inc byte ptr [0x55b6]
+0cec: 803eb6551e         cmp byte ptr [0x55b6], 0x1e
+0cf1: 7605               jbe 0xcf8
+0cf3: c606b6551e         mov byte ptr [0x55b6], 0x1e
+0cf8: b8d495             mov ax, 0x95d4
+0cfb: 50                 push ax
+0cfc: e87129             call 0x3670  -> k1850 print_ds
+0cff: 837ef807           cmp word ptr [bp - 8], 7
+0d03: 7511               jne 0xd16
+0d05: 8006885803         add byte ptr [0x5888], 3
+0d0a: 803e885863         cmp byte ptr [0x5888], 0x63
+0d0f: 7605               jbe 0xd16
+0d11: c606885863         mov byte ptr [0x5888], 0x63
+0d16: b80a00             mov ax, 0xa
+0d19: 50                 push ax
+0d1a: e8e94b             call 0x5906  -> k3ae6 RUN_N_FRAMES(n)
+0d1d: 5e                 pop si
+0d1e: 5f                 pop di
+0d1f: 8be5               mov sp, bp
+0d21: 5d                 pop bp
+0d22: c3                 ret 
+0d23: 90                 nop 
+0d24: 55                 push bp
+0d25: 8bec               mov bp, sp
+0d27: 83ec04             sub sp, 4
+0d2a: 56                 push si
+0d2b: e85e37             call 0x448c  -> k266c GETKEY
+0d2e: b803b7             mov ax, 0xb703
+0d31: 50                 push ax
+0d32: e83b29             call 0x3670  -> k1850 print_ds
+0d35: e85437             call 0x448c  -> k266c GETKEY
+0d38: b833b7             mov ax, 0xb733
+0d3b: 50                 push ax
+0d3c: e83129             call 0x3670  -> k1850 print_ds
+0d3f: e84a37             call 0x448c  -> k266c GETKEY
+0d42: c746fe0000         mov word ptr [bp - 2], 0
+0d47: a0cc58             mov al, byte ptr [0x58cc]
+0d4a: 2ae4               sub ah, ah
+0d4c: 8bf0               mov si, ax
+0d4e: 8b56fe             mov dx, word ptr [bp - 2]
+0d51: b80100             mov ax, 1
+0d54: 8bca               mov cx, dx
+0d56: d3e0               shl ax, cl
+0d58: 85c6               test si, ax
+0d5a: 7412               je 0xd6e
+0d5c: 8956fe             mov word ptr [bp - 2], dx
+0d5f: 83fa08             cmp dx, 8
+0d62: 7512               jne 0xd76
+0d64: b85cb7             mov ax, 0xb75c
+0d67: 50                 push ax
+0d68: e80529             call 0x3670  -> k1850 print_ds
+0d6b: e9f000             jmp 0xe5e
+0d6e: 42                 inc dx
+0d6f: 83fa08             cmp dx, 8
+0d72: 7de8               jge 0xd5c
+0d74: ebdb               jmp 0xd51
+0d76: b001               mov al, 1
+0d78: 8a4efe             mov cl, byte ptr [bp - 2]
+0d7b: d2e0               shl al, cl
+0d7d: 0806ce58           or byte ptr [0x58ce], al
+0d81: b82200             mov ax, 0x22
+0d84: 50                 push ax
+0d85: e85227             call 0x34da  -> k16ba putchar
+0d88: 8b5efe             mov bx, word ptr [bp - 2]
+0d8b: d1e3               shl bx, 1
+0d8d: 8b876e4b           mov ax, word ptr [bx + 0x4b6e]
+0d91: 051eb2             add ax, 0xb21e
+0d94: 50                 push ax
+0d95: e8d828             call 0x3670  -> k1850 print_ds
+0d98: b8e695             mov ax, 0x95e6
+0d9b: 50                 push ax
+0d9c: e8d128             call 0x3670  -> k1850 print_ds
+0d9f: e8ea36             call 0x448c  -> k266c GETKEY
+0da2: 803ece58ff         cmp byte ptr [0x58ce], 0xff
+0da7: 7403               je 0xdac
+0da9: e9b200             jmp 0xe5e
+0dac: ff36ae13           push word ptr [0x13ae]
+0db0: e8dd1a             call 0x2890  -> k0a70 set_color
+0db3: b80800             mov ax, 8
+0db6: 50                 push ax
+0db7: 50                 push ax
+0db8: b8b700             mov ax, 0xb7
+0dbb: 50                 push ax
+0dbc: 50                 push ax
+0dbd: e8e61b             call 0x29a6  -> k0b86 RECT_XOR
+0dc0: e8cf40             call 0x4e92  -> k3072 
+0dc3: ff36b013           push word ptr [0x13b0]
+0dc7: e8c61a             call 0x2890  -> k0a70 set_color
+0dca: b80800             mov ax, 8
+0dcd: 50                 push ax
+0dce: 50                 push ax
+0dcf: b8b700             mov ax, 0xb7
+0dd2: 50                 push ax
+0dd3: 50                 push ax
+0dd4: e8cf1b             call 0x29a6  -> k0b86 RECT_XOR
+0dd7: e8b840             call 0x4e92  -> k3072 
+0dda: ff36ae13           push word ptr [0x13ae]
+0dde: e8af1a             call 0x2890  -> k0a70 set_color
+0de1: b80800             mov ax, 8
+0de4: 50                 push ax
+0de5: 50                 push ax
+0de6: b8b700             mov ax, 0xb7
+0de9: 50                 push ax
+0dea: 50                 push ax
+0deb: e8b81b             call 0x29a6  -> k0b86 RECT_XOR
+0dee: e8a140             call 0x4e92  -> k3072 
+0df1: b873b7             mov ax, 0xb773
+0df4: 50                 push ax
+0df5: e87828             call 0x3670  -> k1850 print_ds
+0df8: e89136             call 0x448c  -> k266c GETKEY
+0dfb: b8ea95             mov ax, 0x95ea
+0dfe: 50                 push ax
+0dff: e86e28             call 0x3670  -> k1850 print_ds
+0e02: b80100             mov ax, 1
+0e05: 50                 push ax
+0e06: e8b52c             call 0x3abe  -> k1c9e 
+0e09: b89db7             mov ax, 0xb79d
+0e0c: 50                 push ax
+0e0d: e86028             call 0x3670  -> k1850 print_ds
+0e10: 2bc0               sub ax, ax
+0e12: 50                 push ax
+0e13: e8a82c             call 0x3abe  -> k1c9e 
+0e16: e87336             call 0x448c  -> k266c GETKEY
+0e19: b80100             mov ax, 1
+0e1c: 50                 push ax
+0e1d: e89e2c             call 0x3abe  -> k1c9e 
+0e20: b8efb7             mov ax, 0xb7ef
+0e23: 50                 push ax
+0e24: e84928             call 0x3670  -> k1850 print_ds
+0e27: 2bc0               sub ax, ax
+0e29: 50                 push ax
+0e2a: e8912c             call 0x3abe  -> k1c9e 
+0e2d: e85c36             call 0x448c  -> k266c GETKEY
+0e30: b80100             mov ax, 1
+0e33: 50                 push ax
+0e34: e8872c             call 0x3abe  -> k1c9e 
+0e37: b82ab8             mov ax, 0xb82a
+0e3a: 50                 push ax
+0e3b: e83228             call 0x3670  -> k1850 print_ds
+0e3e: 2bc0               sub ax, ax
+0e40: 50                 push ax
+0e41: e87a2c             call 0x3abe  -> k1c9e 
+0e44: e84536             call 0x448c  -> k266c GETKEY
+0e47: b80100             mov ax, 1
+0e4a: 50                 push ax
+0e4b: e8702c             call 0x3abe  -> k1c9e 
+0e4e: b89eb8             mov ax, 0xb89e
+0e51: 50                 push ax
+0e52: e81b28             call 0x3670  -> k1850 print_ds
+0e55: 2bc0               sub ax, ax
+0e57: 50                 push ax
+0e58: e8632c             call 0x3abe  -> k1c9e 
+0e5b: e82e36             call 0x448c  -> k266c GETKEY
+0e5e: 5e                 pop si
+0e5f: 8be5               mov sp, bp
+0e61: 5d                 pop bp
+0e62: c3                 ret 
+0e63: 90                 nop 
+0e64: b80100             mov ax, 1
+0e67: 50                 push ax
+0e68: e89b4a             call 0x5906  -> k3ae6 RUN_N_FRAMES(n)
+0e6b: e8f052             call 0x615e  -> k433e 
+0e6e: b80400             mov ax, 4
+0e71: 50                 push ax
+0e72: e8914a             call 0x5906  -> k3ae6 RUN_N_FRAMES(n)
+0e75: c3                 ret 
+0e76: 55                 push bp
+0e77: 8bec               mov bp, sp
+0e79: 83ec14             sub sp, 0x14
+0e7c: 57                 push di
+0e7d: 56                 push si

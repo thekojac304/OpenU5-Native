@@ -1,0 +1,11 @@
+[1/11] Building CXX object CMakeFiles/openu5_core.dir/src/scene_timing.cpp.obj
+[2/11] Building CXX object CMakeFiles/openu5_core.dir/src/narrative_scene.cpp.obj
+[3/11] Building CXX object CMakeFiles/openu5_core.dir/src/rest.cpp.obj
+[4/11] Building CXX object CMakeFiles/batch51_camp_pacing.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp.obj
+[5/11] Building CXX object CMakeFiles/openu5_core.dir/src/blackthorn_scene.cpp.obj
+[6/11] Linking CXX static library libopenu5_core.a
+[7/11] Building CXX object CMakeFiles/batch51_scene_pacing.dir/tests/batch51_scene_pacing_test.cpp.obj
+[8/11] Linking CXX executable batch51_scene_pacing.exe
+[9/11] Building CXX object CMakeFiles/batch51_camp_pacing.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/batch51_camp_pacing_test.cpp.obj
+[10/11] Building CXX object CMakeFiles/batch51_camp_pacing.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_runtime.cpp.obj
+[11/11] Linking CXX executable batch51_camp_pacing.exe

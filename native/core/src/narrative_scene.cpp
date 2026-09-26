@@ -3,6 +3,7 @@
 #include <cstring>
 
 #include "openu5/quest_world.h"
+#include "openu5/scene_timing.h"
 
 // Mirror of the reference presenters: game/src/ui/troll-sneak.ts (the whole
 // class) and main.ts `runRefugeScene` (the refuge half), plus
@@ -152,11 +153,24 @@ bool NarrativeScenePacer::enqueue(const GameEvent &e) {
         }
         return true;
     }
-    if (state_ == NarrativeScenePacerState::Idle) return false;
+    if (state_ == NarrativeScenePacerState::Idle) {
+        // Batch 51 -- the Camp apparition (OUTSUBS camp_results). It has no
+        // script payload: rest.cpp emits it as ordinary events, and the scene
+        // starts at the first of them the original makes the screen WAIT on
+        // (the materialize sweep; "An apparition!" has already printed). From
+        // there on the rest of the turn is deferred like any other scene's.
+        // A harness (paced_=false) keeps the synchronous delivery it always had.
+        if (!paced_ || !camp_apparition_event(e) || !camp_apparition_wait_ms(e)) return false;
+        begin(NarrativeScene::Camp);
+    }
     // Everything else in the turn is deferred behind the scene, in order.
     auto *step = push(NarrativeSceneStepKind::Forward);
     if (!step) return true;
     step->event = e;
+    // The wait the original spends after this point (scene_timing.h); zero for
+    // every event that is not part of the apparition, so the Refuge and
+    // TrollSneak tails are released exactly as before.
+    step->dwell_ms = paced_ ? camp_apparition_wait_ms(e) : 0;
     // Every borrowed payload pointer dies with the synchronous delivery that
     // produced it; this queue outlives that, so none of them may survive.
     step->event.text = nullptr;
@@ -222,6 +236,13 @@ void NarrativeScenePacer::pump(uint32_t now_ms, NarrativeSceneSink beats, EventS
         if (step.has_text) released.text = storage_.text + step.text_offset;
         else if (step.event.kind == GameEventKind::Message) released.text = "";
         if (forward.emit) forward.emit(forward.context, released);
+        if (step.dwell_ms) {
+            // Batch 51: the released point is on screen now; it may not be
+            // replaced before the original's wait has elapsed.
+            resume_at_ms_ = now_ms + step.dwell_ms;
+            waiting_ = true;
+            return;
+        }
     }
 }
 

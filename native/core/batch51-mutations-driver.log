@@ -1,0 +1,14 @@
+chord_hold_zero: KILLED -- batch51_scene_pacing:RED(2), batch51_camp_pacing:RED(5), batch42_advancement_flash:green(0), blackthorn_scene:green(0), batch7b:green(0)
+restore_frames_zero: KILLED -- batch51_scene_pacing:RED(1), batch51_camp_pacing:RED(1), batch42_advancement_flash:green(0), blackthorn_scene:green(0), batch7b:green(0)
+figure_fizzle_zero: KILLED -- batch51_scene_pacing:RED(1), batch51_camp_pacing:RED(1), batch42_advancement_flash:green(0), blackthorn_scene:green(0), batch7b:green(0)
+pacer_ignores_forward_dwell: KILLED -- batch51_scene_pacing:RED(6), batch51_camp_pacing:RED(11), batch42_advancement_flash:green(0), blackthorn_scene:green(0), batch7b:green(0)
+dwell_before_publication: KILLED -- batch51_scene_pacing:RED(3), batch51_camp_pacing:RED(2), batch42_advancement_flash:green(0), blackthorn_scene:green(0), batch7b:green(0)
+sweep_primitive_zero: KILLED -- batch51_scene_pacing:green(0), batch51_camp_pacing:RED(11), batch42_advancement_flash:green(0), blackthorn_scene:green(0), batch7b:green(0)
+bt_materialize_sweep_zero: KILLED -- batch51_scene_pacing:RED(1), batch51_camp_pacing:green(0), batch42_advancement_flash:green(0), blackthorn_scene:green(0), batch7b:green(0)
+bt_circle_fizzle_zero: KILLED -- batch51_scene_pacing:RED(3), batch51_camp_pacing:green(0), batch42_advancement_flash:green(0), blackthorn_scene:green(0), batch7b:green(0)
+bt_siren_zero: KILLED -- batch51_scene_pacing:RED(1), batch51_camp_pacing:green(0), batch42_advancement_flash:green(0), blackthorn_scene:green(0), batch7b:green(0)
+bt_circle_during_sweep: KILLED -- batch51_scene_pacing:RED(1), batch51_camp_pacing:green(0), batch42_advancement_flash:green(0), blackthorn_scene:green(0), batch7b:green(0)
+camp_dwell_input_open: KILLED -- batch51_scene_pacing:green(0), batch51_camp_pacing:RED(1), batch42_advancement_flash:green(0), blackthorn_scene:green(0), batch7b:green(0)
+camp_paced_in_harness: KILLED -- batch51_scene_pacing:RED(1), batch51_camp_pacing:RED(1), batch42_advancement_flash:RED(1), blackthorn_scene:green(0), batch7b:green(0)
+post-mutation restored build: GREEN
+exit=0

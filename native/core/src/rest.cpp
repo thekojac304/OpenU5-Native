@@ -1,4 +1,5 @@
 #include "openu5/rest.h"
+#include "openu5/scene_timing.h"
 #include "openu5/inventory.h"
 #include "openu5/world_terrain.h"
 #include <algorithm>
@@ -113,9 +114,9 @@ void camp_next_member(RestContext &c, CampAdvance &state, bool hold) {
             m.current_hp = m.max_hp;
             m.status = 'G';
             emit(c, GameEventKind::CampActorWake, nullptr, state.slot);
-            emit(c, GameEventKind::Sfx, "apparition-heal-chime");
+            emit(c, GameEventKind::Sfx, kApparitionChimeCue);
             emit(c, GameEventKind::CampViewportXor);
-            emit(c, GameEventKind::Sfx, "apparition-chord");
+            emit(c, GameEventKind::Sfx, kApparitionChordCue);
             emit(c, GameEventKind::CampViewportRestore);
             int32_t level = 1;
             for (int32_t x = m.exp / 100; x > 0; x >>= 1)
@@ -164,8 +165,8 @@ bool camp_wake(RestContext &c, int32_t guard, bool *apparition) {
     if (apparition) *apparition = appeared;
     if (appeared) {
         msg(c, "An apparition!\n");
-        emit(c, GameEventKind::Sfx, "apparition-materialize");
-        emit(c, GameEventKind::Sfx, "apparition-arpeggio");
+        emit(c, GameEventKind::Sfx, kApparitionMaterializeCue);
+        emit(c, GameEventKind::Sfx, kApparitionArpeggioCue);
         emit(c, GameEventKind::CampSceneBegin, nullptr, guard);
         CampAdvance local{};
         auto &state = c.advancement ? *c.advancement : local;

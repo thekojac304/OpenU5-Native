@@ -1,0 +1,396 @@
+# Batch 51 kernel timing primitives (ULTIMA.EXE, offsets after the MZ header)
+
+==== boot calibration of [0x5356] + its INT 1Ch handler  [11b4, 1226)  near-call base 0000
+11b4: c70656530000       mov word ptr [0x5356], 0
+11ba: c7065a530000       mov word ptr [0x535a], 0
+11c0: b01c               mov al, 0x1c
+11c2: b435               mov ah, 0x35
+11c4: cd21               int 0x21
+11c6: 06                 push es
+11c7: 53                 push bx
+11c8: 1e                 push ds
+11c9: 8cc8               mov ax, cs
+11cb: 8ed8               mov ds, ax
+11cd: 8d161412           lea dx, [0x1214]
+11d1: b01c               mov al, 0x1c
+11d3: b425               mov ah, 0x25
+11d5: cd21               int 0x21
+11d7: 1f                 pop ds
+11d8: 833e5a5300         cmp word ptr [0x535a], 0
+11dd: 74f9               je 0x11d8
+11df: c7065a530000       mov word ptr [0x535a], 0
+11e5: ff065653           inc word ptr [0x5356]
+11e9: 833e5a5300         cmp word ptr [0x535a], 0
+11ee: 74f5               je 0x11e5
+11f0: 5a                 pop dx
+11f1: 58                 pop ax
+11f2: 1e                 push ds
+11f3: 8ed8               mov ds, ax
+11f5: b01c               mov al, 0x1c
+11f7: b425               mov ah, 0x25
+11f9: cd21               int 0x21
+11fb: 1f                 pop ds
+11fc: a15653             mov ax, word ptr [0x5356]
+11ff: 33d2               xor dx, dx
+1201: b91200             mov cx, 0x12
+1204: f7e1               mul cx
+1206: b9ee02             mov cx, 0x2ee
+1209: f7f1               div cx
+120b: a35653             mov word ptr [0x5356], ax
+120e: cd12               int 0x12
+1210: a35853             mov word ptr [0x5358], ax
+1213: c3                 ret 
+1214: fb                 sti 
+1215: 1e                 push ds
+1216: 56                 push si
+1217: 50                 push ax
+1218: b8640f             mov ax, 0xf64
+121b: 8ed8               mov ds, ax
+121d: be5a53             mov si, 0x535a
+1220: ff04               inc word ptr [si]
+1222: 58                 pop ax
+1223: 5e                 pop si
+1224: 1f                 pop ds
+1225: cf                 iret 
+
+==== fx_tile_fizzle_in -- 256 blits, 31 compositor calls, NO timer  [1068, 10e0)  near-call base 0000
+1068: 55                 push bp
+1069: 8bec               mov bp, sp
+106b: 56                 push si
+106c: 57                 push di
+106d: 1e                 push ds
+106e: 33ff               xor di, di
+1070: 1e                 push ds
+1071: 8b4606             mov ax, word ptr [bp + 6]
+1074: 8b5e04             mov bx, word ptr [bp + 4]
+1077: 8b7608             mov si, word ptr [bp + 8]
+107a: 8b0ebc52           mov cx, word ptr [0x52bc]
+107e: 8b16be52           mov dx, word ptr [0x52be]
+1082: f9                 stc 
+1083: c70650536600       mov word ptr [0x5350], 0x66
+1089: ff1e5053           lcall [0x5350]
+108d: 1f                 pop ds
+108e: 1e                 push ds
+108f: 47                 inc di
+1090: 8b4606             mov ax, word ptr [bp + 6]
+1093: 8b5e04             mov bx, word ptr [bp + 4]
+1096: 8b7608             mov si, word ptr [bp + 8]
+1099: 8b0ebc52           mov cx, word ptr [0x52bc]
+109d: 8b16be52           mov dx, word ptr [0x52be]
+10a1: f9                 stc 
+10a2: c70650536600       mov word ptr [0x5350], 0x66
+10a8: ff1e5053           lcall [0x5350]
+10ac: 1f                 pop ds
+10ad: 47                 inc di
+10ae: 81ff0001           cmp di, 0x100
+10b2: 7422               je 0x10d6
+10b4: f7c70700           test di, 7
+10b8: 75b6               jne 0x1070
+10ba: 57                 push di
+10bb: 803e935842         cmp byte ptr [0x5893], 0x42
+10c0: 750e               jne 0x10d0
+10c2: b80100             mov ax, 1
+10c5: 50                 push ax
+10c6: e8f170             call 0x81ba  -> k81ba 
+10c9: 5f                 pop di
+10ca: 0bc0               or ax, ax
+10cc: 74a2               je 0x1070
+10ce: 7508               jne 0x10d8
+10d0: e83d48             call 0x5910  -> k5910 render/compositor
+10d3: 5f                 pop di
+10d4: eb9a               jmp 0x1070
+10d6: 33c0               xor ax, ax
+10d8: 1f                 pop ds
+10d9: 5f                 pop di
+10da: 5e                 pop si
+10db: 5d                 pop bp
+10dc: c20600             ret 6
+
+==== keyboard flush 0x1b24 and poll_key_blink_cursor 0x1b38  [1b24, 1b94)  near-call base 0000
+1b24: 1e                 push ds
+1b25: ba4000             mov dx, 0x40
+1b28: 8eda               mov ds, dx
+1b2a: c7061a001e00       mov word ptr [0x1a], 0x1e
+1b30: c7061c001e00       mov word ptr [0x1c], 0x1e
+1b36: 1f                 pop ds
+1b37: c3                 ret 
+1b38: 55                 push bp
+1b39: 8bec               mov bp, sp
+1b3b: 83ec04             sub sp, 4
+1b3e: a18e53             mov ax, word ptr [0x538e]
+1b41: 8946fe             mov word ptr [bp - 2], ax
+1b44: c7068e530000       mov word ptr [0x538e], 0
+1b4a: a19053             mov ax, word ptr [0x5390]
+1b4d: 8b0e0c54           mov cx, word ptr [0x540c]
+1b51: ff060c54           inc word ptr [0x540c]
+1b55: 03c1               add ax, cx
+1b57: 50                 push ax
+1b58: e85ffb             call 0x16ba  -> k16ba putchar
+1b5b: e8b0f2             call 0xe0e  -> k0e0e 
+1b5e: 8946fc             mov word ptr [bp - 4], ax
+1b61: a19253             mov ax, word ptr [0x5392]
+1b64: 39060c54           cmp word ptr [0x540c], ax
+1b68: 7c06               jl 0x1b70
+1b6a: c7060c540000       mov word ptr [0x540c], 0
+1b70: 837efc00           cmp word ptr [bp - 4], 0
+1b74: 740a               je 0x1b80
+1b76: b82000             mov ax, 0x20
+1b79: 50                 push ax
+1b7a: e83dfb             call 0x16ba  -> k16ba putchar
+1b7d: eb08               jmp 0x1b87
+1b7f: 90                 nop 
+1b80: b80100             mov ax, 1
+1b83: 50                 push ax
+1b84: e87305             call 0x20fa  -> k20fa DELAY_TICKS(n)
+1b87: 8b46fe             mov ax, word ptr [bp - 2]
+1b8a: a38e53             mov word ptr [0x538e], ax
+1b8d: 8b46fc             mov ax, word ptr [bp - 4]
+1b90: 8be5               mov sp, bp
+1b92: 5d                 pop bp
+1b93: c3                 ret 
+
+==== kbhit 0x1d5e (flush only after a read, [0x538c] gated)  [1d5e, 1d86)  near-call base 0000
+1d5e: 55                 push bp
+1d5f: 8bec               mov bp, sp
+1d61: 56                 push si
+1d62: 57                 push di
+1d63: 1e                 push ds
+1d64: c7068a530000       mov word ptr [0x538a], 0
+1d6a: b401               mov ah, 1
+1d6c: cd16               int 0x16
+1d6e: 7516               jne 0x1d86
+1d70: 33c0               xor ax, ax
+1d72: 1f                 pop ds
+1d73: 5f                 pop di
+1d74: 5e                 pop si
+1d75: 5d                 pop bp
+1d76: c3                 ret 
+1d77: 833e8c5300         cmp word ptr [0x538c], 0
+1d7c: 7403               je 0x1d81
+1d7e: e8a3fd             call 0x1b24  -> k1b24 KBD_FLUSH
+1d81: 1f                 pop ds
+1d82: 5f                 pop di
+1d83: 5e                 pop si
+1d84: 5d                 pop bp
+1d85: c3                 ret 
+
+==== delay(n): INT 1Ch tick counter  [20fa, 2167)  near-call base 0000
+20fa: 55                 push bp
+20fb: 8bec               mov bp, sp
+20fd: 56                 push si
+20fe: 57                 push di
+20ff: 1e                 push ds
+2100: 8b4604             mov ax, word ptr [bp + 4]
+2103: 3d0100             cmp ax, 1
+2106: 7508               jne 0x2110
+2108: 813e5653f000       cmp word ptr [0x5356], 0xf0
+210e: 7e42               jle 0x2152
+2110: a34a54             mov word ptr [0x544a], ax
+2113: c70648540000       mov word ptr [0x5448], 0
+2119: 06                 push es
+211a: b01c               mov al, 0x1c
+211c: b435               mov ah, 0x35
+211e: cd21               int 0x21
+2120: 8cc0               mov ax, es
+2122: 07                 pop es
+2123: 891e4e54           mov word ptr [0x544e], bx
+2127: a34c54             mov word ptr [0x544c], ax
+212a: 1e                 push ds
+212b: 0e                 push cs
+212c: 1f                 pop ds
+212d: 8d165921           lea dx, [0x2159]
+2131: b01c               mov al, 0x1c
+2133: b425               mov ah, 0x25
+2135: cd21               int 0x21
+2137: 1f                 pop ds
+2138: a14854             mov ax, word ptr [0x5448]
+213b: 3b064a54           cmp ax, word ptr [0x544a]
+213f: 72f7               jb 0x2138
+2141: a14c54             mov ax, word ptr [0x544c]
+2144: 8b164e54           mov dx, word ptr [0x544e]
+2148: 1e                 push ds
+2149: 8ed8               mov ds, ax
+214b: b01c               mov al, 0x1c
+214d: b425               mov ah, 0x25
+214f: cd21               int 0x21
+2151: 1f                 pop ds
+2152: 1f                 pop ds
+2153: 5f                 pop di
+2154: 5e                 pop si
+2155: 5d                 pop bp
+2156: c20200             ret 2
+2159: fb                 sti 
+215a: 1e                 push ds
+215b: 50                 push ax
+215c: 56                 push si
+215d: b8640f             mov ax, 0xf64
+2160: 8ed8               mov ds, ax
+2162: 8d364854           lea si, [0x5448]
+
+==== tone_sweep: a2 samples x calibrated inner delay; mute branch 0x21c4  [2192, 223b)  near-call base 0000
+2192: 55                 push bp
+2193: 8bec               mov bp, sp
+2195: 56                 push si
+2196: 57                 push di
+2197: 1e                 push ds
+2198: a15653             mov ax, word ptr [0x5356]
+219b: 3d6400             cmp ax, 0x64
+219e: 7d04               jge 0x21a4
+21a0: 33c0               xor ax, ax
+21a2: 7405               je 0x21a9
+21a4: b118               mov cl, 0x18
+21a6: f6f1               div cl
+21a8: 98                 cwde 
+21a9: a35454             mov word ptr [0x5454], ax
+21ac: b83c00             mov ax, 0x3c
+21af: e642               out 0x42, al
+21b1: 8ac4               mov al, ah
+21b3: e642               out 0x42, al
+21b5: 8b5e06             mov bx, word ptr [bp + 6]
+21b8: 8b4e08             mov cx, word ptr [bp + 8]
+21bb: 33d2               xor dx, dx
+21bd: 803ecea900         cmp byte ptr [0xa9ce], 0
+21c2: 752d               jne 0x21f1
+21c4: 8b460c             mov ax, word ptr [bp + 0xc]
+21c7: 03d0               add dx, ax
+21c9: 50                 push ax
+21ca: 51                 push cx
+21cb: 035e04             add bx, word ptr [bp + 4]
+21ce: a15454             mov ax, word ptr [0x5454]
+21d1: 0bc0               or ax, ax
+21d3: 7416               je 0x21eb
+21d5: 8b4e0a             mov cx, word ptr [bp + 0xa]
+21d8: 890e5054           mov word ptr [0x5450], cx
+21dc: a35254             mov word ptr [0x5452], ax
+21df: ff0e5254           dec word ptr [0x5452]
+21e3: 75fa               jne 0x21df
+21e5: ff0e5054           dec word ptr [0x5450]
+21e9: 75f1               jne 0x21dc
+21eb: 59                 pop cx
+21ec: 58                 pop ax
+21ed: e2d5               loop 0x21c4
+21ef: e343               jcxz 0x2234
+21f1: 8b460c             mov ax, word ptr [bp + 0xc]
+21f4: 03d0               add dx, ax
+21f6: 50                 push ax
+21f7: 51                 push cx
+21f8: 3bd3               cmp dx, bx
+21fa: 7708               ja 0x2204
+21fc: e461               in al, 0x61
+21fe: 24fc               and al, 0xfc
+2200: e661               out 0x61, al
+2202: eb06               jmp 0x220a
+2204: e461               in al, 0x61
+2206: 0c03               or al, 3
+2208: e661               out 0x61, al
+220a: 035e04             add bx, word ptr [bp + 4]
+220d: a15454             mov ax, word ptr [0x5454]
+2210: 0bc0               or ax, ax
+2212: 7416               je 0x222a
+2214: 8b4e0a             mov cx, word ptr [bp + 0xa]
+2217: 890e5054           mov word ptr [0x5450], cx
+221b: a35254             mov word ptr [0x5452], ax
+221e: ff0e5254           dec word ptr [0x5452]
+2222: 75fa               jne 0x221e
+2224: ff0e5054           dec word ptr [0x5450]
+2228: 75f1               jne 0x221b
+222a: 59                 pop cx
+222b: 58                 pop ax
+222c: e2c3               loop 0x21f1
+222e: e461               in al, 0x61
+2230: 24fc               and al, 0xfc
+2232: e661               out 0x61, al
+2234: 1f                 pop ds
+2235: 5f                 pop di
+2236: 5e                 pop si
+2237: 5d                 pop bp
+2238: c20a00             ret 0xa
+
+==== getkey_with_redraw: no flush before the poll  [266c, 26a3)  near-call base 0000
+266c: 55                 push bp
+266d: 8bec               mov bp, sp
+266f: 83ec02             sub sp, 2
+2672: 56                 push si
+2673: 833ec85202         cmp word ptr [0x52c8], 2
+2678: 7505               jne 0x267f
+267a: c6069158ff         mov byte ptr [0x5891], 0xff
+267f: e8b6f4             call 0x1b38  -> k1b38 poll_key
+2682: 50                 push ax
+2683: e8acf9             call 0x2032  -> k2032 
+2686: 8bf0               mov si, ax
+2688: 0bf6               or si, si
+268a: 7511               jne 0x269d
+268c: 803e935821         cmp byte ptr [0x5893], 0x21
+2691: 7207               jb 0x269a
+2693: 803e93587f         cmp byte ptr [0x5893], 0x7f
+2698: 7603               jbe 0x269d
+269a: e87332             call 0x5910  -> k5910 render/compositor
+269d: 0bf6               or si, si
+269f: 74de               je 0x267f
+
+==== run_n_frames(n): n x (compositor + delay(1))  [3ae6, 3b1b)  near-call base 0000
+3ae6: 55                 push bp
+3ae7: 8bec               mov bp, sp
+3ae9: 83ec04             sub sp, 4
+3aec: 56                 push si
+3aed: 803ea45800         cmp byte ptr [0x58a4], 0
+3af2: 7420               je 0x3b14
+3af4: c746fe0000         mov word ptr [bp - 2], 0
+3af9: 837e0400           cmp word ptr [bp + 4], 0
+3afd: 7e15               jle 0x3b14
+3aff: 8b7604             mov si, word ptr [bp + 4]
+3b02: 8bc6               mov ax, si
+3b04: 0146fe             add word ptr [bp - 2], ax
+3b07: e8061e             call 0x5910  -> k5910 render/compositor
+3b0a: b80100             mov ax, 1
+3b0d: 50                 push ax
+3b0e: e8e9e5             call 0x20fa  -> k20fa DELAY_TICKS(n)
+3b11: 4e                 dec si
+3b12: 75f3               jne 0x3b07
+3b14: 5e                 pop si
+3b15: 8be5               mov sp, bp
+3b17: 5d                 pop bp
+3b18: c20200             ret 2
+
+==== moongate transit: 15 stages x delay(2)  [48ca, 492d)  near-call base 0000
+48ca: b80100             mov ax, 1
+48cd: 50                 push ax
+48ce: e815f2             call 0x3ae6  -> k3ae6 RUN_N_FRAMES(n)
+48d1: b80c17             mov ax, 0x170c
+48d4: 50                 push ax
+48d5: b80100             mov ax, 1
+48d8: 50                 push ax
+48d9: b83075             mov ax, 0x7530
+48dc: 50                 push ax
+48dd: b8d007             mov ax, 0x7d0
+48e0: 50                 push ax
+48e1: b80200             mov ax, 2
+48e4: 50                 push ax
+48e5: e8aad8             call 0x2192  -> k2192 TONE_SWEEP
+48e8: a07c58             mov al, byte ptr [0x587c]
+48eb: 2ae4               sub ah, ah
+48ed: 8946fe             mov word ptr [bp - 2], ax
+48f0: c6067c5816         mov byte ptr [0x587c], 0x16
+48f5: b8dc00             mov ax, 0xdc
+48f8: 50                 push ax
+48f9: b80500             mov ax, 5
+48fc: 50                 push ax
+48fd: 50                 push ax
+48fe: e867c7             call 0x1068  -> k1068 FIZZLE_IN
+4901: c6067c5800         mov byte ptr [0x587c], 0
+4906: b80100             mov ax, 1
+4909: 50                 push ax
+490a: e8d9f1             call 0x3ae6  -> k3ae6 RUN_N_FRAMES(n)
+490d: c60687580f         mov byte ptr [0x5887], 0xf
+4912: a08758             mov al, byte ptr [0x5887]
+4915: 2ae4               sub ah, ah
+4917: 50                 push ax
+4918: b80500             mov ax, 5
+491b: 50                 push ax
+491c: 50                 push ax
+491d: e8f2c7             call 0x1112  -> k1112 blit_partial
+4920: b80200             mov ax, 2
+4923: 50                 push ax
+4924: e8d3d7             call 0x20fa  -> k20fa DELAY_TICKS(n)
+4927: fe0e8758           dec byte ptr [0x5887]
+492b: 75e5               jne 0x4912

@@ -46,15 +46,8 @@ void u5obj_object(const char *stage,size_t i,const openu5::QuestObject&o){
 constexpr uint32_t kInternal=MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT,kPsram=MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT;
 constexpr size_t kAstarBytes=323084,kTranscriptBlocks=96;
 constexpr size_t kCreationWidth=320,kCreationHeight=152,kCreationPixels=kCreationWidth*kCreationHeight;
-// #324 / R-32 -- the deferred Blackthorn capture turn. The longest real turn
-// is the capture entry: 15 events and 50 scene beats; the escorted finale is
-// 44 beats. The arena holds the copied narrative for one turn (the seven
-// throne-room prints plus the interrogation question are well under 2 KiB).
-constexpr size_t kBlackthornSceneSteps=96,kBlackthornSceneTextBytes=4096;
-// Y-04 (Batch 7B). The worst real narrative turn plus headroom: the troll
-// crossing is 1 + 6*5 + 1 = 32 beats and the refuge script is 16, and either
-// can be followed by the rest of its own turn.
-constexpr size_t kNarrativeSceneSteps=64,kNarrativeSceneTextBytes=2048;
+// #324 / R-32 and Y-04: the scene pacers' queue sizes are AlphaRuntime class
+// constants (alpha_runtime.h), shared with the host fixture since Batch 51.
 // One run-n-frames unit (kernel 0x3ae6 / an INT 1Ch tick), the same 55 ms
 // calibration the tile-animation tick and the reference pacers already use.
 constexpr uint32_t kPresentationUnitMs=55;
@@ -199,10 +192,7 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
     blackthorn_scene_services_.state=&blackthorn_scene_state_;
     blackthorn_scene_services_.script=blackthorn_script_;
     context_.blackthorn_scene=&blackthorn_scene_services_;
-    blackthorn_pacer_.attach({blackthorn_steps_,kBlackthornSceneSteps,blackthorn_scene_text_,
-                              kBlackthornSceneTextBytes,blackthorn_scene_grid_});
-    blackthorn_pacer_.set_unit_ms(kPresentationUnitMs);
-    narrative_pacer_.attach({narrative_steps_,kNarrativeSceneSteps,narrative_text_,kNarrativeSceneTextBytes});
+    bind_scene_pacers(true);
     poison_.set_blip_ms(openu5::kPoisonBlipMs);
     look_services_.context=this;look_services_.describe=[](void*p,int32_t tile){auto&r=*static_cast<AlphaRuntime*>(p);return tile>=0&&size_t(tile)<r.resources_.look_count?r.resources_.look_text+r.resources_.look_offsets[tile]:"something";};look_services_.sign=[](void*p,openu5::MapId map,int32_t x,int32_t y){auto&r=*static_cast<AlphaRuntime*>(p);return openu5::resolve_look_sign(r.resources_.signs,r.resources_.sign_count,map,x,y);};context_.look=&look_services_;
     context_.services={this,command_effect,command_reload,banner};context_.events={this,dispatch_event};
@@ -284,11 +274,23 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
     log_metrics("initialized");return ESP_OK;
 }
 
+// Batch 51. The single binder for the scene pacers' storage and cadence, so
+// the host fixture can never run a differently wired pacer than the device.
+void AlphaRuntime::bind_scene_pacers(bool paced){
+    blackthorn_pacer_.attach({blackthorn_steps_,kBlackthornSceneSteps,blackthorn_scene_text_,
+                              kBlackthornSceneTextBytes,blackthorn_scene_grid_});
+    blackthorn_pacer_.set_unit_ms(paced?kPresentationUnitMs:0);
+    narrative_pacer_.attach({narrative_steps_,kNarrativeSceneSteps,narrative_text_,kNarrativeSceneTextBytes});
+    narrative_pacer_.set_paced(paced);
+}
+
 void AlphaRuntime::dispatch_ui(void *p,const openu5::UiIntent&i){static_cast<AlphaRuntime*>(p)->dispatch(i);}
 void AlphaRuntime::dispatch_event(void *p,const openu5::GameEvent&e){static_cast<AlphaRuntime*>(p)->consume_event(e);}
-void AlphaRuntime::consume_event(const openu5::GameEvent&e){
-    // OUTSUBS 0x06b9/0x0850/0x08aa: all scene pixels are transient. The
-    // shipped CampFire map supplies the south formation; no world actor moves.
+// OUTSUBS 0x06b9/0x0850/0x08aa: all scene pixels are transient. The shipped
+// CampFire map supplies the south formation; no world actor moves. Batch 51:
+// one applier for both paths -- the synchronous one below and the paced
+// release -- so the two can never stage a different CampFire.
+bool AlphaRuntime::apply_camp_scene_event(const openu5::GameEvent&e){
     if(e.kind==openu5::GameEventKind::CampSleepSceneBegin ||
        e.kind==openu5::GameEventKind::CampSceneBegin ||
        e.kind==openu5::GameEventKind::CampGuardMove ||
@@ -324,6 +326,31 @@ void AlphaRuntime::consume_event(const openu5::GameEvent&e){
             camp_guard_col_=camp_guard_row_=-1;break;
         default:break;
         }
+        return true;
+    }
+    return false;
+}
+
+void AlphaRuntime::consume_event(const openu5::GameEvent&e){
+    // Batch 51. The Camp apparition is PACED. The original spends its waits
+    // inside camp_results -- the sweeps, the chord that freezes the XOR frame,
+    // the restore frames -- and they block even with sound off; rendering each
+    // event synchronously here made every one of them zero, which is the
+    // "way too fast" Phase 7B saw on the physical TFT. From the first event
+    // the original makes the screen wait on, the narrative pacer owns the rest
+    // of the turn, and it is offered the event BEFORE the synchronous Camp and
+    // status blocks below so no later point can overtake an earlier one.
+    if(narrative_pacer_.active()?narrative_pacer_.scene()==openu5::NarrativeScene::Camp
+                                :openu5::camp_apparition_event(e)){
+        const bool was_active=narrative_pacer_.active();
+        if(narrative_pacer_.enqueue(e)){
+            if(!was_active)ESP_LOGI(kTag,"CAMP_SCENE_PACED begin=%s wait_ms=%lu",
+                                    e.text?e.text:"event",(unsigned long)openu5::camp_apparition_wait_ms(e));
+            dirty_=true;dirty_reason_="camp-scene";
+            return;
+        }
+    }
+    if(apply_camp_scene_event(e)){
         if(board_){dirty_=true;dirty_reason_="camp-scene";
             camp_viewport_only_=e.kind!=openu5::GameEventKind::CampSceneEnd;
             render(*board_,true);camp_viewport_only_=false;}
@@ -515,6 +542,25 @@ int64_t AlphaRuntime::quake_remaining_ms(int64_t now_us) const{
     return elapsed_ms>=window_ms?0:window_ms-elapsed_ms;
 }
 
+// Batch 51. The forward sink of the narrative pacer. A paced Camp visual is
+// applied to the stage and drawn by the very render pass that released it --
+// never by a nested render() -- and that pass preserves the party panel, as
+// the synchronous path does, until the member's own status refresh arrives.
+// Everything else goes straight to the session, exactly as the Refuge and
+// TrollSneak tails always have; nothing is ever re-offered to the pacer.
+void AlphaRuntime::release_scene_event(void *p,const openu5::GameEvent &e){
+    auto &self=*static_cast<AlphaRuntime*>(p);
+    if(self.apply_camp_scene_event(e)){self.dirty_=true;self.dirty_reason_="camp-scene";return;}
+    if(e.kind==openu5::GameEventKind::CampStatusRefresh||e.kind==openu5::GameEventKind::BedStatusRefresh){
+        if(self.board_){
+            const auto result=self.board_->refresh_bed_status_panel(self.game_,self.compose_party_highlight());
+            if(result!=ESP_OK)ESP_LOGE(kTag,"BED_STATUS_REFRESH failed: %s",esp_err_to_name(result));
+        }
+        return;
+    }
+    self.ui_->consume(e);
+}
+
 // Y-04 (Batch 7B). The beat sink of the narrative pacer. A beat is the whole
 // of what the scene changes at that instant: a console line (new, or a
 // CONTINUATION of the one on screen -- the three dots of `$ sneaks across`),
@@ -550,7 +596,7 @@ bool AlphaRuntime::service_narrative_scene(){
     if(!narrative_pacer_.active())return false;
     const auto released_before=narrative_pacer_.released_steps();
     const auto phase_before=narrative_pacer_.phase();
-    narrative_pacer_.pump(uint32_t(esp_timer_get_time()/1000),{this,narrative_beat},ui_->event_sink());
+    narrative_pacer_.pump(uint32_t(esp_timer_get_time()/1000),{this,narrative_beat},{this,release_scene_event});
     const auto released=narrative_pacer_.released_steps();
     const auto phase=narrative_pacer_.phase();
     narrative_released_=released;
@@ -1388,6 +1434,26 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
         observed_frontend_state_=state_after;
         if(!accepted)return false;
         service_frontend_intent();dirty_=true;dirty_reason_="frontend-input";return true;
+    }
+    // Batch 51. While a paced Camp point is on screen the original is inside a
+    // tone_sweep / run_n_frames busy-wait: no getkey is running, so nothing it
+    // reads can act, and saving, loading or a menu cannot interrupt the
+    // partly presented roster either. Swallow everything but transcript
+    // paging -- shortcuts and the system menu included. It must precede the
+    // Batch 41 rule below, which would otherwise turn a shortcut into a scene
+    // key for a getkey the session has not been shown yet.
+    if(narrative_pacer_.modal()&&narrative_pacer_.scene()==openu5::NarrativeScene::Camp){
+        if(shortcut==DeviceShortcut::None&&
+           (action.kind==openu5::UiActionKind::PageUp||action.kind==openu5::UiActionKind::PageDown)){
+            refresh_session_context();
+            ui_->handle_input(action);
+            dirty_=true;dirty_reason_="transcript-page";
+            ESP_LOGI(kTag,"CAMP_SCENE_INPUT action=%s effect=transcript-page",action_name(action.kind));
+            return true;
+        }
+        ESP_LOGI(kTag,"CAMP_SCENE_INPUT action=%s shortcut=%s effect=swallowed gameplay_command=none",
+                 action_name(action.kind),shortcut_name(shortcut));
+        return true;
     }
     // The original apparition is inside getkey: saving, loading and menus
     // cannot interrupt a partly advanced roster.

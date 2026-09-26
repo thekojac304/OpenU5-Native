@@ -6,6 +6,7 @@
 #include "commands.h"
 #include "movement.h"
 #include "presentation.h"
+#include "scene_timing.h"
 
 // Y-04 (Refuge, TrollSneak) -- the MODAL NARRATIVE SCENES, and the one minimal
 // sequencer they share.
@@ -60,10 +61,22 @@
 // scene running visibly faster than the original) will need to be measured
 // against. It is not a general scene framework and must not grow into one
 // here; it is the smallest thing that makes staged timing assertable.
+//
+// CAMP (Batch 51). The third scene is the Camp apparition (OUTSUBS
+// camp_results 0x0658), which the physical T-Deck showed running "way too
+// fast": rest.cpp emits it as ordinary events and the device used to render
+// each one synchronously inside the command, so every original wait -- the
+// sweeps, the chord that freezes the XOR frame, the restore frames -- was
+// zero. It has no script payload and needs none: the pacer takes the turn at
+// the first event the original makes the screen wait on, and each deferred
+// event then carries the wait the original spends after it
+// (camp_apparition_wait_ms, scene_timing.h). The getkeys stay the session's
+// own CampKeyWait; the pacer only decides WHEN the session sees them.
 namespace openu5 {
 
 /** run-n-frames (kernel 0x3AE6): one INT 1Ch tick. The shared scene unit. */
 constexpr uint32_t kSceneFrameUnitMs = 55;
+static_assert(kSceneFrameUnitMs == kSceneTickMs, "the narrative unit IS the shared INT 1Ch tick");
 
 /**
  * Refuge cadence (Class C, calibrated against video-M): ms per RAW unit of the
@@ -76,8 +89,8 @@ constexpr uint32_t kRefugeUnitMs = 70;
 constexpr uint32_t kRefugeTextFloorMs = 900;
 constexpr uint32_t kRefugeSceneFloorMs = 260;
 
-/** Which scene is on stage. */
-enum class NarrativeScene : uint8_t { None, TrollSneak, Refuge };
+/** Which scene is on stage. `Camp` is appended (Batch 51): ordinals are logged. */
+enum class NarrativeScene : uint8_t { None, TrollSneak, Refuge, Camp };
 
 /**
  * VISUAL PHASE of the refuge scene (BLCKTHRN 0x0910). Each phase ACCUMULATES
@@ -193,10 +206,11 @@ class NarrativeScenePacer {
 
     /**
      * Offer an event. Returns true when the pacer took ownership of it (the
-     * caller must NOT also forward it). A scene event always activates; while
-     * a scene runs every later event of the turn is deferred too, because
-     * releasing a later message before an earlier beat would put the narrative
-     * back out of order.
+     * caller must NOT also forward it). A scene event always activates, and
+     * -- when paced -- so does the first Camp apparition event that carries
+     * an original wait; while a scene runs every later event of the turn is
+     * deferred too, because releasing a later message before an earlier beat
+     * would put the narrative back out of order.
      */
     bool enqueue(const GameEvent &);
 

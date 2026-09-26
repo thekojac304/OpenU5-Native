@@ -1,4 +1,5 @@
 #include "openu5/blackthorn_scene.h"
+#include "openu5/scene_timing.h"
 
 #include <algorithm>
 #include <cstring>
@@ -181,12 +182,23 @@ void build_blackthorn_entry_script(BlackthornSceneState &state, BlackthornSceneS
     b.step2(6, 0, -1, 7, 0, -1, 1);
     b.step2(6, -1, 0, 7, 1, 0, 3);
     b.pause(8);
-    // tone_sweep 0x082b, the holy circle (0x0842), then Blackthorn (0x0863).
-    // The LFSR fizzle texture itself is not modelled; he appears on the cut.
+    // Batch 51 -- the materialization in the binary's own order (0x082b-0x087c).
+    // The sweep plays while his cell is still EMPTY: tone_sweep a2=0x32c8
+    // @0x083f runs before slot 8 is written. Then slot 8 = 0x16 (0x116, the
+    // holy circle, write_object_record @0x0854) and fx_tile_fizzle_in(5,5,
+    // 0x178) @0x0860 reveals Blackthorn over it; then slot 8 = 0x78 @0x0875 and
+    // pause(8) @0x087c. Before this batch the circle and Blackthorn were two
+    // consecutive beats with no wait between them, so the pacer applied both
+    // in one pump and no frame ever showed the circle -- the "missing
+    // teleport-in" of hardware row H-122. The LFSR texture of the fizzle is
+    // still not modelled: the circle is held for the fizzle floor, then cut.
+    auto &sweep = b.emit();
+    sweep.sfx = BlackthornSfx::Materialize;
+    sweep.sweep_samples = kBlackthornMaterializeSamples;
     state.objects[8] = {kBlackthornCellX, kBlackthornCellY, kBlackthornHolySymbolTile, true, true};
-    auto &materialize = b.emit();
-    b.stamp(materialize);
-    materialize.sfx = BlackthornSfx::Materialize;
+    auto &circle = b.emit();
+    b.stamp(circle);
+    circle.fizzle = true;
     state.objects[8].tile = kBlackthornTile;
     auto &arrive = b.emit();
     b.stamp(arrive);
@@ -248,6 +260,9 @@ void build_sacrifice_script(BlackthornSceneState &state, BlackthornSceneScript &
     b.pause(10);
     auto &siren = b.emit();
     siren.sfx = BlackthornSfx::ShardSweep;
+    // Batch 51: the two mirrored loops are 920 blocking sweeps; the victim
+    // stays on screen, frozen, for all of them.
+    siren.sweep_samples = kBlackthornSirenSamples;
     state.objects[1].visible = false;
     auto &after = b.emit();
     b.stamp(after);
@@ -480,9 +495,15 @@ void BlackthornScenePacer::pump(uint32_t now_ms, EventSink out) {
         ++released_;
         if (step.kind == BlackthornStepKind::Beat) {
             apply(step.beat);
-            if (step.beat.frames > 0) {
-                if (unit_ms_) {
-                    resume_at_ms_ = now_ms + uint32_t(step.beat.frames) * unit_ms_;
+            if (unit_ms_) {
+                // run-n-frames units, plus the waits the original spends in
+                // primitives that are not run-n-frames (Batch 51).
+                const uint32_t hold =
+                    uint32_t(step.beat.frames > 0 ? step.beat.frames : 0) * unit_ms_ +
+                    tone_sweep_ms(step.beat.sweep_samples) +
+                    (step.beat.fizzle ? kFizzleFloorMs : 0);
+                if (hold) {
+                    resume_at_ms_ = now_ms + hold;
                     waiting_ = true;
                     return;
                 }
