@@ -8,7 +8,21 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 A3-02) — the PC-speaker synthesizer and the first gameplay sounds; Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 A3-03) — the remaining gameplay SFX, ambient cues and scene audio; Alpha 2 remains the released build; read this first
+>
+> **A3-03 is an Alpha 3 development batch, not a release.**
+> - The device now plays 62 of the 73 cue ids from the 1988 primitives' own parameters: the combat victory fanfare (the hardware-reported gap), the fountain / waterfall / clock ambience (the other one), the quake rumble, the shrine and shard ladders, the Blackthorn siren, the Refuge's sounds, the healer jingle, moongate / sceptre / Shadowlord, the attract demo's cues, and sixteen message-adjacent sounds.
+> - Every PC-speaker call site of the binaries (126) is classified in a table the tests enforce; the 11 silent ids and 31 silent sites carry their reason. No music (A3-04). Gameplay semantics, scene timing, saves and the game packs are unchanged; no core event was added.
+> - **A3-02 hardware: PASS** (H-125 closed). See §14 "Alpha 3 A3-03" and [`ALPHA3_AUDIO.md`](ALPHA3_AUDIO.md) §16.
+>
+> | | |
+> |---|---|
+> | Host suite | **131 / 131**, serial, 108.87 s. New: `a3_03_sfx_inventory` 48, `a3_03_sfx_runtime` 46. **26 / 26 mutations killed.** |
+> | Firmware | `3.0.0-alpha3-dev-a3-03-debug`, 920,128 B (`0xe0a40`), +5,520 B, 128,448 B (12 %) free, zero warnings. Image path, SHA-256 and `Git`: tag `alpha3-a3-03-remaining-sfx`. **Not flashed; hardware check pending** (`ALPHA3_AUDIO.md` §16.17). |
+> | SD | **Unchanged.** Sound effects need no audio pack; `/ultima5/openu5-audio.bin` stays optional (music capability). |
+> | Next | The A3-03 device check. Then A3-04 (music playback from the supported patch), which the user starts. |
+>
+> ### CURRENT STATE (Alpha 3 A3-02) — **superseded as the current state by A3-03 above.** the PC-speaker synthesizer and the first gameplay sounds
 >
 > **A3-02 is an Alpha 3 development batch, not a release.**
 > - The device now plays the original's speaker effects: 22 gameplay sounds synthesized from the 1988 primitives' own parameters (footstep, wall bump, world and dungeon cues, arena hits, the spell ceremony, the Camp apparition, Blackthorn), and the harpsichord.
@@ -7630,4 +7644,73 @@ The reference for everything below is `ALPHA3_AUDIO.md` §15. This section keeps
 - No music playback; no final loudness curve; no Settings or HUD redesign.
 - No moongate animation and no endgame cinematic.
 - The remaining cues (§15.5 "Declined until A3-03") were deliberately not wired.
+- No save-format, game-pack or audio-pack change.
+
+## Alpha 3 A3-03 — remaining gameplay SFX, ambient cues and scene audio closeout
+
+The reference for everything below is `ALPHA3_AUDIO.md` §16. This section keeps the batch's evidence trail.
+
+### 1. Baseline (Phase A)
+
+| Item | Value |
+|---|---|
+| Tree | HEAD `bc65972b` = `alpha3-a3-02-sfx-synth`, clean |
+| Host suite | fresh build `native/core/build-a3-03-baseline`, serial ctest **129 / 129**, 111.29 s (`native/core/a3-03-baseline-*.log`). The first build attempt died inside GCC's own `<compare>` header (`uno2dered`, a one-bit corruption of `unordered`; the file on disk is intact); the resumed build completed |
+| Firmware | A3-02: `0xdf4b0` = 914,608 B, 133,968 B free, `Git bc65972b8362`, Launcher `2ee83b26…5706` |
+| **A3-02 hardware** | **PASS** (the user's report): footsteps, wall bump, combat hits, the spell ceremony, the harpsichord (pitch order), SFX Volume incl. 0 %, the Camp apparition cues with no pacing change, Alt+L flush. Carried forward: tone / loudness to A3-05; the **troll-fight victory chime** and the **fountain** missing |
+
+### 2. Findings, each on its own axis
+
+| # | Finding | Kind | Evidence |
+|---|---|---|---|
+| F1 | **The arena victory fanfare was never derived.** COMBAT 0x0cf6–0x0d02 prints `VICTORY!` and calls kernel 0x4368; the native latch prints the same line (a `Message`), but `present_audio` only turned `Attacked` / `Died` into sound. The engine's second `VICTORY!` (the `Ended` line) must never sound: it repeats and also fires for arenas that start won. | missing route (hardware-reported) | `a3-03-cue-sites.log`; V0–V5; mutations M4 / M5 |
+| F2 | **The fountain / waterfall / clock sounds had no route at all.** Their cadence is the key wait `getkey_with_redraw` 0x266c: one redraw — hence one `ambient_sfx_tick` 0x4102 — per 55 ms BIOS tick, never in a dungeon (0x268c–0x269a). `ambient-audio-audit.md` §2 names 0x1070, which is `fx_tile_fizzle_in`. | missing route (hardware-reported) + note correction | 0x266c, 0x1b38, 0x5910–0x5a1d, 0x4102–0x4337; F1–F7, C1–C2 |
+| F3 | **The quake is kernel 0x3072**: 8 passes of viewport strip blits, each step `set_tone(rand_range(0x13, 0x96))`, `stop` at 0x316e. `set_tone` writes the PIT count without a control word, so the sound is random square half-cycles of 19–150 Hz. The draws are the game RNG in the render path (a registered deliberate divergence). | derivation → new primitive (`Rumble`), class C length / sequence | 0x3072–0x3176, 0x22e2–0x230a; R1–R3 |
+| F4 | **The shard ritual shakes three times on one cue** (CAST 0x169d / 0x16a0 / 0x16a3 vs one native `quake` cue); the Codex three times on three cues. The rumble is keyed to the `Quake` event, one per shake; the cue sounds nothing on its own. | derivation → routing | S2, W4; mutation M11 |
+| F5 | **The reference's `sceptre` program is kernel 0x6221 ("The Sceptre is reclaimed!").** The native cue follows "Wielding the Sceptre…", which is CAST 0x198f `TS(0x1450, 1, 0xc350, 0x1388, 1)` plus a burst per dissolved field. | reference divergence (the reference is wrong); native follows the bytes | `a3-03-cue-sites.log`; P4 |
+| F6 | **A3-02's repeat rule played two of three real repeats**: identical pending cues coalesced, so three shakes, three Stonegate drones or one damage burst per member lost one. Only a held key's step / bump coalesces now. | native defect (A3-02 policy) | Q4, S2; mutation M12 |
+| F7 | Sixteen more speaker calls are **adjacent** to a message the native core already prints (the arena's Blocked! / same exit / passes out / possessed / gates in a daemon / grazed / dragged under / ARGH! / regurgitated / stole food / Absorbed! / Plague!, and COLLISION! / DROWNING!!! / WHIRLPOOL! / Something was stolen! / the well's Poof! / the wrong-flame No effect!), plus the arena footstep (SJOG 0x1d32) and the location-29 trapdoor (TOWN 0x0f96). | missing routes | `ALPHA3_AUDIO.md` §16.2; D1, D2, W1 |
+| F8 | The Refuge's two own sounds (the slumber melody, BLCKTHRN 0x0a0d–0x0a49; the revival, one tone per member at `0x8e30 / (i + 7)` — 0x03a0 is a 32-bit divide) had no route. | missing routes | R1 |
+| F9 | The Blackthorn sacrifice siren (A3-02 routed the beat, the synthesizer declined it) is the shard ritual's ladder bit for bit. | wiring completed | B1–B2 |
+| F10 | The ambient gate first silenced arena fights inside dungeons; the original's g_location is ≥ 0x80 in any arena, so 0x266c redraws there. Found by mutation M13 surviving (the dungeon rule was also stated twice); corrected and guarded (F7, M13, M26). | native defect (this batch's own) | `a3-03-mutation-first-pass.log` |
+| F11 | The host fixture never bound the attract demo's View data (production `initialize()` does), so the demo could not run in a host test. Bound in the fixture, as `initialize()` does. | test-seam gap | W3 |
+| F12 | **Not reproduced:** the original's fanfare blocks for 2.09 s and then flushes the keyboard (0x0d05 → 0x1b16). Audio never paces the game (A3-01 contract). | knowing divergence | ledger D-60 |
+
+### 3. What changed
+
+- **Core:** `sfx_synth.{h,cpp}` — the `Rumble` primitive (0x3072), ladder loops (`calls` / `call_stride`), `speaker_ramp` (the trapdoor), 39 more cue programs, the `Ambient` class, `SfxAdmit::Skipped`, `sfx_coalesces`. `audio.{h,cpp}` — 16 appended cue ids (`sceptre-reclaimed` … `refuge-revival`); `sceptre`'s comment names CAST 0x198f. **New:** `sfx_inventory.{h,cpp}` (statuses, the 126-site table, the combat / world message derivations) and `ambient_sfx.{h,cpp}` (0x4102's scan, phase and chimes). `sources.cmake`.
+- **Device:** `alpha_runtime.{h,cpp}` — `present_audio` derives the fanfare, the arena messages and footstep, the healer jingle, the world messages, the location-29 trapdoor and the rumble per `Quake`; `narrative_beat` the Refuge lines; the attract demo routes its frame flags; `service_ambient` / `reset_ambient`, reset on every load and on Return to Title. `CMakeLists`: `PROJECT_VER` `3.0.0-alpha3-dev-a3-03-debug`. **No core event was added** (the Refuge beats and every Sfx event are pinned by `quest_parity`).
+- **Tests:** `native/core/tests/a3_03_sfx_inventory_test.cpp`; `native/targets/tdeck/host_tests/a3_03_sfx_runtime_test.cpp`; the host fixture binds the View data.
+- **Guards edited:** `a3_02_sfx_synth` E12 — supported 23 → 62, the "undeclared" example `moongate` → `bard-song`.
+- **Tools:** `re/tools/a3_03_cue_sites.py` (→ `native/core/a3-03-cue-sites.log`), `native/core/tools/a3_03_mutation_check.py`. A3-02's mutation driver is a record of that batch; four of its anchors moved with this batch's edits and it is not re-run.
+
+### 4. Tests, RED evidence and totals
+
+- **New targets:** `a3_03_sfx_inventory` 48 checks, `a3_03_sfx_runtime` 46 checks. The brief's items 1–25 map in `ALPHA3_AUDIO.md` §16.14.
+- **Found RED before any mutation** (all in the new tests, each fixed where the fault was): I3 (two cues legitimately share a call — `also` column added), P1 / R4 (pitch windows placed on the notes' extreme-duty ends — test windows moved), F5 (expected idle while real bump beeps still played — test), V2 / V5 (the party must still walk off the arena after `VICTORY!` — test), M7 (the teleport used an invalid dungeon cell and the fixture lacked dungeon data — test), W3 (the fixture lacked the View data — F11).
+- **RED evidence by mutation:** 26 one-line production mutations (`native/core/a3-03-mutation.log`). First pass (24): 21 killed, **M13 / M21 / M24 survived** — M13 exposed F10 (the gate was fixed and M26 added), M21 and M24 exposed two lax tests (W2, W3 tightened; M25 added); M5 died only by `-Werror` and was rewritten (`a3-03-mutation-m5-rerun.log`: killed by D2, V1–V3, V5). **Second pass 26 / 26 killed**; the restored build and all five audio suites green.
+- **Full suite:** `native/core/build-a3-03`, serial, **131 / 131 pass, 108.87 s** (`native/core/a3-03-final-ctest.log`). The only build warning is the known w64devkit `stl_uninitialized.h` false positive.
+- **Timing invariance:** the troll victory, the quake, the shrine WELL DONE, the Blackthorn sacrifice and the Refuge are identical — every 5 ms sample, every frame timestamp, the final state — with no audio, the synthesizer, SFX muted, a failing backend, stalled audio and racing audio (V5, Q2, S4, B2, R2); A3-02's T19 / T21 still hold.
+
+### 5. Firmware and packs
+
+- Pre-commit build `native/targets/tdeck/build-a3-03` (`native/targets/tdeck/a3-03-firmware-configure.log`, `a3-03-firmware-build.log`): ESP-IDF 6.1, `idf.py reconfigure` then `ninja -j 4`, first attempt clean, **zero project warnings** under `-Werror`.
+- `0xe0a40` = **920,128 B**, **+5,520 B** against A3-02's 914,608; **128,448 B (12 %)** of the 1 MiB app partition free.
+- Audio memory: the backend object 784 → **912 B** (+128 B: two ladder fields in each segment of the two 24-segment program copies, and the rumble's state). The queue (16 × 16 B), the audio task (4 KiB stack, core 1, priority 3) and the DMA are unchanged. Each ambient tick costs the game thread 121 terrain reads and at most one 16-byte post with a zero timeout.
+- The post-commit image is built in a fresh directory without ccache; its path, SHA-256 and embedded `Git` are in the annotated tag. Not flashed.
+- **Game packs and audio pack: unchanged.** No SD change.
+
+### 6. Rows
+
+- **D-3** (audio): the SFX half is closed in software — 62 of 73 cue ids play, the 11 others and every silent call site are classified with their reason (`ALPHA3_AUDIO.md` §16.18). D-3 stays open for music (A3-04) and the hardware sign-off (A3-05). Ledger: "Alpha 3 A3-03 status".
+- **H-125** (harpsichord audio): **closed — hardware PASS in the A3-02 device check.**
+- **New: H-196 / D-60** — the victory and shard fanfares do not hold the game for 2.09 s and do not flush the keyboard afterwards (COMBAT 0x0d05 / 0x1b16). Knowing divergence, by the A3-01 rule that audio never paces.
+- H-183 – H-186 (shrine key waits, ritual inversion, Refuge cadence, sacrifice burst) are **unchanged**: the scenes now have their sounds, the visual divergences stay queued for the presentation batch.
+
+### 7. Not done in this batch
+
+- No music playback; no final loudness curve; no Settings or HUD redesign.
+- No moongate transit animation and no endgame cinematic.
+- The Camp lute stays the 1988 sound-off branch; the scene pacing is untouched.
+- The 22 `EvidenceUnknown` sites were not attributed (attribution work, not audio work).
 - No save-format, game-pack or audio-pack change.

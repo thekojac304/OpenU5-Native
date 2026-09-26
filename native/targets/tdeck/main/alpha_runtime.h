@@ -11,6 +11,7 @@
 #include "asset_pack.h"
 #include "dungeon_art_cache.h"
 #include "openu5/audio.h"
+#include "openu5/ambient_sfx.h"
 #include "openu5/audio_pack.h"
 #include "openu5/command_char.h"
 #include "openu5/combat.h"
@@ -56,6 +57,9 @@ class AlphaRuntime {
     // audio pack". A null backend is silent.
     void configure_audio(const openu5::AudioPackInfo &, openu5::AudioBackend *);
     const openu5::AudioService &audio() const { return audio_; }
+    // A3-03. The ambient ticker (ambient_sfx.h) and how often it ran.
+    const openu5::AmbientTicker &ambient() const { return ambient_; }
+    uint32_t ambient_ticks() const { return ambient_ticks_; }
     const openu5::AudioPackInfo &audio_pack() const { return audio_pack_; }
     const openu5::FrontendSettings &device_settings() const { return settings_; }
     openu5::GameState &game() { return game_; }
@@ -241,6 +245,11 @@ class AlphaRuntime {
     // volumes and the pack's capability, and never GameState or any RNG.
     openu5::AudioService audio_{};
     openu5::AudioPackInfo audio_pack_{};
+    // A3-03. ambient_sfx_tick 0x4102's counters, and the 55 ms tick and the
+    // clock reading it last ran on.
+    openu5::AmbientTicker ambient_{};
+    uint32_t ambient_tick_ = UINT32_MAX, ambient_ticks_ = 0;
+    int64_t ambient_clock_key_ = -1;
     openu5::IntroViewPlayer intro_view_{};
     openu5::IntroViewFrame intro_frame_{};
     openu5::SystemMenuSession system_menu_{};
@@ -525,6 +534,14 @@ class AlphaRuntime {
     bool combat_actor_is_player(int32_t id) const;
     /** A3-02: the Blackthorn pacer's beat cues, released with their beat. */
     static void blackthorn_cue(void *, openu5::BlackthornSfx);
+    /**
+     * A3-03: one ambient_sfx_tick 0x4102 per 55 ms tick while the original
+     * would be waiting in getkey_with_redraw 0x266c (world, town or arena; no
+     * dungeon, scene, menu, Ending or An Tym). Presentation only.
+     */
+    void service_ambient(int64_t now_us);
+    /** A3-03: a new world (load, title): the ambient counters start over. */
+    void reset_ambient();
 };
 
 } // namespace tdeck

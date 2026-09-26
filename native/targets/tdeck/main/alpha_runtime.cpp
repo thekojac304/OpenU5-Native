@@ -18,6 +18,7 @@
 #include "native_renderer.h"
 #include "openu5/command_char.h"
 #include "openu5/sfx_synth.h"
+#include "openu5/sfx_inventory.h"
 #include "openu5/debug_labels.h"
 #include "openu5/display_names.h"
 #include "openu5/inventory_picker.h"
@@ -568,6 +569,12 @@ void AlphaRuntime::narrative_beat(void *p,const openu5::NarrativeSceneBeat &beat
     }
     // A3-01: the beat's cue goes to the audio service, like every presented cue.
     if(beat.sfx){ESP_LOGI(kTag,"SFX_CUE id=%s source=narrative-scene",beat.sfx);self.audio_.play_sfx(openu5::sfx_from_cue(beat.sfx));}
+    // A3-03. Two party_refuge sounds follow a line (BLCKTHRN 0x0a0d-0x0a49 and
+    // 0x0b5d-0x0bb0); the script carries the line, the reference pins it, so
+    // the sound is derived here. The revival plays one tone per member.
+    if(beat.text&&std::strcmp(beat.text,"But thy slumber is disturbed!")==0)self.audio_.play_sfx(openu5::SfxId::RefugeSlumber);
+    if(beat.text&&std::strcmp(beat.text,"Strange words are intoned.")==0)
+        self.audio_.play_sfx(openu5::SfxId::RefugeRevival,int32_t(self.game_.party.character_count));
     if(beat.phase!=openu5::RefugePhase::None)
         ESP_LOGI(kTag,"REFUGE_SCENE phase=%d",int(beat.phase));
 }
@@ -2037,6 +2044,13 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
             const int64_t render_start=esp_timer_get_time();
             if(render_attract){
                 if(!intro_view_.advance(intro_frame_))return ESP_FAIL;
+                // A3-03. The scene engine's speaker calls (FONT 0x03ca / 0x0403 /
+                // 0x088d), as the frame that carries them is shown. The chime is
+                // 3000 on the gate's first frame and 2000 on its fifth.
+                if(intro_frame_.thunder)audio_.play_sfx(openu5::SfxId::IntroThunder);
+                if(intro_frame_.chime)audio_.play_sfx(openu5::SfxId::IntroChime,
+                    intro_frame_.effect_step==1||intro_frame_.effect_step==14?0:4);
+                if(intro_frame_.summon)audio_.play_sfx(openu5::SfxId::IntroSummon);
                 ESP_LOGI(kTag,"ATTRACT_TICK tick=%lu frame=%lu scene=%u title=\"%s\" cycle=%lu demo_local=1 exact_reference=1",
                          (unsigned long)tick,(unsigned long)attract_frame,unsigned(intro_frame_.scene),
                          openu5::IntroViewPlayer::scene_title(intro_frame_.scene),(unsigned long)intro_frame_.cycle);
@@ -2088,6 +2102,7 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     if(service_blackthorn_scene()){dirty_=true;dirty_reason_="blackthorn-scene";}
     if(service_narrative_scene()){dirty_=true;dirty_reason_="narrative-scene";}
     if(service_poison_flash()){dirty_=true;dirty_reason_="poison-tick";}
+    service_ambient(esp_timer_get_time());
     assert(!frontend_.active() && !system_menu_.active() && "gameplay renderer lacks display ownership");
     if(smoke_.pump()){dirty_=true;dirty_reason_="smoke-test-progress";}
     const int64_t now=esp_timer_get_time();DeviceShortcut held_shortcut{};
@@ -2364,6 +2379,7 @@ void AlphaRuntime::synchronize_loaded_world(){
     // A3-01. Sound is presentation too: a load drops the old world's queued
     // effects. Nothing here reads or writes game state.
     audio_.flush_for_load();
+    reset_ambient();
     // Batch 24 (H-162). Loading is ULTIMA.EXE 0x00f7 -> TOWN.OVL:0x11F0 with
     // fresh=0 -> 0x0408(0): the floor loader zeroes the open-door tracker
     // [0x594f] (0x041d) and re-reads the floor, so a door open at save time
@@ -2480,6 +2496,7 @@ void AlphaRuntime::service_system_menu_intent(){
         // A3-02. The title replaces the world like a load does: no effect of
         // the abandoned game may sound over it. Music is untouched (A3-04).
         audio_.stop_sfx();
+        reset_ambient();
         frontend_.start(uint32_t(esp_timer_get_time()/1000),
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
         true,
@@ -2733,6 +2750,10 @@ void AlphaRuntime::present_audio(const openu5::GameEvent &e){
     // viewport by. The reference catalogues that routine as "time-spell"; the
     // spell-cast / potion-used / scroll-used hooks before it are markers.
     if(e.kind==openu5::GameEventKind::MagicCeremony){audio_.play_sfx(openu5::SfxId::TimeSpell,std::clamp(e.note,int32_t(0),int32_t(8)));return;}
+    // A3-03. One rumble per screen_shake_rumble 0x3072 call, i.e. per Quake
+    // event: the shard ritual shakes three times (CAST 0x169d/0x16a0/0x16a3)
+    // on a single "quake" cue, so the shake, not the cue, carries the sound.
+    if(e.kind==openu5::GameEventKind::Quake){audio_.play_sfx(openu5::SfxId::Quake);return;}
     // The arena's hit and death bursts (kernel 0x3564 / 0x2fd0), derived from
     // the combat events already emitted, as the reference's routeCombatSfx
     // does: the burst depends on the TARGET's side; a miss is silent.
@@ -2743,11 +2764,35 @@ void AlphaRuntime::present_audio(const openu5::GameEvent &e){
             const auto id=openu5::sfx_for_combat_attack(died,c.hit,combat_actor_is_player(c.target));
             if(id!=openu5::SfxId::None)audio_.play_sfx(id);
         }
+        // A3-03. A party member's arena step calls sfx_footstep (SJOG 0x1d32);
+        // the monsters' moves are silent.
+        if(c.kind==openu5::CombatEventKind::Moved&&combat_actor_is_player(c.actor))audio_.play_sfx(openu5::SfxId::MoveStep);
+        // A3-03. The speaker calls that follow an arena message (sfx_inventory.cpp):
+        // VICTORY! (COMBAT 0x0d02; the Ended line never sounds), Escape!, Blocked!, ...
+        const auto derived=openu5::sfx_for_combat_text(c.text,c.kind==openu5::CombatEventKind::Ended);
+        if(derived!=openu5::SfxId::None)audio_.play_sfx(derived);
+        return;
+    }
+    // A3-03. The healer's jingle (SHOPPES 0x13b0) plays when the service is
+    // done -- its three callers are the Cure / Heal / Resurrect branches.
+    if(e.kind==openu5::GameEventKind::Shop&&e.shop&&e.shop->kind==openu5::ShopEventKind::Result&&e.shop->result&&
+       e.shop->session&&e.shop->session->type==openu5::ShopType::Healer&&e.shop->result->ok&&
+       e.shop->result->message&&std::strcmp(e.shop->result->message,"It is done.")==0){audio_.play_sfx(openu5::SfxId::ShopTransaction);return;}
+    if(e.kind==openu5::GameEventKind::Message){
+        // A3-03. A world message the original follows with a speaker call.
+        const auto derived=openu5::sfx_for_world_text(e.text);
+        if(derived!=openu5::SfxId::None){audio_.play_sfx(derived);return;}
+        // TOWN 0x0f96: only location 0x1d's trapdoor plays the falling ramp,
+        // then one burst per member as it dies ([0x585b] members).
+        if(e.text&&std::strcmp(e.text,"A TRAPDOOR!")==0&&game_.position.map.location==29)
+            audio_.play_sfx(openu5::SfxId::TrapdoorFall,int32_t(game_.party.character_count));
         return;
     }
     if(e.kind!=openu5::GameEventKind::Sfx)return;
     const auto id=openu5::sfx_from_cue(e.text);
     if(id==openu5::SfxId::None)ESP_LOGW(kTag,"SFX_CUE unknown id=%s",e.text?e.text:"(null)");
+    // A3-03: the "quake" cue is sounded by its Quake event (above).
+    if(id==openu5::SfxId::Quake)return;
     audio_.play_sfx(id,e.note);
 }
 
@@ -2755,6 +2800,51 @@ bool AlphaRuntime::combat_actor_is_player(int32_t id) const{
     for(int32_t i=0;i<combat_.count;++i)
         if(combat_.actors[i].id==id)return combat_.actors[i].member!=255;
     return false;
+}
+
+void AlphaRuntime::reset_ambient(){
+    ambient_.reset();
+    ambient_clock_key_=-1;
+}
+
+void AlphaRuntime::service_ambient(int64_t now_us){
+    const uint32_t tick=uint32_t(now_us/(int64_t(openu5::kSceneTickMs)*1000));
+    if(tick==ambient_tick_)return;
+    ambient_tick_=tick;
+    // advance_clock re-arms [0x5884] to the 12-hour clock (0x5164-0x5183); the
+    // device sees that as the game clock moving. A new world only records it.
+    const auto &t=game_.time;
+    const int64_t key=((((int64_t(t.year)*13+t.month)*32+t.day)*24+t.hour)*60)+t.minute;
+    if(ambient_clock_key_<0)ambient_clock_key_=key;
+    else if(key!=ambient_clock_key_){ambient_clock_key_=key;ambient_.rearm(uint8_t(t.hour));}
+    // getkey_with_redraw 0x266c redraws (and so ticks 0x4102) only outside
+    // locations 0x21-0x7f; 0x5910 skips it under An Tym ([0x587a] == 'T').
+    // Device menus, the Ending and the paced scenes are not that key wait.
+    const auto mode=ui_?ui_->mode():openu5::UiMode::Exploration;
+    if(mode==openu5::UiMode::Ending||mode==openu5::UiMode::DebugMenu||turn_.time_spell=='T')return;
+    // A dungeon's corridors are g_location 0x21-0x28; an arena, even a dungeon
+    // room's, runs at g_location >= 0x80 and redraws like any other key wait.
+    const bool arena=context_.combat&&combat_.initialized;
+    if(!arena&&context_.dungeon&&dungeon_.active)return;
+    if(blackthorn_pacer_.mounted()||narrative_pacer_.active()||narrative_pacer_.mounted()||camp_scene_active_)return;
+    if(map_reveal_end_us_>now_us||gem_view_active_||zodiac_view_active_)return;
+    openu5::AmbientWindow w{};
+    constexpr int kSide=openu5::AmbientWindow::kSide,kHalf=kSide/2;
+    if(arena){
+        // 0x4114: in an arena the centre is (5,5), the arena's own cells.
+        for(int i=0;i<kSide*kSide;++i)w.tiles[i]=combat_.map.tiles[i];
+    }else{
+        const auto map=game_.position.map;
+        for(int y=0;y<kSide;++y)for(int x=0;x<kSide;++x){
+            int wx=int(game_.position.xy.x)+x-kHalf,wy=int(game_.position.xy.y)+y-kHalf;
+            if(!map.location){wx&=255;wy&=255;}
+            const auto tile=terrain_.effective(resources_.world,map,wx,wy);
+            w.tiles[y*kSide+x]=int16_t(tile<0||tile>0x7fff?-1:tile);
+        }
+    }
+    ++ambient_ticks_;
+    const auto cue=ambient_.tick(openu5::ambient_nearest_class(w));
+    if(cue!=openu5::SfxId::None)audio_.play_sfx(cue);
 }
 
 void AlphaRuntime::blackthorn_cue(void *p,openu5::BlackthornSfx sfx){

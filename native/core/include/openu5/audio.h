@@ -45,11 +45,32 @@ enum class SfxId : uint8_t {
     SpellCast, PotionUsed, ScrollUsed, InvalidMagic,
     // Device diagnostics only (Developer > Diagnostics); never emitted by play.
     DiagnosticTone,
+    // A3-03: original PC-speaker sites the reference catalogue does not name,
+    // each re-read from the binary (re/tools/a3_03_cue_sites.py). Most are
+    // derived at presentation time from a message the core already prints.
+    SceptreReclaimed,   // kernel 0x6221 "The Sceptre is reclaimed!"
+    CombatCharm,        // SJOG 0x2218 " passes out!" / COMSUBS 0x01b1 " possessed!"
+    CombatSummon,       // COMSUBS 0x02cb " gates in a daemon!"
+    CombatGrazed,       // COMSUBS 0x0352 " grazed!"
+    CombatDraggedUnder, // COMSUBS 0x03d6 " dragged under!"
+    CombatEngulfed,     // COMBAT 0x07f1 "ARGH!"
+    CombatRegurgitated, // COMBAT 0x1cbf " regurgitated!"
+    CombatFoodStolen,   // COMBAT 0x03b6 " stole some food!"
+    ShipCollision,      // MAINOUT 0x0300 "COLLISION!"
+    ShipSinking,        // MAINOUT 0x113b (no skiff: DROWNING) / 0x12a6 WHIRLPOOL
+    TheftDetected,      // TALK 0x11a8 "Something was stolen!"
+    WishGranted,        // LOOKOBJ 0x0129 the wishing well's "Poof!"
+    TrapdoorFall,       // TOWN 0x0fa0-0x101e the location-29 trapdoor
+    ShardNoEffect,      // CAST 0x166d the shard held at the wrong flame
+    RefugeSlumber,      // BLCKTHRN 0x0a22-0x0a49 "But thy slumber is disturbed!"
+    RefugeRevival,      // BLCKTHRN 0x0b5d-0x0b8d "Strange words are intoned."
     Count
 };
 constexpr size_t kSfxIdCount = size_t(SfxId::Count);
 /** The reference catalogue's size: CombatHit .. EndgameOrb. */
 constexpr size_t kReferenceSfxCount = size_t(SfxId::EndgameOrb);
+/** The first id A3-03 appended (every id from here on is Original). */
+constexpr SfxId kFirstA303SfxId = SfxId::SceptreReclaimed;
 
 enum class SfxOrigin : uint8_t {
     None,

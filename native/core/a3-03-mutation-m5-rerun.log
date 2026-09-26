@@ -1,0 +1,14 @@
+# A3-03 mutation validation (2026-09-26 14:02)
+
+M5 the victory cue fires twice (the Ended line sounds too) [native/core/src/sfx_inventory.cpp]: KILLED
+    a3-03 inventory exit=1  1 RED
+        RED D2 no sound where the binary has none: Ended VICTORY!, a lost battle, Leave!, refusals, Docked!, door jimmy
+    a3-03 runtime   exit=1  5 RED
+        RED V1 winning the troll fight plays the victory fanfare (COMBAT 0x0d02) exactly once
+        RED V1 and it is heard in full, 2.09 s, then silence
+        RED V2 no replay on redraw or on the Ended line
+        RED V3 an ordinary combat victory plays it once too
+        RED V5 (synth: one fanfare; muted: nothing submitted)
+
+restored build exit=0; a3-03 inventory exit=0, a3-03 runtime exit=0, a3-02 synth exit=0, a3-02 runtime exit=0, a3-01 contract exit=0
+mutations: 1, killed: 1, survived: 0

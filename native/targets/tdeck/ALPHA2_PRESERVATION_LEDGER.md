@@ -177,6 +177,7 @@ answer or a product decision; none is scheduled in Alpha 2 unless marked.
 | D-57 | Two literal `victory` lines follow the report: `UiSession::consume` appends the `GameWon` and `Endgame` events' internal `ending` token to the transcript | fabricated device text; non-blocking | Found by the 53A transcript dump; outside the 53A stop condition | H-194 — queued for the next batch that touches the ending |
 | D-58 | A party **standing** on a drawn moongate is not re-sent by it: native (`commands.cpp` `move()` → `CommandEffect::Moongate`) and the TypeScript reference (`Game.move` → `checkMoongate`) test the gate only after a successful step. The original tests the painted map cell under the party at the top of every outdoor-loop iteration (MAINOUT `0x0b00` → `0x48a8`), so it re-fires after a Pass or any non-moving command, and when night falls on a party standing on a buried stone | native **and** reference divergence; minor | With the phase unchanged the outcome is identical (the party is sent onto itself); it differs only if the phase changes while the party stands on a gate (midnight, nightfall). Found while adjudicating H-195; the parity fixtures pin the step-only trigger, so a fix starts in the reference | H-195 — queued; not changed in Batch 53B |
 | D-59 | The device never binds `CommandContext::sky` (`SkyRefresh`), so the moon-phase latch is never refreshed (the parity driver `quest_driver.cpp:51` binds it). Device saves carry no valid latch (`-1`), so the gate phase is always recomputed from the day's DATA.OVL `0x1EEA` bytes | native device-binding divergence; minor | Correct for every same-day case (7E-C included). It cannot reproduce the original's "yesterday's phases until the next surface hour" window (`0x4a84`), and a save that carried a valid latch would freeze the gates. Found by the Batch 53B probe | — queued; not changed in Batch 53B |
+| D-60 | The victory fanfare (the arena's, COMBAT 0x0d02; the shard ritual's, CAST 0x1759) does not hold the game. In the original `sfx_victory_fanfare` 0x4368 blocks for 2.09 s, and the arena then flushes the BIOS keyboard buffer (0x0d05 → kernel 0x1b16), so keys typed during the fanfare are discarded. The device plays it on the audio task and the game continues at once; keys pressed meanwhile are kept | native presentation-timing divergence; deliberate | The A3-01 rule: audio never paces the game (the TypeScript reference pauses for it, `BLOCKING_CUES`). Every speaker call of the original blocked; this row names the one whose hold was visible to a player. Found in A3-03 (`ALPHA3_AUDIO.md` §16.5) | H-196 — Alpha 3, open (a decision, not a defect) |
 
 ---
 
@@ -331,6 +332,17 @@ Every row checked against the Phase 6T–7D hardware results and the Batch 52 au
   - the Developer test tone is a device-only (class D) sound.
 - **The 1988 sound flag is still not the volume.** At 0 % the Batch 51 sound-flag choices do not change.
 - **No row changed kind and no new ID was allocated.** Totals as after Batch 55.
+
+**Alpha 3 A3-03 status (the remaining SFX, 2026-09-26; `ALPHA3_AUDIO.md` §16).** **D-3's SFX half is closed in software.**
+- **A3-02 hardware: PASS** (the user's report). **H-125 (harpsichord audio) is closed.**
+- **What is new.** 62 of the 73 cue ids play: the combat victory fanfare (the hardware-reported gap), the ambient fountain / waterfall / clock, the quake rumble (one per shake), the shrine and shard ladders, the Blackthorn siren, the Refuge's thunder / slumber / revival, the healer jingle, the moongate, sceptre and Shadowlord sweeps, the attract demo's three cues, and sixteen message-adjacent sounds. Every speaker call site of the binaries (126) is classified; the 11 silent ids and the 31 silent sites carry their reason (§16.18).
+- **What is still missing.** Music (A3-04) and the hardware sign-off (A3-05); D-3 stays open for them. The lute stays the sound-off branch; the endgame and title effects wait for their presentations (D-54).
+- **New row: D-60 / H-196** — the fanfare does not hold the game or flush the keyboard (a decision, by the A3-01 rule).
+- **Knowing choices, recorded so they are not mistaken for fidelity claims:**
+  - the quake rumble's length is the measured shake (8 × 117 ms) because 0x3072 has no timer, and its pitches come from the rumble's own word where the original draws the game RNG in the render path (the registered render-RNG divergence); the law — random square half-cycles of 19–150 Hz — is the binary's;
+  - ambience is not ticked while a paced scene runs (the original's `run_n_frames` redraws would tick it); no scene of the game stages a fountain, waterfall or clock;
+  - the reference's `sceptre` program belongs to "The Sceptre is reclaimed!" (kernel 0x6221); the device plays CAST 0x198f for the wielding and 0x6221 for the reclaiming.
+- **Totals.** 19 deliberate (unchanged). New open row: D-60 (Alpha 3 decision). H-125 closed.
 
 **Totals after Batch 54.**
 - 19 deliberate (unchanged).

@@ -26,7 +26,7 @@ constexpr SfxRow kSfx[] = {
     {"shrine-well-done", SfxOrigin::Original},       // CAST2 mirrored sweeps
     {"shrine-donation", SfxOrigin::Original},        // CAST2 mirrored sweeps
     {"shrine-ordained", SfxOrigin::Original},        // CAST2 seven-note melody
-    {"sceptre", SfxOrigin::Original},                // TS(0xfd2,1,65000,1,1) kernel 0x6221
+    {"sceptre", SfxOrigin::Original},                // TS(0x1450,1,50000,5000,1) CAST 0x198f (A3-03)
     {"blackthorn-materialize", SfxOrigin::Original}, // TS(0xaf0,1,0x32c8,0x64,5) BLCKTHRN 0x083f
     {"shard-sweep", SfxOrigin::Original},            // CAST 0x15f0/0x1620 siren legs
     {"victory-fanfare", SfxOrigin::Original},        // TSx4 kernel 0x4368
@@ -72,6 +72,23 @@ constexpr SfxRow kSfx[] = {
     {"scroll-used", SfxOrigin::NativeHook},
     {"invalid-magic", SfxOrigin::NativeHook},
     {"diagnostic-tone", SfxOrigin::Diagnostic},
+    // A3-03 (sfx_inventory.cpp has the sites and the derivations).
+    {"sceptre-reclaimed", SfxOrigin::Original},      // TS(0xfd2,1,65000,1,1) kernel 0x6221
+    {"combat-charm", SfxOrigin::Original},           // TS(0xc1c,1,30000,1000,2) SJOG 0x2218
+    {"combat-summon", SfxOrigin::Original},          // TS(0xac8,1,5000,1000,15) COMSUBS 0x02cb
+    {"combat-grazed", SfxOrigin::Original},          // GL(1200->2000,1,40) COMSUBS 0x0352
+    {"combat-dragged-under", SfxOrigin::Original},   // GL(1200->2000,1,40) COMSUBS 0x03d6
+    {"combat-engulfed", SfxOrigin::Original},        // NB(40,3000,500) COMBAT 0x07f1
+    {"combat-regurgitated", SfxOrigin::Original},    // NB(1,7000,600) COMBAT 0x1cbf
+    {"combat-food-stolen", SfxOrigin::Original},     // GL(800->2000,1,50) COMBAT 0x03b6
+    {"ship-collision", SfxOrigin::Original},         // NB(100,2000,300) MAINOUT 0x0300
+    {"ship-sinking", SfxOrigin::Original},           // GL(660->150,40,7800) MAINOUT 0x113b / 0x12a6
+    {"theft-detected", SfxOrigin::Original},         // GL(800->2000,1,50) TALK 0x11a8
+    {"wish-granted", SfxOrigin::Original},           // NB(10,3000,2000) LOOKOBJ 0x0129
+    {"trapdoor-fall", SfxOrigin::Original},          // set_tone ramp 1000..251 + NB, TOWN 0x0fa0
+    {"shard-no-effect", SfxOrigin::Original},        // GL(800->2000,1,50) CAST 0x166d
+    {"refuge-slumber", SfxOrigin::Original},         // TS x6 tables DS 0x3720.. BLCKTHRN 0x0a34
+    {"refuge-revival", SfxOrigin::Original},         // TS(0x8e30/(i+7),1,30000,2000,2) BLCKTHRN 0x0b8d
 };
 static_assert(sizeof(kSfx) / sizeof(kSfx[0]) == kSfxIdCount, "one row per SfxId");
 

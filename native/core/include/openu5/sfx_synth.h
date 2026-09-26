@@ -70,7 +70,13 @@ enum class SpeakerPrimitive : uint8_t {
     Glide,   // glide 0x43ae: a staircase of set_tone writes, one per delay(step)
     Sweep,   // tone_sweep 0x2192: the 1-bit PWM loop (pitch from inc, duty from bx)
     Noise,   // noise_burst 0x223c: a PIT square re-pitched by the local PRNG each iteration
-    Silence  // delay 0x20c8 with the speaker gate closed
+    Silence, // delay 0x20c8 with the speaker gate closed
+    // A3-03. screen_shake_rumble 0x3072: the gate stays open while the loop
+    // writes a new PIT count set_tone(rand_range(0x13, 0x96)) at every step
+    // of the shake. set_tone writes the count only (0x22f2-0x22fe, no control
+    // word), so in mode 3 each write takes effect at the next half-cycle: the
+    // speaker plays square half-cycles of independently drawn low pitches.
+    Rumble
 };
 const char *speaker_primitive_name(SpeakerPrimitive);
 
@@ -81,6 +87,13 @@ const char *speaker_primitive_name(SpeakerPrimitive);
  *   Glide   value = start (si), delta = the derived per-step increment
  *   Sweep   value = inc (dx step), start = bx, delta = bx step
  *   Noise   value = band (the draw is 100 + s % (band - 99))
+ *   Rumble  value = the lowest draw, start = the highest (rand_range bounds)
+ *
+ * A3-03. A Sweep segment may stand for a LOOP of `calls` identical
+ * tone_sweep calls whose only changing argument is the bx start, which the
+ * loop moves by `call_stride` between calls (the shard / shrine / Blackthorn
+ * "two 460-call loops"): each call restarts dx = 0, bx = start + k x stride,
+ * and runs `iterations / calls` iterations. calls = 1 is the plain call.
  */
 struct SpeakerSegment {
     SpeakerPrimitive kind = SpeakerPrimitive::None;
@@ -89,6 +102,8 @@ struct SpeakerSegment {
     int16_t delta = 0;
     uint32_t iterations = 0;
     uint32_t iteration_half_samples = 0;
+    uint16_t calls = 1;
+    int16_t call_stride = 0;
 };
 
 constexpr size_t kMaxSpeakerSegments = 24;
@@ -113,11 +128,44 @@ SpeakerSegment speaker_noise(uint16_t step, uint16_t dur, uint16_t band);
 SpeakerSegment speaker_silence(uint16_t count);
 /** A device-only tone of a fixed length (the Developer test tone; class D). */
 SpeakerSegment speaker_fixed_tone(uint16_t hz, uint32_t milliseconds);
+/**
+ * A3-03. A loop of `calls` tone_sweep(inc, delay, count, start + k x stride, step)
+ * calls, k = 0 .. calls - 1 (see SpeakerSegment).
+ */
+SpeakerSegment speaker_sweep_loop(uint16_t inc, uint16_t delay, uint16_t count, uint16_t start, int16_t step,
+                                  uint16_t calls, int16_t stride);
+/**
+ * A3-03. screen_shake_rumble 0x3072's sound: set_tone(rand_range(lo, hi)) for
+ * `milliseconds`. The loop has no timer of its own (its pace is the re-blit
+ * of the viewport), so the length is the shake's measured window.
+ */
+SpeakerSegment speaker_rumble(uint16_t lo, uint16_t hi, uint32_t milliseconds);
+/** 0x3072's shake: 8 cycles, one visible pulse each (presentation.h kQuakePeriodMs). */
+constexpr uint32_t kRumbleCycles = 8;
+constexpr uint32_t kRumbleCycleMs = 117;
+/** The draw at 0x30ac-0x30b4: rand_range(0x13, 0x96) -- 19 .. 150 (Hz, set_tone's unit). */
+constexpr uint16_t kRumbleLowest = 0x13, kRumbleHighest = 0x96;
+/**
+ * The rumble's own draw word. The original draws from the game RNG [0x5420]
+ * inside the render path -- a registered deliberate divergence
+ * (re/notes/oracle-flash-rng.md): the port never consumes g_rng for
+ * presentation, so the SEQUENCE is class C while the law is exact.
+ */
+constexpr uint16_t kRumbleSeed = 0x5420;
+/** rand_range 0x2092's arithmetic on a private word: step, & 0x7fff, lo + v % (hi - lo + 1). */
+uint16_t speaker_rumble_draw(uint16_t &state, uint16_t lo, uint16_t hi);
+/**
+ * A3-03. A hand-written set_tone ramp (TOWN 0x0fb3-0x0fd1): set_tone(v);
+ * delay(delay, 1); v += delta -- `steps` times. A Glide segment whose
+ * increment is the literal delta rather than glide 0x43ae's derived one.
+ */
+SpeakerSegment speaker_ramp(uint16_t start, int16_t delta, uint32_t steps, uint16_t delay);
 
 /**
- * The A3-02 cue table. true = `program` holds the original's sequence for this
- * cue; false = no sound in A3-02 (not yet audited, a marker cue whose sound
- * belongs to a sibling event, or no adjudicated sound). PURE.
+ * The cue table (A3-02, completed in A3-03). true = `program` holds the
+ * original's sequence for this cue; false = no sound (a marker cue whose
+ * sound belongs to a sibling event, music, a presentation the device does not
+ * run, or no adjudicated sound -- sfx_inventory.h says which). PURE.
  */
 bool compile_sfx(SfxId, int32_t param, SpeakerProgram &program);
 /** compile_sfx(id, 0, ...) would succeed. */
@@ -133,8 +181,11 @@ uint32_t speaker_program_frames(const SpeakerProgram &);
 // ---------------------------------------------------------------------------
 class SpeakerVoice {
   public:
-    /** Start `program` (copied). `noise_state` is [0x545c], shared across calls. */
-    void start(const SpeakerProgram &program, uint16_t *noise_state);
+    /**
+     * Start `program` (copied). `noise_state` is [0x545c], shared across calls;
+     * `rumble_state` the rumble's draw word (nullptr = a private one).
+     */
+    void start(const SpeakerProgram &program, uint16_t *noise_state, uint16_t *rumble_state = nullptr);
     /**
      * Render up to `frames` samples, UNSCALED by any volume. Returns how many
      * it produced; fewer than asked (0 included) means the program ended.
@@ -154,6 +205,10 @@ class SpeakerVoice {
 
     SpeakerProgram program_{};
     uint16_t *noise_ = nullptr;
+    uint16_t *rumble_ = nullptr;
+    uint16_t own_rumble_ = kRumbleSeed;
+    // rumble: fine-rate PIT phase against the current half-cycle
+    uint64_t rumble_phase_ = 0, rumble_half_ = 0;
     bool active_ = false;
     uint8_t index_ = 0;
     uint32_t position_ = 0;
@@ -176,10 +231,22 @@ class SpeakerVoice {
 // ---------------------------------------------------------------------------
 // Playback policy.
 // ---------------------------------------------------------------------------
-/** What a cue is, for the preemption rule (ALPHA3_AUDIO.md section 15.4). */
-enum class SfxClass : uint8_t { Ordinary, Instrument, Combat, Spell, Scene, Diagnostic };
+/**
+ * What a cue is, for the preemption rule (ALPHA3_AUDIO.md sections 15.4 and
+ * 16.11). Ambient (A3-03) is the lowest: it never waits in the FIFO (a busy
+ * voice skips the tick -- the next one comes 55 ms later) and any other cue
+ * cuts it.
+ */
+enum class SfxClass : uint8_t { Ambient, Ordinary, Instrument, Combat, Spell, Scene, Diagnostic };
 SfxClass sfx_class(SfxId);
 const char *sfx_class_name(SfxClass);
+/**
+ * A3-03. True only for the cues a HELD KEY repeats (a step, a wall bump): a
+ * request identical to the newest pending one adds nothing. Every other
+ * repeat is a real repeated call in the binary (three shakes, three drones,
+ * one damage burst per member, one note per key) and is played.
+ */
+bool sfx_coalesces(SfxId);
 
 /** What SfxPlayer::submit did with a request. */
 enum class SfxAdmit : uint8_t {
@@ -189,7 +256,8 @@ enum class SfxAdmit : uint8_t {
     Preempted,   // a scene/diagnostic cue replaced the playing one
     Overflowed,  // queued, and the OLDEST pending request was dropped for it
     Unsupported, // no A3-02 program (compile_sfx false)
-    Stale        // posted before the latest flush (transport epoch)
+    Stale,       // posted before the latest flush (transport epoch)
+    Skipped      // A3-03: an ambient tick while the voice was busy (never queued)
 };
 
 class SfxPlayer {
@@ -205,7 +273,7 @@ class SfxPlayer {
 
     struct Stats {
         uint32_t started = 0, queued = 0, coalesced = 0, preempted = 0, overflowed = 0;
-        uint32_t unsupported = 0, stale = 0, flushes = 0, completed = 0;
+        uint32_t unsupported = 0, stale = 0, flushes = 0, completed = 0, ambient_skipped = 0;
     };
 
     /** The policy. Never blocks, never allocates. */
@@ -248,6 +316,7 @@ class SfxPlayer {
     size_t pending_head_ = 0, pending_count_ = 0;
     bool start_after_release_ = false;
     uint16_t noise_ = kNoiseSeed;
+    uint16_t rumble_ = kRumbleSeed;
     uint32_t epoch_ = 0;
     Stats stats_{};
 };

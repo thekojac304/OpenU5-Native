@@ -364,10 +364,13 @@ int main(int argc, char **argv) {
             supported += c;
         }
         SfxPlayer pl;
-        check(consistent && supported == 23 && !compile_sfx(SfxId::None, 0, p) && !compile_sfx(SfxId::Count, 0, p) &&
-                  pl.submit(req(SfxId::Moongate)) == SfxAdmit::Unsupported && pl.submit(req(SfxId(250))) == SfxAdmit::Unsupported &&
+        // A3-03 widened the table (23 -> 62) and wired moongate; bard-song is
+        // still declined (sfx_inventory.h: DeferredPresentation).
+        std::printf("  supported cues: %zu\n", supported);
+        check(consistent && supported == 62 && !compile_sfx(SfxId::None, 0, p) && !compile_sfx(SfxId::Count, 0, p) &&
+                  pl.submit(req(SfxId::BardSong)) == SfxAdmit::Unsupported && pl.submit(req(SfxId(250))) == SfxAdmit::Unsupported &&
                   pl.idle(),
-              "E12 unknown / unaudited ids (None, Count, 250, moongate) compile to nothing and leave the player idle");
+              "E12 unknown / undeclared ids (None, Count, 250, bard-song) compile to nothing and leave the player idle");
         check(compile_sfx(SfxId::SpellCast, 0, p) == false && compile_sfx(SfxId::InvalidMagic, 0, p) == false,
               "E12 the spell-cast hook is a marker (its sound is the ceremony event's); invalid-magic has no adjudicated sound");
     }

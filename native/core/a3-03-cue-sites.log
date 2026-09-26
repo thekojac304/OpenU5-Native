@@ -1,0 +1,879 @@
+== COMBAT.OVL 0x0cc8-0x0d0a  combat_main_loop: BATTLE IS LOST / VICTORY! -> fanfare -> kbd flush
+   0cc8: dec bp
+   0cc9: nop 
+   0cca: call 0xffffdbee   ; -> kernel 0x7e7e 
+   0ccd: inc ax
+   0cce: jne 0xd08
+   0cd0: call 0xffffb680   ; -> kernel 0x5910 viewport_redraw
+   0cd3: cmp byte ptr [0x58a3], 0
+   0cd8: jne 0xcbc
+   0cda: mov ax, 0x6eee
+   0cdd: push ax
+   0cde: call 0x75c0   ; -> kernel 0x1850 print_ds
+   0ce1: mov word ptr [bp - 2], 1
+   0ce6: jmp 0xcbc
+   0ce8: cmp word ptr [0x5876], 0
+   0ced: jne 0xd08
+   0cef: cmp byte ptr [0x58a3], 0
+   0cf4: jne 0xd08
+   0cf6: mov ax, 0x6f00
+   0cf9: push ax
+   0cfa: call 0x75c0   ; -> kernel 0x1850 print_ds
+   0cfd: mov byte ptr [0x58a3], 1
+   0d02: call 0xffffa0d8   ; -> kernel 0x4368 sfx_victory_fanfare
+   0d05: call 0x7886   ; -> kernel 0x1b16 kbd_flush
+== ULTIMA.EXE 0x4368-0x43ad  sfx_victory_fanfare 0x4368: 3 x TS(4600) + TS(6100)
+   4368: push bp
+   4369: mov bp, sp
+   436b: sub sp, 4
+   436e: push si
+   436f: mov word ptr [bp - 2], 3
+   4374: mov si, 3
+   4377: mov ax, 0x11f8
+   437a: push ax
+   437b: mov ax, 1
+   437e: push ax
+   437f: mov ax, 0x2a30
+   4382: push ax
+   4383: mov ax, 0x12c
+   4386: push ax
+   4387: mov ax, 6
+   438a: push ax
+   438b: call 0x2192   ; -> kernel 0x2192 tone_sweep
+   438e: dec si
+   438f: jne 0x4377
+   4391: mov ax, 0x17d4
+   4394: push ax
+   4395: mov ax, 1
+   4398: push ax
+   4399: mov ax, 0x5460
+   439c: push ax
+   439d: mov ax, 0x12c
+   43a0: push ax
+   43a1: mov ax, 3
+   43a4: push ax
+   43a5: call 0x2192   ; -> kernel 0x2192 tone_sweep
+   43a8: pop si
+   43a9: mov sp, bp
+   43ab: pop bp
+   43ac: ret 
+   43ad: nop 
+== CAST.OVL 0x15d8-0x1632  use_shard_at_flame: the two 460-call sweep loops
+   15d8: inc di
+   15d9: push ax
+   15da: call 0x58d0   ; -> kernel 0x1850 print_ds
+   15dd: mov si, 0x7d0
+   15e0: mov ax, 0xa50
+   15e3: push ax
+   15e4: mov ax, 1
+   15e7: push ax
+   15e8: mov ax, 0xc8
+   15eb: push ax
+   15ec: push si
+   15ed: sub ax, ax
+   15ef: push ax
+   15f0: call 0x6212   ; -> kernel 0x2192 tone_sweep
+   15f3: add si, 0x32
+   15f6: cmp si, 0x61a8
+   15fa: jge 0x160a
+   15fc: jmp 0x15e0
+   15fe: mov ax, 0x47d9
+   1601: jmp 0x15d9
+   1603: nop 
+   1604: mov ax, 0x47e3
+   1607: jmp 0x15d9
+   1609: nop 
+   160a: mov word ptr [bp - 2], si
+   160d: mov si, 0x61a8
+   1610: mov ax, 0xa50
+   1613: push ax
+   1614: mov ax, 1
+   1617: push ax
+   1618: mov ax, 0xc8
+   161b: push ax
+   161c: push si
+   161d: sub ax, ax
+   161f: push ax
+   1620: call 0x6212   ; -> kernel 0x2192 tone_sweep
+   1623: sub si, 0x32
+   1626: cmp si, 0x7d0
+   162a: jg 0x1610
+   162c: mov word ptr [bp - 2], si
+   162f: mov bx, word ptr [bp + 4]
+== CAST.OVL 0x1740-0x175e  use_shard_at_flame tail: 'doom ... wrought' -> fanfare
+   1740: call 0x58d0   ; -> kernel 0x1850 print_ds
+   1743: jmp 0x1752
+   1745: nop 
+   1746: mov ax, 0x4861
+   1749: jmp 0x173f
+   174b: nop 
+   174c: mov ax, 0x486a
+   174f: jmp 0x173f
+   1751: nop 
+   1752: mov ax, 0x4874
+   1755: push ax
+   1756: call 0x58d0   ; -> kernel 0x1850 print_ds
+   1759: call 0x83e8   ; -> kernel 0x4368 sfx_victory_fanfare
+   175c: pop si
+   175d: mov sp, bp
+== CAST2.OVL 0x0ac3-0x0b06  ORDAINED: 7-note table melody
+   0ac3: call 0x3670   ; -> kernel 0x1850 print_ds
+   0ac6: mov word ptr [bp - 6], 7
+   0acb: mov di, 0x4be6
+   0ace: mov word ptr [bp - 0xe], 0x4bf4
+   0ad3: mov word ptr [bp - 0x10], 0x4c02
+   0ad8: mov si, 0x4c10
+   0adb: push word ptr [di]
+   0add: mov ax, 1
+   0ae0: push ax
+   0ae1: mov bx, word ptr [bp - 0xe]
+   0ae4: push word ptr [bx]
+   0ae6: mov bx, word ptr [bp - 0x10]
+   0ae9: push word ptr [bx]
+   0aeb: push word ptr [si]
+   0aed: call 0x3fb2   ; -> kernel 0x2192 tone_sweep
+   0af0: add di, 2
+   0af3: add word ptr [bp - 0xe], 2
+   0af7: add word ptr [bp - 0x10], 2
+   0afb: add si, 2
+   0afe: cmp si, 0x4c1e
+   0b02: jb 0xadb
+   0b04: jmp 0xd16
+== CAST2.OVL 0x0bcb-0x0c16  donation accepted: two 460-call sweep loops (0xa8c, count 0xc8)
+   0bcb: push ax
+   0bcc: push ax
+   0bcd: call 0x29a6   ; -> kernel 0x0b86 
+   0bd0: mov si, 0x7d0
+   0bd3: mov ax, 0xa8c
+   0bd6: push ax
+   0bd7: mov ax, 1
+   0bda: push ax
+   0bdb: mov ax, 0xc8
+   0bde: push ax
+   0bdf: push si
+   0be0: sub ax, ax
+   0be2: push ax
+   0be3: call 0x3fb2   ; -> kernel 0x2192 tone_sweep
+   0be6: add si, 0x32
+   0be9: cmp si, 0x61a8
+   0bed: jl 0xbd3
+   0bef: mov word ptr [bp - 6], si
+   0bf2: mov si, 0x61a8
+   0bf5: mov ax, 0xa8c
+   0bf8: push ax
+   0bf9: mov ax, 1
+   0bfc: push ax
+   0bfd: mov ax, 0xc8
+   0c00: push ax
+   0c01: push si
+   0c02: sub ax, ax
+   0c04: push ax
+   0c05: call 0x3fb2   ; -> kernel 0x2192 tone_sweep
+   0c08: sub si, 0x32
+   0c0b: cmp si, 0x7d0
+   0c0f: jg 0xbf5
+   0c11: mov word ptr [bp - 6], si
+   0c14: jmp 0xd16
+== CAST2.OVL 0x0c3f-0x0c8b  WELL DONE: two 460-call sweep loops (0xc1c, count 0x96) -> shake
+   0c3f: push ax
+   0c40: push ax
+   0c41: call 0x29a6   ; -> kernel 0x0b86 
+   0c44: mov si, 0x7d0
+   0c47: mov ax, 0xc1c
+   0c4a: push ax
+   0c4b: mov ax, 1
+   0c4e: push ax
+   0c4f: mov ax, 0x96
+   0c52: push ax
+   0c53: push si
+   0c54: sub ax, ax
+   0c56: push ax
+   0c57: call 0x3fb2   ; -> kernel 0x2192 tone_sweep
+   0c5a: add si, 0x32
+   0c5d: cmp si, 0x61a8
+   0c61: jl 0xc47
+   0c63: mov word ptr [bp - 6], si
+   0c66: mov si, 0x61a8
+   0c69: mov ax, 0xc1c
+   0c6c: push ax
+   0c6d: mov ax, 1
+   0c70: push ax
+   0c71: mov ax, 0x96
+   0c74: push ax
+   0c75: push si
+   0c76: sub ax, ax
+   0c78: push ax
+   0c79: call 0x3fb2   ; -> kernel 0x2192 tone_sweep
+   0c7c: sub si, 0x32
+   0c7f: cmp si, 0x7d0
+   0c83: jg 0xc69
+   0c85: mov word ptr [bp - 6], si
+   0c88: call 0x4e92   ; -> kernel 0x3072 screen_shake_rumble
+== ULTIMA.EXE 0x48c8-0x48f2  moongate tile 0xdc: TS(0x170c,1,30000,2000,2)
+   48c8: mov dh, 0
+   48ca: mov ax, 1
+   48cd: push ax
+   48ce: call 0x3ae6   ; -> kernel 0x3ae6 run_n_frames
+   48d1: mov ax, 0x170c
+   48d4: push ax
+   48d5: mov ax, 1
+   48d8: push ax
+   48d9: mov ax, 0x7530
+   48dc: push ax
+   48dd: mov ax, 0x7d0
+   48e0: push ax
+   48e1: mov ax, 2
+   48e4: push ax
+   48e5: call 0x2192   ; -> kernel 0x2192 tone_sweep
+   48e8: mov al, byte ptr [0x587c]
+   48eb: sub ah, ah
+   48ed: mov word ptr [bp - 2], ax
+== ULTIMA.EXE 0x6200-0x6230  sceptre: TS(0xfd2,1,0xfde8,1,ax)
+   6200: mov ch, 0x57
+   6203: add byte ptr [di + 3], dh
+   6206: jmp 0x633a
+   6209: mov ax, 0xa406
+   620c: push ax
+   620d: call 0x1850   ; -> kernel 0x1850 print_ds
+   6210: mov ax, 0xfd2
+   6213: push ax
+   6214: mov ax, 1
+   6217: push ax
+   6218: mov ax, 0xfde8
+   621b: push ax
+   621c: mov ax, 1
+   621f: push ax
+   6220: push ax
+   6221: call 0x2192   ; -> kernel 0x2192 tone_sweep
+   6224: mov byte ptr [0x57b5], 0
+   6229: jmp 0x633a
+   622c: mov al, byte ptr [bp - 8]
+   622f: and al, 0xf0
+== TOWN.OVL 0x11b8-0x11f0  shadowlord_announce drone
+   11b8: push bp
+   11b9: mov bp, sp
+   11bb: mov ax, 0x27b8
+   11be: push ax
+   11bf: call 0xffff9680   ; -> kernel 0x1850 print_ds
+   11c2: mov bx, word ptr [bp + 4]
+   11c5: shl bx, 1
+   11c7: push word ptr [bx + 0x27dc]
+   11cb: call 0xffff9680   ; -> kernel 0x1850 print_ds
+   11ce: mov ax, 0x27c4
+   11d1: push ax
+   11d2: call 0xffff9680   ; -> kernel 0x1850 print_ds
+   11d5: mov ax, 0x19c8
+   11d8: push ax
+   11d9: mov ax, 1
+   11dc: push ax
+   11dd: mov ax, 0xea60
+   11e0: push ax
+   11e1: mov ax, 0x7d0
+   11e4: push ax
+   11e5: mov ax, 1
+   11e8: push ax
+   11e9: call 0xffff9fc2   ; -> kernel 0x2192 tone_sweep
+   11ec: pop bp
+   11ed: ret 2
+   11f0: push bp
+== ULTIMA.EXE 0x3072-0x3176  screen_shake_rumble 0x3072 (quake / refuge thunder)
+   3072: push bp
+   3073: mov bp, sp
+   3075: sub sp, 6
+   3078: push di
+   3079: push si
+   307a: sub ax, ax
+   307c: push ax
+   307d: mov ax, 1
+   3080: push ax
+   3081: call 0xf6e   ; -> kernel 0x0f6e 
+   3084: mov ax, 1
+   3087: push ax
+   3088: call 0xc22   ; -> kernel 0x0c22 
+   308b: mov word ptr [bp - 2], 8
+   3090: mov word ptr [bp - 6], 8
+   3095: mov si, 8
+   3098: mov ax, 8
+   309b: push ax
+   309c: push si
+   309d: mov ax, 0xb7
+   30a0: push ax
+   30a1: lea ax, [si + 4]
+   30a4: push ax
+   30a5: mov ax, 2
+   30a8: push ax
+   30a9: call 0x71ca   ; -> kernel 0x71ca 
+   30ac: mov ax, 0x13
+   30af: push ax
+   30b0: mov ax, 0x96
+   30b3: push ax
+   30b4: call 0x2092   ; -> kernel 0x2092 rand_range
+   30b7: push ax
+   30b8: call 0x22e2   ; -> kernel 0x22e2 set_tone
+   30bb: add si, 3
+   30be: cmp si, 0xb3
+   30c2: jle 0x3098
+   30c4: mov di, si
+   30c6: mov si, 8
+   30c9: mov ax, 1
+   30cc: push ax
+   30cd: sub ax, ax
+   30cf: push ax
+   30d0: mov ax, 8
+   30d3: push ax
+   30d4: push si
+   30d5: mov ax, 0xb7
+   30d8: push ax
+   30d9: lea ax, [si + 4]
+   30dc: push ax
+   30dd: call 0xace   ; -> kernel 0x0ace 
+   30e0: mov ax, 0x13
+   30e3: push ax
+   30e4: mov ax, 0x96
+   30e7: push ax
+   30e8: call 0x2092   ; -> kernel 0x2092 rand_range
+   30eb: push ax
+   30ec: call 0x22e2   ; -> kernel 0x22e2 set_tone
+   30ef: add si, 3
+   30f2: cmp si, 0xb3
+   30f6: jle 0x30c9
+   30f8: mov di, si
+   30fa: mov si, 0xb3
+   30fd: mov ax, 8
+   3100: push ax
+   3101: push si
+   3102: mov ax, 0xb7
+   3105: push ax
+   3106: lea ax, [si + 4]
+   3109: push ax
+   310a: mov ax, 2
+   310d: push ax
+   310e: call 0x7200   ; -> kernel 0x7200 
+   3111: mov ax, 0x13
+   3114: push ax
+   3115: mov ax, 0x96
+   3118: push ax
+   3119: call 0x2092   ; -> kernel 0x2092 rand_range
+   311c: push ax
+   311d: call 0x22e2   ; -> kernel 0x22e2 set_tone
+   3120: sub si, 3
+   3123: cmp si, 8
+   3126: jge 0x30fd
+   3128: mov di, si
+   312a: mov si, 0xb3
+   312d: mov ax, 1
+   3130: push ax
+   3131: sub ax, ax
+   3133: push ax
+   3134: mov ax, 8
+   3137: push ax
+   3138: push si
+   3139: mov ax, 0xb7
+   313c: push ax
+   313d: lea ax, [si + 4]
+   3140: push ax
+   3141: call 0xace   ; -> kernel 0x0ace 
+   3144: mov ax, 0x13
+   3147: push ax
+   3148: mov ax, 0x96
+   314b: push ax
+   314c: call 0x2092   ; -> kernel 0x2092 rand_range
+   314f: push ax
+   3150: call 0x22e2   ; -> kernel 0x22e2 set_tone
+   3153: sub si, 3
+   3156: cmp si, 8
+   3159: jge 0x312d
+   315b: mov di, si
+   315d: dec word ptr [bp - 6]
+   3160: je 0x3165
+   3162: jmp 0x3095
+   3165: mov word ptr [bp - 4], di
+   3168: sub ax, ax
+   316a: push ax
+   316b: call 0xc22   ; -> kernel 0x0c22 
+   316e: call 0x230e   ; -> kernel 0x230e stop
+   3171: pop si
+   3172: pop di
+   3173: mov sp, bp
+   3175: pop bp
+   3176: ret 
+== SHOPPES.OVL 0x13b0-0x146a  healer jingle: six tone_sweeps
+   13b0: push word ptr [0x13ae]
+   13b4: call 0x67e0   ; -> kernel 0x0a70 
+   13b7: mov ax, 8
+   13ba: push ax
+   13bb: push ax
+   13bc: mov ax, 0xb7
+   13bf: push ax
+   13c0: push ax
+   13c1: call 0x68f6   ; -> kernel 0x0b86 
+   13c4: mov ax, 0x100e
+   13c7: push ax
+   13c8: mov ax, 1
+   13cb: push ax
+   13cc: mov ax, 0x57e4
+   13cf: push ax
+   13d0: mov ax, 0x1388
+   13d3: push ax
+   13d4: mov ax, 1
+   13d7: push ax
+   13d8: call 0x7f02   ; -> kernel 0x2192 tone_sweep
+   13db: mov ax, 0x100e
+   13de: push ax
+   13df: mov ax, 1
+   13e2: push ax
+   13e3: mov ax, 0x57e4
+   13e6: push ax
+   13e7: mov ax, 0x6b6c
+   13ea: push ax
+   13eb: mov ax, 0xffff
+   13ee: push ax
+   13ef: call 0x7f02   ; -> kernel 0x2192 tone_sweep
+   13f2: push word ptr [0x13b0]
+   13f6: call 0x67e0   ; -> kernel 0x0a70 
+   13f9: mov ax, 8
+   13fc: push ax
+   13fd: push ax
+   13fe: mov ax, 0xb7
+   1401: push ax
+   1402: push ax
+   1403: call 0x68f6   ; -> kernel 0x0b86 
+   1406: mov ax, 0x11b2
+   1409: push ax
+   140a: mov ax, 1
+   140d: push ax
+   140e: mov ax, 0x9c40
+   1411: push ax
+   1412: mov ax, 1
+   1415: push ax
+   1416: push ax
+   1417: call 0x7f02   ; -> kernel 0x2192 tone_sweep
+   141a: mov ax, 0x11b2
+   141d: push ax
+   141e: mov ax, 1
+   1421: push ax
+   1422: mov ax, 0x9c40
+   1425: push ax
+   1426: push ax
+   1427: mov ax, 0xffff
+   142a: push ax
+   142b: call 0x7f02   ; -> kernel 0x2192 tone_sweep
+   142e: mov ax, 8
+   1431: push ax
+   1432: push ax
+   1433: mov ax, 0xb7
+   1436: push ax
+   1437: push ax
+   1438: call 0x68f6   ; -> kernel 0x0b86 
+   143b: mov ax, 0x8fc
+   143e: push ax
+   143f: mov ax, 1
+   1442: push ax
+   1443: mov ax, 0x4650
+   1446: push ax
+   1447: mov ax, 1
+   144a: push ax
+   144b: mov ax, 2
+   144e: push ax
+   144f: call 0x7f02   ; -> kernel 0x2192 tone_sweep
+   1452: mov ax, 0x8fc
+   1455: push ax
+   1456: mov ax, 1
+   1459: push ax
+   145a: mov ax, 0x4650
+   145d: push ax
+   145e: mov ax, 0x8ca0
+   1461: push ax
+   1462: mov ax, 0xfffe
+   1465: push ax
+   1466: call 0x7f02   ; -> kernel 0x2192 tone_sweep
+   1469: ret 
+   146a: push bp
+== ULTIMA.EXE 0x4247-0x4335  ambient_sfx_tick 0x4102: class switch + phase counter
+   4247: mov ax, word ptr [bp - 0xc]
+   424a: cmp ax, 1
+   424d: je 0x4262
+   424f: cmp ax, 2
+   4252: je 0x42b2
+   4254: cmp ax, 3
+   4257: je 0x42c4
+   4259: cmp ax, 4
+   425c: je 0x42d2
+   425e: jmp 0x430e
+   4261: nop 
+   4262: cmp byte ptr [0x5884], 0
+   4267: je 0x4292
+   4269: cmp byte ptr [0x6a34], 0
+   426e: je 0x4277
+   4270: cmp byte ptr [0x6a34], 4
+   4275: jne 0x4292
+   4277: mov ax, 0xc2c
+   427a: push ax
+   427b: mov ax, 1
+   427e: push ax
+   427f: mov ax, 0x7d0
+   4282: push ax
+   4283: mov ax, 0x4e20
+   4286: push ax
+   4287: mov ax, 0xfff6
+   428a: push ax
+   428b: call 0x2192   ; -> kernel 0x2192 tone_sweep
+   428e: jmp 0x430e
+   4290: nop 
+   4291: nop 
+   4292: cmp byte ptr [0x6a34], 0
+   4297: jne 0x42a6
+   4299: mov ax, 0xbb8
+   429c: push ax
+   429d: mov ax, 3
+   42a0: push ax
+   42a1: call 0x22c0   ; -> kernel 0x22c0 beep
+   42a4: jmp 0x430e
+   42a6: cmp byte ptr [0x6a34], 4
+   42ab: jne 0x430e
+   42ad: mov ax, 0x7d0
+   42b0: jmp 0x429c
+   42b2: mov ax, 0x14
+   42b5: push ax
+   42b6: mov ax, 0x3c
+   42b9: push ax
+   42ba: mov ax, 0x2710
+   42bd: push ax
+   42be: call 0x223c   ; -> kernel 0x223c noise_burst
+   42c1: jmp 0x430e
+   42c3: nop 
+   42c4: mov ax, 0xa
+   42c7: push ax
+   42c8: mov ax, 0x1e
+   42cb: push ax
+   42cc: mov ax, 0x61a8
+   42cf: jmp 0x42bd
+   42d1: nop 
+   42d2: mov bl, byte ptr [0x6a08]
+   42d6: sub bh, bh
+   42d8: mov al, byte ptr [bx + 0x6a48]
+   42dc: mov byte ptr [bp - 0x26], al
+   42df: cmp al, bh
+   42e1: je 0x42fe
+   42e3: mov bl, al
+   42e5: shl bx, 1
+   42e7: push word ptr [bx + 0x6a34]
+   42eb: mov ax, 1
+   42ee: push ax
+   42ef: mov ax, 0x7d0
+   42f2: push ax
+   42f3: mov ax, 0x4e20
+   42f6: push ax
+   42f7: mov ax, 0xfff6
+   42fa: push ax
+   42fb: call 0x2192   ; -> kernel 0x2192 tone_sweep
+   42fe: inc byte ptr [0x6a08]
+   4302: cmp byte ptr [0x6a08], 0x35
+   4307: jb 0x430e
+   4309: mov byte ptr [0x6a08], 0
+   430e: cmp byte ptr [0x5884], 0
+   4313: je 0x4327
+   4315: cmp byte ptr [0x6a34], 0
+   431a: je 0x4323
+   431c: cmp byte ptr [0x6a34], 4
+   4321: jne 0x4327
+   4323: dec byte ptr [0x5884]
+   4327: inc byte ptr [0x6a34]
+   432b: cmp byte ptr [0x6a34], 7
+   4330: jbe 0x4337
+== ULTIMA.EXE 0x1070-0x10e8  key-wait idle loop: every 8 polls -> viewport_redraw
+   1070: push ds
+   1071: mov ax, word ptr [bp + 6]
+   1074: mov bx, word ptr [bp + 4]
+   1077: mov si, word ptr [bp + 8]
+   107a: mov cx, word ptr [0x52bc]
+   107e: mov dx, word ptr [0x52be]
+   1082: stc 
+   1083: mov word ptr [0x5350], 0x66
+   1089: lcall [0x5350]
+   108d: pop ds
+   108e: push ds
+   108f: inc di
+   1090: mov ax, word ptr [bp + 6]
+   1093: mov bx, word ptr [bp + 4]
+   1096: mov si, word ptr [bp + 8]
+   1099: mov cx, word ptr [0x52bc]
+   109d: mov dx, word ptr [0x52be]
+   10a1: stc 
+   10a2: mov word ptr [0x5350], 0x66
+   10a8: lcall [0x5350]
+   10ac: pop ds
+   10ad: inc di
+   10ae: cmp di, 0x100
+   10b2: je 0x10d6
+   10b4: test di, 7
+   10b8: jne 0x1070
+   10ba: push di
+   10bb: cmp byte ptr [0x5893], 0x42
+   10c0: jne 0x10d0
+   10c2: mov ax, 1
+   10c5: push ax
+   10c6: call 0x81ba   ; -> kernel 0x81ba 
+   10c9: pop di
+   10ca: or ax, ax
+   10cc: je 0x1070
+   10ce: jne 0x10d8
+   10d0: call 0x5910   ; -> kernel 0x5910 viewport_redraw
+   10d3: pop di
+   10d4: jmp 0x1070
+   10d6: xor ax, ax
+   10d8: pop ds
+   10d9: pop di
+   10da: pop si
+   10db: pop bp
+   10dc: ret 6
+   10df: add byte ptr [di - 0x75], dl
+   10e2: in al, dx
+   10e3: push si
+   10e4: push di
+   10e5: push ds
+   10e6: mov ax, word ptr [bp + 6]
+== SJOG.OVL 0x1c20-0x1c3a  combat escape (per member): 'Escape!' -> glide
+   1c20: mov ax, 0x8eae
+   1c23: push ax
+   1c24: call 0x58d0   ; -> kernel 0x1850 print_ds
+   1c27: mov ax, 0x4b0
+   1c2a: push ax
+   1c2b: mov ax, 0x7d0
+   1c2e: push ax
+   1c2f: mov ax, 1
+   1c32: push ax
+   1c33: mov ax, 0x28
+   1c36: push ax
+   1c37: call 0x842e   ; -> kernel 0x43ae glide
+== SJOG.OVL 0x1ee8-0x1f0b  absorb: ' is absorbed!' -> glide
+   1ee8: mov al, byte ptr [0x589e]
+   1eeb: sub ah, ah
+   1eed: push ax
+   1eee: call 0xffffbe1a   ; -> kernel 0x7d9a 
+   1ef1: mov ax, 0x8f02
+   1ef4: push ax
+   1ef5: call 0x58d0   ; -> kernel 0x1850 print_ds
+   1ef8: mov ax, 0x4b0
+   1efb: push ax
+   1efc: mov ax, 0x7d0
+   1eff: push ax
+   1f00: mov ax, 1
+   1f03: push ax
+   1f04: mov ax, 0x28
+   1f07: push ax
+   1f08: call 0x842e   ; -> kernel 0x43ae glide
+== SJOG.OVL 0x1f26-0x1f66  combat reject funnel: code text -> two beeps
+   1f26: push bp
+   1f27: mov bp, sp
+   1f29: push word ptr [bp + 6]
+   1f2c: call 0x58d0   ; -> kernel 0x1850 print_ds
+   1f2f: mov ax, word ptr [bp + 4]
+   1f32: cmp ax, 1
+   1f35: je 0x1f44
+   1f37: cmp ax, 2
+   1f3a: je 0x1f6a
+   1f3c: cmp ax, 3
+   1f3f: je 0x1f70
+   1f41: jmp 0x1f4b
+   1f43: nop 
+   1f44: mov ax, 0x8f12
+   1f47: push ax
+   1f48: call 0x58d0   ; -> kernel 0x1850 print_ds
+   1f4b: mov ax, 0xa
+   1f4e: push ax
+   1f4f: call 0x573a   ; -> kernel 0x16ba putchar
+   1f52: mov ax, 0xdc
+   1f55: push ax
+   1f56: mov ax, 0x96
+   1f59: push ax
+   1f5a: call 0x6340   ; -> kernel 0x22c0 beep
+   1f5d: mov ax, 0x96
+   1f60: push ax
+   1f61: push ax
+   1f62: call 0x6340   ; -> kernel 0x22c0 beep
+== CMDS.OVL 0x1890-0x18b0  escape handler 0x17ec tail -> glide
+   1890: add di, 8
+   1893: inc si
+   1894: cmp si, 0x20
+   1897: jl 0x1881
+   1899: mov word ptr [bp - 6], si
+   189c: mov ax, 0x4b0
+   189f: push ax
+   18a0: mov ax, 0x7d0
+   18a3: push ax
+   18a4: mov ax, 1
+   18a7: push ax
+   18a8: mov ax, 0x28
+   18ab: push ax
+   18ac: call 0x842e   ; -> kernel 0x43ae glide
+== BLCKTHRN.OVL 0x03c8-0x0412  sacrifice siren loops
+   03c8: jno 0x382
+   03ca: or al, byte ptr [bx + si]
+   03cc: push ax
+   03cd: call 0xffff9856   ; -> kernel 0x3ae6 run_n_frames
+   03d0: mov si, 0x7d0
+   03d3: mov ax, 0xa50
+   03d6: push ax
+   03d7: mov ax, 1
+   03da: push ax
+   03db: mov ax, 0xc8
+   03de: push ax
+   03df: push si
+   03e0: sub ax, ax
+   03e2: push ax
+   03e3: call 0x7f02   ; -> kernel 0x2192 tone_sweep
+   03e6: add si, 0x32
+   03e9: cmp si, 0x61a8
+   03ed: jl 0x3d3
+   03ef: mov word ptr [bp - 0x22], si
+   03f2: mov si, 0x61a8
+   03f5: mov ax, 0xa50
+   03f8: push ax
+   03f9: mov ax, 1
+   03fc: push ax
+   03fd: mov ax, 0xc8
+   0400: push ax
+   0401: push si
+   0402: sub ax, ax
+   0404: push ax
+   0405: call 0x7f02   ; -> kernel 0x2192 tone_sweep
+   0408: sub si, 0x32
+   040b: cmp si, 0x7d0
+   040f: jg 0x3f5
+== BLCKTHRN.OVL 0x0a10-0x0a3a  table sweep 0x0a34
+   0a10: push es
+   0a11: add byte ptr [bx + 0x3720], bh
+   0a15: mov word ptr [bp - 0xc], 0x372c
+   0a1a: mov word ptr [bp - 0x10], 0x3738
+   0a1f: mov si, 0x3744
+   0a22: push word ptr [di]
+   0a24: mov ax, 1
+   0a27: push ax
+   0a28: mov bx, word ptr [bp - 0xc]
+   0a2b: push word ptr [bx]
+   0a2d: mov bx, word ptr [bp - 0x10]
+   0a30: push word ptr [bx]
+   0a32: push word ptr [si]
+   0a34: call 0x7f02   ; -> kernel 0x2192 tone_sweep
+   0a37: add di, 2
+== BLCKTHRN.OVL 0x0b70-0x0b92  TS(ax,1,0x7530,0x7d0,2) 0x0b8d
+   0b70: xor byte ptr [bp - 0x2dd5], cl
+   0b74: push dx
+   0b75: push ax
+   0b76: call 0x6110   ; -> kernel 0x03a0 
+   0b79: mov word ptr [bp - 4], ax
+   0b7c: push ax
+   0b7d: mov ax, 1
+   0b80: push ax
+   0b81: mov ax, 0x7530
+   0b84: push ax
+   0b85: mov ax, 0x7d0
+   0b88: push ax
+   0b89: mov ax, 2
+   0b8c: push ax
+   0b8d: call 0x7f02   ; -> kernel 0x2192 tone_sweep
+   0b90: push si
+== BLCKTHRN.OVL 0x0ab8-0x0ad8  party_refuge: 'peal of thunder' -> 0x3072 x2
+   0ab8: bound bx, dword ptr [si]
+   0abb: call 0xffffb680   ; -> kernel 0x5910 viewport_redraw
+   0abe: mov ax, 4
+   0ac1: push ax
+   0ac2: call 0x7e6a   ; -> kernel 0x20fa delay2
+   0ac5: mov ax, 0x719e
+   0ac8: push ax
+   0ac9: call 0x75c0   ; -> kernel 0x1850 print_ds
+   0acc: call 0xffff8de2   ; -> kernel 0x3072 screen_shake_rumble
+   0acf: call 0xffff8de2   ; -> kernel 0x3072 screen_shake_rumble
+   0ad2: mov byte ptr [0xad59], 0
+   0ad7: mov al, 0x16
+== ENDGAME.OVL 0x0778-0x0792  'lives!' sweep 0x078f
+   0778: call 0x68f6   ; -> kernel 0x0b86 
+   077b: mov ax, 0x2260
+   077e: push ax
+   077f: mov ax, 1
+   0782: push ax
+   0783: mov ax, 0x9c40
+   0786: push ax
+   0787: mov ax, 0x1388
+   078a: push ax
+   078b: mov ax, 1
+   078e: push ax
+   078f: call 0x7f02   ; -> kernel 0x2192 tone_sweep
+== ENDGAME.OVL 0x0960-0x098a  orb launch sweep 0x0987
+   0960: jp 0x91a
+   0962: imul si, word ptr [si - 0x17b0], 0x6c58
+   0968: mov al, 8
+   096a: mov byte ptr [0x5c8a], al
+   096d: mov byte ptr [0x5c8b], al
+   0970: call 0x83dc   ; -> kernel 0x266c 
+   0973: mov ax, 0x1450
+   0976: push ax
+   0977: mov ax, 1
+   097a: push ax
+   097b: mov ax, 0xc350
+   097e: push ax
+   097f: mov ax, 0x2710
+   0982: push ax
+   0983: mov ax, 1
+   0986: push ax
+   0987: call 0x7f02   ; -> kernel 0x2192 tone_sweep
+== FONT.OVL 0x03b8-0x0408  intro moongate: thunder NB / chime beep
+   03b8: sub word ptr ds:[di + 0x7502], di
+   03bd: adc bh, byte ptr [bx + si + 0x14]
+   03c1: push ax
+   03c2: mov ax, 0x3c
+   03c5: push ax
+   03c6: mov ax, 0x2710
+   03c9: push ax
+   03ca: call 0x405c   ; -> kernel 0x223c noise_burst
+   03cd: jmp 0x406
+   03cf: nop 
+   03d0: cmp byte ptr [0xbd29], 3
+   03d5: jne 0x406
+   03d7: inc word ptr [0x515a]
+   03db: cmp word ptr [0x515a], 7
+   03e0: jle 0x3e8
+   03e2: mov word ptr [0x515a], 0
+   03e8: cmp word ptr [0x515a], 0
+   03ed: jne 0x3f4
+   03ef: mov ax, 0xbb8
+   03f2: jmp 0x3fe
+   03f4: cmp word ptr [0x515a], 4
+   03f9: jne 0x406
+   03fb: mov ax, 0x7d0
+   03fe: push ax
+   03ff: mov ax, 3
+   0402: push ax
+   0403: call 0x40e0   ; -> kernel 0x22c0 beep
+   0406: dec word ptr [bp + 4]
+== FONT.OVL 0x0878-0x0892  intro SUMMON NB
+   0878: inc di
+   0879: add ax, word ptr [di]
+   087b: pop es
+   087c: add byte ptr [bx + si - 0x18], dl
+   087f: jg 0x8a7
+   0881: mov ax, 1
+   0884: push ax
+   0885: mov ax, 0x4b0
+   0888: push ax
+   0889: mov ax, 0xfa0
+   088c: push ax
+   088d: call 0x405c   ; -> kernel 0x223c noise_burst
+   0890: mov ax, 3
+== ULTIMA.EXE 0x6a20-0x6a42  kernel glide 0x6a3c (not in the 1988 catalogue)
+   6a20: cmp ax, 0xb
+   6a23: jne 0x6a4b
+   6a25: mov ax, 0xa422
+   6a28: push ax
+   6a29: call 0x1850   ; -> kernel 0x1850 print_ds
+   6a2c: mov ax, 0x4b0
+   6a2f: push ax
+   6a30: mov ax, 0x7d0
+   6a33: push ax
+   6a34: mov ax, 1
+   6a37: push ax
+   6a38: mov ax, 0x28
+   6a3b: push ax
+   6a3c: call 0x43ae   ; -> kernel 0x43ae glide
+   6a3f: push word ptr [bp - 4]

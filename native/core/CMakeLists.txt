@@ -1282,6 +1282,13 @@ if(BUILD_TESTING)
   add_test(NAME a3_02_sfx_synth COMMAND a3_02_sfx_synth
     "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/a3-02-sfx-reference.txt"
     "${CMAKE_CURRENT_SOURCE_DIR}")
+  # Alpha 3 A3-03 -- the SFX inventory (every cue and every original call site
+  # classified), the A3-03 programs against the binary, the rumble / ladder /
+  # ambient measured, and the ambient priority policy.
+  add_executable(a3_03_sfx_inventory tests/a3_03_sfx_inventory_test.cpp)
+  target_link_libraries(a3_03_sfx_inventory PRIVATE openu5_core)
+  target_compile_features(a3_03_sfx_inventory PRIVATE cxx_std_17)
+  add_test(NAME a3_03_sfx_inventory COMMAND a3_03_sfx_inventory "${CMAKE_CURRENT_SOURCE_DIR}")
   # A3-01 -- the same seam through the REAL AlphaRuntime: the settings rows by
   # raw keys, reboot/load persistence, the Developer test tone, presentation-
   # time cue routing, and scene timing / game state identical with audio on,
@@ -1355,6 +1362,44 @@ if(BUILD_TESTING)
     target_link_options(a3_02_sfx_runtime PRIVATE -Wl,--gc-sections)
   endif()
   add_test(NAME a3_02_sfx_runtime COMMAND a3_02_sfx_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
+
+  # Alpha 3 A3-03 -- the remaining effects through the REAL AlphaRuntime: a
+  # real fountain and clock, a real troll victory, the quake, shrine and Refuge
+  # cues, world/shop/intro derivations, timing under six audio setups, and
+  # load / title / menu / dungeon / Ending safety.
+  add_executable(a3_03_sfx_runtime
+    ../targets/tdeck/host_tests/a3_03_sfx_runtime_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/batch37_board_capture_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_audio.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(a3_03_sfx_runtime PRIVATE openu5_core)
+  target_include_directories(a3_03_sfx_runtime PRIVATE
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/main)
+  target_compile_features(a3_03_sfx_runtime PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(a3_03_sfx_runtime PRIVATE /Gy)
+    target_link_options(a3_03_sfx_runtime PRIVATE /OPT:REF)
+  else()
+    target_compile_options(a3_03_sfx_runtime PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(a3_03_sfx_runtime PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME a3_03_sfx_runtime COMMAND a3_03_sfx_runtime
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
   # Batch 14 / R-22 -- (Z)-stats navigation. Same seam and same stub/shim set

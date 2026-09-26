@@ -108,6 +108,10 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
         resources_.karma_text_record_count = pack->karma_text_record_count;
         std::copy(std::begin(pack->words), std::end(pack->words), std::begin(resources_.words));
         resources_.word_count = pack->word_count;
+        // A3-03: the attract demo's View data, bound as initialize() binds it
+        // ("intro-view-bind"), so a host test can run the demo and hear its cues.
+        resources_.intro_view = pack->intro_view;
+        intro_view_.bind(resources_.intro_view);
         combat_context_.tables = {resources_.combat_tables, resources_.combat_tables + resources_.combat_table_count,
                                   resources_.combat_tables + resources_.combat_table_count * 2,
                                   resources_.combat_tables + resources_.combat_table_count * 3,

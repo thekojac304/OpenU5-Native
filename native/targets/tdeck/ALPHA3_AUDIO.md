@@ -1,6 +1,6 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX)
 
-**Status: A3-02 COMPLETE (the PC-speaker synthesizer, the first 22 gameplay sounds, the harpsichord). Not an Alpha 3 release.** The device now renders the original's speaker effects for the cues listed in §15.5, synthesized from the 1988 binary's own primitive parameters; every other cue is still declined until A3-03. There is no music playback yet (A3-04). A3-01 (sections 1–14) is the architecture this builds on; §15 is A3-02.
+**Status: A3-03 COMPLETE (the remaining gameplay SFX, the ambient proximity sounds, combat victory and the scene cues). Not an Alpha 3 release.** The device now plays 62 of the 73 cue ids, synthesized from the 1988 binary's own primitive parameters; the 11 that stay silent are each classified, with the reason, in §16.18. Every PC-speaker call site of the shipped binaries — 121 found by the census, 5 by hand — is classified in a table the tests enforce (§16.10). There is no music playback yet (A3-04). A3-01 (sections 1–14) is the architecture, §15 is A3-02, and §16 is A3-03.
 
 This document is the audio track's reference. It records what the original does, what the community music patch adds, how the port tells the two apart, and the contracts later batches must keep.
 
@@ -8,7 +8,7 @@ This document is the audio track's reference. It records what the original does,
 
 | The user's DOS files | Sound effects | Music | What Settings shows |
 |---|---|---|---|
-| **Stock** (unpatched *Ultima V* DOS) | Supported. The effects are the original's PC-speaker sounds, synthesized from the original's own parameters: the first set since A3-02 (§15.5), the rest in A3-03. No asset is needed. | **None.** The 1988 game has no music. | `Music Volume: Unavailable`, footer *Stock DOS game files have no music* |
+| **Stock** (unpatched *Ultima V* DOS) | Supported. The effects are the original's PC-speaker sounds, synthesized from the original's own parameters: 22 since A3-02 (§15.5), 62 of the 73 cue ids since A3-03 (§16). No asset is needed. | **None.** The 1988 game has no music. | `Music Volume: Unavailable`, footer *Stock DOS game files have no music* |
 | **Supported music patch** (Exodus Project *Ultima V Upgrade* 1.0) | The same. | **Enabled** (playback arrives in A3-04). | `Music Volume: 80%`, adjustable |
 | **Incomplete patch** (some of its files) | The same. | None. It is never guessed. | `Unavailable`, *Music patch files are incomplete* |
 | **Unknown music variant** (another driver or foreign XMI files) | The same. | None. It is never guessed. | `Unavailable`, *Unsupported music patch variant* |
@@ -715,6 +715,8 @@ Copy the Launcher image (tag message). SD card: unchanged; `openu5-audio.bin` op
 - **F. Load.** Start the harpsichord run (or the Camp chord) and press Alt+L straight away: silence at once after "Load complete", and nothing from the old game plays after it.
 - Not in this check: music (A3-04), final loudness (A3-05).
 
+**Result (reported by the user before A3-03, 2026-09-26): PASS.** The image boots; footsteps, the wall bump, the arena hits and the spell ceremony are audible; SFX Volume scales them and 0 % mutes; the harpsichord plays in pitch order (H-125 closed); the Camp apparition cues play with no pacing change; Alt+L flushes what plays and what waits. Carried forward: the tone and loudness character (partly the T-Deck's small speaker) to A3-05; **the troll-fight victory chime and the fountain were missing** — A3-03 (§16.4, §16.5).
+
 ### 15.15 Next batches (Phase P)
 
 | Batch | Scope | Why this split |
@@ -722,3 +724,336 @@ Copy the Launcher image (tag message). SD card: unchanged; `openu5-audio.bin` op
 | **A3-03 — remaining gameplay SFX / event hookup** | Programs and routing for the declined cues, each adjudicated against its site: moongate, sceptre, shadowlord, shrine donation / ordained / well-done, quake (class C, synchronised with the shake), `shard-sweep` / `victory-fanfare` **with the reference's blocking pauses decided on their own axis** (`BLOCKING_CUES`), the arena message derivations (escape, absorbed, reject, VICTORY!, Borrowed!), ambient proximity (fountain, waterfall, clock), healer jingle, bard song, Refuge thunder, intro / title / endgame. Close D-3's SFX half. | The primitives and the policy exist; what is left is adjudication and routing, cue by cue. |
 | **A3-04 — music playback from supported patched assets** | The XMI sequencer, the OPL2 emulation and the `FAT.OPL` bank on the core-1 task, mixed after the SFX voice; `music_context_for_location` and the scripted selectors; CPU and memory measured on hardware. | Needs the audio task and the mixer point A3-02 built, and a measured CPU budget. |
 | **A3-05 — volume curve, polish and audio hardware sign-off** | The loudness curve on the real speaker (the user's A3-01 note), SFX / music balance, headroom with both channels, optional music fade, a battery and CPU soak, the strict "1988 sound-off" profile decision, and the ledger rows. | Calibration needs every sound on hardware first. |
+
+## 16. A3-03 — the remaining gameplay SFX, the ambient cues and the scene audio
+
+### 16.1 Baseline (Phase A)
+
+| Item | Value |
+|---|---|
+| Tree | HEAD `bc65972b` = tag `alpha3-a3-02-sfx-synth`, clean |
+| A3-02 firmware | `3.0.0-alpha3-dev-a3-02-debug`, `0xdf4b0` = 914,608 B, 133,968 B (13 %) free, embedded `Git bc65972b8362`, Launcher SHA-256 `2ee83b26…5706` |
+| Host suite | fresh build `native/core/build-a3-03-baseline`, **serial ctest 129 / 129 in 111.29 s** (`native/core/a3-03-baseline-*.log`). The first build attempt died inside GCC's own `<compare>` header with a one-bit corruption (`uno2dered`); the header on disk is intact and the resumed build completed — toolchain flakiness, like A3-02's ESP-IDF crashes |
+| Synth / service / backend | A3-02's `SfxPlayer` behind `AudioService` → `TdeckAudioBackend` (core-1 task, 16-entry queue) |
+| Cue catalogue | 57 `SfxId`s, 23 with a program (22 gameplay + the diagnostic tone); the core emits 31 distinct cue strings |
+| **A3-02 hardware** | **PASS** (the user's report): boots; footsteps, the wall bump, combat hits, the spell ceremony and the harpsichord (pitch order correct) are audible; SFX Volume works down to 0 % mute; the Camp apparition cues play with no pacing change; Alt+L flushes. Carried forward: loudness / tone character to A3-05 (partly the small speaker); **the troll-fight victory chime and the fountain are missing** — both closed here (§16.4, §16.5) |
+
+### 16.2 The census (Phase B)
+
+Primary evidence is the binaries, read three ways:
+- `re/tools/a3_01_sound_census.py` → `native/core/a3-01-sound-census.log`: every call of the six primitives, **121 sites**.
+- `re/tools/a3_03_cue_sites.py` → `native/core/a3-03-cue-sites.log` (new): the pushes of every A3-03 site as whole ranges, because several cues are loops whose arguments only make sense with the loop head and tail (the shard / shrine / Blackthorn ladders, the ORDAINED and Refuge tables, the quake's four passes, the fanfare).
+- For each site, the message printed next to it: a site is **"adjacent"** to a message when the `print_ds` and the speaker call sit in one basic block, print first. That test is what turned 16 hints into attributions (the combat, ship, theft, wish and trapdoor rows below); a hint without adjacency stayed `EvidenceUnknown`.
+
+Five calls the linear census cannot see are classified by hand: kernel **0x429c** (the clock's *tock*, an alignment gap), **0x42c4** (the fountain enters the waterfall's `noise_burst` call at 0x42bd), **SJOG 0x1d32** (an arena step calls `sfx_footstep` 0x433e, a wrapper, not a primitive), and **EGA.DRV 0x269f / 0x29c5** (the title's dissolve and crackle; the driver has its own `noise_burst`).
+
+**The whole table is code** — `openu5::sfx_sites()` in `native/core/src/sfx_inventory.cpp`, one row per call with its cue, status and one line of evidence. **126 sites: 95 Implemented** (4 of them a primitive's own `set_tone` / `stop`), **22 EvidenceUnknown, 4 NoNativeEvent, 5 DeferredPresentation, 0 DeferredMusic** (no speaker site is music; the Exodus songs are A3-04's and never enter this table).
+
+The A3-03 rows (every one re-read for this batch; `a0` is the last push):
+
+| Family | Site(s) | Program | Native trigger |
+|---|---|---|---|
+| **Victory fanfare** | COMBAT 0x0cf6 prints `\nVICTORY!\n`, 0x0cfd sets `g_cmb_victory_flag`, **0x0d02** calls kernel 0x4368; CAST 0x1759 after "… is wrought!" | 0x4368: 3 × TS(0x11f8, 1, 0x2a30, 0x12c, 6) + TS(0x17d4, 1, 0x5460, 0x12c, 3) — 1810 Hz × 3, then 2401 Hz; 2.09 s | the combat latch's `VICTORY!` (a `CombatEventKind::Message`); the shard ritual's `victory-fanfare` cue |
+| **Shard sweep / Blackthorn siren** | CAST 0x15dd–0x162a; BLCKTHRN 0x03d0–0x040f (the same call) | 2 × 460 calls TS(0xa50, 1, 0xc8, si, 0), si = 0x7d0 → 0x61a8 by 0x32 and back: one pitch (1032 Hz) whose duty walks out and back; 7.13 s | the ritual's `shard-sweep` cue; the Blackthorn pacer's `ShardSweep` beat (A3-02 routed it, the synthesizer declined it) |
+| **Shrine: ALAKAZAM / WELL DONE** | CAST2 0x0bd0–0x0c0f / 0x0c44–0x0c83 | the same two 460-call loops with (0xa8c, 0xc8) / (0xc1c, 0x96); 7.13 s / 5.35 s | `shrine-donation` / `shrine-well-done` |
+| **Shrine: ORDAINED** | CAST2 0x0ac6–0x0b02 | 7 × TS from the four DS tables 0x4be6 / 0x4bf4 / 0x4c02 / 0x4c10 | `shrine-ordained` |
+| **Quake** (harpsichord, Word of Power, WELL DONE, Codex, shard ritual, underworld EARTHQUAKE) | kernel **0x3072** (`screen_shake_rumble`; TOWN 0x0ea3, CMDS 0x12f9, CAST2 0x0c88, CAST 0x169d/0x16a0/0x16a3, MAINOUT 0x0a7d) | 8 passes over the viewport edges, each step `set_tone(rand_range(0x13, 0x96))`, `stop` at 0x316e — see §16.6 | the **`Quake` event**, one rumble per shake |
+| **Refuge thunder** | BLCKTHRN 0x0acc / 0x0acf: two calls of the same 0x3072 | one rumble per peal | the Refuge's two `refuge-thunder` beats |
+| **Refuge slumber** | BLCKTHRN 0x0a0d–0x0a49 after "But thy slumber is disturbed!" | 6 × TS from DS 0x3720 / 0x372c / 0x3738 / 0x3744; 10.1 s | that Refuge line |
+| **Refuge revival** | BLCKTHRN 0x0b5d–0x0bb0 after "Strange words are intoned." | per member i: TS(0x8e30 / (i + 7), 1, 0x7530, 0x7d0, 2) — 0x03a0 is a 32-bit unsigned divide | that line; the party size |
+| **Moongate** | kernel 0x48a8: tile under the party == 0xdc → `run_n_frames(1)`, TS(0x170c, 1, 0x7530, 0x7d0, 2) @0x48e5 | 2.3 kHz, 1.16 s | `moongate` (emitted since Alpha 2) |
+| **Sceptre (wielding)** | CAST 0x197b–0x198f after "Wielding the Sceptre of Lord British…"; NB(10, 3000, 2000) @0x19e0 per dissolved field | TS(0x1450, 1, 0xc350, 0x1388, 1), 1.94 s | `sceptre` |
+| **Sceptre reclaimed** | kernel 0x6209–0x6221 after "The Sceptre is reclaimed!" | TS(0xfd2, 1, 0xfde8, 1, 1), 2.52 s | that message |
+| **Shadowlord drone** | TOWN 0x11d5–0x11e9 | TS(0x19c8, 1, 0xea60, 0x7d0, 1), 2.33 s | `shadowlord-announce` |
+| **Healer jingle** | SHOPPES 0x13b0–0x1469 (callers: the Cure / Heal / Resurrect branches) | six TS, three mirrored pairs | a successful healer `Shop` result ("It is done.") |
+| **Arena: escape / absorbed / grazed / dragged under** | SJOG 0x1c37 & CMDS 0x18ac / SJOG 0x1f08 / COMSUBS 0x0352 / 0x03d6 | GL(1200 → 2000, 1, 40) | `Escape!` / `… is absorbed!` / `… grazed!` / `… dragged under!` |
+| **Arena: passes out / possessed** | SJOG 0x2218 / COMSUBS 0x01b1 | TS(0xc1c, 1, 0x7530, 0x3e8, 2) | `… passes out!` / `… possessed!` |
+| **Arena: gates in a daemon** | COMSUBS 0x02cb | TS(0xac8, 1, 0x1388, 0x3e8, 0xf) | `… gates in a daemon!` |
+| **Arena: ARGH! / regurgitated** | COMBAT 0x07f1 / 0x1cbf | NB(40, 3000, 500) / NB(1, 7000, 600) | `ARGH!` / `… regurgitated!` |
+| **Arena: food stolen** | COMBAT 0x03b6 | GL(800 → 2000, 1, 50) | `A … stole some food!` |
+| **Arena: blocked / same exit** | SJOG 0x1d59 / 0x1c1a | beep(0xa5, 0xc8) — the wall bump | `Blocked!` / `All must use the same exit!` |
+| **Arena: footstep** | SJOG 0x1d32 → 0x433e | `move-step` | a party member's `Moved` event |
+| **Arena / world: Absorbed! (magic)** | CAST 0x0e6e, COMBAT 0x0958 | TS(0x2648, 1, 0x6d60, 0x3e8, 2) = `spell-zap` | `Absorbed!` |
+| **Plague!** | SJOG 0x0237 (`search_remains_outcome`) | NB(40, 3000, 500) = `search-fail` | the arena's `\nThou dost find\nPlague!` |
+| **Ship collision** | MAINOUT 0x0300 after "COLLISION!" (not after "Docked!") | NB(100, 2000, 300) | `COLLISION!` |
+| **Ship sinking / whirlpool** | MAINOUT 0x113b (sunk with no skiff, before "DROWNING!!!") / 0x12a6 after "WHIRLPOOL!" | GL(660 → 150, 40, 7800), 7.25 s | `DROWNING!!!` / `\nWHIRLPOOL!\n` |
+| **Theft detected** | TALK 0x11a8 after "Something was stolen!" | GL(800 → 2000, 1, 50) | that message |
+| **Wish granted** | LOOKOBJ 0x0129 after "\|Poof!\|" (the wishing well) | NB(10, 3000, 2000) | `\nPoof!\n` (the potion's `Poof!` is not it) |
+| **Shard at the wrong flame** | CAST 0x166d after "\|\|No effect!\|" | GL(800 → 2000, 1, 50) | `\n\nNo effect!\n` (printed by exactly one core site; test D2) |
+| **Location-29 trapdoor** | TOWN 0x0f96 `cmp [0x5893], 0x1d`; 0x0fb3–0x0fd3 `set_tone(v)`, `delay(0x28, 1)`, v = 1000 … 251; 0x101e NB(40, 3000, 500) per member as each dies | a 28 s falling tone, then a burst per member | `A TRAPDOOR!` while in location 29 — the original's own branch condition |
+| **Ambient** (§16.4) | kernel 0x4102 | fountain NB(10, 30, 25000); waterfall NB(20, 60, 10000); tick / tock beep(3000 / 2000, 3); chime TS(0xc2c, 1, 0x7d0, 0x4e20, −10) | the runtime's ambient ticker |
+| **Intro** | FONT 0x03ca / 0x0403 / 0x088d | NB(20, 60, 10000); beep(3000 or 2000, 3); NB(1, 1200, 4000) | the device's `IntroViewFrame` thunder / chime / summon flags, as the frame is shown |
+| (already A3-02) | kernel 0x6a3c "A ring has vanished!" | GL(1200 → 2000, 1, 40) | `ring-vanishes`, emitted since Alpha 2 |
+
+### 16.3 Emitted / audible / silent (Phase C)
+
+Before A3-03:
+1. **Emitted and audible (A3-02):** move-step, move-blocked, the dungeon cues, torch, ring, cannon, waterfall fall, mirror, the arena hit / heavy / defeat (derived), the ceremony (derived), the harpsichord, the four apparition cues, the Blackthorn materialize.
+2. **Emitted but silent:** moongate, quake, sceptre, shard-sweep, victory-fanfare (shard), shadowlord-announce, the three shrine cues, refuge-thunder, the Blackthorn siren beat, and the four magic markers (spell-cast / potion-used / scroll-used / invalid-magic).
+3. **Original sound, not emitted or derived:** the arena VICTORY! fanfare, escape / absorbed / blocked / footstep and the eight other arena messages, the healer jingle, the ambient proximity sounds, the attract demo's three cues, and the world messages of §16.2.
+
+After A3-03: **set 2 is empty except the four markers** (their sound is the ceremony event's, by design), and **set 3 is closed wherever the original's trigger exists natively**. `a3_03_sfx_inventory` I4 fails if the core emits a cue the device does not play; `a3_03_sfx_runtime` W4 presents every supported cue through the real runtime and fails if one is dropped.
+
+**No new core emission.** Every A3-03 sound is derived at presentation time from an event the core already emits (a message, a combat event, a `Quake`, a shop result, a Refuge line, an intro frame flag). This is deliberate: `quest_parity` serializes the Refuge beats and every Sfx event against the TypeScript reference, so a new core cue would have moved a pinned fixture. The derivation keys are the core's own literals, and `a3_03_sfx_inventory` D1 fails if any key stops being printed by the core.
+
+### 16.4 The fountain and the other ambient sounds (Phase D)
+
+**Where it comes from.** `ambient_sfx_tick` 0x4102 is called only by `viewport_redraw` 0x5910 (at 0x5a1a). The key wait `getkey_with_redraw` 0x266c calls 0x5910 once per pass (0x269a) — but only when `g_location < 0x21` or `> 0x7f`, i.e. never in a dungeon — and each pass spends `delay(1)` = one 55 ms BIOS tick while no key is down (0x1b38 → 0x20fa). 0x5910 skips 0x4102 under An Tym (`[0x587a] == 'T'`). (Correction: `ambient-audio-audit.md` §2 names 0x1070 as the key wait; 0x1068 is `fx_tile_fizzle_in` — `wind-rand-decision.md` had already said so. A DOSBox-X capture of the waterfall measured 54.9 ms between bursts, `audio-diff-calibration.md` §7.2.)
+
+**What it does** (`openu5/ambient_sfx.h`, pure):
+- scan the 11 × 11 window around the party (the arena's own cells, centre (5,5), in combat), x outer, y inner; keep the **nearest** object of a sounding class (squared distance strictly below the best so far, which starts at 0x33, so the far corner still counts; a tie goes to the first in scan order);
+- classes: 1 clock (0xfa / 0xfb), 2 waterfall (0xd4–0xd7), 3 **fountain (0xd8–0xdb)**; the bellows, the moongate and every sprite are silent; class 4 (a bard sprite) is not ported (§16.7);
+- sound: fountain and waterfall on **every** tick; the clock ticks at phase 0 and tocks at phase 4; while `[0x5884]` is non-zero it strikes instead (the chime TS), and `[0x5884]` runs down at phases 0 / 4 **whatever the class** (0x430e is outside the switch);
+- the phase `[0x6a34]` is `(phase + 1) & 7` per call; `[0x5884]` is re-armed to the 12-hour clock (midnight → 12) by `advance_clock` (0x5164–0x5183), which the device reads as "the game clock moved".
+
+**Runtime** (`AlphaRuntime::service_ambient`, called from the gameplay render loop): one 0x4102 call per 55 ms tick while the original would be waiting in 0x266c — the world, a town or any arena (a dungeon room's too: an arena runs at `g_location` ≥ 0x80), **not** a dungeon corridor, a paced scene (Camp, Refuge, TrollSneak, Blackthorn), the Ending, the Developer menu, An Tym, a map reveal or a gem / zodiac view. The System Menu and the title never reach it (they own the render path). The window is the **raw** terrain (`WorldTerrain::effective`, with the hour / persistent / transient overrides), never the light-censored view, so a fountain burbles at night too. A new world (load, System Menu Load, title Continue, Return to Title) starts both counters over.
+
+| Question | Answer |
+|---|---|
+| Trigger | the nearest sounding object within the 11 × 11 window |
+| One-shot or recurring | recurring: one burble per 55 ms tick; each is NB(10, 30, 25000) = 3 draws × 15 sweep samples = **1.7 ms**, a click |
+| Movement / time | the original ticks it on every redraw — the idle key wait and each move's redraw; the device ticks it every 55 ms while eligible, so walking keeps it going |
+| Range | 11 × 11 window (the far corner, distance 50, counts); leaving it stops it within one tick |
+| Several objects | the nearest wins; there is one sound per tick |
+| Stuck tone | impossible: every ambient program is 1.7–77 ms long and never queued |
+| Volume / mute | the SFX channel gain; at 0 % the service never submits (F6) |
+
+**Hardware-visible behaviour:** standing beside the fountain in location 1 at (6,25), the host counts **20 burbles in 1.1 s, exactly 55 ms apart**, each ending (F1–F3); a real clock in location 2 ticks and tocks once each per 440 ms and, after a step moves the clock, strikes the hour (12 at noon) before ticking again (C1–C2).
+
+### 16.5 Combat victory and leaving the arena (Phase E)
+
+- **When it fires:** COMBAT 0x0cf6–0x0d02 prints `\nVICTORY!\n`, sets `g_cmb_victory_flag` and calls the fanfare, **only if the flag was still 0** — once per arena. The defeat branch (0x0cda, `\nBATTLE IS LOST!`) calls nothing. Every arena uses it: overworld and underworld encounters, the troll bridge, camp ambushes, dungeon rooms (one engine, `combat.cpp`, reached through `start_encounter_combat` / `start_fixed_combat`); arenas that start already won (the six empty final rooms) never print it and stay silent, as in the original.
+- **Fanfare, not beeps:** four tone sweeps, two pitches: 1810 Hz × 3, then 2401 Hz twice as long (measured from the rendered PCM, `a3_03_sfx_inventory` P1).
+- **Native trigger:** the latch's `VICTORY!` line (`CombatEventKind::Message`). The engine prints a second `VICTORY!` as the `Ended` line when the party finally walks off the arena; that line can repeat and also fires for arenas that start won, so **it never sounds** (`sfx_for_combat_text(…, ended = true)` → none; mutation M5).
+- **Leaving the arena:** walking a member off the edge (`Escape!`, SJOG 0x1c37) and the escape command (`Escape!`, CMDS 0x18ac) play GL(1200 → 2000, 1, 40). `Leave!` (no enemy left) has no adjacent speaker call and is silent.
+- **The troll case (the user's report):** the toll refusal's own entry, `start_encounter_combat(enemy 41)`, through the real runtime: one fanfare, heard in full (V0–V2); an ordinary arena the same (V3); a lost battle and an escape have no fanfare (V4).
+- **No delay:** the original's fanfare blocks for 2.09 s and then flushes the keyboard buffer (0x0d05 → kernel 0x1b16). **The device reproduces neither**: audio never paces, per the A3-01 contract. V5 runs the troll victory under six audio setups and exploration returns at the same instant (16.305 s) with identical state in all of them. The un-reproduced 2.09 s hold and key flush are a presentation-timing divergence, recorded in the ledger; the TypeScript reference *does* pause for it (`BLOCKING_CUES`) — a decision this batch does not take.
+
+### 16.6 Moongate, quake, shrines, ritual (Phase F)
+
+- **Moongate** plays when the core already emits `moongate` (stepping onto an active gate). The transit animation stays out of scope.
+- **The quake is kernel 0x3072.** Its eight passes redraw the viewport's edges in strips (`call 0x71ca` / `0x0ace` / `0x7200`), and after each strip write a new PIT count: `set_tone(rand_range(0x13, 0x96))`, i.e. 19–150. The gate stays open from the first write to the `stop` at 0x316e. `set_tone` writes the count only (0x22f2–0x22fe, no control word), so in mode 3 each write takes effect at the next half-cycle: **the sound is a square whose every half-cycle is 1 / (2v) s for a freshly drawn v** — a random low rumble (the witness measured a peak near 106 Hz). The synthesizer's new `Rumble` primitive emulates exactly that; the draw is `rand_range` 0x2092's own arithmetic (the `[0x545c]` step, `& 0x7fff`, `lo + v % (hi − lo + 1)`, closed interval — R2).
+  - **Class C, declared:** the loop has no timer (its pace is the strip blits), so the length is the shake's measured window, 8 × 117 ms = 936 ms (`presentation.h`; a `static_assert` ties the two); and the draws come from the **game** RNG `[0x5420]` inside the render path, which the port never consumes for presentation (a registered deliberate divergence, `oracle-flash-rng.md`), so the rumble draws from its own word: the law is exact, the sequence is not.
+  - **One rumble per shake.** The rumble is keyed to the `Quake` event, not the `quake` cue: the shard ritual shakes three times (CAST 0x169d / 0x16a0 / 0x16a3) on one cue, the Codex three times on three cues, and every other shake once. The cue is kept (the reference pins it) and sounds nothing on its own (W4, S1, S2; mutation M11).
+  - The TypeScript reference renders the quake as a tri-band noise burst calibrated to the witness; A3-03 departs toward the bytes.
+- **Shrines.** ALAKAZAM, WELL DONE and ORDAINED play as the shrine emits them (S3). WELL DONE is followed by its shake; in the binary the sweeps and the shake are serialized, and the device's FIFO plays them in that order (sweeps 5.35 s, then the rumble — S1). **The visible divergences stay as they were:** the device still shakes at once and draws no inverted viewport during the sweeps (H-184), and the shrine's key waits are still dropped (H-183). Audio was added without touching those scenes; their timing, frames and state are identical under all six audio setups (S4).
+- **Shard ritual:** the sweep (7.13 s), three rumbles, the fanfare — the binary's order, FIFO (S2); a shard held at the wrong flame plays its GL(800 → 2000) "No effect!".
+
+### 16.7 Bard and lute (Phase G)
+
+- **Camp lute:** the watch's bard plays only with the sound flag on (`[0xa9ce]`, CMDS 0x0123): `run_n_frames(0x34)`, 52 redraws, each advancing the sprite and one note of the 53-index melody through 0x4102 class 4. Batch 51 kept the **sound-off** branch on the device (§4, §10): no lute scene, no drag variation. **SFX Volume is not the sound flag** and never selects a branch — `a3_03_sfx_inventory` I5 fails if any gameplay module reads `sound_volume` or emits `bard-song`.
+- Playing the lute would mean mounting the lute scene — a pacing change this batch must not make. **Status: DeferredPresentation**, with the note derived and ready: melody DS 0x6a48, frequencies DS 0x6a34, TS(freq, 1, 0x7d0, 0x4e20, −10) per non-rest index (`sfx-bardo-adjudicacion.md`).
+- **Class 4 elsewhere** (a bard sprite 0x15C–0x15F in view, e.g. a tavern bard): the gate reads the sprite layer `[0xac64]` with the terrain layer `[0xab02]` empty; the device composes layers differently. Same status.
+- **The harpsichord** is unchanged from A3-02 (TOWN 0x0e34; ten notes, H-125 hardware-confirmed). Its quake is now audible (Q1).
+
+### 16.8 Blackthorn and the quest scenes (Phase H)
+
+- **Materialize:** A3-02 (unchanged).
+- **Sacrifice siren:** BLCKTHRN 0x03d0–0x040f is the shard ritual's ladder, bit for bit; the pacer already held its 7.13 s and handed the beat to the cue sink, and the synthesizer now plays it (B1). The next beat still follows **the pacer's** hold under all six setups (B2).
+- **Refuge:** the two peals (each one 0x3072 call), the slumber melody and the revival tones now sound at their lines; the Refuge's timeline, frames and state are identical under all six setups (R1–R2). The Refuge's own cadence remains class C (H-185).
+- **Explosion / "fanfare":** the sacrifice's explosion (H-186) has no speaker call of its own in the binary; the shard ritual's fanfare is §16.6.
+
+### 16.9 Intro, title and endgame (Phase I)
+
+- **Attract demo** (FONT.OVL's scene engine, which INTRO shares): the device already runs it and already set `thunder` / `chime` / `summon` flags on the frames that carry them; A3-03 routes them as each frame is shown. The chime is 3000 on the gate's first frame and 2000 on its fifth (FONT 0x03e8–0x0403). 90 s of attract: thunder ×4, chime ×8, summon ×1 (W3). The host fixture now binds the View data as `initialize()` does, so the demo runs in host tests.
+- **Title dissolve / subtitle crackle** (EGA.DRV 0x269f / 0x29c5): the device's title has neither effect. DeferredPresentation.
+- **Endgame** (ENDGAME 0x078f "… lives!", 0x0987 the orb): the cinematic is deferred (D-54). DeferredPresentation. No `victory` transcript line triggers a sound: only the combat latch's does.
+- **No music** is started anywhere.
+
+### 16.10 The completeness guard (Phase J)
+
+`openu5/sfx_inventory.h` holds two tables and `a3_03_sfx_inventory` enforces them:
+
+| Guard | Fails when |
+|---|---|
+| I1 | an id is `Implemented` without a program, or has a program without being `Implemented`; an unsupported id has no reason; the silent set is not exactly the eleven of §16.18 |
+| I2 | a census call site (121, parsed from the committed census log) has no row, or a row claims a census site the census does not have; the five hand-found calls are missing |
+| I3 | an `Implemented` site names a cue with no program; an implemented original cue has no site behind it |
+| I4 | a cue literal the core emits maps to a silent id (other than the four magic markers) |
+| I5 | the core emits `bard-song`, or a gameplay module reads `sound_volume` |
+| D1 / D2 | a derivation key stops being printed by the core; a message the binary follows with no sound (`Docked!`, `BATTLE IS LOST!`, the Ended `VICTORY!`, `Leave!`, the potion's `Poof!`, door-jimmy `Key broke!`) would sound |
+| W4 (runtime) | the runtime drops any supported cue |
+
+Statuses: `Implemented`, `DeferredMusic`, `DeferredPresentation`, `EvidenceUnknown`, `IntentionallySilent`, and **`NoNativeEvent`** — added because four original sites are neither unknown nor deferred: their trigger simply does not exist in the native core ("Magic absorbed!", "A shadowlord appears", the dungeon teleport ring, the chest-object jimmy).
+
+### 16.11 Ambient and repeat policy (Phase K)
+
+| Rule | Why |
+|---|---|
+| **Ambient** is a new lowest class | it recurs every 55 ms; losing one tick is inaudible |
+| an ambient tick **never queues**: a busy voice (or a non-empty queue) skips it (`SfxAdmit::Skipped`) | the original only reached 0x4102 when nothing else was sounding — every other primitive blocked |
+| **any** other cue cuts a playing ambient tick (2 ms fade) and starts | ambience never delays a step, a hit or a scene cue |
+| a scene cue skips ambience like everything else; ambience never preempts anything | Q1, M3 |
+| **only a held key's step / bump coalesces** (A3-02 coalesced every identical repeat) | three shakes, three Stonegate drones, one damage burst per member are three real calls in the binary; A3-02's rule played two of three (Q4, S2; mutation M12) |
+| the Shadowlord drone moved from Scene to Ordinary | it is no scene's beat; Stonegate's three announces must each play, FIFO |
+| the fanfare is Combat (FIFO), the shard / shrine ladders Spell (FIFO), the Refuge cues Scene (latest wins) | the binary's order where the game is not paced; the pacer's clock where it is |
+
+40 ticks beside a fountain: 40 bursts, each ending, nothing piling up (Q3). Walking past it: 8 ticks skipped during the step and bump sounds, none queued, no overflow (F5).
+
+### 16.12 Scene and timing safety (Phase L)
+
+Six audio setups, as in A3-02: none, the synthesizer, SFX 0 %, a failing backend, stalled audio (never rendered) and racing audio (rendered 100× ahead). Every sample of the scene state, every frame timestamp and the final game state must be identical.
+
+| Scene | Check | Result |
+|---|---|---|
+| Camp apparition | A3-02 T19 (still run) | identical |
+| Blackthorn entry | A3-02 T21 | identical |
+| **Blackthorn sacrifice** (siren now audible) | B2 | identical; the next beat 7.13 s after the siren in every setup |
+| **Refuge** (thunder, slumber, revival) | R2 | identical |
+| **Shrine WELL DONE** (sweeps + shake) | S4 | identical |
+| **Quake** (the harpsichord melody) | Q2 | identical |
+| **Combat victory** (troll arena) | V5 | identical; exploration returns at 16.305 s in all six |
+
+"Queue full" is covered by Q3/F5 (no overflow) and A3-02 Y10; "audio task delayed" is the stalled setup.
+
+### 16.13 Load and mode safety (Phase M)
+
+| Route | Result |
+|---|---|
+| Alt+L beside a fountain | silent within 2 ms; no burble in the loaded world (M1) |
+| System Menu Load | the same (M2) |
+| System Menu open | no ambient tick while open; the fountain resumes when it closes (M3) |
+| Return to Title | silent; no ambience on the title (M4) |
+| Title Continue | nothing from the old world survives (M5) |
+| Alt+L during the fanfare | faded within 2 ms, nothing queued survives (M6) |
+| Developer teleport | the ambience follows the new position within one tick (F4) |
+| Dungeon corridor | no ambient tick at all (M7) |
+| Arena (a dungeon room's included) | ticks, reading the arena's own cells around (5,5) (F7) |
+| Ending | no ambience (M8) |
+| Alt+L with strikes pending | the loaded world only ticks (M9): a load resets `[0x6a34]` / `[0x5884]` |
+
+### 16.14 Tests (Phase N)
+
+**New ctest targets (2):**
+
+| Target | Checks | Covers |
+|---|---:|---|
+| `a3_03_sfx_inventory` | 48 | I inventory / completeness; D derivations; P programs against the binary's constants; R the rumble and the ladders measured from PCM; A the ambient scan / ticker; Q the policy |
+| `a3_03_sfx_runtime` | 46 | the real `AlphaRuntime`: F fountain (and an arena's), C clock, V victory (troll + ordinary + lost + escape + six-setup timing), Q quake, S shrines / ritual, B Blackthorn sacrifice, R Refuge, W world / shop / intro / no dropped cue, M load / mode |
+
+| Brief item | Checks |
+|---|---|
+| 1 fountain cue emitted | F1, P5, A3 |
+| 2 repeat cadence | F2, A3 |
+| 3 no stuck sound | F3, P5, Q3 |
+| 4 low priority / preemption | Q1, Q2, F5 |
+| 5 mute | F6 |
+| 6 troll victory | V0, V1 |
+| 7 ordinary victory | V3 |
+| 8 exactly once | V1, V2, D2 |
+| 9 not on failed / aborted combat | V4, D2 |
+| 10 no gameplay delay | V5 |
+| 11 moongate | P4, W4 |
+| 12 quake | Q1, R1–R3 |
+| 13 no timing change | Q2 |
+| 14 shrine cue | S1, S3, P3 |
+| 15 ritual cue | S2, P2, R4 |
+| 16 presentation timing unchanged | S4, B2, R2 |
+| 17 bard note order | DeferredPresentation (§16.7); the harpsichord's order is A3-02 H16 / P4 |
+| 18 sound-off semantics separate from volume | I5; A3-02 T19 (Camp identical at 0 % and 80 %) |
+| 19 Blackthorn remaining cue | B1, B2 |
+| 20 final victory cue | not original-backed on the device (ENDGAME cinematic deferred); the shard ritual's fanfare S2 |
+| 21 every supported id has a mapping | I1, I3 |
+| 22 every unsupported id classified | I1, I2 |
+| 23 runtime drops no supported cue | W4, I4 |
+| 24 ambience flushes on load / title | M1–M5, M9 |
+| 25 fanfare flushes safely | M6 |
+
+**Existing guards edited** (the contract each guards is unchanged):
+- `a3_02_sfx_synth` E12: the supported count 23 → 62, and the "undeclared id" example `moongate` → `bard-song` (moongate is now wired).
+- `alpha_runtime_host_fixture.cpp` binds the attract demo's View data as `initialize()` does.
+
+### 16.15 Mutations (Phase O)
+
+`native/core/tools/a3_03_mutation_check.py` → `native/core/a3-03-mutation.log`: 24 one-line production mutations, each run against the A3-03 suites and the A3-02 / A3-01 audio suites.
+
+- **First pass** (`native/core/a3-03-mutation-first-pass.log`, 24 mutations): 21 killed, **3 survived**, and M5 died only by `-Werror`.
+  - **M13** (the dungeon rule dropped) survived because the rule was stated twice — as the UI mode and as the dungeon context — and the context test also silenced arena fights *inside* dungeons, where the original's `g_location` is ≥ 0x80 and 0x266c does redraw. The gate was corrected to the binary's rule (a corridor is silent, any arena ticks; audit finding F10), and F7 plus the new M26 guard the arena side.
+  - **M21** (the healer's type test dropped) survived because the test's other shop used other words; W2 now presents "It is done." from another counter and a healer result that is not the service (new M25 guards the second test).
+  - **M24** (the attract thunder not routed) survived because W3 summed the three flags; it now requires each, and the 2000 Hz chime.
+- **Second pass** (`native/core/a3-03-mutation.log`, 26 mutations): **26 killed, 0 survived**; M5 was still a compile kill (a self-comparison), so it was rewritten to `(void)ended;` and re-run alone (`native/core/a3-03-mutation-m5-rerun.log`): **killed by D2 and V1–V3 / V5**. Every restored build and all five audio suites green.
+
+| # | Mutation | Killed by |
+|---|---|---|
+| M1 | the fountain cue never emitted | A3, F1–F4 |
+| M2 | ambience on every render, not per 55 ms tick | F1, F2, C1 |
+| M3 | ambience preempts a scene / gameplay cue | Q1, F5 |
+| M4 | the troll (arena) victory cue omitted | D1, V1–V3, V5 |
+| M5 | the victory cue fires twice (the Ended line sounds) | D2, V1–V3, V5 (re-run) |
+| M6 | the quake sound drives its shake | Q2, S4 |
+| M7 | ritual audio controls the scene pacing | R2, A3-02 T19 |
+| M8 | a load leaves the ambience state running | M9 |
+| M9 | an unsupported id accepted (bard-song) | I1, A3-02 E12 |
+| M10 | the runtime drops a supported cue (moongate) | W4 |
+| M11 | one rumble per cue instead of per shake | Q1, S1, S2, W4 |
+| M12 | every repeat coalesces (the A3-02 rule) | Q4 |
+| M13 | ambience in a dungeon corridor | M7 |
+| M14 | both ladder legs rise | P2, P3, R4 |
+| M15 | the fanfare's last note at the first pitch | P1 |
+| M16 | the trapdoor ramp everywhere | W1 |
+| M17 | the clock never re-armed | C2, M9 |
+| M18 | the scan keeps the last of equal distances | A2 |
+| M19 | one revival tone whatever the party | R1 |
+| M20 | the escape glide omitted | D1, V4 |
+| M21 | the healer jingle on any shop's result | W2 |
+| M22 | the rumble a flat tone | R1 |
+| M23 | the chimes run down only beside a clock | A4 |
+| M24 | the attract thunder not routed | W3 |
+| M25 | the healer jingle on any healer result | W2 |
+| M26 | no ambience in an arena | F7 |
+
+### 16.16 Firmware (Phase P)
+
+- Pre-commit build `native/targets/tdeck/build-a3-03` (`native/targets/tdeck/a3-03-firmware-configure.log`, `a3-03-firmware-build.log`): ESP-IDF 6.1, `idf.py reconfigure` then `ninja -j 4`, first attempt clean, **zero project warnings** under `-Werror`.
+- `0xe0a40` = **920,128 B**, **+5,520 B** against A3-02's 914,608; **128,448 B (12 %)** of the 1 MiB app partition free.
+- Audio memory: the backend object 784 → **912 B** (+128 B: two ladder fields in each segment of the two 24-segment program copies, and the rumble's state). The queue (16 × 16 B), the audio task (4 KiB stack, core 1, priority 3) and the DMA are unchanged. Each ambient tick costs the game thread 121 terrain reads and at most one 16-byte post with a zero timeout.
+- The post-commit image is built in a fresh directory without ccache; its path, SHA-256 and embedded `Git` are in the annotated tag. Not flashed.
+
+### 16.17 Hardware test (Phase Q) — A3-03 device check
+
+Copy the Launcher image named in the annotated tag. SD card unchanged; `openu5-audio.bin` optional (no SFX needs it). SFX Volume 80 % unless a step says otherwise.
+
+- **A. Boot.** The identity screen reads `FW 3.0.0-alpha3-dev-a3-03-debug` and the tag's `Git` hash; `RES 2041466B CRC 26f75ae6` as before.
+- **B. Fountain.** Developer > Teleport to Moonglow (location 1), X=6, Y=25 — beside the fountain. Stand still: a soft, fast crackle ("burble") about 18 times a second. Walk 6 cells away: it stops. Walk back: it returns. It never turns into a held tone. (Optional: a clock — location 2, X=13 Y=2 — ticks and tocks; take a step and it strikes the hour.)
+- **C. Combat victory.** Fight trolls (a bridge toll refused, or any encounter): when the last enemy falls, **one** fanfare — three equal notes and a higher, longer fourth — then walk off the arena: no second fanfare. Losing a fight or escaping plays no fanfare (escaping plays a short rising glide).
+- **D. Quake / Word of Power.** At Deceit's entrance (Britannia, beside it; the known FALLAX setup), (Y)ell the word: the screen shakes with a low random rumble lasting the shake (~0.9 s).
+- **E. Shrine / ritual.** Any shrine: donate (ALAKAZAM, a long whistling tone whose timbre sweeps up and down, ~7 s), or complete a quest (WELL DONE, ~5 s, then the rumble). Or the harpsichord's 6 7 8 9 8 7 8 7 6 7 6 5 3 on LB castle floor 2: the passage opens with the rumble.
+- **F. Bard / lute.** Not in this build: the Camp keeps the 1988 sound-off lute branch (§16.7). Nothing to check.
+- **G. Load flush.** Beside the fountain, press Alt+L into a save elsewhere: silence at once, no burble after "Load complete". Win a fight and press Alt+L during the fanfare: it stops at once.
+- **H. Volume.** Beside the fountain: 100 %, 50 %, 0 % — quieter each step, silent at 0 %.
+- Not in this check: music (A3-04), final loudness and tone (A3-05).
+
+### 16.18 Remaining SFX (Phase S)
+
+**Cue ids that stay silent (11), each classified:**
+
+| Id | Status | Why |
+|---|---|---|
+| `bard-song` | DeferredPresentation | the Camp lute is the sound-on branch of a scene the device runs in its sound-off form (Batch 51); the tavern bard needs the sprite-layer gate (§16.7) |
+| `title-fizzle`, `title-crackle` | DeferredPresentation | the device title has no dissolve and no subtitle crackle |
+| `endgame-orb` | DeferredPresentation | the endgame cinematic is deferred (D-54) |
+| `line-spray` | EvidenceUnknown | CAST 0x1f60: the fan's lead and a crackle drawn from the game RNG per painted pixel; no native event marks the fan, and its owning spells are not mapped |
+| `combat-reject` | EvidenceUnknown | SJOG 0x1f26's two beeps: which native refusals are the funnel's callers is not established (the device's `What?` is UI text) |
+| `invalid-magic` | EvidenceUnknown | the failure glides are per-spell CAST branches (0x0eb2 / 0x11d3 / 0x1325 / 0x1ba7); none maps to the native generic failure |
+| `cast-spell` | IntentionallySilent | the reference's disputed name for the 0x4368 fanfare; never emitted (casting sounds through the ceremony) |
+| `spell-cast`, `potion-used`, `scroll-used` | IntentionallySilent | markers: the `MagicCeremony` event that follows them plays CAST2 0x0000 |
+
+**Sites with no sound on the device (31 of 126):** the 22 `EvidenceUnknown` rows (glides and sweeps in CAST / CAST2 / COMBAT / COMSUBS / MAINOUT / DUNGEON with no adjacent message, the kernel 0x350a cell impact, the line spells, the reject funnel), 4 `NoNativeEvent` ("Magic absorbed!", "A shadowlord appears", the dungeon teleport ring, the chest-object jimmy) and 5 `DeferredPresentation` (class 4, the endgame, the title). Each row in `sfx_inventory.cpp` names its site and the reason. Closing the `EvidenceUnknown` rows is attribution work — tracing each routine to its caller — not audio work.
+
+**Departures from the TypeScript reference** (each toward the bytes; none in a layer a fixture pins):
+
+| Item | Reference | A3-03 | Why |
+|---|---|---|---|
+| `sceptre` | TS(0xfd2, 1, 65000, 1, 1) | TS(0x1450, 1, 50000, 5000, 1) (+ NB per dissolved field) | the reference used kernel 0x6221's pushes ("The Sceptre is reclaimed!"); the native cue follows "Wielding the Sceptre…", which is CAST 0x198f. 0x6221 is now its own cue |
+| `quake` | tri-band noise, calibrated | the 0x3072 rumble (random half-cycles 19–150 Hz) | §16.6 |
+| `shard-sweep` & the shrine ladders | one tone, the duty not modelled | 2 × 460 calls with the duty walking | A3-02's duty model, applied per call |
+| repeats | — | only a held key's step / bump coalesces | §16.11 |
+| victory / shard fanfare | pauses the game and flushes keys (`BLOCKING_CUES`) | never pauses | the A3-01 contract; recorded as a timing divergence |
+
+### 16.19 Next batches
+
+| Batch | Scope |
+|---|---|
+| **A3-04 — music playback from supported patched assets** | the XMI sequencer, OPL2 emulation and the `FAT.OPL` bank on the core-1 task, mixed after the SFX voice; `music_context_for_location` and the scripted selectors; the combat → victory song switch after `VICTORY!`; CPU and memory measured on hardware. Nothing in A3-03 constrains it: the SFX voice is one channel and music is the other. |
+| **A3-05 — loudness / tone balance and full audio hardware sign-off** | the loudness curve on the real speaker, SFX / music balance and headroom, the tone character the user noted (partly the small speaker), a battery and CPU soak, the strict "1988 sound-off" profile decision (which would also decide the lute, §16.7), and the ledger rows (D-3). |
+| (separate, not audio) | attribution of the 22 `EvidenceUnknown` sites; the presentation batch H-183–H-186 (shrine key waits, the ritual inversion, the Refuge cadence, the sacrifice burst), the endgame cinematic (D-54). |

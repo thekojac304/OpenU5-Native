@@ -1,0 +1,105 @@
+# A3-03 mutation validation (2026-09-26 13:55)
+
+M1 the fountain cue is never emitted [native/core/src/ambient_sfx.cpp]: KILLED
+    a3-03 inventory exit=1  1 RED
+        RED A3 a fountain sounds on every tick (no phase gate); the phase wraps at 8
+    a3-03 runtime   exit=1  8 RED
+        RED F1 standing by a real fountain: one burble per 55 ms tick (0x266c + 0x4102)
+        RED F2 the cadence is the BIOS tick exactly: 55 ms apart on the virtual clock
+        RED F3 each burble is a ~1.7 ms click and ends: no continuous or stuck tone
+        RED F4 and coming back starts it again
+        RED F5 walking by the fountain: ticks during a step are skipped, never queued; nothing overflows
+        RED F6 at SFX Volume 0 the fountain is exact silence (muted in the service, never submitted)
+M2 the fountain loops every frame (ambient on every render, not per 55 ms tick) [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3-03 runtime   exit=1  3 RED
+        RED F1 standing by a real fountain: one burble per 55 ms tick (0x266c + 0x4102)
+        RED F2 the cadence is the BIOS tick exactly: 55 ms apart on the virtual clock
+        RED C1 a real clock ticks and tocks, one of each per 8 ticks (440 ms)
+M3 ambience preempts a scene / gameplay cue [native/core/src/sfx_synth.cpp]: KILLED
+    a3-03 inventory exit=1  1 RED
+        RED Q1 ambience never queues and never cuts a cue: 100 ticks during a scene chord are skipped
+    a3-03 runtime   exit=1  1 RED
+        RED F5 walking by the fountain: ticks during a step are skipped, never queued; nothing overflows
+M4 the troll (arena) victory cue is omitted [native/core/src/sfx_inventory.cpp]: KILLED
+    a3-03 inventory exit=1  1 RED
+        RED D1 each adjacent message maps to the speaker call that follows it in the binary
+    a3-03 runtime   exit=1  6 RED
+        RED V1 winning the troll fight plays the victory fanfare (COMBAT 0x0d02) exactly once
+        RED V1 and it is heard in full, 2.09 s, then silence
+        RED V2 no replay on redraw or on the Ended line
+        RED V3 an ordinary combat victory plays it once too
+        RED V5 (synth: one fanfare; muted: nothing submitted)
+        RED M6 Alt+L during the victory fanfare: faded within 2 ms, nothing queued survives
+M5 the victory cue fires twice (the Ended line sounds too) [native/core/src/sfx_inventory.cpp]: BUILD FAILED (counts as killed)
+    C:\Dev\TamaPoke\.build-tools\w64devkit\bin\c++.exe -DOPENU5_ENABLE_DEVELOPER_TOOLS=1 -IC:/Dev/OpenU5-Native/native/core/include -O3 -DNDEBUG -Wall -Wextra -Wconversion -Werror -MD -MT CMakeFiles/openu5_core.dir/src/sfx_inventory.cpp.obj -MF CMakeFiles\openu5_core.dir\src\sfx_inventory.cpp.obj.d -o CMakeFiles/openu5_core.dir/src/sfx_inventory.cpp.obj -c C:/Dev/OpenU5-Native/native/core/src/sfx_inventory.cpp
+    C:/Dev/OpenU5-Native/native/core/src/sfx_inventory.cpp:248:50: error: unused parameter 'ended' [-Werror=unused-parameter]
+    cc1plus.exe: all warnings being treated as errors
+M6 the quake sound drives its presentation (the shake stretches with submitted audio) [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3-03 runtime   exit=1  2 RED
+        RED Q2 the quake's frames and the game state are identical under all six audio setups
+        RED S4 the shrine's presentation (frames, shake, state) is identical with audio on, off, failing or stalled
+M7 ritual audio controls the scene pacing (the Refuge pacer shifted by submitted audio) [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3-03 runtime   exit=1  1 RED
+        RED R2 the Refuge is paced exactly as without audio under all six setups (the pacer owns time)
+    a3-02 runtime   exit=1  1 RED
+        RED T19 Camp: every 5 ms sample, every frame timestamp and the final state are identical with no audio, the synthesizer, SFX muted, a failing backend, audio stalled and audio racing ahead
+M8 a load leaves the ambience state running [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3-03 runtime   exit=1  1 RED
+        RED M9 Alt+L beside a clock that was about to strike: the loaded world only ticks (no strike survives the load)
+M9 an unsupported SfxId is silently accepted (bard-song) [native/core/src/sfx_synth.cpp]: KILLED
+    a3-03 inventory exit=1  1 RED
+        RED I1 every SfxId is Implemented exactly when compile_sfx has its program (none silently accepted)
+    a3-02 synth     exit=1  1 RED
+        RED E12 unknown / undeclared ids (None, Count, 250, bard-song) compile to nothing and leave the player idle
+M10 the runtime drops one supported cue (moongate) [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3-03 runtime   exit=1  1 RED
+        RED W4 every supported cue presented through the runtime reaches the synthesizer (quake: once, by its shake)
+M11 the shake does not carry the rumble (one quake per cue, not per shake) [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3-03 runtime   exit=1  5 RED
+        RED Q1 the melody's quake (TOWN 0x0ea3 -> 0x3072) plays one rumble, after the 13 notes
+        RED S1 WELL DONE: the two 460-call loops, then ONE rumble (the shake carries it; the cue does not double it)
+        RED S1 in the binary's order: the sweeps (5.35 s) then the rumble, one after the other
+        RED S2 the shard ritual: the sweep, THREE rumbles (CAST 0x169d/0x16a0/0x16a3), the fanfare (CAST 0x1759)
+        RED W4 every supported cue presented through the runtime reaches the synthesizer (quake: once, by its shake)
+M12 every repeat coalesces again (the A3-02 rule) [native/core/src/sfx_synth.cpp]: KILLED
+    a3-03 inventory exit=1  1 RED
+        RED Q4 repeats that are real calls play: three shakes, three Stonegate drones, a burst per damaged member
+M13 ambience in a dungeon (the 0x21-0x7f rule dropped) [native/targets/tdeck/main/alpha_runtime.cpp]: SURVIVED
+M14 the ladder legs both rise (stride sign) [native/core/src/sfx_synth.cpp]: KILLED
+    a3-03 inventory exit=1  3 RED
+        RED P2 shard ritual CAST 0x15dd-0x162a: 2 x 460 calls TS(0xa50,1,0xc8,si,0), 7.13 s (= the Blackthorn siren hold)
+        RED P3 shrine ALAKAZAM (0xa8c, 0xc8) and WELL DONE (0xc1c, 0x96): the same two 460-call loops
+        RED R4 the 920 calls hold one pitch (0xa50 = 1040 Hz) while the duty walks out and back: 7.1 s
+M15 the fanfare's last note at the first pitch [native/core/src/sfx_synth.cpp]: KILLED
+    a3-03 inventory exit=1  1 RED
+        RED P1 victory fanfare 0x4368: 3 x TS(4600,1,10800,300,6) + TS(6100,1,21600,300,3) -- two pitches, 2.09 s
+M16 the trapdoor ramp everywhere (location 29 test dropped) [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3-03 runtime   exit=1  2 RED
+        RED W1 world messages sound where the binary does, and only there (Docked!, the potion's Poof!, a plain trapdoor: mute)
+        RED W1 location 29's trapdoor (TOWN 0x0f96) plays the 28 s fall and a burst per member
+M17 the clock is never re-armed [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3-03 runtime   exit=1  2 RED
+        RED C2 after the clock moves it strikes the 12-hour hour, then goes back to tick / tock
+        RED M9 Alt+L beside a clock that was about to strike: the loaded world only ticks (no strike survives the load)
+M18 the scan keeps the LAST of equal distances [native/core/src/ambient_sfx.cpp]: KILLED
+    a3-03 inventory exit=1  1 RED
+        RED A2 a tie goes to the first in scan order (x outer, y inner)
+M19 the revival plays one tone whatever the party [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3-03 runtime   exit=1  1 RED
+        RED R1 the Refuge's sounds in order: the slumber melody, two peals of thunder, one revival tone per member
+M20 the escape glide is omitted [native/core/src/sfx_inventory.cpp]: KILLED
+    a3-03 inventory exit=1  1 RED
+        RED D1 each adjacent message maps to the speaker call that follows it in the binary
+    a3-03 runtime   exit=1  1 RED
+        RED V4 escaping plays the escape glide (SJOG 0x1c37) and no fanfare
+M21 the healer jingle on any shop result [native/targets/tdeck/main/alpha_runtime.cpp]: SURVIVED
+M22 the rumble is a flat tone (no redraw per half-cycle) [native/core/src/sfx_synth.cpp]: KILLED
+    a3-03 inventory exit=1  1 RED
+        RED R1 its half-cycles are drawn from rand_range(0x13, 0x96): 19..150 Hz, varied, a low rumble
+M23 the chimes do not run down outside the clock branch [native/core/src/ambient_sfx.cpp]: KILLED
+    a3-03 inventory exit=1  1 RED
+        RED A4 the chimes run down even with no clock in view (0x430e is outside the switch)
+M24 the attract demo's thunder is not routed [native/targets/tdeck/main/alpha_runtime.cpp]: SURVIVED
+
+restored build exit=0; a3-03 inventory exit=0, a3-03 runtime exit=0, a3-02 synth exit=0, a3-02 runtime exit=0, a3-01 contract exit=0
+mutations: 24, killed: 21, survived: 3
