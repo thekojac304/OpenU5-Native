@@ -8,7 +8,19 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Batch 52) — Alpha 2 readiness verdict; read this first
+> ### CURRENT STATE (Batch 53) — release blockers fixed in software; hardware retest pending; read this first
+>
+> **RB-1 … RB-4: SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E).** Alpha 2 is still **not** a release candidate: Phase 7E must pass on the Batch 53 image first, then Batch 54 does the re-readiness check and RC packaging. See §14 "Batch 53".
+>
+> | | |
+> |---|---|
+> | Blockers | RB-1 H-189 (ENDMSG + `end_record`), RB-2 H-187 (Words of Power), RB-3 H-188 / H-191 (moonstone owner, save capture, night gate tile, `To phase:`), RB-4 H-146 (shop `ship` / `horse` / `reserve`): all bound by shared production binders; H-190 (KARMA.DAT) rides with them. |
+> | Host suite | **121 / 121 pass**, 0 fail, 0 skipped (new: `batch53_release_blockers`, 95 checks; 42 of 82 RED on the Batch 52 sources). 22 / 22 mutations killed. |
+> | SD pack | **Changed — recopy required.** 2,041,466 B, 42 entries, CRC `0x26f75ae6`, SHA-256 `a48abdbf…379b`. A Batch 51 pack is refused. |
+> | Firmware | 877,728 B (`0xd64a0`), +2,864 B, 170,848 B (16 %) free. Image path, SHA-256 and `Git` hash: tag `alpha2-batch53-release-blockers`. Not flashed. |
+> | Next | **Phase 7E** (checklist) on the Batch 53 image, then Batch 54. |
+
+> ### CURRENT STATE (Batch 52) — **SUPERSEDED by the Batch 53 block above; kept as history.** Alpha 2 readiness verdict
 >
 > **ALPHA 2 NOT READY FOR RELEASE CANDIDATE.** There are four release blockers, all core services that the T-Deck runtime never binds. See §14 "Batch 52" for the evidence, the full reconciliation table and the RC prerequisites.
 >
@@ -20,7 +32,7 @@
 > | Hardware | 6T, 6U, 6V, 6W (functional), 6X, 6Y, 6Z, 7A, 7B (run 2 logic/visual), 7C (run 2) and 7D are **PASS**. 7B pacing was fixed in B51 and passed in 7D. The stale-image runs are struck. |
 > | Next | **Batch 53**: device service-binding completion. It needs an SD-pack change. Then **Phase 7E** on the device, then Batch 54 (RC packaging + smoke). |
 
-> ### CURRENT STATE (Batch 18) — **SUPERSEDED by the Batch 52 block above; kept as history.** Read this before any status claim below
+> ### CURRENT STATE (Batch 18) — **SUPERSEDED by the Batch 53 / 52 blocks above; kept as history.** Read this before any status claim below
 >
 > **Alpha 2: HOST-CLEAN — HARDWARE VALIDATION REMAINS.**
 >
@@ -1716,7 +1728,7 @@ A design review of the freshly-landed R-30 work found two of the five Certificat
 | Y-21 | Rel Hur scroll | **GREEN — DISCHARGED (Batch 5). The stated claim is false.** `AlphaRuntime::modal()`'s Inventory branch (`alpha_runtime.cpp:684`) already routes scroll id 1 (and skull key 17) through `ui_->begin_target(UiRequestId::UseTarget,"Direction?",c)`, and `UiSession`'s TargetSelection direction arm dispatches `UseItem` with `has_direction` set, so `world_magic.cpp` `case 1` sets the wind. Both halves are now pinned host-side: `batch5` B4 (the getdir dispatches `UseItem` + direction) and C6 (`world_magic` spends the scroll and sets `turn.wind`). No production change was needed for the stated defect. | Discharged; the remaining cancel-path divergence is tracked separately as **Y-31** |
 | Y-22 | Dungeon→combat→dungeon return | `dungeon_combat_return` handles floor delta, escape border and facing; covered by `dungeon_flow_parity` at core level only | Device round-trip test |
 | Y-23 | Dungeon keyboard movement with Movement Mode off | No `w`/`d` fallback; only trackball moves | Probably acceptable, but state it as a deliberate contract |
-| Y-24 | Word-of-power Yell | **GREEN — DISCHARGED (Batch 3).** Both branches are regression-tested together: `batch3_group_a` A1 (frigate → `YellSails`, no modal), A2 (non-frigate → `YellText`), A3 (word path → `CommandKind::Yell`). **Batch 52 correction: re-opened as H-187 / RB-2.** A3 only proves the UI dispatches `CommandKind::Yell`. On the device `QuestWorldServices::words` is never bound, so no Word can match, every Yell answers "No effect!" and every dungeon stays sealed. | — |
+| Y-24 | Word-of-power Yell | **GREEN — DISCHARGED (Batch 3).** Both branches are regression-tested together: `batch3_group_a` A1 (frigate → `YellSails`, no modal), A2 (non-frigate → `YellText`), A3 (word path → `CommandKind::Yell`). **Batch 52 correction: re-opened as H-187 / RB-2.** A3 only proves the UI dispatches `CommandKind::Yell`. On the device `QuestWorldServices::words` is never bound, so no Word can match, every Yell answers "No effect!" and every dungeon stays sealed. **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E-B)** — the pack's Words of Power, bound by `bind_quest_services`; `batch53_release_blockers` W1–W11. | — |
 | Y-25 | Shrines | All three modals dispatch correctly; `UiMode::ShrineSpecial` lifecycle (entry, capture, return) repaired in Batch 1 (§5) — no known mode defect remains | Device pass at a shrine (physical-device validation only) |
 | Y-26 | Beds / auto-sleep | `CommandKind::AutoSleep` is core-internal (`commands.cpp:1163`), reached through `townAutoSleepTurn` | Confirm it is genuinely internal-only |
 | Y-28 | Combat Ready picker close timing | Two presentation gaps that do **not** affect action cost (see section 3 R-06): the empty-handed case opens a disabled `"(None available)"` picker instead of charging immediately without one, and `ItemResult::vanished` (`"Ring vanishes!"`) does not close the picker early the way the reference does | Close the picker from `AlphaRuntime::modal()` on `vanished`, and short-circuit the empty-handed open |
@@ -1725,7 +1737,7 @@ A design review of the freshly-landed R-30 work found two of the five Certificat
 | Y-30 | World cast prompt/consumption ordering under the fused `world_magic()` | **OPEN — newly discovered (Batch 5 adjudication), deliberately not fixed.** `world_magic()` performs `cast_spell()` (charge + mana + ceremony) and the direction-dependent effect in **one** call, so the native getdir must be raised *before* the call, while the reference consumes first and prompts after (`main.ts` `doCast` → `pendingCastDoor`/`pendingCastUnlock`/`pendingCastBlink`). Net state matches on both the success and the cancel path (a cancelled world cast still dispatches, so the charge is still spent — `batch5` B3/C3/C5), so this is a **presentation-ordering** divergence, not a state divergence: the result message and the `MagicCeremony` flash land after the getdir instead of before it, and a cast that would fail its own gate (`"Not here!"`, `"None mixed!"`, `"M.P. too low!"`, `"Absorbed!"`) raises a spurious getdir first where the reference prints the failure immediately and never prompts. Most visible on An Ex Por outdoors and In Por in town (both `"Not here!"`). | Split `world_magic` into a cast step and an apply-direction step, then have `AlphaRuntime` dispatch the cast, read the effect, and only then prompt. Core API change — out of Batch 5 scope. |
 | Y-31 | Cancelling the Rel Hur (and skull key) `(U)se` getdir refunds the item | **GREEN — RESOLVED (Batch 16).** The reference consumes at item-selection time, *before* the getdir: `readScroll()` runs and prints its messages, then `pendingScrollWind` is armed (`main.ts` `doCast`-adjacent `(U)se` branch), and cancelling leaves the scroll spent with the wind unchanged; the skull key is explicitly the same (`main.ts`: "la llave YA se decrementó al seleccionar el item (0x18c4 va ANTES del getdir)"). Native dispatched nothing on cancel — `UiSession`'s TargetSelection cancel arm sent a bare `ModalResponse{accepted=false}` for a `UseItem` pending command — so ESC at the Rel Hur prompt **refunded the scroll**. **Fix:** the seam turned out to live in `UiSession::handle_modal`'s TargetSelection cancel arm (host-testable, not `AlphaRuntime` as originally guessed — Batch 11 had already made `AlphaRuntime` host-testable too, but the actual pending state lives in `UiSession`), alongside the existing `Cast` cancel arm: a new `use_item` case dispatches the pending `UseItem` with `has_direction=false`, which `world_magic.cpp` already consumes unconditionally on `cmd.item` range for both scroll ids 0–7 and the skull key (17) — no `world_magic.cpp` change was needed, only the dispatch decision. | Discharged |
 | Y-32 | Scripted-event temporal / pacing parity | **OPEN — investigated and reclassified (Batch 16); still insufficiently evidenced for a numeric fix.** **Batch 51 re-adjudication (read §14 Batch 51 before this cell): the premise below is superseded for the tick waits — `delay` 0x20fa and `run_n_frames` 0x3ae6 count real PIT ticks, so every Blackthorn frame count is byte-exact (A) and 55 ms is the original tick, not a TrollSneak loan. The zero-dwell materialization sweep, holy-circle and siren beats were the defect and are HOST FIXED; only the sweeps' true host duration (B) and the fizzle texture (C) stay open.** A manual comparison against original Ultima V footage found that native's **Blackthorn capture scene appears substantially faster and more collapsed than the original**. Batch 16 confirmed by direct archaeology that **no footage-derived timing evidence exists anywhere for this scene**: `re/notes/blackthorn-escena-324.md` §4 explicitly disclaims a witness for the capture scene's cadence ("sin testigo propio para esta escena"), and the TypeScript port's `PAUSE_UNIT_MS` (`game/src/skin/world-fx.ts:58`) is an admitted reuse of TrollSneak's calibration, not an independent Blackthorn measurement. Every frame count in `blackthorn_scene.cpp`'s script builders is the disassembled bytecode's own literal pause argument (cited instruction-by-instruction against `re/notes/blackthorn-escena-324.md` §2), so the numbers are not invented, but they were never checked against real footage for *this* scene the way Y-04's Quake channel was. Batch 16 also found and ruled out one candidate root cause: `BlackthornScenePacer` (unlike `NarrativeScenePacer`) enforces no reading-floor on `Message`/`Forward`/`Prompt` steps — but tracing the actual interleaving in `blackthorn.cpp` (the `event(...);build_*_script(...);emit_scene(...)` sequence) shows every message is already followed by either a genuine blocking `key_wait` or a frame-bearing beat, so this asymmetry does not currently manifest as a dropped or flashed message; it is recorded as an observation, not a diagnosis. **Batch 4.5D (R-32)**, which built the scene's presentation from nothing, explicitly did not attempt any independent pacing calibration either — it reused the same generic `kPresentationUnitMs`/`PAUSE_UNIT_MS`=55ms convention verbatim. | A frame-by-frame video comparison against original DOS footage, scene by scene, measuring the per-beat dwell each one actually holds rather than assuming the 55ms/tick DOS-timer convention transfers unmodified. `BlackthornScenePacer::resume_at_ms()`/`released_steps()` already expose the shape `batch7b_test.cpp`'s D8/E23-style assertions use for Refuge/TrollSneak (`blackthorn_scene_test.cpp`'s T4 already pins *relative* ordering); once real dwell numbers exist, the same absolute-ms assertion style can be added. Do not invent floor values for the Message/Forward/Prompt asymmetry without footage evidence, even though the architecture would support it cheaply. |
-| Y-33 | Vas Rel Por (spell 46) never raises its phase-gate ceremony | **GREEN — RESOLVED (Batch 16).** `CAST.OVL 0x0cf0` prints "To phase:", reads the key, and only after the exact `'1'..'8'` gate (`0x0d1d`/`0x0d23`) pushes the literal index 8 (`0x0d2d`) into `CAST2:0x0000`; the three early exits (aboard ship at `0x0cf6`, any non-`'1'..'8'` key) skip both the ceremony and the teleport. The native command modelled none of this — no prompt, no gate, and `Command.hours` (reserved for the phase) defaulted to 0, a *valid* phase, so casting the spell silently teleported to moonstone 0 with no keypress at all. **Fix, four layers deep, mirroring `game/src/main.ts`'s `castGateTravel`:** (1) `cast_target_prompt()` gained a `CastTargetPrompt::WorldPhase` case and an `aboard_ship` parameter (ship gates the prompt itself, matching 0x0cf6 firing before the print at 0x0cff); (2) `UiSession`'s `TargetSelection` mode gained a `Character` arm for the new `UiRequestId::GatePhase` request — exactly `'1'-'8'` sets the phase (0-7), anything else (including Cancel, via the existing `cast` arm) leaves the pre-armed `-1` sentinel; (3) `world_magic.cpp`'s `Gate` branch now fires the ceremony (literal index 8) only when a valid phase was chosen **and** the party is not aboard ship — checked independently of the UI, since a caller that supplies `hours` directly (the parity fixture) must get the same answer; (4) `commands.cpp`'s pre-existing (already-correct, unmodified) `phase<0`/ship/bounds gate and silent-success `moonstone_teleport` call now receive a real phase instead of an always-valid stale default. `dungeon_orchestration.cpp` needed **no** change: Vas Rel Por is peace-time-only (`time_bits` excludes both combat and dungeon), so `cast_spell()`'s own generic time-window gate already rejects it underground with "Not here!" before any Gate-specific code runs — proven as a control, not assumed. `check-gameplay.ts` (native's own copy of the parity fixture) was missing the ceremony cue in its `gateTravel` branch entirely — a real gap in the fixture, not the reference — and was corrected alongside the fix; its line-130 scenario (`hours` ∈ {-1,0,3,7,8} × six transport tiles) caught a native off-by-one (no upper bound on the valid phase range) that the new host tests had missed. `gameplay_parity` passes. **Batch 52 correction: re-opened as H-188 / RB-3.** The ceremony and its `'1'`–`'8'` gate are correct, but the device never binds `QuestWorldServices::moonstones`. `size_t(phase) >= moonstone_count` therefore fails every phase with "Failed!" (`commands.cpp:938`), which is exactly the H-12/H-13 hardware symptom. The `To phase:` text is separately overdrawn by `AlphaRuntime::overlay` (D-53). |
+| Y-33 | Vas Rel Por (spell 46) never raises its phase-gate ceremony | **GREEN — RESOLVED (Batch 16).** `CAST.OVL 0x0cf0` prints "To phase:", reads the key, and only after the exact `'1'..'8'` gate (`0x0d1d`/`0x0d23`) pushes the literal index 8 (`0x0d2d`) into `CAST2:0x0000`; the three early exits (aboard ship at `0x0cf6`, any non-`'1'..'8'` key) skip both the ceremony and the teleport. The native command modelled none of this — no prompt, no gate, and `Command.hours` (reserved for the phase) defaulted to 0, a *valid* phase, so casting the spell silently teleported to moonstone 0 with no keypress at all. **Fix, four layers deep, mirroring `game/src/main.ts`'s `castGateTravel`:** (1) `cast_target_prompt()` gained a `CastTargetPrompt::WorldPhase` case and an `aboard_ship` parameter (ship gates the prompt itself, matching 0x0cf6 firing before the print at 0x0cff); (2) `UiSession`'s `TargetSelection` mode gained a `Character` arm for the new `UiRequestId::GatePhase` request — exactly `'1'-'8'` sets the phase (0-7), anything else (including Cancel, via the existing `cast` arm) leaves the pre-armed `-1` sentinel; (3) `world_magic.cpp`'s `Gate` branch now fires the ceremony (literal index 8) only when a valid phase was chosen **and** the party is not aboard ship — checked independently of the UI, since a caller that supplies `hours` directly (the parity fixture) must get the same answer; (4) `commands.cpp`'s pre-existing (already-correct, unmodified) `phase<0`/ship/bounds gate and silent-success `moonstone_teleport` call now receive a real phase instead of an always-valid stale default. `dungeon_orchestration.cpp` needed **no** change: Vas Rel Por is peace-time-only (`time_bits` excludes both combat and dungeon), so `cast_spell()`'s own generic time-window gate already rejects it underground with "Not here!" before any Gate-specific code runs — proven as a control, not assumed. `check-gameplay.ts` (native's own copy of the parity fixture) was missing the ceremony cue in its `gateTravel` branch entirely — a real gap in the fixture, not the reference — and was corrected alongside the fix; its line-130 scenario (`hours` ∈ {-1,0,3,7,8} × six transport tiles) caught a native off-by-one (no upper bound on the valid phase range) that the new host tests had missed. `gameplay_parity` passes. **Batch 52 correction: re-opened as H-188 / RB-3.** The ceremony and its `'1'`–`'8'` gate are correct, but the device never binds `QuestWorldServices::moonstones`. `size_t(phase) >= moonstone_count` therefore fails every phase with "Failed!" (`commands.cpp:938`), which is exactly the H-12/H-13 hardware symptom. The `To phase:` text is separately overdrawn by `AlphaRuntime::overlay` (D-53). **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E-C)** — the runtime moonstone owner and the `To phase:` status line; `batch53_release_blockers` M0–M9, R0–R12b. |
 | Y-34 | `quest_parity` crashes the native driver with `STATUS_ACCESS_VIOLATION` (exit `3221225477`) | **GREEN — RESOLVED (Batch 17). Host-harness undefined behaviour, not a production defect and not environment flakiness.** Carried as "baseline noise" from Batch 8 through Batch 16. The driver dies on input line 3452 (`{"op":"theft","here":0,"seed":20}`, `keys=2`) — one of exactly two of the 1152 `theft` cases in which Faulinei's rejection-sampling re-roll (TALK.OVL `0x11c7`, `re/notes/shadowlord-urbano-acta.md` §2.3) does not terminate against the port's deterministic `OriginalRng`. Both parity sides bound the *observation* with a 65536-draw watchdog; the native side escaped it with `setjmp`/`longjmp` written inline in `quest_driver.cpp`'s `main()`. On `x86_64-w64-mingw32` with `__SEH__`, `setjmp(b)` expands to `_setjmp(b, __builtin_frame_address(0))` because GCC 16 dropped `__builtin_sponentry`, and GCC's frame base is not the Win64 SEH establisher frame — measured at `-O2`: TargetFrame `0x5AD89FFD30` against establisher frame `0x5AD89F62A0`, off by `main`'s ~39 KB frame. `ntdll!RtlUnwindEx` therefore never matches, walks past `main` and off the top of the thread stack into `MEM_RESERVE` pages, and the resulting AV recurses inside exception dispatch until the process dies. At `-O0` the two values coincide exactly and the identical source survives, which is why it read as flaky for eight batches. **Adjudication: zero parity divergence was hiding behind it** — the full 5377-case comparison was run to completion on an `-O0` driver *before* any change and matched the TypeScript reference on every case. **Fix is harness-only**: the escape moved to a shared seam (`native/core/tests/quest_theft_watchdog.h`) and became a C++ exception, the same escape `check-quests.ts` uses. No production translation unit touched; firmware byte-identical. | New `batch17_theft_watchdog` (33 checks) pins the budget, the untouched-state contract, the gate, the linear cascade, the exact non-terminating set, and — group D — that the escape unwinds rather than jumps, so a return to `longjmp` turns red cleanly instead of crashing. Host suite is now **85/85, zero failures**. See §14 Batch 17. |
 
 **Y-29 investigation detail — surveyed candidates for a device-reachable "clear active player" route:**
@@ -6344,7 +6356,7 @@ The 1,648 ms transit animation (`0x48a8`, 15 × `delay(2)`) is presentation and 
 
 | ID | Subsystem | Old status | Current (cat.) | Evidence | Blocker | Required action |
 |---|---|---|---|---|---|---|
-| H-12 / H-13 | Vas Rel Por | FAIL (B20 hw) | **8** | Root cause is RB-3: no moonstones, so every phase fails. The prompt overlay is still present (`alpha_runtime.cpp:1648`). | **yes** | Batch 53 (RB-3 + D-53 prompt) |
+| H-12 / H-13 | Vas Rel Por | FAIL (B20 hw) | **8** | Root cause is RB-3: no moonstones, so every phase fails. The prompt overlay is still present (`alpha_runtime.cpp:1648`). | **yes** | Batch 53 (RB-3 + D-53 prompt) → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E)** |
 | H-15 (presentation half) | world getdir text | FAIL (presentation) | 7 | The same overlay shows `Aim:` instead of `Direction?`. Harmless: Move+Confirm is the right gesture. | no | Fixed incidentally if the D-53 fix covers every world getdir; otherwise Alpha 3 UI |
 | H-22 | wishing-well wish | FAIL (B20 hw) | 7 | **Confirmed this batch from bytes:** LOOKOBJ `0x00aa` calls kernel `0x6f1e` stristr, which folds case with `and 0x5f` (`native/core/batch52-h22-wish-stristr-disasm.log`). Native `look.cpp:49` is case-sensitive, and so is the TS reference (its note leaves the question "open"). An optional easter egg. | no | D-50; fidelity queue (Alpha 3) — fix the TS reference at the pinned layer first |
 | H-23 | chained modal text | PASS partial | 2 | Well/potion chains passed in B20; shrine Visit→Virtue→Donate passed (H-31); Blackthorn interrogation prompts were readable in 7D-B (B51). | no | — |
@@ -6360,7 +6372,7 @@ The 1,648 ms transit animation (`0x48a8`, 15 × `delay(2)`) is presentation and 
 | H-106 | summons in combat | UNTESTED | 3 | `combat_parity`, `magic_parity`. | no | — |
 | H-115 | dungeon save/load | FAIL (B20 hw) | 2 | Fixed B26; **6U PASS**. | no | — |
 | H-118 | shard ritual / Move lock | FAIL CRITICAL | 2 | Fixed B25; **6T PASS**. | no | — |
-| H-119 | Yell a Word of Power | UNTESTED | **8** | RB-2: `words` is unbound, so no Word can ever match. | **yes** | Batch 53 |
+| H-119 | Yell a Word of Power | UNTESTED | **8** | RB-2: `words` is unbound, so no Word can ever match. | **yes** | Batch 53 → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E)** |
 | H-120 | Blackthorn capture scene | UNTESTED | 2 | Exercised in 7D-B on B51. | no | — |
 | H-121 | active char not re-pointed | UNTESTED (do not file) | 5 | `BLCKTHRN 0x03ae-0x04d4`, R-23. | no | — |
 | H-122 | Blackthorn pacing | KNOWN OPEN (D-10) | 2 | B51 fix; **7D-B PASS**. Residual B/C sweep and fizzle duration is category 6 (§7). | no | — |
@@ -6373,7 +6385,7 @@ The 1,648 ms transit animation (`0x48a8`, 15 × `delay(2)`) is presentation and 
 | H-137 (Refuge half) | party-wipe Refuge | UNTESTED | 6 | Core resolution is host-proven (`batch7b`, `quest_parity`). It shares the pacer with TrollSneak (7D-C PASS). The karma speech is H-190 text. **Never run on the device, and it is the party-wipe recovery path.** | no | **RC-P (required)** |
 | H-138 | FX `under_tile` choreography | UNTESTED | 6 | Y-04 host. | no | Optional |
 | H-139 / H-140 | combat Ready picker (D-8/Y-28) | UNTESTED, known open | 6 | Presentation; action cost unchanged; never adjudicated. | no | Alpha 3 |
-| H-146 | ship / skiff / horse purchase | FAIL (B20 hw) | **8** | RB-4. | **yes** | Batch 53 |
+| H-146 | ship / skiff / horse purchase | FAIL (B20 hw) | **8** | RB-4. | **yes** | Batch 53 → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E)** |
 | H-148 | vault chest reset on bed | INCONCLUSIVE → fixed B21B | 1 | The user saw the bed reset working on the B22 image (Batch 23 prompt). 6P was never formally recorded. | no | — |
 | H-149, H-150, H-152 | dungeon room family | FAIL CRITICAL | 5 | Adjudicated original in B21A (authored alcove; Set Active Player auto-pass). H-150/H-152 behaved as adjudicated on the device (21A.3 prompt). | no | — |
 | H-151 | Slime/Gargoyle actor freeze | FAIL CRITICAL | 3 | Fixed in core, B21A (`combat_growth_reserve`), RED-7 on the production path. The capacity constant is shared with the device. | no | **RC-P**: Destard room 9 |
@@ -6393,11 +6405,11 @@ The 1,648 ms transit animation (`0x48a8`, 15 × `delay(2)`) is presentation and 
 | H-181 | bed pose | RESERVED (7C) | 2 (avatar) / 6 (NPC pose) | 7C run 2 PASS for the controlled actor. The scheduled-NPC 1988 pose is unresolved (Batch 49, Outcome D). | no | An original-runtime witness; Alpha 3 preservation |
 | H-182 | Camp apparition pacing | HOST FIXED (7D-A) | 2 | 7D-A PASS. | no | — |
 | H-183 – H-186 | shrine / Refuge / sacrifice scene gaps | queued (B51) | 7 | §5. | no | Alpha 3 scene fidelity |
-| **H-187** | Words of Power | *new* | **8** | RB-2. | **yes** | Batch 53 |
-| **H-188** | moonstones / moongates / Vas Rel Por | *new* | **8** | RB-3. | **yes** | Batch 53 |
-| **H-189** | victory ending / final arena | *new* | **8** | RB-1. | **yes** | Batch 53 |
-| **H-190** | karma speech text | *new* | 7 | §3 companion; text only. | no | Ride Batch 53 (same pack section); otherwise Alpha 3 |
-| **H-191** | night moongate tile | *new* | **8** | Part of RB-3. | **yes** | Batch 53 |
+| **H-187** | Words of Power | *new* | **8** | RB-2. | **yes** | Batch 53 → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E)** |
+| **H-188** | moonstones / moongates / Vas Rel Por | *new* | **8** | RB-3. | **yes** | Batch 53 → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E)** |
+| **H-189** | victory ending / final arena | *new* | **8** | RB-1. | **yes** | Batch 53 → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E)** |
+| **H-190** | karma speech text | *new* | 7 | §3 companion; text only. | no | Ride Batch 53 (same pack section); otherwise Alpha 3 → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E)** |
+| **H-191** | night moongate tile | *new* | **8** | Part of RB-3. | **yes** | Batch 53 → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E)** |
 | Y-24 | Word-of-power Yell | GREEN — DISCHARGED (B3) | 1 → **re-opened as H-187** | The Batch 3 test only checked the UI dispatch. | (RB-2) | — |
 | Y-33 | Vas Rel Por phase gate | GREEN — RESOLVED (B16) | 1 → **re-opened as H-188** | The ceremony is correct; the gate data is missing on the device. | (RB-3) | — |
 | Y-07 / §2 "Codex / endgame" | end-to-end endgame | Y (unproven) | **8** via RB-1 | §3. | (RB-1) | — |
@@ -6638,3 +6650,202 @@ The only remaining path that can leave the device in unresponsive input or the w
 - No RC packaging, no flash, no SD change.
 - No audio, UI or Alpha 3 work.
 - No change to H-183 – H-186.
+
+## Batch 53 — Alpha 2 release-blocker wiring / data closeout
+
+**Verdict: RB-1, RB-2, RB-3 and RB-4 are SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E).** The two companions ride with them: H-190 (KARMA.DAT text) and D-53 (`To phase:`). The fix is one production binder per service family, shared by `AlphaRuntime::initialize()` and the host fixture, plus three new SD-pack sections and a runtime moonstone owner. **The SD resource pack changed** and must be recopied. The firmware changed. Nothing was flashed. No Alpha 3, audio, UI or RC work was started.
+
+### 1. Baseline (Phase 53A)
+
+| Item | Value |
+|---|---|
+| HEAD | `0a3c1af90946602c64f7c5501f56948997bc170e`, branch `main`, tree clean; annotated tag `alpha2-batch52-readiness-audit` on HEAD. No Batch 50 commit or tag. The last firmware-changing commit is Batch 51 `045cb092`. |
+| Host suite (fresh, before any edit) | **120 total · 120 pass · 0 fail · 0 skipped**, serial, `ctest` 108.5 s; build 704 ninja steps in 52 s. Release, `OPENU5_ENABLE_DEVELOPER_TOOLS=ON`, Node 24.18, GCC 16.2.0 (w64devkit), Ninja. One warning: the known w64devkit `stl_uninitialized.h` `-Wstringop-overflow=` false positive. Logs `native/core/batch53-baseline-{configure,host-build,ctest,timing}.log`. |
+| Firmware baseline | Batch 51: 874,864 B (`0xd5970`), 173,712 B (17 %) free, `Git 045cb092b81b` |
+| Launcher baseline | `build-batch51/launcher/OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`, re-hashed: SHA-256 `5323b0dd83251875a287beec8f165097dc134ab20ab0f5114ee4ee8bb9bede6d`; `grep -a` finds `045cb092b81b` |
+| SD pack baseline | 2,039,545 B, SHA-256 `434cd664…b4ea`, 39 entries. **The unmodified pack tool rebuilds it byte for byte** (checked this batch before any change), so the new pack differs from it only by what Batch 53 added. |
+| Batch 52 evidence | RB-1…RB-4 rows (§ Batch 52 §3, §4, §12), `batch52-device-binding-probe.log`, the four `batch52-endgame-probe-*.log` — all present. |
+
+### 2. The device-binding map (Phase 53B)
+
+Why the tests were richer than the firmware, hook by hook, as of Batch 52:
+
+| Hook | Parity drivers | Host fixture (B52) | T-Deck `AlphaRuntime` (B52) | Null / default | Player-visible when missing | Batch 53 |
+|---|---|---|---|---|---|---|
+| `QuestWorldServices::end_record` | `quest_driver.cpp:46` binds ENDMSG.DAT from the corpus | unbound | **unbound**; no ENDMSG in the pack | `rescue_events` / `absorption_endgame` → `InvalidContext`; `finish_encounter_combat` → `Invalid` | Wooden-Box victory refused; final arena never torn down (RB-1) | `bind_quest_services` → pack `endmsg-records.bin` |
+| `karma_record` (quest) | `quest_driver.cpp:39`, quoted KARMA.DAT | unbound | **unbound** | falls back to `RestServices::karma_record` | the rest owner's invented sentence (H-190) | same binder → quoted `karma-records.bin` |
+| `RestServices::karma_record` | `gameplay_driver.cpp:54` | production `bind_rest_services` | invented `"Rest well, Avatar…"` | Camp returns `invalid_context` | invented Camp / Refuge speech (H-190) | `karma_speech`, the same six records |
+| `words` | `quest_driver.cpp:47` (`data.wordsOfPower`) | unbound | **unbound**; no table in the pack | empty view | every Yell "No effect!"; all 8 seals closed (RB-2) | same binder → `words-of-power.bin` |
+| `moonstones` / `moonstone_count` | `quest_driver.cpp:45`, `gameplay_driver.cpp:62` from the document | unbound | **unbound** (read at `alpha_runtime.cpp` Z-stats/Use only) | count 0 | no transit, Vas Rel Por `Failed!`, stones unsearchable and unsaveable (RB-3) | runtime owner `moonstones_[8]`, hydrated from the document |
+| `moon_phases`, `search_objects`, `spawns` | bound | **null** | bound from the pack | fall back / none | — (fixture-only gap) | same binder; the fixture copies the pack data |
+| `encounter`, `combat_resources` | bound | only with a pack | bound | Doom gate / town fight refuse | — | same binder |
+| `end_narration`, `endgame_script` | bound for the endgame-script cases | unbound / false | unbound / false | no cinematic script | ending is transcript text (D-54, Alpha 3) | **unchanged, deliberately** |
+| `ShopServices::ship` / `horse` / `reserve` | `shop_flow_test.cpp:45–55` bind their own | **unbound** | **unbound** | `shop_orchestration.cpp` → `Unsupported` | Y at a shipwright or stable does nothing (RB-4, B20 H-146) | `bind_shop_services` → core `reserve_world_transport` / `place_purchased_ship` / `place_purchased_horse` |
+| other `ShopServices` hooks | bound | a **copy** (record lookup always false, its own occupancy scan, `wake_npcs` a no-op) | bound | — | — | the same binder for both |
+| moonstone persistence | quest driver writes back to the document | — | nothing captured; the GAM bytes pass through unchanged | — | no moved stone can persist | `capture_save_document` → `capture_moonstones`; the generation gate runs `validate_moonstones` |
+
+The fixture was a second copy of `initialize()`, so a hook missing from both was invisible to every runtime test. The parity drivers owned device-required semantics (they bound the hooks themselves).
+
+### 3. Packed data (Phase 53C)
+
+The pack already had a string-record layout (`misc-records.bin`, MISCMSG.DAT): a u32 count, `count+1` u32 offsets, then NUL-terminated records. The three new sections reuse it. They are packed from the same extraction the parity harnesses read, raw and unquoted, with counts pinned to the original files; a non-ASCII code point or a wrong count refuses the pack build (`native/tools/u5pack/alpha1.ts`, `checkedRecords`).
+
+| Section | Source | Records | Packed | Size | CRC32 | Runtime lookup |
+|---|---|---|---|---|---|---|
+| `endmsg-records.bin` | ENDMSG.DAT (`game/assets/ds-strings.json`, identical to `endgame.json` `dialogue.records`) | 11; record 9 is the wooden-box line | string records | 838 B | `e5f68a15` | `AlphaResourceOwners::end_text_*` → `quest_.end_record` |
+| `karma-records.bin` | KARMA.DAT (`ds-strings.json`) | 6 | string records | 793 B | `b544a70e` | `AlphaResourceOwners::karma_text_*` → `karma_speech_[6]` (quoted once at bind, game.ts 0x0b03) |
+| `words-of-power.bin` | DATA.OVL file offset `0x44AD`, 0x3A bytes (DS `0x4502`), `data.json` `wordsOfPower` | 8: FALLAX, VILIS, INOPIA, MALUM, AVIDUS, INFAMA, IGNAVUS, VERAMOCOR | string records; the loader widens them to UTF-16 (`TalkText`) and refuses anything but `A`–`Z` | 98 B | `804e7f97` | `AlphaResourceOwners::words[8]` → `quest_.words` |
+
+END.DAT's narration pages are not packed: they only feed `endgame_script`, which stays off (D-54). The loader reads all three through one private helper, `AlphaResourcePack::read_text_records`, which re-checks the record count against the original file. **Stale-pack gate:** the three names are in `open()`'s required-entry list, so a Batch 51 pack is refused by name (`ESP_ERR_NOT_FOUND`, "Required entry missing: endmsg-records.bin") before the size/CRC identity lock (now 2,041,466 B / `0x26f75ae6`) is even consulted. The container version stays 2.0: its layout did not change.
+
+### 4. Shared production binders (Phase 53D)
+
+| Binder | Owns | Called by |
+|---|---|---|
+| `AlphaRuntime::bind_quest_services()` (`alpha_runtime.cpp:2598`) | every `QuestWorldServices` hook: the object pool, tiles, search/spawn/moon-phase tables, `encounter`, `end_record`, `karma_record`, `words`, the moonstone owner (and its first hydration) | `initialize()` (`:200`), host fixture |
+| `AlphaRuntime::bind_shop_services()` (`:2620`) | every `ShopServices` hook, including `reserve` / `ship` / `horse` | `initialize()` (`:222`), host fixture |
+| `bind_rest_services()` (Batch 29) | `RestServices`; its `karma_record` is now `karma_speech` | both |
+| `capture_save_document()` (`alpha_save_generation.cpp`) | the save capture chain (gameplay, terrain, NPC walk, world objects, **moonstones**, dungeon) | `AlphaSaveService::save` (`alpha_save.cpp`) and the host in-memory save stub |
+| core `reserve_world_transport` / `place_purchased_ship` / `place_purchased_horse` (`world_terrain.cpp`) | the transport placement rules | `world_transport_services` (Board/Disembark) and the shop binder |
+
+The host fixture now declares no gameplay service at all. It copies pack **data** into `resources_` (moon phases, search objects, spawns, shop tables and text, ENDMSG, KARMA, words) and loads INIT.GAM **before** calling the binders, in the same order `initialize()` does, because the moonstone owner hydrates from that document. `batch53_release_blockers` B6/B7 read the two source files and fail if either function stops calling a binder once, or assigns a `quest_.` / `shop_services_.` hook outside one.
+
+### 5. RB-1 / H-189 — the victory ending (Phases 53E/53F)
+
+**RED** (`native/core/batch53-red.log`; the final test built against the Batch 52 production sources plus only two read-only test seams; see §9). The route is the device's: Developer Endgame preset, Doom floor 6 (4,7) facing East, one step onto the `0x61` pit, fall into floor 7 (5,7) = room 15 = combat map 127, four steps north to (5,2) under the trapped soul.
+- EV0–EV2 GREEN (the room and the absorption work).
+- **EV3 RED**: `combat finish result=1`, `COMBAT_TEARDOWN deferred result=1`; `CombatState` stays `initialized` and `ended`.
+- **EV4–EV6, EV9 RED**: `game-won` never set; no "Lord British carefully opens the box...", no ENDMSG record 9, no proclamation.
+- ES0–ES3 GREEN: without the box the stranded ending runs (it never needs ENDMSG) — the Batch 52 control.
+
+**Correction to Batch 52's description (not to its verdict).** Batch 52 wrote that the arena "answers only `Alt+D` / `Alt+S` / `Alt+L`". On the device-shaped host runtime the teardown is deferred on the first finish attempt, but the UI then drops to the dungeon view (`UI_MODE from=combat to=dungeon`) and later keys run as dungeon commands: every step is `Blocked!` (room 15 is walled on all four sides; its Klimb shaft drops back into it), turning works, `Alt+S` / `Alt+M` work (EV7, EV8, EV10, EV11 are GREEN on RED). The arena is never torn down, the ending never runs and `game-won` stays false, so the party is **sealed in the final cell with a half-alive combat state and no way to finish the game**: still K3 (completion impossible) and a soft lock, but not an input wedge. Batch 52's own text is left as written.
+
+**Root cause.** `QuestWorldServices::end_record` was never bound on the device and the pack had no ENDMSG.DAT, so `finish_encounter_combat` (`combat.cpp:1796`) refused the absorbed-with-box teardown.
+
+**GREEN.** `end_record` reads the pack's ENDMSG.DAT (no text in `AlphaRuntime`). EV3–EV11 GREEN: the arena tears down, `game-won` is set, record 9 appears once, the proclamation and report appear once, the view returns to the dungeon (`context.combat` false), the next key is an ordinary dungeon turn, further keys neither re-run the ending nor clear `game-won`, `Alt+S` saves and `Alt+M` opens and closes over the ended game. The ending is transcript text and play continues; the cinematic stays D-54 (Alpha 3). V0/V0b run the exact Phase 7E route through `apply_debug_teleport`.
+
+### 6. RB-2 / H-187 — Words of Power (Phases 53G/53H)
+
+**RED:** W1/W1b GREEN (every seal closed at INIT.GAM, Deceit's entrance reads 223 and cannot be walked onto); W4–W7 RED (Yell `fallax` beside Deceit prints only "No effect!"; the seal stays shut; `(E)nter` impossible); W2 RED (a real Word no longer even quakes); W10 RED (0 of 8).
+
+**Root cause:** `quest_.words` unbound and no Words-of-Power table in the pack.
+
+**GREEN:** the eight DATA.OVL words are packed and bound. Matching is the core's unchanged `contains()`: upper-cased substring, so `fallax` works (W4), `FALLA` is no Word (W3), `VILIS` at Deceit is uttered with a quake but opens nothing (W2). The flag (`Word33+i`) opens exactly its own dungeon (W10, all eight; Doom from the Underworld side), a second Yell toggles it shut as quest.cpp and the reference do (W11). `(E)nter` works with no Developer tool (W7). The seal survives save, power cycle and load (W9), and **the saved GAM carries it as the original does: `0x32a` bit `0x80`, the other seven clear (W7b)** — the check the first mutation pass showed was missing (§12).
+
+### 7. RB-3 / H-188 / H-191 — moonstones, moongates, Vas Rel Por (Phases 53I–53L)
+
+**RED:** M0 RED (no owner), M3 RED (no gate tile at night), M4 RED (stepping onto the Britain gate at 21:00 leaves the party in place), M7b RED (`Aim: empty`), M8 RED (Vas Rel Por + `3` prints `Failed!`), R0 RED. The phase digit itself reached the handler (M6/M7 GREEN) — Batch 52's withdrawal of the digit-routing theory stands.
+
+**The state-owner questions.**
+1. *Where at runtime?* `AlphaRuntime::moonstones_[8]`, pointed to by `quest_.moonstones` / `moonstone_count = 8`. No `GameState` field and no new struct.
+2. *Original save?* GAM `0x28a` x, `0x292` y, `0x29a` location (`0xFF` = carried), `0x2a2` floor — the same bytes as DS `0x5830…0x5848` that kernel `0x47f4` teleports through.
+3. *What did the exporter already preserve?* `load_native_state` already imports them into the document's `moonstones` array and `export_native_state` already writes them back (`persistence.cpp`). They are **not** a sidecar key (`extras[]` does not list them): they travel only in the GAM.
+4. *Where does state belong?* The live values in the adapter-owned array (what commands mutate); the persistent values in the retained document, i.e. the GAM. `capture_moonstones` / `restore_moonstones` / `validate_moonstones` (`gameplay_save.cpp`) move them between the two.
+5. *Load routes?* Title Continue, Load Slot, System Menu Continue Latest, `Alt+L` and generation fallback all end in `synchronize_loaded_world()`, which now restores the stones; the generation gate (`stage_generation`) validates them first, so a bad document is refused whole and the older generation is used.
+6. *New Journey?* `CreateInitialSave` loads INIT.GAM into the document and runs `synchronize_loaded_world()`, so the stones reset to INIT.GAM's eight Britannia gates. At boot `bind_quest_services()` hydrates from the INIT.GAM document as well.
+7. *Developer tooling?* None reads or writes the stones directly; Developer teleport and presets leave them alone. Stones change only through Use (bury), Search/Get (dig up) and — never on the device before — the moongate.
+
+**Save-schema decision: no change.** No new save field, no version bump: the canonical field already existed and the exporter already wrote it. R12 proves the sidecar has no `moonstones` key; R12b proves the saved GAM's `0x28a–0x2a9` equal the runtime stones.
+
+**GREEN:** B4 (the owner holds INIT.GAM's eight stones), M3 (0xDC at night), M4 (walk onto the gate → the phase stone), M8 (Vas Rel Por + `3` → stone 2 at 38,224), M9 (mixture spent). M3c derives the expected phase from the pack's moon-phase table and the hour, not from the core, so a phase-mapping mutation cannot hide in the expectation. H-12/H-13 are re-evaluated: **functionally fixed**; they now wait on Phase 7E.
+
+**D-53 (`To phase:`).** `AlphaRuntime::overlay()` now shows `To phase:` for the `GatePhase` request (CAST.OVL `0x0cff`) instead of the aim reticle's `Aim: empty (-1,-1)` (M7b). The other non-combat getdir prompts (H-15, `Direction?`) are unchanged and stay Alpha 3 UI.
+
+**Moongate visibility (Phase 53L).** New core predicate `moongate_visible_at()` (`quest_world.cpp:322`): night (the same `active_gate_phase` window), a buried stone of this location on the party's large map, surface only, moon-phase table present — the reference's `activeMoongates`. It shares its stone test with `moongate_at` (`buried_stone_at`), so drawing and stepping cannot disagree. `compose_world_presentation` places the static gate tile `0xDC` there before enemies, objects and the party (the reference's `[gates, foes, loot]` order), only on visible cells, and recomposes every frame, so there is no stale gate after travel or at dawn (M2, M3b, M5). Tile `0xDC`'s own rising animation (the reference's `fiel/moongate.ts` lane) and the 1,648 ms transit animation are **not** implemented: Alpha 3 presentation, as scoped. Transit is visually immediate.
+
+### 8. RB-4 / H-146 — ship, skiff and horse (Phases 53M/53N)
+
+**RED:** S0/S1 GREEN (East Britanny's shipwright opens; N declines cleanly — the control); S2/S3/S5 RED (Y on a frigate or skiff: no gold spent, no ship, `Service action failed status=unsupported`); S7 GREEN, S7b/S8 RED (the horse seller never reaches its price); S6/S10 RED (the insufficient-gold paths never run either).
+
+**Root cause:** `ShopServices::ship` / `horse` / `reserve` were never bound (`shop_orchestration.cpp:286/468` → `Unsupported`); the fixture copied the omission.
+
+**GREEN:** the three hooks call core's transport owner. A bought ship is the reference's `spawnDockShip(..., 0)`: an object on the overworld dock (location 0, the party's floor) with the purchase tile (`0x125` frigate / `0x129` skiff), hull 99 and 2 / 0 skiffs. A bought horse is the reference's `stableHorse`: the persistent `0x110` override beside the party. Gold is charged once by the unchanged `buy_ship` / `buy_horse`. S2–S6 and S7b–S10 GREEN; **S4 boards the bought frigate at the dock (79,109) and sails it; S9 mounts the bought horse** — the end-to-end proof. N and insufficient gold spend nothing and place nothing (S1, S6, S10 — S6 also shows the shipwright's throw-out, `buy_ship`'s `!ok`).
+
+### 9. Device-shaped binder completeness (Phase 53O)
+
+`batch53_release_blockers` is the authoritative Batch 53 target (CTest, 95 checks with the shipped pack; 96 when a stale pack path is passed). It boots the real `AlphaRuntime` through the fixture that now calls the production binders, over the shipped pack, and drives raw keys. It fails if any of these is unbound again, each by behaviour, not by a non-null pointer: `end_record` (B1 compares all 11 records with the pack file byte for byte; EV3–EV6), KARMA (B2 for quest and rest; K2 through a real Refuge), words (B3; W4–W11), moonstones (B4; M/R), shop `ship` / `horse` / `reserve` (B5; S2–S10), plus the source-level binder checks B6/B7. `batch52_device_binding_probe.py` is superseded by this target and was not re-run: its "device shape" variants model hooks the device now binds.
+
+**The RED run of the final test** (`batch53-red.log`: the Batch 52 production sources plus only two read-only test seams, `AlphaRuntime::status_overlay()` and the memory stub's GAM reader) ends **40 GREEN / 42 RED of 82**; the R section stops at R0 because there is no owner to save. The REDs are P4–P6, B1–B7, W2 W4–W7b W9–W11, M0 M3 M3c M4 M7b M8, S2 S3 S5 S6 S7b S8 S10, EV3–EV6 EV9, K2, V0b, V6 and R0. Two of them are the **old fixture's own gap, not device defects**: M3c (the fixture bound no moon-phase table; the device did) and V6 (the fixture bound no search objects; Gorn's keys have worked on the device since Batch 4.5C.1). They are exactly the fixture/device divergence the shared binder removes. The controls stay GREEN on RED: the sealed entrance (W1/W1b), the N decline (S1), the shops opening (S0/S7), the stranded ending (ES0–ES3), the Refuge scene itself (K1/K3) and every route (V0–V5, V7, V8). GREEN: `batch53-green.log`, 96 / 96 with the Batch 51 pack passed as the stale-pack argument.
+
+### 10. Persistence (Phase 53P)
+
+| Context / route | Check | Result |
+|---|---|---|
+| surface, System Menu Continue Latest | R2 | GREEN |
+| surface, `Alt+L` | R3 | GREEN |
+| power-cycle-equivalent (fresh runtime, then `Alt+L`) | R4/R5 | GREEN |
+| title → Journey Onward → Continue | R6 | GREEN |
+| corrupt newest generation → older one, with its stones | R7 | GREEN |
+| town (Lord British's castle) / dungeon (Deceit) / aboard ship | R9/R10/R11 | GREEN |
+| no new save field; GAM bytes carry the stones | R12/R12b | GREEN |
+| Word-of-Power seal in the GAM and across a power cycle | W7b/W9 | GREEN |
+| every existing save context and route | `batch24_reload_parity`, `batch26_dungeon_save`, `batch27_alt_load`, `batch28_save_validation`, `persistence_parity` | GREEN |
+
+**No save-format change and no version bump.** Old saves load unchanged: their GAM bytes always held the stones; the device simply never read them into a live owner before.
+
+### 11. Resource pack (Phase 53Q)
+
+| | Batch 51/52 | Batch 53 |
+|---|---|---|
+| Size | 2,039,545 B | **2,041,466 B** (+1,921 = 3 × 64 B TOC + 838 + 793 + 98) |
+| Entries | 39 | **42** |
+| Payload CRC32 | `0x2065ad91` | **`0x26f75ae6`** |
+| SHA-256 | `434cd664b4b92472386e04f08012aee52932296e4c432ec0f1c2e0d26f63b4ea` | **`a48abdbfc88eb5ab43453880a8ea029a1ea0684dfec2045f9dae941b31aa379b`** |
+| Firmware expects | — | `kExpectedAlphaResourceSize = 2041466`, `kExpectedAlphaResourceCrc32 = 0x26f75ae6`, SHA `a48abdbf…379b` |
+
+P4: the firmware identity lock names the new pack. P5: a copy of the new pack with any one of the three entries renamed (TOC CRC re-sealed) is refused at `open()` with `ESP_ERR_NOT_FOUND`. P6 (run with the Batch 51 pack as a second argument, `batch53-green.log`): **the Batch 51 pack is refused by this firmware's loader.** Only the pack file changes on the SD card; no reformat.
+
+### 12. Mutations (Phase 53R)
+
+`native/core/tools/batch53_mutations.py`, 22 cases, each rebuilding and running `batch53_release_blockers`; production restored and touched after every case; post-mutation rebuild GREEN. **Final pass: 22 / 22 killed** (`batch53-mutation-summary.log`, per-case `batch53-mutation-*.log`).
+
+| Area | Mutation | Killed by |
+|---|---|---|
+| Endgame | unbind `end_record` | B1 EV3–EV6 EV9 V0b |
+| | wrong ENDMSG record (index + 1) | B1 EV5 V0b |
+| | suppress `game-won` | EV4 EV9 ES3 V0b |
+| | keep combat active after the absorption | EV3 |
+| Karma | restore the invented line | B2 B2b K2 |
+| Words | empty table | B3 W2 W4–W7b W9–W11 |
+| | wrong dungeon mapping | B3 W4–W7b W9–W11 |
+| | case-sensitive match | W4–W7b W9 |
+| | wrong seal bit | W4–W7b W9–W11 |
+| | seal not written to GAM `0x32a` | **W7b** |
+| Moonstones | zero count | B4 M0 M3 M4 M8 R0 |
+| | wrong phase digit (`'0'` base) | M8 |
+| | wrong transit destination | M4 |
+| | stones not captured on save | R2 R3 R5–R7 R9–R11 R12b |
+| | gate never composed | M3 |
+| Shops | null `ship` / null `horse` / null `reserve` | B5 + S2–S6 / S8 S10 / S2–S10 |
+| | charge gold without placing the ship | S2 S5 |
+| | place the ship without charging | S2 S5 |
+| Binders | fixture bypasses the production shop binder | B5–B7 S2–S10 |
+| | `initialize()` drops `bind_quest_services()` (device-only gap) | B6 |
+
+**First pass (`batch53-mutation-summary-first-pass.log`): 20 / 21 killed.** `words_seal_not_persisted` survived: the sidecar's `questFlags` also carries `word-spoken:33`, so the device's own reload worked while the GAM no longer matched the original format. W7b and R12b were added (a read seam in the memory save stub); a second pass reported that case as build-failed (the mutation left a variable unused under `-Werror`), so it was rewritten; the final pass kills it.
+
+### 13. Regression (Phase 53S)
+
+Final fresh clean build `native/core/build-batch53-final`, serial: **121 total · 121 pass · 0 fail · 0 skipped**, `ctest` 108.6 s, 721 ninja steps in 54 s, one warning (the same w64devkit line; zero project warnings). A comment-only correction in `bind_quest_services` followed; the same build directory relinked 60 targets and re-ran **121 / 121** (`batch53-final-recheck-{build,ctest}.log`, 104.7 s). Logs `native/core/batch53-final-{configure,host-build,ctest,timing}.log`. The count is 120 + `batch53_release_blockers`. Targeted inside it: `batch53_release_blockers` (95/95), `quest_parity`, `gameplay_parity`, `shop_adapters`, `shop_flow`, `shop_parity`, the four TypeScript shop drift checks, `persistence_parity`, `transport_flow_parity`, `dungeon_parity`, `world_flow_parity`, `presentation_regression`, `debug_developer` / `debug_map_picker` / `ui_debug_menu`, `batch24`–`batch29`, `batch51_*` and every other `AlphaRuntime` host target — all pass. The fixture change (shared binders, pack data copied before binding) changed no existing test's result.
+
+### 14. Firmware (Phase 53V)
+
+Fresh ESP-IDF 6.1 build `native/targets/tdeck/build-batch53` (`batch53-firmware-build.log`): **877,728 B (`0xd64a0`)**, **+2,864 B** over Batch 51, **170,848 B (16 %) free** in the 1 MiB app partition. Zero compiler warnings; the five ESP-IDF `component_validation` notices are third-party. Expected pack: 2,041,466 B, CRC `0x26f75ae6`, SHA-256 `a48abdbf…379b`. **Not flashed.** The committed image is rebuilt after the commit so the embedded `Git` hash is the Batch 53 commit; its Launcher path and SHA-256 are in the annotated tag message.
+
+### 15. Row updates
+
+| Row | Was | Now |
+|---|---|---|
+| RB-1 / H-189 / D-46 | release blocker | **SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E-A)** |
+| RB-2 / H-187 / D-44, H-119, Y-24 | release blocker | **SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E-B)** |
+| RB-3 / H-188 / D-45, H-191 / D-48 (gate visibility), H-12 / H-13, Y-33, D-53 | release blocker | **SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E-C)**. The D-48 transit animation stays Alpha 3. |
+| RB-4 / H-146 / D-49 | release blocker (B20 FAIL) | **SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E-D)** |
+| H-190 / D-47 | non-blocking text | **SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E-E)** |
+| H-135 (quake via a Word) | UNTESTED | reachable; observed in 7E-B |
+| H-137 Refuge half | UNTESTED, required | host-proven through the device runtime (K1–K3); **7E-E** |
+
+The historical FAIL / blocker observations are left as recorded. Nothing is marked PASS before the hardware run.
+
+### 16. Not done in this batch
+
+No flash. No Phase 7E run. No RC packaging, no Batch 54, no Alpha 3 / audio / UI work. No moongate transit animation, no `0xDC` rise animation, no endgame cinematic (D-54). H-183 – H-186, H-22 (wish case), H-45 (potion cancel), H-63 (`^` glyph) and H-15's `Direction?` overlay are unchanged.

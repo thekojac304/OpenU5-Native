@@ -308,9 +308,19 @@ int32_t active_gate_phase(const GameState &g,const TurnState &t,const QuestWorld
     if(a<48||a>55||b<48||b>55){int i=(g.time.day-1)*2;a=s.moon_phases&&i>=0&&size_t(i)<s.moon_phase_count?s.moon_phases[i]:48;b=s.moon_phases&&i+1>=0&&size_t(i+1)<s.moon_phase_count?s.moon_phases[i+1]:48;}
     return (g.time.hour<=4?a:b)-48;
 }
+namespace {
+// ULTIMA.EXE 0x4702: a buried stone of THIS location, at (x, y), on the
+// party's large map (0 Britannia, 255 Underworld).
+bool buried_stone_at(const GameState &g,const QuestWorldServices &s,int32_t x,int32_t y){
+    for(size_t i=0;i<s.moonstone_count;++i){auto &m=s.moonstones[i];if(m.buried&&m.location==g.position.map.location&&m.x==x&&m.y==y&&m.z==(g.position.map.floor==255?255:0))return true;}return false;
+}
+}
 bool moongate_at(const GameState &g,const TurnState &t,const QuestWorldServices &s){
     if(active_gate_phase(g,t,s)<0)return false;
-    for(size_t i=0;i<s.moonstone_count;++i){auto &m=s.moonstones[i];if(m.buried&&m.location==g.position.map.location&&m.x==g.position.xy.x&&m.y==g.position.xy.y&&m.z==(g.position.map.floor==255?255:0))return true;}return false;
+    return buried_stone_at(g,s,g.position.xy.x,g.position.xy.y);
+}
+bool moongate_visible_at(const GameState &g,const TurnState &t,const QuestWorldServices &s,int32_t x,int32_t y){
+    return !g.position.map.location && s.moon_phases && active_gate_phase(g,t,s)>=0 && buried_stone_at(g,s,x,y);
 }
 int32_t quest_world_tile(CommandContext &c,MapId map,int32_t x,int32_t y,int32_t tile){
     auto *s=c.quest_world;

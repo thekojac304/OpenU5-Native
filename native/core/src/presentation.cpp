@@ -210,6 +210,11 @@ PresentationSnapshot compose_world_presentation(CommandContext &c,const ActiveMa
     visibility(c,map,center,reveal_all,s.visible);
     auto cell_at=[&](int x,int y)->int{int dx=x-int(center.x),dy=y-int(center.y);if(map.geometry.wraps){if(dx>128)dx-=256;if(dx< -128)dx+=256;if(dy>128)dy-=256;if(dy< -128)dy+=256;}const int col=dx+kHalf,row=dy+kHalf;if(col<0||row<0||col>=kPresentationWindow||row>=kPresentationWindow)return -1;const int at=row*kPresentationWindow+col;return s.visible[at]?at:-1;};
     auto place=[&](int x,int y,int tile,uint32_t actor_id=0,uint8_t seed=0){const int at=cell_at(x,y);if(at>=0){s.tiles[at]=int16_t(tile);s.actor_ids[at]=actor_id;s.actor_seeds[at]=seed;}};
+    // Batch 53 (H-191). The night moongates, before enemies/objects/party:
+    // the reference's entity order is [gates, foes, loot], and the centre
+    // cell (the party) is overwritten below. Recomposed every frame from the
+    // stones, so a gate vanishes with the night or with its stone.
+    if(!map.id.location&&c.quest_world&&c.quest_world->moonstones)for(size_t i=0;i<c.quest_world->moonstone_count;++i){const auto&m=c.quest_world->moonstones[i];if(moongate_visible_at(c.game,c.turn,*c.quest_world,m.x,m.y))place(m.x,m.y,kMoongateTile);}
     if(!map.id.location&&c.outdoor)for(size_t i=0;i<c.outdoor->enemies.size();++i){const auto&e=c.outdoor->enemies[i];place(e.x,e.y,e.tile,0x10000U+uint32_t(e.slot>=0?e.slot:int(i)+32),uint8_t(e.tile&0xfc));}
     if(map.id.location&&c.actors)for(size_t i=0;i<c.actors->count;++i){const auto&a=c.actors->actors[i];if(a.location==map.id.location&&a.z==map.id.floor)place(a.x,a.y,a.schedule.type+256,0x20000U+a.schedule.slot,uint8_t(a.schedule.type&0xfc));}
     // R-04 (Batch 2): two reference-faithful layers, not one unified

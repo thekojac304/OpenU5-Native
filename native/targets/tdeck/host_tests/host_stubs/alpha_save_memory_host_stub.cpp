@@ -6,8 +6,8 @@
 // inside the real AlphaRuntime) and observe what a reload does to the world.
 //
 // Only the storage shell differs from alpha_save.cpp:
-//   save()  -- the same capture chain (capture_gameplay, capture_terrain,
-//              capture_npc_walk, capture_world_objects, capture_dungeon),
+//   save()  -- the same capture chain: since Batch 53 the production
+//              capture_save_document() itself (alpha_save_generation.cpp),
 //              export_native_state over the INIT.GAM template, build_ool,
 //              encode_json; the generation goes to slot (newest+1)&1 with a
 //              commit record carrying the three CRCs, then the post-write
@@ -65,6 +65,7 @@ int older_slot() {
 //   damage  -- the newest generation's sidecar file cut in half with its
 //              commit left alone: a torn or corrupt file, rejected by the CRC
 //              in complete_generation (Batch 27's unreadable-save control);
+//   gam     -- Batch 53: read the newest generation's GAM bytes.
 //   edit    -- Batch 28 (H-166): parse the chosen generation's sidecar, let
 //              the test change sidecar.gameState, re-encode it and re-seal the
 //              commit CRC. The result is a well-formed, CRC-consistent
@@ -89,6 +90,13 @@ bool host_memory_save_edit_for_test(bool newest, void (*edit)(openu5::save::Json
     return true;
 }
 int host_memory_save_generations_for_test() { return int(g_slots[0].present) + int(g_slots[1].present); }
+// Batch 53: the newest generation's GAM bytes as written, so a test can check
+// the on-card format itself (the Word-of-Power bits at 0x32a, the stones at
+// 0x28a) and not only what this runtime reads back.
+std::vector<uint8_t> host_memory_save_gam_for_test() {
+    const int n = newest_slot();
+    return n >= 0 ? g_slots[n].gam : std::vector<uint8_t>{};
+}
 
 bool AlphaSaveService::reserve_dma_headroom() { return true; }
 
@@ -98,11 +106,7 @@ bool AlphaSaveService::save(openu5::CommandContext &c, openu5::OutdoorServices &
                              bool new_journey) {
     elapsed_ms = 0;
     last_failure_[0] = 0;
-    openu5::save::capture_gameplay(c.commands, o, retained);
-    openu5::save::capture_terrain(t, retained);
-    openu5::save::capture_npc_walk(a, c.game.position.map.location, retained);
-    if (c.quest_world) openu5::save::capture_world_objects(*c.quest_world, retained);
-    if (c.dungeon_context) openu5::save::capture_dungeon(c.dungeon_context->state, retained);
+    capture_save_document(c, o, t, a, retained);   // Batch 53: the production chain, not a copy
     openu5::save::Gam gam{};
     openu5::save::Json side;
     if (openu5::save::export_native_state(c.game, c.turn, retained, base, base_size, gam, side, true) !=

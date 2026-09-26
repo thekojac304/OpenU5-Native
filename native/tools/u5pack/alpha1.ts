@@ -386,6 +386,36 @@ function miscMsgRecords(): Buffer {
   return encodeStringRecords(rows);
 }
 
+// Batch 53 (RB-1 / RB-2 / H-190). Three more borrowed-English tables the core
+// already asks for by index and the T-Deck never had: ENDMSG.DAT (11 records,
+// QuestWorldServices::end_record -- record 9 is the wooden-box line the victory
+// ending refuses to run without), KARMA.DAT (6 records, karma_record for the
+// Camp apparition and the Refuge speech) and the eight Words of Power
+// (DATA.OVL 0x44AD, 0x3A bytes, FALLAX..VERAMOCOR; QuestWorldServices::words).
+// Same extraction the parity harnesses already read (ds-strings.json /
+// data.json), same string-record layout as misc-records.bin, raw and unquoted:
+// the quotes around a karma record are composed at use (game.ts, 0x0b03), not
+// stored. A count or a non-ASCII code point that disagrees with the original
+// file refuses the build instead of shipping a pack the firmware would misread.
+function checkedRecords(name: string, rows: unknown, count: number): Buffer {
+  if (!Array.isArray(rows) || rows.length !== count || rows.some((row) => typeof row !== "string")) {
+    throw new Error(`${name} has ${Array.isArray(rows) ? rows.length : 0} string records; expected ${count}`);
+  }
+  for (const row of rows as string[]) {
+    if (!row.length || [...row].some((ch) => ch.codePointAt(0)! > 127)) {
+      throw new Error(`${name} record is empty or has a non-ASCII code point`);
+    }
+  }
+  return encodeStringRecords(rows as string[]);
+}
+const dsStrings = () => JSON.parse(readFileSync(resolve(ROOT, "game/assets/ds-strings.json"), "utf8"));
+function endMsgRecords(): Buffer { return checkedRecords("ENDMSG.DAT", dsStrings()["ENDMSG.DAT"], 11); }
+function karmaRecords(): Buffer { return checkedRecords("KARMA.DAT", dsStrings()["KARMA.DAT"], 6); }
+function wordsOfPower(): Buffer {
+  const data = JSON.parse(readFileSync(resolve(ROOT, "game/assets/data.json"), "utf8"));
+  return checkedRecords("DATA.OVL wordsOfPower", data.wordsOfPower, 8);
+}
+
 // Blackthorn's private throne room (#324 / audit R-32): MISCMAPS.DAT record 0,
 // the 11x11 grid the capture scene stages the party, the guards and Blackthorn
 // himself on. The extractor already produces it as shrine-scene.json's
@@ -462,6 +492,9 @@ const entries: Entry[] = [
   { name: "look.bin", data: lookData() },
   { name: "shop-records.bin", data: stringRecords("game/assets/shoppe.json") },
   { name: "misc-records.bin", data: miscMsgRecords() },
+  { name: "endmsg-records.bin", data: endMsgRecords(), records: 11 },
+  { name: "karma-records.bin", data: karmaRecords(), records: 6 },
+  { name: "words-of-power.bin", data: wordsOfPower(), records: 8 },
   { name: "blackthorn-scene.bin", data: blackthornScene(), records: 11 * 11, stride: 2 },
   { name: "signs.bin", data: packedSigns, records: packedSigns.readUInt32LE(0), stride: ALPHA_SIGN_RECORD_BYTES },
   // Batch 9C / R-05 -- the AUTHORED dungeon art (alpha1-dungeon-art.ts). Five

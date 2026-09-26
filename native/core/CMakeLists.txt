@@ -1149,6 +1149,46 @@ if(BUILD_TESTING)
   endif()
   add_test(NAME batch51_camp_pacing COMMAND batch51_camp_pacing
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+
+  # Batch 53 -- the four Alpha 2 release blockers (RB-1 .. RB-4) on the device's
+  # own binding shape: the real AlphaRuntime through the fixture, which calls
+  # the production binders; the shipped pack; raw keys; the in-memory save stub
+  # running the production save-generation gate. The two source paths let the
+  # test check that initialize() and the fixture share the binders.
+  add_executable(batch53_release_blockers
+    ../targets/tdeck/host_tests/batch53_release_blockers_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_board_host_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(batch53_release_blockers PRIVATE openu5_core)
+  target_include_directories(batch53_release_blockers PRIVATE
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/main)
+  target_compile_definitions(batch53_release_blockers PRIVATE
+    OPENU5_RUNTIME_SOURCE="${CMAKE_CURRENT_SOURCE_DIR}/../targets/tdeck/main/alpha_runtime.cpp"
+    OPENU5_FIXTURE_SOURCE="${CMAKE_CURRENT_SOURCE_DIR}/../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp")
+  target_compile_features(batch53_release_blockers PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(batch53_release_blockers PRIVATE /Gy)
+    target_link_options(batch53_release_blockers PRIVATE /OPT:REF)
+  else()
+    target_compile_options(batch53_release_blockers PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(batch53_release_blockers PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME batch53_release_blockers COMMAND batch53_release_blockers
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
   # Batch 14 / R-22 -- (Z)-stats navigation. Same seam and same stub/shim set
   # as alpha_runtime_integration_regression above: it links the REAL,
   # unmodified alpha_runtime.cpp so the modal is reached only by feeding raw

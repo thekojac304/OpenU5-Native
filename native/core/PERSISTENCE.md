@@ -72,6 +72,15 @@ Do not keep using a stale retained document after mutating those service-owned
 fields. Begin a new game document from the authoritative INIT.GAM/template or
 full initial-state JSON; a bare default C++ GameState is not a complete save.
 
+Moonstones (Batch 53). The eight stones are GAM bytes `0x28a` x, `0x292` y,
+`0x29a` location (`0xFF` = carried) and `0x2a2` floor; import/export map them to
+the document's `moonstones` array, and they are **not** a sidecar key. Their live
+owner is the platform's `QuestWorldServices::moonstones` (on the T-Deck,
+`AlphaRuntime::moonstones_[8]`). `gameplay_save.h` moves them between the two:
+`capture_moonstones` before a save, `restore_moonstones` after every load, and
+`validate_moonstones` inside the generation gate. There was no schema change and
+no version bump: the field always existed; the device simply had no owner.
+
 GameState fields captured directly include the roster/equipment/pack, logical
 equipment length, resources, position/time/turns, transport, ship residue,
 dungeon room bitmap, NPC met/dead grids, generic item flags and worn crown.

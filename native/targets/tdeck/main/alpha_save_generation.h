@@ -49,6 +49,13 @@ struct AlphaSaveStage {
     openu5::DungeonState dungeon{};
 };
 
+// Batch 53. The capture chain every save runs over the live owners before
+// export_native_state. alpha_save.cpp and the host memory stub both call this
+// one function, so an owner added to a save (the moonstones, RB-3) cannot
+// reach one of them and not the other.
+void capture_save_document(openu5::CommandContext &, const openu5::OutdoorServices &, const openu5::WorldTerrain &,
+                           const openu5::NpcActors &, openu5::save::Json &retained);
+
 // `v` holds the commit and the three files' bytes. Fills v.side/v.generation
 // and returns whether the generation is usable. The staged owners are left in
 // `stage` (inspect() reads the party name from stage.game).

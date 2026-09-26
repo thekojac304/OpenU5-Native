@@ -1,0 +1,39 @@
+Batch 53 mutation driver, FIRST PASS (21 cases, before W7b / R12b / K / V existed).
+Transcribed from the driver's console output; the per-case logs of this pass were
+overwritten by the final pass (batch53-mutation-summary.log).
+
+endgame_unbind_end_record KILLED ['B1', 'EV3', 'EV4', 'EV5', 'EV6', 'EV9']
+endgame_wrong_endmsg_record KILLED ['B1', 'EV5']
+endgame_suppress_game_won KILLED ['EV4', 'EV9', 'ES3']
+endgame_combat_active_after_success KILLED ['EV3']
+words_empty_table KILLED ['B3', 'W2', 'W4', 'W5', 'W6', 'W7', 'W9', 'W10', 'W11']
+words_wrong_dungeon_mapping KILLED ['B3', 'W4', 'W5', 'W6', 'W7', 'W9', 'W10', 'W11']
+words_case_sensitive_match KILLED ['W4', 'W5', 'W6', 'W7', 'W9']
+words_wrong_seal_bit KILLED ['W4', 'W5', 'W6', 'W7', 'W9', 'W10', 'W11']
+words_seal_not_persisted SURVIVED
+moon_zero_count KILLED ['B4', 'M0', 'M3', 'M4', 'M8', 'R0']
+moon_wrong_phase_digit KILLED ['M8']
+moon_wrong_transit_destination KILLED ['M4']
+moon_not_persisted KILLED ['R2', 'R3', 'R5', 'R6', 'R7', 'R9', 'R10', 'R11']
+moon_gate_invisible KILLED ['M3']
+shop_null_ship KILLED ['B5', 'S2', 'S3', 'S5', 'S6']
+shop_null_horse KILLED ['B5', 'S8', 'S10']
+shop_null_reserve KILLED ['B5', 'S2', 'S3', 'S5', 'S6', 'S8', 'S10']
+shop_charge_without_transport KILLED ['S2', 'S5']
+shop_transport_without_charge KILLED ['S2', 'S5']
+binder_fixture_bypasses_production KILLED ['B5', 'B6', 'B7', 'S2', 'S3', 'S5', 'S6', 'S7b', 'S8', 'S10']
+binder_device_only_hook_missing KILLED ['B6']
+post-mutation restored build: GREEN
+
+Survivor analysis. words_seal_not_persisted stops persistence.cpp from writing
+the Word-of-Power bit 0x80 into GAM 0x32a. W9 (save, power cycle, load) stayed
+GREEN because the sidecar's gameState.questFlags also carries word-spoken:33 and
+load_native_state takes the sidecar's questFlags. The device's own reload was
+therefore fine, but the GAM it wrote no longer matched the original format. The
+test gained W7b (the saved GAM's 0x32a bit itself) and R12b (the saved GAM's
+moonstone bytes 0x28a..0x2a9) through a new read seam in the memory save stub.
+
+Second pass: the same case reported build-failed -- the mutation text left a
+variable unused under -Werror, so it proved nothing. The mutation was rewritten
+to keep the variable; the final pass (batch53-mutation-summary.log) kills all
+22 cases, words_seal_not_persisted by W7b.

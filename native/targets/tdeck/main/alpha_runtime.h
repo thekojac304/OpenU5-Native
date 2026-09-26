@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 #include "alpha_resources.h"
@@ -105,6 +106,8 @@ class AlphaRuntime {
     const openu5::BlackthornScenePacer &blackthorn_pacer() const { return blackthorn_pacer_; }
     bool camp_scene_inverted() const { return camp_scene_inverted_; }
     bool system_menu_open() const { return system_menu_.active(); }
+    // Batch 53 (D-53): the status/prompt line render() hands to the Board.
+    const char *status_overlay() const { return overlay(); }
     uint32_t routed_command_count() const { return routed_command_sequence_; }
     // Scene pacer storage (#324 / Y-04). Class constants so initialize() and
     // the host fixture size the same queues.
@@ -154,6 +157,14 @@ class AlphaRuntime {
     openu5::OutdoorServices outdoor_{};
     std::vector<openu5::QuestObject> objects_{};
     openu5::QuestWorldServices quest_{};
+    // Batch 53 (RB-3 / H-188). The one runtime owner of the eight moonstones
+    // (GAM 0x28a..0x2a9). quest_.moonstones points here; every load route
+    // re-hydrates it from the loaded document (synchronize_loaded_world) and
+    // every save captures it back (capture_save_document).
+    openu5::Moonstone moonstones_[8]{};
+    // Batch 53 (H-190). KARMA.DAT's six records quoted at use, as game.ts
+    // 0x0b03 composes them; built once by bind_quest_services() from the pack.
+    std::string karma_speech_[6]{};
     openu5::CombatState combat_{};
     openu5::CombatContext combat_context_{game_,turn_,combat_};
     openu5::CombatResources combat_resources_{};
@@ -440,6 +451,14 @@ class AlphaRuntime {
     // Batch 29: the device's RestServices, bound in ONE place so initialize()
     // and the host-test fixture share the exact callbacks (H-154/H-155).
     void bind_rest_services();
+    // Batch 53 (RB-1 .. RB-4). The same rule for every QuestWorldServices and
+    // ShopServices hook: the pack-backed end_record / karma_record / words,
+    // the moonstone owner and the shop's ship / horse / reserve are bound here
+    // and nowhere else, and initialize() and the host fixture both call these.
+    // Batch 52 found four release blockers hidden by fixture/driver copies.
+    void bind_quest_services();
+    void bind_shop_services();
+    static const char *karma_speech(void *, int32_t);
     /** ULTIMA.EXE 0x368E find_object_at_xy != 0: an NPC or an object of the
      *  current location at (x, y, floor) -- the 1988 table holds both. */
     bool object_or_npc_at(int32_t x, int32_t y, int32_t floor) const;

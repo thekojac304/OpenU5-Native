@@ -7,11 +7,13 @@
 // wherever a piece is included below -- except:
 //   * every buffer comes from `new` instead of heap_caps PSRAM;
 //   * nothing here reads an AlphaResourcePack or touches Board;
-//   * resource-pack-derived tables that only matter once combat/dungeon/
-//     shop/save actually run (combat enemy defs, dungeon data, shop/shrine
-//     text tables, the transport/rest service singletons) are left at their
-//     default (empty/null) state, which is the same quiescent state the
-//     production game is in before any of those systems has anything to do.
+//   * resource-pack-derived tables are copied in only when the test supplies
+//     the loaded pack (HostTestFixture::pack); otherwise they stay empty.
+//
+// Since Batch 53 no gameplay SERVICE is declared here: the quest, shop, rest
+// and scene-pacer hooks come from the same production binders initialize()
+// calls (bind_quest_services, bind_shop_services, bind_rest_services,
+// bind_scene_pacers). batch53_release_blockers checks that from the source.
 //
 // No gameplay routing is copied or duplicated here: command()/dispatch()/
 // handle() are called completely unmodified by whoever holds the
@@ -23,6 +25,7 @@
 #include "openu5/npc_path.h"
 #include <algorithm>
 #include <cstring>
+#include <iterator>
 #include "openu5/rest.h"
 
 namespace tdeck {
@@ -77,6 +80,48 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     }
     context_.locations = {resources_.location_x, resources_.location_y,
                            resources_.location_count, resources_.location_count};
+
+    // Batch 24: the pack-derived members initialize() assigns for the Save
+    // template and for town combat (alpha_runtime.cpp, the combat_context_/
+    // combat_resources_ block), then the New Journey's own load_native_state
+    // over INIT.GAM, so Save exports over a real document.
+    // Batch 53: also the pack tables the production binders read -- moon
+    // phases, search objects, shard spawns, the shop tables and text, ENDMSG,
+    // KARMA and the Words of Power -- and all of it BEFORE the binders run,
+    // because initialize() also binds after its INIT.GAM load: the moonstone
+    // owner hydrates from that document. Data only; no hook is set here.
+    if (const auto *pack = fixture.pack) {
+        resources_.initial_gam = pack->initial_gam; resources_.initial_gam_size = pack->initial_gam_size;
+        resources_.initial_ool = pack->initial_ool; resources_.initial_ool_size = pack->initial_ool_size;
+        resources_.combat_map_views = pack->combat_map_views; resources_.combat_map_count = pack->combat_map_count;
+        resources_.combat_enemy_views = pack->combat_enemy_views; resources_.combat_enemy_count = pack->combat_enemy_count;
+        resources_.combat_tables = pack->combat_tables; resources_.combat_table_count = pack->combat_table_count;
+        resources_.moon_phases = pack->moon_phases; resources_.moon_phase_count = pack->moon_phase_count;
+        resources_.search_objects = pack->search_objects; resources_.search_count = pack->search_count;
+        resources_.shard_spawns = pack->shard_spawns; resources_.shard_spawn_count = pack->shard_spawn_count;
+        resources_.shop_data = pack->shop_data;
+        resources_.shop_text_offsets = pack->shop_text_offsets; resources_.shop_text_records = pack->shop_text_records;
+        resources_.shop_text_record_count = pack->shop_text_record_count;
+        resources_.end_text_offsets = pack->end_text_offsets; resources_.end_text_records = pack->end_text_records;
+        resources_.end_text_record_count = pack->end_text_record_count;
+        resources_.karma_text_offsets = pack->karma_text_offsets; resources_.karma_text_records = pack->karma_text_records;
+        resources_.karma_text_record_count = pack->karma_text_record_count;
+        std::copy(std::begin(pack->words), std::end(pack->words), std::begin(resources_.words));
+        resources_.word_count = pack->word_count;
+        combat_context_.tables = {resources_.combat_tables, resources_.combat_tables + resources_.combat_table_count,
+                                  resources_.combat_tables + resources_.combat_table_count * 2,
+                                  resources_.combat_tables + resources_.combat_table_count * 3,
+                                  resources_.combat_table_count};
+        combat_context_.enemy_defs = resources_.combat_enemy_views;
+        combat_context_.enemy_def_count = resources_.combat_enemy_count;
+        combat_resources_.maps = resources_.combat_map_views; combat_resources_.map_count = resources_.combat_map_count;
+        combat_resources_.enemies = resources_.combat_enemy_views; combat_resources_.enemy_count = resources_.combat_enemy_count;
+        combat_resources_.tables = combat_context_.tables;
+        outdoor_.combat = &combat_context_; outdoor_.resources = &combat_resources_; outdoor_.prize_owner = &quest_;
+        openu5::save::SidecarSource source;
+        openu5::save::load_native_state(resources_.initial_gam, resources_.initial_gam_size, nullptr, game_, turn_,
+                                        retained_, source, true);
+    }
     context_.combat_context = &combat_context_;
     context_.dungeon_context = &dungeon_context_;
     context_.dialogue_services = &dialogue_services_;
@@ -118,14 +163,10 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     };
     context_.look = &look_services_;
 
-    quest_.context = this;
-    quest_.count = object_count; quest_.read = object_read; quest_.reserve = object_reserve;
-    quest_.append = object_append; quest_.erase = object_erase; quest_.write = object_write;
-    u5obj_bind(); // Batch 22: same diagnostic observer initialize() binds.
-    quest_.tile_at = tile_at; quest_.volatile_tile = volatile_tile; quest_.persistent_tile = persistent_tile;
-    quest_.search_objects = nullptr; quest_.search_count = 0;
-    quest_.spawns = nullptr; quest_.spawn_count = 0;
-    quest_.moon_phases = nullptr; quest_.moon_phase_count = 0;
+    // Batch 53: production's own binder, not a copy. Until this batch the
+    // fixture re-declared these hooks -- and, like initialize(), left
+    // end_record / karma / words / moonstones unbound (RB-1 .. RB-3).
+    bind_quest_services();
 
     dialogue_assets_.bind(nullptr, 0);
     dialogue_services_.registry = {&dialogue_assets_, AlphaDialogueCache::lookup};
@@ -161,33 +202,15 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     dungeon_context_.encounters = &dungeon_encounters_;
     dungeon_context_.data = fixture.dungeons;
     dungeon_context_.count = fixture.dungeon_count;
-    combat_context_.enemy_defs = fixture.enemy_defs;
-    combat_context_.enemy_def_count = fixture.enemy_def_count;
+    // Batch 53: the pack block above now runs first; the pack's enemy table
+    // keeps precedence, as it did when that block ran last.
+    if (!fixture.pack) {
+        combat_context_.enemy_defs = fixture.enemy_defs;
+        combat_context_.enemy_def_count = fixture.enemy_def_count;
+    }
 
-    shop_services_.context = this;
-    shop_services_.record_present = [](void *, int32_t) { return false; };
-    shop_services_.record = [](void *, int32_t) -> const char * { return nullptr; };
-    shop_services_.tile = [](void *p, int32_t x, int32_t y) { return tile_at(p, x, y); };
-    shop_services_.occupied = [](void *p, int32_t x, int32_t y) {
-        auto &r = *static_cast<AlphaRuntime *>(p);
-        for (size_t i = 0; i < r.actors_.count; ++i)
-            if (r.actors_.actors[i].location == r.game_.position.map.location &&
-                r.actors_.actors[i].z == r.game_.position.map.floor &&
-                r.actors_.actors[i].x == x && r.actors_.actors[i].y == y)
-                return true;
-        for (const auto &o : r.objects_)
-            if (o.location == r.game_.position.map.location && o.floor == r.game_.position.map.floor &&
-                o.x == x && o.y == y)
-                return true;
-        return false;
-    };
-    shop_services_.plate = [](void *p, int32_t x, int32_t y, int32_t tile) { volatile_tile(p, x, y, tile); };
-    shop_services_.hour_tiles = [](void *p) {
-        auto &r = *static_cast<AlphaRuntime *>(p);
-        r.terrain_.refresh(r.resources_.world, r.game_);
-    };
-    shop_services_.wake_npcs = [](void *) {};
-    shop_services_.transactional_services = true;
+    // Batch 53: production's own binder (RB-4 / H-146 hid behind a copy here).
+    bind_shop_services();
 
     // Matches initialize()'s own static-owner pattern exactly (alpha_runtime.cpp,
     // "auto transport=openu5::world_transport_services(context_);"). Move/travel
@@ -199,32 +222,6 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     // Batch 29: production's own binding, not a copy -- H-154/H-155 were a
     // device-only wiring defect, so a fixture-side duplicate would test itself.
     bind_rest_services();
-
-    // Batch 24: the pack-derived members initialize() assigns for the Save
-    // template and for town combat (alpha_runtime.cpp, the combat_context_/
-    // combat_resources_/quest_ block), then the New Journey's own
-    // load_native_state over INIT.GAM, so Save exports over a real document.
-    if (const auto *pack = fixture.pack) {
-        resources_.initial_gam = pack->initial_gam; resources_.initial_gam_size = pack->initial_gam_size;
-        resources_.initial_ool = pack->initial_ool; resources_.initial_ool_size = pack->initial_ool_size;
-        resources_.combat_map_views = pack->combat_map_views; resources_.combat_map_count = pack->combat_map_count;
-        resources_.combat_enemy_views = pack->combat_enemy_views; resources_.combat_enemy_count = pack->combat_enemy_count;
-        resources_.combat_tables = pack->combat_tables; resources_.combat_table_count = pack->combat_table_count;
-        combat_context_.tables = {resources_.combat_tables, resources_.combat_tables + resources_.combat_table_count,
-                                  resources_.combat_tables + resources_.combat_table_count * 2,
-                                  resources_.combat_tables + resources_.combat_table_count * 3,
-                                  resources_.combat_table_count};
-        combat_context_.enemy_defs = resources_.combat_enemy_views;
-        combat_context_.enemy_def_count = resources_.combat_enemy_count;
-        combat_resources_.maps = resources_.combat_map_views; combat_resources_.map_count = resources_.combat_map_count;
-        combat_resources_.enemies = resources_.combat_enemy_views; combat_resources_.enemy_count = resources_.combat_enemy_count;
-        combat_resources_.tables = combat_context_.tables;
-        outdoor_.combat = &combat_context_; outdoor_.resources = &combat_resources_; outdoor_.prize_owner = &quest_;
-        quest_.encounter = &combat_context_; quest_.combat_resources = &combat_resources_;
-        openu5::save::SidecarSource source;
-        openu5::save::load_native_state(resources_.initial_gam, resources_.initial_gam_size, nullptr, game_, turn_,
-                                        retained_, source, true);
-    }
 
     terrain_.refresh(resources_.world, game_);
 

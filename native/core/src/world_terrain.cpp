@@ -39,10 +39,16 @@ TransportServices world_transport_services(CommandContext &ctx){
     s.tile_at=[](void *p,int32_t x,int32_t y){auto &c=*static_cast<CommandContext*>(p);auto m=c.game.position.map;auto tile=get_active_map(c.world,m).value.tile_at(x,y);return open_door_tile(c,m,x,y,quest_world_tile(c,m,x,y,tile));};
     s.horse_owned=[](void *p,WorldPosition pos){auto &c=*static_cast<CommandContext*>(p);if(!pos.map.location||!c.actors)return false;for(size_t i=0;i<c.actors->count;++i){auto &a=c.actors->actors[i];if(a.location==pos.map.location&&a.z==pos.map.floor&&a.x==pos.xy.x&&a.y==pos.xy.y&&a.schedule.dialog)return true;}return false;};
     s.ship_at=[](void *p,WorldPosition pos,int32_t &hull,int32_t &skiffs){auto *q=static_cast<CommandContext*>(p)->quest_world;if(!q||!q->count||!q->read)return false;for(size_t i=0;i<q->count(q->context);++i){auto o=q->read(q->context,i);if(at(o,pos)){if(!o.ship)return false;hull=o.hull;skiffs=o.skiffs;return true;}}return false;};
-    s.reserve=[](void *p,bool ship){auto &c=*static_cast<CommandContext*>(p);auto *q=c.quest_world;if(!c.terrain||!q||!q->count||!q->read||!q->erase||(ship&&(!q->append||!q->reserve)))return false;c.terrain->persistent.reserve(c.terrain->persistent.size()+1);return !ship||q->reserve(q->context,1);};
+    s.reserve=[](void *p,bool ship){return reserve_world_transport(*static_cast<CommandContext*>(p),ship);};
     s.remove_boarded=[](void *p,WorldPosition pos,int32_t tile){auto &c=*static_cast<CommandContext*>(p);auto &q=*c.quest_world;for(size_t i=0;i<q.count(q.context);++i)if(at(q.read(q.context,i),pos)){q.erase(q.context,i);return;}c.terrain->remove_boarded(pos.map,pos.xy.x,pos.xy.y,tile);};
     s.drop=[](void *p,WorldPosition pos,int32_t tile){static_cast<CommandContext*>(p)->terrain->set(pos.map,pos.xy.x,pos.xy.y,tile,true,"transport.drop");};
     s.park_ship=[](void *p,WorldPosition pos,int32_t tile,int32_t hull,int32_t skiffs){auto &q=*static_cast<CommandContext*>(p)->quest_world;QuestObject o;o.location=pos.map.location;o.floor=pos.map.floor;o.x=pos.xy.x;o.y=pos.xy.y;o.tile=tile;o.hull=hull;o.skiffs=skiffs;o.ship=true;q.append(q.context,o);};
     return s;
 }
+bool reserve_world_transport(CommandContext &c,bool ship){auto *q=c.quest_world;if(!c.terrain||!q||!q->count||!q->read||!q->erase||(ship&&(!q->append||!q->reserve)))return false;c.terrain->persistent.reserve(c.terrain->persistent.size()+1);return !ship||q->reserve(q->context,1);}
+void place_purchased_ship(CommandContext &c,int32_t x,int32_t y,int32_t tile,int32_t hull,int32_t skiffs){
+    auto *q=c.quest_world;if(!q||!q->append)return;
+    QuestObject o;o.location=0;o.floor=c.game.position.map.floor;o.x=x;o.y=y;o.tile=tile;o.hull=hull;o.skiffs=skiffs;o.ship=true;q->append(q->context,o);
+}
+void place_purchased_horse(CommandContext &c,int32_t x,int32_t y){if(c.terrain)c.terrain->set(c.game.position.map,x,y,kPurchasedHorseTile,true,"shop.horse");}
 }

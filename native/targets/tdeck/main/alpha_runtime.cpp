@@ -22,6 +22,7 @@
 #include "openu5/inventory_picker.h"
 #include "openu5/loot.h"
 #include "openu5/magic.h"
+#include "openu5/gameplay_save.h"
 #include "openu5/persistence.h"
 #include "openu5/rest.h"
 #include "tdeck_board.h"
@@ -196,10 +197,7 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
     poison_.set_blip_ms(openu5::kPoisonBlipMs);
     look_services_.context=this;look_services_.describe=[](void*p,int32_t tile){auto&r=*static_cast<AlphaRuntime*>(p);return tile>=0&&size_t(tile)<r.resources_.look_count?r.resources_.look_text+r.resources_.look_offsets[tile]:"something";};look_services_.sign=[](void*p,openu5::MapId map,int32_t x,int32_t y){auto&r=*static_cast<AlphaRuntime*>(p);return openu5::resolve_look_sign(r.resources_.signs,r.resources_.sign_count,map,x,y);};context_.look=&look_services_;
     context_.services={this,command_effect,command_reload,banner};context_.events={this,dispatch_event};
-    quest_.context=this;quest_.count=object_count;quest_.read=object_read;quest_.reserve=object_reserve;quest_.append=object_append;quest_.erase=object_erase;quest_.write=object_write;u5obj_bind();
-    quest_.tile_at=tile_at;quest_.volatile_tile=volatile_tile;quest_.persistent_tile=persistent_tile;
-    quest_.search_objects=resources_.search_objects;quest_.search_count=resources_.search_count;quest_.spawns=resources_.shard_spawns;quest_.spawn_count=resources_.shard_spawn_count;
-    quest_.moon_phases=resources_.moon_phases;quest_.moon_phase_count=resources_.moon_phase_count;
+    bind_quest_services();
     dialogue_assets_.bind(resources_.dialogue_data,resources_.dialogue_data_size);dialogue_services_.registry={&dialogue_assets_,AlphaDialogueCache::lookup};
     shrine_services_.data=&resources_.shrine_data;
     shrine_services_.context=this;
@@ -218,20 +216,10 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
     combat_resources_.maps=resources_.combat_map_views;combat_resources_.map_count=resources_.combat_map_count;
     combat_resources_.enemies=resources_.combat_enemy_views;combat_resources_.enemy_count=resources_.combat_enemy_count;combat_resources_.tables=combat_context_.tables;
     outdoor_.combat=&combat_context_;outdoor_.resources=&combat_resources_;outdoor_.prize_owner=&quest_;
-    quest_.encounter=&combat_context_;quest_.combat_resources=&combat_resources_;
     for(size_t i=0;i<resources_.combat_map_count;++i)dungeon_arenas_[i]={resources_.combat_map_views[i],resources_.combat_sprites+i*16};
     dungeon_encounters_.combat=&combat_context_;dungeon_encounters_.arenas=dungeon_arenas_;dungeon_encounters_.count=resources_.combat_map_count;
     dungeon_context_.encounters=&dungeon_encounters_;
-    shop_data_=resources_.shop_data;
-    shop_services_.context=this;
-    shop_services_.record_present=[](void *p,int32_t index){auto&r=*static_cast<AlphaRuntime*>(p);return index>=0&&size_t(index)<r.resources_.shop_text_record_count;};
-    shop_services_.record=[](void *p,int32_t index)->const char*{auto&r=*static_cast<AlphaRuntime*>(p);return index>=0&&size_t(index)<r.resources_.shop_text_record_count?r.resources_.shop_text_records+r.resources_.shop_text_offsets[index]:nullptr;};
-    shop_services_.tile=[](void *p,int32_t x,int32_t y){return tile_at(p,x,y);};
-    shop_services_.occupied=[](void *p,int32_t x,int32_t y){auto&r=*static_cast<AlphaRuntime*>(p);return r.object_or_npc_at(x,y,r.game_.position.map.floor);};
-    shop_services_.plate=[](void *p,int32_t x,int32_t y,int32_t tile){volatile_tile(p,x,y,tile);};
-    shop_services_.hour_tiles=[](void *p){auto&r=*static_cast<AlphaRuntime*>(p);r.terrain_.refresh(r.resources_.world,r.game_);};
-    shop_services_.wake_npcs=[](void *p){auto&r=*static_cast<AlphaRuntime*>(p);const auto loc=r.game_.position.map.location;if(loc>=1&&loc<=32){auto&n=r.resources_.npc_locations[loc-1];openu5::enter_npc_map(r.actors_,n.slots,n.count,uint8_t(loc),uint8_t(r.game_.time.hour),r.game_.npc_dead[loc-1]);}};
-    shop_services_.transactional_services=true;
+    bind_shop_services();
     dungeon_context_.data=resources_.dungeons;dungeon_context_.count=report.dungeon_count;
     auto transport=openu5::world_transport_services(context_);static openu5::TransportServices transport_owner;transport_owner=transport;context_.transport_services=&transport_owner;
     bind_rest_services();
@@ -1645,6 +1633,10 @@ const char *AlphaRuntime::overlay() const {static char text[64]{};text[0]=0;
     // would otherwise look frozen. A device affordance, not transcript text.
     if(blackthorn_pacer_.awaiting_key()){std::snprintf(text,sizeof(text),"Enter: continue");return text;}
     if(ui_&&ui_->mode()==openu5::UiMode::Shop)return text;
+    // Batch 53 (D-53 / H-12). Vas Rel Por's phase getkey (CAST.OVL 0x0cff
+    // "To phase:", then a bare key) is not an aim: without this the generic
+    // reticle text below replaced the prompt with "Aim: empty (-1,-1)".
+    if(ui_&&ui_->mode()==openu5::UiMode::TargetSelection&&ui_->request()==openu5::UiRequestId::GatePhase){std::snprintf(text,sizeof(text),"To phase:");return text;}
     if(ui_&&ui_->mode()==openu5::UiMode::TargetSelection){const int x=ui_->target_x(),y=ui_->target_y();if(ui_->target_command_kind()==openu5::CommandKind::Fire){if(ui_->target_has_direction())std::snprintf(text,sizeof(text),"Fire: %s",openu5::direction_name(ui_->target_direction()));else std::snprintf(text,sizeof(text),"Fire: choose direction");}else{const openu5::CombatActor *target=nullptr;if(context_.combat)for(int i=0;i<combat_.count;++i){const auto&a=combat_.actors[i];if(combat_actor_live(a)&&a.position.x==x&&a.position.y==y){target=&a;break;}}if(target){const char *name=target->enemy&&target->enemy->name?target->enemy->name:target->member<game_.party.character_count?game_.party.characters[target->member].name:"Actor";std::snprintf(text,sizeof(text),"Aim: %.16s (%d,%d)",name,x,y);}else std::snprintf(text,sizeof(text),"Aim: empty (%d,%d)",x,y);}}
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
     else if(ui_&&ui_->mode()==openu5::UiMode::DebugMenu&&debug_){auto v=debug_->view();std::snprintf(text,sizeof(text),"%s > %s",v.title?v.title:"Debug",v.item?v.item:"");}
@@ -2374,6 +2366,10 @@ void AlphaRuntime::synchronize_loaded_world(){
     // fall back to no active session rather than leaking the prior one.
     if(openu5::save::restore_dungeon(retained_,dungeon_)!=openu5::save::Error::None){dungeon_={};ESP_LOGW(kTag,"DUNGEON_RESTORE_FAILED domain-invalid sidecar; dungeon session left inactive");}
     ESP_LOGI(kTag,"DUNGEON_RESTORE active=%d dungeon=%u depth=%u",dungeon_.active,unsigned(dungeon_.pos.dungeon),unsigned(dungeon_.pos.floor));
+    // Batch 53 (RB-3). The stones are GAM bytes 0x28a..0x2a9 in the document
+    // every route just loaded (title Continue, Load Slot, System Menu, Alt+L,
+    // New Journey's INIT.GAM). The generation gate already validated them.
+    if(openu5::save::restore_moonstones(retained_,quest_)!=openu5::save::Error::None)ESP_LOGW(kTag,"MOONSTONES_RESTORE_FAILED domain-invalid document; stones unchanged");
     // Batch 26 (H-115). A 1988 load resumes straight into the restored
     // context's loop (ULTIMA.EXE 0x00DB: g_location >= 0x21 -> DUNGEON.OVL
     // 0x0E2E). The System Menu branch of handle() returns before
@@ -2590,7 +2586,53 @@ void AlphaRuntime::bind_rest_services(){
             if(i==guard||r.game_.party.characters[i].status=='D'||i>=m.start_count[south])continue;
             const auto start=m.starts[south][i];if(start.x==col&&start.y==row)return false;}
         return true;};
-    rest_owner.karma_record=[](void*,int32_t){return "\"Rest well, Avatar. Continue upon the path of virtue.\"";};context_.rest_services=&rest_owner;
+    // Batch 53 (H-190): KARMA.DAT, as check_refuge's own karma_record reads it.
+    rest_owner.karma_record=karma_speech;context_.rest_services=&rest_owner;
+}
+const char *AlphaRuntime::karma_speech(void*p,int32_t index){auto&r=*static_cast<AlphaRuntime*>(p);
+    return index>=0&&index<6&&!r.karma_speech_[index].empty()?r.karma_speech_[index].c_str():nullptr;}
+// Batch 53 (RB-1 .. RB-3, H-190). Every QuestWorldServices hook the device
+// provides. The text hooks read the pack's own ENDMSG.DAT / KARMA.DAT / Words
+// of Power sections; nothing here is authored. It reads the loaded pack (the
+// karma text) and the current document (the moonstones), so both callers run
+// it after those are loaded: initialize() after its INIT.GAM import, the host
+// fixture after its pack block.
+void AlphaRuntime::bind_quest_services(){
+    quest_.context=this;quest_.count=object_count;quest_.read=object_read;quest_.reserve=object_reserve;quest_.append=object_append;quest_.erase=object_erase;quest_.write=object_write;u5obj_bind();
+    quest_.tile_at=tile_at;quest_.volatile_tile=volatile_tile;quest_.persistent_tile=persistent_tile;
+    quest_.search_objects=resources_.search_objects;quest_.search_count=resources_.search_count;quest_.spawns=resources_.shard_spawns;quest_.spawn_count=resources_.shard_spawn_count;
+    quest_.moon_phases=resources_.moon_phases;quest_.moon_phase_count=resources_.moon_phase_count;
+    quest_.encounter=&combat_context_;quest_.combat_resources=&combat_resources_;
+    // RB-1: ENDMSG.DAT. Record 9 is what absorption_endgame / rescue_events /
+    // finish_encounter_combat require before a Wooden-Box victory may run.
+    quest_.end_record=[](void*p,int32_t index)->const char*{auto&r=*static_cast<AlphaRuntime*>(p);
+        return tdeck::misc_text_record({r.resources_.end_text_offsets,r.resources_.end_text_records,r.resources_.end_text_record_count},index);};
+    // H-190: the six KARMA.DAT records, quoted at use (game.ts, 0x0b03).
+    for(size_t i=0;i<6;++i){const char*k=tdeck::misc_text_record({resources_.karma_text_offsets,resources_.karma_text_records,resources_.karma_text_record_count},int32_t(i));karma_speech_[i]=k?std::string("\"")+k+"\"":std::string();}
+    quest_.karma_record=karma_speech;
+    // RB-2: DATA.OVL 0x44AD, FALLAX .. VERAMOCOR.
+    quest_.words={resources_.words,resources_.word_count};
+    // RB-3: the runtime's own stones, hydrated from the current document.
+    quest_.moonstones=moonstones_;quest_.moonstone_count=8;
+    if(openu5::save::restore_moonstones(retained_,quest_)!=openu5::save::Error::None)ESP_LOGW(kTag,"MOONSTONES_RESTORE_FAILED no valid moonstones in the current document");
+}
+// Batch 53 (RB-4 / H-146). Every ShopServices hook the device provides. The
+// three transport hooks are core's own placement owner (world_terrain.h), the
+// same one Board/Disembark and world_transport_services use.
+void AlphaRuntime::bind_shop_services(){
+    shop_data_=resources_.shop_data;
+    shop_services_.context=this;
+    shop_services_.record_present=[](void *p,int32_t index){auto&r=*static_cast<AlphaRuntime*>(p);return index>=0&&size_t(index)<r.resources_.shop_text_record_count;};
+    shop_services_.record=[](void *p,int32_t index)->const char*{auto&r=*static_cast<AlphaRuntime*>(p);return index>=0&&size_t(index)<r.resources_.shop_text_record_count?r.resources_.shop_text_records+r.resources_.shop_text_offsets[index]:nullptr;};
+    shop_services_.tile=[](void *p,int32_t x,int32_t y){return tile_at(p,x,y);};
+    shop_services_.occupied=[](void *p,int32_t x,int32_t y){auto&r=*static_cast<AlphaRuntime*>(p);return r.object_or_npc_at(x,y,r.game_.position.map.floor);};
+    shop_services_.plate=[](void *p,int32_t x,int32_t y,int32_t tile){volatile_tile(p,x,y,tile);};
+    shop_services_.hour_tiles=[](void *p){auto&r=*static_cast<AlphaRuntime*>(p);r.terrain_.refresh(r.resources_.world,r.game_);};
+    shop_services_.wake_npcs=[](void *p){auto&r=*static_cast<AlphaRuntime*>(p);const auto loc=r.game_.position.map.location;if(loc>=1&&loc<=32){auto&n=r.resources_.npc_locations[loc-1];openu5::enter_npc_map(r.actors_,n.slots,n.count,uint8_t(loc),uint8_t(r.game_.time.hour),r.game_.npc_dead[loc-1]);}};
+    shop_services_.reserve=[](void *p,bool ship){return openu5::reserve_world_transport(static_cast<AlphaRuntime*>(p)->context_,ship);};
+    shop_services_.ship=[](void *p,int32_t x,int32_t y,int32_t tile,int32_t hull,int32_t skiffs){openu5::place_purchased_ship(static_cast<AlphaRuntime*>(p)->context_,x,y,tile,hull,skiffs);};
+    shop_services_.horse=[](void *p,int32_t x,int32_t y){openu5::place_purchased_horse(static_cast<AlphaRuntime*>(p)->context_,x,y);};
+    shop_services_.transactional_services=true;
 }
 void AlphaRuntime::start_smoke(void*p,int group){auto&r=*static_cast<AlphaRuntime*>(p);r.smoke_.start(group);r.dirty_=true;r.dirty_reason_="smoke-test-start";}
 } // namespace tdeck

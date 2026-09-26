@@ -64,8 +64,8 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 |---|---|---|---|---|---|---|
 | H-10 | World, party ≥2, an active player set via `1`–`6` | **`Symbol` held + Mic pressed and released** (do **not** hold past 1.1 s) | the `Set Active Plr:` echo, resolving to *no* active member | `active_character` returns to `255` | — | PASS (Batch 20, hardware, `a357e28c…`) |
 | H-11 | Immediately after H-10 | plain Mic short press, then a plain 1.1 s hold | short = Cancel as before; hold = Movement Mode toggle as before | unchanged contract | — | PASS (Batch 20, hardware, `a357e28c…`) |
-| H-12 | World, on foot, a caster with Vas Rel Por mixed and ≥ its mana | `C` → `Vas Rel Por` | the prompt **`To phase:`** appears | none yet | any non-`1`–`8` key, and the device Cancel, **fail silently** — no banner, no teleport | **FAIL — confirmed production defect (Batch 20, hardware, `a357e28c…`).** Screen shows `Aim: empty (-1,-1)` with a `Move\|Confirm\|Mic Back` footer instead of `To phase:`. Root cause (proven): `AlphaRuntime::overlay()` (`alpha_runtime.cpp:1489`) unconditionally renders the generic combat-reticle overlay for ANY non-`Fire` `UiMode::TargetSelection` request, clobbering the real prompt text set by `begin_target(...,"To phase:",...)`. Confirmed NOT cosmetic-only for GatePhase specifically: a bare `2` and `e` (no Sym) both produced `"Failed!"` with no ceremony flash at all, even though `ui_session.cpp:665-673` correctly accepts `'1'`-`'8'` for `GatePhase` — the digit never reaches that handler, pointing to a T-Deck key-routing gap upstream, not yet localized. **Blast radius confirmed wider in H-15:** the same `overlay()` clobbering also hides the plain world `Direction?` getdir text (harmless there, since Move+Confirm is the correct interaction for a spatial direction pick — only `GatePhase`'s non-spatial digit entry is functionally broken by it). Deferred to Batch 21 (isolated to targeting-prompt presentation + this one spell's input path, does not block the rest of the checklist) |
-| H-13 | At the H-12 prompt | a digit `1`–`8` | the ceremony flash, then the party is **elsewhere**, with **no** `Success!`/`Failed!` banner | moonstone teleport applied | — | **FAIL — same defect as H-12.** Cannot be exercised; the phase digit never registers, so the ceremony/teleport never fires |
+| H-12 | World, on foot, a caster with Vas Rel Por mixed and ≥ its mana | `C` → `Vas Rel Por` | the prompt **`To phase:`** appears | none yet | any non-`1`–`8` key, and the device Cancel, **fail silently** — no banner, no teleport | **FAIL — confirmed production defect (Batch 20, hardware, `a357e28c…`).** Screen shows `Aim: empty (-1,-1)` with a `Move\|Confirm\|Mic Back` footer instead of `To phase:`. Root cause (proven): `AlphaRuntime::overlay()` (`alpha_runtime.cpp:1489`) unconditionally renders the generic combat-reticle overlay for ANY non-`Fire` `UiMode::TargetSelection` request, clobbering the real prompt text set by `begin_target(...,"To phase:",...)`. Confirmed NOT cosmetic-only for GatePhase specifically: a bare `2` and `e` (no Sym) both produced `"Failed!"` with no ceremony flash at all, even though `ui_session.cpp:665-673` correctly accepts `'1'`-`'8'` for `GatePhase` — the digit never reaches that handler, pointing to a T-Deck key-routing gap upstream, not yet localized. **Blast radius confirmed wider in H-15:** the same `overlay()` clobbering also hides the plain world `Direction?` getdir text (harmless there, since Move+Confirm is the correct interaction for a spatial direction pick — only `GatePhase`'s non-spatial digit entry is functionally broken by it). Deferred to Batch 21 (isolated to targeting-prompt presentation + this one spell's input path, does not block the rest of the checklist) **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E-C).** |
+| H-13 | At the H-12 prompt | a digit `1`–`8` | the ceremony flash, then the party is **elsewhere**, with **no** `Success!`/`Failed!` banner | moonstone teleport applied | — | **FAIL — same defect as H-12.** Cannot be exercised; the phase digit never registers, so the ceremony/teleport never fires **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E-C).** |
 | H-14 | **Aboard a ship or skiff**, same caster | `C` → `Vas Rel Por` | **the `To phase:` prompt must not appear at all** — the ship check precedes the print (`CAST.OVL 0x0cf6`) | spell/mana still spent per the reference, no teleport | — | PASS (Batch 20, hardware, `a357e28c…`) — immediate silent `Failed!`, no prompt shown at all, matching the aboard-ship abort path |
 | H-15 | World, carrying a **Rel Hur** scroll (count noted) | `U` → Rel Hur → **cancel** the `Direction?` prompt | the direction row appears and closes | **the scroll count is DOWN by one** — the reference consumes at selection, before the getdir | this *is* the cancel path | **PASS for the wind-change/consume-at-selection behavior (Batch 20, hardware, `a357e28c…`)** — wind changed correctly to match the selected direction. **FAIL (presentation-only, same defect as H-12):** no `Direction?` text appears in the transcript, only the generic `Aim: empty (x,y)` overlay — functionally harmless here since Move+Confirm is the right interaction for a direction pick. Enemies observed spawning near the party after use are **not related to Rel Hur** — `outdoor_turn()`'s `has_spawn`/`SpawnRoll` random-encounter check (`turn.h:48-55`) runs on every outdoor turn via the same shared `turn()` path any turn-consuming command goes through; Rel Hur's own effect code (`magic.cpp:176-181`) only touches wind. Not a defect |
 | H-16 | World, carrying a **skull key** (count noted) | `U` → skull key → **cancel** the `Direction?` prompt | same shape | **the key count is DOWN by one** | this *is* the cancel path | PASS (Batch 20, hardware, `a357e28c…`) |
@@ -177,7 +177,7 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 | H-70 | Debug → Transport → Ship | `B`oard, then `Y`ell | **HOIST/FURL, not a word prompt** (R-19); the ship sails with the wind | PASS (Batch 20, hardware, `a357e28c…`) |
 | H-71 | Aboard | `X`-it; board a horse, a carpet, a skiff | the avatar sprite changes each time | PASS (Batch 20, hardware, `a357e28c…`) |
 | H-72 | Aboard a ship | save, reload | transport mode and hull survive | PASS (Batch 20, hardware, `a357e28c…`) |
-| H-146 | **New in Batch 20 — no prior row covered this.** Shipwright or Horse Seller, gold ≥ price | `Y` to confirm the purchase | The ship/skiff/horse is granted, gold spent, transport placed at the dock/stable | **FAIL — confirmed production defect (Batch 20, hardware, `a357e28c…`).** `N` (decline) works; `Y` (confirm) does **nothing** — no message, no gold spent, no transport granted. Root cause (proven): `shop_orchestration.cpp`'s `ShipDeal` confirm handler (line 467-470) and `horse()` handler (line 285-288) both require the `v.ship`/`v.horse` and `v.reserve` callback hooks; `alpha_runtime.cpp:220-229` wires `shop_services_.record_present/record/tile/occupied/plate/hour_tiles/wake_npcs` but never assigns `.ship`, `.horse`, or `.reserve`, so they're null on this build and the confirm silently hits `CommandStatus::Unsupported`. Device-only adapter wiring gap; player-facing effect is that no shop can sell a ship, skiff, or horse. Workaround for the rest of this session: Debug → Presets → "Transport Test Setup" bypasses the shop. Deferred to Batch 21 (doesn't block remaining validation given the workaround) |
+| H-146 | **New in Batch 20 — no prior row covered this.** Shipwright or Horse Seller, gold ≥ price | `Y` to confirm the purchase | The ship/skiff/horse is granted, gold spent, transport placed at the dock/stable | **FAIL — confirmed production defect (Batch 20, hardware, `a357e28c…`).** `N` (decline) works; `Y` (confirm) does **nothing** — no message, no gold spent, no transport granted. Root cause (proven): `shop_orchestration.cpp`'s `ShipDeal` confirm handler (line 467-470) and `horse()` handler (line 285-288) both require the `v.ship`/`v.horse` and `v.reserve` callback hooks; `alpha_runtime.cpp:220-229` wires `shop_services_.record_present/record/tile/occupied/plate/hour_tiles/wake_npcs` but never assigns `.ship`, `.horse`, or `.reserve`, so they're null on this build and the confirm silently hits `CommandStatus::Unsupported`. Device-only adapter wiring gap; player-facing effect is that no shop can sell a ship, skiff, or horse. Workaround for the rest of this session: Debug → Presets → "Transport Test Setup" bypasses the shop. Deferred to Batch 21 (doesn't block remaining validation given the workaround) **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E-D).** |
 | H-147 | **New in Batch 20 — expected non-defect, recorded to save future testers the investigation.** Aboard a ship, sails down | `H` (Hole up), enter any hours value, Enter | Hull increases by a random 1-3 (capped at 99); the clock advances by a **fixed 25 minutes regardless of the hours entered** — the "Hours (1-9)?" prompt (`ui_session.cpp:794`) is asked unconditionally for `H` in every context and this ship-repair path (`rest.cpp:232-240`) simply ignores the value. **Confirmed matches code exactly on hardware — not a bug.** Do not mistake this for a way to skip to daytime; it never was one |
 
 ---
@@ -270,7 +270,7 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 | # | Setup | Input | Expected | Result |
 |---|---|---|---|---|
 | H-118 | Debug → Quest → grant a shard | `U`se it in a Flame room | the shard's effect fires (R-08) | **FAIL — CRITICAL, confirmed production defect (Batch 20, hardware, `a357e28c…`).** Used Debug → Certification → "Flame/Shard Test" (grants all 3 shards, teleports to the verified Empath Abbey (15,3) floor-1 ritual cell), then `U`sed a shard. Only the generic "Use item" echo appeared — no ritual text at all, even though `cast_shard_into_flame()` (`quest.cpp:89-107`) is unconditional: it always writes a header line first regardless of position match, so at minimum 1-2 lines of flavor text should always print. **Afterward, movement became permanently silent — no `Blocked!`, no echo, nothing — and did NOT recover after teleporting elsewhere or loading a save.** `Alt+M`/`Alt+D` (System Menu/Developer) still respond normally, ruling out a total device hang; teleport and load commands are themselves still processed (the destination/reload happens) but movement remains dead afterward regardless. Since Load only restores `GameState`/`TurnState`/quest data (confirmed via `alpha_save.cpp` review, see H-115) and never touches UI session mode, and this survives both teleport and load, the stuck state most likely lives in UI-session/input-mode state (e.g. a leftover `TargetSelection`-style mode silently swallowing movement input) rather than corrupted save data. **Narrowed further:** `L`ook and `Z`-stats both work normally (Look correctly resolves different directions per trackball/WASD input, confirming directional input hardware is fine) — only the world **Move** command path specifically is affected, producing no response at all (not even `Blocked!`). This rules out a broad UI/input freeze; it's a targeted lock on one command kind. Recovered via power cycle (teleport/reload were insufified). Root cause not yet isolated — needs dedicated investigation. **Top priority for Batch 21 alongside H-149/H-150/H-151/H-115** **Batch 25: HOST FIXED / DEVICE RETEST PENDING (audit Phase 6T).** Root cause was not the ritual: a question the core was waiting on (e.g. "Leave this place?") was on screen when `Alt+D` was pressed; `UiSession::set_base_mode()` overwrote the Developer menu's return register, so closing the menu dropped the question while `awaiting_exit` stayed set and every world command (Use, Move, Look's core half) was refused silently. See `GAMEPLAY_INTEGRATION_AUDIT.md` §"Batch 25" **Batch 52: HARDWARE PASS — Phase 6T.** |
-| H-119 | At a dungeon entrance | `Y`ell a word of power | the quake and the flag toggle | UNTESTED |
+| H-119 | At a dungeon entrance | `Y`ell a word of power | the quake and the flag toggle | UNTESTED **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E-B).** |
 | H-120 | Blackthorn's palace, capture sequence | run the whole ceremony | the interrogation asks its questions, each with a visible **`Your response?`** row (see H-23), and the scene reads as a distinct scene, not the ordinary Palace lobby (R-32) | UNTESTED |
 | H-121 | During H-120, a companion is executed | observe the active character | **the previously-set active character is NOT re-pointed** — if it named the executed companion or anyone after them in the marching order, it now names someone else. That is `BLCKTHRN 0x03ae-0x04d4`'s own behaviour. **Do not file it** | UNTESTED |
 | H-122 | During H-120 | watch the pacing | **RE-ADJUDICATED — Batch 51** (see Phase 7D-B below): the tick pacing is byte-exact; the materialization sweep, the holy-circle frame and the sacrifice siren had **zero dwell** and are host fixed; the "missing teleport-in" was the circle frame being staged and replaced inside one pump, so it never reached the screen (its LFSR texture is still not modelled). *Original row text:* **KNOWN OPEN — D-10/Y-32.** The scene may feel faster and more collapsed than the original. **If you can record video against original footage, that recording is the missing evidence.** Capture it rather than filing a ticket | Consistent with the known-open D-10/Y-32 pacing issue (fast, as expected — not filed separately). **Additional new observation (Batch 20):** the animation for Blackthorn teleporting in appears to be missing entirely, distinct from the general pacing issue. Recorded for Batch 21 follow-up, not yet root-caused |
@@ -295,9 +295,9 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 | H-132 | Debug → Default Entrance at a location with a basement (e.g. Lord British's castle) | enter | you arrive on the **ground floor**, not the basement — the ordinal-vs-signed-z fix | R-27 | PASS (Batch 20, hardware, `a357e28c…`) |
 | H-133 | Debug menu, all pages | browse | every setter shows a **label**, not a raw ordinal, and the current value is readable without moving the cursor onto it. Special Items and Quest Items are reachable and named | R-28, R-29 | PASS (Batch 20, hardware) |
 | H-134 | Debug → any preset | select it | the effect list is **disclosed** before applying and a confirm gate is required. The Transport preset does **not** silently rig HMS Cape | R-30 | PASS (Batch 20, hardware, `a357e28c…`) — verified during Leg B's "Combat Test Setup" preset application (effect list disclosed, confirm gate present) |
-| H-135 | Trigger an earthquake event (Yell a word of power at a dungeon entrance, H-119) | observe | the **Quake** shake renders | Y-04 | UNTESTED |
+| H-135 | Trigger an earthquake event (Yell a word of power at a dungeon entrance, H-119) | observe | the **Quake** shake renders | Y-04 | UNTESTED **Batch 53: reachable again (RB-2 fixed); observed in Phase 7E-B.** |
 | H-136 | Combat: land a killing area-effect blow, or step a poisoned member through a turn | observe | **CellExplosion** draws on the cell; **PoisonTick** flashes the poisoned member's roster row by inversion, not by a tile write | Y-04 | UNTESTED |
-| H-137 | Enter a Refuge; separately, let a troll ambush you at a bridge | observe | the **Refuge** and **TrollSneak** narrative scenes both pace out as sequences with readable text, not as a single flashed frame | Y-04 | PASS for TrollSneak (Batch 20, hardware) — confirmed via a bridge ambush. Refuge half not yet tested |
+| H-137 | Enter a Refuge; separately, let a troll ambush you at a bridge | observe | the **Refuge** and **TrollSneak** narrative scenes both pace out as sequences with readable text, not as a single flashed frame | Y-04 | PASS for TrollSneak (Batch 20, hardware) — confirmed via a bridge ambush. Refuge half not yet tested **Batch 53: Refuge half host-proven on the device runtime; Phase 7E-E.** |
 | H-138 | Any combat where a summoned or field effect kills the last enemy while a member is poisoned | observe | the sprite on the cell stays put for the whole choreography (`under_tile`), and no committed state change is deferred past it | Y-04 (#243) | UNTESTED |
 | H-139 | Combat, a member with **nothing** in hand | `R`eady | **KNOWN OPEN — D-8/Y-28.** Today a disabled `(None available)` picker opens instead of the action being charged immediately. Record what you see; do not file | Y-28 | UNTESTED |
 | H-140 | Combat, `R`eady a ring that vanishes on use | observe | **KNOWN OPEN — D-8/Y-28.** `Ring vanishes!` does not close the picker early. Record; do not file | Y-28 | UNTESTED |
@@ -707,7 +707,7 @@ The historical result cells above are left as recorded. Category numbers follow 
 
 | Row | Batch 20 result | Now | Where it was settled / what remains |
 |---|---|---|---|
-| H-12, H-13 | FAIL | **8** | Root-caused in Batch 52: the device owns no moonstones, so every phase fails (H-188 / RB-3). The `To phase:` text is also overdrawn by the `Aim:` overlay (D-53). Fix in Batch 53, then Phase 7E. |
+| H-12, H-13 | FAIL | **8** | Root-caused in Batch 52: the device owns no moonstones, so every phase fails (H-188 / RB-3). The `To phase:` text is also overdrawn by the `Aim:` overlay (D-53). Fix in Batch 53, then Phase 7E. → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-C)** |
 | H-15 (text half) | FAIL (presentation) | 7 | The same overlay. Harmless. |
 | H-22 | FAIL | 7 | The original folds case (kernel `0x6f1e`, proven this batch); native does not. Easter egg. D-50. |
 | H-23 | PASS (partial) | 2 | Blackthorn prompts were readable in 7D-B; the shrine chain passed in H-31. |
@@ -723,7 +723,7 @@ The historical result cells above are left as recorded. Category numbers follow 
 | H-106 | UNTESTED | 3 | Combat and magic parity. |
 | H-115 | FAIL | 2 | B26; 6U PASS. |
 | H-118 | FAIL CRITICAL | 2 | B25; 6T PASS. |
-| H-119 | UNTESTED | **8** | Cannot work on the device: Words of Power are unbound (H-187 / RB-2). |
+| H-119 | UNTESTED | **8** | Cannot work on the device: Words of Power are unbound (H-187 / RB-2). → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-B)** |
 | H-120 | UNTESTED | 2 | 7D-B (B51). |
 | H-121 | UNTESTED | 5 | Original; do not file. |
 | H-122 | KNOWN OPEN | 2 | 7D-B PASS. The residual class-B/C timing is category 6. The sacrifice burst is H-186 (7). |
@@ -734,7 +734,7 @@ The historical result cells above are left as recorded. Category numbers follow 
 | H-136, H-138 | UNTESTED | 6 | Y-04 host. |
 | H-137 (Refuge half) | UNTESTED | 6 | **Never device-run, and it is the party-wipe recovery path: Phase 7E (required).** |
 | H-139, H-140 | UNTESTED (known open) | 6 | D-8. Alpha 3. |
-| H-146 | FAIL | **8** | Still unbound: `ShopServices::ship` / `horse` / `reserve` (RB-4). |
+| H-146 | FAIL | **8** | Still unbound: `ShopServices::ship` / `horse` / `reserve` (RB-4). → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-D)** |
 | H-148 | INCONCLUSIVE | 1 | B21B fix; the reset was seen on the device (Batch 23 report). |
 | H-149, H-150, H-152 | FAIL CRITICAL | 5 | Original behaviour; H-150/H-152 were seen behaving as adjudicated (21A.3 report). |
 | H-151 | FAIL CRITICAL | 3 | Core fix B21A (RED-7). The device observation is owed: Phase 7E. |
@@ -743,11 +743,11 @@ The historical result cells above are left as recorded. Category numbers follow 
 
 | Row | Behaviour on the Batch 51 device | Status |
 |---|---|---|
-| H-187 | Yell a Word of Power at a dungeon entrance → always "No effect!", and the seal never opens. INIT.GAM starts all eight dungeons sealed, so no dungeon can be entered without Developer teleport. | **RELEASE BLOCKER (RB-2)** |
-| H-188 | Moongates never transit, Vas Rel Por always prints "Failed!", and searching for or using moonstones does nothing. The runtime owns no moonstones. | **RELEASE BLOCKER (RB-3)** |
-| H-189 | Final Doom battle with the Wooden Box: the victory ending is refused, and the arena never tears down (only `Alt+D` / `Alt+S` / `Alt+L` answer). | **RELEASE BLOCKER (RB-1)** |
-| H-190 | The Camp apparition and Refuge karma speech show an invented sentence instead of the KARMA.DAT text. | non-blocking; ride Batch 53 |
-| H-191 | No moongate tile is drawn at night. | **RELEASE BLOCKER (part of RB-3)** |
+| H-187 | Yell a Word of Power at a dungeon entrance → always "No effect!", and the seal never opens. INIT.GAM starts all eight dungeons sealed, so no dungeon can be entered without Developer teleport. | **RELEASE BLOCKER (RB-2)** → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-B)** |
+| H-188 | Moongates never transit, Vas Rel Por always prints "Failed!", and searching for or using moonstones does nothing. The runtime owns no moonstones. | **RELEASE BLOCKER (RB-3)** → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-C)** |
+| H-189 | Final Doom battle with the Wooden Box: the victory ending is refused, and the arena never tears down (only `Alt+D` / `Alt+S` / `Alt+L` answer). | **RELEASE BLOCKER (RB-1)** → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-A)** |
+| H-190 | The Camp apparition and Refuge karma speech show an invented sentence instead of the KARMA.DAT text. | non-blocking; ride Batch 53 → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-E)** |
+| H-191 | No moongate tile is drawn at night. | **RELEASE BLOCKER (part of RB-3)** → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-C)** |
 
 ### Reconciled disposition (Batch 52)
 
@@ -767,7 +767,7 @@ The partial halves of PASS rows are dispositioned separately: H-15 text (7), H-2
 
 *Note on the Batch 20 tally.* Its Group 10 line (4 PASS / 1 FAIL / 2 UNTESTED) does not match the cells. H-120 and H-121 read UNTESTED, and H-122 has an observation rather than a PASS. The tally is left as recorded; this table supersedes it.
 
-### Phase 7E — *RESERVED for the Batch 53 image, not yet written*
+### Phase 7E — *RESERVED for the Batch 53 image* → **written in the Batch 53 section below**
 
 Batch 53 must write the exact steps against its own image, including the `Git` hash gate and the **SD-pack recopy**; Words of Power, ENDMSG and KARMA need new pack sections. Minimum content:
 
@@ -780,3 +780,90 @@ Batch 53 must write the exact steps against its own image, including the `Git` h
 7. Owed observations: a Slime / Gargoyle room in Destard (H-151); the vault floor-change reset and the door closing after a load (H-158, H-161, H-162); Gorn's brazier at the corrected location (H-30).
 
 RC packaging and smoke are **Batch 54**, after 7E passes.
+
+## Batch 53 — release-blocker wiring / data closeout (2026-09-26)
+
+**RB-1 … RB-4: SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E below).** Evidence: `GAMEPLAY_INTEGRATION_AUDIT.md` §14 "Batch 53"; host target `batch53_release_blockers` (95 checks, 22 / 22 mutations killed). Nothing is marked PASS before this phase runs.
+
+| Row | Batch 53 status | 7E step |
+|---|---|---|
+| H-189 (RB-1) | SOFTWARE FIXED — HARDWARE RETEST PENDING | A |
+| H-187 (RB-2), H-119, H-135 | SOFTWARE FIXED — HARDWARE RETEST PENDING | B |
+| H-188, H-191 (RB-3), H-12, H-13 | SOFTWARE FIXED — HARDWARE RETEST PENDING | C |
+| H-146 (RB-4) | SOFTWARE FIXED — HARDWARE RETEST PENDING | D |
+| H-190, H-137 (Refuge half) | SOFTWARE FIXED — HARDWARE RETEST PENDING | E |
+| H-151 | host-certified (B21A); device observation owed | F |
+| H-158, H-161, H-162 | host-certified (B23/B24); device observation owed | G |
+| H-30 | host-certified (B4.5C.1); device observation owed | H |
+
+### Phase 7E — Batch 53 release-blocker retest · *firmware AND SD pack change*
+
+Every coordinate below was executed on the host through the same Developer call the menu makes (`batch53_release_blockers` section V; the log prints them). `Alt+D` opens Developer; `Alt+M` the System Menu. In Developer → Teleport, set **Use default entrance: Off** before typing X / Y. Floors of a dungeon read "Level N" in that menu; the in-dungeon HUD shows N+1.
+
+**0. Setup and identity gate**
+1. On the SD card, replace **only** `/ultima5/openu5-alpha1-resources.bin` with the Batch 53 file: **2,041,466 bytes**, SHA-256 `a48abdbfc88eb5ab43453880a8ea029a1ea0684dfec2045f9dae941b31aa379b`. Do not reformat; keep the saves folder and `openu5-assets.bin`.
+2. Flash the Batch 53 Launcher image (path and SHA-256 in tag `alpha2-batch53-release-blockers`).
+3. Boot. The identity screen must show `Git` = the first 12 hex digits of the Batch 53 commit (the tag names it), `RES v2.0 2041466B CRC 26f75ae6`, and the game must start. *Optional negative check:* with the old Batch 51 pack on the card the device must **refuse to start** (identity mismatch; the log names `endmsg-records.bin` as missing).
+4. Continue a save or start a New Journey. Existing saves stay compatible.
+
+**A. The ending (H-189)** — about 2 minutes
+1. `Alt+D` → Shortcuts → **Preset: Endgame**. Then Party → **Party size 1** (a full party also works, but every member must make the walk in step 5).
+2. Teleport → Destination **Doom**, Floor **Level 6**, X **4**, Y **7** → Teleport.
+3. Turn with the trackball until the party faces **East**, then move forward once. *Expected:* "Pit Trap!", "Falling...", "...splat!", and the final room's arena opens: a trapped soul above a mirror at the top centre.
+4. *Expected:* the arena accepts moves.
+5. Move the Avatar **North 4 times**, to the cell straight under the soul. *Expected:* "Avatar is absorbed!"; the arena closes; the ending prints: "Lord British carefully opens the box...", "\"FOLLOW!\" cries Lord British...", the date proclamation, "THE QUEST OF THE AVATAR IS FOREVER" and "Report now, thy Quest compleat in ...".
+6. *Expected:* the dungeon view is back; turning left/right responds; `Alt+S` prints "Save complete"; `Alt+M` opens and closes the menu.
+- **Pass:** 5 and 6. **Fail:** the arena stays drawn, no ending text, or keys only reach the Developer/save shortcuts.
+- *Known, do not file:* the ending is transcript text and play continues — the cinematic (green scene, orb, story pages) is Alpha 3 (D-54).
+
+**B. A Word of Power (H-119, H-135, H-187)** — about 1 minute
+1. Teleport → **Britannia**, X **240**, Y **74** (one cell south of Deceit's entrance).
+2. Move **North**. *Expected:* nothing happens — the entrance is sealed.
+3. `Y` (Yell), type **FALLAX**, Enter. *Expected:* "A word of power is uttered", a screen quake, and **no** "No effect!".
+4. Move **North** onto the entrance, press `E`. *Expected:* the party enters Deceit — no Developer tool involved.
+5. *Optional:* `Alt+S`, then `Alt+L`, then leave and walk back: the seal stays open. Yelling **VILIS** there instead quakes but prints "No effect!".
+- **Pass:** 3 and 4.
+
+**C. Moongate and Vas Rel Por (H-188, H-191, H-12, H-13)** — about 3 minutes
+1. Teleport → **Britannia**, X **96**, Y **103**. Then Time → **Hour 21**.
+2. Close Developer. *Expected:* a **moongate** is drawn one cell **North** (96,102). At hour 12 it must be absent.
+3. Move **North** onto it. *Expected:* the view jumps to another moongate site (which one depends on the day's Trammel phase). No transit animation yet — that is Alpha 3.
+4. Stats → Character: the Avatar → **Level 8**, **Current MP 99**. Inventory → Inventory index **46** → Spell quantity **1** (the row names Vas Rel Por).
+5. Press `C` (if asked "Player:", choose the Avatar), pick **Vas Rel Por**. *Expected:* the status line reads **`To phase:`** (not "Aim: empty").
+6. Press **3**. *Expected:* the ceremony flash, then the party stands at 38,224 (the Jhelom gate). No "Failed!". Digits map 1 → 224,133, 2 → 96,102, 3 → 38,224, 4 → 50,37, 5 → 166,19, 6 → 104,194, 7 → 23,126, 8 → 187,167 while the stones are still buried in their new-game places.
+- **Pass:** 2, 3, 5 and 6.
+
+**D. Buying transport (H-146)** — about 3 minutes
+1. Inventory → **Gold 5000**. Time → **Hour 9**.
+2. Teleport → **East Britanny**, Floor Ground Floor, X **8**, Y **10** (next to Master Hawkins of The Oaken Oar at 7,10).
+3. `T` (Talk) **West**. At "May I help thee?" press `Y`; press `A` (frigate) or `B` (skiff); at the price press `Y`. *Expected:* "She awaits thee at the dock!" and the gold goes down. At "anything else" press `N` until the shop closes.
+4. Teleport → **Britannia**, X **79**, Y **109** (the East Britanny dock). *Expected:* the ship is there. Press `B`. *Expected:* the party is aboard.
+5. Horse: Time → **Hour 9**; Teleport → **Paws**, Ground Floor, X **7**, Y **18** (north of the horse seller at 7,19). `T` **South**, `Y` at the greeting, `Y` at the price. *Expected:* the gold goes down and a horse appears beside the party. Step onto it, press `B`: mounted.
+6. *Control:* answering `N` at the price spends nothing and places nothing.
+- **Pass:** 3, 4 and 5.
+
+**E. Refuge after a party wipe (H-137, H-190)** — about 2 minutes
+1. Party → **Party size 1**. Shortcuts → **Preset: Low health/status** (the Avatar is poisoned at 1 HP). Inventory → **Karma 50**. Close Developer.
+2. Press **Space** (Pass) until the poison kills the Avatar. *Expected:* "An unending darkness engulfs thee...", "Thou hast found refuge.", the apparition, and a **KARMA.DAT** speech — at karma 50 it begins "It is within thee to attain great power, O seeker..." (never "Rest well, Avatar").
+3. *Expected:* the party wakes in Lord British's castle, healed.
+- **Pass:** 2 and 3.
+
+**F. A Slime / Gargoyle room (H-151)** — about 2 minutes
+1. Teleport → **Destard**, Floor **Level 6**, X **3**, Y **2**. Turn to face **North**, move forward. *Expected:* room 9's arena opens with Slimes / Gargoyles.
+2. Fight or pass a dozen turns. *Expected:* turns advance, enemies act ("divides!" may appear), `Alt+M` and the Mic key answer. No freeze, no power cycle.
+- **Pass:** 2.
+
+**G. Vault reset and door-after-load (H-158, H-161, H-162)** — about 4 minutes
+1. Inventory → **Skull keys 3**. Enter Lord British's castle (Teleport → Lord British's Castle, default entrance On) and take the ladder at (1,1) down to the basement.
+2. `U`se a skull key on the vault door at **(15,24)**, open it, open the three chests; `G`et a few pieces and leave the rest.
+3. Climb up one floor and straight back down. *Expected:* the three chests are back unopened, the loose loot is gone, the door is magically locked again.
+4. `O`pen an ordinary basement door (e.g. at (20,16)), then `Alt+S` and `Alt+L`. *Expected:* the door is **closed** after the load; everything else is as saved.
+- **Pass:** 3 and 4.
+
+**H. Gorn's brazier (H-30)** — about 1 minute
+1. Inventory → **Keys 0**. Teleport → **Palace of Blackthorn**, Floor **Basement**, X **8**, Y **7**.
+2. `S`earch **North** (the brazier at 8,6). *Expected:* the keys are found (not "Nothing of note").
+3. `G`et **North**. *Expected:* the party now holds **9 keys**.
+- **Pass:** 2 and 3.
+
+**Report back:** the `Git` hash seen on the identity screen, then PASS / FAIL per step A–H with any text that differed. RC packaging and smoke are **Batch 54**, only after 7E passes.

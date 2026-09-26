@@ -108,5 +108,13 @@ QuestCommandResult search_world(CommandContext &,const Direction *,EventSink,Ran
 CommandStatus use_moonstone(CommandContext &,int32_t,EventSink);
 int32_t active_gate_phase(const GameState &,const TurnState &,const QuestWorldServices &);
 bool moongate_at(const GameState &,const TurnState &,const QuestWorldServices &);
+// Batch 53 (H-191). kernel_moongate_render 0x475a: at night (the same window
+// as moongate_at) the gate tile 0xDC stands on every buried stone of the
+// party's large map -- all eight stones, not only the active phase's (the
+// phase decides the destination, 0x4962). Like the reference's
+// activeMoongates it is surface-only and needs the moon-phase table. It shares
+// its stone test with moongate_at; compose_world_presentation draws from it.
+bool moongate_visible_at(const GameState &,const TurnState &,const QuestWorldServices &,int32_t x,int32_t y);
+constexpr int32_t kMoongateTile=0xdc;
 int32_t quest_world_tile(CommandContext &,MapId,int32_t,int32_t,int32_t);
 }

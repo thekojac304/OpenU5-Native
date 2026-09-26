@@ -22,10 +22,12 @@ namespace tdeck {
 constexpr char kAlphaResourcePath[] = "/sd/ultima5/openu5-alpha1-resources.bin";
 constexpr uint16_t kAlphaResourceVersionMajor = 2;
 constexpr uint16_t kAlphaResourceVersionMinor = 0;
-constexpr uint32_t kExpectedAlphaResourceSize = 2039545;
-constexpr uint32_t kExpectedAlphaResourceCrc32 = 0x2065ad91U;
+// Batch 53: + endmsg-records.bin, karma-records.bin, words-of-power.bin
+// (Batch 9C..52: 2,039,545 B, CRC 0x2065ad91, SHA-256 434cd664..b4ea).
+constexpr uint32_t kExpectedAlphaResourceSize = 2041466;
+constexpr uint32_t kExpectedAlphaResourceCrc32 = 0x26f75ae6U;
 constexpr char kExpectedAlphaResourceSha256[] =
-    "434cd664b4b92472386e04f08012aee52932296e4c432ec0f1c2e0d26f63b4ea";
+    "a48abdbfc88eb5ab43453880a8ea029a1ea0684dfec2045f9dae941b31aa379b";
 
 struct CreationSprite {
     uint16_t width = 0, height = 0;
@@ -84,6 +86,19 @@ struct AlphaResourceOwners {
     uint32_t *misc_text_offsets = nullptr;
     char *misc_text_records = nullptr;
     size_t misc_text_record_count = 0;
+    // Batch 53 (RB-1 / RB-2 / H-190). ENDMSG.DAT (11 records: the ending's
+    // dialogue, record 9 the wooden-box line) and KARMA.DAT (6 records, raw
+    // and unquoted) in the same layout as misc-records.bin, and the eight
+    // DATA.OVL Words of Power widened to UTF-16 for QuestWorldServices::words.
+    uint32_t *end_text_offsets = nullptr;
+    char *end_text_records = nullptr;
+    size_t end_text_record_count = 0;
+    uint32_t *karma_text_offsets = nullptr;
+    char *karma_text_records = nullptr;
+    size_t karma_text_record_count = 0;
+    char16_t *word_text = nullptr;
+    openu5::TalkText words[8]{};
+    size_t word_count = 0;
     uint8_t *dialogue_data = nullptr;
     size_t dialogue_data_size = 0;
     char16_t *shrine_text = nullptr;
@@ -161,6 +176,10 @@ class AlphaResourcePack {
 
     const Entry *find(const char *) const;
     esp_err_t read(const Entry &, size_t, void *, size_t) const;
+    // Batch 53: one reader for the misc-records.bin string-record layout.
+    // `expected` != 0 pins the record count the original file has.
+    esp_err_t read_text_records(const char *name, uint32_t expected, uint32_t *&offsets, char *&text,
+                                size_t &count, size_t &text_bytes) const;
 };
 
 } // namespace tdeck

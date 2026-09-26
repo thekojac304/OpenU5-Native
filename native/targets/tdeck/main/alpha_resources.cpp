@@ -42,6 +42,9 @@ void AlphaResourceOwners::release() {
                     static_cast<void *>(shop_numbers), static_cast<void *>(shop_names),
                     static_cast<void *>(shop_text_offsets), static_cast<void *>(shop_text_records),
                     static_cast<void *>(misc_text_offsets), static_cast<void *>(misc_text_records),
+                    static_cast<void *>(end_text_offsets), static_cast<void *>(end_text_records),
+                    static_cast<void *>(karma_text_offsets), static_cast<void *>(karma_text_records),
+                    static_cast<void *>(word_text),
                     static_cast<void *>(dialogue_data), static_cast<void *>(shrine_text),
                     static_cast<void *>(look_offsets), static_cast<void *>(look_text),
                     static_cast<void *>(signs), static_cast<void *>(sign_text),
@@ -126,6 +129,9 @@ esp_err_t AlphaResourcePack::open(const char *path, AlphaResourceReport &report)
     heap_caps_free(scratch);
     if ((payload_crc ^ 0xffffffffU) != report.payload_crc32) { close(); return ESP_ERR_INVALID_CRC; }
     static const char *required[]={"init.gam","init.ool","overworld.map","underworld.map","smallmaps.bin","dungeons.bin","npcs.bin","worldtables.bin","combat.bin","shops.bin","shop-records.bin","misc-records.bin","blackthorn-scene.bin","talk.bin","shrines.bin","questions.bin","intro-text.bin","intro-title.rgb565","credits.rgb565","demo-scene.bin","look.bin","signs.bin","runes.ch","combatmaps.json","data.json","shoppe.json","talk-towne.json","talk-dwelling.json","talk-castle.json","talk-keep.json","look2.json","signs.json","endgame.json",
+                                  // Batch 53: ENDMSG / KARMA / Words of Power. A Batch 51 pack
+                                  // lacks all three and is refused here by name.
+                                  "endmsg-records.bin","karma-records.bin","words-of-power.bin",
                                   // Batch 9C / R-05: the authored dungeon art. Named here so a pack
                                   // built before it existed is rejected by NAME, not only by the
                                   // size/CRC identity lock -- the log then says which half is stale.
@@ -143,6 +149,20 @@ esp_err_t AlphaResourcePack::open(const char *path, AlphaResourceReport &report)
                  (unsigned long)kExpectedAlphaResourceSize,
                  (unsigned long)kExpectedAlphaResourceCrc32);
     return ESP_OK;
+}
+
+esp_err_t AlphaResourcePack::read_text_records(const char *name, uint32_t expected, uint32_t *&offsets, char *&text,
+                                               size_t &count, size_t &text_bytes) const {
+    offsets=nullptr;text=nullptr;count=0;text_bytes=0;
+    const auto *entry=find(name);uint8_t head[4]{};
+    if(!entry||read(*entry,0,head,4)!=ESP_OK)return ESP_FAIL;
+    const uint32_t n=u32(head);const size_t dir=4+size_t(n+1)*4;
+    if(!n||n>512||(expected&&n!=expected)||dir>=entry->length)return ESP_ERR_INVALID_SIZE;
+    offsets=static_cast<uint32_t*>(psram_alloc(size_t(n+1)*4));text=static_cast<char*>(psram_alloc(entry->length-dir));
+    if(!offsets||!text)return ESP_ERR_NO_MEM;
+    if(read(*entry,4,offsets,size_t(n+1)*4)!=ESP_OK||read(*entry,dir,text,entry->length-dir)!=ESP_OK)return ESP_FAIL;
+    if(!validate_misc_text_records(offsets,text,entry->length-dir,n))return ESP_ERR_INVALID_SIZE;
+    count=n;text_bytes=entry->length-dir;return ESP_OK;
 }
 
 esp_err_t AlphaResourcePack::load(AlphaResourceOwners &o, AlphaResourceReport &r) {
@@ -260,6 +280,43 @@ esp_err_t AlphaResourcePack::load(AlphaResourceOwners &o, AlphaResourceReport &r
        read(*misc_text_records,misc_text_dir,o.misc_text_records,misc_text_records->length-misc_text_dir)!=ESP_OK||
        !validate_misc_text_records(o.misc_text_offsets,o.misc_text_records,misc_text_records->length-misc_text_dir,misc_text_count)){o.release();return ESP_ERR_INVALID_SIZE;}
     o.misc_text_record_count=misc_text_count;
+    // Batch 53 (RB-1 / H-190 / RB-2). Counts pinned to the original files, so
+    // a pack that drifted from ENDMSG.DAT / KARMA.DAT / DATA.OVL cannot load.
+    size_t batch53_bytes=0;
+    {
+        size_t end_bytes=0,karma_bytes=0,word_bytes=0,word_count=0;
+        uint32_t *word_offsets=nullptr;
+        char *word_chars=nullptr;
+        esp_err_t e=read_text_records("endmsg-records.bin",11,o.end_text_offsets,o.end_text_records,o.end_text_record_count,end_bytes);
+        if(e==ESP_OK)
+            e=read_text_records("karma-records.bin",6,o.karma_text_offsets,o.karma_text_records,o.karma_text_record_count,karma_bytes);
+        if(e==ESP_OK)
+            e=read_text_records("words-of-power.bin",8,word_offsets,word_chars,word_count,word_bytes);
+        if(e==ESP_OK){
+            o.word_text=static_cast<char16_t*>(psram_alloc(word_bytes*sizeof(char16_t)));
+            if(!o.word_text)
+                e=ESP_ERR_NO_MEM;
+        }
+        // The words are the ASCII capitals of DATA.OVL 0x44AD; anything else
+        // is a corrupt or foreign pack.
+        for(size_t i=0;e==ESP_OK&&i<word_count;++i){
+            const size_t at=word_offsets[i],length=word_offsets[i+1]-at-1;
+            for(size_t k=0;k<length;++k){
+                const auto ch=uint8_t(word_chars[at+k]);
+                if(ch<'A'||ch>'Z')
+                    e=ESP_ERR_INVALID_SIZE;
+                o.word_text[at+k]=char16_t(ch);
+            }
+            o.words[i]={o.word_text+at,length};
+        }
+        if(word_offsets)
+            heap_caps_free(word_offsets);
+        if(word_chars)
+            heap_caps_free(word_chars);
+        if(e!=ESP_OK){o.release();return e;}
+        o.word_count=word_count;
+        batch53_bytes=size_t(12+7)*4+end_bytes+karma_bytes+word_bytes*sizeof(char16_t);
+    }
     // Blackthorn's throne room (#324 / R-32): cols, rows, then cols*rows
     // int16 tiles. Rejected outright when it is not the expected 11x11, so a
     // stale pack can never half-stage the capture scene.
@@ -291,7 +348,7 @@ esp_err_t AlphaResourcePack::load(AlphaResourceOwners &o, AlphaResourceReport &r
     if(read(*signs,sign_text_at,o.sign_text,sign_text_bytes)!=ESP_OK||(sign_raw_bytes&&read(*signs,sign_raw_at,o.sign_raw,sign_raw_bytes)!=ESP_OK)){o.release();return ESP_FAIL;}
     for(uint32_t i=0;i<sign_count;++i){uint8_t b[sign_record]{};if(read(*signs,sign_header+size_t(i)*sign_record,b,sizeof(b))!=ESP_OK){o.release();return ESP_FAIL;}const uint32_t to=u32(b+8),tl=u32(b+12),ro=u32(b+16),rl=u32(b+20);if(to>=sign_text_bytes||tl>=sign_text_bytes-to||o.sign_text[to+tl]!=0||ro>sign_raw_bytes||rl>sign_raw_bytes-ro){o.release();return ESP_ERR_INVALID_SIZE;}auto &record=o.signs[i];record.map={b[0],i16(b+2)};record.x=b[4];record.y=b[5];record.value={o.sign_text+to,rl?o.sign_raw+ro:nullptr,rl};}
     o.sign_count=sign_count;
-    o.psram_bytes=over->length+under->length+init->length+init_ool->length+size_t(sc)*1024+dc*sizeof(openu5::DungeonData)+nc*sizeof(openu5::NpcSlot)+size_t(pc)*4+size_t(qc)*sizeof(openu5::SearchObject)+size_t(shc)*sizeof(openu5::ShardSpawn)+size_t(cmc)*(sizeof(openu5::CombatMap)+16)+size_t(cec)*(sizeof(openu5::CombatEnemy)+42)+size_t(ctc)*16+size_t(src)*(sizeof(openu5::ShopRecord)+64)+sn*4+talk->length+8*24*sizeof(char16_t)+question_bytes+intro_bytes+title_bytes+credits_bytes+creation->length+demo_bytes+1024+size_t(shop_text_count+1)*4+shop_text_records->length-shop_text_dir+size_t(misc_text_count+1)*4+misc_text_records->length-misc_text_dir+size_t(look_count+1)*4+look->length-look_dir+size_t(sign_count)*sizeof(openu5::LookSignRecord)+sign_text_bytes+sign_raw_bytes;
+    o.psram_bytes=batch53_bytes+over->length+under->length+init->length+init_ool->length+size_t(sc)*1024+dc*sizeof(openu5::DungeonData)+nc*sizeof(openu5::NpcSlot)+size_t(pc)*4+size_t(qc)*sizeof(openu5::SearchObject)+size_t(shc)*sizeof(openu5::ShardSpawn)+size_t(cmc)*(sizeof(openu5::CombatMap)+16)+size_t(cec)*(sizeof(openu5::CombatEnemy)+42)+size_t(ctc)*16+size_t(src)*(sizeof(openu5::ShopRecord)+64)+sn*4+talk->length+8*24*sizeof(char16_t)+question_bytes+intro_bytes+title_bytes+credits_bytes+creation->length+demo_bytes+1024+size_t(shop_text_count+1)*4+shop_text_records->length-shop_text_dir+size_t(misc_text_count+1)*4+misc_text_records->length-misc_text_dir+size_t(look_count+1)*4+look->length-look_dir+size_t(sign_count)*sizeof(openu5::LookSignRecord)+sign_text_bytes+sign_raw_bytes;
     ESP_LOGI(kTag,"Loaded owners: %lu small floors, %lu dungeons, %lu NPC records; PSRAM=%zu",(unsigned long)sc,(unsigned long)dc,(unsigned long)nc,o.psram_bytes);
     return ESP_OK;
 }

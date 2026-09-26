@@ -24,6 +24,17 @@ Error restore_world_objects(const Json &,QuestWorldServices &);
 // generation gate runs this (and restore_dungeon into scratch) BEFORE a load
 // commits, because the two restores themselves only run afterwards.
 Error validate_world_objects(const Json &);
+// Batch 53 (RB-3 / H-188). The eight moonstones are GAM state, not a sidecar
+// field: 0x28a x, 0x292 y, 0x29a location (0xFF = carried), 0x2a2 floor --
+// DS 0x5830..0x5848, the four arrays kernel 0x47f4 teleports through.
+// load_native_state already imports them into the document's "moonstones" and
+// export_native_state writes them back. QuestWorldServices::moonstones is the
+// runtime owner commands mutate; these two move it to and from that document,
+// so there is no second model and no new save field. capture writes all
+// `moonstone_count` stones; restore is all-or-nothing and needs 8 valid ones.
+void capture_moonstones(const QuestWorldServices &,Json &);
+Error restore_moonstones(const Json &,QuestWorldServices &);
+Error validate_moonstones(const Json &);
 // R-15: a dungeon session (`DungeonState`) is caller-owned runtime state, not
 // part of GameState/CommandState. Absent from the document (surface save, the
 // common case) restores to an inactive default. Present-but-invalid is a

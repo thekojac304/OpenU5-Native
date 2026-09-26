@@ -26,9 +26,18 @@ bool stage_generation(AlphaSaveCandidate&v,AlphaSaveStage&s){
     if(err==openu5::save::Error::None)err=openu5::save::restore_npc_walk(s.document,s.game.position.map.location,true,s.actors);
     if(err==openu5::save::Error::None)err=openu5::save::validate_world_objects(s.document);
     if(err==openu5::save::Error::None)err=openu5::save::restore_dungeon(s.document,s.dungeon);
+    // Batch 53 (RB-3): the moonstones synchronize_loaded_world() restores.
+    if(err==openu5::save::Error::None)err=openu5::save::validate_moonstones(s.document);
     if(err!=openu5::save::Error::None)ESP_LOGW(kTag,"generation=%llu refused at the semantic gate",(unsigned long long)v.commit.sequence);
     return err==openu5::save::Error::None;
 }
+}
+
+void capture_save_document(openu5::CommandContext&c,const openu5::OutdoorServices&o,const openu5::WorldTerrain&t,const openu5::NpcActors&a,openu5::save::Json&retained){
+    openu5::save::capture_gameplay(c.commands,o,retained);openu5::save::capture_terrain(t,retained);
+    openu5::save::capture_npc_walk(a,c.game.position.map.location,retained);
+    if(c.quest_world){openu5::save::capture_world_objects(*c.quest_world,retained);openu5::save::capture_moonstones(*c.quest_world,retained);}
+    if(c.dungeon_context)openu5::save::capture_dungeon(c.dungeon_context->state,retained);
 }
 
 bool verify_candidate(AlphaSaveCandidate&v,AlphaSaveStage&s){

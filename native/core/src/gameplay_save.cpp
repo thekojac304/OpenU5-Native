@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <iterator>
 #include <vector>
 namespace openu5::save {
 namespace {
@@ -98,6 +99,30 @@ Error restore_world_objects(const Json &state,QuestWorldServices &s){
     if(!s.reserve(s.context,objects.size()))return Error::NativeDomain;
     for(auto &o:objects)s.append(s.context,o);
     return Error::None;
+}
+void capture_moonstones(const QuestWorldServices &s,Json &out){
+    if(!s.moonstones||s.moonstone_count<8)return;
+    auto &arr=out["moonstones"];arr=Json::array();
+    for(size_t i=0;i<s.moonstone_count;++i){const auto &m=s.moonstones[i];Json v=Json::object();
+        v["x"]=Json(int(m.x));v["y"]=Json(int(m.y));v["buried"]=Json(m.buried);v["location"]=Json(int(m.location));v["z"]=Json(int(m.z));
+        arr.values.push_back(std::move(v));}
+}
+namespace {
+bool decode_moonstones(const Json &state,Moonstone (&out)[8]){
+    const auto &arr=state["moonstones"];
+    if(arr.kind!=Json::Array||arr.values.size()<8)return false;
+    for(size_t i=0;i<8;++i){const auto &v=arr.at(i);
+        if(v.kind!=Json::Object||!finite_int(v["x"],0,255)||!finite_int(v["y"],0,255)||!finite_int(v["location"],0,255)||
+           !finite_int(v["z"],-1,255)||v["buried"].kind!=Json::Bool)return false;
+        out[i]={uint8_t(v["x"].integer()),uint8_t(v["y"].integer()),int16_t(v["z"].integer()),uint8_t(v["location"].integer()),v["buried"].truth()};}
+    return true;
+}
+}
+Error validate_moonstones(const Json &state){Moonstone m[8];return decode_moonstones(state,m)?Error::None:Error::NativeDomain;}
+Error restore_moonstones(const Json &state,QuestWorldServices &s){
+    Moonstone m[8];if(!decode_moonstones(state,m))return Error::NativeDomain;
+    if(!s.moonstones||s.moonstone_count<8)return Error::NativeDomain;
+    std::copy(std::begin(m),std::end(m),s.moonstones);return Error::None;
 }
 void capture_dungeon(const DungeonState &d,Json &out){
     if(!d.active){out.erase("dungeon");return;}
