@@ -2,14 +2,19 @@
 
 #include <cstdio>
 
+#include "esp_attr.h"
 #include "esp_err.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "tdeck_pins.h"
 
 namespace tdeck {
 namespace {
 constexpr char kTag[] = "OpenU5-Audio";
-constexpr uint32_t kChunkFrames = 256; // 16 ms at 16 kHz; one DMA buffer
+/** One DMA descriptor takes 8 ms to play; a write that waited this long has hit a dead channel. */
+constexpr uint32_t kWriteTimeoutMs = 200;
+/** The audio task copies its window out for the game thread every 16 blocks (128 ms). */
+constexpr uint32_t kPublishEveryBlocks = 16;
 } // namespace
 
 bool TdeckAudioBackend::play_sfx(const openu5::SfxRequest &request) {
@@ -50,10 +55,61 @@ void TdeckAudioBackend::set_gain(openu5::AudioChannel channel, uint16_t gain_q15
 }
 
 void TdeckAudioBackend::set_music_library(const openu5::AudioPackPayload *library) {
-    music_library_ = library;
-    music_bank_loaded_ = library && library->bank && music_bank_.load(library->bank, library->bank_length);
-    if (library && !music_bank_loaded_)
+    const int64_t t0 = esp_timer_get_time();
+    const size_t playable = library_.load(library);
+    const int64_t t1 = esp_timer_get_time();
+    pump_.set_music_library(&library_);
+    if (library && !library_.loaded())
         ESP_LOGE(kTag, "AUDIO_BACKEND music library bank failed to parse: songs will stay silent");
+    else if (library)
+        ESP_LOGI(kTag, "AUDIO_BACKEND music library songs=%u/%u events=%u parse_us=%lld", unsigned(playable),
+                 unsigned(openu5::kMusicSongCount), unsigned(library_.event_count()), (long long)(t1 - t0));
+}
+
+bool TdeckAudioBackend::perf_snapshot(openu5::AudioPerfSnapshot &out) const {
+    taskENTER_CRITICAL(&perf_lock_);
+    out = published_;
+    const bool valid = published_valid_;
+    taskEXIT_CRITICAL(&perf_lock_);
+    return valid;
+}
+
+void TdeckAudioBackend::perf_reset() { perf_reset_requested_.store(true); }
+
+uint64_t TdeckAudioBackend::clock_us(void *) { return uint64_t(esp_timer_get_time()); }
+
+// The I2S DMA ISR (core 0, where ensure_started() allocated it). One call per
+// finished descriptor, and one per descriptor the DMA had to replay empty
+// (the driver's send queue overflowed: nobody refilled it in time).
+bool IRAM_ATTR TdeckAudioBackend::on_sent(i2s_chan_handle_t, i2s_event_data_t *, void *context) {
+    auto *self = static_cast<TdeckAudioBackend *>(context);
+    self->isr_played_ = self->isr_played_ + 1;
+    return false;
+}
+
+bool IRAM_ATTR TdeckAudioBackend::on_send_q_ovf(i2s_chan_handle_t, i2s_event_data_t *, void *context) {
+    auto *self = static_cast<TdeckAudioBackend *>(context);
+    self->isr_overflows_ = self->isr_overflows_ + 1;
+    return false;
+}
+
+bool TdeckAudioBackend::I2sRingSink::preload(const int16_t *block) {
+    size_t loaded = 0;
+    return i2s_channel_preload_data(owner_.tx_, block, kBlockBytes, &loaded) == ESP_OK && loaded == kBlockBytes;
+}
+
+bool TdeckAudioBackend::I2sRingSink::enable() {
+    const esp_err_t on = i2s_channel_enable(owner_.tx_);
+    if (on != ESP_OK) ESP_LOGE(kTag, "AUDIO_BACKEND enable failed: %s", esp_err_to_name(on));
+    return on == ESP_OK;
+}
+
+void TdeckAudioBackend::I2sRingSink::disable() { i2s_channel_disable(owner_.tx_); }
+
+bool TdeckAudioBackend::I2sRingSink::write(const int16_t *block) {
+    size_t written = 0;
+    return i2s_channel_write(owner_.tx_, block, kBlockBytes, &written, kWriteTimeoutMs) == ESP_OK &&
+           written == kBlockBytes;
 }
 
 bool TdeckAudioBackend::ensure_started() {
@@ -78,11 +134,14 @@ bool TdeckAudioBackend::ensure_started() {
         return false;
     };
 
+    // The descriptor ring is the render-ahead buffer (ALPHA3_AUDIO.md section
+    // 18.7): the pump keeps all of it full, so its depth is both the stall
+    // tolerance and the SFX latency. A3-02..A3-04: 4 x 256 frames.
     i2s_chan_config_t channel{};
     channel.id = I2S_NUM_0;
     channel.role = I2S_ROLE_MASTER;
-    channel.dma_desc_num = 4;
-    channel.dma_frame_num = kChunkFrames;
+    channel.dma_desc_num = openu5::kAudioRingBlocks;
+    channel.dma_frame_num = openu5::kAudioBlockFrames;
     channel.auto_clear_after_cb = true; // an underrun sends silence, never a stale buffer
     channel.auto_clear_before_cb = false;
     channel.allow_pd = false;
@@ -119,127 +178,81 @@ bool TdeckAudioBackend::ensure_started() {
     err = i2s_channel_init_std_mode(tx_, &config);
     if (err != ESP_OK) return fail("i2s_channel_init_std_mode", err);
 
+    // A3-04A: the driver's own view of the ring, for the pump's counters.
+    i2s_event_callbacks_t callbacks{};
+    callbacks.on_sent = &TdeckAudioBackend::on_sent;
+    callbacks.on_send_q_ovf = &TdeckAudioBackend::on_send_q_ovf;
+    err = i2s_channel_register_event_callback(tx_, &callbacks, this);
+    if (err != ESP_OK) return fail("i2s_channel_register_event_callback", err);
+
     queue_ = xQueueCreate(kQueueDepth, sizeof(Command));
     if (!queue_) return fail("xQueueCreate", ESP_ERR_NO_MEM);
     music_queue_ = xQueueCreate(1, sizeof(MusicCommand)); // depth 1: xQueueOverwrite keeps only the latest
     if (!music_queue_) return fail("xQueueCreate(music)", ESP_ERR_NO_MEM);
     // Core 1 runs no game task; the game loop and input capture are on core 0.
-    // A3-04's OPL2 synth adds real per-sample work (ALPHA3_AUDIO.md section
-    // 17.4); the stack grew from 4096 to 6144 B for its headroom, still well
-    // inside PSRAM/internal RAM budget.
-    if (xTaskCreatePinnedToCore(task_entry, "openu5-audio", 6144, this, 3, &task_, 1) != pdPASS) {
+    if (xTaskCreatePinnedToCore(task_entry, "openu5-audio", kTaskStackBytes, this, 3, &task_, 1) != pdPASS) {
         task_ = nullptr;
         return fail("xTaskCreatePinnedToCore", ESP_ERR_NO_MEM);
     }
-    ESP_LOGI(kTag, "AUDIO_BACKEND i2s ready rate=%u bits=16 mono bclk=%d ws=%d dout=%d core=1 synth=pc-speaker+opl2",
+    ESP_LOGI(kTag,
+             "AUDIO_BACKEND i2s ready rate=%u bits=16 mono bclk=%d ws=%d dout=%d core=1 synth=pc-speaker+opl2 "
+             "ring=%ux%u frames (%u ms ahead)",
              unsigned(kSampleRateHz), int(pins::kSpeakerI2sBclk), int(pins::kSpeakerI2sWs),
-             int(pins::kSpeakerI2sDout));
+             int(pins::kSpeakerI2sDout), unsigned(openu5::kAudioRingBlocks), unsigned(openu5::kAudioBlockFrames),
+             unsigned(openu5::kAudioRingBlocks * openu5::kAudioBlockUs / 1000));
     return true;
-}
-
-void TdeckAudioBackend::apply_music_command(const MusicCommand &command) {
-    if (command.stop) {
-        music_player_.stop();
-        music_song_ = openu5::MusicSong::None;
-        return;
-    }
-    if (command.song == music_song_ && music_player_.active()) return; // AudioService already de-dupes, but be sure
-    if (!music_bank_loaded_ || !music_library_) {
-        music_player_.stop();
-        music_song_ = openu5::MusicSong::None;
-        return; // no library or an unparsable bank: silence, never a guess
-    }
-    const size_t id = size_t(command.song);
-    if (id >= openu5::kMusicSongCount || !music_library_->song[id]) {
-        music_player_.stop();
-        music_song_ = openu5::MusicSong::None;
-        return;
-    }
-    auto track = std::make_unique<openu5::MusicTrack>();
-    if (!openu5::parse_xmi_events(music_library_->song[id], music_library_->song_length[id], *track)) {
-        ESP_LOGE(kTag, "AUDIO_BACKEND song %u failed to parse: staying silent", unsigned(id));
-        music_player_.stop();
-        music_song_ = openu5::MusicSong::None;
-        return;
-    }
-    // stop() FIRST: it clears music_player_'s internal pointer into the old
-    // music_track_ before that object is destroyed by the reassignment below.
-    // Never a window where the player could hold a dangling track pointer.
-    music_player_.stop();
-    music_track_ = std::move(track);
-    music_player_.start(*music_track_, music_bank_, kMusicChip, /*loop=*/true);
-    music_song_ = command.song;
 }
 
 void TdeckAudioBackend::task_entry(void *self) { static_cast<TdeckAudioBackend *>(self)->run(); }
 
-// The audio task. It blocks in exactly three places: the SFX queue for a
-// bounded wait while both channels are silent (kIdleWaitTicks -- bounded,
-// not portMAX_DELAY, because a start_music() while idle arrives on the
-// SEPARATE music_queue_ and must not wait behind a SFX-only block), and
-// i2s_channel_write while either channel sounds -- never a busy loop, so it
-// cannot starve the idle task's watchdog on core 1.
+void TdeckAudioBackend::publish_perf() {
+    blocks_since_publish_ = 0;
+    const uint32_t stack_free = uint32_t(uxTaskGetStackHighWaterMark(nullptr) * sizeof(StackType_t));
+    if (stack_free < stack_free_min_) stack_free_min_ = stack_free;
+    openu5::AudioPerfSnapshot snapshot{};
+    pump_.perf(snapshot);
+    snapshot.stack_free_min = stack_free_min_;
+    taskENTER_CRITICAL(&perf_lock_);
+    snapshot.seq = published_.seq + 1;
+    published_ = snapshot;
+    published_valid_ = true;
+    taskEXIT_CRITICAL(&perf_lock_);
+}
+
+// The audio task. It blocks in exactly two places: i2s_channel_write inside
+// pump_.step() while the channel runs (the DMA freeing a descriptor paces
+// it), and a bounded wait on the SFX queue while the pump sleeps (bounded,
+// not portMAX_DELAY, because a start_music() arrives on the SEPARATE
+// music_queue_ and must not wait behind a SFX-only block). It never logs,
+// parses or allocates here; the pump's runaway guard yields a tick if the
+// producer ever falls behind real time for good (section 18.12), so the
+// idle task on core 1 -- and the task watchdog -- always get to run.
 void TdeckAudioBackend::run() {
     constexpr TickType_t kIdleWaitTicks = pdMS_TO_TICKS(20);
-    int16_t sfx_chunk[kChunkFrames];
-    int16_t music_chunk[kChunkFrames];
-    int16_t mixed[kChunkFrames];
-    size_t written = 0;
-    bool enabled = false;
+    pump_.set_clock({this, &TdeckAudioBackend::clock_us});
+    pump_.reset_perf();
     for (;;) {
         Command command{};
-        const bool both_idle = player_.idle() && !music_player_.active();
-        bool got = xQueueReceive(queue_, &command, both_idle ? kIdleWaitTicks : 0) == pdTRUE;
+        bool got = xQueueReceive(queue_, &command, pump_.sleeping() ? kIdleWaitTicks : 0) == pdTRUE;
+        pump_.note_sfx_queue_depth(uint32_t(uxQueueMessagesWaiting(queue_)) + (got ? 1u : 0u));
         // The epoch first: a flush that happened while these commands were in
         // flight makes them stale.
-        player_.sync_epoch(epoch_.load());
+        pump_.sync_epoch(epoch_.load());
         while (got) {
-            player_.submit(command.request, command.epoch);
+            pump_.submit_sfx(command.request, command.epoch);
             got = xQueueReceive(queue_, &command, 0) == pdTRUE;
         }
         MusicCommand music_command{};
-        while (xQueueReceive(music_queue_, &music_command, 0) == pdTRUE) apply_music_command(music_command);
-
-        if (player_.idle() && !music_player_.active()) {
-            if (enabled) {
-                // Two chunks of silence flush the DMA ring, then the clocks go
-                // off so the amplifier idles between effects.
-                for (auto &s : mixed) s = 0;
-                for (int i = 0; i < 2; ++i) i2s_channel_write(tx_, mixed, sizeof(mixed), &written, 200);
-                i2s_channel_disable(tx_);
-                enabled = false;
-                const auto &st = player_.stats();
-                ESP_LOGD(kTag, "SFX idle started=%lu queued=%lu coalesced=%lu preempted=%lu overflowed=%lu stale=%lu queue_full=%lu",
-                         (unsigned long)st.started, (unsigned long)st.queued, (unsigned long)st.coalesced,
-                         (unsigned long)st.preempted, (unsigned long)st.overflowed, (unsigned long)st.stale,
-                         (unsigned long)queue_full_.load());
-            }
-            continue;
+        while (xQueueReceive(music_queue_, &music_command, 0) == pdTRUE) {
+            if (music_command.stop) pump_.stop_music();
+            else pump_.play_music(music_command.song);
         }
-        if (!enabled) {
-            const esp_err_t on = i2s_channel_enable(tx_);
-            if (on != ESP_OK) {
-                ESP_LOGE(kTag, "AUDIO_BACKEND enable failed: %s", esp_err_to_name(on));
-                player_.flush(); // drop it rather than spin on a dead channel
-                music_player_.stop();
-                vTaskDelay(pdMS_TO_TICKS(50));
-                continue;
-            }
-            enabled = true;
+        if (perf_reset_requested_.exchange(false)) {
+            pump_.reset_perf();
+            blocks_since_publish_ = kPublishEveryBlocks; // publish the fresh, empty window right away
         }
-        // Each channel's own live gain, applied once inside its render(): a
-        // volume change (0 included) is heard within one chunk. SFX and
-        // music never duck one another (ALPHA3_AUDIO.md section 9) -- they
-        // are summed and saturated, the same as two independent hardware
-        // paths mixing in the air would be.
-        player_.render(sfx_chunk, kChunkFrames, sfx_gain_.load());
-        if (music_player_.active()) music_player_.render(music_chunk, kChunkFrames, kSampleRateHz, music_gain_.load());
-        else for (auto &s : music_chunk) s = 0;
-        for (uint32_t i = 0; i < kChunkFrames; ++i) {
-            const int32_t sum = int32_t(sfx_chunk[i]) + int32_t(music_chunk[i]);
-            mixed[i] = int16_t(sum > 32767 ? 32767 : sum < -32768 ? -32768 : sum);
-        }
-        i2s_channel_write(tx_, mixed, sizeof(mixed), &written, 200);
+        if (pump_.step(sink_, sfx_gain_.load(), music_gain_.load())) vTaskDelay(1);
+        if (++blocks_since_publish_ >= kPublishEveryBlocks) publish_perf();
     }
 }
 

@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <vector>
 
 // Alpha 3 A3-04 -- the music decoder/synth: FAT.OPL bank reader, OPL2/OPL3
@@ -111,6 +112,8 @@ class OplEmulator {
     /** count samples at kOplClockHz into left/right, starting at offset. Never allocates. */
     void generate(float *left, float *right, size_t count, size_t offset = 0);
     bool is_silent() const;
+    /** A3-04A diagnostics: channels with either operator's envelope not Off (the per-sample cost driver). */
+    size_t sounding_channels() const;
 
   private:
     static constexpr size_t kMaxChannels = 18;
@@ -308,6 +311,10 @@ class MusicSongPlayer {
     bool active() const { return active_; }
     /** True once a non-looping track has run its tail out. */
     bool ended() const { return ended_; }
+    /** A3-04A diagnostics: MIDI voices keyed or held by the sustain pedal (0 when stopped). */
+    size_t active_voices() const { return alloc_ ? alloc_->active_voices() : 0; }
+    /** A3-04A diagnostics: OPL channels still sounding, releases included (0 when stopped). */
+    size_t sounding_channels() const { return active_ ? chip_.sounding_channels() : 0; }
 
     /**
      * Renders `frames` MONO samples at `output_rate_hz`, mixed down from the
@@ -330,7 +337,10 @@ class MusicSongPlayer {
     const MusicTrack *track_ = nullptr;
     const MilesOplBank *bank_ = nullptr;
     OplEmulator chip_{OplChipKind::Opl2};
-    std::unique_ptr<OplVoiceAllocator> alloc_; // (re)built once per start(), never in render()
+    // (Re)built in place once per start(), never in render(). A3-04A: held
+    // inline rather than behind a unique_ptr, so a song switch on the audio
+    // task allocates nothing (ALPHA3_AUDIO.md section 18.9).
+    std::optional<OplVoiceAllocator> alloc_;
     bool loop_ = true;
     bool active_ = false, ended_ = false;
     size_t event_index_ = 0;

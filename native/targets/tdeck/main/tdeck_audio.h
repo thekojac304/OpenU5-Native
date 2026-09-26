@@ -3,20 +3,18 @@
 #include <atomic>
 #include <cstdint>
 
-#include <memory>
-
 #include "driver/i2s_std.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
 #include "openu5/audio.h"
 #include "openu5/audio_pack.h"
-#include "openu5/music_synth.h"
-#include "openu5/sfx_synth.h"
+#include "openu5/audio_stream.h"
 
 namespace tdeck {
 
-// The T-Deck Plus speaker (A3-01) driving the PC-speaker synthesizer (A3-02).
+// The T-Deck Plus speaker (A3-01) driving the PC-speaker synthesizer (A3-02)
+// and the OPL2 music synth (A3-04), fed by the A3-04A block pump.
 //
 // Output path (LilyGO's board definition, examples/UnitTest/utilities.h and
 // examples/SimpleTone/SimpleTone.ino): an I2S-input speaker amplifier on
@@ -27,31 +25,31 @@ namespace tdeck {
 //
 // Threads. The GAME thread (core 0) only ever: checks that the cue has an
 // A3-02 program (openu5::sfx_supported), posts {request, epoch} with a ZERO
-// timeout, bumps the flush epoch, stores a gain, or overwrites the length-1
+// timeout, bumps the flush epoch, stores a gain, overwrites the length-1
 // music command queue (xQueueOverwrite: "the latest wants song X/stop", not
-// a backlog) -- it never waits. The AUDIO task (core 1, where no game task
-// runs) owns the openu5::SfxPlayer AND the A3-04 openu5::MusicSongPlayer: it
-// drains both queues, renders 16 ms chunks of each at their own live gain,
-// mixes them (a saturating sum -- the patched original's MIDI card and PC
-// speaker were separate hardware and both sounded at once, ALPHA3_AUDIO.md
-// section 9), and blocks only in i2s_channel_write or a short bounded wait
-// when both channels are silent (so a new music command is never more than
-// that wait late). A flush (load, Return to Title) is an SFX epoch only:
-// requests posted before it are dropped as stale; music is untouched (the
-// same policy AudioService already documents for flush_for_load()).
+// a backlog), or copies the latest published performance window under a
+// spinlock -- it never waits. The AUDIO task (core 1, where no game task
+// runs) owns openu5::AudioRingPump (ALPHA3_AUDIO.md section 18): it drains
+// both queues between blocks, and the pump renders one 8 ms block of music +
+// SFX (each at its own live gain, summed and saturated -- section 9) and
+// hands it to the DMA descriptor ring, which IS the render-ahead buffer:
+// kAudioRingBlocks x kAudioBlockFrames = 64 ms ahead of the speaker. The task
+// blocks only in i2s_channel_write (waiting for the DMA to free a descriptor
+// -- that wait paces it) or, when silent with the channel off, in a bounded
+// wait on the SFX queue. A flush (load, Return to Title) is an SFX epoch
+// only; music is untouched (AudioService::flush_for_load()'s policy).
 //
 // Nothing here can stall the game loop: the I2S channel, its DMA buffers and
 // the task are created on the first accepted SFX or music request, and a
 // bring-up failure leaves the game silent and playable.
-class TdeckAudioBackend final : public openu5::AudioBackend {
+class TdeckAudioBackend final : public openu5::AudioBackend, public openu5::AudioPerfSource {
   public:
     static constexpr uint32_t kSampleRateHz = openu5::kSfxOutputRateHz;
     static constexpr uint32_t kQueueDepth = 16;
-    /** OPL2 (9 voices): a real period AdLib card's own polyphony, and the
-     * device's CPU budget (ALPHA3_AUDIO.md section 17.4). The browser
-     * reference defaults to OPL3 (18) only to avoid voice stealing that a
-     * real 1988-2001 AdLib listener would also have heard. */
-    static constexpr openu5::OplChipKind kMusicChip = openu5::OplChipKind::Opl2;
+    /** A3-04 raised it 4096 -> 6144 B for the OPL synth; A3-04A moved the block buffers off it (section 18.9). */
+    static constexpr uint32_t kTaskStackBytes = 6144;
+    /** One DMA descriptor, mono 16-bit. */
+    static constexpr size_t kBlockBytes = openu5::kAudioBlockFrames * sizeof(int16_t);
 
     bool play_sfx(const openu5::SfxRequest &) override;
     void stop_sfx() override;
@@ -62,17 +60,20 @@ class TdeckAudioBackend final : public openu5::AudioBackend {
     const char *last_error() const { return error_; }
 
     /**
-     * A3-04. The audio pack's song/bank bytes, kept resident by
+     * A3-04 / A3-04A. The audio pack's song/bank bytes, kept resident by
      * alpha_audio.cpp's RetainedAudioPayload for as long as the process
      * runs. Called once at boot, from the single-threaded startup path,
-     * strictly before any start_music() can reach the audio task -- so
-     * parsing the bank here (not on the audio task) races with nothing.
-     * `library` must outlive this backend (it does: main.cpp gives it a
-     * `static` RetainedAudioPayload, same lifetime as the backend itself).
-     * A null or unparsable library leaves the backend silent for music
-     * (start_music always returns false), never a crash.
+     * strictly before any start_music() can reach the audio task. A3-04A:
+     * the bank AND all 16 songs are parsed here, once (MusicLibrary), so a
+     * song switch on the audio task never parses or allocates. A null or
+     * unparsable library leaves music silent, never a crash.
      */
     void set_music_library(const openu5::AudioPackPayload *library);
+    const openu5::MusicLibrary &music_library() const { return library_; }
+
+    // openu5::AudioPerfSource (Developer > Diagnostics > Audio performance).
+    bool perf_snapshot(openu5::AudioPerfSnapshot &) const override;
+    void perf_reset() override;
 
   private:
     struct Command {
@@ -83,11 +84,29 @@ class TdeckAudioBackend final : public openu5::AudioBackend {
         openu5::MusicSong song = openu5::MusicSong::None;
         bool stop = false;
     };
+    // The DMA descriptor ring, as the pump sees it (ESP-IDF i2s_std TX).
+    class I2sRingSink final : public openu5::PcmRingSink {
+      public:
+        explicit I2sRingSink(TdeckAudioBackend &owner) : owner_(owner) {}
+        bool preload(const int16_t *block) override;
+        bool enable() override;
+        void disable() override;
+        bool write(const int16_t *block) override;
+        uint32_t blocks_played() const override { return owner_.isr_played_; }
+        uint32_t underrun_events() const override { return owner_.isr_overflows_; }
+
+      private:
+        TdeckAudioBackend &owner_;
+    };
+
     bool ensure_started();
     static void task_entry(void *);
     void run();
-    /** Audio task only: services a dequeued MusicCommand (parses/starts/stops). */
-    void apply_music_command(const MusicCommand &);
+    /** Audio task: copy the pump's window out for the game thread. */
+    void publish_perf();
+    static bool on_sent(i2s_chan_handle_t, i2s_event_data_t *, void *);
+    static bool on_send_q_ovf(i2s_chan_handle_t, i2s_event_data_t *, void *);
+    static uint64_t clock_us(void *);
 
     QueueHandle_t queue_ = nullptr;
     QueueHandle_t music_queue_ = nullptr; // depth 1; xQueueOverwrite always keeps the latest
@@ -97,13 +116,18 @@ class TdeckAudioBackend final : public openu5::AudioBackend {
     std::atomic<uint16_t> music_gain_{0};
     std::atomic<uint32_t> epoch_{0};
     std::atomic<uint32_t> queue_full_{0};
-    openu5::SfxPlayer player_{}; // audio task only
-    const openu5::AudioPackPayload *music_library_ = nullptr; // set once at boot; read-only after
-    openu5::MilesOplBank music_bank_{};                        // parsed once in set_music_library()
-    bool music_bank_loaded_ = false;
-    openu5::MusicSongPlayer music_player_{};             // audio task only
-    std::unique_ptr<openu5::MusicTrack> music_track_;    // audio task only; music_player_ points into it
-    openu5::MusicSong music_song_ = openu5::MusicSong::None; // audio task's idea of "currently loaded"
+    std::atomic<bool> perf_reset_requested_{false};
+    // Written only by the I2S DMA ISR (on_sent / on_send_q_ovf), read by the
+    // audio task: single writer, aligned 32-bit, so a plain volatile is enough.
+    volatile uint32_t isr_played_ = 0;
+    volatile uint32_t isr_overflows_ = 0;
+    openu5::MusicLibrary library_{};  // parsed once in set_music_library(); read-only after
+    openu5::AudioRingPump pump_{};    // audio task only
+    I2sRingSink sink_{*this};         // audio task only
+    uint32_t blocks_since_publish_ = 0, stack_free_min_ = UINT32_MAX; // audio task only
+    mutable portMUX_TYPE perf_lock_ = portMUX_INITIALIZER_UNLOCKED;
+    openu5::AudioPerfSnapshot published_{}; // under perf_lock_
+    bool published_valid_ = false;          // under perf_lock_
     bool failed_ = false;
     char error_[64]{};
 };

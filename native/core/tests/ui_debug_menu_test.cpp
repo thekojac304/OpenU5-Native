@@ -185,8 +185,10 @@ int main(){
   static constexpr int kQuestWorldActions[] = {6};
   static constexpr int kNpcActions[] = {7};
   static constexpr int kShortcutActions[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14};
-  // A3-01: row 16 is "Audio test tone (SFX)", an action row like the groups.
-  static constexpr int kDiagnosticActions[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+  // A3-01: the last row is "Audio test tone (SFX)", an action row like the
+  // groups; A3-04A inserted "Audio performance" (16) and "Audio stats (live)"
+  // (17) just above it, so it is now row 18.
+  static constexpr int kDiagnosticActions[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18};
   static constexpr int kCertificationActions[] = {0,1,2,3,4};
   const CategoryRows tables[] = {
       {UiDebugCategory::Teleport, 6, kTeleportActions, 1},
@@ -205,7 +207,7 @@ int main(){
       {UiDebugCategory::Transport, 6, nullptr, 0},
       {UiDebugCategory::NpcDungeonState, 8, kNpcActions, 1},
       {UiDebugCategory::ShortcutsPresets, 15, kShortcutActions, 15},
-      {UiDebugCategory::Diagnostics, 17, kDiagnosticActions, 17},
+      {UiDebugCategory::Diagnostics, 19, kDiagnosticActions, 19},
       {UiDebugCategory::Certification, 5, kCertificationActions, 5},
   };
   for (const auto &table : tables) {

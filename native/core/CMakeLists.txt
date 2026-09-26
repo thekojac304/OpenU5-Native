@@ -1299,6 +1299,17 @@ if(BUILD_TESTING)
   add_test(NAME a3_04_music_synth COMMAND a3_04_music_synth
     "${CMAKE_CURRENT_SOURCE_DIR}"
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
+  # A3-04A -- the real-time audio path: the device audio task's pump driven
+  # against a model of the ESP-IDF i2s_std TX descriptor ring (prime, drain,
+  # stall tolerance, underrun detection, exact playback order, switch/volume
+  # latency, zero allocation), the hot-path guard scan, the benchmark
+  # timeline, and the device backend's wiring.
+  add_executable(a3_04a_audio_stream tests/a3_04a_audio_stream_test.cpp)
+  target_link_libraries(a3_04a_audio_stream PRIVATE openu5_core)
+  target_compile_features(a3_04a_audio_stream PRIVATE cxx_std_17)
+  add_test(NAME a3_04a_audio_stream COMMAND a3_04a_audio_stream
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
   # A3-01 -- the same seam through the REAL AlphaRuntime: the settings rows by
   # raw keys, reboot/load persistence, the Developer test tone, presentation-
   # time cue routing, and scene timing / game state identical with audio on,

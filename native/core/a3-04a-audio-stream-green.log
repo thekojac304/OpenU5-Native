@@ -1,0 +1,70 @@
+GREEN H1 no function-local static in the audio task's code: /src/music_synth.cpp
+GREEN H1 no function-local static in the audio task's code: /src/sfx_synth.cpp
+GREEN H1 no function-local static in the audio task's code: /src/audio_stream.cpp
+GREEN H1 no function-local static in the audio task's code: /src/audio.cpp
+GREEN H2 tables() returns a namespace-scope object: no guard on the synth's per-sample path
+GREEN H3 the firmware builds music_synth.cpp at -O2 with FP contraction off (same IEEE results as -Og, no out-of-line call per operator)
+GREEN H4 audio_stream.cpp holds no RTOS call, lock, log or allocation
+GREEN L0 the real audio pack is present, Valid and Supported (run: npm run pack:audio)
+GREEN L1 the library parses all 16 songs and the 181-timbre bank once, at load
+GREEN L2 every resident track is the song's own parse (same events, same end tick)
+GREEN L3 the resident corpus is 21,529 events (172 KB at 8 bytes; measured in section 18.4)
+GREEN L4 no payload, no bank, or MusicSong::None: nothing playable, never a guess
+GREEN P1 render min/avg/max over the window; the snapshot keeps the publisher's seq
+GREEN P2 p95/p99 = the upper edge of the 1 %-of-a-block bucket holding rank 96 / 100 of 101 (97 %, 101 %)
+GREEN P3 exactly the one block that took longer than it lasts is a missed deadline
+GREEN P4 fill, write and period statistics (the first write has no period)
+GREEN P5 CPU = render time over the window; underrun/SFX/switch/voice counters
+GREEN P6 a reset starts an empty window
+GREEN P7 the legacy-guard estimate: 4 reads x sounding channels x chip samples per block x the guard's cost
+GREEN R1 every start from silence preloads EVERY descriptor before enabling (2 starts, 16 preloads)
+GREEN R1 the first ring the DMA plays is exactly the first eight rendered blocks (no lead-in)
+GREEN R2 no stale replay: after the off/on cycle the DMA never plays a previous sound's block
+GREEN R3 the drain plays every real block before the clocks stop (no cut tail)
+GREEN R4 at 50 % load with no stall: zero empty blocks, zero driver overflows, zero dry writes
+GREEN R4 every block played in order: none skipped, repeated or reordered
+GREEN R4 the ring stays full (fill never below 7 of 8) and the task never needs a runaway yield
+GREEN R17 the oracle: 600 blocks of the Theme + cues equal MusicSongPlayer and SfxPlayer rendered directly and summed -- nothing skipped, repeated, re-gained or replaced
+GREEN R5 a 5 ms stall: no underrun, and the stream is the reference, block for block
+GREEN R5 a 10 ms stall: no underrun, and the stream is the reference, block for block
+GREEN R5 a 20 ms stall: no underrun, and the stream is the reference, block for block
+GREEN R5 a 40 ms stall: no underrun, and the stream is the reference, block for block
+GREEN R5 a 100 ms stall: the speaker runs dry (6 empty blocks) and BOTH detectors see it (driver 6, writer 1)
+GREEN R5 ... and recovers: nothing skipped or repeated, the same blocks in the same order after the gap
+  designed stall tolerance at 50 % load: 59 ms (ring 8 x 8000 us, render 4000 us)
+GREEN R6 stall tolerance = the whole ring minus one block's render: 59 ms (>= 40)
+GREEN R6 ... which covers the 40 ms case with margin
+  random jitter: 30 stalls of 0-40 ms over 2000 blocks: 0 empty blocks, fill min 3
+GREEN R7 random stalls up to 40 ms all through music, SFX and a song switch: no underrun, exact stream
+GREEN R8 the same 40 ms stall DOES underrun a 3-descriptor ring (24 ms): depth is what buys the tolerance, and it is measured
+GREEN R9 a producer at 150 % of real time (A3-04's synth, section 18.3) underruns continuously -- counted by both detectors (205 driver overflows)
+GREEN R9 ... and the runaway guard yields the core (12 times) instead of starving its idle task
+GREEN R10 the block rendered right after a switch is the new song's first block, and the next 90 are exactly a fresh start of it (nothing of the old song leaks through the player)
+  song switch: command -> first new block at the speaker = 64.0 ms
+GREEN R10 the new song reaches the speaker within one ring plus one block (72 ms) of the command
+GREEN R11 a Music Volume change reaches the very next block and no block already in the ring (volume is per block)
+GREEN R12 SFX Volume 0: cues submitted at gain 0 leave the music stream bit-identical to no cues at all
+GREEN R12 SFX overlay music as a saturating sum, sample for sample (SFX Volume 0 = music alone, Music Volume 0 = SFX alone: each gain touches its own channel only)
+GREEN R13 after the music stops, exactly one ring of silence is written, the clocks stop, and the task sleeps
+GREEN R14 a failed I2S enable leaves the audio path silent and off, counted, and yields instead of spinning
+GREEN R15 the flush epoch still drops in-flight requests; only admitted cues are counted
+GREEN R16 3,000 blocks, SFX every 11 and four song switches after warm-up: zero heap allocations
+GREEN B1 settle -> reset; 30 s music alone -> read + reset; 15 s music + SFX -> read + restore; then done
+GREEN B1 ... at 2 s + 30 s and + 15 s
+GREEN B2 one cue every 100 ms during the SFX phase (~150)
+GREEN B3 a late frame plays ONE cue, never a catch-up burst
+Ultima V Theme 30.0s
+missed 0  underrun 0  hw 0
+render avg 3.21 p99 3.90 max 4.70
+block 8.0ms  music max 0.00  CPU 0%
+sched max 8.40  min buffered 56 ms
+voices max 0  OPL ch avg 8.7 max 9
+SFX 0 (0 w/music) q0 p0
+stack min 0 B  runaway 0  fail 0
+GREEN B4 the compact report: missed/underrun, render avg/p99/max, sched max, min buffered, voices
+GREEN B4 ... and never writes past the caller's lines
+GREEN S1 the device audio task runs the production pump this test drives
+GREEN S2 the DMA ring is exactly the geometry the pump and this model assume
+GREEN S3 the driver's on_sent / on_send_q_ovf callbacks feed blocks_played() and underrun_events()
+GREEN S4 songs are parsed once at boot (MusicLibrary::load); the audio task never parses, and never logs
+A3-04A audio stream: 58/58 checks

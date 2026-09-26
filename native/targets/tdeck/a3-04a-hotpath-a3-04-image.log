@@ -1,0 +1,41 @@
+# A3-04A firmware hot-path check: C:\Dev\OpenU5-Native\native\targets\tdeck\build-a3-04-post\openu5_tdeck.elf
+
+generate(): 177 instructions, 8 call sites: openu5::OplEmulator::Operator::advance_envelope(unsigned long, unsigned char), openu5::OplEmulator::Operator::sample(unsigned long, long, long), openu5::OplEmulator::advance_clocks(), openu5::OplEmulator::phase_inc(openu5::OplEmulator::Channel const&, openu5::OplEmulator::Operator const&) const, openu5::OplEmulator::tremolo_atten() const
+functions reachable from generate(): 33
+    __cxa_guard_acquire                                             52 instructions
+    __cxa_guard_release                                             46 instructions
+    __isnand                                                        12 instructions
+    __kernel_cos                                                   144 instructions
+    __kernel_rem_pio2                                              722 instructions
+    __kernel_sin                                                   139 instructions
+    __math_divzero                                                  15 instructions
+    __math_inexact64                                                18 instructions
+    __math_invalid                                                  22 instructions
+    __math_oflow                                                    13 instructions
+    __math_set_invalid                                              16 instructions
+    __math_uflow                                                    14 instructions
+    __rem_pio2                                                     407 instructions
+    _pow                                                          1102 instructions
+    _sin                                                            49 instructions
+    floor                                                           78 instructions
+    ldexp                                                           67 instructions
+    log                                                            363 instructions
+    log2                                                            12 instructions
+    lround                                                          84 instructions
+    openu5::(anonymous namespace)::OplTables::OplTables()           81 instructions
+    openu5::(anonymous namespace)::expo(long)                       24 instructions
+    openu5::(anonymous namespace)::tables()                         13 instructions
+    openu5::(anonymous namespace)::wave_atten(unsigned char, lon   165 instructions
+    openu5::OplEmulator::Operator::advance_envelope(unsigned lon    82 instructions
+    openu5::OplEmulator::Operator::sample(unsigned long, long, l    33 instructions
+    openu5::OplEmulator::advance_clocks()                           37 instructions
+    openu5::OplEmulator::phase_inc(openu5::OplEmulator::Channel     51 instructions
+    openu5::OplEmulator::tremolo_atten() const                      16 instructions
+    signal_waiting_tasks()                                          16 instructions
+    sqrt                                                           148 instructions
+    static_init_prepare()                                           29 instructions
+    wait_for_guard_obj(guard_t*)                                    56 instructions
+reachable: __cxa_guard_acquire  via __cxa_guard_acquire <- openu5::(anonymous namespace)::tables <- openu5::(anonymous namespace)::wave_atten <- openu5::OplEmulator::Operator::sample <- openu5::OplEmulator::generate
+reachable: __cxa_guard_release  via __cxa_guard_release <- openu5::(anonymous namespace)::tables <- openu5::(anonymous namespace)::wave_atten <- openu5::OplEmulator::Operator::sample <- openu5::OplEmulator::generate
+
+RED the per-sample path reaches: __cxa_guard_acquire, __cxa_guard_release

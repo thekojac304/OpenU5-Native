@@ -13,6 +13,7 @@
 #include "openu5/audio.h"
 #include "openu5/ambient_sfx.h"
 #include "openu5/audio_pack.h"
+#include "openu5/audio_stream.h"
 #include "openu5/command_char.h"
 #include "openu5/combat.h"
 #include "openu5/dialogue_orchestration.h"
@@ -57,6 +58,12 @@ class AlphaRuntime {
     // audio pack". A null backend is silent.
     void configure_audio(const openu5::AudioPackInfo &, openu5::AudioBackend *);
     const openu5::AudioService &audio() const { return audio_; }
+    // A3-04A. The audio task's performance windows (the device backend; null
+    // on the host and with no audio output): the Developer "Audio
+    // performance" / "Audio stats (live)" rows and the heartbeat's
+    // AUDIO_PERF line read it. main.cpp attaches it after configure_audio().
+    void attach_audio_perf(openu5::AudioPerfSource *source) { audio_perf_ = source; }
+    bool audio_benchmark_running() const { return audio_bench_.running(); }
     // A3-03. The ambient ticker (ambient_sfx.h) and how often it ran.
     const openu5::AmbientTicker &ambient() const { return ambient_; }
     uint32_t ambient_ticks() const { return ambient_ticks_; }
@@ -245,6 +252,11 @@ class AlphaRuntime {
     // volumes and the pack's capability, and never GameState or any RNG.
     openu5::AudioService audio_{};
     openu5::AudioPackInfo audio_pack_{};
+    // A3-04A. Diagnostics only; nothing in play reads them.
+    openu5::AudioPerfSource *audio_perf_ = nullptr;
+    openu5::AudioBenchmark audio_bench_{};
+    uint32_t bench_guard_ns_ = 0, bench_idle_channels_x100_ = 0;
+    size_t bench_internal_free_ = 0, bench_psram_free_ = 0;
     // A3-03. ambient_sfx_tick 0x4102's counters, and the 55 ms tick and the
     // clock reading it last ran on.
     openu5::AmbientTicker ambient_{};
@@ -515,6 +527,12 @@ class AlphaRuntime {
     static void start_smoke(void *, int group);
     // A3-01. Developer > Diagnostics > "Audio test tone (SFX)".
     static void audio_test_tone(void *);
+    // A3-04A. Developer > Diagnostics > "Audio performance" (the ~47 s
+    // benchmark, ticked from render()) and "Audio stats (live)".
+    static void audio_perf_start(void *);
+    static void audio_stats_now(void *);
+    void service_audio_benchmark(int64_t now_us);
+    void report_audio_perf(const char *heading, const openu5::AudioPerfSnapshot &);
     // A3-01. The one binder of the Developer diagnostics services, shared by
     // initialize() and the host fixture (the fixture used to copy the call).
     void bind_developer_diagnostics();

@@ -47,6 +47,27 @@ void u5obj_object(const char *stage,size_t i,const openu5::QuestObject&o){
              stage,unsigned(i),long(o.location),long(o.floor),long(o.x),long(o.y),long(o.tile),o.chest,o.prop,o.plot,int(o.item),o.loot,o.search,o.shadowlord,o.trapped,long(o.contents),long(o.slot));
 }
 constexpr uint32_t kInternal=MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT,kPsram=MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT;
+// A3-04A: A3-04's stutter, measured on the device itself (ALPHA3_AUDIO.md
+// section 18.3). A function-local static with a dynamic initializer: under
+// the firmware's -mdisable-hardware-atomics every read goes through
+// __cxa_guard_acquire (a FreeRTOS mutex take + give). noipa keeps GCC from
+// proving either read pure and hoisting it out of the timing loop.
+struct GuardProbe{int value;GuardProbe():value(1){}};
+int g_unguarded_probe=1;
+__attribute__((noipa)) int guarded_probe_read(){static GuardProbe probe;return probe.value;}
+__attribute__((noipa)) int unguarded_probe_read(){return g_unguarded_probe;}
+/** Nanoseconds one guarded read costs over a plain one (4,000 of each, ~10 ms on the device). */
+uint32_t measure_guard_ns(){
+    constexpr int kReads=4000;
+    volatile int sink=0;
+    const int64_t t0=esp_timer_get_time();
+    for(int i=0;i<kReads;++i)sink=sink+guarded_probe_read();
+    const int64_t t1=esp_timer_get_time();
+    for(int i=0;i<kReads;++i)sink=sink+unguarded_probe_read();
+    const int64_t t2=esp_timer_get_time();
+    const int64_t extra=(t1-t0)-(t2-t1);
+    return extra>0?uint32_t(extra*1000/kReads):0u;
+}
 constexpr size_t kAstarBytes=323084,kTranscriptBlocks=96;
 constexpr size_t kCreationWidth=320,kCreationHeight=152,kCreationPixels=kCreationWidth*kCreationHeight;
 // #324 / R-32 and Y-04: the scene pacers' queue sizes are AlphaRuntime class
@@ -2008,6 +2029,9 @@ void AlphaRuntime::compose_creation_art(){
 
 esp_err_t AlphaRuntime::render(Board&board,bool force){
     board_=&board;
+    // A3-04A: the Developer audio benchmark is a timeline, not a wait; it
+    // ticks here in every mode so leaving the menu (or the game) cannot stall it.
+    service_audio_benchmark(esp_timer_get_time());
     if(applied_brightness_!=settings_.brightness){ESP_RETURN_ON_ERROR(board.set_brightness(settings_.brightness),kTag,"apply persistent display brightness");applied_brightness_=settings_.brightness;}
     if(frontend_.active()){
         const int64_t now=esp_timer_get_time();
@@ -2508,7 +2532,10 @@ void AlphaRuntime::service_system_menu_intent(){
     else if((intent.kind==openu5::SystemMenuIntentKind::LoadLatest||intent.kind==openu5::SystemMenuIntentKind::LoadSlot)&&!ok)ui_->append(openu5::UiTextChannel::System,"No valid save");
 }
 
-void AlphaRuntime::log_metrics(const char*where)const{const auto stack=uxTaskGetStackHighWaterMark(nullptr)*sizeof(StackType_t);const auto internal=heap_caps_get_free_size(kInternal),psram=heap_caps_get_free_size(kPsram);ESP_LOGI(kTag,"METRICS %s internal=%zu psram=%zu stack_margin=%u render_high_us=%lu frontend_render_high_us=%lu command_high_us=%lu transcript=%lu/%zu",where,internal,psram,unsigned(stack),(unsigned long)render_high_us_,(unsigned long)frontend_render_high_us_,(unsigned long)command_high_us_,(unsigned long)transcript_high_water_,kTranscriptBlocks);const auto&m=input_.direction_metrics();ESP_LOGI(kTag,"TRACKBALL_INPUT raw_edges=%lu accepted=%lu suppressed=%lu",(unsigned long)m.trackball_raw_edges(),(unsigned long)m.trackball_accepted(),(unsigned long)m.trackball_suppressed());ESP_LOGI(kTag,"TRACKBALL_SETTINGS percent=%u min_interval_us=%lld debounce_us=%lld accel=1.00",unsigned(settings_.trackball_responsiveness),(long long)m.trackball_debounce_us(),(long long)m.trackball_debounce_us());if(internal<32768)ESP_LOGW(kTag,"LOW INTERNAL RAM: %zu",internal);if(stack<4096)ESP_LOGW(kTag,"LOW MAIN STACK MARGIN: %u",unsigned(stack));}
+void AlphaRuntime::log_metrics(const char*where)const{const auto stack=uxTaskGetStackHighWaterMark(nullptr)*sizeof(StackType_t);const auto internal=heap_caps_get_free_size(kInternal),psram=heap_caps_get_free_size(kPsram);ESP_LOGI(kTag,"METRICS %s internal=%zu psram=%zu stack_margin=%u render_high_us=%lu frontend_render_high_us=%lu command_high_us=%lu transcript=%lu/%zu",where,internal,psram,unsigned(stack),(unsigned long)render_high_us_,(unsigned long)frontend_render_high_us_,(unsigned long)command_high_us_,(unsigned long)transcript_high_water_,kTranscriptBlocks);const auto&m=input_.direction_metrics();ESP_LOGI(kTag,"TRACKBALL_INPUT raw_edges=%lu accepted=%lu suppressed=%lu",(unsigned long)m.trackball_raw_edges(),(unsigned long)m.trackball_accepted(),(unsigned long)m.trackball_suppressed());ESP_LOGI(kTag,"TRACKBALL_SETTINGS percent=%u min_interval_us=%lld debounce_us=%lld accel=1.00",unsigned(settings_.trackball_responsiveness),(long long)m.trackball_debounce_us(),(long long)m.trackball_debounce_us());if(audio_perf_){openu5::AudioPerfSnapshot a{};if(audio_perf_->perf_snapshot(a))ESP_LOGI(kTag,"AUDIO_PERF song=%s window_ms=%lu blocks=%lu missed=%lu underruns=%lu hw_underruns=%lu render_avg_us=%lu p99_us=%lu max_us=%lu music_max_us=%lu cpu_permille=%lu sched_max_us=%lu fill_min=%lu/%lu channels_avg_x100=%lu channels_max=%lu voices_max=%lu sfx=%lu sfx_with_music=%lu stack_free_min=%lu runaway=%lu failures=%lu",a.music_active?openu5::music_song_title(a.song):"none",(unsigned long)(a.window_us/1000),(unsigned long)a.blocks,(unsigned long)a.missed_deadlines,(unsigned long)a.underruns,(unsigned long)a.hw_underruns,(unsigned long)a.render_avg_us,(unsigned long)a.render_p99_us,(unsigned long)a.render_max_us,(unsigned long)a.music_max_us,(unsigned long)a.cpu_permille,(unsigned long)a.period_max_us,(unsigned long)a.fill_min,(unsigned long)a.ring_blocks,(unsigned long)a.channels_avg_x100,(unsigned long)a.channels_max,(unsigned long)a.voices_max,(unsigned long)a.sfx_submitted,(unsigned long)a.sfx_during_music,(unsigned long)a.stack_free_min,(unsigned long)a.runaway_yields,(unsigned long)(a.write_failures+a.enable_failures));}
+    if(internal<32768)ESP_LOGW(kTag,"LOW INTERNAL RAM: %zu",internal);
+    if(stack<4096)ESP_LOGW(kTag,"LOW MAIN STACK MARGIN: %u",unsigned(stack));
+}
 
 size_t AlphaRuntime::object_count(void*p){return static_cast<AlphaRuntime*>(p)->objects_.size();}
 openu5::QuestObject AlphaRuntime::object_read(void*p,size_t i){auto&r=*static_cast<AlphaRuntime*>(p);return i<r.objects_.size()?r.objects_[i]:openu5::QuestObject{};}
@@ -2726,7 +2753,7 @@ void AlphaRuntime::configure_audio(const openu5::AudioPackInfo &pack,openu5::Aud
 
 void AlphaRuntime::bind_developer_diagnostics(){
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
-    if(debug_){openu5::UiDiagnosticsServices services{};services.context=this;services.start=start_smoke;services.audio_test=audio_test_tone;debug_->attach_diagnostics(services);}
+    if(debug_){openu5::UiDiagnosticsServices services{};services.context=this;services.start=start_smoke;services.audio_test=audio_test_tone;services.audio_perf=audio_perf_start;services.audio_stats=audio_stats_now;debug_->attach_diagnostics(services);}
 #endif
 }
 
@@ -2798,6 +2825,9 @@ void AlphaRuntime::present_audio(const openu5::GameEvent &e){
 }
 
 void AlphaRuntime::sync_music(){
+    // A3-04A: while the Developer "Audio performance" benchmark runs it owns
+    // the music (one known track, section 18.14); its end calls this again.
+    if(audio_bench_.running())return;
     // Priority order, highest first (ALPHA3_AUDIO.md section 17.6):
     //   1. the Blackthorn capture/sacrifice cutscene -- silence (the doc's
     //      "Blackthorn capture, death"; the pacer's ONLY scene is that one,
@@ -2910,5 +2940,102 @@ void AlphaRuntime::audio_test_tone(void *p){
     ESP_LOGI(kTag,"AUDIO_TEST %s",line);
     if(r.ui_)r.ui_->append(openu5::UiTextChannel::System,line);
     r.dirty_=true;r.dirty_reason_="audio-test";
+}
+
+// ---------------------------------------------------------------------------
+// A3-04A. Developer > Diagnostics > "Audio performance" / "Audio stats (live)"
+// (ALPHA3_AUDIO.md section 18.14). Game thread only; every call returns at
+// once -- the benchmark is a timeline service_audio_benchmark() advances.
+// ---------------------------------------------------------------------------
+void AlphaRuntime::report_audio_perf(const char *heading,const openu5::AudioPerfSnapshot &s){
+    char lines[10][64]{};
+    const size_t n=openu5::format_audio_perf(s,lines,10);
+    ESP_LOGI(kTag,"AUDIO_PERF_REPORT %s",heading);
+    if(ui_)ui_->append(openu5::UiTextChannel::System,heading);
+    for(size_t i=0;i<n;++i){
+        ESP_LOGI(kTag,"AUDIO_PERF_REPORT   %s",lines[i]);
+        if(ui_)ui_->append(openu5::UiTextChannel::System,lines[i]);
+    }
+    dirty_=true;dirty_reason_="audio-perf";
+}
+
+void AlphaRuntime::audio_perf_start(void *p){
+    auto &r=*static_cast<AlphaRuntime*>(p);
+    const char *refused=!r.audio_perf_?"Audio perf: no audio output":r.audio_bench_.running()?"Audio perf: already running":nullptr;
+    if(refused){
+        if(r.ui_)r.ui_->append(openu5::UiTextChannel::System,refused);
+        r.dirty_=true;r.dirty_reason_="audio-perf";
+        return;
+    }
+    r.bench_guard_ns_=measure_guard_ns();
+    r.bench_internal_free_=heap_caps_get_free_size(kInternal);
+    r.bench_psram_free_=heap_caps_get_free_size(kPsram);
+    // The benchmark's track (AudioBenchmark::kSong, the Theme): the title
+    // context. Nothing reaches the backend if music is unavailable or at 0 %;
+    // the run then measures SFX alone and says "no music".
+    r.audio_.play_music(openu5::MusicContext::Title);
+    r.audio_perf_->perf_reset();
+    r.audio_bench_.start(uint32_t(esp_timer_get_time()/1000));
+    ESP_LOGI(kTag,"AUDIO_PERF_BENCH start song=%s guard_ns=%lu internal=%u psram=%u music=%s",
+             openu5::music_song_title(openu5::AudioBenchmark::kSong),(unsigned long)r.bench_guard_ns_,
+             unsigned(r.bench_internal_free_),unsigned(r.bench_psram_free_),r.audio_.has_music()?"available":"unavailable");
+    if(r.ui_){
+        r.ui_->append(openu5::UiTextChannel::System,"Audio perf: 47 s -- music alone 30 s,");
+        r.ui_->append(openu5::UiTextChannel::System,"then music + a cue every 100 ms 15 s.");
+    }
+    r.dirty_=true;r.dirty_reason_="audio-perf";
+}
+
+void AlphaRuntime::audio_stats_now(void *p){
+    auto &r=*static_cast<AlphaRuntime*>(p);
+    openu5::AudioPerfSnapshot s{};
+    const char *refused=!r.audio_perf_?"Audio stats: no audio output":
+                        r.audio_bench_.running()?"Audio stats: benchmark running":
+                        !r.audio_perf_->perf_snapshot(s)?"Audio stats: no audio played yet":nullptr;
+    if(refused){
+        if(r.ui_)r.ui_->append(openu5::UiTextChannel::System,refused);
+        r.dirty_=true;r.dirty_reason_="audio-perf";
+        return;
+    }
+    r.report_audio_perf("Audio stats since last read:",s);
+    r.audio_perf_->perf_reset();
+}
+
+void AlphaRuntime::service_audio_benchmark(int64_t now_us){
+    if(!audio_bench_.running()||!audio_perf_)return;
+    const auto a=audio_bench_.tick(uint32_t(now_us/1000));
+    // A phase edge reads the window that just ended BEFORE starting the next.
+    openu5::AudioPerfSnapshot s{};
+    if(a.capture_idle||a.capture_stress){
+        const char *heading=a.capture_idle?"Audio perf, music alone (idle):":"Audio perf, music + SFX:";
+        if(!audio_perf_->perf_snapshot(s)){
+            // The audio task never ran: no music available/at 0 % and no cue played.
+            if(ui_)ui_->append(openu5::UiTextChannel::System,"Audio perf: no audio output this phase");
+            ESP_LOGW(kTag,"AUDIO_PERF_REPORT %s no audio output",heading);
+        }else{
+            if(a.capture_idle)bench_idle_channels_x100_=s.channels_avg_x100;
+            report_audio_perf(heading,s);
+        }
+    }
+    if(a.reset_perf)audio_perf_->perf_reset();
+    if(a.sfx!=openu5::SfxId::None)audio_.play_sfx(a.sfx);
+    if(a.finished){
+        // A3-04's root cause, priced on this device: what its per-read
+        // mutex would cost per block at the channels just measured.
+        const uint32_t legacy_us=openu5::legacy_guard_us_per_block(bench_guard_ns_,bench_idle_channels_x100_);
+        char line[64]{};
+        std::snprintf(line,sizeof(line),"A3-04 guard %lu ns/read = %lu.%lu ms/8 ms blk",(unsigned long)bench_guard_ns_,
+                      (unsigned long)(legacy_us/1000),(unsigned long)((legacy_us/100)%10));
+        ESP_LOGI(kTag,"AUDIO_PERF_REPORT   %s",line);
+        if(ui_)ui_->append(openu5::UiTextChannel::System,line);
+        const long internal=long(heap_caps_get_free_size(kInternal))-long(bench_internal_free_);
+        const long psram=long(heap_caps_get_free_size(kPsram))-long(bench_psram_free_);
+        std::snprintf(line,sizeof(line),"heap change: internal %ld B, PSRAM %ld B",internal,psram);
+        ESP_LOGI(kTag,"AUDIO_PERF_REPORT   %s",line);
+        if(ui_)ui_->append(openu5::UiTextChannel::System,line);
+        ESP_LOGI(kTag,"AUDIO_PERF_BENCH done cues=%lu",(unsigned long)audio_bench_.sfx_played());
+        sync_music(); // the benchmark no longer owns the music: back to the game's own
+        dirty_=true;dirty_reason_="audio-perf";
+    }
 }
 } // namespace tdeck

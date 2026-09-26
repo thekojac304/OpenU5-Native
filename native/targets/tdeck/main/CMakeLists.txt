@@ -16,6 +16,13 @@ target_compile_options(${COMPONENT_LIB} PRIVATE
     # Keep per-function stack reports beside target objects. These are build
     # diagnostics only and do not change the firmware's runtime behavior.
     -fstack-usage)
+# A3-04A (native/targets/tdeck/ALPHA3_AUDIO.md section 18.6): the OPL2 synth
+# steps ~50,000 chip samples a second on the audio task, and at the project's
+# -Og every operator step is an out-of-line call chain. This ONE file is built
+# at -O2; -ffp-contract=off keeps its float results bit-identical to -Og (no
+# fused multiply-add; -O2 enables no fast-math), so what plays is unchanged.
+set_source_files_properties("${CMAKE_CURRENT_LIST_DIR}/../../../core/src/music_synth.cpp"
+    PROPERTIES COMPILE_OPTIONS "-O2;-ffp-contract=off")
 find_program(OPENU5_GIT_EXECUTABLE NAMES git.exe git
     PATHS "C:/Program Files/Git/cmd" NO_DEFAULT_PATH)
 if(OPENU5_GIT_EXECUTABLE)

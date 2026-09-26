@@ -144,6 +144,9 @@ extern "C" void app_main(void) {
                          audio_pack.state==openu5::AudioPackState::Valid?openu5::music_capability_name(audio_pack.record.capability):"none",
                          unsigned(audio_pack.song_entries),int(audio_pack.bank_entry));
                 runtime.configure_audio(audio_pack,&audio_backend);
+                // A3-04A: the audio task's performance windows, for the Developer
+                // "Audio performance" rows and the heartbeat's AUDIO_PERF line.
+                runtime.attach_audio_perf(&audio_backend);
             }
             if(!ready)ESP_LOGE(kTag,"Alpha runtime initialization failed: %s",esp_err_to_name(initialized));
         }

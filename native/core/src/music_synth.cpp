@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <new>
 
 #include "openu5/audio.h" // apply_gain_q15
 
@@ -33,10 +34,17 @@ struct OplTables {
         }
     }
 };
-const OplTables &tables() {
-    static const OplTables t;
-    return t;
-}
+// A3-04A: a NAMESPACE-scope object, built once by the startup constructors,
+// never a function-local static. The firmware compiles with
+// -mdisable-hardware-atomics, so GCC cannot inline the "already built?"
+// check of a function-local static and calls __cxa_guard_acquire -- a
+// FreeRTOS mutex take + give -- on EVERY access. The synth reads these
+// tables four times per sounding channel per chip sample (~1.7 million
+// mutex round trips a second on the real corpus): that was A3-04's stutter
+// (ALPHA3_AUDIO.md section 18.3). Nothing reads them during static
+// initialization, so there is no initialization-order hazard.
+const OplTables kTables;
+const OplTables &tables() { return kTables; }
 
 constexpr int32_t kSilentAtten = 0x1000; // "mute without branching": expo(SILENT) == 0
 constexpr uint32_t kWaveNeg = 0x10000;
@@ -436,6 +444,13 @@ bool OplEmulator::is_silent() const {
     for (size_t c = 0; c < channel_count_; ++c)
         if (channels_[c].mod.eg_state != kEnvOff || channels_[c].car.eg_state != kEnvOff) return false;
     return true;
+}
+
+size_t OplEmulator::sounding_channels() const {
+    size_t n = 0;
+    for (size_t c = 0; c < channel_count_; ++c)
+        if (channels_[c].mod.eg_state != kEnvOff || channels_[c].car.eg_state != kEnvOff) ++n;
+    return n;
 }
 
 // ===========================================================================
@@ -853,8 +868,13 @@ void MusicSongPlayer::start(const MusicTrack &track, const MilesOplBank &bank, O
     track_ = &track;
     bank_ = &bank;
     loop_ = loop;
-    chip_ = OplEmulator(chip);
-    alloc_ = std::make_unique<OplVoiceAllocator>(bank, chip, this, &MusicSongPlayer::sink_trampoline);
+    // A3-04A: rebuilt IN PLACE. `chip_ = OplEmulator(chip)` built a ~1.7 KB
+    // temporary on the audio task's stack at every song switch; the emulator
+    // is trivially destructible, so re-constructing it where it lives is the
+    // same state with no temporary.
+    chip_.~OplEmulator();
+    new (&chip_) OplEmulator(chip);
+    alloc_.emplace(bank, chip, this, &MusicSongPlayer::sink_trampoline);
     alloc_->reset();
     event_index_ = 0;
     song_sample_ = 0.0;

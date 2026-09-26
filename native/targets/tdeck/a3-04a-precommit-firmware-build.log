@@ -1,0 +1,34 @@
+﻿ninja: Entering directory `build-a3-04a'
+[1/15] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/tdeck_audio.cpp.obj
+[2/15] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/music_synth.cpp.obj
+[3/15] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/audio_stream.cpp.obj
+[4/15] Building C object esp-idf/esp_app_format/CMakeFiles/__idf_esp_app_format.dir/esp_app_desc.c.obj
+[5/15] Performing build step for 'bootloader'
+[1/1] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-a3-04a\bootloader && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 C:/Dev/OpenU5-Native/native/targets/tdeck/build-a3-04a/bootloader/bootloader.bin"
+
+Bootloader binary size 0x5850 bytes. 0x27b0 bytes (31%) free.
+
+
+[6/15] Linking C static library esp-idf\esp_app_format\libesp_app_format.a
+[7/15] No install step for 'bootloader'
+[8/15] Completed 'bootloader'
+[9/15] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/main.cpp.obj
+[10/15] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/alpha_runtime.cpp.obj
+[11/15] Linking C static library esp-idf\main\libmain.a
+[12/15] Generating esp-idf/esp_system/ld/sections.ld
+Skipping linker script generation, section names unchanged
+
+[13/15] Linking CXX executable openu5_tdeck.elf
+[14/15] Generating binary image from built executable
+esptool v5.4.0
+
+Creating ESP32-S3 image...
+
+Merged 3 ELF sections.
+
+Successfully created ESP32-S3 image.
+
+Generated C:/Dev/OpenU5-Native/native/targets/tdeck/build-a3-04a/openu5_tdeck.bin
+[15/15] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-a3-04a && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app C:/Dev/OpenU5-Native/native/targets/tdeck/build-a3-04a/partition_table/partition-table.bin C:/Dev/OpenU5-Native/native/targets/tdeck/build-a3-04a/openu5_tdeck.bin"
+openu5_tdeck.bin binary size 0xe91e0 bytes. Smallest app partition is 0x100000 bytes. 0x16e20 bytes (9%) free.
+
