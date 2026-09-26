@@ -9,12 +9,14 @@
 > during Batch 18 or Batch 19. Every row's result column reads `UNTESTED`. Do not infer a
 > PASS from a host-suite green: the whole point of these rows is that they are
 > the checks host evidence cannot make.
+>
+> **Batch 52 correction:** this banner was true at Batch 18/19 and is kept as history. Batch 20 ran 117 rows on hardware, and Phases 6T–7D followed. The authoritative status is the "Alpha 2 Readiness — Batch 52" section at the end of this file.
 
 ## Session setup
 
 | Item | Value |
 |---|---|
-| Firmware image | **The current validation image is the Launcher named in the annotated tag of the batch that owns the phase you are running** (for Phase 7D: tag `alpha2-batch51-scene-pacing`). *Batch 51 correction: this row used to name `build-batch19`; it was never updated, and in the first Phase 7B/7C session a stale Batch 43 image was flashed instead of Batch 48.* Every batch packages the same filename, `OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`, so the filename proves nothing. |
+| Firmware image | **The current validation image is the Launcher named in the annotated tag of the batch that owns the phase you are running** (for Phase 7D: tag `alpha2-batch51-scene-pacing`). *Batch 51 correction: this row used to name `build-batch19`; it was never updated, and in the first Phase 7B/7C session a stale Batch 43 image was flashed instead of Batch 48.* Every batch packages the same filename, `OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`, so the filename proves nothing. *Batch 52: no new image. The next phase, 7E, will name the Batch 53 tag, and that batch changes the SD pack as well.* |
 | **Firmware identity gate** | **Before recording ANY physical result, read `Git <hash>` on the boot identity screen and confirm it equals the first 12 hex digits of the commit the owning tag points to** (`git rev-list -n1 <tag>`); write that hash into the result cell. On disk the same check is `grep -a -o <hash> <image>`. A result recorded against a different hash certifies nothing about the phase and must be struck, not reinterpreted. |
 | **SD resource pack** | **NO REFRESH REQUIRED.** Neither Batch 18 nor Batch 19 changed any resource file. The last pack change was Batch 9C (`openu5-alpha1-resources.bin`, 2,039,545 B, payload CRC32 `0x2065ad91`, SHA-256 `434cd664…b4ea`). If the card already boots a Batch 9C-or-later image, leave it alone. |
 | If the card is older than 9C | `npm run pack:alpha1`, then copy `native/assets/openu5-alpha1-resources.bin` over `<SD>:\ultima5\openu5-alpha1-resources.bin`. **Do not reformat**; saves and settings are separate files. A stale card stops at the identity screen with `match=0` — that is the gate working. |
@@ -257,7 +259,7 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 | H-112 | Corridor | cast an ordinary spell (e.g. `In Lor`): **the same flash/inversion the overworld gives**. Then cast `Grav Por` or `Vas Flam` as the negative control — weapon-spells stay silent, above ground and below | PASS (Batch 20, hardware, `a357e28c…`) |
 | H-113 | Trigger a dungeon encounter and win | **the return is to the same cell and facing** (Y-22) | PASS (Batch 20, hardware, `a357e28c…`) — tested via a corridor ambush, not a room encounter |
 | H-114 | In a dungeon | `Alt+M` → close; `Alt+D` → Back | **the dungeon view returns both times** | PASS (Batch 20, hardware, `a357e28c…`) |
-| H-115 | In a dungeon | save, reload | position, facing, revealed cells, wanderer **and any field you cast** resume exactly (R-15; fields ride in `DungeonState::cells`) | **FAIL — confirmed production defect (Batch 20, hardware, `a357e28c…`).** Save reports success; reloading (same session, no power-cycle) resumes an older/prior save instead. Reproducible specifically in dungeons — never observed in the overworld. Root cause (proven architectural gap, exact trigger for this symptom not yet confirmed): `alpha_save.cpp`'s `candidate()` (used as the save's own "semantic-validation" self-check, line ~178) and `restore_candidate()` (the core of `load()`) both only call `restore_gameplay`/`restore_terrain`/`restore_npc_walk` — **neither ever calls `restore_dungeon`**. Dungeon state is restored as a separate step afterward (`alpha_runtime.cpp:2166`), and its failure just logs `DUNGEON_RESTORE_FAILED` and silently resets `dungeon_={}` with no player-visible indication. This means both the save-time and load-time integrity checks are blind to dungeon-payload corruption — a save/load can be reported fully successful while the dungeon-specific data is invalid. Needs live log confirmation (`DUNGEON_RESTORE_FAILED` at the moment of reload) to nail the exact mechanism, but the architectural gap itself is confirmed by code inspection. High priority for Batch 21 alongside H-149/H-150/H-151 **Batch 26: HOST FIXED / DEVICE RETEST PENDING (audit Phase 6U).** The cause was not the save self-check: the sidecar exporter never wrote the `"dungeon"` object (`persistence.cpp` `extras[]`), so every dungeon save loaded at the entrance on the surface. Saving underground is allowed in 1988 (`CAST2.OVL:0x10FE`, no location gate) and resumes in place. The Rel Tym toggle is 0 after a load (`DUNGEON 0x0E40`, not saved). Use the System Menu load (`Alt+L` is H-164). See `GAMEPLAY_INTEGRATION_AUDIT.md` §"Batch 26" |
+| H-115 | In a dungeon | save, reload | position, facing, revealed cells, wanderer **and any field you cast** resume exactly (R-15; fields ride in `DungeonState::cells`) | **FAIL — confirmed production defect (Batch 20, hardware, `a357e28c…`).** Save reports success; reloading (same session, no power-cycle) resumes an older/prior save instead. Reproducible specifically in dungeons — never observed in the overworld. Root cause (proven architectural gap, exact trigger for this symptom not yet confirmed): `alpha_save.cpp`'s `candidate()` (used as the save's own "semantic-validation" self-check, line ~178) and `restore_candidate()` (the core of `load()`) both only call `restore_gameplay`/`restore_terrain`/`restore_npc_walk` — **neither ever calls `restore_dungeon`**. Dungeon state is restored as a separate step afterward (`alpha_runtime.cpp:2166`), and its failure just logs `DUNGEON_RESTORE_FAILED` and silently resets `dungeon_={}` with no player-visible indication. This means both the save-time and load-time integrity checks are blind to dungeon-payload corruption — a save/load can be reported fully successful while the dungeon-specific data is invalid. Needs live log confirmation (`DUNGEON_RESTORE_FAILED` at the moment of reload) to nail the exact mechanism, but the architectural gap itself is confirmed by code inspection. High priority for Batch 21 alongside H-149/H-150/H-151 **Batch 26: HOST FIXED / DEVICE RETEST PENDING (audit Phase 6U).** The cause was not the save self-check: the sidecar exporter never wrote the `"dungeon"` object (`persistence.cpp` `extras[]`), so every dungeon save loaded at the entrance on the surface. Saving underground is allowed in 1988 (`CAST2.OVL:0x10FE`, no location gate) and resumes in place. The Rel Tym toggle is 0 after a load (`DUNGEON 0x0E40`, not saved). Use the System Menu load (`Alt+L` is H-164). See `GAMEPLAY_INTEGRATION_AUDIT.md` §"Batch 26" **Batch 52: HARDWARE PASS — Phase 6U.** |
 | H-116 | Descend past floor 7 | the Underworld transition | PASS (Batch 20, hardware, `a357e28c…`) |
 | H-117 | Walk out at the level-1 entrance | the surface world view and Exploration verbs return | PASS (Batch 20, hardware, `a357e28c…`) |
 
@@ -267,13 +269,13 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 
 | # | Setup | Input | Expected | Result |
 |---|---|---|---|---|
-| H-118 | Debug → Quest → grant a shard | `U`se it in a Flame room | the shard's effect fires (R-08) | **FAIL — CRITICAL, confirmed production defect (Batch 20, hardware, `a357e28c…`).** Used Debug → Certification → "Flame/Shard Test" (grants all 3 shards, teleports to the verified Empath Abbey (15,3) floor-1 ritual cell), then `U`sed a shard. Only the generic "Use item" echo appeared — no ritual text at all, even though `cast_shard_into_flame()` (`quest.cpp:89-107`) is unconditional: it always writes a header line first regardless of position match, so at minimum 1-2 lines of flavor text should always print. **Afterward, movement became permanently silent — no `Blocked!`, no echo, nothing — and did NOT recover after teleporting elsewhere or loading a save.** `Alt+M`/`Alt+D` (System Menu/Developer) still respond normally, ruling out a total device hang; teleport and load commands are themselves still processed (the destination/reload happens) but movement remains dead afterward regardless. Since Load only restores `GameState`/`TurnState`/quest data (confirmed via `alpha_save.cpp` review, see H-115) and never touches UI session mode, and this survives both teleport and load, the stuck state most likely lives in UI-session/input-mode state (e.g. a leftover `TargetSelection`-style mode silently swallowing movement input) rather than corrupted save data. **Narrowed further:** `L`ook and `Z`-stats both work normally (Look correctly resolves different directions per trackball/WASD input, confirming directional input hardware is fine) — only the world **Move** command path specifically is affected, producing no response at all (not even `Blocked!`). This rules out a broad UI/input freeze; it's a targeted lock on one command kind. Recovered via power cycle (teleport/reload were insufified). Root cause not yet isolated — needs dedicated investigation. **Top priority for Batch 21 alongside H-149/H-150/H-151/H-115** **Batch 25: HOST FIXED / DEVICE RETEST PENDING (audit Phase 6T).** Root cause was not the ritual: a question the core was waiting on (e.g. "Leave this place?") was on screen when `Alt+D` was pressed; `UiSession::set_base_mode()` overwrote the Developer menu's return register, so closing the menu dropped the question while `awaiting_exit` stayed set and every world command (Use, Move, Look's core half) was refused silently. See `GAMEPLAY_INTEGRATION_AUDIT.md` §"Batch 25" |
+| H-118 | Debug → Quest → grant a shard | `U`se it in a Flame room | the shard's effect fires (R-08) | **FAIL — CRITICAL, confirmed production defect (Batch 20, hardware, `a357e28c…`).** Used Debug → Certification → "Flame/Shard Test" (grants all 3 shards, teleports to the verified Empath Abbey (15,3) floor-1 ritual cell), then `U`sed a shard. Only the generic "Use item" echo appeared — no ritual text at all, even though `cast_shard_into_flame()` (`quest.cpp:89-107`) is unconditional: it always writes a header line first regardless of position match, so at minimum 1-2 lines of flavor text should always print. **Afterward, movement became permanently silent — no `Blocked!`, no echo, nothing — and did NOT recover after teleporting elsewhere or loading a save.** `Alt+M`/`Alt+D` (System Menu/Developer) still respond normally, ruling out a total device hang; teleport and load commands are themselves still processed (the destination/reload happens) but movement remains dead afterward regardless. Since Load only restores `GameState`/`TurnState`/quest data (confirmed via `alpha_save.cpp` review, see H-115) and never touches UI session mode, and this survives both teleport and load, the stuck state most likely lives in UI-session/input-mode state (e.g. a leftover `TargetSelection`-style mode silently swallowing movement input) rather than corrupted save data. **Narrowed further:** `L`ook and `Z`-stats both work normally (Look correctly resolves different directions per trackball/WASD input, confirming directional input hardware is fine) — only the world **Move** command path specifically is affected, producing no response at all (not even `Blocked!`). This rules out a broad UI/input freeze; it's a targeted lock on one command kind. Recovered via power cycle (teleport/reload were insufified). Root cause not yet isolated — needs dedicated investigation. **Top priority for Batch 21 alongside H-149/H-150/H-151/H-115** **Batch 25: HOST FIXED / DEVICE RETEST PENDING (audit Phase 6T).** Root cause was not the ritual: a question the core was waiting on (e.g. "Leave this place?") was on screen when `Alt+D` was pressed; `UiSession::set_base_mode()` overwrote the Developer menu's return register, so closing the menu dropped the question while `awaiting_exit` stayed set and every world command (Use, Move, Look's core half) was refused silently. See `GAMEPLAY_INTEGRATION_AUDIT.md` §"Batch 25" **Batch 52: HARDWARE PASS — Phase 6T.** |
 | H-119 | At a dungeon entrance | `Y`ell a word of power | the quake and the flag toggle | UNTESTED |
 | H-120 | Blackthorn's palace, capture sequence | run the whole ceremony | the interrogation asks its questions, each with a visible **`Your response?`** row (see H-23), and the scene reads as a distinct scene, not the ordinary Palace lobby (R-32) | UNTESTED |
 | H-121 | During H-120, a companion is executed | observe the active character | **the previously-set active character is NOT re-pointed** — if it named the executed companion or anyone after them in the marching order, it now names someone else. That is `BLCKTHRN 0x03ae-0x04d4`'s own behaviour. **Do not file it** | UNTESTED |
 | H-122 | During H-120 | watch the pacing | **RE-ADJUDICATED — Batch 51** (see Phase 7D-B below): the tick pacing is byte-exact; the materialization sweep, the holy-circle frame and the sacrifice siren had **zero dwell** and are host fixed; the "missing teleport-in" was the circle frame being staged and replaced inside one pump, so it never reached the screen (its LFSR texture is still not modelled). *Original row text:* **KNOWN OPEN — D-10/Y-32.** The scene may feel faster and more collapsed than the original. **If you can record video against original footage, that recording is the missing evidence.** Capture it rather than filing a ticket | Consistent with the known-open D-10/Y-32 pacing issue (fast, as expected — not filed separately). **Additional new observation (Batch 20):** the animation for Blackthorn teleporting in appears to be missing entirely, distinct from the general pacing issue. Recorded for Batch 21 follow-up, not yet root-caused |
 | H-123 | Falsehood / Abbey chain | run it | the chain completes and its quest objects register | UNTESTED |
-| H-124 | Overworld, town, dungeon, aboard a ship, mid-quest | save and reload in each | after each: position, party, inventory, equipment, time, transport, world objects, hidden/search objects, and the UI mode and renderer all match | PASS for overworld/town/ship contexts (Batch 20, hardware, `a357e28c…`). Dungeon context not independently retested — presumed to share H-115's confirmed defect given the identical save/reload mechanism **Batch 26:** the dungeon context shared H-115's defect and is fixed with it; world objects were already persisted (R-14) and are now pinned by `batch26_dungeon_save` L1/L2. Dungeon context: **DEVICE RETEST PENDING (audit Phase 6U)** |
+| H-124 | Overworld, town, dungeon, aboard a ship, mid-quest | save and reload in each | after each: position, party, inventory, equipment, time, transport, world objects, hidden/search objects, and the UI mode and renderer all match | PASS for overworld/town/ship contexts (Batch 20, hardware, `a357e28c…`). Dungeon context not independently retested — presumed to share H-115's confirmed defect given the identical save/reload mechanism **Batch 26:** the dungeon context shared H-115's defect and is fixed with it; world objects were already persisted (R-14) and are now pinned by `batch26_dungeon_save` L1/L2. Dungeon context: **DEVICE RETEST PENDING (audit Phase 6U)** **Batch 52: dungeon context HARDWARE PASS — Phase 6U.** |
 
 ---
 
@@ -514,7 +516,7 @@ The 1988 bed loop advances ten minutes, refreshes town terrain if the resulting 
 
 **Retest gate:** Phase **6X** below, after a later device flash. Phase 6W is already assigned to Batch 29; Phases 6T, 6U and 6V remain pending. The SD pack and save format are unchanged. No hardware was flashed or SD card modified in Batch 30.
 
-### Phase 6X — Batch 30 bed survival and day/night · *PENDING*
+### Phase 6X — Batch 30 bed survival and day/night · *PENDING* → **PASS (Batch 52 reconciliation)**
 
 Use the Batch 30 firmware. Close Developer before each sleep and keep enough HP to survive starvation. These steps check device presentation and state. The host observer establishes the exact in-loop terrain ordering; a final device screenshot alone cannot, because the runtime also refreshes terrain after input.
 
@@ -522,7 +524,7 @@ Use the Batch 30 firmware. Close Developer before each sleep and keep enough HP 
 2. Developer → Time **05:50**, Food **5**, heal the party, set one member's Status to **P**, leave the others **G**; teleport to a free castle bed. Press `h`, `1`, Enter. Expect one HP of poison damage per completed sleep tick on P and food reduced by **one** at 06:00 (the G members are asleep during the meal). Record before/after HP, food and clock. If an occupant ejects the party, its final tick must still damage P.
 3. Developer → Time **19:50**, teleport to a free castle bed, `h`, `1`, Enter; inspect the castle lamp at **(15,10)** and the tile south at **(15,11)**. Repeat from **04:50** on a free bed. Expect the night overlay after 20:00 and the day tile after 05:00. Host evidence pins that the change occurred during the first boundary tick, before NPC snap.
 
-**Status:** 6X not performed. Do not use a Q-duration observation to judge H-156; H-170 is separate and queued. H-165 and all other queued issues remain out of scope.
+**Status:** 6X not performed *(at Batch 30; **Batch 52: HARDWARE PASS**, in the 6T–7C block)*. Do not use a Q-duration observation to judge H-156; H-170 is separate and queued. H-165 and all other queued issues remain out of scope.
 
 ## Batch 31 — H-165 pending question / Developer dungeon teleport
 
@@ -547,7 +549,7 @@ The shipped-pack raw-key test is **35/35 GREEN**; six mutations are killed. The 
 | H-167 | Optional watch prompt, one valid `G` guard, invalid/cancel fallback, guard walk and RNG | **HOST FIXED / DEVICE RETEST PENDING — Phase 6Y** |
 | H-171 | Camp entry Q/T clear, per-step redraw wind, and hourly encounter RNG order; no survival turn housekeeping | **HOST FIXED — Batch 36; no new device phase** |
 
-### Phase 6Y — Batch 32 camp watch · *PENDING*
+### Phase 6Y — Batch 32 camp watch · *PENDING* → **PASS (Batch 52 reconciliation)**
 
 Use the Batch 32 Launcher after the existing flash plan. Keep the SD resource pack as is. The host test proves the underlying choice and walk mechanics; this physical check proves the handheld prompt, picker and return presentation.
 
@@ -585,11 +587,11 @@ Original-byte disassembly corrects the Batch 32 H-171 queue: `0x2900` is status 
 
 Host raw-key framebuffer proof establishes a synchronous black copy fill of the map-image rectangle after `Zzzzzzz...`, before the first ten-minute tick. It persists through all bed ticks and restores on the next ordinary redraw. The 12/12 focused checks, seven killed mutations, 19/19 affected subset and 107/107 fresh full suite passed. The clean ESP-IDF 6.1 image is **869,888 bytes (`0xd4600`)**, **+432 bytes** from Batch 36 (`batch37-firmware-build.log`). The host capture Board does not exercise the TFT/SPI transfer, so the physical pixel result remains unobserved. No check or flash was performed. Existing phases **6T, 6U, 6V, 6W, 6X and 6Y** retain their assignments. H-173 remains queued separately; H-174 records the distinct intermediate roster refresh omission.
 
-### Phase 6Z — Batch 37 bed-entry map blackout · *PENDING*
+### Phase 6Z — Batch 37 bed-entry map blackout · *PENDING* → **PASS (Batch 52 reconciliation)**
 
 | # | Setup | Input | Expected visible result | Expected state change | Result |
 |---|---|---|---|---|---|
-| 6Z | On an empty LeftBed in Lord British's Castle, with a clock visible and one awake `G` party member | `H` → `1` → Enter; observe immediately after `Zzzzzzz...` and until wake | The **map image** becomes solid black at once, including bed, party and NPC pixels; cyan frame, sky/wind captions, transcript and party panel remain visible. The map stays black across sleep updates and is restored by the ordinary wake redraw, with no stale black cells after the party steps east. | Clock reaches the original target hour; the party wakes one cell east. The interim roster status is tracked separately by H-174. | **UNTESTED** |
+| 6Z | On an empty LeftBed in Lord British's Castle, with a clock visible and one awake `G` party member | `H` → `1` → Enter; observe immediately after `Zzzzzzz...` and until wake | The **map image** becomes solid black at once, including bed, party and NPC pixels; cyan frame, sky/wind captions, transcript and party panel remain visible. The map stays black across sleep updates and is restored by the ordinary wake redraw, with no stale black cells after the party steps east. | Clock reaches the original target hour; the party wakes one cell east. The interim roster status is tracked separately by H-174. | **UNTESTED** → **Batch 52: HARDWARE PASS** (6T–7C block; see Batch 52) |
 
 Use the Batch 37 commit-stamped Launcher when this phase is eventually run. Do not infer Phase 6Z PASS from the host framebuffer stub. The SD pack is unchanged; no SD recopy is required.
 
@@ -601,11 +603,11 @@ The 1988 Camp loop stores (start hour + requested hours) modulo 24 and tests the
 
 Original CMDS calls the status renderer after eligible G-to-S, before Zzz and black fill, then once per ten-minute tick after housekeeping and before NPC snap/ejection. It presents S at entry; tick frames update HP/status and clock. A sleeping active selection is cleared. The final sleeping frame lasts until ordinary redraw after wake. Native now draws only the right status region synchronously. Raw-key host framebuffer RED was 9/17; corrected 17/17, with nine mutations killed, 20/20 affected regressions and 109/109 full host tests. A clean ESP-IDF 6.1 firmware build hit an internal compiler error in unchanged ESP-IDF LCD code, then completed on a one-job retry (batch39-firmware-build.log and batch39-firmware-retry.log). The image is **870,640 bytes (0xd48f0)**, **+784 bytes** from Batch 38, with 0x2b710 bytes free in the 1 MiB app partition. The commit-stamped Launcher is packaged after commit; its SHA-256 is recorded in the annotated tag. The host Board does not exercise physical TFT/SPI glyph transfer. **No hardware check or flash was performed.** Pending 6T-6Z keep their meanings.
 
-### Phase 7A - Batch 39 bed status-panel text - *PENDING*
+### Phase 7A - Batch 39 bed status-panel text - *PENDING* → **PASS (Batch 52 reconciliation)**
 
 | # | Setup | Input | Expected visible result | Expected state change | Result |
 |---|---|---|---|---|---|
-| 7A | Empty LeftBed in Lord British's Castle; one selected awake G member, a poisoned second member with visible HP, and the clock | H -> 1 -> Enter; observe before Zzz, through six sleep ticks, and at the next ordinary redraw | The intermediate panel first shows S with no active selection while the map is still visible. Zzz and black fill follow. Each tick updates right-panel HP/clock while the map remains black. The sleeping panel persists through wake, then ordinary redraw restores G and the map. | Poison HP loses one per tick; clock reaches 13:00; party wakes and steps east. | **UNTESTED** |
+| 7A | Empty LeftBed in Lord British's Castle; one selected awake G member, a poisoned second member with visible HP, and the clock | H -> 1 -> Enter; observe before Zzz, through six sleep ticks, and at the next ordinary redraw | The intermediate panel first shows S with no active selection while the map is still visible. Zzz and black fill follow. Each tick updates right-panel HP/clock while the map remains black. The sleeping panel persists through wake, then ordinary redraw restores G and the map. | Poison HP loses one per tick; clock reaches 13:00; party wakes and steps east. | **UNTESTED** → **Batch 52: HARDWARE PASS** (6T–7C block; see Batch 52) |
 
 Use the Batch 39 commit-stamped Launcher when this phase is eventually run. Phase 6Z remains the separate map-blackout TFT check. The SD pack is unchanged.
 
@@ -613,7 +615,7 @@ Use the Batch 39 commit-stamped Launcher when this phase is eventually run. Phas
 
 Original-byte tracing and a real Rest-command host test establish that level evaluation occurs only in the successful Camp apparition. It does not run on XP award, an ordinary turn or bed sleep. The existing native progression formula, HP/stat/MP mutations and roster RNG order pass 21/21 focused checks and eight targeted mutations; the affected subset passes 15/15 and the fresh full host suite passes 110/110. No production logic changed, no firmware was built for this audit, and no hardware was flashed or tested. Existing pending phases 6T-6Z and 7A are unchanged.
 
-### Phase 7B — Camp apparition staging and visuals — *RESERVED, UNTESTED*
+### Phase 7B — Camp apparition staging and visuals — *RESERVED, UNTESTED* → **run 2 logic/visual PASS; pacing fixed B51, PASS in 7D (Batch 52)**
 
 Batches 41–43 host-corrected H-175/D-32, H-176/D-33 and H-177/D-34. Accepted outdoor Camp now shows the CampFire sleep scene before the apparition gate, including when it misses. Sleepable non-guard members lie on tile 0x11e and show S in the panel; a posted guard and poisoned P member remain standing, with guard movement visible. The panel clock updates during Camp. A successful gate then materializes the figure over the fire, wakes each live actor in roster order, XORs the full 176x176 window once after each chime, and restores the viewport before level/Hail. Advancement panel updates follow each eligible member's acknowledgement. Host tests confirm pixels and ordering; physical TFT pulse duration belongs to this reserved phase. Phase 7B remains untested.
 
@@ -642,7 +644,7 @@ Final host evidence: focused 20/20, affected CTest subset 21/21, full fresh host
 
 The physical 23:45 report included an upright named bed occupant and a visually empty bed whose Look result was a guard. Shipped original code and CASTLE.NPC show the upright pose is original; native's dialog-zero actor filter caused the empty guard bed. Host correction is complete. H-179/D-36 remains the separate Camp ring-42 visual gap. No hardware was flashed or checked. Existing 6T–6Z, 7A and 7B checks remain pending.
 
-### Phase 7C — nighttime NPC beds and silent guard — *RESERVED, UNTESTED*
+### Phase 7C — nighttime NPC beds and silent guard — *RESERVED, UNTESTED* → **run 2 PASS (Batch 52 reconciliation)**
 
 | # | Setup | Input | Expected visible result | Expected logical result | Result |
 |---|---|---|---|---|---|
@@ -664,15 +666,15 @@ Batch 46 validation: 16/16 focused, 22/22 affected, 117/117 fresh host, nine kil
 
 The physical Phase 7B run on the confirmed Batch 48 image showed every Camp apparition visual correct and the whole sequence "way too fast". The cause is shared: the device honoured an original wait only inside a scene pacer and only when it was a BIOS-tick primitive (`delay`/`run_n_frames`). Waits the original spends in `tone_sweep` (which blocks even with sound off) or a fizzle were zero, and the Camp apparition had no pacer at all. Batch 51 paces the apparition with the original's own waits and gives the Blackthorn materialization, holy-circle frame and sacrifice siren their holds. TrollSneak, which uses only tick waits and already passed on hardware (H-137), is the unchanged control. Host evidence: focused 28/28 + 21/21 on a virtual clock, 12/12 mutations killed, fresh full host suite 120/120. Firmware 874,864 B, +1,520 vs Batch 48. **SD resource pack unchanged; no SD recopy required.** Not flashed.
 
-### Phase 7D — scripted-scene pacing on the TFT — *PENDING*
+### Phase 7D — scripted-scene pacing on the TFT — *PENDING* → **PASS (Batch 52)**
 
 **Gate first:** the boot identity screen must read `Git <first 12 hex of the alpha2-batch51-scene-pacing commit>` (the tag message states it). Film the screen if you can — a phone at 60 fps resolves every hold below; 120/240 fps resolves the 55 ms circle frame. Durations are the device's: **A** = exact original ticks, **B** = the calibrated floor of a host-dependent 1988 wait (1988 machines held it longer, up to the stated witness), **D** = a one-tick minimum so a transitional frame is visible at all.
 
 | # | Setup | Input | Expected visible result | Pass criterion | Result |
 |---|---|---|---|---|---|
-| 7D-A | As 7B: outdoor on foot, at least two live members — one at level 1 with ≥100 XP (it will level), one without. Keep a save to retry the 25 % apparition gate. | H → hours → Enter → no watch. During the first inverted pulse press **Alt+S, Alt+M, Mic, Alt+D, Alt+L** once each. At the first Hail press **Alt+S**; at the karma speech press any key. | "An apparition!", then the sleeping camp holds **≈1.5 s** (B ≥1.55 s: materialize + six-note arpeggio) before the figure appears over the fire; the figure alone for a moment (D); the member stands **≈¼ s** (A 55 ms + B 193 ms chime); then the **whole 176×176 viewport inverts and stays inverted ≈2.3 s** (B ≥2.325 s; 1988 hosts held 2.75–4.57 s); it restores and **≥165 ms** later (A) the Hail appears and waits. The keys pressed during the inversion do **nothing** — no "Save complete", no menu, no Developer overlay, no load, no skipped beat. At the Hail, Alt+S advances (Batch 41) and never saves. Each further member gets its own full pulse; a non-levelling member's pulse is followed by ≈0.4 s of normal scene. The karma speech waits for a key; then the figure vanishes and the camp ends. | Every inversion visibly holds **at least 2 s**; nothing between "An apparition!" and the first Hail reads as instantaneous; dwell keys have no effect; order identical to 7B run 2. Serial: `CAMP_SCENE_PACED begin=apparition-materialize wait_ms=387`, `CAMP_SCENE_INPUT … effect=swallowed` per dwell key, `NARRATIVE_SCENE_END scene=3`. | **PENDING** |
-| 7D-B | H-120: Blackthorn's palace capture; a party of three or more living members if you want the sacrifice. | Run the capture; answer the interrogation (a wrong answer reaches the warning; a correct mantra at the right point reaches the sacrifice). | After the two guards take their posts behind the prisoners and pause, **Blackthorn's cell stays empty ≈½ s** (B ≥503 ms materialize sweep), then the **holy circle (0x116) is shown as its own frame** (D ≥55 ms — brief but distinct; the LFSR dissolve is still not modelled, so it cuts), then Blackthorn stands ≈0.44 s (A, 8 ticks) before speaking. Prompts stay readable; Enter continues. Sacrifice: after the pause the **victim stays frozen on the table ≈7 s** (B ≥7.13 s siren), then goes dark and the table is empty. | The circle frame is seen (video) and the materialization pause and siren hold are clearly present. **Not a regression:** no explosion burst is drawn on the victim — queued H-186. | **PENDING** |
-| 7D-C | H-137: a bridge troll ambush (control — this mechanism was not changed). | Walk onto the bridge until the trolls spot you. | Unchanged from Batch 20: "Thou spieth trolls under the bridge!", ≈550 ms (A 10 ticks), "$ sneaks across" with dots ≈275 ms (A 5 ticks) apart. | Same as the Batch 20 PASS; no new delay anywhere else. | **PENDING** |
+| 7D-A | As 7B: outdoor on foot, at least two live members — one at level 1 with ≥100 XP (it will level), one without. Keep a save to retry the 25 % apparition gate. | H → hours → Enter → no watch. During the first inverted pulse press **Alt+S, Alt+M, Mic, Alt+D, Alt+L** once each. At the first Hail press **Alt+S**; at the karma speech press any key. | "An apparition!", then the sleeping camp holds **≈1.5 s** (B ≥1.55 s: materialize + six-note arpeggio) before the figure appears over the fire; the figure alone for a moment (D); the member stands **≈¼ s** (A 55 ms + B 193 ms chime); then the **whole 176×176 viewport inverts and stays inverted ≈2.3 s** (B ≥2.325 s; 1988 hosts held 2.75–4.57 s); it restores and **≥165 ms** later (A) the Hail appears and waits. The keys pressed during the inversion do **nothing** — no "Save complete", no menu, no Developer overlay, no load, no skipped beat. At the Hail, Alt+S advances (Batch 41) and never saves. Each further member gets its own full pulse; a non-levelling member's pulse is followed by ≈0.4 s of normal scene. The karma speech waits for a key; then the figure vanishes and the camp ends. | Every inversion visibly holds **at least 2 s**; nothing between "An apparition!" and the first Hail reads as instantaneous; dwell keys have no effect; order identical to 7B run 2. Serial: `CAMP_SCENE_PACED begin=apparition-materialize wait_ms=387`, `CAMP_SCENE_INPUT … effect=swallowed` per dwell key, `NARRATIVE_SCENE_END scene=3`. | **HARDWARE PASS — Batch 51 image** (user, Batch 52 prompt): staging and dwell perceptible, no longer too fast. The dwell-key swallow was not reported separately; it is host-certified. |
+| 7D-B | H-120: Blackthorn's palace capture; a party of three or more living members if you want the sacrifice. | Run the capture; answer the interrogation (a wrong answer reaches the warning; a correct mantra at the right point reaches the sacrifice). | After the two guards take their posts behind the prisoners and pause, **Blackthorn's cell stays empty ≈½ s** (B ≥503 ms materialize sweep), then the **holy circle (0x116) is shown as its own frame** (D ≥55 ms — brief but distinct; the LFSR dissolve is still not modelled, so it cuts), then Blackthorn stands ≈0.44 s (A, 8 ticks) before speaking. Prompts stay readable; Enter continues. Sacrifice: after the pause the **victim stays frozen on the table ≈7 s** (B ≥7.13 s siren), then goes dark and the table is empty. | The circle frame is seen (video) and the materialization pause and siren hold are clearly present. **Not a regression:** no explosion burst is drawn on the victim — queued H-186. | **HARDWARE PASS — Batch 51 image**: pacing and materialization much better. The circle frame was not reported separately; it is host-certified. H-186 is still queued. |
+| 7D-C | H-137: a bridge troll ambush (control — this mechanism was not changed). | Walk onto the bridge until the trolls spot you. | Unchanged from Batch 20: "Thou spieth trolls under the bridge!", ≈550 ms (A 10 ticks), "$ sneaks across" with dots ≈275 ms (A 5 ticks) apart. | Same as the Batch 20 PASS; no new delay anywhere else. | **HARDWARE PASS — Batch 51 image**: the TrollSneak control is unchanged. |
 
 **Queued by the Batch 51 audit — classification only, none fixed; do not file as regressions:**
 
@@ -682,3 +684,99 @@ The physical Phase 7B run on the confirmed Batch 48 image showed every Camp appa
 | H-184 | Donation "ALAKAZAM!", "WELL DONE!", Codex ceremony | No viewport inversion at all; the Codex shows its three quakes but not its three XOR pulses. | `rect_XOR` `0x0bcd`/`0x0c41` held through 920 sweeps, then `run_n_frames(10)`; Codex XOR+shake ×3 `0x0dbd`–`0x0dee` | D-41 |
 | H-185 | Refuge | Cadence is Class C (70 ms/unit + reading floors); the karma speech holds on a timer instead of waiting for a key. | exact `delay(n)` ticks; `getkey` `0x0b3e` | D-42 |
 | H-186 | Blackthorn sacrifice | No explosion burst is drawn on the victim. | burst `0x041e` fires **before** the victim clears (`0x0421`) | D-43 |
+
+## Alpha 2 Readiness — Batch 52 (2026-09-25)
+
+**Verdict: ALPHA 2 NOT READY FOR RELEASE CANDIDATE.** Four release blockers were found by audit and by a device-shape probe, not by a hardware run: RB-1 H-189, RB-2 H-187, RB-3 H-188/H-191 and RB-4 H-146. The full evidence, the blocker criteria and the reconciliation table are in `GAMEPLAY_INTEGRATION_AUDIT.md` §14 "Batch 52". **No production code, firmware or SD pack changed in Batch 52.** The runtime baseline is still the Batch 51 image: 874,864 B, `Git 045cb092b81b`, Launcher SHA-256 `5323b0dd83251875a287beec8f165097dc134ab20ab0f5114ee4ee8bb9bede6d`.
+
+### Physical phases — authoritative status
+
+| Phase | Result | Image / note |
+|---|---|---|
+| 6T, 6U, 6V, 6X, 6Y, 6Z, 7A | **HARDWARE PASS** | User report of the 6T–7C block (2026-09-25). No hash was recorded, because the gate did not exist yet. The session's 7B/7C half was later identified as `Git c1226a0af4c3` (Batch 43), which contains every fix these phases test. The later changes on their paths (B44–B51) are presentation that 7B/7C run 2 and 7D exercised again. |
+| 6W | **HARDWARE PASS (functional)** | Snap, occupancy, "Blocked!", Look and ejection all worked. The bed *visuals* from that session came from the stale image; see 7C run 2. |
+| 7B | Run 1 **INVALID** (B43). Run 2 **logic/visual PASS, pacing FAIL** (`Git 0bbdbf5c86f5`, B48). | The pacing fix is H-182 (B51), which passed in 7D-A. |
+| 7C | Run 1 **INVALID**. Run 2 **authoritative criteria PASS** (B48). | The named-NPC 1988 pose is still an evidence question (Batch 49), not a criterion. |
+| 7D | **HARDWARE PASS** on the Batch 51 image, confirmed by the user | A: Camp pacing dramatically improved, dwell perceptible. B: Blackthorn pacing and materialization much better. C: TrollSneak unchanged. The dwell-key swallow (7D-A) and the one-tick circle frame on video (7D-B) were not reported separately; both are host-certified. |
+| 6Q | **HARDWARE PASS** | The user confirmed the basement chest hydration in the Batch 23 prompt (2026-09-22). The same report saw the H-148 bed reset working. |
+| 6M, 6M.1, 6N, 6P, 6R, 6S | **no recorded result** | Host-certified. The items still owed become steps in Phase 7E (below). |
+
+### Rows still marked FAIL / BLOCKED / INCONCLUSIVE / UNTESTED — current disposition
+
+The historical result cells above are left as recorded. Category numbers follow the audit: **1** superseded, **2** hardware pass, **3** host-certified with no device question left, **5** original quirk preserved, **6** evidence gap (non-blocking), **7** future / Alpha 3, **8** release blocker.
+
+| Row | Batch 20 result | Now | Where it was settled / what remains |
+|---|---|---|---|
+| H-12, H-13 | FAIL | **8** | Root-caused in Batch 52: the device owns no moonstones, so every phase fails (H-188 / RB-3). The `To phase:` text is also overdrawn by the `Aim:` overlay (D-53). Fix in Batch 53, then Phase 7E. |
+| H-15 (text half) | FAIL (presentation) | 7 | The same overlay. Harmless. |
+| H-22 | FAIL | 7 | The original folds case (kernel `0x6f1e`, proven this batch); native does not. Easter egg. D-50. |
+| H-23 | PASS (partial) | 2 | Blackthorn prompts were readable in 7D-B; the shrine chain passed in H-31. |
+| H-30 | BLOCKED | 3 | R-33 host fix. Never run at the corrected location: Phase 7E. |
+| H-45 | FAIL | 7 | Still refunds the potion on cancel. Player-favourable. D-51. |
+| H-51 | INCONCLUSIVE | 6 | Code-verified; the location confounded the result. |
+| H-63 | FAIL | 7 | The `^` glyph is still missing. Cosmetic. D-52. |
+| H-78 | INCONCLUSIVE | 1 | Superseded by the H-149 adjudication; H-77/H-81 passed. |
+| H-84 | UNTESTED | 6 | `dungeon_art_regression`. |
+| H-98, H-99, H-101 | UNTESTED | 3 | Batch 12B on the production path. |
+| H-100 | UNTESTED (negative gate) | 5 | 50 of the 128 shipped `.CBT` boards author slots on BlackSquare. |
+| H-102 – H-105 | UNTESTED | 5 | The In \*Grav negative gate is original (`bugs-del-original.md` §2.9). |
+| H-106 | UNTESTED | 3 | Combat and magic parity. |
+| H-115 | FAIL | 2 | B26; 6U PASS. |
+| H-118 | FAIL CRITICAL | 2 | B25; 6T PASS. |
+| H-119 | UNTESTED | **8** | Cannot work on the device: Words of Power are unbound (H-187 / RB-2). |
+| H-120 | UNTESTED | 2 | 7D-B (B51). |
+| H-121 | UNTESTED | 5 | Original; do not file. |
+| H-122 | KNOWN OPEN | 2 | 7D-B PASS. The residual class-B/C timing is category 6. The sacrifice burst is H-186 (7). |
+| H-123 | UNTESTED | 6 | Reachable in normal play only after RB-2 is fixed: Phase 7E. |
+| H-124 (dungeon) | PENDING | 2 | 6U PASS. |
+| H-128, H-129 | UNTESTED | 6 | Internal auto-sleep (7C walked onto beds with no stray command); Developer-only. |
+| H-135 | UNTESTED | 6 | Its only normal trigger is H-119: Phase 7E. |
+| H-136, H-138 | UNTESTED | 6 | Y-04 host. |
+| H-137 (Refuge half) | UNTESTED | 6 | **Never device-run, and it is the party-wipe recovery path: Phase 7E (required).** |
+| H-139, H-140 | UNTESTED (known open) | 6 | D-8. Alpha 3. |
+| H-146 | FAIL | **8** | Still unbound: `ShopServices::ship` / `horse` / `reserve` (RB-4). |
+| H-148 | INCONCLUSIVE | 1 | B21B fix; the reset was seen on the device (Batch 23 report). |
+| H-149, H-150, H-152 | FAIL CRITICAL | 5 | Original behaviour; H-150/H-152 were seen behaving as adjudicated (21A.3 report). |
+| H-151 | FAIL CRITICAL | 3 | Core fix B21A (RED-7). The device observation is owed: Phase 7E. |
+
+### New rows — found by Batch 52 (code, bytes and the device-shape probe; no hardware run)
+
+| Row | Behaviour on the Batch 51 device | Status |
+|---|---|---|
+| H-187 | Yell a Word of Power at a dungeon entrance → always "No effect!", and the seal never opens. INIT.GAM starts all eight dungeons sealed, so no dungeon can be entered without Developer teleport. | **RELEASE BLOCKER (RB-2)** |
+| H-188 | Moongates never transit, Vas Rel Por always prints "Failed!", and searching for or using moonstones does nothing. The runtime owns no moonstones. | **RELEASE BLOCKER (RB-3)** |
+| H-189 | Final Doom battle with the Wooden Box: the victory ending is refused, and the arena never tears down (only `Alt+D` / `Alt+S` / `Alt+L` answer). | **RELEASE BLOCKER (RB-1)** |
+| H-190 | The Camp apparition and Refuge karma speech show an invented sentence instead of the KARMA.DAT text. | non-blocking; ride Batch 53 |
+| H-191 | No moongate tile is drawn at night. | **RELEASE BLOCKER (part of RB-3)** |
+
+### Reconciled disposition (Batch 52)
+
+Exactly **37** of the 152 Batch 20 rows have a result cell that reads FAIL, BLOCKED, INCONCLUSIVE or UNTESTED: 12 FAIL, 1 BLOCKED, 3 INCONCLUSIVE and 21 UNTESTED. They are dispositioned as follows:
+
+| Category | Rows | Count |
+|---|---|---|
+| **2** — hardware PASS since | H-115, H-118, H-120 | 3 |
+| **1** — superseded | H-78, H-148 | 2 |
+| **3** — host-certified | H-30, H-98, H-99, H-101, H-106, H-151 | 6 |
+| **5** — original preserved | H-100, H-102 – H-105, H-121, H-149, H-150, H-152 | 9 |
+| **6** — evidence gap (non-blocking) | H-51, H-84, H-123, H-128, H-129, H-135, H-136, H-138, H-139, H-140 | 10 |
+| **7** — Alpha 3 | H-22, H-45, H-63 | 3 |
+| **8** — **release blocker** | **H-12, H-13, H-119, H-146** | **4** |
+
+The partial halves of PASS rows are dispositioned separately: H-15 text (7), H-23 Blackthorn/shrine prompts (2), H-122 (2), H-124 dungeon context (2), H-137 Refuge (6, required in 7E). The other 115 Batch 20 PASS rows stand.
+
+*Note on the Batch 20 tally.* Its Group 10 line (4 PASS / 1 FAIL / 2 UNTESTED) does not match the cells. H-120 and H-121 read UNTESTED, and H-122 has an observation rather than a PASS. The tally is left as recorded; this table supersedes it.
+
+### Phase 7E — *RESERVED for the Batch 53 image, not yet written*
+
+Batch 53 must write the exact steps against its own image, including the `Git` hash gate and the **SD-pack recopy**; Words of Power, ENDMSG and KARMA need new pack sections. Minimum content:
+
+1. Yell FALLAX next to Deceit's entrance: quake, seal opens, ordinary `(E)nter` works (H-119, H-135, H-187).
+2. A night moongate is visible and transits. Vas Rel Por shows `To phase:`, and a digit transits (H-188, H-191, H-12, H-13).
+3. Buy a skiff or ship and a horse (H-146).
+4. Developer Endgame preset → Doom's final room → absorption with the Wooden Box → the victory text appears and the arena closes (H-189).
+5. The Camp karma speech is KARMA.DAT text (H-190).
+6. Refuge after a party wipe (H-137 Refuge half).
+7. Owed observations: a Slime / Gargoyle room in Destard (H-151); the vault floor-change reset and the door closing after a load (H-158, H-161, H-162); Gorn's brazier at the corrected location (H-30).
+
+RC packaging and smoke are **Batch 54**, after 7E passes.

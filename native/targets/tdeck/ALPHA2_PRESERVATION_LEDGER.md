@@ -35,6 +35,8 @@ it is an assessment, not a commitment, and **no toggle is implemented**.
 
 **Batch 51 re-adjudicated D-10 and added D-39 through D-43** (scripted-scene pacing). The original paces every staged scene with `delay` 0x20fa and `run_n_frames` 0x3ae6 (real BIOS ticks, exact), `tone_sweep` 0x2192 (blocks for a2 samples even with sound off; host-dependent) and `fx_tile_fizzle_in` 0x1068 (no timer). The device honoured only tick waits and only inside a pacer, so the Camp apparition (D-39) and Blackthorn's sweep/circle/siren beats (D-10) had no dwell; both are host fixed. The sweep hold uses the project's established calibration (25,806 samples/s, `speaker.ts`), the fast-host floor below both 1988 witnesses. Four scene-local gaps are only classified: D-40 shrine/Codex key waits, D-41 ritual inversion, D-42 Refuge cadence and getkey, D-43 the Blackthorn sacrifice burst.
 
+**Batch 52 (Alpha 2 readiness audit) reconciled every row and added D-44 through D-54.** Phases 6T–7D passed on hardware: D-19, D-20, D-23, D-24, D-29, D-31–D-37 and D-39 are hardware-confirmed. D-38 is confirmed for the avatar; the scheduled-NPC 1988 pose is still unresolved. The new rows are native **device-wiring defects**, not choices. They were found by checking every core service hook against what `AlphaRuntime` binds. D-44 (Words of Power), D-45 (moonstones; its D-48 gate visibility and D-53 prompt ride with it), D-46 (ENDMSG endgame) and D-49 (shop ship/horse, the Batch 20 H-146 FAIL) are **Alpha 2 release blockers**. D-47 (karma text), D-50–D-52 and D-54 are non-blocking. The per-row status table is §6. No production code changed.
+
 ---
 
 ## 1. Reference-faithful behaviour (the default)
@@ -154,6 +156,17 @@ answer or a product decision; none is scheduled in Alpha 2 unless marked.
 | D-41 | Donation "ALAKAZAM!", "WELL DONE!" and the Codex ceremony: `RitualInvert` has no device consumer (no viewport inversion), the 184,000 / 138,000-sample sweep holds are zero, and the Codex's three XOR pulses are absent (only its quakes play) | missing presentation beat + missing dwell | CAST2 `0x0bcd`/`0x0c41` XOR held through 920 sweeps then `run_n_frames(10)` `0x0d1a`; Codex XOR+shake ×3 `0x0dbd`–`0x0dee`; reference has `ui/ritual-invert.ts`. Not fixed in Batch 51 | H-184 |
 | D-42 | Refuge cadence is Class C — 70 ms per `delay` unit plus 900/260 ms reading floors — where the original's `delay(n)` is exact 54.93 ms ticks; the karma speech holds on a timer where the original waits for a key; the sweeps, fizzles and dissolves are unheld | calibration + missing acknowledgement | the beat script is `quest_parity`-pinned (`quest_driver` serializes `delayUnits`), so the getkey must enter through the TypeScript reference first; changing only the device unit would make the speech faster, not right. BLCKTHRN `0x0910`–`0x0bfa`, getkey `0x0b3e` | H-185 |
 | D-43 | Blackthorn sacrifice: the burst never reaches the device world-FX layer (the pacer releases `CellExplosion` to `UiSession`, not `consume_event`), and native orders it after the victim clears where the original fires it first | missing presentation beat + ordering | BLCKTHRN `0x041e` burst before `0x0421`–`0x0429` clear; not fixed in Batch 51 | H-186 |
+| D-44 | Words of Power are never bound on the device: `QuestWorldServices::words` is empty and the SD pack has no table. Yell therefore never matches, and every dungeon seal stays closed (INIT.GAM `0x32a–0x331` are all `0x00`). No dungeon can be entered in normal play. | **native defect — RELEASE BLOCKER (RB-2)** | Device wiring never finished; the parity harness binds it itself. The fix needs a pack section for DATA.OVL DS `0x4502` (FALLAX … VERAMOCOR). | H-187 (re-opens Y-24) |
+| D-45 | The runtime owns no moonstones (`QuestWorldServices::moonstones` unbound). Moongates never transit, Vas Rel Por always prints "Failed!", searching for or using a stone does nothing, and no save can ever record a moved stone. | **native defect — RELEASE BLOCKER (RB-3)** | GAM `0x28a–0x2a9` has no `GameState` field, and the adapter-side owner was never built | H-188 (root cause of H-12/H-13; re-opens Y-33) |
+| D-46 | The device has no ENDMSG.DAT (`end_record` unbound). The Wooden-Box victory is refused, and the final Doom arena's teardown is deferred forever, so only `Alt+D`/`Alt+S`/`Alt+L` answer. | **native defect — RELEASE BLOCKER (RB-1)** | The text was never packed | H-189 |
+| D-47 | The Camp apparition and Refuge karma speech show one invented sentence instead of the six KARMA.DAT records | fabricated text; non-blocking | The text was never packed; `bind_rest_services` substitutes a constant | H-190 |
+| D-48 | The night moongate tile `0xDC` is never composed at a buried stone (kernel `0x475a`), and the 1,648 ms transit (`0x48a8`, 15 × `delay(2)`) is absent | presentation. Gate visibility is **part of RB-3**; the transit animation is Alpha 3 | No native composition path; the reference uses `activeMoongates` | H-191 |
+| D-49 | The shipwright/stable purchase confirm does nothing (`ShopServices::ship`/`horse`/`reserve` unbound → `Unsupported`) | **native defect — RELEASE BLOCKER (RB-4)** | Batch 20 hardware FAIL, never fixed; the host fixture copies the omission | H-146 |
+| D-50 | The wishing well matches its six words case-sensitively; the original folds case with kernel `0x6f1e` stristr (`and 0x5f`), called from LOOKOBJ `0x00aa` | native **and** reference divergence; minor | The TypeScript note left it "open". Batch 52 proved it from bytes (`native/core/batch52-h22-wish-stristr-disasm.log`); fix the reference first | H-22 |
+| D-51 | Cancelling a potion's target picker refunds the potion; the reference consumes it at selection | native divergence; player-favourable | The Use-target cancel path never dispatches | H-45 |
+| D-52 | The Z-stats Armaments marker renders `^` as `?` | presentation | The 5×7 face has no `^` glyph | H-63 |
+| D-53 | `AlphaRuntime::overlay` replaces every non-Fire TargetSelection prompt (`To phase:`, `Direction?`) with `Aim: empty (x,y)` | presentation. The `To phase:` half rides RB-3 | The reticle readout is not scoped to combat aim | H-12, H-15 |
+| D-54 | The device ending is transcript text only: `endgame_script` false, `end_narration` unbound. There is no green scene, orb, dissolve, story pages, scroll or terminal freeze. | missing presentation; Alpha 3 | Reachable only once RB-1 is fixed | Y-07 |
 
 ---
 
@@ -213,3 +226,54 @@ Batch 46 validation: 16/16 focused, 22/22 affected, 117/117 fresh full host, and
 Batch 48 final firmware: 873,344 bytes (0xd5380), +160 against Batch 46, 0x2ac80 bytes free; final affected 17/17 and host 118/118. Commit-stamped Launcher SHA-256 is recorded in the annotated Batch 48 tag.
 
 **Batch 49 — scheduled NPC bed-pose adjudication (unresolved).** Fresh opcode assertions and shipped castle data are in `native/core/batch49-original-npc-bed-trace.log` (regenerator `re/tools/batch49_npc_bed_trace.py`). At 23:45, castle slot 13's authored 0x5c and slot 1's 0x70 target (9,7,0) and (17,7,0); both corresponding CASTLE.DAT heads are 0xab. TOWN 0x17d9 passes the type unchanged to EXE 0x3a74; ordinary EXE 0x55f8 calls the same 0x51b8 selector, whose 0x40-0x7f branch would choose 0x1a **if** the live DS:6608 cell is still 0xab. No original live DS:6608 value or rendered frame was captured. Batch 45's upright observation was on native hardware, so it cannot establish the 1988 pose. Outcome D applies: native production remains unchanged; no new defect ID or RED test is warranted. Obtain a paired original DOSBox-X memory/framebuffer trace of the exact castle slot at 23:45, including both map-entry and in-place schedule transition if possible. Phase 7C remains reserved and cannot settle the original rule from native hardware alone. No flash.
+
+---
+
+## 6. Batch 52 reconciliation (2026-09-25)
+
+Every row checked against the Phase 6T–7D hardware results and the Batch 52 audit (`GAMEPLAY_INTEGRATION_AUDIT.md` §14 "Batch 52"). Earlier cells are kept as written; this table is the current status.
+
+| Row(s) | Current status | Kind |
+|---|---|---|
+| A-1 … A-14 | unchanged — required hardware adaptations (A-13's identity gate will also stop a stale card once Batch 53 changes the pack) | required hardware divergence |
+| E-1 … E-4 | unchanged — deliberate enhancements (scrollback, Developer tools, fountain line, settings) | deliberate UX modernization already present |
+| D-1, D-2, D-7 | open product decisions | unresolved (decision) |
+| D-3 | audio out of scope; see also the audio-driven items below | Alpha 3 audio |
+| D-4, D-9 | open reference questions (Mix underground; world getdir order) | unresolved original behaviour |
+| D-5, D-6, D-12, D-13, D-14, D-15, D-16 | incomplete / presentation / deferral | Alpha 3 |
+| D-8 | Ready picker presentation (H-139/H-140 never run) | Alpha 3 UI |
+| D-10 | **fix hardware-confirmed (7D-B PASS, Batch 51 image).** Residual: true 1988 sweep durations (class B, host-dependent) and fizzle texture (class C) | future strict-preservation-profile candidate |
+| D-11, D-23 | resolved (D-23: **HW PASS 6V**) | obsolete historical note |
+| D-17, D-18 | dead code, harmless | hygiene |
+| D-19 | resolved — **HW PASS 6W** (functional) | obsolete historical note |
+| D-20 | resolved — **HW PASS 6X** | obsolete historical note |
+| D-21, D-22 | **host fixed — Batch 23** (H-158 floor-change reload; H-159 chest contents `0x1E`, with the TypeScript generator); this ledger never struck them. Device observation owed (Phase 7E) | resolved on host |
+| D-24 | resolved — **HW PASS 6Y** | obsolete historical note |
+| D-25 … D-28, D-30 | host fixed, no device question (B33–B36, B38) | resolved on host |
+| D-29 | resolved — **HW PASS 6Z** | obsolete historical note |
+| D-31 | resolved — **HW PASS 7A** | obsolete historical note |
+| D-32 … D-36 | resolved — **HW PASS 7B run 2** (logic/visual, Batch 48 image) and **7D-A** (pacing, Batch 51 image) | obsolete historical note |
+| D-37 | guard visibility / Look / occupancy — **HW PASS 7C run 2** | resolved; the pose question lives in D-38 |
+| D-38 | controlled-actor bed pose — **HW PASS 7C run 2**. **Named/scheduled NPC 1988 sleeping pose still UNRESOLVED** (Batch 49 Outcome D: needs a paired original memory/framebuffer witness) | unresolved original behaviour |
+| D-39 | resolved — **HW PASS 7D-A**. Residual: sweep holds are the calibrated fast-host floor (25,806 samples/s); 1988 hosts held the chord 1.18×–1.96× longer — **machine-dependent**, a preservation-profile choice | future strict-preservation-profile candidate |
+| D-40 … D-43 | classified, not fixed (H-183 … H-186); **not Alpha 2 blockers** (no lock, no state) | known missing original presentation → Alpha 3 scene fidelity |
+| D-44, D-45 (+ D-48 gate visibility, D-53 `To phase:`), D-46, D-49 | **ALPHA 2 RELEASE BLOCKERS RB-2, RB-3, RB-1, RB-4** | native defects (device wiring) |
+| D-47 | fabricated karma text, non-blocking; ride Batch 53 (same pack section as D-46) | native defect (text) |
+| D-48 transit animation, D-54 | missing original presentation | Alpha 3 presentation |
+| D-50, D-51, D-52 | minor divergences | Alpha 3 fidelity / UI |
+
+**Scripted-scene pacing decisions (Batch 51), restated.** Tick waits (`delay` 0x20fa, `run_n_frames` 0x3ae6) are exact. `tone_sweep` 0x2192 holds use the calibrated floor, which depends on the machine. Fizzles are held one tick without their texture. Getkeys stay real key waits. Confirmed on hardware by 7D.
+
+**Missing audio-driven behaviour.**
+- There is no audio (D-3).
+- The original's `tone_sweep` blocks even with sound off; the device reproduces those waits silently (D-39/D-10).
+- The sound-flag branches (the original drags the blindfolded party 3 times instead of 18 with sound OFF, and skips the bard's lute) keep the device's sound-ON drags and sound-OFF lute (Batch 51 §13.5).
+- The harpsichord notes are silent (H-125).
+
+**Totals after Batch 52.** 18 deliberate (A-1 … A-14, E-1 … E-4). Unresolved or queued rows open at Batch 52:
+- 4 release blockers (D-44, D-45 with D-48/D-53, D-46, D-49);
+- 1 fabricated-text defect (D-47);
+- open decisions and questions (D-1, D-2, D-4, D-7, D-9, the D-38 NPC pose, the D-10/D-39 residuals);
+- Alpha 3 items (D-3, D-5, D-6, D-8, D-12 … D-16, D-40 … D-43, D-48 animation, D-50 … D-52, D-54).
+
+Deliberate and unresolved rows are still never totalled together.

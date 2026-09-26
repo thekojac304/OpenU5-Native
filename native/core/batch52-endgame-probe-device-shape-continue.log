@@ -1,0 +1,17 @@
+C:\Dev\OpenU5-Native\native\core\tools\check-quests.ts:247
+if(run.status!==0)throw new Error(run.stderr||run.error?.message||('Native driver failed: '+run.status));
+                        ^
+
+Error: BATCH52_PROBE absorption_endgame=InvalidContext
+BATCH52_PROBE absorption_endgame=InvalidContext
+BATCH52_PROBE absorption_endgame=InvalidContext
+BATCH52_PROBE absorption_endgame=InvalidContext
+BATCH52_PROBE absorption_endgame=InvalidContext
+BATCH52_PROBE absorption_endgame=InvalidContext
+
+    at <anonymous> (C:\Dev\OpenU5-Native\native\core\tools\check-quests.ts:247:25)
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:643:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.18.0

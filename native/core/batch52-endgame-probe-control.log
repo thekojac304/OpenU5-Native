@@ -1,0 +1,40 @@
+{
+  cases: 5377,
+  nonterminatingObservations: 2,
+  counts: {
+    'world-flow': 1064,
+    destroy: 48,
+    grant: 48,
+    ritual: 192,
+    summon: 256,
+    word: 72,
+    rescue: 512,
+    melody: 143,
+    donate: 210,
+    codex: 1024,
+    shrine: 256,
+    check: 56,
+    restore: 56,
+    theft: 1152,
+    playtime: 156,
+    roundtrip: 40,
+    'shrine-flow': 68,
+    'native-roundtrip': 24
+  },
+  realShrines: 8,
+  realWords: 8,
+  scriptedEncounterSequences: 82,
+  realNpcSequences: 214,
+  combatVictorySequences: 7,
+  combatRefugeSequences: 5,
+  partyEscapeSequences: 4,
+  combatAbsorptionSequences: 6,
+  longShrineTravelSequences: 5,
+  travelGaps: [
+    'Shrine 1: no dry walkable approach in this foot-only route search',
+    'Shrine 3: no dry walkable approach in this foot-only route search',
+    'Shrine 6: reference coordinates do not identify an overworld shrine tile'
+  ],
+  requiredAssetSkips: 0,
+  sizes: 'GameState=2304 QuestState=68'
+}

@@ -1,0 +1,74 @@
+# Batch 52 -- H-22 wishing-well match: original callee and case folding
+# LOOKOBJ.OVL (file offsets). The near call at 0x00aa encodes displayed target 0xffffcc8e.
+# Overlay base 0xA290 is the one that already resolves LOOKOBJ 0x014e 'call 0xffff97e4' to ULTIMA.EXE 0x3A74
+# (set_actor_record, derived in #211): 0x97e4+0xA290=0x3A74 (mod 0x10000). Same base: 0xcc8e+0xA290=0x6F1E.
+# sha256 LOOKOBJ.OVL / ULTIMA.EXE:
+91eb595670f8a94a91b43e9912a5755cdc40aac991231d29425c6eedd1eacd57 *original/u5/ultima5/LOOKOBJ.OVL
+e904215f43f45080b499a6de683dddce6f3b0466f25bdce067388ea50a7ac5b0 *original/u5/ultima5/ULTIMA.EXE
+
+## LOOKOBJ 0x00a2..: needle = DS 0x7242 ('Corvette', first of six wish words), haystack = [bp-0xe] (typed wish)
+00a2: b84272               mov ax, 0x7242
+00a5: 50                   push ax
+00a6: 8d46f2               lea ax, [bp - 0xe]
+00a9: 50                   push ax
+00aa: e8e1cb               call 0xffffcc8e
+00ad: 3dffff               cmp ax, 0xffff
+00b0: 7f50                 jg 0x102
+00b2: b84c72               mov ax, 0x724c
+
+## LOOKOBJ 0x014e (base cross-check)
+014e: e89396               call 0xffff97e4
+
+## ULTIMA.EXE kernel 0x6f1e stristr: 0x6f5f-0x6f6b fold both bytes above 0x60 with 'and 0x5f' before comparing
+6f1e: 55                   push bp
+6f1f: 8bec                 mov bp, sp
+6f21: 56                   push si
+6f22: 57                   push di
+6f23: 1e                   push ds
+6f24: fc                   cld 
+6f25: 1e                   push ds
+6f26: 07                   pop es
+6f27: 8b7e06               mov di, word ptr [bp + 6]
+6f2a: e86300               call 0x6f90
+6f2d: 893ea46a             mov word ptr [0x6aa4], di
+6f31: 8b7e04               mov di, word ptr [bp + 4]
+6f34: e85900               call 0x6f90
+6f37: 393ea46a             cmp word ptr [0x6aa4], di
+6f3b: 7f47                 jg 0x6f84
+6f3d: 2b3ea46a             sub di, word ptr [0x6aa4]
+6f41: 893ea66a             mov word ptr [0x6aa6], di
+6f45: 33db                 xor bx, bx
+6f47: 8b0ea46a             mov cx, word ptr [0x6aa4]
+6f4b: 8b7606               mov si, word ptr [bp + 6]
+6f4e: 8b7e04               mov di, word ptr [bp + 4]
+6f51: 03fb                 add di, bx
+6f53: ac                   lodsb al, byte ptr [si]
+6f54: 0bf6                 or si, si
+6f56: 742f                 je 0x6f87
+6f58: 268a25               mov ah, byte ptr es:[di]
+6f5b: 47                   inc di
+6f5c: 257f7f               and ax, 0x7f7f
+6f5f: 80fc60               cmp ah, 0x60
+6f62: 7e03                 jle 0x6f67
+6f64: 80e45f               and ah, 0x5f
+6f67: 3c60                 cmp al, 0x60
+6f69: 7e02                 jle 0x6f6d
+6f6b: 245f                 and al, 0x5f
+6f6d: 3ae0                 cmp ah, al
+6f6f: 7504                 jne 0x6f75
+6f71: e2e0                 loop 0x6f53
+6f73: eb12                 jmp 0x6f87
+6f75: 8b16a46a             mov dx, word ptr [0x6aa4]
+6f79: 2bd1                 sub dx, cx
+6f7b: 03da                 add bx, dx
+6f7d: 43                   inc bx
+6f7e: 3b1ea66a             cmp bx, word ptr [0x6aa6]
+6f82: 7ec3                 jle 0x6f47
+6f84: bbffff               mov bx, 0xffff
+6f87: 8bc3                 mov ax, bx
+6f89: 1f                   pop ds
+
+## DATA.OVL file offset 0x7252 (= DS 0x7242 + 0x10): the six mixed-case wish words
+b'Corvette\x00\x00Ferrari\x00Lamborghini\x00Lotus\x00Porsche\x00Horse\x00\nN'
+
+## Native: native/core/src/look.cpp:49 wish.find(u"Horse") etc. -- case-sensitive std::u16string::find, no fold.

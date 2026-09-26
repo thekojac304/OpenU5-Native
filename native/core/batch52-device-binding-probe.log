@@ -1,0 +1,210 @@
+== control {
+ "cases": 5377,
+ "mismatches": {
+  "byFlow": {},
+  "byOp": {},
+  "paths": {},
+  "total": 0
+ }
+}
+== end_record {
+ "cases": 5377,
+ "mismatches": {
+  "byFlow": {
+   "world-flow [absorb]": 9,
+   "world-flow [battle-end,battle-move,fixed]": 3
+  },
+  "byOp": {
+   "world-flow": 12
+  },
+  "paths": {
+   "world-flow [absorb]": [
+    ".steps[].events[] length",
+    ".steps[].state.questFlags.game-won",
+    ".steps[].state.questFlags.in-doom",
+    ".state.questFlags.game-won",
+    ".state.questFlags.in-doom",
+    ".steps[].events[].endgame.beats[].message"
+   ],
+   "world-flow [battle-end,battle-move,fixed]": [
+    ".steps[].events[] length",
+    ".steps[].state.questFlags.in-doom",
+    ".steps[].state.questFlags.game-won",
+    ".steps[].seed",
+    ".steps[].combat.active",
+    ".steps[].combat.seed",
+    ".steps[].combat.map",
+    ".steps[].combat.tiles"
+   ]
+  },
+  "total": 12
+ }
+}
+== words {
+ "cases": 5377,
+ "mismatches": {
+  "byFlow": {
+   "world-flow [yell]": 16
+  },
+  "byOp": {
+   "world-flow": 16
+  },
+  "paths": {
+   "world-flow [yell]": [
+    ".steps[].events[] length",
+    ".steps[].state.questFlags.word-spoken:33",
+    ".steps[].state.time.minute",
+    ".steps[].state.turnsSinceStart",
+    ".steps[].seed",
+    ".state.questFlags.word-spoken:33",
+    ".state.time.minute",
+    ".state.turnsSinceStart"
+   ]
+  },
+  "total": 16
+ }
+}
+== moonstones {
+ "cases": 5377,
+ "mismatches": {
+  "byFlow": {
+   "world-flow [moon,search]": 22,
+   "world-flow [move]": 15
+  },
+  "byOp": {
+   "world-flow": 37
+  },
+  "paths": {
+   "world-flow [moon,search]": [
+    ".steps[].events[] length",
+    ".steps[].state.moonstones[].x",
+    ".steps[].state.moonstones[].y",
+    ".steps[].state.moonstones[].location",
+    ".steps[].state.moonstones[].buried",
+    ".steps[].state.worldObjects[] length",
+    ".state.moonstones[].x",
+    ".state.moonstones[].y"
+   ],
+   "world-flow [move]": [
+    ".steps[].events[] length",
+    ".steps[].state.position.x",
+    ".steps[].state.position.y",
+    ".state.position.x",
+    ".state.position.y",
+    ".steps[].state.position.location",
+    ".state.position.location"
+   ]
+  },
+  "total": 37
+ }
+}
+== karma {
+ "cases": 5377,
+ "mismatches": {
+  "byFlow": {
+   "world-flow [battle-end,battle-hold,npc-attack,refuge-resolve]": 3,
+   "world-flow [battle-end,battle-step,npc-attack]": 2,
+   "world-flow [get,interior]": 2,
+   "world-flow [refuge-check,refuge-resolve]": 12
+  },
+  "byOp": {
+   "world-flow": 19
+  },
+  "paths": {
+   "world-flow [battle-end,battle-hold,npc-attack,refuge-resolve]": [
+    ".steps[].events[].refuge.beats[].message"
+   ],
+   "world-flow [battle-end,battle-step,npc-attack]": [
+    ".steps[].events[].refuge.beats[].message"
+   ],
+   "world-flow [get,interior]": [
+    ".steps[].events[].refuge.beats[].message"
+   ],
+   "world-flow [refuge-check,refuge-resolve]": [
+    ".steps[].events[].refuge.beats[].message"
+   ]
+  },
+  "total": 19
+ }
+}
+== device {
+ "cases": 5377,
+ "mismatches": {
+  "byFlow": {
+   "world-flow [absorb]": 9,
+   "world-flow [battle-end,battle-hold,npc-attack,refuge-resolve]": 3,
+   "world-flow [battle-end,battle-move,fixed]": 3,
+   "world-flow [battle-end,battle-step,npc-attack]": 2,
+   "world-flow [get,interior]": 2,
+   "world-flow [moon,search]": 22,
+   "world-flow [move]": 15,
+   "world-flow [refuge-check,refuge-resolve]": 12,
+   "world-flow [yell]": 16
+  },
+  "byOp": {
+   "world-flow": 84
+  },
+  "paths": {
+   "world-flow [absorb]": [
+    ".steps[].events[] length",
+    ".steps[].state.questFlags.game-won",
+    ".steps[].state.questFlags.in-doom",
+    ".state.questFlags.game-won",
+    ".state.questFlags.in-doom",
+    ".steps[].events[].endgame"
+   ],
+   "world-flow [battle-end,battle-hold,npc-attack,refuge-resolve]": [
+    ".steps[].events[].refuge.beats[].message"
+   ],
+   "world-flow [battle-end,battle-move,fixed]": [
+    ".steps[].events[] length",
+    ".steps[].state.questFlags.in-doom",
+    ".steps[].state.questFlags.game-won",
+    ".steps[].seed",
+    ".steps[].combat.active",
+    ".steps[].combat.seed",
+    ".steps[].combat.map",
+    ".steps[].combat.tiles"
+   ],
+   "world-flow [battle-end,battle-step,npc-attack]": [
+    ".steps[].events[].refuge.beats[].message"
+   ],
+   "world-flow [get,interior]": [
+    ".steps[].events[].refuge.beats[].message"
+   ],
+   "world-flow [moon,search]": [
+    ".steps[].events[] length",
+    ".steps[].state.moonstones[].x",
+    ".steps[].state.moonstones[].y",
+    ".steps[].state.moonstones[].location",
+    ".steps[].state.moonstones[].buried",
+    ".steps[].state.worldObjects[] length",
+    ".state.moonstones[].x",
+    ".state.moonstones[].y"
+   ],
+   "world-flow [move]": [
+    ".steps[].events[] length",
+    ".steps[].state.position.x",
+    ".steps[].state.position.y",
+    ".state.position.x",
+    ".state.position.y",
+    ".steps[].state.position.location",
+    ".state.position.location"
+   ],
+   "world-flow [refuge-check,refuge-resolve]": [
+    ".steps[].events[].refuge.beats[].message"
+   ],
+   "world-flow [yell]": [
+    ".steps[].events[] length",
+    ".steps[].state.questFlags.word-spoken:33",
+    ".steps[].state.time.minute",
+    ".steps[].state.turnsSinceStart",
+    ".steps[].seed",
+    ".state.questFlags.word-spoken:33",
+    ".state.time.minute",
+    ".state.turnsSinceStart"
+   ]
+  },
+  "total": 84
+ }
+}
