@@ -166,6 +166,9 @@ void UiSession::dispatch(const UiIntent &i) const {
 }
 
 void UiSession::set_base_mode(UiMode m) {
+    // Batch 53A. The ending is terminal: no resync may hand the session back
+    // to a world mode (see leave_ending()).
+    if (base_mode_ == UiMode::Ending) return;
     base_mode_ = m;
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
     // H-118 (Batch 25). The Developer menu parks whatever it interrupted in
@@ -180,6 +183,29 @@ void UiSession::set_base_mode(UiMode m) {
 #else
     if (!is_modal(mode_)) mode_ = m;
 #endif
+}
+
+void UiSession::enter_ending() {
+    // Same modal teardown as CombatEnded: whatever prompt or picker was open
+    // belongs to the game that just ended.
+    request_=UiRequestId::None;selection_={};selection_cursor_=0;
+    input_[0]=0;input_length_=0;prompt_[0]=0;pending_command_={};target_render_marker_=false;
+#if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
+    if (mode_ == UiMode::DebugMenu) debug_return_mode_ = UiMode::Ending;
+    else
+#endif
+    mode_ = UiMode::Ending;
+    base_mode_ = return_mode_ = pre_combat_mode_ = UiMode::Ending;
+}
+
+void UiSession::leave_ending(UiMode world) {
+    if (base_mode_ != UiMode::Ending) return;
+    base_mode_ = return_mode_ = pre_combat_mode_ = world;
+#if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
+    if (mode_ == UiMode::DebugMenu) { if (debug_return_mode_ == UiMode::Ending) debug_return_mode_ = world; }
+    else
+#endif
+    mode_ = world;
 }
 
 UiMode UiSession::world_return_mode(UiMode m) const {
@@ -1140,6 +1166,10 @@ bool UiSession::handle_input(const UiAction &a) {
         return true;
     }
 #endif
+    // Batch 53A. ENDGAME.OVL owns the machine until it is reset: no world
+    // command, no picker, no prompt. Transcript paging (above) is the one
+    // thing left, so the ending text can still be read.
+    if (mode_ == UiMode::Ending) return true;
     if (is_modal(mode_)) return handle_modal(a);
     switch (mode_) {
     case UiMode::Exploration: return handle_exploration(a);
@@ -1364,6 +1394,9 @@ void UiSession::consume(const GameEvent &e) {
     case GameEventKind::GameWon:
     case GameEventKind::Endgame:
         if(e.text)append(UiTextChannel::Quest,e.text);
+        // Batch 53A. game-won is the entry to ENDGAME.OVL (overlay-13 stub
+        // 0x7c4a), which never returns to the dungeon loop.
+        if(e.kind==GameEventKind::GameWon)enter_ending();
         break;
     case GameEventKind::BlackthornScene:
         // #324 / R-32. Purely staged presentation: the owner's scene pacer

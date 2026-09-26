@@ -274,6 +274,8 @@ class AlphaRuntime {
     uint32_t rendered_attract_frame_ = UINT32_MAX;
     uint8_t applied_brightness_ = 0;
     bool dungeon_presentation_pending_ = false;
+    // Batch 53A: the one System line that says why input stops answering.
+    bool ending_announced_ = false;
     bool gem_view_active_ = false;
     bool gem_view_charges_turn_ = false;
     // R-13: Use Spyglass. Closes on any key like gem view, but charges no
@@ -391,6 +393,8 @@ class AlphaRuntime {
     void synchronize_after_debug(openu5::WorldPosition before, bool dungeon_before);
     void drain_pending_npc_initiation();
     void synchronize_loaded_world();
+    // Batch 53A: keep UiMode::Ending in step with the live game's game-won.
+    void synchronize_ending(const char *site);
     void service_frontend_intent();
     void service_system_menu_intent();
     DeviceDebugScreen debug_screen() const;

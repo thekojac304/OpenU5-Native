@@ -1,0 +1,426 @@
+[I][AlphaResources] Alpha resource pack v2.0 valid: 2041466 bytes, 42 entries, payload CRC=26f75ae6, expected SHA-256=a48abdbfc88e, firmware_match=1
+[I][AlphaResources] Loaded owners: 64 small floors, 8 dungeons, 1024 NPC records; PSRAM=1187190
+R  Phase 7E-A reproduced: Endgame preset, party of 1, Doom L6 (4,7), East into the pit, North x4
+[I][AlphaRuntime] DUNGEON_LOAD_BEGIN dungeon=40 depth=0
+[I][AlphaRuntime] DUNGEON_LOAD_RESULT result=success reason=normal-init
+[I][AlphaRuntime] DUNGEON_SESSION_STATE active=1 dungeon=40 depth=0 x=1 y=1 facing=2
+[I][AlphaRuntime] DUNGEON_CONTEXT dungeon=1
+[I][AlphaRuntime] DUNGEON_RENDERER active=1
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=7 time=0 us
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=15,15 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] UI_MODE from=dungeon to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=1
+  GREEN R1     the pit drops the party into the final arena (combat map 127)
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=1 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=2
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=1 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=3
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=1 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=4
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=3 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=0 scheduled=0
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=end
+[I][AlphaRuntime] COMBAT_END reason=victory/all-hostiles-gone
+[I][AlphaRuntime] WORLD_RESTORE_BEGIN loc=0 floor=0 origin=0,0
+[I][AlphaRuntime] combat finish result=0 victory=1
+[I][AlphaRuntime] WORLD_TILE_RESTORE x=0 y=0 source=authoritative-world+terrain before=1 after=1 unchanged=1
+[I][AlphaRuntime] WORLD_POST_COMBAT player=15,15 tile_under_player=1 loc=0 floor=0
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] UI_MODE from=combat to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=5
+  GREEN R2     absorption: "Avatar is absorbed!"
+  GREEN R3     "VICTORY!" is printed as the arena closes
+  GREEN R4     game-won is set
+  GREEN R5     the ENDMSG ending (record 9, proclamation, report) is printed once
+  GREEN R6     the arena is torn down
+         final position: dungeon=40 floor=7 (5,7) facing=1 active=1
+  GREEN R7     the dungeon session is still Doom floor 7 (5,7), the cell the pit dropped the party into
+  GREEN R8     that cell is enclosed: Forward in all four facings never leaves it (core, on copies)
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=6
+         OBSERVED after the ending: mode=dungeon; one trackball-right routed 1 gameplay command(s), facing 1 -> 2
+TV the terminal ending with the wooden box
+[I][AlphaRuntime] DUNGEON_LOAD_BEGIN dungeon=40 depth=0
+[I][AlphaRuntime] DUNGEON_LOAD_RESULT result=success reason=normal-init
+[I][AlphaRuntime] DUNGEON_SESSION_STATE active=1 dungeon=40 depth=0 x=1 y=1 facing=2
+[I][AlphaRuntime] DUNGEON_CONTEXT dungeon=1
+[I][AlphaRuntime] DUNGEON_RENDERER active=1
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=7 time=0 us
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=15,15 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] UI_MODE from=dungeon to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=1
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=73 base=00 symbol=00 ui=combat emitted=confirm action_char=0 shortcut=save
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=combat gameplay_command=none
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=1 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=2
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=1 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=3
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=1 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=4
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=3 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=0 scheduled=0
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=end
+[I][AlphaRuntime] COMBAT_END reason=victory/all-hostiles-gone
+[I][AlphaRuntime] WORLD_RESTORE_BEGIN loc=0 floor=0 origin=0,0
+[I][AlphaRuntime] combat finish result=0 victory=1
+[I][AlphaRuntime] WORLD_TILE_RESTORE x=0 y=0 source=authoritative-world+terrain before=1 after=1 unchanged=1
+[I][AlphaRuntime] WORLD_POST_COMBAT player=15,15 tile_under_player=1 loc=0 floor=0
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] UI_MODE from=combat to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=5
+  GREEN TV0    precondition: a pre-ending save exists; the ending ran and set game-won
+  RED   TV1    ** the session is in the terminal UiMode::Ending, not back in Dungeon (ENDGAME.OVL never returns) **
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=6
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=7
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=8
+  RED   TV2    ** trackball forward / turn right / turn left route no gameplay command; facing and cell unchanged **
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=dungeon emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=dungeon gameplay_command=24 sequence=9
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=dungeon emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=dungeon gameplay_command=24 sequence=10
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6b base=00 symbol=00 ui=dungeon emitted=character action_char=107 shortcut=none
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=dungeon gameplay_command=24 sequence=11
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=7a base=00 symbol=00 ui=dungeon emitted=character action_char=122 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] UI_MODE from=dungeon to=party
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=dungeon gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=63 base=00 symbol=00 ui=party emitted=character action_char=99 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=party gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=77 base=00 symbol=00 ui=party emitted=character action_char=119 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=party gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=08 base=00 symbol=00 ui=party emitted=back action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] UI_MODE from=party to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=back ui=party gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=dungeon emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=dungeon emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=dungeon gameplay_command=none
+  RED   TV3    ** Enter, Space, K, Z, C, W, Backspace and Mic (Cancel) route nothing; no turn passes **
+  RED   TV4    swallowed keys add nothing to the transcript (no per-key noise, no "Blocked!")
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=page-up ui=dungeon gameplay_command=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=page-down ui=dungeon gameplay_command=none
+  RED   TV5    Shift+Up / Shift+Down page the ending text and return to it
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=73 base=00 symbol=00 ui=dungeon emitted=confirm action_char=0 shortcut=save
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=dungeon gameplay_command=none
+  RED   TV6    ** Alt+S writes nothing: the newest save is still the pre-ending one **
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=00 symbol=00 ui=dungeon emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=00 symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+  RED   TV7    ** System Menu -> Save writes nothing either **
+  RED   TV8    both refusals say so on the System line
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=00 symbol=00 ui=dungeon emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=00 symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+  RED   TV9    Alt+M opens and closes the System Menu over the ended game
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=64 base=00 symbol=00 ui=dungeon emitted=confirm action_char=0 shortcut=developer
+[I][AlphaRuntime] DEBUG_OPEN count=1 called=1 opened=1 mode_before=dungeon mode_after=debug reconstructed=1
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] UI_MODE from=dungeon to=debug
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=dungeon gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=debug emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=debug emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] DEBUG_ACTION action=cancel prior_depth=0 prior_category=-1 prior_index=0 new_depth=0 new_category=-1 new_index=0 mode=debug->dungeon
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] UI_MODE from=debug to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=debug gameplay_command=none
+  RED   TV10   Alt+D opens Developer; leaving it returns to the Ending
+  GREEN TV11   game-won survives all of it and the ending never re-runs
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6c base=00 symbol=00 ui=dungeon emitted=confirm action_char=0 shortcut=load
+[I][AlphaRuntime] U5OBJ CLEAR site=load-restore pool_before=0
+[I][AlphaRuntime] WORLD_OBJECTS_RESTORE count=0
+[I][AlphaRuntime] DUNGEON_RESTORE active=1 dungeon=40 depth=6
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=dungeon gameplay_command=none
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=12
+  RED   TV12   ** Alt+L restores the pre-ending save and leaves the Ending: the next key is a gameplay command again **
+TS the terminal ending without the wooden box
+[I][AlphaRuntime] DUNGEON_LOAD_BEGIN dungeon=40 depth=0
+[I][AlphaRuntime] DUNGEON_LOAD_RESULT result=success reason=normal-init
+[I][AlphaRuntime] DUNGEON_SESSION_STATE active=1 dungeon=40 depth=0 x=1 y=1 facing=2
+[I][AlphaRuntime] DUNGEON_CONTEXT dungeon=1
+[I][AlphaRuntime] DUNGEON_RENDERER active=1
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=7 time=0 us
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=15,15 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] UI_MODE from=dungeon to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=1
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=73 base=00 symbol=00 ui=combat emitted=confirm action_char=0 shortcut=save
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=combat gameplay_command=none
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=1 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=2
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=1 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=3
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=1 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=4
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=3 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=0 scheduled=0
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=end
+[I][AlphaRuntime] COMBAT_END reason=victory/all-hostiles-gone
+[I][AlphaRuntime] WORLD_RESTORE_BEGIN loc=0 floor=0 origin=0,0
+[I][AlphaRuntime] combat finish result=0 victory=1
+[I][AlphaRuntime] WORLD_TILE_RESTORE x=0 y=0 source=authoritative-world+terrain before=1 after=1 unchanged=1
+[I][AlphaRuntime] WORLD_POST_COMBAT player=15,15 tile_under_player=1 loc=0 floor=0
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] UI_MODE from=combat to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=5
+  GREEN TS0    precondition: a pre-ending save exists; the ending ran and set game-won
+  RED   TS1    ** the session is in the terminal UiMode::Ending, not back in Dungeon (ENDGAME.OVL never returns) **
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=6
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=7
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=8
+  RED   TS2    ** trackball forward / turn right / turn left route no gameplay command; facing and cell unchanged **
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=dungeon emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=dungeon gameplay_command=24 sequence=9
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=dungeon emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=dungeon gameplay_command=24 sequence=10
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6b base=00 symbol=00 ui=dungeon emitted=character action_char=107 shortcut=none
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=dungeon gameplay_command=24 sequence=11
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=7a base=00 symbol=00 ui=dungeon emitted=character action_char=122 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] UI_MODE from=dungeon to=party
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=dungeon gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=63 base=00 symbol=00 ui=party emitted=character action_char=99 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=party gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=77 base=00 symbol=00 ui=party emitted=character action_char=119 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=party gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=08 base=00 symbol=00 ui=party emitted=back action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] UI_MODE from=party to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=back ui=party gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=dungeon emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=dungeon emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=dungeon gameplay_command=none
+  RED   TS3    ** Enter, Space, K, Z, C, W, Backspace and Mic (Cancel) route nothing; no turn passes **
+  RED   TS4    swallowed keys add nothing to the transcript (no per-key noise, no "Blocked!")
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=page-up ui=dungeon gameplay_command=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=page-down ui=dungeon gameplay_command=none
+  RED   TS5    Shift+Up / Shift+Down page the ending text and return to it
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=73 base=00 symbol=00 ui=dungeon emitted=confirm action_char=0 shortcut=save
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=dungeon gameplay_command=none
+  RED   TS6    ** Alt+S writes nothing: the newest save is still the pre-ending one **
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=00 symbol=00 ui=dungeon emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=00 symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+  RED   TS7    ** System Menu -> Save writes nothing either **
+  RED   TS8    both refusals say so on the System line
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=00 symbol=00 ui=dungeon emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=00 symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+  RED   TS9    Alt+M opens and closes the System Menu over the ended game
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=64 base=00 symbol=00 ui=dungeon emitted=confirm action_char=0 shortcut=developer
+[I][AlphaRuntime] DEBUG_OPEN count=1 called=1 opened=1 mode_before=dungeon mode_after=debug reconstructed=1
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] UI_MODE from=dungeon to=debug
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=dungeon gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=debug emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=debug emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] DEBUG_ACTION action=cancel prior_depth=0 prior_category=-1 prior_index=0 new_depth=0 new_category=-1 new_index=0 mode=debug->dungeon
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] UI_MODE from=debug to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=debug gameplay_command=none
+  RED   TS10   Alt+D opens Developer; leaving it returns to the Ending
+  GREEN TS11   game-won survives all of it and the ending never re-runs
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6c base=00 symbol=00 ui=dungeon emitted=confirm action_char=0 shortcut=load
+[I][AlphaRuntime] U5OBJ CLEAR site=load-restore pool_before=0
+[I][AlphaRuntime] WORLD_OBJECTS_RESTORE count=0
+[I][AlphaRuntime] DUNGEON_RESTORE active=1 dungeon=40 depth=6
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=dungeon gameplay_command=none
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=12
+  RED   TS12   ** Alt+L restores the pre-ending save and leaves the Ending: the next key is a gameplay command again **
+TI the Ending follows game-won: Developer un-win, and a legacy won save
+[I][AlphaRuntime] DUNGEON_LOAD_BEGIN dungeon=40 depth=0
+[I][AlphaRuntime] DUNGEON_LOAD_RESULT result=success reason=normal-init
+[I][AlphaRuntime] DUNGEON_SESSION_STATE active=1 dungeon=40 depth=0 x=1 y=1 facing=2
+[I][AlphaRuntime] DUNGEON_CONTEXT dungeon=1
+[I][AlphaRuntime] DUNGEON_RENDERER active=1
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=7 time=0 us
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=15,15 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] UI_MODE from=dungeon to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=1
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=73 base=00 symbol=00 ui=combat emitted=confirm action_char=0 shortcut=save
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=combat gameplay_command=none
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=1 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=2
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=1 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=3
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=1 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=4
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=3 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=0 scheduled=0
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=end
+[I][AlphaRuntime] COMBAT_END reason=victory/all-hostiles-gone
+[I][AlphaRuntime] WORLD_RESTORE_BEGIN loc=0 floor=0 origin=0,0
+[I][AlphaRuntime] combat finish result=0 victory=1
+[I][AlphaRuntime] WORLD_TILE_RESTORE x=0 y=0 source=authoritative-world+terrain before=1 after=1 unchanged=1
+[I][AlphaRuntime] WORLD_POST_COMBAT player=15,15 tile_under_player=1 loc=0 floor=0
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] UI_MODE from=combat to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=5
+  RED   TI1    precondition: the Ending is live
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=64 base=00 symbol=00 ui=dungeon emitted=confirm action_char=0 shortcut=developer
+[I][AlphaRuntime] DEBUG_OPEN count=1 called=1 opened=1 mode_before=dungeon mode_after=debug reconstructed=1
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] UI_MODE from=dungeon to=debug
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=dungeon gameplay_command=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=debug emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=debug emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] DEBUG_ACTION action=cancel prior_depth=0 prior_category=-1 prior_index=0 new_depth=0 new_category=-1 new_index=0 mode=debug->dungeon
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] UI_MODE from=debug to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=debug gameplay_command=none
+  GREEN TI2    Developer Preset: Endgame (game-won cleared) leaves the Ending for the dungeon
+         after the first ending: Doom room 15 cleared=1, cell (5,7) floor 7 = 0xaf
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=dungeon emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=dungeon emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=dungeon to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=dungeon gameplay_command=none
+[I][AlphaRuntime] DUNGEON_LOAD_BEGIN dungeon=40 depth=0
+[I][AlphaRuntime] DUNGEON_LOAD_RESULT result=success reason=normal-init
+[I][AlphaRuntime] DUNGEON_SESSION_STATE active=1 dungeon=40 depth=0 x=1 y=1 facing=2
+[I][AlphaRuntime] DUNGEON_CONTEXT dungeon=1
+[I][AlphaRuntime] DUNGEON_RENDERER active=1
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=7 time=0 us
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=90,100 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=90,100 dungeon=1
+[I][AlphaRuntime] UI_MODE from=dungeon to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=6
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=1 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=90,100 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=7
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=1 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=90,100 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=8
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=1 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=90,100 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=9
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=3 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=0 active=0 scheduled=0
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=end
+[I][AlphaRuntime] COMBAT_END reason=victory/all-hostiles-gone
+[I][AlphaRuntime] WORLD_RESTORE_BEGIN loc=0 floor=0 origin=0,0
+[I][AlphaRuntime] combat finish result=0 victory=1
+[I][AlphaRuntime] WORLD_TILE_RESTORE x=0 y=0 source=authoritative-world+terrain before=1 after=1 unchanged=1
+[I][AlphaRuntime] WORLD_POST_COMBAT player=90,100 tile_under_player=8 loc=0 floor=0
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=90,100 dungeon=1
+[I][AlphaRuntime] UI_MODE from=combat to=dungeon
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=10
+  RED   TI3    Test A reruns without a reload: Preset: Dungeon, a surface teleport, then the 7E-A route again
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6c base=00 symbol=00 ui=dungeon emitted=confirm action_char=0 shortcut=load
+[I][AlphaRuntime] U5OBJ CLEAR site=load-restore pool_before=0
+[I][AlphaRuntime] WORLD_OBJECTS_RESTORE count=0
+[I][AlphaRuntime] DUNGEON_RESTORE active=1 dungeon=40 depth=7
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=dungeon gameplay_command=none
+[I][AlphaRuntime] combat command=24 status=success turns=1 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=1 location=0 floor=0 xy=15,15 dungeon=1
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=dungeon gameplay_command=24 sequence=11
+  RED   TI4    ** a save of an already-won game loads into the Ending, never back into play **
+  RED   TI5    and says why once ("The quest is complete.")
+
+batch53a_ending_terminal: 13/39 checks GREEN, 26 RED

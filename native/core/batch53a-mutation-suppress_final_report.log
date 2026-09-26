@@ -1,0 +1,153 @@
+[1/6] Building CXX object CMakeFiles/openu5_core.dir/src/quest_world.cpp.obj
+[2/6] Linking CXX static library libopenu5_core.a
+[3/6] Building CXX object CMakeFiles/batch53_release_blockers.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_runtime.cpp.obj
+[4/6] Building CXX object CMakeFiles/batch53a_ending_terminal.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_runtime.cpp.obj
+[5/6] Linking CXX executable batch53a_ending_terminal.exe
+[6/6] Linking CXX executable batch53_release_blockers.exe
+==== batch53a_ending_terminal
+  GREEN U1     ** a GameWon event puts the session in UiMode::Ending **
+  GREEN U2     ** set_base_mode(Dungeon / Exploration) -- the per-input resync -- cannot leave it **
+  GREEN U3     ** a direction, a command letter, Confirm and Cancel dispatch nothing **
+  GREEN U4     leave_ending(Dungeon) -- the owner's load path -- restores ordinary dispatch
+  GREEN R1     the pit drops the party into the final arena (combat map 127)
+  GREEN R2     absorption: "Avatar is absorbed!"
+  GREEN R3     "VICTORY!" is printed as the arena closes
+  GREEN R4     game-won is set
+  RED   R5     the ENDMSG ending (record 9, proclamation, report) is printed once
+  GREEN R6     the arena is torn down
+  GREEN R7     the dungeon session is still Doom floor 7 (5,7), the cell the pit dropped the party into
+  GREEN R8     that cell is enclosed: Forward in all four facings never leaves it (core, on copies)
+  GREEN TV0    precondition: a pre-ending save exists; the ending ran and set game-won
+  GREEN TV1    ** the session is in the terminal UiMode::Ending, not back in Dungeon (ENDGAME.OVL never returns) **
+  GREEN TV2    ** trackball forward / turn right / turn left route no gameplay command; facing and cell unchanged **
+  GREEN TV3    ** Enter, Space, K, Z, C, W, Backspace and Mic (Cancel) route nothing; no turn passes **
+  GREEN TV4    swallowed keys add nothing to the transcript (no per-key noise, no "Blocked!")
+  GREEN TV5    Shift+Up / Shift+Down page the ending text and return to it
+  GREEN TV6    ** Alt+S writes nothing: the newest save is still the pre-ending one **
+  GREEN TV7    ** System Menu -> Save writes nothing either **
+  GREEN TV8    both refusals say so on the System line
+  GREEN TV9    Alt+M opens and closes the System Menu over the ended game
+  GREEN TV10   Alt+D opens Developer; leaving it returns to the Ending
+  GREEN TV11   game-won survives all of it and the ending never re-runs
+  GREEN TV12   ** Alt+L restores the pre-ending save and leaves the Ending: the next key is a gameplay command again **
+  GREEN TS0    precondition: a pre-ending save exists; the ending ran and set game-won
+  GREEN TS1    ** the session is in the terminal UiMode::Ending, not back in Dungeon (ENDGAME.OVL never returns) **
+  GREEN TS2    ** trackball forward / turn right / turn left route no gameplay command; facing and cell unchanged **
+  GREEN TS3    ** Enter, Space, K, Z, C, W, Backspace and Mic (Cancel) route nothing; no turn passes **
+  GREEN TS4    swallowed keys add nothing to the transcript (no per-key noise, no "Blocked!")
+  GREEN TS5    Shift+Up / Shift+Down page the ending text and return to it
+  GREEN TS6    ** Alt+S writes nothing: the newest save is still the pre-ending one **
+  GREEN TS7    ** System Menu -> Save writes nothing either **
+  GREEN TS8    both refusals say so on the System line
+  GREEN TS9    Alt+M opens and closes the System Menu over the ended game
+  GREEN TS10   Alt+D opens Developer; leaving it returns to the Ending
+  GREEN TS11   game-won survives all of it and the ending never re-runs
+  GREEN TS12   ** Alt+L restores the pre-ending save and leaves the Ending: the next key is a gameplay command again **
+  GREEN TI1    precondition: the Ending is live
+  GREEN TI2    Developer Preset: Endgame (game-won cleared) leaves the Ending for the dungeon
+  GREEN TI3    Test A reruns without a reload: Preset: Dungeon, a surface teleport, then the 7E-A route again
+  GREEN TI4    ** from ordinary play, a save of an already-won game loads into the Ending, never back into play **
+  GREEN TI5    and says why once ("The quest is complete.")
+  GREEN TI6    ** System Menu -> Continue Latest (a not-won save) leaves the Ending at once: the first key plays **
+batch53a_ending_terminal: 43/44 checks GREEN, 1 RED
+==== batch53a_ending_terminal exit=1
+==== batch53_release_blockers
+  GREEN P1     endmsg-records.bin: the 11 ENDMSG.DAT records; record 9 is the wooden-box line
+  GREEN P2     karma-records.bin: the 6 KARMA.DAT records, unquoted
+  GREEN P3     words-of-power.bin: DATA.OVL 0x44AD, FALLAX .. VERAMOCOR
+  GREEN P4     the firmware's identity lock names THIS pack (size + payload CRC)
+  GREEN P5     ** a pack missing endmsg / karma / words is rejected at open() (ESP_ERR_NOT_FOUND) **
+  GREEN B1     ** quest_world.end_record(0..10) is ENDMSG.DAT byte for byte; out of range is null **
+  GREEN B2     ** quest and rest karma_record(0..5) are the quoted KARMA.DAT records (H-190) **
+  GREEN B2b    the invented "Rest well, Avatar" line is gone
+  GREEN B3     ** quest_world.words is the eight Words of Power **
+  GREEN B4     ** quest_world.moonstones: 8 stones owned by the runtime, hydrated from INIT.GAM 0x28a **
+  GREEN B5     shop_services.ship / horse / reserve are bound (exercised in S)
+  GREEN B6     ** initialize() and the host fixture each call the same production binders once **
+  GREEN B7     ** neither initialize() nor the fixture assigns a quest/shop hook outside those binders **
+  GREEN W0     precondition: a walkable cell next to Deceit's entrance
+  GREEN W1     new game: every seal closed; Deceit's entrance reads as the sealed tile 223
+  GREEN W1b    the sealed entrance cannot be walked onto
+  GREEN W2     a real Word at the WRONG dungeon is uttered (quake) but opens nothing
+  GREEN W3     a partial word is no Word at all
+  GREEN W4     ** Yell `fallax` beside Deceit: uttered, seal 33 (and only 33) opens -- case-insensitive, as the core's contains() **
+  GREEN W5     the entrance is an entrance again
+  GREEN W6     the party walks onto it
+  GREEN W7     ** ordinary (E)nter takes the party into Deceit -- no Developer tool **
+  GREEN W7b    ** the save's GAM carries the opened seal as the original does: 0x32a bit 0x80, the other seven clear **
+  GREEN W8     precondition: a fresh runtime starts with every seal closed
+  GREEN W9     ** the opened seal (GAM 0x32a bit 0x80) survives save + power cycle + load **
+  GREEN W10    ** all eight Words open all eight seals, each its own bit **
+  GREEN W11    a second FALLAX toggles Deceit's seal shut again (quest.cpp's toggle, as the reference)
+  GREEN M0     the runtime owns the eight moonstones
+  GREEN M1     precondition: a walkable cell beside stone 1
+  GREEN M2     no gate by day: the cell shows its own terrain
+  GREEN M3     ** at night the gate tile 0xDC is composed over the buried stone (H-191) **
+  GREEN M3b    the party's own cell is not a gate
+  GREEN M3c    the night's gate phase is Trammel's for this day (moon-phase table bound)
+  GREEN M4     ** stepping onto the night gate transports the party to the active phase's stone **
+  GREEN M5     the gate leaves no stale tile once the night is over
+  GREEN M6     (C)ast opens the spell menu
+  GREEN M7     Vas Rel Por asks for the phase
+  GREEN M7b    ** the status line reads "To phase:" (D-53), not the aim reticle's "Aim: empty" **
+  GREEN M8     ** Vas Rel Por + '3' lands on moonstone 2 (H-12/H-13) **
+  GREEN M9     the mixture is spent
+  GREEN S0     East Britanny's shipwright opens its shop
+  GREEN S1     N declines the frigate: no gold, no ship (control)
+  GREEN S2     ** Y buys the frigate: gold spent, a frigate (0x125, hull 99, 2 skiffs) waits at the overworld dock **
+  GREEN S3     "She awaits thee at the dock!"
+  GREEN S4     ** (B)oard at the dock: the party sails the frigate it bought **
+  GREEN S5     ** Y buys the skiff: 0x129 at the dock **
+  GREEN S6     without the gold no skiff appears (buy_ship's !ok: the shipwright throws the party out)
+  GREEN S7     Paws' horse seller opens its shop
+  GREEN S7b    the horse seller names the price and waits for Y/N
+  GREEN S8     ** Y buys the horse: gold spent, a horse (0x110) stands beside the party **
+  GREEN S9     ** (B)oard mounts the horse it bought **
+  GREEN S10    without the gold no horse appears ("Thou couldst not afford to feed it!")
+  GREEN EV0    precondition: the game is not won
+  GREEN EV1    Doom floor 6 pit -> room 15: the final arena is live
+  GREEN EV2    the Avatar walks to (5,2) under the trapped soul and is absorbed
+  GREEN EV3    ** the final arena tears down (no COMBAT_TEARDOWN deferred) **
+  GREEN EV4    ** game-won is set **
+  GREEN EV5    ** ENDMSG record 9 is read from the pack and shown exactly once **
+  RED   EV6    the proclamation and the report appear once (no duplicated ending)
+  GREEN EV7    the arena is gone and the session is in the terminal Ending (Batch 53A), not back in Dungeon
+  GREEN EV8    ** no input wedge: the next key is answered by the Ending (no dungeon turn), paging still reads the ending **
+  GREEN EV9    further input neither re-runs the ending nor clears game-won
+  GREEN EV10   Alt+S refuses to save the ended game (Batch 53A)
+  GREEN EV11   Alt+M opens and closes the System Menu over the ended game, which stays ended
+  GREEN ES0    precondition: the game is not won
+  GREEN ES1    Doom floor 6 pit -> room 15: the final arena is live
+  GREEN ES2    the Avatar walks to (5,2) under the trapped soul and is absorbed
+  GREEN ES3    control: without the box the stranded ending runs (it never needed ENDMSG)
+  GREEN K0     precondition: the preset leaves the lone Avatar poisoned at 1 HP
+  GREEN K1     the poison kills the Avatar and the Refuge scene runs
+  GREEN K2     ** the apparition speaks KARMA.DAT record 2, quoted, not the invented line (H-190) **
+  GREEN K3     ** the party wakes in Lord British's castle (17, floor 1, 10,10), healed **
+  GREEN V0     7E-A: the Developer teleport + one step east drops the party into the final room
+  GREEN V0b    7E-A: four steps north, the Avatar is absorbed and the victory ending runs
+  GREEN V1     7E-B: the Developer teleport lands beside Deceit's sealed entrance
+  GREEN V2     7E-C: the teleport lands beside the Britain gate
+  GREEN V3     7E-D: East Britanny's shipwright trades at that hour
+  GREEN V4     7E-D: Paws' horse seller trades at that hour
+  GREEN V5     7E-H: the teleport lands in the jail
+  GREEN V6     7E-H: (S)earch North finds Gorn's keys at the brazier; (G)et North takes all 9
+  GREEN V7     7E-F: that step opens Destard room 9 with a Slime/Gargoyle on the board
+  GREEN V8     7E-F: the arena takes turns (no H-151 freeze)
+  GREEN R0     precondition: the runtime owns the stones
+  GREEN R1     (S)earch + (G)et on stone 4's cell digs it up
+  GREEN R2     ** System Menu Continue Latest restores the saved stones **
+  GREEN R3     ** Alt+L restores them **
+  GREEN R4     precondition: a fresh runtime has INIT.GAM's stones
+  GREEN R5     ** after a power cycle the stones come back from storage **
+  GREEN R6     ** title Continue restores them too **
+  GREEN R7     ** a corrupt newest generation falls back to the older one, with the older one's stones **
+  GREEN R9     save + Alt+L in town (Lord British's castle) keeps the stones
+  GREEN R10    save + Alt+L in dungeon (Deceit) keeps the stones
+  GREEN R11    save + Alt+L in aboard a ship at sea keeps the stones
+  GREEN R12b   ** and those GAM bytes are exactly the runtime's stones (0x28a x, 0x292 y, 0x29a location, 0x2a2 floor) **
+  GREEN R12    ** no new save field: the sidecar has no "moonstones" key -- they travel in GAM 0x28a..0x2a9 **
+batch53_release_blockers: 94/95 checks GREEN, 1 RED
+==== batch53_release_blockers exit=1
+
+MUTATION suppress_final_report: KILLED

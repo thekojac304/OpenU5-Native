@@ -180,9 +180,9 @@ struct Harness {
     }
     bool key(uint8_t code) { return raw_key(code); }
     void type(const char *s) { for (; *s; ++s) key(uint8_t(*s)); }
-    bool ball(RawInputKind kind) {
+    bool ball(RawInputKind kind, bool shift = false) {
         advance(100000);
-        tdeck::RawInputEvent raw{}; raw.kind = kind; raw.timestamp_us = openu5_host_virtual_clock_us();
+        tdeck::RawInputEvent raw{}; raw.kind = kind; raw.modifiers.shift = shift; raw.timestamp_us = openu5_host_virtual_clock_us();
         return rt->handle(raw);
     }
     // The device loop (main.cpp): 5 ms per pass, render() each pass, which is
@@ -726,20 +726,31 @@ void test_endgame(bool box) {
                "** ENDMSG record 9 is read from the pack and shown exactly once **");
         expect(h.count("THE QUEST OF THE AVATAR IS FOREVER") == 1 && h.count("Report now, thy Quest compleat") == 1, "EV6",
                "the proclamation and the report appear once (no duplicated ending)");
-        expect(h.mode() == UiMode::Dungeon && !h.rt->command_context().combat, "EV7",
-               "input returns to the dungeon view, not the arena");
+        // Batch 53A: these four checks (EV7, EV8, EV10, EV11) used to assert
+        // that play resumes in the dungeon after the ending. The original
+        // never returns from ENDGAME.OVL (re/notes/batch53a-endgame-
+        // terminal.md); the full contract is batch53a_ending_terminal.
+        expect(h.mode() == UiMode::Ending && !h.rt->command_context().combat, "EV7",
+               "the arena is gone and the session is in the terminal Ending (Batch 53A), not back in Dungeon");
         const auto facing = h.d().pos.facing;
-        h.east();                                                        // turn right in the dungeon
-        expect(h.d().active && h.d().pos.facing != facing, "EV8", "** the next key is a normal dungeon command: no input wedge **");
+        const auto routed = h.rt->routed_command_count();
+        h.east();                                                        // a dungeon turn key
+        h.set_mark(); h.ball(RawInputKind::TrackballUp, true);           // Shift+Up pages the transcript
+        expect(h.d().active && h.d().pos.facing == facing && h.rt->routed_command_count() == routed &&
+                   h.rt->ui()->scroll_offset_lines() > 0, "EV8",
+               "** no input wedge: the next key is answered by the Ending (no dungeon turn), paging still reads the ending **");
+        h.ball(RawInputKind::TrackballDown, true);
         h.set_mark(); h.key(' '); h.key(' ');
         expect(h.count("THE QUEST OF THE AVATAR IS FOREVER") == 0 && quest_flag(h.g().quest, QuestFlag::GameWon), "EV9",
                "further input neither re-runs the ending nor clears game-won");
         h.set_mark(); h.alt_save();
-        expect(h.saw("Save complete"), "EV10", "Alt+S still saves after the ending");
+        expect(!h.saw("Save complete") && h.saw("Save unavailable"), "EV10",
+               "Alt+S refuses to save the ended game (Batch 53A)");
         h.raw_key('m', true);
         const bool menu = h.rt->system_menu_open();
         h.raw_key('m', true);
-        expect(menu && !h.rt->system_menu_open() && h.mode() == UiMode::Dungeon, "EV11", "Alt+M opens and closes the System Menu over the ended game");
+        expect(menu && !h.rt->system_menu_open() && h.mode() == UiMode::Ending, "EV11",
+               "Alt+M opens and closes the System Menu over the ended game, which stays ended");
     } else {
         expect(!h.rt->command_context().combat && won && h.saw("pull up a chair") && !h.saw("FOLLOW!"), "ES3",
                "control: without the box the stranded ending runs (it never needed ENDMSG)");

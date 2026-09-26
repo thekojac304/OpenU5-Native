@@ -8,7 +8,19 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Batch 53) — release blockers fixed in software; hardware retest pending; read this first
+> ### CURRENT STATE (Batch 53A) — ending state fixed in software; Test A rerun pending; read this first
+>
+> **Phase 7E-A run 1 (Batch 53 image): absorption, `VICTORY!`, ENDMSG, input responsive — PASS; the post-ending state — NOT ACCEPTED.** The original never returns from ENDGAME.OVL after game-won; the device fell back into Dungeon mode in Doom's enclosed final cell (H-192 / D-55, Outcome B). Batch 53A adds the terminal `UiMode::Ending`. See §14 "Batch 53A".
+>
+> | | |
+> |---|---|
+> | Fix | `UiMode::Ending`: entered on GameWon, cannot be left by a resync, swallows every game key; paging, System Menu, Load, Developer stay; Save refused. No relocation, no cinematic. |
+> | Host suite | **122 / 122 pass, 0 fail, 0 skipped, 117.2 s** (new: `batch53a_ending_terminal`, 44 checks; 26 of 39 RED on the Batch 53 sources). 15 / 15 mutations killed. |
+> | SD pack | **Unchanged** (Batch 53: 2,041,466 B, CRC `0x26f75ae6`). No recopy. |
+> | Firmware | 878,752 B (`0xd68a0`), +1,024 B. Image path, SHA-256 and `Git` hash: tag `alpha2-batch53a-ending-terminal`. Not flashed. |
+> | Next | **Phase 7E-A′** (checklist, Batch 53A section) on the Batch 53A image; then 7E B–H; then Batch 54. |
+
+> ### CURRENT STATE (Batch 53) — **SUPERSEDED by the Batch 53A block above; kept as history.** release blockers fixed in software; hardware retest pending
 >
 > **RB-1 … RB-4: SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E).** Alpha 2 is still **not** a release candidate: Phase 7E must pass on the Batch 53 image first, then Batch 54 does the re-readiness check and RC packaging. See §14 "Batch 53".
 >
@@ -6724,6 +6736,8 @@ The host fixture now declares no gameplay service at all. It copies pack **data*
 
 **GREEN.** `end_record` reads the pack's ENDMSG.DAT (no text in `AlphaRuntime`). EV3–EV11 GREEN: the arena tears down, `game-won` is set, record 9 appears once, the proclamation and report appear once, the view returns to the dungeon (`context.combat` false), the next key is an ordinary dungeon turn, further keys neither re-run the ending nor clear `game-won`, `Alt+S` saves and `Alt+M` opens and closes over the ended game. The ending is transcript text and play continues; the cinematic stays D-54 (Alpha 3). V0/V0b run the exact Phase 7E route through `apply_debug_teleport`.
 
+**Batch 53A correction (2026-09-26).** "Play continues" was this batch's assumption, not the original's: ENDGAME.OVL never returns to the dungeon after game-won. On hardware (7E-A run 1) the party was left in the enclosed final cell with movement accepted (H-192 / D-55). EV7, EV8, EV10 and EV11 were rewritten to the terminal contract (IDs kept). See §14 "Batch 53A".
+
 ### 6. RB-2 / H-187 — Words of Power (Phases 53G/53H)
 
 **RED:** W1/W1b GREEN (every seal closed at INIT.GAM, Deceit's entrance reads 223 and cannot be walked onto); W4–W7 RED (Yell `fallax` beside Deceit prints only "No effect!"; the seal stays shut; `(E)nter` impossible); W2 RED (a real Word no longer even quakes); W10 RED (0 of 8).
@@ -6849,3 +6863,125 @@ The historical FAIL / blocker observations are left as recorded. Nothing is mark
 ### 16. Not done in this batch
 
 No flash. No Phase 7E run. No RC packaging, no Batch 54, no Alpha 3 / audio / UI work. No moongate transit animation, no `0xDC` rise animation, no endgame cinematic (D-54). H-183 – H-186, H-22 (wish case), H-45 (potion cancel), H-63 (`^` glyph) and H-15's `Direction?` overlay are unchanged.
+
+## Batch 53A — post-victory Doom exit / ending-state hardware follow-up
+
+**Scope.** Only the state after the final Doom absorption. Phase 7E B–H, Batch 54, RC packaging and Alpha 3 were not started.
+
+### 1. Baseline (Phase 53A-A)
+
+`1d7135e9` = tag `alpha2-batch53-release-blockers`, clean tree. Fresh host build `native/core/build-batch53a`, serial: **121 / 121** (`batch53a-baseline-ctest.log`, 111.3 s). Pack 2,041,466 B, CRC `0x26f75ae6`, SHA-256 `a48abdbf…379b`; Batch 53 Launcher SHA-256 `b84b7856…2e6a`, `Git 1d7135e9bcb0`.
+
+### 2. The hardware observation (Phase 7E-A, run 1, Batch 53 image)
+
+On the correct Batch 53 image and pack, Developer Endgame preset, party of 1, Doom Level 6 (4,7), East into the pit, North ×4:
+
+| step | result |
+|---|---|
+| absorption ("Avatar is absorbed!") | **PASS** |
+| `VICTORY!` | **PASS** |
+| ENDMSG ending text | **PASS** |
+| input responsive | **PASS** |
+| afterwards | the party stands in the enclosed final Doom cell; ordinary movement commands are accepted and go nowhere |
+
+Test A was **not accepted**: its step 6 ("the dungeon view is back; turning responds; `Alt+S` saves") was written from Batch 53's own assumption that play continues, not from the original. That expectation is adjudicated below.
+
+### 3. The original after game-won (Phase 53A-B)
+
+Derived from the shipped binaries by `re/tools/batch53a_endgame_terminal.py` (output `native/core/batch53a-original-endgame.log`); write-up `re/notes/batch53a-endgame-terminal.md`.
+
+- **Entry.** The absorption sentinel `0x4d` at DS `0x58a0` is checked FIRST by the combat teardown (SJOG `0x2046`, DUNGEON `0x00cb`); both calls resolve, each through its own module slot, to the single overlay-13 stub ULTIMA.EXE `0x7c4a` → ENDGAME.OVL `endgame_main` `0x0648`.
+- **Its own context.** `endgame_main` reads MISCMAPS.DAT (its scene map) and ENDMSG.DAT, and waits on `getkey_with_redraw` at ten sites. The two box questions are real Y/N prompts (loops `0x0852` and `0x088b` accept only `Y`/`N`); victory needs `Y` **and** the box (`0x08b9`/`0x08c2`).
+- **No return.** `endgame_main` has one `ret` (`0x0aed`), reachable only after `call endgame_datestamp` (`0x0a70`). `endgame_datestamp` has no `ret` and no jump out; it ends in the loop **`0x04f9`**. The stranded branch ends in the wander loop **`0x0ac9`** (via `0x0b1f` → `jmp 0x0ac9`). The dungeon loop that called the stub never resumes; nothing relocates the party.
+- **The terminal loop.** In `original/u5/ultima5` (2,864 B) both loops call `0x0b0b`: a non-blocking key poll (kernel `0x1d5e`, `int 16h AH=01`); on a key, `restore_video_mode` (`0x0878`) and `exit()` (`0x02f4` → `0x034c` → `0x0e2f`: driver shutdown, `int 21h AH=4Ch`). The 1988 copy cited in `fanfarria-endgame-espectral.md` (`original/u5/play`, not in this tree) has `ff 46 fe eb fb` at `0x04f9`: a spin that reads no key. Both: **terminal**.
+
+| # | question | original |
+|---|---|---|
+| 1 | stay in the final Doom map? | no — ENDGAME.OVL's scene map replaces it; the position is never read again |
+| 2 | arena torn down? | the teardown is diverted before restoring anything; the arena is never returned to |
+| 3 | party relocated? | no |
+| 4 | dedicated ending mode? | **yes** — ENDGAME.OVL, own map, text, key loops, terminal loop |
+| 5 | back to LB / surface / title / credits? | no (the throne scene is inside ENDGAME.OVL) |
+| 6 | movement after game-won? | **never** |
+| 7 | ending takes over permanently? | **yes** |
+| 8 | acknowledgement loop after the final text? | pages wait on getkey; after the final text the terminal loop: a key exits to DOS (this build) or nothing reads keys (1988) |
+| 9 | restart / title / new game? | none in-game; the program ends |
+| 10 | gameplay vs presentation | gameplay: game-won, no world input, no save, no relocation, the Y/N choice. Presentation: green scene, orb, dissolve, story pages, scroll (D-54) |
+
+Classification: **A** (terminal; the party never returns to exploration).
+
+### 4. Reference port (Phase 53A-C)
+
+`game/src/core/endgame/sequence.ts` ends every script in `terminalFreeze` (victory) or `terminalPrison` (stranded); `game/src/ui/endgame-pacer.ts` keeps `endgaming` armed "for ever", and `main.ts` routes every key to `endgamePacer.consumeKey()` (text beats advance, terminal states swallow). World input never resumes; only a save load tears the pacer down (`applyLoadedState` → `endgamePacer.reset()`). The reference auto-answers the Y/N questions from the box ("NO un prompt") — contradicted by the bytes (D-56). The native deliberately omits the presenter (`endgame_script = false`, D-54) and, until 53A, omitted the terminal state with it.
+
+### 5. Native trace (Phase 53A-D)
+
+North ×4 → `service_combat` → `finish_combat_if_needed` → `finish_encounter_combat` (`combat.cpp:1795`): `absorbed_any` → `combat=false`, `CombatEnded` (UiSession: `mode = pre_combat_mode_ = Dungeon`), `absorption_endgame` → messages, `GameWon`, `Endgame` (UiSession only appended their `e.text`). Back in `finish_combat_if_needed`: `set_base_mode(Dungeon)` (`alpha_runtime.cpp:932`), and after every later input `synchronize_after_debug` re-asserts Dungeon through `resolve_synchronized_base_mode`. The dungeon session was never touched: Doom floor 7 (5,7), room 15, walled on all four sides (R8). The render source is the dungeon view; the next raw key is routed by `UiSession::handle_dungeon` into `DungeonAction`s — steps fail, turns work.
+
+So: combat teardown **did** occur and the dungeon session remained; game-won was set **without any mode change**; the ending text is ordinary transcript; there is no scene runner to fall back from — the missing piece is the terminal state the original's ENDGAME.OVL is, which the Alpha 3 presenter (D-54) would draw but which is not itself presentation. The two are one mechanism in the original; 53A separates the gameplay half (terminal state) from the presentation half (cinematic, still Alpha 3).
+
+### 6. Reproduction (Phase 53A-E)
+
+New host target `batch53a_ending_terminal` (real `AlphaRuntime` over the shipped pack, raw keys through `handle()`). Section R reproduces run 1 exactly and holds before and after the fix: arena opens (R1), absorbed (R2), `VICTORY!` (R3), game-won (R4), ENDMSG once (R5), arena torn down (R6), dungeon session Doom floor 7 (5,7) (R7), the cell enclosed — Forward fails in all four facings, core-only on copies (R8). On Batch 53 it printed `OBSERVED after the ending: mode=dungeon; one trackball-right routed 1 gameplay command(s), facing 1 -> 2`. It also dumps the device transcript, which shows two literal `victory` lines after the report (§12, H-194).
+
+### 7. Adjudication (Phase 53A-F)
+
+**OUTCOME B — TERMINAL ENDING MODE IS MISSING.** The original never accepts exploration input after victory; the native falls back into Dungeon mode. Not A (the 7E expectation was wrong, but so is the device), not C (the original relocates nothing), not D (the bytes are sufficient).
+
+### 8. Fix (Phase 53A-G)
+
+- **`UiMode::Ending`** (appended after `KeyWait`). `UiSession::consume(GameWon)` calls `enter_ending()` (same modal teardown as `CombatEnded`); `set_base_mode()` returns early while the base mode is Ending, so no resync can hand the session back to Dungeon; `handle_input` returns after transcript paging and the Developer menu, before any mode dispatch. `leave_ending(world)` is the owner's only way out.
+- **`AlphaRuntime::synchronize_ending(site)`**, called after the combat finish, after every input's resync and on every load: it keeps the Ending equal to the live game's game-won — a load, New Journey or a Developer un-win (Preset: Endgame clears game-won) leaves it; a loaded save of an already-won game enters it. It appends one System line, once: `The quest is complete. Alt+M: System Menu`.
+- **Save is refused** while the Ending is live (`Alt+S` and System Menu → Save): `Save unavailable: the quest is complete`; nothing is written.
+- Unchanged: game-won, the ENDMSG/KARMA text, `bind_quest_services`, the combat cleanup, the Batch 53 refusal fix. No teleport, no location, no cinematic. The GOG build's "any key exits" is **not** bound to ordinary keys: the device shows the whole ending as one transcript, and a stray key would throw away unread text. System Menu → **Return to Title** (existing) is the device's program exit.
+
+Files: `native/core/include/openu5/ui_session.h`, `native/core/src/ui_session.cpp`, `native/targets/tdeck/main/alpha_runtime.{h,cpp}`, `native/core/tools/ui_host_harness.cpp` (mode-name table), `native/core/CMakeLists.txt`; tests `native/targets/tdeck/host_tests/batch53a_ending_terminal_test.cpp` (new) and `batch53_release_blockers_test.cpp` (EV7, EV8, EV10, EV11 rewritten, IDs kept).
+
+### 9. RED → GREEN
+
+**RED** (`native/core/batch53a-red.log`): the final test built against the Batch 53 production sources plus only the inert `UiMode::Ending` enumerator and `ending_active()` accessor, which nothing entered: **13 / 39 GREEN, 26 RED** — R1–R8 GREEN (the hardware facts), every contract check TV1–TV10/TV12, TS1–TS10/TS12, TI1/TI3–TI5 RED. (Sections U and TI6 were added after, when the first mutation pass showed that the core hook and the System Menu load path were not independently covered; they are proven by the mutations in §11.) The same build ran `batch53_release_blockers` 95 / 95.
+
+**GREEN** (`native/core/batch53a-green.log`): **44 / 44**. `batch53_release_blockers` **95 / 95** after its four play-continues checks were rewritten to the adjudicated contract (they were the only RED ones against the fix: EV7, EV8, EV10, EV11).
+
+### 10. Input contract after victory (Phase 53A-H)
+
+| input | while the Ending is live | original basis |
+|---|---|---|
+| trackball / WASD movement, turns | swallowed; no command, no turn (TV2) | no command loop after game-won |
+| Enter, Space, command letters, Backspace | swallowed (TV3) | same |
+| Mic short (Cancel) | swallowed (TV3) | same |
+| Mic long | Movement Mode toggle (device setting only) | A-1 |
+| Shift+Up / Shift+Down | page the ending transcript (TV5) | the only way to read the device's one-transcript ending |
+| `Alt+M` | System Menu opens / closes; the game stays ended (TV9) | device shell (A-5) |
+| System Menu → Save, `Alt+S` | **refused**, nothing written (TV6–TV8) | no save exists inside ENDGAME.OVL |
+| System Menu → Load, `Alt+L` | load; a not-won save leaves the Ending at once (TV12, TI6); a won save loads into it (TI4) | the reference's load resets its pacer |
+| System Menu → Return to Title | the frontend | the program's exit (GOG `0x0b0b` → `exit()`) |
+| `Alt+D` | Developer opens, returns to the Ending (TV10); a preset that clears game-won leaves it (TI2) | debug build only |
+
+Nothing advances "ending text" by key: the device prints the whole ending at once (D-54); per-page pacing and the Y/N choice (D-56) belong to the Alpha 3 presenter.
+
+### 11. Mutations and regression (Phase 53A-I)
+
+`native/core/tools/batch53a_mutations.py`, each case against both `batch53a_ending_terminal` and `batch53_release_blockers`. **First pass 13 / 15** (`batch53a-mutation-summary-first-pass.log`): `device_never_enters` did not compile (a driver defect, fixed), and **`load_keeps_ending` survived** — `Alt+L` runs the per-input resync after the load, which masked the missing load hook; but the System Menu load returns before that resync, so without the hook the first key after a menu load was eaten. TI6 now checks the menu path before any key. **Second pass 14 / 15** (`batch53a-mutation-summary-second-pass.log`): **`device_never_enters` survived** — TI4 loaded the won save while the session was already in the Ending, so the load-entry path was never exercised; TI4 now un-wins first. **Final pass: 15 / 15 killed** (`batch53a-mutation-summary.log`), restored build GREEN:
+
+`ui_gamewon_no_ending`, `enter_ending_noop` (omit the transition), `ending_not_sticky` (Dungeon restored too early), `ending_routes_movement` (movement during the Ending), `ending_swallows_paging`, `device_leaves_while_won`, `device_never_enters`, `load_keeps_ending`, `ending_clears_game_won`, `ending_relocates_party`, `ending_announce_every_input`, `alt_s_saves_ended_game`, `menu_saves_ended_game`, `suppress_final_report`, `combat_active_after_ending` (no teardown).
+
+Regression: fresh clean build `native/core/build-batch53a-final`, serial: **122 / 122 pass, 0 fail, 0 skipped, 117.2 s** (`batch53a-final-ctest.log`). Inside it: `batch53a_ending_terminal` 44/44, `batch53_release_blockers` 95/95, `quest_parity`, `gameplay_parity`, `world_flow_parity`, `dungeon_parity`, `persistence_parity`, `ui_mode_regression`, `input_regression`, `ui_debug_menu`, `batch24`–`batch29` (load/save), `batch51_*` and every other `AlphaRuntime` host target.
+
+### 12. Row updates and new IDs
+
+| Row | Was | Now |
+|---|---|---|
+| RB-1 / H-189 / D-46 | SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-A) | **7E-A run 1 (Batch 53 image): absorption, `VICTORY!`, ENDMSG, input — PASS; post-ending state NOT ACCEPTED (H-192).** Rerun on the 53A image: 7E-A′ |
+| **H-192 / D-55** *(new)* | — | After the ending the device fell back into Dungeon mode in the enclosed final cell and accepted movement; the original never leaves ENDGAME.OVL. **SOFTWARE FIXED (53A) — HARDWARE RETEST PENDING (7E-A′)** |
+| **H-193 / D-56** *(new)* | — | The ending's two Y/N questions are the player's (getkey loops `0x0852`, `0x088b`); native and reference answer from the box. Only the box-and-`Y` route is exercised by 7E-A. **Alpha 3, with the presenter (D-54)** |
+| **H-194 / D-57** *(new)* | — | Two literal `victory` lines follow the report: `UiSession` appends the `GameWon`/`Endgame` events' internal token to the transcript. Fabricated device text, non-blocking. **Queued (next batch that touches the ending); not fixed here — outside the 53A stop condition** |
+| D-54 | Alpha 3 presentation | unchanged; the terminal state is no longer part of it |
+
+### 13. Firmware (Phase 53A-L)
+
+Fresh ESP-IDF 6.1 build `native/targets/tdeck/build-batch53a` (`batch53a-firmware-build.log`): **878,752 B (`0xd68a0`)**, **+1,024 B** over Batch 53, **169,824 B (16 %) free** in the 1 MiB app partition. Zero compiler warnings (the `-Werror=misleading-indentation` firmware flags included); the ESP-IDF `component_validation` notices are third-party. **The SD resource pack is unchanged** (2,041,466 B, CRC `0x26f75ae6`, SHA-256 `a48abdbf…379b`; no pack source or packer changed). **Not flashed.** The committed image is rebuilt after the commit (`idf.py reconfigure build`) so the embedded `Git` hash is the Batch 53A commit; its Launcher path and SHA-256 are in the annotated tag `alpha2-batch53a-ending-terminal`.
+
+### 14. Not done in this batch
+
+No flash. No Phase 7E B–H, no Batch 54, no RC packaging, no Alpha 3 work: no cinematic, no per-page pacing, no Y/N prompt (D-56), no audio, no UI. H-194's `victory` lines are recorded, not fixed. The resource pack is unchanged.

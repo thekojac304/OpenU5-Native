@@ -1189,6 +1189,42 @@ if(BUILD_TESTING)
   endif()
   add_test(NAME batch53_release_blockers COMMAND batch53_release_blockers
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+
+  # Batch 53A -- the state after the final Doom absorption. ENDGAME.OVL never
+  # returns to the dungeon; the device must enter the terminal UiMode::Ending
+  # instead of falling back into Dungeon mode in the enclosed final cell. Same
+  # seam and sources as batch53_release_blockers.
+  add_executable(batch53a_ending_terminal
+    ../targets/tdeck/host_tests/batch53a_ending_terminal_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_board_host_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(batch53a_ending_terminal PRIVATE openu5_core)
+  target_include_directories(batch53a_ending_terminal PRIVATE
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/main)
+  target_compile_features(batch53a_ending_terminal PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(batch53a_ending_terminal PRIVATE /Gy)
+    target_link_options(batch53a_ending_terminal PRIVATE /OPT:REF)
+  else()
+    target_compile_options(batch53a_ending_terminal PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(batch53a_ending_terminal PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME batch53a_ending_terminal COMMAND batch53a_ending_terminal
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
   # Batch 14 / R-22 -- (Z)-stats navigation. Same seam and same stub/shim set
   # as alpha_runtime_integration_regression above: it links the REAL,
   # unmodified alpha_runtime.cpp so the modal is reached only by feeding raw

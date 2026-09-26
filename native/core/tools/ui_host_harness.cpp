@@ -9,7 +9,7 @@
 using namespace openu5;
 
 namespace {
-const char *mode_name(UiMode m){static const char*n[]={"explore","dungeon","combat","dialogue","shop","shrine","text","number","yes/no","party","inventory","equipment","spell","target","debug"};return n[int(m)];}
+const char *mode_name(UiMode m){static const char*n[]={"explore","dungeon","combat","dialogue","shop","shrine","text","number","yes/no","party","inventory","equipment","spell","target","debug","key-wait","ending"};return n[int(m)];}
 size_t option_count(void*){return 4;}UiSelectionItem option(void*,size_t i){static const char*n[]={"Avatar","Sword","In Lor","Target"};return {n[i],true};}
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
 void show_debug(const UiDebugMenu &debug){const auto v=debug.view();std::cout<<v.title<<" > "<<v.item;if(v.editing)std::cout<<" = "<<v.value<<" ["<<v.minimum<<".."<<v.maximum<<"]";std::cout<<"\n";}

@@ -96,7 +96,7 @@ void log_loot_stack(const openu5::CombatState &combat,int x,int y,const char *ph
     if(visible>=0){const auto &pile=combat.piles[visible];const auto decoded=openu5::decode_loot({pile.id,pile.quantity});char name[96]{};openu5::loot_item_name({pile.id,pile.quantity},name,sizeof(name));ESP_LOGI(kTag,"LOOT_STACK_VISIBLE x=%d y=%d chosen_index=%d type=%s name=%s",x,y,visible,openu5::loot_category_name(decoded.category),name);}
 }
 const char *status_name(openu5::CommandStatus s){static const char*n[]={"success","rejected","no-op","awaiting response","unsupported","invalid context","core error","needs storage"};return n[std::min<size_t>(size_t(s),7)];}
-const char *mode_name(openu5::UiMode m){static const char*n[]={"explore","dungeon","combat","dialogue","shop","special","text","number","yes/no","party","inventory","equipment","spell","target","debug","key-wait"};return n[std::min<size_t>(size_t(m),15)];}
+const char *mode_name(openu5::UiMode m){static const char*n[]={"explore","dungeon","combat","dialogue","shop","special","text","number","yes/no","party","inventory","equipment","spell","target","debug","key-wait","ending"};return n[std::min<size_t>(size_t(m),16)];}
 const char *action_name(openu5::UiActionKind k){static const char*n[]={"direction","character","confirm","cancel","back","next","previous","page-up","page-down","select-index","text","delete","system-menu"};return n[std::min<size_t>(size_t(k),12)];}
 const char *frontend_state_name(openu5::FrontendState s){static const char*n[]={"title","intro","attract","menu","new-journey","character-creation","continue","load","settings","credits","enter-game","error"};return n[std::min<size_t>(size_t(s),11)];}
 const char *creation_phase_name(openu5::FrontendCreationPhase p){static const char*n[]={"name","gender","questionnaire"};return n[std::min<size_t>(size_t(p),2)];}
@@ -930,6 +930,9 @@ bool AlphaRuntime::finish_combat_if_needed(){
     trace_direct_troll_tile("WORLD_FINISH_POST_REBIND");
     log_combat_world_restore();
     ui_->set_base_mode(dungeon_.active?openu5::UiMode::Dungeon:openu5::UiMode::Exploration);
+    // Batch 53A. An absorption teardown ends in ENDGAME.OVL, not back here:
+    // the set_base_mode above is a no-op once game-won entered the Ending.
+    synchronize_ending("combat-finish");
     for(size_t i=0;i<objects_.size();++i){const auto&o=objects_[i];if(o.chest)ESP_LOGI(kTag,"CHEST_POST_COMBAT loc=%ld floor=%ld x=%ld y=%ld object_id=%u present=1 player_loc=%u player_floor=%d player_x=%u player_y=%u",long(o.location),long(o.floor),long(o.x),long(o.y),unsigned(i),unsigned(game_.position.map.location),int(game_.position.map.floor),unsigned(game_.position.xy.x),unsigned(game_.position.xy.y));}
     if(direct_troll_.active){
         const auto s=terrain_.inspect(resources_.world,direct_troll_.map,direct_troll_.trigger_x,direct_troll_.trigger_y);
@@ -1311,6 +1314,7 @@ void AlphaRuntime::synchronize_after_debug(openu5::WorldPosition before,bool dun
     // Mode arbitration lives in ui_mode_policy.h so the host suite exercises
     // the same session-preserving rule production uses.
     ui_->set_base_mode(resolve_synchronized_base_mode(ui_->base_mode(),context_.combat,dungeon_.active));
+    synchronize_ending("input");
     ESP_LOGI(kTag,"debug teleport rebind moved=%d prior_dungeon=%d location=%u floor=%d xy=%u,%u dungeon=%d",
              moved,dungeon_before,
              unsigned(game_.position.map.location),int(game_.position.map.floor),
@@ -1551,6 +1555,12 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
 #else
         ui_->append(openu5::UiTextChannel::System,"Developer tools disabled");
 #endif
+    }else if(shortcut==DeviceShortcut::Save&&ui_->ending_active()){
+        // Batch 53A. There is no save of an ended game: the original is inside
+        // ENDGAME.OVL, which has no command loop, and a save here would load
+        // back into the enclosed final Doom cell.
+        ui_->append(openu5::UiTextChannel::System,"Save unavailable: the quest is complete");
+        ESP_LOGI(kTag,"SAVE_REFUSED source=alt-s reason=ending");
     }else if(shortcut==DeviceShortcut::Save){uint32_t ms=0;bool ok=save_.save(context_,outdoor_,terrain_,actors_,retained_,resources_.initial_gam,resources_.initial_gam_size,resources_.initial_ool,resources_.initial_ool_size,ms);if(ok)trace_direct_troll_save("SAVE_WORLD_OVERRIDE");ui_->append(openu5::UiTextChannel::System,ok?"Save complete":"Save failed; prior kept");}
     else if(shortcut==DeviceShortcut::Load){uint32_t ms=0;bool ok=save_.load(context_,outdoor_,terrain_,actors_,retained_,ms);if(ok){
         // Batch 27 (H-164). The same load as System Menu -> Continue Latest,
@@ -2377,8 +2387,33 @@ void AlphaRuntime::synchronize_loaded_world(){
     // the same rule, or the first input after the load is routed by the
     // pre-load mode (a world command instead of the dungeon turn/step).
     context_.dungeon=dungeon_.active;context_.combat=combat_.initialized&&!combat_.ended;
+    // Batch 53A. Leave the Ending first: set_base_mode() cannot, by design.
+    // A load is a new game on screen, so a won one says why once more.
+    ending_announced_=false;synchronize_ending("load");
     ui_->set_base_mode(resolve_synchronized_base_mode(ui_->base_mode(),context_.combat,dungeon_.active));
     dungeon_presentation_pending_=dungeon_.active;
+}
+
+void AlphaRuntime::synchronize_ending(const char *site){
+    // Batch 53A. ENDGAME.OVL endgame_main (0x0648) never returns to the
+    // dungeon loop: the victory branch ends in endgame_datestamp's loop at
+    // 0x04f9, the stranded branch in the wander loop at 0x0ac9. So an ended
+    // game is terminal -- UiMode::Ending, entered by UiSession on GameWon --
+    // and this is the one place the device keeps it in step with the live
+    // game's flag: a load, a New Journey or a Developer un-win (Preset:
+    // Endgame clears game-won) leaves it; a loaded save of an already-won
+    // game enters it rather than resuming play in the enclosed final cell.
+    const bool won=openu5::quest_flag(game_.quest,openu5::QuestFlag::GameWon);
+    const bool was=ui_->ending_active();
+    if(won&&!was)ui_->enter_ending();
+    else if(!won&&was)ui_->leave_ending(resolve_synchronized_base_mode(openu5::UiMode::Exploration,context_.combat,dungeon_.active));
+    if(won!=was)ESP_LOGI(kTag,"ENDING_MODE %s site=%s dungeon=%d loc=%u floor=%d",won?"enter":"leave",site,dungeon_.active,
+                         unsigned(game_.position.map.location),int(game_.position.map.floor));
+    // Device text, not the game's: the original ends on a frozen screen, the
+    // T-Deck says once which key still answers.
+    if(ui_->ending_active()&&!ending_announced_){ending_announced_=true;ui_->append(openu5::UiTextChannel::System,"The quest is complete. Alt+M: System Menu");
+        ESP_LOGI(kTag,"ENDING_MODE active site=%s gameplay_input=swallowed save=refused",site);}
+    else if(!ui_->ending_active())ending_announced_=false;
 }
 
 void AlphaRuntime::service_frontend_intent(){
@@ -2417,7 +2452,11 @@ void AlphaRuntime::service_frontend_intent(){
 void AlphaRuntime::service_system_menu_intent(){
     const auto intent=system_menu_.take_intent();if(intent.kind==openu5::SystemMenuIntentKind::None||intent.kind==openu5::SystemMenuIntentKind::Resume)return;
     uint32_t ms=0;bool ok=true;
-    if(intent.kind==openu5::SystemMenuIntentKind::Save){ok=save_.save(context_,outdoor_,terrain_,actors_,retained_,resources_.initial_gam,resources_.initial_gam_size,resources_.initial_ool,resources_.initial_ool_size,ms);if(ok)trace_direct_troll_save("SAVE_WORLD_OVERRIDE");ui_->append(openu5::UiTextChannel::System,ok?"Save complete":"Save failed; prior kept");}
+    if(intent.kind==openu5::SystemMenuIntentKind::Save&&ui_->ending_active()){ok=false;
+        // Batch 53A: the same refusal as Alt+S.
+        ui_->append(openu5::UiTextChannel::System,"Save unavailable: the quest is complete");
+        ESP_LOGI(kTag,"SAVE_REFUSED source=system-menu reason=ending");}
+    else if(intent.kind==openu5::SystemMenuIntentKind::Save){ok=save_.save(context_,outdoor_,terrain_,actors_,retained_,resources_.initial_gam,resources_.initial_gam_size,resources_.initial_ool,resources_.initial_ool_size,ms);if(ok)trace_direct_troll_save("SAVE_WORLD_OVERRIDE");ui_->append(openu5::UiTextChannel::System,ok?"Save complete":"Save failed; prior kept");}
     else if(intent.kind==openu5::SystemMenuIntentKind::LoadLatest)ok=save_.load(context_,outdoor_,terrain_,actors_,retained_,ms);
     else if(intent.kind==openu5::SystemMenuIntentKind::LoadSlot)ok=save_.load_slot(intent.slot,context_,outdoor_,terrain_,actors_,retained_,ms);
     else if(intent.kind==openu5::SystemMenuIntentKind::PersistSettings){settings_=intent.settings;input_.set_movement_mode_enabled(settings_.movement_mode);input_.set_trackball_responsiveness(settings_.trackball_responsiveness);ok=settings_store_.save(settings_);}

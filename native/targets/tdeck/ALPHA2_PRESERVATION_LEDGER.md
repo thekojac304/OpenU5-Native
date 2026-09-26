@@ -39,6 +39,8 @@ it is an assessment, not a commitment, and **no toggle is implemented**.
 
 **Batch 53 fixed the four release blockers in software; the hardware retest is Phase 7E.** D-44 (Words of Power), D-45 (the runtime moonstone owner, hydrated from and captured into GAM `0x28a–0x2a9` with no new save field), D-46 (ENDMSG.DAT and `end_record`) and D-49 (shop `ship` / `horse` / `reserve` on core's own transport owner) are bound by shared production binders that `initialize()` and the host fixture both call; D-48's gate visibility (static tile `0xDC`) and D-53's `To phase:` line ride with D-45; D-47 now shows the six KARMA.DAT records. Three SD-pack sections were added (ENDMSG, KARMA, Words of Power). Each row reads **SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E)**; none is struck before the device run. Still open and unchanged: D-48's transit animation and the `0xDC` rise, D-54 (endgame cinematic), D-50 – D-52, D-40 – D-43.
 
+**Batch 53A (2026-09-26) — the state after the ending.** Phase 7E-A run 1 on the Batch 53 image passed the absorption, `VICTORY!`, the ENDMSG text and input responsiveness, then left the party in Doom's enclosed final cell accepting movement. The shipped ENDGAME.OVL never returns to the dungeon (both endings finish in a loop inside the overlay), so this was a native defect, **D-55** (Outcome B), not an Alpha 3 presentation gap: the device now enters a terminal `UiMode::Ending` on game-won. **A-15** records the device's terminal-state adaptations. Two findings from the same trace are recorded, not fixed: **D-56** (the Y/N box questions are the player's in the original) and **D-57** (two `victory` token lines in the transcript). D-46 stays SOFTWARE FIXED — HARDWARE RETEST PENDING until 7E-A′ passes.
+
 ---
 
 ## 1. Reference-faithful behaviour (the default)
@@ -84,6 +86,7 @@ with no ESC and no numeric row, a trackball, and no DOS text console.
 | A-12 | Z-stats Items page prints canonical names, not RUNES.CH sigils | `print_list_row`'s `*`/`!`/`(` branches draw a pictogram | ASCII face | Batch 14 residual 4 | Yes |
 | A-13 | Asset pack + CRC/SHA identity gate blocks boot on a mismatched SD card | no such concept | the card and firmware can drift independently | `packs_match`, Batch 9C | No — a safety gate |
 | A-14 | Persistence is a JSON sidecar over a two-slot generation commit | a single `.GAM`/`SAVED.GAM` pair | flash wear, partial-write recovery, DMA headroom | §8, `persistence_parity` | No |
+| A-15 | After game-won the device is in the terminal `UiMode::Ending`: game keys do nothing, Shift+Up/Down page the ending, the System Menu stays (Load, Settings, Developer, **Return to Title**), Save is refused, and one System line says `The quest is complete. Alt+M: System Menu` | ENDGAME.OVL's terminal loop (`0x04f9` / `0x0ac9`): in the GOG build any key restores the video mode and quits to DOS (`0x0b0b` → `exit()`); the 1988 build (`ff 46 fe eb fb`) reads no key | The device shows the whole ending as one transcript, so a stray key must not throw it away; Return to Title is the device's program exit; a save would load back into the sealed cell | Batch 53A; `batch53a_ending_terminal` | Possible (bind "any key → title" once the Alpha 3 presenter paces the pages) |
 
 ---
 
@@ -168,7 +171,10 @@ answer or a product decision; none is scheduled in Alpha 2 unless marked.
 | D-51 | Cancelling a potion's target picker refunds the potion; the reference consumes it at selection | native divergence; player-favourable | The Use-target cancel path never dispatches | H-45 |
 | D-52 | The Z-stats Armaments marker renders `^` as `?` | presentation | The 5×7 face has no `^` glyph | H-63 |
 | D-53 | `AlphaRuntime::overlay` replaces every non-Fire TargetSelection prompt (`To phase:`, `Direction?`) with `Aim: empty (x,y)` | presentation. The `To phase:` half rides RB-3 | The reticle readout is not scoped to combat aim | H-12, H-15 **Batch 53: the `To phase:` half SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-C); `Direction?` (H-15) stays Alpha 3 UI.** |
-| D-54 | The device ending is transcript text only: `endgame_script` false, `end_narration` unbound. There is no green scene, orb, dissolve, story pages, scroll or terminal freeze. | missing presentation; Alpha 3 | Reachable only once RB-1 is fixed | Y-07 |
+| D-54 | The device ending is transcript text only: `endgame_script` false, `end_narration` unbound. There is no green scene, orb, dissolve, story pages, scroll or terminal freeze. | missing presentation; Alpha 3 | Reachable only once RB-1 is fixed | Y-07 **Batch 53A: the terminal *state* was not presentation and is split out as D-55; the cinematic itself stays Alpha 3.** |
+| D-55 | After the ending the device returned to `UiMode::Dungeon` in Doom's enclosed final cell (floor 7, 5,7) and accepted movement; the original never leaves ENDGAME.OVL (`endgame_datestamp` has no `ret`; loops `0x04f9` / `0x0ac9`) | **native defect** (missing terminal state) | Batch 53's own test asserted "play continues" (EV7/EV8/EV10/EV11) | H-192 **Batch 53A: SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E-A′).** |
+| D-56 | The ending's two box questions ("Didst thou bring my box?", "…Didst thou bring it?") are real Y/N prompts in the original (getkey loops `0x0852`, `0x088b`; victory needs `Y` **and** the box at `0x08b9`/`0x08c2`); native and the TypeScript reference answer them from the inventory | native **and** reference divergence | Part of the ending presenter the device does not have (D-54); 7E-A exercises only the box-and-`Y` route | H-193 — Alpha 3, with D-54 |
+| D-57 | Two literal `victory` lines follow the report: `UiSession::consume` appends the `GameWon` and `Endgame` events' internal `ending` token to the transcript | fabricated device text; non-blocking | Found by the 53A transcript dump; outside the 53A stop condition | H-194 — queued for the next batch that touches the ending |
 
 ---
 
@@ -273,6 +279,10 @@ Every row checked against the Phase 6T–7D hardware results and the Batch 52 au
 - The harpsichord notes are silent (H-125).
 
 **Batch 53 status.** D-44, D-45, D-46, D-49 (the four release blockers), D-47, D-48 gate visibility and D-53 `To phase:`: **SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E)**. Unchanged: D-48 transit animation, D-54, D-50 – D-52, D-40 – D-43 and every row above.
+
+**Batch 53A status.** D-55 (terminal state after the ending): **SOFTWARE FIXED — HARDWARE RETEST PENDING (Phase 7E-A′)**. New and open: D-56 (Alpha 3, with D-54), D-57 (queued). New deliberate row A-15. D-46's retest moves from 7E-A to 7E-A′ (run 1 passed its absorption/ending half on the Batch 53 image).
+
+**Totals after Batch 53A.** 19 deliberate (A-1 … A-15, E-1 … E-4). Software-fixed rows awaiting Phase 7E: D-44, D-45 (with D-48 gate / D-53 prompt), D-46 and D-55 (7E-A′), D-47, D-49. New open rows: D-56 (Alpha 3), D-57 (queued).
 
 **Totals after Batch 53.** 18 deliberate (A-1 … A-14, E-1 … E-4). Software-fixed rows awaiting Phase 7E: D-44, D-45 (with D-48 gate / D-53 prompt), D-46, D-47, D-49. Open decisions and questions and the Alpha 3 items are as listed for Batch 52 below.
 

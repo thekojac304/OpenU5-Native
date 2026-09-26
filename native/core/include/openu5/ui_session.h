@@ -28,7 +28,13 @@ enum class UiMode : uint8_t {
     SpellSelection,
     TargetSelection,
     DebugMenu,
-    KeyWait // Original blocking getkey; any physical key acknowledges one beat.
+    KeyWait, // Original blocking getkey; any physical key acknowledges one beat.
+    // Batch 53A. The terminal ending. ENDGAME.OVL's endgame_main (0x0648) is
+    // entered from the combat teardown and never returns to the dungeon loop:
+    // both branches end in a loop with no exit back into the game (0x04f9 after
+    // the proclamation, 0x0ac9 in the stranded branch). From game-won onward
+    // no world command runs again; only transcript paging answers.
+    Ending
 };
 
 enum class UiActionKind : uint8_t {
@@ -223,6 +229,15 @@ class UiSession {
 
     UiMode mode() const { return mode_; }
     UiMode base_mode() const { return base_mode_; }
+    // Batch 53A: the terminal ending (UiMode::Ending). GameWon enters it;
+    // set_base_mode() cannot leave it -- the per-input resyncs that re-assert
+    // Dungeon/Exploration are exactly what put the device back into the
+    // enclosed Doom cell. Only the owner leaves it, when the live game stops
+    // being won (a load, a New Journey, a Developer un-win), naming the world
+    // mode to resume.
+    bool ending_active() const { return base_mode_ == UiMode::Ending; }
+    void enter_ending();
+    void leave_ending(UiMode world);
     UiRequestId request() const { return request_; }
     const char *prompt() const { return prompt_; }
     const char16_t *input_buffer() const { return input_; }

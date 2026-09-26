@@ -16,7 +16,7 @@
 
 | Item | Value |
 |---|---|
-| Firmware image | **The current validation image is the Launcher named in the annotated tag of the batch that owns the phase you are running** (for Phase 7D: tag `alpha2-batch51-scene-pacing`). *Batch 51 correction: this row used to name `build-batch19`; it was never updated, and in the first Phase 7B/7C session a stale Batch 43 image was flashed instead of Batch 48.* Every batch packages the same filename, `OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`, so the filename proves nothing. *Batch 52: no new image. The next phase, 7E, will name the Batch 53 tag, and that batch changes the SD pack as well.* |
+| Firmware image | **The current validation image is the Launcher named in the annotated tag of the batch that owns the phase you are running** (for Phase 7D: tag `alpha2-batch51-scene-pacing`). *Batch 51 correction: this row used to name `build-batch19`; it was never updated, and in the first Phase 7B/7C session a stale Batch 43 image was flashed instead of Batch 48.* Every batch packages the same filename, `OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`, so the filename proves nothing. *Batch 52: no new image. The next phase, 7E, will name the Batch 53 tag, and that batch changes the SD pack as well.* *Batch 53A: Phase 7E continues on the Batch 53A image (tag `alpha2-batch53a-ending-terminal`); the SD pack is the Batch 53 one, unchanged.* |
 | **Firmware identity gate** | **Before recording ANY physical result, read `Git <hash>` on the boot identity screen and confirm it equals the first 12 hex digits of the commit the owning tag points to** (`git rev-list -n1 <tag>`); write that hash into the result cell. On disk the same check is `grep -a -o <hash> <image>`. A result recorded against a different hash certifies nothing about the phase and must be struck, not reinterpreted. |
 | **SD resource pack** | **NO REFRESH REQUIRED.** Neither Batch 18 nor Batch 19 changed any resource file. The last pack change was Batch 9C (`openu5-alpha1-resources.bin`, 2,039,545 B, payload CRC32 `0x2065ad91`, SHA-256 `434cd664…b4ea`). If the card already boots a Batch 9C-or-later image, leave it alone. |
 | If the card is older than 9C | `npm run pack:alpha1`, then copy `native/assets/openu5-alpha1-resources.bin` over `<SD>:\ultima5\openu5-alpha1-resources.bin`. **Do not reformat**; saves and settings are separate files. A stale card stops at the identity screen with `match=0` — that is the gate working. |
@@ -787,7 +787,7 @@ RC packaging and smoke are **Batch 54**, after 7E passes.
 
 | Row | Batch 53 status | 7E step |
 |---|---|---|
-| H-189 (RB-1) | SOFTWARE FIXED — HARDWARE RETEST PENDING | A |
+| H-189 (RB-1) | SOFTWARE FIXED — HARDWARE RETEST PENDING. **Run 1 (Batch 53 image): absorption, `VICTORY!`, ENDMSG, input PASS; post-ending state NOT ACCEPTED (H-192) — see Batch 53A** | A → **A′** |
 | H-187 (RB-2), H-119, H-135 | SOFTWARE FIXED — HARDWARE RETEST PENDING | B |
 | H-188, H-191 (RB-3), H-12, H-13 | SOFTWARE FIXED — HARDWARE RETEST PENDING | C |
 | H-146 (RB-4) | SOFTWARE FIXED — HARDWARE RETEST PENDING | D |
@@ -807,6 +807,8 @@ Every coordinate below was executed on the host through the same Developer call 
 4. Continue a save or start a New Journey. Existing saves stay compatible.
 
 **A. The ending (H-189)** — about 2 minutes
+
+> **Batch 53A:** run 1 on this image passed steps 1–5 (absorption, `VICTORY!`, ENDMSG, input responsive). **Step 6 and the "play continues" note below are superseded**: the original never returns to the dungeon after the ending. Run **7E-A′** (Batch 53A section at the end) instead; B–H below are unchanged.
 1. `Alt+D` → Shortcuts → **Preset: Endgame**. Then Party → **Party size 1** (a full party also works, but every member must make the walk in step 5).
 2. Teleport → Destination **Doom**, Floor **Level 6**, X **4**, Y **7** → Teleport.
 3. Turn with the trackball until the party faces **East**, then move forward once. *Expected:* "Pit Trap!", "Falling...", "...splat!", and the final room's arena opens: a trapped soul above a mirror at the top centre.
@@ -867,3 +869,39 @@ Every coordinate below was executed on the host through the same Developer call 
 - **Pass:** 2 and 3.
 
 **Report back:** the `Git` hash seen on the identity screen, then PASS / FAIL per step A–H with any text that differed. RC packaging and smoke are **Batch 54**, only after 7E passes.
+
+## Batch 53A — the state after the final Doom absorption (2026-09-26)
+
+### Phase 7E-A, run 1 — Batch 53 image (`Git 1d7135e9bcb0`, pack `RES v2.0 2041466B CRC 26f75ae6`)
+
+| Step | Result |
+|---|---|
+| 1–4 setup, pit, arena | PASS |
+| 5 absorption ("Avatar is absorbed!") | **PASS** |
+| 5 `VICTORY!` | **PASS** |
+| 5 ENDMSG ending text | **PASS** |
+| input responsive | **PASS** |
+| 6 afterwards | the party stands in Doom's enclosed final cell (floor 7, 5,7); movement commands are accepted and go nowhere |
+
+**Test A: NOT ACCEPTED.** Step 6's expectation ("the dungeon view is back; turning responds; `Alt+S` saves") was Batch 53's own assumption, not the original's. Batch 53A read the shipped ENDGAME.OVL: after game-won the original never returns to the dungeon — both endings finish in a loop inside ENDGAME.OVL (`0x04f9`, `0x0ac9`) that accepts no game command (in the GOG build a key quits the program). Adjudication **Outcome B**: the device was missing that terminal state. Evidence: `GAMEPLAY_INTEGRATION_AUDIT.md` §14 "Batch 53A", `re/notes/batch53a-endgame-terminal.md`. Step 6 and the "play continues" note of Test A above are superseded by 7E-A′ below; B–H are unchanged and still to be run.
+
+### Phase 7E-A′ — Test A rerun on the Batch 53A image · *firmware changes, SD pack does not*
+
+**0. Identity gate.** Keep the Batch 53 SD pack (**no recopy**). Flash the Batch 53A Launcher (path and SHA-256 in tag `alpha2-batch53a-ending-terminal`). The identity screen must show `Git` = the first 12 hex digits of the Batch 53A commit and `RES v2.0 2041466B CRC 26f75ae6`.
+
+**Only if the game you continue is the `Alt+S` save made at step 6 of run 1:** it now opens straight into the ending ("The quest is complete. Alt+M: System Menu") — that is correct, not a hang. Before step 1: `Alt+D` → Shortcuts → **Dungeon Test Setup** (Preset: Dungeon; it re-arms the final room), then Teleport → **Britannia**, X **90**, Y **100** (leave Doom so the floor is re-read).
+
+1. `Alt+D` → Shortcuts → **Endgame Test Setup** (Preset: Endgame). Party → **Party size 1**.
+2. Teleport → **Doom**, Floor **Level 6**, X **4**, Y **7**, Use default entrance **Off** → Teleport.
+3. Face **East**, move forward once: "Pit Trap!", "Falling...", "...splat!", the final arena.
+4. **North ×4.** *Expected, unchanged from run 1:* "Avatar is absorbed!", `VICTORY!`, the ending text through "Report now, thy Quest compleat in … to Lord British at Origin Systems!".
+5. *Expected, new:* right after it, one System line **"The quest is complete. Alt+M: System Menu"**. The Doom view stays on screen (the cinematic is Alpha 3, D-54).
+6. Press forward, turn left/right, Enter, Space, `K`, Mic. *Expected:* **nothing happens** — no step, no turn, no "Blocked!", no new text. This is the original's terminal state, not a wedge.
+7. **Shift+Up**, then **Shift+Down**. *Expected:* the transcript scrolls back through the ending and returns.
+8. `Alt+S`. *Expected:* **"Save unavailable: the quest is complete"**; no "Save complete". Then `Alt+M` → **Save** → `Alt+M` to close: the transcript shows the same refusal, and step 6 still holds.
+9. `Alt+M` → Load / Save Management → **Continue Latest**. *Expected:* "Load complete". A save made before the ending plays normally from the very first key; the run-1 `Alt+S` save (made after the Batch 53 ending) opens into the ending again, which is also correct. *(Return to Title is the other way out — the device's equivalent of the original quitting to DOS.)*
+
+- **Pass:** 4, 5, 6, 8 and 9. **Fail:** any step or turn after the ending, "Save complete" after the ending, or no response to Shift+Up/`Alt+M`.
+- *Known, do not file:* two lines reading `victory` after the report (H-194, queued); the ending is transcript text with the Doom view behind it, and the box question is answered for you (D-54 / D-56, Alpha 3).
+
+**Report back:** the `Git` hash, then PASS / FAIL for 7E-A′ steps 4–9. Do not run B–H yet.

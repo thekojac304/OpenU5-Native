@@ -1,0 +1,131 @@
+source: C:\Dev\OpenU5-Native\original\u5\ultima5
+ENDGAME.OVL 2864 B sha1 8c94bb4edf93ba540d3c4c7a28729d9142e63f94
+ULTIMA.EXE  36592 B sha1 8a6dfb9fe7216b924c510714b021d9998c7e309c
+
+=== 1. entry: sentinel 0x4d -> overlay-13 stub -> endgame_main
+
+--- DUNGEON.OVL room return [0x00cb, 0x00d5)
+  00cb: 803ea0584d     cmp byte ptr [0x58a0], 0x4d
+  00d0: 7503           jne 0xd5
+  00d2: e8a5f9         call 0xfffffa7a  ; kernel 0x7c4a overlay-13 stub -> ENDGAME.OVL
+
+--- SJOG.OVL combat-exit restore [0x2046, 0x2050)
+  2046: 803ea0584d     cmp byte ptr [0x58a0], 0x4d
+  204b: 7503           jne 0x2050
+  204d: e87a9c         call 0xffffbcca  ; kernel 0x7c4a overlay-13 stub -> ENDGAME.OVL
+
+  ULTIMA.EXE 0x7c4a: 9aec022e070d00ead8a8  = lcall loader, overlay #13, ljmp 0xa8d8 -> ENDGAME.OVL 0x0648
+
+=== 2. endgame_main 0x0648: its own files, its own key loops
+  065f: file name DS 0x8480 = 'MISCMAPS.DAT'
+  0672: file name DS 0x848e = 'ENDMSG.DAT'
+  getkey_with_redraw call sites in endgame_main: 10 -> 0x0848 0x0852 0x088b 0x092c 0x0936 0x0940 0x094a 0x0954 0x095e 0x0970
+
+--- Y/N loop 1 ('Didst thou bring my box?'): loops until 'Y' or 'N' [0x0852, 0x087c)
+  0852: e8877b         call 0x83dc  ; kernel 0x266c getkey_with_redraw
+  0855: 8bf0           mov si, ax
+  0857: 3d4e00         cmp ax, 0x4e
+  085a: 741a           je 0x876
+  085c: 3d5900         cmp ax, 0x59
+  085f: 7507           jne 0x868
+  0861: b8b484         mov ax, 0x84b4
+  0864: 50             push ax
+  0865: e8586d         call 0x75c0  ; kernel 0x1850 print_string
+  0868: 8bc6           mov ax, si
+  086a: 3d5900         cmp ax, 0x59
+  086d: 740d           je 0x87c
+  086f: 3d4e00         cmp ax, 0x4e
+  0872: 7408           je 0x87c
+  0874: ebdc           jmp 0x852  ; ENDGAME.OVL 0x0852
+  0876: b8ba84         mov ax, 0x84ba
+  0879: ebe9           jmp 0x864  ; ENDGAME.OVL 0x0864
+  087b: 90             nop 
+
+--- branch: answer 'Y' AND g_wooden_box (DS 0x57bf) != 0 [0x08b9, 0x08cc)
+  08b9: 837efe59       cmp word ptr [bp - 2], 0x59
+  08bd: 7403           je 0x8c2
+  08bf: e9b401         jmp 0xa76  ; ENDGAME.OVL 0x0a76
+  08c2: 803ebf5700     cmp byte ptr [0x57bf], 0
+  08c7: 7503           jne 0x8cc
+  08c9: e9aa01         jmp 0xa76  ; ENDGAME.OVL 0x0a76
+
+=== 3. every ret / exit
+  endgame_main [0x0648,0x0aee): ret at 0x0aed
+
+--- the only path to that ret: call endgame_datestamp, then jmp 0x0ae8 [0x0a6d, 0x0a76)
+  0a6d: e890f5         call 0  ; ENDGAME.OVL 0x0000
+  0a70: e8b3f8         call 0x326  ; ENDGAME.OVL 0x0326
+  0a73: eb73           jmp 0xae8  ; ENDGAME.OVL 0x0ae8
+  0a75: 90             nop 
+  endgame_datestamp [0x0326,0x04fe): ret count 0; jumps leaving the body: []
+
+=== 4. the terminal loops
+
+--- victory: last print, then the loop at 0x04f9 [0x04eb, 0x04fe)
+  04eb: b85a84         mov ax, 0x845a
+  04ee: 50             push ax
+  04ef: e848fd         call 0x23a  ; ENDGAME.OVL 0x023a
+  04f2: b85c84         mov ax, 0x845c
+  04f5: 50             push ax
+  04f6: e8c770         call 0x75c0  ; kernel 0x1850 print_string
+  04f9: e80f06         call 0xb0b  ; ENDGAME.OVL 0x0b0b
+  04fc: ebfb           jmp 0x4f9  ; ENDGAME.OVL 0x04f9
+
+--- stranded: the wander loop [0x0ac9, 0x0aee)
+  0ac9: b80100         mov ax, 1
+  0acc: 50             push ax
+  0acd: e8d2fa         call 0x5a2  ; ENDGAME.OVL 0x05a2
+  0ad0: b80300         mov ax, 3
+  0ad3: 50             push ax
+  0ad4: e8cbfa         call 0x5a2  ; ENDGAME.OVL 0x05a2
+  0ad7: b80400         mov ax, 4
+  0ada: 50             push ax
+  0adb: e8c4fa         call 0x5a2  ; ENDGAME.OVL 0x05a2
+  0ade: b80500         mov ax, 5
+  0ae1: 50             push ax
+  0ae2: e8bdfa         call 0x5a2  ; ENDGAME.OVL 0x05a2
+  0ae5: e83700         call 0xb1f  ; ENDGAME.OVL 0x0b1f
+  0ae8: 5e             pop si
+  0ae9: 5f             pop di
+  0aea: 8be5           mov sp, bp
+  0aec: 5d             pop bp
+  0aed: c3             ret 
+
+--- loop body helpers (0x0b0b poll, 0x0b1f stranded tail) [0x0b0b, 0x0b24)
+  0b0b: e8c06f         call 0x7ace  ; kernel 0x1d5e kernel_getkey (int 16h AH=01 poll)
+  0b0e: 3c00           cmp al, 0
+  0b10: 7406           je 0xb18
+  0b12: e8d35a         call 0x65e8  ; kernel 0x0878 restore_video_mode
+  0b15: e84c55         call 0x6064  ; kernel 0x02f4 exit() -> 0x034c -> 0x0e2f int 21h AH=4Ch
+  0b18: ba1b00         mov dx, 0x1b
+  0b1b: e85560         call 0x6b73  ; kernel 0x0e03 sound-driver dispatch (dx = function)
+  0b1e: c3             ret 
+  0b1f: e8e9ff         call 0xb0b  ; ENDGAME.OVL 0x0b0b
+  0b22: eba5           jmp 0xac9  ; ENDGAME.OVL 0x0ac9
+
+--- kernel 0x1d5e: non-blocking key poll [0x1d5e, 0x1d72)
+  1d5e: 55             push bp
+  1d5f: 8bec           mov bp, sp
+  1d61: 56             push si
+  1d62: 57             push di
+  1d63: 1e             push ds
+  1d64: c7068a530000   mov word ptr [0x538a], 0
+  1d6a: b401           mov ah, 1
+  1d6c: cd16           int 0x16
+  1d6e: 7516           jne 0x1d86
+  1d70: 33c0           xor ax, ax
+
+--- kernel exit(): 0x0346 close handles, 0x034c -> 0x0e2f [0x0346, 0x034f)
+  0346: e80700         call 0x350  ; kernel 0x0350 crt0 restore int vectors
+  0349: 8b4604         mov ax, word ptr [bp + 4]
+  034c: e8e00a         call 0xe2f  ; kernel 0x0e2f driver shutdown + int 21h AH=4Ch
+
+--- kernel 0x0e2f: driver shutdown, DOS terminate [0x0e2f, 0x0e36)
+  0e2f: e8f4ff         call 0xe26  ; kernel 0x0e26 sound-driver shutdown (dx=3)
+  0e32: b44c           mov ah, 0x4c
+  0e34: cd21           int 0x21
+
+Conclusion: after game-won the machine is inside endgame_main for good. In this build a key
+pressed in either terminal loop restores the video mode and terminates the program; a build
+whose 0x04f9 is `ff 46 fe eb fb` (re/notes/fanfarria-endgame-espectral.md, original/u5/play)
+spins without reading the keyboard. Neither returns to the dungeon or accepts a game command.
