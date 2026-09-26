@@ -30,6 +30,7 @@ release candidate never shares a name with an ordinary batch image:
 | `2.0.0-alpha2-rc1-debug` (Batch 54, RC1) | `OpenU5-TDeck-Alpha2.0.0-alpha2-RC1-Debug-Launcher.bin` |
 | `3.0.0-alpha3-dev-a3-01-debug` (Alpha 3 A3-01, **development build, not a release**) | `OpenU5-TDeck-Alpha3.0.0-alpha3-dev-a3-01-Debug-Launcher.bin`; its path, size, SHA-256 and `Git` are in tag `alpha3-a3-01-audio-architecture`. The game packs are unchanged; `/ultima5/openu5-audio.bin` is optional (`ALPHA3_AUDIO.md`). |
 | `3.0.0-alpha3-dev-a3-02-debug` (Alpha 3 A3-02, **development build, not a release**) | `OpenU5-TDeck-Alpha3.0.0-alpha3-dev-a3-02-Debug-Launcher.bin`; its path, size, SHA-256 and `Git` are in tag `alpha3-a3-02-sfx-synth`. The game packs are unchanged; the sound effects need no audio pack (`ALPHA3_AUDIO.md` §15). |
+| `3.0.0-alpha3-dev-a3-04-debug` (Alpha 3 A3-04, **development build, not a release**) | `OpenU5-TDeck-Alpha3.0.0-alpha3-dev-a3-04-Debug-Launcher.bin`; its path, size, SHA-256 and `Git` are in tag `alpha3-a3-04-music-playback`. The game packs are unchanged; music playback needs the existing patched `openu5-audio.bin` (`ALPHA3_AUDIO.md` §17), no regeneration. Hardware confirmation pending (A3-05). |
 
 - Firmware version: `2.0.0-alpha2-rc1-debug` (identity screen: `FW 2.0.0-alpha2-rc1-debug`)
 - Size: 878,752 bytes (`0xd68a0`). This leaves 169,824 B (16 %) free in the 1 MiB app partition.

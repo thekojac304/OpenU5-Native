@@ -1262,7 +1262,7 @@ Fresh ESP-IDF 6.1 build, `native/targets/tdeck/build-a3-04` (`native/targets/tde
 
 The user is away from the device; nothing below has been run. Copy the Launcher image named in this batch's annotated tag onto the T-Deck's SD card structure as usual (`/sd/ultima5/…`), keep the existing `openu5-audio.bin` (§17.16: no regeneration needed).
 
-**A. Patched assets, boot.** Boot with the existing supported `openu5-audio.bin`. The identity screen shows this batch's `FW`/`Git`; `AUDIO_PACK … capability=supported-music-patch` in the log. Settings shows `Music Volume: 80%`, adjustable.
+**A. Patched assets, boot.** Boot with the existing supported `openu5-audio.bin`. The identity screen reads `FW 3.0.0-alpha3-dev-a3-04-debug` and the tag's `Git` hash; `AUDIO_PACK … capability=supported-music-patch` in the log. Settings shows `Music Volume: 80%`, adjustable.
 
 **B. Title.** At the title screen (before New Journey / Continue), the Ultima V Theme should be audible.
 
