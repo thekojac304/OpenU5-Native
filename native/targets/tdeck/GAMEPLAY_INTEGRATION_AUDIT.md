@@ -8,7 +8,21 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Batch 53A) — ending state fixed in software; Test A rerun pending; read this first
+> ### CURRENT STATE (Batch 54) — ALPHA 2 RC READY — HARDWARE SMOKE PENDING; read this first
+>
+> **Phase 7E is complete; RB-1 … RB-4 are HARDWARE PASS.** A fresh blocker sweep found **zero active Alpha 2 release blockers**: **ALPHA 2 READY FOR RELEASE CANDIDATE**. The Alpha 2 release candidate (**RC1**) is packaged. See §14 "Batch 54" and the release notes [`../../../ALPHA2.md`](../../../ALPHA2.md).
+>
+> | | |
+> |---|---|
+> | Hardware | 7E-A′, B, C (after the 53B adjudication), D and F: **PASS**. E, G and H: accepted (previously witnessed). Checklist, Batch 54 section. |
+> | Blockers | **0 active.** Every open row is non-blocking and assigned to a milestone (§14 Batch 54 §3). |
+> | Change | RC identity only: `PROJECT_VER` `2.0.0-alpha2-rc1-debug`, and a Launcher file name taken from it. No gameplay, save or pack change. |
+> | Host suite | **123 / 123**, fresh serial run, one known w64devkit warning. The post-commit run on the tagged tree is recorded in the tag message. |
+> | Firmware | 878,752 B (`0xd68a0`), 169,824 B (16 %) free, zero compiler warnings. Image path, SHA-256 and `Git`: tag `alpha2-batch54-rc1`. Not flashed. |
+> | SD pack | **Unchanged** (Batch 53: 2,041,466 B, CRC `0x26f75ae6`). **No recopy.** |
+> | Next | **Phase 8** RC smoke (checklist, Batch 54 section). If it passes, Alpha 2 is released; if it fails, only the smallest targeted follow-up. |
+
+> ### CURRENT STATE (Batch 53A) — **SUPERSEDED by the Batch 54 block above; kept as history.** ending state fixed in software; Test A rerun pending
 >
 > **Phase 7E-A run 1 (Batch 53 image): absorption, `VICTORY!`, ENDMSG, input responsive — PASS; the post-ending state — NOT ACCEPTED.** The original never returns from ENDGAME.OVL after game-won; the device fell back into Dungeon mode in Doom's enclosed final cell (H-192 / D-55, Outcome B). Batch 53A adds the terminal `UiMode::Ending`. See §14 "Batch 53A".
 >
@@ -7099,3 +7113,198 @@ Fresh host build `native/core/build-batch53b`, serial ctest: **123 / 123** (`bat
 ### 12. Not done in this batch
 
 No flash, no firmware build. No Phase 7E-D … H, no Batch 54, no RC packaging, no Alpha 3 work, no moongate animation, no audio, no UI. D-58 and D-59 are recorded, not fixed. The resource pack is unchanged.
+
+## Batch 54 — Alpha 2 release candidate (RC1): Phase 7E closeout, final sweep, packaging
+
+**Verdict: ALPHA 2 READY FOR RELEASE CANDIDATE → ALPHA 2 RC READY — HARDWARE SMOKE PENDING.** Phase 7E is complete, and zero Alpha 2 release blockers remain. The batch changes only RC identity: the firmware version string and the Launcher file name. There is no gameplay, save, pack or UI change. Release notes: [`../../../ALPHA2.md`](../../../ALPHA2.md).
+
+### 1. Baseline (Phase 54A)
+
+- **Tree.** HEAD `a0a064fe` (Batch 53B) on `main`, clean.
+- **Tags.** `alpha2-batch53a-ending-terminal` → `5fe1ac53` and `alpha2-batch53b-moongate-return` → `a0a064fe`, both annotated.
+- **53B touched no firmware.** `git diff 5fe1ac53 a0a064fe` touches only three docs, one host test and the host CMake: no `main/` and no core source. The Batch 53A Launcher on disk still hashes to `bf66d24b…da201` and embeds `5fe1ac5335a1`.
+- **Packs.** `openu5-alpha1-resources.bin` is 2,041,466 B, SHA-256 `a48abdbf…379b`. The firmware expects that size, CRC `0x26f75ae6` and SHA (`alpha_resources.h`). `openu5-assets.bin` is 132,284 B, SHA-256 `6eb001ed…e188`, CRC `0x933c9b82`, the Alpha 1 pack and unchanged.
+- **Host suite.** A fresh host build `native/core/build-batch54-baseline` (Release, `OPENU5_ENABLE_DEVELOPER_TOOLS=ON`, GCC 16.2 / w64devkit, Ninja, Node for the drift targets) took 61 s. The only warning was the known w64devkit `stl_uninitialized.h` false positive (`batch54-baseline-host-build.log`). A serial ctest gave **123 / 123 pass, 0 fail, 0 skipped, 110.5 s** (`batch54-baseline-ctest.log`).
+
+### 2. Phase 7E reconciliation (Phase 54B)
+
+The user reported these results after Batch 53B; they are recorded in the checklist's Batch 54 section.
+- **Hardware PASS:** 7E-A′ (the terminal Ending on the 53A image), 7E-B (FALLAX opens Deceit), 7E-C and 7E-D (ship/skiff and horse purchase, boarding, mounting), 7E-F (Destard room: no freeze). 7E-C passed the gate draw, first transit, `To phase:` and phase travel in run 1. The return-trip observation (H-195) is the original's behaviour (53B, Outcome A).
+- **Accepted as previously witnessed:** 7E-E (the Refuge return to Lord British's castle; the KARMA.DAT source is host-certified), 7E-G (vault reset / door after load) and 7E-H (Gorn's brazier). Nothing in Batches 53–54 touches the G or H paths.
+- **History kept as written:** the 7E-A run-1 NOT ACCEPTED cell, the 7E-C run-1 hold and the stale-image runs.
+- **Phase 7E: COMPLETE.**
+
+### 3. Final blocker sweep (Phase 54C)
+
+**Search.** Across the checklist, this audit and the ledger, I searched for: RELEASE BLOCKER, BLOCKER, FAIL, CRITICAL, HARD/SOFT LOCK, (KNOWN) OPEN, RETEST PENDING, HARDWARE RETEST REQUIRED, SOFTWARE FIXED, DEVICE RETEST, TODO, FIXME, unsupported, placeholder, no-op, unbound, stale firmware and stale pack. The same terms were searched in production sources (`native/core/src`, `native/core/include`, `native/targets/tdeck/main`).
+
+**Production sources.** No `TODO`, `FIXME`, `XXX` or `HACK`. The `NoOp` / "no-op" hits are the core's legitimate `CommandStatus::NoOp` and descriptive comments. "placeholder" hits are descriptive comments only.
+
+**Docs.** Every document hit belongs to one of these:
+- a row that Batch 52's reconciliation already dispositioned (its category table);
+- a Batch 53 / 53A / 53B row now closed by Phase 7E;
+- a historical cell that is kept as written.
+
+"HARD LOCK" and "SOFT LOCK" do not occur.
+
+| ID | Current status | Alpha 2 blocker | Evidence | Destination if deferred |
+|---|---|---|---|---|
+| RB-1 H-189 / D-46 | HARDWARE PASS (7E-A′) | no | `batch53_release_blockers` E, `batch53a_ending_terminal` | — |
+| H-192 / D-55 terminal Ending | HARDWARE PASS (7E-A′) | no | `batch53a_ending_terminal` 44/44 | — |
+| RB-2 H-187 / D-44, H-119, H-135 | HARDWARE PASS (7E-B) | no | `batch53_release_blockers` W | — |
+| RB-3 H-188 / D-45, H-191 / D-48 gate, H-12, H-13, D-53 | HARDWARE PASS (7E-C, after 53B) | no | `batch53_release_blockers` M/R, `batch53b_moongate_return` 24/24 | — |
+| H-195 no return link | not a defect (original) | no | `re/notes/batch53b-moongate-return.md` | — |
+| RB-4 H-146 / D-49 | HARDWARE PASS (7E-D) | no | `batch53_release_blockers` S | — |
+| H-190 / D-47, H-137 Refuge | accepted (witnessed); text host-certified | no | `batch53_release_blockers` B2/K | — |
+| H-151 | HARDWARE PASS (7E-F) | no | B21A RED-7 | — |
+| H-148, H-158, H-159, H-161, H-162, D-21, D-22 | accepted (previously confirmed) | no | `batch21b`, `batch23`, `batch24` | — |
+| H-30 | accepted (previously confirmed) | no | `quest_search` | — |
+| H-149, H-150, H-152 | original behaviour preserved | no | `bugs-del-original.md` | — |
+| H-194 / D-57 two literal `victory` lines after the ending | open; cosmetic device text | no (readable, no state) | 53A transcript dump | next batch that touches the ending (Alpha 3, with D-54) |
+| H-193 / D-56 ending Y/N box questions answered for the player | open; presentation | no | ENDGAME.OVL `0x0852`/`0x088b` | Alpha 3 (ending presenter) |
+| D-54 endgame cinematic / paged ending | missing presentation | no | §14 Batch 53 | Alpha 3 |
+| D-48 moongate transit animation | missing presentation | no | `0x48a8` | Alpha 3 |
+| D-58 standing-on-gate re-fire | minor divergence (native and reference) | no | MAINOUT `0x0b00` | Alpha 3 (starts in the reference) |
+| D-59 `SkyRefresh` unbound | minor device-binding divergence; correct for every same-day case | no | 53B probe | Alpha 3 / queued |
+| H-183 – H-186 / D-40 – D-43 scene fidelity | classified, not fixed | no (no lock, no state) | B51 | Alpha 3 scene fidelity |
+| H-22 / D-50 wish case-insensitivity | minor divergence | no | kernel `0x6f1e` | Alpha 3 |
+| H-45 / D-51 potion cancel refund | player-favourable divergence | no | B52 | Alpha 3 |
+| H-63 / D-52 `^` caret glyph | cosmetic | no | B52 | Alpha 3 UI |
+| H-15 (text half), other non-combat `Direction?` prompts under the aim overlay | presentation | no | §14 Batch 53 (D-53 fixed only `To phase:`) | Alpha 3 UI |
+| H-139, H-140 / D-8 Ready picker | known open presentation | no | Y-28 | Alpha 3 UI |
+| D-38 named/scheduled NPC 1988 sleeping pose | unresolved original-behaviour question | no | B49 Outcome D | Alpha 3 (needs an original witness) |
+| H-51, H-84, H-123, H-128, H-129, H-136, H-138 | evidence gaps, host-certified | no | B52 category 6 | optional future observation |
+| D-3 audio (and the audio-driven items) | out of scope | no | — | Alpha 3 |
+| D-1, D-2, D-7 product decisions; D-4, D-9 reference questions | open | no | ledger | Alpha 3 |
+| D-5, D-6, D-12 – D-16 | incomplete / presentation | no | ledger | Alpha 3 |
+| D-10 / D-39 residual sweep durations | machine-dependent preservation choice | no | B51 | preservation-profile candidate |
+| D-17, D-18 dead code | hygiene | no | ledger | hygiene |
+| Diagnostics compiled in (`INPUT_TRACE`, U5OBJ trace, SD self-test file) | **decided at RC: kept** — log-only; removing them is a production change outside this batch | no | §14 Batch 52 §8 | Alpha 3 hygiene |
+| Host fixture copies of non-binder services (`shrine_services_.record` returns null and the Blackthorn scene tables are null in the fixture) | test hygiene; the device binds both | no | §4 below | future fixture hygiene |
+| `ctest -j 6` `gameplay_parity` SEGFAULT (Batch 22 note) | host test-infra; the recorded totals are serial | no | Batch 22 baseline note | test infra |
+
+**Active Alpha 2 release blockers: 0.**
+
+### 4. Service-binding completeness (Phase 54D)
+
+**Probe.** A static probe listed every function-pointer hook declared in `native/core/include/openu5/*.h` (76 declarations) and located the code that assigns each: the device, the core itself or the host fixture. It found no gap:
+
+- **Quest / endgame, Words of Power, moonstones, rest / karma, shops / transport.** Every hook is set in the three production binders `bind_quest_services`, `bind_rest_services` and `bind_shop_services`. `initialize()` and `attach_host_test_fixture()` each call all three exactly once, and neither assigns a quest or shop hook outside them. `batch53_release_blockers` B6 / B7 pin this (GREEN).
+- **`CommandContext` service pointers** (`actors`, `npc_data`, `rest_services`, `combat_context`, `dungeon_context`, `transport_services`, `dialogue_services`, `shop_services`, `shrine_services`, `quest_world`, `blackthorn`, `blackthorn_scene`, `outdoor`, `look`, `terrain`, `services` = effect / reload / banner, `events`). All are bound by the device. The fixture's copies match the device's apart from whitespace, plus its fixture-owned dungeon and enemy tables and a heap A* scratch.
+- **Transport.** `TransportServices` is built by core `world_transport_services()` for both.
+- **Save / load.** Save / load runs through `AlphaSaveService`, whose host counterpart is the two-slot memory stub, and `stage_generation()`.
+- **Dungeon / session transitions** run through the device's own event consumers.
+- **Fixture-only gameplay services: none.** The fixture is *weaker* than the device in two places: shrine text returns null, and the Blackthorn capture tiles and script are null. Those paths are certified by `shop_parity`, `blackthorn_scene` and `batch45b`, not by fixture runtime tests. This is recorded as test hygiene; it is not a device gap.
+- **Unbound on the device, by decision.** `CommandContext::sky` (D-59, queued). `QuestWorldServices::end_narration` / `endgame_script` (D-54, Alpha 3). The optional hooks with safe fallbacks that Batch 52 classified: `DialogueServices::handoff`, `ConversationContext` localisation helpers, `CombatResources::reset_doors`, the `DungeonContext` alternative consumers, `UiControllerServices::dispatch`. No **required** runtime callback is null.
+
+No new architecture; nothing changed.
+
+### 5. Persistence (Phase 54E)
+
+All targets were GREEN in the baseline run. No save schema changed.
+
+| Requirement | Target(s) and checks |
+|---|---|
+| Ordinary save / load, Alt+L ("quick load") | `batch27_alt_load` 37/37 |
+| System Menu Continue Latest; title → Journey Onward → Continue | `batch26_dungeon_save` 34/34 (D2), `batch28_save_validation` 51/51 (F2 title Continue), `batch24_reload_parity` 47/47 |
+| Generation fallback, corrupt-newest | `batch28_save_validation` 51/51 |
+| Dungeon save / load | `batch26_dungeon_save` 34/34 |
+| Town save / load (doors, NPCs, chests) | `batch24_reload_parity` 47/47, `batch23_vault_parity` 45/45, `batch21b_chest_reset` 38 |
+| Ship / transport objects | object round-trip checks in batches 26 / 27 / 28, and `persistence_parity` |
+| Quest flags / game-won | `batch53a_ending_terminal` TI4 / TI6 / TV12, `persistence_parity` |
+| Moonstones | `batch53_release_blockers` R |
+| Loose objects | `batch26_dungeon_save` L1 / L2, `batch22_basement_objects` 23/23 |
+| Power-cycle-equivalent (a fresh runtime, then Continue / Alt+L) | `batch26_dungeon_save` D2 / L2, `batch27_alt_load` P / E′ |
+
+### 6. Input / mode (Phase 54F)
+
+All targets were GREEN.
+
+| Area | Target(s) and checks |
+|---|---|
+| Exploration, combat, dungeon input | `ui_session` 277, `input_regression`, `dungeon_input_regression`, `movement_regression`, `combat_escape_regression`, `ui_mode_regression` |
+| System Menu, Developer overlay | `ui_debug_menu` 222, `debug_developer` 69, `debug_map_picker` 62, `debug_labels` 309, `frontend` |
+| Camp | `batch29_rest_wiring` 26/26, `batch32_camp_watch` 35/35, `batch51_camp_pacing` 21/21 |
+| Mic, raw keys | `batch41_raw_key` 9/9, `batch12b_hardware_regression`, `batch19_command_char_runtime` 57 |
+
+**Ending mode** (`batch53a_ending_terminal` 44/44):
+- U2 and TV1 / TS1: the Ending cannot fall back into Dungeon after victory.
+- TV12, TS12 and TI6: loading a pre-ending save leaves the Ending.
+- TV9 / TV10: `Alt+M` and `Alt+D` over the ended game return to it.
+- TV6 / TV7: `Alt+S` and System Menu Save are refused.
+
+**Modal wedges** — the input freeze class and pending-question wedges (H-118 / H-165 / H-167):
+- `batch31_h165_dungeon_entry` 11/11;
+- `batch25_shard_ritual` 42/42: a pending yes/no question survives `Alt+D` and the Certification (H-118), driven with raw keys and a short Mic press;
+- `batch51_camp_pacing` 21/21: `Alt+S`, `Alt+M`, Mic, `Alt+D` and `Alt+L`, pressed during a paced beat, are swallowed and do not wedge.
+- `batch51_scene_pacing` 28/28: the scene pacer holds input modally and then releases it.
+
+**No stale scene mode survives a load:**
+- The Ending is the one persistent scene mode, and a load leaves it: `batch53a_ending_terminal` TV12 / TS12 / TI6.
+- `Alt+L` ends in the same `synchronize_loaded_world()` as Continue Latest (`batch27_alt_load`).
+- A load cannot land mid-beat, because paced scenes swallow it (`batch51_camp_pacing`).
+
+### 7. Decision (Phase 54G)
+
+**ALPHA 2 READY FOR RELEASE CANDIDATE.** There are zero active blockers (§3), no service gap (§4), and the persistence and input / mode guards are GREEN (§5–6).
+
+### 8. RC identity (Phase 54H)
+
+The project had no RC convention. Tags are `alpha2-batchNN-<slug>`, and every Launcher since Alpha 2.0.0 shares the file name `OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`, which is how a stale image reached the device in Batch 50. RC1 is identified four ways:
+
+- **Firmware version.** `PROJECT_VER` `2.0.0-alpha2-debug` → **`2.0.0-alpha2-rc1-debug`**. The identity screen shows it as `FW 2.0.0-alpha2-rc1-debug`. It stays a Debug image: the Developer tools are part of Alpha 2.
+- **Launcher file name.** `package_launcher.py` now derives the name from `PROJECT_VER`: **`OpenU5-TDeck-Alpha2.0.0-alpha2-RC1-Debug-Launcher.bin`**. A non-RC version still yields the historical name.
+- **Tag.** The annotated tag is **`alpha2-batch54-rc1`**. It carries the image path, SHA-256 and embedded `Git`.
+- **Save compatibility is untouched.** The version string is read only by the identity screen and log (`main.cpp`). Saves stay `/ultima5/saves/alpha1-g{0,1}.*` with no version field, the resource-pack gate compares size / CRC, and `alpha_save*.cpp` has no version gate. The `2.0.0-alpha2-debug` fallback literals in `main.cpp`, used only if the app descriptor is missing, were deliberately left alone.
+
+### 9. Firmware and resource pack (Phases 54I / 54J)
+
+**Pre-commit fresh build** `native/targets/tdeck/build-batch54-pre` (ESP-IDF 6.1, `--no-ccache`, `batch54-precommit-firmware-build.log`):
+- **878,752 B (`0xd68a0`)**, identical in size to Batch 53A;
+- **169,824 B (16 %) free** in the 1 MiB app partition;
+- **zero compiler warnings**; the five `component_validation` CMake notices are ESP-IDF's own.
+
+**RC image.** It is rebuilt from scratch after the commit (`build-batch54`, no ccache), so the embedded `Git` is the RC commit, and packaged there. Its path, SHA-256 and `Git` are in the tag.
+
+**SD resource pack: unchanged.** No pack source or packer changed; the RC expects exactly 2,041,466 B / CRC `0x26f75ae6` / SHA-256 `a48abdbf…379b`. **The stale-pack gate still works.**
+- In ctest, `batch53_release_blockers` P4 checks that the identity lock names this pack. P5 checks that a pack missing any of the three Batch 53 sections is refused at `open()`.
+- Batch 54 also ran it by hand with the real Batch 51 pack (2,039,545 B, SHA-256 `434cd664…`) as the second argument: **96 / 96 GREEN**, and P6 confirmed that the Batch 51 pack is rejected.
+
+**No SD recopy.**
+
+### 10. Host validation (Phase 54K)
+
+- **Targeted release set: 71 targets, all GREEN** in the baseline run (`native/core/batch54-baseline-targeted.log`; the stale-pack run is `batch54-stale-pack.log`):
+  - release blockers 3 (95 / 44 / 24 checks);
+  - persistence 9;
+  - quest / gameplay parity 7;
+  - shops / transport 5;
+  - world / dungeon / combat 14;
+  - presentation 14;
+  - input / mode 15;
+  - Developer 4.
+- **Full suite: 123 / 123 serial.**
+- **Post-commit run.** Both sets are re-run from a fresh build on the committed RC tree after the commit, and the totals go in the tag message. Those logs are git-ignored (`batch54-rc-*.log`), so the tagged tree stays clean.
+
+### 11. Row updates
+
+| Row(s) | Before | After |
+|---|---|---|
+| RB-1 H-189 / D-46, H-192 / D-55 | SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-A′) | **HARDWARE PASS (7E-A′, Batch 53A image)** |
+| RB-2 H-187 / D-44, H-119, H-135 | … (7E-B) | **HARDWARE PASS (7E-B)** |
+| RB-3 H-188 / D-45, H-191 / D-48 gate, H-12, H-13, D-53 | … (7E-C / C′) | **HARDWARE PASS (7E-C; return step adjudicated original, 53B)** |
+| RB-4 H-146 / D-49 | … (7E-D) | **HARDWARE PASS (7E-D)** |
+| H-190 / D-47, H-137 Refuge half | … (7E-E) | **ACCEPTED** (witnessed on the device; text host-certified) |
+| H-151 | host-certified; device observation owed (7E-F) | **HARDWARE PASS (7E-F)** |
+| H-148, H-158, H-159, H-161, H-162, D-21, D-22 | device observation owed (7E-G) | **ACCEPTED** (previously physically confirmed) |
+| H-30 | device observation owed (7E-H) | **ACCEPTED** (previously physically confirmed) |
+
+No new ID.
+
+### 12. Not done in this batch
+
+- No flash and no SD change.
+- No gameplay, save, pack, UI or ending code touched.
+- No Alpha 3 work: no audio, music, UI rework, moongate animation or endgame cinematic.
+- No non-blocking fidelity item fixed: H-194, D-58, D-59, H-183 – H-186, H-22, H-45 and H-63 stay open.
+- The final public release waits for Phase 8.

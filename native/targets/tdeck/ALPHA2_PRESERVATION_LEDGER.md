@@ -286,6 +286,29 @@ Every row checked against the Phase 6T–7D hardware results and the Batch 52 au
 
 **Batch 53B status.** Phase 7E-C run 1: first moongate transit PASS, destination gate drawn, **stepping back onto the destination gate did not transport the party back**, Vas Rel Por PASS; Test C held. Adjudicated **Outcome A** — the original has no return link: every gate leads to the stone of the current moon phase, which is the one the party just arrived on (ULTIMA.EXE `0x4962`–`0x4977`, `0x47f4`). D-45 / D-48 (gate visibility) / D-53 are unchanged in status: **SOFTWARE FIXED — HARDWARE RETEST PENDING**, now completed by **7E-C′** (revised criteria, no reflash). No production change. New open rows: D-58, D-59 (both minor, queued).
 
+**Batch 54 status (Alpha 2 RC1).** Phase 7E is complete; see the checklist's Batch 54 section.
+- **HARDWARE PASS:**
+  - D-44 (7E-B);
+  - D-45 with D-48 gate visibility and D-53 `To phase:` (7E-C, return step adjudicated original in 53B);
+  - D-46 and D-55 (7E-A′);
+  - D-49 (7E-D).
+- **Accepted:**
+  - D-47: the Refuge was witnessed on the device, and its KARMA.DAT text is host-certified;
+  - D-21 and D-22: 7E-G, previously physically confirmed.
+- **No row changed kind, and no row was fixed in Batch 54.**
+- **Still open and non-blocking:**
+  - D-56, D-57, D-58 and D-59;
+  - the D-48 transit animation and D-54;
+  - D-40 – D-43, D-50 – D-52, D-38's NPC pose;
+  - the Batch 52 open decisions, questions and Alpha 3 items.
+
+  The Alpha 2 release notes (`ALPHA2.md`, repository root) list them for testers.
+
+**Totals after Batch 54.**
+- 19 deliberate (unchanged).
+- Software-fixed rows awaiting hardware: **none**.
+- Open, non-blocking: D-56 and D-57 (ending); D-58 and D-59 (moongate); plus everything listed as open after Batch 52 except the release blockers, all of which are now closed.
+
 **Totals after Batch 53B.** 19 deliberate (unchanged). Software-fixed rows awaiting Phase 7E: as after Batch 53A, with D-45's retest moved from 7E-C to 7E-C′. New open rows: D-58, D-59 (queued), in addition to D-56 (Alpha 3) and D-57 (queued).
 
 **Totals after Batch 53A.** 19 deliberate (A-1 … A-15, E-1 … E-4). Software-fixed rows awaiting Phase 7E: D-44, D-45 (with D-48 gate / D-53 prompt), D-46 and D-55 (7E-A′), D-47, D-49. New open rows: D-56 (Alpha 3), D-57 (queued).

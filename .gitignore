@@ -188,6 +188,10 @@ native/targets/tdeck/build-*/
 /native/targets/tdeck/build-batch45*-*.log
 /native/targets/tdeck/export-batch1[47].log
 /native/targets/tdeck/export-batch21a*.log
+# Batch 54: the post-commit RC validation logs. They are produced after the commit
+# on the tagged tree; their totals and the image SHA-256 are in the tag message.
+/native/core/batch54-rc-*.log
+/native/targets/tdeck/batch54-rc-*.log
 /native/targets/tdeck/export_log*.txt
 # Verbatim .NPC records for location 17 lifted from the shipped pack (EA data, like
 # loot_names.inc): read by tests/batch21b_lb_basement_probe.cpp, never distributed.

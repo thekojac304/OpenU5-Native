@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import re
 import struct
 
 
@@ -37,6 +38,19 @@ def validate(data: bytes) -> None:
         raise ValueError("Invalid image SHA-256")
 
 
+def launcher_name(version: str) -> str:
+    """Name the image after PROJECT_VER, so a release candidate cannot share a file
+    name with an ordinary batch build: 2.0.0-alpha2-debug keeps the historical
+    OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin; 2.0.0-alpha2-rc1-debug is
+    OpenU5-TDeck-Alpha2.0.0-alpha2-RC1-Debug-Launcher.bin."""
+    debug = version.endswith("-debug")
+    base = version[:-len("-debug")] if debug else version
+    base = re.sub(r"-rc(\d+)$", r"-RC\1", base)
+    if not re.fullmatch(r"[0-9A-Za-z.\-]+", base):
+        raise ValueError(f"Unexpected project version {version!r}")
+    return f"OpenU5-TDeck-Alpha{base}{'-Debug' if debug else ''}-Launcher.bin"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--build-dir", type=Path, default=Path(__file__).resolve().parent / "build")
@@ -50,12 +64,13 @@ def main() -> None:
         raise ValueError("App image must be inside the build directory")
     data = source.read_bytes()
     validate(data)
-    destination = build / "launcher" / "OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin"
+    destination = build / "launcher" / launcher_name(metadata["project_version"])
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_bytes(data)
     if destination.read_bytes() != data:
         raise OSError("Packaged image differs from app image")
     print(f"Launcher image: {destination}")
+    print(f"Firmware version: {metadata['project_version']}")
     print(f"Size: {len(data)} bytes")
     print(f"App partition minimum: {(len(data) + 0xFFFF) & ~0xFFFF} bytes (64 KiB alignment)")
     print(f"SHA-256: {hashlib.sha256(data).hexdigest()}")

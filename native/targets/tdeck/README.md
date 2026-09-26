@@ -1,5 +1,9 @@
 # OpenU5-TDeck: Milestone 5 native movement
 
+> **Current release: Alpha 2 RC1.** Release notes, install and SD layout are in
+> [`../../../ALPHA2.md`](../../../ALPHA2.md); packaging in [LAUNCHER.md](LAUNCHER.md).
+> The Milestone 5 text below is historical.
+
 The foundational native core is now under [../../core](../../core/README.md).
 The device movement slice uses its portable state and rules; hardware/input
 behavior remains unchanged and the latest input cleanup is still physically

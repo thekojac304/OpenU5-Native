@@ -1,0 +1,138 @@
+=== release-blockers  (^(batch53_release_blockers|batch53a_ending_terminal|batch53b_moongate_return)$)
+1/3 Test #77: batch53_release_blockers .........   Passed    0.34 sec
+2/3 Test #78: batch53a_ending_terminal .........   Passed    0.07 sec
+3/3 Test #79: batch53b_moongate_return .........   Passed    0.05 sec
+77: batch53_release_blockers: 95/95 checks GREEN, 0 RED
+78: batch53a_ending_terminal: 44/44 checks GREEN, 0 RED
+79: batch53b_moongate_return: 24/24 checks GREEN, 0 RED
+The following tests passed:
+100% tests passed out of 3
+=== persistence  (^(persistence_parity|batch21b_chest_reset|batch22_basement_objects|batch23_vault_parity|batch24_reload_parity|batch25_shard_ritual|batch26_dungeon_save|batch27_alt_load|batch28_save_validation)$)
+1/9 Test   #5: batch21b_chest_reset .............   Passed    0.01 sec
+2/9 Test  #48: batch22_basement_objects .........   Passed    0.04 sec
+3/9 Test  #49: batch23_vault_parity .............   Passed    0.05 sec
+4/9 Test  #50: batch24_reload_parity ............   Passed    0.11 sec
+5/9 Test  #51: batch25_shard_ritual .............   Passed    0.05 sec
+6/9 Test  #52: batch26_dungeon_save .............   Passed    0.08 sec
+7/9 Test  #53: batch27_alt_load .................   Passed    0.10 sec
+8/9 Test  #54: batch28_save_validation ..........   Passed    0.25 sec
+9/9 Test #109: persistence_parity ...............   Passed    0.91 sec
+5: batch21b chest reset: 38 checks passed
+48: batch22_basement_objects: 23/23 checks GREEN, 0 RED
+49: batch23_vault_parity: 45/45 checks GREEN, 0 RED
+50: batch24_reload_parity: 47/47 checks GREEN, 0 RED
+51: batch25_shard_ritual: 42/42 checks GREEN, 0 RED
+52: batch26_dungeon_save: 34/34 checks GREEN, 0 RED
+53: batch27_alt_load: 37/37 checks GREEN, 0 RED
+54: batch28_save_validation: 51/51 checks GREEN, 0 RED
+The following tests passed:
+100% tests passed out of 9
+=== quest-gameplay  (^(quest_parity|gameplay_parity|gameplay_integration|quest_search|batch7b|batch15_sacrifice_roster|batch18_well_ceremony)$)
+1/7 Test   #4: quest_search .....................   Passed    0.01 sec
+2/7 Test  #10: gameplay_integration .............   Passed    0.02 sec
+3/7 Test  #81: batch18_well_ceremony ............   Passed    0.02 sec
+4/7 Test  #89: batch7b ..........................   Passed    0.03 sec
+5/7 Test  #93: batch15_sacrifice_roster .........   Passed    0.01 sec
+6/7 Test  #99: gameplay_parity ..................   Passed    9.42 sec
+7/7 Test #103: quest_parity .....................   Passed    4.85 sec
+4: 15 quest_search checks passed
+89: batch7b: 264 checks passed
+The following tests passed:
+100% tests passed out of 7
+=== shops-transport  (^(shop_adapters|shop_flow|shop_parity|transport_flow_parity|travel_parity)$)
+1/5 Test #13: shop_adapters ....................   Passed    0.01 sec
+2/5 Test #14: shop_flow ........................   Passed    0.97 sec
+3/5 Test #15: shop_parity ......................   Passed    0.30 sec
+4/5 Test #18: transport_flow_parity ............   Passed    0.02 sec
+5/5 Test #29: travel_parity ....................   Passed    0.20 sec
+The following tests passed:
+100% tests passed out of 5
+=== world-dungeon  (^(world_flow_adapters|world_flow_parity|dungeon_flow_parity|dungeon_parity|movement_flow_parity|dungeon_combat_regression|batch21a_dungeon_room_regression|batch21a3_combat_active_player|batch31_h165_dungeon_entry|combat_parity|advanced_combat_parity|magic_parity|command_parity|turn_parity)$)
+1/14 Test #12: movement_flow_parity ...............   Passed    0.13 sec
+2/14 Test #19: world_flow_adapters ................   Passed    0.01 sec
+3/14 Test #20: dungeon_flow_parity ................   Passed    0.04 sec
+4/14 Test #21: world_flow_parity ..................   Passed    0.18 sec
+5/14 Test #22: dungeon_parity .....................   Passed    0.52 sec
+6/14 Test #23: advanced_combat_parity .............   Passed    1.11 sec
+7/14 Test #24: magic_parity .......................   Passed    0.07 sec
+8/14 Test #25: combat_parity ......................   Passed    0.35 sec
+9/14 Test #27: command_parity .....................   Passed    0.17 sec
+10/14 Test #30: turn_parity ........................   Passed    0.03 sec
+11/14 Test #39: batch21a3_combat_active_player .....   Passed    0.02 sec
+12/14 Test #42: dungeon_combat_regression ..........   Passed    0.01 sec
+13/14 Test #47: batch21a_dungeon_room_regression ...   Passed    6.11 sec
+14/14 Test #59: batch31_h165_dungeon_entry .........   Passed    0.05 sec
+19: 12 world flow adapter checks passed
+23: 125440 advanced combat snapshots passed; 3 capacity/invalid-input adapter checks passed
+25: 7 combat adapter checks passed
+47: RED-1  reused room-number collision (floor 0 room 1 clears floor 1 room 1)
+47: RED-3  cleared room emits the message only and stays walkable
+47: RED-2  every healthy party member gets a turn inside a room
+47: RED-4  lost battle, keep moving, enter another room
+47: RED-6  Set Active Player inside a room (H-150/H-152)
+47: RED-7  an arena containing a divide-on-hit enemy stays playable (H-151)
+47: RED-8  the pit-fed chest alcove blocks all four ways and Search opens it (H-149)
+47: RED-5  mutually exclusive states really are exclusive
+59: batch31_h165_dungeon_entry: 11/11 GREEN
+The following tests passed:
+100% tests passed out of 14
+=== presentation  (^(presentation_regression|dungeon_view_regression|dungeon_art_regression|gem_view_regression|action_feedback_regression|batch37_bed_viewport|batch39_party_panel|batch42_advancement_flash|batch43_sleep_scene|batch45_npc_beds|batch48_bed_pose|batch51_scene_pacing|batch51_camp_pacing|blackthorn_scene)$)
+1/14 Test #32: presentation_regression ..........   Passed    0.01 sec
+2/14 Test #33: dungeon_view_regression ..........   Passed    0.01 sec
+3/14 Test #34: dungeon_art_regression ...........   Passed    0.03 sec
+4/14 Test #35: gem_view_regression ..............   Passed    0.01 sec
+5/14 Test #44: action_feedback_regression .......   Passed    0.02 sec
+6/14 Test #56: batch45_npc_beds .................   Passed    0.05 sec
+7/14 Test #57: batch48_bed_pose .................   Passed    0.06 sec
+8/14 Test #65: batch37_bed_viewport .............   Passed    0.05 sec
+9/14 Test #66: batch39_party_panel ..............   Passed    0.04 sec
+10/14 Test #68: batch42_advancement_flash ........   Passed    0.08 sec
+11/14 Test #69: batch43_sleep_scene ..............   Passed    0.31 sec
+12/14 Test #75: batch51_scene_pacing .............   Passed    0.01 sec
+13/14 Test #76: batch51_camp_pacing ..............   Passed    0.05 sec
+14/14 Test #97: blackthorn_scene .................   Passed    0.02 sec
+34: dungeon_art regression: all checks passed
+56: batch45_npc_beds: 14/14 checks GREEN, 0 RED
+57: batch48_bed_pose: 40/40 checks GREEN, 0 RED
+65: batch37_bed_viewport: 12/12 GREEN, 0 RED
+66: batch39_party_panel: 17/17 GREEN, 0 RED
+68: Batch 42 visual: 23/23 checks
+69: Batch 43 sleep scene: 20/20 checks
+75: Batch 51 scene pacing: 28/28 checks
+76: Batch 51 Camp pacing: 21/21 checks
+The following tests passed:
+100% tests passed out of 14
+=== input-mode  (^(ui_session|ui_mode_regression|input_regression|dungeon_input_regression|movement_regression|batch19_command_char|batch19_command_char_runtime|batch41_raw_key|alpha_runtime_integration_regression|batch12b_hardware_regression|combat_escape_regression|direct_troll_handoff_regression|frontend|batch29_rest_wiring|batch32_camp_watch)$)
+1/15 Test  #1: frontend ...............................   Passed    0.01 sec
+2/15 Test  #2: ui_session .............................   Passed    0.01 sec
+3/15 Test #31: movement_regression ....................   Passed    0.01 sec
+4/15 Test #36: combat_escape_regression ...............   Passed    0.01 sec
+5/15 Test #37: direct_troll_handoff_regression ........   Passed    0.02 sec
+6/15 Test #40: input_regression .......................   Passed    0.01 sec
+7/15 Test #41: dungeon_input_regression ...............   Passed    0.01 sec
+8/15 Test #43: batch12b_hardware_regression ...........   Passed    0.05 sec
+9/15 Test #45: ui_mode_regression .....................   Passed    0.01 sec
+10/15 Test #46: alpha_runtime_integration_regression ...   Passed    0.02 sec
+11/15 Test #55: batch29_rest_wiring ....................   Passed    0.10 sec
+12/15 Test #60: batch32_camp_watch .....................   Passed    0.05 sec
+13/15 Test #67: batch41_raw_key ........................   Passed    0.05 sec
+14/15 Test #82: batch19_command_char_runtime ...........   Passed    0.02 sec
+15/15 Test #95: batch19_command_char ...................   Passed    0.02 sec
+2: 277 UI session checks passed; sizeof(UiSession)=512 block=168
+55: batch29_rest_wiring: 26/26 checks GREEN, 0 RED
+60: H-167: 35/35 checks
+67: Batch 41 raw key: 9/9 checks
+95: 57 Batch 19 command-character picker and crystal-ball checks passed
+The following tests passed:
+100% tests passed out of 15
+=== developer  (^(ui_debug_menu|debug_developer|debug_labels|debug_map_picker)$)
+1/4 Test #6: debug_labels .....................   Passed    0.01 sec
+2/4 Test #7: ui_debug_menu ....................   Passed    0.01 sec
+3/4 Test #8: debug_map_picker .................   Passed    0.01 sec
+4/4 Test #9: debug_developer ..................   Passed    0.01 sec
+6: 309 debug labels checks passed
+7: 222 debug menu checks passed; sizeof(UiDebugMenu)=304
+8: 62 debug map picker checks passed
+9: 69 debug developer checks passed
+The following tests passed:
+100% tests passed out of 4

@@ -943,3 +943,94 @@ Run it on whatever Batch 53 / 53A image is on the device (53B changed no firmwar
 - *Known, do not file:* no gate close/open animation, so steps 3 and 5 are instantaneous and step 5 looks like "nothing happened" (D-48, Alpha 3). Standing on a gate and pressing Space does not re-fire it on the device; the original re-fires it (to the same stone at the same hour) — declared divergence D-58, no visible difference here.
 
 **Report back:** the `Git` hash, then PASS / FAIL for 7E-C′ steps 2–7.
+
+## Batch 54 — Phase 7E closeout and the Alpha 2 release candidate (2026-09-26)
+
+### Phase 7E — final reconciliation (user report after Batch 53B)
+
+This table records the results as the user reported them. The run-1 cells above (7E-A run 1, 7E-C run 1) and the stale-image history from earlier phases stay as written.
+
+| Test | Rows | Image | Result | Notes |
+|---|---|---|---|---|
+| **7E-A′** ending terminal state | H-189 (RB-1), H-192 / D-55, D-46 | Batch 53A (`Git 5fe1ac5335a1`) | **HARDWARE PASS** | Absorption, `VICTORY!` and the ENDMSG text appear. The device then stays in the terminal Ending, and ordinary dungeon controls no longer resume. Save is refused. Loading a pre-ending save leaves the Ending. Run 1 on the Batch 53 image is kept above: its post-ending state was NOT ACCEPTED, and Batch 53A fixed it. |
+| **7E-B** Word of Power | H-187 (RB-2), H-119, H-135, D-44 | Batch 53 / 53A | **HARDWARE PASS** | The sealed Deceit entrance blocks. Yelling `FALLAX` opens it with the quake. Ordinary `(E)nter` works afterwards. |
+| **7E-C** moongate / Vas Rel Por | H-188, H-191 (RB-3), H-12, H-13, D-45, D-48 (gate), D-53 | Batch 53 / 53A | **HARDWARE PASS (after the Batch 53B adjudication)** | Run 1 passed four checks: the gate is drawn at the night moonstone, the first transit works, Vas Rel Por shows `To phase:`, and phase travel works. The "no return through the destination gate" observation (H-195) is the original's behaviour, not a defect (Batch 53B, Outcome A). The user accepted C on that basis. The revised 7E-C′ steps 4–7 were not reported separately. |
+| **7E-D** transport shop | H-146 (RB-4), D-49 | Batch 53 / 53A | **HARDWARE PASS** | Ship/skiff purchase deducts the gold, places the vessel, and boarding works. Horse purchase and mounting work. |
+| **7E-E** Refuge | H-137 (Refuge half), H-190, D-47 | — | **ACCEPTED — previously witnessed** | The user has seen the party-wipe Refuge path return the party to Lord British's castle. That the speech comes from KARMA.DAT is host-certified (`batch53_release_blockers` B2/K). No hardware run was forced just to prove where the string comes from. |
+| **7E-F** Destard Slime / Gargoyle room | H-151 | Batch 53 / 53A | **HARDWARE PASS** | The authored room opens, turns continue, and controls respond. No actor-storage freeze. |
+| **7E-G** vault reset / door after load | H-158, H-159, H-161, H-162, H-148, D-21, D-22 | earlier images | **ACCEPTED — previously physically confirmed** | Not rerun: nothing after Batch 24 changed that subsystem. |
+| **7E-H** Gorn's brazier keys | H-30 | earlier images | **ACCEPTED — previously physically confirmed** | Not rerun: nothing after Batch 4.5C.1 changed that path. |
+
+**Phase 7E: COMPLETE.** RB-1 … RB-4 are **HARDWARE PASS**. No Phase 7E row is still pending.
+
+The following history is preserved, not rewritten:
+- The stale-firmware runs: Batch 50's device ran the Batch 43 image, and 7B/7C run 1 are INVALID.
+- The Batch 53A correction: the original never leaves ENDGAME.OVL after game-won, so "play continues" was wrong.
+- The Batch 53B moongate adjudication: a gate leads to the current phase's stone, and there is no return link.
+
+### Phase 8 — Alpha 2 RC1 hardware smoke · *new firmware; SD pack unchanged* · about 10–15 minutes
+
+This smoke test looks for catastrophic regressions only; it is not another validation campaign. Compared with the Batch 53A image that passed Phase 7E, the RC1 image changes only the version string and the embedded `Git` hash. The annotated tag `alpha2-batch54-rc1` gives its path, SHA-256 and `Git` hash. `Alt+D` opens Developer and `Alt+M` the System Menu. A short Mic press is Cancel.
+
+**1. Boot / identity (1 min)**
+1. **Do not recopy the SD pack.** `/ultima5/openu5-alpha1-resources.bin` stays the Batch 53 file (2,041,466 B). `/ultima5/openu5-assets.bin` and `/ultima5/saves/` stay as they are.
+2. In Launcher, install `OpenU5-TDeck-Alpha2.0.0-alpha2-RC1-Debug-Launcher.bin`.
+3. Boot. The identity screen is held for about 2 s, so a photo helps. It must read:
+   - **`FW 2.0.0-alpha2-rc1-debug`**
+   - **`Git <first 12 hex of the tag's commit>`**
+   - **`RES v2.0 2041466B CRC 26f75ae6`**
+   - **`ASSET … 132284B CRC 933c9b82`**
+
+   The title screen must follow. A resource-mismatch refusal is a FAIL: report it with the photo.
+
+**2. Basic input (2 min)** — Journey Onward → **Continue Latest** (or start a New Journey).
+1. Move a few cells with the trackball. `L`ook in a direction. `T`alk to someone nearby, type `NAME`, then `BYE`. Open `Z` stats, then press Mic to back out. *Expected:* typed text never moves the party.
+2. Hold Mic for about a second: movement mode toggles. Hold it again to toggle it back.
+3. `Alt+M` opens the System Menu; Mic or `Alt+M` closes it. `Alt+D` opens Developer; Mic backs out to play.
+
+**3. Save / load (1 min)**
+1. Note the position, then press `Alt+S`. *Expected:* "Save complete".
+2. Walk 5 or more cells away.
+3. Press `Alt+L`. *Expected:* "Load complete", the party is back at the saved cell, and the next key moves normally.
+
+**4. Power-cycle Continue (1 min)**
+1. Switch the device off and on. The identity screen must read as in step 1.
+2. Journey Onward → **Continue Latest**. *Expected:* the step-3 save loads at the same position, and input works.
+
+**5. Dungeon (2 min)**
+1. `Alt+D` → Shortcuts → **Preset: Dungeon**. Teleport → **Britannia**, X **240**, Y **74**, Use default entrance **Off**. Close Developer, move **North** onto Deceit's entrance, and press `E`.
+2. Move and turn several times in the 3D view. *Expected:* the view and the HUD's level readout stay correct.
+3. Press `Alt+L` to load the step-3 save; loading out of a dungeon is the check. *Expected:* the surface appears and the next key moves normally.
+
+**6. Combat (2–3 min)**
+1. `Alt+D` → Shortcuts → **Preset: Combat** (maxed party, best gear). Walk the Britannia wilderness until an encounter opens an arena. For a deterministic route, use the 7E-F Destard room instead: Teleport → **Destard**, Level **6**, X **3**, Y **2**, face **North**, then forward.
+2. Take several turns: move, attack, and let each member act.
+3. End the fight normally: win it, or leave an outdoor arena by the edge. *Expected:* the map returns and the next key plays. If the Destard fight drags on, press `Alt+L` to get out, and note that you did.
+
+**7. Rest (1 min)**
+1. Outdoors on foot, press `H` (Hole up / Camp), choose a few hours, press Enter, and post no watch. *Expected:* the camp scene draws, the clock advances, and the party wakes. The status panel and map come back, and the next key plays.
+2. If the apparition appears, it counts as step 8's scene: let it run, and answer the Hail and the karma speech.
+
+**8. Scripted scene (1–2 min)** — the Refuge (the 7E-E route, deterministic)
+1. Press `Alt+S` first. Then `Alt+D` → Party → **Party size 1**, then Shortcuts → **Preset: Low health/status**, and close Developer.
+2. Press Space (Pass) until the poison kills the Avatar. *Expected:*
+   - "An unending darkness engulfs thee..." and "Thou hast found refuge." appear.
+   - The apparition and a karma speech follow, paced rather than all at once.
+   - The party wakes in Lord British's castle, healed, and input works.
+3. To get the full party back, press `Alt+L` to load the save from step 8.1.
+
+**9. Ending mode — not run.** `batch53a_ending_terminal` (44/44) certifies it on the RC tree. Batch 54 changes no ending code, and 7E-A′ passed on the device.
+
+**10. Transport / moongate — optional.** Run it only if convenient: 7E-C and 7E-D passed, and Batch 54 changes neither.
+
+- **PASS requires every step above, and all of these:**
+  - no crash, reset or watchdog;
+  - no lock: every screen answers the trackball, `Alt+M` or Mic;
+  - no stale-resource refusal;
+  - no input-mode corruption: typing never moves the party, and movement never types;
+  - Save, Load and Continue restore the saved state;
+  - the dungeon, combat and rest loops return to play.
+- **FAIL:** report the step, what the screen showed, the `Git` line and, if you have it, `/ultima5/logs/` from the SD card.
+- *Known, do not file:* the "Known issues" list in `ALPHA2.md` at the repository root. It covers no audio, no moongate or ending animation, the two `victory` lines after the ending text (H-194), D-58 / D-59, and the Alpha 3 scene-fidelity rows H-183 – H-186.
+
+**Report back:** the `FW` and `Git` lines, then PASS / FAIL for steps 1–8.
