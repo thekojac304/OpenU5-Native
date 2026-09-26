@@ -10,6 +10,8 @@
 #include "alpha_save.h"
 #include "asset_pack.h"
 #include "dungeon_art_cache.h"
+#include "openu5/audio.h"
+#include "openu5/audio_pack.h"
 #include "openu5/command_char.h"
 #include "openu5/combat.h"
 #include "openu5/dialogue_orchestration.h"
@@ -47,6 +49,15 @@ class AlphaRuntime {
     bool handle(const RawInputEvent &);
     esp_err_t render(Board &, bool force = false);
     void log_metrics(const char *checkpoint) const;
+    // A3-01. The audio seam: the pack's capability (read at boot by
+    // tdeck::load_audio_pack_info) and the output. main.cpp calls it after
+    // initialize(); a host test calls it after attach_host_test_fixture().
+    // Until it is called the runtime is silent and Settings reports "no
+    // audio pack". A null backend is silent.
+    void configure_audio(const openu5::AudioPackInfo &, openu5::AudioBackend *);
+    const openu5::AudioService &audio() const { return audio_; }
+    const openu5::AudioPackInfo &audio_pack() const { return audio_pack_; }
+    const openu5::FrontendSettings &device_settings() const { return settings_; }
     openu5::GameState &game() { return game_; }
     const openu5::UiSession *ui() const { return ui_; }
 
@@ -106,6 +117,8 @@ class AlphaRuntime {
     const openu5::BlackthornScenePacer &blackthorn_pacer() const { return blackthorn_pacer_; }
     bool camp_scene_inverted() const { return camp_scene_inverted_; }
     bool system_menu_open() const { return system_menu_.active(); }
+    // A3-01: the System Menu page as it would be drawn (read-only).
+    openu5::FrontendView system_menu_view() const { return system_menu_.view(); }
     // Batch 53 (D-53): the status/prompt line render() hands to the Board.
     const char *status_overlay() const { return overlay(); }
     uint32_t routed_command_count() const { return routed_command_sequence_; }
@@ -222,6 +235,10 @@ class AlphaRuntime {
     AlphaSettingsService settings_store_{};
     openu5::FrontendSession frontend_{};
     openu5::FrontendSettings settings_{};
+    // A3-01. Presentation only: the service reads the cue, the settings'
+    // volumes and the pack's capability, and never GameState or any RNG.
+    openu5::AudioService audio_{};
+    openu5::AudioPackInfo audio_pack_{};
     openu5::IntroViewPlayer intro_view_{};
     openu5::IntroViewFrame intro_frame_{};
     openu5::SystemMenuSession system_menu_{};
@@ -485,6 +502,18 @@ class AlphaRuntime {
     void u5obj_trace_render(const openu5::PresentationSnapshot &);
     void u5obj_bind();
     static void start_smoke(void *, int group);
+    // A3-01. Developer > Diagnostics > "Audio test tone (SFX)".
+    static void audio_test_tone(void *);
+    // A3-01. The one binder of the Developer diagnostics services, shared by
+    // initialize() and the host fixture (the fixture used to copy the call).
+    void bind_developer_diagnostics();
+    // A3-01. settings.json -> settings_ -> the input adapter and the audio
+    // service; initialize() and the host fixture both run it.
+    void load_device_settings();
+    /** Push settings_ to every device consumer (input adapter, audio volumes). */
+    void apply_device_settings();
+    /** A presented event's sound: a semantic cue, forwarded to the service. */
+    void present_audio(const openu5::GameEvent &);
 };
 
 } // namespace tdeck

@@ -314,6 +314,14 @@ Every row checked against the Phase 6T–7D hardware results and the Batch 52 au
 - no software-fixed row awaiting hardware;
 - the same open, non-blocking rows.
 
+**Alpha 3 A3-01 status (audio architecture, 2026-09-26; `native/targets/tdeck/ALPHA3_AUDIO.md`).** **D-3 stays open.**
+- **What is new.** The `soundVolume` / `musicVolume` settings are no longer inert. They are the Settings rows *SFX Volume* and *Music Volume*, and they drive an audio service that every presented `Sfx` cue now reaches.
+- **What is still missing.** The device backend renders only the Developer test tone, so gameplay is still silent. D-3 closes with A3-02 / A3-03. H-125 (harpsichord) closes with A3-02.
+- **Two rules recorded for the audio track:**
+  - **SFX Volume is an output gain, not the 1988 sound flag `[0xa9ce]`.** At 0 % the Batch 51 sound-flag choices (sound-ON drags, sound-OFF lute; B51 §13.5) do not change.
+  - **Music is not original.** The stock 1988 DOS game has none. It becomes a deliberate row, derived from the user's Exodus *Ultima V Upgrade* 1.0 files, when A3-04 makes it audible. Stock installs stay silent of music.
+- **No row changed kind, no row was fixed, and no new ID was allocated.** Totals as after Batch 55.
+
 **Totals after Batch 54.**
 - 19 deliberate (unchanged).
 - Software-fixed rows awaiting hardware: **none**.

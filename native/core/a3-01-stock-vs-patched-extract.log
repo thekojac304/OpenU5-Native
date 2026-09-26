@@ -1,0 +1,71 @@
+# A3-01 Phase E/F evidence: does the game pack depend on the music patch?
+# patched = copy of original/u5/ultima5 (Exodus Project U5 Upgrade 1.0 applied)
+# stock   = same copy minus the patch-only files (mid.drv, 16 XMI + setm.xmi, FAT.OPL, MIDPAK*, *.ADV/*.ADD, ULTIMA5.COM, SETM.EXE, u5cfg.exe, u5data.exe, U5.CFG, patch txt files)
+#           and DATA.OVL fileoff 0x5350 restored from MID.DRV to T1K.DRV (u5data.exe's only DATA.OVL change; 3 bytes)
+# NOTE: simulated stock -- the patched ULTIMA.EXE/overlays remain, but the extractor reads no code overlay or EXE.
+# command: npx tsx extractor/src/cli.ts --src <set> --out out-<set>
+
+== patched: 221 files; stock: 150 files
+== DATA.OVL bytes differing patched vs stock: 3
+== extraction outputs present on one side only:
+30,46d29
+< ./music/amiga.mid
+< ./music/blackthorn.mid
+< ./music/britannia.mid
+< ./music/engagement.mid
+< ./music/fanfare.mid
+< ./music/fat.opl
+< ./music/greyson.mid
+< ./music/halls.mid
+< ./music/hornpipe.mid
+< ./music/ladynan.mid
+< ./music/monarch.mid
+< ./music/reunion.mid
+< ./music/rule-britannia.mid
+< ./music/stones.mid
+< ./music/tarantella.mid
+< ./music/theme.mid
+< ./music/worlds-below.mid
+== common outputs that differ:
+DIFF ./manifest.json (not a pack input)
+== every pack:alpha1 input, patched vs stock vs committed-pack source (game/assets):
+SAME init.gam                 6944efc741690183 6944efc741690183 6944efc741690183
+SAME init.ool                 d2ec1ae9f0472fcb d2ec1ae9f0472fcb d2ec1ae9f0472fcb
+SAME maps/overworld.json      cfeb5c5bb10a150f cfeb5c5bb10a150f cfeb5c5bb10a150f
+SAME maps/underworld.json     f7647785a56c36e1 f7647785a56c36e1 f7647785a56c36e1
+SAME maps/smallmaps.json      ea5bc98ade267c0b ea5bc98ade267c0b ea5bc98ade267c0b
+SAME maps/dungeons.json       20a5f216bceb6fb3 20a5f216bceb6fb3 20a5f216bceb6fb3
+SAME maps/combatmaps.json     ecc9c0286d4f625e ecc9c0286d4f625e ecc9c0286d4f625e
+SAME npcs.json                cb6a721f9f57116c cb6a721f9f57116c cb6a721f9f57116c
+SAME data.json                c8e54649c83d0d83 c8e54649c83d0d83 c8e54649c83d0d83
+SAME talk/towne.json          20c3ce6e5dd6c5a5 20c3ce6e5dd6c5a5 20c3ce6e5dd6c5a5
+SAME talk/dwelling.json       b874359d228049ca b874359d228049ca b874359d228049ca
+SAME talk/castle.json         81d078b7ef059b15 81d078b7ef059b15 81d078b7ef059b15
+SAME talk/keep.json           592366ec5d6a89f7 592366ec5d6a89f7 592366ec5d6a89f7
+SAME questions.json           8fbd9af846ac620b 8fbd9af846ac620b 8fbd9af846ac620b
+SAME intro-scenes.json        dccb949201cff3c3 dccb949201cff3c3 dccb949201cff3c3
+SAME intro-pics.png           1f294acc10d41655 1f294acc10d41655 1f294acc10d41655
+SAME intro-pics.json          7f1b38ccaa50bd53 7f1b38ccaa50bd53 7f1b38ccaa50bd53
+SAME look2.json               de2522111d163900 de2522111d163900 de2522111d163900
+SAME shoppe.json              e593c9dc69b400b1 e593c9dc69b400b1 e593c9dc69b400b1
+SAME ds-strings.json          39b24dcfeb29c682 39b24dcfeb29c682 39b24dcfeb29c682
+SAME shrine-scene.json        6afdb0ff5cc88be5 6afdb0ff5cc88be5 6afdb0ff5cc88be5
+SAME signs.json               0340f5222041c4ef 0340f5222041c4ef 0340f5222041c4ef
+SAME demo-scene.json          d810dc40920c631e d810dc40920c631e d810dc40920c631e
+SAME endgame.json             09a2f15ef49b1330 09a2f15ef49b1330 09a2f15ef49b1330
+== raw DOS files pack:alpha1 reads directly (none is in the patch's Files.txt):
+SAME DNG1.16
+SAME DNG2.16
+SAME DNG3.16
+SAME ITEMS.16
+SAME MON0.16
+SAME MON1.16
+SAME MON2.16
+SAME MON3.16
+SAME MON4.16
+SAME MON5.16
+SAME MON6.16
+SAME MON7.16
+SAME runes.ch
+
+VERDICT: stock-shaped and patched sources give byte-identical pack:alpha1 inputs; the game pack cannot tell them apart.

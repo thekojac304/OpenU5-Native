@@ -231,7 +231,7 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     // diagnostics, ui_->attach_debug_menu), so Alt+D opens the real menu and a
     // host test can walk it with raw keys. No existing host test sends Alt+D.
     debug_ = new openu5::UiDebugMenu(context_);
-    debug_->attach_diagnostics({this, start_smoke});
+    bind_developer_diagnostics(); // A3-01: the production binder, not a copy
     ui_->attach_debug_menu(debug_);
 #endif
 
@@ -242,6 +242,10 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     // game already in progress -- the same state frontend_.complete_intent()
     // reaches in production once Continue/New Game actually succeeds -- so
     // command-routing tests exercise gameplay input, not the title menu.
+    // A3-01: settings.json through the same binder initialize() runs (the
+    // host stubs' store is empty unless a test opts in), so a test sees the
+    // device's load-and-apply path, not a copy of it.
+    load_device_settings();
     frontend_.enter_game();
 }
 

@@ -236,13 +236,12 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
     ui_->append(openu5::UiTextChannel::System,"Mic back  Alt+D debug  Alt+S save  Alt+L load");
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
     smoke_.bind({&context_,&resources_,&alpha_report_,&tile_report_,ui_});
-    void *debug_mem=heap_caps_malloc(sizeof(openu5::UiDebugMenu),kPsram);if(!debug_mem)return ESP_ERR_NO_MEM;debug_=new(debug_mem)openu5::UiDebugMenu(context_);debug_->attach_diagnostics({this,start_smoke});ui_->attach_debug_menu(debug_);
+    void *debug_mem=heap_caps_malloc(sizeof(openu5::UiDebugMenu),kPsram);if(!debug_mem)return ESP_ERR_NO_MEM;debug_=new(debug_mem)openu5::UiDebugMenu(context_);bind_developer_diagnostics();ui_->attach_debug_menu(debug_);
 #endif
     {
         debug51::Step trace("settings-load");
-        settings_store_.load(settings_);
+        load_device_settings();
     }
-    input_.set_movement_mode_enabled(settings_.movement_mode);input_.set_trackball_responsiveness(settings_.trackball_responsiveness);
     openu5::FrontendSaveSlot slots[2]{};
     {
         debug51::Step trace("save-slots-inspect");
@@ -403,6 +402,7 @@ void AlphaRuntime::consume_event(const openu5::GameEvent&e){
         dirty_=true;dirty_reason_="narrative-scene";
         return;
     }
+    present_audio(e);
     ui_->consume(e);
     if(e.kind==openu5::GameEventKind::PoisonTick){
         // #213. The roster row inversion is the SHARED 0x2a28 primitive, one
@@ -546,6 +546,9 @@ void AlphaRuntime::release_scene_event(void *p,const openu5::GameEvent &e){
         }
         return;
     }
+    // A3-01. A paced cue reaches the audio service when the pacer releases it
+    // -- the same instant the session sees it -- never when it was emitted.
+    self.present_audio(e);
     self.ui_->consume(e);
 }
 
@@ -561,8 +564,8 @@ void AlphaRuntime::narrative_beat(void *p,const openu5::NarrativeSceneBeat &beat
         if(beat.append)self.ui_->append_continuation(openu5::UiTextChannel::Message,beat.text);
         else self.ui_->append(openu5::UiTextChannel::Message,beat.text);
     }
-    // Y-03 owns real audio; the cue is semantic here, as everywhere else.
-    if(beat.sfx)ESP_LOGI(kTag,"SFX_CUE id=%s source=narrative-scene",beat.sfx);
+    // A3-01: the beat's cue goes to the audio service, like every presented cue.
+    if(beat.sfx){ESP_LOGI(kTag,"SFX_CUE id=%s source=narrative-scene",beat.sfx);self.audio_.play_sfx(openu5::sfx_from_cue(beat.sfx));}
     if(beat.phase!=openu5::RefugePhase::None)
         ESP_LOGI(kTag,"REFUGE_SCENE phase=%d",int(beat.phase));
 }
@@ -1405,7 +1408,7 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
         bool accepted=false;
         if(shortcut==DeviceShortcut::MovementModeToggled){settings_.movement_mode=input_.movement_mode_enabled();accepted=settings_store_.save(settings_);}
         else accepted=frontend_.handle(action,uint32_t(raw.timestamp_us/1000));
-        if(accepted){settings_=frontend_.settings();input_.set_movement_mode_enabled(settings_.movement_mode);input_.set_trackball_responsiveness(settings_.trackball_responsiveness);}
+        if(accepted){settings_=frontend_.settings();apply_device_settings();}
         const auto state_after=frontend_.state();const auto phase_after=frontend_.creation_phase();
         ESP_LOGI(kTag,"FRONTEND_INPUT raw=%s action=%s char=%u accepted=%d state=%s->%s phase=%s->%s name=\"%s\"->\"%s\"",
                  raw_input_name(raw.kind),action_name(action.kind),unsigned(action.character),accepted,
@@ -1458,11 +1461,11 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
         dirty_=true;dirty_reason_="camp-key-wait";return true;
     }
     if(action.kind==openu5::UiActionKind::SystemMenu){
-        if(system_menu_.active()){settings_=system_menu_.settings();input_.set_movement_mode_enabled(settings_.movement_mode);input_.set_trackball_responsiveness(settings_.trackball_responsiveness);settings_store_.save(settings_);system_menu_.close();}else{openu5::FrontendSaveSlot slots[2]{};save_.inspect(slots);system_menu_.open(settings_,slots);}
+        if(system_menu_.active()){settings_=system_menu_.settings();apply_device_settings();settings_store_.save(settings_);system_menu_.close();}else{openu5::FrontendSaveSlot slots[2]{};save_.inspect(slots);system_menu_.open(settings_,slots);}
         ESP_LOGI(kTag,"SYSTEM_MENU action=toggle open=%d gameplay_command=none",system_menu_.active());dirty_=true;dirty_reason_="system-menu";return true;
     }
     if(system_menu_.active()){
-        const bool accepted=system_menu_.handle(action);if(accepted){settings_=system_menu_.settings();input_.set_movement_mode_enabled(settings_.movement_mode);input_.set_trackball_responsiveness(settings_.trackball_responsiveness);}service_system_menu_intent();
+        const bool accepted=system_menu_.handle(action);if(accepted){settings_=system_menu_.settings();apply_device_settings();}service_system_menu_intent();
         ESP_LOGI(kTag,"SYSTEM_MENU action=%s accepted=%d open=%d gameplay_command=none",action_name(action.kind),accepted,system_menu_.active());
         dirty_=true;dirty_reason_="system-menu";return accepted;
     }
@@ -2356,6 +2359,9 @@ void AlphaRuntime::synchronize_loaded_world(){
     // pacer is cancelled WITHOUT reporting a completion, so a load can never
     // trigger the resurrection the scene would otherwise have applied.
     narrative_pacer_.cancel();world_fx_.clear();poison_.cancel();
+    // A3-01. Sound is presentation too: a load drops the old world's queued
+    // effects. Nothing here reads or writes game state.
+    audio_.flush_for_load();
     // Batch 24 (H-162). Loading is ULTIMA.EXE 0x00f7 -> TOWN.OVL:0x11F0 with
     // fresh=0 -> 0x0408(0): the floor loader zeroes the open-door tracker
     // [0x594f] (0x041d) and re-reads the floor, so a door open at save time
@@ -2674,4 +2680,64 @@ void AlphaRuntime::bind_shop_services(){
     shop_services_.transactional_services=true;
 }
 void AlphaRuntime::start_smoke(void*p,int group){auto&r=*static_cast<AlphaRuntime*>(p);r.smoke_.start(group);r.dirty_=true;r.dirty_reason_="smoke-test-start";}
+
+// ---------------------------------------------------------------------------
+// A3-01 -- the audio seam. Architecture: ALPHA3_AUDIO.md.
+// ---------------------------------------------------------------------------
+void AlphaRuntime::configure_audio(const openu5::AudioPackInfo &pack,openu5::AudioBackend *backend){
+    audio_pack_=pack;
+    const auto availability=openu5::music_availability(pack);
+    audio_.set_music_availability(availability);
+    system_menu_.set_music_availability(availability);
+    frontend_.set_music_availability(availability);
+    apply_device_settings();
+    audio_.attach(backend);
+    ESP_LOGI(kTag,"AUDIO_CONFIG pack=%s capability=%s music=%s sfx_volume=%u music_volume=%u output=%s",
+             openu5::audio_pack_state_name(pack.state),
+             pack.state==openu5::AudioPackState::Valid?openu5::music_capability_name(pack.record.capability):"none",
+             openu5::music_availability_name(availability),unsigned(audio_.sfx_volume()),unsigned(audio_.music_volume()),
+             backend?"attached":"silent");
+    dirty_=true;dirty_reason_="audio-config";
+}
+
+void AlphaRuntime::bind_developer_diagnostics(){
+#if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
+    if(debug_){openu5::UiDiagnosticsServices services{};services.context=this;services.start=start_smoke;services.audio_test=audio_test_tone;debug_->attach_diagnostics(services);}
+#endif
+}
+
+void AlphaRuntime::load_device_settings(){
+    // Absent or unreadable settings.json keeps the defaults (decode_settings
+    // assigns only a fully valid document); either way every consumer is fed.
+    const bool loaded=settings_store_.load(settings_);
+    apply_device_settings();
+    ESP_LOGI(kTag,"SETTINGS_LOAD loaded=%d sfx_volume=%u music_volume=%u",loaded,unsigned(settings_.sound_volume),unsigned(settings_.music_volume));
+}
+
+void AlphaRuntime::apply_device_settings(){
+    input_.set_movement_mode_enabled(settings_.movement_mode);
+    input_.set_trackball_responsiveness(settings_.trackball_responsiveness);
+    audio_.set_sfx_volume(settings_.sound_volume);
+    audio_.set_music_volume(settings_.music_volume);
+}
+
+void AlphaRuntime::present_audio(const openu5::GameEvent &e){
+    if(e.kind!=openu5::GameEventKind::Sfx)return;
+    const auto id=openu5::sfx_from_cue(e.text);
+    if(id==openu5::SfxId::None)ESP_LOGW(kTag,"SFX_CUE unknown id=%s",e.text?e.text:"(null)");
+    audio_.play_sfx(id,e.note);
+}
+
+void AlphaRuntime::audio_test_tone(void *p){
+    auto &r=*static_cast<AlphaRuntime*>(p);
+    const auto before=r.audio_.stats();
+    r.audio_.play_sfx(openu5::SfxId::DiagnosticTone);
+    const auto &after=r.audio_.stats();
+    const char *result=after.sfx_submitted>before.sfx_submitted?"tone sent":
+                       after.sfx_muted>before.sfx_muted?"silent (SFX Volume 0% or no output)":"output declined";
+    char line[80]{};std::snprintf(line,sizeof(line),"Audio test: %s, SFX %u%%",result,unsigned(r.audio_.sfx_volume()));
+    ESP_LOGI(kTag,"AUDIO_TEST %s",line);
+    if(r.ui_)r.ui_->append(openu5::UiTextChannel::System,line);
+    r.dirty_=true;r.dirty_reason_="audio-test";
+}
 } // namespace tdeck

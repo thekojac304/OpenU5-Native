@@ -1,0 +1,95 @@
+# A3-01 mutation validation (2026-09-26 03:19)
+
+M1 music reaches the backend without the supported patch [native/core/src/audio.cpp]: KILLED
+    contract   exit=1  1 RED
+        RED S13 without the supported patch no context, at any volume, ever reaches the backend
+M2 an SFX volume change also drives the music channel [native/core/src/audio.cpp]: KILLED
+    contract   exit=1  1 RED
+        RED S14 SFX volume changes the SFX channel only (no music gain, no restart)
+    runtime    exit=1  1 RED
+        RED S5/S14 trackball Right: SFX 90 %, applied live to the SFX channel only
+M3 SFX volume 0 is not mute [native/core/src/audio.cpp]: KILLED
+    contract   exit=1  1 RED
+        RED S16 SFX volume 0 is mute: nothing is submitted
+    runtime    exit=1  2 RED
+        RED T16 with SFX Volume 0 no apparition cue is submitted at all
+        RED D2 at SFX Volume 0 % the test tone is not submitted, and the line says why
+M4 the same song restarts on every request [native/core/src/audio.cpp]: KILLED
+    contract   exit=1  2 RED
+        RED S12 the same song is never restarted (the driver's cmp al,[0x11e])
+        RED S15 music volume changes the music channel only
+M5 a linear gain law [native/core/src/audio.cpp]: KILLED
+    contract   exit=1  1 RED
+        RED S17 gain: 0 -> 0, 50 -> 8191, 100 -> 32767 exactly, above 100 clamps, strictly increasing
+M6 two reference cue strings swapped [native/core/src/audio.cpp]: KILLED
+    contract   exit=1  1 RED
+        RED V3 drift: the first 52 SfxIds are the reference catalogue (game/src/core/sfx.ts), in its order
+M7 a "supported" claim is trusted without its songs [native/core/src/audio_pack.cpp]: KILLED
+    contract   exit=1  1 RED
+        RED P5 never pretend: 'supported' without 16 valid songs + a bank, a stock record carrying music, an unknown capability or a duplicate song is Inconsistent -> no music
+M8 the payload CRC is not checked [native/core/src/audio_pack.cpp]: KILLED
+    contract   exit=1  1 RED
+        RED P3 bytes outside every entry are covered too: appended data breaks the header's payload CRC
+M9 a stale major version is accepted [native/core/src/audio_pack.cpp]: KILLED
+    contract   exit=1  1 RED
+        RED P4 stale/newer major version, wrong magic, truncation and absence are all refused -- and every refusal is 'no music', never a boot failure (music_availability)
+M10 the Music Volume row adjusts while music is unavailable [native/core/src/system_menu.cpp]: KILLED
+    contract   exit=1  2 RED
+        RED F7 stock assets: Music Volume shows Unavailable, ignores every adjust key, keeps the stored 80, and the footer says why
+        RED F8 leaving Settings persists both volumes (the unavailable one unchanged)
+    runtime    exit=1  3 RED
+        RED S7 stock game files: Music Volume reads Unavailable, the footer says why, adjust keys do nothing, the stored 60 % is kept and nothing reaches the music channel
+        RED S7 the unavailable Music Volume preference is persisted unchanged
+        RED S7 a later supported audio pack finds the kept 60 % preference live again
+M11 Return to Title forgets the music availability [native/core/src/frontend.cpp]: KILLED
+    contract   exit=1  2 RED
+        RED F5 title Settings (release build): six rows, the same two audio rows at 4 and 5
+        RED F7 title Settings (developer build): seven rows; Music Volume unavailable and unchanged
+M12 paced cues are not routed at their release [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    runtime    exit=1  2 RED
+        RED T20 no cue is played inside the Camp command; the four apparition cues reach the backend one by one, in scene order, as the pacer releases them
+        RED T20 the arpeggio cue waits for the materialize hold: the PACER releases sound, sound never paces the scene
+M13 cues are played at emission, before the pacer [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    runtime    exit=1  3 RED
+        RED G11 every Sfx the core emitted during play reached the backend once, in order, as its SfxId, at the SFX gain
+        RED T20 no cue is played inside the Camp command; the four apparition cues reach the backend one by one, in scene order, as the pacer releases them
+        RED T20 the arpeggio cue waits for the materialize hold: the PACER releases sound, sound never paces the scene
+M14 settings volumes never reach the audio service [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    runtime    exit=1  7 RED
+        RED T16 with SFX Volume 0 no apparition cue is submitted at all
+        RED S5/S14 trackball Right: SFX 90 %, applied live to the SFX channel only
+        RED S6/S15 Music Volume steps down to 60 %, applied live to the music channel only
+        RED S8 after a reboot the volumes come back from settings.json and reach the audio service
+        RED S7 SFX Volume stays fully usable without music
+        RED S7 a later supported audio pack finds the kept 60 % preference live again
+M15 configure_audio does not tell the System Menu [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    runtime    exit=1  7 RED
+        RED S5 Alt+M > Settings shows SFX Volume and Music Volume (supported patch)
+        RED S6/S15 Music Volume steps down to 60 %, applied live to the music channel only
+        RED S8 closing the menu writes both volumes to settings.json
+        RED S8 after a reboot the volumes come back from settings.json and reach the audio service
+        RED S7 stock game files: Music Volume reads Unavailable, the footer says why, adjust keys do nothing, the stored 60 % is kept and nothing reaches the music channel
+        RED S7 the unavailable Music Volume preference is persisted unchanged
+M16 a load does not flush SFX [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    runtime    exit=1  1 RED
+        RED H1 Alt+L flushes the audio service's SFX (stop_sfx)
+M17 the Developer binder drops the audio test [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    runtime    exit=1  3 RED
+        RED D1 Alt+D > Diagnostics > Audio test tone sends ONE diagnostic tone at the SFX gain
+        RED D1 and says so on a System line
+        RED D2 at SFX Volume 0 % the test tone is not submitted, and the line says why
+M18 the audio path draws from the game RNG [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    runtime    exit=1  1 RED
+        RED G18 and identical to a run whose Sfx events never reach the runtime at all: presenting sound draws no RNG and writes no state
+M19 any mid.drv is trusted [native/tools/u5pack/audio-capability.ts]: KILLED
+    capability exit=1  2 RED
+        RED C7 a complete-looking patch whose mid.drv hash is not Exodus 1.0 is an unknown variant
+        RED R4 one changed byte in mid.drv's selector makes it an unknown variant (the port copies THAT selector)
+M20 foreign XMI files count as stock [native/tools/u5pack/audio-capability.ts]: KILLED
+    capability exit=1  1 RED
+        RED C4 XMI songs of no known patch are an UNKNOWN variant, never stock
+M21 an incomplete patch still ships its songs [native/tools/u5pack/audio.ts]: KILLED
+    capability exit=1  0 RED
+
+restored build exit=0; contract exit=0, runtime exit=0, capability exit=0
+mutations: 21, killed: 21, survived: 0

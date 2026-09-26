@@ -22,6 +22,9 @@ constexpr const char *shortcut_items[]={"Max Party","Max Resources","Equip Best 
 // "Run All" (index 0) is a menu-only entry; the real group names (index 1..N)
 // come from the single debug_labels source shared with device presentation.
 constexpr const char *kRunAllItem = "Run All";
+// A3-01: the last Diagnostics row plays one short tone through the SFX
+// channel, so the speaker path and the SFX Volume setting can be checked.
+constexpr const char *kAudioTestItem = "Audio test tone (SFX)";
 template<size_t N> constexpr size_t countof(const char *const (&)[N]){return N;}
 int64_t clamp_add(int64_t value,int delta,int64_t lo,int64_t hi){
     if(delta>0 && value>=hi)return lo;
@@ -44,7 +47,7 @@ size_t UiDebugMenu::item_count() const{
  case UiDebugCategory::QuestWorld:return countof(quest_world_items);case UiDebugCategory::Time:return countof(time_items);
  case UiDebugCategory::Transport:return countof(transport_items);case UiDebugCategory::NpcDungeonState:return countof(npc_items);
  case UiDebugCategory::ShortcutsPresets:return countof(shortcut_items);case UiDebugCategory::Count:break;
- case UiDebugCategory::Diagnostics:return 1+debug_diagnostic_group_count();
+ case UiDebugCategory::Diagnostics:return 2+debug_diagnostic_group_count();
  case UiDebugCategory::Certification:return size_t(DebugCertification::Count);
  }return 0;
 }
@@ -63,7 +66,7 @@ const char *UiDebugMenu::row_label(size_t index) const{
  // (Batch 4.5A-4 PART 1) instead of a locally duplicated "Preset: X" string.
  case UiDebugCategory::ShortcutsPresets:return index>=5?debug_preset_info(DebugPreset(index-5)).display_name:shortcut_items[index];
  case UiDebugCategory::Count:break;
- case UiDebugCategory::Diagnostics:return index==0?kRunAllItem:debug_diagnostic_group_name(index-1);
+ case UiDebugCategory::Diagnostics:return index==0?kRunAllItem:index==1+debug_diagnostic_group_count()?kAudioTestItem:debug_diagnostic_group_name(index-1);
  case UiDebugCategory::Certification:return debug_certification_info(DebugCertification(index)).display_name;
  }return "";
 }
@@ -270,7 +273,7 @@ void UiDebugMenu::apply_action(){
  case UiDebugCategory::QuestWorld:if(cursor_==6)set(apply_debug_shortcut(context_,DebugShortcut::KillShadowlords));break;
  case UiDebugCategory::NpcDungeonState:if(cursor_==7)set(debug_clear_overworld_enemies(context_));break;
  case UiDebugCategory::ShortcutsPresets:if(cursor_==0)set(apply_debug_shortcut(context_,DebugShortcut::MaximizeAll));else if(cursor_==1)set(apply_debug_shortcut(context_,DebugShortcut::MaxResources));else if(cursor_==2)set(apply_debug_shortcut(context_,DebugShortcut::BestEquipment));else if(cursor_==3)set(apply_debug_shortcut(context_,DebugShortcut::FullMaxParty));else if(cursor_==4)set(apply_debug_shortcut(context_,DebugShortcut::KillShadowlords));else set(apply_debug_preset(context_,DebugPreset(cursor_-5)));break;
- case UiDebugCategory::Diagnostics:if(diagnostics_.start)diagnostics_.start(diagnostics_.context,cursor_?int(cursor_-1):-1);break;
+ case UiDebugCategory::Diagnostics:if(cursor_==1+debug_diagnostic_group_count()){if(diagnostics_.audio_test)diagnostics_.audio_test(diagnostics_.context);}else if(diagnostics_.start)diagnostics_.start(diagnostics_.context,cursor_?int(cursor_-1):-1);break;
  // Batch 4.5A-4: a Certification setup surfaces through the same
  // last_status_/last_teleport_status_/last_teleport_request_ fields the
  // Teleport category already uses, so device presentation needs no

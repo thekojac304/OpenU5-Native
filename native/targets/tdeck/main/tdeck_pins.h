@@ -19,6 +19,13 @@ inline constexpr gpio_num_t kTftBacklight = GPIO_NUM_42;
 inline constexpr gpio_num_t kI2cData = GPIO_NUM_18;
 inline constexpr gpio_num_t kI2cClock = GPIO_NUM_8;
 inline constexpr gpio_num_t kKeyboardInterrupt = GPIO_NUM_46;
+// A3-01: the speaker's I2S input (LilyGO utilities.h BOARD_I2S_BCK/WS/DOUT;
+// T-Deck Plus wiki pin table). TX only: no MCLK, and the amplifier has no
+// control bus. The ES7210 microphone ADC (MCLK 48, LRCK 21, SCK 47, DIN 14)
+// is a separate I2S path and is not used.
+inline constexpr gpio_num_t kSpeakerI2sBclk = GPIO_NUM_7;
+inline constexpr gpio_num_t kSpeakerI2sWs = GPIO_NUM_5;
+inline constexpr gpio_num_t kSpeakerI2sDout = GPIO_NUM_6;
 // LilyGO UnitTest mapping: G01=up, G03=down, G04=left, G02=right.
 inline constexpr gpio_num_t kTrackballUp = GPIO_NUM_3;
 inline constexpr gpio_num_t kTrackballDown = GPIO_NUM_15;

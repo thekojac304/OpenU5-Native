@@ -7,6 +7,7 @@
     "extract": "tsx src/cli.ts",
     "pack:native": "tsx ../native/tools/u5pack/cli.ts",
     "pack:alpha1": "tsx ../native/tools/u5pack/alpha1.ts",
+    "pack:audio": "tsx ../native/tools/u5pack/audio.ts",
     "test": "vitest run"
   },
   "//fflate": [

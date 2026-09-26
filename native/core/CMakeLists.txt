@@ -1261,6 +1261,56 @@ if(BUILD_TESTING)
   endif()
   add_test(NAME batch53b_moongate_return COMMAND batch53b_moongate_return
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+  # Alpha 3 A3-01 -- the audio contract (vocabulary, music selector, service
+  # policy, audio-pack reader, Settings rows) in the portable core. The real
+  # audio pack is built locally by `npm run pack:audio` and never committed.
+  add_executable(a3_01_audio_contract tests/a3_01_audio_contract_test.cpp)
+  target_link_libraries(a3_01_audio_contract PRIVATE openu5_core)
+  target_compile_features(a3_01_audio_contract PRIVATE cxx_std_17)
+  add_test(NAME a3_01_audio_contract COMMAND a3_01_audio_contract
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../game/src/core/sfx.ts"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../game/src/ui/music.ts"
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/a3-01-audio-stock.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
+  # A3-01 -- the same seam through the REAL AlphaRuntime: the settings rows by
+  # raw keys, reboot/load persistence, the Developer test tone, presentation-
+  # time cue routing, and scene timing / game state identical with audio on,
+  # off, refused or muted.
+  add_executable(a3_01_audio_runtime
+    ../targets/tdeck/host_tests/a3_01_audio_runtime_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/batch37_board_capture_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_audio.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(a3_01_audio_runtime PRIVATE openu5_core)
+  target_include_directories(a3_01_audio_runtime PRIVATE
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/main)
+  target_compile_features(a3_01_audio_runtime PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(a3_01_audio_runtime PRIVATE /Gy)
+    target_link_options(a3_01_audio_runtime PRIVATE /OPT:REF)
+  else()
+    target_compile_options(a3_01_audio_runtime PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(a3_01_audio_runtime PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME a3_01_audio_runtime COMMAND a3_01_audio_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/a3-01-audio-stock.bin")
   # Batch 14 / R-22 -- (Z)-stats navigation. Same seam and same stub/shim set
   # as alpha_runtime_integration_regression above: it links the REAL,
   # unmodified alpha_runtime.cpp so the modal is reached only by feeding raw
@@ -1560,6 +1610,13 @@ if(BUILD_TESTING)
     add_test(NAME typescript_turn_fixture_drift COMMAND "${NODE_EXECUTABLE}" --import tsx
       "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate-turn-fixtures.ts" --check)
     set_tests_properties(typescript_turn_fixture_drift PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+    # A3-01 -- the packer's music-capability detector and audio-pack writer:
+    # synthetic installs (no game bytes) plus read-only views of the real one.
+    add_test(NAME a3_01_audio_capability COMMAND "${NODE_EXECUTABLE}" --import tsx
+      "${CMAKE_CURRENT_SOURCE_DIR}/../tools/u5pack/check-audio-pack.ts"
+      --real "${CMAKE_CURRENT_SOURCE_DIR}/../../original/u5/ultima5"
+      --fixture "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/a3-01-audio-stock.bin")
+    set_tests_properties(a3_01_audio_capability PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
   endif()
   if(CMAKE_CONFIGURATION_TYPES)
     set(OPENU5_CTEST_CONFIG_ARGS -C "$<CONFIG>")

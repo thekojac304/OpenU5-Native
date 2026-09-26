@@ -1,5 +1,7 @@
 # Shared source list: host and ESP-IDF compile the same portable implementation.
 set(OPENU5_CORE_SOURCES
+    "${CMAKE_CURRENT_LIST_DIR}/src/audio.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/audio_pack.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/frontend.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/frontend_settings.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/hud.cpp"

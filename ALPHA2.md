@@ -162,14 +162,22 @@ Every knowing difference from the original is listed, with its reason, in [`nati
 
 ## Alpha 3 handoff
 
-Alpha 2 is closed. The Alpha 3 tracks below are defined, but **none has started**. Each starts only when it is asked for.
+Alpha 2 is closed. The Alpha 3 tracks below are defined. Each starts only when it is asked for. **Status (A3-01, 2026-09-26):** the audio track has started. The UI/frontend and presentation tracks have not.
 
-**1. Audio / music**
-- Design an audio backend and service architecture for the T-Deck: an output path and a core → device event seam.
-- Inventory the original's SFX, tone, sweep and chime events, including the silent waits that are now reproduced (D-3, D-10 / D-39).
-- Music contexts and their transitions.
-- Volume and audio settings in the Settings menu.
-- The harpsichord (H-125) and the scene cues.
+**1. Audio / music** — **A3-01 done** (tag `alpha3-a3-01-audio-architecture`). This is architecture, not an Alpha 3 release. The reference is [`native/targets/tdeck/ALPHA3_AUDIO.md`](native/targets/tdeck/ALPHA3_AUDIO.md).
+- Done in A3-01:
+  - the T-Deck I2S speaker path;
+  - the semantic SFX vocabulary and the audio service;
+  - the original SFX inventory, including the silent waits (D-3, D-10 / D-39) and the sound-flag branches;
+  - the music-patch archaeology and capability detection: **stock DOS files have no music**, and only the Exodus *Ultima V Upgrade* 1.0 patch enables it;
+  - the optional SD audio pack `openu5-audio.bin` (`npm run pack:audio`);
+  - the **SFX Volume** / **Music Volume** Settings rows;
+  - a Developer test tone.
+- Next:
+  - A3-02: speaker synthesizer and the first gameplay SFX, including the harpsichord, H-125;
+  - A3-03: broad SFX hookup and the scene cues;
+  - A3-04: music playback and contexts;
+  - A3-05: audio polish and hardware validation.
 
 **2. UI / frontend**
 - Audit the main game window and HUD.

@@ -8,7 +8,21 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Batch 55) — ALPHA 2 RELEASED / CLOSED; read this first
+> ### CURRENT STATE (Alpha 3 A3-01) — audio architecture; Alpha 2 remains the released build; read this first
+>
+> **A3-01 is an Alpha 3 development batch, not a release.**
+> - It adds the audio architecture: a semantic cue → service → backend seam, the T-Deck I2S speaker backend (Developer test tone only), music-capability detection, the optional SD audio pack `openu5-audio.bin`, and the SFX / Music Volume Settings rows.
+> - **Gameplay is still silent on the device**, and gameplay semantics, saves and the game packs are unchanged.
+> - See §14 "Alpha 3 A3-01" and [`ALPHA3_AUDIO.md`](ALPHA3_AUDIO.md).
+>
+> | | |
+> |---|---|
+> | Host suite | **126 / 126**, fresh build, serial, 107.4 s. New: `a3_01_audio_contract` 57, `a3_01_audio_runtime` 37, `a3_01_audio_capability` 26. **21 / 21 mutations killed.** Stale-pack gate 96 / 96. |
+> | Firmware | `3.0.0-alpha3-dev-a3-01-debug`, 908,816 B (`0xdde10`), +30,064 B, 139,760 B (13 %) free, zero warnings. Image path, SHA-256 and `Git`: tag `alpha3-a3-01-audio-architecture`. **Not flashed; hardware check pending** (`ALPHA3_AUDIO.md` §13). |
+> | SD | Game packs **unchanged**, no recopy. **New and optional:** `/ultima5/openu5-audio.bin` from `npm run pack:audio` (patched install: 56,148 B; stock: 112 B). |
+> | Next | The A3-01 device check. Then A3-02 (speaker synthesizer and the first SFX), which the user starts. |
+
+> ### CURRENT STATE (Batch 55) — **the Alpha 2 release record; superseded as the current state by A3-01 above.** ALPHA 2 RELEASED / CLOSED
 >
 > **Phase 8, the RC1 hardware smoke, PASSED on the device (steps 1–8).** RC1 is promoted **byte for byte** to the final Alpha 2 release: tag **`alpha2-batch55-release`**. Alpha 2 hardware validation is complete, and no Alpha 2 row is open as a blocker. See §14 "Batch 55" and [`../../../ALPHA2.md`](../../../ALPHA2.md).
 >
@@ -7406,3 +7420,135 @@ None. No row changed kind or status in Batch 55, and no new ID was allocated. Ev
 - No new hardware campaign.
 
 The Alpha 3 tracks are defined in `ALPHA2.md` ("Alpha 3 handoff"). None has started.
+
+## Alpha 3 A3-01 — audio architecture, asset capability detection and settings contract
+
+**Verdict: architecture, capability detection, volume settings and tests complete. The first hardware audio exists only as a Developer diagnostic tone.**
+- Gameplay stays silent on the device. Every presented cue now reaches the audio service, but the backend renders only the test tone.
+- This is **not an Alpha 3 release**. The released build is still Alpha 2 (Batch 55).
+- The architecture reference is [`ALPHA3_AUDIO.md`](ALPHA3_AUDIO.md). This section keeps the audit trail.
+
+### 1. Baseline (Phase A)
+
+| Item | Value |
+|---|---|
+| Tree | HEAD `4b3257f4` = `alpha2-batch55-release`, clean |
+| Firmware source | `211c676a` |
+| Host suite | Fresh build, serial ctest **123 / 123**, 116.19 s (`native/core/a3-01-baseline-*.log`) |
+| Firmware | `0xd68a0` = 878,752 B, 169,824 B free |
+| Game pack | OU5A1RES 2.0, 42 entries, 2,041,466 B, CRC `0x26f75ae6`, exact size + CRC lock |
+| Settings | `settings.json` v1, which already stored `soundVolume` / `musicVolume` (inert, D-3 / Y-03) |
+| Audio | none; the device dropped the core's 31 distinct `Sfx` cue ids |
+
+### 2. Findings, each on its own axis
+
+| # | Finding | Kind | Evidence |
+|---|---|---|---|
+| F1 | The development install is the **Exodus Project *Ultima V Upgrade* 1.0**, applied in place: the patched EXE / overlays, `mid.drv`, 16 XMI, `FAT.OPL`, and `DATA.OVL` slot `MID.DRV`. The stock copies are no longer in the tree. | reference fact | `ALPHA3_AUDIO.md` §5; `re/notes/music-location-mapping.md` |
+| F2 | The stock 1988 game has **no music**. Its only audio is the PC speaker. | reference fact (re-confirmed) | `re/notes/audio-profile-1988.md` |
+| F3 | Speaker primitive census of this tree: 121 call sites. It matches `sfx-catalog.md` for tone_sweep / noise_burst / set_tone / stop. The catalogue's glide total ("27") mis-sums its own rows (31). Beep sites ≥ 9. | derivation | `re/tools/a3_01_sound_census.py`, `native/core/a3-01-sound-census.log` |
+| F4 | The original has sound-flag **gameplay branches** (`[0xa9ce]`: drags 3 vs 18, the lute). The device's volume must not become that flag. | reference fact → design rule | B51 §13.5; `ALPHA3_AUDIO.md` §4 / §10 |
+| F5 | **A stock-shaped install and the patched install build byte-identical game-pack inputs.** Putting capability into the game pack would make one of two valid installs fail the exact identity lock. | measurement → architecture decision | `native/core/a3-01-stock-vs-patched-extract.log` |
+| F6 | No song carries AIL loop controllers. Looping is the driver restarting a finished song on each key poll. | derivation | `ALPHA3_AUDIO.md` §5 |
+| F7 | `FrontendSession::start()` wipes the whole session, and would have forgotten the music availability on Return to Title. Fixed: availability is kept as device configuration. | native defect (found while wiring) | F7 checks; mutation M11 |
+| F8 | The first runtime run found that re-applying all settings after one Settings edit pushed an unchanged gain to the *other* channel. Fixed: `AudioService` touches a channel only when its own volume changes. | native defect (found by a new test) | S14 / S5 checks; mutation M2 |
+| F9 | The host fixture copied `attach_diagnostics({this,start_smoke})` from `initialize()`, and it never ran the settings load. Both are now shared production binders: `bind_developer_diagnostics()` and `load_device_settings()`. | fixture-copy class (see Batch 29 / 51 / 53) | M14 / M17 kill through the fixture |
+
+### 3. What changed
+
+- **Core** (`native/core`):
+  - `include/openu5/audio.h`, `src/audio.cpp`:
+    - `SfxId` (52 reference + 4 native hook + 1 diagnostic);
+    - `MusicSong`, `MusicContext`, `song_for_context`, `music_context_for_location` (mid.drv 0x016d);
+    - `MusicCapability` / `MusicAvailability`;
+    - the volume and gain math;
+    - `AudioBackend`, `NullAudioBackend`, `AudioService`;
+    - the Settings row formatters.
+  - `include/openu5/audio_pack.h`, `src/audio_pack.cpp`: the OU5AUDIO 1.0 reader, `validate_xmi`, `validate_timbre_bank`.
+  - `system_menu`, `frontend`: the SFX / Music Volume rows, in order before Developer; Music is unavailable-aware; `start()` keeps availability.
+  - `ui_debug_menu`: the Diagnostics row "Audio test tone (SFX)"; `UiDiagnosticsServices::audio_test`.
+  - `frontend.h`: comments only on the two existing fields.
+- **Device** (`native/targets/tdeck/main`):
+  - `alpha_audio.{h,cpp}`: the optional pack loader.
+  - `tdeck_audio.{h,cpp}`: the I2S proof-of-concept backend (lazy, core 1, 0-timeout queue).
+  - `tdeck_pins.h`: the speaker I2S pins.
+  - `alpha_runtime`:
+    - `configure_audio`, `present_audio` (immediate, paced release, Refuge beats);
+    - `load_device_settings` / `apply_device_settings`, `bind_developer_diagnostics`, `audio_test_tone`;
+    - `flush_for_load` in `synchronize_loaded_world`;
+    - a read-only `system_menu_view()`.
+  - `main.cpp`: reads the audio pack **after** the unchanged identity gate.
+  - `CMakeLists`: `esp_driver_i2s`, `PROJECT_VER` `3.0.0-alpha3-dev-a3-01-debug`.
+- **Host fixture and stubs:**
+  - the fixture calls the two shared binders;
+  - the memory save stub gains an **opt-in** in-memory `settings.json` (off by default).
+- **Packer:**
+  - `native/tools/u5pack/audio-capability.ts` (detector), `audio.ts` (`npm run pack:audio`), `check-audio-pack.ts` (test);
+  - `pack:audio` scripts in both `package.json`.
+- **Tests:**
+  - `native/core/tests/a3_01_audio_contract_test.cpp`;
+  - `native/targets/tdeck/host_tests/a3_01_audio_runtime_test.cpp`;
+  - the committed 112-byte `native/core/fixtures/a3-01-audio-stock.bin` (pure format; byte-identical to what a real stock install produces).
+- **Guards edited** (the row sets grew; nothing else changed):
+  - `frontend_test` System Menu Settings `line_count` 5 → 7;
+  - `ui_debug_menu_test` Diagnostics 16 → 17 rows.
+- **Tools:** `re/tools/a3_01_sound_census.py`, `native/core/tools/a3_01_mutation_check.py`.
+
+### 4. Tests, RED evidence and totals
+
+- **New targets:**
+  - `a3_01_audio_contract`, 57 checks;
+  - `a3_01_audio_runtime`, 37 checks (the real `AlphaRuntime`, raw keys, virtual clock);
+  - `a3_01_audio_capability`, 26 checks (node).
+  - The mapping to the brief's matrix items 1–20 is in `ALPHA3_AUDIO.md` §12.
+- **RED evidence** is by mutation, since the guards and the code are new. See `native/core/a3-01-mutation.log`.
+  - There are 21 one-line production mutations: service ×6, pack reader ×3, menu ×2, runtime ×7, detector ×2, writer ×1.
+  - The first pass killed 19. **Two survived**, and each exposed a test gap:
+    - **M8:** a disabled header payload-CRC check. Per-entry CRCs hid it. Closed by P3: bytes outside every entry.
+    - **M18:** an RNG draw in the audio path. The "silent" control ran the same path. Closed by the G18 oracle: a run whose Sfx events never reach the runtime.
+  - **The second pass killed all 21.** M21 is killed by the capability test aborting, not by a RED line; it is still a failure exit.
+  - F8 was found RED before any mutation: the first runtime run was 34 / 36, with S5 / S14 and S6 / S15 RED on the original service code.
+- **Full suite:** fresh build (`native/core/build-a3-01`), serial, **126 / 126 pass, 107.39 s** (`native/core/a3-01-final-ctest.log`). The only build warning is the known w64devkit `stl_uninitialized.h` false positive (`a3-01-final-host-build.log`).
+- **Stale-pack gate:** `batch53_release_blockers` with the real Batch 51 pack (`434cd664…`) passes **96 / 96**, and P6 still refuses it (`native/core/a3-01-stale-pack.log`).
+- **Timing invariance (T19):**
+  - The paced Camp apparition's 5 ms timeline and every presented frame's timestamp are identical with no audio, a recording backend, a refusing backend and SFX muted.
+  - The cues reach the backend at pacer release: materialize 5 ms, arpeggio 395 ms, chime 1670 ms, chord 1865 ms.
+  - No cue is played inside the command.
+
+### 5. Firmware and packs
+
+- **Pre-commit build** (`native/targets/tdeck/a3-01-firmware-build.log`):
+  - ESP-IDF 6.1, zero warnings under `-Werror`;
+  - `0xdde10` = **908,816 B**, **+30,064 B** vs Alpha 2;
+  - **139,760 B (13 %)** of the 1 MiB app partition free.
+- **Map attribution:**
+  - the ESP-IDF I2S driver objects are about 12.6 KB;
+  - the new A3-01 audio code is about 5.2 KB (`audio` 1.8, `audio_pack` 2.0, loader 0.3, backend 1.1);
+  - the rest is menu, runtime and driver-dependency growth.
+- The post-commit image (embedded `Git` = the A3-01 commit): path, SHA-256 and size are in the annotated tag.
+- **Game packs: unchanged.** `openu5-alpha1-resources.bin` is 2,041,466 B, CRC `0x26f75ae6`; `openu5-assets.bin` is unchanged. No recopy.
+- **Audio pack (new, optional, never committed):**
+  - patched install: 56,148 B, payload CRC `0x25723dd7`, SHA-256 `28c1533b…a6d3`;
+  - stock: 112 B, SHA-256 `dec685f0…7cac`.
+
+### 6. Disclosed incident
+
+While attributing the size delta, `idf.py -B build-batch54 size-components` was run against the Alpha 2 RC1 build directory. ESP-IDF rebuilt that directory from the **A3-01** sources.
+- **The released artifact is intact.** `build-batch54/launcher/OpenU5-TDeck-Alpha2.0.0-alpha2-RC1-Debug-Launcher.bin` still hashes to `ff3dfe19…5828`, with its original timestamp.
+- **What changed** is only that directory's *intermediate* `openu5_tdeck.bin`. It is now an A3-01 image that identifies itself as `3.0.0-alpha3-dev-a3-01-debug` / `Git 4b3257f4`.
+- Do not flash from `build-batch54/` with `idf.py flash`; use the Launcher file, whose identity is recorded in `alpha2-batch54-rc1` / `alpha2-batch55-release`.
+
+### 7. Rows
+
+- **D-3 stays open.** The settings are live and the cues are routed, but gameplay audio is still absent.
+- **H-125 stays open** (A3-02).
+- No row changed kind, and no new ID was allocated. Ledger: "Alpha 3 A3-01 status".
+- **Device check:** `ALPHA3_AUDIO.md` §13, steps 1–8. It is not run yet.
+
+### 8. Not done in this batch
+
+- No gameplay SFX synthesis and no music playback.
+- No Settings visual redesign and no HUD work.
+- No moongate animation and no endgame cinematic.
+- No save-format change: `settings.json` stays at v1 with the same keys.
+- The game-pack format and identity are unchanged.

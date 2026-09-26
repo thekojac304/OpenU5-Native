@@ -19,6 +19,7 @@
 // Not reproduced: files, temp+rename, fsync, the PSRAM scratch, timing.
 //
 // Never linked into firmware: only host CMake targets compile it.
+#include "openu5/frontend_settings.h"
 #include "alpha_save.h"
 #include "alpha_save_generation.h"
 
@@ -172,7 +173,22 @@ void AlphaSaveService::inspect(openu5::FrontendSaveSlot (&slots)[2]) {
     }
 }
 
-bool AlphaSettingsService::load(openu5::FrontendSettings &) const { return false; }
-bool AlphaSettingsService::save(const openu5::FrontendSettings &) const { return false; }
+// A3-01: an opt-in in-memory settings.json. Off by default, so every older
+// test still runs with no settings file at all. On, it holds the exact text
+// the production service would write (encode_settings) and reads it back the
+// way the production service does (decode_settings), so a second runtime in
+// the same process is a reboot of the first.
+std::string &a3_host_settings_text() { static std::string text; return text; }
+bool &a3_host_settings_enabled() { static bool enabled = false; return enabled; }
+bool AlphaSettingsService::load(openu5::FrontendSettings &s) const {
+    return a3_host_settings_enabled() && openu5::decode_settings(a3_host_settings_text(), s);
+}
+bool AlphaSettingsService::save(const openu5::FrontendSettings &s) const {
+    if (!a3_host_settings_enabled()) return false;
+    std::string text;
+    if (!openu5::encode_settings(s, text)) return false;
+    a3_host_settings_text() = text;
+    return true;
+}
 
 } // namespace tdeck

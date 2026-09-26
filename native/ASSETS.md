@@ -1,5 +1,16 @@
 # Ultima V native asset pack (Milestone 4)
 
+> **Alpha 3 A3-01 — the optional audio pack.** `npm run pack:audio` builds
+> `native/assets/openu5-audio.bin` (OU5AUDIO 1.0), which goes on the card as
+> `/ultima5/openu5-audio.bin`. It records the install's **music capability**. The
+> stock DOS game has no music; only the Exodus *Ultima V Upgrade* 1.0 patch
+> enables it. When that patch is complete, the pack also carries its 16 XMI songs
+> and `FAT.OPL` verbatim. It is optional (without it: no music, and Settings says
+> why), separate from the game packs (their identity is unchanged), derived
+> locally, and never committed. Custom paths:
+> `npm run pack:audio -- --source <dir> --output <file>`. Format, detection rules
+> and policy: [`targets/tdeck/ALPHA3_AUDIO.md`](targets/tdeck/ALPHA3_AUDIO.md).
+
 The native pack has a deterministic host-side converter and streaming ESP32
 validator/reader. Milestone 4 v2 adds only the initial Iolo's Hut floor needed
 to reproduce INIT.GAM's actual starting context. The generated pack contains

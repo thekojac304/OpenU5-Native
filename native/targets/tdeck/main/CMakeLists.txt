@@ -5,10 +5,11 @@ idf_component_register(
          "device_smoke_tests.cpp"
          "asset_pack.cpp" "native_renderer.cpp" "alpha_resources.cpp" "alpha_dialogue.cpp"
          "alpha_save.cpp" "alpha_save_generation.cpp" "alpha_runtime.cpp" "ui_input_adapter.cpp" "dungeon_art_cache.cpp"
+         "alpha_audio.cpp" "tdeck_audio.cpp"
          ${OPENU5_CORE_SOURCES}
     INCLUDE_DIRS "." "../../../core/include"
     PRIV_REQUIRES esp_system esp_app_format esp_hw_support esp_psram heap spi_flash freertos esp_timer
-                  esp_driver_gpio esp_driver_i2c esp_driver_ledc esp_driver_spi esp_driver_sdspi fatfs sdmmc
+                  esp_driver_gpio esp_driver_i2c esp_driver_i2s esp_driver_ledc esp_driver_spi esp_driver_sdspi fatfs sdmmc
 )
 target_compile_options(${COMPONENT_LIB} PRIVATE
     -Wall -Wextra -Wconversion -Werror

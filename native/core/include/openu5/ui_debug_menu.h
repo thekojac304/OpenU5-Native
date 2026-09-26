@@ -54,6 +54,8 @@ struct DebugRowValue {
 struct UiDiagnosticsServices {
     void *context = nullptr;
     void (*start)(void *, int group) = nullptr; // -1 runs every group.
+    // A3-01: Diagnostics' last row, "Audio test tone (SFX)".
+    void (*audio_test)(void *) = nullptr;
 };
 
 struct UiDebugMenuView {

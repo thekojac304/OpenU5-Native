@@ -1,0 +1,177 @@
+# A3-01 PC-speaker primitive census (a0 = [bp+4] ... a4 = [bp+0xc])
+# source: original/u5/ultima5
+== ULTIMA.EXE kernel (direct calls)
+  ULTIMA.EXE   22cd SET_TONE    a0..=word ptr [bp + 6]
+  ULTIMA.EXE   22da SPK_STOP    a0..=
+  ULTIMA.EXE   2a68 NOISE_BURST a0..=0x7d0,0x640,0xa
+  ULTIMA.EXE   2fe3 NOISE_BURST a0..=0x1f4,0xbb8,0x28,si,bp
+  ULTIMA.EXE   30b8 SET_TONE    a0..=ax
+  ULTIMA.EXE   30ec SET_TONE    a0..=ax
+  ULTIMA.EXE   311d SET_TONE    a0..=ax
+  ULTIMA.EXE   3150 SET_TONE    a0..=ax
+  ULTIMA.EXE   316e SPK_STOP    a0..=
+  ULTIMA.EXE   355a NOISE_BURST a0..=0x7d0,0xbb8,0xa
+  ULTIMA.EXE   35c9 NOISE_BURST a0..=0x1f4,0xbb8,0x28
+  ULTIMA.EXE   35de NOISE_BURST a0..=0x7d0,0xbb8,0xa
+  ULTIMA.EXE   428b TONE_SWEEP  a0..=0xfff6,0x4e20,0x7d0,1,0xc2c
+  ULTIMA.EXE   42a1 BEEP        a0..=3,0xbb8
+  ULTIMA.EXE   42be NOISE_BURST a0..=0x2710,0x3c,0x14
+  ULTIMA.EXE   42fb TONE_SWEEP  a0..=0xfff6,0x4e20,0x7d0,1,word ptr [bx + 0x6a34]
+  ULTIMA.EXE   434a NOISE_BURST a0..=0x3e8,0x19,1
+  ULTIMA.EXE   4364 NOISE_BURST a0..=0x5dc,0x19,1
+  ULTIMA.EXE   438b TONE_SWEEP  a0..=6,0x12c,0x2a30,1,0x11f8
+  ULTIMA.EXE   43a5 TONE_SWEEP  a0..=3,0x12c,0x5460,1,0x17d4
+  ULTIMA.EXE   43d9 SET_TONE    a0..=si
+  ULTIMA.EXE   43f7 SPK_STOP    a0..=
+  ULTIMA.EXE   48e5 TONE_SWEEP  a0..=2,0x7d0,0x7530,1,0x170c
+  ULTIMA.EXE   6221 TONE_SWEEP  a0..=ax,1,0xfde8,1,0xfd2
+  ULTIMA.EXE   6a3c GLIDE       a0..=0x28,1,0x7d0,0x4b0
+== BLCKTHRN.OVL base=a290 known_hits=80
+  BLCKTHRN.OVL 03e3 TONE_SWEEP  a0..=ax,si,0xc8,1,0xa50
+  BLCKTHRN.OVL 0405 TONE_SWEEP  a0..=ax,si,0xc8,1,0xa50
+  BLCKTHRN.OVL 083f TONE_SWEEP  a0..=5,0x64,0x32c8,1,0xaf0
+  BLCKTHRN.OVL 0a34 TONE_SWEEP  a0..=word ptr [si],word ptr [bx],word ptr [bx],1,word ptr [di]
+  BLCKTHRN.OVL 0b8d TONE_SWEEP  a0..=2,0x7d0,0x7530,1,ax
+== CAST.OVL base=bf80 known_hits=98
+  CAST.OVL     029a GLIDE       a0..=0x28,1,0x7d0,0x4b0
+  CAST.OVL     0d85 TONE_SWEEP  a0..=2,0x3e8,0x6d60,1,0x2648
+  CAST.OVL     0e6e TONE_SWEEP  a0..=2,0x3e8,0x6d60,1,0x2648
+  CAST.OVL     0eb2 GLIDE       a0..=0x32,1,0x7d0,0x320
+  CAST.OVL     11d3 GLIDE       a0..=0x32,1,0x7d0,0x320
+  CAST.OVL     1325 GLIDE       a0..=0x32,1,0x7d0,0x320
+  CAST.OVL     15f0 TONE_SWEEP  a0..=ax,si,0xc8,1,0xa50
+  CAST.OVL     1620 TONE_SWEEP  a0..=ax,si,0xc8,1,0xa50
+  CAST.OVL     166d GLIDE       a0..=0x32,1,0x7d0,0x320
+  CAST.OVL     198f TONE_SWEEP  a0..=1,0x1388,0xc350,1,0x1450
+  CAST.OVL     19e0 NOISE_BURST a0..=0x7d0,0xbb8,0xa
+  CAST.OVL     1ba7 GLIDE       a0..=0x32,1,0x7d0,0x320
+  CAST.OVL     1c00 SET_TONE    a0..=ax
+  CAST.OVL     1f51 SPK_STOP    a0..=
+  CAST.OVL     1fbc NOISE_BURST a0..=0x2bc,word ptr [bp - 0x108],0x320
+== CAST2.OVL base=e1e0 known_hits=105
+  CAST2.OVL    001d NOISE_BURST a0..=0x2bc,ax,0x320,si,di
+  CAST2.OVL    0056 TONE_SWEEP  a0..=word ptr [si + 0x4b2c],word ptr [si + 0x4b08],di,1,word ptr [si + 0x4af6]
+  CAST2.OVL    006d TONE_SWEEP  a0..=ax,word ptr [si + 0x4b1a],di,1,word ptr [si + 0x4af6]
+  CAST2.OVL    0094 TONE_SWEEP  a0..=1,0x12c,0xfde8,1,0x1180
+  CAST2.OVL    0560 TONE_SWEEP  a0..=5,0x1f4,0x2ee0,1,0xac8
+  CAST2.OVL    0aed TONE_SWEEP  a0..=word ptr [si],word ptr [bx],word ptr [bx],1,word ptr [di]
+  CAST2.OVL    0be3 TONE_SWEEP  a0..=ax,si,0xc8,1,0xa8c
+  CAST2.OVL    0c05 TONE_SWEEP  a0..=ax,si,0xc8,1,0xa8c
+  CAST2.OVL    0c57 TONE_SWEEP  a0..=ax,si,0x96,1,0xc1c
+  CAST2.OVL    0c79 TONE_SWEEP  a0..=ax,si,0x96,1,0xc1c
+== CMDS.OVL base=bf80 known_hits=119
+  CMDS.OVL     09d5 GLIDE       a0..=0x12c,5,0xc8,0x3e8
+  CMDS.OVL     0c05 GLIDE       a0..=0x12c,5,0xc8,0x3e8
+  CMDS.OVL     11b2 TONE_SWEEP  a0..=2,0x7d0,0x7530,1,0x28a0
+  CMDS.OVL     18ac GLIDE       a0..=0x28,1,0x7d0,0x4b0
+== COMBAT.OVL base=a290 known_hits=63
+  COMBAT.OVL   01b2 GLIDE       a0..=0x96,5,0x190,0x2ee
+  COMBAT.OVL   033c GLIDE       a0..=0x96,5,0x190,0x2ee
+  COMBAT.OVL   03b6 GLIDE       a0..=0x32,1,0x7d0,0x320
+  COMBAT.OVL   04f6 GLIDE       a0..=0x28,1,0x7d0,0x4b0
+  COMBAT.OVL   07f1 NOISE_BURST a0..=0x1f4,0xbb8,0x28
+  COMBAT.OVL   0958 TONE_SWEEP  a0..=2,0x3e8,0x6d60,1,0x2648
+  COMBAT.OVL   1cbf NOISE_BURST a0..=0x258,0x1b58,1
+== COMSUBS.OVL base=e1e0 known_hits=51
+  COMSUBS.OVL  01b1 TONE_SWEEP  a0..=2,0x3e8,0x7530,1,0xc1c
+  COMSUBS.OVL  02cb TONE_SWEEP  a0..=0xf,0x3e8,0x1388,1,0xac8
+  COMSUBS.OVL  0352 GLIDE       a0..=0x28,1,0x7d0,0x4b0
+  COMSUBS.OVL  03d6 GLIDE       a0..=0x28,1,0x7d0,0x4b0
+  COMSUBS.OVL  06de NOISE_BURST a0..=0x2bc,ax,0x320
+  COMSUBS.OVL  0acb GLIDE       a0..=0x64,5,0x12c,0x514
+  COMSUBS.OVL  0c0b GLIDE       a0..=0x96,5,0x2ee,0x190,bp
+== DATA.OVL base=81d0 known_hits=0
+== DNGLOOK.OVL base=a290 known_hits=22
+== DUNGEON.OVL base=81d0 known_hits=73
+  DUNGEON.OVL  04b9 NOISE_BURST a0..=0x4e20,0x1f4,1
+  DUNGEON.OVL  099e NOISE_BURST a0..=0xdac,0x32,1
+  DUNGEON.OVL  0a30 NOISE_BURST a0..=0xdac,0x32,1
+  DUNGEON.OVL  103c NOISE_BURST a0..=0x4e20,ax,1
+  DUNGEON.OVL  1483 GLIDE       a0..=ax,1,0xdac,0xc80
+  DUNGEON.OVL  1cfb GLIDE       a0..=0x32,1,0x7d0,0x320
+== ENDGAME.OVL base=a290 known_hits=66
+  ENDGAME.OVL  078f TONE_SWEEP  a0..=1,0x1388,0x9c40,1,0x2260
+  ENDGAME.OVL  0987 TONE_SWEEP  a0..=1,0x2710,0xc350,1,0x1450
+== FLAMES.OVL base=81d0 known_hits=0
+== FONT.OVL base=e1e0 known_hits=14
+  FONT.OVL     03ca NOISE_BURST a0..=0x2710,0x3c,0x14
+  FONT.OVL     0403 BEEP        a0..=3,0x7d0
+  FONT.OVL     088d NOISE_BURST a0..=0xfa0,0x4b0,1
+== INTRO.OVL base=81d0 known_hits=0
+== LOOKOBJ.OVL base=a290 known_hits=41
+  LOOKOBJ.OVL  0129 NOISE_BURST a0..=0x7d0,0xbb8,0xa
+== MAINOUT.OVL base=81d0 known_hits=106
+  MAINOUT.OVL  0300 NOISE_BURST a0..=0x12c,0x7d0,0x64
+  MAINOUT.OVL  0344 BEEP        a0..=0xc8,0xa5
+  MAINOUT.OVL  113b GLIDE       a0..=0x1e78,0x28,0x96,0x294
+  MAINOUT.OVL  11ec GLIDE       a0..=0x64,5,0x12c,0x514
+  MAINOUT.OVL  12a6 GLIDE       a0..=0x1e78,0x28,0x96,0x294
+  MAINOUT.OVL  13e9 GLIDE       a0..=0x64,5,0x12c,0x514
+== NPC.OVL base=a290 known_hits=5
+== OUTSUBS.OVL base=a290 known_hits=42
+  OUTSUBS.OVL  0492 GLIDE       a0..=0x12c,1,0x320,0x9c4
+  OUTSUBS.OVL  067b TONE_SWEEP  a0..=6,0x9c4,0x2710,1,0xa3c
+  OUTSUBS.OVL  0698 TONE_SWEEP  a0..=0xd,0xc8,0x1388,1,word ptr [si]
+  OUTSUBS.OVL  0896 TONE_SWEEP  a0..=0xd,0xc8,0x1388,1,0x157c
+  OUTSUBS.OVL  08c1 TONE_SWEEP  a0..=1,0x9c4,0xea60,1,0x157c
+== SHOPPES.OVL base=a290 known_hits=152
+  SHOPPES.OVL  13d8 TONE_SWEEP  a0..=1,0x1388,0x57e4,1,0x100e
+  SHOPPES.OVL  13ef TONE_SWEEP  a0..=0xffff,0x6b6c,0x57e4,1,0x100e
+  SHOPPES.OVL  1417 TONE_SWEEP  a0..=ax,1,0x9c40,1,0x11b2
+  SHOPPES.OVL  142b TONE_SWEEP  a0..=0xffff,ax,0x9c40,1,0x11b2
+  SHOPPES.OVL  144f TONE_SWEEP  a0..=2,1,0x4650,1,0x8fc
+  SHOPPES.OVL  1466 TONE_SWEEP  a0..=0xfffe,0x8ca0,0x4650,1,0x8fc
+== SHOPPES2.OVL base=e1e0 known_hits=104
+== SHOPPES3.OVL base=e1e0 known_hits=52
+== SJOG.OVL base=bf80 known_hits=136
+  SJOG.OVL     0237 NOISE_BURST a0..=0x1f4,0xbb8,0x28
+  SJOG.OVL     0c31 GLIDE       a0..=0x32,1,0x7d0,0x320
+  SJOG.OVL     1a21 GLIDE       a0..=0x32,1,0x7d0,0x320
+  SJOG.OVL     1c1a BEEP        a0..=0xc8,0xa5
+  SJOG.OVL     1c37 GLIDE       a0..=0x28,1,0x7d0,0x4b0
+  SJOG.OVL     1d59 BEEP        a0..=0xc8,0xa5
+  SJOG.OVL     1f08 GLIDE       a0..=0x28,1,0x7d0,0x4b0
+  SJOG.OVL     1f5a BEEP        a0..=0x96,0xdc
+  SJOG.OVL     1f62 BEEP        a0..=ax,0x96
+  SJOG.OVL     2218 TONE_SWEEP  a0..=2,0x3e8,0x7530,1,0xc1c
+== TALK.OVL base=bf80 known_hits=61
+  TALK.OVL     11a8 GLIDE       a0..=0x32,1,0x7d0,0x320
+== TOWN.OVL base=81d0 known_hits=74
+  TOWN.OVL     0849 BEEP        a0..=0xc8,0xa5
+  TOWN.OVL     0a75 NOISE_BURST a0..=si,0x78,0x28
+  TOWN.OVL     0e6d TONE_SWEEP  a0..=0xfffc,0x4e20,0xfa0,1,word ptr [bx + 0x2746]
+  TOWN.OVL     0fbb SET_TONE    a0..=word ptr [bp - 4]
+  TOWN.OVL     0fd3 SPK_STOP    a0..=
+  TOWN.OVL     101e NOISE_BURST a0..=0x1f4,0xbb8,0x28
+  TOWN.OVL     11e9 TONE_SWEEP  a0..=1,0x7d0,0xea60,1,0x19c8
+== ZSTATS.OVL base=e1e0 known_hits=78
+  ZSTATS.OVL   0e42 GLIDE       a0..=0x28,1,0x7d0,0x4b0
+
+== per file
+  BLCKTHRN.OVL TONE_SWEEP=5
+  CAST.OVL     GLIDE=6 NOISE_BURST=2 SET_TONE=1 SPK_STOP=1 TONE_SWEEP=5
+  CAST2.OVL    NOISE_BURST=1 TONE_SWEEP=9
+  CMDS.OVL     GLIDE=3 TONE_SWEEP=1
+  COMBAT.OVL   GLIDE=4 NOISE_BURST=2 TONE_SWEEP=1
+  COMSUBS.OVL  GLIDE=4 NOISE_BURST=1 TONE_SWEEP=2
+  DUNGEON.OVL  GLIDE=2 NOISE_BURST=4
+  ENDGAME.OVL  TONE_SWEEP=2
+  FONT.OVL     BEEP=1 NOISE_BURST=2
+  LOOKOBJ.OVL  NOISE_BURST=1
+  MAINOUT.OVL  BEEP=1 GLIDE=4 NOISE_BURST=1
+  OUTSUBS.OVL  GLIDE=1 TONE_SWEEP=4
+  SHOPPES.OVL  TONE_SWEEP=6
+  SJOG.OVL     BEEP=4 GLIDE=4 NOISE_BURST=1 TONE_SWEEP=1
+  TALK.OVL     GLIDE=1
+  TOWN.OVL     BEEP=1 NOISE_BURST=2 SET_TONE=1 SPK_STOP=1 TONE_SWEEP=2
+  ULTIMA.EXE   BEEP=1 GLIDE=1 NOISE_BURST=8 SET_TONE=6 SPK_STOP=3 TONE_SWEEP=6
+  ZSTATS.OVL   GLIDE=1
+
+== totals (this tree)   vs   re/notes/sfx-catalog.md section 2 (1988 corpus)
+  TONE_SWEEP    44   vs   44
+  NOISE_BURST   25   vs   25
+  GLIDE         31   vs   27
+  SET_TONE       8   vs    8
+  SPK_STOP       5   vs    5
+  BEEP           8   vs    2
+  ALL          121   vs  111

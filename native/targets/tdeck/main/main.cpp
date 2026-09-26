@@ -17,11 +17,13 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include "alpha_audio.h"
 #include "alpha_resources.h"
 #include "alpha_runtime.h"
 #include "asset_pack.h"
 #include "boot_trace.h"
 #include "sd_diagnostic_logger.h"
+#include "tdeck_audio.h"
 #include "tdeck_board.h"
 #include "tdeck_input.h"
 
@@ -124,6 +126,19 @@ extern "C" void app_main(void) {
                 tile_pack.close();
             }
             ESP_LOGI(kTag,"Resource packs closed after PSRAM/cache load; save descriptor reserve restored");
+            if(ready){
+                // A3-01. The optional audio pack: read once, never part of the
+                // identity gate above. Missing/stale/corrupt only means no music.
+                debug51::Step trace("audio-pack-load");
+                const auto audio_pack=tdeck::load_audio_pack_info(tdeck::kAudioPackPath);
+                static tdeck::TdeckAudioBackend audio_backend;
+                ESP_LOGI(kTag,"AUDIO_PACK path=%s state=%s size=%lu crc=%08lx capability=%s songs=%u bank=%d",
+                         tdeck::kAudioPackPath,openu5::audio_pack_state_name(audio_pack.state),
+                         (unsigned long)audio_pack.file_size,(unsigned long)audio_pack.payload_crc32,
+                         audio_pack.state==openu5::AudioPackState::Valid?openu5::music_capability_name(audio_pack.record.capability):"none",
+                         unsigned(audio_pack.song_entries),int(audio_pack.bank_entry));
+                runtime.configure_audio(audio_pack,&audio_backend);
+            }
             if(!ready)ESP_LOGE(kTag,"Alpha runtime initialization failed: %s",esp_err_to_name(initialized));
         }
         else ESP_LOGE(kTag,"RESOURCE_MISMATCH startup blocked expected_res_size=%lu expected_res_crc=%08lx expected_asset_size=%lu expected_asset_crc=%08lx",

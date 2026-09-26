@@ -1,5 +1,6 @@
 #pragma once
 
+#include "audio.h"
 #include "state.h"
 #include "turn.h"
 #include "ui_session.h"
@@ -41,8 +42,12 @@ struct FrontendSettings {
     uint16_t trackball_responsiveness = 100;
     uint8_t ui_size = 1;                  // Reserved: 0=compact, 1=normal, 2=large.
     bool developer_tools_visible = false;
-    uint8_t sound_volume = 80;            // Future backend; no audio in Alpha 2.0.
-    uint8_t music_volume = 80;            // Future backend; no audio in Alpha 2.0.
+    // A3-01: the Settings rows "SFX Volume" and "Music Volume", 0..100 % in
+    // steps of 10 (0 = mute). Stored since Alpha 2 (settings.json keys
+    // soundVolume / musicVolume), so existing cards keep their value. Music
+    // Volume is kept even while no music is available (see openu5/audio.h).
+    uint8_t sound_volume = 80;
+    uint8_t music_volume = 80;
     bool touch_controls = false;           // Future touch frontend.
 };
 
@@ -138,6 +143,8 @@ class FrontendSession {
         intro_texts_ = scenes; intro_text_count_ = count;
     }
     const FrontendSettings &settings() const { return settings_; }
+    /** A3-01: whether the Music Volume row is live (openu5/audio.h). */
+    void set_music_availability(MusicAvailability a) { music_availability_ = a; }
     bool active() const { return state_ != FrontendState::EnterGame; }
     FrontendCreationPhase creation_phase() const { return creation_; }
     const char *creation_name() const { return name_; }
@@ -159,6 +166,7 @@ class FrontendSession {
     FrontendCreationPhase creation_ = FrontendCreationPhase::Name;
     FrontendIntent pending_{};
     FrontendSettings settings_{};
+    MusicAvailability music_availability_ = MusicAvailability::NoAudioPack;
     FrontendSaveSlot saves_[2]{};
     GypsyTournament tournament_{};
     uint32_t entered_ms_ = 0;
