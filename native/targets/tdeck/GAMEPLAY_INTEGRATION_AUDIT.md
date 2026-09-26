@@ -8,7 +8,20 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Batch 54) — ALPHA 2 RC READY — HARDWARE SMOKE PENDING; read this first
+> ### CURRENT STATE (Batch 55) — ALPHA 2 RELEASED / CLOSED; read this first
+>
+> **Phase 8, the RC1 hardware smoke, PASSED on the device (steps 1–8).** RC1 is promoted **byte for byte** to the final Alpha 2 release: tag **`alpha2-batch55-release`**. Alpha 2 hardware validation is complete, and no Alpha 2 row is open as a blocker. See §14 "Batch 55" and [`../../../ALPHA2.md`](../../../ALPHA2.md).
+>
+> | | |
+> |---|---|
+> | Hardware | Phase 8 steps 1–8 **PASS** on `FW 2.0.0-alpha2-rc1-debug`, `Git 211c676a1dca`, `RES v2.0 2041466B CRC 26f75ae6`, `ASSET 132284B CRC 933c9b82`. No regression. |
+> | Release image | The RC1 Launcher, unchanged: 878,752 B, SHA-256 `ff3dfe19…5828`, embedded `Git 211c676a1dca`. No rebuild, no flash needed. |
+> | Change | Docs only. No production source, save, pack or UI change since RC1. |
+> | Host suite | **123 / 123**, fresh build, serial (134.3 s). Release blockers 95 / 44 / 24, persistence 9 / 9 targets, stale-pack gate 96 / 96. |
+> | SD pack | **Unchanged** since Batch 53. **No recopy.** |
+> | Next | Nothing for Alpha 2. Alpha 3 tracks are defined in `ALPHA2.md` ("Alpha 3 handoff") and have not started. |
+
+> ### CURRENT STATE (Batch 54) — **SUPERSEDED by the Batch 55 block above; kept as history.** ALPHA 2 RC READY — HARDWARE SMOKE PENDING
 >
 > **Phase 7E is complete; RB-1 … RB-4 are HARDWARE PASS.** A fresh blocker sweep found **zero active Alpha 2 release blockers**: **ALPHA 2 READY FOR RELEASE CANDIDATE**. The Alpha 2 release candidate (**RC1**) is packaged. See §14 "Batch 54" and the release notes [`../../../ALPHA2.md`](../../../ALPHA2.md).
 >
@@ -7308,3 +7321,88 @@ No new ID.
 - No Alpha 3 work: no audio, music, UI rework, moongate animation or endgame cinematic.
 - No non-blocking fidelity item fixed: H-194, D-58, D-59, H-183 – H-186, H-22, H-45 and H-63 stay open.
 - The final public release waits for Phase 8.
+
+## Batch 55 — Alpha 2 final release closeout
+
+**Verdict: ALPHA 2 RELEASED / CLOSED.** The Phase 8 RC smoke passed on the device, and RC1 is promoted byte for byte to the final Alpha 2 release. This is a release-engineering batch: no gameplay, save, pack, UI or firmware change, and no new binary.
+
+### 1. Baseline (Phase 55A)
+
+- **Tree.** HEAD `211c676a` on `main`, clean. It is the commit of the annotated tag `alpha2-batch54-rc1`.
+- **No production change since RC1.** Nothing was committed after the RC1 tag. Batch 55 edits only Markdown and adds its own evidence logs.
+- **RC1 Launcher.** `native/targets/tdeck/build-batch54/launcher/OpenU5-TDeck-Alpha2.0.0-alpha2-RC1-Debug-Launcher.bin` is on disk. It is 878,752 B and hashes to SHA-256 `ff3dfe193973547db2648c5f486aa381086505eb80b5f2dadec7432194fb5828`, as the RC1 tag records.
+- **Packs.**
+  - `openu5-alpha1-resources.bin`: 2,041,466 B, SHA-256 `a48abdbf…379b`, CRC `0x26f75ae6`.
+  - `openu5-assets.bin`: 132,284 B, SHA-256 `6eb001ed…e188`, CRC `0x933c9b82`.
+
+  Both are unchanged.
+
+### 2. Phase 8 reconciliation (Phase 55B)
+
+The user ran the complete Phase 8 smoke on the RC1 image and reported steps 1–8 **PASS** (checklist, Batch 55 section).
+- The boot identity read `FW 2.0.0-alpha2-rc1-debug`, `Git 211c676a1dca`, `RES v2.0 2041466B CRC 26f75ae6` and `ASSET 132284B CRC 933c9b82`.
+- There was no crash, lock, stale-resource refusal or mixed input mode.
+- Save, `Alt+L` and power-cycle Continue restored the saved state.
+- The dungeon, combat, Camp and Refuge loops returned to play.
+
+**No hardware regression was found. Alpha 2 hardware validation is complete.** The Batch 54 "HARDWARE SMOKE PENDING" wording is superseded, not rewritten.
+
+### 3. Release identity decision (Phase 55C): Option A, promote RC1 byte for byte
+
+- **The tested bytes are the release.** Phase 8 ran on exactly the image with SHA-256 `ff3dfe19…5828`. A metadata-only rebuild would give a new, untested image that differs in the version string, `Git`, build times and image SHA. It would also need another boot check, and it adds nothing a tester can use.
+- **No convention requires a version string without `rc`.** Batch 54 introduced the project's first RC identity (§14 Batch 54 §8), and nothing defines a separate final version. The identity screen's `FW` line and the Launcher file name are display identity only; no save, pack or gameplay code reads `PROJECT_VER` (§14 Batch 54 §8).
+- **The Alpha 2 final firmware therefore still reads `FW 2.0.0-alpha2-rc1-debug` and `Git 211c676a1dca`.** This is intentional, and `ALPHA2.md` says so.
+- **`PROJECT_VER` stays `2.0.0-alpha2-rc1-debug` in the tree.** A build from the release tree then names its image and `FW` line the way the released one reads.
+- **No second file name.** `package_launcher.py` derives the Launcher name from `PROJECT_VER`. A renamed copy (such as "…-Final-…") would carry a name that disagrees with its own identity screen, and a shared or ambiguous file name is how a stale image reached the device in Batch 50. The release artifact is the RC1 file itself.
+- Save file names and schema are untouched.
+
+### 4. Release tag (Phase 55D)
+
+- **One annotated tag: `alpha2-batch55-release`.** It follows the `alpha2-batchNN-<slug>` convention, and there is no redundant second tag. It points to the Batch 55 docs commit.
+- **The source commit of the firmware is `211c676a`** (`alpha2-batch54-rc1`). Excluding `*.md`, `*.log` and `.gitignore`, `git diff alpha2-batch54-rc1 alpha2-batch55-release` is empty.
+- The tag message carries the hardware target, the status, the source commit, the Launcher SHA-256, the pack identities, the host totals and the Phase 8 PASS.
+
+### 5. Artifacts (Phase 55E)
+
+| Item | Value |
+|---|---|
+| Launcher | `native/targets/tdeck/build-batch54/launcher/OpenU5-TDeck-Alpha2.0.0-alpha2-RC1-Debug-Launcher.bin` |
+| Size | 878,752 B (`0xd68a0`); 169,824 B (16 %) of the 1 MiB app partition free; Launcher allocation ≥ 896 KiB |
+| SHA-256 | `ff3dfe193973547db2648c5f486aa381086505eb80b5f2dadec7432194fb5828` (re-verified on disk in Batch 55) |
+| Embedded `Git` / `FW` | `211c676a1dca` / `2.0.0-alpha2-rc1-debug` |
+| Resource pack | 2,041,466 B, CRC32 `26f75ae6`, SHA-256 `a48abdbfc88eb5ab43453880a8ea029a1ea0684dfec2045f9dae941b31aa379b` |
+| Asset pack | 132,284 B, CRC32 `933c9b82`, SHA-256 `6eb001ed2a7729e683896998f693d02aeaf1327f3cddd661d1c726ef7414e188` |
+| SD recopy | **none** (the pack is the Batch 53 pack) |
+
+### 6. Host verification (Phase 55F)
+
+The only difference from RC1 is documentation, so the RC1 software evidence (§14 Batch 54 §5, §6 and §10) stands. Batch 55 adds one fresh run on the release tree:
+
+- **Build.** A fresh host build, `native/core/build-batch55-final` (Release, `OPENU5_ENABLE_DEVELOPER_TOOLS=ON`, GCC 16.2 / w64devkit), took 65 s. Its only warning is the known w64devkit `stl_uninitialized.h` false positive (`batch55-final-host-build.log`).
+- **Full suite, serial.** **123 / 123 pass, 0 fail, 0 skipped, 134.3 s** (`batch55-final-ctest.log`).
+- **Release blockers.** `batch53_release_blockers` 95 / 95, `batch53a_ending_terminal` 44 / 44, `batch53b_moongate_return` 24 / 24 (`batch55-final-targeted.log`).
+- **Persistence: 9 / 9 targets.**
+  - `persistence_parity`
+  - `batch21b_chest_reset`
+  - `batch22_basement_objects` 23 / 23
+  - `batch23_vault_parity` 45 / 45
+  - `batch24_reload_parity` 47 / 47
+  - `batch25_shard_ritual` 42 / 42
+  - `batch26_dungeon_save` 34 / 34
+  - `batch27_alt_load` 37 / 37
+  - `batch28_save_validation` 51 / 51
+- **Stale-pack gate.** With the real Batch 51 pack (SHA-256 `434cd664…`) as the second argument: **96 / 96 GREEN**. P6 confirms that the Batch 51 pack is rejected (`batch55-final-stale-pack.log`).
+
+### 7. Row updates
+
+None. No row changed kind or status in Batch 55, and no new ID was allocated. Every open row is still the non-blocking set of §14 Batch 54 §3, with the milestone given there.
+
+### 8. Not done in this batch
+
+- No firmware build, no flash, no SD change.
+- No gameplay, save, pack, UI or ending code touched; `PROJECT_VER` unchanged.
+- No Alpha 3 work: no audio, music, UI, moongate animation or endgame cinematic.
+- No non-blocking fidelity item fixed.
+- No new hardware campaign.
+
+The Alpha 3 tracks are defined in `ALPHA2.md` ("Alpha 3 handoff"). None has started.

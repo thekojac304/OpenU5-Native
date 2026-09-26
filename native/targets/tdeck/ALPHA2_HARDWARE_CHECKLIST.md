@@ -16,7 +16,7 @@
 
 | Item | Value |
 |---|---|
-| Firmware image | **The current validation image is the Launcher named in the annotated tag of the batch that owns the phase you are running** (for Phase 7D: tag `alpha2-batch51-scene-pacing`). *Batch 51 correction: this row used to name `build-batch19`; it was never updated, and in the first Phase 7B/7C session a stale Batch 43 image was flashed instead of Batch 48.* Every batch packages the same filename, `OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`, so the filename proves nothing. *Batch 52: no new image. The next phase, 7E, will name the Batch 53 tag, and that batch changes the SD pack as well.* *Batch 53A: Phase 7E continues on the Batch 53A image (tag `alpha2-batch53a-ending-terminal`); the SD pack is the Batch 53 one, unchanged.* |
+| Firmware image | **The current validation image is the Launcher named in the annotated tag of the batch that owns the phase you are running** (for Phase 7D: tag `alpha2-batch51-scene-pacing`). *Batch 51 correction: this row used to name `build-batch19`; it was never updated, and in the first Phase 7B/7C session a stale Batch 43 image was flashed instead of Batch 48.* Every batch packages the same filename, `OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`, so the filename proves nothing. *Batch 52: no new image. The next phase, 7E, will name the Batch 53 tag, and that batch changes the SD pack as well.* *Batch 53A: Phase 7E continues on the Batch 53A image (tag `alpha2-batch53a-ending-terminal`); the SD pack is the Batch 53 one, unchanged.* *Batch 55: Alpha 2 final is the RC1 image byte for byte (`OpenU5-TDeck-Alpha2.0.0-alpha2-RC1-Debug-Launcher.bin`, SHA-256 `ff3dfe19…5828`). Its `Git` line reads `211c676a1dca`, the commit of `alpha2-batch54-rc1`, NOT the commit of the release tag `alpha2-batch55-release`, which is a docs-only commit on top of it.* |
 | **Firmware identity gate** | **Before recording ANY physical result, read `Git <hash>` on the boot identity screen and confirm it equals the first 12 hex digits of the commit the owning tag points to** (`git rev-list -n1 <tag>`); write that hash into the result cell. On disk the same check is `grep -a -o <hash> <image>`. A result recorded against a different hash certifies nothing about the phase and must be struck, not reinterpreted. |
 | **SD resource pack** | **NO REFRESH REQUIRED.** Neither Batch 18 nor Batch 19 changed any resource file. The last pack change was Batch 9C (`openu5-alpha1-resources.bin`, 2,039,545 B, payload CRC32 `0x2065ad91`, SHA-256 `434cd664…b4ea`). If the card already boots a Batch 9C-or-later image, leave it alone. |
 | If the card is older than 9C | `npm run pack:alpha1`, then copy `native/assets/openu5-alpha1-resources.bin` over `<SD>:\ultima5\openu5-alpha1-resources.bin`. **Do not reformat**; saves and settings are separate files. A stale card stops at the identity screen with `match=0` — that is the gate working. |
@@ -968,7 +968,7 @@ The following history is preserved, not rewritten:
 - The Batch 53A correction: the original never leaves ENDGAME.OVL after game-won, so "play continues" was wrong.
 - The Batch 53B moongate adjudication: a gate leads to the current phase's stone, and there is no return link.
 
-### Phase 8 — Alpha 2 RC1 hardware smoke · *new firmware; SD pack unchanged* · about 10–15 minutes
+### Phase 8 — Alpha 2 RC1 hardware smoke · *new firmware; SD pack unchanged* · about 10–15 minutes · *PENDING* → **PASS (Batch 55)**
 
 This smoke test looks for catastrophic regressions only; it is not another validation campaign. Compared with the Batch 53A image that passed Phase 7E, the RC1 image changes only the version string and the embedded `Git` hash. The annotated tag `alpha2-batch54-rc1` gives its path, SHA-256 and `Git` hash. `Alt+D` opens Developer and `Alt+M` the System Menu. A short Mic press is Cancel.
 
@@ -1034,3 +1034,38 @@ This smoke test looks for catastrophic regressions only; it is not another valid
 - *Known, do not file:* the "Known issues" list in `ALPHA2.md` at the repository root. It covers no audio, no moongate or ending animation, the two `victory` lines after the ending text (H-194), D-58 / D-59, and the Alpha 3 scene-fidelity rows H-183 – H-186.
 
 **Report back:** the `FW` and `Git` lines, then PASS / FAIL for steps 1–8.
+
+## Batch 55 — Phase 8 result and the Alpha 2 release (2026-09-26)
+
+### Phase 8 — Alpha 2 RC1 hardware smoke · **PASS**
+
+The user ran the complete Phase 8 smoke above on the device, on the RC1 image, and reported every step PASS. The "HARDWARE SMOKE PENDING" wording in the Batch 54 section is superseded by this result; it stays as written.
+
+**Boot identity, as read on the device:**
+- `FW 2.0.0-alpha2-rc1-debug`
+- `Git 211c676a1dca` (the `alpha2-batch54-rc1` commit)
+- `RES v2.0 2041466B CRC 26f75ae6`
+- `ASSET … 132284B CRC 933c9b82`
+
+The packs matched the firmware. The image is `OpenU5-TDeck-Alpha2.0.0-alpha2-RC1-Debug-Launcher.bin`, SHA-256 `ff3dfe193973547db2648c5f486aa381086505eb80b5f2dadec7432194fb5828`.
+
+| Step | Covers | Result |
+|---|---|---|
+| 1 Boot / identity | FW, Git, RES and ASSET lines; packs match | **PASS** |
+| 2 Basic input | movement, Look, Talk, Z-stats, Mic, movement-mode toggle, System Menu, Developer | **PASS** |
+| 3 Save / `Alt+L` | save, walk away, load; exact saved state; input normal afterwards | **PASS** |
+| 4 Power-cycle Continue | full power off/on, Continue Latest, saved state, input normal | **PASS** |
+| 5 Dungeon | Deceit entry, dungeon turns, load back out; no mode or input corruption | **PASS** |
+| 6 Combat | encounter, several combat turns, normal exit, control restored | **PASS** |
+| 7 Rest / Camp | camp scene, clock advance, return to play | **PASS** |
+| 8 Scripted scene | party-wipe route, the Refuge scene, waking in Lord British's castle, input afterwards | **PASS** |
+
+The PASS criteria all held: no crash, reset or watchdog; no lock; no stale-resource refusal; no mixed input mode; Save, Load and Continue restored the saved state; the dungeon, combat, rest and scripted-scene loops returned to play. Steps 9 (ending) and 10 (transport / moongate) were not run, as the smoke specified; Phase 7E and the host suite cover them.
+
+**No hardware regression was found. Alpha 2 hardware validation is COMPLETE.**
+
+### Alpha 2 released
+
+The tested RC1 image is promoted **byte for byte** to the final Alpha 2 release (tag `alpha2-batch55-release`; see `GAMEPLAY_INTEGRATION_AUDIT.md` §14 "Batch 55"). No new firmware was built, so no further flash and no SD change are needed. A device that passed Phase 8 is already running Alpha 2 final.
+
+No hardware phase remains open for Alpha 2. The next physical checks belong to Alpha 3 work.

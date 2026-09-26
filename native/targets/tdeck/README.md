@@ -1,6 +1,8 @@
 # OpenU5-TDeck: Milestone 5 native movement
 
-> **Current release: Alpha 2 RC1.** Release notes, install and SD layout are in
+> **Current release: Alpha 2 (released and closed, Batch 55, tag `alpha2-batch55-release`).**
+> It is the hardware-validated RC1 image, promoted byte for byte; its identity screen reads
+> `FW 2.0.0-alpha2-rc1-debug`. Release notes, install and SD layout are in
 > [`../../../ALPHA2.md`](../../../ALPHA2.md); packaging in [LAUNCHER.md](LAUNCHER.md).
 > The Milestone 5 text below is historical.
 

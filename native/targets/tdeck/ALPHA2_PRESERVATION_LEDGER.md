@@ -304,6 +304,16 @@ Every row checked against the Phase 6T–7D hardware results and the Batch 52 au
 
   The Alpha 2 release notes (`ALPHA2.md`, repository root) list them for testers.
 
+**Batch 55 status (Alpha 2 released / closed).** The Phase 8 RC1 hardware smoke passed on the device: steps 1–8 PASS on `Git 211c676a1dca`, `RES … CRC 26f75ae6`, `ASSET … CRC 933c9b82` (checklist, Batch 55 section).
+- RC1 is promoted byte for byte to the final Alpha 2 release, tag `alpha2-batch55-release`.
+- No hardware regression was found. Alpha 2 hardware validation is complete.
+- **No row changed kind or status, and no row was fixed in Batch 55.** Every row still open after Batch 54 is non-blocking and carries its milestone into Alpha 3 (`ALPHA2.md`, "Alpha 3 handoff").
+
+**Totals after Batch 55.** As after Batch 54:
+- 19 deliberate;
+- no software-fixed row awaiting hardware;
+- the same open, non-blocking rows.
+
 **Totals after Batch 54.**
 - 19 deliberate (unchanged).
 - Software-fixed rows awaiting hardware: **none**.

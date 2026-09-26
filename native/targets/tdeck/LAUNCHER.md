@@ -1,4 +1,10 @@
-# Launcher packaging — Alpha 2 RC1
+# Launcher packaging — Alpha 2 (RC1, released as final)
+
+> **Batch 55: Alpha 2 final is the RC1 image below, byte for byte.** It passed the
+> Phase 8 hardware smoke. No final-version image is built: a rebuild would be a new,
+> untested image. The release tag is `alpha2-batch55-release`. The firmware's source
+> commit, and its embedded `Git`, is `211c676a1dca` (`alpha2-batch54-rc1`).
+> SHA-256 `ff3dfe193973547db2648c5f486aa381086505eb80b5f2dadec7432194fb5828`.
 
 From an activated ESP-IDF v6.1 shell, on a clean, committed tree (the firmware
 embeds `git rev-parse --short=12 HEAD` at CMake configure time):
