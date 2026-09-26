@@ -6,7 +6,12 @@ which is the safe direction for a universal claim about call sites."""
 import os, sys
 D = 'original/u5/ultima5'
 BASES = {
-    'ULTIMA.EXE': 0, 'TOWN.OVL': 0x81d0, 'OUTSUBS.OVL': 0x81d0, 'MAINOUT.OVL': 0x8304,
+    # MAINOUT is overlay 2 of the thunk table and loads at 0x81d0 like TOWN
+    # (Batch 53B): thunk 0x7a3a -> ovl 2 off 0x0d22 is a MAINOUT prologue, and
+    # MAINOUT's own near calls resolve to kernel prologues only at 0x81d0
+    # (0xc232 -> 0x4402 tile_ptr, 0xd740 -> 0x5910, 0xb82c -> 0x39fc). The old
+    # 0x8304 (overlay 3) silently missed every MAINOUT caller, e.g. 0x0b00.
+    'ULTIMA.EXE': 0, 'TOWN.OVL': 0x81d0, 'OUTSUBS.OVL': 0x81d0, 'MAINOUT.OVL': 0x81d0,
     'COMSUBS.OVL': 0x85fe, 'NPC.OVL': 0xa290, 'TALK.OVL': 0xa290, 'SHOPPES.OVL': 0xa290,
     'SHOPPES2.OVL': 0xa89e, 'SHOPPES3.OVL': 0xa5f6, 'LOOKOBJ.OVL': 0xa444,
     'DNGLOOK.OVL': 0xa2b6, 'CAST.OVL': 0xa8d8, 'CMDS.OVL': 0xbf80, 'SJOG.OVL': 0xbf80,

@@ -1,0 +1,32 @@
+[1/3] Building CXX object CMakeFiles/openu5_core.dir/src/commands.cpp.obj
+[2/3] Linking CXX static library libopenu5_core.a
+[3/3] Linking CXX executable batch53b_moongate_return.exe
+==== batch53b_moongate_return
+  GREEN R1     7E-C step 1: the Developer teleport lands at Britannia 96,103
+  GREEN R2     7E-C step 2: at hour 21 the gate tile 0xDC is drawn one cell North, on stone 1 (96,102)
+  RED   R3     7E-C step 3: moving North onto it fires the gate once and lands on the active phase's stone
+  GREEN R4     precondition: tonight's phase is not stone 1's, so the first transit really moved the party
+  GREEN R6     ** at the destination the draw predicate and the transit predicate agree: visible AND active **
+  GREEN R7     ** the active phase still selects the stone the party stands on: this gate's destination is itself **
+  GREEN R8     precondition: the destination gate has a walkable neighbour
+  GREEN R8b    ** one step off, the destination gate is drawn: 0xDC is composed on the stone the party arrived on **
+  GREEN R9     stepping off the destination gate is an ordinary step (no transit, no refusal)
+  RED   R10    ** stepping back onto the destination gate FIRES the gate: re-entry is not blocked **
+  GREEN R11    ** ...and lands where it stands (the active stone), not back at 96,102: the hardware observation, reproduced **
+  GREEN R12    no "Failed!", no prompt, the session stays in Exploration
+  RED   O1     ** entering from ANY adjacent cell fires the gate and lands on the active stone (no previous-position state) **
+  RED   O2     ** three laps off and back on: the gate fires every time (no suppression flag that never clears) **
+  RED   O3     Pass on the destination gate is routed and leaves the party on the same cell
+  RED   O4     ** after waiting a turn, stepping off and back on fires the gate and lands on the active stone **
+  RED   O5     the party still stands on the destination gate (bump variant N/A)
+  RED   O6     ** exactly one activation per step onto the gate, none on the steps off: no double trigger, no ping-pong **
+  RED   O7     same hour, same phase, and the eight stones untouched by any transit (0x47f4 only reads them)
+  GREEN T1     on Day 3 at hour 21 the active phase is 1 (the Britain stone's)
+  RED   T2     ** then stepping off the destination gate and back on transits to stone 1: the party is back at 96,102 **
+  RED   T3     Vas Rel Por '2' from the destination returns the party to 96,102 (spell path unchanged)
+  RED   T4     control: at 00:05 stepping onto a gate fires it but the party stays on it (midnight edge, 0x494d)
+  RED   T5     the first transit lands on the stone the data's Trammel byte names for this day
+batch53b_moongate_return: 11/24 checks GREEN, 13 RED
+==== batch53b_moongate_return exit=1
+
+MUTATION double_trigger_per_step: KILLED

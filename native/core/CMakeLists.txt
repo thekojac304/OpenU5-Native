@@ -1225,6 +1225,42 @@ if(BUILD_TESTING)
   endif()
   add_test(NAME batch53a_ending_terminal COMMAND batch53a_ending_terminal
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+
+  # Batch 53B -- Phase 7E-C's return trip through a moongate: the exact
+  # physical sequence (teleport, hour 21, step onto the gate, step off and
+  # back on the destination gate) on the device runtime, adjudicated against
+  # MAINOUT 0x0b00 / ULTIMA.EXE 0x48a8-0x4977. Same seam as Batch 53.
+  add_executable(batch53b_moongate_return
+    ../targets/tdeck/host_tests/batch53b_moongate_return_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_board_host_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(batch53b_moongate_return PRIVATE openu5_core)
+  target_include_directories(batch53b_moongate_return PRIVATE
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/main)
+  target_compile_features(batch53b_moongate_return PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(batch53b_moongate_return PRIVATE /Gy)
+    target_link_options(batch53b_moongate_return PRIVATE /OPT:REF)
+  else()
+    target_compile_options(batch53b_moongate_return PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(batch53b_moongate_return PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME batch53b_moongate_return COMMAND batch53b_moongate_return
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
   # Batch 14 / R-22 -- (Z)-stats navigation. Same seam and same stub/shim set
   # as alpha_runtime_integration_regression above: it links the REAL,
   # unmodified alpha_runtime.cpp so the modal is reached only by feeding raw

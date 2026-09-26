@@ -1,0 +1,10 @@
+just_arrived_never_clears: KILLED -- exit=1 RED=12 [R10 O1 O2 O3 O4 O5 O6 O7 T2 T3 T4 T5]
+same_tile_antiretrigger_forever: KILLED -- exit=1 RED=6 [R10 O1 O2 O4 O6 T2]
+reverse_link_to_origin: KILLED -- exit=1 RED=4 [R11 O1 O2 O4]
+visible_but_inactive: KILLED -- exit=1 RED=6 [R6 R10 O1 O2 O4 O6]
+active_but_invisible: KILLED -- exit=1 RED=2 [R6 R8b]
+wrong_destination_index: KILLED -- exit=1 RED=11 [R3 R7 O1 O2 O3 O5 O6 O7 T2 T3 T5]
+double_trigger_per_step: KILLED -- exit=1 RED=13 [R3 R10 O1 O2 O3 O4 O5 O6 O7 T2 T3 T4 T5]
+transit_advances_clock: KILLED -- exit=1 RED=11 [R3 R7 O1 O2 O3 O5 O6 O7 T2 T3 T5]
+
+8/8 killed

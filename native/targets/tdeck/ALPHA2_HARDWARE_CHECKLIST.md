@@ -789,7 +789,7 @@ RC packaging and smoke are **Batch 54**, after 7E passes.
 |---|---|---|
 | H-189 (RB-1) | SOFTWARE FIXED — HARDWARE RETEST PENDING. **Run 1 (Batch 53 image): absorption, `VICTORY!`, ENDMSG, input PASS; post-ending state NOT ACCEPTED (H-192) — see Batch 53A** | A → **A′** |
 | H-187 (RB-2), H-119, H-135 | SOFTWARE FIXED — HARDWARE RETEST PENDING | B |
-| H-188, H-191 (RB-3), H-12, H-13 | SOFTWARE FIXED — HARDWARE RETEST PENDING | C |
+| H-188, H-191 (RB-3), H-12, H-13 | SOFTWARE FIXED — HARDWARE RETEST PENDING. **Run 1: first transit PASS, destination gate drawn, stepping back onto it did not transport the party back (H-195), Vas Rel Por PASS; Test C held — adjudicated by Batch 53B: the original's behaviour, no fix** | C → **C′** |
 | H-146 (RB-4) | SOFTWARE FIXED — HARDWARE RETEST PENDING | D |
 | H-190, H-137 (Refuge half) | SOFTWARE FIXED — HARDWARE RETEST PENDING | E |
 | H-151 | host-certified (B21A); device observation owed | F |
@@ -827,6 +827,8 @@ Every coordinate below was executed on the host through the same Developer call 
 - **Pass:** 3 and 4.
 
 **C. Moongate and Vas Rel Por (H-188, H-191, H-12, H-13)** — about 3 minutes
+
+> **Batch 53B:** run 1 passed steps 2, 3, 5 and 6; stepping back onto the destination gate did not take the party back to 96,102 and the test was held. That is the original's behaviour (every gate leads to the stone the moons select, which is the one you just arrived on). The pass criteria are completed by **7E-C′** (Batch 53B section at the end); steps 1–6 below are unchanged.
 1. Teleport → **Britannia**, X **96**, Y **103**. Then Time → **Hour 21**.
 2. Close Developer. *Expected:* a **moongate** is drawn one cell **North** (96,102). At hour 12 it must be absent.
 3. Move **North** onto it. *Expected:* the view jumps to another moongate site (which one depends on the day's Trammel phase). No transit animation yet — that is Alpha 3.
@@ -905,3 +907,39 @@ Every coordinate below was executed on the host through the same Developer call 
 - *Known, do not file:* two lines reading `victory` after the report (H-194, queued); the ending is transcript text with the Doom view behind it, and the box question is answered for you (D-54 / D-56, Alpha 3).
 
 **Report back:** the `Git` hash, then PASS / FAIL for 7E-A′ steps 4–9. Do not run B–H yet.
+
+## Batch 53B — the moongate return trip (2026-09-26)
+
+### Phase 7E-C, run 1 — as reported
+
+| Step | Result |
+|---|---|
+| 1 Teleport Britannia 96,103, Time Hour 21 | done |
+| 2 a moongate drawn one cell North (96,102) | **PASS** |
+| 3 move North onto it: the party is transported | **PASS** (first transit) |
+| — at the destination | the moongate is still visibly present |
+| — step back onto that visible destination gate | **the party was not transported back** |
+| 5 Vas Rel Por: `To phase:` | **PASS** |
+| 6 digit `3`: travels correctly; moonstone state and gate visibility correct | **PASS** |
+
+**Test C held** pending adjudication of the return step (H-195).
+
+**Adjudication (Batch 53B): Outcome A — the device is right; no firmware change.** In the original a moongate does not lead back to the gate you came from. Every gate sends the party to the stone of the phase the moons show *now* (Trammel's phase from 20:00, Felucca's after midnight; ULTIMA.EXE `0x4962`–`0x4977`), and during the same phase that is the stone the party just arrived on. Stepping back onto the destination gate therefore transits the party onto itself. On the original the gate closes and re-opens around the party; the device has no transit animation yet (D-48, Alpha 3), so nothing visible happens. Evidence: `GAMEPLAY_INTEGRATION_AUDIT.md` §14 "Batch 53B", `re/notes/batch53b-moongate-return.md`, host target `batch53b_moongate_return` (24 checks; 8 / 8 mutations killed).
+
+### Phase 7E-C′ — the revised Test C · *no reflash, no SD change*
+
+Run it on whatever Batch 53 / 53A image is on the device (53B changed no firmware and no SD pack). Party size 1 is simplest.
+
+1. `Alt+D` → Teleport → **Britannia**, X **96**, Y **103** (Use default entrance **Off**). Time → **Day 5**, **Hour 21**, **Minute 0**.
+2. Close Developer. *Expected:* a moongate one cell **North** (96,102).
+3. Move **North** onto it. *Expected:* the party stands on another gate at **50,37** — Day 5's Trammel phase is 3. (For another day: Days 1–28 → phase 0 0 1 2 3 4 5 6 7 0 0 1 2 3 4 5 6 7 0 0 1 2 3 4 5 6 7 0; phase 0 → 224,133 · 1 → 96,102 · 2 → 38,224 · 3 → 50,37 · 4 → 166,19 · 5 → 104,194 · 6 → 23,126 · 7 → 187,167, i.e. Vas Rel Por digit phase+1. On a day whose phase is 1 the gate sends the party onto itself.)
+4. Step **off** the gate one cell in any walkable direction. *Expected:* an ordinary step; the gate is now drawn on the cell the party left (while the party stands on it, the party sprite covers it).
+5. Step **back onto** it. *Expected:* **the party stays on that same gate** — no move to 96,102, no `Failed!`, no prompt. This is correct: at this hour every gate leads to this stone. Repeat 4–5 from a different side: same result.
+6. *Expected:* the next move off the gate works normally (no frozen input).
+7. **The return trip.** `Alt+D` → Time → **Day 3**, Hour **21**, Minute **0** (Day 3's Trammel phase is 1 = the Britain stone). Close Developer. Step off the gate and back on. *Expected:* the party is at **96,102**, the Britain gate.
+8. Steps 4–6 of the original Test C (Vas Rel Por, `To phase:`, digit `3` → 38,224) — already PASS in run 1; repeat only if convenient. *Optional:* from any gate, Vas Rel Por digit **2** returns to 96,102 at once.
+
+- **Pass:** 2, 3, 5, 6 and 7 (plus run 1's Vas Rel Por PASS). **Fail:** step 5 lands anywhere other than the gate the party stands on, any `Failed!` from a gate at hour 21, input refused after a gate, or step 7 not at 96,102. *(If step 7 leaves the party on the 50,37 gate, report it together with the Day shown: that would be a moon-phase latch carried in the save, which the device never refreshes — D-59 — not the gate.)*
+- *Known, do not file:* no gate close/open animation, so steps 3 and 5 are instantaneous and step 5 looks like "nothing happened" (D-48, Alpha 3). Standing on a gate and pressing Space does not re-fire it on the device; the original re-fires it (to the same stone at the same hour) — declared divergence D-58, no visible difference here.
+
+**Report back:** the `Git` hash, then PASS / FAIL for 7E-C′ steps 2–7.

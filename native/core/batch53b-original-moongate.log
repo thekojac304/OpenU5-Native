@@ -1,0 +1,335 @@
+# 1. MAINOUT.OVL loads at 0x81d0 (thunk overlay 2)
+  OK    kernel thunk 0x7a3a = lcall loader, overlay 2, ljmp
+  OK    overlay 2 target 0x8ef2 - 0x81d0 = MAINOUT 0x0d22, a function prologue (the outdoor entry the kernel calls at 0x00c4)
+  OK    MAINOUT 0x16e0: base 0x81d0 -> kernel 0x4402 (prologue); base 0x8304 -> 0x4536 (not a prologue)
+  OK    MAINOUT 0x05a0: base 0x81d0 -> kernel 0x5910 (prologue); base 0x8304 -> 0x5a44 (not a prologue)
+  OK    MAINOUT 0x0aa2: base 0x81d0 -> kernel 0x39fc (prologue); base 0x8304 -> 0x3b30 (not a prologue)
+
+# 2. The outdoor loop checks the gate at the top of every iteration
+
+--- MAINOUT outdoor main loop, head [0x0a84..0x0b1a)
+0a84: 55             push bp
+0a85: 8bec           mov bp, sp
+0a87: 83ec10         sub sp, 0x10
+0a8a: c746fe0000     mov word ptr [bp - 2], 0
+0a8f: c746f60000     mov word ptr [bp - 0xa], 0
+0a94: c746f80100     mov word ptr [bp - 8], 1
+0a99: ff76fe         push word ptr [bp - 2]
+0a9c: e87bff         call 0xa1a
+0a9f: 8946fe         mov word ptr [bp - 2], ax
+0aa2: e887ad         call 0xffffb82c
+0aa5: 8946fa         mov word ptr [bp - 6], ax
+0aa8: 3d0100         cmp ax, 1
+0aab: 7515           jne 0xac2
+0aad: b80a00         mov ax, 0xa
+0ab0: 50             push ax
+0ab1: e8368a         call 0xffff94ea
+0ab4: e8a3bf         call 0xffffca5a
+0ab7: b82a2b         mov ax, 0x2b2a
+0aba: 50             push ax
+0abb: e8c28b         call 0xffff9680
+0abe: e95101         jmp 0xc12
+0ac1: 90             nop 
+0ac2: 837efaff       cmp word ptr [bp - 6], -1
+0ac6: 7538           jne 0xb00
+0ac8: 803ebda901     cmp byte ptr [0xa9bd], 1
+0acd: 7412           je 0xae1
+0acf: b80100         mov ax, 1
+0ad2: 50             push ax
+0ad3: e87898         call 0xffffa34e
+0ad6: b8352b         mov ax, 0x2b35
+0ad9: 50             push ax
+0ada: e8c789         call 0xffff94a4
+0add: 0bc0           or ax, ax
+0adf: 74f5           je 0xad6
+0ae1: e86eed         call 0xfffff852
+0ae4: 50             push ax
+0ae5: b85a5c         mov ax, 0x5c5a
+0ae8: 50             push ax
+0ae9: b80001         mov ax, 0x100
+0aec: 50             push ax
+0aed: e81899         call 0xffffa408
+0af0: e8b981         call 0xffff8cac
+0af3: c746f60100     mov word ptr [bp - 0xa], 1
+0af8: c746f80000     mov word ptr [bp - 8], 0
+0afd: e91201         jmp 0xc12
+0b00: e8d5bb         call 0xffffc6d8
+0b03: 0bc0           or ax, ax
+0b05: 7403           je 0xb0a
+0b07: e890ed         call 0xfffff89a
+0b0a: 803e935800     cmp byte ptr [0x5893], 0
+0b0f: 7403           je 0xb14
+0b11: e90902         jmp 0xd1d
+0b14: e881fa         call 0x598
+0b17: 8846fc         mov byte ptr [bp - 4], al
+  OK    MAINOUT 0x0b00: call kernel_moongate_enter 0x48a8 (unconditional)
+  OK    MAINOUT 0x0b14: call 0x0598 (key read) AFTER the gate check
+  OK    MAINOUT 0x05a0: the key read starts with the screen update 0x5910
+  OK    MAINOUT 0x0d1a: jmp 0x0a8f -- every command loops back to the top (and to 0x0b00)
+  OK    MAINOUT never references [0xa9bc]: no "just arrived" skip outdoors
+  OK    TOWN.OVL references [0xa9bc] only at ['0x11fd', '0x146a', '0x1471']
+
+--- TOWN loader 0x11f0 sets the flag [0x11f0..0x11ff)
+11f0: 55             push bp
+11f1: 8bec           mov bp, sp
+11f3: 83ec06         sub sp, 6
+11f6: 56             push si
+11f7: b001           mov al, 1
+11f9: a2e624         mov byte ptr [0x24e6], al
+11fc: a2bca9         mov byte ptr [0xa9bc], al
+
+--- TOWN loop: one skipped check after a town load [0x1468..0x1480)
+1468: 803ebca900     cmp byte ptr [0xa9bc], 0
+146d: 7407           je 0x1476
+146f: c606bca900     mov byte ptr [0xa9bc], 0
+1474: eb0a           jmp 0x1480
+1476: e85fb2         call 0xffffc6d8
+1479: 0bc0           or ax, ax
+147b: 7403           je 0x1480
+147d: e81ae4         call 0xfffff89a
+  OK    TOWN 0x1476: the town loop's own call to 0x48a8, skipped once when [0xa9bc] is set
+
+# 3. kernel_moongate_enter 0x48a8: fires on the painted tile under the party
+
+--- ULTIMA.EXE kernel_moongate_enter [0x48a8..0x4987)
+48a8: 55             push bp
+48a9: 8bec           mov bp, sp
+48ab: 83ec06         sub sp, 6
+48ae: c746fa0000     mov word ptr [bp - 6], 0
+48b3: a09658         mov al, byte ptr [0x5896]
+48b6: 2ae4           sub ah, ah
+48b8: 50             push ax
+48b9: a09758         mov al, byte ptr [0x5897]
+48bc: 50             push ax
+48bd: e842fb         call 0x4402
+48c0: 8bd8           mov bx, ax
+48c2: 803fdc         cmp byte ptr [bx], 0xdc
+48c5: 7403           je 0x48ca
+48c7: e9b600         jmp 0x4980
+48ca: b80100         mov ax, 1
+48cd: 50             push ax
+48ce: e815f2         call 0x3ae6
+48d1: b80c17         mov ax, 0x170c
+48d4: 50             push ax
+48d5: b80100         mov ax, 1
+48d8: 50             push ax
+48d9: b83075         mov ax, 0x7530
+48dc: 50             push ax
+48dd: b8d007         mov ax, 0x7d0
+48e0: 50             push ax
+48e1: b80200         mov ax, 2
+48e4: 50             push ax
+48e5: e8aad8         call 0x2192
+48e8: a07c58         mov al, byte ptr [0x587c]
+48eb: 2ae4           sub ah, ah
+48ed: 8946fe         mov word ptr [bp - 2], ax
+48f0: c6067c5816     mov byte ptr [0x587c], 0x16
+48f5: b8dc00         mov ax, 0xdc
+48f8: 50             push ax
+48f9: b80500         mov ax, 5
+48fc: 50             push ax
+48fd: 50             push ax
+48fe: e867c7         call 0x1068
+4901: c6067c5800     mov byte ptr [0x587c], 0
+4906: b80100         mov ax, 1
+4909: 50             push ax
+490a: e8d9f1         call 0x3ae6
+490d: c60687580f     mov byte ptr [0x5887], 0xf
+4912: a08758         mov al, byte ptr [0x5887]
+4915: 2ae4           sub ah, ah
+4917: 50             push ax
+4918: b80500         mov ax, 5
+491b: 50             push ax
+491c: 50             push ax
+491d: e8f2c7         call 0x1112
+4920: b80200         mov ax, 2
+4923: 50             push ax
+4924: e8d3d7         call 0x20fa
+4927: fe0e8758       dec byte ptr [0x5887]
+492b: 75e5           jne 0x4912
+492d: a09658         mov al, byte ptr [0x5896]
+4930: 2ae4           sub ah, ah
+4932: 50             push ax
+4933: a09758         mov al, byte ptr [0x5897]
+4936: 50             push ax
+4937: e8c8fa         call 0x4402
+493a: 8bd8           mov bx, ax
+493c: c60705         mov byte ptr [bx], 5
+493f: 800ee62402     or byte ptr [0x24e6], 2
+4944: b80500         mov ax, 5
+4947: 50             push ax
+4948: 50             push ax
+4949: 50             push ax
+494a: e893c7         call 0x10e0
+494d: 803e7f5800     cmp byte ptr [0x587f], 0
+4952: 750e           jne 0x4962
+4954: 803e81580a     cmp byte ptr [0x5881], 0xa
+4959: 7307           jae 0x4962
+495b: c746fa0100     mov word ptr [bp - 6], 1
+4960: eb18           jmp 0x497a
+4962: 803e7f580c     cmp byte ptr [0x587f], 0xc
+4967: 7305           jae 0x496e
+4969: a08558         mov al, byte ptr [0x5885]
+496c: eb03           jmp 0x4971
+496e: a08658         mov al, byte ptr [0x5886]
+4971: 2ae4           sub ah, ah
+4973: 2d3000         sub ax, 0x30
+4976: 50             push ax
+4977: e87afe         call 0x47f4
+497a: 8a46fe         mov al, byte ptr [bp - 2]
+497d: a27c58         mov byte ptr [0x587c], al
+4980: 8b46fa         mov ax, word ptr [bp - 6]
+4983: 8be5           mov sp, bp
+4985: 5d             pop bp
+4986: c3             ret 
+  OK    0x48c2: cmp byte [tile_ptr(party_x, party_y)], 0xDC -- else return
+  OK    0x493c: the gate cell under the party becomes 5 (grass) before the jump
+  OK    0x4962-0x4973: phase = (hour < 12 ? [0x5885] Felucca : [0x5886] Trammel) - 0x30
+  OK    0x4977: call kernel_moongate_teleport(phase)
+
+--- ULTIMA.EXE kernel_moongate_teleport [0x47f4..0x48a7)
+47f4: 55             push bp
+47f5: 8bec           mov bp, sp
+47f7: 83ec02         sub sp, 2
+47fa: 8b5e04         mov bx, word ptr [bp + 4]
+47fd: 80bf4058ff     cmp byte ptr [bx + 0x5840], 0xff
+4802: 7506           jne 0x480a
+4804: 2bc0           sub ax, ax
+4806: e99800         jmp 0x48a1
+4809: 90             nop 
+480a: 803e935800     cmp byte ptr [0x5893], 0
+480f: 7521           jne 0x4832
+4811: b80100         mov ax, 1
+4814: 50             push ax
+4815: e806dd         call 0x251e
+4818: b8baa3         mov ax, 0xa3ba
+481b: 50             push ax
+481c: e855ce         call 0x1674
+481f: 0bc0           or ax, ax
+4821: 74f5           je 0x4818
+4823: e8fc31         call 0x7a22
+4826: 50             push ax
+4827: b85a5c         mov ax, 0x5c5a
+482a: 50             push ax
+482b: b80001         mov ax, 0x100
+482e: 50             push ax
+482f: e8a6dd         call 0x25d8
+4832: a09358         mov al, byte ptr [0x5893]
+4835: 2ae4           sub ah, ah
+4837: 8946fe         mov word ptr [bp - 2], ax
+483a: 8b5e04         mov bx, word ptr [bp + 4]
+483d: 8a874058       mov al, byte ptr [bx + 0x5840]
+4841: a29358         mov byte ptr [0x5893], al
+4844: 8a873058       mov al, byte ptr [bx + 0x5830]
+4848: a29658         mov byte ptr [0x5896], al
+484b: 8a873858       mov al, byte ptr [bx + 0x5838]
+484f: a29758         mov byte ptr [0x5897], al
+4852: 8a874858       mov al, byte ptr [bx + 0x5848]
+4856: a29558         mov byte ptr [0x5895], al
+4859: 38269358       cmp byte ptr [0x5893], ah
+485d: 741d           je 0x487c
+485f: 837efe00       cmp word ptr [bp - 2], 0
+4863: 7417           je 0x487c
+4865: 803e935821     cmp byte ptr [0x5893], 0x21
+486a: 7310           jae 0x487c
+486c: 837efe21       cmp word ptr [bp - 2], 0x21
+4870: 7d0a           jge 0x487c
+4872: b80100         mov ax, 1
+4875: 50             push ax
+4876: e8cd31         call 0x7a46
+4879: eb23           jmp 0x489e
+487b: 90             nop 
+487c: 803e935800     cmp byte ptr [0x5893], 0
+4881: 751b           jne 0x489e
+4883: 837efe00       cmp word ptr [bp - 2], 0
+4887: 7515           jne 0x489e
+4889: e89631         call 0x7a22
+488c: 50             push ax
+488d: b85a5c         mov ax, 0x5c5a
+4890: 50             push ax
+4891: b80001         mov ax, 0x100
+4894: 50             push ax
+4895: 2bc0           sub ax, ax
+4897: 50             push ax
+4898: e8d3dc         call 0x256e
+489b: e8e032         call 0x7b7e
+489e: b80100         mov ax, 1
+48a1: 8be5           mov sp, bp
+48a3: 5d             pop bp
+48a4: c20200         ret 2
+  OK    neither routine calls advance_clock 0x4f7c or the phase refresh 0x4a84
+  OK    the origin (party x/y) is read only for the two tile pointers, never for the destination
+  OK    0x483d-0x4856: location / x / y / floor copied from the chosen stone's four tables (0x5840/30/38/48)
+  OK    the phase latches are only read here, never written
+
+# 4. The only painter of 0xDC: the night render, from the screen update
+
+--- ULTIMA.EXE kernel_moongate_render [0x475a..0x47f4)
+475a: 55             push bp
+475b: 8bec           mov bp, sp
+475d: 83ec08         sub sp, 8
+4760: 57             push di
+4761: 56             push si
+4762: c746f8dc00     mov word ptr [bp - 8], 0xdc
+4767: 803e7f5814     cmp byte ptr [0x587f], 0x14
+476c: 7307           jae 0x4775
+476e: 803e7f5805     cmp byte ptr [0x587f], 5
+4773: 7311           jae 0x4786
+4775: b88758         mov ax, 0x5887
+4778: 50             push ax
+4779: b80100         mov ax, 1
+477c: 50             push ax
+477d: b81000         mov ax, 0x10
+4780: 50             push ax
+4781: e86cf7         call 0x3ef0
+4784: eb17           jmp 0x479d
+4786: b88758         mov ax, 0x5887
+4789: 50             push ax
+478a: b80100         mov ax, 1
+478d: 50             push ax
+478e: e8a5f7         call 0x3f36
+4791: 803e875800     cmp byte ptr [0x5887], 0
+4796: 7505           jne 0x479d
+4798: c746f80500     mov word ptr [bp - 8], 5
+479d: 2bf6           sub si, si
+479f: 8b7efe         mov di, word ptr [bp - 2]
+47a2: 56             push si
+47a3: e85cff         call 0x4702
+47a6: 0bc0           or ax, ax
+47a8: 7438           je 0x47e2
+47aa: 8a843058       mov al, byte ptr [si + 0x5830]
+47ae: 2ae4           sub ah, ah
+47b0: 50             push ax
+47b1: 8a843858       mov al, byte ptr [si + 0x5838]
+47b5: 50             push ax
+47b6: e849fc         call 0x4402
+47b9: 8bf8           mov di, ax
+47bb: 8a05           mov al, byte ptr [di]
+47bd: 2ae4           sub ah, ah
+47bf: 3b46f8         cmp ax, word ptr [bp - 8]
+47c2: 7406           je 0x47ca
+47c4: b80100         mov ax, 1
+47c7: eb03           jmp 0x47cc
+47c9: 90             nop 
+47ca: 2bc0           sub ax, ax
+47cc: 8946fa         mov word ptr [bp - 6], ax
+47cf: 8a46f8         mov al, byte ptr [bp - 8]
+47d2: 8805           mov byte ptr [di], al
+47d4: 800ee62402     or byte ptr [0x24e6], 2
+47d9: 837efa00       cmp word ptr [bp - 6], 0
+47dd: 7403           je 0x47e2
+47df: e86816         call 0x5e4a
+47e2: 46             inc si
+47e3: 83fe08         cmp si, 8
+47e6: 7cba           jl 0x47a2
+47e8: 897efe         mov word ptr [bp - 2], di
+47eb: 8976fc         mov word ptr [bp - 4], si
+47ee: 5e             pop si
+47ef: 5f             pop di
+47f0: 8be5           mov sp, bp
+47f2: 5d             pop bp
+47f3: c3             ret 
+  OK    tile 0xDC written at every stone 0x4702 calls visible (this location, this floor, in the 32x32 window)
+  OK    0x594e (inside the screen update 0x5910): call kernel_moongate_render
+
+ALL CHECKS OK

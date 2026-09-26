@@ -6767,6 +6767,8 @@ The host fixture now declares no gameplay service at all. It copies pack **data*
 
 **Moongate visibility (Phase 53L).** New core predicate `moongate_visible_at()` (`quest_world.cpp:322`): night (the same `active_gate_phase` window), a buried stone of this location on the party's large map, surface only, moon-phase table present — the reference's `activeMoongates`. It shares its stone test with `moongate_at` (`buried_stone_at`), so drawing and stepping cannot disagree. `compose_world_presentation` places the static gate tile `0xDC` there before enemies, objects and the party (the reference's `[gates, foes, loot]` order), only on visible cells, and recomposes every frame, so there is no stale gate after travel or at dawn (M2, M3b, M5). Tile `0xDC`'s own rising animation (the reference's `fiel/moongate.ts` lane) and the 1,648 ms transit animation are **not** implemented: Alpha 3 presentation, as scoped. Transit is visually immediate.
 
+**Batch 53B note (2026-09-26).** Phase 7E-C run 1 held Test C because stepping back onto the destination gate did not return the party to 96,102. That is the original's behaviour (every gate leads to the current phase's stone — the one just arrived on), not a defect in this section's wiring. See §14 "Batch 53B".
+
 ### 8. RB-4 / H-146 — ship, skiff and horse (Phases 53M/53N)
 
 **RED:** S0/S1 GREEN (East Britanny's shipwright opens; N declines cleanly — the control); S2/S3/S5 RED (Y on a frigate or skiff: no gold spent, no ship, `Service action failed status=unsupported`); S7 GREEN, S7b/S8 RED (the horse seller never reaches its price); S6/S10 RED (the insufficient-gold paths never run either).
@@ -6985,3 +6987,115 @@ Fresh ESP-IDF 6.1 build `native/targets/tdeck/build-batch53a` (`batch53a-firmwar
 ### 14. Not done in this batch
 
 No flash. No Phase 7E B–H, no Batch 54, no RC packaging, no Alpha 3 work: no cinematic, no per-page pacing, no Y/N prompt (D-56), no audio, no UI. H-194's `victory` lines are recorded, not fixed. The resource pack is unchanged.
+
+## Batch 53B — the moongate return trip (Phase 7E-C follow-up)
+
+**Scope.** Only the second physical traversal of a moongate in Phase 7E-C. Phase 7E-D … H, Batch 54, RC packaging, Alpha 3, the transit animation (D-48) and audio were not started.
+
+**Verdict: Outcome A — the hardware behaviour is correct.** The original has no return link: every gate sends the party to the stone of the phase the moons show now, and during the same phase that is the stone the party just arrived on. Stepping back onto the destination gate transits the party onto itself. No production change; Test C's acceptance criteria are rewritten as 7E-C′.
+
+### 1. Baseline (Phase 53B-A)
+
+`5fe1ac53` = tag `alpha2-batch53a-ending-terminal`, clean tree. Fresh host build `native/core/build-batch53b-baseline`, serial: **122 / 122** (`batch53b-baseline-ctest.log`, 110.4 s). Batch 53A Launcher `build-batch53a/launcher/OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`, 878,752 B, SHA-256 `bf66d24b…da201`, embeds `FW … 5fe1ac5335a1`. Pack `native/assets/openu5-alpha1-resources.bin` 2,041,466 B, SHA-256 `a48abdbf…379b` (payload CRC `0x26f75ae6` per the loader).
+
+### 2. The hardware observation (Phase 7E-C, run 1) — recorded as reported
+
+Teleport Britannia X=96, Y=103, hour 21: a moongate appears one tile North; stepping North onto it — **first transit PASS**, the party is transported. At the destination **the moongate is still visibly present**; stepping back onto that visible destination gate **did not transport the party back**. Vas Rel Por **PASS** (`To phase:` appears, `3` travels correctly, moonstone state and gate visibility correct). **Test C held** pending this adjudication. New row **H-195**.
+
+### 3. The original (Phase 53B-B)
+
+`re/tools/batch53b_moongate_return.py` reads the shipped bytes and asserts each fact (22 / 22 OK, `native/core/batch53b-original-moongate.log`); the write-up is `re/notes/batch53b-moongate-return.md`.
+
+| # | question | answer (bytes) |
+|---|---|---|
+| 1 | world-step handler / gate detection | The outdoor loop MAINOUT `0x0a84` (overlay 2, loaded at **0x81d0**) calls `kernel_moongate_enter` `0x48a8` at `0x0b00`, **unconditionally, at the top of every iteration**, before the key read `0x0b14`; every command loops back (`0x0d1a jmp 0x0a8f`). |
+| 2 | what it tests | the map-buffer cell under the party == `0xDC` (`0x48bd call 0x4402`, `0x48c2`). |
+| 3 | visibility vs interactivity | the only writer of `0xDC` is `kernel_moongate_render` `0x475a` (every stone `0x4702` reports visible), run from the screen update `0x5910` (`0x594e`) that the key read calls first (MAINOUT `0x05a0`). **One predicate**: a drawn gate is an active gate. |
+| 4 | moon-phase lookup | `0x4962`: hour < 12 → `[0x5885]` Felucca, else `[0x5886]` Trammel; `- 0x30` (`0x4973`). |
+| 5 | buried-stone table / destination | `0x4977 call 0x47f4`; `0x483d`–`0x4856` copy location / x / y / floor from the chosen stone's tables `0x5840/30/38/48`. The origin's x/y are read only for the tile pointers. **The destination depends on the clock alone.** |
+| 6 | debounce / cooldown / "just arrived" | **none outdoors**: MAINOUT never references `[0xa9bc]`. The binary's only such flag is the TOWN loop's one-shot skip (`TOWN 0x1468`, set by the town loader `0x11f0`), one skipped check after a town load. |
+| 7 | time during transit | neither `0x48a8` nor `0x47f4` calls `advance_clock` `0x4f7c` or the phase refresh `0x4a84`, and neither writes the latches. |
+| 8 | visible but not triggerable | only the midnight edge (`0x494d`, 00:00–00:09: the gate fires, closes, no jump) and a carried active stone (`0x47fd`). Neither applies at 21:00. |
+
+**Consequence.** At the destination, same phase ⇒ same stone ⇒ the party's own cell. The origin gate is reachable again only when the moons select its phase, or by Vas Rel Por. There is no "reverse" traversal to suppress and none to restore.
+
+**Declared divergence found on the way (D-58).** Because the test sits at the loop top and the paint happens during the key read, the original also re-fires a gate the party is *standing* on, on the next iteration (after Pass, Look, any non-moving command; or when night falls on a party standing on a buried stone). Native and the reference test only after a successful step. Same phase → identical outcome (sent onto itself). Not the 7E-C case; queued, not changed (the parity fixtures pin the step-only trigger, so it starts in the reference).
+
+**Tooling correction.** `re/tools/callers_banda.py` loaded MAINOUT at 0x8304 (overlay 3's base) and so never reported a MAINOUT caller — it listed TOWN `0x1476` as the only caller of `0x48a8`. The thunk table (`0x7a3a` → overlay 2 → MAINOUT `0x0d22`, a prologue) and three MAINOUT near calls that land on kernel prologues only at 0x81d0 fix the base; corrected in the tool, positive control: `callers_banda.py 0x48a8` now lists MAINOUT `0x0b00` beside TOWN `0x1476`. Earlier "only caller" claims that relied on MAINOUT at 0x8304 should be re-run.
+
+### 4. Reference port (Phase 53B-C)
+
+`game/src/core/game.ts` `move()` calls `checkMoongate` after every accepted step (line 1559). `checkMoongate` (3297) requires `moongateAt` (the draw gate: night, a buried stone of this location/floor at x,y), then the midnight edge, then `activeGatePhase` → `moonstoneDestination` → `moonstoneTeleport` (3405), the same routine as Vas Rel Por. No cooldown, no just-arrived flag, no origin memory; stepping back onto the arrival gate in the same phase teleports onto itself. It agrees with the bytes on everything the hardware case exercises; it differs only in D-58 (step-only trigger).
+
+### 5. Native trace (Phase 53B-D)
+
+Trackball → `UiInputAdapter` → `AlphaRuntime::dispatch` → `CommandKind::Move` → `commands.cpp` `move()` → `resolve_world_step` → `turn(true)` (the clock; phases not latched on the device, D-59) → `effect(CommandEffect::Moongate)` (line 516) → `commands.cpp:107`: `moongate_at` (`quest_world.cpp:318`, the same `buried_stone_at` test as the draw predicate `moongate_visible_at`, 322) → Sfx `moongate` → `active_gate_phase` (305) → midnight/carried checks → `moonstone_teleport` (`transitions.cpp:133`), which writes the stone's position. On the second attempt the chain runs identically: no stale previous position (none is kept), trigger-on-step (not a one-shot), no suppression flag, the index is the active phase's (unchanged at 21:xx), draw and transit share one stone test, the hour does not move in transit, and no awaiting flag is set (the next move is routed normally — not the H-118 silent-refusal signature). **Root cause of the observation: the destination of every gate in that phase is the gate the party stands on; `moonstone_teleport` rewrites the same coordinates. Nothing is broken.** The device's only difference from the original here is the missing close/open animation (D-48), which is why the correct outcome looks like "nothing happened".
+
+### 6. Reproduction (Phase 53B-E)
+
+New host target **`batch53b_moongate_return`** (real `AlphaRuntime` over the shipped pack, raw keys through `handle()`, the Developer teleport through `apply_debug_teleport` and `debug_set_clock` as the menu does; the gate's firing is read from the core's own event stream by a forwarding `EventSink` wrapper). The harness day is INIT.GAM's (Day 5: Trammel 3 → stone 3, 50,37). **24 / 24 GREEN.**
+
+| id | check |
+|---|---|
+| R1–R4 | the 7E-C route: teleport lands at 96,103; `0xDC` drawn at 96,102 at hour 21; North fires the gate once and lands on stone 3 (50,37); tonight's phase is not stone 1's |
+| R6, R7 | at the destination the draw and transit predicates agree; the active phase still selects the party's own stone |
+| R8, R8b, R9 | a walkable side exists; one step off, `0xDC` is composed on the arrival stone (under the party the sprite covers it — composed `0x11c`); the step off is ordinary |
+| **R10, R11** | **stepping back on fires the gate (1 activation) and lands where it stands, not at 96,102 — the hardware observation reproduced** |
+| R12 | no `Failed!`, no prompt, still Exploration |
+| O1 | from **all 4** walkable sides: fires and lands on the active stone (no previous-position state) |
+| O2 | three laps: fires every time (no latch that never clears) |
+| O3, O4 | Pass on the gate is routed, party stays; after waiting a turn, off-and-on fires and lands on the active stone. *Printed:* the device fires 0 times on Pass (D-58) |
+| O5 | "facing only": on foot the overworld party has no facing; there is no impassable neighbour at 50,37, so the bump variant is N/A and Pass stands in |
+| O6 | exactly one activation per step onto the gate, none on steps off: no double trigger, no ping-pong |
+| O7 | same hour and phase after the lap; the eight stones untouched |
+| **T1, T2** | **the valid return: Developer Day 3 (Trammel `1`), hour 21, step off and back on → the party is at 96,102** (device latch printed: `-1/-1`, i.e. day-computed) |
+| T3 | Vas Rel Por `2` from the destination → 96,102, mixture spent |
+| T4 | control: 00:05, the gate fires and the party stays (midnight edge) |
+| T5 | the first transit lands on the data's Trammel stone for the day |
+
+A probe (printed, not asserted) seeds a valid latch from Day 5 and crosses 21:00 on Day 3: the latch stays `50/51` and the party stays on 50,37 — the device never refreshes the latch (D-59; `context_.sky` is never bound, `quest_driver.cpp:51` binds it). Not the 7E-C case: device saves carry no valid latch.
+
+*Test-authoring record.* The first draft had two RED checks that were the test's own errors, not production's: it looked for `0xDC` on the party's own cell (the composer draws the party there; the check now looks one step off, R8b), and it expected a seeded latch to refresh at 21:00 (the device never refreshes it — that draft is what exposed D-59; the check now uses the latch the device actually holds, and the seeded case became the probe).
+
+### 7. Adjudication (Phase 53B-F)
+
+**Outcome A.** "Immediate re-entry intentionally blocked" is refuted (there is no outdoor guard, and the device fires on re-entry, R10/O1/O2). "Broken second transit" is refuted (it fires and lands exactly where the original would, R11). "Visibility/interactivity mismatch" is refuted (one predicate in both; R6/R8b). What the tester saw is the original's rule that a gate leads to the current phase's stone; with no animation (D-48) the self-transit is invisible. **No production code changed; no cooldown was added.**
+
+### 8. Mutation validation (Phase 53B-G)
+
+The guard is GREEN on first run, so `native/core/tools/batch53b_mutations.py` plants each rejected hypothesis in production and requires RED. **8 / 8 killed**, restored build GREEN (`batch53b-mutation-summary.log`, `batch53b-post-mutation.log`):
+
+| mutation | RED |
+|---|---|
+| `just_arrived_never_clears` (a flag set by a transit, never cleared) | 12 — R10 O1 O2 O3 O4 O5 O6 O7 T2 T3 T4 T5 |
+| `same_tile_antiretrigger_forever` (landing cell refused forever) | 6 — R10 O1 O2 O4 O6 T2 |
+| `reverse_link_to_origin` (the "take me back" model) | 4 — R11 O1 O2 O4 |
+| `visible_but_inactive` (active stone drawn, never fires) | 6 — R6 R10 O1 O2 O4 O6 |
+| `active_but_invisible` (active stone fires, never drawn) | 2 — R6 R8b |
+| `wrong_destination_index` (`(phase+1)%8`) | 11 — R3 R7 O1 O2 O3 O5 O6 O7 T2 T3 T5 |
+| `double_trigger_per_step` | 13 — R3 R10 O1 O2 O3 O4 O5 O6 O7 T2 T3 T4 T5 |
+| `transit_advances_clock` (+3 h in `moonstone_teleport`) | 11 — R3 R7 O1 O2 O3 O5 O6 O7 T2 T3 T5 |
+
+The brief's "no step-off requirement when the original requires one" has no mutation: the original requires no step-off (it re-fires even while standing, D-58); the device's step-only trigger is the stricter side and is recorded as D-58 instead.
+
+### 9. Regression (Phase 53B-H)
+
+Fresh host build `native/core/build-batch53b`, serial ctest: **123 / 123** (`batch53b-final-ctest.log`, 108.7 s; 122 before + the new target). `batch53_release_blockers` 95 / 95, `batch53a_ending_terminal` 44 / 44, `batch53b_moongate_return` 24 / 24 (`batch53b-green.log`). The only compiler warning is the known w64devkit `stl_uninitialized.h` false positive. Includes `batch53_release_blockers` (M moongates / Vas Rel Por, R moonstone persistence), `batch53a_ending_terminal`, the moongate / world-flow / command / quest parity targets and the save targets. No ESP-IDF build ran in this batch.
+
+### 10. Firmware and resource pack
+
+**No firmware change, no rebuild, nothing flashed.** The device image under test stays the Batch 53A Launcher (SHA-256 `bf66d24b…da201`, `Git 5fe1ac5335a1`). **The SD resource pack is unchanged** (2,041,466 B, CRC `0x26f75ae6`, SHA-256 `a48abdbf…379b`; no pack source or packer touched).
+
+### 11. Row updates and new IDs
+
+| Row | Before | After |
+|---|---|---|
+| RB-3 / H-188 / D-45, H-191 / D-48 (gate), H-12 / H-13, D-53 | SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-C) | **7E-C run 1: first transit PASS, Vas Rel Por PASS, destination gate drawn; Test C held on the return step.** Still HARDWARE RETEST PENDING — completed by **7E-C′** (revised criteria, same image) |
+| **H-195** *(new)* | — | 7E-C run 1: stepping back onto the destination gate did not return the party to 96,102. **NOT A DEFECT — the original's behaviour (Outcome A, Batch 53B)**; covered by 7E-C′ steps 4–7 |
+| **D-58** *(new)* | — | a gate the party stands on is not re-fired on the device / reference (the original re-fires every loop iteration). Minor, queued |
+| **D-59** *(new)* | — | the device binds no `SkyRefresh`; the moon-phase latch never refreshes. Minor, queued |
+| D-48 transit animation | Alpha 3 | unchanged; it is why the correct self-transit looks like "nothing happened" |
+
+### 12. Not done in this batch
+
+No flash, no firmware build. No Phase 7E-D … H, no Batch 54, no RC packaging, no Alpha 3 work, no moongate animation, no audio, no UI. D-58 and D-59 are recorded, not fixed. The resource pack is unchanged.
