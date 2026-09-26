@@ -245,6 +245,16 @@ class BlackthornScenePacer {
     void attach(BlackthornPacerStorage storage) { storage_ = storage; }
     /** ms per run-n-frames unit; 0 drains synchronously (host harnesses). */
     void set_unit_ms(uint32_t ms) { unit_ms_ = ms; }
+    /**
+     * A3-02. Told a beat's point sound cue at the instant pump() applies that
+     * beat -- the same instant its stage reaches the screen -- so the cue
+     * follows the pacer and never the other way round. Optional.
+     */
+    struct CueSink {
+        void *context = nullptr;
+        void (*cue)(void *, BlackthornSfx) = nullptr;
+    };
+    void set_cue_sink(CueSink sink) { cue_sink_ = sink; }
 
     /**
      * Offer an event. Returns true when the pacer took ownership of it (the
@@ -280,6 +290,7 @@ class BlackthornScenePacer {
 
   private:
     BlackthornPacerStorage storage_{};
+    CueSink cue_sink_{};
     BlackthornStage stage_{};
     BlackthornScenePhase phase_ = BlackthornScenePhase::Inactive;
     BlackthornPacerState state_ = BlackthornPacerState::Idle;

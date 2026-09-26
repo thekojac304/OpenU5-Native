@@ -162,7 +162,7 @@ Every knowing difference from the original is listed, with its reason, in [`nati
 
 ## Alpha 3 handoff
 
-Alpha 2 is closed. The Alpha 3 tracks below are defined. Each starts only when it is asked for. **Status (A3-01, 2026-09-26):** the audio track has started. The UI/frontend and presentation tracks have not.
+Alpha 2 is closed. The Alpha 3 tracks below are defined. Each starts only when it is asked for. **Status (A3-02, 2026-09-26):** the audio track is in progress. The UI/frontend and presentation tracks have not started.
 
 **1. Audio / music** — **A3-01 done** (tag `alpha3-a3-01-audio-architecture`). This is architecture, not an Alpha 3 release. The reference is [`native/targets/tdeck/ALPHA3_AUDIO.md`](native/targets/tdeck/ALPHA3_AUDIO.md).
 - Done in A3-01:
@@ -173,9 +173,9 @@ Alpha 2 is closed. The Alpha 3 tracks below are defined. Each starts only when i
   - the optional SD audio pack `openu5-audio.bin` (`npm run pack:audio`);
   - the **SFX Volume** / **Music Volume** Settings rows;
   - a Developer test tone.
+- **A3-02 done** (tag `alpha3-a3-02-sfx-synth`; `ALPHA3_AUDIO.md` §15): the PC-speaker synthesizer (the original's primitives emulated from their loop bodies), 22 gameplay sounds — footstep, wall bump, dungeon and world cues, arena hits, the spell ceremony, the Camp apparition, Blackthorn's materialization — and the audible harpsichord (H-125, host-verified; its device check is §15.14).
 - Next:
-  - A3-02: speaker synthesizer and the first gameplay SFX, including the harpsichord, H-125;
-  - A3-03: broad SFX hookup and the scene cues;
+  - A3-03: the remaining SFX and scene cues (moongate, quake, shrines, shard ritual with the blocking-pause decision, ambient, bard song, intro / title / endgame);
   - A3-04: music playback and contexts;
   - A3-05: audio polish and hardware validation.
 

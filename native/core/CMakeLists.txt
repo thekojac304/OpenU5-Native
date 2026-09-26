@@ -1273,6 +1273,15 @@ if(BUILD_TESTING)
     "${CMAKE_CURRENT_SOURCE_DIR}"
     "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/a3-01-audio-stock.bin"
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
+  # Alpha 3 A3-02 -- the PC-speaker synthesizer (primitives measured from the
+  # PCM they render, the cue table against the binary's constants and the
+  # TypeScript reference, the harpsichord, the playback policy).
+  add_executable(a3_02_sfx_synth tests/a3_02_sfx_synth_test.cpp)
+  target_link_libraries(a3_02_sfx_synth PRIVATE openu5_core)
+  target_compile_features(a3_02_sfx_synth PRIVATE cxx_std_17)
+  add_test(NAME a3_02_sfx_synth COMMAND a3_02_sfx_synth
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/a3-02-sfx-reference.txt"
+    "${CMAKE_CURRENT_SOURCE_DIR}")
   # A3-01 -- the same seam through the REAL AlphaRuntime: the settings rows by
   # raw keys, reboot/load persistence, the Developer test tone, presentation-
   # time cue routing, and scene timing / game state identical with audio on,
@@ -1311,6 +1320,43 @@ if(BUILD_TESTING)
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin"
     "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/a3-01-audio-stock.bin")
+  # Alpha 3 A3-02 -- real effects through the REAL AlphaRuntime: the
+  # synthesizer behind the device's own sfx_supported gate, the harpsichord by
+  # raw keys, combat/ceremony cues from emitted events, Camp and Blackthorn
+  # timelines under six audio setups, and load/title/Developer/Ending safety.
+  add_executable(a3_02_sfx_runtime
+    ../targets/tdeck/host_tests/a3_02_sfx_runtime_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/batch37_board_capture_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_audio.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(a3_02_sfx_runtime PRIVATE openu5_core)
+  target_include_directories(a3_02_sfx_runtime PRIVATE
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/main)
+  target_compile_features(a3_02_sfx_runtime PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(a3_02_sfx_runtime PRIVATE /Gy)
+    target_link_options(a3_02_sfx_runtime PRIVATE /OPT:REF)
+  else()
+    target_compile_options(a3_02_sfx_runtime PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(a3_02_sfx_runtime PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME a3_02_sfx_runtime COMMAND a3_02_sfx_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
   # Batch 14 / R-22 -- (Z)-stats navigation. Same seam and same stub/shim set
   # as alpha_runtime_integration_regression above: it links the REAL,
   # unmodified alpha_runtime.cpp so the modal is reached only by feeding raw
@@ -1617,6 +1663,10 @@ if(BUILD_TESTING)
       --real "${CMAKE_CURRENT_SOURCE_DIR}/../../original/u5/ultima5"
       --fixture "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/a3-01-audio-stock.bin")
     set_tests_properties(a3_01_audio_capability PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+    # A3-02 -- the reference speaker catalogue the synthesizer is compared with.
+    add_test(NAME a3_02_sfx_reference_drift COMMAND "${NODE_EXECUTABLE}" --import tsx
+      "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate-sfx-fixtures.ts" --check)
+    set_tests_properties(a3_02_sfx_reference_drift PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
   endif()
   if(CMAKE_CONFIGURATION_TYPES)
     set(OPENU5_CTEST_CONFIG_ARGS -C "$<CONFIG>")

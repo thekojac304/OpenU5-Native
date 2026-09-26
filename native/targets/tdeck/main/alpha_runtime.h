@@ -144,6 +144,8 @@ class AlphaRuntime {
     const openu5::CombatState &combat_state() const { return combat_; }
     const openu5::CommandContext &command_context() const { return context_; }
     openu5::DungeonState &dungeon_state_for_test() { return dungeon_; }
+    // A3-02: the arena roster present_audio() resolves a hit's target side in.
+    openu5::CombatState &combat_state_for_test() { return combat_; }
     // Batch 22: the SAME context the device's UiDebugMenu is constructed
     // over (initialize(): new UiDebugMenu(context_)), so a host test can make
     // the identical apply_debug_teleport(context_, ...) call, and the SAME
@@ -512,8 +514,17 @@ class AlphaRuntime {
     void load_device_settings();
     /** Push settings_ to every device consumer (input adapter, audio volumes). */
     void apply_device_settings();
-    /** A presented event's sound: a semantic cue, forwarded to the service. */
+    /**
+     * A presented event's sound, forwarded to the service: an Sfx cue as the
+     * core named it, and (A3-02) the two sounds the original makes for events
+     * that are not Sfx cues -- the magic ceremony CAST2.OVL:0x0000(index) and
+     * the arena hit/death bursts (the reference's sfxForCombatEvent).
+     */
     void present_audio(const openu5::GameEvent &);
+    /** True when combat actor `id` is a party member (the 0x35ac side test). */
+    bool combat_actor_is_player(int32_t id) const;
+    /** A3-02: the Blackthorn pacer's beat cues, released with their beat. */
+    static void blackthorn_cue(void *, openu5::BlackthornSfx);
 };
 
 } // namespace tdeck

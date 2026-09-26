@@ -8,7 +8,21 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 A3-01) — audio architecture; Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 A3-02) — the PC-speaker synthesizer and the first gameplay sounds; Alpha 2 remains the released build; read this first
+>
+> **A3-02 is an Alpha 3 development batch, not a release.**
+> - The device now plays the original's speaker effects: 22 gameplay sounds synthesized from the 1988 primitives' own parameters (footstep, wall bump, world and dungeon cues, arena hits, the spell ceremony, the Camp apparition, Blackthorn), and the harpsichord.
+> - Every other cue is still declined (A3-03); there is no music playback (A3-04). Gameplay semantics, scene timing, saves and the game packs are unchanged.
+> - See §14 "Alpha 3 A3-02" and [`ALPHA3_AUDIO.md`](ALPHA3_AUDIO.md) §15.
+>
+> | | |
+> |---|---|
+> | Host suite | **129 / 129**, serial, 111.6 s. New: `a3_02_sfx_synth` 50, `a3_02_sfx_runtime` 34, `a3_02_sfx_reference_drift` (node). **26 / 26 mutations killed.** |
+> | Firmware | `3.0.0-alpha3-dev-a3-02-debug`, 914,608 B (`0xdf4b0`), +5,792 B, 133,968 B (13 %) free, zero warnings. Image path, SHA-256 and `Git`: tag `alpha3-a3-02-sfx-synth`. **Not flashed; hardware check pending** (`ALPHA3_AUDIO.md` §15.14). |
+> | SD | **Unchanged.** Sound effects need no audio pack; `/ultima5/openu5-audio.bin` stays optional (music capability). |
+> | Next | The A3-02 device check. Then A3-03 (the remaining SFX and scene cues), which the user starts. |
+>
+> ### CURRENT STATE (Alpha 3 A3-01) — **superseded as the current state by A3-02 above.** audio architecture
 >
 > **A3-01 is an Alpha 3 development batch, not a release.**
 > - It adds the audio architecture: a semantic cue → service → backend seam, the T-Deck I2S speaker backend (Developer test tone only), music-capability detection, the optional SD audio pack `openu5-audio.bin`, and the SFX / Music Volume Settings rows.
@@ -7552,3 +7566,68 @@ While attributing the size delta, `idf.py -B build-batch54 size-components` was 
 - No moongate animation and no endgame cinematic.
 - No save-format change: `settings.json` stays at v1 with the same keys.
 - The game-pack format and identity are unchanged.
+
+## Alpha 3 A3-02 — T-Deck SFX generator, first gameplay sounds and the harpsichord
+
+The reference for everything below is `ALPHA3_AUDIO.md` §15. This section keeps the batch's evidence trail.
+
+### 1. Baseline (Phase A)
+
+| Item | Value |
+|---|---|
+| Tree | HEAD `2f218808` = `alpha3-a3-01-audio-architecture`, clean |
+| Host suite | fresh build `native/core/build-a3-02-baseline`, serial ctest **126 / 126**, 115.79 s (`native/core/a3-02-baseline-*.log`) |
+| Firmware | A3-01: `0xdde10` = 908,816 B, `Git 2f21880857ca`, Launcher `4909aa6f…c17c` |
+| A3-01 hardware | PASS (user report; `ALPHA3_AUDIO.md` §13). Loudness calibration deferred to A3-05 |
+| Audio | the backend rendered only the Developer tone and declined every gameplay cue |
+
+### 2. Findings, each on its own axis
+
+| # | Finding | Kind | Evidence |
+|---|---|---|---|
+| F1 | `tone_sweep` 0x2192 is a 1-bit PWM: `dx += inc; gate = dx > bx; bx += step`. The pitch is inc alone (the reference is right); **start/step sweep the duty cycle**, which the reference renders as a fixed 50 % square. The ceremony's and the healer jingle's mirrored start/step pairs are duty mirrors. | derivation → modelled | `dis16.py` 0x2192–0x2236; `ALPHA3_AUDIO.md` §15.2 |
+| F2 | `noise_burst` 0x223c is a do-while: **ceil**(dur / step) draws, at least one, and no 512 cap. The reference floors and caps. Every A3-02 cue is an exact multiple, so no A3-02 sound differs. | derivation | 0x2255–0x22b0 |
+| F3 | `set_tone` 0x22e2 quantises through the same PIT divisor as noise (`0x1234DE / v`); the reference applies that law to noise only. | derivation | 0x22ef–0x22f8 |
+| F4 | The noise PRNG word `[0x545c]` starts at **`0x7664`** in the DS image (the reference seeds 0x1234). | measurement | DATA.OVL fileoff 0x546c |
+| F5 | All 22 call sites of the A3-02 cue set push the arguments the reference catalogue cites. | verification | `re/tools/a3_02_cue_sites.py` → `native/core/a3-02-cue-sites.log` |
+| F6 | The spell ceremony's sound is CAST2.OVL:0x0000(index), indexed by the `MagicCeremony` event (the reference calls it `time-spell`); the `spell-cast` / `potion-used` / `scroll-used` cues before it are markers. | derivation → routing | CAST2 0x0000–0x007d; `game/src/core/magic/ceremony.ts` |
+| F7 | **Return to Title did not flush SFX**: a queued effect could sound over the title. Fixed (`audio_.stop_sfx()`); Continue / LoadSlot / New Journey already flushed through `synchronize_loaded_world()`. | native defect (found while auditing the modes) | M4; mutation M9 |
+| F8 | A 4-deep pending queue lost a harpsichord note when five instant keys were followed by a step; the original's 15-key type-ahead never drops one. The FIFO is 8 deep. | design correction (found by a new test) | P3 first run; `ALPHA3_AUDIO.md` §15.4 |
+| F9 | The Blackthorn pacer applied its beat cues internally and never exposed them, so its sounds had no route. A cue sink is bound in the shared `bind_scene_pacers()`, so the host fixture runs the device's wiring. | missing route | T21; mutation M23 |
+| F10 | The first two firmware builds died inside ESP-IDF's own sources (an assembler `.tbyte` error in `mcpwm_oper.c`, then a GCC internal segfault in `esp_lcd_panel_rgb.c`); a third build at `ninja -j 4` completed. No project file was involved. | environment | `native/targets/tdeck/a3-02-firmware-build.log` |
+
+### 3. What changed
+
+- **Core:** `include/openu5/sfx_synth.h`, `src/sfx_synth.cpp` (new): primitive constructors, `compile_sfx` (the cue table), `SpeakerVoice` (the renderer), `SfxPlayer` (policy, FIFO, epoch), `sfx_class`, `sfx_for_combat_attack`. `blackthorn_scene.{h,cpp}`: an optional `CueSink`, told each beat cue as the beat is applied. `sources.cmake`.
+- **Device:** `tdeck_audio.{h,cpp}`: the synthesizer on the core-1 task, `{request, epoch}` commands, a 16-entry queue, a 4 KiB stack. `alpha_runtime.{h,cpp}`: the ceremony and combat cues in `present_audio()`, `combat_actor_is_player()`, `blackthorn_cue()`, the cue sink in `bind_scene_pacers()`, the Return-to-Title flush, a `combat_state_for_test()` seam. `CMakeLists`: `PROJECT_VER` `3.0.0-alpha3-dev-a3-02-debug`.
+- **Tests:** `native/core/tests/a3_02_sfx_synth_test.cpp`; `native/targets/tdeck/host_tests/a3_02_sfx_runtime_test.cpp`; `native/core/tools/generate-sfx-fixtures.ts` + `native/core/fixtures/a3-02-sfx-reference.txt` (81 reference segments).
+- **Guards edited (source shape only):** `a3_01_audio_contract` V4 skips `sfx_synth.*` like `audio.*`; S20 accepts `xQueueSend(queue_, &<command>, 0)`.
+- **Tools:** `re/tools/a3_02_cue_sites.py`, `native/core/tools/a3_02_mutation_check.py`.
+
+### 4. Tests, RED evidence and totals
+
+- **New targets:** `a3_02_sfx_synth` 50 checks, `a3_02_sfx_runtime` 34 checks, `a3_02_sfx_reference_drift` (node). The mapping to the brief's items 1–25 is in `ALPHA3_AUDIO.md` §15.11.
+- **RED evidence** is by mutation (`native/core/a3-02-mutation.log`): 26 one-line production mutations. First pass 25 killed — **M20 survived** (no test repeated a digit; closed by H18) and M22 was only compile-killed (rewritten). **Second pass 26 / 26 killed**; the restored build and all four audio suites green. M9 / M23 / M24 / M25 are A3-02's own wiring reverted to A3-01's behaviour.
+- **Found RED before any mutation:** P3 / P4 on the first runtime run (F8), M5 (a test ordering bug, fixed in the test), and P0 (the seat flag is derived on input, fixed in the test).
+- **Full suite:** `native/core/build-a3-02`, serial, **129 / 129 pass, 111.59 s** (`native/core/a3-02-final-ctest.log`). The only build warning is the known w64devkit `stl_uninitialized.h` false positive.
+- **Timing invariance:** the paced Camp apparition and the paced Blackthorn entry are identical — every 5 ms sample, every frame timestamp, the final state — with no audio, the synthesizer, SFX muted, a failing backend, stalled audio and racing audio (T19, T21).
+
+### 5. Firmware and packs
+
+- Pre-commit build `build-a3-02`: ESP-IDF 6.1, zero project warnings; `0xdf4b0` = **914,608 B**, **+5,792 B** vs A3-01; **133,968 B (13 %)** free.
+- Audio memory: backend object 784 B (static), task stack 3 → 4 KiB, queue 16 × 16 B; the synthesizer's code about 4.5 KB.
+- The post-commit image (embedded `Git` = the A3-02 commit) is built in a fresh directory; path, SHA-256 and size are in the annotated tag.
+- **Game packs and audio pack: unchanged.** No SD change.
+
+### 6. Rows
+
+- **D-3 stays open**; its SFX half is partly closed in software (22 cues). Ledger: "Alpha 3 A3-02 status".
+- **H-125 (harpsichord audio): fixed on the host**, awaiting the A3-02 device check (`ALPHA3_AUDIO.md` §15.14 D).
+- No row changed kind and no new ID was allocated.
+
+### 7. Not done in this batch
+
+- No music playback; no final loudness curve; no Settings or HUD redesign.
+- No moongate animation and no endgame cinematic.
+- The remaining cues (§15.5 "Declined until A3-03") were deliberately not wired.
+- No save-format, game-pack or audio-pack change.

@@ -229,7 +229,9 @@ int main(int argc, char **argv) {
                 const auto ext = f.path().extension().string();
                 if (ext != ".cpp" && ext != ".h") continue;
                 const auto name = f.path().filename().string();
-                if (name == "audio.cpp" || name == "audio.h") continue; // the table itself
+                // The tables themselves: the vocabulary (A3-01) and the A3-02
+                // synthesizer, whose class names sit on SfxClass lines.
+                if (name == "audio.cpp" || name == "audio.h" || name == "sfx_synth.cpp" || name == "sfx_synth.h") continue;
                 std::istringstream in(slurp(f.path().string()));
                 for (std::string line; std::getline(in, line);) {
                     const bool emits = line.find("Sfx") != std::string::npos || line.find("sound(\"") != std::string::npos ||
@@ -502,7 +504,8 @@ int main(int argc, char **argv) {
         check(clean, "S20 audio.cpp holds no loop-until, delay, sleep, wait or RTOS primitive");
         const auto device = slurp(core_dir + "/../targets/tdeck/main/tdeck_audio.cpp");
         const auto play = device.substr(device.find("bool TdeckAudioBackend::play_sfx"), 400);
-        check(play.find("xQueueSend(queue_, &request, 0)") != std::string::npos &&
+        // A3-02 posts a {request, epoch} command instead of the bare request.
+        check(std::regex_search(play, std::regex(R"(xQueueSend\(queue_, &\w+, 0\))")) &&
                   device.find("xTaskCreatePinnedToCore(task_entry, \"openu5-audio\"") != std::string::npos,
               "S20 the device backend's game-thread entry posts with a 0 timeout; I2S writes run on its own task");
     }

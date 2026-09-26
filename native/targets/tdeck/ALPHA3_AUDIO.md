@@ -1,6 +1,6 @@
-# Alpha 3 — Audio architecture (A3-01)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer)
 
-**Status: A3-01 COMPLETE (architecture, capability detection, volume settings, tests, one diagnostic tone). Not an Alpha 3 release.** Gameplay is still silent on the device: every semantic sound cue now reaches an audio service, but the device backend renders only the Developer test tone until A3-02.
+**Status: A3-02 COMPLETE (the PC-speaker synthesizer, the first 22 gameplay sounds, the harpsichord). Not an Alpha 3 release.** The device now renders the original's speaker effects for the cues listed in §15.5, synthesized from the 1988 binary's own primitive parameters; every other cue is still declined until A3-03. There is no music playback yet (A3-04). A3-01 (sections 1–14) is the architecture this builds on; §15 is A3-02.
 
 This document is the audio track's reference. It records what the original does, what the community music patch adds, how the port tells the two apart, and the contracts later batches must keep.
 
@@ -8,7 +8,7 @@ This document is the audio track's reference. It records what the original does,
 
 | The user's DOS files | Sound effects | Music | What Settings shows |
 |---|---|---|---|
-| **Stock** (unpatched *Ultima V* DOS) | Supported. The effects are the original's PC-speaker sounds, synthesized from the original's own parameters (A3-02/A3-03). No asset is needed. | **None.** The 1988 game has no music. | `Music Volume: Unavailable`, footer *Stock DOS game files have no music* |
+| **Stock** (unpatched *Ultima V* DOS) | Supported. The effects are the original's PC-speaker sounds, synthesized from the original's own parameters: the first set since A3-02 (§15.5), the rest in A3-03. No asset is needed. | **None.** The 1988 game has no music. | `Music Volume: Unavailable`, footer *Stock DOS game files have no music* |
 | **Supported music patch** (Exodus Project *Ultima V Upgrade* 1.0) | The same. | **Enabled** (playback arrives in A3-04). | `Music Volume: 80%`, adjustable |
 | **Incomplete patch** (some of its files) | The same. | None. It is never guessed. | `Unavailable`, *Music patch files are incomplete* |
 | **Unknown music variant** (another driver or foreign XMI files) | The same. | None. It is never guessed. | `Unavailable`, *Unsupported music patch variant* |
@@ -414,7 +414,7 @@ This is `openu5/audio.h`: `AudioService` over `AudioBackend`.
 - The I2S channel and the task exist only after the first tone.
 - A bring-up failure is logged (`AUDIO_BACKEND failed <step>: <err>`) and leaves the game silent.
 
-**Not yet run on hardware.** A3-01 device check:
+**Hardware result (reported by the user before A3-02, 2026-09-26): PASS.** The A3-01 image booted; the test tone plays through the speaker; SFX Volume changes its loudness and 0 % mutes; both volumes survive a reboot; Music Volume is adjustable with the supported music-patched asset set; gameplay stayed stable with the backend up. The levels will want tuning: that is A3-05, not a defect. A3-01 device check, as it was run:
 1. Boot with **no** `openu5-audio.bin`:
    - the log shows `AUDIO_PACK … state=missing`;
    - Settings shows `SFX Volume: 80%`, and `Music Volume: Unavailable` with footer *No audio pack: npm run pack:audio*.
@@ -438,3 +438,287 @@ This is `openu5/audio.h`: `AudioService` over `AudioBackend`.
 | **A3-03 — broad SFX hookup** | Emit what the core does not emit yet: arena combat hits / damage / defeat / escape / victory fanfare; the spell-ceremony pairing (MagicCeremony index → CAST2 0x0000 tables); healer jingle; ambient proximity (fountain / waterfall / clock); Blackthorn beat cues; intro and title cues; bard song. Audit each against `sfx-catalog.md` and give each its guard. | This is mostly core emission and adjudication work, not audio code. |
 | **A3-04 — music playback** | Port the reference's XMI sequencer, voice allocator, bank reader and OPL2 emulator (`game/src/ui/opl/`) to the core-1 task. Keep the audio pack's songs and bank in PSRAM. Wire `music_context_for_location` and the scripted selectors (title, creation, shrine / camp freeze, combat / victory, Blackthorn / death silence, intro / endgame tables, the Reunion → Rule Britannia chain). Measure CPU. | This is the largest piece. It needs A3-02's mixer, and a CPU budget measured on hardware. |
 | **A3-05 — audio polish and hardware validation** | Mixer headroom and clipping, optional music fade, SFX / music balance, a battery and CPU soak, Settings hardware sign-off, the preservation-ledger rows (D-3 closure), and a possible strict "1988 sound-off" profile decision (the sound-flag branches). | Decisions that need the other three on hardware first. |
+
+## 15. A3-02 — the PC-speaker synthesizer, the first gameplay sounds and the harpsichord
+
+### 15.1 Baseline (Phase A)
+
+| Item | Value |
+|---|---|
+| Tree | HEAD `2f218808` = tag `alpha3-a3-01-audio-architecture`, clean |
+| A3-01 firmware | `3.0.0-alpha3-dev-a3-01-debug`, `0xdde10` = 908,816 B, embedded `Git 2f21880857ca`, Launcher SHA-256 `4909aa6f…c17c` |
+| Host suite | fresh build `native/core/build-a3-02-baseline`, **serial ctest 126 / 126 in 115.79 s**; the only build warning is the known w64devkit `stl_uninitialized.h` false positive (`native/core/a3-02-baseline-*.log`) |
+| Game / resource packs | unchanged since Alpha 2: `openu5-alpha1-resources.bin` 2,041,466 B, CRC `0x26f75ae6` |
+| Audio pack | optional `openu5-audio.bin`, OU5AUDIO 1.0, music capability only (patched 56,148 B) |
+| Service / backend | `AudioService` (A3-01) → `TdeckAudioBackend`, which rendered only `DiagnosticTone` and declined every gameplay cue |
+| Settings | SFX Volume / Music Volume rows, 0–100 % step 10, default 80, `settings.json` `soundVolume` / `musicVolume` |
+| Cue catalogue | 57 `SfxId`s; the core emits 31 distinct cue ids (A3-01 V4) |
+| A3-01 hardware | **PASS** (§13): tone audible, SFX Volume scales, 0 % mutes, persistence, Music row, stability. Calibration not final → A3-05 |
+
+### 15.2 The primitives, re-read from the bytes (Phase B)
+
+Every primitive body was disassembled again for this batch (`re/tools/dis16.py --exe`), and every call site the A3-02 cues use was re-read with its pushes (`re/tools/a3_02_cue_sites.py` → `native/core/a3-02-cue-sites.log`, 22 sites, each landing on the claimed primitive). C argument order is a0 = the LAST push; the reference writes push order.
+
+| Primitive | Entry (C args) | What the loop does | Pitch | Length | Mute branch |
+|---|---|---|---|---|---|
+| **tone sweep** | `tone_sweep` 0x2192 (a0 bx step, a1 bx start, a2 count, a3 delay, a4 inc) | PIT ch2 = 0x3c (a 19.9 kHz carrier the cone averages); `dx = 0, bx = start`; count times: `dx += inc; gate = dx > bx` (`cmp dx,bx; ja` 0x21f8, **unsigned**); `bx += step`; spin a3 × C/24 | inc / 65536 × 25,806 Hz, constant | count × a3 sweep samples | 0x21c4: the same loop, gate closed — it blocks just as long |
+| **noise burst** | `noise_burst` 0x223c (a0 band, a1 dur, a2 step) | gate on; **do** { `s = PRNG(s)`; PIT = 0x1234DE / (100 + s mod (band − 99)); `acc += step`; spin step × C>>4 } **while** `acc < dur` (signed) | each draw in [100, band], **closed** | ceil(dur / step) iterations (≥ 1) × 1.5 samples × step | same loop, silent |
+| **fixed tone** | `beep` 0x22c0 (a0 dur, a1 freq) = `set_tone` 0x22e2 + `delay` 0x20c8(dur, 1) + `stop` 0x230e | one PIT square | 1193182 / floor(1193182 / freq) | dur × 24 samples | the delay is kept |
+| **glide** | `glide` 0x43ae (a0 total, a1 step, a2 end, a3 start) | `inc = trunc16((end − start) × step) / total`; `si = start, di = 0`; **while** `di < total` (signed `jl`) { set_tone(si); delay(step, 1); si += inc; di += step } | a staircase; the nominal end is **never written**: cannon 1000→«200» ends at 233 Hz | ceil(total / step) × step × 24 samples | delays kept |
+| **stop / silence** | `stop` 0x230e; `delay` 0x20c8 (a0 count, a1 shift) | gate bits 0/1 cleared; count × C >> table[shift]; shift 1 → table `[0x5427]` = 0 | — | count × 24 samples | — |
+| **repeated beep** | two or more `beep` calls | e.g. `combat-reject` (SJOG 0x1f52/0x1f5d), not wired in A3-02 | — | — | — |
+| **multi-tone sequence** | a loop of `tone_sweep` calls | the arpeggio (6), the ceremony (NB + 2), the mirror (18 NB), later the ordained melody / healer jingle | per call | sum | — |
+| **scene chime / arpeggio** | the Camp apparition's four sites (OUTSUBS 0x067b / 0x0698 / 0x0896 / 0x08c1), Blackthorn 0x083f | tone sweeps | per call | per call | — |
+
+- **The noise PRNG** is the word `[0x545c]`: `((s + 0x9248) ror 3 ^ 0x9248) + 0x11`. It is shared across calls and never touches `g_rng`. Its initial value is read from the DS image: DATA.OVL fileoff 0x546c = **`0x7664`**.
+- **Calibration:** one sweep sample = 1 / 25,806 s (`speaker.ts` `DELAY_UNIT_MS` = 0.93 ms from DOSBox-X captures; `scene_timing.h` `kToneSweepSamplesPerSecond`). The synthesizer uses the pacers' **integer** 25,806 (the reference's 24000/0.93 = 25,806.45 differs by 17 ppm) and a `static_assert` ties the two constants together. Durations are held in half samples so that noise_burst's 1.5-sample unit stays exact; frames = floor(half samples × 16000 / 51,612) per segment.
+- **Which duration the sound follows:** its own loop length (the original's). The paced scenes hold for the same number of samples because both are derived from one constant — never because one waits for the other (§15.7). Scene timing itself was recovered separately in Batch 51 and is unchanged.
+- **Aliasing at 16 kHz:** A3-02 sweep fundamentals are 1.0–3.5 kHz (the highest, the ceremony at idx 0, 3,469 Hz); PIT tones 165 Hz–2.5 kHz; noise draws reach 20 kHz (`dungeon-zap`) — above Nyquist. Every primitive is rendered at 4× (64 kHz) and box-filtered to 16 kHz, and the noise path then passes the cone low-pass (2.1 kHz). What still folds is the 1-bit gate's own upper harmonics, which is part of the PC-speaker character; the real cone rolled off above ~5 kHz anyway. No clipping: see §15.3.
+
+**Where A3-02 departs from the TypeScript reference** — each time toward the bytes, none of it in a layer a fixture pins (§15.11 R1):
+
+| Item | Reference (`speaker.ts`) | A3-02 | Why |
+|---|---|---|---|
+| tone_sweep timbre | a 50 % square; start/step "→AV" | **the duty is modelled**: gate = dx > bx per iteration, bx swept by step | the loop body (0x21f8); the mirrored start/step pairs of the ceremony and the healer jingle are duty mirrors |
+| PIT quantisation | noise only (`pitHz`) | every PIT tone: beeps, glides, noise | 0x22f2 divides the same way for set_tone |
+| noise iterations | floor(dur / step), capped at 512 | ceil(dur / step), no cap | the do-while at 0x22aa; equal for every A3-02 cue (all exact multiples) |
+| PRNG seed | 0x1234, arbitrary | 0x7664 | the DS image |
+| calibration | 25,806.45 | 25,806 | the pacers' constant (17 ppm) |
+
+### 15.3 The synthesizer (Phase C)
+
+**Layers** (all pure, in the portable core: `native/core/include/openu5/sfx_synth.h`, `src/sfx_synth.cpp`; no heap, no RTOS, no clock, no GameState, no `g_rng`):
+1. `compile_sfx(SfxId, param, SpeakerProgram&)` — the cue table (§15.5). A program is ≤ 24 segments; a segment is ONE primitive call holding the binary's own arguments.
+2. `SpeakerVoice` — renders a program by **emulating each primitive's loop**:
+   - PIT tones (beep, glide steps): a 50 % square from a 32-bit phase accumulator at the fine rate, bipolar (DC-free);
+   - tone_sweep: the literal 1-bit PWM, one gate decision per original iteration, minus the expected duty so the output stays centred however far the duty sweeps;
+   - noise: a unipolar gate (the cone is only pushed), a 20 Hz DC block and the 2.1 kHz cone low-pass, as the reference measured — one pole each where the reference uses two-pole biquads (the noise timbre is class C there too);
+   - 4× oversampling (64 kHz) and a box filter to 16 kHz; integer arithmetic only, so host and device render the same samples.
+3. `SfxPlayer` — one monophonic voice plus a pending FIFO, the policy of §15.4, the persistent PRNG word, and the transport epoch.
+
+| Decision | Choice | Reason |
+|---|---|---|
+| Sample rate | 16 kHz, 16-bit mono | A3-01's hardware-validated I2S setup; ample for fundamentals ≤ 3.5 kHz |
+| Waveform | square / 1-bit PWM, not band-limited sines | the speaker was a gate; do not modernise the timbre |
+| Amplitude | a 50 % square peaks at 8,192 (−12 dBFS), the A3-01 tone's level; an extreme duty can reach 2× = 16,384 | 6 dB of headroom; nothing clips at unity (Y6) |
+| Envelope | linear 4 ms ramps at every tone / sweep / glide segment edge, 0.25 ms for noise (the reference's EDGE_S / NOISE_EDGE_S); a 2 ms release on a cancel or a preemption | no click, and noise keeps its dry attack |
+| Sweep interpolation | none: one gate decision per original iteration | the original has no interpolation either |
+| Gain | applied once, at render time, from the live SFX channel gain, saturating | a Settings change is heard within one 16 ms chunk (Y8) |
+
+**Device** (`native/targets/tdeck/main/tdeck_audio.{h,cpp}`):
+- The **game thread** only: checks `sfx_supported(id)` (a cue without an A3-02 program is declined there and never costs a queue slot), posts `{request, epoch}` to a 16-entry FreeRTOS queue with a **0 timeout** (full = declined and counted), bumps an atomic flush epoch on `stop_sfx()`, or stores a gain. It never waits.
+- The **audio task** (core 1, 4 KiB stack, priority 3, created on the first accepted cue) owns the `SfxPlayer`. It blocks on the queue while silent; otherwise it syncs the epoch, drains the queue into the player, renders 256-frame (16 ms) chunks at the live gain and blocks only in `i2s_channel_write` (200 ms timeout). When the player goes idle it writes two silent chunks and disables the channel. It never spins, so it cannot starve core 1's idle-task watchdog.
+- **Memory:** the backend object is 784 B (static; it holds the player, one program and the FIFO), the task stack grew 3 → 4 KiB, the queue is 16 × 16 B. The synthesizer's code is about 4.5 KB.
+
+### 15.4 Channel and priority policy (Phase D)
+
+One voice, like the one speaker gate. The original never overlapped two effects because every primitive blocked; the device keeps that order without blocking anything.
+
+| Class | Cues | Rule |
+|---|---|---|
+| **Diagnostic** | the Developer test tone | preempts everything and flushes the FIFO |
+| **Scene** | apparition ×4, Blackthorn materialize (and later: Refuge, intro, title, bard, endgame) | the **latest wins**: it cuts whatever plays at its class or below (2 ms fade) and drops the lower-class cues still queued — the pacer is the clock, so audio follows it |
+| **Spell** | the ceremony | FIFO |
+| **Combat** | hit / heavy / defeat / damage | FIFO |
+| **Instrument** | harpsichord notes | FIFO, **never coalesced**: a repeated key is a repeated note |
+| **Ordinary** | world feedback (footstep, wall bump, glides, dungeon noise) | FIFO |
+
+- **FIFO:** 8 pending. An **overflow drops the oldest pending** request, never the one playing (the A3-01 contract). Eight was chosen by a test: five instant harpsichord keys plus the step after them overflowed a 4-deep queue and lost a note, which the original (15-key BIOS type-ahead) never did. At most ~1.2 s of notes can lag.
+- **Repeats:** a request identical to the newest pending one (same id and parameter) is coalesced — holding a direction into a wall queues at most one more bump.
+- **Twenty requests at once** (Y10): distinct ones — the first plays, the newest 8 wait, the 11 oldest are dropped; identical ones — one plays, one waits, 18 coalesce. None of it blocks the producer.
+- **Unknown or unaudited ids** are declined at the backend and counted as refused by the service (never retried).
+
+### 15.5 The first gameplay sounds (Phase E)
+
+**22 gameplay cues + the diagnostic tone** render in A3-02. Every one is emitted by the core already, or — for the four combat cues and the ceremony — derived at presentation from an event the core already emits, exactly as the reference's `sfxForCombatEvent` / ceremony do. No gameplay event was added.
+
+| Brief item | Cue (`SfxId`) | Site and pushes | Program | Length |
+|---|---|---|---|---|
+| 1 error beep | `move-blocked` | MAINOUT 0x0344 / TOWN 0x0849: `beep(0xa5, 0xc8)` | 165 Hz PIT tone | 186 ms |
+| 2 movement | `move-step` | kernel 0x433e: NB(1, 0x19, 0x3e8); delay(0x14, 1); NB(1, 0x19, 0x5dc) | two 1.5 ms clicks, 18.6 ms apart | 21 ms |
+| — world | `torch-borrowed`, `dungeon-fail` | SJOG 0x1a21, DUNGEON 0x1cfb: glide(0x320→0x7d0, 1, 0x32) | 800→1976 Hz, 50 steps | 46.5 ms |
+| — world | `ring-vanishes` | ZSTATS 0x0e42: glide(0x4b0→0x7d0, 1, 0x28) | 1200→1980 Hz | 37 ms |
+| — world | `cannon-fire` | CMDS 0x09d5: glide(0x3e8→0xc8, 5, 0x12c) | 1000→233 Hz, 60 steps | 279 ms |
+| — world | `waterfall-fall` | OUTSUBS 0x0492: glide(0x9c4→0x320, 1, 0x12c) | 2500→1005 Hz | 279 ms |
+| — world | `dungeon-trap` | kernel 0x2fe3: NB(0x28, 0xbb8, 0x1f4) | 75 draws ≤ 500 Hz | 174 ms |
+| — world | `dungeon-zap` | DUNGEON 0x04b9: NB(1, 0x1f4, 0x4e20) | 500 draws ≤ 20 kHz | 29 ms |
+| — world | `field-afflict` | DUNGEON 0x099e: NB(1, 0x32, 0xdac) | 50 draws ≤ 3.5 kHz | 3 ms |
+| — world | `mirror-break` | TOWN 0x0a69–0x0a80: si = 0x7d0 … <0x4e20 step 0x3e8, NB(0x28, 0x78, si) | 18 bursts, band 2000 → 19000 | 125 ms |
+| 3 combat | `combat-hit` | kernel 0x35de: NB(0xa, 0xbb8, 0x7d0) — a hit on an **enemy** | 300 draws ≤ 2 kHz | 174 ms |
+| 3 combat | `combat-hit-heavy` | kernel 0x35c9: NB(0x28, 0xbb8, 0x1f4) — a hit on a **party member** | 75 draws ≤ 500 Hz | 174 ms |
+| 3 combat | `combat-defeat` | kernel 0x2fe3 (the 0x2fd0 burst) — a death | 75 draws ≤ 500 Hz | 174 ms |
+| 3 combat | `combat-damage` | kernel 0x2a68: NB(0xa, 0x640, 0x7d0) — dungeon trap damage | 160 draws ≤ 2 kHz | 93 ms |
+| 4 spell | `time-spell` (the ceremony) | CAST2 0x0000(idx < 9): NB(0x320, 0x1f40 + 0x640·i, 0x2bc) then tone_sweep(inc[i], 1, 0x2710 + 0xfa0·i, up[i], +step[i]) and the mirror (down[i], −step[i]); tables DATA.OVL 0x4af6 / 0x4b08 / 0x4b1a / 0x4b2c | a low burble, then one pitch whose timbre sweeps out and back | 1.24 s (i = 0) … 4.46 s (i = 8) |
+| 5 Camp | `apparition-materialize` | OUTSUBS 0x067b: TS(0xa3c, 1, 0x2710, 0x9c4, 6) | 1032 Hz, duty 96 % → 5 % | 387.5 ms |
+| 5 Camp | `apparition-arpeggio` | OUTSUBS 0x0683–0x06a2: TS([0x3a26 + 2k], 1, 0x1388, 0xc8, 0xd) × 6 | 1032 ×3, 1457, 1536, 1638 Hz | 1162.5 ms |
+| 5 Camp | `apparition-heal-chime` | OUTSUBS 0x0896: TS(0x157c, 1, 0x1388, 0xc8, 0xd) | 2166 Hz | 194 ms |
+| 5 Camp | `apparition-chord` | OUTSUBS 0x08c1: TS(0x157c, 1, 0xea60, 0x9c4, 1) | 2166 Hz, duty 96 % → 5 % | 2325 ms |
+| 6 Blackthorn | `blackthorn-materialize` | BLCKTHRN 0x083f: TS(0xaf0, 1, 0x32c8, 0x64, 5) | 1103 Hz | 504 ms |
+| — harpsichord | `instrument-note` | TOWN 0x0e6d: TS(note[digit], 1, 0xfa0, 0x4e20, 0xfffc) | §15.6 | 155 ms |
+| — device | `diagnostic-tone` | class D (the A3-01 chime) | 880 + 1320 Hz | 300 ms |
+
+- **Item 7, a UI / selection cue: none.** The 1988 game makes no sound in its menus, and none was invented.
+- **How they reach the synthesizer:**
+  - `present_audio()` (A3-01) for every `Sfx` cue, at presentation time;
+  - **new:** a `MagicCeremony(index)` event plays `time-spell(index)`. The `spell-cast` / `potion-used` / `scroll-used` cues before it are markers with no program; `invalid-magic` has no adjudicated sound;
+  - **new:** a `Combat` event `Attacked` with `hit > 0` plays `combat-hit`, or `combat-hit-heavy` when the target is a party member (`member != 255`); `Died` plays `combat-defeat`; a miss is silent;
+  - **new:** the Blackthorn pacer's beat cue (`BlackthornSfx`) is handed to a cue sink at the instant the beat is applied — bound in the shared `bind_scene_pacers()`, so the host fixture runs the device's wiring. `ShardSweep` is routed but still declined.
+- **Declined until A3-03**, with the reason each needs its own adjudication: `quake` (class C tri-band, and its sync with the shake), `moongate` / `sceptre` / `shadowlord-announce` (long sweeps inside presentations not yet reworked), `shard-sweep` / `victory-fanfare` (the reference pauses the game for them: `BLOCKING_CUES` #206/#212), the shrine cues (inside the shrine pacer), the arena `combat-escape` / `combat-absorbed` / `combat-reject` / `VICTORY!` / arena `Borrowed!` derivations, `refuge-thunder` (class C), ambient, bard song, intro/title, endgame.
+
+### 15.6 The harpsichord (Phase F)
+
+- **Trigger:** in any small map, while the tile immediately SOUTH of the party is 0x8D (the party sits on the chair facing it), a digit key goes to TOWN 0x0e34 instead of the command dispatcher: note = digit, then `tone_sweep(note[digit], 1, 4000, 20000, −4)` @0x0e6d, then the 13-note matcher (`6 7 8 9 8 7 8 7 6 7 6 5 3` opens the passage on LB castle floor 2 — unchanged gameplay). No turn passes. The original uses **only the speaker**, never a music driver.
+- **Notes** (DATA.OVL 0x2746, digit-indexed):
+
+  | digit | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0 |
+  |---|---|---|---|---|---|---|---|---|---|---|
+  | inc | 0x0c2c | 0x0da9 | 0x0f56 | 0x103f | 0x123c | 0x1478 | 0x16fa | 0x1857 | 0x1b53 | 0x1eab |
+  | Hz | 1227 | 1377 | 1546 | 1638 | 1838 | 2063 | 2316 | 2454 | 2754 | 3092 |
+
+  Digits 1–9 rise; 0 is the highest key (the tenth). Each note is 4000 samples = **155 ms**, its duty widening 69 % → 94 %.
+- **Overlap:** never. The note blocks in the original and keys wait in the BIOS buffer, so notes play one after another, each in full. The device queues them (FIFO, never coalesced) and input never waits.
+- **Stuck notes:** impossible by construction (every program is finite; the longest wait is ~1.2 s of queued notes). The System Menu does not cut a phrase; a load or Return to Title cuts it in 2 ms.
+- SFX Volume applies; 0 % is exact silence. **H-125 is fixed on the host; its hardware confirmation is §15.14 D.**
+
+### 15.7 Scene-timing safety (Phase G)
+
+`a3_02_sfx_runtime` runs the paced **Camp apparition** and the paced **Blackthorn** entry segment through the real `AlphaRuntime`, on the virtual clock, under six audio setups: no audio, the synthesizer, SFX muted (from `settings.json`), a failing backend (declines everything), **stalled** audio (never rendered — every sound "lasts forever") and **racing** audio (rendered 100× ahead — every sound "ends at once").
+
+- **T19 (Camp) and T21 (Blackthorn):** every 5 ms sample (pacer state, XOR/inversion, released steps, frame count), every presented frame's timestamp and the final game state are **identical** under all six.
+- The apparition cues reach the synthesizer when the pacer releases them (5 / 395 / 1670 / 1865 ms); the Blackthorn sweep sounds at its beat and the next beat follows **503 ms** later — the pacer's hold, not the sound's.
+- Mutations M6 (the Camp pump held while audio refuses) and M7 (the Blackthorn pump shifted by submitted sounds) are both killed by these checks.
+
+### 15.8 Load and mode safety (Phase H)
+
+| Route | Result |
+|---|---|
+| Alt+L | `flush_for_load` (A3-01): the playing cue fades in 2 ms, the queued ones are dropped, silence after (M1) |
+| System Menu Load | the same (M2) |
+| Title Continue | Return to Title flushes, and the load flushes again (M3) |
+| **Return to Title** | **new:** `audio_.stop_sfx()`. The title replaces the world, like a load; before A3-02 a queued effect could still sound over the title (M4; mutation M9) |
+| Developer menu | the test tone preempts the playing cue; the path is healthy and idle after (M5) |
+| Camp | paced cues, §15.7 |
+| Ending | the cue playing when the game is won ends on its own; cues still play; Return to Title from the Ending flushes (M6) |
+
+- **Stale effects:** a flush is an **epoch**. A request posted before it is dropped by the audio task as stale, even if it was still in the FreeRTOS queue (Y10; mutation M22).
+- **No dangling references:** the backend holds only copied requests (id, parameter, gain); it never calls the service, a scene or the game.
+
+### 15.9 Volume (Phase I)
+
+- Gain = volume² × 32767 / 10⁴ (A3-01): 0 % → 0, 10 % → 327, 50 % → 8,191, 80 % → 20,970, 100 % → 32,767.
+- Measured on the chord's peak: 0 / 148 / 3,726 / 9,541 / 14,908 — strictly monotonic (Y8).
+- 0 % is exact digital zero (Y7), and the service does not even submit (R2).
+- 100 % and any gain above it clamp to unity; no integer overflow (Y8).
+- A change mid-tone is heard from the next 16 ms chunk, phase unbroken (Y8).
+- The gain is applied once (Y8; mutation M13), and only to the SFX channel (A3-01 S14; mutation M14).
+- **Hardware loudness curve calibration deferred to A3-05.**
+
+### 15.10 The audio pack (Phase J)
+
+**SFX need no asset.** The effects are synthesized from code and the binary's parameters, so stock and patched users get the same sounds, and a missing, stale or corrupt `openu5-audio.bin` changes nothing about them: `main.cpp` attaches the backend whatever the pack's state. Nothing was added to OU5AUDIO. The optional pack remains music capability only (A3-04).
+
+### 15.11 Tests (Phase K)
+
+**New ctest targets (3):**
+
+| Target | Checks | Covers |
+|---|---:|---|
+| `a3_02_sfx_synth` | 50 | primitives measured from rendered PCM (Y1–Y10), cue mapping (E11–E14), harpsichord (H15–H18), the TypeScript reference row by row (R1), no blocking primitive (N1) |
+| `a3_02_sfx_runtime` | 34 | the real `AlphaRuntime` by raw keys: routing (R), harpsichord (P), combat / ceremony (C), Camp and Blackthorn timing (T), load / mode (M), persisted volume (S25) |
+| `a3_02_sfx_reference_drift` (node) | 1 | `native/core/tools/generate-sfx-fixtures.ts --check`: the reference catalogue as 81 segments, `native/core/fixtures/a3-02-sfx-reference.txt` |
+
+| Brief item | Checks |
+|---|---|
+| 1 fixed tone | Y1 (1000.15 Hz beep, 165 Hz wall bump, a sweep's inc/65536 × 25806) |
+| 2 sweep direction and endpoints | Y2 (duty narrows as bx rises, widens as it falls; the pitch holds on both legs) |
+| 3 glide | Y3 (staircase, effective end, falling pitch, total ≤ 0 is mute) |
+| 4 noise bounds | Y4 (PRNG verbatim, the closed interval reached at both ends, bounded output, persistent state, no game RNG) |
+| 5 duration | Y5 (frames from the calibration; scene cues match their holds within 1 ms; the ceremony lead equals the inverted-viewport lead) |
+| 6 amplitude clamp | Y6 |
+| 7 0 % mute | Y7, R2 |
+| 8 max-volume clamp | Y8 |
+| 9 cancellation | Y9, H17 |
+| 10 queue overflow | Y10 |
+| 11 id → primitive | E11, R1 |
+| 12 unknown id | E12 |
+| 13 repeated cue | E13, H18 |
+| 14 scene priority | E14 |
+| 15 note mapping | H15 |
+| 16 pitch ordering | H16, P4 |
+| 17 cancellation | H17, P5 |
+| 18 rapid notes | H18, P1–P3 |
+| 19 Camp audio on/off | T19 |
+| 20 Blackthorn audio on/off | T21 |
+| 21 backend failure | T19 / T21 (broken), T16 |
+| 22 load clears stale SFX | M1–M3, Y10 (epoch) |
+| 23 Return to Title | M3, M4 |
+| 24 Ending | M6 |
+| 25 persisted volume on real effects | S25 |
+
+- **Existing guards edited** (source shape only; each still guards the same contract):
+  - `a3_01_audio_contract` V4 skips `sfx_synth.{h,cpp}` like `audio.{h,cpp}` (its class-name strings sit on `SfxClass` lines);
+  - S20 accepts any `xQueueSend(queue_, &x, 0)` (the device now posts a `{request, epoch}` command).
+- **RED evidence** is by mutation (§15.12): the synthesizer and its guards are new. The runtime wiring A3-02 added is shown RED by reverting it to A3-01's behaviour: M9 (Return to Title), M23 (Blackthorn cue), M24 (ceremony), M25 (combat side).
+
+### 15.12 Mutations (Phase L)
+
+`native/core/tools/a3_02_mutation_check.py` → `native/core/a3-02-mutation.log`: 26 one-line production mutations (synthesizer 16, runtime 7, service 2, device 1). Each must turn at least one check RED.
+
+- **First pass: 25 killed.**
+  - **M20 survived** (harpsichord notes coalesced like ordinary cues): no test pressed the same digit twice in a row. Closed by H18 "the same digit three times fast is three notes".
+  - **M22** died only by a compile error (`-Werror` on the unused parameter), a weak kill. The mutation was rewritten to compile.
+- **Second pass: 26 / 26 killed**, restored build and all four suites green.
+
+| # | Mutation | Killed by |
+|---|---|---|
+| M1 | sweep direction reversed | Y2 |
+| M2 / M3 | wrong harpsichord / ceremony table | H15, H16, P4, E11, R1 |
+| M4 / M5 | 0 % not silent (render / service) | Y7, R2 |
+| M6 / M7 | Camp / Blackthorn scene waits on audio | T19 / T21 |
+| M8 / M9 | load / Return to Title keeps SFX | M1–M4 |
+| M10 | harpsichord note index + 1 | H15, H16, P4 |
+| M11 / M12 | overflow refuses the producer / the device producer waits | Y10 / A3-01 S20 |
+| M13 | gain applied twice | Y8 |
+| M14 | SFX volume touches the music channel | A3-01 S14 |
+| M15 | a cancelled tone keeps generating | Y9, H17, M1 |
+| M16 | the duty is not modelled | Y2 |
+| M17 | noise interval open | Y4 |
+| M18 | durations off the calibration | Y5, R1, P3 … |
+| M19 | an unaudited cue accepted | E12 |
+| M20 | notes coalesced | H18 |
+| M21 | a scene cue does not preempt | E14 |
+| M22 | the epoch ignored | Y10 |
+| M23 / M24 / M25 | Blackthorn cue / ceremony / combat side not routed | T21 / C2 / C1 |
+| M26 | the PRNG re-seeded per burst | Y4 |
+
+### 15.13 Firmware (Phase M)
+
+- Pre-commit build `native/targets/tdeck/build-a3-02` (`native/targets/tdeck/a3-02-firmware-build.log`): ESP-IDF 6.1, **zero project warnings** under `-Werror`.
+- `0xdf4b0` = **914,608 B**, **+5,792 B** against A3-01's 908,816; **133,968 B (13 %)** of the 1 MiB app partition free.
+- Audio memory: backend object 784 B static; task stack +1 KiB (4 KiB); queue 16 × 16 B; synthesizer code about 4.5 KB.
+- Two first attempts died inside ESP-IDF's own sources (an assembler rejecting `.tbyte` in `mcpwm_oper.c`, then a GCC internal segfault in `esp_lcd_panel_rgb.c`) — different third-party files each time, no project file involved; the build completed at `ninja -j 4`. The post-commit image is built from a fresh directory; its path, SHA-256 and embedded `Git` are in the annotated tag.
+- Not flashed.
+
+### 15.14 Hardware test (Phase N) — A3-02 device check
+
+Copy the Launcher image (tag message). SD card: unchanged; `openu5-audio.bin` optional.
+
+- **A. Boot.** The identity screen reads `FW 3.0.0-alpha3-dev-a3-02-debug` and the `Git` hash of the tag; `RES 2041466B CRC 26f75ae6` as before.
+- **B. Basic SFX** (SFX Volume 80 %). Confirm each is heard and that they differ:
+  1. Walk on the overworld: a soft double click on every step.
+  2. Walk into a wall, a mountain or a table: a low buzz of ~0.2 s.
+  3. A fight: a hit on a monster and a hit on the party are two different noise bursts; a kill is a low burst; a miss is silent.
+  4. Cast any ceremonial spell (a healing or light spell), or drink a potion: a low burble while the screen is normal, then one whistling pitch whose timbre sweeps while the viewport is inverted.
+- **C. Volume.** Repeat B.2 at 100 %, 50 % and 0 %: loudness falls with each step, and 0 % is silent.
+- **D. Harpsichord** (Lord British's castle, floor 2: sit on the chair at (17,17) facing the harpsichord south; Developer > Teleport works). Press 1 to 9 and 0: ten rising pitches, 0 the highest. Type a quick run: every note plays in order, the keys never stall, nothing rings on. Open Alt+M mid-run and close it: no stuck tone. Optional: 6 7 8 9 8 7 8 7 6 7 6 5 3 opens the passage as before.
+- **E. Camp apparition** (a member with enough experience to level, then (H)ole up and camp): the rising materialize tone, the six-note arpeggio, the heal chime and the long chord. The scene must feel paced exactly as in Alpha 2 — sound neither hurries nor holds it.
+- **F. Load.** Start the harpsichord run (or the Camp chord) and press Alt+L straight away: silence at once after "Load complete", and nothing from the old game plays after it.
+- Not in this check: music (A3-04), final loudness (A3-05).
+
+### 15.15 Next batches (Phase P)
+
+| Batch | Scope | Why this split |
+|---|---|---|
+| **A3-03 — remaining gameplay SFX / event hookup** | Programs and routing for the declined cues, each adjudicated against its site: moongate, sceptre, shadowlord, shrine donation / ordained / well-done, quake (class C, synchronised with the shake), `shard-sweep` / `victory-fanfare` **with the reference's blocking pauses decided on their own axis** (`BLOCKING_CUES`), the arena message derivations (escape, absorbed, reject, VICTORY!, Borrowed!), ambient proximity (fountain, waterfall, clock), healer jingle, bard song, Refuge thunder, intro / title / endgame. Close D-3's SFX half. | The primitives and the policy exist; what is left is adjudication and routing, cue by cue. |
+| **A3-04 — music playback from supported patched assets** | The XMI sequencer, the OPL2 emulation and the `FAT.OPL` bank on the core-1 task, mixed after the SFX voice; `music_context_for_location` and the scripted selectors; CPU and memory measured on hardware. | Needs the audio task and the mixer point A3-02 built, and a measured CPU budget. |
+| **A3-05 — volume curve, polish and audio hardware sign-off** | The loudness curve on the real speaker (the user's A3-01 note), SFX / music balance, headroom with both channels, optional music fade, a battery and CPU soak, the strict "1988 sound-off" profile decision, and the ledger rows. | Calibration needs every sound on hardware first. |

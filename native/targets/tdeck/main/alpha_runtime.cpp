@@ -17,6 +17,7 @@
 #include "boot_trace.h"
 #include "native_renderer.h"
 #include "openu5/command_char.h"
+#include "openu5/sfx_synth.h"
 #include "openu5/debug_labels.h"
 #include "openu5/display_names.h"
 #include "openu5/inventory_picker.h"
@@ -267,6 +268,7 @@ void AlphaRuntime::bind_scene_pacers(bool paced){
     blackthorn_pacer_.attach({blackthorn_steps_,kBlackthornSceneSteps,blackthorn_scene_text_,
                               kBlackthornSceneTextBytes,blackthorn_scene_grid_});
     blackthorn_pacer_.set_unit_ms(paced?kPresentationUnitMs:0);
+    blackthorn_pacer_.set_cue_sink({this,blackthorn_cue});
     narrative_pacer_.attach({narrative_steps_,kNarrativeSceneSteps,narrative_text_,kNarrativeSceneTextBytes});
     narrative_pacer_.set_paced(paced);
 }
@@ -2474,7 +2476,11 @@ void AlphaRuntime::service_system_menu_intent(){
 #endif
         ESP_LOGI(kTag,"DEBUG_OPEN source=system-menu opened=%d gameplay_command=none",ok);
     }
-    else if(intent.kind==openu5::SystemMenuIntentKind::ReturnToTitle){system_menu_.close();frontend_.start(uint32_t(esp_timer_get_time()/1000),
+    else if(intent.kind==openu5::SystemMenuIntentKind::ReturnToTitle){system_menu_.close();
+        // A3-02. The title replaces the world like a load does: no effect of
+        // the abandoned game may sound over it. Music is untouched (A3-04).
+        audio_.stop_sfx();
+        frontend_.start(uint32_t(esp_timer_get_time()/1000),
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
         true,
 #else
@@ -2722,10 +2728,41 @@ void AlphaRuntime::apply_device_settings(){
 }
 
 void AlphaRuntime::present_audio(const openu5::GameEvent &e){
+    // A3-02. The ceremony's sound is CAST2.OVL:0x0000(index) -- the noise lead
+    // and the two mirrored sweeps start_magic_ceremony() times the inverted
+    // viewport by. The reference catalogues that routine as "time-spell"; the
+    // spell-cast / potion-used / scroll-used hooks before it are markers.
+    if(e.kind==openu5::GameEventKind::MagicCeremony){audio_.play_sfx(openu5::SfxId::TimeSpell,std::clamp(e.note,int32_t(0),int32_t(8)));return;}
+    // The arena's hit and death bursts (kernel 0x3564 / 0x2fd0), derived from
+    // the combat events already emitted, as the reference's routeCombatSfx
+    // does: the burst depends on the TARGET's side; a miss is silent.
+    if(e.kind==openu5::GameEventKind::Combat&&e.combat){
+        const auto &c=*e.combat;
+        const bool died=c.kind==openu5::CombatEventKind::Died;
+        if(died||c.kind==openu5::CombatEventKind::Attacked){
+            const auto id=openu5::sfx_for_combat_attack(died,c.hit,combat_actor_is_player(c.target));
+            if(id!=openu5::SfxId::None)audio_.play_sfx(id);
+        }
+        return;
+    }
     if(e.kind!=openu5::GameEventKind::Sfx)return;
     const auto id=openu5::sfx_from_cue(e.text);
     if(id==openu5::SfxId::None)ESP_LOGW(kTag,"SFX_CUE unknown id=%s",e.text?e.text:"(null)");
     audio_.play_sfx(id,e.note);
+}
+
+bool AlphaRuntime::combat_actor_is_player(int32_t id) const{
+    for(int32_t i=0;i<combat_.count;++i)
+        if(combat_.actors[i].id==id)return combat_.actors[i].member!=255;
+    return false;
+}
+
+void AlphaRuntime::blackthorn_cue(void *p,openu5::BlackthornSfx sfx){
+    auto &self=*static_cast<AlphaRuntime*>(p);
+    const auto id=sfx==openu5::BlackthornSfx::Materialize?openu5::SfxId::BlackthornMaterialize:
+                  sfx==openu5::BlackthornSfx::ShardSweep?openu5::SfxId::ShardSweep:openu5::SfxId::None;
+    ESP_LOGI(kTag,"SFX_CUE id=%s source=blackthorn-scene",openu5::sfx_cue(id)?openu5::sfx_cue(id):"none");
+    self.audio_.play_sfx(id);
 }
 
 void AlphaRuntime::audio_test_tone(void *p){

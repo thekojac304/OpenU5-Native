@@ -1,0 +1,264 @@
+== MAINOUT.OVL 0x0344  move-blocked (overworld wall bump) -> kernel 0x22c0 beep
+   032f: mov ax, 0x29b8
+   0332: push ax
+   0333: call 0xffff9680
+   0336: call 0xffffa8d8
+   0339: jmp 0x347
+   033b: nop 
+   033c: mov ax, 0xa5
+   033f: push ax
+   0340: mov ax, 0xc8
+   0343: push ax
+   0344: call 0xffffa0f0
+== TOWN.OVL 0x0849  move-blocked (town wall bump) -> kernel 0x22c0 beep
+   0832: push word ptr [bp - 0xe]
+   0835: call 0x52e
+   0838: jmp 0x854
+   083a: mov ax, 0x26d6
+   083d: push ax
+   083e: call 0xffff9680
+   0841: mov ax, 0xa5
+   0844: push ax
+   0845: mov ax, 0xc8
+   0848: push ax
+   0849: call 0xffffa0f0
+== ULTIMA.EXE 0x434a  move-step burst 1 -> kernel 0x223c noise_burst
+   4339: mov sp, bp
+   433b: pop bp
+   433c: ret 
+   433d: nop 
+   433e: mov ax, 1
+   4341: push ax
+   4342: mov ax, 0x19
+   4345: push ax
+   4346: mov ax, 0x3e8
+   4349: push ax
+   434a: call 0x223c
+== ULTIMA.EXE 0x4355  move-step gap -> kernel 0x20c8 delay
+   4341: push ax
+   4342: mov ax, 0x19
+   4345: push ax
+   4346: mov ax, 0x3e8
+   4349: push ax
+   434a: call 0x223c
+   434d: mov ax, 1
+   4350: push ax
+   4351: mov ax, 0x14
+   4354: push ax
+   4355: call 0x20c8
+== ULTIMA.EXE 0x4364  move-step burst 2 -> kernel 0x223c noise_burst
+   4350: push ax
+   4351: mov ax, 0x14
+   4354: push ax
+   4355: call 0x20c8
+   4358: mov ax, 1
+   435b: push ax
+   435c: mov ax, 0x19
+   435f: push ax
+   4360: mov ax, 0x5dc
+   4363: push ax
+   4364: call 0x223c
+== ULTIMA.EXE 0x35c9  combat-hit-heavy (target is a party member) -> kernel 0x223c noise_burst
+   35b5: sub ah, ah
+   35b7: mov si, ax
+   35b9: push si
+   35ba: call 0x2a28
+   35bd: mov ax, 0x28
+   35c0: push ax
+   35c1: mov ax, 0xbb8
+   35c4: push ax
+   35c5: mov ax, 0x1f4
+   35c8: push ax
+   35c9: call 0x223c
+== ULTIMA.EXE 0x35de  combat-hit (target is an enemy) -> kernel 0x223c noise_burst
+   35c9: call 0x223c
+   35cc: push si
+   35cd: call 0x2a28
+   35d0: jmp 0x35e1
+   35d2: mov ax, 0xa
+   35d5: push ax
+   35d6: mov ax, 0xbb8
+   35d9: push ax
+   35da: mov ax, 0x7d0
+   35dd: push ax
+   35de: call 0x223c
+== ULTIMA.EXE 0x2a68  combat-damage (party_member_take_damage) -> kernel 0x223c noise_burst
+   2a53: mov bp, sp
+   2a55: push si
+   2a56: push word ptr [bp + 6]
+   2a59: call 0x2a28
+   2a5c: mov ax, 0xa
+   2a5f: push ax
+   2a60: mov ax, 0x640
+   2a63: push ax
+   2a64: mov ax, 0x7d0
+   2a67: push ax
+   2a68: call 0x223c
+== ULTIMA.EXE 0x2fe3  combat-defeat / dungeon-trap (0x2fd0 dispatcher) -> kernel 0x223c noise_burst
+   2fd0: push bp
+   2fd1: mov bp, sp
+   2fd3: sub sp, 4
+   2fd6: push si
+   2fd7: mov ax, 0x28
+   2fda: push ax
+   2fdb: mov ax, 0xbb8
+   2fde: push ax
+   2fdf: mov ax, 0x1f4
+   2fe2: push ax
+   2fe3: call 0x223c
+== DUNGEON.OVL 0x04b9  dungeon-zap -> kernel 0x223c noise_burst
+   04a5: mov ax, 0xb7
+   04a8: push ax
+   04a9: push ax
+   04aa: call 0xffff89b6
+   04ad: mov ax, 1
+   04b0: push ax
+   04b1: mov ax, 0x1f4
+   04b4: push ax
+   04b5: mov ax, 0x4e20
+   04b8: push ax
+   04b9: call 0xffffa06c
+== DUNGEON.OVL 0x099e  field-afflict -> kernel 0x223c noise_burst
+   0989: je 0x9a6
+   098b: mov byte ptr [si], 0x53
+   098e: push di
+   098f: call 0xffffa858
+   0992: mov ax, 1
+   0995: push ax
+   0996: mov ax, 0x32
+   0999: push ax
+   099a: mov ax, 0xdac
+   099d: push ax
+   099e: call 0xffffa06c
+== DUNGEON.OVL 0x1cfb  dungeon-fail -> kernel 0x43ae glide
+   1ce7: push ax
+   1ce8: call 0x9680
+   1ceb: mov ax, 0x320
+   1cee: push ax
+   1cef: mov ax, 0x7d0
+   1cf2: push ax
+   1cf3: mov ax, 1
+   1cf6: push ax
+   1cf7: mov ax, 0x32
+   1cfa: push ax
+   1cfb: call 0xffffc1de
+== SJOG.OVL 0x1a21  torch-borrowed -> kernel 0x43ae glide
+   1a0d: push ax
+   1a0e: call 0x58d0
+   1a11: mov ax, 0x320
+   1a14: push ax
+   1a15: mov ax, 0x7d0
+   1a18: push ax
+   1a19: mov ax, 1
+   1a1c: push ax
+   1a1d: mov ax, 0x32
+   1a20: push ax
+   1a21: call 0x842e
+== CMDS.OVL 0x09d5  cannon-fire -> kernel 0x43ae glide
+   09bf: mov al, byte ptr [0x5897]
+   09c2: mov word ptr [bp - 0x14], ax
+   09c5: mov ax, 0x3e8
+   09c8: push ax
+   09c9: mov ax, 0xc8
+   09cc: push ax
+   09cd: mov ax, 5
+   09d0: push ax
+   09d1: mov ax, 0x12c
+   09d4: push ax
+   09d5: call 0x842e
+== OUTSUBS.OVL 0x0492  waterfall-fall -> kernel 0x43ae glide
+   047e: push ax
+   047f: call 0xffffd936
+   0482: mov ax, 0x9c4
+   0485: push ax
+   0486: mov ax, 0x320
+   0489: push ax
+   048a: mov ax, 1
+   048d: push ax
+   048e: mov ax, 0x12c
+   0491: push ax
+   0492: call 0xffffa11e
+== TOWN.OVL 0x0a75  mirror-break (loop body, band = si) -> kernel 0x223c noise_burst
+   0a5f: mov byte ptr [bx], 0x9f
+   0a62: mov ax, 0x26f2
+   0a65: push ax
+   0a66: call 0xffff9680
+   0a69: mov si, 0x7d0
+   0a6c: mov ax, 0x28
+   0a6f: push ax
+   0a70: mov ax, 0x78
+   0a73: push ax
+   0a74: push si
+   0a75: call 0xffffa06c
+== OUTSUBS.OVL 0x067b  apparition-materialize -> kernel 0x2192 tone_sweep
+   0667: mov ax, 0xa3c
+   066a: push ax
+   066b: mov ax, 1
+   066e: push ax
+   066f: mov ax, 0x2710
+   0672: push ax
+   0673: mov ax, 0x9c4
+   0676: push ax
+   0677: mov ax, 6
+   067a: push ax
+   067b: call 0x7f02
+== OUTSUBS.OVL 0x0698  apparition-arpeggio (per note) -> kernel 0x2192 tone_sweep
+   0683: mov si, 0x3a26
+   0686: push word ptr [si]
+   0688: mov ax, 1
+   068b: push ax
+   068c: mov ax, 0x1388
+   068f: push ax
+   0690: mov ax, 0xc8
+   0693: push ax
+   0694: mov ax, 0xd
+   0697: push ax
+   0698: call 0x7f02
+== OUTSUBS.OVL 0x0896  apparition-heal-chime -> kernel 0x2192 tone_sweep
+   0882: mov ax, 0x157c
+   0885: push ax
+   0886: mov ax, 1
+   0889: push ax
+   088a: mov ax, 0x1388
+   088d: push ax
+   088e: mov ax, 0xc8
+   0891: push ax
+   0892: mov ax, 0xd
+   0895: push ax
+   0896: call 0x7f02
+== OUTSUBS.OVL 0x08c1  apparition-chord -> kernel 0x2192 tone_sweep
+   08ad: mov ax, 0x157c
+   08b0: push ax
+   08b1: mov ax, 1
+   08b4: push ax
+   08b5: mov ax, 0xea60
+   08b8: push ax
+   08b9: mov ax, 0x9c4
+   08bc: push ax
+   08bd: mov ax, 1
+   08c0: push ax
+   08c1: call 0x7f02
+== BLCKTHRN.OVL 0x083f  blackthorn-materialize -> kernel 0x2192 tone_sweep
+   082b: mov ax, 0xaf0
+   082e: push ax
+   082f: mov ax, 1
+   0832: push ax
+   0833: mov ax, 0x32c8
+   0836: push ax
+   0837: mov ax, 0x64
+   083a: push ax
+   083b: mov ax, 5
+   083e: push ax
+   083f: call 0x7f02
+== TOWN.OVL 0x0e6d  instrument-note -> kernel 0x2192 tone_sweep
+   0e57: shl bx, 1
+   0e59: push word ptr [bx + 0x2746]
+   0e5d: mov ax, 1
+   0e60: push ax
+   0e61: mov ax, 0xfa0
+   0e64: push ax
+   0e65: mov ax, 0x4e20
+   0e68: push ax
+   0e69: mov ax, 0xfffc
+   0e6c: push ax
+   0e6d: call 0xffff9fc2

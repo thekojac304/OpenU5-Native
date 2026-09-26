@@ -2,6 +2,7 @@
 set(OPENU5_CORE_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/audio.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/audio_pack.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/sfx_synth.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/frontend.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/frontend_settings.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/hud.cpp"

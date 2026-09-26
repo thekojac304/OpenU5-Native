@@ -322,6 +322,16 @@ Every row checked against the Phase 6T–7D hardware results and the Batch 52 au
   - **Music is not original.** The stock 1988 DOS game has none. It becomes a deliberate row, derived from the user's Exodus *Ultima V Upgrade* 1.0 files, when A3-04 makes it audible. Stock installs stay silent of music.
 - **No row changed kind, no row was fixed, and no new ID was allocated.** Totals as after Batch 55.
 
+**Alpha 3 A3-02 status (PC-speaker synthesizer, 2026-09-26; `ALPHA3_AUDIO.md` §15).** **D-3 stays open, now partly closed in software.**
+- **What is new.** The device renders 22 gameplay sounds from the 1988 primitives' own parameters (§15.5), SFX Volume scales them, and 0 % is exact silence. **H-125 (harpsichord audio) is fixed on the host**; it awaits the A3-02 device check (§15.14 D).
+- **What is still missing.** Every other cue is declined until A3-03 (§15.5 lists each with its reason). D-3 closes when A3-03 has wired them and the hardware check has passed.
+- **Knowing choices, recorded here so they are not mistaken for fidelity claims:**
+  - the noise path's DC block and cone low-pass are one-pole filters where the reference measured two-pole ones (the noise timbre is class C in both);
+  - the tone_sweep **duty** is modelled from the loop body (0x21f8), which the reference left at 50 %;
+  - the Developer test tone is a device-only (class D) sound.
+- **The 1988 sound flag is still not the volume.** At 0 % the Batch 51 sound-flag choices do not change.
+- **No row changed kind and no new ID was allocated.** Totals as after Batch 55.
+
 **Totals after Batch 54.**
 - 19 deliberate (unchanged).
 - Software-fixed rows awaiting hardware: **none**.

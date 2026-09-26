@@ -495,6 +495,7 @@ void BlackthornScenePacer::pump(uint32_t now_ms, EventSink out) {
         ++released_;
         if (step.kind == BlackthornStepKind::Beat) {
             apply(step.beat);
+            if (step.beat.sfx != BlackthornSfx::None && cue_sink_.cue) cue_sink_.cue(cue_sink_.context, step.beat.sfx);
             if (unit_ms_) {
                 // run-n-frames units, plus the waits the original spends in
                 // primitives that are not run-n-frames (Batch 51).
