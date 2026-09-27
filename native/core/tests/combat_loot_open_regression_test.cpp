@@ -66,17 +66,31 @@ int main(){
     snapshot=compose_combat_presentation(battle,game);
     check(snapshot.tiles[chest_key]!=combat_loot_render_tile(15),"empty stack no longer paints a loose-loot representative");
 
-    // A full destination leaves the chosen top object in place, visibly and
-    // authoritatively, for a later retry.
+    // STALE EXPECTATION CORRECTED (Alpha 3 A3-HF1): this block used to assert
+    // that a full destination "retains the selected loose object" -- a rule
+    // native invented in 0a45b673 and the audit called "deliberate and
+    // correct" with no original citation. SJOG get_item_switch 0x1458 has no
+    // such branch: gold goes through add_word_capped (ULTIMA.EXE 0x3f14) and
+    // 0x177a then clears the object slot unconditionally. On hardware the
+    // invented rule was "Nothing to get!" forever at every pile a Developer-
+    // maxed pack reached. A full counter now takes the item and stays full.
     battle.piles[battle.pile_count++]={{6,4},2,1};
     game.gold=9999;
-    check(combat_action(arena,CombatAction::Get,0,-1)==CombatResult::Ok&&battle.pile_count==1&&game.gold==9999,
-          "full inventory retains the selected loose object");
+    check(combat_action(arena,CombatAction::Get,0,-1)==CombatResult::Ok&&battle.pile_count==0&&game.gold==9999,
+          "full gold still takes the selected loose object and stays at 9999");
     snapshot=compose_combat_presentation(battle,game);
-    check(snapshot.tiles[chest_key]==combat_loot_render_tile(2),"full-inventory object remains renderable");
+    check(snapshot.tiles[chest_key]!=combat_loot_render_tile(2),"the taken object no longer paints");
     game.gold=gold_before+20;
+    // An unknown record is the one thing the original leaves in place: the
+    // 0x1458 jump-table default (0x1750) prints "Nothing to get!" and skips
+    // the slot clear.
+    battle.piles[battle.pile_count++]={{6,4},0,1};
+    check(combat_action(arena,CombatAction::Get,0,-1)==CombatResult::Ok&&battle.pile_count==1&&game.gold==gold_before+20,
+          "an unknown record stays in place");
+    battle.pile_count=0;
+    battle.piles[battle.pile_count++]={{6,4},2,1};
     check(combat_action(arena,CombatAction::Get,0,-1)==CombatResult::Ok&&battle.pile_count==0&&game.gold==gold_before+21,
-          "retained object is collectible after capacity is available");
+          "an ordinary gold pickup below the cap is unchanged");
 
     // Directional victory Get is the physical keyboard route; it reaches the
     // same authoritative inventory mutation and removes only its selected item.

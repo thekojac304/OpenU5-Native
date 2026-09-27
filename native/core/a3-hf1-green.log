@@ -1,0 +1,72 @@
+  Britain entrance (81,106); nearest bridge (76,119) tile 0x6b, 13 cells away; land side (76,120)
+GREEN L1 the shipped Britannia map has a bridge (0x6a/0x6b) near Britain's entrance
+  NORMAL: attacked=1 trolls=1 won=1 lingering=1 chest=(7,3) encoded=1 contents=15 opened=1 loot=7 gets=7 refusals=0 taken=7 left=0
+    Get: top {5,25} -> taken, pile 7 -> 6
+    Get: top {5,24} -> taken, pile 6 -> 5
+    Get: top {5,21} -> taken, pile 5 -> 4
+    Get: top {2,38} -> taken, pile 4 -> 3
+    Get: top {7,1} -> taken, pile 3 -> 2
+    Get: top {13,1} -> taken, pile 2 -> 1
+    Get: top {15,1} -> taken, pile 1 -> 0
+  MAXED: attacked=1 trolls=1 won=1 lingering=1 chest=(7,3) encoded=1 contents=15 opened=1 loot=7 gets=7 refusals=0 taken=7 left=0
+    Get: top {5,25} -> taken, pile 7 -> 6
+    Get: top {5,24} -> taken, pile 6 -> 5
+    Get: top {5,21} -> taken, pile 5 -> 4
+    Get: top {2,38} -> taken, pile 4 -> 3
+    Get: top {7,1} -> taken, pile 3 -> 2
+    Get: top {13,1} -> taken, pile 2 -> 1
+    Get: top {15,1} -> taken, pile 1 -> 0
+GREEN L2 a roaming troll next to the party attacks on a Pass (outdoor_tick -> outdoor_start, enemy 41)
+GREEN L3 the fight is won with raw keys; the victory arena lingers for its loot
+GREEN L4 the troll's death drops a reward chest in the arena (Engine::kill, contents = troll treasure 15)
+GREEN L5 (O)pen by raw key + direction opens it: "Found:" and its loot lies on the chest cell
+GREEN L6 the MAXED arm is the same fight, the same chest cell and the same loot, record for record
+GREEN N1 NORMAL: every Get takes one item and the pile empties
+GREEN N2 NORMAL: each Get names its item and moves exactly its own counter
+GREEN M1 MAXED: no Get answers "Nothing to get!" while loot lies there (SJOG 0x1458 has no full-pack refusal)
+GREEN M2 MAXED: every Get takes one item and the pile empties (0x177a clears the slot unconditionally)
+GREEN M3 MAXED: each item is named and its counter stays at the cap (add_byte_capped 0x3ef0 / add_word_capped 0x3f14)
+  TOLL NORMAL: attacked=1 trolls=1 won=1 lingering=1 chest=(6,4) encoded=1 contents=15 opened=1 loot=7 gets=7 refusals=0 taken=7 left=0
+    Get: top {5,19} -> taken, pile 7 -> 6
+    Get: top {5,25} -> taken, pile 6 -> 5
+    Get: top {6,4} -> taken, pile 5 -> 4
+    Get: top {2,5} -> taken, pile 4 -> 3
+    Get: top {7,2} -> taken, pile 3 -> 2
+    Get: top {13,1} -> taken, pile 2 -> 1
+    Get: top {15,1} -> taken, pile 1 -> 0
+  TOLL MAXED: attacked=1 trolls=1 won=1 lingering=1 chest=(6,4) encoded=1 contents=15 opened=1 loot=7 gets=7 refusals=0 taken=7 left=0
+    Get: top {5,19} -> taken, pile 7 -> 6
+    Get: top {5,25} -> taken, pile 6 -> 5
+    Get: top {6,4} -> taken, pile 5 -> 4
+    Get: top {2,5} -> taken, pile 4 -> 3
+    Get: top {7,2} -> taken, pile 3 -> 2
+    Get: top {13,1} -> taken, pile 2 -> 1
+    Get: top {15,1} -> taken, pile 1 -> 0
+GREEN T1 the bridge toll (TrollSneak -> "Pay toll?" -> n) fights the same trolls and drops a chest the same way
+GREEN T2 toll entry, NORMAL: every item is taken
+GREEN T3 toll entry, MAXED: every item is taken at the cap -- the same Get, the same defect, the same fix
+  P: saved=1 arena live after load=0 chest still closed=0 world objects=0
+GREEN P1 save before Open -> load: the arena is either kept whole or not at all
+GREEN P2 an arena the save does not keep leaves no phantom chest or loot in the world
+GREEN E8 load after the victory: the taken loot stays in the pack, no chest or loot reappears in the world
+GREEN E9 power cycle (fresh runtime + Load): the same pack, no duplicate reward, no phantom chest
+  E1: 4 of 4 free sides
+GREEN E1 Get from each free side of the chest takes the item (gems at 99 stay 99)
+GREEN E2 near-full: 98 gems + 2 gems -> 99, the item is taken and named
+GREEN E3 an unknown record still answers "Nothing to get!" and stays (the 0x1458 jump-table default, 0x1750)
+GREEN E4 a nested chest on top still answers "Open it first!" and stays (0x1482)
+GREEN E5 gold that overflows the cap: 9990 + 38 -> 9999, taken and named
+GREEN E6 leaving with loot still on the ground: nothing is granted and nothing is promoted to the world (R-03)
+GREEN E7 a victory with no reward drops no chest and no loot
+  E10: grass (80,105), 4 fight(s) before a chest
+  GRASS MAXED: attacked=1 trolls=0 won=1 lingering=0 chest=(2,2) encoded=0 contents=-1 opened=1 loot=8 gets=8 refusals=0 taken=8 left=0
+    Get: top {5,21} -> taken, pile 8 -> 7
+    Get: top {5,24} -> taken, pile 7 -> 6
+    Get: top {6,5} -> taken, pile 6 -> 5
+    Get: top {2,4} -> taken, pile 5 -> 4
+    Get: top {7,2} -> taken, pile 4 -> 3
+    Get: top {8,2} -> taken, pile 3 -> 2
+    Get: top {13,1} -> taken, pile 2 -> 1
+    Get: top {15,2} -> taken, pile 1 -> 0
+GREEN E10 other terrain (grass) and repeated encounters at one spot: the maxed pack takes every item
+26 checks, 0 failures

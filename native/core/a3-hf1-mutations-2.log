@@ -1,0 +1,8 @@
+M2 KILLED revert the fix for gold only :: a3_hf1_arena_loot: M1; M2; T3; E10 | combat_loot_open_regression: combat loot Open regression: full gold still takes the selected loose object and stays at 9999
+M7 KILLED drop the loot during Open (spilled, then lost) :: a3_hf1_arena_loot: L5; N2; M3 | combat_loot_open_regression: combat loot Open regression: authoritative chest logic places its contents in the combat loot pile
+M8 KILLED Get grants but never removes: duplicate loot :: a3_hf1_arena_loot: N1; N2; M2; M3; T2; T3; E1; E2; E5; E10 | combat_loot_open_regression: combat loot Open regression: first Get takes only the LIFO equipment item
+M9 KILLED Get takes the bottom of the stack (FIFO), not the top :: a3_hf1_arena_loot: N2; M3 | combat_loot_open_regression: combat loot Open regression: first Get takes only the LIFO equipment item
+M11 KILLED unknown records are silently consumed :: a3_hf1_arena_loot: E3 | combat_loot_open_regression: combat loot Open regression: an unknown record stays in place
+M12 KILLED duplicate the reward on teardown: promote the chest to the world :: a3_hf1_arena_loot: E6 | combat_loot_open_regression: combat loot Open regression: a consumed combat chest is never promoted or duplicated in the world
+
+6/6 killed; 0 survived; 0 invalid/not applied

@@ -1,0 +1,14 @@
+M1 KILLED revert the fix: a full counter refuses the pickup again :: a3_hf1_arena_loot: M1; M2; M3; T3; E1; E10
+M2 NOT-APPLIED revert the fix for gold only
+M3 KILLED skip reward generation (RNG still drawn) :: a3_hf1_arena_loot: L4; L5; L6; N1; N2; M2; M3; T1; T2; T3; E1; E10
+M4 KILLED clear the chest's contents on Open :: a3_hf1_arena_loot: L5; N2; M3 | combat_loot_open_regression: combat loot Open regression: authoritative chest logic places its contents in the combat loot pile
+M5 KILLED shift the spilled reward one tile east :: a3_hf1_arena_loot: L5; N2; M3
+M6 KILLED Get ignores the opened chest's loot on the ground :: a3_hf1_arena_loot: N1; N2; M1; M2; M3; T2; T3; E1; E2; E4; E5; E10 | combat_loot_open_regression: combat loot Open regression: first Get takes only the LIFO equipment item
+M7 NOT-APPLIED drop the loot during Open (spilled, then lost)
+M8 NOT-APPLIED Get grants but never removes: duplicate loot
+M9 NOT-APPLIED Get takes the bottom of the stack (FIFO), not the top
+M10 KILLED a full counter overflows its cap :: a3_hf1_arena_loot: M3; T3; E1; E2
+M11 NOT-APPLIED unknown records are silently consumed
+M12 NOT-APPLIED duplicate the reward on teardown: promote the chest to the world
+
+6/12 killed; 0 survived; 6 invalid/not applied

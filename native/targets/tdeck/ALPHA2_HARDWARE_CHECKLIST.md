@@ -1069,3 +1069,34 @@ The PASS criteria all held: no crash, reset or watchdog; no lock; no stale-resou
 The tested RC1 image is promoted **byte for byte** to the final Alpha 2 release (tag `alpha2-batch55-release`; see `GAMEPLAY_INTEGRATION_AUDIT.md` §14 "Batch 55"). No new firmware was built, so no further flash and no SD change are needed. A device that passed Phase 8 is already running Alpha 2 final.
 
 No hardware phase remains open for Alpha 2. The next physical checks belong to Alpha 3 work.
+
+## Alpha 3 A3-HF1 — the troll-encounter reward chest (2026-09-26)
+
+### Observation that opened it (Alpha 3 A3-04B image)
+
+A random troll encounter by the bridge near Britain, won normally. A chest appeared in the arena and opened, but every `Get` toward it in the expected adjacent direction answered **"Nothing to get!"**. The user reported it was not the scripted TrollSneak scene. Not audio-related.
+
+**Host finding** (`GAMEPLAY_INTEGRATION_AUDIT.md` §14 "Alpha 3 A3-HF1"): the loot was on the chest's cell and the Get found it, but refused it because its counter was already full (99, or 9999 for gold and food). The 1988 Get has no such refusal: it takes the item, names it, and the full counter stays full. The Developer "Stocked inventory" and "Combat" presets fill every counter a chest can hold, so with either one every item was refused. Because the Get takes the top of the stack, one full counter blocked the whole pile.
+
+### Phase H-197 — arena chest Get with a full pack · *new firmware; SD pack unchanged* · about 10 minutes · **PENDING**
+
+Flash the A3-HF1 Launcher image (its path and SHA-256 are in tag `alpha3-hf1-arena-loot`). The boot screen should show `FW 3.0.0-alpha3-dev-a3-hf1-debug` and that tag's `Git`.
+
+1. **Fill the pack.** `Alt+D` → Shortcuts / Presets → **Preset: Stocked inventory** → confirm. This leaves Dexterity alone, so the trolls can still catch the party. *Optional:* Resources → Gold → `9000`, so the gold pickup shows a visible change.
+2. **Go to the bridge.** `Alt+D` → Teleport → Destination Britannia, X `76`, Y `120` → Teleport. This is the grass just south of the bridge at (76,119), south-west of Britain.
+3. **Meet trolls.** Walk north onto the bridge and back south, over and over. About one crossing in eight wakes the trolls. If someone fails to sneak across, **"Pay toll?"** appears: press **N**.
+   - A maxed party (DEX 30, from Maxed party / Combat / Full Test Setup) is never caught. In that case walk the overworld until any monster attacks instead. Every monster's chest goes through the same Get.
+4. **Win the fight.** A kill leaves a chest about half the time. If none appears, leave with Back and repeat step 3.
+5. **Open it.** Stand next to the chest with the member whose turn it is and press **O** + the direction. You should see "Found:" and a list.
+6. **Get the loot.** Press **G** + the same direction, repeatedly. The turn passes after each command, so in a larger party aim from the member whose turn it is, and they must be next to the chest.
+7. **Check the pack.** `Z` → Provisions: full counters are still 99 / 9999. With the optional 9000 gold, the gold has gone up by the amount the Get named.
+
+**PASS:**
+- Each Get names one item ("38 gold!", "1 key!", a weapon's name…), and the next item shows on the cell.
+- **No "Nothing to get!" while loot lies on the cell.**
+- After the last item the cell is empty. One more Get there now answers "Nothing to get!", which is correct.
+- Leaving with Back afterwards returns to the overworld normally.
+
+**FAIL:** report the step, what the screen showed, the `FW` / `Git` lines, and the `COMBAT_GET_REQUEST` / `COMBAT_GET_CANDIDATE` / `COMBAT_GET_RESULT` lines from `/ultima5/logs/` if you have them. **If it fails with an ordinary, not-maxed pack, that is a different defect. Say so.**
+
+*Known, do not file:* a save taken inside the arena loads back to the overworld without the arena. That was already true before this hotfix and is not this report.

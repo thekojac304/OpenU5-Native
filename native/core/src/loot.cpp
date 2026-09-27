@@ -113,13 +113,20 @@ case LootCategory::Equipment:return "equipment";case LootCategory::Keys:return "
 case LootCategory::Gems:return "gems";case LootCategory::Torches:return "torches";
 case LootCategory::Food:return "food";case LootCategory::QuestItem:return "quest";
 default:return "none";}}
+// False only for a record SJOG get_item_switch (0x1458) has no item arm for
+// (its jump-table default 0x1750: "Nothing to get!", the object stays) or a
+// non-positive amount. A full counter is NOT a refusal (A3-HF1): every item
+// arm adds through the saturating helpers -- add_byte_capped ULTIMA.EXE 0x3ef0,
+// add_word_capped 0x3f14, or an inline inc + clamp to 0x63 -- and then clears
+// the object slot unconditionally (0x177a -> 0x7af4). The item is taken and
+// named; a counter already at 99 / 9999 simply stays there.
 bool apply_loot_grant(GameState &g, LootGrant v) {
-    auto add = [&](int32_t &n, int a) {if(a<=0||n>=99)return false;const auto before=n;n=std::min<int32_t>(99,n+a);return n!=before;};
+    auto add = [&](int32_t &n, int a) {if(a<=0)return false;if(n<99)n=std::min<int32_t>(99,n+a);return true;};
     int q = v.quantity;
     switch (v.id) {
     case 2:
-        if(q<=0||g.gold>=9999)return false;
-        g.gold = uint16_t(std::min(9999, int(g.gold) + q));
+        if(q<=0)return false;
+        if(g.gold<9999)g.gold = uint16_t(std::min(9999, int(g.gold) + q));
         return true;
     case 7:
         return add(g.keys, q&127);
@@ -128,8 +135,8 @@ bool apply_loot_grant(GameState &g, LootGrant v) {
     case 13:
         return add(g.torches, q);
     case 15:
-        if(q<=0||g.food>=9999)return false;
-        g.food = uint16_t(std::min(9999, int(g.food) + q));
+        if(q<=0)return false;
+        if(g.food<9999)g.food = uint16_t(std::min(9999, int(g.food) + q));
         return true;
     case 3:
         if (q < 0 || q >= 8) return false;

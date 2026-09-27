@@ -8,7 +8,19 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 A3-03) — the remaining gameplay SFX, ambient cues and scene audio; Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 A3-HF1) — gameplay hotfix: the troll-encounter reward chest; Alpha 2 remains the released build; read this first
+>
+> **A3-HF1 is a small Alpha 3 gameplay hotfix, not a release.** The audio batches A3-04, A3-04A and A3-04B are recorded in [`ALPHA3_AUDIO.md`](ALPHA3_AUDIO.md) §17–§19; A3-04B's render retest is still pending.
+> - Hardware: after a random troll fight by the bridge near Britain, the chest opened but every `Get` answered "Nothing to get!". Cause: the arena Get refused any item whose counter was already full (99 / 9999), a rule native invented and the 1988 Get (SJOG 0x1458) does not have. The Developer "Stocked inventory" and "Combat" presets fill every such counter. Fixed in `apply_loot_grant`; nothing else moves. See §14 "Alpha 3 A3-HF1".
+>
+> | | |
+> |---|---|
+> | Host suite | **137 / 137**, serial, 133.13 s. New: `a3_hf1_arena_loot` 26 (RED 6 before the fix). **12 / 12 mutations killed.** |
+> | Firmware | `3.0.0-alpha3-dev-a3-hf1-debug`, 963,152 B (`0xeb250`), +64 B, 85,424 B (8 %) free, zero warnings. Image path, SHA-256 and `Git`: tag `alpha3-hf1-arena-loot`. **Not flashed; hardware retest pending.** |
+> | SD | **Unchanged.** |
+> | Next | Hardware retest H-197 (`ALPHA2_HARDWARE_CHECKLIST.md`, "Alpha 3 A3-HF1"). |
+>
+> ### CURRENT STATE (Alpha 3 A3-03) — the remaining gameplay SFX, ambient cues and scene audio — **superseded as the current state by A3-HF1 above.**
 >
 > **A3-03 is an Alpha 3 development batch, not a release.**
 > - The device now plays 62 of the 73 cue ids from the 1988 primitives' own parameters: the combat victory fanfare (the hardware-reported gap), the fountain / waterfall / clock ambience (the other one), the quake rumble, the shrine and shard ladders, the Blackthorn siren, the Refuge's sounds, the healer jingle, moongate / sceptre / Shadowlord, the attract demo's cues, and sixteen message-adjacent sounds.
@@ -283,7 +295,7 @@ See the full Resource/Item matrix in §11. Summary: **gold/food/gems/keys/torche
 | Chest creation in arena | **G** | `combat.cpp:467`, `:1178` — `combat_parity` green. |
 | Trapped/untrapped, Search, trap resolution | **G** | Preserved as working; `chest_trap` parity green. |
 | Loose-object spawn, LIFO stack, one-item-per-Get | **G** | `combat.cpp:1346` top-of-stack scan; preserved as intended. |
-| Full-inventory retention (`apply_loot_grant` fails → pile kept) | **G** | Deliberate and correct: "award first, erase second". |
+| ~~Full-inventory retention (`apply_loot_grant` fails → pile kept)~~ | **G — CORRECTED (A3-HF1)** | ~~Deliberate and correct: "award first, erase second".~~ **Withdrawn:** a native invention with no original citation. SJOG `get_item_switch` 0x1458 saturates the counter and 0x177a clears the object unconditionally; on hardware the rule was "Nothing to get!" forever at every chest a Developer-maxed pack reached. A full counter now takes the item (D-61 / H-197). Only an unknown record (0x1750) and a nested chest (0x1482) stay. |
 | Final removal → `pile_count` 0 | **G** | Confirmed. |
 | Cell recomposition after removal | **G** — RESOLVED (Batch 2) | ANCHOR 1 (b). R-02 fixed — no chest-tile-1 producer remains. |
 | Combat→world chest promotion | **G** — RESOLVED (Batch 2) | ANCHOR 1 (a) — `gameplay_parity` mismatch 59 fixed. R-03: both promotion sites removed. |
@@ -7714,3 +7726,106 @@ The reference for everything below is `ALPHA3_AUDIO.md` §16. This section keeps
 - The Camp lute stays the 1988 sound-off branch; the scene pacing is untouched.
 - The 22 `EvidenceUnknown` sites were not attributed (attribution work, not audio work).
 - No save-format, game-pack or audio-pack change.
+
+## Alpha 3 A3-HF1 — the troll-encounter reward chest: "Nothing to get!"
+
+A narrowly scoped gameplay hotfix after the A3-04B audio work. No audio, UI, RNG, loot-table, chest-content or save-format change.
+
+### 1. Baseline (Phase H1)
+
+| Item | Value |
+|---|---|
+| Tree | HEAD `e5d5149f` (A3-04B post-commit build logs; tag `alpha3-a3-04b-render-contention` is `11015be6`), clean |
+| Host suite | fresh build `native/core/build-hf1-baseline`, serial ctest **136 / 136**, 137.87 s (`native/core/a3-hf1-baseline-*.log`) |
+| Firmware | A3-04B `0xeb210` = 963,088 B, 85,488 B free, Launcher SHA-256 `bb0429ed…5b3d` |
+
+### 2. The hardware observation, as reported
+
+On the current Alpha 3 device build: the party crossed the bridge near Britain, a **random** troll encounter started (the user states it was not the scripted TrollSneak scene), the fight was won normally, a chest appeared in the arena, **it opened**, and repeated `Get` in the expected adjacent direction answered **"Nothing to get!"** every time. The device's inventory at that moment was not captured. Nothing in this path touches audio, and nothing in the fix does.
+
+### 3. The original (Phase H2)
+
+Re-derived in this batch from the 1988 bytes with `re/tools/dis16.py` (the `re/disasm` listings the notes cite do not exist):
+
+| Routine | What it does |
+|---|---|
+| SJOG `get_item_switch` 0x1458 | One arm per item type. Every **item** arm credits the pack through a saturating add — kernel `add_byte_capped` (ULTIMA.EXE CS 0x3ef0: `old + n >= cap ? cap : old + n`, no result) for keys / gems / torches / ammunition, `add_word_capped` (0x3f14, same shape, cap 0x270f) for gold and food, or an inline `inc` + `cmp 0x64` → `0x63` for potions, scrolls and equipment (0x14a5, 0x1659, 0x1693) — and then jumps to 0x177a. There is **no "pack full" test anywhere in the routine.** |
+| 0x177a | For a real object slot (`< 0x20`), `call 0x7af4` clears the record — **unconditionally**, whatever the add did — then marks the turn (0x178e). |
+| 0x1482 | Type 1 (a chest, closed or nested at the top of the stack): "Open it first!" (DS 0x8c3e), `jmp 0x1798` — the slot clear is skipped. |
+| 0x1750 | The jump table's default (a type with no arm): "Nothing to get!" (DS 0x8d92), then 0x1485 → `jmp 0x1798` — the slot clear is skipped. |
+
+So, after any fight: a chest is **not** always generated (per kill, `r30 ≤ treasure`; the troll's treasure is 15); it is an arena object on the dead monster's cell; (O)pen spills its contents as loose objects on that same cell (SJOG open 0x112C / `loot_place` 0x0F88, per `re/notes/combat-commands.md`, not re-derived here); (G)et takes **one** object per turn from the top of that stack, names it and clears it — **a full counter included**; the reward is arena-local and does not survive teardown; nothing is special about trolls or bridges. The scripted bridge toll (TrollSneak preamble, MAINOUT 0x1c0e) only differs in how the fight **starts**.
+
+### 4. The native trace (Phase H3)
+
+| Stage | Native | Verdict |
+|---|---|---|
+| Roaming encounter | `outdoor_tick` → adjacent attacker → `outdoor_start` → `start_encounter_combat(41, …)` | correct |
+| Toll encounter | Move onto 0x6a/0x6b → `outdoor_turn` troll roll → "Pay toll?" → `CommandKind::TrollToll` refused → `start_encounter_combat(41, …)` | correct, same arena |
+| Reward generation | `Engine::kill` (`combat.cpp`): chest on the dead troll's cell, contents = treasure, trap on a second roll | correct |
+| Open | `CombatAction::OpenAt` → `chest_loot` → one `CombatLootPile` per item on the chest cell, "Found:" + one line each | correct |
+| Get target | actor position + trackball direction (`commands.cpp` 722–723 → `combat.cpp` 1440–1447), top of the stack (LIFO) | correct |
+| **Get award** | `apply_loot_grant` (`loot.cpp`) returned **false when the counter was already at 99 / 9999**; the arena Get turned that into **"Nothing to get!" and kept the pile** (`combat.cpp` 1470–1473) | **defect** |
+| Teardown | `finish_encounter_combat`: arena loot is never promoted (R-03) | correct, not involved |
+| World hydration / save | not involved: the reward never leaves the arena | — |
+
+The reward never disappears. It lies on the right cell, the Get looks at the right cell and finds it — and then refuses it.
+
+### 5. Host reproduction (Phase H4) — `a3_hf1_arena_loot`
+
+Through the **real AlphaRuntime** with the shipped pack, all by raw keys: the Britannia map, Britain's entrance at (81,106), the nearest bridge at (76,119) (tile 0x6b, 13 cells away), a roaming troll (enemy 41) on the land cell (76,120) beside it, a Pass that lets `outdoor_tick` launch the encounter, the fight fought with `a` + trackball reticle + Enter, then (O)pen and (G)et with the key + a trackball direction. **Seed 2**: one troll, one untrapped chest at arena (7,3), contents 15, seven items (three weapons, 38 gold, a key, a torch, food). Both arms start from the Developer **Combat** preset (a strong party, an identical fight); NORMAL then resets the counters to ordinary values, MAXED keeps the preset's 99 / 9999 — the state the Developer "Combat" and "Stocked Inventory" presets leave **every** counter a chest can grant in.
+
+| Arm | Gets | "Nothing to get!" | Items taken | Pile after |
+|---|---|---|---|---|
+| NORMAL | 7 | 0 | 7 | 0 |
+| MAXED (before the fix) | 24 (the test's cap) | **24** | **0** | **7** |
+
+The toll-entry fight (**seed 113**, with a clumsy Avatar: the preset's DEX 30 can never be caught, since the sneak roll is `rand(1,30) > dex`) gives the same numbers: NORMAL 7 / 7, MAXED 24 refusals and nothing taken. That is the hardware report: the chest opens, its loot lies on the ground, and every Get answers "Nothing to get!".
+
+### 6. Classification (Phase H6)
+
+**G — OTHER: a full-pack refusal the original does not have.** Not A (the loot is generated), not B (it survives; there is no teardown in between), not C (it is on the chest cell, where the Get looks), not D (Open spills it correctly), not E (the Get targets and finds it), not F (the original takes it). The rule was invented in `0a45b673` ("Repair Alpha 2.0 loot and chest integration"), pinned by `combat_loot_open_regression` ("full inventory retains the selected loose object") and listed in §2.F as "Deliberate and correct: award first, erase second" — with no original citation. SJOG 0x1458 has no such branch. Because the Get always takes the top of the stack, one capped counter locks the whole pile beneath it.
+
+**Inference, stated as one:** the device's counters were not captured. The attribution rests on (1) this is the only native branch that prints "Nothing to get!" while an object lies on the target cell; (2) the other one (nothing on the target cell) cannot survive repeated Gets from the chest's side — every side, both entries, bridge and grass, were exercised; (3) the Developer presets that make a troll fight comfortable are exactly the ones that cap every counter. If the retest (H-197) fails with an ordinary inventory, it is a different defect: send the device log's `COMBAT_GET_REQUEST` / `COMBAT_GET_CANDIDATE` / `COMBAT_GET_RESULT` lines.
+
+### 7. The fix (Phase H8)
+
+`native/core/src/loot.cpp` `apply_loot_grant`: a counter already at its cap is a successful pickup that changes nothing (`if (n < 99) n = min(99, n + a); return true;`, and the same at 9999 for gold and food). It returns false only for a record with no item arm (0x1750) or a non-positive amount. The arena Get itself is untouched; it now takes, names and removes the item.
+
+- **Scope of the behaviour change:** only the arena Get reads the return value. The other two callers (`dungeon.cpp` hallway-chest Get and `quest_search.cpp` world-object Get) ignore it, and the change to the game state is identical to before at every counter value, so they are unchanged.
+- **Unchanged:** reward RNG and its order (the Get draws nothing), loot types and quantities, chest placement, Open, the turn charge, the LIFO order, teardown, save / load, random and toll encounters, TrollSneak. An unknown record still answers "Nothing to get!" and stays (0x1750); a nested chest still answers "Open it first!" and stays (0x1482).
+- **Reference:** the TypeScript port already behaves this way (`applyLootGrant` is void and saturates; `Combat.resolveBoardGet` always pops). No parity fixture moves.
+- **Left as found (not reachable from arena loot):** the sandalwood box (type 14) is still refused when already owned, where 0x14f0 takes it anyway. A chest never spills one, and the world-object route ignores the return value.
+
+### 8. Tests, RED evidence and totals (Phases H7, H10–H12)
+
+- **New target `a3_hf1_arena_loot`** (26 checks, `native/targets/tdeck/host_tests/a3_hf1_arena_loot_test.cpp`): L1–L6 the report's preconditions; N1–N2 ordinary inventory; M1–M3 maxed inventory; T1–T3 the toll entry; P1–P2 save / load around the arena; E1–E10 edge cases (each free side; 98 + 2 gems; an unknown record; a nested chest; 9990 + 38 gold; leaving loot behind; a victory with no chest; load after victory; power cycle; grass and repeated encounters at one spot). `--scan` reprints the seed table the seeds were pinned from.
+- **RED on unchanged production** (`native/core/a3-hf1-red.log`): **6 RED** — M1, M2, M3 (roaming: 24 refusals, nothing taken, the pile stays at 7), T3 (the toll entry, the same), E1 (every side), E10 (grass). Everything else GREEN, including E2 / E5 (just below the cap, which native already handled): the defect is exactly "at the cap". The corrected `combat_loot_open_regression` is RED on the same code (`native/core/a3-hf1-red-combat-loot.log`).
+- **GREEN after the fix** (`native/core/a3-hf1-green.log`): **26 / 26**.
+- **Stale expectation corrected:** `combat_loot_open_regression` asserted the invented retention. It now asserts that full gold takes the object and stays at 9999, that an unknown record stays, and that an ordinary pickup is unchanged (dated comment in the test). Mutation M2 shows it RED against the old gold rule.
+- **Mutations** (`native/core/tools/a3_hf1_mutation_check.py`; `native/core/a3-hf1-mutations.log`, `a3-hf1-mutations-2.log`): **12 / 12 killed** — revert the fix (M1), revert it for gold only (M2), skip reward generation with the RNG still drawn (M3), clear the contents on Open (M4), shift the reward one tile (M5), Get ignores the loot on the ground (M6), drop the loot during Open (M7), grant without removing = duplicate loot (M8), FIFO instead of LIFO (M9), overflow the cap (M10), consume unknown records (M11), promote the chest to the world on teardown = a duplicate after reload (M12). The first pass left six multi-line anchors unapplied (the checkout is CRLF); the driver now follows the file's line endings, and the second pass applied and killed all six.
+- **Full suite:** `native/core/build-hf1`, serial, **137 / 137 pass, 133.13 s** (`native/core/a3-hf1-ctest.log`; one new target). The only build warning is the known w64devkit `stl_uninitialized.h` false positive. The regression set the brief names is inside it: `combat_loot_open_regression`, `direct_troll_handoff_regression`, `combat_parity`, `advanced_combat_parity`, `combat_escape_regression`, `dungeon_combat_regression`, `presentation_regression`, `world_flow_parity`, `gameplay_parity`, `quest_parity`, `persistence_parity`, `batch21b_chest_reset`, `batch22_basement_objects`, `a3_03_sfx_runtime` (troll victory).
+
+### 9. Persistence (Phase H9)
+
+The fix touches no world or loose-object state and no save field. Characterized anyway: a save taken inside the victory arena loads back to the **world without the arena** — the save does not carry arena state, as before this batch — and no chest or loot appears in the world (P1, P2). The loot taken before leaving stays in the pack through Load and through a power cycle (a fresh runtime + Load), with no duplicate reward and no phantom chest (E8, E9). No schema change.
+
+### 10. Firmware (Phase H13)
+
+- Pre-commit build `native/targets/tdeck/build-a3-hf1` (`a3-hf1-firmware-configure.log`, `a3-hf1-firmware-build.log`): ESP-IDF 6.1, `idf.py --no-ccache reconfigure` then `ninja -j 4`, first attempt clean, **zero project warnings** under `-Werror` (the five `component_validation` notices are ESP-IDF's own).
+- `0xeb250` = **963,152 B**, **+64 B** against A3-04B's 963,088; **85,424 B (8 %)** of the 1 MiB app partition free.
+- The A3-04A / A3-04B ELF guards still hold on this image (`a3-hf1-hotpath-check.log`, `a3-hf1-iram-check.log`): nothing the fix touches is on the audio path.
+- `PROJECT_VER` `3.0.0-alpha3-dev-a3-hf1-debug`. The post-commit image is built in a fresh directory without ccache; its path, SHA-256 and embedded `Git` are in the annotated tag `alpha3-hf1-arena-loot`. **Not flashed.**
+- **Game packs and audio pack: unchanged.** No SD change.
+
+### 11. Rows
+
+- §2.F "Full-inventory retention (`apply_loot_grant` fails → pile kept)" — **corrected**: it was a native invention, not a reference behaviour.
+- **New: D-61 / H-197** — the arena Get refused an item whose counter was at its cap. **Host fixed (A3-HF1); hardware retest pending** (`ALPHA2_HARDWARE_CHECKLIST.md`, "Alpha 3 A3-HF1").
+
+### 12. Not done in this batch
+
+- No audio change; A3-04B's render retest is still pending, as it was.
+- The arena is still not saved (a save inside it loads back to the world); that is how the port has always behaved and is not this report.
+- The sandalwood-box refusal (§7) is recorded, not changed.
+- No loot-balance, chest-content, RNG, UI or presentation change.
