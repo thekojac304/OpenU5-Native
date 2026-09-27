@@ -1,0 +1,39 @@
+image: build-a3-04f-post/openu5_tdeck.elf
+
+_ZN6openu512_GLOBAL__N_1L11crc32_u16leEPKtj  @ 0x4206689c, 70 bytes
+  loop 0x420668a8..0x420668d8 (bltu a11, a3, 420668a8): body 18 instructions
+  innermost loop body:
+    0x420668a8: addx2 a8, a11, a2
+    0x420668ab: l16ui a8, a8, 0
+    0x420668ae: xor a10, a9, a8
+    0x420668b1: extui a10, a10, 0, 8
+    0x420668b4: l32r a12, 42041c54
+    0x420668b7: addx4 a10, a10, a12
+    0x420668ba: l32i.n a10, a10, 0
+    0x420668bc: srli a9, a9, 8
+    0x420668bf: xor a10, a10, a9
+    0x420668c2: srli a8, a8, 8
+    0x420668c5: xor a8, a8, a10
+    0x420668c8: extui a8, a8, 0, 8
+    0x420668cb: addx4 a8, a8, a12
+    0x420668ce: l32i.n a9, a8, 0
+    0x420668d0: srli a10, a10, 8
+    0x420668d3: xor a9, a9, a10
+    0x420668d6: addi.n a11, a11, 1
+    0x420668d8: bltu a11, a3, 420668a8
+  per frame (176x176): the innermost body 18 x 30,976 pixels = 557,568 instructions = 2.3 ms at 240 MHz, 1 instruction/cycle
+  C1 no per-bit loop (table-driven): GREEN
+  C2 innermost loop body <= 24 instructions: GREEN (18)
+
+_ZN6openu512_GLOBAL__N_1L11expand_tileERA128_KhRA16_KtPtii  @ 0x420930f4, 92 bytes
+  loop 0x42093118..0x42093144 (blti a9, 8, 42093118): body 17 instructions
+  loop 0x42093102..0x4209314b (bge a8, a12, 42093102): body 28 instructions
+
+_ZN6openu515render_snapshotERKNS_21PresentationTileCacheERKNS_20PresentationSnapshotEmxPtjRNS_12RenderReportE  @ 0x42067440, 609 bytes
+  loop 0x42067489..0x42067490 (bne a10, a8, 42067489): body 4 instructions
+  loop 0x420674c8..0x42067522 (bge a8, a7, 420674c8): body 33 instructions
+  loop 0x42067558..0x42067590 (bge a8, a7, 42067558): body 20 instructions
+  loop 0x4206758c..0x42067597 (bge a8, a6, 4206758c): body 6 instructions
+  loop 0x4206753c..0x4206759f (bltu a4, a8, 4206753c): body 36 instructions
+
+A3-04F image check: GREEN
