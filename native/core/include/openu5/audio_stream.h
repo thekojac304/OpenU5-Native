@@ -123,6 +123,10 @@ struct AudioPerfSnapshot {
     uint32_t write_avg_us = 0, write_max_us = 0;
     // Interval between two consecutive deliveries (the audio task's own schedule).
     uint32_t period_avg_us = 0, period_max_us = 0;
+    // A3-04C: one delivery interval minus the write's wait -- from the DMA
+    // freeing a descriptor to the next block handed over (the task's own
+    // work per block: queues, render, mix, copy).
+    uint32_t task_busy_avg_us = 0, task_busy_max_us = 0;
     // Blocks not yet finished playing (the one playing included), sampled
     // just before each write. ring_blocks = full (the write will wait for
     // the DMA); 0 = the speaker had already run dry.
@@ -142,6 +146,7 @@ struct AudioPerfSnapshot {
     uint32_t stack_free_min = 0;     // bytes; the device fills it (uxTaskGetStackHighWaterMark)
     bool music_active = false;
     MusicSong song = MusicSong::None;
+    bool music_bypass = false;       // A3-04C probe: the song is "playing" but the synth is skipped
 };
 
 class AudioPerfCounters {
@@ -172,7 +177,8 @@ class AudioPerfCounters {
   private:
     uint64_t start_us_ = 0;
     uint32_t blocks_ = 0, written_ = 0, fills_ = 0, periods_ = 0;
-    uint64_t render_sum_ = 0, music_sum_ = 0, write_sum_ = 0, period_sum_ = 0, fill_sum_ = 0;
+    uint64_t render_sum_ = 0, music_sum_ = 0, write_sum_ = 0, period_sum_ = 0, fill_sum_ = 0, busy_sum_ = 0;
+    uint32_t busy_max_ = 0;
     uint64_t voices_sum_ = 0, channels_sum_ = 0;
     uint32_t render_min_ = UINT32_MAX, render_max_ = 0, music_max_ = 0, write_max_ = 0, period_max_ = 0;
     uint32_t fill_min_ = UINT32_MAX, fill_max_ = 0;
@@ -225,6 +231,16 @@ class AudioRingPump {
     void stop_music();
     /** A bring-up failure: drop everything and stay silent. */
     void fail_silent();
+    /**
+     * A3-04C Developer probe (ALPHA3_AUDIO.md section 20): skip the music
+     * synth. The song stays "playing" -- the channel keeps running, the task
+     * keeps its DMA-paced cadence, SFX still sound -- but its blocks are
+     * silence and the song does not advance, so switching the probe off
+     * resumes it exactly where it stopped. It separates the synth's own work
+     * from everything else that "music on" changes. Off at boot.
+     */
+    void set_music_bypass(bool on) { music_bypass_ = on; }
+    bool music_bypass() const { return music_bypass_; }
 
     // ---- the loop ----
     /** Something to render: a cue sounding or pending, or a song playing. */
@@ -261,6 +277,7 @@ class AudioRingPump {
     SfxPlayer sfx_{};
     MusicSongPlayer music_{};
     MusicSong song_ = MusicSong::None;
+    bool music_bypass_ = false; // A3-04C probe
     State state_ = State::Off;
     uint32_t primed_ = 0;       // blocks preloaded in this Priming phase
     uint32_t silent_run_ = 0;   // blocks in a row rendered with nothing to play
@@ -287,6 +304,12 @@ class AudioPerfSource {
     virtual bool perf_snapshot(AudioPerfSnapshot &) const = 0;
     /** Ask the audio task to start a new window (applied before its next block). */
     virtual void perf_reset() = 0;
+    /**
+     * A3-04C Developer probe: skip (true) or restore (false) the music synth
+     * (AudioRingPump::set_music_bypass), applied before the task's next block.
+     * False = this source has no such probe.
+     */
+    virtual bool set_music_bypass(bool) { return false; }
 };
 
 /**

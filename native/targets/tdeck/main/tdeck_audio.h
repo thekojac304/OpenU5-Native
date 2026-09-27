@@ -74,6 +74,20 @@ class TdeckAudioBackend final : public openu5::AudioBackend, public openu5::Audi
     // openu5::AudioPerfSource (Developer > Diagnostics > Audio performance).
     bool perf_snapshot(openu5::AudioPerfSnapshot &) const override;
     void perf_reset() override;
+    /** A3-04C probe: skip the music synth from the task's next block (section 20). */
+    bool set_music_bypass(bool on) override {
+        bypass_requested_.store(on);
+        return true;
+    }
+
+    /**
+     * A3-04C (ALPHA3_AUDIO.md section 20): 1 while the audio task is running
+     * on core 1, 0 while it is blocked (in i2s_channel_write waiting for the
+     * DMA, in its idle queue wait, or yielding). Written only by the audio
+     * task, read by the TFT writer on core 0 to classify each row: an aligned
+     * word, so a plain volatile is enough (the same rule as isr_played_).
+     */
+    const volatile uint32_t *activity_flag() const { return &active_; }
 
   private:
     struct Command {
@@ -121,6 +135,8 @@ class TdeckAudioBackend final : public openu5::AudioBackend, public openu5::Audi
     // audio task: single writer, aligned 32-bit, so a plain volatile is enough.
     volatile uint32_t isr_played_ = 0;
     volatile uint32_t isr_overflows_ = 0;
+    volatile uint32_t active_ = 0;                // A3-04C: see activity_flag()
+    std::atomic<bool> bypass_requested_{false};   // A3-04C probe, applied by the task between blocks
     openu5::MusicLibrary library_{};  // parsed once in set_music_library(); read-only after
     openu5::AudioRingPump pump_{};    // audio task only
     I2sRingSink sink_{*this};         // audio task only

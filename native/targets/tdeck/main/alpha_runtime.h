@@ -71,6 +71,19 @@ class AlphaRuntime {
     void attach_system_perf(openu5::SystemPerfSource *source) { system_perf_ = source; }
     // The game thread's own frames and inputs (always counted; diagnostics only).
     const openu5::RenderPerfCounters &render_perf() const { return render_perf_; }
+    // Alpha 3 A3-04C (ALPHA3_AUDIO.md section 20): the contention map. The SD
+    // log writer's burst statistics (device only; main.cpp attaches them),
+    // main.cpp's loop passes, the window's one-line summary (the heartbeat's
+    // A3C_PERF line) and the Developer "synth bypass" probe's state.
+    struct SdLogPerfHooks {
+        bool (*snapshot)(openu5::SdLogPerf &) = nullptr;
+        void (*reset)() = nullptr;
+    };
+    void attach_sd_log_perf(SdLogPerfHooks hooks) { sd_log_perf_ = hooks; }
+    void note_loop_pass(uint32_t us) { contention_.on_loop(us); }
+    const openu5::ContentionCounters &contention() const { return contention_; }
+    size_t contention_line(char *out, size_t cap) const;
+    bool music_bypass() const { return music_bypass_; }
     // The combined AUDIO / RENDER PERF report: it replaces the Developer
     // screen's rows until dismissed (Enter / Back), and scrolls with Up/Down.
     // "Pending" = it finished while the Developer menu was closed: Alt+D shows it.
@@ -276,6 +289,11 @@ class AlphaRuntime {
     // A3-04B. Diagnostics only; nothing in play reads them.
     openu5::SystemPerfSource *system_perf_ = nullptr;
     openu5::RenderPerfCounters render_perf_{};
+    // A3-04C. Diagnostics only; nothing in play reads them.
+    openu5::ContentionCounters contention_{};
+    SdLogPerfHooks sd_log_perf_{};
+    bool music_bypass_ = false;
+    openu5::PerfScenario perf_scenario() const;
     openu5::AudioPerfSnapshot bench_idle_{};
     bool bench_idle_valid_ = false;
     uint32_t bench_status_second_ = UINT32_MAX;
@@ -557,6 +575,7 @@ class AlphaRuntime {
     // benchmark, ticked from render()) and "Audio stats (live)".
     static void audio_perf_start(void *);
     static void audio_stats_now(void *);
+    static bool music_bypass_probe(void *, bool toggle);
     void service_audio_benchmark(int64_t now_us);
     // A3-04B. The report view (section 19.3) and the three windows it reads.
     void reset_perf_windows();

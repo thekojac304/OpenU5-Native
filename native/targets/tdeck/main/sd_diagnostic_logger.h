@@ -1,5 +1,7 @@
 #pragma once
 
+#include "openu5/perf_report.h"
+
 namespace tdeck::sdlog {
 
 constexpr const char *kCardLogPath = "/ultima5/logs/alpha20-frontend-debug.log";
@@ -19,5 +21,12 @@ bool start_writer();
 // capture continues while a persistence transaction owns the card.
 bool begin_storage_transaction();
 void end_storage_transaction();
+
+// Alpha 3 A3-04C (ALPHA3_AUDIO.md section 20): the writer's storage bursts
+// since the last reset -- each wake that wrote or flushed, timed from taking
+// the storage mutex to giving it back. The SD card sits on the TFT's SPI bus,
+// so a long burst is time a TFT row may have waited. Any thread; never waits.
+bool perf_snapshot(openu5::SdLogPerf &out);
+void perf_reset();
 
 }  // namespace tdeck::sdlog

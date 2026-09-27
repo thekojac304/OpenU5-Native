@@ -108,8 +108,11 @@ void TdeckAudioBackend::I2sRingSink::disable() { i2s_channel_disable(owner_.tx_)
 
 bool TdeckAudioBackend::I2sRingSink::write(const int16_t *block) {
     size_t written = 0;
-    return i2s_channel_write(owner_.tx_, block, kBlockBytes, &written, kWriteTimeoutMs) == ESP_OK &&
-           written == kBlockBytes;
+    owner_.active_ = 0; // A3-04C: blocked until the DMA frees a descriptor
+    const bool ok = i2s_channel_write(owner_.tx_, block, kBlockBytes, &written, kWriteTimeoutMs) == ESP_OK &&
+                    written == kBlockBytes;
+    owner_.active_ = 1;
+    return ok;
 }
 
 bool TdeckAudioBackend::ensure_started() {
@@ -231,9 +234,14 @@ void TdeckAudioBackend::run() {
     constexpr TickType_t kIdleWaitTicks = pdMS_TO_TICKS(20);
     pump_.set_clock({this, &TdeckAudioBackend::clock_us});
     pump_.reset_perf();
+    active_ = 1;
     for (;;) {
         Command command{};
-        bool got = xQueueReceive(queue_, &command, pump_.sleeping() ? kIdleWaitTicks : 0) == pdTRUE;
+        // A3-04C: the flag says "blocked" only around a wait that can block.
+        const bool may_block = pump_.sleeping();
+        if (may_block) active_ = 0;
+        bool got = xQueueReceive(queue_, &command, may_block ? kIdleWaitTicks : 0) == pdTRUE;
+        active_ = 1;
         pump_.note_sfx_queue_depth(uint32_t(uxQueueMessagesWaiting(queue_)) + (got ? 1u : 0u));
         // The epoch first: a flush that happened while these commands were in
         // flight makes them stale.
@@ -251,7 +259,12 @@ void TdeckAudioBackend::run() {
             pump_.reset_perf();
             blocks_since_publish_ = kPublishEveryBlocks; // publish the fresh, empty window right away
         }
-        if (pump_.step(sink_, sfx_gain_.load(), music_gain_.load())) vTaskDelay(1);
+        pump_.set_music_bypass(bypass_requested_.load()); // A3-04C probe, between blocks
+        if (pump_.step(sink_, sfx_gain_.load(), music_gain_.load())) {
+            active_ = 0;
+            vTaskDelay(1);
+            active_ = 1;
+        }
         if (++blocks_since_publish_ >= kPublishEveryBlocks) publish_perf();
     }
 }

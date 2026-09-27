@@ -50,6 +50,9 @@ std::atomic<bool> g_storage_ready{false};
 std::atomic<bool> g_writer_started{false};
 StaticSemaphore_t g_storage_mutex_control{};
 SemaphoreHandle_t g_storage_mutex=nullptr;
+// A3-04C: burst statistics (written by the writer task, read by the game thread).
+std::atomic<uint32_t> g_perf_bursts{0}, g_perf_busy_us{0}, g_perf_max_us{0};
+std::atomic<bool> g_perf_reset{false};
 
 bool make_directory(const char *path)
 {
@@ -180,6 +183,7 @@ void writer_task(void *)
         bool flush_now = false;
         const bool received=xQueueReceive(g_queue,&record,kWriterWakeTicks)==pdTRUE;
         if(g_storage_mutex)xSemaphoreTake(g_storage_mutex,portMAX_DELAY);
+        const int64_t burst_start_us=esp_timer_get_time();
         if (received) {
             do {
                 if (!write_record(record)) {
@@ -211,6 +215,18 @@ void writer_task(void *)
                 return;
             }
             last_flush_ms = now_ms;
+        }
+        if (received || flush_now) {
+            // A3-04C: this wake touched the card (or the stdio buffer in front of it).
+            if (g_perf_reset.exchange(false)) {
+                g_perf_bursts.store(0);
+                g_perf_busy_us.store(0);
+                g_perf_max_us.store(0);
+            }
+            const uint32_t us = static_cast<uint32_t>(esp_timer_get_time() - burst_start_us);
+            g_perf_bursts.fetch_add(1);
+            g_perf_busy_us.fetch_add(us);
+            if (us > g_perf_max_us.load()) g_perf_max_us.store(us);
         }
         if(g_storage_mutex)xSemaphoreGive(g_storage_mutex);
     }
@@ -296,6 +312,22 @@ bool start_writer()
         return false;
     }
     return true;
+}
+
+bool perf_snapshot(openu5::SdLogPerf &out)
+{
+    out = openu5::SdLogPerf{};
+    out.valid = g_writer_started.load(std::memory_order_acquire) && g_storage_ready.load(std::memory_order_acquire);
+    if (g_perf_reset.load()) return out.valid; // a reset not yet applied by the writer: an empty window
+    out.bursts = g_perf_bursts.load();
+    out.busy_us = g_perf_busy_us.load();
+    out.max_us = g_perf_max_us.load();
+    return out.valid;
+}
+
+void perf_reset()
+{
+    g_perf_reset.store(true);
 }
 
 bool begin_storage_transaction()

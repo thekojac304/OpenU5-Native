@@ -1507,6 +1507,52 @@ if(BUILD_TESTING)
   endif()
   add_test(NAME a3_04b_perf_runtime COMMAND a3_04b_perf_runtime
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+  # A3-04C -- the contention map: the Developer "synth bypass" probe on the
+  # production pump (the song keeps playing, the synth does no work, it
+  # resumes where it stopped), the audio task's own work per block, the TFT /
+  # loop / row-level contention counters, the report section and the one-line
+  # A3C_PERF heartbeat, and the device wiring (source scans).
+  add_executable(a3_04c_contention tests/a3_04c_contention_test.cpp)
+  target_link_libraries(a3_04c_contention PRIVATE openu5_core)
+  target_compile_features(a3_04c_contention PRIVATE cxx_std_17)
+  add_test(NAME a3_04c_contention COMMAND a3_04c_contention
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
+  # A3-04C -- the same through the REAL AlphaRuntime: every gameplay frame's
+  # TFT timing reaches the live report and the A3C_PERF line, the probe row
+  # toggles the audio task's probe and labels the report, the game untouched.
+  add_executable(a3_04c_contention_runtime
+    ../targets/tdeck/host_tests/a3_04c_contention_runtime_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/batch37_board_capture_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_audio.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(a3_04c_contention_runtime PRIVATE openu5_core)
+  target_include_directories(a3_04c_contention_runtime PRIVATE
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/main)
+  target_compile_features(a3_04c_contention_runtime PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(a3_04c_contention_runtime PRIVATE /Gy)
+    target_link_options(a3_04c_contention_runtime PRIVATE /OPT:REF)
+  else()
+    target_compile_options(a3_04c_contention_runtime PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(a3_04c_contention_runtime PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME a3_04c_contention_runtime COMMAND a3_04c_contention_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
   # Alpha 3 gameplay hotfix A3-HF1 -- the troll-encounter reward chest whose
   # Get answered "Nothing to get!": a roaming troll by the bridge near
   # Britain, the fight, (O)pen and (G)et, all by raw keys through the REAL

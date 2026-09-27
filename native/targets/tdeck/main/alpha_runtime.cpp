@@ -2161,6 +2161,7 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
         dirty_=e!=ESP_OK;
         return e;
     }
+    const int64_t logic_t0=esp_timer_get_time(); // A3-04C: the frame's game logic starts here
     service_combat();
     if(service_blackthorn_scene()){dirty_=true;dirty_reason_="blackthorn-scene";}
     if(service_narrative_scene()){dirty_=true;dirty_reason_="narrative-scene";}
@@ -2385,6 +2386,8 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     // strips entirely rather than overdrawing them across it. The zodiac view
     // still keeps the world bars (unchanged, out of this batch's scope).
     const auto dungeon_bands=openu5::hud_dungeon_bands(dungeon_,dungeon_source&&!gem_view_active_&&!zodiac_view_active_);
+    // A3-04C: what the Board measured inside THIS frame's TFT write only.
+    openu5::TftTiming tft_timing{};board.take_tft_timing(tft_timing);
     const int64_t tft_t0=esp_timer_get_time();
     if(e==ESP_OK){
         if(camp_viewport_only_&&camp_source)
@@ -2406,6 +2409,8 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
         render_perf_.on_frame(uint64_t(frame_t0),uint32_t(tft_t0-frame_t0),uint32_t(tiles_end-start),
                               uint32_t(tft_t1-tft_t0),uint32_t(tft_t1-frame_t0));
         if(input_pending_us_>=0){render_perf_.on_input_shown(uint32_t(tft_t1-input_pending_us_));input_pending_us_=-1;}
+        board.take_tft_timing(tft_timing);
+        contention_.on_frame(uint32_t(frame_t0-logic_t0),uint32_t(tft_t1-tft_t0),tft_timing);
     }else if(debug_mode){input_pending_us_=-1;}
     const auto us=uint32_t(esp_timer_get_time()-start);render_high_us_=std::max(render_high_us_,us);
     if(dungeon_source){
@@ -2600,6 +2605,9 @@ void AlphaRuntime::log_metrics(const char*where)const{const auto stack=uxTaskGet
                  (unsigned long)s.audio_permille,(unsigned long)s.main_permille,(unsigned long)s.input_permille,(unsigned long)s.sdlog_permille,
                  (unsigned long)s.other_permille,(unsigned long)s.heap_internal_free,(unsigned long)s.heap_internal_min,
                  (unsigned long)s.heap_psram_free,(unsigned long)s.stack_main_free,(unsigned long)s.stack_audio_free,(unsigned long)s.stack_input_free);}
+    // A3-04C (section 20): the whole window on one line, in a fixed order, so
+    // runs diff field by field. Same window as the Developer report.
+    {char line[openu5::kContentionLineBytes];contention_line(line,sizeof(line));ESP_LOGI(kTag,"A3C_PERF %s",line);}
     if(internal<32768)ESP_LOGW(kTag,"LOW INTERNAL RAM: %zu",internal);
     if(stack<4096)ESP_LOGW(kTag,"LOW MAIN STACK MARGIN: %u",unsigned(stack));
 }
@@ -2820,7 +2828,7 @@ void AlphaRuntime::configure_audio(const openu5::AudioPackInfo &pack,openu5::Aud
 
 void AlphaRuntime::bind_developer_diagnostics(){
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
-    if(debug_){openu5::UiDiagnosticsServices services{};services.context=this;services.start=start_smoke;services.audio_test=audio_test_tone;services.audio_perf=audio_perf_start;services.audio_stats=audio_stats_now;debug_->attach_diagnostics(services);}
+    if(debug_){openu5::UiDiagnosticsServices services{};services.context=this;services.start=start_smoke;services.audio_test=audio_test_tone;services.audio_perf=audio_perf_start;services.audio_stats=audio_stats_now;services.music_bypass=music_bypass_probe;debug_->attach_diagnostics(services);}
 #endif
 }
 
@@ -3024,7 +3032,51 @@ void AlphaRuntime::audio_test_tone(void *p){
 void AlphaRuntime::reset_perf_windows(){
     if(audio_perf_)audio_perf_->perf_reset();
     render_perf_.reset(uint64_t(esp_timer_get_time()));input_pending_us_=-1;
+    contention_.reset(uint64_t(esp_timer_get_time()));
+    if(sd_log_perf_.reset)sd_log_perf_.reset();
     if(system_perf_)system_perf_->system_perf_reset();
+}
+
+// A3-04C (ALPHA3_AUDIO.md section 20): the label that makes two windows
+// comparable -- the music capability, both volumes and the probe.
+openu5::PerfScenario AlphaRuntime::perf_scenario() const{
+    openu5::PerfScenario s{};
+    s.music_available=audio_.has_music();
+    s.music_volume=audio_.music_volume();
+    s.sfx_volume=audio_.sfx_volume();
+    s.synth_bypass=music_bypass_;
+    return s;
+}
+
+size_t AlphaRuntime::contention_line(char *out,size_t cap) const{
+    const uint64_t now=uint64_t(esp_timer_get_time());
+    openu5::RenderPerfSnapshot render{};render_perf_.snapshot(now,render);
+    openu5::ContentionSnapshot contention{};contention_.snapshot(now,contention);
+    openu5::AudioPerfSnapshot audio{};const bool has_audio=audio_perf_&&audio_perf_->perf_snapshot(audio);
+    openu5::SystemPerfSnapshot system{};const bool has_system=system_perf_&&system_perf_->system_perf_snapshot(system);
+    openu5::SdLogPerf sd{};const bool has_sd=sd_log_perf_.snapshot&&(sd_log_perf_.snapshot(sd),true);
+    const auto scenario=perf_scenario();
+    openu5::PerfReportInput in{};
+    in.audio=has_audio?&audio:nullptr;in.render=&render;in.system=has_system?&system:nullptr;
+    in.scenario=&scenario;in.contention=&contention;in.sdlog=has_sd?&sd:nullptr;
+    return openu5::format_contention_line(in,out,cap);
+}
+
+// A3-04C: Developer > Diagnostics > "Probe: synth bypass". Skips the music
+// synth while the song stays "playing" (channel, DMA and task cadence as with
+// music on); the report and the A3C_PERF line carry BYPASS while it is on.
+// Off at boot, never saved. toggle=false only reads the state (the row label).
+bool AlphaRuntime::music_bypass_probe(void *p,bool toggle){
+    auto &r=*static_cast<AlphaRuntime*>(p);
+    if(!toggle)return r.music_bypass_;
+    if(!r.audio_perf_||!r.audio_perf_->set_music_bypass(!r.music_bypass_)){
+        r.publish_perf_report("Synth bypass: no audio output on this device",nullptr,nullptr,nullptr,nullptr,false);
+        return r.music_bypass_;
+    }
+    r.music_bypass_=!r.music_bypass_;
+    ESP_LOGI(kTag,"A3C_PROBE synth_bypass=%d",r.music_bypass_);
+    r.dirty_=true;r.dirty_reason_="synth-bypass-probe";
+    return r.music_bypass_;
 }
 
 void AlphaRuntime::publish_perf_report(const char *title,const openu5::AudioPerfSnapshot *first,const char *first_heading,
@@ -3034,6 +3086,11 @@ void AlphaRuntime::publish_perf_report(const char *title,const openu5::AudioPerf
     openu5::PerfReportInput in{};
     in.title=title;in.audio=first;in.audio_heading=first_heading;in.audio2=second;in.audio2_heading=second_heading;
     in.render=&render;in.system=has_system?&system:nullptr;
+    // A3-04C: the contention section, labelled with what was playing.
+    openu5::ContentionSnapshot contention{};contention_.snapshot(uint64_t(esp_timer_get_time()),contention);
+    openu5::SdLogPerf sd{};const bool has_sd=sd_log_perf_.snapshot&&(sd_log_perf_.snapshot(sd),true);
+    const auto scenario=perf_scenario();
+    in.scenario=&scenario;in.contention=&contention;in.sdlog=has_sd?&sd:nullptr;
     if(with_guard){in.has_guard=true;in.guard_ns=bench_guard_ns_;
         in.guard_us_per_block=openu5::legacy_guard_us_per_block(bench_guard_ns_,bench_idle_channels_x100_);}
     perf_report_count_=perf_report_lines_?openu5::format_perf_report(in,perf_report_lines_,openu5::kPerfReportMaxLines):0;

@@ -64,6 +64,10 @@ struct UiDiagnosticsServices {
     // the Developer screen, where it stays until dismissed.
     void (*audio_perf)(void *) = nullptr;
     void (*audio_stats)(void *) = nullptr;
+    // A3-04C (ALPHA3_AUDIO.md section 20): "Probe: synth bypass", the row
+    // just above them. toggle=true flips the probe; either way it returns
+    // the probe's state (the row's label shows it).
+    bool (*music_bypass)(void *, bool toggle) = nullptr;
 };
 
 struct UiDebugMenuView {
@@ -140,6 +144,7 @@ class UiDebugMenu {
     mutable char character_label_buf_[20]{};
     mutable char quest_item_label_buf_[32]{};
     mutable char special_item_label_buf_[32]{};
+    mutable char bypass_label_buf_[40]{};
 
     size_t item_count() const;
     const char *category_name(size_t) const;

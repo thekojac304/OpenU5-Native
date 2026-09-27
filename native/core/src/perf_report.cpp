@@ -95,6 +95,116 @@ void RenderPerfCounters::snapshot(uint64_t now_us, RenderPerfSnapshot &out) cons
 }
 
 // ===========================================================================
+// ContentionCounters (A3-04C, ALPHA3_AUDIO.md section 20)
+// ===========================================================================
+void ContentionCounters::reset(uint64_t now_us) {
+    *this = ContentionCounters{};
+    start_us_ = now_us;
+}
+
+void ContentionCounters::on_frame(uint32_t logic_us, uint32_t tft_us, const TftTiming &t) {
+    ++frames_;
+    logic_sum_ += logic_us;
+    if (logic_us > logic_max_) logic_max_ = logic_us;
+    // Viewport frames against the rest: the whole 176-px viewport is ~28,000
+    // pixels in 158 row transactions; a panel or animated-cell frame is a
+    // fraction of that. Different workloads, so they are not averaged together.
+    if (t.viewport_full) {
+        ++viewport_frames_;
+        viewport_tft_sum_ += tft_us;
+        if (tft_us > viewport_tft_max_) viewport_tft_max_ = tft_us;
+    } else {
+        ++panel_frames_;
+        panel_tft_sum_ += tft_us;
+        if (tft_us > panel_tft_max_) panel_tft_max_ = tft_us;
+    }
+    if (!t.cpu_mhz) return;
+    ++timed_frames_;
+    cpu_mhz_ = t.cpu_mhz;
+    const uint32_t xfer_us = uint32_t(t.xfer_cycles / t.cpu_mhz);
+    const uint32_t yield_us = uint32_t(t.yield_cycles / t.cpu_mhz);
+    // What is left of show_alpha: building rows, panel text, window setup.
+    fill_sum_ += tft_us > xfer_us + yield_us ? tft_us - xfer_us - yield_us : 0;
+    xfer_sum_ += xfer_us;
+    yield_sum_ += yield_us;
+    if (xfer_us > xfer_frame_max_) xfer_frame_max_ = xfer_us;
+    if (yield_us > yield_frame_max_) yield_frame_max_ = yield_us;
+    transactions_ += t.transactions;
+    rows_ += t.rows;
+    rows_idle_ += t.rows_idle;
+    rows_busy_ += t.rows_busy;
+    yields_ += t.yields;
+    if (t.xfer_max_cycles > xfer_max_cycles_) xfer_max_cycles_ = t.xfer_max_cycles;
+    if (t.yield_max_cycles > yield_max_cycles_) yield_max_cycles_ = t.yield_max_cycles;
+    slow_ += t.slow_xfers;
+    slow_busy_ += t.slow_xfers_busy;
+    late_yields_ += t.late_yields;
+    fill_idle_cycles_ += t.fill_cycles_idle;
+    fill_busy_cycles_ += t.fill_cycles_busy;
+    xfer_idle_cycles_ += t.xfer_cycles_idle;
+    xfer_busy_cycles_ += t.xfer_cycles_busy;
+}
+
+void ContentionCounters::on_loop(uint32_t loop_us) {
+    ++loops_;
+    loop_sum_ += loop_us;
+    if (loop_us > loop_max_) loop_max_ = loop_us;
+}
+
+void ContentionCounters::snapshot(uint64_t now_us, ContentionSnapshot &out) const {
+    out = ContentionSnapshot{};
+    out.window_us = now_us > start_us_ ? uint32_t(now_us - start_us_) : 0;
+    out.frames = frames_;
+    if (frames_) {
+        out.logic_avg_us = uint32_t(logic_sum_ / frames_);
+        out.logic_max_us = logic_max_;
+    }
+    out.viewport_frames = viewport_frames_;
+    if (viewport_frames_) {
+        out.viewport_tft_avg_us = uint32_t(viewport_tft_sum_ / viewport_frames_);
+        out.viewport_tft_max_us = viewport_tft_max_;
+    }
+    out.panel_frames = panel_frames_;
+    if (panel_frames_) {
+        out.panel_tft_avg_us = uint32_t(panel_tft_sum_ / panel_frames_);
+        out.panel_tft_max_us = panel_tft_max_;
+    }
+    out.timed = timed_frames_ > 0;
+    if (timed_frames_) {
+        const auto cap = [](uint64_t v) { return uint32_t(v > UINT32_MAX ? UINT32_MAX : v); };
+        out.tft_fill_avg_us = uint32_t(fill_sum_ / timed_frames_);
+        out.tft_xfer_avg_us = uint32_t(xfer_sum_ / timed_frames_);
+        out.tft_xfer_max_us = xfer_frame_max_;
+        out.tft_yield_avg_us = uint32_t(yield_sum_ / timed_frames_);
+        out.tft_yield_max_us = yield_frame_max_;
+        out.transactions = cap(transactions_);
+        out.rows = cap(rows_);
+        out.rows_idle = cap(rows_idle_);
+        out.rows_busy = cap(rows_busy_);
+        out.yields = cap(yields_);
+        out.xfer_max_us = xfer_max_cycles_ / cpu_mhz_;
+        out.yield_max_us = yield_max_cycles_ / cpu_mhz_;
+        out.slow_xfers = slow_;
+        out.slow_xfers_busy = slow_busy_;
+        out.late_yields = late_yields_;
+        // Per-row averages in 0.1 us: the same row code, split by what the
+        // other core was doing -- the direct test of cross-core contention.
+        const auto per_row_x10 = [&](uint64_t cycles, uint64_t rows) {
+            return rows ? cap(cycles * 10 / cpu_mhz_ / rows) : 0u;
+        };
+        out.row_fill_idle_x10 = per_row_x10(fill_idle_cycles_, rows_idle_);
+        out.row_fill_busy_x10 = per_row_x10(fill_busy_cycles_, rows_busy_);
+        out.row_xfer_idle_x10 = per_row_x10(xfer_idle_cycles_, rows_idle_);
+        out.row_xfer_busy_x10 = per_row_x10(xfer_busy_cycles_, rows_busy_);
+    }
+    out.loops = loops_;
+    if (loops_) {
+        out.loop_avg_us = uint32_t(loop_sum_ / loops_);
+        out.loop_max_us = loop_max_;
+    }
+}
+
+// ===========================================================================
 // format_perf_report
 // ===========================================================================
 namespace {
@@ -153,6 +263,75 @@ void audio_section(Lines &out, const char *heading, const AudioPerfSnapshot &s) 
             (unsigned long)(s.write_failures + s.enable_failures));
 }
 
+/** A share as a whole percentage, rounded; 0 when there is no whole. */
+unsigned long share(uint64_t part, uint64_t whole) {
+    return whole ? (unsigned long)((part * 100 + whole / 2) / whole) : 0ul;
+}
+
+/** "12.3" from a value in tenths. */
+struct Tenths {
+    char s[16];
+    explicit Tenths(uint32_t x10) {
+        std::snprintf(s, sizeof s, "%lu.%lu", (unsigned long)(x10 / 10), (unsigned long)(x10 % 10));
+    }
+};
+
+/** What was playing and at which settings -- at most 47 characters. */
+void scenario_text(char *out, size_t cap, const PerfScenario &sc, const AudioPerfSnapshot *audio) {
+    if (!sc.music_available)
+        std::snprintf(out, cap, "music n/a  sfx %u%%%s", unsigned(sc.sfx_volume), sc.synth_bypass ? " BYPASS" : "");
+    else
+        std::snprintf(out, cap, "music %u%% %.14s sfx %u%%%s", unsigned(sc.music_volume),
+                      audio && audio->music_active ? music_song_title(audio->song) : "(silent)",
+                      unsigned(sc.sfx_volume), sc.synth_bypass ? " BYPASS" : "");
+}
+
+void contention_section(Lines &out, const PerfReportInput &in) {
+    out.add("-- Contention map (A3-04C) --");
+    if (in.scenario) {
+        char sc[48];
+        scenario_text(sc, sizeof sc, *in.scenario, in.audio);
+        out.add("%.51s", sc);
+    }
+    if (const ContentionSnapshot *c = in.contention) {
+        out.add("logic avg %s max %s  loop max %s ms", Ms(c->logic_avg_us, 1).s, Ms(c->logic_max_us, 1).s,
+                Ms(c->loop_max_us, 1).s);
+        out.add("viewport %lu frm tft avg %s max %s", (unsigned long)c->viewport_frames,
+                Ms(c->viewport_tft_avg_us, 1).s, Ms(c->viewport_tft_max_us, 1).s);
+        out.add("other %lu frm tft avg %s max %s", (unsigned long)c->panel_frames, Ms(c->panel_tft_avg_us, 1).s,
+                Ms(c->panel_tft_max_us, 1).s);
+        if (c->timed) {
+            out.add("tft/frame fill %s xfer %s yield %s", Ms(c->tft_fill_avg_us, 1).s, Ms(c->tft_xfer_avg_us, 1).s,
+                    Ms(c->tft_yield_avg_us, 1).s);
+            out.add("yield %lu max %s ms late %lu (tick 10)", (unsigned long)c->yields, Ms(c->yield_max_us, 1).s,
+                    (unsigned long)c->late_yields);
+            out.add("xfer max %s ms slow %lu (%lu w/audio)", Ms(c->xfer_max_us, 2).s, (unsigned long)c->slow_xfers,
+                    (unsigned long)c->slow_xfers_busy);
+            out.add("rows %lu  audio running at %lu%%", (unsigned long)c->rows,
+                    share(c->rows_busy, uint64_t(c->rows_busy) + c->rows_idle));
+            out.add("row fill us: audio idle %s busy %s", Tenths(c->row_fill_idle_x10).s,
+                    Tenths(c->row_fill_busy_x10).s);
+            out.add("row xfer us: audio idle %s busy %s", Tenths(c->row_xfer_idle_x10).s,
+                    Tenths(c->row_xfer_busy_x10).s);
+        } else {
+            out.add("(no TFT timing in this window)");
+        }
+    }
+    if (const AudioPerfSnapshot *a = in.audio) {
+        const uint32_t sfx_mix = a->render_avg_us > a->music_avg_us ? a->render_avg_us - a->music_avg_us : 0;
+        out.add("audio task/blk avg %s max %s ms", Ms(a->task_busy_avg_us, 2).s, Ms(a->task_busy_max_us, 2).s);
+        out.add("sfx+mix avg %s write avg %s max %s", Ms(sfx_mix, 2).s, Ms(a->write_avg_us, 1).s,
+                Ms(a->write_max_us, 1).s);
+    }
+    if (const SdLogPerf *sd = in.sdlog) {
+        if (sd->valid)
+            out.add("sd log %lu bursts max %s total %s ms", (unsigned long)sd->bursts, Ms(sd->max_us, 1).s,
+                    Ms(sd->busy_us, 1).s);
+        else
+            out.add("sd log: not running");
+    }
+}
+
 } // namespace
 
 size_t format_perf_report(const PerfReportInput &in, char (*lines)[kPerfReportLineBytes], size_t max_lines) {
@@ -198,12 +377,89 @@ size_t format_perf_report(const PerfReportInput &in, char (*lines)[kPerfReportLi
         out.add("stack free B: main %lu audio %lu input %lu", (unsigned long)s->stack_main_free,
                 (unsigned long)s->stack_audio_free, (unsigned long)s->stack_input_free);
     }
+    if (in.scenario || in.contention || in.sdlog) contention_section(out, in);
     out.add("OPL2 %lu Hz -> %lu Hz out, ring %lux%lu", (unsigned long)kOplClockHz, (unsigned long)kSfxOutputRateHz,
             (unsigned long)kAudioRingBlocks, (unsigned long)kAudioBlockFrames);
     if (in.has_guard)
         out.add("A3-04 guard %lu ns/read = %s ms/8 ms blk", (unsigned long)in.guard_ns,
                 Ms(in.guard_us_per_block, 1).s);
     return out.count();
+}
+
+// ===========================================================================
+// format_contention_line (A3-04C) -- one heartbeat line, fixed field order
+// ===========================================================================
+namespace {
+// Appends to a bounded line; a field that does not fit is cut, never overrun.
+class LineOut {
+  public:
+    LineOut(char *out, size_t cap) : out_(out), cap_(cap) { out_[0] = 0; }
+    __attribute__((format(printf, 2, 3))) void add(const char *format, ...) {
+        if (n_ + 1 >= cap_) return;
+        va_list args;
+        va_start(args, format);
+        const int w = std::vsnprintf(out_ + n_, cap_ - n_, format, args);
+        va_end(args);
+        if (w > 0) n_ = n_ + size_t(w) < cap_ ? n_ + size_t(w) : cap_ - 1;
+    }
+    size_t size() const { return n_; }
+
+  private:
+    char *out_;
+    size_t cap_, n_ = 0;
+};
+} // namespace
+
+size_t format_contention_line(const PerfReportInput &in, char *out, size_t cap) {
+    if (!out || !cap) return 0;
+    LineOut line(out, cap);
+    // Field legend (ALPHA3_AUDIO.md section 20.5): a/b = avg/max ms; n:a/b =
+    // count:avg/max; xfer/fill per row in us as audio-idle/audio-busy.
+    char sc[48] = "?";
+    if (in.scenario) scenario_text(sc, sizeof sc, *in.scenario, in.audio);
+    line.add("scen=[%s]", sc);
+    const uint32_t window = in.render ? in.render->window_us : in.contention ? in.contention->window_us : 0;
+    line.add(" win=%lu.%lus", (unsigned long)(window / 1000000), (unsigned long)((window / 100000) % 10));
+    if (const RenderPerfSnapshot *r = in.render)
+        line.add(" | frame n=%lu avg=%s p95=%s max=%s late=%lu | cmp=%s/%s tiles=%s tft=%s/%s in=%lu:%s",
+                 (unsigned long)r->frames, Ms(r->frame_avg_us, 1).s, Ms(r->frame_p95_us, 1).s,
+                 Ms(r->frame_max_us, 1).s, (unsigned long)r->late_frames, Ms(r->compose_avg_us, 1).s,
+                 Ms(r->compose_max_us, 1).s, Ms(r->tiles_max_us, 1).s, Ms(r->tft_avg_us, 1).s,
+                 Ms(r->tft_max_us, 1).s, (unsigned long)r->shown, Ms(r->input_max_us, 1).s);
+    if (const ContentionSnapshot *c = in.contention) {
+        line.add(" | logic=%s/%s vp=%lu:%s/%s oth=%lu:%s/%s", Ms(c->logic_avg_us, 1).s, Ms(c->logic_max_us, 1).s,
+                 (unsigned long)c->viewport_frames, Ms(c->viewport_tft_avg_us, 1).s, Ms(c->viewport_tft_max_us, 1).s,
+                 (unsigned long)c->panel_frames, Ms(c->panel_tft_avg_us, 1).s, Ms(c->panel_tft_max_us, 1).s);
+        if (c->timed)
+            line.add(" | split fill=%s xfer=%s yld=%s | yld n=%lu max=%s late=%lu | xfer max=%s slow=%lu/%lu"
+                     " | rows=%lu busy=%lu%% fill=%s/%s xfer=%s/%s",
+                     Ms(c->tft_fill_avg_us, 1).s, Ms(c->tft_xfer_avg_us, 1).s, Ms(c->tft_yield_avg_us, 1).s,
+                     (unsigned long)c->yields, Ms(c->yield_max_us, 1).s, (unsigned long)c->late_yields,
+                     Ms(c->xfer_max_us, 2).s, (unsigned long)c->slow_xfers, (unsigned long)c->slow_xfers_busy,
+                     (unsigned long)c->rows, share(c->rows_busy, uint64_t(c->rows_busy) + c->rows_idle),
+                     Tenths(c->row_fill_idle_x10).s, Tenths(c->row_fill_busy_x10).s,
+                     Tenths(c->row_xfer_idle_x10).s, Tenths(c->row_xfer_busy_x10).s);
+        else
+            line.add(" | split none");
+        line.add(" | loop=%lu:%s/%s", (unsigned long)c->loops, Ms(c->loop_avg_us, 1).s, Ms(c->loop_max_us, 1).s);
+    }
+    if (const AudioPerfSnapshot *a = in.audio)
+        line.add(" | audio blk=%lu rnd=%s/%s mus=%s/%s task=%s buf=%lu und=%lu hw=%lu miss=%lu clip=%lu",
+                 (unsigned long)a->blocks, Ms(a->render_avg_us, 2).s, Ms(a->render_max_us, 2).s,
+                 Ms(a->music_avg_us, 2).s, Ms(a->music_max_us, 2).s, Ms(a->task_busy_max_us, 2).s,
+                 (unsigned long)(uint64_t(a->fill_min) * a->block_us / 1000), (unsigned long)a->underruns,
+                 (unsigned long)a->hw_underruns, (unsigned long)a->missed_deadlines, (unsigned long)a->mix_clipped);
+    else
+        line.add(" | audio none");
+    if (const SdLogPerf *sd = in.sdlog)
+        if (sd->valid)
+            line.add(" | sd=%lu:%s/%s", (unsigned long)sd->bursts, Ms(sd->max_us, 1).s, Ms(sd->busy_us, 1).s);
+    if (const SystemPerfSnapshot *s = in.system)
+        if (s->valid)
+            line.add(" | cpu0=%lu cpu1=%lu main=%lu aud=%lu inp=%lu sdl=%lu", pct(s->core_busy_permille[0]),
+                     pct(s->core_busy_permille[1]), pct(s->main_permille), pct(s->audio_permille),
+                     pct(s->input_permille), pct(s->sdlog_permille));
+    return line.size();
 }
 
 } // namespace openu5

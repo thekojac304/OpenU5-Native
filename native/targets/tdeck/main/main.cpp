@@ -148,6 +148,9 @@ extern "C" void app_main(void) {
                 // A3-04A: the audio task's performance windows, for the Developer
                 // "Audio performance" rows and the heartbeat's AUDIO_PERF line.
                 runtime.attach_audio_perf(&audio_backend);
+                // A3-04C (ALPHA3_AUDIO.md section 20): each TFT row is classified
+                // by whether the audio task on core 1 was running at both its ends.
+                board.set_audio_activity_flag(audio_backend.activity_flag());
             }
             if(ready){
                 // A3-04B: per-core / per-task CPU (FreeRTOS run-time statistics),
@@ -155,6 +158,8 @@ extern "C" void app_main(void) {
                 static tdeck::SystemPerf system_perf;
                 if(system_perf.begin())runtime.attach_system_perf(&system_perf);
                 else ESP_LOGW(kTag,"SYS_PERF unavailable: no PSRAM for the task table");
+                // A3-04C: the SD-log writer's bursts (its card shares the TFT's SPI bus).
+                runtime.attach_sd_log_perf({&tdeck::sdlog::perf_snapshot,&tdeck::sdlog::perf_reset});
             }
             if(!ready)ESP_LOGE(kTag,"Alpha runtime initialization failed: %s",esp_err_to_name(initialized));
         }
@@ -175,7 +180,8 @@ extern "C" void app_main(void) {
     }
     ESP_LOGI(kTag,"Alpha input loop active; no physical-device success is asserted");debug51::stage(12,"alpha-input-loop");
     int64_t heartbeat=esp_timer_get_time()+5000000;
-    for(;;){tdeck::RawInputEvent raw{};bool input_dirty=false;size_t drained=0;
+    for(;;){const int64_t loop_t0=esp_timer_get_time(); // A3-04C: one pass, input to yield
+        tdeck::RawInputEvent raw{};bool input_dirty=false;size_t drained=0;
         while(input_result==ESP_OK&&drained<64&&input.poll(raw)){
             ++drained;
             ESP_LOGD(kTag,"input src=%s code=%02x state=%s S%d A%d H%d",tdeck::raw_input_name(raw.kind),raw.code,tdeck::transition_name(raw.transition),raw.modifiers.symbol,raw.modifiers.alt,raw.modifiers.shift);
@@ -184,6 +190,7 @@ extern "C" void app_main(void) {
         if(input_dirty&&ready){const auto draw=runtime.render(board);if(draw!=ESP_OK)ESP_LOGE(kTag,"Alpha redraw failed: %s",esp_err_to_name(draw));}
         if(ready){const auto draw=runtime.render(board);if(draw!=ESP_OK)ESP_LOGE(kTag,"Alpha animation redraw failed: %s",esp_err_to_name(draw));}
         const int64_t now=esp_timer_get_time();if(now>=heartbeat){debug51::stack_checkpoint("running-alpha-loop");input.log_metrics();if(ready)runtime.log_metrics("heartbeat");else ESP_LOGW(kTag,"Alpha runtime not ready; internal=%zu PSRAM=%zu",heap_caps_get_free_size(kInternal),heap_caps_get_free_size(kPsram));heartbeat=now+5000000;}
+        if(ready)runtime.note_loop_pass(uint32_t(esp_timer_get_time()-loop_t0));
         vTaskDelay(pdMS_TO_TICKS(5));
     }
 }

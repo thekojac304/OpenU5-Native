@@ -14,12 +14,14 @@
 #include "driver/sdspi_host.h"
 #include "driver/spi_master.h"
 #include "esp_check.h"
+#include "esp_cpu.h"
 #include "esp_log.h"
 #include "esp_vfs_fat.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "sdmmc_cmd.h"
 #include "sd_protocol_defs.h"
+#include "sdkconfig.h"
 
 #include "tdeck_pins.h"
 #include "native_renderer.h"
@@ -252,8 +254,7 @@ esp_err_t Board::write_display_command(uint8_t command, const uint8_t *data,
     transaction.length = 8;
     transaction.tx_data[0] = command;
     gpio_set_level(pins::kTftDataCommand, 0);
-    ESP_RETURN_ON_ERROR(spi_device_transmit(display_handle(display_device_), &transaction),
-                        kTag, "send TFT command 0x%02x", command);
+    ESP_RETURN_ON_ERROR(tft_command(transaction), kTag, "send TFT command 0x%02x", command);
     if (data_length == 0) {
         return ESP_OK;
     }
@@ -261,7 +262,73 @@ esp_err_t Board::write_display_command(uint8_t command, const uint8_t *data,
     payload.length = data_length * 8;
     payload.tx_buffer = data;
     gpio_set_level(pins::kTftDataCommand, 1);
-    return spi_device_transmit(display_handle(display_device_), &payload);
+    return tft_command(payload);
+}
+
+// ---------------------------------------------------------------------------
+// Alpha 3 A3-04C (ALPHA3_AUDIO.md section 20): the timed TFT transaction.
+// Core-0 cycle counts (the game loop is pinned there): two CCOUNT reads per
+// transaction and two loads of the audio task's flag -- no call, no lock.
+// The transactions themselves are exactly what they were.
+// ---------------------------------------------------------------------------
+Board::RowMark Board::row_mark() const
+{
+    return RowMark{uint32_t(esp_cpu_get_cycle_count()), audio_running()};
+}
+
+esp_err_t Board::tft_row(spi_transaction_t &transaction, RowMark start)
+{
+    return tft_transmit(transaction, &start);
+}
+
+esp_err_t Board::tft_command(spi_transaction_t &transaction)
+{
+    return tft_transmit(transaction, nullptr);
+}
+
+esp_err_t Board::tft_transmit(spi_transaction_t &transaction, const RowMark *start)
+{
+    const bool busy0 = audio_running();
+    const uint32_t c0 = uint32_t(esp_cpu_get_cycle_count());
+    const esp_err_t result = spi_device_transmit(display_handle(display_device_), &transaction);
+    const uint32_t c1 = uint32_t(esp_cpu_get_cycle_count());
+    const bool busy1 = audio_running();
+    const uint32_t xfer = c1 - c0;
+    auto &t = tft_timing_;
+    ++t.transactions;
+    t.xfer_cycles += xfer;
+    if (xfer > t.xfer_max_cycles) t.xfer_max_cycles = xfer;
+    if (xfer > openu5::kSlowXferUs * tft_cpu_mhz_) {
+        ++t.slow_xfers;
+        if (busy0 || busy1) ++t.slow_xfers_busy;
+    }
+    if (start) {
+        ++t.rows;
+        const uint32_t fill = c0 - start->cycles;
+        // Classified only when the audio task did not change state during the row.
+        if (start->busy && busy0 && busy1) {
+            ++t.rows_busy;
+            t.fill_cycles_busy += fill;
+            t.xfer_cycles_busy += xfer;
+        } else if (!start->busy && !busy0 && !busy1) {
+            ++t.rows_idle;
+            t.fill_cycles_idle += fill;
+            t.xfer_cycles_idle += xfer;
+        }
+    }
+    return result;
+}
+
+void Board::tft_yield()
+{
+    const uint32_t c0 = uint32_t(esp_cpu_get_cycle_count());
+    vTaskDelay(1);
+    const uint32_t cycles = uint32_t(esp_cpu_get_cycle_count()) - c0;
+    auto &t = tft_timing_;
+    ++t.yields;
+    t.yield_cycles += cycles;
+    if (cycles > t.yield_max_cycles) t.yield_max_cycles = cycles;
+    if (cycles > openu5::kLateYieldUs * tft_cpu_mhz_) ++t.late_yields;
 }
 
 esp_err_t Board::initialize_display()
@@ -291,6 +358,7 @@ esp_err_t Board::initialize_display()
     ESP_RETURN_ON_ERROR(spi_bus_add_device(pins::kSharedSpiHost, &display_config, &handle),
                         kTag, "attach ST7789");
     display_device_ = handle;
+    tft_cpu_mhz_ = CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ; // A3-04C: CCOUNT -> microseconds (no DFS here)
 
     struct InitCommand {
         uint8_t command;
@@ -383,14 +451,14 @@ esp_err_t Board::fill_rect(int x, int y, int width, int height, uint16_t color)
     int remaining = width * height;
     int chunks=0;
     while (remaining > 0) {
+        const RowMark mark = row_mark();
         const int count = std::min(remaining, static_cast<int>(pixels_per_chunk));
         spi_transaction_t transaction{};
         transaction.length = count * 16;
         transaction.tx_buffer = pixels.data();
-        ESP_RETURN_ON_ERROR(spi_device_transmit(display_handle(display_device_), &transaction),
-                            kTag, "write TFT pixels");
+        ESP_RETURN_ON_ERROR(tft_row(transaction, mark), kTag, "write TFT pixels");
         remaining -= count;
-        if((++chunks&31)==0)vTaskDelay(1);
+        if((++chunks&31)==0)tft_yield();
     }
     return ESP_OK;
 }
@@ -434,6 +502,7 @@ esp_err_t Board::draw_rgb565_strided(int x,int y,int width,int height,
     auto &row_bytes = transfer_row_;
     gpio_set_level(pins::kTftDataCommand, 1);
     for (int row = 0; row < height; ++row) {
+        const RowMark mark = row_mark();
         for (int col = 0; col < width; ++col) {
             const uint16_t pixel = pixels[row * stride + col];
             row_bytes[col * 2] = static_cast<uint8_t>(pixel >> 8);
@@ -442,9 +511,8 @@ esp_err_t Board::draw_rgb565_strided(int x,int y,int width,int height,
         spi_transaction_t transaction{};
         transaction.length = width * 16;
         transaction.tx_buffer = row_bytes.data();
-        ESP_RETURN_ON_ERROR(spi_device_transmit(display_handle(display_device_), &transaction),
-                            kTag, "write RGB565 row");
-        if(row>0&&(row&15)==0)vTaskDelay(1);
+        ESP_RETURN_ON_ERROR(tft_row(transaction, mark), kTag, "write RGB565 row");
+        if(row>0&&(row&15)==0)tft_yield();
     }
     return ESP_OK;
 }
@@ -663,11 +731,12 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
         gpio_set_level(pins::kTftDataCommand,1);
         constexpr int origin=(openu5::kHudSkyBarW-12*8)/2;
         for(int row=0;row<openu5::kHudSkyBarH;++row){
+            const RowMark mark=row_mark();
             for(int x=0;x<openu5::kHudSkyBarW;++x){uint16_t color=kBlack;
                 if(row<8&&hud.sky_visible)for(size_t i=0;i<hud.mark_count;++i){const int gx=origin+int(hud.marks[i].cell)*8;if(x>=gx&&x<gx+8){const uint8_t code=hud.marks[i].sun?0x2a:hud.marks[i].glyph;const uint8_t bits=runes_font[size_t(code&0x7f)*8+size_t(row)];if(bits&(0x80U>>unsigned(x-gx)))color=hud.marks[i].sun?kYellow:kWhite;}}
                 transfer_row_[size_t(x)*2]=uint8_t(color>>8);transfer_row_[size_t(x)*2+1]=uint8_t(color);}
             spi_transaction_t transaction{};transaction.length=openu5::kHudSkyBarW*16;transaction.tx_buffer=transfer_row_.data();
-            ESP_RETURN_ON_ERROR(spi_device_transmit(display_handle(display_device_),&transaction),kTag,"write authentic U5 sky row");
+            ESP_RETURN_ON_ERROR(tft_row(transaction,mark),kTag,"write authentic U5 sky row");
         }
         return ESP_OK;
     };
@@ -706,6 +775,7 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
     else std::snprintf(wind_text,sizeof(wind_text)," Wind: %-16.16s",hud.wind_visible?hud.wind:"--");
     const bool viewport_changed=!viewport_cache_valid_||viewport_crc_!=viewport_crc;
     if(viewport_changed){
+        ++tft_timing_.viewport_full; // A3-04C: a whole-viewport frame
         const int top=full_square_viewport?0:openu5::kHudSkyBarH;
         const int height=full_square_viewport?openu5::kViewportPixels:openu5::kViewportPixels-openu5::kHudSkyBarH-openu5::kHudWindBarH;
         ESP_RETURN_ON_ERROR(draw_rgb565_strided(openu5::kHudViewportX,openu5::kHudViewportY+top,openu5::kViewportPixels,height,pixels+top*openu5::kViewportPixels,openu5::kViewportPixels),kTag,"draw Alpha viewport");
@@ -850,6 +920,7 @@ esp_err_t Board::draw_rgb565_scaled(int x,int y,int width,int height,
     ESP_RETURN_ON_ERROR(set_display_window(x,y,width,height),kTag,"set scaled RGB565 window");
     auto &row_bytes=transfer_row_;gpio_set_level(pins::kTftDataCommand,1);
     for(int row=0;row<height;++row){
+        const RowMark mark=row_mark();
         const int source_y=row*source_height/height;
         for(int col=0;col<width;++col){
             const int source_x=col*source_width/width;
@@ -857,9 +928,8 @@ esp_err_t Board::draw_rgb565_scaled(int x,int y,int width,int height,
             row_bytes[col*2]=uint8_t(pixel>>8);row_bytes[col*2+1]=uint8_t(pixel);
         }
         spi_transaction_t transaction{};transaction.length=width*16;transaction.tx_buffer=row_bytes.data();
-        ESP_RETURN_ON_ERROR(spi_device_transmit(display_handle(display_device_),&transaction),
-                            kTag,"write scaled RGB565 row");
-        if(row>0&&(row&15)==0)vTaskDelay(1);
+        ESP_RETURN_ON_ERROR(tft_row(transaction,mark),kTag,"write scaled RGB565 row");
+        if(row>0&&(row&15)==0)tft_yield();
     }
     return ESP_OK;
 }
@@ -994,6 +1064,7 @@ esp_err_t Board::draw_text_box(int x,int y,int width,int height,const char *text
     const int cell_width=6*scale_x;
     const size_t text_length=std::strlen(text);
     for(int row=0;row<height;++row){
+        const RowMark mark=row_mark();
         const int glyph_row=row/scale_y;
         for(int col=0;col<width;++col){
             // Reverse video swaps the two: the glyph is punched out of a
@@ -1008,8 +1079,8 @@ esp_err_t Board::draw_text_box(int x,int y,int width,int height,const char *text
             row_bytes[col*2]=uint8_t(pixel>>8);row_bytes[col*2+1]=uint8_t(pixel);
         }
         spi_transaction_t transaction{};transaction.length=width*16;transaction.tx_buffer=row_bytes.data();
-        ESP_RETURN_ON_ERROR(spi_device_transmit(display_handle(display_device_),&transaction),kTag,"write coherent text row");
-        if(row>0&&(row&15)==0)vTaskDelay(1);
+        ESP_RETURN_ON_ERROR(tft_row(transaction,mark),kTag,"write coherent text row");
+        if(row>0&&(row&15)==0)tft_yield();
     }
     return ESP_OK;
 }
@@ -1025,6 +1096,7 @@ esp_err_t Board::draw_text_box_metrics(int x,int y,int width,int height,const ch
     auto &row_bytes=transfer_row_;gpio_set_level(pins::kTftDataCommand,1);
     const size_t text_length=std::strlen(text);
     for(int row=0;row<height;++row){
+        const RowMark mark=row_mark();
         for(int col=0;col<width;++col){
             uint16_t pixel=kBlack;const size_t char_index=size_t(col/metrics.cell_width);
             const int within_x=col%metrics.cell_width;
@@ -1037,7 +1109,7 @@ esp_err_t Board::draw_text_box_metrics(int x,int y,int width,int height,const ch
             row_bytes[col*2]=uint8_t(pixel>>8);row_bytes[col*2+1]=uint8_t(pixel);
         }
         spi_transaction_t transaction{};transaction.length=width*16;transaction.tx_buffer=row_bytes.data();
-        ESP_RETURN_ON_ERROR(spi_device_transmit(display_handle(display_device_),&transaction),kTag,"write metric text row");
+        ESP_RETURN_ON_ERROR(tft_row(transaction,mark),kTag,"write metric text row");
     }
     return ESP_OK;
 }

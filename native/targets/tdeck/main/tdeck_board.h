@@ -9,10 +9,12 @@
 #include "openu5/state.h"
 #include "openu5/frontend.h"
 #include "openu5/hud.h"
+#include "openu5/perf_report.h"
 #include "openu5/turn.h"
 #include "openu5/ui_session.h"
 #include "device_ui_views.h"
 
+struct spi_transaction_t;
 namespace tdeck {
 
 constexpr size_t kDebugScreenRows = 9;
@@ -110,8 +112,34 @@ public:
     bool debug_last_full_redraw() const { return debug_last_full_redraw_; }
     size_t debug_last_dirty_regions() const { return debug_last_dirty_regions_; }
     size_t debug_last_pixels() const { return debug_last_pixels_; }
+    // Alpha 3 A3-04C (ALPHA3_AUDIO.md section 20): what the TFT write cost,
+    // transaction by transaction, since the last take (the runtime takes it
+    // around every gameplay frame). `flag` is the audio task's "running"
+    // word (TdeckAudioBackend::activity_flag), read at each row's two ends.
+    void set_audio_activity_flag(const volatile uint32_t *flag) { audio_active_ = flag; }
+    void take_tft_timing(openu5::TftTiming &out) {
+        out = tft_timing_;
+        out.cpu_mhz = tft_cpu_mhz_;
+        tft_timing_ = openu5::TftTiming{};
+    }
 
 private:
+    // A3-04C: every TFT transaction and every draw-loop yield goes through
+    // these, so the split (row building / SPI transfer / tick yield) and
+    // the audio-running classification cover the whole write.
+    struct RowMark {
+        uint32_t cycles = 0;
+        bool busy = false;
+    };
+    bool audio_running() const { return audio_active_ && *audio_active_ != 0; }
+    RowMark row_mark() const;
+    /** One pixel row (or fill chunk) that started building at `start`. */
+    esp_err_t tft_row(spi_transaction_t &transaction, RowMark start);
+    /** A command / window-setup transaction (no row to build). */
+    esp_err_t tft_command(spi_transaction_t &transaction);
+    esp_err_t tft_transmit(spi_transaction_t &transaction, const RowMark *start);
+    /** The draw loops' vTaskDelay(1): lets the idle task and the input task run. */
+    void tft_yield();
     esp_err_t draw_party_rows(const openu5::GameState &, DevicePartyHighlight);
     esp_err_t initialize_shared_spi();
     esp_err_t write_display_command(uint8_t command, const uint8_t *data = nullptr,
@@ -133,6 +161,9 @@ private:
     esp_err_t draw_shared_bus_marker(int pass);
 
     void *display_device_ = nullptr;
+    openu5::TftTiming tft_timing_{};
+    uint32_t tft_cpu_mhz_ = 0; // set with the display; 0 on the host (no timing)
+    const volatile uint32_t *audio_active_ = nullptr;
     // Sole app task; synchronous spi_device_transmit completes before reuse.
     alignas(4) std::array<uint8_t, 320 * 2> transfer_row_{};
     bool shared_spi_initialized_ = false;

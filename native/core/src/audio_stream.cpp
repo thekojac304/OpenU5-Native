@@ -89,6 +89,10 @@ void AudioPerfCounters::on_write(uint32_t fill_before, uint32_t write_us, uint32
         ++periods_;
         period_sum_ += period_us;
         if (period_us > period_max_) period_max_ = period_us;
+        // A3-04C: the part of the interval the task was not waiting in the write.
+        const uint32_t busy = period_us > write_us ? period_us - write_us : 0;
+        busy_sum_ += busy;
+        if (busy > busy_max_) busy_max_ = busy;
     }
 }
 
@@ -132,6 +136,8 @@ void AudioPerfCounters::snapshot(uint64_t now_us, AudioPerfSnapshot &out) const 
     if (periods_) {
         out.period_avg_us = uint32_t(period_sum_ / periods_);
         out.period_max_us = period_max_;
+        out.task_busy_avg_us = uint32_t(busy_sum_ / periods_);
+        out.task_busy_max_us = busy_max_;
     }
     out.underruns = underruns_;
     out.hw_underruns = hw_underruns_;
@@ -193,7 +199,10 @@ void AudioRingPump::render_block(uint16_t sfx_gain_q15, uint16_t music_gain_q15)
     // Each channel at its own live gain, applied once inside its own render()
     // (section 17.9): a volume change reaches the very next block, and never
     // touches a block already handed to the ring.
-    if (music_.active()) music_.render(music_block_, kAudioBlockFrames, kSfxOutputRateHz, music_gain_q15);
+    // A3-04C: the bypass probe renders the song's block as silence without
+    // touching the player, so the song neither sounds nor advances.
+    if (music_.active() && !music_bypass_)
+        music_.render(music_block_, kAudioBlockFrames, kSfxOutputRateHz, music_gain_q15);
     else std::memset(music_block_, 0, sizeof(music_block_));
     const uint64_t t1 = now();
     sfx_.render(sfx_block_, kAudioBlockFrames, sfx_gain_q15);
@@ -306,6 +315,7 @@ void AudioRingPump::perf(AudioPerfSnapshot &out) const {
     perf_.snapshot(now(), out);
     out.music_active = music_.active();
     out.song = song_;
+    out.music_bypass = music_bypass_;
     out.ring_blocks = uint32_t(ring_blocks_);
 }
 

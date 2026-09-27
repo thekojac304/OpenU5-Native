@@ -1,0 +1,4 @@
+F1 KILLED the report loses its contention section :: contention: F1, F2, F3, F4 | runtime: R5, P3
+F5 KILLED the line loses its row-level split :: contention: L1
+
+2/2 killed; 0 survived; 0 invalid/not applied

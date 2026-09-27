@@ -1,6 +1,8 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map)
 
-**Status (A3-04B): MUSIC SMOOTHNESS IMPROVED — RENDER PERFORMANCE RETEST PENDING.** On the A3-04A image music played smoothly but the overworld lagged with music on and was much better at Music Volume 0 %, and the Developer audio benchmark showed no results. A3-04B (§19): the synth — which at 0 % does not run at all — executed from flash through the instruction and data caches both cores share, contending with the renderer on the other core; its per-sample path is now bit-exactly ~39 % cheaper per channel and runs from IRAM (proved on the linked image). The benchmark's results, the game thread's frame counters and FreeRTOS per-core/per-task CPU are one report on the Developer screen that stays until dismissed. The retest image exists (§19.15–19.16). Not an Alpha 3 release.
+**Status (A3-04C): CONTENTION MAP INSTRUMENTED — CAUSE NARROWED, NOT PROVEN — HARDWARE EVIDENCE PENDING (Outcome C).** The user still sees the map lag with music on and much less at Music Volume 0 %. A3-04C (§20) found that 0 % turns off three things at once: the synth, the I2S DMA/interrupt on core 0, and the audio task's wakes. It adds the measurements that separate them: a per-frame TFT split (row building / SPI / tick yields), a row-level test of what core 1 was doing while each TFT row was built and sent, SD-log bus bursts, the audio task's own work per block, and a one-line `A3C_PERF` heartbeat. It also adds a Developer probe, *Probe: synth bypass*, that keeps the song, channel and cadence but skips the synth. No gameplay, audio output or renderer behaviour changed. The next step is the §20.10 hardware runs; their result picks A3-04D (§20.11).
+
+**Status as A3-04B wrote it: MUSIC SMOOTHNESS IMPROVED — RENDER PERFORMANCE RETEST PENDING.** On the A3-04A image music played smoothly but the overworld lagged with music on and was much better at Music Volume 0 %, and the Developer audio benchmark showed no results. A3-04B (§19): the synth — which at 0 % does not run at all — executed from flash through the instruction and data caches both cores share, contending with the renderer on the other core; its per-sample path is now bit-exactly ~39 % cheaper per channel and runs from IRAM (proved on the linked image). The benchmark's results, the game thread's frame counters and FreeRTOS per-core/per-task CPU are one report on the Developer screen that stays until dismissed. The retest image exists (§19.15–19.16). Not an Alpha 3 release.
 
 **Status as A3-04A wrote it: A3-04 music on hardware — PLAYBACK FUNCTIONAL — SMOOTHNESS RETEST PENDING.** The A3-04 image played the right songs but extremely stuttery; the cause was a FreeRTOS mutex taken on every synth table read (a function-local static under `-mdisable-hardware-atomics`), fixed in A3-04A together with a per-file `-O2`, a primed/drained DMA ring, boot-time song parsing and on-device performance counters (§18). The retest image exists (§18.17–18.18). Not an Alpha 3 release.
 
@@ -13,7 +15,7 @@ This document is the audio track's reference. It records what the original does,
 | The user's DOS files | Sound effects | Music | What Settings shows |
 |---|---|---|---|
 | **Stock** (unpatched *Ultima V* DOS) | Supported. The effects are the original's PC-speaker sounds, synthesized from the original's own parameters: 22 since A3-02 (§15.5), 62 of the 73 cue ids since A3-03 (§16). No asset is needed. | **None.** The 1988 game has no music. | `Music Volume: Unavailable`, footer *Stock DOS game files have no music* |
-| **Supported music patch** (Exodus Project *Ultima V Upgrade* 1.0) | The same. | **Enabled** (§17); smooth real-time playback fixed in A3-04A (§18); its contention with rendering fixed in A3-04B (§19), render retest pending. Loudness/tone balance is A3-05. | `Music Volume: 80%`, adjustable |
+| **Supported music patch** (Exodus Project *Ultima V Upgrade* 1.0) | The same. | **Enabled** (§17); smooth real-time playback fixed in A3-04A (§18); its contention with rendering addressed in A3-04B (§19); the lag that remains with music on is instrumented in A3-04C (§20), hardware evidence pending. Loudness/tone balance is A3-05. | `Music Volume: 80%`, adjustable |
 | **Incomplete patch** (some of its files) | The same. | None. It is never guessed. | `Unavailable`, *Music patch files are incomplete* |
 | **Unknown music variant** (another driver or foreign XMI files) | The same. | None. It is never guessed. | `Unavailable`, *Unsupported music patch variant* |
 | No audio pack on the card, or a stale/corrupt one | The same. | None. | `Unavailable`, *No audio pack: npm run pack:audio* or *Audio pack stale or corrupt: rebuild* |
@@ -1854,3 +1856,225 @@ Copy the Launcher image named in tag `alpha3-a3-04b-render-contention` as usual;
 ### 19.18 Documentation and status
 
 This section; the header and §0 above; `LAUNCHER.md`'s A3-04B row. **A3-04 music hardware status: MUSIC SMOOTHNESS IMPROVED — RENDER PERFORMANCE RETEST PENDING** until the user validates the A3-04B image.
+
+## 20. A3-04C — music-on render/TFT and main-loop contention: measure first
+
+**Hardware observation that opened this batch** (the user, after A3-04A/A3-04B): music plays mostly smoothly, but with music enabled the overworld/map refresh is noticeably laggy, visual updates look tearing-like or uneven, responsiveness is worse, render/TFT timing spikes were visible in the performance diagnostics and the main/game side looked heavily loaded; **Music Volume 0 % is substantially better.** No device numbers or photographs came with the report, and the image it was seen on is not recorded (A3-04B `…-a3-04b-debug` and A3-HF1 `…-a3-hf1-debug` both carry A3-04B's IRAM placement). The checklist (§20.10) records both first.
+
+**Status: OUTCOME C — INSTRUMENTED; THE CAUSE IS NARROWED, NOT PROVEN; HARDWARE EVIDENCE PENDING.** Nothing in this batch changes what the game does, what it draws or what it plays. It adds the measurements and one Developer probe the device needs to tell the remaining hypotheses apart, and it leaves the synth, the renderer, the TFT driver, task placement and buffering exactly as A3-04B left them. The source and the linked image do not show a mechanism big enough to explain "substantially better at 0 %" after A3-04B (§20.6), so a production "fix" now would be a guess, which the batch rules forbid (§20.11).
+
+### 20.1 Baseline (Phase 1)
+
+- HEAD `5469b577` on `main` (A3-HF1's post-commit logs), tree clean. Latest tags: `alpha3-hf1-arena-loot` (`d1465ed7`), `alpha3-a3-04b-render-contention` (`11015be6`), `alpha3-a3-04a-audio-realtime` (`e48abb8d`).
+- Firmware at baseline: A3-HF1, `0xeb250` = 963,152 B, 85,424 B (8 %) free.
+- Fresh host build `native/core/build-a3-04c-base`, **serial ctest 137/137 passed in 143.07 s**, the one known w64devkit `stl_uninitialized.h` warning (`native/core/a3-04c-baseline-{configure,build,ctest}.log`).
+- Reviewed: A3-04 (§17), A3-04A (§18), A3-04B (§19) and their diagnostics.
+
+**Execution-context map** (from the source, `sdkconfig` and the linked image):
+
+| What | Where / how |
+|---|---|
+| Audio task | `openu5-audio`, prio 3, **core 1**, 6 KiB internal stack. Blocks in `i2s_channel_write` (DMA-paced, one 8 ms block per wake) or, when silent, in a 20 ms idle queue wait |
+| Game / render | ESP-IDF `main`, prio 1, **core 0**. Loop: drain ≤ 64 inputs → `handle()` → `render()` (twice after input) → `vTaskDelay(pdMS_TO_TICKS(5))`, which is **`vTaskDelay(0)` at `CONFIG_FREERTOS_HZ=100`: a yield, not a sleep**. The task is always runnable except inside the TFT write's waits |
+| TFT write | Inside `main`: `Board::show_alpha` → one **blocking `spi_device_transmit` per pixel row** (SPI2 at 40 MHz, DMA from the internal `transfer_row_`), **`vTaskDelay(1)` every 16 rows** (every 32 chunks in `fill_rect`). The whole 176-px viewport is 158 rows ⇒ 9 yields, each until the next 10 ms tick |
+| Interrupts on core 0 | I2S TX GDMA EOF (125/s while the channel runs, allocated where `ensure_started()` ran), SPI2 transaction completion (IRAM), esp_timer, systick |
+| Input | `openu5-input`, prio 4, core 0 |
+| SD-log writer | `alpha20-sd-log`, idle priority, **unpinned**, writes the card on **SPI2, the TFT's bus**; 4 KiB stdio buffer, flush every 2 s or on "important" lines |
+| Synchronisation | Game → audio: two FreeRTOS queues (zero-timeout sends, `xQueueOverwrite` for music), atomics (gains, epoch, the new probe). Audio → game: the published perf window under a portMUX spinlock, copied every 16 blocks. TFT: the SPI2 bus lock shared with the SD card. SD: the storage mutex |
+| Shared hardware | The **16 KB ICache / 32 KB DCache and the MSPI bus (flash + octal PSRAM) serve both cores**; SPI2 (TFT + SD); the FreeRTOS kernel lock |
+| Code placement | Audio per-sample path in IRAM (A3-04B, image-checked). **FreeRTOS kernel and the SPI master's non-ISR code run from flash** (`CONFIG_FREERTOS_IN_IRAM` off) — used by both cores |
+| Logging | Every `ESP_LOG` goes to USB-Serial/JTAG and into a 48-line PSRAM queue for the SD writer. The audio task logs nothing per block; **the game thread logs `PRESENTATION_DISPATCH` on every gameplay frame** (plus the 5 s heartbeat) |
+
+### 20.2 What "Music Volume 0 %" does (Test C) — read from the source, pinned by tests
+
+**It stops the song** (A3-04B §19.6's "option D"): `AudioService::sync_music()` wants `MusicSong::None` when the music volume is 0 → the backend's `stop_music()` → the pump stops the player → eight silent blocks (64 ms) drain → **`i2s_channel_disable`** → the audio task sleeps in its 20 ms queue wait. So, against music on, 0 % removes **three things at once**:
+
+1. the OPL2 synth's work on core 1 (≈ 33 % of core 1 for the Theme, A3-04B's static estimate);
+2. the I2S DMA and its **125/s EOF interrupt on core 0**;
+3. the audio task's 125/s DMA-paced wakes (replaced by 50/s idle-queue timeouts).
+
+It is not "synthesize and multiply by zero", not "mute after the mix", and it does not leave the sequencer running. The context is kept; raising the volume restarts the context's song from its first bar. A 0 %-vs-on comparison therefore **cannot say which of the three matters** — the probe of §20.4 splits them. Pinned by `a3_04b_perf` Z1–Z6 (unchanged) and `a3_04c_contention` P8 (the stop path is unaffected by the probe).
+
+### 20.3 Instrumentation added (Phase 2)
+
+All of it is aggregated in windows; nothing is logged per frame or per block. The window is the Developer report's: it starts at boot and at every *Audio/render stats (live)* read, so the on-screen report and the serial line always describe the same span.
+
+| Measurement | Where | How / cost |
+|---|---|---|
+| **logic** avg/max — `render()`'s game logic before composing (combat, scenes, timers, input hold, ambient) | `alpha_runtime.cpp` | one timer read per drawn frame |
+| **loop** count/avg/max — one pass of `main.cpp`'s loop (input, handling, drawing) | `main.cpp` → `note_loop_pass` | one timer read per pass |
+| **TFT split per frame**: `xfer` (inside `spi_device_transmit`: bus acquire, DMA, completion wait), `yield` (inside the draw loops' `vTaskDelay(1)`), `fill` = tft − xfer − yield (building rows: the PSRAM viewport read, glyph lookups, byte swap; panel text; window setup) | `Board::tft_transmit` / `tft_yield` (every TFT transaction and every draw-loop yield goes through them — `a3_04c_contention` S1/S2) | two `CCOUNT` reads per transaction and per yield (core-0 cycles; no call to a timer, no lock) |
+| **viewport frames vs other frames** — tft avg/max for frames that rewrote the whole viewport, and for the rest (animated cells, panels, text) | `show_alpha` marks the whole-viewport write | a counter |
+| transactions, rows, **slow transactions** (> 1 ms: waited for the SPI bus or was preempted) and how many of those had the audio task running, the slowest transaction | `tft_transmit` | — |
+| **yields**: count, max, **late** (> 11 ms: core 0 was not handed back at the tick) | `tft_yield` | — |
+| **Row-level contention test**: every row is classified by the audio task's *running* flag at the row's start and at both ends of its transaction (busy / idle / straddling); **fill and xfer per row are averaged separately for audio-busy and audio-idle rows** | `tft_transmit` + `TdeckAudioBackend::activity_flag()` | one aligned-word load per end |
+| audio **task busy per block** avg/max (DMA freed a descriptor → next block handed over = delivery interval − the write's wait) | `AudioPerfCounters::on_write` (flash, per block) | arithmetic only |
+| audio **sfx+mix** avg (render − music) and the i2s **write** avg/max | report | — |
+| **SD-log bursts**: count, max, total mutex-held time of the writer's wakes that wrote or flushed | `sd_diagnostic_logger.cpp` | one timer read per such wake |
+| the **scenario** label: music capability, Music/SFX volume, song, probe | `AlphaRuntime::perf_scenario()` | — |
+
+Kept from A3-04B unchanged: frame avg/p95/p99/max and late (> 55 ms), compose, tiles, tft avg/max, cadence, input → screen latency, key handling; audio render avg/p99/max, music avg/max, missed deadlines, underruns, hardware underruns, buffered min/max (the slack), sched max, clip, voices/channels, stack; CPU0/CPU1 and per-task CPU, heap, stacks.
+
+The row-level split is the batch's key measurement. The same code runs over the same frames in the same run, and the only difference between the two sets of rows is whether core 1's audio task was executing at that instant. A shared-cache, MSPI, internal-SRAM or kernel-lock coupling shows up as **busy > idle**. With no coupling, the two averages match within noise, whatever the absolute frame time.
+
+### 20.4 The discriminating probe: Developer › Diagnostics › **Probe: synth bypass**
+
+A new Diagnostics row, **inserted above *Audio/render performance*** so that the stats, benchmark and test-tone rows keep their places counted from the end (A3-01/A3-04B tests navigate by them). Enter toggles it; the row shows `Probe: synth bypass: off` / `ON`. It is **off at boot and never saved**; every report and `A3C_PERF` line made while it is on is labelled **`BYPASS`**.
+
+With the probe on, `AudioRingPump::render_block` renders the playing song's block as silence without touching the player. The song stays "playing": the channel keeps running, the DMA and its 125/s interrupt keep going, the audio task keeps its DMA-paced cadence, and SFX still sound. The OPL2 synth does no work and the song does not advance. Switching it off resumes the song exactly where it stopped (proved bit-exact, P6). So:
+
+| Run | synth work | I2S DMA + EOF ISR on core 0 | 125/s audio wakes |
+|---|---|---|---|
+| B — music on | yes | yes | yes |
+| **B′ — music on + probe** | **no** | yes | yes |
+| C — Music Volume 0 % | no | no | no |
+
+**B ≈ B′ ≫ C** puts the lag on the channel/interrupt/wake cadence, not the synth. **B′ ≈ C ≪ B** puts it on the synth's own work, which is then a memory-system coupling, because it runs on the other core. **B ≈ B′ ≈ C** says music is not the cause.
+
+The check is one boolean load in `render_block`, which stays in IRAM (`a3_04b_iram_check.py` GREEN on the A3-04C image; `audio_iram.lf` unchanged).
+
+### 20.5 Output formats (Phase 2 "diagnostic output")
+
+**On the Developer screen** — the *Audio/render stats (live)* and *Audio/render performance* reports gain a section (values illustrative):
+
+```
+-- Contention map (A3-04C) --
+music 80% Ultima V Theme sfx 80%              <- the scenario (BYPASS when the probe is on; "music n/a" without the capability)
+logic avg 0.4 max 2.1  loop max 130.1 ms
+viewport 40 frm tft avg 80.0 max 90.1         <- frames that rewrote the whole viewport
+other 210 frm tft avg 12.0 max 30.0
+tft/frame fill 4.1 xfer 6.0 yield 20.1        <- where a frame's TFT time went
+yield 900 max 10.9 ms late 0 (tick 10)
+xfer max 1.20 ms slow 3 (2 w/audio)
+rows 12345  audio running at 33%
+row fill us: audio idle 12.1 busy 12.3        <- the cross-core test: equal = no coupling
+row xfer us: audio idle 65.0 busy 66.0
+audio task/blk avg 2.90 max 3.20 ms
+sfx+mix avg 0.20 write avg 5.0 max 7.9
+sd log 3 bursts max 12.3 total 20.0 ms
+```
+
+The report buffer went from 48 to 64 lines; the benchmark's report is now 50 lines and would have lost its last two (`a3_04c_contention` F4).
+
+**On serial / the SD log** — one `A3C_PERF` line every 5 s (the heartbeat), the same window as the screen, fixed field order so two runs diff field by field (≤ 719 characters: one SD-log record with its prefix, L2):
+
+```
+A3C_PERF scen=[music 80% Ultima V Theme sfx 80%] win=20.1s | frame n=250 avg=42.1 p95=70.0 max=120.4 late=3 | cmp=12.0/30.0 tiles=20.0 tft=30.2/90.1 in=12:130.0 | logic=0.4/2.1 vp=40:80.0/90.1 oth=210:12.0/30.0 | split fill=4.1 xfer=6.0 yld=20.1 | yld n=900 max=10.9 late=0 | xfer max=1.20 slow=3/2 | rows=12345 busy=33% fill=12.1/12.3 xfer=65.0/66.0 | loop=5000:5.0/130.1 | audio blk=2500 rnd=2.90/4.10 mus=2.70/3.90 task=3.20 buf=56 und=0 hw=0 miss=0 clip=0 | sd=3:12.3/20.0 | cpu0=98 cpu1=36 main=95 aud=33 inp=1 sdl=1
+```
+
+Legend: `a/b` = avg/max ms; `n:a/b` = count:avg/max; `cmp` compose; `vp`/`oth` viewport/other frames' TFT; `split` per-frame TFT ms; `slow=total/with-audio`; `rows … fill=idle/busy xfer=idle/busy` µs per row; `rnd`/`mus` block render/music ms; `task` audio task busy max per block; `buf` minimum buffered ms; `und`/`hw`/`miss` underruns / hardware underruns / missed deadlines; `sd=bursts:max/total` ms; CPU in %. The A3-04B `AUDIO_PERF` / `RENDER_PERF` / `SYS_PERF` heartbeat lines are unchanged.
+
+### 20.6 Phase 4 — the hypotheses against the source and the image
+
+| # | Hypothesis | Evidence available now | Status | What the device run decides it with |
+|---|---|---|---|---|
+| 1 | Both heavy tasks on one core / priority starvation | Audio pinned to core 1, game to core 0; the audio task cannot preempt the game loop | **ruled out** (source) | CPU0/CPU1, `main`/`aud` % |
+| 2 | Audio bursts too large | Per-block work is on core 1; A3-04B's model: the producer renders exactly what the DMA consumes | bounded | `task` max per block |
+| 3 | Excessive context switching | 125/s audio wakes on core 1; each TFT row already costs core 0 two switches of its own | small | rows busy vs idle |
+| 4 | Critical sections | The perf spinlock is taken every 128 ms (copy of one snapshot) by core 1, by core 0 only for a report / heartbeat | **ruled out** (source) | — |
+| 5 | Heap / allocator | The audio task allocates nothing after start (A3-04A) | **ruled out** (source, tests) | heap lines |
+| 6 | Logging contention | The audio task logs nothing per block. **The game logs one line every gameplay frame** (`PRESENTATION_DISPATCH`), which feeds the SD writer on the TFT's bus, whether music plays or not | music-independent baseline | `sd=` bursts, `slow` transactions |
+| 7 | SPI / TFT DMA interaction | I2S and SPI2 are separate peripherals on separate GDMA channels; SPI2's only other user is the SD card | not audio | `slow`, `xfer` busy vs idle |
+| 8 | Cache / IRAM / flash | Per-sample audio path in IRAM (image check GREEN). **Residual per-block flash code on core 1: at most 2,048 instructions ≈ 5.3 KB ≈ 167 of the ICache's 512 lines** (`a3_04c_audio_flash_footprint.py`, below), most of it the FreeRTOS kernel and IDF I2S code the renderer's own SPI calls use too | small, not zero | **row `fill` busy vs idle**; B vs B′ |
+| 9 | PSRAM bandwidth | The audio task touches PSRAM only per MIDI event (8-byte events, ≤ 69 per block on the Theme's densest bar) | small | row `fill` busy vs idle |
+| 10 | Float synth monopolising a CPU | Core 1 only | not core 0 | CPU1 |
+| 11 | Audio cadence → periodic core-0 stalls | The I2S EOF ISR runs on **core 0**, 125/s, only while the channel runs | **open** | **B′ vs C** (the probe keeps it) |
+| 12 | Notification / semaphore contention | No primitive is shared between the audio task and the game thread except the kernel lock | small | row `xfer` busy vs idle |
+| 13 | DMA ISR behaviour | see 11 | open | B′ vs C |
+| 14 | Cross-core synchronisation | FreeRTOS's kernel spinlock: both cores take it on every queue/semaphore op; the TFT takes it several times per row | small | row `xfer` busy vs idle |
+| 15 | Music work while inaudible | At 0 % none (stop). A3-04B's silent-operator floor covers rests | **ruled out** (source) | — |
+| 16 | Expensive sequencing, repeated | Per MIDI event (`dispatch`, flash), not per sample | small | `mus` max vs avg |
+
+**Two findings that do not depend on music, both visible now:**
+
+- **The TFT write sleeps by design.** A full viewport is 158 rows with a `vTaskDelay(1)` every 16. Each 16-row band takes about 2 ms of SPI work and then waits for the next 10 ms tick, so a step's viewport write is roughly 9 ticks ≈ 85–95 ms, delivered in 16-row bands. On the panel that is a top-to-bottom wipe, which can look like tearing whether or not music plays. The new `yield` share measures it. If it dominates `tft` equally in B and C, the "tearing" is this pacing and belongs to a renderer batch, not audio.
+- **"The main side looks heavily loaded" is the loop's shape.** `vTaskDelay(pdMS_TO_TICKS(5))` is `vTaskDelay(0)` at 100 Hz, so `main` is runnable all the time except inside the TFT's waits, and CPU0 reads near 100 % in every scenario. The loop counters and `main %` let B and C be compared. A high `main %` alone says nothing about music.
+
+**Residual flash footprint of the audio task** (`native/targets/tdeck/a3_04c_audio_flash_footprint.py <elf> <log> --depth 3`, `a3-04c-audio-flash-footprint.log`): the walk starts from `TdeckAudioBackend::run`, `AudioRingPump::step` and the sink's `write`, skips error and log paths, and skips A3-04B's IRAM per-sample path. It reaches 54 functions: 18 in IRAM, 36 in flash, 2,048 flash instructions in total. The largest are `AudioPerfCounters::snapshot` (310, every 128 ms, not every block), `step` (238), `run` (153), `xQueueGenericSend` (128), `i2s_channel_write` (127), `xQueueSemaphoreTake` (109). The normal per-block path is a fraction of that upper bound. Even the whole bound, evicting and refilling 167 lines 125 times a second, is about 21,000 extra misses a second, on the order of 1 % of core 0. That is why the device measurement, not this estimate, decides it.
+
+### 20.7 Phase 3 — the controlled comparisons (what each run isolates)
+
+| Test | Setup | Isolates |
+|---|---|---|
+| **A** music unavailable | no `openu5-audio.bin` on the card (Settings: `Music Volume: Unavailable`) | the renderer alone; the audio task starts only for SFX |
+| **B** music on | Music 80 %, SFX 80 % | everything |
+| **B′** music on + probe | as B, *Probe: synth bypass: ON* | B minus the synth's work |
+| **C** Music Volume 0 % | Music 0 %, SFX 80 % | B minus synth, DMA/ISR and wakes (the channel runs only around cues) |
+| **D** SFX only | as C, walking into a wall / fighting so cues play | SFX synth + the channel's on/off cycles |
+| **E** heavy refresh | B, then C, then B′ on the same heavy path (§20.10 step E) | the renderer's worst case under each |
+
+### 20.8 Tests, RED / GREEN and mutations
+
+- **New targets:** `a3_04c_contention` (41 checks: P probe on the production pump, B task busy against the descriptor-ring model, C counters, F report section, L the one-line format, S device wiring scans) and `a3_04c_contention_runtime` (13 checks through the real `AlphaRuntime` with raw keys: every gameplay frame's TFT timing reaches the report and the line, Developer frames are not counted, a live read restarts the window; the probe row toggles the audio task's probe, shows its state, labels the report, says "no audio output" without a backend; the game is untouched with the probe on and every frame timed). The host Board stub plays the device Board's per-frame timing (`batch37_set_tft_feed`).
+- **Changed expectations (deliberate, not weakened):** `ui_debug_menu_test` U2 — Diagnostics has 20 rows (was 19), the new row is an action row like its neighbours.
+- **RED found by the new tests before they were green (first run):** the scenario label dropped `BYPASS` when music is unavailable (runtime P3) — a real bug in the new formatter, fixed; the first `A3C_PERF` format overflowed its buffer on an ordinary window (L1/L2) — compacted, and the buffer sized to one SD-log record; the runtime test itself miscounted the fixture's untimed first frame (R1/R2) — the expectation corrected.
+- **Mutations:** `native/core/tools/a3_04c_mutation_check.py` → `native/core/a3-04c-mutation.log`, 28 mutants over the pump (K1–K5), the counters (C1–C5), the report and line (F1–F5), the runtime (R1–R5), the Developer row (U1–U2) and the device wiring the scans guard (D1–D6). **28 mutants, 28 killed by a failing check, 0 survived.** The first pass killed 26. F1 and F5 were INVALID: F1 left `contention_section` unused and F5 mismatched its format arguments, both under `-Werror`. Both were rewritten to compile and re-run (`a3-04c-mutation-rerun.log`): killed. Which check killed each one is in the log. For example, K2 ("the probe discards the synth output but the song advances") is caught only by P6, the bit-exact resume.
+- **Full suite:** fresh build `native/core/build-a3-04c`, **serial ctest 139/139 passed in 138.85 s** (`native/core/a3-04c-ctest-pass1.log`): A3-HF1's 137 plus the two new targets. The only warning is the known w64devkit one. Every A3-04A/A3-04B audio test passes unchanged: the synth is not modified, so the goldens G1–G6 stand. So do the timing proofs (Camp, Blackthorn, Refuge, quake, shrine, combat-victory timelines; `batch51_*` pacing), persistence and gameplay parity.
+
+### 20.9 Firmware
+
+Pre-commit build `native/targets/tdeck/build-a3-04c` (`a3-04c-firmware-configure.log`, `a3-04c-firmware-build.log`): ESP-IDF 6.1, `idf.py --no-ccache reconfigure` then `ninja -j 4`, **first attempt clean, zero project warnings** under `-Werror`. The five `component_validation` notices are ESP-IDF's own.
+
+- **Size: `0xecd90` = 970,128 B, +6,976 B** vs A3-HF1's 963,152 B; **`0x13270` = 78,448 B (7 %) free** in the 1 MiB app partition.
+- Sections vs A3-HF1: `.iram0.text` 76,015 → 76,003 B (unchanged: nothing moved into or out of IRAM); `.dram0.bss` +288 B (the Board's per-frame timing, the contention counters, the SD-log atomics); `.dram0.data` +112 B; `.flash.text` +5,612 B; `.flash.rodata` +1,264 B. PSRAM: the report buffer 48 → 64 rows (+832 B).
+- **Image checks on the A3-04C ELF:** `a3_04b_iram_check.py` **GREEN** (`a3-04c-iram-check.log`: the per-sample path, now with the probe's check in `render_block`, is IRAM/ROM only, no flash `.rodata`); `a3_04a_hotpath_check.py` **GREEN** (`a3-04c-hotpath-check.log`). The disassembly of `Board::tft_transmit` shows the two `rsr.ccount` reads around the unchanged `spi_device_transmit` call, and nothing else on the row path.
+- Version string `3.0.0-alpha3-dev-a3-04c-debug` (`CMakeLists.txt` `PROJECT_VER`), so the identity screen and the Launcher file name cannot be mistaken for A3-HF1's.
+- Not flashed. The post-commit image (a fresh directory, `--no-ccache`, which embeds the commit) is the one the annotated tag `alpha3-a3-04c-contention-map` names, with its path, size, SHA-256 and `Git`.
+
+### 20.10 Hardware validation checklist (the user's; not done here)
+
+**0. Identity (before any number is recorded).** Flash the A3-04C Launcher image named in tag `alpha3-a3-04c-contention-map` (`OpenU5-TDeck-Alpha3.0.0-alpha3-dev-a3-04c-Debug-Launcher.bin`; path, SHA-256 and `Git` in the tag message) through Launcher. Keep the same game pack and the same `openu5-audio.bin`; nothing is regenerated. The boot identity screen must read **`FW 3.0.0-alpha3-dev-a3-04c-debug`** and the tag's `Git` hash. If not, stop: the numbers would belong to another image. Please also note which image the original lag report was seen on, if known.
+
+**Serial monitor (optional but preferred).** Connect USB-C to a PC and open the USB-Serial/JTAG port at 115200 (for example `idf.py -p COMx monitor` from an ESP-IDF shell, or any serial terminal). Without a PC, the same line is in `/sd/ultima5/logs/alpha20-frontend-debug.log`, and the Developer report shows everything on screen. Capture the **last `A3C_PERF` line before each window is read** (one every 5 s). Also capture the `PERF_REPORT` lines the read prints.
+
+**How every run is measured (same for each).**
+1. Set the run's settings (System Menu › Settings). For the probe: Alt+D › Diagnostics › *Probe: synth bypass* (four rows up from the top) → Enter until the row reads the wanted state; leave the menu with Back.
+2. Start a clean window: Alt+D › Diagnostics › *Audio/render stats (live)* → Enter → **Enter again to dismiss**. That read starts the window, so discard that report.
+3. Do the activity for **60 s**. Walk by holding the trackball in one direction, turning at obstacles. Do not open menus.
+4. Read the window: Alt+D › Diagnostics › *Audio/render stats (live)*. **Photograph every page** (Down scrolls; the contention section is near the end) or copy the matching `PERF_REPORT` / last `A3C_PERF` line from serial.
+
+**Runs** (same place, same direction, same speed; the overworld in open grassland/forest):
+
+| Run | Music | SFX | Probe | Activity (60 s) |
+|---|---|---|---|---|
+| A | unavailable (remove `openu5-audio.bin`, reboot; put it back afterwards) | 80 % | off | walk |
+| B | 80 % | 80 % | off | walk |
+| B′ | 80 % | 80 % | **ON** | walk |
+| C | **0 %** | 80 % | off | walk |
+| D | 0 % | 80 % | off | walk into a wall / along a coast so the step/bump cues keep playing; then one fight |
+| E | 80 %, then 0 %, then 80 % + probe ON | 80 % | as stated | the heaviest refresh: walk continuously along a **coastline with animated water in view** (viewport rewrite every step + animated cells); then enter and leave a town twice (full-screen redraws) |
+
+Switch the probe **off** again at the end (it is never saved; a reboot also clears it).
+
+**What to look at while walking.** Step-to-screen lag. Whether the map repaints in visible bands (top to bottom). Uneven step cadence. Music smoothness and any static. Keyboard/trackball responsiveness.
+
+**What to send.** For each run: the photographed report pages (or the `A3C_PERF` line), plus one sentence on the visual/feel.
+
+**Reading the result — PASS / FAIL.** No run "passes" the batch on its own. The batch passes when the runs are complete and consistent enough to decide §20.11. A run is **invalid** (repeat it) when its `scen=` label does not match the table, when fewer than 150 gameplay frames were drawn (`frame n`), or when it contains a menu visit. Audio health must hold in B, B′ and E: `und=0 hw=0 miss=0` (or 0–1 at a song switch). **FAIL (report at once)** if any run shows underruns or missed deadlines in steady play, audible static, a crash or reboot, or music that does not resume after the probe is switched off.
+
+The decision table the numbers feed:
+
+| Observation | Meaning |
+|---|---|
+| B's `frame avg/max`, `tft`, `vp` close to C's (within ~10 %) and to A's | the lag is **not music**; look at `split`: if `yld` is most of `tft`, it is the TFT's tick pacing (§20.6) → a renderer batch |
+| B ≫ C and **B′ ≈ C** | the synth's work couples through the memory system; the row `fill`/`xfer` busy-vs-idle gap should show it |
+| B ≫ C and **B′ ≈ B** | not the synth: the I2S DMA/ISR/wake cadence on core 0 → A3-04D (below) |
+| `slow` transactions high and `sd=` max large, in every run | SD-log writes holding the TFT's SPI bus (music-independent) |
+| `yld … late` > 0 mostly in B | core 0 not handed back at the tick while music runs |
+
+### 20.11 Outcome, remaining hypotheses and the next batch
+
+**Outcome C.** The measurements are in place. The remaining causes are narrowed to four, each with a device test that separates it: (a) the synth's residual memory-system coupling; (b) the I2S DMA/ISR/wake cadence on core 0; (c) music-independent renderer pacing (tick-paced TFT bands, per-frame logging, SD writes on the TFT's bus); (d) something not modelled, which would show as a row busy/idle gap without a B′/C difference. Ruled out from source: same-core competition, priority starvation, shared locks, allocation, audio-side logging, music work at 0 %.
+
+**No production fix in this batch, and why.** Each candidate fix belongs to one hypothesis. Moving the I2S channel and its interrupt to core 1 (A3-04B §19.9's kept lever) fixes (b). Placing the FreeRTOS kernel in IRAM (`CONFIG_FREERTOS_IN_IRAM`, a global IRAM trade) touches (a). Changing the TFT's yield cadence or the per-frame log touches (c), which is the renderer and outside the audio batch's mandate. Making any of them now would change behaviour on a guess the device has not confirmed.
+
+**A3-04D, scoped by the result** (one of):
+- *B′ ≈ B ≫ C:* bring the I2S channel up from the audio task so its GDMA interrupt lands on core 1. Prove it by the same A3C runs, with the pump, buffering, synth and priorities untouched.
+- *B′ ≈ C ≪ B with a row busy/idle gap:* locate the shared resource with the gap as the metric. Candidates: `CONFIG_FREERTOS_IN_IRAM`, the per-block flash functions into IRAM, the song events into internal RAM. One at a time, each measured.
+- *B ≈ B′ ≈ C:* audio is cleared. A renderer batch (not audio) takes the TFT pacing (the 16-row `vTaskDelay(1)`) and the per-frame `PRESENTATION_DISPATCH` log, with its own evidence rules.
+
+### 20.12 Files
+
+- Core: `include/openu5/perf_report.h`, `src/perf_report.cpp` (`TftTiming`, `SdLogPerf`, `ContentionCounters`, `PerfScenario`, the report section, `format_contention_line`, 64-line report); `include/openu5/audio_stream.h`, `src/audio_stream.cpp` (the probe, task busy, `AudioPerfSource::set_music_bypass`); `include/openu5/ui_debug_menu.h`, `src/ui_debug_menu.cpp` (the probe row).
+- Device: `tdeck_board.{h,cpp}` (timed transactions/yields, row classification), `tdeck_audio.{h,cpp}` (activity flag, probe), `sd_diagnostic_logger.{h,cpp}` (bursts), `alpha_runtime.{h,cpp}` (logic time, per-frame split, scenario, `A3C_PERF`, probe service), `main.cpp` (wiring, loop passes), `CMakeLists.txt` (`PROJECT_VER`).
+- Tests / tools: `tests/a3_04c_contention_test.cpp`, `host_tests/a3_04c_contention_runtime_test.cpp`, `host_stubs/batch37_board_capture_stub.cpp` (TFT feed), `tests/ui_debug_menu_test.cpp` (20 rows), `core/CMakeLists.txt`, `tools/a3_04c_mutation_check.py`, `targets/tdeck/a3_04c_audio_flash_footprint.py`.

@@ -1,0 +1,43 @@
+# A3-04C audio per-block flash footprint: C:\Dev\OpenU5-Native\native\targets\tdeck\build-a3-04c\openu5_tdeck.elf
+
+reached (depth <= 3, error/log paths not followed): 54 functions -- FLASH 36, IRAM 18
+
+FLASH functions (instructions, depth from a root):
+      310  d3  openu5::AudioPerfCounters::snapshot(unsigned long long, openu5::AudioPerfSnapshot&) const
+      238  d0  openu5::AudioRingPump::step(openu5::PcmRingSink&, unsigned short, unsigned short)
+      153  d0  tdeck::TdeckAudioBackend::run()
+      128  d2  xQueueGenericSend
+      127  d1  i2s_channel_write
+      109  d2  xQueueSemaphoreTake
+      107  d2  prvAddCurrentTaskToDelayedList
+      106  d3  xTaskPriorityInherit
+       96  d1  xQueueReceive
+       94  d3  vTaskPriorityDisinheritAfterTimeout
+       71  d1  openu5::AudioPerfCounters::on_write(unsigned long, unsigned long, unsigned long, bool, bool)
+       70  d3  xTaskCheckForTimeOut
+       52  d1  tdeck::TdeckAudioBackend::publish_perf()
+       36  d3  vListInsert
+       28  d2  vTaskPlaceOnEventList
+       27  d0  tdeck::TdeckAudioBackend::I2sRingSink::write(short const*)
+       27  d2  openu5::AudioRingPump::perf(openu5::AudioPerfSnapshot&) const
+       27  d3  pvTaskIncrementMutexHeldCount
+       26  d1  vTaskDelay
+       21  d1  openu5::AudioRingPump::sleeping() const
+       21  d2  uxQueueSpacesAvailable
+       19  d1  uxQueueMessagesWaiting
+       18  d1  openu5::AudioRingPump::reset_perf()
+       17  d2  openu5::AudioPerfCounters::reset(unsigned long long)
+       12  d1  openu5::AudioRingPump::fail_silent()
+       12  d3  prvGetDisinheritPriorityAfterTimeout
+       11  d2  openu5::SfxPlayer::flush()
+       11  d3  xTaskGetCurrentTaskHandle
+       11  d3  prvTaskCheckFreeStackSpace
+       11  d3  openu5::SpeakerVoice::release(unsigned long)
+       11  d3  openu5::MusicSongPlayer::stop()
+       11  d3  vTaskInternalSetTimeOutState
+        9  d2  uxTaskGetStackHighWaterMark
+        8  d2  openu5::AudioRingPump::stop_music()
+        7  d1  openu5::SfxPlayer::sync_epoch(unsigned long)
+        6  d1  tdeck::TdeckAudioBackend::clock_us(void*)
+
+total 2048 instructions in flash (~5324 bytes, ~167 32-byte ICache lines of the 16 KB / 512-line cache) -- an upper bound on what one block can fetch through the shared cache

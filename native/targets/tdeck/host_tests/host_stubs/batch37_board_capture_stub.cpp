@@ -21,6 +21,10 @@ uint16_t first_panel_map_pixel = 0;
 tdeck::DeviceDebugScreen last_debug{};
 bool last_debug_valid = false;
 int debug_draws = 0;
+// A3-04C: what the device Board would have measured inside each gameplay
+// frame's TFT write, and how long that write takes on the virtual clock.
+openu5::TftTiming tft_feed{};
+int64_t tft_feed_us = 0;
 void capture_panel(const openu5::GameState &game, tdeck::DevicePartyHighlight highlight) {
     for (int row = 0; row < 6; ++row) {
         const auto &member = game.party.characters[row];
@@ -41,6 +45,12 @@ void batch37_reset_screen() {
     last_debug = {};
     last_debug_valid = false;
     debug_draws = 0;
+    tft_feed = {};
+    tft_feed_us = 0;
+}
+void batch37_set_tft_feed(const openu5::TftTiming &timing, int64_t write_us) {
+    tft_feed = timing;
+    tft_feed_us = write_us;
 }
 const tdeck::DeviceDebugScreen *batch37_last_debug_screen() { return last_debug_valid ? &last_debug : nullptr; }
 int batch37_debug_draw_count() { return debug_draws; }
@@ -88,6 +98,11 @@ esp_err_t Board::show_alpha(const uint16_t *pixels, const openu5::UiSession &, c
     if (debug) {
         last_debug = *debug;
         ++debug_draws;
+    } else {
+        // A3-04C: a gameplay frame's TFT write, as the device Board measures it.
+        tft_timing_ = tft_feed;
+        tft_cpu_mhz_ = tft_feed.cpu_mhz;
+        openu5_host_virtual_clock_us() += tft_feed_us;
     }
     ++ui_draws;
     if(!full_square_viewport)++world_draws;
