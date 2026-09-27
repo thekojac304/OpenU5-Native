@@ -22,6 +22,7 @@
 // T-Deck firmware; production's initialize() is untouched and does not call
 // this method.
 #include "../main/alpha_runtime.h"
+#include "../main/tdeck_board.h"
 #include "openu5/npc_path.h"
 #include <algorithm>
 #include <cstring>
@@ -54,6 +55,12 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     }
 
     transcript_ = new openu5::UiTextBlock[kHostTestTranscriptBlocks]();
+    // A3-04B: the two PSRAM buffers initialize() gives the Developer screen
+    // (its view and the perf report's rows), so a host test can render with
+    // the menu open. Before this, rendering in DebugMenu mode dereferenced a
+    // null debug_view_ on the host.
+    debug_view_ = new DeviceDebugScreen();
+    perf_report_lines_ = new char[openu5::kPerfReportMaxLines][openu5::kPerfReportLineBytes]();
     ui_ = new openu5::UiSession({transcript_, kHostTestTranscriptBlocks}, {this, dispatch_ui}, {11, 12, 63});
 
     context_.actors = &actors_;

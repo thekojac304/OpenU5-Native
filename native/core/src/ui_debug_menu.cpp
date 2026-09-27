@@ -26,9 +26,10 @@ constexpr const char *kRunAllItem = "Run All";
 // channel, so the speaker path and the SFX Volume setting can be checked.
 constexpr const char *kAudioTestItem = "Audio test tone (SFX)";
 // A3-04A: the real-time audio diagnostics, inserted just above it so the test
-// tone stays the last row (the one "Up" from row 0 reaches).
-constexpr const char *kAudioPerfItem = "Audio performance";
-constexpr const char *kAudioStatsItem = "Audio stats (live)";
+// tone stays the last row (the one "Up" from row 0 reaches). A3-04B renamed
+// them: both now also report the game thread's frames and the machine's CPU.
+constexpr const char *kAudioPerfItem = "Audio/render performance";
+constexpr const char *kAudioStatsItem = "Audio/render stats (live)";
 template<size_t N> constexpr size_t countof(const char *const (&)[N]){return N;}
 int64_t clamp_add(int64_t value,int delta,int64_t lo,int64_t hi){
     if(delta>0 && value>=hi)return lo;

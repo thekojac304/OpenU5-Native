@@ -1,6 +1,8 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention)
 
-**Status (A3-04A): A3-04 music on hardware — PLAYBACK FUNCTIONAL — SMOOTHNESS RETEST PENDING.** The A3-04 image played the right songs but extremely stuttery; the cause was a FreeRTOS mutex taken on every synth table read (a function-local static under `-mdisable-hardware-atomics`), fixed in A3-04A together with a per-file `-O2`, a primed/drained DMA ring, boot-time song parsing and on-device performance counters (§18). The retest image exists (§18.17–18.18). Not an Alpha 3 release.
+**Status (A3-04B): MUSIC SMOOTHNESS IMPROVED — RENDER PERFORMANCE RETEST PENDING.** On the A3-04A image music played smoothly but the overworld lagged with music on and was much better at Music Volume 0 %, and the Developer audio benchmark showed no results. A3-04B (§19): the synth — which at 0 % does not run at all — executed from flash through the instruction and data caches both cores share, contending with the renderer on the other core; its per-sample path is now bit-exactly ~39 % cheaper per channel and runs from IRAM (proved on the linked image). The benchmark's results, the game thread's frame counters and FreeRTOS per-core/per-task CPU are one report on the Developer screen that stays until dismissed. The retest image exists (§19.15–19.16). Not an Alpha 3 release.
+
+**Status as A3-04A wrote it: A3-04 music on hardware — PLAYBACK FUNCTIONAL — SMOOTHNESS RETEST PENDING.** The A3-04 image played the right songs but extremely stuttery; the cause was a FreeRTOS mutex taken on every synth table read (a function-local static under `-mdisable-hardware-atomics`), fixed in A3-04A together with a per-file `-O2`, a primed/drained DMA ring, boot-time song parsing and on-device performance counters (§18). The retest image exists (§18.17–18.18). Not an Alpha 3 release.
 
 **A3-04 status as it was written:** SOFTWARE COMPLETE, HARDWARE VALIDATION PENDING (music playback from the supported community patch). The device now decodes and plays the Exodus Project *Ultima V Upgrade* 1.0's 16 XMI songs through a from-scratch OPL2 emulator, driven by `AlphaRuntime::sync_music()` at the same boundaries the patch driver itself re-derives its selector (every key poll, load, Ending, Camp). Host-validated end to end against the real patch corpus (67 + 18 = 85 new checks, §17.14) and by mutation (§17.15); the ESP-IDF firmware builds clean. Only the physical loudness/tone balance and an audible confirmation on the T-Deck are pending (§17.17), because the user was away from the device for this batch — A3-03's own hardware retest is carried forward alongside it (§17.17, item K). A3-01 (sections 1–14) is the architecture, §15 is A3-02, §16 is A3-03, and §17 is A3-04.
 
@@ -11,7 +13,7 @@ This document is the audio track's reference. It records what the original does,
 | The user's DOS files | Sound effects | Music | What Settings shows |
 |---|---|---|---|
 | **Stock** (unpatched *Ultima V* DOS) | Supported. The effects are the original's PC-speaker sounds, synthesized from the original's own parameters: 22 since A3-02 (§15.5), 62 of the 73 cue ids since A3-03 (§16). No asset is needed. | **None.** The 1988 game has no music. | `Music Volume: Unavailable`, footer *Stock DOS game files have no music* |
-| **Supported music patch** (Exodus Project *Ultima V Upgrade* 1.0) | The same. | **Enabled** (§17); smooth real-time playback fixed in A3-04A (§18), hardware retest pending. Loudness/tone balance is A3-05. | `Music Volume: 80%`, adjustable |
+| **Supported music patch** (Exodus Project *Ultima V Upgrade* 1.0) | The same. | **Enabled** (§17); smooth real-time playback fixed in A3-04A (§18); its contention with rendering fixed in A3-04B (§19), render retest pending. Loudness/tone balance is A3-05. | `Music Volume: 80%`, adjustable |
 | **Incomplete patch** (some of its files) | The same. | None. It is never guessed. | `Unavailable`, *Music patch files are incomplete* |
 | **Unknown music variant** (another driver or foreign XMI files) | The same. | None. It is never guessed. | `Unavailable`, *Unsupported music patch variant* |
 | No audio pack on the card, or a stale/corrupt one | The same. | None. | `Unavailable`, *No audio pack: npm run pack:audio* or *Audio pack stale or corrupt: rebuild* |
@@ -1541,3 +1543,314 @@ Copy the Launcher image named in tag `alpha3-a3-04a-audio-realtime` as usual; ke
 ### 18.19 Documentation and status
 
 This section; the header and §0 above; `LAUNCHER.md`'s A3-04A row. **A3-04 music hardware status: PLAYBACK FUNCTIONAL — SMOOTHNESS RETEST PENDING** until the user validates the A3-04A image.
+
+## 19. A3-04B — music CPU contention, overworld render lag, and the invisible diagnostic
+
+**Hardware observation that opened this batch** (the A3-04A image, `FW 3.0.0-alpha3-dev-a3-04a-debug`, `Git e48abb8d735b`, Launcher SHA-256 `2ba8bb93…83e7a`, flashed to the T-Deck Plus by the user): the catastrophic stutter is gone and music plays mostly smoothly — **but with music on, the overworld is noticeably slower**: map refreshes lag and there is a tearing-like effect; in a fight with two snakes the audio is "a little staticky". **With Music Volume = 0 % the overworld is MUCH better.** And Developer → Diagnostics → Audio performance runs its 47 s and plays its material, but **no result appears on screen** afterwards.
+
+**Status: MUSIC SMOOTHNESS IMPROVED — RENDER PERFORMANCE RETEST PENDING.** Everything below is software-complete and host-validated; the retest image exists (§19.15). No number in this section is a device measurement: the device numbers are either deterministic host counts or static analysis of the linked image, and say so. The retest's new report (§19.3) measures the real ones — per core and per task.
+
+### 19.1 Baseline (Phase A)
+
+- HEAD `5c6cf905` (A3-04A's post-commit logs); tag `alpha3-a3-04a-audio-realtime` = `e48abb8d`, the image on the device (embedded `Git e48abb8d735b`, 954,848 B, 93,728 B free). Tree clean.
+- Fresh host build and **serial ctest: 134/134 passed in 116.76 s**, the one known w64devkit `stl_uninitialized.h` warning only (`native/core/a3-04b-baseline-{configure,build,ctest}.log`).
+- Read from the source and `sdkconfig`:
+
+| Item | A3-04A |
+|---|---|
+| Audio task | `openu5-audio`, priority 3, **pinned to core 1**, 6,144 B stack; created on the first sound by `ensure_started()` (game thread) |
+| Game / render task | ESP-IDF's `main` task (`app_main`'s loop), priority 1, **pinned to core 0** (`CONFIG_ESP_MAIN_TASK_AFFINITY_CPU0`), 24 KiB stack. Loop: drain input → `handle()` → `render()` → `vTaskDelay(pdMS_TO_TICKS(5))`, which is **0 ticks** at `CONFIG_FREERTOS_HZ=100` (a yield) |
+| Other tasks | `openu5-input` prio 4 core 0; `alpha20-sd-log` idle priority, unpinned; `esp_timer` core 0; IPC per core; `Tmr Svc` unpinned |
+| Music synth | OPL2, 9 channels, **49,716 Hz** chip rate, in `music_synth.cpp` at `-O2 -ffp-contract=off`, executed **from flash** (`0x4202xxxx`) |
+| Output | 16 kHz mono 16-bit I2S; **8 × 128-frame DMA ring (64 ms)**, one block = 8 ms; the I2S EOF interrupt on core 0 |
+| Caches | ICache **16 KB**, DCache 32 KB — **both shared by the two cores**; QIO flash 80 MHz and octal PSRAM 80 MHz behind one MSPI controller |
+| Diagnostic | Developer row → `audio_perf_start` → `AudioBenchmark` ticked in `render()` → `report_audio_perf()` → `ui_->append(System, …)` + `ESP_LOGI` |
+| Music Volume 0 % | `AudioService::sync_music()`: volume 0 ⇒ `stop_music` (§19.6) |
+
+### 19.2 Why the diagnostic's results were invisible (Phase B)
+
+The benchmark ran and its counters were correct; **its results went to the one place the user could not see.** `report_audio_perf()` appended ~21 lines to the gameplay transcript (`UiTextChannel::System`), and:
+
+1. **The Developer screen covers the transcript.** The benchmark is started from Developer → Diagnostics, and the user waits there; that screen draws only its own menu rows and a status line — and the Diagnostics status line kept showing the *smoke test's* `Results: /sd/…` path, which looks like an answer.
+2. **After leaving the menu, the lines had scrolled away.** The transcript panel is 135 px wide — 22 columns at the small text size — and 19 rows tall (fewer at larger sizes). The report's lines are 30–45 characters, so 21 lines wrap to ~50 rows, and only the **last two** (the A3-04 guard price and the heap change) were in view; the measurements themselves were above them, reachable only by paging back with Shift+Up — nothing said so.
+3. Refusals ("no audio output", "already running") went to the same hidden transcript.
+
+Serial `AUDIO_PERF_REPORT` lines were written, but the device retest is done without a serial monitor.
+
+**Fix:** the results are a **report that replaces the Developer screen's rows until it is dismissed** (§19.3). The runtime test proves it through the real `AlphaRuntime` with raw keys and the Developer screen `Board::show_alpha` actually receives (`a3_04b_perf_runtime` D0–D10), and mutation **D1** — A3-04A's reporting re-created in the current code (lines to the transcript, nothing on the Developer screen) — turns those checks RED (§19.13).
+
+### 19.3 The AUDIO / RENDER PERF report (Phases B, P)
+
+Developer (Alt+D) → Diagnostics, the two rows above **Audio test tone (SFX)** (renamed; still 19 rows, the test tone still last):
+
+- **Audio/render performance** — the A3-04A benchmark (Theme, 2 s settle, 30 s music alone, 15 s music + a cue every 100 ms). While it runs, the Diagnostics status line counts: `Audio perf 12/47s music alone: keep still`. When it ends, the report opens.
+- **Audio/render stats (live)** — opens the report for the window **since the last read** (or boot), then starts a new one. This is the control-matrix tool (§19.12).
+
+The report sits on the Developer screen — breadcrumb `Developer > Perf report`, 9 rows per page, position `1-9/32` — **until dismissed**: Up/Down (trackball) scroll a line, PageUp/PageDown a page, **Enter or Back closes it**; leaving the Developer menu dismisses it too. If the benchmark ends while the player has left the menu (walking during it is allowed — that is how to measure render under music), one transcript line says `Perf report ready: Alt+D shows it`, and Alt+D opens it first. Every line also goes to serial / the SD log as `PERF_REPORT …`; the 5 s heartbeat adds `RENDER_PERF …` and `SYS_PERF …` lines.
+
+The benchmark's report (the format exactly as `format_perf_report` writes it; the values are illustrative):
+
+```
+AUDIO/RENDER PERF  benchmark
+-- Music alone (idle): Ultima V Theme --
+window 30.0s  blocks 3750  block 8.0 ms
+render avg 3.21 p99 4.10 max 5.02 ms          <- one 8 ms block: music + SFX + mix
+music avg 3.00 max 4.80  audio CPU 40%          <- the synth alone; render time / window
+missed 1  underrun 2  hw 3  clip 4              <- deadlines, dry writes, DMA replays, saturated samples
+buffered min 56 max 64 ms  sched max 9.1        <- ring fill before each write; delivery interval
+voices max 9  OPL ch avg 8.6 max 9
+SFX 12 (12 w/music) q1 p1  runaway 0
+audio stack min 3120 B  failures 0
+-- Music + cue/100 ms: Ultima V Theme --
+… (the same nine lines)
+-- Render: 250 gameplay frames in 45.0s --
+frame avg 42.1 p95 70.0 p99 80.0
+frame max 120.4 ms  late (>55 ms) 3
+compose avg 12.0 max 30.0  tiles max 20.0
+tft avg 30.2 max 90.1 ms
+cadence avg 118.0 max 400.0 ms
+input 12 shown avg 90.0 max 130.0 ms
+key handling max 20.0 ms  game busy 45%
+-- System --
+CPU0 78%  CPU1 55%  (FreeRTOS run time)
+audio 51% main 70% input 1% sdlog 2%
+other tasks 3% (of one core)
+heap int 123456 (min 98765) B
+heap PSRAM 4567890 (min 4500000) B
+stack free B: main 9870 audio 3120 input 2100
+OPL2 49716 Hz -> 16000 Hz out, ring 8x128
+A3-04 guard 900 ns/read = 12.5 ms/8 ms blk
+```
+
+Every field the batch asked for is on it: render avg/max (and p99), scheduling gap (`sched max` = the longest delivery interval), missed deadlines, underruns (writer) and hardware underruns (the driver's `on_send_q_ovf`), minimum and maximum buffered ms, music voices max, the audio task's CPU (its own render time, and FreeRTOS's per-task figure), the audio stack high-water mark, heap and PSRAM (free and lowest-ever), the synth/output rates, and the new clip count. Formatting is portable and tested (`format_perf_report`, `a3_04b_perf` F1–F3: every field present, every line ≤ 51 characters with every counter at `UINT32_MAX`, "no audio"/"no frames"/"no run-time statistics" said rather than left blank).
+
+### 19.4 Core / task contention map (Phase D)
+
+What runs where, from the source, `sdkconfig` and the linked image:
+
+| | Core 0 | Core 1 |
+|---|---|---|
+| Tasks | `main` (game loop: input handling, composition, rasterizer, TFT writes, logging) prio 1 · `openu5-input` prio 4 · `esp_timer` · IPC0 · IDLE0 | `openu5-audio` prio 3 (pump, OPL2 synth, SFX synth, mix, `i2s_channel_write`) · IPC1 · IDLE1 |
+| Unpinned | `alpha20-sd-log` (idle priority; SD writes on the SPI bus the TFT shares), `Tmr Svc` — they run wherever a core is free | |
+| Interrupts | I2S DMA EOF (125/s, a 256 B clear + queue send, IRAM), SPI (TFT and SD share `SPI2`), the keyboard task's I2C transactions, systick | systick, cross-core yield |
+| Blocking | TFT: one `spi_device_transmit` per row, `vTaskDelay(1)` (10 ms) every 16 rows; waits for the shared SPI bus while the SD writer holds it | the audio task blocks in `i2s_channel_write` whenever the ring is full |
+
+**What the audio task does NOT do to core 0:** it takes no lock the game thread takes (the perf window is a spinlock copy every 128 ms), allocates nothing, logs nothing, and never waits for the game thread; the game thread only posts zero-timeout queue messages. It cannot preempt the game loop — they are pinned to different cores. **The one thing both cores share is the memory system**: the 16 KB instruction cache, the 32 KB data cache and the MSPI bus behind them (flash and PSRAM). In A3-04A the synth — about half of core 1, continuously, whenever music plays (§19.7) — executed from flash through that shared ICache and read constant tables through the shared DCache, while the renderer on core 0 executes its own large code path from flash and streams the 62 KB viewport and the tile cache through PSRAM. Each core's cache misses evict the other's lines and queue on the same bus. **At Music Volume 0 % the synth does not run at all** (§19.6): the renderer had the caches and the bus to itself — the user's "much better". That is the mechanism this batch fixes (§19.8); it also explains the combat "static" as the other direction of the same coupling (§19.10).
+
+Ruled out or bounded from the source: raw CPU on core 0 (the audio task never runs there); task priority (different cores; the audio task sleeps in the write — §19.9); the I2S interrupt (125/s, a few µs each on core 0, unchanged since A3-02 whose SFX did not slow rendering); audio-held locks (none shared). The SD-log writer is the one unpinned task that could be pushed around by the audio task's core-1 bursts while it holds the shared SPI bus; the report's per-task CPU (`sdlog %`) and `tft max` measure whether it matters.
+
+### 19.5 Render instrumentation (Phase E)
+
+`openu5::RenderPerfCounters` (`perf_report.{h,cpp}`, portable, host-tested — `a3_04b_perf` R1–R5), owned by the game thread; no logging in the hot path (the heartbeat and the report read a snapshot):
+
+- **frame**: every drawn *gameplay* frame (world, combat, dungeon, scenes — not the Developer screen): total, **avg / max / p95 / p99** (2 ms histogram, up to 200 ms), and **late frames** — longer than 55 ms, one tick of the original's 18.2 Hz animation clock;
+- **compose** (presentation + rasterizer + post-processing) and **tiles** (the rasterizer alone) avg/max; **tft** (`Board::show_alpha`: panels + SPI, bus waits included) avg/max;
+- **cadence**: the interval between drawn frames, avg/max;
+- **input**: each input's handling time (`handle()` wraps it), and **input → screen latency** — from the key's capture timestamp to the end of the first gameplay frame drawn after it (`shown avg/max`);
+- **game busy**: frame + input-handling time over the window (a lower bound on the game task's CPU; the report's FreeRTOS `main %` is the true figure).
+
+`a3_04b_perf_runtime` R1/R2 prove it through the real runtime: twelve steps are twelve inputs, each shown by a later frame; Developer screen redraws are not counted.
+
+**Per-core / per-task CPU** — `tdeck::SystemPerf` (`system_perf.{h,cpp}`, device-only): the FreeRTOS run-time statistics, newly enabled in `sdkconfig.defaults` (`CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS`, 64-bit counters, esp_timer clock — one timer read per context switch). A window's CPU*n* = 1 − IDLE*n*'s share; the audio, main, input and SD-log tasks are found by name, so the audio task (created with the first sound) counts from zero. Heap and PSRAM free/lowest-ever and the three stacks' high-water marks come with it. `uxTaskGetSystemState` runs only for the report and the 5 s heartbeat.
+
+### 19.6 Music Volume 0 % (Phases C, N)
+
+**What A3-04A does at 0 %: option D — stop.** `AudioService::sync_music()` wants `MusicSong::None` when the volume is 0, so the backend receives `stop_music`, the pump stops the player, and — with no cue pending — drains one ring of silence and **turns the channel off**. The synth runs for **no block**: zero OPL work, zero resampling, and the audio task sleeps on its queue. It was never option A (synthesize, then multiply by zero). This is exactly why the user saw "0 % = much faster": at 0 % the only core-1 load that competes for the shared memory system is gone.
+
+The context is kept (`current_music_context()`); raising the volume above 0 **restarts the context's song from its first bar**. Decision (deliberate, kept): *restart*, not *resume*. A pause at the exact position would keep a stopped player's voices, chip and sequencer state around (and ring buffers full of stale samples), and would need a replay-to-position to be exact after a context change; the patch's own driver restarts songs on every selector change, so a restart is what an unmuted context sounds like there too. A context that changes while muted is simply the song that starts on unmute. Nothing here changes: A3-04B only pins the behaviour.
+
+Tests (`a3_04b_perf` Z0–Z6, through `AudioService` and the production pump): 80 % → the synth runs every block; 0 % → `stop_music`, no synth block, the pump drains ≤ 9 blocks and sleeps, context kept; back to 80 % → the first 40 blocks equal a fresh start bit for bit; contexts changed while muted touch nothing and the unmute plays the *current* context (Halls of Doom); a load while muted flushes SFX and starts nothing; a cue while muted is heard and the synth still runs for no block.
+
+### 19.7 The OPL hot path (Phases G, H, I) — measured, then made cheaper, bit for bit
+
+**Profile (static, from the linked images; host counts on the real corpus):**
+
+- Per chip sample the synth visits every channel with an operator not Off. On the corpus that is **8.14 channels / 15.14 operators on average** (60 s of every song; Theme 8.61). Each sounding channel steps two envelopes, two phase accumulators, two waveform+exp lookups, feedback and the mix — at 49,716 Hz.
+- **A3-04A's per-sounding-channel path: ~254 Xtensa instructions**, including four out-of-line calls (`advance_envelope` ×2, `Operator::sample` ×2) and two **64-bit** phase-increment computations (`int64` shift + multiply, ~20 instructions each on the ESP32-S3), plus an out-of-line `advance_clocks` per sample. At ~1.2 cycles per instruction that is **~305 cycles per channel per chip sample ≈ 54 % of core 1 for the Theme — before any flash-cache miss**, all of it fetched through the shared ICache.
+- **Silent work** (Phase H): operators whose static attenuation already makes the output exactly 0 (`expo()` of anything ≥ 3072 is 0 — the exp ROM's largest entry + 2048 < 4096) are only **6.8 %** of the operators computed; channels with both operators silent 4.2 %; carrier silent 20.3 % (its modulator still runs: the feedback history needs it). A silent fast path alone is a small win — the cost is the per-operator work itself.
+- **Resampler** (Phase I): per output sample A3-04A called `std::floor` and `std::lround` (libm, **in flash**) on software doubles, plus four ROM soft-double operations; per block a `std::ceil`. A few percent of core 1 — kept at 49,716 → 16,000 Hz: **neither rate was lowered**.
+- **Worst-case track**: the Theme (most sounding channels, densest events), the benchmark's song; lightest: Halls of Doom (4.38 channels). Time per output block and per sample are what the report's `music avg/max` measures on the device.
+
+**The changes (`music_synth.cpp`) — every one bit-exact:**
+
+| Change | Why it is exact |
+|---|---|
+| Phase step in 32-bit, not `int64` | fnum ≤ 1023 + 2·3 after vibrato, block ≤ 7, multiplier ≤ 30: the product stays below 2²² |
+| Phase step **cached per operator**, re-derived when F-number/block/multiplier/vibrato change (`refresh_channel`, `refresh_vibrato` — the latter on the vibrato clock, before that sample's step) | the same function of the same inputs, computed at the moment an input changes instead of every sample |
+| Envelope early-outs **inline**: `env_rate` / `env_mask` cached per operator (state, rate registers, key code); `envelope_step()` is A3-04A's body past its early-outs, and re-derives the cache when the state changes | A3-04A returned at the same two tests; the rate of the next sample is the new state's, as before |
+| Silent floor: `(eg_level << 3) + (tl << 5) + ksl ≥ 3072` → 0 without the waveform/exp lookups (the phase still advances) | waveform attenuation and tremolo are never negative, and `expo(≥ 3072) = 0` (G7) |
+| OPL2 **mono bus**: the right half is not generated; the mix-down takes the left half | OPL2 has every channel on both sides, and `(x + x) * 0.5f == x` exactly |
+| `std::floor(read_pos)` → `size_t(read_pos)`; `std::ceil` → an exact integer ceil; `std::lround(double(v) * 32767.0)` → an integer round of v's significand | `read_pos` is never negative; `double(v) * 32767` is exact (24 + 15 bits), so lround is a round-half-up of the magnitude (G8: 16 M random floats + every half-way point; `--exhaustive`: every float in [−1, 1]) |
+| `wave_atten`, `expo`, `Operator::sample`, `advance_clocks` forced inline (`OPENU5_SYNTH_INLINE`); `wave_atten` an if-chain, not a switch | code generation only |
+| `kEgInc`, `kMult2`, `kVibratoSteps` copied into the RAM tables object | same values (§19.8) |
+
+**Result: ~155 instructions per sounding channel per chip sample (−39 %), no call on the common path, all from IRAM** (`generate()` is one 483-instruction IRAM function). At the same 1.2 CPI: ~186 cycles ⇒ **~33 % of core 1 for the Theme** (static estimate; host relative timing of the whole corpus: −43 %, 1.551 s → 0.882 s for 320 s of audio — a direction, not ESP32 truth).
+
+Per 8 ms output block for the Theme (8.6 sounding channels × ~398 chip samples, + ~0.3 ms resampler/SFX/mix), static: **A3-04A ≈ 4.7 ms** (≈ 37 µs per output sample) → **A3-04B ≈ 2.9 ms** (≈ 23 µs per output sample). Voice allocation and the sequencer run per MIDI event (≤ 69 per block on the Theme's densest bar), not per sample. The device's `music avg/max` replaces these estimates.
+
+**Bit-exactness proof** (`a3_04b_perf` G1–G9; the fingerprints were computed from the A3-04A synth *before any change* — `tests/a3_04b_synth_goldens.h`, `tools/a3_04b_golden_printer.cpp`, `native/core/a3-04b-goldens-from-a3-04a.log`):
+
+| | Fingerprint |
+|---|---|
+| G1 A3-04's L6 corpus (every song, 256-frame, unity) | `6a7ff3d5727df2c6` (= A3-04A's documented value) |
+| G2 device geometry: every song looping 30 s, 128-frame blocks, 16 kHz, 80 % | `52875b74637a7da9` |
+| G3 the corpus through OPL3 (stereo bus) | `4116e61779750372` |
+| G4 44.1 kHz / 22.05 kHz / 96-frame blocks | `51b361b865686794` |
+| G5 OPL2 chip, 6,000 rounds of random register writes (every cached input changed mid-note) | `e35cff74c7f0587b` |
+| G6 OPL3 chip, the same, both arrays, all 8 waveforms | `df50a8ed1111170a` |
+
+All unchanged. Mutations S1–S10 (a missed cache refresh, the floor off by one, the mono path on OPL3, the rounding half-down, a truncated phase step…) each turn them RED (§19.13).
+
+### 19.8 The fix for the cross-core coupling: the per-sample audio path in IRAM
+
+`native/targets/tdeck/main/audio_iram.lf` (registered with `LDFRAGMENTS`) places, symbol by symbol, **every function executed per chip sample or per output sample** — the chip (`generate`, the envelope step, the vibrato refresh), the resampler (`MusicSongPlayer::render`, `fill_chip`), the SFX voice (`SfxPlayer::render`, `SpeakerVoice::render`/`fine_level`/`begin_*`, the PIT/noise/rumble helpers), `apply_gain_q15`, the mix (`render_block`) and its per-block counters — in **IRAM (`noflash`)**. Their constant tables live in the RAM tables object; `music_synth.cpp`, `sfx_synth.cpp` and `audio_stream.cpp` are built with **`-fno-jump-tables`** (a switch table would sit in flash `.rodata`). Only the per-MIDI-event voice allocator (`dispatch`), the per-cue start (`start_next`) and the chip buffer's one-time sizing stay in flash.
+
+So while music plays, **core 1 no longer fetches instructions or constants through the caches core 0 renders with.** The audio task's remaining memory traffic is internal SRAM (chip state, tables, the 1.6 KB chip buffer, the DMA ring) plus a few PSRAM reads of the song's event list per block.
+
+**Proof on the linked image** — `native/targets/tdeck/a3_04b_iram_check.py` walks the call graph from `AudioRingPump::render_block` (direct `call8` targets *and* the `l32r`+`callx` long calls an IRAM function needs to reach flash) and checks every function's address and every literal it loads:
+
+- **RED on the A3-04A ELF** (`a3-04b-iram-a3-04a-image.log`): 25 flash functions on the path — `generate`, `sample`, `advance_envelope`, `render`, `fill_chip`, the whole SFX voice — plus `floor`, `ceil`, `lround` (libm, flash).
+- **GREEN on the A3-04B ELF** (`a3-04b-iram-a3-04b-image.log`): 24 functions reached, all IRAM or ROM except the three by-design flash ones; no flash `.rodata` read. (An intermediate build was RED on eight small leaves and on `kVibratoSteps`/`kMult2` in `.rodata` — `a3-04b-iram-intermediate-image.log`; that is how they were found.)
+- A3-04A's own rule still holds: `a3_04a_hotpath_check.py` finds no guard, lock, allocation, log or delay from `generate()` (`a3-04b-hotpath-a3-04a-rule.log`).
+
+Cost: IRAM `.iram0.text` +5,692 B (the audio path plus FreeRTOS's run-time-stats code); the internal heap starts 7,472 B later (IRAM + `.bss` +1,456 B). The report's `heap int` / `min` show the headroom on the device.
+
+**Not changed, and why:** the cache sizes (16 KB ICache / 32 KB DCache — a global trade of internal RAM; if frames are still slow with music *and* muted alike, that is the renderer's own cost, a separate question the report now answers); the SPI clock; the renderer (the batch forbids reducing it).
+
+### 19.9 Producer and ring scheduling (Phases J, K, L)
+
+**Audit (Phase L): the producer renders only when a DMA slot is needed.** Every `step()` renders one block and hands it to `i2s_channel_write`, which returns only when the DMA has finished a descriptor; with the ring full, the task sleeps there. It never renders ahead of the ring and never spins (A3-04A's runaway guard yields if writes stop blocking). **The high-water mark is the full ring; the low-water mark is one free descriptor.** Its CPU is therefore exactly the synth's cost × real time — the model's M1 proves it (2,500 blocks rendered in 19.95 s of ring time: exactly what the DMA consumed) and M2 that with music muted core 1 is ~idle between cues. A sleep "when render-ahead is healthy" would only empty descriptors the DMA is about to play.
+
+**Phase J — a larger music render-ahead (a PSRAM/SRAM PCM ring in front of the DMA): assessed, not implemented.** Core 1 has no other work to give time to — the audio task already sleeps whenever the ring is full — and the cross-core coupling scales with the synth's *total* memory traffic, not its burstiness; bursts would not reduce it (and IRAM placement removes it). It would add latency to every volume change, song switch and load/title flush (or a flush path to discard pre-rendered music), and a PSRAM ring would *add* traffic on the shared bus. The 64 ms ring already rides out a single ~59 ms stall (A3-04A R6).
+
+**Phase K — priority / affinity: unchanged, deliberately.** The audio task is alone on core 1 at priority 3; lowering it gives time only to IDLE1 and the unpinned SD writer, and cannot help core 0. Moving the I2S interrupt to core 1 (bringing the channel up on the audio task) would move 125 short ISRs/s off core 0 — kept as a lever if the retest's `tft max`/`frame max` still differ between music on and muted with everything else equal.
+
+### 19.10 Combat "static" (Phase M)
+
+A **mix-saturation counter** now counts every sample the music + SFX sum clamps (`clip` in the report; `AudioPerfSnapshot::mix_clipped`, per block and per window). Host evidence on the real corpus (`a3_04b_perf` C1–C3):
+
+- The loudest song at unity peaks at **25,240** (Lord Blackthorn; the combat song Engagement and Melee: 9,697), the loudest cue at **15,688** (the shop's; the combat hits far less). At the **default volumes (80 % / 80 %) the largest possible sum is 26,191 < 32,768: no song under any cue can saturate.** A fight (the combat song under a heavy hit every 104 ms) never saturates even at 100 % / 100 % (peak 12,328).
+- The counter itself is proved against an independent sum: the loudest song under the loudest cue at 100 %/100 % clips 3 samples, and the pump counts exactly those 3.
+
+So the combat static is **not clipping**. The remaining candidates are underruns (the synth slowed by cache contention exactly when combat rendering is busiest — the §19.4 coupling in the other direction; the report's `missed`/`underrun`/`hw` counters) and the combat cues' own character (a noise burst *is* noise). IRAM placement removes the contention; if the retest still hears static with `underrun 0 hw 0 clip 0`, it is the cue's timbre — A3-05's tonal pass, not a defect.
+
+### 19.11 Host performance model (Phase O)
+
+`a3_04b_perf` M1–M4 — the production pump against A3-04A's ESP-IDF descriptor-ring model (now shared as `tests/a3_04a_virtual_i2s_ring.h`), with a per-block cost from the static synth costs above (sounding channels × chip samples × cycles, + fixed per-block work; desktop time is never used):
+
+- **M1** the producer renders exactly what the DMA consumes, never ahead; the audio task's CPU is the synth's cost and nothing more (**33 %** of core 1 for the Theme at the A3-04B cost; 54 % at A3-04A's).
+- **M2** music muted: the synth runs for no block; core 1 ~idle between cues (31 ‰).
+- **M3** contention headroom: cost inflation in random bursts on 30 % of blocks (a busy renderer's cache pressure), swept until the speaker runs dry — **A3-04A tolerates 2.95×, A3-04B 5.35×** (≥ 1.5× the ratio of A3-04A's, as the synth-cost ratio 305/186 predicts). This is the model's statement of the combat-static hypothesis: A3-04A had little margin when the renderer pressed on the shared caches.
+- **M4** a cue submitted while music plays is heard within the ring + one block (64 ms ≤ 72 ms) at the new cost.
+
+The model does not claim the size of the cross-core coupling — that constant is unmeasured, and IRAM placement removes it by construction (§19.8). The retest measures it: frame times with music on vs. muted.
+
+### 19.12 Control matrix (Phase F) — how the retest measures it
+
+Each case: Developer → Diagnostics → **Audio/render stats (live)** once (dismiss it: that starts a clean window), do the activity for ~20 s, then read **Audio/render stats (live)** again and photograph the report pages.
+
+| Case | Setup | What separates the hypotheses |
+|---|---|---|
+| 1 | Music Volume 0 % (capability present), walk | the reference: synth off; `CPU1` ≈ SFX only |
+| 2 | Music > 0, title music, idle | audio CPU alone |
+| 3 | Music > 0, overworld idle | + animation frames |
+| 4 | Music > 0, walking continuously | **frame avg/max, tft max, late, input max vs case 1** — equal ⇒ contention fixed |
+| 5 | Music + footsteps | + SFX; `clip` |
+| 6 | Music + combat SFX (a fight) | `missed`, `underrun`, `hw`, `clip` — the static |
+| 7 | No music at all (remove `openu5-audio.bin`, or stock files) | same as case 1 for the synth; SFX-only baseline |
+
+A3-04A cannot be measured this way (its report never appeared); the user's own "0 % much better" is the A3-04A datum.
+
+### 19.13 RED / GREEN and mutations (Phases Q, T)
+
+**RED first** — none of these is "looks laggy":
+
+1. **Diagnostic invisible**: mutation **D1** re-creates A3-04A's reporting inside the current code (lines appended to the gameplay transcript; the Developer screen shows none): the runtime test goes RED (D2 "the report replaces the rows", D4, D7, D9 …) — the reported defect, reproduced through raw keys and the real Developer screen.
+2. **Per-sample audio path on the shared flash cache**: `a3_04b_iram_check.py` **RED on the A3-04A image**, GREEN on A3-04B's (§19.8).
+3. **Synth cost**: A3-04A's per-channel path had four out-of-line calls and two 64-bit multiplies per chip sample (listing, §19.7); the source scan I4 (no phase-step computation, no 64-bit value, no library call in `generate()`) is RED on A3-04A's source.
+4. **Music Volume 0 % still synthesizing**: *not* RED on A3-04A — it already stopped (§19.6); mutation Z1 (volume 0 keeps the song at zero gain) proves the tests would see it.
+5. **Mixer clipping**: A3-04A had no counter; C1 now proves one against an oracle, and C3 proves the defaults cannot clip.
+
+**Mutations** — `native/core/tools/a3_04b_mutation_check.py` → `native/core/a3-04b-mutation.log`. A mutation that does not build is *invalid*, not killed: every kill below is a failing check.
+
+| # | Mutation | Killed by |
+|---|---|---|
+| S1 | the envelope cache is not refreshed after an attack/decay rate write (0x60) | `perf` G5, G6 (2 RED) |
+| S2 | the envelope cache is not refreshed when the envelope changes state | `perf` G1, G2, G3, G4, G5 … (8 RED) |
+| S3 | a vibrato step does not refresh the vibrato operators' phase step | `perf` G1, G2, G3, G4, G5 … (6 RED) |
+| S4 | a vibrato-depth write (0xBD) does not refresh the phase steps | `perf` G5, G6 (2 RED) |
+| S5 | the silent floor one below the exp ROM's real limit (3071) | `perf` G7 (1 RED) |
+| S6 | total level / key scaling not refreshed on a 0x40 write | `perf` G5, G6 (2 RED) |
+| S7 | the mono shortcut taken for the OPL3 chip too (its stereo bus mixed as left only) | `perf` G3 (1 RED) |
+| S8 | the integer rounding rounds half down | `perf` G8 (1 RED) |
+| S9 | the exact ceil returns the floor | `perf` G1, G2, G3, G4, G9 … (8 RED); `stream` R5, R7 … (7 RED) |
+| S10 | the phase step truncated to 16 bits | `perf` G1, G2, G3, G4, G5 … (6 RED) |
+| Z1 | muted music is still fully rendered (volume 0 keeps the song, at zero gain) | `perf` Z1, Z2, Z3, Z4, Z5 … (7 RED) |
+| Z2 | a restart keeps the old song's buffered chip samples | `perf` Z2 (1 RED); `stream` R10 (1 RED) |
+| Z3 | SFX starve while the music is muted (pending cues no longer wake the pump) | `perf` Z5 (1 RED); `stream` R3 (1 RED) (re-run, after Z5/M1 were strengthened) |
+| K1 | the producer renders ahead of the ring (two renders per write) | `perf` M1 (1 RED); `stream` R17, R10 (2 RED) (re-run, after Z5/M1 were strengthened) |
+| K2 | the producer never yields (the runaway guard never fires) | `stream` R9 (1 RED) |
+| K3 | the ring is primed with one block instead of all of it (no render-ahead high water) | `stream` R1, R4 (2 RED) |
+| C1 | the clipping counter disabled | `perf` C1 (1 RED) |
+| C2 | the clipping counter counts only the positive limit | `perf` C1 (1 RED) |
+| R1 | render stats never update (no frame is counted) | `runtime` R1 (1 RED) |
+| R2 | a frame exactly one animation tick long counts as late | `perf` R1 (1 RED) |
+| R3 | an input is never marked shown | `runtime` R1 (1 RED) |
+| R4 | Developer screen redraws counted as gameplay frames | `runtime` R2, D9 … (3 RED) |
+| R5 | the frame percentile reports the bucket's lower edge | `perf` R2 (1 RED) |
+| D1 | A3-04A's reporting: the lines go to the gameplay transcript, the Developer screen shows none | `runtime` D2, D3, D4 … (11 RED) |
+| D2 | the diagnostic results discarded (the report is built and never shown) | `runtime` D2, D3, D4 … (8 RED) |
+| D3 | the report does not stay: any key dismisses it (no scrolling) | `runtime` D4 … (2 RED) |
+| D4 | a report finished with the menu closed is dropped | `runtime` D7 … (2 RED) |
+| D5 | the benchmark shows no progress on the Developer screen | `runtime` D1 (1 RED) |
+| D6 | the report loses its render section | `perf` F1, F3 (2 RED); `runtime` D4, D9 (2 RED) |
+| D7 | the live read does not start a new window | `runtime` D9 (1 RED) |
+| I1 | generate() left out of the IRAM fragment | `perf` I1 (1 RED) |
+| I2 | jump tables allowed again in the IRAM synth file | `perf` I2 (1 RED) |
+| I3 | FreeRTOS run-time statistics dropped from the firmware configuration | `perf` I3 (1 RED) |
+
+**33 mutations, 33 killed by a failing check, 0 survived, 0 invalid** (`a3-04b-mutation.log`, one clean pass on the final production code; restored build and all four tests GREEN afterwards). History, kept: a first pass (`a3-04b-mutation-pass1.log`) had three INVALID entries — S2's replacement left a parameter unused under `-Werror` (the mutation was fixed), S3/S4 hit a transient `ld returned 1` relinking an `.exe` — re-run clean in `a3-04b-mutation-pass1-rerun.log`. Reading which check killed what then showed two of this batch's own checks weaker than their labels: Z5 played its cue before the pump had gone to sleep (Z3 was caught only by A3-04A's R3) and M1 counted loop steps, not renders (K1 was caught only by A3-04A's R10/R17). Both were strengthened (Z5 drains to sleep first; M1 counts `render_block` calls) and Z3/K1 re-run (`a3-04b-mutation-rerun.log`): each is now killed by its own check.
+
+### 19.14 Timing, gameplay and audio regression (Phases R, S)
+
+The game thread's only changes are the counters (a few timer reads per frame and per input), the report view (Developer-menu only), and the renamed rows; nothing reads game state or a game clock differently, and nothing in the audio path changed its output (§19.7). **Full suite: **136/136 passed, serial, 126.08 s** (`native/core/a3-04b-final-ctest.log`; the first full run, before the Z5/M1 strengthening, was also 136/136 in 125.16 s, `a3-04b-ctest-pass1.log`)** — A3-04A's 134 plus `a3_04b_perf` (38 checks) and `a3_04b_perf_runtime` (21). All existing timing proofs pass unchanged: Camp, Blackthorn, Refuge, quake, shrine and combat-victory timelines under the none/synth/muted/broken/stalled/racing backends (`a3_01_audio_runtime` T19–T21, `a3_02_sfx_runtime`, `a3_03_sfx_runtime`), `batch51_*` pacing, `batch53a_ending_terminal`, persistence (`batch24`–`batch28`); and `a3_04b_perf_runtime` T1 walks with the counters, a live read and the report in between and ends in exactly the same game state.
+
+Audio regression, all green: music contexts and switches, loops, Camp, Ending, volume, stock no-music, unknown patch (`a3_04_music_runtime`, A3-01 P/S-series); SFX overlay and independent volumes (A3-04A R12, R17); mute/unmute and load while muted (Z-series); load/Return-to-Title flush (A3-04A R15, A3-02 M4/M5); combat transitions (`a3_03_sfx_runtime`); the whole A3-04A stream suite (58/58) against the new synth.
+
+### 19.15 Firmware (Phase U)
+
+Fresh ESP-IDF 6.1 build, `native/targets/tdeck/build-a3-04b` (`a3-04b-firmware-configure.log`, `-build.log`; incremental rebuilds `-build-pass2.log`, `-build-pass3.log` after the IRAM check found the leaves). **Built clean on the first attempt; zero project warnings.**
+
+- **Size: `0xeb210` = 963,088 B, +8,240 B** vs A3-04A's 954,848 B; **`0x14df0` = 85,488 B (8 %) free** in the 1 MiB app partition.
+- **Static RAM:** `.iram0.text` 70,323 → 76,015 B (**+5,692 B**: the audio per-sample path + FreeRTOS run-time statistics); `.dram0.bss` 49,824 → 51,280 B (+1,456 B: render counters, the benchmark's saved window, system-perf state); `.dram0.data` +128 B. The internal heap starts 7,472 B later.
+- **PSRAM:** + the report's rows (48 × 52 = 2,496 B) and the task table (24 × `TaskStatus_t`); the song library unchanged (~172 KB).
+- **Buffers:** DMA ring unchanged — **8 × 128 frames = 2,048 B, 64 ms**; **high water = the full ring** (the write blocks), **low water = one free descriptor** (the write returns and the next block renders).
+- **Tasks:** audio `openu5-audio` prio 3 core 1, 6,144 B stack (unchanged); game `main` prio 1 core 0; input prio 4 core 0.
+- **Configuration:** `CONFIG_FREERTOS_USE_TRACE_FACILITY`, `CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS`, `…_RUN_TIME_COUNTER_TYPE_U64`, `…_RUN_TIME_STATS_USING_ESP_TIMER` (in the tracked `sdkconfig.defaults`; the ignored local `sdkconfig` had them explicitly off and was switched on).
+- **Image checks:** `a3_04b_iram_check.py` GREEN; `a3_04a_hotpath_check.py` GREEN.
+- Not flashed. The post-commit image (a fresh directory, `--no-ccache`) is the one the annotated tag names, with its SHA-256 and embedded `Git`.
+
+### 19.16 Hardware retest (Phase V)
+
+Copy the Launcher image named in tag `alpha3-a3-04b-render-contention` as usual; keep the existing `openu5-audio.bin` (no regeneration). The identity screen reads `FW 3.0.0-alpha3-dev-a3-04b-debug`.
+
+1. **Music on, overworld idle ~20 s.** Then Developer → Diagnostics → *Audio/render stats (live)* → dismiss (Enter) — a clean window starts.
+2. **Walk continuously ~20 s.** Read *Audio/render stats (live)*; photograph its pages (Down scrolls).
+3. **Fight 2–3 enemies** a few rounds. Read and photograph again. Is there static?
+4. **Compare map smoothness** (steps 2–3) with A3-04A's memory of it.
+5. **Set Music Volume 0 %, repeat the walk** (~20 s) and read/photograph again — the reference.
+6. **Restore Music Volume.**
+7. Developer → Diagnostics → **Audio/render performance**; wait ~47 s (or walk during it and press Alt+D when the transcript says the report is ready).
+8. **Send a photo of every page of the report** (Down to scroll; Enter/Back closes it).
+
+**Pass:** no obvious overworld slowdown or tearing relative to the muted walk (frame avg/max and `tft max` close between steps 2 and 5); music smooth; no recurring static; `underrun`/`hw` 0 or near 0; `late` near zero; input responsive (`input … max` similar with music on and off). **Do not** start loudness/tone tuning — that is A3-05.
+
+### 19.17 Findings
+
+- **F-1 (fixed):** the Developer audio diagnostic's results were printed only to the gameplay transcript, hidden by the Developer screen and wrapped out of view (§19.2).
+- **F-2 (fixed, retest pending):** the music synth executed from flash through the instruction and data caches both cores share; the renderer on core 0 and the synth on core 1 slowed each other (§19.4, §19.8).
+- **F-3 (found, not fixed — out of scope):** `MusicSongPlayer::render` under-fills its chip buffer at output ratios above ~3 (below ~16.6 kHz, e.g. 11,025 Hz): `needed = ceil(1 + ratio·(frames−1)) + 2` can fall below `ratio·frames + 1`, the unconsumed fraction accumulates in `read_pos_`, and after a few hundred calls the interpolation reads past the buffer. **The device never reaches it**: at 16 kHz and 128 frames `needed − ratio·frames = 0.27 ≥ 0` for every starting fraction, and the golden G2 runs that geometry. Present since A3-04; host-only rates. Queued for a later audio batch.
+
+### 19.18 Documentation and status
+
+This section; the header and §0 above; `LAUNCHER.md`'s A3-04B row. **A3-04 music hardware status: MUSIC SMOOTHNESS IMPROVED — RENDER PERFORMANCE RETEST PENDING** until the user validates the A3-04B image.

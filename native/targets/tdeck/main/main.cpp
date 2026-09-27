@@ -23,6 +23,7 @@
 #include "asset_pack.h"
 #include "boot_trace.h"
 #include "sd_diagnostic_logger.h"
+#include "system_perf.h"
 #include "tdeck_audio.h"
 #include "tdeck_board.h"
 #include "tdeck_input.h"
@@ -147,6 +148,13 @@ extern "C" void app_main(void) {
                 // A3-04A: the audio task's performance windows, for the Developer
                 // "Audio performance" rows and the heartbeat's AUDIO_PERF line.
                 runtime.attach_audio_perf(&audio_backend);
+            }
+            if(ready){
+                // A3-04B: per-core / per-task CPU (FreeRTOS run-time statistics),
+                // heap and stacks for the Developer perf report and SYS_PERF.
+                static tdeck::SystemPerf system_perf;
+                if(system_perf.begin())runtime.attach_system_perf(&system_perf);
+                else ESP_LOGW(kTag,"SYS_PERF unavailable: no PSRAM for the task table");
             }
             if(!ready)ESP_LOGE(kTag,"Alpha runtime initialization failed: %s",esp_err_to_name(initialized));
         }

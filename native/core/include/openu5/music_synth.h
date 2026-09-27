@@ -109,11 +109,26 @@ class OplEmulator {
     size_t channel_count() const { return channel_count_; }
 
     void write_reg(uint16_t reg, uint8_t value);
-    /** count samples at kOplClockHz into left/right, starting at offset. Never allocates. */
+    /**
+     * count samples at kOplClockHz into left/right, starting at offset. Never
+     * allocates. A3-04B: `right` may be null for an OPL2 chip, whose bus is
+     * mono (every channel is on both sides, so right[i] would equal left[i]);
+     * an OPL3 chip always needs both.
+     */
     void generate(float *left, float *right, size_t count, size_t offset = 0);
     bool is_silent() const;
     /** A3-04A diagnostics: channels with either operator's envelope not Off (the per-sample cost driver). */
     size_t sounding_channels() const;
+
+    /**
+     * A3-04B (ALPHA3_AUDIO.md section 19.7): an operator whose static
+     * attenuation (envelope + total level + key scaling) is at least this
+     * outputs exactly 0 whatever its phase, waveform or tremolo -- the exp
+     * ROM's largest entry plus its implicit 2048 is below 1 << 12, so expo()
+     * of anything >= 12 << 8 shifts it to nothing. The per-sample path skips
+     * the waveform and exp lookups for it (the phase still advances).
+     */
+    static constexpr int32_t kSilentFloor = 12 << 8;
 
   private:
     static constexpr size_t kMaxChannels = 18;
@@ -129,14 +144,27 @@ class OplEmulator {
         int32_t eg_level = 511;
         int32_t ksl_atten = 0;
         int32_t prev1 = 0, prev2 = 0;
+        // A3-04B: values A3-04A derived from the registers on EVERY chip
+        // sample, now derived once whenever one of their inputs changes
+        // (OplEmulator::refresh_channel / refresh_vibrato and
+        // envelope_step's own state changes). Same numbers, same order of
+        // use: the golden fingerprints in tests/a3_04b_synth_goldens.h pin it.
+        uint32_t inc = 0;          // phase_inc(): the per-sample phase step
+        int32_t static_atten = 0;  // (tl << 5) + ksl_atten
+        uint32_t env_mask = 0;     // (1 << shift) - 1 of the current envelope rate
+        uint8_t env_rate = 0;      // the current envelope rate; 0 = the envelope does not move (Off or a zero rate)
+        uint8_t env_shift = 0;
 
         void update_ksl(uint16_t fnum, uint8_t block);
         void key_on();
         void key_off();
         uint8_t rate_for(uint8_t reg, uint8_t key_code) const;
-        void advance_envelope(uint32_t eg_counter, uint8_t key_code);
-        /** Returns the operator's signed magnitude (~-4085..4085); always integer-valued. */
-        int32_t sample(uint32_t phase_inc, int32_t modulation, int32_t tremolo);
+        /** env_rate / env_shift / env_mask from the state, the rate registers and the key code. */
+        void refresh_envelope(uint8_t key_code);
+        /** A3-04A's advance_envelope() past its early-outs: the caller already tested env_rate and env_mask. */
+        void envelope_step(uint32_t eg_counter, uint8_t key_code);
+        /** Advances the phase by `inc`; returns the signed magnitude (~-4085..4085), always integer-valued. */
+        int32_t sample(int32_t modulation, int32_t tremolo);
     };
 
     struct Channel {
@@ -153,6 +181,10 @@ class OplEmulator {
 
     Operator *op(size_t channel, bool carrier);
     uint32_t phase_inc(const Channel &, const Operator &) const;
+    /** A3-04B: re-derive both operators' cached values after any write that touched the channel. */
+    void refresh_channel(Channel &);
+    /** A3-04B: re-derive the phase step of every vibrato operator (the vibrato position or depth changed). */
+    void refresh_vibrato();
     void advance_clocks();
     int32_t tremolo_atten() const;
 
@@ -290,6 +322,9 @@ namespace test_only {
 uint16_t opl_log_sin(int index);
 uint16_t opl_exp(int index);
 int32_t opl_expo(int32_t att);
+// A3-04B: the resampler's exact integer stand-ins for std::lround / std::ceil.
+int32_t opl_round_q15(float v);
+size_t opl_ceil_positive(double x);
 } // namespace test_only
 
 // ---------------------------------------------------------------------------
@@ -353,6 +388,10 @@ class MusicSongPlayer {
     double read_pos_ = 0;
     double ratio_ = 1.0; // kOplClockHz / output_rate_hz
     uint32_t last_output_rate_ = 0;
+    // A3-04B: an OPL2 chip's bus is mono, so its right half is never
+    // generated and the mix-down takes the left half as is -- exactly what
+    // A3-04A's (left + right) * 0.5f gave when right == left.
+    bool mono_ = true;
 };
 
 } // namespace openu5

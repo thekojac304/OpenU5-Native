@@ -1,0 +1,16 @@
+# A3-04B mutation validation (2026-09-26 20:50)
+
+Z3 SFX starve while the music is muted (pending cues no longer wake the pump): KILLED
+    perf     exit=1  1 RED
+        RED Z5 SFX are unaffected while muted: a step played to the SLEEPING pump wakes it and is heard; the synth still runs for no block
+    stream   exit=1  1 RED
+        RED R3 the drain plays every real block before the clocks stop (no cut tail)
+K1 the producer renders ahead of the ring (two renders per write): KILLED
+    perf     exit=1  1 RED
+        RED M1 the producer renders exactly what the DMA consumes (4992 renders = one primed ring + 2492 writes, in 19948 ms): it never runs ahead of the ring, it waits in the write
+    stream   exit=1  2 RED
+        RED R17 the oracle: 600 blocks of the Theme + cues equal MusicSongPlayer and SfxPlayer rendered directly and summed -- nothing skipped, repeated, re-gained or replaced
+        RED R10 the block rendered right after a switch is the new song's first block, and the next 90 are exactly a fresh start of it (nothing of the old song leaks through the player)
+
+restored build exit=0; perf exit=0, runtime exit=0, stream exit=0, synth exit=0
+mutations: 2, killed by a failing check: 2, survived or invalid: 0

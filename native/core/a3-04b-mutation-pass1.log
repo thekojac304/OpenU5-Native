@@ -1,0 +1,152 @@
+# A3-04B mutation validation (2026-09-26 20:26)
+
+S1 the envelope cache is not refreshed after an attack/decay rate write (0x60): KILLED
+    perf     exit=1  2 RED
+        RED G5 the OPL2 chip under 6,000 rounds of random register writes (every cached input changed mid-note): 0a45d6f77520516b
+        RED G6 the OPL3 chip under the same, both arrays and all eight waveforms: e34d65ac11c6ab0d
+S2 the envelope cache is not refreshed when the envelope changes state: INVALID (does not build)
+    C:\Dev\TamaPoke\.build-tools\w64devkit\bin\c++.exe -DOPENU5_ENABLE_DEVELOPER_TOOLS=1 -IC:/Dev/OpenU5-Native/native/core/include -O3 -DNDEBUG -Wall -Wextra -Wconversion -Werror -MD -MT CMakeFiles/openu5_core.dir/src/music_synth.cpp.obj -MF CMakeFiles\openu5_core.dir\src\music_synth.cpp.obj.d -o CMakeFiles/openu5_core.dir/src/music_synth.cpp.obj -c C:/Dev/OpenU5-Native/native/core/src/music_synth.cpp
+    C:/Dev/OpenU5-Native/native/core/src/music_synth.cpp:305:72: error: unused parameter 'key_code' [-Werror=unused-parameter]
+    cc1plus.exe: all warnings being treated as errors
+S3 a vibrato step does not refresh the vibrato operators' phase step: INVALID (does not build)
+    collect2.exe: error: ld returned 1 exit status
+S4 a vibrato-depth write (0xBD) does not refresh the phase steps: INVALID (does not build)
+    collect2.exe: error: ld returned 1 exit status
+S5 the silent floor one below the exp ROM's real limit (3071): KILLED
+    perf     exit=1  1 RED
+        RED G7 kSilentFloor = 3072 is exact: exp ROM max 2037 + 2048 < 4096, so expo() is 0 from 3072 up and non-zero just below
+S6 total level / key scaling not refreshed on a 0x40 write: KILLED
+    perf     exit=1  2 RED
+        RED G5 the OPL2 chip under 6,000 rounds of random register writes (every cached input changed mid-note): b92e93c223a3121b
+        RED G6 the OPL3 chip under the same, both arrays and all eight waveforms: 0cf6a2b60c9eed48
+S7 the mono shortcut taken for the OPL3 chip too (its stereo bus mixed as left only): KILLED
+    perf     exit=1  1 RED
+        RED G3 the same corpus through the OPL3 chip (stereo bus): 4ac6b56d73c2b3ae
+S8 the integer rounding rounds half down: KILLED
+    perf     exit=1  1 RED
+        RED G8 round_q15 == std::lround(double(v) * 32767.0) for 16196616 floats (random, every half-way point, edges), 2 differ
+S9 the exact ceil returns the floor: KILLED
+    perf     exit=1  8 RED
+        RED G1 A3-04's own L6 corpus fingerprint is unchanged: a815921de0ab2ea8 (A3-04A documented 6a7ff3d5727df2c6)
+        RED G2 the device's geometry -- every song looping 30 s in 128-frame blocks at 16 kHz, Music 80 %: 7f5a29339011a775
+        RED G3 the same corpus through the OPL3 chip (stereo bus): 1d03977c93cafda0
+        RED G4 other output rates and chunk sizes (44.1 kHz, 22.05 kHz, 96 frames): 6f48ac2fe78aa9bd
+        RED G9 ceil_positive == std::ceil for 2,000,000 positive doubles, whole numbers included
+        RED Z2 Music back to 80 %: the context's song restarts at its first block (restart policy: 40 blocks equal a fresh start, bit for bit)
+    stream   exit=1  7 RED
+        RED R17 the oracle: 600 blocks of the Theme + cues equal MusicSongPlayer and SfxPlayer rendered directly and summed -- nothing skipped, repeated, re-gained or replaced
+        RED R5 a 5 ms stall: no underrun, and the stream is the reference, block for block
+        RED R5 a 10 ms stall: no underrun, and the stream is the reference, block for block
+        RED R5 a 20 ms stall: no underrun, and the stream is the reference, block for block
+        RED R5 a 40 ms stall: no underrun, and the stream is the reference, block for block
+        RED R5 ... and recovers: nothing skipped or repeated, the same blocks in the same order after the gap
+    synth    exit=3221225477  0 RED
+S10 the phase step truncated to 16 bits: KILLED
+    perf     exit=1  6 RED
+        RED G1 A3-04's own L6 corpus fingerprint is unchanged: 2e700d87859835d5 (A3-04A documented 6a7ff3d5727df2c6)
+        RED G2 the device's geometry -- every song looping 30 s in 128-frame blocks at 16 kHz, Music 80 %: 92ac81a8f3d2f8f6
+        RED G3 the same corpus through the OPL3 chip (stereo bus): 65746680e19eb461
+        RED G4 other output rates and chunk sizes (44.1 kHz, 22.05 kHz, 96 frames): 0c5282dda6bb4670
+        RED G5 the OPL2 chip under 6,000 rounds of random register writes (every cached input changed mid-note): 84d1e47d3be01863
+        RED G6 the OPL3 chip under the same, both arrays and all eight waveforms: c9899d770085fa6b
+Z1 muted music is still fully rendered (volume 0 keeps the song, at zero gain): KILLED
+    perf     exit=1  7 RED
+        RED Z1 Music 0 %: stop_music reaches the backend, the synth runs for NO block, and the context is kept
+        RED Z1 ... and with no cue the pump drains one ring of silence and sleeps: 200 blocks after the mute, then nothing (A3-04A's '0 % is much faster')
+        RED Z2 Music back to 80 %: the context's song restarts at its first block (restart policy: 40 blocks equal a fresh start, bit for bit)
+        RED Z3 contexts change while muted without touching the backend (no start, no synth)
+        RED Z4 a load while muted flushes SFX (epoch 1) and starts no music
+        RED Z5 SFX are unaffected while muted: the step is heard, the synth still runs for no block
+Z2 a restart keeps the old song's buffered chip samples: KILLED
+    perf     exit=1  1 RED
+        RED Z2 Music back to 80 %: the context's song restarts at its first block (restart policy: 40 blocks equal a fresh start, bit for bit)
+    stream   exit=1  1 RED
+        RED R10 the block rendered right after a switch is the new song's first block, and the next 90 are exactly a fresh start of it (nothing of the old song leaks through the player)
+Z3 SFX starve while the music is muted (pending cues no longer wake the pump): KILLED
+    stream   exit=1  1 RED
+        RED R3 the drain plays every real block before the clocks stop (no cut tail)
+K1 the producer renders ahead of the ring (two renders per write): KILLED
+    perf     exit=1  1 RED
+        RED Z5 SFX are unaffected while muted: the step is heard, the synth still runs for no block
+    stream   exit=1  2 RED
+        RED R17 the oracle: 600 blocks of the Theme + cues equal MusicSongPlayer and SfxPlayer rendered directly and summed -- nothing skipped, repeated, re-gained or replaced
+        RED R10 the block rendered right after a switch is the new song's first block, and the next 90 are exactly a fresh start of it (nothing of the old song leaks through the player)
+K2 the producer never yields (the runaway guard never fires): KILLED
+    stream   exit=1  1 RED
+        RED R9 ... and the runaway guard yields the core (0 times) instead of starving its idle task
+K3 the ring is primed with one block instead of all of it (no render-ahead high water): KILLED
+    stream   exit=1  2 RED
+        RED R1 every start from silence preloads EVERY descriptor before enabling (2 starts, 2 preloads)
+        RED R4 the ring stays full (fill never below 7 of 8) and the task never needs a runaway yield
+C1 the clipping counter disabled: KILLED
+    perf     exit=1  1 RED
+        RED C1 Music 100 % + SFX 100 %, the loudest song under the loudest cue: the pump counts exactly the saturated samples an independent sum finds (0, peak 34773)
+C2 the clipping counter counts only the positive limit: KILLED
+    perf     exit=1  1 RED
+        RED C1 Music 100 % + SFX 100 %, the loudest song under the loudest cue: the pump counts exactly the saturated samples an independent sum finds (0, peak 34773)
+R1 render stats never update (no frame is counted): KILLED
+    runtime  exit=1  1 RED
+        RED R1 twelve steps: the game thread counted 0 frames and 12 inputs, each shown by a later frame (12)
+R2 a frame exactly one animation tick long counts as late: KILLED
+    perf     exit=1  1 RED
+        RED R1 frames, their average / maximum, compose / tiles / TFT, and late frames (> 55 ms: 45 of them)
+R3 an input is never marked shown: KILLED
+    runtime  exit=1  1 RED
+        RED R1 twelve steps: the game thread counted 13 frames and 12 inputs, each shown by a later frame (0)
+R4 Developer screen redraws counted as gameplay frames: KILLED
+    runtime  exit=1  3 RED
+        RED R2 Developer screen redraws are not gameplay frames (still 19)
+        RED D9 "Audio/render stats (live)" opens the report at once, with the frames just played (-- Render: 13 gameplay frames)
+        RED D9 ... and a new window starts: frames, audio and system all reset
+R5 the frame percentile reports the bucket's lower edge: KILLED
+    perf     exit=1  1 RED
+        RED R2 p95 / p99 = the upper edge of the 2 ms bucket holding rank 95 / 99, never above the maximum
+D1 A3-04A's reporting: the lines go to the gameplay transcript, the Developer screen shows none: KILLED
+    runtime  exit=1  11 RED
+        RED D2 when it ends, the report REPLACES the Developer screen's rows (breadcrumb "Developer > Diagnostics")
+        RED D2 ... with the measurements themselves on the first page:
+        RED D2 ... and says how to scroll and dismiss it (17/19)
+        RED D2 nothing is dumped into the gameplay transcript any more (A3-04A's invisible 21 lines)
+        RED D3 twenty more seconds of frames and it is still there: it stays until dismissed
+        RED D4 Down scrolls one line (18/19)
+D2 the diagnostic results discarded (the report is built and never shown): KILLED
+    runtime  exit=1  8 RED
+        RED D2 when it ends, the report REPLACES the Developer screen's rows (breadcrumb "Developer > Diagnostics")
+        RED D2 ... with the measurements themselves on the first page:
+        RED D2 ... and says how to scroll and dismiss it (17/19)
+        RED D3 twenty more seconds of frames and it is still there: it stays until dismissed
+        RED D4 Down scrolls one line (18/19)
+        RED D4 ... page by page to the last line: the render and system sections, then the guard price (32 lines, stops at 17/19)
+D3 the report does not stay: any key dismisses it (no scrolling): KILLED
+    runtime  exit=1  2 RED
+        RED D4 Down scrolls one line (17/19)
+        RED D4 ... page by page to the last line: the render and system sections, then the guard price (32 lines, stops at 16/19)
+D4 a report finished with the menu closed is dropped: KILLED
+    runtime  exit=1  2 RED
+        RED D7 a benchmark that ends while the player walks leaves ONE transcript line and waits
+        RED D7 ... Alt+D shows it first
+D5 the benchmark shows no progress on the Developer screen: KILLED
+    runtime  exit=1  1 RED
+        RED D1 while it runs the Developer screen shows its progress: "Results: /ultima5/logs/smoke-tests.log"
+D6 the report loses its render section: KILLED
+    perf     exit=1  2 RED
+        RED F1 the report carries every field the device retest reads (render, sched, missed, underrun/hw, buffered min/max, voices, clip, CPU, stacks, heap, PSRAM, rates, frames, TFT, late, input) [frame avg
+        RED F3 no audio, no frames and no run-time statistics are each said, not left blank
+    runtime  exit=1  2 RED
+        RED D4 ... page by page to the last line: the render and system sections, then the guard price (28 lines, stops at 20-28/28)
+        RED D9 "Audio/render stats (live)" opens the report at once, with the frames just played (-- Render: 13 gameplay frames)
+D7 the live read does not start a new window: KILLED
+    runtime  exit=1  1 RED
+        RED D9 ... and a new window starts: frames, audio and system all reset
+I1 generate() left out of the IRAM fragment: KILLED
+    perf     exit=1  1 RED
+        RED I1 the linker fragment puts the per-sample audio path in IRAM (noflash) _ZN6openu511OplEmulator8generateEPfS1_jj
+I2 jump tables allowed again in the IRAM synth file: KILLED
+    perf     exit=1  1 RED
+        RED I2 the component registers the fragment; the IRAM files are built without jump tables (a switch table would live in flash .rodata)
+I3 FreeRTOS run-time statistics dropped from the firmware configuration: KILLED
+    perf     exit=1  1 RED
+        RED I3 the firmware keeps FreeRTOS run-time statistics (64-bit, esp_timer) for the per-core / per-task CPU
+
+restored build exit=0; perf exit=0, runtime exit=0, stream exit=0, synth exit=0
+mutations: 33, killed by a failing check: 30, survived or invalid: 3

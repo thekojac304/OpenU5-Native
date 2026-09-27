@@ -170,6 +170,8 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
         creation_canvas_=static_cast<uint16_t*>(heap_caps_calloc(kCreationPixels,sizeof(uint16_t),kPsram));
         tile_cache_storage_=static_cast<uint8_t*>(heap_caps_malloc(openu5::kCachedTileBytes,kPsram));
         debug_view_=static_cast<DeviceDebugScreen*>(heap_caps_calloc(1,sizeof(DeviceDebugScreen),kPsram));
+        // A3-04B: the Developer perf report's rows (a missing table only means no report).
+        perf_report_lines_=static_cast<char(*)[openu5::kPerfReportLineBytes]>(heap_caps_calloc(openu5::kPerfReportMaxLines,openu5::kPerfReportLineBytes,kPsram));
         ui_mem=heap_caps_malloc(sizeof(openu5::UiSession),kPsram);
         // #324 / R-32. kBlackthornSceneSteps is the worst real turn plus
         // headroom: the capture entry is the longest at 15 events and 50
@@ -1359,6 +1361,20 @@ DeviceDebugScreen AlphaRuntime::debug_screen() const{
     DeviceDebugScreen out{};
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
     if(!debug_)return out;
+    // A3-04B (ALPHA3_AUDIO.md section 19.3): the AUDIO / RENDER PERF report
+    // replaces the menu rows until dismissed -- A3-04A printed its results to
+    // the gameplay transcript, which this screen covers.
+    if(perf_report_open_&&perf_report_lines_){
+        std::snprintf(out.breadcrumb,sizeof(out.breadcrumb),"Developer > Perf report");
+        const size_t rows=std::min(kDebugScreenRows,perf_report_count_-std::min(perf_report_top_,perf_report_count_));
+        std::snprintf(out.position,sizeof(out.position),"%u-%u/%u",unsigned(perf_report_top_+1),
+                      unsigned(perf_report_top_+rows),unsigned(perf_report_count_));
+        out.row_count=rows;
+        out.selected_row=rows; // a report, not a menu: nothing is selected
+        for(size_t i=0;i<rows;++i)std::snprintf(out.rows[i],sizeof(out.rows[i]),"%.51s",perf_report_lines_[perf_report_top_+i]);
+        std::snprintf(out.status,sizeof(out.status),"Up/Down scroll  Enter/Back close");
+        return out;
+    }
     const auto v=debug_->view();
     if(v.confirming&&v.confirming_sheet){
         // Batch 4.5A-4 Part 1/13: the one shared preset/Certification
@@ -1404,7 +1420,10 @@ DeviceDebugScreen AlphaRuntime::debug_screen() const{
     if(v.confirming)std::snprintf(out.status,sizeof(out.status),"%s",v.confirmation?v.confirmation:"Confirm?");
     else if(v.category==int(openu5::UiDebugCategory::Diagnostics)){
         const auto s=smoke_.view();
-        if(s.running)std::snprintf(out.status,sizeof(out.status),"RUN %u/%u P%u F%u %.20s",unsigned(s.completed),unsigned(s.total),unsigned(s.passed),unsigned(s.failed),s.scenario);
+        if(audio_bench_.running())std::snprintf(out.status,sizeof(out.status),"Audio perf %lu/%lus %s: keep still",
+            (unsigned long)(audio_bench_.elapsed_ms(uint32_t(esp_timer_get_time()/1000))/1000),
+            (unsigned long)(openu5::AudioBenchmark::kTotalMs/1000),openu5::AudioBenchmark::phase_name(audio_bench_.phase()));
+        else if(s.running)std::snprintf(out.status,sizeof(out.status),"RUN %u/%u P%u F%u %.20s",unsigned(s.completed),unsigned(s.total),unsigned(s.passed),unsigned(s.failed),s.scenario);
         else if(s.complete)std::snprintf(out.status,sizeof(out.status),"DONE P%u F%u %.30s",unsigned(s.passed),unsigned(s.failed),s.failed?s.first_failure:"all passed");
         else std::snprintf(out.status,sizeof(out.status),"Results: %s",kSmokeTestSdPath);
     } else if(v.has_result)std::snprintf(out.status,sizeof(out.status),"Result: %s",(v.category==int(openu5::UiDebugCategory::Teleport)||v.category==int(openu5::UiDebugCategory::Certification))?openu5::debug_teleport_result_label(v.last_teleport_status,v.teleport_passability_known,v.teleport_passable):openu5::debug_status_name(v.last_status));
@@ -1412,7 +1431,21 @@ DeviceDebugScreen AlphaRuntime::debug_screen() const{
     return out;
 }
 
-bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAction action;DeviceShortcut shortcut;
+// A3-04B (ALPHA3_AUDIO.md section 19.5): every input's processing time, and
+// the capture time of the oldest one no gameplay frame has shown yet -- the
+// next drawn gameplay frame closes it (input -> screen latency).
+bool AlphaRuntime::handle(const RawInputEvent&raw){
+    const int64_t t0=esp_timer_get_time();
+    const bool routed=handle_input_event(raw);
+    const int64_t t1=esp_timer_get_time();
+    if(routed){
+        render_perf_.on_input(uint32_t(t1-t0));
+        if(input_pending_us_<0)input_pending_us_=raw.timestamp_us>0&&raw.timestamp_us<=t1?raw.timestamp_us:t0;
+    }
+    return routed;
+}
+
+bool AlphaRuntime::handle_input_event(const RawInputEvent&raw){service_combat();openu5::UiAction action;DeviceShortcut shortcut;
     const bool in_frontend=frontend_.active();
     const bool frontend_name=in_frontend&&frontend_.state()==openu5::FrontendState::CharacterCreation&&
                              frontend_.creation_phase()==openu5::FrontendCreationPhase::Name;
@@ -1499,6 +1532,10 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
         ESP_LOGI(kTag,"SYSTEM_MENU action=%s accepted=%d open=%d gameplay_command=none",action_name(action.kind),accepted,system_menu_.active());
         dirty_=true;dirty_reason_="system-menu";return accepted;
     }
+    // A3-04B. The perf report sits on the Developer screen until dismissed:
+    // it takes every key but the Alt shortcuts (section 19.3).
+    if(perf_report_open_&&shortcut==DeviceShortcut::None&&ui_->mode()==openu5::UiMode::DebugMenu)
+        return handle_perf_report_input(action);
     // #324 / R-32. While a scene segment is running the reference pacer
     // swallows input (the same rule the shrine rite uses) and the binary is
     // simply inside its own synchronous routine. Two deliberate exceptions:
@@ -1585,6 +1622,8 @@ bool AlphaRuntime::handle(const RawInputEvent&raw){service_combat();openu5::UiAc
         ++debug_open_count_;const bool opened=ui_->open_debug_menu();dirty_reason_="mode-entry";
         ESP_LOGI(kTag,"DEBUG_OPEN count=%lu called=1 opened=%d mode_before=%s mode_after=%s reconstructed=1",
                  (unsigned long)debug_open_count_,opened,mode_name(mode_before),mode_name(ui_->mode()));
+        // A3-04B: a report that finished while the menu was closed is what it shows first.
+        if(ui_->mode()==openu5::UiMode::DebugMenu&&perf_report_pending_){perf_report_pending_=false;perf_report_open_=true;perf_report_top_=0;}
 #else
         ui_->append(openu5::UiTextChannel::System,"Developer tools disabled");
 #endif
@@ -2168,6 +2207,8 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     narrative_was_active_=narrative_active;
     const uint32_t tick=uint32_t(now/55000);
     const bool debug_mode=ui_->mode()==openu5::UiMode::DebugMenu;
+    // A3-04B: the perf report lives on the Developer screen; leaving the menu dismisses it.
+    if(!debug_mode&&perf_report_open_)perf_report_open_=false;
     // A world/combat animation flag must never wake the modal Developer UI.
     // Alpha 1.3 entered here every 55 ms, then converted animation_only to a
     // full debug-screen clear below: the physical flashing root cause.
@@ -2178,6 +2219,7 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     bool animation_only=!debug_mode&&!dirty_&&!force&&(animation_visible_||quake_active||world_fx_active||poison_active)&&tick!=rendered_animation_tick_;
     if(dungeon_presentation_pending_){force=true;animation_only=false;}
     if(!dirty_&&!force&&!animation_only)return ESP_OK;
+    const int64_t frame_t0=esp_timer_get_time(); // A3-04B: the frame's own time starts here
     const char *render_reason=force?"full-redraw":animation_only?"animation-tick":dirty_reason_;
     auto &snapshot=presentation_;snapshot={};
     openu5::ActiveMap world_gem_map{};bool world_gem_map_ready=false;
@@ -2311,6 +2353,7 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
             e=openu5::render_snapshot(tile_cache_,snapshot,tick,game_.turns_since_start,
                                        viewport_,openu5::kViewportPixelCount,report);}
     }
+    const int64_t tiles_end=esp_timer_get_time(); // A3-04B: the rasterizer alone
     // The cannon ball lives BETWEEN cells, so it is painted into the rasterized
     // window rather than composed into the snapshot (a cell blit cannot place
     // it). It precedes the invert/shake post-processes so those act on the
@@ -2342,6 +2385,7 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     // strips entirely rather than overdrawing them across it. The zodiac view
     // still keeps the world bars (unchanged, out of this batch's scope).
     const auto dungeon_bands=openu5::hud_dungeon_bands(dungeon_,dungeon_source&&!gem_view_active_&&!zodiac_view_active_);
+    const int64_t tft_t0=esp_timer_get_time();
     if(e==ESP_OK){
         if(camp_viewport_only_&&camp_source)
             e=board.show_camp_viewport(viewport_,report.viewport_crc32);
@@ -2353,6 +2397,16 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
                                compose_party_highlight(),report.viewport_crc32,&dungeon_bands,
                                gem_view_active_||camp_source,camp_source);
     }
+    // A3-04B (ALPHA3_AUDIO.md section 19.5): a drawn gameplay frame's cost --
+    // composition (presentation + rasterizer + post-processing), the TFT
+    // write (panels + SPI, bus waits included) -- and the input it shows.
+    // The Developer screen is not gameplay: it neither counts nor closes an input.
+    const int64_t tft_t1=esp_timer_get_time();
+    if(!debug_mode&&e==ESP_OK){
+        render_perf_.on_frame(uint64_t(frame_t0),uint32_t(tft_t0-frame_t0),uint32_t(tiles_end-start),
+                              uint32_t(tft_t1-tft_t0),uint32_t(tft_t1-frame_t0));
+        if(input_pending_us_>=0){render_perf_.on_input_shown(uint32_t(tft_t1-input_pending_us_));input_pending_us_=-1;}
+    }else if(debug_mode){input_pending_us_=-1;}
     const auto us=uint32_t(esp_timer_get_time()-start);render_high_us_=std::max(render_high_us_,us);
     if(dungeon_source){
         dungeon_render_high_us_=std::max(dungeon_render_high_us_,us);
@@ -2533,6 +2587,19 @@ void AlphaRuntime::service_system_menu_intent(){
 }
 
 void AlphaRuntime::log_metrics(const char*where)const{const auto stack=uxTaskGetStackHighWaterMark(nullptr)*sizeof(StackType_t);const auto internal=heap_caps_get_free_size(kInternal),psram=heap_caps_get_free_size(kPsram);ESP_LOGI(kTag,"METRICS %s internal=%zu psram=%zu stack_margin=%u render_high_us=%lu frontend_render_high_us=%lu command_high_us=%lu transcript=%lu/%zu",where,internal,psram,unsigned(stack),(unsigned long)render_high_us_,(unsigned long)frontend_render_high_us_,(unsigned long)command_high_us_,(unsigned long)transcript_high_water_,kTranscriptBlocks);const auto&m=input_.direction_metrics();ESP_LOGI(kTag,"TRACKBALL_INPUT raw_edges=%lu accepted=%lu suppressed=%lu",(unsigned long)m.trackball_raw_edges(),(unsigned long)m.trackball_accepted(),(unsigned long)m.trackball_suppressed());ESP_LOGI(kTag,"TRACKBALL_SETTINGS percent=%u min_interval_us=%lld debounce_us=%lld accel=1.00",unsigned(settings_.trackball_responsiveness),(long long)m.trackball_debounce_us(),(long long)m.trackball_debounce_us());if(audio_perf_){openu5::AudioPerfSnapshot a{};if(audio_perf_->perf_snapshot(a))ESP_LOGI(kTag,"AUDIO_PERF song=%s window_ms=%lu blocks=%lu missed=%lu underruns=%lu hw_underruns=%lu render_avg_us=%lu p99_us=%lu max_us=%lu music_max_us=%lu cpu_permille=%lu sched_max_us=%lu fill_min=%lu/%lu channels_avg_x100=%lu channels_max=%lu voices_max=%lu sfx=%lu sfx_with_music=%lu stack_free_min=%lu runaway=%lu failures=%lu",a.music_active?openu5::music_song_title(a.song):"none",(unsigned long)(a.window_us/1000),(unsigned long)a.blocks,(unsigned long)a.missed_deadlines,(unsigned long)a.underruns,(unsigned long)a.hw_underruns,(unsigned long)a.render_avg_us,(unsigned long)a.render_p99_us,(unsigned long)a.render_max_us,(unsigned long)a.music_max_us,(unsigned long)a.cpu_permille,(unsigned long)a.period_max_us,(unsigned long)a.fill_min,(unsigned long)a.ring_blocks,(unsigned long)a.channels_avg_x100,(unsigned long)a.channels_max,(unsigned long)a.voices_max,(unsigned long)a.sfx_submitted,(unsigned long)a.sfx_during_music,(unsigned long)a.stack_free_min,(unsigned long)a.runaway_yields,(unsigned long)(a.write_failures+a.enable_failures));}
+    // A3-04B (section 19.5): the running render and machine windows, supplemental to the Developer report.
+    {openu5::RenderPerfSnapshot r{};render_perf_.snapshot(uint64_t(esp_timer_get_time()),r);
+     ESP_LOGI(kTag,"RENDER_PERF window_ms=%lu frames=%lu frame_avg_us=%lu p95_us=%lu p99_us=%lu max_us=%lu compose_avg_us=%lu tiles_max_us=%lu tft_avg_us=%lu tft_max_us=%lu cadence_max_us=%lu late=%lu inputs=%lu input_max_us=%lu handle_max_us=%lu busy_permille=%lu",
+              (unsigned long)(r.window_us/1000),(unsigned long)r.frames,(unsigned long)r.frame_avg_us,(unsigned long)r.frame_p95_us,
+              (unsigned long)r.frame_p99_us,(unsigned long)r.frame_max_us,(unsigned long)r.compose_avg_us,(unsigned long)r.tiles_max_us,
+              (unsigned long)r.tft_avg_us,(unsigned long)r.tft_max_us,(unsigned long)r.cadence_max_us,(unsigned long)r.late_frames,
+              (unsigned long)r.shown,(unsigned long)r.input_max_us,(unsigned long)r.handle_max_us,(unsigned long)r.busy_permille);}
+    if(system_perf_){openu5::SystemPerfSnapshot s{};if(system_perf_->system_perf_snapshot(s))
+        ESP_LOGI(kTag,"SYS_PERF valid=%d window_ms=%lu cpu0_permille=%lu cpu1_permille=%lu audio=%lu main=%lu input=%lu sdlog=%lu other=%lu heap_int=%lu heap_int_min=%lu psram=%lu stack_main=%lu stack_audio=%lu stack_input=%lu",
+                 s.valid,(unsigned long)(s.window_us/1000),(unsigned long)s.core_busy_permille[0],(unsigned long)s.core_busy_permille[1],
+                 (unsigned long)s.audio_permille,(unsigned long)s.main_permille,(unsigned long)s.input_permille,(unsigned long)s.sdlog_permille,
+                 (unsigned long)s.other_permille,(unsigned long)s.heap_internal_free,(unsigned long)s.heap_internal_min,
+                 (unsigned long)s.heap_psram_free,(unsigned long)s.stack_main_free,(unsigned long)s.stack_audio_free,(unsigned long)s.stack_input_free);}
     if(internal<32768)ESP_LOGW(kTag,"LOW INTERNAL RAM: %zu",internal);
     if(stack<4096)ESP_LOGW(kTag,"LOW MAIN STACK MARGIN: %u",unsigned(stack));
 }
@@ -2943,99 +3010,120 @@ void AlphaRuntime::audio_test_tone(void *p){
 }
 
 // ---------------------------------------------------------------------------
-// A3-04A. Developer > Diagnostics > "Audio performance" / "Audio stats (live)"
-// (ALPHA3_AUDIO.md section 18.14). Game thread only; every call returns at
-// once -- the benchmark is a timeline service_audio_benchmark() advances.
+// A3-04A/B. Developer > Diagnostics > "Audio/render performance" (the
+// benchmark) and "Audio/render stats (live)" (ALPHA3_AUDIO.md sections 18.14,
+// 19.3). Game thread only; every call returns at once -- the benchmark is a
+// timeline service_audio_benchmark() advances from render().
+//
+// A3-04B: the results are a REPORT on the Developer screen that stays up
+// until dismissed. A3-04A appended ~21 lines to the gameplay transcript: the
+// Developer screen covers that panel while the menu is open, and after it
+// closes, 22-column wrapping left only the last two lines in view -- the
+// measurements themselves had scrolled away (section 19.2).
 // ---------------------------------------------------------------------------
-void AlphaRuntime::report_audio_perf(const char *heading,const openu5::AudioPerfSnapshot &s){
-    char lines[10][64]{};
-    const size_t n=openu5::format_audio_perf(s,lines,10);
-    ESP_LOGI(kTag,"AUDIO_PERF_REPORT %s",heading);
-    if(ui_)ui_->append(openu5::UiTextChannel::System,heading);
-    for(size_t i=0;i<n;++i){
-        ESP_LOGI(kTag,"AUDIO_PERF_REPORT   %s",lines[i]);
-        if(ui_)ui_->append(openu5::UiTextChannel::System,lines[i]);
-    }
-    dirty_=true;dirty_reason_="audio-perf";
+void AlphaRuntime::reset_perf_windows(){
+    if(audio_perf_)audio_perf_->perf_reset();
+    render_perf_.reset(uint64_t(esp_timer_get_time()));input_pending_us_=-1;
+    if(system_perf_)system_perf_->system_perf_reset();
+}
+
+void AlphaRuntime::publish_perf_report(const char *title,const openu5::AudioPerfSnapshot *first,const char *first_heading,
+                                       const openu5::AudioPerfSnapshot *second,const char *second_heading,bool with_guard){
+    openu5::RenderPerfSnapshot render{};render_perf_.snapshot(uint64_t(esp_timer_get_time()),render);
+    openu5::SystemPerfSnapshot system{};const bool has_system=system_perf_&&system_perf_->system_perf_snapshot(system);
+    openu5::PerfReportInput in{};
+    in.title=title;in.audio=first;in.audio_heading=first_heading;in.audio2=second;in.audio2_heading=second_heading;
+    in.render=&render;in.system=has_system?&system:nullptr;
+    if(with_guard){in.has_guard=true;in.guard_ns=bench_guard_ns_;
+        in.guard_us_per_block=openu5::legacy_guard_us_per_block(bench_guard_ns_,bench_idle_channels_x100_);}
+    perf_report_count_=perf_report_lines_?openu5::format_perf_report(in,perf_report_lines_,openu5::kPerfReportMaxLines):0;
+    perf_report_top_=0;
+    // Serial / SD-log copy, supplemental to the screen.
+    for(size_t i=0;i<perf_report_count_;++i)ESP_LOGI(kTag,"PERF_REPORT %s",perf_report_lines_[i]);
+    const bool in_menu=ui_&&ui_->mode()==openu5::UiMode::DebugMenu;
+    perf_report_open_=in_menu&&perf_report_count_>0;
+    perf_report_pending_=!in_menu&&perf_report_count_>0;
+    if(perf_report_pending_&&ui_)ui_->append(openu5::UiTextChannel::System,"Perf report ready: Alt+D shows it");
+    ESP_LOGI(kTag,"PERF_REPORT_READY lines=%u shown=%d pending=%d",unsigned(perf_report_count_),perf_report_open_,perf_report_pending_);
+    dirty_=true;dirty_reason_="perf-report";
+}
+
+bool AlphaRuntime::handle_perf_report_input(const openu5::UiAction &action){
+    const size_t last=perf_report_count_>kDebugScreenRows?perf_report_count_-kDebugScreenRows:0;
+    const bool up=(action.kind==openu5::UiActionKind::Direction&&(action.direction==openu5::Direction::North||action.direction==openu5::Direction::West))||
+                  action.kind==openu5::UiActionKind::Previous;
+    const bool down=(action.kind==openu5::UiActionKind::Direction&&(action.direction==openu5::Direction::South||action.direction==openu5::Direction::East))||
+                    action.kind==openu5::UiActionKind::Next;
+    if(up){if(perf_report_top_>0)--perf_report_top_;}
+    else if(down){if(perf_report_top_<last)++perf_report_top_;}
+    else if(action.kind==openu5::UiActionKind::PageUp)perf_report_top_=perf_report_top_>kDebugScreenRows?perf_report_top_-kDebugScreenRows:0;
+    else if(action.kind==openu5::UiActionKind::PageDown)perf_report_top_=std::min(last,perf_report_top_+kDebugScreenRows);
+    else if(action.kind==openu5::UiActionKind::Confirm||action.kind==openu5::UiActionKind::Cancel||action.kind==openu5::UiActionKind::Back)
+        perf_report_open_=false;
+    ESP_LOGI(kTag,"PERF_REPORT_INPUT action=%s top=%u open=%d",action_name(action.kind),unsigned(perf_report_top_),perf_report_open_);
+    dirty_=true;dirty_reason_="perf-report";
+    return true;
 }
 
 void AlphaRuntime::audio_perf_start(void *p){
     auto &r=*static_cast<AlphaRuntime*>(p);
-    const char *refused=!r.audio_perf_?"Audio perf: no audio output":r.audio_bench_.running()?"Audio perf: already running":nullptr;
-    if(refused){
-        if(r.ui_)r.ui_->append(openu5::UiTextChannel::System,refused);
-        r.dirty_=true;r.dirty_reason_="audio-perf";
+    if(!r.audio_perf_||r.audio_bench_.running()){
+        r.publish_perf_report(!r.audio_perf_?"Audio perf: no audio output on this device":"Audio perf: already running",
+                              nullptr,nullptr,nullptr,nullptr,false);
         return;
     }
     r.bench_guard_ns_=measure_guard_ns();
     r.bench_internal_free_=heap_caps_get_free_size(kInternal);
     r.bench_psram_free_=heap_caps_get_free_size(kPsram);
+    r.bench_idle_valid_=false;r.bench_status_second_=UINT32_MAX;
     // The benchmark's track (AudioBenchmark::kSong, the Theme): the title
     // context. Nothing reaches the backend if music is unavailable or at 0 %;
     // the run then measures SFX alone and says "no music".
     r.audio_.play_music(openu5::MusicContext::Title);
-    r.audio_perf_->perf_reset();
+    r.reset_perf_windows();
     r.audio_bench_.start(uint32_t(esp_timer_get_time()/1000));
     ESP_LOGI(kTag,"AUDIO_PERF_BENCH start song=%s guard_ns=%lu internal=%u psram=%u music=%s",
              openu5::music_song_title(openu5::AudioBenchmark::kSong),(unsigned long)r.bench_guard_ns_,
              unsigned(r.bench_internal_free_),unsigned(r.bench_psram_free_),r.audio_.has_music()?"available":"unavailable");
-    if(r.ui_){
-        r.ui_->append(openu5::UiTextChannel::System,"Audio perf: 47 s -- music alone 30 s,");
-        r.ui_->append(openu5::UiTextChannel::System,"then music + a cue every 100 ms 15 s.");
-    }
     r.dirty_=true;r.dirty_reason_="audio-perf";
 }
 
 void AlphaRuntime::audio_stats_now(void *p){
     auto &r=*static_cast<AlphaRuntime*>(p);
-    openu5::AudioPerfSnapshot s{};
-    const char *refused=!r.audio_perf_?"Audio stats: no audio output":
-                        r.audio_bench_.running()?"Audio stats: benchmark running":
-                        !r.audio_perf_->perf_snapshot(s)?"Audio stats: no audio played yet":nullptr;
-    if(refused){
-        if(r.ui_)r.ui_->append(openu5::UiTextChannel::System,refused);
-        r.dirty_=true;r.dirty_reason_="audio-perf";
-        return;
-    }
-    r.report_audio_perf("Audio stats since last read:",s);
-    r.audio_perf_->perf_reset();
+    if(r.audio_bench_.running()){r.publish_perf_report("Perf stats: the benchmark is running",nullptr,nullptr,nullptr,nullptr,false);return;}
+    // The window since the last read (or boot): audio, frames, the machine.
+    // A first read with no sound played yet still reports frames and CPU.
+    openu5::AudioPerfSnapshot a{};
+    const bool has_audio=r.audio_perf_&&r.audio_perf_->perf_snapshot(a);
+    r.publish_perf_report("AUDIO/RENDER PERF  live window",has_audio?&a:nullptr,"Since last read",nullptr,nullptr,false);
+    r.reset_perf_windows();
 }
 
 void AlphaRuntime::service_audio_benchmark(int64_t now_us){
     if(!audio_bench_.running()||!audio_perf_)return;
     const auto a=audio_bench_.tick(uint32_t(now_us/1000));
+    // The Developer screen's progress line, once a second while it is open.
+    const uint32_t second=audio_bench_.elapsed_ms(uint32_t(now_us/1000))/1000;
+    if(second!=bench_status_second_&&ui_&&ui_->mode()==openu5::UiMode::DebugMenu){bench_status_second_=second;dirty_=true;dirty_reason_="audio-perf-progress";}
     // A phase edge reads the window that just ended BEFORE starting the next.
-    openu5::AudioPerfSnapshot s{};
-    if(a.capture_idle||a.capture_stress){
-        const char *heading=a.capture_idle?"Audio perf, music alone (idle):":"Audio perf, music + SFX:";
-        if(!audio_perf_->perf_snapshot(s)){
-            // The audio task never ran: no music available/at 0 % and no cue played.
-            if(ui_)ui_->append(openu5::UiTextChannel::System,"Audio perf: no audio output this phase");
-            ESP_LOGW(kTag,"AUDIO_PERF_REPORT %s no audio output",heading);
-        }else{
-            if(a.capture_idle)bench_idle_channels_x100_=s.channels_avg_x100;
-            report_audio_perf(heading,s);
-        }
+    if(a.capture_idle){
+        bench_idle_valid_=audio_perf_->perf_snapshot(bench_idle_);
+        if(bench_idle_valid_)bench_idle_channels_x100_=bench_idle_.channels_avg_x100;
+        audio_perf_->perf_reset(); // the second phase is its own audio window; frames and CPU run on
+    }else if(a.reset_perf){
+        reset_perf_windows(); // settled: every window starts with the measured 45 s
     }
-    if(a.reset_perf)audio_perf_->perf_reset();
     if(a.sfx!=openu5::SfxId::None)audio_.play_sfx(a.sfx);
     if(a.finished){
-        // A3-04's root cause, priced on this device: what its per-read
-        // mutex would cost per block at the channels just measured.
-        const uint32_t legacy_us=openu5::legacy_guard_us_per_block(bench_guard_ns_,bench_idle_channels_x100_);
-        char line[64]{};
-        std::snprintf(line,sizeof(line),"A3-04 guard %lu ns/read = %lu.%lu ms/8 ms blk",(unsigned long)bench_guard_ns_,
-                      (unsigned long)(legacy_us/1000),(unsigned long)((legacy_us/100)%10));
-        ESP_LOGI(kTag,"AUDIO_PERF_REPORT   %s",line);
-        if(ui_)ui_->append(openu5::UiTextChannel::System,line);
+        openu5::AudioPerfSnapshot stress{};
+        const bool has_stress=audio_perf_->perf_snapshot(stress);
+        publish_perf_report("AUDIO/RENDER PERF  benchmark",bench_idle_valid_?&bench_idle_:nullptr,"Music alone (idle)",
+                            has_stress?&stress:nullptr,"Music + cue/100 ms",true);
         const long internal=long(heap_caps_get_free_size(kInternal))-long(bench_internal_free_);
         const long psram=long(heap_caps_get_free_size(kPsram))-long(bench_psram_free_);
-        std::snprintf(line,sizeof(line),"heap change: internal %ld B, PSRAM %ld B",internal,psram);
-        ESP_LOGI(kTag,"AUDIO_PERF_REPORT   %s",line);
-        if(ui_)ui_->append(openu5::UiTextChannel::System,line);
-        ESP_LOGI(kTag,"AUDIO_PERF_BENCH done cues=%lu",(unsigned long)audio_bench_.sfx_played());
+        ESP_LOGI(kTag,"AUDIO_PERF_BENCH done cues=%lu heap_change_internal=%ld heap_change_psram=%ld",
+                 (unsigned long)audio_bench_.sfx_played(),internal,psram);
         sync_music(); // the benchmark no longer owns the music: back to the game's own
-        dirty_=true;dirty_reason_="audio-perf";
     }
 }
 } // namespace tdeck

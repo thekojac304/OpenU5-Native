@@ -57,9 +57,11 @@ struct UiDiagnosticsServices {
     // A3-01: Diagnostics' last row, "Audio test tone (SFX)".
     void (*audio_test)(void *) = nullptr;
     // A3-04A (ALPHA3_AUDIO.md section 18.14): the two rows just above it.
-    // "Audio performance" runs the ~47 s music benchmark; "Audio stats
-    // (live)" prints the audio task's window since the last read, then
-    // starts a new one (walk, fight, open menus, then read).
+    // "Audio/render performance" runs the ~47 s music benchmark;
+    // "Audio/render stats (live)" reports the window since the last read,
+    // then starts a new one (walk, fight, open menus, then read). A3-04B
+    // (section 19.3): both open the combined AUDIO / RENDER PERF report on
+    // the Developer screen, where it stays until dismissed.
     void (*audio_perf)(void *) = nullptr;
     void (*audio_stats)(void *) = nullptr;
 };

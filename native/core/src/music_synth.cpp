@@ -18,10 +18,38 @@ namespace {
 
 constexpr double kPi = 3.14159265358979323846;
 
+// A3-04B (ALPHA3_AUDIO.md section 19.7): the per-operator helpers are part of
+// the per-sample loop's body. GCC's size heuristic kept wave_atten() and
+// advance_clocks() out of line at -O2 (two call sites; one call per sample):
+// a call8/entry/retw round trip per operator per chip sample on the device.
+// Forcing them inline changes code generation only.
+#if defined(__GNUC__)
+#define OPENU5_SYNTH_INLINE inline __attribute__((always_inline))
+#else
+#define OPENU5_SYNTH_INLINE inline
+#endif
+
+constexpr int32_t kEgInc[4][8] = {
+    {0, 1, 0, 1, 0, 1, 0, 1},
+    {0, 1, 0, 1, 1, 1, 0, 1},
+    {0, 1, 1, 1, 0, 1, 1, 1},
+    {0, 1, 1, 1, 1, 1, 1, 1},
+};
+constexpr int32_t kMult2[16] = {1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 20, 24, 24, 30, 30};
+constexpr int32_t kVibratoSteps[8] = {0, 1, 2, 1, 0, -1, -2, -1};
+
 // ---- OPL log-domain ROMs (chip.ts LOG_SIN / EXP): generated, not copied. ----
 struct OplTables {
     uint16_t log_sin[256]{};
     uint16_t exp_tab[256]{};
+    // A3-04B: kEgInc, kMult2 and kVibratoSteps again, copied here so the
+    // per-sample path (the envelope step, the vibrato's phase steps) reads
+    // them from internal RAM with the other two ROMs: on the device a
+    // constexpr table lives in flash .rodata, behind the data cache the
+    // renderer on the other core also uses (ALPHA3_AUDIO.md section 19.8).
+    int8_t eg_inc[4][8]{};
+    uint8_t mult2[16]{};
+    int8_t vibrato_steps[8]{};
     OplTables() {
         for (int i = 0; i < 256; ++i) {
             const double v = -std::log2(std::sin(((i + 0.5) * kPi) / 512.0)) * 256.0;
@@ -32,6 +60,10 @@ struct OplTables {
             const double v = std::floor(0.5 + (std::pow(2.0, i / 256.0) - 1.0) * 2048.0);
             exp_tab[i] = uint16_t(v);
         }
+        for (int r = 0; r < 4; ++r)
+            for (int k = 0; k < 8; ++k) eg_inc[r][k] = int8_t(kEgInc[r][k]);
+        for (int i = 0; i < 16; ++i) mult2[i] = uint8_t(kMult2[i]);
+        for (int i = 0; i < 8; ++i) vibrato_steps[i] = int8_t(kVibratoSteps[i]);
     }
 };
 // A3-04A: a NAMESPACE-scope object, built once by the startup constructors,
@@ -49,11 +81,42 @@ const OplTables &tables() { return kTables; }
 constexpr int32_t kSilentAtten = 0x1000; // "mute without branching": expo(SILENT) == 0
 constexpr uint32_t kWaveNeg = 0x10000;
 
-int32_t expo(int32_t att) {
+OPENU5_SYNTH_INLINE int32_t expo(int32_t att) {
     const int32_t a = att < 0 ? 0 : att > 0x1fff ? 0x1fff : att;
     const int32_t shift = a >> 8;
     if (shift >= 20) return 0;
     return (int32_t(tables().exp_tab[255 - (a & 0xff)]) + 2048) >> shift;
+}
+
+// A3-04B (ALPHA3_AUDIO.md section 19.7): the resampler's libm calls, exactly,
+// without libm. On the device std::ceil / std::lround live in flash and run
+// in software double arithmetic; these are integer operations.
+
+/** std::ceil(x) for 0 < x < 2^32: the conversion truncates, and double(t) is exact. */
+inline size_t ceil_positive(double x) {
+    const size_t t = size_t(x);
+    return double(t) < x ? t + 1 : t;
+}
+
+/**
+ * std::lround(double(v) * 32767.0), for every float v below 2 in magnitude,
+ * and a value at least 65536 in magnitude (which the caller's clamp turns
+ * into what lround's would) beyond. double(v) * 32767.0 is exact -- a 24-bit
+ * significand times a 15-bit integer fits a double's 53 bits -- so the
+ * product is m * 32767 * 2^-s for v's significand m and scale s, and
+ * lround's half-away-from-zero is a round-half-up of that magnitude.
+ */
+inline int32_t round_q15(float v) {
+    uint32_t bits;
+    std::memcpy(&bits, &v, sizeof bits);
+    const bool negative = (bits >> 31) != 0;
+    const uint32_t exponent = (bits >> 23) & 0xffu;
+    if (exponent >= 128) return negative ? -65536 : 65536;      // |v| >= 2 (never reached: |v| <= 1)
+    const uint32_t shift = 150u - exponent;                     // |v| = significand * 2^-shift
+    if (shift >= 40) return 0;                                   // |v| * 32767 < 2^39 * 2^-40 = 1/2 (zeros, subnormals too)
+    const uint64_t product = uint64_t((bits & 0x7fffffu) | 0x800000u) * 32767u;
+    const int32_t magnitude = int32_t((product + (uint64_t(1) << (shift - 1))) >> shift);
+    return negative ? -magnitude : magnitude;
 }
 
 struct WaveAtten {
@@ -61,52 +124,42 @@ struct WaveAtten {
     bool neg;
 };
 
-/** chip.ts waveAtten, minus the packed-int GC-avoidance trick (unneeded in C++: this is a stack value). */
-WaveAtten wave_atten(uint8_t wave, int32_t phase) {
+/**
+ * chip.ts waveAtten, minus the packed-int GC-avoidance trick (unneeded in
+ * C++: this is a stack value). A3-04B: an if-chain rather than A3-04A's
+ * switch, case for case -- a switch this size becomes a jump table, which
+ * the device keeps in flash .rodata (section 19.8). Same results for every
+ * waveform: A3-04A's `default` served only 7, the one value above 6 that
+ * write_reg() lets through.
+ */
+OPENU5_SYNTH_INLINE WaveAtten wave_atten(uint8_t wave, int32_t phase) {
     const int32_t quarter = phase & 0xff;
-    const int32_t mirrored = (phase & 0x100) ? 255 - quarter : quarter;
     const bool half = (phase & 0x200) != 0;
     const auto &t = tables();
-    switch (wave) {
-    case 0: return {t.log_sin[mirrored], half};
-    case 1: return half ? WaveAtten{kSilentAtten, false} : WaveAtten{t.log_sin[mirrored], false};
-    case 2: return {t.log_sin[mirrored], false};
-    case 3: return (phase & 0x100) ? WaveAtten{kSilentAtten, false} : WaveAtten{t.log_sin[quarter], false};
-    case 4: {
+    if (wave < 4) {
+        const int32_t mirrored = (phase & 0x100) ? 255 - quarter : quarter;
+        if (wave == 0) return {t.log_sin[mirrored], half};
+        if (wave == 1) return half ? WaveAtten{kSilentAtten, false} : WaveAtten{t.log_sin[mirrored], false};
+        if (wave == 2) return {t.log_sin[mirrored], false};
+        return (phase & 0x100) ? WaveAtten{kSilentAtten, false} : WaveAtten{t.log_sin[quarter], false};
+    }
+    if (wave < 6) { // 4 and 5
         if (half) return {kSilentAtten, false};
         const int32_t d = (phase << 1) & 0x3ff;
         const int32_t q = d & 0xff;
         const int32_t idx = (d & 0x100) ? 255 - q : q;
-        return {t.log_sin[idx], (d & 0x200) != 0};
+        return {t.log_sin[idx], wave == 4 && (d & 0x200) != 0};
     }
-    case 5: {
-        if (half) return {kSilentAtten, false};
-        const int32_t d = (phase << 1) & 0x3ff;
-        const int32_t q = d & 0xff;
-        const int32_t idx = (d & 0x100) ? 255 - q : q;
-        return {t.log_sin[idx], false};
-    }
-    case 6: return {0, half};
-    default: {
-        const int32_t v = phase & 0x1ff;
-        return {(half ? 0x1ff - v : v) << 3, half};
-    }
-    }
+    if (wave == 6) return {0, half};
+    const int32_t v = phase & 0x1ff;
+    return {(half ? 0x1ff - v : v) << 3, half};
 }
 
 constexpr uint8_t kEnvOff = 0, kEnvAttack = 1, kEnvDecay = 2, kEnvSustain = 3, kEnvRelease = 4;
-constexpr int32_t kMult2[16] = {1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 20, 24, 24, 30, 30};
 constexpr int32_t kKslRom[16] = {0, 32, 40, 45, 48, 51, 53, 55, 56, 58, 59, 60, 61, 62, 63, 64};
 constexpr uint8_t kKslShift[4] = {31, 1, 2, 0};
-constexpr int32_t kEgInc[4][8] = {
-    {0, 1, 0, 1, 0, 1, 0, 1},
-    {0, 1, 0, 1, 1, 1, 0, 1},
-    {0, 1, 1, 1, 0, 1, 1, 1},
-    {0, 1, 1, 1, 1, 1, 1, 1},
-};
 constexpr uint32_t kTremoloSteps = 52;
 const uint32_t kTremoloPeriod = uint32_t(std::lround(double(kOplClockHz) / 3.7 / double(kTremoloSteps)));
-constexpr int32_t kVibratoSteps[8] = {0, 1, 2, 1, 0, -1, -2, -1};
 const uint32_t kVibratoPeriod = uint32_t(std::lround(double(kOplClockHz) / 6.1 / 8.0));
 constexpr int32_t kModScale = 1;
 constexpr float kOutputScale = 1.0f / 16384.0f;
@@ -132,6 +185,8 @@ namespace test_only {
 uint16_t opl_log_sin(int index) { return tables().log_sin[index & 0xff]; }
 uint16_t opl_exp(int index) { return tables().exp_tab[index & 0xff]; }
 int32_t opl_expo(int32_t att) { return expo(att); }
+int32_t opl_round_q15(float v) { return round_q15(v); }
+size_t opl_ceil_positive(double x) { return ceil_positive(x); }
 } // namespace test_only
 
 // ===========================================================================
@@ -222,7 +277,18 @@ uint8_t OplEmulator::Operator::rate_for(uint8_t reg, uint8_t key_code) const {
     return r > 63 ? 63 : uint8_t(r);
 }
 
-void OplEmulator::Operator::advance_envelope(uint32_t eg_counter, uint8_t key_code) {
+// A3-04A's advance_envelope(), split in two (A3-04B, ALPHA3_AUDIO.md section
+// 19.7). It ran for every sounding operator on every chip sample and, for
+// all but the fastest rates, returned at its mask test: (eg_counter & mask)
+// is non-zero for all but one sample in 2^shift. The part before that test
+// depends only on the state, the rate registers and the key code, so it is
+// now computed when one of those changes (refresh_envelope), and the
+// per-sample loop makes the mask test inline; envelope_step() is the rest,
+// unchanged.
+void OplEmulator::Operator::refresh_envelope(uint8_t key_code) {
+    env_rate = 0;
+    env_shift = 0;
+    env_mask = 0;
     if (eg_state == kEnvOff) return;
     const uint8_t reg = eg_state == kEnvAttack ? attack_rate
                          : eg_state == kEnvDecay ? decay_rate
@@ -231,11 +297,17 @@ void OplEmulator::Operator::advance_envelope(uint32_t eg_counter, uint8_t key_co
     const uint8_t rate = rate_for(reg, key_code);
     if (rate == 0) return;
     const uint8_t hi = rate >> 2;
-    const uint32_t shift = hi < 13 ? uint32_t(13 - hi) : 0;
+    env_rate = rate;
+    env_shift = uint8_t(hi < 13 ? 13 - hi : 0);
+    env_mask = (1u << env_shift) - 1;
+}
+
+void OplEmulator::Operator::envelope_step(uint32_t eg_counter, uint8_t key_code) {
+    const uint8_t hi = env_rate >> 2;
     const uint32_t scale = hi < 13 ? 1u : (1u << (hi - 13));
-    if ((eg_counter & ((1u << shift) - 1)) != 0) return;
-    const int32_t inc = kEgInc[rate & 3][(eg_counter >> shift) & 7] * int32_t(scale);
+    const int32_t inc = int32_t(tables().eg_inc[env_rate & 3][(eg_counter >> env_shift) & 7]) * int32_t(scale);
     if (inc == 0) return;
+    const uint8_t state = eg_state;
     if (eg_state == kEnvAttack) {
         eg_level += (~eg_level * inc) >> 3;
         if (eg_level <= 0) {
@@ -252,17 +324,7 @@ void OplEmulator::Operator::advance_envelope(uint32_t eg_counter, uint8_t key_co
             eg_state = kEnvSustain;
         }
     }
-}
-
-int32_t OplEmulator::Operator::sample(uint32_t phase_inc, int32_t modulation, int32_t tremolo) {
-    phase = phase + phase_inc; // uint32_t: wraps exactly like the TS >>> 0
-    if (eg_state == kEnvOff) return 0;
-    const int32_t idx = (int32_t(phase >> 10) + modulation) & 0x3ff;
-    const WaveAtten w = wave_atten(waveform, idx);
-    const int32_t att =
-        w.att + (eg_level << 3) + (int32_t(tl) << 5) + ksl_atten + (am ? tremolo : 0);
-    const int32_t mag = expo(att);
-    return w.neg ? -mag : mag;
+    if (eg_state != state) refresh_envelope(key_code); // the next rate applies from the next sample, as before
 }
 
 void OplEmulator::Channel::update_ksl() {
@@ -289,9 +351,13 @@ void OplEmulator::write_reg(uint16_t reg, uint8_t value) {
     if (r == 0xbd) {
         tremolo_depth_ = (v & 0x80) != 0;
         vibrato_depth_ = (v & 0x40) != 0;
+        refresh_vibrato(); // A3-04B: the depth scales every vibrato operator's phase step
         return; // rhythm mode: unused (the voice allocator never sets it)
     }
 
+    // A3-04B: every write below ends by re-deriving its channel's cached
+    // operator values (refresh_channel), whatever it changed -- one rule,
+    // so no register can be missed. Writes are per MIDI event, not per sample.
     const size_t chBase = size_t(array) * 9;
     if (r >= 0x20 && r <= 0x35) {
         const RegOp m = reg_to_op(r - 0x20);
@@ -303,6 +369,7 @@ void OplEmulator::write_reg(uint16_t reg, uint8_t value) {
         o->eg_sustain = (v & 0x20) != 0;
         o->ksr = (v & 0x10) != 0;
         o->mult = v & 0x0f;
+        refresh_channel(channels_[chBase + m.channel]);
         return;
     }
     if (r >= 0x40 && r <= 0x55) {
@@ -314,6 +381,7 @@ void OplEmulator::write_reg(uint16_t reg, uint8_t value) {
         o.ksl = v >> 6;
         o.tl = v & 0x3f;
         o.update_ksl(ch.fnum, ch.block);
+        refresh_channel(ch);
         return;
     }
     if (r >= 0x60 && r <= 0x75) {
@@ -323,6 +391,7 @@ void OplEmulator::write_reg(uint16_t reg, uint8_t value) {
         if (!o) return;
         o->attack_rate = v >> 4;
         o->decay_rate = v & 0x0f;
+        refresh_channel(channels_[chBase + m.channel]);
         return;
     }
     if (r >= 0x80 && r <= 0x95) {
@@ -333,6 +402,7 @@ void OplEmulator::write_reg(uint16_t reg, uint8_t value) {
         const uint8_t sl = v >> 4;
         o->sustain_level = uint16_t((sl == 15 ? 31 : sl) << 4);
         o->release_rate = v & 0x0f;
+        refresh_channel(channels_[chBase + m.channel]);
         return;
     }
     if (r >= 0xe0 && r <= 0xf5) {
@@ -341,6 +411,7 @@ void OplEmulator::write_reg(uint16_t reg, uint8_t value) {
         Operator *o = op(chBase + m.channel, m.carrier);
         if (!o) return;
         o->waveform = (kind_ == OplChipKind::Opl3 && opl3_enabled_) ? (v & 0x07) : (v & 0x03);
+        refresh_channel(channels_[chBase + m.channel]);
         return;
     }
     if (r >= 0xa0 && r <= 0xa8) {
@@ -348,6 +419,7 @@ void OplEmulator::write_reg(uint16_t reg, uint8_t value) {
         Channel &ch = channels_[chBase + (r - 0xa0)];
         ch.fnum = uint16_t((ch.fnum & 0x300) | v);
         ch.update_ksl();
+        refresh_channel(ch);
         return;
     }
     if (r >= 0xb0 && r <= 0xb8) {
@@ -365,6 +437,7 @@ void OplEmulator::write_reg(uint16_t reg, uint8_t value) {
             ch.car.key_off();
         }
         ch.keyed = on;
+        refresh_channel(ch);
         return;
     }
     if (r >= 0xc0 && r <= 0xc8) {
@@ -386,13 +459,33 @@ uint32_t OplEmulator::phase_inc(const Channel &ch, const Operator &o) const {
     int32_t fnum = ch.fnum;
     if (o.vib) {
         const int32_t unit = vibrato_depth_ ? (fnum >> 8) : (fnum >> 9);
-        fnum += kVibratoSteps[vibrato_pos_] * unit;
+        fnum += int32_t(tables().vibrato_steps[vibrato_pos_]) * unit;
         if (fnum < 0) fnum = 0;
     }
-    return uint32_t(((int64_t(fnum) << ch.block) * kMult2[o.mult]) >> 1);
+    // A3-04B: 32-bit, not A3-04A's int64 (a shift and multiply the ESP32-S3
+    // does in ~20 instructions). Same value: fnum <= 1023 + 2 * 3 after
+    // vibrato, block <= 7 and kMult2 <= 30, so the product stays below 2^22.
+    return ((uint32_t(fnum) << ch.block) * uint32_t(tables().mult2[o.mult])) >> 1;
 }
 
-void OplEmulator::advance_clocks() {
+void OplEmulator::refresh_channel(Channel &ch) {
+    const uint8_t key_code = ch.key_code();
+    for (Operator *o : {&ch.mod, &ch.car}) {
+        o->inc = phase_inc(ch, *o);
+        o->static_atten = (int32_t(o->tl) << 5) + o->ksl_atten;
+        o->refresh_envelope(key_code);
+    }
+}
+
+void OplEmulator::refresh_vibrato() {
+    for (size_t c = 0; c < channel_count_; ++c) {
+        Channel &ch = channels_[c];
+        if (ch.mod.vib) ch.mod.inc = phase_inc(ch, ch.mod);
+        if (ch.car.vib) ch.car.inc = phase_inc(ch, ch.car);
+    }
+}
+
+OPENU5_SYNTH_INLINE void OplEmulator::advance_clocks() {
     ++eg_counter_;
     if (++tremolo_counter_ >= kTremoloPeriod) {
         tremolo_counter_ = 0;
@@ -401,6 +494,7 @@ void OplEmulator::advance_clocks() {
     if (++vibrato_counter_ >= kVibratoPeriod) {
         vibrato_counter_ = 0;
         vibrato_pos_ = (vibrato_pos_ + 1) & 7;
+        refresh_vibrato(); // A3-04B: once per ~1,019 chip samples, before this sample's phase steps
     }
 }
 
@@ -410,33 +504,53 @@ int32_t OplEmulator::tremolo_atten() const {
     return int32_t((tremolo_depth_ ? tri : (tri >> 2)) * 8);
 }
 
+// A3-04A's Operator::sample(), with the phase step read from the cache and
+// one early-out added (A3-04B, section 19.7): a static attenuation at or
+// above kSilentFloor makes expo() 0 whatever the waveform adds, so the
+// waveform and exp lookups are skipped. The waveform attenuation and the
+// tremolo are never negative, so they can only add to it.
+OPENU5_SYNTH_INLINE int32_t OplEmulator::Operator::sample(int32_t modulation, int32_t tremolo) {
+    phase = phase + inc; // uint32_t: wraps exactly like the TS >>> 0
+    if (eg_state == kEnvOff) return 0;
+    const int32_t base = (eg_level << 3) + static_atten;
+    if (base >= kSilentFloor) return 0;
+    const int32_t idx = (int32_t(phase >> 10) + modulation) & 0x3ff;
+    const WaveAtten w = wave_atten(waveform, idx);
+    const int32_t mag = expo(w.att + base + (am ? tremolo : 0));
+    return w.neg ? -mag : mag;
+}
+
 void OplEmulator::generate(float *left, float *right, size_t count, size_t offset) {
     for (size_t i = offset; i < offset + count; ++i) {
         advance_clocks();
         const int32_t trem = tremolo_atten();
+        const uint32_t eg = eg_counter_;
         float l = 0, r = 0;
         for (size_t c = 0; c < channel_count_; ++c) {
             Channel &ch = channels_[c];
             if (ch.mod.eg_state == kEnvOff && ch.car.eg_state == kEnvOff) continue;
-            const uint8_t key_code = ch.key_code();
-            ch.mod.advance_envelope(eg_counter_, key_code);
-            ch.car.advance_envelope(eg_counter_, key_code);
+            // Both envelopes first, then both operators (A3-04A's order). The
+            // inline test is advance_envelope()'s own early-outs: Off or a
+            // zero rate (env_rate 0), then the rate's counter mask.
+            if (ch.mod.env_rate && (eg & ch.mod.env_mask) == 0) ch.mod.envelope_step(eg, ch.key_code());
+            if (ch.car.env_rate && (eg & ch.car.env_mask) == 0) ch.car.envelope_step(eg, ch.key_code());
 
             const int32_t fb = ch.feedback == 0 ? 0 : (ch.mod.prev1 + ch.mod.prev2) >> (9 - ch.feedback);
-            const int32_t modOut = ch.mod.sample(phase_inc(ch, ch.mod), fb, trem);
+            const int32_t modOut = ch.mod.sample(fb, trem);
             ch.mod.prev2 = ch.mod.prev1;
             ch.mod.prev1 = modOut;
 
-            const int32_t carOut =
-                ch.car.sample(phase_inc(ch, ch.car), ch.additive ? 0 : modOut * kModScale, trem);
+            const int32_t carOut = ch.car.sample(ch.additive ? 0 : modOut * kModScale, trem);
             const int32_t out = ch.additive ? modOut + carOut : carOut;
             if (ch.left) l += float(out);
-            if (ch.right) r += float(out);
+            if (right && ch.right) r += float(out);
         }
         const float lf = l * kOutputScale;
-        const float rf = r * kOutputScale;
         left[i] = lf > 1.0f ? 1.0f : lf < -1.0f ? -1.0f : lf;
-        right[i] = rf > 1.0f ? 1.0f : rf < -1.0f ? -1.0f : rf;
+        if (right) {
+            const float rf = r * kOutputScale;
+            right[i] = rf > 1.0f ? 1.0f : rf < -1.0f ? -1.0f : rf;
+        }
     }
 }
 
@@ -868,6 +982,7 @@ void MusicSongPlayer::start(const MusicTrack &track, const MilesOplBank &bank, O
     track_ = &track;
     bank_ = &bank;
     loop_ = loop;
+    mono_ = chip == OplChipKind::Opl2;
     // A3-04A: rebuilt IN PLACE. `chip_ = OplEmulator(chip)` built a ~1.7 KB
     // temporary on the audio task's stack at every song switch; the emulator
     // is trivially destructible, so re-constructing it where it lives is the
@@ -923,8 +1038,9 @@ void MusicSongPlayer::fill_chip(float *l, float *r, size_t n, size_t base) {
         }
         size_t budget = n - done;
         if (event_index_ < events.size()) {
+            // Positive: the loop above consumed every event at or before song_sample_.
             const double until_d = double(events[event_index_].tick) * tick_to_sample - song_sample_;
-            size_t until = size_t(std::ceil(until_d));
+            size_t until = ceil_positive(until_d);
             if (until < 1) until = 1;
             if (until < budget) budget = until;
         } else if (loop_) {
@@ -938,7 +1054,7 @@ void MusicSongPlayer::fill_chip(float *l, float *r, size_t n, size_t base) {
         } else if (song_sample_ >= end_sample_) {
             ended_ = true;
             std::fill(l + base + done, l + base + n, 0.0f);
-            std::fill(r + base + done, r + base + n, 0.0f);
+            if (r) std::fill(r + base + done, r + base + n, 0.0f);
             return;
         }
         chip_.generate(l, r, budget, base + done);
@@ -971,11 +1087,14 @@ void MusicSongPlayer::render(int16_t *mono_out, size_t frames, uint32_t output_r
         last_output_rate_ = output_rate_hz;
     }
 
-    const size_t drop = size_t(std::floor(read_pos_));
+    // A3-04B: size_t(read_pos_) IS floor(read_pos_) -- it is never negative
+    // (it starts at 0, grows by ratio_ and loses at most its own floor) -- and
+    // needs no libm call (section 19.7). Same for i0 below.
+    const size_t drop = size_t(read_pos_);
     if (drop > 0) {
         const size_t clamped = drop < have_ ? drop : have_;
         std::copy(chip_l_.get() + clamped, chip_l_.get() + have_, chip_l_.get());
-        std::copy(chip_r_.get() + clamped, chip_r_.get() + have_, chip_r_.get());
+        if (!mono_) std::copy(chip_r_.get() + clamped, chip_r_.get() + have_, chip_r_.get());
         have_ -= clamped;
         read_pos_ -= double(clamped);
     }
@@ -988,24 +1107,30 @@ void MusicSongPlayer::render(int16_t *mono_out, size_t frames, uint32_t output_r
     // the "never allocates once started" guarantee. A fixed (frames,
     // output_rate_hz) pair now always asks for the same capacity, so
     // ensure_capacity grows exactly once and never again.
-    const size_t needed = size_t(std::ceil(1.0 + ratio_ * double(frames - 1))) + 2;
+    const size_t needed = ceil_positive(1.0 + ratio_ * double(frames - 1)) + 2;
     ensure_capacity(needed);
     if (needed > have_) {
         const size_t missing = needed - have_;
-        fill_chip(chip_l_.get(), chip_r_.get(), missing, have_);
+        fill_chip(chip_l_.get(), mono_ ? nullptr : chip_r_.get(), missing, have_);
         have_ += missing;
     }
 
     for (size_t i = 0; i < frames; ++i) {
-        const size_t i0 = size_t(std::floor(read_pos_));
+        const size_t i0 = size_t(read_pos_);
         const size_t i1 = i0 + 1 < have_ ? i0 + 1 : i0;
         const float frac = float(read_pos_ - double(i0));
         const float a = chip_l_[i0], b = chip_l_[i1];
-        const float c = chip_r_[i0], d = chip_r_[i1];
         const float left_s = a + (b - a) * frac;
-        const float right_s = c + (d - c) * frac;
-        const float mono = (left_s + right_s) * 0.5f;
-        int32_t sample = int32_t(std::lround(double(mono) * 32767.0));
+        // OPL2: right == left, and (x + x) * 0.5f == x exactly (a doubling
+        // and a halving of a float are both exact), so the left half IS
+        // A3-04A's mono sample.
+        float mono = left_s;
+        if (!mono_) {
+            const float c = chip_r_[i0], d = chip_r_[i1];
+            const float right_s = c + (d - c) * frac;
+            mono = (left_s + right_s) * 0.5f;
+        }
+        int32_t sample = round_q15(mono);
         if (sample > 32767) sample = 32767;
         if (sample < -32768) sample = -32768;
         mono_out[i] = apply_gain_q15(int16_t(sample), gain_q15);

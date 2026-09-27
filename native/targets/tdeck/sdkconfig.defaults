@@ -35,3 +35,12 @@ CONFIG_LOG_DEFAULT_LEVEL_INFO=y
 # Native game + FAT/SD/SPI + diagnostic formatting need a real call-stack budget.
 # Large app/CRC/display buffers are off-stack; require >=4 KiB measured reserve.
 CONFIG_ESP_MAIN_TASK_STACK_SIZE=24576
+
+# A3-04B (ALPHA3_AUDIO.md section 19.4): FreeRTOS run-time statistics for the
+# Developer perf report's per-core and per-task CPU (SystemPerf). The clock is
+# esp_timer (microseconds); 64-bit counters never wrap within a session. The
+# cost is one timer read per context switch.
+CONFIG_FREERTOS_USE_TRACE_FACILITY=y
+CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS=y
+CONFIG_FREERTOS_RUN_TIME_COUNTER_TYPE_U64=y
+CONFIG_FREERTOS_RUN_TIME_STATS_USING_ESP_TIMER=y

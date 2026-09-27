@@ -137,6 +137,8 @@ struct AudioPerfSnapshot {
     uint32_t cpu_permille = 0;       // render time / window
     uint32_t sfx_submitted = 0, sfx_during_music = 0, sfx_pending_max = 0, sfx_queue_max = 0;
     uint32_t music_switches = 0;
+    // A3-04B: samples the music + SFX sum saturated at the int16 limits (section 19.10).
+    uint32_t mix_clipped = 0, mix_clipped_blocks = 0;
     uint32_t stack_free_min = 0;     // bytes; the device fills it (uxTaskGetStackHighWaterMark)
     bool music_active = false;
     MusicSong song = MusicSong::None;
@@ -149,7 +151,8 @@ class AudioPerfCounters {
     static constexpr size_t kBuckets = 2 * kBucketsPerBlock;
 
     void reset(uint64_t now_us);
-    void on_render(uint32_t render_us, uint32_t music_us, uint32_t voices, uint32_t channels, uint32_t sfx_pending);
+    void on_render(uint32_t render_us, uint32_t music_us, uint32_t voices, uint32_t channels, uint32_t sfx_pending,
+                   uint32_t clipped = 0);
     void on_write(uint32_t fill_before, uint32_t write_us, uint32_t period_us, bool ok, bool had_period);
     void on_underrun() { ++underruns_; }
     void on_write_failure() { ++write_failures_; }
@@ -176,7 +179,7 @@ class AudioPerfCounters {
     uint32_t underruns_ = 0, hw_underruns_ = 0, missed_ = 0, write_failures_ = 0, enable_failures_ = 0;
     uint32_t runaway_yields_ = 0, voices_max_ = 0, channels_max_ = 0;
     uint32_t sfx_submitted_ = 0, sfx_during_music_ = 0, sfx_pending_max_ = 0, sfx_queue_max_ = 0;
-    uint32_t music_switches_ = 0;
+    uint32_t music_switches_ = 0, mix_clipped_ = 0, mix_clipped_blocks_ = 0;
     uint32_t histogram_[kBuckets + 1]{};
 };
 
@@ -323,10 +326,14 @@ class AudioBenchmark {
     bool running() const { return phase_ != Phase::Idle && phase_ != Phase::Done; }
     Phase phase() const { return phase_; }
     uint32_t sfx_played() const { return sfx_played_; }
+    /** A3-04B: the progress line on the Developer screen while it runs. */
+    static constexpr uint32_t kTotalMs = kSettleMs + kMusicOnlyMs + kMusicSfxMs;
+    uint32_t elapsed_ms(uint32_t now_ms) const { return phase_ == Phase::Idle ? 0 : now_ms - started_ms_; }
+    static const char *phase_name(Phase);
 
   private:
     Phase phase_ = Phase::Idle;
-    uint32_t phase_start_ms_ = 0, next_sfx_ms_ = 0, sfx_played_ = 0;
+    uint32_t started_ms_ = 0, phase_start_ms_ = 0, next_sfx_ms_ = 0, sfx_played_ = 0;
 };
 
 /**

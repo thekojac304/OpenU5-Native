@@ -1,0 +1,66 @@
+# A3-04B firmware IRAM check: C:\Dev\OpenU5-Native\native\targets\tdeck\build-a3-04a-post\openu5_tdeck.elf
+
+functions reached from render_block(): 28
+    42029614 FLASH   20 insns  openu5::apply_gain_q15(short, unsigned short)  <-- FLASH on the per-sample path
+    42029fdc FLASH   12 insns  openu5::(anonymous namespace)::pit_divisor(unsigned long)  <-- FLASH on the per-sample path
+    4202a000 FLASH   10 insns  openu5::(anonymous namespace)::pit_phase_inc(unsigned long)  <-- FLASH on the per-sample path
+    4202a048 FLASH   14 insns  openu5::speaker_noise_next(unsigned short)  <-- FLASH on the per-sample path
+    4202a070 FLASH   16 insns  openu5::speaker_noise_draw(unsigned short&, unsigned short)  <-- FLASH on the per-sample path
+    4202a09c FLASH   16 insns  openu5::speaker_rumble_draw(unsigned short&, unsigned short, unsigned short)  <-- FLASH on the per-sample path
+    4202b000 FLASH   92 insns  openu5::SpeakerVoice::begin_iteration()  <-- FLASH on the per-sample path
+    4202b108 FLASH   74 insns  openu5::SpeakerVoice::begin_segment()  <-- FLASH on the per-sample path
+    4202b228 FLASH  110 insns  openu5::SpeakerVoice::fine_level()  <-- FLASH on the per-sample path
+    4202b364 FLASH  182 insns  openu5::SpeakerVoice::render(long*, unsigned int)  <-- FLASH on the per-sample path
+    4202b5bc FLASH   29 insns  openu5::SfxPlayer::start_next()  (allowed: per cue start (compile_sfx, queue))
+    4202b88c FLASH   70 insns  openu5::SfxPlayer::render(short*, unsigned int, unsigned short)  <-- FLASH on the per-sample path
+    4202b98c FLASH   65 insns  _ZN6openu515MusicSongPlayer15ensure_capacityEj$part$0  (allowed: once per song size: the chip buffer)
+    4202c8c0 FLASH   85 insns  openu5::OplEmulator::Operator::advance_envelope(unsigned long, unsigned char)  <-- FLASH on the per-sample path
+    4202c9a8 FLASH  146 insns  openu5::OplEmulator::Operator::sample(unsigned long, long, long)  <-- FLASH on the per-sample path
+    4202cfb8 FLASH   39 insns  openu5::OplEmulator::advance_clocks()  <-- FLASH on the per-sample path
+    4202d01c FLASH  234 insns  openu5::OplEmulator::generate(float*, float*, unsigned int, unsigned int)  <-- FLASH on the per-sample path
+    4202d288 FLASH   25 insns  openu5::OplEmulator::sounding_channels() const  <-- FLASH on the per-sample path
+    4202dc00 FLASH   25 insns  openu5::OplVoiceAllocator::active_voices() const  <-- FLASH on the per-sample path
+    4202e5dc FLASH   68 insns  openu5::MusicSongPlayer::dispatch(openu5::MusicEvent const&)  (allowed: per MIDI event (the voice allocator))
+    4202e6a4 FLASH  144 insns  openu5::MusicSongPlayer::fill_chip(float*, float*, unsigned int, unsigned int)  <-- FLASH on the per-sample path
+    4202e810 FLASH  210 insns  openu5::MusicSongPlayer::render(short*, unsigned int, unsigned long, unsigned short)  <-- FLASH on the per-sample path
+    4202ec2c FLASH   76 insns  openu5::AudioPerfCounters::on_render(unsigned long, unsigned long, unsigned long, unsigned  <-- FLASH on the per-sample path
+    4202f0ec FLASH  108 insns  openu5::AudioRingPump::render_block(unsigned short, unsigned short)  <-- FLASH on the per-sample path
+    4208e6ec FLASH   76 insns  ceil  <-- FLASH on the per-sample path
+    4208e7b0 FLASH   78 insns  floor  <-- FLASH on the per-sample path
+    4208f680 FLASH   84 insns  lround  <-- FLASH on the per-sample path
+    4208f810 FLASH   16 insns  __math_set_invalid  <-- FLASH on the per-sample path
+
+per-sample openu5::OplEmulator::generate(float*, float*, unsigned int,  FLASH
+per-sample openu5::MusicSongPlayer::render(short*, unsigned int, unsign FLASH
+per-sample openu5::SfxPlayer::render(short*, unsigned int, unsigned sho FLASH
+
+FLASH  openu5::apply_gain_q15 <- openu5::MusicSongPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::(anonymous namespace)::pit_divisor <- openu5::SpeakerVoice::begin_iteration <- openu5::SpeakerVoice::render <- openu5::SfxPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::(anonymous namespace)::pit_phase_inc <- openu5::SpeakerVoice::begin_iteration <- openu5::SpeakerVoice::render <- openu5::SfxPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::speaker_noise_next <- openu5::speaker_noise_draw <- openu5::SpeakerVoice::begin_iteration <- openu5::SpeakerVoice::render <- openu5::SfxPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::speaker_noise_draw <- openu5::SpeakerVoice::begin_iteration <- openu5::SpeakerVoice::render <- openu5::SfxPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::speaker_rumble_draw <- openu5::SpeakerVoice::fine_level <- openu5::SpeakerVoice::render <- openu5::SfxPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::SpeakerVoice::begin_iteration <- openu5::SpeakerVoice::render <- openu5::SfxPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::SpeakerVoice::begin_segment <- openu5::SpeakerVoice::render <- openu5::SfxPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::SpeakerVoice::fine_level <- openu5::SpeakerVoice::render <- openu5::SfxPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::SpeakerVoice::render <- openu5::SfxPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::SfxPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::OplEmulator::Operator::advance_envelope <- openu5::OplEmulator::generate <- openu5::MusicSongPlayer::fill_chip <- openu5::MusicSongPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::OplEmulator::Operator::sample <- openu5::OplEmulator::generate <- openu5::MusicSongPlayer::fill_chip <- openu5::MusicSongPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::OplEmulator::advance_clocks <- openu5::OplEmulator::generate <- openu5::MusicSongPlayer::fill_chip <- openu5::MusicSongPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::OplEmulator::generate <- openu5::MusicSongPlayer::fill_chip <- openu5::MusicSongPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::OplEmulator::sounding_channels <- openu5::AudioRingPump::render_block
+FLASH  openu5::OplVoiceAllocator::active_voices <- openu5::AudioRingPump::render_block
+FLASH  openu5::MusicSongPlayer::fill_chip <- openu5::MusicSongPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::MusicSongPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::AudioPerfCounters::on_render <- openu5::AudioRingPump::render_block
+FLASH  openu5::AudioRingPump::render_block
+FLASH  ceil <- openu5::MusicSongPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  floor <- openu5::MusicSongPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  lround <- openu5::MusicSongPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  __math_set_invalid <- lround <- openu5::MusicSongPlayer::render <- openu5::AudioRingPump::render_block
+BANNED floor  via floor <- openu5::MusicSongPlayer::render <- openu5::AudioRingPump::render_block
+BANNED ceil  via ceil <- openu5::MusicSongPlayer::render <- openu5::AudioRingPump::render_block
+BANNED lround  via lround <- openu5::MusicSongPlayer::render <- openu5::AudioRingPump::render_block
+
+RED the per-sample audio path still uses the flash cache: 25 flash function(s), 0 flash .rodata read(s), 3 banned call(s)

@@ -17,6 +17,10 @@ int world_draws = 0;
 int ui_draws = 0;
 int panel_draws = 0;
 uint16_t first_panel_map_pixel = 0;
+// A3-04B: the Developer screen the runtime last handed to show_alpha.
+tdeck::DeviceDebugScreen last_debug{};
+bool last_debug_valid = false;
+int debug_draws = 0;
 void capture_panel(const openu5::GameState &game, tdeck::DevicePartyHighlight highlight) {
     for (int row = 0; row < 6; ++row) {
         const auto &member = game.party.characters[row];
@@ -34,7 +38,12 @@ void batch37_reset_screen() {
     camp_panels.clear();
     fills = draws = panel_draws = world_draws = ui_draws = 0;
     first_panel_map_pixel = 0;
+    last_debug = {};
+    last_debug_valid = false;
+    debug_draws = 0;
 }
+const tdeck::DeviceDebugScreen *batch37_last_debug_screen() { return last_debug_valid ? &last_debug : nullptr; }
+int batch37_debug_draw_count() { return debug_draws; }
 uint16_t batch37_pixel(int x, int y) { return screen[size_t(y) * 320 + size_t(x)]; }
 size_t batch37_frame_count() { return frames.size(); }
 int64_t batch37_frame_time_us(size_t frame) { return frame<frame_times.size()?frame_times[frame]:-1; }
@@ -68,12 +77,18 @@ void Board::show_runtime_identity(const char *, const char *, const char *, cons
 esp_err_t Board::show_view(const uint16_t *, int, int, const char *, const char *, bool) { return ESP_OK; }
 esp_err_t Board::show_alpha(const uint16_t *pixels, const openu5::UiSession &, const openu5::GameState &game,
                             const openu5::TurnState &, const openu5::HudWorldState &, const uint8_t *,
-                            const char *, const uint8_t *, bool, const DeviceDebugScreen *, bool,
+                            const char *, const uint8_t *, bool, const DeviceDebugScreen *debug, bool,
                             uint8_t, const DeviceShopView *, const DeviceSelectionView *,
                             const DeviceContextActionBar *, DevicePartyHighlight highlight, uint32_t,
                             const openu5::HudDungeonBands *, bool full_square_viewport, bool preserve_party_panel) {
     if (!pixels) return ESP_ERR_INVALID_ARG;
     ++draws;
+    // A3-04B: what the Developer screen showed (null = the gameplay HUD).
+    last_debug_valid = debug != nullptr;
+    if (debug) {
+        last_debug = *debug;
+        ++debug_draws;
+    }
     ++ui_draws;
     if(!full_square_viewport)++world_draws;
     frames.emplace_back();

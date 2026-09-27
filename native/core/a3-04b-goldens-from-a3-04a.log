@@ -1,0 +1,6 @@
+kCorpusL6        = 0x6a7ff3d5727df2c6ull
+kCorpusDevice128 = 0x52875b74637a7da9ull
+kCorpusOpl3      = 0x4116e61779750372ull
+kCorpusRates     = 0x51b361b865686794ull
+kChipStressOpl2  = 0xe35cff74c7f0587bull
+kChipStressOpl3  = 0xdf50a8ed1111170aull

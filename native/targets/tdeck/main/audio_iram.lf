@@ -1,0 +1,53 @@
+# Alpha 3 A3-04B (native/targets/tdeck/ALPHA3_AUDIO.md section 19.8): the
+# audio task's per-sample path runs from IRAM, not from flash.
+#
+# The ESP32-S3's instruction and data caches are shared by BOTH cores. In
+# A3-04A the OPL2 synth -- about half of core 1, continuously, whenever music
+# plays -- executed from flash through that shared instruction cache, and
+# read its constant tables through the shared data cache, while the game
+# loop on core 0 rendered through the same caches and the same MSPI bus
+# (flash and PSRAM). With music at 0 % the synth does not run at all and the
+# renderer had the caches to itself -- the user's "0 % is much faster".
+#
+# Placed here: everything executed per chip sample or per output sample
+# (the chip, the resampler, the SFX voice, the gain, the mix), and the
+# per-block functions that contain those loops. Per MIDI event (the voice
+# allocator, note_to_fnum_block) and per cue start stay in flash; the image
+# check (a3_04b_iram_check.py) lists what the IRAM path still calls.
+#
+# Symbol names are Xtensa GCC's mangling (size_t = unsigned int "j",
+# uint32_t = unsigned long "m", int32_t = long "l"; a function in an
+# anonymous namespace carries "_GLOBAL__N_1L"). A name that stops
+# matching after a signature change silently leaves that function in flash:
+# a3_04b_iram_check.py on the linked image is the test that catches it, and
+# a3_04b_perf I1 checks this list names the roots.
+[mapping:openu5_audio_iram]
+archive: libmain.a
+entries:
+    music_synth:_ZN6openu511OplEmulator8generateEPfS1_jj (noflash)
+    music_synth:_ZN6openu511OplEmulator14advance_clocksEv (noflash)
+    music_synth:_ZN6openu511OplEmulator15refresh_vibratoEv (noflash)
+    music_synth:_ZNK6openu511OplEmulator9phase_incERKNS0_7ChannelERKNS0_8OperatorE (noflash)
+    music_synth:_ZNK6openu511OplEmulator13tremolo_attenEv (noflash)
+    music_synth:_ZN6openu511OplEmulator8Operator13envelope_stepEmh (noflash)
+    music_synth:_ZN6openu511OplEmulator8Operator16refresh_envelopeEh (noflash)
+    music_synth:_ZNK6openu511OplEmulator8Operator8rate_forEhh (noflash)
+    music_synth:_ZN6openu511OplEmulator8Operator6sampleEll (noflash)
+    music_synth:_ZN6openu512_GLOBAL__N_1L10wave_attenEhl (noflash)
+    music_synth:_ZN6openu515MusicSongPlayer6renderEPsjmt (noflash)
+    music_synth:_ZN6openu515MusicSongPlayer9fill_chipEPfS1_jj (noflash)
+    music_synth:_ZNK6openu511OplEmulator17sounding_channelsEv (noflash)
+    music_synth:_ZNK6openu517OplVoiceAllocator13active_voicesEv (noflash)
+    audio_stream:_ZN6openu513AudioRingPump12render_blockEtt (noflash)
+    audio_stream:_ZN6openu517AudioPerfCounters9on_renderEmmmmmm (noflash)
+    sfx_synth:_ZN6openu59SfxPlayer6renderEPsjt (noflash)
+    sfx_synth:_ZN6openu512SpeakerVoice6renderEPlj (noflash)
+    sfx_synth:_ZN6openu512SpeakerVoice10fine_levelEv (noflash)
+    sfx_synth:_ZN6openu512SpeakerVoice15begin_iterationEv (noflash)
+    sfx_synth:_ZN6openu512SpeakerVoice13begin_segmentEv (noflash)
+    sfx_synth:_ZN6openu512_GLOBAL__N_1L11pit_divisorEm (noflash)
+    sfx_synth:_ZN6openu512_GLOBAL__N_1L13pit_phase_incEm (noflash)
+    sfx_synth:_ZN6openu518speaker_noise_nextEt (noflash)
+    sfx_synth:_ZN6openu518speaker_noise_drawERtt (noflash)
+    sfx_synth:_ZN6openu519speaker_rumble_drawERttt (noflash)
+    audio:_ZN6openu514apply_gain_q15Est (noflash)

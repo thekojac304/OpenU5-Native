@@ -1,0 +1,25 @@
+# A3-04B mutation validation (2026-09-26 20:37)
+
+S2 the envelope cache is not refreshed when the envelope changes state: KILLED
+    perf     exit=1  8 RED
+        RED G1 A3-04's own L6 corpus fingerprint is unchanged: 0618f34955648962 (A3-04A documented 6a7ff3d5727df2c6)
+        RED G2 the device's geometry -- every song looping 30 s in 128-frame blocks at 16 kHz, Music 80 %: e6f1139652eef871
+        RED G3 the same corpus through the OPL3 chip (stereo bus): 31ccbd361ce2c8c3
+        RED G4 other output rates and chunk sizes (44.1 kHz, 22.05 kHz, 96 frames): fddaf53f6a3a601b
+        RED G5 the OPL2 chip under 6,000 rounds of random register writes (every cached input changed mid-note): e0f809e53ae73cf3
+        RED G6 the OPL3 chip under the same, both arrays and all eight waveforms: 0d3a4282fef09cfd
+S3 a vibrato step does not refresh the vibrato operators' phase step: KILLED
+    perf     exit=1  6 RED
+        RED G1 A3-04's own L6 corpus fingerprint is unchanged: a8504d22ad0e35bb (A3-04A documented 6a7ff3d5727df2c6)
+        RED G2 the device's geometry -- every song looping 30 s in 128-frame blocks at 16 kHz, Music 80 %: 80f6ee0746c7685c
+        RED G3 the same corpus through the OPL3 chip (stereo bus): dfecaa76436bcb2b
+        RED G4 other output rates and chunk sizes (44.1 kHz, 22.05 kHz, 96 frames): 179325cb200b5053
+        RED G5 the OPL2 chip under 6,000 rounds of random register writes (every cached input changed mid-note): aa299f7378cd145b
+        RED G6 the OPL3 chip under the same, both arrays and all eight waveforms: e1151abdf82b895c
+S4 a vibrato-depth write (0xBD) does not refresh the phase steps: KILLED
+    perf     exit=1  2 RED
+        RED G5 the OPL2 chip under 6,000 rounds of random register writes (every cached input changed mid-note): e89f85ab228ffadb
+        RED G6 the OPL3 chip under the same, both arrays and all eight waveforms: 53091f780f5d0b2b
+
+restored build exit=0; perf exit=0, runtime exit=0, stream exit=0, synth exit=0
+mutations: 3, killed by a failing check: 3, survived or invalid: 0

@@ -1,0 +1,46 @@
+# A3-04B firmware IRAM check: C:\Dev\OpenU5-Native\native\targets\tdeck\build-a3-04b\openu5_tdeck.elf
+
+functions reached from render_block(): 26
+    403832c4 IRAM    19 insns  openu5::apply_gain_q15(short, unsigned short)
+    403832fc IRAM   120 insns  openu5::AudioRingPump::render_block(unsigned short, unsigned short)
+    40383434 IRAM    84 insns  openu5::AudioPerfCounters::on_render(unsigned long, unsigned long, unsigned long, unsigned
+    40383514 IRAM    40 insns  openu5::OplEmulator::advance_clocks()
+    40383584 IRAM    65 insns  openu5::OplEmulator::refresh_vibrato()
+    4038363c IRAM    59 insns  openu5::OplEmulator::Operator::envelope_step(unsigned long, unsigned char)
+    403836d8 IRAM    49 insns  openu5::OplEmulator::Operator::refresh_envelope(unsigned char)
+    4038375c IRAM   279 insns  openu5::OplEmulator::generate(float*, float*, unsigned int, unsigned int)
+    40383a44 IRAM   288 insns  openu5::MusicSongPlayer::render(short*, unsigned int, unsigned long, unsigned short)
+    40383d48 IRAM   147 insns  openu5::MusicSongPlayer::fill_chip(float*, float*, unsigned int, unsigned int)
+    40383ec8 IRAM   113 insns  openu5::SpeakerVoice::fine_level()
+    4038400c IRAM    76 insns  openu5::SpeakerVoice::begin_segment()
+    403840e0 IRAM    96 insns  openu5::SpeakerVoice::begin_iteration()
+    403841f8 IRAM   182 insns  openu5::SpeakerVoice::render(long*, unsigned int)
+    403843e8 IRAM    71 insns  openu5::SfxPlayer::render(short*, unsigned int, unsigned short)
+    42099ed4 FLASH   90 insns  openu5::(anonymous namespace)::wave_atten(unsigned char, long)  <-- FLASH on the per-sample path
+    4209a004 FLASH   66 insns  _ZN6openu515MusicSongPlayer15ensure_capacityEj$part$0  (allowed: once per song size: the chip buffer)
+    4209b464 FLASH   26 insns  openu5::OplEmulator::sounding_channels() const  <-- FLASH on the per-sample path
+    4209bde0 FLASH   25 insns  openu5::OplVoiceAllocator::active_voices() const  <-- FLASH on the per-sample path
+    4209c7cc FLASH   69 insns  openu5::MusicSongPlayer::dispatch(openu5::MusicEvent const&)  (allowed: per MIDI event (the voice allocator))
+    4209cda4 FLASH   13 insns  openu5::(anonymous namespace)::pit_divisor(unsigned long)  <-- FLASH on the per-sample path
+    4209cdc8 FLASH   10 insns  openu5::(anonymous namespace)::pit_phase_inc(unsigned long)  <-- FLASH on the per-sample path
+    4209ce10 FLASH   14 insns  openu5::speaker_noise_next(unsigned short)  <-- FLASH on the per-sample path
+    4209ce38 FLASH   16 insns  openu5::speaker_noise_draw(unsigned short&, unsigned short)  <-- FLASH on the per-sample path
+    4209ce64 FLASH   16 insns  openu5::speaker_rumble_draw(unsigned short&, unsigned short, unsigned short)  <-- FLASH on the per-sample path
+    4209de84 FLASH   29 insns  openu5::SfxPlayer::start_next()  (allowed: per cue start (compile_sfx, queue))
+
+per-sample openu5::OplEmulator::generate(float*, float*, unsigned int,  IRAM
+per-sample openu5::MusicSongPlayer::render(short*, unsigned int, unsign IRAM
+per-sample openu5::SfxPlayer::render(short*, unsigned int, unsigned sho IRAM
+
+FLASH  openu5::(anonymous namespace)::wave_atten <- openu5::OplEmulator::generate <- openu5::MusicSongPlayer::fill_chip <- openu5::MusicSongPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::OplEmulator::sounding_channels <- openu5::AudioRingPump::render_block
+FLASH  openu5::OplVoiceAllocator::active_voices <- openu5::AudioRingPump::render_block
+FLASH  openu5::(anonymous namespace)::pit_divisor <- openu5::SpeakerVoice::begin_iteration <- openu5::SpeakerVoice::render <- openu5::SfxPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::(anonymous namespace)::pit_phase_inc <- openu5::SpeakerVoice::begin_iteration <- openu5::SpeakerVoice::render <- openu5::SfxPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::speaker_noise_next <- openu5::speaker_noise_draw <- openu5::SpeakerVoice::begin_iteration <- openu5::SpeakerVoice::render <- openu5::SfxPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::speaker_noise_draw <- openu5::SpeakerVoice::begin_iteration <- openu5::SpeakerVoice::render <- openu5::SfxPlayer::render <- openu5::AudioRingPump::render_block
+FLASH  openu5::speaker_rumble_draw <- openu5::SpeakerVoice::fine_level <- openu5::SpeakerVoice::render <- openu5::SfxPlayer::render <- openu5::AudioRingPump::render_block
+DROM   openu5::OplEmulator::refresh_vibrato reads flash .rodata 3c0c4d34 openu5::(anonymous namespace)::kVibratoSteps
+DROM   openu5::OplEmulator::refresh_vibrato reads flash .rodata 3c0c4d98 openu5::(anonymous namespace)::kMult2
+
+RED the per-sample audio path still uses the flash cache: 8 flash function(s), 2 flash .rodata read(s), 0 banned call(s)

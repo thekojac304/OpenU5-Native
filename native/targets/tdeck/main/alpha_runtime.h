@@ -14,6 +14,7 @@
 #include "openu5/ambient_sfx.h"
 #include "openu5/audio_pack.h"
 #include "openu5/audio_stream.h"
+#include "openu5/perf_report.h"
 #include "openu5/command_char.h"
 #include "openu5/combat.h"
 #include "openu5/dialogue_orchestration.h"
@@ -64,6 +65,21 @@ class AlphaRuntime {
     // AUDIO_PERF line read it. main.cpp attaches it after configure_audio().
     void attach_audio_perf(openu5::AudioPerfSource *source) { audio_perf_ = source; }
     bool audio_benchmark_running() const { return audio_bench_.running(); }
+    // A3-04B (ALPHA3_AUDIO.md section 19). The machine-wide window -- per-core
+    // and per-task CPU from the FreeRTOS run-time statistics, heap, stacks --
+    // for the same report; main.cpp attaches the device's, the host has none.
+    void attach_system_perf(openu5::SystemPerfSource *source) { system_perf_ = source; }
+    // The game thread's own frames and inputs (always counted; diagnostics only).
+    const openu5::RenderPerfCounters &render_perf() const { return render_perf_; }
+    // The combined AUDIO / RENDER PERF report: it replaces the Developer
+    // screen's rows until dismissed (Enter / Back), and scrolls with Up/Down.
+    // "Pending" = it finished while the Developer menu was closed: Alt+D shows it.
+    bool perf_report_open() const { return perf_report_open_; }
+    bool perf_report_pending() const { return perf_report_pending_; }
+    size_t perf_report_line_count() const { return perf_report_count_; }
+    const char *perf_report_line(size_t i) const {
+        return perf_report_lines_ && i < perf_report_count_ ? perf_report_lines_[i] : "";
+    }
     // A3-03. The ambient ticker (ambient_sfx.h) and how often it ran.
     const openu5::AmbientTicker &ambient() const { return ambient_; }
     uint32_t ambient_ticks() const { return ambient_ticks_; }
@@ -257,6 +273,16 @@ class AlphaRuntime {
     openu5::AudioBenchmark audio_bench_{};
     uint32_t bench_guard_ns_ = 0, bench_idle_channels_x100_ = 0;
     size_t bench_internal_free_ = 0, bench_psram_free_ = 0;
+    // A3-04B. Diagnostics only; nothing in play reads them.
+    openu5::SystemPerfSource *system_perf_ = nullptr;
+    openu5::RenderPerfCounters render_perf_{};
+    openu5::AudioPerfSnapshot bench_idle_{};
+    bool bench_idle_valid_ = false;
+    uint32_t bench_status_second_ = UINT32_MAX;
+    int64_t input_pending_us_ = -1; // capture time of the oldest input no gameplay frame has shown yet
+    char (*perf_report_lines_)[openu5::kPerfReportLineBytes] = nullptr; // kPerfReportMaxLines rows, PSRAM
+    size_t perf_report_count_ = 0, perf_report_top_ = 0;
+    bool perf_report_open_ = false, perf_report_pending_ = false;
     // A3-03. ambient_sfx_tick 0x4102's counters, and the 55 ms tick and the
     // clock reading it last ran on.
     openu5::AmbientTicker ambient_{};
@@ -532,7 +558,13 @@ class AlphaRuntime {
     static void audio_perf_start(void *);
     static void audio_stats_now(void *);
     void service_audio_benchmark(int64_t now_us);
-    void report_audio_perf(const char *heading, const openu5::AudioPerfSnapshot &);
+    // A3-04B. The report view (section 19.3) and the three windows it reads.
+    void reset_perf_windows();
+    void publish_perf_report(const char *title, const openu5::AudioPerfSnapshot *first, const char *first_heading,
+                             const openu5::AudioPerfSnapshot *second, const char *second_heading, bool with_guard);
+    bool handle_perf_report_input(const openu5::UiAction &);
+    /** handle()'s body; handle() wraps it to time each input (section 19.5). */
+    bool handle_input_event(const RawInputEvent &);
     // A3-01. The one binder of the Developer diagnostics services, shared by
     // initialize() and the host fixture (the fixture used to copy the call).
     void bind_developer_diagnostics();

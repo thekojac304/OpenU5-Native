@@ -52,8 +52,12 @@ void AudioPerfCounters::reset(uint64_t now_us) {
 }
 
 void AudioPerfCounters::on_render(uint32_t render_us, uint32_t music_us, uint32_t voices, uint32_t channels,
-                                  uint32_t sfx_pending) {
+                                  uint32_t sfx_pending, uint32_t clipped) {
     ++blocks_;
+    if (clipped) {
+        mix_clipped_ += clipped;
+        ++mix_clipped_blocks_;
+    }
     render_sum_ += render_us;
     music_sum_ += music_us;
     if (render_us < render_min_) render_min_ = render_us;
@@ -142,6 +146,8 @@ void AudioPerfCounters::snapshot(uint64_t now_us, AudioPerfSnapshot &out) const 
     out.sfx_pending_max = sfx_pending_max_;
     out.sfx_queue_max = sfx_queue_max_;
     out.music_switches = music_switches_;
+    out.mix_clipped = mix_clipped_;
+    out.mix_clipped_blocks = mix_clipped_blocks_;
 }
 
 // ===========================================================================
@@ -193,13 +199,19 @@ void AudioRingPump::render_block(uint16_t sfx_gain_q15, uint16_t music_gain_q15)
     sfx_.render(sfx_block_, kAudioBlockFrames, sfx_gain_q15);
     // Summed and saturated: the MIDI card and the PC speaker were separate
     // hardware mixing in the air -- no ducking, neither replaces the other.
+    // A3-04B: every saturated sample is counted (section 19.10) -- a harsh
+    // "static" on the device is either this or a dry ring, and the report
+    // says which.
+    uint32_t clipped = 0;
     for (uint32_t i = 0; i < kAudioBlockFrames; ++i) {
         const int32_t sum = int32_t(sfx_block_[i]) + int32_t(music_block_[i]);
+        const bool over = sum > 32767 || sum < -32768;
+        clipped += over ? 1u : 0u;
         block_[i] = int16_t(sum > 32767 ? 32767 : sum < -32768 ? -32768 : sum);
     }
     const uint64_t t2 = now();
     perf_.on_render(uint32_t(t2 - t0), uint32_t(t1 - t0), uint32_t(music_.active_voices()),
-                    uint32_t(music_.sounding_channels()), uint32_t(sfx_.pending()));
+                    uint32_t(music_.sounding_channels()), uint32_t(sfx_.pending()), clipped);
 }
 
 bool AudioRingPump::step(PcmRingSink &sink, uint16_t sfx_gain_q15, uint16_t music_gain_q15) {
@@ -343,8 +355,20 @@ size_t format_audio_perf(const AudioPerfSnapshot &s, char (*lines)[64], size_t m
 // ===========================================================================
 // AudioBenchmark
 // ===========================================================================
+const char *AudioBenchmark::phase_name(Phase p) {
+    switch (p) {
+    case Phase::Idle: return "idle";
+    case Phase::Settle: return "settling";
+    case Phase::MusicOnly: return "music alone";
+    case Phase::MusicSfx: return "music + SFX";
+    case Phase::Done: return "done";
+    }
+    return "";
+}
+
 void AudioBenchmark::start(uint32_t now_ms) {
     phase_ = Phase::Settle;
+    started_ms_ = now_ms;
     phase_start_ms_ = now_ms;
     next_sfx_ms_ = 0;
     sfx_played_ = 0;
