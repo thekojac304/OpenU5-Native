@@ -1553,6 +1553,49 @@ if(BUILD_TESTING)
   endif()
   add_test(NAME a3_04c_contention_runtime COMMAND a3_04c_contention_runtime
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+  # Alpha 3 A3-04D (targets/tdeck/ALPHA3_AUDIO.md section 21) -- the SD
+  # diagnostic log's switch: off at boot, serial always, the card untouched
+  # while off (the device writer's own logic against a fake card), the
+  # report / A3C_PERF labels, the SD attribution of slow TFT transactions,
+  # and the device wiring.
+  add_executable(a3_04d_sd_log tests/a3_04d_sd_log_test.cpp)
+  target_link_libraries(a3_04d_sd_log PRIVATE openu5_core)
+  target_compile_features(a3_04d_sd_log PRIVATE cxx_std_17)
+  add_test(NAME a3_04d_sd_log COMMAND a3_04d_sd_log "${CMAKE_CURRENT_SOURCE_DIR}")
+  # A3-04D -- the same switch through the REAL AlphaRuntime: the Developer
+  # row, the labels, n/a without a logger, the game untouched.
+  add_executable(a3_04d_sd_log_runtime
+    ../targets/tdeck/host_tests/a3_04d_sd_log_runtime_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/batch37_board_capture_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_audio.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(a3_04d_sd_log_runtime PRIVATE openu5_core)
+  target_include_directories(a3_04d_sd_log_runtime PRIVATE
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/main)
+  target_compile_features(a3_04d_sd_log_runtime PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(a3_04d_sd_log_runtime PRIVATE /Gy)
+    target_link_options(a3_04d_sd_log_runtime PRIVATE /OPT:REF)
+  else()
+    target_compile_options(a3_04d_sd_log_runtime PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(a3_04d_sd_log_runtime PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME a3_04d_sd_log_runtime COMMAND a3_04d_sd_log_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
   # Alpha 3 gameplay hotfix A3-HF1 -- the troll-encounter reward chest whose
   # Get answered "Nothing to get!": a roaming troll by the bridge near
   # Britain, the fight, (O)pen and (G)et, all by raw keys through the REAL

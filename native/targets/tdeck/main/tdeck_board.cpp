@@ -289,10 +289,12 @@ esp_err_t Board::tft_command(spi_transaction_t &transaction)
 esp_err_t Board::tft_transmit(spi_transaction_t &transaction, const RowMark *start)
 {
     const bool busy0 = audio_running();
+    const bool sd0 = sd_log_burst();
     const uint32_t c0 = uint32_t(esp_cpu_get_cycle_count());
     const esp_err_t result = spi_device_transmit(display_handle(display_device_), &transaction);
     const uint32_t c1 = uint32_t(esp_cpu_get_cycle_count());
     const bool busy1 = audio_running();
+    const bool sd1 = sd_log_burst();
     const uint32_t xfer = c1 - c0;
     auto &t = tft_timing_;
     ++t.transactions;
@@ -301,6 +303,11 @@ esp_err_t Board::tft_transmit(spi_transaction_t &transaction, const RowMark *sta
     if (xfer > openu5::kSlowXferUs * tft_cpu_mhz_) {
         ++t.slow_xfers;
         if (busy0 || busy1) ++t.slow_xfers_busy;
+        // A3-04D: the SD-log writer was in a burst -- a card command holds this bus.
+        if (sd0 || sd1) {
+            ++t.slow_xfers_sd;
+            if (xfer > t.xfer_max_sd_cycles) t.xfer_max_sd_cycles = xfer;
+        }
     }
     if (start) {
         ++t.rows;

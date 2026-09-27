@@ -10,7 +10,7 @@
 
 > ### CURRENT STATE (Alpha 3 A3-HF1) — gameplay hotfix: the troll-encounter reward chest; Alpha 2 remains the released build; read this first
 >
-> **A3-HF1 is a small Alpha 3 gameplay hotfix, not a release.** The audio batches A3-04, A3-04A, A3-04B and A3-04C are recorded in [`ALPHA3_AUDIO.md`](ALPHA3_AUDIO.md) §17–§20; the music-on render lag is instrumented (A3-04C, §20), and its hardware runs are pending. A3-04C changes no gameplay.
+> **A3-HF1 is a small Alpha 3 gameplay hotfix, not a release.** The audio batches A3-04, A3-04A, A3-04B, A3-04C and A3-04D are recorded in [`ALPHA3_AUDIO.md`](ALPHA3_AUDIO.md) §17–§21. The music-on render lag was instrumented in A3-04C (§20). Its runs traced the 0.8–1.5 s stalls to the SD diagnostic log, whose card shares the TFT's SPI bus, so A3-04D (§21) turns that log off by default behind a Developer switch; its ON/OFF hardware runs are pending. Neither batch changes gameplay.
 > - Hardware: after a random troll fight by the bridge near Britain, the chest opened but every `Get` answered "Nothing to get!". Cause: the arena Get refused any item whose counter was already full (99 / 9999), a rule native invented and the 1988 Get (SJOG 0x1458) does not have. The Developer "Stocked inventory" and "Combat" presets fill every such counter. Fixed in `apply_loot_grant`; nothing else moves. See §14 "Alpha 3 A3-HF1".
 >
 > | | |

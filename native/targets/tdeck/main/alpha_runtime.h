@@ -78,12 +78,17 @@ class AlphaRuntime {
     struct SdLogPerfHooks {
         bool (*snapshot)(openu5::SdLogPerf &) = nullptr;
         void (*reset)() = nullptr;
+        // A3-04D (section 21): the SD diagnostic log's switch -- the Developer
+        // row "Probe: SD diag logging" and the scenario's "sdlog ON/OFF".
+        openu5::SdLogState (*state)() = nullptr;
+        bool (*set_enabled)(bool) = nullptr;
     };
     void attach_sd_log_perf(SdLogPerfHooks hooks) { sd_log_perf_ = hooks; }
     void note_loop_pass(uint32_t us) { contention_.on_loop(us); }
     const openu5::ContentionCounters &contention() const { return contention_; }
     size_t contention_line(char *out, size_t cap) const;
     bool music_bypass() const { return music_bypass_; }
+    openu5::SdLogState sd_log_state() const;
     // The combined AUDIO / RENDER PERF report: it replaces the Developer
     // screen's rows until dismissed (Enter / Back), and scrolls with Up/Down.
     // "Pending" = it finished while the Developer menu was closed: Alt+D shows it.
@@ -576,6 +581,7 @@ class AlphaRuntime {
     static void audio_perf_start(void *);
     static void audio_stats_now(void *);
     static bool music_bypass_probe(void *, bool toggle);
+    static openu5::SdLogState sd_log_probe(void *, bool toggle);
     void service_audio_benchmark(int64_t now_us);
     // A3-04B. The report view (section 19.3) and the three windows it reads.
     void reset_perf_windows();

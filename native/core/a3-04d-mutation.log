@@ -1,0 +1,35 @@
+M1 KILLED the log is ON at boot (the A3-04C behaviour) :: sd_log: D1, D2, C1, C2, C3, C4, W1, W2, W3, W4 | runtime: R1, R3, R4, R5, R6, R7, T1
+M2 KILLED capture ignores the switch: every log call is queued for the card :: sd_log: D2, D4, C1, C2, C3, C4, W1, W2, W3, W4, W6
+M3 KILLED serial is skipped while the card copy is off :: sd_log: C1, C2, C3, C4, W1, W11
+M4 KILLED a wake while off and closed still opens the log :: sd_log: W1, W2, W3, W6, W7, W8
+M5 KILLED switching off never closes the log (the writer keeps flushing) :: sd_log: W6, W8
+M6 KILLED switching off drops what was captured while on :: sd_log: W6
+M7 KILLED the writer is never idle: it wakes every 250 ms while off :: sd_log: D2, W1, W6
+M8 KILLED switching on is not refused without a card / writer :: sd_log: D1, D2, W11
+M9 KILLED a card error leaves the switch on :: sd_log: W11
+M10 KILLED the A3-04C flush cadence changes: a flush on every wake :: sd_log: W3, W4, W5, W10
+M11 KILLED the A3-04C line prefix changes :: sd_log: W3, W9
+F1 KILLED the scenario label drops the log's state :: sd_log: F2, F3, F6, F7
+F2 KILLED the report's SD-log line does not say OFF :: sd_log: F3, F8 | runtime: R6
+F3 KILLED the A3C_PERF line's sd= field does not say OFF :: sd_log: F3 | runtime: R6
+F4 KILLED slow TFT transactions during SD bursts are not added up :: sd_log: K1, F5
+F5 KILLED the longest SD-burst transaction is not kept (the last frame's instead) :: sd_log: K1, F5
+F6 KILLED with no logger reporting, the A3-04C label changes :: sd_log: F1 | runtime: N1
+U1 KILLED the SD row toggles the synth bypass :: runtime: R3, R4, R5, R7, N1, T1
+U2 KILLED the row says ON while the log is off :: runtime: R1, R3, R5
+R1 KILLED the scenario is not labelled with the log's state :: sd_log: S8 | runtime: R4, R6
+R2 KILLED the Developer row never reaches the device switch :: sd_log: S8 | runtime: R1, R3, R4, R5, R7, N1, T1
+R3 KILLED the probe switches the device the wrong way :: sd_log: S8 | runtime: R3, R4
+D1 KILLED the writer never sleeps: it polls every 250 ms while off :: sd_log: S1
+D2 KILLED the log hook bypasses the core log :: sd_log: S3
+D3 KILLED boot switches the log on :: sd_log: S4
+D4 KILLED switching on does not wake the sleeping writer :: sd_log: S5
+D5 KILLED boot opens the log again (A3-04C's initialize_storage) :: sd_log: S4
+D6 KILLED the burst flag is never raised :: sd_log: S2
+D7 KILLED the Board never attributes a slow transaction to the SD log :: sd_log: S6
+D8 KILLED main.cpp never hands the Board the burst flag :: sd_log: S7
+D9 KILLED a save's storage transaction depends on the log's switch :: sd_log: S9
+D10 KILLED the smoke tests rely on the logger to create /sd/ultima5/logs :: sd_log: S9
+
+32/32 killed; 0 survived; 0 invalid/not applied
+exit 0

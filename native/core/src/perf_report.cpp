@@ -138,6 +138,8 @@ void ContentionCounters::on_frame(uint32_t logic_us, uint32_t tft_us, const TftT
     if (t.yield_max_cycles > yield_max_cycles_) yield_max_cycles_ = t.yield_max_cycles;
     slow_ += t.slow_xfers;
     slow_busy_ += t.slow_xfers_busy;
+    slow_sd_ += t.slow_xfers_sd;
+    if (t.xfer_max_sd_cycles > xfer_max_sd_cycles_) xfer_max_sd_cycles_ = t.xfer_max_sd_cycles;
     late_yields_ += t.late_yields;
     fill_idle_cycles_ += t.fill_cycles_idle;
     fill_busy_cycles_ += t.fill_cycles_busy;
@@ -186,6 +188,8 @@ void ContentionCounters::snapshot(uint64_t now_us, ContentionSnapshot &out) cons
         out.yield_max_us = yield_max_cycles_ / cpu_mhz_;
         out.slow_xfers = slow_;
         out.slow_xfers_busy = slow_busy_;
+        out.slow_xfers_sd = slow_sd_;
+        out.xfer_max_sd_us = xfer_max_sd_cycles_ / cpu_mhz_;
         out.late_yields = late_yields_;
         // Per-row averages in 0.1 us: the same row code, split by what the
         // other core was doing -- the direct test of cross-core contention.
@@ -276,20 +280,32 @@ struct Tenths {
     }
 };
 
-/** What was playing and at which settings -- at most 47 characters. */
+/** A3-04D: the SD diagnostic log's state; nothing when no logger reported one (the A3-04C label). */
+const char *sd_log_suffix(SdLogState state) {
+    switch (state) {
+    case SdLogState::On: return " sdlog ON";
+    case SdLogState::Off: return " sdlog OFF";
+    case SdLogState::Unavailable: return " sdlog n/a";
+    case SdLogState::NotReported: break;
+    }
+    return "";
+}
+
+/** What was playing and at which settings -- at most 51 characters (one report row). */
 void scenario_text(char *out, size_t cap, const PerfScenario &sc, const AudioPerfSnapshot *audio) {
     if (!sc.music_available)
-        std::snprintf(out, cap, "music n/a  sfx %u%%%s", unsigned(sc.sfx_volume), sc.synth_bypass ? " BYPASS" : "");
+        std::snprintf(out, cap, "music n/a  sfx %u%%%s%s", unsigned(sc.sfx_volume), sc.synth_bypass ? " BYPASS" : "",
+                      sd_log_suffix(sc.sd_log));
     else
-        std::snprintf(out, cap, "music %u%% %.14s sfx %u%%%s", unsigned(sc.music_volume),
+        std::snprintf(out, cap, "music %u%% %.14s sfx %u%%%s%s", unsigned(sc.music_volume),
                       audio && audio->music_active ? music_song_title(audio->song) : "(silent)",
-                      unsigned(sc.sfx_volume), sc.synth_bypass ? " BYPASS" : "");
+                      unsigned(sc.sfx_volume), sc.synth_bypass ? " BYPASS" : "", sd_log_suffix(sc.sd_log));
 }
 
 void contention_section(Lines &out, const PerfReportInput &in) {
     out.add("-- Contention map (A3-04C) --");
     if (in.scenario) {
-        char sc[48];
+        char sc[64];
         scenario_text(sc, sizeof sc, *in.scenario, in.audio);
         out.add("%.51s", sc);
     }
@@ -307,6 +323,9 @@ void contention_section(Lines &out, const PerfReportInput &in) {
                     (unsigned long)c->late_yields);
             out.add("xfer max %s ms slow %lu (%lu w/audio)", Ms(c->xfer_max_us, 2).s, (unsigned long)c->slow_xfers,
                     (unsigned long)c->slow_xfers_busy);
+            // A3-04D: the slow ones the SD-log writer was in a burst for (the card shares this bus).
+            out.add("slow in sd-log burst %lu max %s ms", (unsigned long)c->slow_xfers_sd,
+                    Ms(c->xfer_max_sd_us, 1).s);
             out.add("rows %lu  audio running at %lu%%", (unsigned long)c->rows,
                     share(c->rows_busy, uint64_t(c->rows_busy) + c->rows_idle));
             out.add("row fill us: audio idle %s busy %s", Tenths(c->row_fill_idle_x10).s,
@@ -324,11 +343,14 @@ void contention_section(Lines &out, const PerfReportInput &in) {
                 Ms(a->write_max_us, 1).s);
     }
     if (const SdLogPerf *sd = in.sdlog) {
-        if (sd->valid)
-            out.add("sd log %lu bursts max %s total %s ms", (unsigned long)sd->bursts, Ms(sd->max_us, 1).s,
+        if (!sd->valid)
+            out.add("sd log: not running");
+        else if (sd->off) // A3-04D: switched off -- the counters are this window's, not stale
+            out.add("sd log OFF: %lu bursts max %s total %s ms", (unsigned long)sd->bursts, Ms(sd->max_us, 1).s,
                     Ms(sd->busy_us, 1).s);
         else
-            out.add("sd log: not running");
+            out.add("sd log %lu bursts max %s total %s ms", (unsigned long)sd->bursts, Ms(sd->max_us, 1).s,
+                    Ms(sd->busy_us, 1).s);
     }
 }
 
@@ -415,7 +437,9 @@ size_t format_contention_line(const PerfReportInput &in, char *out, size_t cap) 
     LineOut line(out, cap);
     // Field legend (ALPHA3_AUDIO.md section 20.5): a/b = avg/max ms; n:a/b =
     // count:avg/max; xfer/fill per row in us as audio-idle/audio-busy.
-    char sc[48] = "?";
+    // A3-04D (section 21): insd=n:max -- slow TFT transactions with an SD-log
+    // burst in progress, and the longest; sd=OFF:... while the log is off.
+    char sc[64] = "?";
     if (in.scenario) scenario_text(sc, sizeof sc, *in.scenario, in.audio);
     line.add("scen=[%s]", sc);
     const uint32_t window = in.render ? in.render->window_us : in.contention ? in.contention->window_us : 0;
@@ -432,10 +456,11 @@ size_t format_contention_line(const PerfReportInput &in, char *out, size_t cap) 
                  (unsigned long)c->panel_frames, Ms(c->panel_tft_avg_us, 1).s, Ms(c->panel_tft_max_us, 1).s);
         if (c->timed)
             line.add(" | split fill=%s xfer=%s yld=%s | yld n=%lu max=%s late=%lu | xfer max=%s slow=%lu/%lu"
-                     " | rows=%lu busy=%lu%% fill=%s/%s xfer=%s/%s",
+                     " insd=%lu:%s | rows=%lu busy=%lu%% fill=%s/%s xfer=%s/%s",
                      Ms(c->tft_fill_avg_us, 1).s, Ms(c->tft_xfer_avg_us, 1).s, Ms(c->tft_yield_avg_us, 1).s,
                      (unsigned long)c->yields, Ms(c->yield_max_us, 1).s, (unsigned long)c->late_yields,
                      Ms(c->xfer_max_us, 2).s, (unsigned long)c->slow_xfers, (unsigned long)c->slow_xfers_busy,
+                     (unsigned long)c->slow_xfers_sd, Ms(c->xfer_max_sd_us, 1).s,
                      (unsigned long)c->rows, share(c->rows_busy, uint64_t(c->rows_busy) + c->rows_idle),
                      Tenths(c->row_fill_idle_x10).s, Tenths(c->row_fill_busy_x10).s,
                      Tenths(c->row_xfer_idle_x10).s, Tenths(c->row_xfer_busy_x10).s);
@@ -453,7 +478,8 @@ size_t format_contention_line(const PerfReportInput &in, char *out, size_t cap) 
         line.add(" | audio none");
     if (const SdLogPerf *sd = in.sdlog)
         if (sd->valid)
-            line.add(" | sd=%lu:%s/%s", (unsigned long)sd->bursts, Ms(sd->max_us, 1).s, Ms(sd->busy_us, 1).s);
+            line.add(" | sd=%s%lu:%s/%s", sd->off ? "OFF:" : "", (unsigned long)sd->bursts, Ms(sd->max_us, 1).s,
+                     Ms(sd->busy_us, 1).s);
     if (const SystemPerfSnapshot *s = in.system)
         if (s->valid)
             line.add(" | cpu0=%lu cpu1=%lu main=%lu aud=%lu inp=%lu sdl=%lu", pct(s->core_busy_permille[0]),

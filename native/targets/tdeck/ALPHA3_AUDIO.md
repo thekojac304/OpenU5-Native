@@ -1,6 +1,8 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation)
 
-**Status (A3-04C): CONTENTION MAP INSTRUMENTED — CAUSE NARROWED, NOT PROVEN — HARDWARE EVIDENCE PENDING (Outcome C).** The user still sees the map lag with music on and much less at Music Volume 0 %. A3-04C (§20) found that 0 % turns off three things at once: the synth, the I2S DMA/interrupt on core 0, and the audio task's wakes. It adds the measurements that separate them: a per-frame TFT split (row building / SPI / tick yields), a row-level test of what core 1 was doing while each TFT row was built and sent, SD-log bus bursts, the audio task's own work per block, and a one-line `A3C_PERF` heartbeat. It also adds a Developer probe, *Probe: synth bypass*, that keeps the song, channel and cadence but skips the synth. No gameplay, audio output or renderer behaviour changed. The next step is the §20.10 hardware runs; their result picks A3-04D (§20.11).
+**Status (A3-04D): SD DIAGNOSTIC LOGGING OFF BY DEFAULT — MECHANISM PROVEN FROM THE SOURCE — HARDWARE CONFIRMATION PENDING.** The A3-04C runs showed 0.8–1.5 s frame/TFT stalls with the synth bypassed and with music off, each within a few ms of the SD-log writer's longest burst. A3-04D (§21) traced why. The SD card shares SPI2 with the TFT, and ESP-IDF's sdspi driver holds that bus for a whole card command, the card's busy time included, at 800 kHz. The diagnostic SD log is therefore now **off at boot**, one Developer keypress (*Probe: SD diag logging*) turns it on for a session, and serial logging is unchanged. Every report and `A3C_PERF` line says `sdlog ON/OFF`, and slow TFT transactions are attributed to SD-log bursts (`insd=`). The ON/OFF device runs of §21.7 are pending, and the batch is not hardware-validated until they pass.
+
+**Status as A3-04C wrote it: CONTENTION MAP INSTRUMENTED — CAUSE NARROWED, NOT PROVEN — HARDWARE EVIDENCE PENDING (Outcome C).** The user still sees the map lag with music on and much less at Music Volume 0 %. A3-04C (§20) found that 0 % turns off three things at once: the synth, the I2S DMA/interrupt on core 0, and the audio task's wakes. It adds the measurements that separate them: a per-frame TFT split (row building / SPI / tick yields), a row-level test of what core 1 was doing while each TFT row was built and sent, SD-log bus bursts, the audio task's own work per block, and a one-line `A3C_PERF` heartbeat. It also adds a Developer probe, *Probe: synth bypass*, that keeps the song, channel and cadence but skips the synth. No gameplay, audio output or renderer behaviour changed. The next step is the §20.10 hardware runs; their result picks A3-04D (§20.11).
 
 **Status as A3-04B wrote it: MUSIC SMOOTHNESS IMPROVED — RENDER PERFORMANCE RETEST PENDING.** On the A3-04A image music played smoothly but the overworld lagged with music on and was much better at Music Volume 0 %, and the Developer audio benchmark showed no results. A3-04B (§19): the synth — which at 0 % does not run at all — executed from flash through the instruction and data caches both cores share, contending with the renderer on the other core; its per-sample path is now bit-exactly ~39 % cheaper per channel and runs from IRAM (proved on the linked image). The benchmark's results, the game thread's frame counters and FreeRTOS per-core/per-task CPU are one report on the Developer screen that stays until dismissed. The retest image exists (§19.15–19.16). Not an Alpha 3 release.
 
@@ -2078,3 +2080,155 @@ The decision table the numbers feed:
 - Core: `include/openu5/perf_report.h`, `src/perf_report.cpp` (`TftTiming`, `SdLogPerf`, `ContentionCounters`, `PerfScenario`, the report section, `format_contention_line`, 64-line report); `include/openu5/audio_stream.h`, `src/audio_stream.cpp` (the probe, task busy, `AudioPerfSource::set_music_bypass`); `include/openu5/ui_debug_menu.h`, `src/ui_debug_menu.cpp` (the probe row).
 - Device: `tdeck_board.{h,cpp}` (timed transactions/yields, row classification), `tdeck_audio.{h,cpp}` (activity flag, probe), `sd_diagnostic_logger.{h,cpp}` (bursts), `alpha_runtime.{h,cpp}` (logic time, per-frame split, scenario, `A3C_PERF`, probe service), `main.cpp` (wiring, loop passes), `CMakeLists.txt` (`PROJECT_VER`).
 - Tests / tools: `tests/a3_04c_contention_test.cpp`, `host_tests/a3_04c_contention_runtime_test.cpp`, `host_stubs/batch37_board_capture_stub.cpp` (TFT feed), `tests/ui_debug_menu_test.cpp` (20 rows), `core/CMakeLists.txt`, `tools/a3_04c_mutation_check.py`, `targets/tdeck/a3_04c_audio_flash_footprint.py`.
+
+## 21. A3-04D — SD diagnostic logging and the TFT on the shared SPI bus
+
+**The hardware result that opened this batch** (the user's A3-04C runs, same open-overworld walk; approximate values read off the Developer report):
+
+| Run | audio CPU | CPU0 | CPU1 | main | frame max | TFT max | SD-log burst max |
+|---|---|---|---|---|---|---|---|
+| B — music 80 % | ~41 % | ~79 % | ~43 % | ~78 % | ~1175 ms | ~1137 ms | ~1159 ms |
+| B′ — music 80 %, synth bypass | ~2 % | ~62 % | ~3 % | ~61 % | ~871 ms | ~833 ms | ~848 ms |
+| C — music 0 % | ~1 % | ~59 % | ~2 % | ~58 % | ~1504 ms | ~1465 ms | ~1500 ms |
+
+The 0.8–1.5 s frame/TFT stalls stay when the synth is bypassed and when music is off; C, with no music at all, has the longest. In every run the frame maximum sits within 4–23 ms of the SD-log burst maximum, and the TFT maximum 15–35 ms below it. By §20.10's decision table this is the "SD-log writes holding the TFT's SPI bus (music-independent)" row. The synth's own cost (B vs B′: CPU1 43 → 3 %) is real but does not explain second-long stalls.
+
+**Status: MECHANISM PROVEN FROM THE SOURCE; PRODUCTION POLICY CHANGED (Option A: SD diagnostic logging OFF by default, one Developer keypress to turn on); HARDWARE CONFIRMATION PENDING.** A correlation alone was not accepted: §21.2 traces the path from a log line to a TFT row waiting on the bus, through the project's code and ESP-IDF's. The device ON/OFF comparison (§21.7) is the confirmation still to come. The batch is **not** hardware-validated until it passes.
+
+### 21.1 Baseline (Phase 1)
+
+- HEAD `3ce935b9` on `main` (A3-04C's post-commit logs), tree clean. Latest tags: `alpha3-a3-04c-contention-map` (`2a53128a`), `alpha3-hf1-arena-loot` (`d1465ed7`), `alpha3-a3-04b-render-contention`.
+- Firmware at baseline: A3-04C, `0xecd90` = 970,128 B, 78,448 B (7 %) free.
+- Fresh host build `native/core/build-a3-04d-base`: **serial ctest 139/139 passed in 135.17 s**, the one known w64devkit `stl_uninitialized.h` warning (`native/core/a3-04d-baseline-{configure,build,ctest}.log`).
+
+### 21.2 The mechanism, traced (Phase 1)
+
+| # | Question | Answer, with the evidence |
+|---|---|---|
+| 1 | Which bus? | **One: SPI2.** `pins::kSharedSpiHost = SPI2_HOST` (`tdeck_pins.h`) carries the ST7789 (CS GPIO 12, 40 MHz) and the SD card (CS GPIO 39, `kSdClockKhz = 800`, `tdeck_board.cpp`). Nothing else is on it. |
+| 2 | How does the TFT use it? | From the game loop (`main`, prio 1, core 0): one blocking `spi_device_transmit` per pixel row in `Board::tft_transmit`. A 640-byte row takes 128 µs of clocking. |
+| 3 | How does the SD card use it? | ESP-IDF `sdspi_host_start_command` (`esp_driver_sdspi/src/sdspi_host.c` 481–539) calls `spi_device_acquire_bus(portMAX_DELAY)`, then sends the command, **every data block and, after each block, `poll_busy` while the card programs** (`start_command_write_blocks`, lines 895–1022), and only then `spi_device_release_bus`. `spi_device_acquire_bus`: "Transactions to all other devices will be put off until `spi_device_release_bus` is called" (`spi_master.h`). The write timeout is `SDMMC_WRITE_CMD_TIMEOUT_MS` = **5000 ms** (`sdmmc_common.h`). **While the card is busy, no TFT row can move, and nothing in the port bounds how long the card may be busy short of 5 s.** |
+| 4 | What does one log flush send? | newlib hands FATFS the 4 KiB stdio buffer; `f_write` (`fatfs/src/ff.c` 4160–4240) writes its whole sectors as **one multi-sector `disk_write`** (clipped at a cluster boundary), i.e. one CMD25 of 8 × 512 B. **At 800 kHz that is ≥ 41 ms of clocking in a single bus hold**, before the card's programming time after each block. At a cluster boundary FATFS also reads a FAT sector and later writes it to both FATs (`use_one_fat = false`), each ≥ 5 ms at 800 kHz. |
+| 5 | Which task writes, and is it synchronous? | `alpha20-sd-log`: `tskIDLE_PRIORITY`, **unpinned**, 4 KiB stack. Its `fwrite`/`fflush` are synchronous down to the card. It wakes for every queued line and at least every 250 ms, takes the storage mutex **on every wake**, and flushes every 2 s, on every "important" line (`INPUT_EDGE`, `KEYBOARD_METRICS` in each 5 s heartbeat, any `" W ("`/`" E ("` line, …), and whenever the 4 KiB buffer fills. The game thread does not touch the card. It formats a 768-byte copy of each log line (`vsnprintf`) and queues it (784 B into PSRAM). |
+| 6 | How much is written while walking? | The host runtime logs about 5 INFO lines (≈ 0.4–0.5 KB) per step (`INPUT_ROUTE`, the command, the render line, `PRESENTATION_DISPATCH`, …). The 5 s heartbeat adds `AUDIO_PERF`, `RENDER_PERF`, `SYS_PERF`, `A3C_PERF` (≤ 719 B) and `KEYBOARD_METRICS`. A steady walk therefore fills the 4 KiB buffer every few seconds, on top of the 2 s periodic flushes. |
+| 7 | Does anything else use the card during a walk? | **No.** `main.cpp` closes both packs after the PSRAM load ("Resource packs closed after PSRAM/cache load"), the audio pack is read once at boot, and saves/settings touch the card only when asked. During the test walk, the diagnostic log is the TFT's only competitor for SPI2. |
+| 8 | Is there an fsync, close/reopen or metadata write per flush? | No fsync: `CONFIG_FATFS_IMMEDIATE_FSYNC` is off, so `vfs_fat_write` does not call `f_sync`. The log is closed only at rotation (512 KiB) or on an error. Metadata costs come from FAT updates at cluster boundaries, and rotation (unlink + rename + create) happens once per 512 KiB. |
+| 9 | Can the logger block the TFT? | **Yes, for the whole of every card command (item 3).** A3-04C's burst timer brackets exactly those commands: from the storage mutex taken to the mutex given back. |
+
+So the maxima line up because one frame's TFT write sits behind one long burst: the frame starts a few tens of ms into the burst, and its remaining rows go out as soon as the bus is released. Frame − burst = +16 / +23 / +4 ms and TFT − burst = −22 / −15 / −35 ms in B / B′ / C. The durations themselves come from the card (programming, garbage collection), which the source cannot predict. The device run measures them directly (§21.4, `insd`).
+
+**Two side findings from the same trace:**
+- **The SD log was less durable than it looked.** FATFS writes a file's size into its directory entry only in `f_sync` / `f_close` (`ff.c` 4256–4320), and A3-04C's logger closed the file only at rotation. After a power-off, the directory still records the size from the last rotation or boot, so a session's lines may not be readable afterwards. That fits the user's experience that the log was never important day to day. A3-04D closes the log when logging is switched off.
+- **Serial is safe to keep.** With no host reading, ESP-IDF's USB-Serial/JTAG console busy-waits at most once for 50 ms after the FIFO fills, then drops bytes until a host reads again (`usb_serial_jtag_vfs.c` 148–170). It cannot produce second-long stalls.
+
+### 21.3 The change: a Developer switch, OFF by default (Phases 2 and 5, Option A)
+
+**Policy: diagnostic SD logging is off at boot.** `openu5::kSdDiagLoggingDefault = false`. **Developer › Diagnostics › *Probe: SD diag logging*** turns it on for the session. It is never saved, and a reboot turns it off. Serial logging is unchanged in every state.
+
+- **The core log (`openu5::SdDiagLog`, `sd_diag_log.{h,cpp}`).** A3-04C's writer logic moved unchanged into core, so host tests run the device's own logic against a fake card: the same `[%010llu] ` prefix on every physical line, rotation at 512 KiB, the 2 s and "important"-line flushes, and the drop notice. Added to it: the switch; `mirror()`, the log hook's body (**serial always**; the card copy is formatted and queued only while on); and `wake()`, which **touches nothing while off with the file closed**.
+- **The device writer** (`sd_diagnostic_logger.cpp`) keeps the FreeRTOS queue, task and storage mutex, stdio on FATFS, and A3-04C's burst timing. While the log is idle it **sleeps in `ulTaskNotifyTake(portMAX_DELAY)`**: no 250 ms wake, no mutex, no flush, no card access. Switching on notifies it. The next wake opens the log for append (a full log becomes the archive first), and from then on the cadence is A3-04C's exactly. Switching off: the next wake writes what was captured while on and closes the log (so the directory entry gets its size), then the writer sleeps again. A card error closes the log and switches it off for good (`n/a`); serial continues.
+- **Boot no longer opens or rotates the log.** `initialize_storage()` only records that the card is mounted. The `logs` directory is created when logging is first switched on.
+- **The row** is inserted **above** *Probe: synth bypass*, five rows up from the top. Every older row keeps its place counted from the end (the synth bypass is still four up, the test tone still the last). It reads `Probe: SD diag logging: off` / `ON` / `n/a`. Enter toggles it; with no card or writer it says `SD diag logging: no SD card logger on this device` on the Developer screen. Switching logs `A3D_PROBE sd_log=0|1` to serial.
+- **Labels:** the scenario gains ` sdlog ON` / ` sdlog OFF` / ` sdlog n/a`, so it is on every report and every `A3C_PERF` line. It is left out only when no logger reports a state (the host's A3-04C label is byte-identical). While logging is off, the report says `sd log OFF: n bursts …` and the line `sd=OFF:n:max/total`, so zero counters read as "off", not as stale.
+- **New attribution (the within-run proof).** The Board reads the writer's burst word (`sdlog::burst_flag()`, 1 while the writer holds the storage mutex) at both ends of every TFT transaction, as it reads the audio task's flag. A slow transaction (> 1 ms) during a burst is counted, and the longest is kept. Report line `slow in sd-log burst N max M ms`; `A3C_PERF` field `insd=N:M` after `slow=`. That costs two word loads per transaction.
+
+**Why Option A is the smallest safe fix.**
+- *Option B (buffer or defer)* cannot remove the stall. Whatever the buffering, a 4 KiB write at 800 kHz holds the TFT's bus for ≥ 41 ms, and then for the card's busy time. Removing that means changing the SD clock, the card's bus or the display's ownership of it, all outside this batch.
+- *Option C (delete the logger)* would remove a tool the checklists still name (`ALPHA2_HARDWARE_CHECKLIST.md` asks for `/ultima5/logs/` on a FAIL).
+- Option A leaves the logger one keypress away, adds no subsystem, and changes nothing the game, the saves or the audio do.
+
+**What does not change:** gameplay; saves (the storage transaction does not depend on the switch, and an idle writer never takes the mutex); settings; the packs (loaded at boot, never through the logger); the smoke-test log (`smoke-tests.log`, written by the smoke tests themselves, which create their own directory); serial logging; music selection/sequencing, SFX, the audio buffering and the synth; TFT rendering and its 16-row `vTaskDelay(1)` yields; the main loop's `vTaskDelay(pdMS_TO_TICKS(5))`; input. All A3-04C metrics are kept.
+
+### 21.4 Output formats
+
+The report's contention section (values illustrative, logging off):
+
+```
+-- Contention map (A3-04C) --
+music 80% Ultima V Theme sfx 80% sdlog OFF     <- scenario + the log's state
+...
+xfer max 0.30 ms slow 0 (0 w/audio)
+slow in sd-log burst 0 max 0.0 ms              <- A3-04D: slow TFT transactions during an SD-log burst
+...
+sd log OFF: 0 bursts max 0.0 total 0.0 ms      <- "sd log N bursts ..." while on
+```
+
+`A3C_PERF` (serial; also the SD log while it is on), A3-04C's line with three additions:
+
+```
+A3C_PERF scen=[music 80% Ultima V Theme sfx 80% sdlog OFF] win=60.1s | frame n=... | ... | xfer max=0.30 slow=0/0 insd=0:0.0 | rows=... | ... | sd=OFF:0:0.0/0.0 | cpu0=... sdl=0
+```
+
+`insd=n:max` = slow TFT transactions with an SD-log burst in progress : the longest (ms). `sd=OFF:` prefix = logging switched off. The worst realistic line is 714 characters (≤ 719, one SD-log record with its prefix; `a3_04d_sd_log` F7).
+
+### 21.5 Tests, RED / GREEN and mutations
+
+- **New targets:** `a3_04d_sd_log` (40 checks: D the policy, C the log hook (serial always), W the writer against a fake card that records every operation, K the attribution counters, F the labels / report / line, S the device wiring and the unrelated SD users) and `a3_04d_sd_log_runtime` (9 checks through the real `AlphaRuntime` with raw keys: the row five up, the older rows' places, on/off through the device hooks backed by the core log, `sdlog ON/OFF` on the report and the line, `n/a` with no logger with A3-04C's label unchanged, and the game untouched).
+- **Key behavioural proofs:** W1: logging OFF through 60 s of gameplay-rate logging, **the card is never touched** (0 opens, writes, flushes, closes or bursts), the writer stays idle, and serial got all 624 lines. C1: serial receives every call formatted exactly, whatever the state. W6: switching off writes what was captured, closes once, then no wake at all. W2–W5, W9, W10: while on, the A3-04C behaviour (prefix, flush cadence, rotation, drop notice) is unchanged. S9: saves, settings, smoke tests and packs do not depend on the log.
+- **Changed expectation (deliberate, not weakened):** `ui_debug_menu_test` U2: Diagnostics has 21 rows (was 20). The new row is an action row like its neighbours, and the test tone is still the last row.
+- **RED-first:** the device-wiring scans run against the **unmodified A3-04C device sources** (`git show HEAD:…` into scratch, `a3-04d-red-device-scans-vs-a3-04c.log`): **S1–S8 RED** (the writer never sleeps, the hook queues unconditionally, boot opens the log, there is no switch, no attribution, no wiring). S9 is GREEN on both trees, as a preservation guard must be. Its failure mode is proven by mutants D9/D10. The core and runtime checks use the new API, so they are proven by mutation.
+- **First-run REDs:** F8 expected the SD-log line to be the report's last. The guard section follows the contention section (A3-04C's F4 already says so), so the expectation was corrected to "the last line is the guard's". No production change came from it.
+- **Mutations:** `native/core/tools/a3_04d_mutation_check.py` → `native/core/a3-04d-mutation.log`. **32 mutants, 32 killed by a failing check, 0 survived, 0 invalid**, all on the first pass. They cover the policy and the core log (M1–M11: the default on, capture or serial ignoring the switch, a wake that touches the card while off, no close on switch-off, captured lines dropped, a writer that never idles, no availability or failure guard, and A3-04C's flush cadence and prefix changed), the labels and counters (F1–F6), the row (U1–U2), the runtime (R1–R3), and the device wiring the scans guard (D1–D10). D9/D10 make a save and the smoke tests depend on the log, and are what proves S9 can fail. The log says which check killed each one. For example, M1 (the log on at boot, i.e. A3-04C's behaviour) turns 10 core checks and 7 runtime checks RED.
+- **Full suite:** fresh build `native/core/build-a3-04d`, **serial ctest 141/141 passed in 137.35 s** (`native/core/a3-04d-ctest-pass1.log`): A3-04C's 139 plus the two new targets. The only warning is the known w64devkit one. A3-04C's own contention tests pass unchanged, including S8 (the burst timing) and the L/F format checks.
+
+### 21.6 Firmware
+
+Pre-commit build `native/targets/tdeck/build-a3-04d` (`a3-04d-firmware-configure.log`, `a3-04d-firmware-build.log`): ESP-IDF 6.1, `idf.py --no-ccache reconfigure` then `ninja -j 4`, **first attempt clean, zero project warnings** under `-Werror`. The five `component_validation` notices are ESP-IDF's own.
+
+- **Size: `0xed5e0` = 972,256 B, +2,128 B** vs A3-04C's 970,128 B; **`0x12a20` = 76,320 B (7 %) free** in the 1 MiB app partition.
+- Sections vs A3-04C: `.iram0.text` 76,003 → 76,003 B (**unchanged**); `.dram0.data` +32 B; `.dram0.bss` +32 B; `.flash.text` +1,736 B (the core log, the Developer row, the labels); `.flash.rodata` +356 B.
+- **Stack (`-fstack-usage`):** the writer's deepest path (writer task → drop notice → line → `fwrite`) is **1,840 B before and after** (A3-04C: 832 + 912 + 64 + 32; A3-04D: 832 + 48 + 816 + 80 + 32 + 32) on its 4 KiB stack. The log hook's frame is +48 B per log call (A3-04C 864 B; A3-04D 64 + 848 B).
+- **Image checks on the A3-04D ELF:** `a3_04b_iram_check.py` **GREEN** (`a3-04d-iram-check.log`) and `a3_04a_hotpath_check.py` **GREEN** (`a3-04d-hotpath-check.log`). The audio path is untouched.
+- Version string `3.0.0-alpha3-dev-a3-04d-debug` (`CMakeLists.txt` `PROJECT_VER`), so neither the identity screen nor the Launcher file name can be mistaken for A3-04C's.
+- Not flashed. The post-commit image (a fresh directory, `--no-ccache`, which embeds the commit) is the one the annotated tag `alpha3-a3-04d-sd-log-isolation` names, with its path, size, SHA-256 and `Git`.
+
+### 21.7 Hardware validation checklist (the user's; not done here)
+
+**0. Identity first.** Flash the A3-04D Launcher image named in tag `alpha3-a3-04d-sd-log-isolation` through Launcher: `native/targets/tdeck/build-a3-04d-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-dev-a3-04d-Debug-Launcher.bin` (its size, SHA-256 and `Git` are in the tag message). Same game pack, same `openu5-audio.bin`: nothing is regenerated. The boot identity screen must read **`FW 3.0.0-alpha3-dev-a3-04d-debug`** and the tag's `Git` hash. If it does not, stop: the numbers would belong to another image.
+
+**Serial (preferred).** USB-C to the PC. From an ESP-IDF PowerShell (after `. C:\esp\v6.1\esp-idf\export.ps1`), run `python -m esp_idf_monitor -p COMx -b 115200 --no-reset`, with COMx being the T-Deck's USB-Serial/JTAG port. `--no-reset` keeps the connect from rebooting the device. This standalone monitor touches no build directory; an `idf.py … monitor` pointed at a build dir can reconfigure that dir from the current sources. Any serial terminal on COMx at 115200 also works. Save the last **`A3C_PERF`** line before each read, and the **`PERF_REPORT`** lines the read prints. Also save the `A3D_PROBE sd_log=…` line when you switch. Without a PC, photograph the report pages. Logging is off in Tests 2–4, so the SD card will not have these lines.
+
+**Common procedure (every test):**
+1. Boot, load the same save, stand in the **same open overworld grassland/forest spot as A3-04C**, facing the same way.
+2. Set the test's settings (System Menu › Settings for volumes; Alt+D › Diagnostics for the probes). The *Probe: SD diag logging* row is **five up** from the top of Diagnostics; *Probe: synth bypass* is **four up**. Enter until the row reads the wanted state, then Back out.
+3. Start a clean window: Alt+D › Diagnostics › *Audio/render stats (live)* (two up) → Enter → **Enter again to dismiss**. That read starts the window, so discard it.
+4. **Walk for 60 s** by holding the trackball in one direction, turning at obstacles, at the same speed as A3-04C. Open no menus.
+5. Read the window: Alt+D › Diagnostics › *Audio/render stats (live)* → Enter. **Photograph every page** (Down scrolls; the contention section is near the end), or save the `PERF_REPORT` lines and the last `A3C_PERF` line.
+
+A run is **invalid** (repeat it) if its scenario label does not match the table, if `frame n` < **150**, or if it included a menu visit.
+
+| Test | Music | SFX | Probe: SD diag logging | Probe: synth bypass | Scenario label must read |
+|---|---|---|---|---|---|
+| **1** | **0 %** | 80 % | **ON** | off | `music 0% (silent) sfx 80% sdlog ON` |
+| **2** | **0 %** | 80 % | **off** (boot default) | off | `music 0% (silent) sfx 80% sdlog OFF` |
+| **3** | **80 %** | 80 % | **off** | off | `music 80% <song> sfx 80% sdlog OFF` |
+| **4** (strongly preferred) | **80 %** | 80 % | **off** | **ON** | `music 80% <song> sfx 80% BYPASS sdlog OFF` |
+
+Run 2 first, straight after boot, to confirm the default. Then 1 (switch the log on), then off again for 3 and 4. Switch the synth bypass off at the end. A reboot also clears both probes, and the log is off after it.
+
+**Pages / fields to record for each test:** the scenario line; `frame avg/p95/max`, `late`; `tft avg/max`; `viewport … tft avg/max` and `other …`; `cadence avg/max`; `input` (in) avg/max; `tft/frame fill / xfer / yield`; `yield … late`; `xfer max … slow … (… w/audio)`; **`slow in sd-log burst N max M`**; `sd log …` (bursts / max / total); `audio task/blk`, `und/hw/miss`; CPU0 / CPU1 / main / aud / sdl %. The `A3C_PERF` line has all of them.
+
+**While walking, note:** step-to-screen lag, visible banding, uneven cadence, music smoothness or static, input responsiveness.
+
+**PASS (the SD log is the culprit and the fix works):**
+- **Test 1 reproduces the stalls:** a frame/TFT max of hundreds of ms or more, with `sd log` max close to it, and **`insd` max ≈ `xfer max` ≈ the SD burst max**. This is the direct proof that one TFT transaction waited out the burst.
+- **Test 2 removes them:** `sd=OFF:0:0.0/0.0`, `insd=0:0.0`, `xfer max` ≲ 1–2 ms, and **frame max / TFT max drastically lower than Test 1 and than A3-04C's C (~1.5 s)**. Expected: roughly the viewport write's ~90 ms tick-paced cost plus logic/compose, i.e. well under ~250 ms.
+- **Test 3:** no new audio underruns (`und=0 hw=0 miss=0`, 0–1 at a song switch), music correct and smooth, frame/TFT max in the same range as Test 2 (no second-long spikes).
+- **Test 4:** as Test 3 with CPU1 near idle. The Test 3 − Test 4 difference is the synth's remaining cost, now measured without SD noise.
+- **No regressions:** saves and loads work (save once, load once), the game starts with the same packs, SFX work.
+
+**FAIL / do not declare victory:** if **Test 2's frame/TFT max is still in the 0.8–1.5 s range**, SD logging is not the (only) cause. Report the Test 2 pages; do not tag. Also FAIL on audio underruns in steady play, audible static, a crash or reboot, or any save/load problem.
+
+### 21.8 Outcome and the next step
+
+**Outcome (host):** the mechanism is proven from the source, and production now keeps diagnostic SD logging out of normal play by default. **Pending:** Tests 1–4.
+
+The next step is chosen by the device result:
+- **Test 2 passes (stalls gone):** SD logging was the catastrophic-stall source. The next performance step is **renderer cadence/yield cleanup** (the 16-row `vTaskDelay(1)`: ~9 ticks ≈ 90 ms per viewport write, drawn in bands, §20.6), measured against Test 2/3 as the new baseline. It comes before synth optimisation because it sets the frame time with or without music. The synth's residual cost (Test 3 vs Test 4) decides whether synth work follows.
+- **Test 2 still shows ~1 s stalls:** the SD log is not the cause. Report, don't fix. The `insd`/`slow`/`yield late` fields then point at what held core 0 or the bus.
+
+### 21.9 Files
+
+- Core: `include/openu5/sd_diag_log.h`, `src/sd_diag_log.cpp` (new: the switch, the hook body, the writer's wakes); `sources.cmake`; `include/openu5/perf_report.h`, `src/perf_report.cpp` (`SdLogState` in the scenario, `SdLogPerf::off`, `TftTiming::slow_xfers_sd`/`xfer_max_sd_cycles`, the report line and `insd=`/`sd=OFF:`); `include/openu5/ui_debug_menu.h`, `src/ui_debug_menu.cpp` (the row).
+- Device: `sd_diagnostic_logger.{h,cpp}` (the core log wired to FreeRTOS/stdio; sleeps while idle; `state`/`set_enabled`/`burst_flag`), `tdeck_board.{h,cpp}` (SD attribution), `alpha_runtime.{h,cpp}` (hooks, scenario, the probe service), `main.cpp` (wiring, boot message), `CMakeLists.txt` (`PROJECT_VER`).
+- Tests / tools: `tests/a3_04d_sd_log_test.cpp`, `host_tests/a3_04d_sd_log_runtime_test.cpp`, `tests/ui_debug_menu_test.cpp` (21 rows), `core/CMakeLists.txt`, `tools/a3_04d_mutation_check.py`.

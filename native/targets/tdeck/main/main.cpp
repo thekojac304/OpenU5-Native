@@ -55,7 +55,8 @@ extern "C" void app_main(void) {
     const esp_err_t display=board.initialize_display();debug51::stack_checkpoint("after-board-display-init");
     const tdeck::SdStatus sd=board.initialize_and_test_sd();debug51::stack_checkpoint("after-sd-init");board.show_diagnostics(sd.ok);
     const bool sd_log_ready=sd.ok&&sd_log_capture&&tdeck::sdlog::initialize_storage();
-    if(sd_log_ready)ESP_LOGI(kTag,"SD logging initialized successfully: %s (buffered, 512 KiB cap)",tdeck::sdlog::kCardLogPath);
+    // A3-04D: available, not running -- off at boot; Developer > Diagnostics > "Probe: SD diag logging".
+    if(sd_log_ready)ESP_LOGI(kTag,"SD diag logging available: %s (buffered, 512 KiB cap; off until switched on)",tdeck::sdlog::kCardLogPath);
     else ESP_LOGW(kTag,"SD logging initialization failed; serial logging remains active");
     static tdeck::InputHardware input;
     esp_err_t input_result=ESP_FAIL;
@@ -159,7 +160,11 @@ extern "C" void app_main(void) {
                 if(system_perf.begin())runtime.attach_system_perf(&system_perf);
                 else ESP_LOGW(kTag,"SYS_PERF unavailable: no PSRAM for the task table");
                 // A3-04C: the SD-log writer's bursts (its card shares the TFT's SPI bus).
-                runtime.attach_sd_log_perf({&tdeck::sdlog::perf_snapshot,&tdeck::sdlog::perf_reset});
+                // A3-04D (section 21): and the log's switch (off at boot); the Board
+                // attributes slow TFT transactions to the writer's bursts.
+                runtime.attach_sd_log_perf({&tdeck::sdlog::perf_snapshot,&tdeck::sdlog::perf_reset,
+                                            &tdeck::sdlog::state,&tdeck::sdlog::set_enabled});
+                board.set_sd_activity_flag(tdeck::sdlog::burst_flag());
             }
             if(!ready)ESP_LOGE(kTag,"Alpha runtime initialization failed: %s",esp_err_to_name(initialized));
         }

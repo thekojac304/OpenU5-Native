@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "openu5/audio_stream.h"
+#include "openu5/sd_diag_log.h"
 
 // Alpha 3 A3-04B -- the render side of the performance picture and the one
 // combined report the Developer menu shows (ALPHA3_AUDIO.md section 19).
@@ -115,6 +116,10 @@ struct TftTiming {
     uint64_t xfer_cycles = 0;      // inside spi_device_transmit: bus acquire + DMA + completion
     uint32_t xfer_max_cycles = 0;
     uint32_t slow_xfers = 0, slow_xfers_busy = 0; // longer than kSlowXferUs (and of those, with audio running)
+    // A3-04D: of the slow ones, those with the SD-log writer in a burst at either end
+    // (the card is on this SPI bus), and the longest of those.
+    uint32_t slow_xfers_sd = 0;
+    uint32_t xfer_max_sd_cycles = 0;
     uint32_t yields = 0;           // vTaskDelay(1) every 16 rows
     uint64_t yield_cycles = 0;
     uint32_t yield_max_cycles = 0;
@@ -128,6 +133,7 @@ struct TftTiming {
 /** The SD-log writer's storage bursts (its SPI bus is the TFT's). Device only. */
 struct SdLogPerf {
     bool valid = false;
+    bool off = false;              // A3-04D: logging switched off -- the writer does not touch the card
     uint32_t bursts = 0;           // writer wakes that wrote or flushed
     uint32_t busy_us = 0, max_us = 0;
 };
@@ -144,6 +150,7 @@ struct ContentionSnapshot {
     uint32_t panel_frames = 0, panel_tft_avg_us = 0, panel_tft_max_us = 0;          // everything else
     uint32_t transactions = 0, rows = 0;
     uint32_t xfer_max_us = 0, slow_xfers = 0, slow_xfers_busy = 0;
+    uint32_t slow_xfers_sd = 0, xfer_max_sd_us = 0;        // A3-04D: slow with an SD-log burst in progress
     uint32_t yields = 0, yield_max_us = 0, late_yields = 0;
     uint32_t rows_idle = 0, rows_busy = 0;
     uint32_t row_fill_idle_x10 = 0, row_fill_busy_x10 = 0; // per-row average, 0.1 us
@@ -169,6 +176,7 @@ class ContentionCounters {
     uint64_t viewport_tft_sum_ = 0, panel_tft_sum_ = 0;
     uint64_t transactions_ = 0, rows_ = 0, rows_idle_ = 0, rows_busy_ = 0, yields_ = 0;
     uint32_t xfer_max_cycles_ = 0, yield_max_cycles_ = 0, slow_ = 0, slow_busy_ = 0, late_yields_ = 0;
+    uint32_t slow_sd_ = 0, xfer_max_sd_cycles_ = 0;
     uint64_t fill_idle_cycles_ = 0, fill_busy_cycles_ = 0, xfer_idle_cycles_ = 0, xfer_busy_cycles_ = 0;
     uint32_t loops_ = 0, loop_max_ = 0;
     uint64_t loop_sum_ = 0;
@@ -179,6 +187,7 @@ struct PerfScenario {
     bool music_available = false;  // the audio pack's music capability
     uint8_t music_volume = 0, sfx_volume = 0;
     bool synth_bypass = false;     // the A3-04C Developer probe
+    SdLogState sd_log = SdLogState::NotReported; // A3-04D: "sdlog ON" / "sdlog OFF" / "sdlog n/a"
 };
 
 // ---------------------------------------------------------------------------

@@ -189,7 +189,9 @@ int main(){
   // groups; A3-04A inserted "Audio performance" (16) and "Audio stats (live)"
   // (17) just above it, so it is now row 18. A3-04C inserted "Probe: synth
   // bypass" (16) above those two: the test tone is row 19, still the last.
-  static constexpr int kDiagnosticActions[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19};
+  // A3-04D inserted "Probe: SD diag logging" (16) above the bypass: the test
+  // tone is row 20, still the last.
+  static constexpr int kDiagnosticActions[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20};
   static constexpr int kCertificationActions[] = {0,1,2,3,4};
   const CategoryRows tables[] = {
       {UiDebugCategory::Teleport, 6, kTeleportActions, 1},
@@ -208,7 +210,7 @@ int main(){
       {UiDebugCategory::Transport, 6, nullptr, 0},
       {UiDebugCategory::NpcDungeonState, 8, kNpcActions, 1},
       {UiDebugCategory::ShortcutsPresets, 15, kShortcutActions, 15},
-      {UiDebugCategory::Diagnostics, 20, kDiagnosticActions, 20},
+      {UiDebugCategory::Diagnostics, 21, kDiagnosticActions, 21},
       {UiDebugCategory::Certification, 5, kCertificationActions, 5},
   };
   for (const auto &table : tables) {

@@ -2828,7 +2828,7 @@ void AlphaRuntime::configure_audio(const openu5::AudioPackInfo &pack,openu5::Aud
 
 void AlphaRuntime::bind_developer_diagnostics(){
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
-    if(debug_){openu5::UiDiagnosticsServices services{};services.context=this;services.start=start_smoke;services.audio_test=audio_test_tone;services.audio_perf=audio_perf_start;services.audio_stats=audio_stats_now;services.music_bypass=music_bypass_probe;debug_->attach_diagnostics(services);}
+    if(debug_){openu5::UiDiagnosticsServices services{};services.context=this;services.start=start_smoke;services.audio_test=audio_test_tone;services.audio_perf=audio_perf_start;services.audio_stats=audio_stats_now;services.music_bypass=music_bypass_probe;services.sd_log=sd_log_probe;debug_->attach_diagnostics(services);}
 #endif
 }
 
@@ -3045,7 +3045,14 @@ openu5::PerfScenario AlphaRuntime::perf_scenario() const{
     s.music_volume=audio_.music_volume();
     s.sfx_volume=audio_.sfx_volume();
     s.synth_bypass=music_bypass_;
+    s.sd_log=sd_log_state(); // A3-04D
     return s;
+}
+
+// A3-04D (ALPHA3_AUDIO.md section 21): the SD diagnostic log's state, as the
+// device logger reports it (NotReported when none is attached: the host).
+openu5::SdLogState AlphaRuntime::sd_log_state() const{
+    return sd_log_perf_.state?sd_log_perf_.state():openu5::SdLogState::NotReported;
 }
 
 size_t AlphaRuntime::contention_line(char *out,size_t cap) const{
@@ -3077,6 +3084,26 @@ bool AlphaRuntime::music_bypass_probe(void *p,bool toggle){
     ESP_LOGI(kTag,"A3C_PROBE synth_bypass=%d",r.music_bypass_);
     r.dirty_=true;r.dirty_reason_="synth-bypass-probe";
     return r.music_bypass_;
+}
+
+// A3-04D: Developer > Diagnostics > "Probe: SD diag logging". The SD
+// diagnostic log is off at boot (openu5::kSdDiagLoggingDefault) and never
+// saved; Enter switches it for the session. Only the log's card writes
+// change -- serial logging, saves, settings and the packs do not use it. The
+// report and the A3C_PERF line carry "sdlog ON" / "sdlog OFF".
+openu5::SdLogState AlphaRuntime::sd_log_probe(void *p,bool toggle){
+    auto &r=*static_cast<AlphaRuntime*>(p);
+    const openu5::SdLogState now=r.sd_log_state();
+    if(!toggle)return now;
+    const bool on=now!=openu5::SdLogState::On;
+    if((now!=openu5::SdLogState::On&&now!=openu5::SdLogState::Off)||!r.sd_log_perf_.set_enabled||
+       !r.sd_log_perf_.set_enabled(on)){
+        r.publish_perf_report("SD diag logging: no SD card logger on this device",nullptr,nullptr,nullptr,nullptr,false);
+        return r.sd_log_state();
+    }
+    ESP_LOGI(kTag,"A3D_PROBE sd_log=%d",on?1:0);
+    r.dirty_=true;r.dirty_reason_="sd-log-probe";
+    return r.sd_log_state();
 }
 
 void AlphaRuntime::publish_perf_report(const char *title,const openu5::AudioPerfSnapshot *first,const char *first_heading,

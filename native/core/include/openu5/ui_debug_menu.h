@@ -3,6 +3,7 @@
 #include "debug_developer.h"
 #include "debug_labels.h"
 #include "debug_map_picker.h"
+#include "sd_diag_log.h"
 #include "ui_session.h"
 
 namespace openu5 {
@@ -68,6 +69,10 @@ struct UiDiagnosticsServices {
     // just above them. toggle=true flips the probe; either way it returns
     // the probe's state (the row's label shows it).
     bool (*music_bypass)(void *, bool toggle) = nullptr;
+    // A3-04D (section 21): "Probe: SD diag logging", the row just above the
+    // synth bypass. toggle=true switches the SD diagnostic log on or off;
+    // either way it returns the log's state (the row's label shows it).
+    SdLogState (*sd_log)(void *, bool toggle) = nullptr;
 };
 
 struct UiDebugMenuView {
@@ -145,6 +150,7 @@ class UiDebugMenu {
     mutable char quest_item_label_buf_[32]{};
     mutable char special_item_label_buf_[32]{};
     mutable char bypass_label_buf_[40]{};
+    mutable char sd_log_label_buf_[40]{};
 
     size_t item_count() const;
     const char *category_name(size_t) const;

@@ -117,6 +117,9 @@ public:
     // around every gameplay frame). `flag` is the audio task's "running"
     // word (TdeckAudioBackend::activity_flag), read at each row's two ends.
     void set_audio_activity_flag(const volatile uint32_t *flag) { audio_active_ = flag; }
+    // A3-04D (section 21): the SD-log writer's burst word (sdlog::burst_flag()),
+    // read at both ends of every transaction; the SD card shares this SPI bus.
+    void set_sd_activity_flag(const volatile uint32_t *flag) { sd_active_ = flag; }
     void take_tft_timing(openu5::TftTiming &out) {
         out = tft_timing_;
         out.cpu_mhz = tft_cpu_mhz_;
@@ -132,6 +135,7 @@ private:
         bool busy = false;
     };
     bool audio_running() const { return audio_active_ && *audio_active_ != 0; }
+    bool sd_log_burst() const { return sd_active_ && *sd_active_ != 0; }
     RowMark row_mark() const;
     /** One pixel row (or fill chunk) that started building at `start`. */
     esp_err_t tft_row(spi_transaction_t &transaction, RowMark start);
@@ -164,6 +168,7 @@ private:
     openu5::TftTiming tft_timing_{};
     uint32_t tft_cpu_mhz_ = 0; // set with the display; 0 on the host (no timing)
     const volatile uint32_t *audio_active_ = nullptr;
+    const volatile uint32_t *sd_active_ = nullptr;
     // Sole app task; synchronous spi_device_transmit completes before reuse.
     alignas(4) std::array<uint8_t, 320 * 2> transfer_row_{};
     bool shared_spi_initialized_ = false;

@@ -1,0 +1,43 @@
+GREEN D1 before the card is mounted and the writer runs: unavailable, and switching on is refused
+GREEN D2 at boot (the writer running, the card mounted) SD diagnostic logging is OFF, capturing nothing, the writer idle
+GREEN D3 the Developer switch turns it on: capturing, the writer awake
+GREEN D4 ... and off again
+GREEN D5 none of that touched the card by itself (the writer does, at its wake)
+GREEN C1 logging OFF: all 200 log calls reach serial, formatted exactly; nothing is queued for the card
+GREEN C2 logging ON: serial still gets the call, and the card copy is queued with its timestamp
+GREEN C3 a full queue drops the card copy (counted), never the serial one, never waits
+GREEN C4 switched off again: serial continues, the card copy stops at once
+GREEN W1 logging OFF for 60 s of gameplay logging: the card is never touched (0 opens, 0 writes, 0 flushes, 0 closes, 0 bursts), the writer stays idle, serial got all 624 lines
+GREEN W2 switched on: the next wake opens the log for append (one burst), nothing else
+GREEN W3 every physical line gets the [%010llu] prefix; ordinary lines are only buffered (no flush yet)
+GREEN W4 an important line (INPUT_EDGE) flushes at once, as in A3-04C
+GREEN W5 while on: no flush before 2 s have passed, then the periodic flush (one burst), as in A3-04C
+GREEN W6 switched off: the next wake writes what was captured while on, closes the log once (the directory entry gets the size), then the writer sleeps without a timeout for the next 60 s
+GREEN W7 ... and further wakes touch nothing
+GREEN W8 switched on again: reopened for append
+GREEN W9 a full log on open becomes the archive at once; one that fills rotates at the 512 KiB cap (line 735 of 1,200), as in A3-04C
+GREEN W10 dropped lines are reported in the log (SD_LOG_QUEUE_DROPPED count=3) and flushed
+GREEN W11 a card write error closes the log, switches it off for good (n/a, cannot be switched on), and serial logging continues
+GREEN W12 a log that cannot be opened (no directory, write-protected card) fails the same way
+GREEN K1 slow TFT transactions during SD-log bursts add up across frames (3 of 6); the longest is kept (812.3 ms)
+GREEN K2 a new window starts at zero
+GREEN F1 no logger reporting a state (NotReported): A3-04C's label and SD-log text, unchanged
+GREEN F2 logging ON: the report and the A3C_PERF line say "sdlog ON"
+GREEN F3 logging OFF: "sdlog OFF" in the label, and the SD-log counters say OFF instead of looking stale:
+     | sd=OFF:0:0.0/0.0
+GREEN F4 no card / no writer: "sdlog n/a"
+GREEN F5 the SD attribution is on the report (its own line; A3-04C's lines unchanged) and in the A3C_PERF line (insd=count:max)
+GREEN F6 the longest label (51 characters) is one whole report row
+GREEN F7 the worst realistic A3C_PERF line with the A3-04D fields is whole (714 chars, ends with sdl=100) and still fits one SD-log record with its prefix
+GREEN F8 the longest report (benchmark + contention + the A3-04D lines: 51 of 64 lines) still fits; the last line is the guard's (nothing cut)
+RED S1 while the log is idle (off and closed) the writer sleeps without a timeout, before its queue wait and before it takes the storage mutex: no periodic wake, no flush, no card access
+RED S2 every card access is the core writer's (g_log.wake, bracketed by the storage mutex and the burst flag); the file has one fopen / fwrite and the two flushes of CardLogFile
+RED S3 the ESP-IDF log hook is SdDiagLog::mirror with the serial writer: serial always, the queue only through it
+RED S4 the boot path no longer opens or rotates the log, and nothing overrides the default: the log starts as kSdDiagLoggingDefault (OFF)
+RED S5 switching on wakes the sleeping writer
+RED S6 every TFT transaction reads the writer's burst flag at both ends; a slow one during a burst is counted and its length kept
+RED S7 main.cpp hands the runtime the switch and the Board the burst flag, and switches nothing on
+RED S8 the Developer row reaches the device switch, and every report and A3C_PERF line is labelled
+GREEN S9 unrelated card use is untouched: a save's storage transaction does not depend on the switch (and never waits for an idle writer), saves/settings and the smoke tests create their own directories, and the packs never include the logger
+
+40 checks, 8 failed
