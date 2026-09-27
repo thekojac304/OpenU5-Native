@@ -1,0 +1,123 @@
+# A3-04F mutation validation (2026-09-27 15:13)
+
+K1 the CRC takes a pixel's high byte first [native/targets/tdeck/main/native_renderer.cpp]: KILLED
+    a3_04f_render_runtime exit=1  1 RED
+        RED C1 the viewport CRC equals the bit-by-bit CRC-32 it replaces on 2/64 buffers (empty, all 0, all 1, random, odd lengths): the Board's change detector and every logged crc= are unchanged
+    a3_04e_pacing_runtime exit=0  0 RED
+K2 the CRC skips its final inversion [native/targets/tdeck/main/native_renderer.cpp]: KILLED
+    a3_04f_render_runtime exit=1  1 RED
+        RED C1 the viewport CRC equals the bit-by-bit CRC-32 it replaces on 0/64 buffers (empty, all 0, all 1, random, odd lengths): the Board's change detector and every logged crc= are unchanged
+    a3_04e_pacing_runtime exit=0  0 RED
+K3 the CRC reads only each pixel's low byte [native/targets/tdeck/main/native_renderer.cpp]: KILLED
+    a3_04f_render_runtime exit=1  1 RED
+        RED C1 the viewport CRC equals the bit-by-bit CRC-32 it replaces on 1/64 buffers (empty, all 0, all 1, random, odd lengths): the Board's change detector and every logged crc= are unchanged
+    a3_04e_pacing_runtime exit=0  0 RED
+F1 fill chunks stop at the rectangle's width again (one per row of a frame line) [native/targets/tdeck/main/tdeck_board.cpp]: KILLED
+    a3_04f_render_runtime exit=1  1 RED
+        RED P1 every window's pixels travel as whole rows packed up to the bus's 640 B: 63 of 1908 windows use more transactions than their rows need; e.g. 138x240 at (182,0) in 240 transactions, 120 needed (
+    a3_04e_pacing_runtime exit=1  1 RED
+        RED Y1 legacy: the repaint on leaving the Developer screen sleeps to the next tick 37 times (full clear 7, viewport 9, right-panel reflow 3; the frame lines no longer pause -- A3-04D, one transaction 
+F2 320 px chunks from a buffer filled only as wide as the rectangle [native/targets/tdeck/main/tdeck_board.cpp]: KILLED
+    a3_04f_render_runtime exit=1  1 RED
+        RED G1 the panel after every render call equals the A3-04F baseline's (297 states vs 297 recorded, 2766 vs 2766 render calls; first difference at state 0, phase 0; source: A3-04F baseline (HEAD 414e95
+    a3_04e_pacing_runtime exit=0  0 RED
+R1 no row packing: every row its own transaction again [native/targets/tdeck/main/tdeck_board.h]: KILLED
+    a3_04f_render_runtime exit=1  3 RED
+        RED P1 every window's pixels travel as whole rows packed up to the bus's 640 B: 1643 of 1949 windows use more transactions than their rows need; e.g. 32x7 at (84,13) in 7 transactions, 1 needed (B2 st
+        RED P2 one animation tick on the coast: 10 windows, 0 of them side by side in one tile row, 16 tiny transactions of 192 (8.90 ms modelled)
+        RED P3 a 16 x 64 window pauses after rows 16, 32 and 48 (3 pauses) and its 64 rows arrive intact in 64 transactions (17 + 16 + 16 + 15 rows: a batch ends at each pause row)
+    a3_04e_pacing_runtime exit=0  0 RED
+R2 packed rows are built over each other (the batch offset ignored) [native/targets/tdeck/main/tdeck_board.cpp]: KILLED
+    a3_04f_render_runtime exit=1  4 RED
+        RED B0 the census ran every scenario (inland, shore, 24 steps, Pass, status, Z, Developer, a won fight and back) with the panel's viewport equal to the composed one after all 4141 gameplay renders and
+        RED P3 a 16 x 64 window pauses after rows 16, 32 and 48 (3 pauses) and its 64 rows arrive intact in 4 transactions (17 + 16 + 16 + 15 rows: a batch ends at each pause row)
+        RED G0 the golden script: 2766 render calls, 299 distinct panel states, the viewport always the composed one, no malformed or oversize transaction
+        RED G1 the panel after every render call equals the A3-04F baseline's (299 states vs 297 recorded, 2766 vs 2766 render calls; first difference at state 2, phase 0; source: A3-04F baseline (HEAD 414e95
+    a3_04e_pacing_runtime exit=0  0 RED
+R3 a batch runs through a pause row (the pause is skipped) [native/targets/tdeck/main/tdeck_board.h]: KILLED
+    a3_04f_render_runtime exit=1  1 RED
+        RED P3 a 16 x 64 window pauses after rows 16, 32 and 48 (0 pauses) and its 64 rows arrive intact in 4 transactions (17 + 16 + 16 + 15 rows: a batch ends at each pause row)
+    a3_04e_pacing_runtime exit=0  0 RED
+R4 a batch may outgrow the 640 B buffer / max_transfer_sz by a row [native/targets/tdeck/main/tdeck_board.h]: KILLED
+    a3_04f_render_runtime exit=1  11 RED
+        RED B0 the census ran every scenario (inland, shore, 24 steps, Pass, status, Z, Developer, a won fight and back) with the panel's viewport equal to the composed one after all 4141 gameplay renders and
+        RED P2 one animation tick on the coast: 0 windows, 0 of them side by side in one tile row, 0 tiny transactions of 0 (0.00 ms modelled)
+        RED R2 one member's HP changes: exactly that party row is drawn (0 party, 0 status)
+        RED R3 a row the bed refresh drew in reverse video (same text) is redrawn by the next frame, and only it (0 party, 0 status): the panel is as before
+        RED R4 a row the bed refresh drew with other text is redrawn by the next frame, and only it (0 party, 0 status): the panel is as before
+        RED P3 a 16 x 64 window pauses after rows 16, 32 and 48 (0 pauses) and its 64 rows arrive intact in 0 transactions (17 + 16 + 16 + 15 rows: a batch ends at each pause row)
+        RED T2 a new short line while the transcript is not yet full: one row (control, 0)
+        RED T3 on a line, a scroll and a wrapped message the rows drawn are exactly the rows whose text or colour changed (drawn/changed: B3 0/1 B4 0/12 B5 0/12 B6 0/12 B6b 0/0 B6c 0/5 B6d 0/1)
+        RED T5 closing the Z modal and leaving the Developer screen still redraw all 19 transcript rows (the retained rows are invalidated, control)
+        RED G0 the golden script: 2766 render calls, 1 distinct panel states, the viewport always the composed one, no malformed or oversize transaction
+        RED G1 the panel after every render call equals the A3-04F baseline's (1 states vs 297 recorded, 2766 vs 2766 render calls; first difference at state 0, phase 0; source: A3-04F baseline (HEAD 414e958a
+    a3_04e_pacing_runtime exit=1  15 RED
+        RED Y1 legacy: the repaint on leaving the Developer screen sleeps to the next tick 0 times (full clear 7, viewport 9, right-panel reflow 3; the frame lines no longer pause -- A3-04D, one transaction p
+        RED Y2 legacy: a walking step sleeps 0 times: the viewport's 158 rows, one sleep after rows 16, 32 .. 144
+        RED M1 legacy: the window's TFT maximum IS its one full-screen repaint, 0.0 ms modelled (19 sleeps span >= 18 ticks since A3-04F; A3-04D's 37 spanned >= 36: device 404-408 ms)
+        RED M2 legacy: a walking viewport frame costs 0.0 ms modelled (9 sleeps span >= 8 ticks; device viewport avg ~122 ms incl. the repaint and row building)
+        RED M3 A3-04E: the repaint 0.0 ms and a step 0.0 ms modelled (transfers only; the device adds row building), 0.0 ms of pauses in the whole window
+        RED M4 ... input-to-screen max 0.0 ms (legacy 0.0 ms), frame max 0.0 ms (legacy 0.0 ms)
+        RED M5 A3E_PACE names the pacing and carries the repaint / viewport split and the pauses
+        RED V1 legacy and A3-04E pacing put byte-identical streams on the panel (every transaction, in order: hash 1469598103934665603 / 1469598103934665603), the same final panel; only the pause differs (36 
+        RED V2 after every one of 1099 gameplay renders the panel's viewport is the composed viewport, row for row: no incomplete frame, no corrupted or missing row, no malformed transaction
+        RED V3 ... also on the timed runs (753 renders)
+        RED L1 idle exploration: the loop blocks on the input queue for one tick after a pass
+        RED L3 ... drawn: the idle wait again
+        RED L4 "Probe: legacy loop spin: ON": idle, yet 0 -- the pre-A3-04E reschedule
+        RED W5 the guard costs nothing wherever the idle loop already runs: rows that let it (A3-04E's model), the legacy tick-sleep pacing, and the loop's own idle wait when nothing is queued (enforcements 1
+        RED W6 A3E_PACE carries the heartbeat number and the idle-service window:
+E1 adjacent animated cells are separate windows again [native/targets/tdeck/main/tdeck_board.cpp]: KILLED
+    a3_04f_render_runtime exit=1  1 RED
+        RED P2 one animation tick on the coast: 47 windows, 37 of them side by side in one tile row, 0 tiny transactions of 282 (11.10 ms modelled)
+    a3_04e_pacing_runtime exit=0  0 RED
+E2 a run's window is one cell wide (the rest of the run is not drawn) [native/targets/tdeck/main/tdeck_board.cpp]: KILLED
+    a3_04f_render_runtime exit=1  3 RED
+        RED B0 the census ran every scenario (inland, shore, 24 steps, Pass, status, Z, Developer, a won fight and back) with the panel's viewport equal to the composed one after all 4141 gameplay renders and
+        RED G0 the golden script: 2766 render calls, 297 distinct panel states, the viewport always the composed one, no malformed or oversize transaction
+        RED G1 the panel after every render call equals the A3-04F baseline's (297 states vs 297 recorded, 2766 vs 2766 render calls; first difference at state 2, phase 0; source: A3-04F baseline (HEAD 414e95
+    a3_04e_pacing_runtime exit=0  0 RED
+B1 every frame redraws all nine party / status rows again [native/targets/tdeck/main/tdeck_board.cpp]: KILLED
+    a3_04f_render_runtime exit=1  4 RED
+        RED R1 a redraw with nothing changed draws no party or status row (6 party, 0 status)
+        RED R2 one member's HP changes: exactly that party row is drawn (6 party, 0 status)
+        RED R3 a row the bed refresh drew in reverse video (same text) is redrawn by the next frame, and only it (6 party, 0 status): the panel is as before
+        RED R4 a row the bed refresh drew with other text is redrawn by the next frame, and only it (6 party, 0 status): the panel is as before
+    a3_04e_pacing_runtime exit=0  0 RED
+B2 a row is never forced (a painted-over panel keeps its blank rows) [native/targets/tdeck/main/tdeck_board.cpp]: KILLED
+    a3_04f_render_runtime exit=1  1 RED
+        RED G1 the panel after every render call equals the A3-04F baseline's (297 states vs 297 recorded, 2766 vs 2766 render calls; first difference at state 151, phase 3; source: A3-04F baseline (HEAD 414e
+    a3_04e_pacing_runtime exit=0  0 RED
+B3 reverse video is not part of a row's key [native/targets/tdeck/main/tdeck_board.cpp]: KILLED
+    a3_04f_render_runtime exit=1  1 RED
+        RED R3 a row the bed refresh drew in reverse video (same text) is redrawn by the next frame, and only it (0 party, 0 status): the panel is as before
+    a3_04e_pacing_runtime exit=0  0 RED
+B5 a forced draw (full repaint, bed refresh) does not teach the row cache [native/targets/tdeck/main/tdeck_board.cpp]: KILLED
+    a3_04f_render_runtime exit=1  2 RED
+        RED R3 a row the bed refresh drew in reverse video (same text) is redrawn by the next frame, and only it (0 party, 0 status): the panel is as before
+        RED R4 a row the bed refresh drew with other text is redrawn by the next frame, and only it (0 party, 0 status): the panel is as before
+    a3_04e_pacing_runtime exit=0  0 RED
+T1 the line's sequence number is back in the key (every scrolled row redrawn) [native/targets/tdeck/main/tdeck_board.cpp]: KILLED
+    a3_04f_render_runtime exit=1  1 RED
+        RED T3 on a line, a scroll and a wrapped message the rows drawn are exactly the rows whose text or colour changed (drawn/changed: B3 1/1 B4 12/12 B5 12/12 B6 12/12 B6b 12/0 B6c 12/5 B6d 12/1)
+    a3_04e_pacing_runtime exit=0  0 RED
+T2 the transcript ignores invalidation (a painted-over panel keeps stale rows) [native/targets/tdeck/main/tdeck_board.cpp]: KILLED
+    a3_04f_render_runtime exit=1  2 RED
+        RED T5 closing the Z modal and leaving the Developer screen still redraw all 19 transcript rows (the retained rows are invalidated, control)
+        RED G1 the panel after every render call equals the A3-04F baseline's (297 states vs 297 recorded, 2766 vs 2766 render calls; first difference at state 151, phase 3; source: A3-04F baseline (HEAD 414e
+    a3_04e_pacing_runtime exit=0  0 RED
+T3 a row's colour is not part of its key [native/targets/tdeck/main/tdeck_board.cpp]: KILLED
+    a3_04f_render_runtime exit=1  1 RED
+        RED T3 on a line, a scroll and a wrapped message the rows drawn are exactly the rows whose text or colour changed (drawn/changed: B3 1/1 B4 12/12 B5 12/12 B6 12/12 B6b 0/0 B6c 4/5 B6d 0/1)
+    a3_04e_pacing_runtime exit=0  0 RED
+M1 leaving the Developer screen keeps the retained right panel [native/targets/tdeck/main/tdeck_board.cpp]: SURVIVED
+    a3_04f_render_runtime exit=0  0 RED
+    a3_04e_pacing_runtime exit=0  0 RED
+M2 closing the compact selector (Z) keeps the retained right panel [native/targets/tdeck/main/tdeck_board.cpp]: KILLED
+    a3_04f_render_runtime exit=1  2 RED
+        RED T5 closing the Z modal and leaving the Developer screen still redraw all 19 transcript rows (the retained rows are invalidated, control)
+        RED G1 the panel after every render call equals the A3-04F baseline's (297 states vs 297 recorded, 2766 vs 2766 render calls; first difference at state 151, phase 3; source: A3-04F baseline (HEAD 414e
+    a3_04e_pacing_runtime exit=0  0 RED
+
+restored: build exit=0; a3_04f_render_runtime exit=0, a3_04e_pacing_runtime exit=0
+mutations: 20, killed: 19, survived: 1, invalid: 0

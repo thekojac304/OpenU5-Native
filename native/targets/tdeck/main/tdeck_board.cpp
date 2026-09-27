@@ -458,10 +458,15 @@ esp_err_t Board::fill_rect(int x, int y, int width, int height, uint16_t color)
         x + width > kDisplayWidth || y + height > kDisplayHeight) {
         return ESP_ERR_INVALID_ARG;
     }
+    ++draw_calls_.fill_rects;
     ESP_RETURN_ON_ERROR(set_display_window(x, y, width, height), kTag, "set fill window");
     auto &pixels = transfer_row_;
     static_assert(sizeof(transfer_row_) == kDisplayWidth * 2);
-    const size_t pixels_per_chunk = std::min(width, kDisplayWidth);
+    // A3-04F (ALPHA3_AUDIO.md section 26): a chunk is the whole buffer, not one
+    // row of the rectangle -- the window wraps each row into the next, so the
+    // pixel stream is the same. A 1-2 px frame line was one 2-4 byte
+    // transaction per row (180 for a viewport side); it is now one or two.
+    const size_t pixels_per_chunk = kDisplayWidth;
     for (size_t index = 0; index < pixels_per_chunk; ++index) {
         pixels[index * 2] = static_cast<uint8_t>(color >> 8);
         pixels[index * 2 + 1] = static_cast<uint8_t>(color);
@@ -517,19 +522,27 @@ esp_err_t Board::draw_rgb565_strided(int x,int y,int width,int height,
         y + height > kDisplayHeight) {
         return ESP_ERR_INVALID_ARG;
     }
+    ++draw_calls_.rgb565;
     ESP_RETURN_ON_ERROR(set_display_window(x, y, width, height), kTag, "set RGB565 window");
     auto &row_bytes = transfer_row_;
     gpio_set_level(pins::kTftDataCommand, 1);
+    const size_t row_length = size_t(width) * 2;
+    size_t used = 0; // A3-04F: bytes of whole rows waiting in transfer_row_
+    RowMark mark{};
     for (int row = 0; row < height; ++row) {
-        const RowMark mark = row_mark();
+        if (used == 0) mark = row_mark();
+        uint8_t *out = row_bytes.data() + used;
         for (int col = 0; col < width; ++col) {
             const uint16_t pixel = pixels[row * stride + col];
-            row_bytes[col * 2] = static_cast<uint8_t>(pixel >> 8);
-            row_bytes[col * 2 + 1] = static_cast<uint8_t>(pixel);
+            out[col * 2] = static_cast<uint8_t>(pixel >> 8);
+            out[col * 2 + 1] = static_cast<uint8_t>(pixel);
         }
+        used += row_length;
+        if (!row_batch_ends(used, row_length, row, height)) continue; // not a pause row either
         spi_transaction_t transaction{};
-        transaction.length = width * 16;
+        transaction.length = used * 8;
         transaction.tx_buffer = row_bytes.data();
+        used = 0;
         ESP_RETURN_ON_ERROR(tft_row(transaction, mark), kTag, "write RGB565 row");
         if(openu5::tft_row_yield_due(row))tft_yield();
     }
@@ -635,25 +648,37 @@ esp_err_t Board::fill_bed_viewport()
     return result;
 }
 
-esp_err_t Board::draw_party_rows(const openu5::GameState &game,DevicePartyHighlight party_highlight) {
+esp_err_t Board::draw_panel_row(size_t slot,int y,const char *text,uint16_t color,bool invert,bool force) {
+    // A3-04F (ALPHA3_AUDIO.md section 26): up to A3-HF2.1 all nine rows were
+    // rewritten on every frame that was not an animation tick -- 117 SPI
+    // transactions (~7 ms of transfers) when nothing in them had changed.
+    auto &cached=panel_rows_[slot];
+    if(!force&&cached.valid&&cached.color==color&&cached.invert==invert&&std::strcmp(cached.text,text)==0)return ESP_OK;
+    ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudRightX,y,openu5::kHudRightW,8,text,color,1,1,invert),kTag,"draw panel row");
+    std::snprintf(cached.text,sizeof(cached.text),"%s",text);cached.color=color;cached.invert=invert;cached.valid=true;
+    return ESP_OK;
+}
+
+esp_err_t Board::draw_party_rows(const openu5::GameState &game,DevicePartyHighlight party_highlight,bool force) {
     const auto members=openu5::party_members(game.party);
     // Y-04 (#213): `damage_flash` puts ONE row in reverse video -- the binary's
     // 0x2a28, an XOR of the row's rectangle, shared with the picker cursor and
     // the combat hit. It is the top of openu5::roster_invert_row's precedence.
-    for(size_t row=0;row<6;++row){char line[24]{};uint16_t color=kWhite;bool invert=false;if(row<members.count){const auto index=members.indices[row];const auto&a=game.party.characters[index];const bool selected=index==party_highlight.selected,actor=index==party_highlight.actor;std::snprintf(line,sizeof(line),"%c%u %-7.7s %3u/%3u %c",selected?'>':actor?'*':' ',unsigned(row+1),a.name,unsigned(std::min<uint16_t>(a.current_hp,999)),unsigned(std::min<uint16_t>(a.max_hp,999)),a.status?a.status:'G');color=selected?kGreen:actor?kCyan:kWhite;invert=index==party_highlight.damage_flash;}ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudRightX,4+int(row)*8,openu5::kHudRightW,8,line,color,1,1,invert),kTag,"draw party row");}
+    for(size_t row=0;row<6;++row){char line[24]{};uint16_t color=kWhite;bool invert=false;if(row<members.count){const auto index=members.indices[row];const auto&a=game.party.characters[index];const bool selected=index==party_highlight.selected,actor=index==party_highlight.actor;std::snprintf(line,sizeof(line),"%c%u %-7.7s %3u/%3u %c",selected?'>':actor?'*':' ',unsigned(row+1),a.name,unsigned(std::min<uint16_t>(a.current_hp,999)),unsigned(std::min<uint16_t>(a.max_hp,999)),a.status?a.status:'G');color=selected?kGreen:actor?kCyan:kWhite;invert=index==party_highlight.damage_flash;}ESP_RETURN_ON_ERROR(draw_panel_row(row,4+int(row)*8,line,color,invert,force),kTag,"draw party row");}
     return ESP_OK;
 }
 
 esp_err_t Board::refresh_bed_status_panel(const openu5::GameState &game,DevicePartyHighlight party_highlight) {
     if(!display_initialized_||!alpha_drawn_)return ESP_ERR_INVALID_STATE;
-    ESP_RETURN_ON_ERROR(draw_party_rows(game,party_highlight),kTag,"refresh bed party rows");
+    // Drawn unconditionally, as before; the rows' caches learn what is shown.
+    ESP_RETURN_ON_ERROR(draw_party_rows(game,party_highlight,true),kTag,"refresh bed party rows");
     char location[24]{};
     const char *name=hud_location_caption(game.position.map.location,game.position.map.floor,false,0);
     std::snprintf(location,sizeof(location),"%.22s",name);
-    ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudRightX,58,openu5::kHudRightW,8,location,kCyan),kTag,"refresh bed location");
+    ESP_RETURN_ON_ERROR(draw_panel_row(6,58,location,kCyan,false,true),kTag,"refresh bed location");
     char clock[24]{};
     std::snprintf(clock,sizeof(clock),"Day %ld  %02ld:%02ld",long(game.time.day),long(game.time.hour),long(game.time.minute));
-    return draw_text_box(openu5::kHudRightX,68,openu5::kHudRightW,8,clock,kWhite);
+    return draw_panel_row(7,68,clock,kWhite,false,true);
 }
 
 esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
@@ -745,6 +770,7 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
             return ESP_OK;
         }
         if(!runes_font)return ESP_ERR_INVALID_ARG;
+        ++draw_calls_.sky_strips;
         ESP_RETURN_ON_ERROR(set_display_window(openu5::kHudSkyBarX,openu5::kHudSkyBarY,
                             openu5::kHudSkyBarW,openu5::kHudSkyBarH),kTag,"set U5 sky window");
         gpio_set_level(pins::kTftDataCommand,1);
@@ -768,12 +794,17 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
         return ESP_OK;
     };
     if(animation_only&&animated_cells){
-        for(int row=0;row<openu5::kViewportTiles;++row)for(int col=0;col<openu5::kViewportTiles;++col){const int i=row*openu5::kViewportTiles+col;if(!animated_cells[i])continue;
+        // A3-04F (ALPHA3_AUDIO.md section 26): a run of adjacent animated cells
+        // in one tile row is one window over the same composed pixels -- one
+        // window setup (five transactions) per run, not per cell.
+        for(int row=0;row<openu5::kViewportTiles;++row)for(int col=0;col<openu5::kViewportTiles;){const int i=row*openu5::kViewportTiles+col;if(!animated_cells[i]){++col;continue;}
+            int end=col+1;while(end<openu5::kViewportTiles&&animated_cells[row*openu5::kViewportTiles+end])++end;
             const int clip_top=row==0?openu5::kHudSkyBarH:0;
             const int clip_bottom=row==openu5::kViewportTiles-1?openu5::kHudWindBarH:0;
-            const int height=openu5::kTilePixels-clip_top-clip_bottom;if(height<=0)continue;
-            ESP_RETURN_ON_ERROR(draw_rgb565_strided(openu5::kHudViewportX+col*openu5::kTilePixels,openu5::kHudViewportY+row*openu5::kTilePixels+clip_top,openu5::kTilePixels,height,
-                                pixels+(row*openu5::kTilePixels+clip_top)*openu5::kViewportPixels+col*openu5::kTilePixels,openu5::kViewportPixels),kTag,"draw clipped animated Alpha cell");}
+            const int height=openu5::kTilePixels-clip_top-clip_bottom;if(height<=0){col=end;continue;}
+            ESP_RETURN_ON_ERROR(draw_rgb565_strided(openu5::kHudViewportX+col*openu5::kTilePixels,openu5::kHudViewportY+row*openu5::kTilePixels+clip_top,(end-col)*openu5::kTilePixels,height,
+                                pixels+(row*openu5::kTilePixels+clip_top)*openu5::kViewportPixels+col*openu5::kTilePixels,openu5::kViewportPixels),kTag,"draw clipped animated Alpha cells");
+            col=end;}
         return ESP_OK;
     }
     // R-17/Y-14: the gem view is a full-square 176x176 composition, not the
@@ -837,6 +868,9 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
             ESP_RETURN_ON_ERROR(draw_text_box(x+2,kContextBarActionsY,width-4,kContextBarActionsH,bar.actions,kGreen),kTag,"context valid actions");
         context_cache_=bar;context_cache_valid_=true;return ESP_OK;
     };
+    // A3-04F: the visible transcript lines, built each frame -- a local on the
+    // main task's stack (it was a Board member in internal .data).
+    openu5::UiRenderedLine transcript_lines[kAlphaTranscriptLines]{};
     if(shop&&shop->active){
         const bool first=!shop_cache_valid_;
         auto account=[&](size_t pixels){++debug_last_dirty_regions_;debug_last_pixels_+=pixels;};
@@ -862,9 +896,9 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
             ESP_RETURN_ON_ERROR(draw_text_box(184,39+int(i)*14,134,12,line,current&&i==shop->selected_row?kGreen:kWhite),kTag,"shop offer row");account(134*12);
         }
         if(first||shop->gold!=shop_cache_.gold){char line[24]{};std::snprintf(line,sizeof(line),"Gold: %ld",long(shop->gold));ESP_RETURN_ON_ERROR(draw_text_box(184,127,134,8,line,kWhite),kTag,"shop gold");account(134*8);}
-        std::fill(std::begin(transcript_lines_),std::end(transcript_lines_),openu5::UiRenderedLine{});
-        const auto count=ui.visible_lines(transcript_lines_,kShopLogRows,openu5::kHudTranscriptColumns);
-        for(size_t i=0;i<kShopLogRows;++i){const char*text=i<count?transcript_lines_[i].text:"";const uint32_t seq=i<count?transcript_lines_[i].sequence:0;const uint16_t color=i<count&&transcript_lines_[i].channel==openu5::UiTextChannel::Shop?kCyan:kWhite;auto&cached=transcript_cache_[i];if(first||cached.sequence!=seq||cached.color!=color||std::strcmp(cached.text,text)!=0){ESP_RETURN_ON_ERROR(draw_text_box(184,152+int(i)*8,134,8,text,color),kTag,"shop transcript row");account(134*8);cached.sequence=seq;cached.color=color;std::snprintf(cached.text,sizeof(cached.text),"%s",text);}}
+        std::fill(std::begin(transcript_lines),std::end(transcript_lines),openu5::UiRenderedLine{});
+        const auto count=ui.visible_lines(transcript_lines,kShopLogRows,openu5::kHudTranscriptColumns);
+        for(size_t i=0;i<kShopLogRows;++i){const char*text=i<count?transcript_lines[i].text:"";const uint32_t seq=i<count?transcript_lines[i].sequence:0;const uint16_t color=i<count&&transcript_lines[i].channel==openu5::UiTextChannel::Shop?kCyan:kWhite;auto&cached=transcript_cache_[i];if(first||cached.sequence!=seq||cached.color!=color||std::strcmp(cached.text,text)!=0){ESP_RETURN_ON_ERROR(draw_text_box(184,152+int(i)*8,134,8,text,color),kTag,"shop transcript row");account(134*8);cached.sequence=seq;cached.color=color;std::snprintf(cached.text,sizeof(cached.text),"%s",text);}}
         ESP_RETURN_ON_ERROR(draw_context_bar(shop->context,182,137,first),kTag,"shop context action bar");account(137*25);
         shop_cache_=*shop;shop_cache_valid_=true;alpha_ui_cache_valid_=true;
         return ESP_OK;
@@ -884,14 +918,14 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
         if(changed(selection->detail2,selection_cache_.detail2)){ESP_RETURN_ON_ERROR(draw_text_box(184,35,134,8,selection->detail2,kWhite),kTag,"selector detail row two");account(134*8);}
         const size_t rows=std::max(selection->row_count,selection_cache_.row_count);
         for(size_t i=0;i<rows&&i<kSelectionVisibleRows;++i){if(!selection_row_needs_redraw(*selection,selection_cache_,i,first))continue;char line[24]{};if(i<selection->row_count)std::snprintf(line,sizeof(line),"%c%.21s",i==selection->selected_row?'>':' ',selection->rows[i]);ESP_RETURN_ON_ERROR(draw_text_box(184,46+int(i)*14,134,12,line,i<selection->row_count&&i==selection->selected_row?kGreen:kWhite),kTag,"selector row");account(134*12);}
-        std::fill(std::begin(transcript_lines_),std::end(transcript_lines_),openu5::UiRenderedLine{});const auto count=ui.visible_lines(transcript_lines_,kSelectorLogRows,openu5::kHudTranscriptColumns);
+        std::fill(std::begin(transcript_lines),std::end(transcript_lines),openu5::UiRenderedLine{});const auto count=ui.visible_lines(transcript_lines,kSelectorLogRows,openu5::kHudTranscriptColumns);
         const bool show_transcript=selection_uses_transcript(*selection);
-        for(size_t i=0;i<kSelectorLogRows;++i){const char*text=show_transcript&&i<count?transcript_lines_[i].text:"";const uint32_t seq=show_transcript&&i<count?transcript_lines_[i].sequence:0;const uint16_t color=show_transcript&&i<count&&transcript_lines_[i].channel==openu5::UiTextChannel::Combat?kRed:kWhite;auto&cached=transcript_cache_[i];if(first||cached.sequence!=seq||cached.color!=color||std::strcmp(cached.text,text)!=0){ESP_RETURN_ON_ERROR(draw_text_box(184,172+int(i)*8,134,8,text,color),kTag,"selector transcript");account(134*8);cached.sequence=seq;cached.color=color;std::snprintf(cached.text,sizeof(cached.text),"%s",text);}}
+        for(size_t i=0;i<kSelectorLogRows;++i){const char*text=show_transcript&&i<count?transcript_lines[i].text:"";const uint32_t seq=show_transcript&&i<count?transcript_lines[i].sequence:0;const uint16_t color=show_transcript&&i<count&&transcript_lines[i].channel==openu5::UiTextChannel::Combat?kRed:kWhite;auto&cached=transcript_cache_[i];if(first||cached.sequence!=seq||cached.color!=color||std::strcmp(cached.text,text)!=0){ESP_RETURN_ON_ERROR(draw_text_box(184,172+int(i)*8,134,8,text,color),kTag,"selector transcript");account(134*8);cached.sequence=seq;cached.color=color;std::snprintf(cached.text,sizeof(cached.text),"%s",text);}}
         ESP_RETURN_ON_ERROR(draw_context_bar(selection->context,182,137,first),kTag,"selector context action bar");account(137*25);
         selection_cache_=*selection;selection_cache_valid_=true;alpha_ui_cache_valid_=true;return ESP_OK;
     }
     if(!preserve_party_panel) {
-        ESP_RETURN_ON_ERROR(draw_party_rows(game,party_highlight),kTag,"draw party rows");
+        ESP_RETURN_ON_ERROR(draw_party_rows(game,party_highlight,!alpha_ui_cache_valid_),kTag,"draw party rows");
     }
     // Batch 9B.  While a dungeon session is mounted the caption is the DUNGEON's
     // name, not game.position's -- that field holds the surface RETURN context
@@ -899,10 +933,9 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
     char location[24]{};const char*name=hud_location_caption(game.position.map.location,game.position.map.floor,bands_active,bands_active?dungeon_bands->dungeon_id:uint8_t(0));std::snprintf(location,sizeof(location),"%.22s",name);
     char clock[24]{};std::snprintf(clock,sizeof(clock),"Day %ld  %02ld:%02ld",long(game.time.day),long(game.time.hour),long(game.time.minute));
     if(!preserve_party_panel){
-        const char*world[]={location,clock};for(int i=0;i<2;++i)ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudRightX,58+i*10,openu5::kHudRightW,8,world[i],i==0?kCyan:kWhite),kTag,"draw world status");
-        ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudRightX,78,openu5::kHudRightW,8,
-                            movement_mode?"MOVE MODE: ON":"",movement_mode?kGreen:kWhite),
-                            kTag,"draw movement mode indicator");
+        const char*world[]={location,clock};for(int i=0;i<2;++i)ESP_RETURN_ON_ERROR(draw_panel_row(6+size_t(i),58+i*10,world[i],i==0?kCyan:kWhite,false,!alpha_ui_cache_valid_),kTag,"draw world status");
+        ESP_RETURN_ON_ERROR(draw_panel_row(8,78,movement_mode?"MOVE MODE: ON":"",movement_mode?kGreen:kWhite,false,
+                            !alpha_ui_cache_valid_),kTag,"draw movement mode indicator");
     }
 
     // Transcript history and active modal state have separate retained regions.
@@ -920,9 +953,14 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
     }
     size_t transcript_columns=0,transcript_rows=0;
     world_transcript_geometry(ui_size,context_active,transcript_columns,transcript_rows);
-    std::fill(std::begin(transcript_lines_),std::end(transcript_lines_),openu5::UiRenderedLine{});
-    const auto count=ui.visible_lines(transcript_lines_,transcript_rows,transcript_columns);
-    for(size_t i=0;i<transcript_rows;++i){const char*text="";uint32_t seq=0;uint16_t color=kWhite;if(i<count){text=transcript_lines_[i].text;seq=transcript_lines_[i].sequence;color=transcript_lines_[i].channel==openu5::UiTextChannel::Prompt?kCyan:transcript_lines_[i].channel==openu5::UiTextChannel::Combat?kRed:kWhite;}auto&cached=transcript_cache_[i];if(!alpha_ui_cache_valid_||cached.sequence!=seq||cached.color!=color||std::strcmp(cached.text,text)!=0){ESP_RETURN_ON_ERROR(draw_text_box_metrics(openu5::kHudRightX,openu5::kHudTranscriptY+int(i)*text_metrics.line_height,openu5::kHudRightW,text_metrics.line_height,text,color,text_metrics),kTag,"draw running log row");cached.sequence=seq;cached.color=color;std::snprintf(cached.text,sizeof(cached.text),"%s",text);}}
+    std::fill(std::begin(transcript_lines),std::end(transcript_lines),openu5::UiRenderedLine{});
+    const auto count=ui.visible_lines(transcript_lines,transcript_rows,transcript_columns);
+    // A3-04F (ALPHA3_AUDIO.md section 26): a row is redrawn when its text or
+    // colour changed. A row's pixels are a function of those two and the text
+    // metrics (whose change clears the cache above); the line's sequence number
+    // is not drawn, and keying on it redrew every row of each scroll even
+    // where the same text landed on it again ("Pass" under "Pass").
+    for(size_t i=0;i<transcript_rows;++i){const char*text="";uint32_t seq=0;uint16_t color=kWhite;if(i<count){text=transcript_lines[i].text;seq=transcript_lines[i].sequence;color=transcript_lines[i].channel==openu5::UiTextChannel::Prompt?kCyan:transcript_lines[i].channel==openu5::UiTextChannel::Combat?kRed:kWhite;}auto&cached=transcript_cache_[i];if(!alpha_ui_cache_valid_||cached.color!=color||std::strcmp(cached.text,text)!=0){ESP_RETURN_ON_ERROR(draw_text_box_metrics(openu5::kHudRightX,openu5::kHudTranscriptY+int(i)*text_metrics.line_height,openu5::kHudRightW,text_metrics.line_height,text,color,text_metrics),kTag,"draw running log row");cached.sequence=seq;cached.color=color;std::snprintf(cached.text,sizeof(cached.text),"%s",text);}}
     if(context_active)ESP_RETURN_ON_ERROR(draw_context_bar(*context_bar,openu5::kHudPartyFrameX,openu5::kHudPartyFrameW,!context_cache_valid_),kTag,"gameplay context action bar");
     alpha_ui_cache_valid_=true;
     return ESP_OK;
@@ -936,6 +974,7 @@ esp_err_t Board::draw_rgb565_scaled(int x,int y,int width,int height,
        source_height<=0||source_stride<source_width||width>kDisplayWidth||
        x<0||y<0||x+width>kDisplayWidth||y+height>kDisplayHeight)
         return ESP_ERR_INVALID_ARG;
+    ++draw_calls_.rgb565;
     ESP_RETURN_ON_ERROR(set_display_window(x,y,width,height),kTag,"set scaled RGB565 window");
     auto &row_bytes=transfer_row_;gpio_set_level(pins::kTftDataCommand,1);
     for(int row=0;row<height;++row){
@@ -1078,13 +1117,18 @@ esp_err_t Board::draw_text_box(int x,int y,int width,int height,const char *text
     if(!display_initialized_||!text||width<=0||height<=0||width>kDisplayWidth||
        x<0||y<0||x+width>kDisplayWidth||y+height>kDisplayHeight||scale_x<=0||scale_y<=0)
         return ESP_ERR_INVALID_ARG;
+    ++draw_calls_.text_boxes;
     ESP_RETURN_ON_ERROR(set_display_window(x,y,width,height),kTag,"set coherent text window");
     auto &row_bytes=transfer_row_;gpio_set_level(pins::kTftDataCommand,1);
     const int cell_width=6*scale_x;
     const size_t text_length=std::strlen(text);
+    const size_t row_length=size_t(width)*2;
+    size_t used=0; // A3-04F: whole rows share a transaction (row_batch_ends)
+    RowMark mark{};
     for(int row=0;row<height;++row){
-        const RowMark mark=row_mark();
+        if(used==0)mark=row_mark();
         const int glyph_row=row/scale_y;
+        uint8_t *out=row_bytes.data()+used;
         for(int col=0;col<width;++col){
             // Reverse video swaps the two: the glyph is punched out of a
             // filled row, which is what an XOR of the row's rectangle looks
@@ -1095,9 +1139,11 @@ esp_err_t Board::draw_text_box(int x,int y,int width,int height,const char *text
                 const auto bitmap=glyph(text[char_index]);
                 if(bitmap[glyph_col]&(1U<<glyph_row))pixel=invert?kBlack:color;
             }
-            row_bytes[col*2]=uint8_t(pixel>>8);row_bytes[col*2+1]=uint8_t(pixel);
+            out[col*2]=uint8_t(pixel>>8);out[col*2+1]=uint8_t(pixel);
         }
-        spi_transaction_t transaction{};transaction.length=width*16;transaction.tx_buffer=row_bytes.data();
+        used+=row_length;
+        if(!row_batch_ends(used,row_length,row,height))continue; // not a pause row either
+        spi_transaction_t transaction{};transaction.length=used*8;transaction.tx_buffer=row_bytes.data();used=0;
         ESP_RETURN_ON_ERROR(tft_row(transaction,mark),kTag,"write coherent text row");
         if(openu5::tft_row_yield_due(row))tft_yield();
     }
@@ -1111,11 +1157,16 @@ esp_err_t Board::draw_text_box_metrics(int x,int y,int width,int height,const ch
        x+width>kDisplayWidth||y+height>kDisplayHeight||!metrics.glyph_width||
        !metrics.glyph_height||metrics.cell_width<metrics.glyph_width||
        metrics.line_height<metrics.glyph_height)return ESP_ERR_INVALID_ARG;
+    ++draw_calls_.metric_text_boxes;
     ESP_RETURN_ON_ERROR(set_display_window(x,y,width,height),kTag,"set metric text window");
     auto &row_bytes=transfer_row_;gpio_set_level(pins::kTftDataCommand,1);
     const size_t text_length=std::strlen(text);
+    const size_t row_length=size_t(width)*2;
+    size_t used=0; // A3-04F: whole rows share a transaction (row_batch_ends)
+    RowMark mark{};
     for(int row=0;row<height;++row){
-        const RowMark mark=row_mark();
+        if(used==0)mark=row_mark();
+        uint8_t *out=row_bytes.data()+used;
         for(int col=0;col<width;++col){
             uint16_t pixel=kBlack;const size_t char_index=size_t(col/metrics.cell_width);
             const int within_x=col%metrics.cell_width;
@@ -1125,9 +1176,11 @@ esp_err_t Board::draw_text_box_metrics(int x,int y,int width,int height,const ch
                 const auto bitmap=glyph(text[char_index]);
                 if(bitmap[glyph_col]&(1U<<glyph_row))pixel=color;
             }
-            row_bytes[col*2]=uint8_t(pixel>>8);row_bytes[col*2+1]=uint8_t(pixel);
+            out[col*2]=uint8_t(pixel>>8);out[col*2+1]=uint8_t(pixel);
         }
-        spi_transaction_t transaction{};transaction.length=width*16;transaction.tx_buffer=row_bytes.data();
+        used+=row_length;
+        if(!row_batch_ends(used,row_length,row,height))continue;
+        spi_transaction_t transaction{};transaction.length=used*8;transaction.tx_buffer=row_bytes.data();used=0;
         ESP_RETURN_ON_ERROR(tft_row(transaction,mark),kTag,"write metric text row");
     }
     return ESP_OK;

@@ -1138,3 +1138,25 @@ Flash the A3-HF2.1 Launcher image (its path and SHA-256 are in tag `alpha3-hf2-1
 5. **The clock** (location 2, X 13, Y 2): as in H-198 — no strike after steps inside the hour.
 
 **PASS:** the line appears only at a change of screen, mode or source; the game and its sounds behave as on the A3-HF2 image. **FAIL:** a `PRESENTATION_DISPATCH` line repeated with no change between, a change with no line, or any gameplay / audio difference from the A3-HF2 image — report it with the `FW` / `Git` lines.
+
+## Alpha 3 A3-04F — render / TFT efficiency (2026-09-27)
+
+A3-04F changes how the Board sends pixels (whole rows share one SPI transaction; adjacent animated cells are one window; frame lines are one or two transactions, not one per row), redraws a party / status / transcript row only when its text, colour or reverse video changed, and computes the viewport checksum from a table instead of bit by bit. On the host the panel is pixel-identical to the A3-HF2.1 Board after every one of 2,766 render calls (`ALPHA3_AUDIO.md` §26). Nothing the game does, plays or saves changes.
+
+### Phase H-200 — render correctness and speed · *new firmware; SD pack unchanged* · about 15 minutes · **PENDING**
+
+Flash the A3-04F Launcher image (its path and SHA-256 are in tag `alpha3-a3-04f-render-efficiency`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-04f-debug` and that tag's `Git`; if not, stop. Use the music-patched assets, Music 80 %, SFX 80 %, *Probe: SD diag logging* off (the boot default). Serial is optional; if attached, search the capture for `task_wdt` afterwards.
+
+1. **Start a window.** `Alt+D` › Diagnostics › *Audio/render stats (live)* (two up) › Enter › Enter › Back › Back. Leaving the menu repaints the whole screen: both frames, all party rows, location, clock, the transcript — nothing missing.
+2. **The coast.** `Alt+D` › Teleport › Britannia X `111`, Y `22` (grass with water on most of the screen). Stand 30 s. Every water cell animates; no cell frozen, misplaced, striped or half-drawn; the top (sky) and bottom (wind) strips unharmed.
+3. **Walk 60 s** along the coast and inland, in straight lines and in zig-zags. The map moves one tile per step with no missing rows or tiles. The transcript scrolls correctly: no stale, duplicated or missing line, repeated lines ("West", "West", …) included. The clock advances.
+4. **Pass 15 times** (Space): 15 `Pass` lines scroll up; the newest is at the bottom.
+5. **Z open / close ×3, Developer menu open / close ×3.** Each close redraws the whole right panel: party rows, location, clock, transcript and frame lines complete, no ghost of the menu.
+6. **A fight, if one comes:** a hit member's row flashes in reverse video and returns to normal; HP numbers update; entering and leaving the arena repaint cleanly.
+7. **Read the window:** `Alt+D` › Diagnostics › *Audio/render stats (live)* › Enter. Photograph every page (or keep the `A3C_PERF` / `A3E_PACE` lines).
+
+Reference, A3-04E.1 image (11-minute soak, `ALPHA3_AUDIO.md` §23.10): compose avg **38.5 ms**, tiles max 37.4 ms, full-screen TFT max 148.8 ms, viewport-frame TFT avg 51.9–55.2 ms, animation-frame (`oth`) TFT avg 12.9–17.7 ms, walking step median 87.4 ms (serial `render … us`), `idle0 gap` max 102.9 ms, `forced=0`, `und=0 hw=0 miss=0`.
+
+**PASS:** steps 1–6 as described (no missing, stale, ghosted or misplaced pixels anywhere); compose avg **≤ 26 ms**; full-screen TFT max below 148.8 ms; `und=0 hw=0 miss=0` (0–1 at a song switch), music and SFX continuous and on time; `idle0 gap` max < 250 ms; no `task_wdt`, crash or reboot.
+
+**FAIL:** any visual defect (photograph it, say which screen and what you did just before), compose avg above 26 ms, underruns, a watchdog line or a reboot. Report it with the `FW` / `Git` lines and the report pages.

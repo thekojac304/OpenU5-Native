@@ -34,6 +34,12 @@ int g_param_count = 0;
 int g_x0 = 0, g_x1 = kWidth - 1, g_y0 = 0, g_y1 = kHeight - 1, g_x = 0, g_y = 0;
 openu5_host_spi_device g_display{1};
 std::vector<Pause> g_pauses;
+std::vector<WindowWrite> g_windows; // A3-04F
+// A3-04F: spi_bus_config_t::max_transfer_sz as the Board set it. The driver
+// refuses a longer transaction (esp_driver_spi/src/gpspi/spi_master.c,
+// check_trans_valid: "txdata transfer > host maximum", ESP_ERR_INVALID_ARG).
+// 4092 is ESP-IDF's DMA default for 0; the Board configures 640.
+uint32_t g_max_transfer = 4092;
 volatile uint32_t g_idle_passes = 0;
 
 void idle_blocked_for(uint64_t us) {
@@ -93,6 +99,13 @@ void decode(const uint8_t *data, size_t bytes) {
         if (g_command == 0x2C) { // RAMWR: the write pointer returns to the window's start
             g_x = g_x0;
             g_y = g_y0;
+            WindowWrite w{};
+            w.x0 = g_x0;
+            w.y0 = g_y0;
+            w.x1 = g_x1;
+            w.y1 = g_y1;
+            g_windows.push_back(w);
+            ++g_stats.windows;
         }
         return;
     }
@@ -112,7 +125,28 @@ void decode(const uint8_t *data, size_t bytes) {
     }
     if (g_command == 0x2C) {
         if (bytes % 2) ++g_stats.malformed; // RGB565: whole pixels only
-        for (size_t i = 0; i + 1 < bytes; i += 2) pixel(uint16_t(data[i] << 8 | data[i + 1]));
+        if (g_windows.empty()) { // pixels continuing a window from before reset_stats()
+            WindowWrite w{};
+            w.x0 = g_x0;
+            w.y0 = g_y0;
+            w.x1 = g_x1;
+            w.y1 = g_y1;
+            g_windows.push_back(w);
+        }
+        WindowWrite &w = g_windows.back();
+        ++w.transactions;
+        if (bytes < kThinPixelBytes) ++w.thin;
+        ++g_stats.pixel_transactions;
+        g_stats.pixel_bytes += bytes;
+        if (bytes < kThinPixelBytes) ++g_stats.thin_transactions;
+        if (bytes <= kTinyPixelBytes) ++g_stats.tiny_transactions;
+        for (size_t i = 0; i + 1 < bytes; i += 2) {
+            const uint16_t value = uint16_t(data[i] << 8 | data[i + 1]);
+            if (w.pixels == 0) w.colour = value;
+            else if (value != w.colour) w.solid = false;
+            ++w.pixels;
+            pixel(value);
+        }
     }
 }
 } // namespace
@@ -125,8 +159,11 @@ uint64_t stream_hash() { return g_hash; }
 void reset_stats() {
     g_stats = Stats{};
     g_pauses.clear();
+    g_windows.clear();
 }
 const std::vector<Pause> &pauses() { return g_pauses; }
+const std::vector<WindowWrite> &windows() { return g_windows; }
+uint32_t max_transfer_bytes() { return g_max_transfer; }
 const volatile uint32_t *idle_passes() { return &g_idle_passes; }
 void idle_wait_one_tick() {
     int64_t &now = openu5_host_virtual_clock_us();
@@ -192,7 +229,10 @@ esp_err_t ledc_channel_config(const ledc_channel_config_t *) { return ESP_OK; }
 esp_err_t ledc_set_duty(ledc_mode_t, ledc_channel_t, uint32_t) { return ESP_OK; }
 esp_err_t ledc_update_duty(ledc_mode_t, ledc_channel_t) { return ESP_OK; }
 
-esp_err_t spi_bus_initialize(spi_host_device_t, const spi_bus_config_t *, spi_dma_chan_t) { return ESP_OK; }
+esp_err_t spi_bus_initialize(spi_host_device_t, const spi_bus_config_t *config, spi_dma_chan_t) {
+    g_max_transfer = config && config->max_transfer_sz > 0 ? uint32_t(config->max_transfer_sz) : 4092u;
+    return ESP_OK;
+}
 esp_err_t spi_bus_add_device(spi_host_device_t, const spi_device_interface_config_t *, spi_device_handle_t *handle) {
     *handle = &g_display;
     return ESP_OK;
@@ -203,6 +243,12 @@ esp_err_t spi_device_transmit(spi_device_handle_t handle, spi_transaction_t *t) 
     const bool txdata = (t->flags & SPI_TRANS_USE_TXDATA) != 0;
     const size_t bytes = t->length / 8;
     const uint8_t *data = txdata ? t->tx_data : static_cast<const uint8_t *>(t->tx_buffer);
+    if (t->length > size_t(g_max_transfer) * 8) { // A3-04F: the driver refuses it; nothing is sent
+        ++g_stats.malformed;
+        ++g_stats.oversize;
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (bytes > g_stats.max_transaction_bytes) g_stats.max_transaction_bytes = uint32_t(bytes);
     if (t->length % 8 || (bytes && !data)) ++g_stats.malformed;
     hash_byte(uint8_t(g_dc));
     for (int shift = 0; shift < 32; shift += 8) hash_byte(uint8_t(bytes >> shift));

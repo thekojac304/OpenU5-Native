@@ -1,0 +1,33 @@
+capture: a3-04e1-hw-soak.log
+heartbeats 110  uptime 112.7-660.0 s
+
+Per music segment (averages recovered from cumulative counters; boundary = the heartbeat before it):
+  music 80%  uptime     0.0-  314.0 s  frames 2266  CPU0 53 % CPU1 41 % main 52 % aud 41 % (cumulative)  und=0 hw=0 miss=0 (cumulative)
+      frame avg                  59.3 ms +- 0.1  over 2266 frames
+      compose avg                38.5 ms +- 0.1  over 2266 frames
+      TFT avg                    20.7 ms +- 0.1  over 2266 frames
+      viewport-frame TFT avg     55.2 ms +- 0.1  over 421 frames
+      other-frame TFT avg        12.9 ms +- 0.1  over 1845 frames
+      TFT row building avg        2.9 ms +- 0.1  over 2266 frames
+      TFT SPI transfer avg       17.8 ms +- 0.1  over 2266 frames
+      transactions / frame      237.0  (rows 537002)
+      audio render / 8 ms blk    3.21 ms over 32720 blocks
+      input frames (render us) n=464 median 87.3 p90 89.2 max 183.7 ms
+      idle0 gap max (cum.)     102.9 ms  forced 0
+      INPUT_SERVICE warnings   n=117 median 135.9 max 747.9 ms
+  music  0%  uptime   314.0-  660.0 s  frames 929  CPU0 34 % CPU1 18 % main 33 % aud 18 % (cumulative)  und=0 hw=0 miss=0 (cumulative)
+      frame avg                  68.2 ms +- 0.2  over 929 frames
+      compose avg                38.5 ms +- 0.2  over 929 frames
+      TFT avg                    29.6 ms +- 0.2  over 929 frames
+      viewport-frame TFT avg     52.6 ms +- 0.1  over 312 frames
+      other-frame TFT avg        17.7 ms +- 0.2  over 617 frames
+      TFT row building avg        5.0 ms +- 0.2  over 929 frames
+      TFT SPI transfer avg       24.7 ms +- 0.2  over 929 frames
+      transactions / frame      307.5  (rows 285701)
+      audio render / 8 ms blk    0.34 ms over 6250 blocks
+      input frames (render us) n=355 median 87.4 p90 89.0 max 181.7 ms
+      idle0 gap max (cum.)     102.9 ms  forced 0
+      INPUT_SERVICE warnings   n=69 median 139.5 max 274.8 ms
+
+Whole run (cumulative at the last heartbeat):
+  frames 3195: frame avg 61.9 compose avg 38.5 TFT avg 23.3 ms; viewport frames 733 TFT avg 54.1; other frames 2462 TFT avg 14.1; split fill 3.5 xfer 19.8; transactions 822703 = 257.5 / frame

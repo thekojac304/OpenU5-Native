@@ -57,6 +57,12 @@ struct SdStatus {
     esp_err_t error = ESP_FAIL;
 };
 
+// Alpha 3 A3-04F (ALPHA3_AUDIO.md section 26): how often each draw primitive
+// ran since the last reset. Counting only; the host render census reads it.
+struct BoardDrawCalls {
+    uint32_t fill_rects = 0, rgb565 = 0, text_boxes = 0, metric_text_boxes = 0, sky_strips = 0;
+};
+
 struct BedViewportRect { int x, y, width, height; };
 constexpr BedViewportRect bed_viewport_rect() {
     return {openu5::kHudViewportX, openu5::kHudViewportY+openu5::kHudSkyBarH,
@@ -135,6 +141,8 @@ public:
     // A3-04E.1 (section 23): the idle-service guarantee the yield pause
     // consults (a tick sleep when core 0's idle loop has not run for 200 ms).
     void set_idle_service(IdleService *service) { idle_ = service; }
+    const BoardDrawCalls &draw_calls() const { return draw_calls_; }
+    void reset_draw_calls() { draw_calls_ = {}; }
 
 private:
     // A3-04C: every TFT transaction and every draw-loop yield goes through
@@ -159,7 +167,26 @@ private:
      * task outranks this one, so the tick sleep only made every band wait.
      */
     void tft_yield();
-    esp_err_t draw_party_rows(const openu5::GameState &, DevicePartyHighlight);
+    /**
+     * A3-04F (ALPHA3_AUDIO.md section 26): the row loops build whole rows
+     * back to back in transfer_row_ and send them as one transaction -- the
+     * panel's window wraps each row into the next. `used` counts this row's
+     * bytes too. A batch ends with the rectangle, when the next row would not
+     * fit (640 B, the bus's max_transfer_sz), or at a pause row, so a pause
+     * still falls after row 16, 32, ... has gone out.
+     */
+    bool row_batch_ends(size_t used, size_t row_bytes, int row, int height) const {
+        return row + 1 == height || used + row_bytes > transfer_row_.size() || openu5::tft_row_yield_due(row);
+    }
+    /** `force`: draw every row whatever it last showed (the panel was painted over). */
+    esp_err_t draw_party_rows(const openu5::GameState &, DevicePartyHighlight, bool force);
+    /**
+     * A3-04F: one 8-px row of the right panel's party / status block, drawn only
+     * when its text, colour or reverse video differs from what that row last
+     * drew, or when `force`d. Slots 0-5 are the party, 6 the location, 7 the
+     * clock, 8 the movement mode.
+     */
+    esp_err_t draw_panel_row(size_t slot, int y, const char *text, uint16_t color, bool invert, bool force);
     esp_err_t initialize_shared_spi();
     esp_err_t write_display_command(uint8_t command, const uint8_t *data = nullptr,
                                     size_t data_length = 0);
@@ -186,6 +213,7 @@ private:
     const volatile uint32_t *sd_active_ = nullptr;
     openu5::TftPacing tft_pacing_ = openu5::kPacingDefault.tft;
     IdleService *idle_ = nullptr;
+    BoardDrawCalls draw_calls_{};
     // Sole app task; synchronous spi_device_transmit completes before reuse.
     alignas(4) std::array<uint8_t, 320 * 2> transfer_row_{};
     bool shared_spi_initialized_ = false;
@@ -204,11 +232,19 @@ private:
         uint16_t color = 0;
         char text[openu5::kUiRenderedLineBytes]{};
     } transcript_cache_[kAlphaTranscriptLines]{};
-    openu5::UiRenderedLine transcript_lines_[kAlphaTranscriptLines]{};
-    char status_cache_[24]{};
-    char mode_cache_[24]{};
-    char prompt_cache_[32]{};
-    char input_cache_[32]{};
+    // A3-04F: what each party / status row last drew (draw_panel_row). Only a
+    // frame with alpha_ui_cache_valid_ set may skip one: everything that paints
+    // over the right panel clears that flag.
+    struct CachedPanelRow {
+        char text[24]{};
+        uint16_t color = 0;
+        bool invert = false;
+        bool valid = false;
+    } panel_rows_[9]{};
+    // A3-04F: the transcript's per-frame scratch (1,976 B) is a local of
+    // show_alpha now, on the main task's stack, and four caches nothing read or
+    // wrote (112 B) are gone: the retained panel rows above cost internal RAM,
+    // and section 23.10.5 left the internal heap's low-water mark unexplained.
     bool alpha_ui_cache_valid_ = false;
     uint8_t alpha_ui_size_cache_ = 0xff;
     bool viewport_cache_valid_ = false;

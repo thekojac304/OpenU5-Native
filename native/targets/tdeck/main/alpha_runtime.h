@@ -163,6 +163,10 @@ class AlphaRuntime {
         // Host framebuffer tests may compose deterministic all-white map tiles.
         bool render_pixels = false;
         bool indexed_test_tiles = false;
+        // A3-04F: every row and pixel of a tile differs, so a scrolled or
+        // composited animation frame changes the panel (an indexed test tile
+        // is one colour, and scrolling it changes nothing).
+        bool patterned_test_tiles = false;
         // Batch 51: the scene pacers get the same storage and binder as
         // initialize(). `false` is the pacers' own harness contract (a zero
         // unit drains every beat synchronously -- set_paced(false) /

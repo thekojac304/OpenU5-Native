@@ -42,6 +42,12 @@ struct Model {
     uint32_t idle_pass_us = 20;
 };
 
+// A3-04F (ALPHA3_AUDIO.md section 26): a pixel transaction whose bits take
+// less time on the wire than the transaction's fixed cost (26 us = 130 bytes
+// at 40 MHz) is overhead-dominated -- "thin". A "tiny" one is one 16 px row or less.
+constexpr uint32_t kThinPixelBytes = 130;
+constexpr uint32_t kTinyPixelBytes = 32;
+
 struct Stats {
     uint64_t transactions = 0, bytes = 0;
     uint64_t xfer_ns = 0;
@@ -49,6 +55,22 @@ struct Stats {
     uint64_t zero_delays = 0;               // vTaskDelay(0): a reschedule
     uint64_t yields = 0;                    // taskYIELD
     uint64_t malformed = 0;                 // pixel data that was not whole pixels, or outside a window
+    // A3-04F: the pixel side of the stream (RAMWR payload transactions).
+    uint64_t pixel_transactions = 0, pixel_bytes = 0;
+    uint64_t thin_transactions = 0, tiny_transactions = 0;
+    uint64_t windows = 0;           // RAMWR commands: one per draw primitive call
+    uint32_t max_transaction_bytes = 0;
+    uint64_t oversize = 0;          // refused as the driver refuses them: length > max_transfer_sz
+};
+
+/** A3-04F: one RAMWR -- the window its pixels went to, and how they travelled. */
+struct WindowWrite {
+    int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
+    uint32_t pixels = 0, transactions = 0, thin = 0;
+    bool solid = true;   // every pixel the same colour (a fill, or a blank text row)
+    uint16_t colour = 0; // the first pixel's
+    int width() const { return x1 - x0 + 1; }
+    int height() const { return y1 - y0 + 1; }
 };
 
 /** One scheduler call of the draw code, with the panel window it interrupted. */
@@ -64,6 +86,10 @@ void install();
 void reset_stats();
 /** Every pause since install() / reset_stats(). */
 const std::vector<Pause> &pauses();
+/** A3-04F: every RAMWR window since install() / reset_stats(), in order. */
+const std::vector<WindowWrite> &windows();
+/** A3-04F: the bus's max_transfer_sz as the Board configured it (spi_bus_initialize). */
+uint32_t max_transfer_bytes();
 /** The panel's memory, 320 x 240 RGB565, row-major. */
 const uint16_t *gram();
 /** FNV-1a over every transaction since install() / restart_stream(): D/C level, length, bytes. */

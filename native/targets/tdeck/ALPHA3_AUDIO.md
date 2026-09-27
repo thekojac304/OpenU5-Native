@@ -1,6 +1,13 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency)
 
-**Status (A3-HF2.1, 2026-09-27): CLEANUP — TYPESCRIPT CLOCK PARITY, `PRESENTATION_DISPATCH` ON CHANGE ONLY. A3-HF1 AND A3-HF2 HARDWARE-VALIDATED (H-197, H-198 PASS).** The two items A3-HF2 queued (§25). The TypeScript skin (`game/src/skin/coreview.ts`) re-armed the clock strike on every turn, the model the bytes refuted; it now arms only when the game hour changes, with the native key and reset (9 new vitest rows, RED 6 / 9 before). `PRESENTATION_DISPATCH` is logged when the UI mode or presentation source changes instead of on every frame: in the new `a3_hf2_1_dispatch_log` target the same session writes 4 lines instead of 242 (RED 1 / 7 before). 16 / 16 mutations killed. No gameplay, audio, pacing or SD change; the render performance work (§22.11) is next.
+**Status (A3-04F, 2026-09-27): RENDER / TFT EFFICIENCY — FOUR CHANGES HOST-PROVEN PIXEL FOR PIXEL — HARDWARE VALIDATION PENDING (H-200).** Measured first (§26):
+- On the A3-04E.1 hardware soak, composition was 38.5 ms of every drawn frame, music or not. The linked image shows ~90 % of it was a bit-by-bit viewport CRC-32 (4.71 M instructions per frame). It is now table-driven and bit-identical: 0.56 M instructions.
+- Whole pixel rows share an SPI transaction up to the bus's 640 B, fill chunks are 320 px, and adjacent animated cells are one window.
+- Party / status / transcript rows are redrawn only when what they show changed.
+
+On the real Board over the fake panel, the panel after all 2,766 render calls of a golden script equals the baseline Board's. Modelled per frame: a coast animation tick drops from 852 to 87 SPI transactions (25.9 → 6.2 ms), and a step from 436 to 280 (31.5 → 24.0 ms). Internal RAM is 1,808 B lower. RED-first 8 / 16 → GREEN 16 / 16; 20 / 20 mutations killed; host suite 146 / 146. Device timings are **not measured yet**, and §26.8 lists the measured but deferred items.
+
+**Status as A3-HF2.1 wrote it (2026-09-27): CLEANUP — TYPESCRIPT CLOCK PARITY, `PRESENTATION_DISPATCH` ON CHANGE ONLY. A3-HF1 AND A3-HF2 HARDWARE-VALIDATED (H-197, H-198 PASS).** The two items A3-HF2 queued (§25). The TypeScript skin (`game/src/skin/coreview.ts`) re-armed the clock strike on every turn, the model the bytes refuted; it now arms only when the game hour changes, with the native key and reset (9 new vitest rows, RED 6 / 9 before). `PRESENTATION_DISPATCH` is logged when the UI mode or presentation source changes instead of on every frame: in the new `a3_hf2_1_dispatch_log` target the same session writes 4 lines instead of 242 (RED 1 / 7 before). 16 / 16 mutations killed. No gameplay, audio, pacing or SD change; the render performance work (§22.11) is next.
 
 **Status as A3-HF2 wrote it (2026-09-27): GRANDFATHER-CLOCK STRIKE FIXED ON THE HOST — FOUNTAIN NOT REPRODUCED — HARDWARE RETEST PENDING.** On the A3-04E.1 image every move beside a grandfather clock was followed by a strike-like beep before the tick-tock. The bytes show why: `advance_clock` 0x4f7c saves the hour in `[0x5880]` (0x4fa0), and at 0x514a it skips the strike re-arm (0x5164) unless the hour changed. The device re-armed on every **minute**, so on every step. That model came from an unverified note, and A3-03's C2 row pinned it. The re-arm key is now the hour (one line, §24). Tick / tock and the genuine hour strike are unchanged, and the new `a3_hf2_ambient_parity` target proves both (RED 3 before the fix). The fountain was checked on the device-loop model: 25 s standing still, a burble in every 55 ms tick, nothing skipped. **Not reproduced, no change.** The §24.10 retest is five short steps.
 
@@ -2455,6 +2462,8 @@ Remaining, in the order the numbers suggest (each its own batch, measured with t
 4. **The synth's steady cost** (~3.3 ms per 8 ms block, ~43 % of core 1). It is unchanged here, and it is the next audio batch as planned.
 5. The fountain ambient-SFX parity defect (separate, audio).
 
+*A3-04F (2026-09-27, §26): items 1–3 measured and their dominant causes removed, host-proven pixel for pixel. Composition was ~90 % a bit-by-bit viewport CRC, now table-driven. `fill_rect` chunks are 320 px. The transcript is keyed on what is drawn. Rows are packed per transaction and unchanged panel rows are retained. Device timings are pending H-200, and §26.8 lists what was measured and deferred. Item 4 is unchanged; item 5 was A3-HF2 (§24).*
+
 ### 22.12 Files
 
 - Core: `include/openu5/render_pacing.h`, `src/render_pacing.cpp` (new: the policy), `sources.cmake`; `include/openu5/perf_report.h`, `src/perf_report.cpp` (`TftTiming::full_screen`, the pacing counters, the report section, `format_pacing_line`); `include/openu5/ui_debug_menu.h`, `src/ui_debug_menu.cpp` (the two rows).
@@ -2915,3 +2924,220 @@ H-199 in `ALPHA2_HARDWARE_CHECKLIST.md`. Flash the A3-HF2.1 image with a serial 
 - The render / TFT performance work: §22.11's list (composition time, `fill_rect` chunking, the transcript redraw, the synth's steady cost) is the next batch.
 - The other §23.10.5 observations (the System Menu's SD inspection time, the internal-heap low-water mark, the 75 ms `INPUT_SERVICE` threshold) are unchanged.
 - The TypeScript suite's 97 pre-existing failures (§25.3) are recorded, not investigated.
+
+*A3-04F (§26) did the render / TFT items: composition's dominant cost, `fill_rect` chunking and the transcript redraw. The synth's steady cost remains an audio item.*
+
+## 26. A3-04F — render and TFT efficiency: measured, then the dominant costs removed
+
+The render / TFT batch §22.11 queued. The rule was to measure first, rank the costs by evidence, and then make the smallest changes that preserve every pixel. No UI redesign, no gameplay, audio, pacing, SD or save change. The A3-04E / A3-04E.1 pacing and idle-service guarantee, `PRESENTATION_DISPATCH` on change only, and H-197 / H-198 behaviour are all untouched.
+
+**Status: FOUR CHANGES, HOST-PROVEN PIXEL FOR PIXEL; HARDWARE VALIDATION PENDING (H-200).** The evidence comes from four sources, kept apart in every table below:
+
+| Kind | What it is | Where |
+|---|---|---|
+| **Hardware, measured (before only)** | the A3-04E.1 11-minute soak (§23.10), the last validated device capture; its render path is A3-HF2.1's apart from the per-frame `PRESENTATION_DISPATCH` line | `a3-04e1-hw-soak.log`, split by `native/core/tools/a3_04f_hw_baseline.py` → `native/core/a3-04f-hw-baseline.log` |
+| **Image, measured (before and after)** | the linked firmware's own loops × their trip counts for a 176 × 176 frame; a lower bound at one instruction per cycle | `a3_04f_image_check.py` → `a3-04f-image-check-hf2-1.log`, `a3-04f-image-check.log` |
+| **Host model (before and after)** | the real `AlphaRuntime` and `tdeck_board.cpp` over A3-04E's fake ST7789. Transaction, window, byte and pixel counts are **exact**. Transfer times are the **documented model** (26 µs per DMA / 24 µs per CPU transaction plus the bits at 40 MHz), not device timings. Row building is not modelled | `a3_04f_render_runtime` → `native/core/a3-04f-red.log` (baseline), `a3-04f-green.log` |
+| **Hardware, after** | **not measured**. Pending H-200 | — |
+
+### 26.1 Baseline (Step 1)
+
+- HEAD `414e958a` on `main`, clean. Latest tag `alpha3-hf2-1-cleanup` (`94993d3d`); earlier `alpha3-hf2-ambient-clock`, `alpha3-a3-04e1-idle-service`, `alpha3-a3-04e-render-pacing`.
+- Fresh host build `native/core/build-a3-04f-base`: **145 / 145, serial, 132.93 s** (`native/core/a3-04f-baseline-{configure,build,ctest}.log`). The only warning is the known w64devkit one.
+- Firmware at baseline: A3-HF2.1, `0xeea00` = 977,408 B, 71,168 B (7 %) free.
+- **Already proven, quoted from the A3-04E.1 soak** (default pacing, 3,195 gameplay frames): frame avg 61.9 ms, p95 94.0, max 186.1; **compose avg 38.5 ms** (max 43.3); **tiles max 37.4 ms**; TFT avg 23.3 ms, max 148.8; viewport frames 716 × 51.9 ms avg (71.2 max) without the 17 full-screen repaints (147.0 / 148.8 ms); other (animation) frames 2,462 × 14.1 ms; TFT split: row building 3.5 ms, SPI 19.8 ms per frame; 822,703 pixel transactions = 257.5 per frame; walking step median 87.4 ms; `idle0` gap max 102.9 ms, `forced=0`; `und=0 hw=0 miss=0`.
+
+### 26.2 The baseline, re-measured (Step 2)
+
+**P1 / P5 — frame, composition and TFT with and without music** (hardware, the soak's two music segments; the counters are cumulative, so a segment's average is recovered from two heartbeats):
+
+| Segment | Frames | Frame avg | Compose avg | TFT avg | Viewport-frame TFT | Animation-frame TFT | Row building | SPI | Step median | Audio | Idle / input |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Music 80 % | 2,266 | 59.3 | **38.5** | 20.7 | 55.2 | 12.9 | 2.9 | 17.8 | 87.3 ms | 3.21 ms per 8 ms block; und / hw / miss 0 | idle0 gap 102.9 ms, forced 0; `INPUT_SERVICE` median 135.9 ms |
+| Music 0 % | 929 | 68.2 | **38.5** | 29.6 | 52.6 | 17.7 | 5.0 | 24.7 | 87.4 ms | 0.34 ms per block | same; 139.5 ms |
+
+Composition is the same with and without music, and it is paid on every drawn frame. 77 % of frames are animation ticks. A step costs the same with and without music. The segments differ in scenery (animation-frame TFT), not in music. The CPU figures are cumulative: CPU0 34 %, CPU1 18–41 % (the synth).
+
+**P1 — what composition is** (image, A3-HF2.1). `tiles` is `render_snapshot` alone, and it is ~97 % of `compose`. Its loops:
+
+| Loop (A3-HF2.1, `-Og`) | Body | Trips per frame | Instructions per frame |
+|---|---|---|---|
+| viewport CRC, per bit | 8 (`srli, extui, neg, l32r, and, xor, addi.n, blti`) | 495,616 | 3.96 M |
+| … per byte (the rest of that loop) | 7 | 61,952 | 0.43 M |
+| … per pixel (the rest) | 10 | 30,976 | 0.31 M |
+| **viewport CRC, total** | | | **4.71 M ≥ 19.6 ms at 240 MHz**, plus 589 K taken branches |
+| clear the viewport | 4 | 30,976 | 0.12 M |
+| `expand_tile`, per pixel pair | 17 | 15,488 | 0.26 M (+0.02 M rows) |
+| per-tile scan, frames, bitmaps | 6–36 | 121 × unique tiles | ~0.1 M |
+
+The CRC is ~90 % of the rasterizer's instructions. The device's 37 ms `tiles` is consistent with it once branch penalties and PSRAM misses on the 62 KB viewport are added.
+
+**P2 / P3 / P4 — the host census.** New target `a3_04f_render_runtime`. The fake panel now logs every RAMWR window with its pixels and transactions, and counts pixel transactions, **thin** ones (< 130 B: shorter on the wire than their 26 µs fixed cost) and **tiny** ones (≤ 32 B, one 16 px row). It also enforces the bus's `max_transfer_sz`: the driver refuses a longer transaction (`esp_driver_spi/src/gpspi/spi_master.c:1110`). The Board counts its draw-primitive calls. These counters are inert: the A3-04E runtime's byte-stream hash is `13014867211709330466` with and without them. The fixture gained `patterned_test_tiles`, whose indexed test tiles are one colour each, so scrolling water changed nothing. Per frame, baseline:
+
+| Scenario | Txns | of them tiny | Windows | Pixels | Draws fill / text / metric-text | Modelled xfer | What is drawn |
+|---|---|---|---|---|---|---|---|
+| B2 stand, 3 animated cells | 45 | 30 | 3 | 480 | 0 / 0 / 0 | 1.35 ms | 3 cells × (5 commands + 16 rows of 32 B) |
+| B3 a step, transcript not full | 293 | 0 | 11 | 38,608 | 0 / 9 / 1 | 23.02 ms | viewport, party 6, status 3, one transcript row |
+| B4 a step, full transcript | 436 | 0 | 22 | 50,488 | 0 / 9 / 12 | 31.45 ms | + all 12 transcript rows |
+| B6b a Pass under 12 Passes | 436 | 0 | 22 | 50,488 | 0 / 9 / 12 | 31.45 ms | all 12 rows, **none of which changed** |
+| B7 one member's HP | 280 | 0 | 10 | 37,528 | 0 / 9 / 0 | 22.25 ms | the viewport + all 9 party / status rows |
+| B8 nothing changed | 280 | 0 | 10 | 37,528 | 0 / 9 / 0 | 22.25 ms | the same |
+| B10 Z closes | 1,444 | **558** | 51 | 93,513 | 22 / 9 / 19 | 74.76 ms | 1 px frame lines, one transaction per pixel row |
+| B12 leaving the Developer screen | 1,717 | **558** | 54 | 173,481 | 23 / 10 / 19 | 113.83 ms | the same lines + the full clear |
+| B17 stand on the coast (55 animated cells in view) | 1,002 | **727** | 55 | 11,632 | 0 / 0 / 0 | **30.50 ms** | every tick, every cell its own window |
+| B19 one animation tick, coast | 852 | 617 | 47 | 9,872 | | 25.92 ms | |
+
+P3 region by region: standing with nothing animated draws nothing. An animation tick draws only the animated cells. Every frame that is not an animation tick redraws all nine party / status rows, changed or not (B8). A step also redraws the 158-row viewport. B7/B8 redraw the whole viewport too, because the Board's viewport checksum is stale after the animation ticks (§26.8). Z and the Developer screen redraw the whole right panel, and leaving the Developer screen the whole screen.
+
+**P4 — the transcript.** Rows are cached by (sequence, colour, text). A scroll gives every visible row a new sequence number, so **all 12 visible rows are redrawn on every new line**, even where the same text lands on the row again (B6b: 12 drawn, 0 changed).
+
+**P5 — music-loaded.** On the host the render path does not read the audio state, and core 1 is not modelled, so the host cannot measure music contention. The hardware figures above are the measurement.
+
+### 26.3 The costs, ranked (Step 3)
+
+| # | Cost (measured) | Why | Fix | Expected (from the evidence) | Risk | Host proof |
+|---|---|---|---|---|---|---|
+| 1 | **viewport CRC: 4.71 M instructions, every drawn frame** (≈ 90 % of a 37 ms rasterizer) | a bit-at-a-time CRC-32 over 61,952 bytes at `-Og` | a 1 KiB table, a byte at a time, **bit-identical** | ≈ 4.15 M fewer instructions per frame (≥ 17 ms at 1 instr/cycle) | none if identical: the value gates the viewport redraw and is logged as `crc=` | C1 on 64 buffers + zlib's check value; the image check |
+| 2 | **animation ticks: one window + one 32 B transaction per cell row** (coast: 852 txns, 617 tiny, 25.9 ms modelled per tick; device `oth` 12.9–17.7 ms) | `draw_rgb565_strided` sends one row per transaction; each animated cell is its own window | rows packed up to 640 B; adjacent cells of a tile row one window | coast tick −90 % transactions, −76 % modelled | pixel order | P1, P2, G1 |
+| 3 | **party / status rows: 117 transactions (6.9 ms modelled) on every frame that is not an animation tick** | drawn unconditionally | a row is drawn when its text, colour or reverse video changed; every repaint of the right panel still forces them | none of the 9 rows on a no-change frame; 1 of 9 on a step (the clock) | invalidation | R1–R4, G1 |
+| 4 | **transcript: 12 rows (≈ 9.3 ms modelled) per scrolled line** | the sequence number in the row key | key on (colour, text), what the pixels are made of | depends on the text: 0 rows for repeated lines, 12 for a zig-zag walk | invalidation | T1–T5, G1 |
+| 5 | **thin lines: 558 tiny transactions per full repaint** | `fill_rect` chunked by the rectangle's width | 320 px chunks whatever the width (the window wraps) | 558 → 8 tiny transactions per full repaint | pixel order | P1, G1 |
+| 6 | stale viewport CRC after animation ticks: the next non-step redraw resends the viewport (163 txns, 15.4 ms modelled) | the animation path does not update the Board's CRC | **deferred** (§26.8) | | would remove a self-healing redraw | |
+
+### 26.4 The skinny transactions (Step 4)
+
+Every caller of a thin or tiny transaction, traced in the census:
+
+- **`fill_rect`** chunked a rectangle by `min(width, 320)` pixels, so a line 1–2 px wide sent one 2–4 byte transaction per row. That covers the viewport frame sides (2 × 180: 180 each, the "~180 per side"), the party / world frame sides (1 × 52, 1 × 32), and the selector's and shop's separators (1 × 238). A chunk is now always 320 px from the one 640 B buffer. The panel's window wraps, so the pixel stream is the same.
+- **`draw_rgb565_strided`**: an animated cell was 16 rows of 32 B. **`draw_text_box` / `draw_text_box_metrics`**: 8 rows of 270 B.
+- **Constraints.** The bus's `max_transfer_sz` is 640 B. The DMA source is the Board's own 640 B `transfer_row_` (internal RAM, DMA-capable). A larger buffer would have taken internal RAM (§26.7), so it was rejected. 640 B transactions were already on the device in every full-width fill chunk.
+- **The change.** A row loop builds whole rows back to back and sends them when the rectangle ends, when the next row would not fit, or at a pause row (`Board::row_batch_ends`). A pause therefore still falls after rows 16, 32, … have gone out, and a batch cannot run through one (P3). Adjacent animated cells in one tile row are one window over the same composed pixels. The sky strip and the 176 px viewport rows (352 B, one per transaction) are unchanged.
+
+### 26.5 The transcript (Step 5)
+
+- ST7789 hardware scrolling cannot move this region. In the landscape rotation (`MADCTL` MV) its vertical scroll runs along the panel's native axis, which is the screen's horizontal. Reading GRAM back over the shared SPI bus is not an option either. So a row whose content changes must be re-sent.
+- A row's pixels are a function of its text, its colour and the text metrics. A metrics change already clears the cache. The key is now (colour, text); the sequence number is no longer compared.
+- T1 (control): animation ticks and a no-change redraw draw no transcript row. T2 (control): one new line before the transcript is full draws one row. **T3: on a step, a scroll, a Pass under 12 Passes, a wrapped message and a same-text line in another colour, the rows drawn are exactly the rows whose text or colour changed.** Baseline B6b 12/0, B6c 12/5, B6d 12/1; after 0/0, 5/5, 1/1. A zig-zag walk still changes all 12 (12/12 both). T4: scroll and full-transcript pixels are covered by the golden (G1). T5 (control): closing Z and leaving the Developer screen still redraw all 19 geometry rows.
+
+### 26.6 Composition (Step 6)
+
+The only change is the CRC (§26.3 #1). It uses the IEEE table (`static_assert` on two entries). The table is namespace-scope `constexpr`, never a function-local static, so it takes no guard mutex on the firmware (§18.3). The image after the change: **the per-pixel loop is 18 instructions, 0.56 M per frame (−88 %), 31 K taken branches (was 589 K); C1 and C2 GREEN.** The rest of the rasterizer (~0.5 M instructions) is unchanged and deferred (§26.8).
+
+### 26.7 Retained panel rows, and internal RAM
+
+`Board::draw_panel_row` holds what each of the nine party / status rows last drew (text, colour, reverse video). It skips a row only in a frame that starts with `alpha_ui_cache_valid_` set. Every path that paints over the right panel clears that flag: the first game frame, leaving the Developer screen, a UI-size reflow, leaving the shop or the compact selector, and the front end. The bed / camp status refresh (`refresh_bed_status_panel`, CMDS 0x060a / 0x0674) draws unconditionally, as before, and teaches the cache what it drew (R3, R4).
+
+The first build put the cache (252 B) and the census counters (20 B) in internal `.data`, +272 B, because the Board is a statically initialised object. §23.10.5 left the internal heap's low-water mark (200 B) unexplained, so this batch should not spend internal RAM. The offset:
+- the transcript's per-frame scratch (1,976 B) is a local of `show_alpha`, on the main task's stack. That frame grows 368 → 2,352 B; the main task has 24 KiB and the soak's worst free was 17,224 B.
+- four Board members nothing read or wrote are deleted (112 B).
+
+**Net: internal `.data` −1,808 B against A3-HF2.1; `.bss` and IRAM unchanged.**
+
+### 26.8 Measured but deferred
+
+- **The stale viewport CRC after animation ticks** (#6 above; B7/B8 resend 27,808 px). On an animation tick the Board draws only the animated cells. A quake or world-fx tick shifts or paints the whole buffer, so the Board cannot know the rest of the viewport matches. Taking the tick's CRC would remove the redraw that heals that case.
+- **The rest of the rasterizer on animation ticks.** All 121 cells are re-expanded and the viewport cleared (~0.5 M instructions) where only the animated cells changed. That needs an incremental rasterizer with its own proof. Measure H-200 first.
+- **Text row building.** `glyph()` is called per pixel (device row building 2.9–5.0 ms per frame).
+- **The whole transcript ring is re-wrapped twice per frame** in `visible_lines` (96 blocks). Not measured on the device.
+- **Window setup** is 5 transactions per window (CASET, RASET, RAMWR). Now 14 windows per step.
+- **The firmware's `-Og`.** A per-file `-O2` for the renderer, like `music_synth.cpp`, is a larger surface. Not needed for the CRC.
+- **Rejected:** a buffer larger than 640 B (internal RAM, the viewport's 352 B rows would still need 2 per transaction); polling transactions (busy-wait on core 0, against the idle-service guarantee); fewer pauses or lower animation cadence (not needed, and a visible change).
+- Found in passing: `Board::draw_rgb565_scaled` has no caller.
+
+### 26.9 Music-loaded render behaviour (Step 7)
+
+On the device, the render path's cost was already music-independent (§26.2), and A3-04F only removes work from core 0. The one cross-core coupling, the shared ICache / DCache / MSPI (§19.8), is now lighter: the CRC reads the same 62 KB once but executes ~88 % fewer instructions, and the Board raises far fewer SPI interrupts. The audio path is untouched: `a3_04b_iram_check.py` and `a3_04a_hotpath_check.py` are GREEN with the same report as A3-HF2.1. Music-on behaviour after the change is **not measured**. H-200 runs with Music 80 %.
+
+### 26.10 Tests, RED / GREEN and mutations (Steps 8–9)
+
+- **`a3_04f_render_runtime` (16 checks)**, the real runtime and Board:
+  - B0: the census runs every scenario, with the panel's viewport equal to the composed one after every render.
+  - P1: every window's pixels in no more transactions than its whole rows need at 640 B. P2: a coast animation tick has no side-by-side windows and no tiny transaction. P3: a 16 × 64 window still pauses after rows 16 / 32 / 48 and arrives intact in 4 transactions.
+  - R1–R4: the retained party / status rows.
+  - T1–T3, T5: the transcript.
+  - C1: the CRC equals the bit-by-bit one on 64 buffers and zlib's value for "12345678".
+  - I1: the idle-service guarantee on a coast walk with input always queued and rows never feeding the idle loop (208.9 ms; 234.7 before; budget 200 ms plus one composition).
+  - G0 / **G1: the panel golden.** Over one untimed 2,766-call script (boot, the shore, 30 steps, Pass, status, Z, the Developer screen, a won fight, inland, the coast, 14 Passes), the whole 320 × 240 panel after every render call is hashed and compared with the sequence recorded from the baseline Board (`host_tests/a3_04f_panel_goldens.h`, 297 distinct states). The recording run is `native/core/a3-04f-census-baseline.log`; its G1 is RED only because the placeholder golden was compiled in.
+- **RED-first.** `native/core/tools/a3_04f_red_first.py` swaps in HEAD's `tdeck_board.{h,cpp}` and `native_renderer.cpp`, with only the inert counters re-applied, and runs the census (`native/core/a3-04f-red.log`). **8 / 16: P1, P2, P3, R1–R4, T3 RED.** B0, T1, T2, T5, C1, I1, G0 and G1 are GREEN, as controls must be. After: **16 / 16** (`a3-04f-green.log`). For the CRC's cost, `a3_04f_image_check.py` is **RED on the A3-HF2.1 image and GREEN on A3-04F's**.
+- **Changed expectations (deliberate, not weakened).** A run after the production change and before these edits (`native/core/a3-04f-a3-04e-runtime-probe.log`) has exactly these RED:
+  - `a3_04e_pacing_runtime` Y1: the legacy repaint sleeps 19 times, not 37, because the frame lines no longer chunk per row.
+  - M1: legacy repaint ≥ 180 ms, not ≥ 360 ms. The legacy probe still sleeps at the same cadence, but this image cannot reproduce A3-04D's 37 sleeps.
+  - W7: it pinned the literal `200.`. It now requires the report to show the gap the guard itself recorded (202.6 ms), at or over the budget and under §23.8's 250 ms line.
+  - `a3_04e_pacing` P8: its model of `fill_rect` follows the Board, 19 = 7 + 9 + 3.
+- **Mutations.** `native/core/tools/a3_04f_mutation_check.py`, 20 mutants against both real-Board targets:
+  - The CRC: K1 byte order, K2 no final inversion, K3 the low byte only.
+  - The fills: F1 per-row chunks, F2 a buffer filled only rectangle-wide.
+  - The packing: R1 none, R2 rows built over each other, R3 a batch runs through a pause row, R4 a batch outgrows 640 B.
+  - The coalescing: E1 none, E2 a one-cell window.
+  - The rows: B1 always forced, B2 never forced, B3 reverse video not keyed, B5 forced draws do not teach the cache.
+  - The transcript: T1 the sequence back in the key, T2 no invalidation, T3 colour not keyed.
+  - The transitions: M1 and M2 (Developer exit, selector close keep the retained panel).
+  - First pass: 19 killed, M1 survived (`native/core/a3-04f-mutation.log`). That M1 removed one of the Developer exit's two invalidations. The other, forgetting the UI size, forces the panel reflow and invalidates again, so the mutant was equivalent. Redefined to remove both, **M1 is killed** by T5, R3, R4, G1 and A3-04E's Y1/M1 (`a3-04f-mutation-rerun.log`). **20 / 20 killed.**
+  - A colour-only mutant of the party / status key is not listed because it is equivalent by construction: each row's colour is a function of its text (the `>` / `*` marker, the fixed status colours).
+
+### 26.11 Regression (Step 10)
+
+Fresh build `native/core/build-a3-04f`: **146 / 146, serial, 126.49 s** (`native/core/a3-04f-{configure,build,ctest}.log`). That is A3-HF2.1's 145 plus `a3_04f_render_runtime`, and the only warning is the known w64devkit one. Every A3-04E / A3-04E.1 pacing and watchdog check passes, as do the A3-HF2 ambient and A3-HF2.1 dispatch checks and every earlier audio, timing, gameplay and persistence test. No TypeScript file changed.
+
+### 26.12 Before / after (Step 11)
+
+Host model, per frame (`a3-04f-red.log` → `a3-04f-green.log`). Transactions and pixels are exact; transfer times are the model's:
+
+| Scenario | Txns | Tiny | Windows | Modelled xfer |
+|---|---|---|---|---|
+| Stand, 3 animated cells (B2) | 45 → 12 | 30 → 0 | 3 → 2 | 1.35 → 0.50 ms |
+| One step (B3) | 293 → 181 | 0 → 0 | 11 → 3 | 23.02 → 16.68 ms |
+| Step, full transcript, zig-zag (B4) | 436 → 280 | 0 | 22 → 14 | 31.45 → 23.97 ms |
+| Transcript line, identical text (B6b) | 436 → 172 | 0 | 22 → 2 | 31.45 → 16.02 ms |
+| Wrapped 3-row message (B6c) | 436 → 208 | 0 | 22 → 6 | 31.45 → 18.67 ms |
+| Status change only (B7) | 280 → 172 | 0 | 10 → 2 | 22.25 → 16.02 ms |
+| Nothing changed (B8) | 280 → 163 | 0 | 10 → 1 | 22.25 → 15.36 ms (the deferred viewport) |
+| Z open / close (B9 / B10) | 1,204 / 1,444 → 503 / 654 | 476 / 558 → 0 / 8 | 28 / 51 | 65.94 / 74.76 → 47.72 / 54.22 ms |
+| Leaving the Developer screen (B12) | 1,717 → 927 | 558 → 8 | 54 | 113.83 → 93.29 ms |
+| Combat entry (B13) / the fight (B14) | 75 / 272 → 27 / 144 | 46 / 14 → 0 / 0 | | 2.92 / 19.16 → 1.54 / 13.18 ms |
+| Leaving the arena (B15) | 436 → 235 | 0 | 22 → 9 | 31.45 → 20.66 ms |
+| Coast, animation tick (B19) | **852 → 87** | **617 → 0** | 47 → 10 | **25.92 → 6.17 ms** |
+| Coast, a step (B18) | 436 → 280 | 0 | 22 → 14 | 31.45 → 23.97 ms |
+
+The 8 tiny transactions left in a repaint are the 6–7 px frame caps: one transaction each is their minimum. Pixels per scenario are unchanged, and G1 proves the panel is.
+
+| Device metric (hardware) | A3-04E.1 (measured) | A3-04F |
+|---|---|---|
+| compose avg / tiles max | 38.5 / 37.4 ms | **pending H-200**; the image has ≈ 4.15 M fewer instructions per frame |
+| frame avg | 59.3 (music 80 %) / 68.2 ms (0 %) | pending |
+| walking step median | 87.3 / 87.4 ms | pending |
+| viewport-frame TFT avg | 55.2 / 52.6 ms | pending |
+| animation-frame TFT avg | 12.9 / 17.7 ms | pending |
+| full-screen TFT max | 148.8 ms | pending |
+| idle0 gap max / forced | 102.9 ms / 0 | pending (host model I1: 234.7 → 208.9 ms worst case) |
+| und / hw / miss | 0 / 0 / 0 | pending |
+
+### 26.13 Firmware (Step 14)
+
+Pre-commit build `native/targets/tdeck/build-a3-04f` (`a3-04f-firmware-configure.log`; `a3-04f-firmware-build.log` is the incremental rebuild after the internal-RAM offset). ESP-IDF 6.1, `--no-ccache`, `ninja -j 4`, first attempt clean, zero project warnings.
+
+- **`0xeebe0` = 977,888 B, +480 B** against A3-HF2.1; **`0x11420` = 70,688 B (7 %) free**.
+- Sections against A3-HF2.1 (`esp_idf_size` on both `.map` files: `a3-04f-size-hf2-1-image.log`, `a3-04f-size-image.log`): flash `.text` +1,188 B; `.rodata` +1,088 B (the CRC table's 1,024); **internal `.data` −1,808 B**; `.bss` and IRAM (`.text` 60,647 + 15,356) unchanged.
+- Image guards: `a3_04f_image_check.py` GREEN (`a3-04f-image-check.log`), `a3_04b_iram_check.py` GREEN, `a3_04a_hotpath_check.py` GREEN.
+- Version `3.0.0-alpha3-dev-a3-04f-debug`. Not flashed. The post-commit image (a fresh directory, which embeds the commit) is the one tag `alpha3-a3-04f-render-efficiency` names, with its path, size, SHA-256 and `Git`.
+
+### 26.14 Hardware validation (the user's; not done here)
+
+**H-200** in `ALPHA2_HARDWARE_CHECKLIST.md`: identity, the coast's animation, a 60 s walk, 15 Passes, Z and the Developer screen three times each, a fight if one comes, and the live report. PASS needs, besides correct pixels everywhere: compose avg ≤ 26 ms (38.5 before), full-screen TFT max below 148.8 ms, `und=0 hw=0 miss=0`, `idle0 gap` < 250 ms and no `task_wdt`.
+
+### 26.15 Outcome
+
+| | Items |
+|---|---|
+| **Fixed** (host-proven; device pending H-200) | the bit-by-bit viewport CRC; per-row and per-cell TFT transactions; the per-row chunking of thin fills; the unconditional party / status redraw; the transcript's sequence-keyed full redraw |
+| **Improved** (host model) | a step −36 % transactions (−24 % modelled xfer); a coast animation tick −90 % (−76 %); the Developer-exit repaint −46 % (−18 %); a combat frame −47 % (−31 %); internal RAM −1,808 B |
+| **Measured but deferred** | §26.8: the stale viewport CRC after animation ticks, the full re-rasterization on animation ticks, text row building, the transcript re-wrap, the window setup, `-Og` |
+| **Not reproduced** | nothing. Every suspected item was found, with the numbers above |
+
+**§22.11 is not finished**: the deferred items stand, and the synth's steady cost on core 1 is an audio item. Broad render performance is not claimed.
+
+### 26.16 Files
+
+- Device: `main/native_renderer.cpp` (the table CRC); `main/tdeck_board.{h,cpp}` (`row_batch_ends` and the three row loops, 320 px fill chunks, the coalesced animated runs, `draw_panel_row` and its cache, the transcript key, the scratch on the stack, the dead members removed, the census counters); `main/alpha_runtime.h` (the fixture's `patterned_test_tiles`); `CMakeLists.txt` (`PROJECT_VER`).
+- Tests / tools: `host_tests/a3_04f_render_runtime_test.cpp`, `host_tests/a3_04f_panel_goldens.h` (new); `host_tests/board_shims/fake_tdeck_bus.{h,cpp}` (window log, thin / tiny, `max_transfer_sz`); `host_tests/alpha_runtime_host_fixture.cpp`; `host_tests/a3_04e_pacing_runtime_test.cpp` (Y1, M1, W7); `native/core/tests/a3_04e_pacing_test.cpp` (P8); `native/core/CMakeLists.txt`; `a3_04f_image_check.py`, `native/core/tools/a3_04f_{hw_baseline,red_first,mutation_check}.py` (new).
+- Docs: this section, the status line and §22.11's note; `ALPHA2_HARDWARE_CHECKLIST.md` (H-200); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`.

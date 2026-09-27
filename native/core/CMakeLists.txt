@@ -1753,6 +1753,46 @@ if(BUILD_TESTING)
   endif()
   add_test(NAME a3_hf2_1_dispatch_log COMMAND a3_hf2_1_dispatch_log
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+  # Alpha 3 A3-04F -- render / TFT efficiency (ALPHA3_AUDIO.md section 26): the
+  # REAL AlphaRuntime on the REAL tdeck_board.cpp over A3-04E's fake ST7789.
+  # The census (transactions, thin transfers, windows by region per scenario)
+  # and the panel golden (a3_04f_panel_goldens.h, recorded from the baseline).
+  add_executable(a3_04f_render_runtime
+    ../targets/tdeck/host_tests/a3_04f_render_runtime_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/board_shims/fake_tdeck_bus.cpp
+    ../targets/tdeck/main/tdeck_board.cpp
+    ../targets/tdeck/main/idle_service.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_audio.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(a3_04f_render_runtime PRIVATE openu5_core)
+  target_include_directories(a3_04f_render_runtime PRIVATE
+    ../targets/tdeck/host_tests/board_shims
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/host_tests
+    ../targets/tdeck/main)
+  target_compile_features(a3_04f_render_runtime PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(a3_04f_render_runtime PRIVATE /Gy)
+    target_link_options(a3_04f_render_runtime PRIVATE /OPT:REF)
+  else()
+    target_compile_options(a3_04f_render_runtime PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(a3_04f_render_runtime PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME a3_04f_render_runtime COMMAND a3_04f_render_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
   # Batch 14 / R-22 -- (Z)-stats navigation. Same seam and same stub/shim set
   # as alpha_runtime_integration_regression above: it links the REAL,
   # unmodified alpha_runtime.cpp so the modal is reached only by feeding raw

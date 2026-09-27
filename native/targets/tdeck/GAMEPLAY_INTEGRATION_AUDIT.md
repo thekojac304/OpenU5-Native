@@ -8,7 +8,21 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 A3-HF2.1) — cleanup: TypeScript clock parity, `PRESENTATION_DISPATCH` on change only; Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 A3-04F) — render / TFT efficiency; Alpha 2 remains the released build; read this first
+>
+> **A3-04F is an Alpha 3 performance batch, not a release.** It changes how the Board sends pixels and when it redraws panel rows, and how the viewport checksum is computed. Nothing the game does, draws, plays or saves changes. The host proves the panel identical after every render call of a 2,766-call script.
+> - Composition (38.5 ms per frame on the A3-04E.1 hardware soak, music or not) was ~90 % a bit-by-bit CRC-32 (4.71 M instructions per frame in the image). It is now table-driven and bit-identical (0.56 M).
+> - SPI traffic: whole rows share a transaction (≤ 640 B), frame lines are one or two transactions instead of one per row, and adjacent animated cells are one window. Unchanged party / status / transcript rows are not redrawn. Host model: a coast animation tick 852 → 87 transactions (25.9 → 6.2 ms), a step 436 → 280 (31.5 → 24.0 ms). Internal RAM −1,808 B.
+> - Measured but deferred: `ALPHA3_AUDIO.md` §26.8. **Device timings pending H-200.**
+>
+> | | |
+> |---|---|
+> | Host suite | **146 / 146**, serial, 126.49 s. New: `a3_04f_render_runtime` 16 (RED 8 before). Deliberately changed: A3-04E's Y1 / M1 / W7 / P8 (`ALPHA3_AUDIO.md` §26.10). **20 / 20 mutations killed.** |
+> | Firmware | `3.0.0-alpha3-dev-a3-04f-debug`. Pre-commit build 977,888 B (`0xeebe0`), +480 B, 70,688 B (7 %) free, zero warnings; audio image guards GREEN. Image path, SHA-256 and `Git`: tag `alpha3-a3-04f-render-efficiency`. **Not flashed.** |
+> | SD | **Unchanged.** |
+> | Next | H-200 on the device. §26.8's deferred items; the synth's steady cost is an audio item. |
+>
+> ### CURRENT STATE (Alpha 3 A3-HF2.1) — cleanup: TypeScript clock parity, `PRESENTATION_DISPATCH` on change only — **superseded as the current state by A3-04F above.**
 >
 > **A3-HF2.1 is a small Alpha 3 cleanup, not a release.** A3-HF1 and A3-HF2 are hardware-validated: **H-197 PASS, H-198 PASS** (2026-09-27, physical T-Deck).
 > - The TypeScript skin (`game/src/skin/coreview.ts`) re-armed the grandfather clock's strike on every turn, the model A3-HF2 refuted from the bytes. It now arms only when the game hour changes (0x514a), with native's year / month / day / hour key, and a load resets it. See §14 "Alpha 3 A3-HF2.1" and `ALPHA3_AUDIO.md` §25.
@@ -7934,3 +7948,36 @@ The TypeScript reference is secondary to the binary; here it was brought into li
 
 - §22.11's render / TFT performance work is next.
 - The TypeScript suite's 97 pre-existing failures are recorded, not investigated.
+
+## Alpha 3 A3-04F — render / TFT efficiency
+
+§22.11's render list, measured first. The full write-up is [`ALPHA3_AUDIO.md`](ALPHA3_AUDIO.md) §26; this section records the classification on its own axis. No gameplay, RNG, save, audio, pacing, SD or UI-layout change. The watchdog / idle-service guarantee (A3-04E.1) and the transition-only `PRESENTATION_DISPATCH` (A3-HF2.1) are untouched.
+
+### 1. Items and classification
+
+| # | Item (measured) | Class | Change |
+|---|---|---|---|
+| 1 | The viewport CRC-32, bit by bit: 4.71 M instructions per 176 × 176 frame in the linked image, ~90 % of composition (38.5 ms per frame on hardware) | **performance defect** (device-only; no behaviour) | table-driven, bit-identical (`native_renderer.cpp`) |
+| 2 | One SPI transaction per pixel row. An animated cell was 16 transactions of 32 B plus its own window; a text row 270 B | **performance defect** | whole rows packed up to 640 B (`Board::row_batch_ends`); adjacent animated cells are one window |
+| 3 | `fill_rect` chunked by width: a 1–2 px frame line was one 2–4 B transaction per row (558 per full repaint) | **performance defect** | 320 px chunks whatever the width |
+| 4 | All nine party / status rows redrawn on every non-animation frame (117 transactions) | **performance defect** | drawn when text, colour or reverse video changed; forced whenever the right panel was painted over |
+| 5 | Transcript rows keyed on the line's sequence number: every scroll redrew all 12 visible rows, changed or not | **performance defect** | keyed on (colour, text), what the row's pixels are made of |
+| 6 | The stale viewport CRC after animation ticks makes the next non-step redraw resend the viewport | **measured, deferred** | none (§26.8) |
+
+None is a divergence from the 1988 original: the original's picture is what the panel shows, and it is unchanged. No parity fixture changed.
+
+### 2. Evidence
+
+- **Hardware (before):** the A3-04E.1 soak split by music (`native/core/a3-04f-hw-baseline.log`). Compose 38.5 ms with music 80 % and at 0 %, step median 87.3 / 87.4 ms, `und=0 hw=0 miss=0`, `idle0` gap 102.9 ms, `forced=0`. **After: not measured; H-200.**
+- **Image (before / after):** `a3_04f_image_check.py` is RED on the A3-HF2.1 image (the 8-instruction per-bit loop) and GREEN on A3-04F's (18 instructions per pixel).
+- **Host model:** new target `a3_04f_render_runtime` (16 checks, the real runtime and Board over the fake ST7789). RED 8 / 16 against HEAD's Board and rasterizer (P1, P2, P3, R1–R4, T3; `native/core/a3-04f-red.log`), GREEN 16 / 16. G1: the whole panel after every one of 2,766 render calls equals the sequence recorded from the baseline Board. Transfer times are the documented model, not device timings.
+- **Mutations:** `native/core/tools/a3_04f_mutation_check.py`, **20 / 20 killed**. The first pass's surviving M1 was equivalent (a redundant second invalidation); the redefined M1 is killed.
+- **Suite / firmware:** **146 / 146**, serial, 126.49 s. Pre-commit firmware 977,888 B (+480 B), 70,688 B free; internal `.data` −1,808 B; IRAM and `.bss` unchanged; audio image guards GREEN. Image path, SHA-256 and `Git`: tag `alpha3-a3-04f-render-efficiency`. **Not flashed.** SD unchanged.
+
+### 3. Rows
+
+- No new D-row (no divergence). **H-200** (render correctness and speed) in `ALPHA2_HARDWARE_CHECKLIST.md`.
+
+### 4. Not done in this batch
+
+- `ALPHA3_AUDIO.md` §26.8: the stale viewport CRC after animation ticks, the full re-rasterization on animation ticks, text row building, the transcript's per-frame re-wrap, window setup, `-Og`. The synth's steady cost (audio).

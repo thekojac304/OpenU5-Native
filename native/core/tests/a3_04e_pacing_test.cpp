@@ -84,9 +84,10 @@ int row_loop_pauses(int rows) {
         if (tft_row_yield_due(row)) ++n;
     return n;
 }
-/** Pauses in fill_rect(w x h): chunks of min(w, 320) pixels. */
+/** Pauses in fill_rect(w x h): chunks of 320 pixels (A3-04F; min(w, 320) up to A3-HF2.1). */
 int fill_pauses(int w, int h) {
-    const int chunk = w < 320 ? w : 320;
+    (void)w;
+    const int chunk = 320;
     int n = 0, chunks = 0;
     for (int remaining = w * h; remaining > 0; remaining -= chunk)
         if (tft_chunk_yield_due(++chunks)) ++n;
@@ -173,10 +174,10 @@ int main(int argc, char **argv) {
         const int full = fill_pauses(320, 240) + row_loop_pauses(158) + fill_pauses(138, 240) + 2 * fill_pauses(180, 2) +
                          2 * fill_pauses(2, 180) + 2 * fill_pauses(137, 1) + 2 * fill_pauses(1, 52) +
                          2 * fill_pauses(137, 1) + 2 * fill_pauses(1, 32) + fill_pauses(137, 1);
-        check(step == 9 && full == 37 && fill_pauses(2, 180) == 5 && fill_pauses(320, 240) == 7,
+        check(step == 9 && full == 19 && fill_pauses(2, 180) == 0 && fill_pauses(320, 240) == 7,
               "P8 derived from the geometry: a walking step's viewport (158 rows) pauses 9 times; the menu-exit repaint "
-              "37 (clear 7 + viewport 9 + panel reflow 7 + a 2 px x 180 frame side 5 each, one chunk per row) -- at "
-              "one 10 ms tick each, ~90 ms and ~370 ms of sleep");
+              "19 (clear 7 + viewport 9 + panel reflow 3; since A3-04F a 2 px x 180 frame side is two 320 px chunks, "
+              "not 180 rows, and never pauses -- A3-04D: 37) -- at one 10 ms tick each, ~90 ms and ~190 ms of sleep");
     }
 
     // ======================================================================

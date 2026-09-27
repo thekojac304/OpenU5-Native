@@ -1,0 +1,74 @@
+legacy full repaint pauses:
+       7 in window x 0-319 y 0-239 (320x240)
+       9 in window x 4-179 y 13-170 (176x158)
+       3 in window x 182-319 y 0-239 (138x240)
+RED Y1 legacy: the repaint on leaving the Developer screen sleeps to the next tick 19 times (full clear 7, viewport 9, right-panel reflow 7, the two 180-row viewport-frame sides 5+5 -- one transaction per 2 px row -- and the party and world frame sides 1+1+1+1)
+GREEN Y2 legacy: a walking step sleeps 9 times: the viewport's 158 rows, one sleep after rows 16, 32 .. 144
+GREEN Y3 A3-04E: no tick sleep in either; a yield at exactly the same 19 + 9 points, and the same 927 + 190 SPI transactions
+modelled window, legacy : pace=[tft TICK  loop SPIN] win=6.7s | frame n=13 avg=101.0 max=212.1 | tft=101.0/212.1 in=13:101.0/212.1 | full=1:212.1/212.1 vp=12:91.7/95.8 | yld n=127 /vp=9.7 vpms=76.5 tot=994.6 max=8.45 late=0 | loop n=0 /s=0 max=0.0 wait=0:0.0/0.0 in=0 asleep=0.0 | idle0 gap=200.0 forced=13:13/69.9 miss=0
+modelled window, A3-04E : pace=[tft yield  loop idle-wait] win=5.5s | frame n=13 avg=24.5 max=93.3 | tft=24.5/93.3 in=13:24.5/93.3 | full=1:93.3/93.3 vp=12:18.7/20.0 | yld n=127 /vp=9.7 vpms=0.0 tot=0.1 max=0.00 late=0 | loop n=0 /s=0 max=0.0 wait=0:0.0/0.0 in=0 asleep=0.0 | idle0 gap=0.0 forced=0:0/0.0 miss=0
+RED M1 legacy: the window's TFT maximum IS its one full-screen repaint, 212.1 ms modelled (37 sleeps span >= 36 ticks; device A3-04D: 404-408 ms)
+GREEN M2 legacy: a walking viewport frame costs 91.7 ms modelled (9 sleeps span >= 8 ticks; device viewport avg ~122 ms incl. the repaint and row building)
+GREEN M3 A3-04E: the repaint 93.3 ms and a step 18.7 ms modelled (transfers only; the device adds row building), 0.1 ms of pauses in the whole window
+GREEN M4 ... input-to-screen max 93.3 ms (legacy 212.1 ms), frame max 93.3 ms (legacy 212.1 ms)
+GREEN M5 A3E_PACE names the pacing and carries the repaint / viewport split and the pauses
+GREEN V1 legacy and A3-04E pacing put byte-identical streams on the panel (every transaction, in order: hash 10008294749595023069 / 10008294749595023069), the same final panel; only the pause differs (215 tick sleeps vs 215 yields)
+GREEN V2 after every one of 1099 gameplay renders the panel's viewport is the composed viewport, row for row: no incomplete frame, no corrupted or missing row, no malformed transaction
+GREEN T1 the game after the same script is the same (0,80,80,13:59,80,rng32343)
+GREEN V3 ... also on the timed runs (405 renders)
+GREEN L1 idle exploration: the loop blocks on the input queue for one tick after a pass
+GREEN L2 a handled input whose frame is not drawn yet: no sleep
+GREEN L3 ... drawn: the idle wait again
+GREEN L4 "Probe: legacy loop spin: ON": idle, yet 0 -- the pre-A3-04E reschedule
+GREEN L5 while the audio benchmark runs: no sleep
+GREEN L6 setup: a raw Camp reaches the paced apparition
+GREEN L6 a paced Camp scene (resume_at = now + dwell): the loop never sleeps while the pacer is active or mounted, so each dwell is A3-04D's to the microsecond
+GREEN W1 A3-04E as shipped (yields, no guard) reproduces the hardware's task watchdog in the model: core 0's idle loop goes 6100.4 ms without a pass while the game thread walks (the watchdog's limit is 5 s)
+GREEN W2 with the guard the longest idle gap is 200.9 ms (budget 200.0 ms); it slept 30 ticks in 30 enforcements = 291.5 ms of 6300.0 ms (60 steps), never in vain
+RED W7 the live report shows the idle gap, and the read starts a new idle-service window with the others
+GREEN W3 ... and the 60 steps end where they do without the guard's sleeps (0,80,80,16:55,80,rng62025): the game is untouched
+GREEN W4 the menu-exit repaint under the worst case costs 0 guard tick sleep(s) at most one per 200 ms -- not the 37 of the legacy pause
+GREEN W5 the guard costs nothing wherever the idle loop already runs: rows that let it (A3-04E's model), the legacy tick-sleep pacing, and the loop's own idle wait when nothing is queued (enforcements 0/0/0; the longest gap standing is the first full frame, 98.3 ms)
+GREEN W6 A3E_PACE carries the heartbeat number and the idle-service window:
+    hb=7 pace=[tft yield  loop idle-wait] win=8.1s | frame n=31 avg=21.9 max=93.3 | tft=21.9/93.3 in=30:19.5/20.9 | full=1:93.3/93.3 vp=30:19.5/20.9 | yld n=289 /vp=9.3 vpms=0.0 tot=0.2 max=0.00 late=0 | loop n=0 /s=0 max=0.0 wait=0:0.0/0.0 in=0 asleep=0.0 | idle0 gap=82.0 forced=0:0/0.0 miss=0
+GREEN H1 every heartbeat logs A3E_PACE (hb=1, hb=2) directly after A3C_PERF, as its last perf line -- the code emits it; on the device the USB-Serial/JTAG console drops the tail of a burst once the host stops reading for 50 ms (section 23)
+GREEN P1 a fresh runtime (a reboot) paces as A3-04E: yields, idle wait; the Board draws with it
+GREEN P2 seven rows up, Enter: "Probe: legacy TFT pacing" ON -- the Board sleeps to the tick again from the next draw on; the loop is untouched
+GREEN P3 six rows up, Enter: "Probe: legacy loop spin" ON
+GREEN P4 the live report names the pacing in use and its cost:
+AUDIO/RENDER PERF  live window
+-- Music: no audio played in this window --
+-- Render: 1 gameplay frames in 7.3s --
+frame avg 93.3 p95 93.3 p99 93.3
+frame max 93.3 ms  late (>55 ms) 1
+compose avg 0.0 max 0.0  tiles max 0.0
+tft avg 93.3 max 93.3 ms
+cadence avg 0.0 max 0.0 ms
+input 0 shown avg 0.0 max 0.0 ms
+key handling max 0.0 ms  game busy 1%
+-- Contention map (A3-04C) --
+music n/a  sfx 80%
+logic avg 0.0 max 0.0  loop max 0.0 ms
+viewport 1 frm tft avg 93.3 max 93.3
+other 0 frm tft avg 0.0 max 0.0
+tft/frame fill 0.0 xfer 93.2 yield 0.0
+yield 19 max 0.0 ms late 0 (tick 10)
+xfer max 0.15 ms slow 0 (0 w/audio)
+slow in sd-log burst 0 max 0.0 ms
+rows 657  audio running at 0%
+row fill us: audio idle 0.0 busy 0.0
+row xfer us: audio idle 131.6 busy 0.0
+-- Pacing (A3-04E) --
+tft TICK  loop SPIN
+full-screen 1 frm tft avg 93.3 max 93.3
+viewport w/o full 0 frm avg 0.0 max 0.0
+pauses/vp frm 19.0 = 0.0 ms  all 0.0 ms
+loop 0/s  waits 0 avg 0.0 max 0.0 ms
+loop asleep 0.0 of 7.3 s  input wakes 0
+idle0 gap max 0.0 ms forced 0/0.0 ms miss 0
+OPL2 49716 Hz -> 16000 Hz out, ring 8x128
+
+GREEN P5 Enter again on each: both back to A3-04E
+GREEN P6 the older rows keep their places counted from the end: the synth bypass is four up, the SD log five up
+GREEN P7 nothing is saved: a new runtime starts at A3-04E whatever the last one did
+A3-04E pacing runtime: 31/34 checks

@@ -70,18 +70,34 @@ void animated_bitmap(const PresentationTileCache &cache,uint16_t tile,uint32_t t
     }
 }
 
+// Alpha 3 A3-04F (ALPHA3_AUDIO.md section 26): the same reflected CRC-32
+// (polynomial 0xedb88320), a byte at a time from a 1 KiB table instead of a
+// bit at a time. The bit loop ran 8 instructions for each of a frame's
+// 495,616 bits -- about 4.7 M instructions per 176x176 frame, most of the
+// ~37 ms rasterizer the device measured, on every frame including animation
+// ticks. The value is bit-identical: the Board's viewport change detector and
+// every logged crc= are unchanged. Constant-initialized at namespace scope, so
+// no function-local static (a guard mutex on the firmware).
+constexpr std::array<uint32_t, 256> make_crc32_table()
+{
+    std::array<uint32_t, 256> table{};
+    for (uint32_t i = 0; i < 256; ++i) {
+        uint32_t crc = i;
+        for (int bit = 0; bit < 8; ++bit) crc = (crc >> 1) ^ (0xedb88320U & (0U - (crc & 1U)));
+        table[i] = crc;
+    }
+    return table;
+}
+constexpr std::array<uint32_t, 256> kCrc32Table = make_crc32_table();
+static_assert(kCrc32Table[1] == 0x77073096U && kCrc32Table[255] == 0x2d02ef8dU, "the IEEE CRC-32 table");
+
 uint32_t crc32_u16le(const uint16_t *pixels, size_t count)
 {
     uint32_t crc = 0xffffffffU;
     for (size_t i = 0; i < count; ++i) {
-        const uint8_t bytes[] = {static_cast<uint8_t>(pixels[i]),
-                                 static_cast<uint8_t>(pixels[i] >> 8)};
-        for (uint8_t value : bytes) {
-            crc ^= value;
-            for (int bit = 0; bit < 8; ++bit) {
-                crc = (crc >> 1) ^ (0xedb88320U & (0U - (crc & 1U)));
-            }
-        }
+        const uint32_t pixel = pixels[i]; // little-endian: the low byte first
+        crc = kCrc32Table[(crc ^ pixel) & 0xffU] ^ (crc >> 8);
+        crc = kCrc32Table[(crc ^ (pixel >> 8)) & 0xffU] ^ (crc >> 8);
     }
     return crc ^ 0xffffffffU;
 }

@@ -1,0 +1,92 @@
+#pragma once
+// A3-04F (ALPHA3_AUDIO.md section 26): the panel after every render call of
+// a3_04f_render_runtime's golden script (consecutive repeats folded), FNV-1a
+// over all 320x240 pixels. Recorded from the A3-04F BASELINE Board with
+// `a3_04f_render_runtime <pack> --record <this file>`; never regenerate it from
+// an optimised Board -- that would compare the change with itself.
+#include <cstddef>
+#include <cstdint>
+namespace a3_04f_goldens {
+constexpr const char *kSource = "A3-04F baseline (HEAD 414e958a + census counters)";
+constexpr size_t kRenders = 2766;
+constexpr size_t kPhaseCount = 8;
+constexpr size_t kPhaseStart[8] = {1, 21, 132, 145, 165, 206, 228, 257};
+constexpr size_t kCount = 297;
+constexpr uint64_t kPanel[297] = {
+    0x6e3fd05db6f9d470ull, 0x02f02331259ccd42ull, 0x317c2ba974a0d0eeull, 0x5d7de856a310cce0ull,
+    0xe5c0bc8a724a1b16ull, 0x527921703374b5d2ull, 0x8d14886d112ad5c4ull, 0x649316a34a16e1c2ull,
+    0xb8ed219637e434b8ull, 0x6f28c2748afc39d2ull, 0x4dad804b7805b114ull, 0x62768276a44fa16eull,
+    0x03678d322b6796ceull, 0xe8b34092e04e3514ull, 0x80d56e047b6e06b4ull, 0x7ddf872d45d28aceull,
+    0x17569dd30b416dd4ull, 0x02f02331259ccd42ull, 0x317c2ba974a0d0eeull, 0x5d7de856a310cce0ull,
+    0xe5c0bc8a724a1b16ull, 0xb4a7ff50e4a7f90cull, 0x18fadcbbb111d596ull, 0x107990fd7ac85694ull,
+    0x5fb0f76e2b760692ull, 0xdff97452c9f70228ull, 0x12aecfaf24c2135aull, 0xd8321103b6ce6faaull,
+    0x8f6dd7147a2e8f30ull, 0xd54ac763ec30caccull, 0x032cc04b31903b1aull, 0xdc130f80393f3298ull,
+    0xa39705f715e32f28ull, 0x70bb9aeeb4e36cbeull, 0x08e46ccd1c60063aull, 0xc35abe374f72ca4cull,
+    0xb7a789deb4e0fdfeull, 0xffbc6c8cfeee53a8ull, 0x90ba9a2188a4da32ull, 0x853f7dacb4081738ull,
+    0x09570d44b589654eull, 0x9e5fa1ab9a308a06ull, 0x7508d513f2278700ull, 0x221bbaf2034a7ce8ull,
+    0xe176f89d44fc091cull, 0x733fd91c52368306ull, 0x2228e23f8297247cull, 0xdbd63cd12333570eull,
+    0x8ab10d181c5024acull, 0x3860a5c331cb9292ull, 0x2d8dfac65616161aull, 0xaf3b8d6db3bc8c14ull,
+    0x90468787cfbc4a2cull, 0x7c8ccaf4955c220aull, 0x5a9183efe7fc5570ull, 0xd6514f6275500acaull,
+    0xea47404333595b90ull, 0x508e962f80065966ull, 0xb1ec65e9ccaa60aaull, 0xa782c32c5709eee0ull,
+    0x1410dd4a580fa96cull, 0xa6cc062289b04246ull, 0xc24d81788c390e6aull, 0x9ab2b9d1d9662000ull,
+    0x0d96e93e8d592d3aull, 0x80958bc0b391d40cull, 0xaf87f42d5efdf962ull, 0x28afc8ec8dc84770ull,
+    0x79dc943e8674d2c8ull, 0x50de02a0c16a1b6aull, 0x00d5c8c6cb316782ull, 0x8007f2e9ceac174eull,
+    0xc7eaca4c6895af58ull, 0x05570b90f57e7d2eull, 0x047f83831ef4af18ull, 0xb69b12c735f325b6ull,
+    0x4943a3f71bb2b6f4ull, 0xa95e6ef28626bb2cull, 0x072d158cf4182c06ull, 0xe6268e610807d8e6ull,
+    0xb3d4d5fdf01f77daull, 0xc1d312fa93ddc92cull, 0xf011868528efad0aull, 0x1e736638d56caf08ull,
+    0xfb640d602eb29abcull, 0x14a38e4dd7fdcd22ull, 0x6943d26b78ca67f6ull, 0xcfcda10a7005d80aull,
+    0x9c87bcb7efcec478ull, 0xc1bd56b330d0a6a2ull, 0xdfd8f36e2eb3d90cull, 0xf8de15c6392a6ef4ull,
+    0xffc0fdc0d015a62aull, 0x09ced61d9b1ee1caull, 0x73560fc1539562f4ull, 0x967f8c07ed8b864aull,
+    0x883be28f26494a48ull, 0x6faf6ce72f624e7cull, 0x8786ef4c7156d7a6ull, 0x58dddd29e7aaffd0ull,
+    0x751ce5c0455587e2ull, 0xbb42c11384fd81d0ull, 0xf30203413b837b56ull, 0x8032a6361f557e86ull,
+    0xcf78aae3b034b850ull, 0xcb33bff38c13fc4aull, 0x4fd92fe8879b4b22ull, 0x88d2680c5d34f23eull,
+    0xa1ad6a610142d988ull, 0x48f4ddb7758fdadeull, 0x74257ca9b4bdae6cull, 0xdc9c03aeddbb10a6ull,
+    0xddbd424a34781b1cull, 0xeb6e64431ca87288ull, 0x4a0860d09a36e582ull, 0x8ead4a9d120c5f28ull,
+    0xeeaa19624e0ff652ull, 0x375c55ec7074379cull, 0x6ce250787897c75cull, 0x451fb83519e8808aull,
+    0xcb2d97313b2bb842ull, 0xedd8e10de48ee2d2ull, 0xc1b9040222338510ull, 0x35f8214a1ff7f9ecull,
+    0xf728d820a11bd71eull, 0x24421511e06e1b5aull, 0xab0d1e6571b50274ull, 0x5996c6d3691ff8e2ull,
+    0xc5fbad58ef955baaull, 0xd0e14597a0793764ull, 0xb4068b28542d0df6ull, 0x50802644e28742c6ull,
+    0x6c425bc0c64b6100ull, 0x6ec16dc04c84b55aull, 0x9c7de9c1384e1220ull, 0x8541364a0b7b3c26ull,
+    0x20f48cf7dac2b9c2ull, 0x054656d2e1f4272cull, 0x6517213be6a3edb0ull, 0x83914a081087ced6ull,
+    0x8a5573a62b51e53aull, 0x0ba6da0aff3f24ccull, 0x097b9bb2a383bb6aull, 0x9bc36071e5627430ull,
+    0xd3a9feec0371cbdaull, 0x0845788dea6e4b46ull, 0xabbc640866fcd646ull, 0xa9bfc050c2892434ull,
+    0xb8bf64dd1f9125a4ull, 0xb52d1e9e50b7cff6ull, 0xcf042639bc43c31cull, 0xf18c495b09b7bebcull,
+    0xa2bac3d51d183c52ull, 0x5939f806bd6228b6ull, 0xfb881dd8bbc4dcf8ull, 0xd785956065e8b7e6ull,
+    0x76aebc269dec7b3cull, 0xb592000c0decd0d1ull, 0x1760ed51d836adeaull, 0x2325b3fbf2f186a0ull,
+    0xbec8fa3ad3812b96ull, 0x0fdec21fd5eb3392ull, 0xf18c495b09b7bebcull, 0xa2bac3d51d183c52ull,
+    0x5939f806bd6228b6ull, 0x8b5560b7e1c61386ull, 0xf872dcff1da2b0b5ull, 0xf5c58164bbc91fc9ull,
+    0x5a724693d946e36dull, 0x6adcabb7fbc9491bull, 0x1001afca726d3613ull, 0x8685e57e57e90c85ull,
+    0xc135faccdbb1a383ull, 0xe432afa3061a534full, 0x2dd673bc43b24b87ull, 0xdfdc628c6b7be79bull,
+    0xd239e4bf72f00a4bull, 0xf2113def18c5e687ull, 0x0c5db5f6125d5790ull, 0x08bba570b7e274e3ull,
+    0xd567f8d5fdcd28f7ull, 0xa591fdbb38825c6full, 0x51e2a4e38bef4d00ull, 0x5a49b4a1f79babcaull,
+    0xa8eb11abfe92917full, 0xc9dabe6144672a1eull, 0x616cd387c9c452c3ull, 0x5fd7545c53f9c0a0ull,
+    0x2baefb94136f9e76ull, 0x53220d6d40d8659cull, 0x01528f9036329758ull, 0xebfbac9aa84a9f62ull,
+    0x10804f0d26b37a98ull, 0xe2de4e72edef01bcull, 0xa4696cc5443a9c5eull, 0xd9973dac353db34cull,
+    0xe7974c2ac3a2d5a2ull, 0x8510191fef47285cull, 0xf950ef6215ab7d36ull, 0xa73a820de52ee798ull,
+    0x5f6c23cbb6796d78ull, 0xbda01c3ee9fa086eull, 0x3781b918be541fd6ull, 0x5fd7545c53f9c0a0ull,
+    0x2baefb94136f9e76ull, 0x53220d6d40d8659cull, 0xbd44a7dd6e26506cull, 0xc62bc2623c947342ull,
+    0xaa1097d49d3cbebeull, 0x5da3f815376a7b38ull, 0x098c53394e83d21eull, 0x815be5f90d42ac88ull,
+    0x74630f8ab2f39702ull, 0xc0406b88b4dfb186ull, 0x715faaaadf607544ull, 0xd30023529551f5ccull,
+    0xe1e9f6357d4506eeull, 0x2710560d9dd630feull, 0x3cb1124438fdf71aull, 0x116e2e4c16d1b6d4ull,
+    0x893d35411497a7b2ull, 0x22f05cd71fd1734cull, 0x691e803d8bbcda3aull, 0x1b2302320be49d68ull,
+    0x1e1a99575a285bacull, 0x4bc0abd6aaf36bfeull, 0x1b34e44df313d95eull, 0x41d001e81ca0be64ull,
+    0xcaad1030def64e78ull, 0xcf65beed49c36a0aull, 0x5d273627e6ad57aaull, 0xd3bbd9185e70b1c4ull,
+    0xbbe7f182fa0034acull, 0xaf1a8122b14a5e2eull, 0xba230282e2ad3e5cull, 0x585a07736c190a1eull,
+    0x7453f21f43e92bd8ull, 0xf1ab09d10136b0a2ull, 0x01a2cdc2ed40bf90ull, 0x67139c52853da630ull,
+    0x5b5f7df7fc150f60ull, 0xaf264e56cd21ee9aull, 0xc47d3bf1147537b0ull, 0x32f4dc086114c82aull,
+    0x5ab8c00373ec5d20ull, 0x20e7025919b1fe22ull, 0xe9d336a37ffcf3a2ull, 0x033c6958fc33d0e4ull,
+    0xa954715a8c608b78ull, 0xc70acd1798f16138ull, 0xf8db8751007006baull, 0xd435f0d3ce05b6baull,
+    0x1fda94408438f046ull, 0xeef20465bb03f5e2ull, 0x6ba3fd9166a849f4ull, 0x780747798e60fb0aull,
+    0x62f3ff0fd8968196ull, 0x6eeaa162c81014f0ull, 0x89d3a1ae66bc82b2ull, 0x5912909ed40de3aaull,
+    0xd0ae42e520f43d8cull, 0x24a3591a2678bd8eull, 0x6657e9a4ce698e78ull, 0xfb7a5dccb1030570ull,
+    0x1cce1b7a4fcc3a46ull, 0x80eaf6b833085ea2ull, 0x5de15569525a9940ull, 0xe24ae86ede9b3af2ull,
+    0x96ba3a698acf01c0ull, 0xfa56a6d4b5fc2628ull, 0x1b88a5c3df728560ull, 0x6fa575ba132478ecull,
+    0x5bd5ddb52cf4de46ull, 0x29c4a71d6c90a73cull, 0x2f50dc0d63ca7ad6ull, 0x61994f2b17ccf270ull,
+    0xe2171676a4e2a78eull, 0x6c18b3bb0d345fa8ull, 0xd5e96f433cdb4b82ull, 0x5e9bb0a2f3d06fe0ull,
+    0xec09c0b8f6668374ull, 0x0146ac3a30c6f37eull, 0x55f582afd1bef78aull, 0x43093ed775925952ull,
+    0xd2aa45f57bf8b114ull, 0xcffaba7a04ea6264ull, 0x864dbc9f4302c696ull, 0xbbb0b0a06e769920ull,
+    0x94d8d96730ddb44eull, 0x2916bac89663108aull, 0x00486f2b9e0db0e0ull, 0xb6e65026715b04caull,
+    0x7939f499cb3b93e0ull, 0x59ab1da090ffd66cull, 0x0acba3ebbdec8020ull, 0xbef95e25fc8610b8ull,
+    0xd0fdce196c8e2f92ull,
+};
+} // namespace a3_04f_goldens

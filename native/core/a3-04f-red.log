@@ -1,0 +1,70 @@
+# A3-04F RED-first: a3_04f_render_runtime against HEAD's Board and rasterizer (+ census counters)
+
+grass with water in view at (138,60); grass with nothing animated near at (105,60); the coast with the most animated cells in view (55) at (111,22)
+B  census (modelled bus: 40 MHz, 26 us per DMA / 24 us per CPU transaction; row building not modelled)
+  transcript after 24 steps: 12 visible rows, the last: "West" / "East"
+  transcript after 12 more Passes: "Pass" / "Pass"
+  B1 stand 2 s, nothing animated     frames    0 | per frame: txns     0.0 (cmd    0.0 pix    0.0 thin    0.0 tiny    0.0) windows    0.0 px        0 xfer   0.00 ms | fills 0.0 text 0.0 mtext 0.0 rgb 0.0 sky 0.0 | max txn 0 B
+                                       regions per frame: | solid windows 0.0
+  B2 stand 2 s, water in view        frames   37 | per frame: txns    45.0 (cmd   15.0 pix   30.0 thin   30.0 tiny   30.0) windows    3.0 px      480 xfer   1.35 ms | fills 0.0 text 0.0 mtext 0.0 rgb 3.0 sky 0.0 | max txn 32 B
+                                       regions per frame: viewport 3.0w/480px | solid windows 0.0
+  B3 one step (the step frame)       frames    1 | per frame: txns   293.0 (cmd   55.0 pix  238.0 thin    0.0 tiny    0.0) windows   11.0 px    38608 xfer  23.02 ms | fills 0.0 text 9.0 mtext 1.0 rgb 1.0 sky 0.0 | max txn 352 B
+                                       regions per frame: party 6.0w/6480px status 3.0w/3240px transcript 1.0w/1080px viewport 1.0w/27808px | solid windows 6.0
+  B4 step, full transcript, zig-zag  frames    1 | per frame: txns   436.0 (cmd  110.0 pix  326.0 thin    0.0 tiny    0.0) windows   22.0 px    50488 xfer  31.45 ms | fills 0.0 text 9.0 mtext 12.0 rgb 1.0 sky 0.0 | max txn 352 B
+                                       regions per frame: party 6.0w/6480px status 3.0w/3240px transcript 12.0w/12960px viewport 1.0w/27808px | solid windows 6.0
+  B5 step, full transcript, zig-zag  frames    1 | per frame: txns   450.0 (cmd  115.0 pix  335.0 thin    0.0 tiny    0.0) windows   23.0 px    52072 xfer  32.44 ms | fills 0.0 text 10.0 mtext 12.0 rgb 1.0 sky 0.0 | max txn 352 B
+                                       regions per frame: party 6.0w/6480px status 3.0w/3240px transcript 12.0w/12960px viewport 1.0w/27808px wind 1.0w/1584px | solid windows 6.0
+  B6 Pass (one line + clock)         frames    1 | per frame: txns   436.0 (cmd  110.0 pix  326.0 thin    0.0 tiny    0.0) windows   22.0 px    50488 xfer  31.45 ms | fills 0.0 text 9.0 mtext 12.0 rgb 1.0 sky 0.0 | max txn 352 B
+                                       regions per frame: party 6.0w/6480px status 3.0w/3240px transcript 12.0w/12960px viewport 1.0w/27808px | solid windows 6.0
+  B6b Pass, 12 Passes above it       frames    1 | per frame: txns   436.0 (cmd  110.0 pix  326.0 thin    0.0 tiny    0.0) windows   22.0 px    50488 xfer  31.45 ms | fills 0.0 text 9.0 mtext 12.0 rgb 1.0 sky 0.0 | max txn 352 B
+                                       regions per frame: party 6.0w/6480px status 3.0w/3240px transcript 12.0w/12960px viewport 1.0w/27808px | solid windows 6.0
+  B6d "Pass" as a prompt line        frames    1 | per frame: txns   436.0 (cmd  110.0 pix  326.0 thin    0.0 tiny    0.0) windows   22.0 px    50488 xfer  31.45 ms | fills 0.0 text 9.0 mtext 12.0 rgb 1.0 sky 0.0 | max txn 352 B
+                                       regions per frame: party 6.0w/6480px status 3.0w/3240px transcript 12.0w/12960px viewport 1.0w/27808px | solid windows 6.0
+  B6c a wrapped 3-row message        frames    1 | per frame: txns   436.0 (cmd  110.0 pix  326.0 thin    0.0 tiny    0.0) windows   22.0 px    50488 xfer  31.45 ms | fills 0.0 text 9.0 mtext 12.0 rgb 1.0 sky 0.0 | max txn 352 B
+                                       regions per frame: party 6.0w/6480px status 3.0w/3240px transcript 12.0w/12960px viewport 1.0w/27808px | solid windows 6.0
+  B7 status only (HP -1, redraw)     frames    1 | per frame: txns   280.0 (cmd   50.0 pix  230.0 thin    0.0 tiny    0.0) windows   10.0 px    37528 xfer  22.25 ms | fills 0.0 text 9.0 mtext 0.0 rgb 1.0 sky 0.0 | max txn 352 B
+                                       regions per frame: party 6.0w/6480px status 3.0w/3240px viewport 1.0w/27808px | solid windows 6.0
+  B8 nothing changed (forced redraw) frames    1 | per frame: txns   280.0 (cmd   50.0 pix  230.0 thin    0.0 tiny    0.0) windows   10.0 px    37528 xfer  22.25 ms | fills 0.0 text 9.0 mtext 0.0 rgb 1.0 sky 0.0 | max txn 352 B
+                                       regions per frame: party 6.0w/6480px status 3.0w/3240px viewport 1.0w/27808px | solid windows 6.0
+  B9 Z modal open                    frames    1 | per frame: txns  1204.0 (cmd  140.0 pix 1064.0 thin  476.0 tiny  476.0) windows   28.0 px    86864 xfer  65.94 ms | fills 9.0 text 18.0 mtext 0.0 rgb 1.0 sky 0.0 | max txn 352 B
+                                       regions per frame: lines 8.0w/1298px panel-clear 1.0w/33120px party 3.0w/4020px status 3.0w/4824px transcript 12.0w/15794px viewport 1.0w/27808px | solid windows 14.0
+  B10 Z modal close                  frames    1 | per frame: txns  1444.0 (cmd  255.0 pix 1189.0 thin  558.0 tiny  558.0) windows   51.0 px    93513 xfer  74.76 ms | fills 22.0 text 9.0 mtext 19.0 rgb 1.0 sky 0.0 | max txn 360 B
+                                       regions per frame: lines 21.0w/2345px panel-clear 1.0w/33120px party 6.0w/6480px status 3.0w/3240px transcript 19.0w/20520px viewport 1.0w/27808px | solid windows 35.0
+  B11 Developer menu open            frames    0 | per frame: txns   544.0 (cmd   80.0 pix  464.0 thin   11.0 tiny    0.0) windows   16.0 px   142820 xfer  71.21 ms | fills 1.0 text 15.0 mtext 0.0 rgb 0.0 sky 0.0 | max txn 640 B
+                                       regions per frame: full-clear 1.0w/76800px party 3.0w/8252px status 2.0w/10608px transcript 10.0w/47160px | solid windows 2.0
+  B12 Developer menu close (repaint) frames    1 | per frame: txns  1717.0 (cmd  270.0 pix 1447.0 thin  558.0 tiny  558.0) windows   54.0 px   173481 xfer 113.83 ms | fills 23.0 text 10.0 mtext 19.0 rgb 1.0 sky 1.0 | max txn 640 B
+                                       regions per frame: full-clear 1.0w/76800px lines 21.0w/2345px panel-clear 1.0w/33120px party 6.0w/6480px sky 1.0w/1584px status 3.0w/3240px transcript 19.0w/20520px viewport 1.0w/27808px wind 1.0w/1584px | solid windows 36.0
+  B13 combat entry (+1.5 s)          frames   30 | per frame: txns    75.4 (cmd   18.2 pix   57.3 thin   46.4 tiny   46.4) windows    3.6 px     2425 xfer   2.92 ms | fills 0.0 text 0.3 mtext 0.4 rgb 2.9 sky 0.0 | max txn 352 B
+                                       regions per frame: party 0.2w/216px status 0.1w/108px transcript 0.4w/432px viewport 2.9w/1669px | solid windows 0.2
+  B14 the fight (all frames)         frames  156 | per frame: txns   272.1 (cmd   59.9 pix  212.2 thin   14.2 tiny   14.2) windows   12.0 px    30316 xfer  19.16 ms | fills 0.6 text 5.7 mtext 4.3 rgb 1.4 sky 0.0 | max txn 352 B
+                                       regions per frame: lines 0.4w/50px party 3.6w/3905px status 1.8w/1952px transcript 4.8w/10100px viewport 1.4w/14309px | solid windows 5.4
+  B15 leave the victory arena        frames    1 | per frame: txns   436.0 (cmd  110.0 pix  326.0 thin    0.0 tiny    0.0) windows   22.0 px    50488 xfer  31.45 ms | fills 0.0 text 9.0 mtext 12.0 rgb 1.0 sky 0.0 | max txn 352 B
+                                       regions per frame: party 6.0w/6480px status 3.0w/3240px transcript 12.0w/12960px viewport 1.0w/27808px | solid windows 6.0
+  B16 back on the map 1 s            frames   19 | per frame: txns    45.0 (cmd   15.0 pix   30.0 thin   30.0 tiny   30.0) windows    3.0 px      480 xfer   1.35 ms | fills 0.0 text 0.0 mtext 0.0 rgb 3.0 sky 0.0 | max txn 32 B
+                                       regions per frame: viewport 3.0w/480px | solid windows 0.0
+  B17 stand 2 s on the coast         frames   82 | per frame: txns  1002.0 (cmd  275.0 pix  727.0 thin  727.0 tiny  727.0) windows   55.0 px    11632 xfer  30.50 ms | fills 0.0 text 0.0 mtext 0.0 rgb 55.0 sky 0.0 | max txn 32 B
+                                       regions per frame: viewport 55.0w/11632px | solid windows 0.0
+  B18 step on the coast              frames    1 | per frame: txns   436.0 (cmd  110.0 pix  326.0 thin    0.0 tiny    0.0) windows   22.0 px    50488 xfer  31.45 ms | fills 0.0 text 9.0 mtext 12.0 rgb 1.0 sky 0.0 | max txn 352 B
+                                       regions per frame: party 6.0w/6480px status 3.0w/3240px transcript 12.0w/12960px viewport 1.0w/27808px | solid windows 6.0
+  B19 one animation tick, coast      frames    1 | per frame: txns   852.0 (cmd  235.0 pix  617.0 thin  617.0 tiny  617.0) windows   47.0 px     9872 xfer  25.92 ms | fills 0.0 text 0.0 mtext 0.0 rgb 47.0 sky 0.0 | max txn 32 B
+                                       regions per frame: viewport 47.0w/9872px | solid windows 0.0
+GREEN B0 the census ran every scenario (inland, shore, 24 steps, Pass, status, Z, Developer, a won fight and back) with the panel's viewport equal to the composed one after all 4134 gameplay renders and no malformed transaction
+RED P1 every window's pixels travel as whole rows packed up to the bus's 640 B: 6863 of 7061 windows use more transactions than their rows need; e.g. 16x7 at (84,13) in 7 transactions, 1 needed (B2 stand 2 s, water in view)
+RED P2 one animation tick on the coast: 47 windows, 37 of them side by side in one tile row, 617 tiny transactions of 852 (25.92 ms modelled)
+RED R1 a redraw with nothing changed draws no party or status row (6 party, 3 status)
+RED R2 one member's HP changes: exactly that party row is drawn (6 party, 3 status)
+RED R3 a row the bed refresh drew in reverse video (same text) is redrawn by the next frame, and only it (6 party, 3 status): the panel is as before
+RED R4 a row the bed refresh drew with other text is redrawn by the next frame, and only it (6 party, 3 status): the panel is as before
+RED P3 a 16 x 64 window pauses after rows 16, 32 and 48 (3 pauses) and its 64 rows arrive intact in 64 transactions (17 + 16 + 16 + 15 rows: a batch ends at each pause row)
+GREEN T1 animation ticks and a redraw with nothing changed draw no transcript row (control)
+GREEN T2 a new short line while the transcript is not yet full: one row (control, 1)
+RED T3 on a line, a scroll and a wrapped message the rows drawn are exactly the rows whose text or colour changed (drawn/changed: B3 1/1 B4 12/12 B5 12/12 B6 12/12 B6b 12/0 B6c 12/5 B6d 12/1)
+GREEN T5 closing the Z modal and leaving the Developer screen still redraw all 19 transcript rows (the retained rows are invalidated, control)
+GREEN C1 the viewport CRC equals the bit-by-bit CRC-32 it replaces on 64/64 buffers (empty, all 0, all 1, random, odd lengths): the Board's change detector and every logged crc= are unchanged
+GREEN I1 walking the coast with input always queued and rows that never let the idle task finish a pass: the longest idle gap is 234.7 ms (budget 200.0 ms), no enforcement in vain (control)
+GREEN G0 the golden script: 2766 render calls, 297 distinct panel states, the viewport always the composed one, no malformed or oversize transaction
+GREEN G1 the panel after every render call equals the A3-04F baseline's (297 states vs 297 recorded, 2766 vs 2766 render calls; source: A3-04F baseline (HEAD 414e958a + census counters))
+A3-04F render runtime: 8/16 checks
+exit=1
+
+restored the working Board and rasterizer; rebuild exit=0

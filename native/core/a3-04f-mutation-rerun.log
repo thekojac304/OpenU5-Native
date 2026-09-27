@@ -1,0 +1,14 @@
+# A3-04F mutation validation (2026-09-27 15:15)
+
+M1 leaving the Developer screen keeps the retained right panel (both invalidations gone) [native/targets/tdeck/main/tdeck_board.cpp]: KILLED
+    a3_04f_render_runtime exit=1  4 RED
+        RED R3 a row the bed refresh drew in reverse video (same text) is redrawn by the next frame, and only it (1 party, 0 status): the panel is as before
+        RED R4 a row the bed refresh drew with other text is redrawn by the next frame, and only it (1 party, 0 status): the panel is as before
+        RED T5 closing the Z modal and leaving the Developer screen still redraw all 19 transcript rows (the retained rows are invalidated, control)
+        RED G1 the panel after every render call equals the A3-04F baseline's (297 states vs 297 recorded, 2766 vs 2766 render calls; first difference at state 158, phase 3; source: A3-04F baseline (HEAD 414e
+    a3_04e_pacing_runtime exit=1  2 RED
+        RED Y1 legacy: the repaint on leaving the Developer screen sleeps to the next tick 16 times (full clear 7, viewport 9, right-panel reflow 3; the frame lines no longer pause -- A3-04D, one transaction 
+        RED M1 legacy: the window's TFT maximum IS its one full-screen repaint, 161.4 ms modelled (19 sleeps span >= 18 ticks since A3-04F; A3-04D's 37 spanned >= 36: device 404-408 ms)
+
+restored: build exit=0; a3_04f_render_runtime exit=0, a3_04e_pacing_runtime exit=0
+mutations: 1, killed: 1, survived: 0, invalid: 0

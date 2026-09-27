@@ -1,0 +1,31 @@
+image: build-a3-hf2-1-post/openu5_tdeck.elf
+
+_ZN6openu512_GLOBAL__N_1L11crc32_u16leEPKtj  @ 0x42066414, 90 bytes
+  loop 0x42066444..0x42066458 (blti a9, 8, 42066444): body 8 instructions  <- per-bit CRC step
+  loop 0x42066438..0x4206645f (bne a12, a9, 42066438): body 15 instructions  <- per-bit CRC step
+  loop 0x42066420..0x42066464 (bltu a13, a3, 42066420): body 25 instructions  <- per-bit CRC step
+  innermost loop body:
+    0x42066444: srli a10, a8, 1
+    0x42066447: extui a8, a8, 0, 1
+    0x4206644a: neg a8, a8
+    0x4206644d: l32r a11, 42040a90
+    0x42066450: and a8, a8, a11
+    0x42066453: xor a8, a10, a8
+    0x42066456: addi.n a9, a9, 1
+    0x42066458: blti a9, 8, 42066444
+  per frame (176x176): the per-bit body 8 x 495,616 bits = 3,964,928 instructions = 16.5 ms at 240 MHz, 1 instruction/cycle, before the per-byte and per-pixel work
+  C1 no per-bit loop (table-driven): RED
+  C2 innermost loop body <= 24 instructions: GREEN (8)
+
+_ZN6openu512_GLOBAL__N_1L11expand_tileERA128_KhRA16_KtPtii  @ 0x42092c50, 92 bytes
+  loop 0x42092c74..0x42092ca0 (blti a9, 8, 42092c74): body 17 instructions
+  loop 0x42092c5e..0x42092ca7 (bge a8, a12, 42092c5e): body 28 instructions
+
+_ZN6openu515render_snapshotERKNS_21PresentationTileCacheERKNS_20PresentationSnapshotEmxPtjRNS_12RenderReportE  @ 0x42066fd0, 601 bytes
+  loop 0x42067018..0x4206701f (bne a10, a8, 42067018): body 4 instructions
+  loop 0x42067058..0x420670b4 (bge a8, a7, 42067058): body 33 instructions
+  loop 0x420670e5..0x42067119 (bge a8, a7, 420670e5): body 20 instructions
+  loop 0x42067115..0x42067120 (bge a8, a6, 42067115): body 6 instructions
+  loop 0x420670cd..0x42067128 (bltu a4, a8, 420670cd): body 36 instructions
+
+A3-04F image check: RED

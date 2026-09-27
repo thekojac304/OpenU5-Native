@@ -344,11 +344,14 @@ int main(int argc, char **argv) {
     // ---- Y / M: the pauses, and the modelled cost of the device's procedure --
     const Window legacy = measure(true, true), e = measure(false, false);
     std::printf("legacy full repaint pauses:%s\n", legacy.full_pauses.c_str());
-    check(legacy.full_sleeps == 37 && legacy.full_yields == 0,
+    // A3-04F (section 26): fill_rect's chunks are 320 px whatever the
+    // rectangle's width, so the frame sides (one chunk per row up to A3-HF2.1:
+    // 5+5 and 1+1+1+1 pauses) no longer reach a 32nd chunk and the right-panel
+    // reflow is 104 chunks, not 240. A3-04D's image slept 37 times here.
+    check(legacy.full_sleeps == 19 && legacy.full_yields == 0,
           "Y1 legacy: the repaint on leaving the Developer screen sleeps to the next tick " +
-              std::to_string(legacy.full_sleeps) + " times (full clear 7, viewport 9, right-panel reflow 7, the two "
-              "180-row viewport-frame sides 5+5 -- one transaction per 2 px row -- and the party and world frame sides "
-              "1+1+1+1)");
+              std::to_string(legacy.full_sleeps) + " times (full clear 7, viewport 9, right-panel reflow 3; the "
+              "frame lines no longer pause -- A3-04D, one transaction per 2 px row: 37)");
     check(legacy.step_sleeps == 9 && legacy.step_yields == 0,
           "Y2 legacy: a walking step sleeps " + std::to_string(legacy.step_sleeps) +
               " times: the viewport's 158 rows, one sleep after rows 16, 32 .. 144");
@@ -361,9 +364,9 @@ int main(int argc, char **argv) {
 
     std::printf("modelled window, legacy : %s\n", legacy.line.c_str());
     std::printf("modelled window, A3-04E : %s\n", e.line.c_str());
-    check(legacy.c.full_frames == 1 && legacy.c.full_tft_max_us >= 360000 && legacy.r.tft_max_us == legacy.c.full_tft_max_us,
+    check(legacy.c.full_frames == 1 && legacy.c.full_tft_max_us >= 180000 && legacy.r.tft_max_us == legacy.c.full_tft_max_us,
           "M1 legacy: the window's TFT maximum IS its one full-screen repaint, " + ms(legacy.c.full_tft_max_us) +
-              " modelled (37 sleeps span >= 36 ticks; device A3-04D: 404-408 ms)");
+              " modelled (19 sleeps span >= 18 ticks since A3-04F; A3-04D's 37 spanned >= 36: device 404-408 ms)");
     check(legacy.c.vp_only_frames >= 10 && legacy.c.vp_only_tft_avg_us >= 80000,
           "M2 legacy: a walking viewport frame costs " + ms(legacy.c.vp_only_tft_avg_us) +
               " modelled (9 sleeps span >= 8 ticks; device viewport avg ~122 ms incl. the repaint and row building)");
@@ -498,10 +501,22 @@ int main(int argc, char **argv) {
                   ms(uint64_t(window)) + " (60 steps), never in vain");
         g.open_diagnostics();
         g.ups(2);
+        // A3-04F: the report must show the gap the guard itself recorded. Up to
+        // A3-04F this pinned the literal "200." -- that run's value; with fewer
+        // SPI transactions per frame the guard's cooperative points fall a
+        // little differently and the same walk records 202.6 ms. The bound that
+        // matters is the budget plus at most one composition, under section
+        // 23.8's 250 ms line.
+        const uint32_t gap_us = g.idle.stats().max_gap_us;
         g.key('\r'); // "Audio/render stats (live)": publishes this window, starts the next
-        const bool shown = report_text(*g.rt).find("idle0 gap max 200.") != std::string::npos;
+        char gap_text[48];
+        std::snprintf(gap_text, sizeof gap_text, "idle0 gap max %lu.%lu ms", (unsigned long)(gap_us / 1000),
+                      (unsigned long)(gap_us % 1000 / 100));
+        const bool shown = report_text(*g.rt).find(gap_text) != std::string::npos && gap_us >= kIdleServiceBudgetUs &&
+                           gap_us < 250000;
         check(shown && g.idle.stats().enforcements == 0 && g.idle.stats().forced_sleeps == 0,
-              "W7 the live report shows the idle gap, and the read starts a new idle-service window with the others");
+              "W7 the live report shows the idle gap the guard recorded (" + std::string(gap_text) +
+                  ", the budget plus at most one composition), and the read starts a new idle-service window with the others");
         check(g.state() == bare.state(),
               "W3 ... and the 60 steps end where they do without the guard's sleeps (" + g.state() +
                   "): the game is untouched");
