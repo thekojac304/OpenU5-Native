@@ -2068,6 +2068,7 @@ void AlphaRuntime::compose_creation_art(){
 
 esp_err_t AlphaRuntime::render(Board&board,bool force){
     board_=&board;
+    board.set_tft_pacing(pacing_.tft); // A3-04E: the draw loops' pause (section 22)
     // A3-04A: the Developer audio benchmark is a timeline, not a wait; it
     // ticks here in every mode so leaving the menu (or the game) cannot stall it.
     service_audio_benchmark(esp_timer_get_time());
@@ -2608,6 +2609,7 @@ void AlphaRuntime::log_metrics(const char*where)const{const auto stack=uxTaskGet
     // A3-04C (section 20): the whole window on one line, in a fixed order, so
     // runs diff field by field. Same window as the Developer report.
     {char line[openu5::kContentionLineBytes];contention_line(line,sizeof(line));ESP_LOGI(kTag,"A3C_PERF %s",line);}
+    {char line[openu5::kPacingLineBytes];pacing_line(line,sizeof(line));ESP_LOGI(kTag,"A3E_PACE %s",line);}
     if(internal<32768)ESP_LOGW(kTag,"LOW INTERNAL RAM: %zu",internal);
     if(stack<4096)ESP_LOGW(kTag,"LOW MAIN STACK MARGIN: %u",unsigned(stack));
 }
@@ -2828,7 +2830,7 @@ void AlphaRuntime::configure_audio(const openu5::AudioPackInfo &pack,openu5::Aud
 
 void AlphaRuntime::bind_developer_diagnostics(){
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
-    if(debug_){openu5::UiDiagnosticsServices services{};services.context=this;services.start=start_smoke;services.audio_test=audio_test_tone;services.audio_perf=audio_perf_start;services.audio_stats=audio_stats_now;services.music_bypass=music_bypass_probe;services.sd_log=sd_log_probe;debug_->attach_diagnostics(services);}
+    if(debug_){openu5::UiDiagnosticsServices services{};services.context=this;services.start=start_smoke;services.audio_test=audio_test_tone;services.audio_perf=audio_perf_start;services.audio_stats=audio_stats_now;services.music_bypass=music_bypass_probe;services.sd_log=sd_log_probe;services.legacy_tft_pacing=legacy_tft_probe;services.legacy_loop_spin=legacy_loop_probe;debug_->attach_diagnostics(services);}
 #endif
 }
 
@@ -3046,6 +3048,7 @@ openu5::PerfScenario AlphaRuntime::perf_scenario() const{
     s.sfx_volume=audio_.sfx_volume();
     s.synth_bypass=music_bypass_;
     s.sd_log=sd_log_state(); // A3-04D
+    s.pacing_reported=true;s.pacing=pacing_; // A3-04E
     return s;
 }
 
@@ -3067,6 +3070,65 @@ size_t AlphaRuntime::contention_line(char *out,size_t cap) const{
     in.audio=has_audio?&audio:nullptr;in.render=&render;in.system=has_system?&system:nullptr;
     in.scenario=&scenario;in.contention=&contention;in.sdlog=has_sd?&sd:nullptr;
     return openu5::format_contention_line(in,out,cap);
+}
+
+// A3-04E (ALPHA3_AUDIO.md section 22): the pacing window on one line, next
+// to A3C_PERF (whose format stays A3-04C/D's, so old and new runs diff).
+size_t AlphaRuntime::pacing_line(char *out,size_t cap) const{
+    const uint64_t now=uint64_t(esp_timer_get_time());
+    openu5::RenderPerfSnapshot render{};render_perf_.snapshot(now,render);
+    openu5::ContentionSnapshot contention{};contention_.snapshot(now,contention);
+    openu5::AudioPerfSnapshot audio{};const bool has_audio=audio_perf_&&audio_perf_->perf_snapshot(audio);
+    openu5::SystemPerfSnapshot system{};const bool has_system=system_perf_&&system_perf_->system_perf_snapshot(system);
+    const auto scenario=perf_scenario();
+    openu5::PerfReportInput in{};
+    in.audio=has_audio?&audio:nullptr;in.render=&render;in.system=has_system?&system:nullptr;
+    in.scenario=&scenario;in.contention=&contention;
+    return openu5::format_pacing_line(in,out,cap);
+}
+
+// A3-04E: may main.cpp's loop block on the input queue for one tick after
+// this pass (openu5::loop_wait_ticks)? A one-tick sleep makes a service at
+// most one tick late. For anything driven by the absolute clock -- the 55 ms
+// animation and ambient ticks, the quake / world-fx / invert / map-reveal
+// windows, the input-hold threshold, the frontend -- that is all it does. The
+// services below schedule each step RELATIVE to the moment the previous one
+// was serviced (resume_at = now + dwell, next beat = now + 400 ms), so every
+// late step would push all the later ones back: while any of them is live
+// the loop does not sleep, and their timing is exactly A3-04D's.
+bool AlphaRuntime::loop_may_sleep() const{
+    if(dirty_||dungeon_presentation_pending_)return false;  // a frame is still owed
+    if(next_enemy_step_us_)return false;                     // combat: the enemy beat
+    if(blackthorn_pacer_.active()||blackthorn_pacer_.mounted())return false;
+    if(narrative_pacer_.active()||narrative_pacer_.mounted())return false;
+    if(poison_.active()||camp_scene_active_)return false;
+    if(audio_bench_.running()||smoke_.view().running)return false;
+    return true;
+}
+
+// A3-04E: Developer > Diagnostics > "Probe: legacy TFT pacing" / "Probe:
+// legacy loop spin". ON puts that half of the game thread's pacing back to
+// what every image up to A3-04D did (vTaskDelay(1) every 16 rows / a spinning
+// loop), so the device can measure each change alone and both together. Off
+// at boot, never saved; the report and A3E_PACE name the pacing in use.
+bool AlphaRuntime::legacy_tft_probe(void *p,bool toggle){
+    auto &r=*static_cast<AlphaRuntime*>(p);
+    if(toggle){
+        r.pacing_.tft=r.pacing_.tft==openu5::TftPacing::TickSleep?openu5::kPacingDefault.tft:openu5::kPacingLegacy.tft;
+        ESP_LOGI(kTag,"A3E_PROBE tft=%s loop=%s",openu5::tft_pacing_name(r.pacing_.tft),openu5::loop_pacing_name(r.pacing_.loop));
+        r.dirty_=true;r.dirty_reason_="pacing-probe";
+    }
+    return r.pacing_.tft==openu5::TftPacing::TickSleep;
+}
+
+bool AlphaRuntime::legacy_loop_probe(void *p,bool toggle){
+    auto &r=*static_cast<AlphaRuntime*>(p);
+    if(toggle){
+        r.pacing_.loop=r.pacing_.loop==openu5::LoopPacing::Spin?openu5::kPacingDefault.loop:openu5::kPacingLegacy.loop;
+        ESP_LOGI(kTag,"A3E_PROBE tft=%s loop=%s",openu5::tft_pacing_name(r.pacing_.tft),openu5::loop_pacing_name(r.pacing_.loop));
+        r.dirty_=true;r.dirty_reason_="pacing-probe";
+    }
+    return r.pacing_.loop==openu5::LoopPacing::Spin;
 }
 
 // A3-04C: Developer > Diagnostics > "Probe: synth bypass". Skips the music

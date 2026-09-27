@@ -1,0 +1,6 @@
+[1/6] Linking CXX executable a3_04e_pacing.exe
+[2/6] Linking CXX executable a3_04c_contention.exe
+[3/6] Building CXX object CMakeFiles/ui_debug_menu_tests.dir/tests/ui_debug_menu_test.cpp.obj
+[4/6] Linking CXX executable ui_debug_menu_tests.exe
+[5/6] Building CXX object CMakeFiles/a3_04e_pacing_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/a3_04e_pacing_runtime_test.cpp.obj
+[6/6] Linking CXX executable a3_04e_pacing_runtime.exe

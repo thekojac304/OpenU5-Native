@@ -329,7 +329,13 @@ esp_err_t Board::tft_transmit(spi_transaction_t &transaction, const RowMark *sta
 void Board::tft_yield()
 {
     const uint32_t c0 = uint32_t(esp_cpu_get_cycle_count());
-    vTaskDelay(1);
+    // A3-04E (ALPHA3_AUDIO.md section 22): a reschedule, not a sleep. Alpha
+    // 2.0's vTaskDelay(1) waited for the next 10 ms tick at every call, and the
+    // 16 rows between two calls take ~2 ms: a 158-row viewport spent ~90 ms
+    // asleep, the menu-exit repaint ~370 ms. The sleep stays behind Developer >
+    // Diagnostics > "Probe: legacy TFT pacing".
+    if (const uint32_t ticks = openu5::tft_pause_ticks(tft_pacing_)) vTaskDelay(ticks);
+    else taskYIELD();
     const uint32_t cycles = uint32_t(esp_cpu_get_cycle_count()) - c0;
     auto &t = tft_timing_;
     ++t.yields;
@@ -465,7 +471,7 @@ esp_err_t Board::fill_rect(int x, int y, int width, int height, uint16_t color)
         transaction.tx_buffer = pixels.data();
         ESP_RETURN_ON_ERROR(tft_row(transaction, mark), kTag, "write TFT pixels");
         remaining -= count;
-        if((++chunks&31)==0)tft_yield();
+        if(openu5::tft_chunk_yield_due(++chunks))tft_yield();
     }
     return ESP_OK;
 }
@@ -519,7 +525,7 @@ esp_err_t Board::draw_rgb565_strided(int x,int y,int width,int height,
         transaction.length = width * 16;
         transaction.tx_buffer = row_bytes.data();
         ESP_RETURN_ON_ERROR(tft_row(transaction, mark), kTag, "write RGB565 row");
-        if(row>0&&(row&15)==0)tft_yield();
+        if(openu5::tft_row_yield_due(row))tft_yield();
     }
     return ESP_OK;
 }
@@ -664,7 +670,7 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
     if(!display_initialized_||!pixels)return ESP_ERR_INVALID_STATE;
     (void)turn;(void)overlay;
     debug_last_full_redraw_=false;debug_last_dirty_regions_=0;debug_last_pixels_=0;
-    if(!alpha_drawn_||frontend_drawn_){ESP_RETURN_ON_ERROR(fill_rect(0,0,kDisplayWidth,kDisplayHeight,kBlack),kTag,"initialize Alpha 2.0 game screen");alpha_drawn_=true;frontend_drawn_=false;alpha_ui_cache_valid_=false;alpha_ui_size_cache_=0xff;viewport_cache_valid_=false;sky_bar_cache_valid_=false;shop_cache_valid_=false;selection_cache_valid_=false;context_cache_valid_=false;animation_only=false;debug_last_full_redraw_=true;debug_last_pixels_=kDisplayWidth*kDisplayHeight;}
+    if(!alpha_drawn_||frontend_drawn_){++tft_timing_.full_screen;ESP_RETURN_ON_ERROR(fill_rect(0,0,kDisplayWidth,kDisplayHeight,kBlack),kTag,"initialize Alpha 2.0 game screen");alpha_drawn_=true;frontend_drawn_=false;alpha_ui_cache_valid_=false;alpha_ui_size_cache_=0xff;viewport_cache_valid_=false;sky_bar_cache_valid_=false;shop_cache_valid_=false;selection_cache_valid_=false;context_cache_valid_=false;animation_only=false;debug_last_full_redraw_=true;debug_last_pixels_=kDisplayWidth*kDisplayHeight;}
     if(debug){
         const bool full=!debug_drawn_||!debug_cache_valid_;
         debug_last_full_redraw_=full;debug_last_dirty_regions_=0;debug_last_pixels_=0;
@@ -705,7 +711,7 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
         debug_cache_=*debug;debug_cache_valid_=true;debug_drawn_=true;
         return ESP_OK;
     }
-    if(debug_drawn_){ESP_RETURN_ON_ERROR(fill_rect(0,0,kDisplayWidth,kDisplayHeight,kBlack),kTag,"leave developer screen");debug_drawn_=false;debug_cache_valid_=false;alpha_ui_cache_valid_=false;alpha_ui_size_cache_=0xff;viewport_cache_valid_=false;sky_bar_cache_valid_=false;shop_cache_valid_=false;selection_cache_valid_=false;context_cache_valid_=false;animation_only=false;}
+    if(debug_drawn_){++tft_timing_.full_screen;ESP_RETURN_ON_ERROR(fill_rect(0,0,kDisplayWidth,kDisplayHeight,kBlack),kTag,"leave developer screen");debug_drawn_=false;debug_cache_valid_=false;alpha_ui_cache_valid_=false;alpha_ui_size_cache_=0xff;viewport_cache_valid_=false;sky_bar_cache_valid_=false;shop_cache_valid_=false;selection_cache_valid_=false;context_cache_valid_=false;animation_only=false;}
     if((!shop||!shop->active)&&shop_cache_valid_){
         ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudPartyFrameX,0,kDisplayWidth-openu5::kHudPartyFrameX,kDisplayHeight,kBlack),kTag,"leave shop panel");
         shop_cache_valid_=false;context_cache_valid_=false;alpha_ui_cache_valid_=false;
@@ -936,7 +942,7 @@ esp_err_t Board::draw_rgb565_scaled(int x,int y,int width,int height,
         }
         spi_transaction_t transaction{};transaction.length=width*16;transaction.tx_buffer=row_bytes.data();
         ESP_RETURN_ON_ERROR(tft_row(transaction,mark),kTag,"write scaled RGB565 row");
-        if(row>0&&(row&15)==0)tft_yield();
+        if(openu5::tft_row_yield_due(row))tft_yield();
     }
     return ESP_OK;
 }
@@ -1087,7 +1093,7 @@ esp_err_t Board::draw_text_box(int x,int y,int width,int height,const char *text
         }
         spi_transaction_t transaction{};transaction.length=width*16;transaction.tx_buffer=row_bytes.data();
         ESP_RETURN_ON_ERROR(tft_row(transaction,mark),kTag,"write coherent text row");
-        if(row>0&&(row&15)==0)tft_yield();
+        if(openu5::tft_row_yield_due(row))tft_yield();
     }
     return ESP_OK;
 }

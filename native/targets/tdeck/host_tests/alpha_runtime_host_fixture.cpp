@@ -104,6 +104,9 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
         resources_.combat_enemy_views = pack->combat_enemy_views; resources_.combat_enemy_count = pack->combat_enemy_count;
         resources_.combat_tables = pack->combat_tables; resources_.combat_table_count = pack->combat_table_count;
         resources_.moon_phases = pack->moon_phases; resources_.moon_phase_count = pack->moon_phase_count;
+        // A3-04E: the sky strip's glyphs; the real Board (a3_04e_pacing_runtime)
+        // refuses a world frame without them, the capture stub never read them.
+        resources_.runes_font = pack->runes_font;
         resources_.search_objects = pack->search_objects; resources_.search_count = pack->search_count;
         resources_.shard_spawns = pack->shard_spawns; resources_.shard_spawn_count = pack->shard_spawn_count;
         resources_.shop_data = pack->shop_data;

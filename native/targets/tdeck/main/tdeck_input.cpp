@@ -318,6 +318,17 @@ bool InputHardware::poll(RawInputEvent &event)
     return true;
 }
 
+bool InputHardware::wait_for_event(TickType_t ticks)
+{
+    // A peek: the event stays queued for poll(), which counts and logs it.
+    RawInputEvent event{};
+    if (event_queue_ == nullptr) {
+        vTaskDelay(ticks);
+        return false;
+    }
+    return xQueuePeek(event_queue_, &event, ticks) == pdTRUE;
+}
+
 bool InputHardware::service_once(RawInputEvent &event)
 {
     event = {};

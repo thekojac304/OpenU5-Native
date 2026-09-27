@@ -17,6 +17,10 @@ public:
     ~InputHardware();
     esp_err_t initialize();
     bool poll(RawInputEvent &event);
+    // A3-04E (ALPHA3_AUDIO.md section 22): blocks the game thread for up to
+    // `ticks` until an input event is queued; true = one is waiting (it is
+    // left for poll()). The idle wait of main.cpp's loop: input ends it at once.
+    bool wait_for_event(TickType_t ticks);
     bool keyboard_online() const { return keyboard_device_ != nullptr; }
     void log_metrics() const;
 

@@ -196,6 +196,19 @@ extern "C" void app_main(void) {
         if(ready){const auto draw=runtime.render(board);if(draw!=ESP_OK)ESP_LOGE(kTag,"Alpha animation redraw failed: %s",esp_err_to_name(draw));}
         const int64_t now=esp_timer_get_time();if(now>=heartbeat){debug51::stack_checkpoint("running-alpha-loop");input.log_metrics();if(ready)runtime.log_metrics("heartbeat");else ESP_LOGW(kTag,"Alpha runtime not ready; internal=%zu PSRAM=%zu",heap_caps_get_free_size(kInternal),heap_caps_get_free_size(kPsram));heartbeat=now+5000000;}
         if(ready)runtime.note_loop_pass(uint32_t(esp_timer_get_time()-loop_t0));
-        vTaskDelay(pdMS_TO_TICKS(5));
+        // A3-04E (ALPHA3_AUDIO.md section 22): the end of a pass. Up to A3-04D
+        // this was vTaskDelay(pdMS_TO_TICKS(5)): 0 ticks at CONFIG_FREERTOS_HZ=100,
+        // a reschedule, so the thread spun between frames. Now a pass blocks on
+        // the input queue for one tick (a queued event ends the wait at once);
+        // while something is paced relative to "now" (scenes, combat beats) the
+        // runtime says 0 and the loop reschedules exactly as before. The spin
+        // stays behind Developer > Diagnostics > "Probe: legacy loop spin".
+        const uint32_t wait_ticks=ready?runtime.loop_wait_ticks():openu5::kLoopIdleWaitTicks;
+        if(wait_ticks){
+            const int64_t wait_t0=esp_timer_get_time();
+            const bool woke=input.wait_for_event(wait_ticks);
+            if(ready)runtime.note_loop_wait(uint32_t(esp_timer_get_time()-wait_t0),woke);
+        }
+        else vTaskDelay(0); // a reschedule -- what pdMS_TO_TICKS(5) always was at 100 Hz
     }
 }

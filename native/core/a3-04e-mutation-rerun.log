@@ -1,0 +1,6 @@
+K5 KILLED the gate is ignored: the loop sleeps through paced scenes :: pacing: P6 | runtime: L2, L5, L6
+K6 KILLED the legacy spin sleeps too :: pacing: P6 | runtime: L4
+C3 KILLED input wakes of the loop are not counted :: pacing: C3
+
+3/3 killed; 0 survived; 0 invalid/not applied
+exit 0

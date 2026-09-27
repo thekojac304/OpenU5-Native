@@ -10,6 +10,7 @@
 #include "openu5/frontend.h"
 #include "openu5/hud.h"
 #include "openu5/perf_report.h"
+#include "openu5/render_pacing.h"
 #include "openu5/turn.h"
 #include "openu5/ui_session.h"
 #include "device_ui_views.h"
@@ -125,6 +126,11 @@ public:
         out.cpu_mhz = tft_cpu_mhz_;
         tft_timing_ = openu5::TftTiming{};
     }
+    // A3-04E (ALPHA3_AUDIO.md section 22): what the draw loops' pause every
+    // 16 rows does -- a yield (A3-04E) or a sleep to the next tick (legacy).
+    // The runtime sets it before every draw from its (never saved) policy.
+    void set_tft_pacing(openu5::TftPacing pacing) { tft_pacing_ = pacing; }
+    openu5::TftPacing tft_pacing() const { return tft_pacing_; }
 
 private:
     // A3-04C: every TFT transaction and every draw-loop yield goes through
@@ -142,7 +148,12 @@ private:
     /** A command / window-setup transaction (no row to build). */
     esp_err_t tft_command(spi_transaction_t &transaction);
     esp_err_t tft_transmit(spi_transaction_t &transaction, const RowMark *start);
-    /** The draw loops' vTaskDelay(1): lets the idle task and the input task run. */
+    /**
+     * The draw loops' pause every 16 rows / 32 fill chunks (Alpha 2.0's
+     * cadence). A3-04E: taskYIELD, not vTaskDelay(1) -- each row already
+     * blocks in spi_device_transmit (the idle task runs there) and the input
+     * task outranks this one, so the tick sleep only made every band wait.
+     */
     void tft_yield();
     esp_err_t draw_party_rows(const openu5::GameState &, DevicePartyHighlight);
     esp_err_t initialize_shared_spi();
@@ -169,6 +180,7 @@ private:
     uint32_t tft_cpu_mhz_ = 0; // set with the display; 0 on the host (no timing)
     const volatile uint32_t *audio_active_ = nullptr;
     const volatile uint32_t *sd_active_ = nullptr;
+    openu5::TftPacing tft_pacing_ = openu5::kPacingDefault.tft;
     // Sole app task; synchronous spi_device_transmit completes before reuse.
     alignas(4) std::array<uint8_t, 320 * 2> transfer_row_{};
     bool shared_spi_initialized_ = false;

@@ -73,6 +73,12 @@ struct UiDiagnosticsServices {
     // synth bypass. toggle=true switches the SD diagnostic log on or off;
     // either way it returns the log's state (the row's label shows it).
     SdLogState (*sd_log)(void *, bool toggle) = nullptr;
+    // A3-04E (section 22): "Probe: legacy TFT pacing" and "Probe: legacy loop
+    // spin", the two rows just above the SD log. toggle=true switches the game
+    // thread's draw-loop pause / loop wait between A3-04E's and the pre-A3-04E
+    // behaviour; either way it returns whether the legacy one is on.
+    bool (*legacy_tft_pacing)(void *, bool toggle) = nullptr;
+    bool (*legacy_loop_spin)(void *, bool toggle) = nullptr;
 };
 
 struct UiDebugMenuView {
@@ -151,6 +157,8 @@ class UiDebugMenu {
     mutable char special_item_label_buf_[32]{};
     mutable char bypass_label_buf_[40]{};
     mutable char sd_log_label_buf_[40]{};
+    mutable char tft_pacing_label_buf_[40]{};
+    mutable char loop_spin_label_buf_[40]{};
 
     size_t item_count() const;
     const char *category_name(size_t) const;

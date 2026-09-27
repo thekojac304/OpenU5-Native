@@ -1,0 +1,72 @@
+﻿
+build-a3-04e\openu5_tdeck.elf:     file format elf32-xtensa-le
+
+
+Disassembly of section .flash.text:
+
+42010d84 <tdeck::Board::tft_yield()>:
+42010d84:	004136        	entry	a1, 32
+42010d87:	03ea70        	rsr.ccount	a7
+42010d8a:	840282        	l8ui	a8, a2, 132
+42010d8d:	c8cc      	bnez.n	a8, 42010d9d <tdeck::Board::tft_yield()+0x19>
+42010d8f:	01a0a2        	movi	a10, 1
+42010d92:	c12081        	l32r	a8, 42001214 <_stext+0x11f4> (4209a670 <vTaskDelay>)
+42010d95:	0008e0        	callx8	a8
+42010d98:	0001c6        	j	42010da3 <tdeck::Board::tft_yield()+0x1f>
+42010d9b:	810000        	src	a0, a0, a0
+42010d9e:	e0c1e6        	bgei	a1, 32, 42010d82 <tdeck::Board::write_display_command(unsigned char, unsigned char const*, unsigned int)+0x8e>
+42010da1:	0008      	l32i.n	a0, a0, 0
+42010da3:	03ea80        	rsr.ccount	a8
+42010da6:	c08870        	sub	a8, a8, a7
+42010da9:	d298      	l32i.n	a9, a2, 52
+42010dab:	991b      	addi.n	a9, a9, 1
+42010dad:	d299      	s32i.n	a9, a2, 52
+42010daf:	e298      	l32i.n	a9, a2, 56
+42010db1:	f2b8      	l32i.n	a11, a2, 60
+42010db3:	0bad      	mov.n	a10, a11
+42010db5:	809980        	add	a9, a9, a8
+42010db8:	01b987        	bgeu	a9, a8, 42010dbd <tdeck::Board::tft_yield()+0x39>
+42010dbb:	ab1b      	addi.n	a10, a11, 1
+42010dbd:	e299      	s32i.n	a9, a2, 56
+42010dbf:	f2a9      	s32i.n	a10, a2, 60
+42010dc1:	102292        	l32i	a9, a2, 64
+42010dc4:	02b987        	bgeu	a9, a8, 42010dca <tdeck::Board::tft_yield()+0x46>
+42010dc7:	106282        	s32i	a8, a2, 64
+42010dca:	1e2292        	l32i	a9, a2, 120
+42010dcd:	c1d9a1        	l32r	a10, 42001534 <_stext+0x1514> (2af8 <UserFrameTotalSize+0x29f8>)
+42010dd0:	8299a0        	mull	a9, a9, a10
+42010dd3:	07b987        	bgeu	a9, a8, 42010dde <tdeck::Board::tft_yield()+0x5a>
+42010dd6:	112282        	l32i	a8, a2, 68
+42010dd9:	881b      	addi.n	a8, a8, 1
+42010ddb:	116282        	s32i	a8, a2, 68
+42010dde:	f01d      	retw.n
+
+42010de0 <tdeck::Board::set_display_window(int, int, int, int)>:
+42010de0:	008136        	entry	a1, 64
+42010de3:	535a      	add.n	a5, a3, a5
+42010de5:	f45050        	extui	a5, a5, 0, 16
+42010de8:	550b      	addi.n	a5, a5, -1
+42010dea:	646a      	add.n	a6, a4, a6
+42010dec:	f46060        	extui	a6, a6, 0, 16
+42010def:	660b      	addi.n	a6, a6, -1
+42010df1:	218830        	srai	a8, a3, 8
+42010df4:	104182        	s8i	a8, a1, 16
+42010df7:	114132        	s8i	a3, a1, 17
+42010dfa:	748850        	extui	a8, a5, 8, 8
+42010dfd:	124182        	s8i	a8, a1, 18
+42010e00:	134152        	s8i	a5, a1, 19
+42010e03:	218840        	srai	a8, a4, 8
+42010e06:	144182        	s8i	a8, a1, 20
+42010e09:	154142        	s8i	a4, a1, 21
+42010e0c:	748860        	extui	a8, a6, 8, 8
+42010e0f:	82          	.byte	0x82
+
+build-a3-04e\openu5_tdeck.elf:     file format elf32-xtensa-le
+
+
+Disassembly of section .flash.text:
+
+42010d9d <tdeck::Board::tft_yield()+0x19>:
+42010d9d:	c1e681        	l32r	a8, 42001538 <_stext+0x1518> (4038020c <vPortYield>)
+42010da0:	0008e0        	callx8	a8
+42010da3:	03ea80        	rsr.ccount	a8

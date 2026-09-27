@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "openu5/audio_stream.h"
+#include "openu5/render_pacing.h"
 #include "openu5/sd_diag_log.h"
 
 // Alpha 3 A3-04B -- the render side of the performance picture and the one
@@ -101,6 +102,8 @@ class SystemPerfSource {
 constexpr uint32_t kSlowXferUs = 1000;
 /** The draw loops' vTaskDelay(1) returns at the next 10 ms tick; longer means core 0 was not handed back. */
 constexpr uint32_t kLateYieldUs = 11000;
+/** A3-04E: the FreeRTOS tick the legacy draw-loop sleep waited for (CONFIG_FREERTOS_HZ=100). */
+constexpr uint32_t kDeviceTickUs = 10000;
 
 /**
  * What the device Board measured while writing ONE gameplay frame to the
@@ -120,7 +123,7 @@ struct TftTiming {
     // (the card is on this SPI bus), and the longest of those.
     uint32_t slow_xfers_sd = 0;
     uint32_t xfer_max_sd_cycles = 0;
-    uint32_t yields = 0;           // vTaskDelay(1) every 16 rows
+    uint32_t yields = 0;           // the draw loops' pauses every 16 rows: vTaskDelay(1) (legacy) or taskYIELD (A3-04E)
     uint64_t yield_cycles = 0;
     uint32_t yield_max_cycles = 0;
     uint32_t late_yields = 0;      // longer than kLateYieldUs
@@ -128,6 +131,9 @@ struct TftTiming {
     uint64_t fill_cycles_idle = 0, fill_cycles_busy = 0; // building the row (the PSRAM viewport read, glyphs, byte swap)
     uint64_t xfer_cycles_idle = 0, xfer_cycles_busy = 0;
     uint32_t viewport_full = 0;    // the whole 176-px viewport was rewritten (a step, a new map)
+    // A3-04E: the whole 320x240 screen was cleared and repainted (the game
+    // screen's first frame; leaving the Developer screen or a system menu).
+    uint32_t full_screen = 0;
 };
 
 /** The SD-log writer's storage bursts (its SPI bus is the TFT's). Device only. */
@@ -156,6 +162,18 @@ struct ContentionSnapshot {
     uint32_t row_fill_idle_x10 = 0, row_fill_busy_x10 = 0; // per-row average, 0.1 us
     uint32_t row_xfer_idle_x10 = 0, row_xfer_busy_x10 = 0;
     uint32_t loops = 0, loop_avg_us = 0, loop_max_us = 0;  // main.cpp's loop passes
+    // A3-04E (ALPHA3_AUDIO.md section 22). Full-screen repaints are ALSO
+    // viewport frames (as in A3-04C); vp_only is the viewport frames that were
+    // not, i.e. what walking costs without the menu-exit repaint.
+    uint32_t full_frames = 0, full_tft_avg_us = 0, full_tft_max_us = 0;
+    uint32_t vp_only_frames = 0, vp_only_tft_avg_us = 0, vp_only_tft_max_us = 0;
+    uint32_t viewport_yields_x10 = 0;   // draw-loop pauses per viewport frame, 0.1
+    uint32_t viewport_yield_avg_us = 0; // time in them per viewport frame
+    uint32_t yield_total_us = 0;        // time in them over the whole window
+    // The loop's end-of-pass waits (LoopPacing::IdleWait; none while it spins).
+    uint32_t loop_waits = 0, loop_wait_avg_us = 0, loop_wait_max_us = 0;
+    uint32_t loop_wait_total_us = 0;    // the loop asleep (blocked on the input queue)
+    uint32_t loop_input_wakes = 0;      // waits an input event ended early
 };
 
 class ContentionCounters {
@@ -165,6 +183,8 @@ class ContentionCounters {
     void on_frame(uint32_t logic_us, uint32_t tft_us, const TftTiming &t);
     /** One pass of main.cpp's loop (input, handling, drawing). */
     void on_loop(uint32_t loop_us);
+    /** A3-04E: the loop blocked `wait_us` on the input queue after a pass; `input` = an event ended it. */
+    void on_loop_wait(uint32_t wait_us, bool input);
     void snapshot(uint64_t now_us, ContentionSnapshot &out) const;
 
   private:
@@ -180,6 +200,13 @@ class ContentionCounters {
     uint64_t fill_idle_cycles_ = 0, fill_busy_cycles_ = 0, xfer_idle_cycles_ = 0, xfer_busy_cycles_ = 0;
     uint32_t loops_ = 0, loop_max_ = 0;
     uint64_t loop_sum_ = 0;
+    // A3-04E
+    uint32_t full_frames_ = 0, full_tft_max_ = 0, vp_only_frames_ = 0, vp_only_tft_max_ = 0;
+    uint64_t full_tft_sum_ = 0, vp_only_tft_sum_ = 0;
+    uint64_t viewport_yields_ = 0, viewport_yield_sum_ = 0; // over timed viewport frames
+    uint32_t timed_viewport_frames_ = 0;
+    uint32_t loop_waits_ = 0, loop_wait_max_ = 0, loop_input_wakes_ = 0;
+    uint64_t loop_wait_sum_ = 0;
 };
 
 /** What was playing, at which settings: the label that makes two runs comparable. */
@@ -188,6 +215,10 @@ struct PerfScenario {
     uint8_t music_volume = 0, sfx_volume = 0;
     bool synth_bypass = false;     // the A3-04C Developer probe
     SdLogState sd_log = SdLogState::NotReported; // A3-04D: "sdlog ON" / "sdlog OFF" / "sdlog n/a"
+    // A3-04E: the game thread's pacing (the two legacy probes). Reported on
+    // its own report line and in A3E_PACE, not in the 51-character label.
+    bool pacing_reported = false;
+    PacingPolicy pacing{};
 };
 
 // ---------------------------------------------------------------------------
@@ -226,5 +257,13 @@ size_t format_perf_report(const PerfReportInput &, char (*lines)[kPerfReportLine
  */
 constexpr size_t kContentionLineBytes = 720;
 size_t format_contention_line(const PerfReportInput &, char *out, size_t cap);
+
+/**
+ * A3-04E (ALPHA3_AUDIO.md section 22): the pacing window on ONE line (the
+ * serial `A3E_PACE` heartbeat, next to A3C_PERF, whose format is unchanged).
+ * Always NUL-terminated; returns the characters written (< kPacingLineBytes).
+ */
+constexpr size_t kPacingLineBytes = 600;
+size_t format_pacing_line(const PerfReportInput &, char *out, size_t cap);
 
 } // namespace openu5

@@ -578,10 +578,15 @@ int main(int argc, char **argv) {
         check(!board.empty() && count_of(board, "spi_device_transmit(") == 1 &&
                   transmit.find("spi_device_transmit(") != std::string::npos,
               "S1 every TFT transaction goes through the timed Board::tft_transmit (the only spi_device_transmit)");
-        check(count_of(board, "vTaskDelay(1)") == 1 && yield.find("vTaskDelay(1)") != std::string::npos &&
+        // A3-04E (section 22) made the pause a policy (a yield, or the legacy
+        // vTaskDelay(1) behind a Developer probe), so the literal is gone; the
+        // guard is the same: tft_yield is the only scheduler call of the draw
+        // code (the other two vTaskDelays are the power-up and ST7789 init waits).
+        check(count_of(board, "vTaskDelay(") == 3 && yield.find("vTaskDelay(") != std::string::npos &&
+                  yield.find("taskYIELD()") != std::string::npos && count_of(board, "taskYIELD()") == 1 &&
                   count_of(board, "tft_yield()") >= 5,
-              "S2 every draw-loop yield is the timed Board::tft_yield (the only vTaskDelay(1)); " +
-                  std::to_string(count_of(board, "tft_yield()") - 1) + " loops use it");
+              "S2 every draw-loop yield is the timed Board::tft_yield (its only vTaskDelay/taskYIELD outside "
+              "init); " + std::to_string(count_of(board, "tft_yield()") - 1) + " loops use it");
         check(std::regex_search(transmit, std::regex(R"(audio_running\(\)[\s\S]*spi_device_transmit[\s\S]*audio_running\(\))")) &&
                   transmit.find("rows_busy") != std::string::npos && transmit.find("rows_idle") != std::string::npos,
               "S3 a row is classified by the audio task's flag at the row's start and around its transaction");

@@ -89,6 +89,17 @@ class AlphaRuntime {
     size_t contention_line(char *out, size_t cap) const;
     bool music_bypass() const { return music_bypass_; }
     openu5::SdLogState sd_log_state() const;
+    // Alpha 3 A3-04E (ALPHA3_AUDIO.md section 22): the game thread's pacing.
+    // The draw loops' pause (pushed to the Board before every draw) and
+    // main.cpp's end-of-pass wait. A3-04E's by default; the two Developer
+    // probes switch either back to the legacy behaviour. Never saved.
+    const openu5::PacingPolicy &pacing() const { return pacing_; }
+    // May main.cpp's loop block for a tick after this pass? No while anything
+    // is scheduled relative to the moment it is serviced (see the .cpp).
+    bool loop_may_sleep() const;
+    uint32_t loop_wait_ticks() const { return openu5::loop_wait_ticks(pacing_.loop, loop_may_sleep()); }
+    void note_loop_wait(uint32_t us, bool input) { contention_.on_loop_wait(us, input); }
+    size_t pacing_line(char *out, size_t cap) const; // the heartbeat's A3E_PACE line
     // The combined AUDIO / RENDER PERF report: it replaces the Developer
     // screen's rows until dismissed (Enter / Back), and scrolls with Up/Down.
     // "Pending" = it finished while the Developer menu was closed: Alt+D shows it.
@@ -161,6 +172,8 @@ class AlphaRuntime {
     const openu5::NarrativeScenePacer &narrative_pacer() const { return narrative_pacer_; }
     const openu5::BlackthornScenePacer &blackthorn_pacer() const { return blackthorn_pacer_; }
     bool camp_scene_inverted() const { return camp_scene_inverted_; }
+    // A3-04E: the last composed 176x176 viewport -- what the Board was handed.
+    const uint16_t *composed_viewport() const { return viewport_; }
     bool system_menu_open() const { return system_menu_.active(); }
     // A3-01: the System Menu page as it would be drawn (read-only).
     openu5::FrontendView system_menu_view() const { return system_menu_.view(); }
@@ -298,6 +311,7 @@ class AlphaRuntime {
     openu5::ContentionCounters contention_{};
     SdLogPerfHooks sd_log_perf_{};
     bool music_bypass_ = false;
+    openu5::PacingPolicy pacing_ = openu5::kPacingDefault; // A3-04E
     openu5::PerfScenario perf_scenario() const;
     openu5::AudioPerfSnapshot bench_idle_{};
     bool bench_idle_valid_ = false;
@@ -582,6 +596,9 @@ class AlphaRuntime {
     static void audio_stats_now(void *);
     static bool music_bypass_probe(void *, bool toggle);
     static openu5::SdLogState sd_log_probe(void *, bool toggle);
+    // A3-04E. Developer > Diagnostics > "Probe: legacy TFT pacing" / "... loop spin".
+    static bool legacy_tft_probe(void *, bool toggle);
+    static bool legacy_loop_probe(void *, bool toggle);
     void service_audio_benchmark(int64_t now_us);
     // A3-04B. The report view (section 19.3) and the three windows it reads.
     void reset_perf_windows();

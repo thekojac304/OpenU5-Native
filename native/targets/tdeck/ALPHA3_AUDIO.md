@@ -1,6 +1,8 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing)
 
-**Status (A3-04D): SD DIAGNOSTIC LOGGING OFF BY DEFAULT — MECHANISM PROVEN FROM THE SOURCE — HARDWARE CONFIRMATION PENDING.** The A3-04C runs showed 0.8–1.5 s frame/TFT stalls with the synth bypassed and with music off, each within a few ms of the SD-log writer's longest burst. A3-04D (§21) traced why. The SD card shares SPI2 with the TFT, and ESP-IDF's sdspi driver holds that bus for a whole card command, the card's busy time included, at 800 kHz. The diagnostic SD log is therefore now **off at boot**, one Developer keypress (*Probe: SD diag logging*) turns it on for a session, and serial logging is unchanged. Every report and `A3C_PERF` line says `sdlog ON/OFF`, and slow TFT transactions are attributed to SD-log bursts (`insd=`). The ON/OFF device runs of §21.7 are pending, and the batch is not hardware-validated until they pass.
+**Status (A3-04E): RENDERER TICK SLEEPS AND MAIN-LOOP SPIN REMOVED — HOST-PROVEN WITH THE REAL BOARD CODE — HARDWARE VALIDATION PENDING.** With SD logging off, A3-04D's device runs still showed a ~400–445 ms frame/TFT maximum and a ~122 ms viewport average, the same with and without the synth. A3-04E (§22) found that neither is a stall. Every draw loop slept to the next 10 ms tick every 16 rows. A walking step crossed 9 of those sleeps, and the full-screen repaint on leaving the Developer menu, which opens every measurement window, crossed 37. The real `tdeck_board.cpp`, built for the host over a fake ST7789, reproduces both counts; its model gives 391.7 ms for the repaint, against the device's 404–408 ms. The draw loops now yield at the same points instead of sleeping (modelled repaint 113.8 ms, step 27.7 ms; byte-identical panel stream). The main loop, whose `vTaskDelay(pdMS_TO_TICKS(5))` was 0 ticks, now blocks on the input queue for one tick when nothing relative-timed is running. Each half is behind its own Developer probe (*Probe: legacy TFT pacing* / *legacy loop spin*), so the device can measure it alone. Not hardware-validated until the §22.10 runs pass.
+
+**Status as A3-04D wrote it: SD DIAGNOSTIC LOGGING OFF BY DEFAULT — MECHANISM PROVEN FROM THE SOURCE — HARDWARE CONFIRMATION PENDING.** The A3-04C runs showed 0.8–1.5 s frame/TFT stalls with the synth bypassed and with music off, each within a few ms of the SD-log writer's longest burst. A3-04D (§21) traced why. The SD card shares SPI2 with the TFT, and ESP-IDF's sdspi driver holds that bus for a whole card command, the card's busy time included, at 800 kHz. The diagnostic SD log is therefore now **off at boot**, one Developer keypress (*Probe: SD diag logging*) turns it on for a session, and serial logging is unchanged. Every report and `A3C_PERF` line says `sdlog ON/OFF`, and slow TFT transactions are attributed to SD-log bursts (`insd=`). The ON/OFF device runs of §21.7 are pending, and the batch is not hardware-validated until they pass.
 
 **Status as A3-04C wrote it: CONTENTION MAP INSTRUMENTED — CAUSE NARROWED, NOT PROVEN — HARDWARE EVIDENCE PENDING (Outcome C).** The user still sees the map lag with music on and much less at Music Volume 0 %. A3-04C (§20) found that 0 % turns off three things at once: the synth, the I2S DMA/interrupt on core 0, and the audio task's wakes. It adds the measurements that separate them: a per-frame TFT split (row building / SPI / tick yields), a row-level test of what core 1 was doing while each TFT row was built and sent, SD-log bus bursts, the audio task's own work per block, and a one-line `A3C_PERF` heartbeat. It also adds a Developer probe, *Probe: synth bypass*, that keeps the song, channel and cadence but skips the synth. No gameplay, audio output or renderer behaviour changed. The next step is the §20.10 hardware runs; their result picks A3-04D (§20.11).
 
@@ -2232,3 +2234,213 @@ The next step is chosen by the device result:
 - Core: `include/openu5/sd_diag_log.h`, `src/sd_diag_log.cpp` (new: the switch, the hook body, the writer's wakes); `sources.cmake`; `include/openu5/perf_report.h`, `src/perf_report.cpp` (`SdLogState` in the scenario, `SdLogPerf::off`, `TftTiming::slow_xfers_sd`/`xfer_max_sd_cycles`, the report line and `insd=`/`sd=OFF:`); `include/openu5/ui_debug_menu.h`, `src/ui_debug_menu.cpp` (the row).
 - Device: `sd_diagnostic_logger.{h,cpp}` (the core log wired to FreeRTOS/stdio; sleeps while idle; `state`/`set_enabled`/`burst_flag`), `tdeck_board.{h,cpp}` (SD attribution), `alpha_runtime.{h,cpp}` (hooks, scenario, the probe service), `main.cpp` (wiring, boot message), `CMakeLists.txt` (`PROJECT_VER`).
 - Tests / tools: `tests/a3_04d_sd_log_test.cpp`, `host_tests/a3_04d_sd_log_runtime_test.cpp`, `tests/ui_debug_menu_test.cpp` (21 rows), `core/CMakeLists.txt`, `tools/a3_04d_mutation_check.py`.
+
+## 22. A3-04E — renderer cadence, TFT yields and main-loop scheduling
+
+**The hardware result that opened this batch** (the user's A3-04D runs, SD logging off, same open-overworld walk; values read off the Developer report):
+
+| Test | Music | frame avg / max | TFT avg / max | viewport TFT avg / max | xfer max | slow | CPU0 | CPU1 | main | audio |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 2 | 0 % | 79.2 / 443.0 | 41.1 / 404.4 | 122.0 / 404.4 | 0.60 | 0 | 74 % | 1 % | 73 % | — |
+| 3 | 80 % | 101.3 / 443.6 | 63.4 / 405.4 | 122.6 / 405.4 | 0.84 | 0 | 69 % | 43 % | 68 % | 42 % (3.35 ms/blk, no misses) |
+| 4 | 80 %, synth bypass | 81.7 / 444.7 | 43.7 / 408.1 | 121.6 / 408.1 | 0.55 | 0 | 73 % | 2 % | 72 % | 2 % |
+
+The SD stalls are gone (A3-04D confirmed). The ~400–445 ms worst case and the ~122 ms viewport average are **the same with and without the synth**, and the user remembers banded redraws from before music existed. The SPI transfers themselves are fast (worst transaction 0.55–0.84 ms, none slow).
+
+**Status: OUTCOME A (host) — both stalls removed in production, each behind its own legacy probe so the device can measure them one at a time; HARDWARE VALIDATION PENDING.** The ~400 ms is not a stall at all. It is a deterministic, tick-quantised repaint, and the host reproduces it with the real Board code (§22.2). The draw loops now yield where they used to sleep to the next tick. An idle pass of the main loop now blocks on the input queue for one tick instead of spinning. Nothing the game does, draws, plays or saves changes, and the task placement and the tick rate are untouched.
+
+### 22.1 Baseline (Phase 1)
+
+- HEAD `63c9e13b` on `main` (A3-04D's post-commit logs), tree clean. Latest tag `alpha3-a3-04d-sd-log-isolation` (`5cd8fd0b`).
+- Firmware at baseline: A3-04D, `0xed5e0` = 972,256 B, 76,320 B (7 %) free.
+- Fresh host build `native/core/build-a3-04e-base`: **serial ctest 141/141 passed in 136.13 s**, the one known w64devkit warning (`native/core/a3-04e-baseline-{configure,build,ctest}.log`).
+
+**Scheduling map** (source, `sdkconfig`, ESP-IDF 6.1):
+
+| Context | Core | Prio | How it waits |
+|---|---|---|---|
+| `main` — game logic, composition **and every TFT transaction** | 0 | 1 | Up to A3-04D: never, except inside the TFT write. The loop ended with `vTaskDelay(pdMS_TO_TICKS(5))` = `vTaskDelay(0)` at `CONFIG_FREERTOS_HZ=100`, which only reschedules (FreeRTOS `tasks.c`: "A delay time of zero just forces a reschedule") |
+| `openu5-input` | 0 | 4 | `xTaskNotifyWait` (GPIO interrupt, 1-tick fallback); posts `RawInputEvent`s to a 64-entry queue that `main` drains with zero timeout. It preempts `main` whenever it is ready |
+| `openu5-audio` | 1 | 3 | `i2s_channel_write` (DMA-paced, 8 ms blocks) or a 20 ms idle queue wait (A3-04A..D, unchanged) |
+| `alpha20-sd-log` | any | 0 | `ulTaskNotifyTake(portMAX_DELAY)` while logging is off (A3-04D) |
+| IDLE0 / IDLE1 | 0 / 1 | 0 | the task watchdog checks both (5 s, warning only, no panic) |
+| `esp_timer`, `ipc0/1` | 0 / both | 22 / 24 | system |
+| `Tmr Svc` | any | 1 | FreeRTOS software timers: the project uses none |
+| TFT write | inside `main` | — | one **interrupt transaction per pixel row** (`spi_device_transmit`, SPI2 at 40 MHz, DMA from internal RAM). It blocks: `spi_device_get_trans_result` waits in `xQueueReceive` on the result queue (`esp_driver_spi/src/gpspi/spi_master.c:1267`, "block until return"), so IDLE0 runs during every row's DMA |
+
+**Where the renderer paused** (all in `tdeck_board.cpp`): `fill_rect` after every 32nd chunk; `draw_rgb565_strided`, `draw_rgb565_scaled` and `draw_text_box` after rows 16, 32, …; never in `draw_text_box_metrics` or the sky strip. Every pause was `vTaskDelay(1)` inside the timed `Board::tft_yield` (A3-04C), i.e. a sleep until the next 10 ms tick.
+
+### 22.2 The pacing cost, reconciled (Phase 2)
+
+The pauses are counted **in the real Board code**. `tdeck_board.cpp` now builds on the host over `host_tests/board_shims`, a fake ST7789 that decodes the byte stream into a 320×240 panel, and the real `AlphaRuntime` drives it (`a3_04e_pacing_runtime`). The pause breakdown below is what that test prints. The timing model uses ESP-IDF's documented ESP32-S3 interrupt-transaction cost (`docs/en/api-reference/peripherals/spi_master.rst`, "Transaction Duration": 26 µs via DMA, 24 µs via CPU, measured with `CONFIG_SPI_MASTER_ISR_IN_IRAM` as this firmware has it), the bits at 40 MHz, and `vTaskDelay(n)` = sleep to the n-th next 10 ms tick. It does **not** model building the rows (the device's `fill`), so a modelled time is a lower bound.
+
+| Frame | Pauses (real Board, host) | Tick-sleep floor | Modelled legacy TFT | Device A3-04D | Modelled A3-04E |
+|---|---|---|---|---|---|
+| **Leaving the Developer screen** (full-screen repaint) | **37** = clear 320×240 **7** + viewport 176×158 **9** + right-panel reflow 138×240 **7** + the two 2×180 viewport-frame sides **5 + 5** + the party and world frame sides (1×52, 1×32, twice) **1+1+1+1**; 1,717 transactions | ≥ 36 ticks = 360 ms | **391.7 ms** | TFT max **404.4 / 405.4 / 408.1** | **113.8 ms** |
+| **A walking step** (viewport rewrite + panels) | **9** (after rows 16 … 144 of 158); 306 transactions | ≥ 8 ticks = 80 ms | **100.3 ms** | viewport avg **~122** (this average also includes the one repaint, and row building) | **27.7 ms** |
+
+Why the maximum is the same ~443 ms in every A3-04D test: **every measurement window starts inside the Developer menu** (the *Audio/render stats (live)* read resets it), so its first gameplay frame is always this full-screen repaint. The repaint's cost is set by the tick, not by what is playing. It is not an SPI stall: the transfers are ~1,717 × ~30 µs plus the bytes. The frame max (443 ms) is the TFT max (404 ms) plus that frame's composition. Two of the 37 pauses show a pre-existing inefficiency: `fill_rect` chunks a rectangle by its width, so a 2-pixel-wide, 180-row frame line is 180 transactions of 4 bytes each, which is 5 pauses by itself. With tick sleeps that cost 50 ms per line; with yields it costs ~5 ms (§22.11).
+
+The banding: with a pause every 16 rows and each pause waiting ~8 ms for the tick, the 158-row viewport arrives in **10 bands over ~90 ms**, a visible top-to-bottom wipe, music or not. Without the sleeps the same rows arrive in ~20–30 ms. That is still a top-to-bottom raster (the panel has no tearing-effect sync here), but it is 3–4× faster and has no pauses in it.
+
+### 22.3 Why the yield existed (Phase 3)
+
+It came in with the Alpha 2.0 import (`c18f5b64`, 2026-09-18) in `fill_rect`, `draw_rgb565_strided`, `draw_rgb565_scaled` and `draw_text_box`, with no comment, test or document. The Board before it had no pauses. Every candidate reason was checked against the source:
+
+| Candidate reason | Finding |
+|---|---|
+| Task-watchdog / idle starvation | The watchdog watches IDLE0/IDLE1. **A draw cannot starve IDLE0**: every row blocks in `spi_device_transmit`'s result-queue wait, and IDLE0 runs there. What *can* starve it is the loop spinning between frames (`vTaskDelay(0)`), which the pauses never touched. `DEBUG51.md` already flagged `pdMS_TO_TICKS(5)` = 0 as an idle-starvation hypothesis. The A3-04E idle wait addresses exactly that |
+| Input servicing | The input task has priority 4 and preempts the priority-1 game thread whenever it is ready. A sleep in `main` gives it nothing. Draining happens in `main` itself, so sleeping mid-draw only delays it |
+| Audio servicing | The audio task is on core 1; the game→audio queues are zero-timeout sends |
+| Another task starving | Only priority ≤ 1 tasks on core 0 could benefit: IDLE0 (above), `Tmr Svc` (unused) and the unpinned idle-priority SD writer, which runs on core 1 anyway |
+| TFT driver / DMA completion | Every transaction is synchronous; there is nothing to let complete |
+| Long critical sections | None in the draw loops |
+| Visible artifacts | The sleep *causes* the bands |
+
+**Conclusion: an inherited conservative scheduling choice.** No requirement for it was found. It most likely dates from before the input task existed ("the native app polls and redraws synchronously in app_main", `DEBUG51.md`), but the history does not say so, and that is recorded as unclear. That is why the legacy pause stays one keypress away, rather than being deleted.
+
+### 22.4 Candidate renderer pacings (Phase 4)
+
+| Candidate | Effect (host model, real Board) | Verdict |
+|---|---|---|
+| **A — `taskYIELD()` at the same points** | 0 tick sleeps; the 37 + 9 pauses become reschedules (modelled at 1 µs; nothing else of priority 1 is ready on core 0); repaint 391.7 → 113.8 ms, step 100.3 → 27.7 ms | **selected** |
+| B — pause less often (every 64 rows) | viewport 2 sleeps, but the repaint still sleeps ~17 times (fill chunks, frame lines): ~170 ms, still tick-quantised | rejected: halves the cost, keeps the mechanism |
+| C — pause only when needed | nothing on core 0 needs the game thread to sleep (§22.3), so "when needed" is never; it collapses into A/D | rejected (no consumer) |
+| D — no pause | the same timing as A | A keeps an explicit cooperative point for free, so a future priority-1 peer on core 0 still gets its turn every 16 rows |
+
+The cadence itself is unchanged (`openu5::tft_row_yield_due` / `tft_chunk_yield_due` are Alpha 2.0's expressions, pinned by P2). Only what happens at each point changed, through `openu5::tft_pause_ticks(TftPacing)`.
+
+**The Phase 6 matrix, as far as a host can measure it** (`a3_04e_pacing_runtime`: the A3-04C/D procedure on the modelled bus, 12 steps; transfers and pauses only):
+
+| Configuration | Repaint TFT | Step TFT (avg / max) | Pause time / viewport frame | Frame max |
+|---|---|---|---|---|
+| Baseline (TFT tick, loop spin) = A3-04D | 391.7 ms | 100.3 / 107.6 ms | 88.3 ms | 391.7 ms |
+| Renderer candidate (TFT yield, loop spin) | 113.8 ms | 27.7 / 31.4 ms | 0.0 ms | 113.8 ms |
+| Main-loop candidate (TFT tick, loop idle-wait) | as baseline | as baseline | as baseline | as baseline |
+| Combined (A3-04E) | 113.8 ms | 27.7 / 31.4 ms | 0.0 ms | 113.8 ms |
+
+`main.cpp` does not run on the host, so the main-loop candidate's effect (CPU0 / `main` %, the loop's sleep) exists only on the device: runs A0/A2 of §22.10 measure it. The host proves its policy and gate (P4–P6, L1–L6, S4–S6).
+
+### 22.5 The main loop (Phase 5)
+
+`vTaskDelay(pdMS_TO_TICKS(5))` is 0 ticks at 100 Hz, so the game thread never slept between frames. The smallest correct fix that meets the requirements:
+
+- **An idle wait on the input queue** (`InputHardware::wait_for_event` = `xQueuePeek(event_queue_, &event, ticks)`) for **`openu5::kLoopIdleWaitTicks` = 1 tick**. This is a tick count, not milliseconds, so no tick rate rounds it to zero (P5). A queued event ends the wait at once, so input pays **no** added latency. The event stays queued for `poll()`, which counts and logs it.
+- **A gate, `AlphaRuntime::loop_may_sleep()`.** A one-tick sleep makes a service at most one tick late. That is harmless for everything driven by the absolute clock: the 55 ms animation and ambient ticks, the quake / world-fx / invert / map-reveal windows, the input-hold threshold, the frontend. But some services schedule each step relative to the moment the previous one was serviced. The scene pacers use `resume_at = now + dwell`, the combat enemy beat uses `now + 400 ms`, and the poison flash, Camp, the audio benchmark and the smoke tests do the same, so a late step would push all later ones back. While any of them is live, or a frame is still owed, the loop does not sleep and their timing is exactly A3-04D's (L6: never once during a paced Camp).
+- Otherwise `vTaskDelay(0)`, as before. The not-ready error screen waits one tick.
+
+Rejected: a higher `CONFIG_FREERTOS_HZ` (a global change to every tick-based wait, and to the legacy pause's length); a deadline-driven loop (every service would have to publish its next deadline). No busy-wait anywhere (S5).
+
+### 22.6 The device A/B: two Developer probes
+
+**Developer › Diagnostics › *Probe: legacy TFT pacing*** (seven up from the top) and ***Probe: legacy loop spin*** (six up), inserted above *Probe: SD diag logging* so every older row keeps its place counted from the end (SD log five up, synth bypass four up, benchmark three, stats two, tone one). Each row reads `off` (A3-04E, the boot default) or `ON` (the A3-04D behaviour). Neither is saved; a reboot is A3-04E. Switching logs `A3E_PROBE tft=… loop=…`. Both ON is exactly A3-04D's pacing, so the baseline, each candidate alone and the combination run on **one image**.
+
+### 22.7 Instrumentation (kept, and added)
+
+Everything from A3-04B/C/D is kept, and `A3C_PERF` is **byte-identical** in format (F7), so old and new runs diff field by field. Added:
+
+- `TftTiming::full_screen`: the Board marks the two gameplay full-screen repaints (the first game frame; leaving the Developer screen).
+- `ContentionCounters`: full-screen repaints apart from the other viewport frames; pauses per viewport frame and their time; the window's total pause time; the loop's idle waits (count, avg, max, total asleep, input wakes) and passes per second.
+- A report section, last before the OPL2 line (values illustrative):
+
+```
+-- Pacing (A3-04E) --
+tft yield  loop idle-wait                      <- "tft TICK  loop SPIN" = the legacy probes ON
+full-screen 1 frm tft avg 113.8 max 113.8      <- the menu-exit repaint
+viewport w/o full 40 frm avg 27.7 max 31.4     <- walking
+pauses/vp frm 9.0 = 0.0 ms  all 0.1 ms         <- legacy: 9.0 = ~88 ms
+loop 95/s  waits 4800 avg 9.8 max 10.2 ms
+loop asleep 47.0 of 60.0 s  input wakes 12
+```
+
+- One `A3E_PACE` line per 5 s heartbeat, after `A3C_PERF` (worst case 534 characters, inside one SD-log record):
+
+```
+A3E_PACE pace=[tft yield  loop idle-wait] win=60.1s | frame n=... avg=... max=... | tft=avg/max in=n:avg/max | full=n:avg/max vp=n:avg/max | yld n=... /vp=9.0 vpms=... tot=... max=... late=... | loop n=... /s=... max=... wait=n:avg/max in=... asleep=... | und=0 hw=0 miss=0 | cpu0=.. cpu1=.. main=.. aud=..
+```
+
+### 22.8 Tests, RED / GREEN and mutations
+
+- **New targets.** `a3_04e_pacing` (37 checks): P the policy, C the counters, F the report / line / fit, U the rows, S the device wiring and the preservation guards. `a3_04e_pacing_runtime` (26 checks): the **real `AlphaRuntime` driving the real `tdeck_board.cpp`** over the fake panel. It covers Y the pauses (37 / 9, the same points and transactions in both modes), M the modelled procedure (legacy ≥ 360 ms repaint, A3-04E < half), V the panel (byte-identical transaction streams under both pacings; after every one of 1,099 gameplay renders the panel's viewport **is** the composed viewport, row for row: no incomplete frame, no corrupted or missing row), L the loop gate (idle → 1 tick; a handled-but-undrawn input, the legacy spin, the benchmark, a paced Camp → none), P the probes and T the game untouched.
+- **Host seams.** `host_tests/board_shims/` (fake `driver/*.h`, `esp_cpu.h`, `esp_vfs_fat.h`, `sdkconfig.h`, and `fake_tdeck_bus.{h,cpp}`: the ST7789 decode, the stream hash, the timing model). `esp_shims/freertos/task.h`: `vTaskDelay` / `taskYIELD` hooks, no-ops unless a test installs them. The fixture now copies the runes font (the real Board refuses a world frame without it; the capture stub never read it). There is a read-only `AlphaRuntime::composed_viewport()`.
+- **Changed expectations (deliberate, not weakened).** `ui_debug_menu_test` U2: Diagnostics has 23 rows (was 21), both new rows are action rows, and the tone is still last. `a3_04c_contention` S2: the guard is unchanged in intent (every draw-loop pause is the timed `tft_yield`), but it no longer pins the literal `vTaskDelay(1)`, which the policy replaced. It now requires that `tft_yield` is the only `vTaskDelay`/`taskYIELD` of the draw code (the other two `vTaskDelay`s are the power-up and ST7789 init waits). A full run taken after the production change and before these two edits (`native/core/a3-04e-ctest-probe.log`) has exactly these two RED, 139/141 otherwise green.
+- **RED-first.** The device scans run against the **unmodified A3-04D device sources** (`git archive HEAD` into scratch, the untracked `sdkconfig` copied; `a3-04e-red-device-scans-vs-a3-04d.log`): **S1–S4 and S6–S10 RED** (the tick sleep, the literal cadence, no repaint mark, the zero-tick loop delay, no input peek, no pacing hand-over, no gate, no probes, no `A3E_PACE`). S5 (no busy-wait), S11 (task placement and tick rate) and S12 (never saved) are GREEN on both trees, as preservation guards must be; mutants D8/D9/D10 prove they can fail. The core and runtime checks use the new API, so they are proven by mutation.
+- **First-run REDs, all in the tests.** F5 left the scenario on the legacy policy after F2 (fixed in the test). F5b measured the true worst-case `A3E_PACE` line at 534 characters: the buffer went 400 → 600, still inside one 768-byte SD-log record with its prefix. V1 first compared counts that included the Developer frames drawn before the probe was switched, and then compared streams that legitimately differ by the probe row's own "ON"/"off" text; the comparison now starts after the probe is set. A raw-string escape was lost in one test edit (a literal CR in `'\r'`), which the compiler caught. No production change came from any of them.
+- **Mutations:** `native/core/tools/a3_04e_mutation_check.py` → `native/core/a3-04e-mutation.log`, 36 mutants: the policy (K1–K7), the counters, report and line (C1–C4, F1–F4), the rows (U1–U3), the runtime (R1–R8) and the Board / device wiring (D1–D10). **36 mutants, 36 killed by a failing check, 0 survived.** The first pass killed 33. K5, K6 and C3 were INVALID: each left a parameter unused under `-Werror`. They were rewritten with a `(void)` and re-run (`a3-04e-mutation-rerun.log`): killed. The log says which check killed each one. For example, D1 (A3-04D's `tft_yield`, always `vTaskDelay(1)`) turns S1 and the runtime's Y3/M3/M4/V1 RED. D3 (a "faster" fill that skips half of every rectangle in the yield mode) and D4 (the yield mode abandons the viewport at its first pause) are killed only by the panel checks V1/V2/V3: that is the proof that a timing gain cannot hide an incomplete frame here. R2 (the gate forgets the enemy beat) is caught by the source scan S8 alone. D9/D10 prove the preservation guards S11/S12 can fail.
+- **Full suite:** fresh build `native/core/build-a3-04e`, **serial ctest 143/143 passed in 136.25 s** (`native/core/a3-04e-ctest-pass1.log`): A3-04D's 141 plus the two new targets. The only warning is the known w64devkit one. Every A3-04A..D audio test passes unchanged (the synth, pump and task are untouched), and so do the timing proofs (Camp, Blackthorn, Refuge, quake, shrine, combat timelines; `batch51_*` pacing), persistence and gameplay parity.
+
+### 22.9 Firmware
+
+Pre-commit build `native/targets/tdeck/build-a3-04e` (`a3-04e-firmware-configure.log`, `a3-04e-firmware-build.log`): ESP-IDF 6.1, `idf.py --no-ccache reconfigure` then `ninja -j 4`, **first attempt clean, zero project warnings** under `-Werror`.
+
+- **Size: `0xee5d0` = 976,336 B, +4,080 B** vs A3-04D's 972,256 B; **`0x11a30` = 72,240 B (7 %) free** in the 1 MiB app partition.
+- Sections vs A3-04D (`esp_idf_size` on both images' `.map` files, `a3-04e-size-a3-04d-image.log` / `a3-04e-size-a3-04e-image.log`): **IRAM `.text` 60,647 + 15,356 = 76,003 B, unchanged**; `.data` unchanged; `.bss` +80 B (the runtime's and the Board's pacing, the new counters); flash `.text` +3,348 B; `.rodata` +736 B.
+- **Image checks on the A3-04E ELF:** `a3_04b_iram_check.py` **GREEN** (`a3-04e-iram-check.log`) and `a3_04a_hotpath_check.py` **GREEN** (`a3-04e-hotpath-check.log`). The audio path is untouched.
+- **The pause in the linked image** (`a3-04e-tft-yield-disasm.log`): `Board::tft_yield` reads the Board's pacing byte between its two unchanged `rsr.ccount` reads. `TickSleep` calls `vTaskDelay(1)`; `Yield` calls `vPortYield` (`taskYIELD`).
+- **Stack (`-fstack-usage`):** `log_metrics` 848 B before and after (the `A3C_PERF` and `A3E_PACE` buffers share its frame); `contention_line` 576 → 640 B; `pacing_line` 624 B, a sibling of it. The main task has 24 KiB.
+- A later `idf.py -B build-a3-04e size` rebuilt that directory (with ccache) before sizing it. The sizes above come from the `.map` files, and the checks ran on the first image. The tagged image is the post-commit one anyway.
+- Version string `3.0.0-alpha3-dev-a3-04e-debug` (`CMakeLists.txt` `PROJECT_VER`).
+- Not flashed. The post-commit image (a fresh directory, `--no-ccache`, which embeds the commit) is the one the annotated tag `alpha3-a3-04e-render-pacing` names, with its path, size, SHA-256 and `Git`.
+
+### 22.10 Hardware validation checklist (the user's; not done here)
+
+**0. Identity first.** Flash the A3-04E Launcher image `native/targets/tdeck/build-a3-04e-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-dev-a3-04e-Debug-Launcher.bin` through Launcher (its size, SHA-256 and `Git` are in tag `alpha3-a3-04e-render-pacing`). Same game pack, same `openu5-audio.bin`: nothing is regenerated. The boot identity screen must read **`FW 3.0.0-alpha3-dev-a3-04e-debug`** and the tag's `Git` hash. If not, stop.
+
+**Serial (strongly preferred for this batch: it is the watchdog check).** From an ESP-IDF PowerShell (`. C:\esp\v6.1\esp-idf\export.ps1`): `python -m esp_idf_monitor -p COMx -b 115200 --no-reset` (COMx = the T-Deck's USB-Serial/JTAG port). Save, for every run, the last **`A3C_PERF`** and **`A3E_PACE`** lines before the read, the **`PERF_REPORT`** lines the read prints, and every **`A3E_PROBE`** line. Afterwards search the whole capture for **`task_wdt`**: it must not appear. Without a PC, photograph every report page; the *Pacing (A3-04E)* section is the last before the `OPL2` line.
+
+**Fixed settings for every run:** *Probe: SD diag logging* **off** (the boot default; never switch it on in this batch); *Probe: synth bypass* **off**; SFX 80 %.
+
+**Diagnostics rows, counted Up from the top row:** 7 *Probe: legacy TFT pacing*, 6 *Probe: legacy loop spin*, 5 *Probe: SD diag logging*, 4 *Probe: synth bypass*, 3 *Audio/render performance*, 2 *Audio/render stats (live)*, 1 *Audio test tone*.
+
+**Common procedure (each run):**
+1. Set the run's probes (Alt+D › Diagnostics, Up N times, Enter until the row reads the wanted state) and the music volume (System Menu › Settings).
+2. Start a clean window: Alt+D › Diagnostics › *Audio/render stats (live)* (two up) → Enter → **Enter** (dismiss) → Back → Back. Leaving the menu draws the full-screen repaint, which is **in** the window: it is the report's `full-screen` line.
+3. Do the run's activity, opening no menu.
+4. Read the window: Alt+D › Diagnostics › *Audio/render stats (live)* → Enter. Photograph every page or save the lines.
+
+A run is **invalid** (repeat it) if the report's pacing line or the scenario (`… sdlog OFF`) does not match the table, if `frame n` < 150 (R4: < 100), or if it included any other menu visit.
+
+| Run | Music | *legacy TFT pacing* | *legacy loop spin* | Report pacing line | Activity | Time |
+|---|---|---|---|---|---|---|
+| **A0** baseline | 0 % | **ON** | **ON** | `tft TICK  loop SPIN` | open-overworld grassland/forest, the A3-04D spot and direction; hold the trackball, turn at obstacles | 60 s |
+| **A1** renderer alone | 0 % | off | **ON** | `tft yield  loop SPIN` | same | 60 s |
+| **A2** main loop alone | 0 % | **ON** | off | `tft TICK  loop idle-wait` | same | 60 s |
+| **R1** = A3 combined | 0 % | off | off | `tft yield  loop idle-wait` | same | 60 s |
+| **R2** | **80 %** | off | off | `tft yield  loop idle-wait` | same | 60 s |
+| **R3** heavy redraw | 80 % | off | off | same | walk along a coastline with animated water in view for 60 s, then enter and leave a town **three times** | ~2 min |
+| **R4** responsiveness | 80 % | off | off | same | 30 s of rapid direction changes (flick the trackball N/E/S/W as fast as possible, count the flicks roughly), then open and close the System Menu 3× and the Developer menu 3× (read this window **last**, via the Developer menu) | ~60 s |
+
+Run them in that order: A0 → A1 → A2 → R1 (each candidate alone before the combination), then R2–R4. Optional, for the eye: repeat R3 with both probes ON and compare the town entry/exit and the coastline.
+
+**While running, note:** banding/tearing of the viewport, step-to-screen lag, uneven cadence, the town entry/exit and menu-dismissal repaints, animated water/coast, any incomplete or corrupted rows, music smoothness/tempo, SFX timing, static, input responsiveness.
+
+**Fields to record (each run):** the pacing line; `frame avg/p95/max`; `tft avg/max`; `input shown avg/max`; the Pacing section (`full-screen … max`, `viewport w/o full … avg/max`, `pauses/vp frm … = … ms`, `loop …/s  waits … avg … max`, `loop asleep … of … s`, `input wakes`); `yield … late`; `xfer max … slow`; `audio … und/hw/miss`, `audio task/blk`; CPU0 / CPU1 / main / aud. `A3E_PACE` and `A3C_PERF` hold all of them.
+
+**PASS / FAIL:**
+- **A0 reproduces A3-04D** (otherwise the comparison is void; report and stop): `full-screen` max ~390–420 ms, `viewport w/o full` avg ~95–125 ms, `pauses/vp frm ~9.0 = ~85–90 ms`, CPU0/main ~70–75 %.
+- **A1 (renderer):** `pauses/vp frm ~9.0 = < 1 ms`; `full-screen` max **≤ 200 ms** (model 114 ms plus row building); `viewport w/o full` avg **≤ 60 ms** (model 28 ms plus row building); no bands; no incomplete/corrupted rows.
+- **A2 (main loop):** `loop asleep` more than half of the window; `input wakes` > 0; **main % at least 10 points below A0's**, CPU0 likewise; `input shown` avg no more than ~10 ms above A0's; the TFT figures as in A0.
+- **R1 (combined):** A1's and A2's criteria together; `frame max` **≤ 250 ms** (A3-04D: ~443); `input shown` max ≤ 250 ms.
+- **R2:** as R1; `und=0 hw=0 miss=0` (0–1 at a song switch); no static; the song's tempo unchanged; CPU1 ~ A3-04D Test 3's (~43 %: the synth is unchanged).
+- **R3:** no incomplete or corrupted rows; town entry/exit visibly quicker; `full-screen` max ≤ 250 ms; audio as R2.
+- **R4:** every flick moves (no lost or doubled step), no stuck input, `input shown` max ≤ 250 ms, each menu dismissal repaint ≤ 250 ms.
+- **FAIL — report, do not tag:** any `task_wdt` line on serial; a crash or reboot; underruns or missed deadlines in steady play; static; a song-speed change; an SFX timing change; an incomplete/corrupted frame; lost/stuck input; or A1/R1 `full-screen` max not at least 30 % below A0's.
+
+Switch both probes off at the end (a reboot also does).
+
+### 22.11 Outcome, remaining performance work
+
+**Outcome A (host):** the source of the ~400 ms worst case is exact. It is the full-screen repaint on leaving the Developer screen, which crosses 37 forced sleeps until the next 10 ms tick (§22.2), and the ~122 ms viewport average is the same mechanism (9 sleeps per step). No requirement for the sleeps exists (§22.3). Production now yields at the same points, and an idle loop pass waits for input for one tick. **Pending:** the device runs of §22.10. **Hardware validation is not claimed.**
+
+Remaining, in the order the numbers suggest (each its own batch, measured with this report):
+1. **Composition time.** A3-04D's frame avg (79 ms) minus TFT avg (41 ms) leaves ~38 ms of composition and logic per frame, which becomes the largest term once the tick sleeps are gone. The report's `compose avg/max` and `tiles max` locate it.
+2. **`fill_rect` chunking by width.** A 1–2 px vertical line is one 4-byte transaction per row (~27 µs each: 180 of them per viewport-frame side). Chunking the pixel stream by up to 320 pixels regardless of width (the window auto-wraps) would take the repaint's ~530 small transactions to a handful. This is a renderer change with its own pixel-identity proof, and V1/V2 are the harness.
+3. **Transcript redraw per step.** Every step rewrites the whole scrolled transcript (up to 19 text rows). A scroll-aware redraw is a renderer change.
+4. **The synth's steady cost** (~3.3 ms per 8 ms block, ~43 % of core 1). It is unchanged here, and it is the next audio batch as planned.
+5. The fountain ambient-SFX parity defect (separate, audio).
+
+### 22.12 Files
+
+- Core: `include/openu5/render_pacing.h`, `src/render_pacing.cpp` (new: the policy), `sources.cmake`; `include/openu5/perf_report.h`, `src/perf_report.cpp` (`TftTiming::full_screen`, the pacing counters, the report section, `format_pacing_line`); `include/openu5/ui_debug_menu.h`, `src/ui_debug_menu.cpp` (the two rows).
+- Device: `tdeck_board.{h,cpp}` (the pause through the policy, `set_tft_pacing`, the repaint mark), `main.cpp` (the idle wait), `tdeck_input.{h,cpp}` (`wait_for_event`), `alpha_runtime.{h,cpp}` (pacing state, `loop_may_sleep`, the probes, the scenario, `A3E_PACE`, `composed_viewport`), `CMakeLists.txt` (`PROJECT_VER`).
+- Tests / tools: `tests/a3_04e_pacing_test.cpp`, `host_tests/a3_04e_pacing_runtime_test.cpp`, `host_tests/board_shims/*`, `host_tests/esp_shims/freertos/task.h`, `host_tests/alpha_runtime_host_fixture.cpp` (runes font), `tests/ui_debug_menu_test.cpp` (23 rows), `tests/a3_04c_contention_test.cpp` (S2), `core/CMakeLists.txt`, `tools/a3_04e_mutation_check.py`.

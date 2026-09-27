@@ -118,6 +118,17 @@ void ContentionCounters::on_frame(uint32_t logic_us, uint32_t tft_us, const TftT
         panel_tft_sum_ += tft_us;
         if (tft_us > panel_tft_max_) panel_tft_max_ = tft_us;
     }
+    // A3-04E: the full-screen repaint (leaving the Developer screen, the first
+    // game frame) apart from the viewport frames a walk draws.
+    if (t.full_screen) {
+        ++full_frames_;
+        full_tft_sum_ += tft_us;
+        if (tft_us > full_tft_max_) full_tft_max_ = tft_us;
+    } else if (t.viewport_full) {
+        ++vp_only_frames_;
+        vp_only_tft_sum_ += tft_us;
+        if (tft_us > vp_only_tft_max_) vp_only_tft_max_ = tft_us;
+    }
     if (!t.cpu_mhz) return;
     ++timed_frames_;
     cpu_mhz_ = t.cpu_mhz;
@@ -145,12 +156,24 @@ void ContentionCounters::on_frame(uint32_t logic_us, uint32_t tft_us, const TftT
     fill_busy_cycles_ += t.fill_cycles_busy;
     xfer_idle_cycles_ += t.xfer_cycles_idle;
     xfer_busy_cycles_ += t.xfer_cycles_busy;
+    if (t.viewport_full) {
+        ++timed_viewport_frames_;
+        viewport_yields_ += t.yields;
+        viewport_yield_sum_ += yield_us;
+    }
 }
 
 void ContentionCounters::on_loop(uint32_t loop_us) {
     ++loops_;
     loop_sum_ += loop_us;
     if (loop_us > loop_max_) loop_max_ = loop_us;
+}
+
+void ContentionCounters::on_loop_wait(uint32_t wait_us, bool input) {
+    ++loop_waits_;
+    loop_wait_sum_ += wait_us;
+    if (wait_us > loop_wait_max_) loop_wait_max_ = wait_us;
+    if (input) ++loop_input_wakes_;
 }
 
 void ContentionCounters::snapshot(uint64_t now_us, ContentionSnapshot &out) const {
@@ -205,6 +228,30 @@ void ContentionCounters::snapshot(uint64_t now_us, ContentionSnapshot &out) cons
     if (loops_) {
         out.loop_avg_us = uint32_t(loop_sum_ / loops_);
         out.loop_max_us = loop_max_;
+    }
+    // A3-04E
+    const auto cap32 = [](uint64_t v) { return uint32_t(v > UINT32_MAX ? UINT32_MAX : v); };
+    out.full_frames = full_frames_;
+    if (full_frames_) {
+        out.full_tft_avg_us = uint32_t(full_tft_sum_ / full_frames_);
+        out.full_tft_max_us = full_tft_max_;
+    }
+    out.vp_only_frames = vp_only_frames_;
+    if (vp_only_frames_) {
+        out.vp_only_tft_avg_us = uint32_t(vp_only_tft_sum_ / vp_only_frames_);
+        out.vp_only_tft_max_us = vp_only_tft_max_;
+    }
+    if (timed_viewport_frames_) {
+        out.viewport_yields_x10 = cap32(viewport_yields_ * 10 / timed_viewport_frames_);
+        out.viewport_yield_avg_us = cap32(viewport_yield_sum_ / timed_viewport_frames_);
+    }
+    out.yield_total_us = cap32(yield_sum_);
+    out.loop_waits = loop_waits_;
+    out.loop_input_wakes = loop_input_wakes_;
+    out.loop_wait_total_us = cap32(loop_wait_sum_);
+    if (loop_waits_) {
+        out.loop_wait_avg_us = uint32_t(loop_wait_sum_ / loop_waits_);
+        out.loop_wait_max_us = loop_wait_max_;
     }
 }
 
@@ -302,6 +349,40 @@ void scenario_text(char *out, size_t cap, const PerfScenario &sc, const AudioPer
                       unsigned(sc.sfx_volume), sc.synth_bypass ? " BYPASS" : "", sd_log_suffix(sc.sd_log));
 }
 
+/** Passes per second over the window. */
+unsigned long per_second(uint32_t count, uint32_t window_us) {
+    return window_us ? (unsigned long)(uint64_t(count) * 1000000u / window_us) : 0ul;
+}
+
+/** A3-04E (section 22): which pacing ran -- legacy behaviour in upper case. */
+void pacing_text(char *out, size_t cap, const PerfScenario *sc) {
+    if (!sc || !sc->pacing_reported)
+        std::snprintf(out, cap, "pacing not reported");
+    else
+        std::snprintf(out, cap, "tft %s  loop %s", tft_pacing_name(sc->pacing.tft), loop_pacing_name(sc->pacing.loop));
+}
+
+/** A3-04E: what the pacing cost -- the repaint classes, the pauses, the loop's waits. */
+void pacing_section(Lines &out, const PerfReportInput &in) {
+    out.add("-- Pacing (A3-04E) --");
+    char pace[48];
+    pacing_text(pace, sizeof pace, in.scenario);
+    out.add("%.51s", pace);
+    const ContentionSnapshot *c = in.contention;
+    if (!c) return;
+    out.add("full-screen %lu frm tft avg %s max %s", (unsigned long)c->full_frames, Ms(c->full_tft_avg_us, 1).s,
+            Ms(c->full_tft_max_us, 1).s);
+    out.add("viewport w/o full %lu frm avg %s max %s", (unsigned long)c->vp_only_frames,
+            Ms(c->vp_only_tft_avg_us, 1).s, Ms(c->vp_only_tft_max_us, 1).s);
+    out.add("pauses/vp frm %s = %s ms  all %s ms", Tenths(c->viewport_yields_x10).s, Ms(c->viewport_yield_avg_us, 1).s,
+            Ms(c->yield_total_us, 1).s);
+    out.add("loop %lu/s  waits %lu avg %s max %s ms", per_second(c->loops, c->window_us), (unsigned long)c->loop_waits,
+            Ms(c->loop_wait_avg_us, 1).s, Ms(c->loop_wait_max_us, 1).s);
+    // Seconds with one decimal: Ms() of a millisecond count.
+    out.add("loop asleep %s of %s s  input wakes %lu", Ms(c->loop_wait_total_us / 1000, 1).s,
+            Ms(c->window_us / 1000, 1).s, (unsigned long)c->loop_input_wakes);
+}
+
 void contention_section(Lines &out, const PerfReportInput &in) {
     out.add("-- Contention map (A3-04C) --");
     if (in.scenario) {
@@ -352,6 +433,7 @@ void contention_section(Lines &out, const PerfReportInput &in) {
             out.add("sd log %lu bursts max %s total %s ms", (unsigned long)sd->bursts, Ms(sd->max_us, 1).s,
                     Ms(sd->busy_us, 1).s);
     }
+    if ((in.scenario && in.scenario->pacing_reported) || in.contention) pacing_section(out, in);
 }
 
 } // namespace
@@ -485,6 +567,43 @@ size_t format_contention_line(const PerfReportInput &in, char *out, size_t cap) 
             line.add(" | cpu0=%lu cpu1=%lu main=%lu aud=%lu inp=%lu sdl=%lu", pct(s->core_busy_permille[0]),
                      pct(s->core_busy_permille[1]), pct(s->main_permille), pct(s->audio_permille),
                      pct(s->input_permille), pct(s->sdlog_permille));
+    return line.size();
+}
+
+size_t format_pacing_line(const PerfReportInput &in, char *out, size_t cap) {
+    if (!out || !cap) return 0;
+    LineOut line(out, cap);
+    // Legend (ALPHA3_AUDIO.md section 22): a/b = avg/max ms; n:a/b = count:avg/max;
+    // full = full-screen repaints, vp = the viewport frames that were not; yld /vp =
+    // draw-loop pauses per viewport frame; wait = the loop's idle waits, in = an input ended one.
+    char pace[48];
+    pacing_text(pace, sizeof pace, in.scenario);
+    line.add("pace=[%s]", pace);
+    const uint32_t window = in.render ? in.render->window_us : in.contention ? in.contention->window_us : 0;
+    line.add(" win=%lu.%lus", (unsigned long)(window / 1000000), (unsigned long)((window / 100000) % 10));
+    if (const RenderPerfSnapshot *r = in.render)
+        line.add(" | frame n=%lu avg=%s max=%s | tft=%s/%s in=%lu:%s/%s", (unsigned long)r->frames,
+                 Ms(r->frame_avg_us, 1).s, Ms(r->frame_max_us, 1).s, Ms(r->tft_avg_us, 1).s, Ms(r->tft_max_us, 1).s,
+                 (unsigned long)r->shown, Ms(r->input_avg_us, 1).s, Ms(r->input_max_us, 1).s);
+    if (const ContentionSnapshot *c = in.contention) {
+        line.add(" | full=%lu:%s/%s vp=%lu:%s/%s", (unsigned long)c->full_frames, Ms(c->full_tft_avg_us, 1).s,
+                 Ms(c->full_tft_max_us, 1).s, (unsigned long)c->vp_only_frames, Ms(c->vp_only_tft_avg_us, 1).s,
+                 Ms(c->vp_only_tft_max_us, 1).s);
+        line.add(" | yld n=%lu /vp=%s vpms=%s tot=%s max=%s late=%lu", (unsigned long)c->yields,
+                 Tenths(c->viewport_yields_x10).s, Ms(c->viewport_yield_avg_us, 1).s, Ms(c->yield_total_us, 1).s,
+                 Ms(c->yield_max_us, 2).s, (unsigned long)c->late_yields);
+        line.add(" | loop n=%lu /s=%lu max=%s wait=%lu:%s/%s in=%lu asleep=%s", (unsigned long)c->loops,
+                 per_second(c->loops, c->window_us), Ms(c->loop_max_us, 1).s, (unsigned long)c->loop_waits,
+                 Ms(c->loop_wait_avg_us, 1).s, Ms(c->loop_wait_max_us, 1).s, (unsigned long)c->loop_input_wakes,
+                 Ms(c->loop_wait_total_us, 1).s);
+    }
+    if (const AudioPerfSnapshot *a = in.audio)
+        line.add(" | und=%lu hw=%lu miss=%lu", (unsigned long)a->underruns, (unsigned long)a->hw_underruns,
+                 (unsigned long)a->missed_deadlines);
+    if (const SystemPerfSnapshot *s = in.system)
+        if (s->valid)
+            line.add(" | cpu0=%lu cpu1=%lu main=%lu aud=%lu", pct(s->core_busy_permille[0]),
+                     pct(s->core_busy_permille[1]), pct(s->main_permille), pct(s->audio_permille));
     return line.size();
 }
 
