@@ -9,6 +9,9 @@ public:
  const FrontendSettings& settings()const{return settings_;}
  // A3-01: whether the Music Volume row is live (openu5/audio.h).
  void set_music_availability(MusicAvailability a){music_availability_=a;}
+ // A3-04G: the save list after a Save made from this menu (the Load page
+ // listed the card as it was when the menu opened). Page and cursor stay.
+ void set_save_slots(const FrontendSaveSlot(&s)[2]){saves_[0]=s[0];saves_[1]=s[1];}
  // A3-01: the Settings page's rows, in order. Developer stays last.
  enum SettingsRow:uint8_t{kBrightnessRow,kMovementRow,kTrackballRow,kTextSizeRow,kSfxVolumeRow,kMusicVolumeRow,kDeveloperRow,kSettingsRowCount};
 private:

@@ -22,6 +22,7 @@
 
 #include "openu5/commands.h"
 #include "openu5/dungeon.h"
+#include "openu5/frontend.h"
 #include "openu5/gameplay_save.h"
 
 namespace tdeck {
@@ -58,7 +59,9 @@ void capture_save_document(openu5::CommandContext &, const openu5::OutdoorServic
 
 // `v` holds the commit and the three files' bytes. Fills v.side/v.generation
 // and returns whether the generation is usable. The staged owners are left in
-// `stage` (inspect() reads the party name from stage.game).
+// `stage` (inspect() reads the party name from stage.game). A3-04G: the stage's
+// previous contents are released FIRST, before the generation is imported, so
+// a verify never holds two save documents at once.
 bool verify_candidate(AlphaSaveCandidate &v, AlphaSaveStage &stage);
 bool restore_candidate(AlphaSaveCandidate &pick, openu5::CommandContext &, openu5::OutdoorServices &,
                        openu5::WorldTerrain &, openu5::NpcActors &, openu5::save::Json &retained,
@@ -67,5 +70,17 @@ bool restore_candidate(AlphaSaveCandidate &pick, openu5::CommandContext &, openu
 int restore_newest(AlphaSaveCandidate (&candidates)[2], openu5::CommandContext &, openu5::OutdoorServices &,
                    openu5::WorldTerrain &, openu5::NpcActors &, openu5::save::Json &retained,
                    AlphaSaveStage &stage);
+
+// Alpha 3 A3-04G (ALPHA3_AUDIO.md section 28). A staged generation is a save
+// document imported from the GAM: ~2,700 nodes, ~190 KB on the device, every
+// block at most 4 KiB, so internal RAM first (SPIRAM_MALLOC_ALWAYSINTERNAL).
+// These give every buffer of a candidate or a stage back to the heap; the
+// fixed-size parts (GameState and the rest) stay where they are.
+void release_candidate(AlphaSaveCandidate &);
+void release_stage(AlphaSaveStage &);
+// What the title screen and the System Menu list for a generation that
+// verify_candidate() accepted: present, valid, its sequence and the first
+// member's name, from the staged game.
+openu5::FrontendSaveSlot summarize_candidate(const AlphaSaveCandidate &, const AlphaSaveStage &);
 
 } // namespace tdeck

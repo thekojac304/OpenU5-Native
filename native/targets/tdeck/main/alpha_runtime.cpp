@@ -2620,7 +2620,11 @@ void AlphaRuntime::service_system_menu_intent(){
         // Batch 53A: the same refusal as Alt+S.
         ui_->append(openu5::UiTextChannel::System,"Save unavailable: the quest is complete");
         ESP_LOGI(kTag,"SAVE_REFUSED source=system-menu reason=ending");}
-    else if(intent.kind==openu5::SystemMenuIntentKind::Save){ok=save_.save(context_,outdoor_,terrain_,actors_,retained_,resources_.initial_gam,resources_.initial_gam_size,resources_.initial_ool,resources_.initial_ool_size,ms);if(ok)trace_direct_troll_save("SAVE_WORLD_OVERRIDE");ui_->append(openu5::UiTextChannel::System,ok?"Save complete":"Save failed; prior kept");}
+    else if(intent.kind==openu5::SystemMenuIntentKind::Save){ok=save_.save(context_,outdoor_,terrain_,actors_,retained_,resources_.initial_gam,resources_.initial_gam_size,resources_.initial_ool,resources_.initial_ool_size,ms);if(ok)trace_direct_troll_save("SAVE_WORLD_OVERRIDE");ui_->append(openu5::UiTextChannel::System,ok?"Save complete":"Save failed; prior kept");
+        // A3-04G: the menu stays open, so its Load page must list the card as it
+        // now is, after a success or a failure alike. The save already told the
+        // save list what it wrote: normally two commit reads.
+        openu5::FrontendSaveSlot slots[2]{};save_.inspect(slots);system_menu_.set_save_slots(slots);}
     else if(intent.kind==openu5::SystemMenuIntentKind::LoadLatest)ok=save_.load(context_,outdoor_,terrain_,actors_,retained_,ms);
     else if(intent.kind==openu5::SystemMenuIntentKind::LoadSlot)ok=save_.load_slot(intent.slot,context_,outdoor_,terrain_,actors_,retained_,ms);
     else if(intent.kind==openu5::SystemMenuIntentKind::PersistSettings){settings_=intent.settings;input_.set_movement_mode_enabled(settings_.movement_mode);input_.set_trackball_responsiveness(settings_.trackball_responsiveness);ok=settings_store_.save(settings_);}

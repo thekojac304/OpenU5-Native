@@ -1,0 +1,86 @@
+
+[C] census: two generations, one sidecar DOM, one cold inspect
+  GREEN C0    two Alt+S saves through the real alpha_save.cpp both complete
+         slot 0: gam=4192 ool=512 json=369 commit=32 B
+         slot 1: gam=4192 ool=512 json=369 commit=32 B
+  GREEN C1    each generation is gam 4,192 + ool 512 + commit 32 B + a non-empty sidecar
+         sidecar DOM (host): 62 allocations, 5794 B live (5794 B small), peak small 7084 B
+         sidecar DOM (32-bit estimate): 27 nodes, 25 blocks (25 small / 0 large), 4228 B (4228 small / 0 large)
+  GREEN C2    the sidecar itself parses to a small tree (all of it small allocations)
+         verify_candidate (empty)   opens=0(fail 0) reads=0 bytes_read=0 writes=0 bytes_written=0 retained=284490 small=266058 peak_small=377868 io_small=0 allocs=3885 host=0.45 ms
+         verify_candidate (again)   opens=0(fail 0) reads=0 bytes_read=0 writes=0 bytes_written=0 retained=0 small=0 peak_small=111810 io_small=0 allocs=3884 host=0.45 ms
+         second verify on one stage peaks 0 B above the first
+  GREEN C4    a verify on a stage that still holds a document never holds both (peak = one verify's)
+         staged save document (32-bit estimate): 2717 nodes, 303 blocks (303 small / 0 large), 193220 B (193220 small / 0 large)
+  GREEN C2b   a verified generation stages a large document of small allocations (> 32 KiB small)
+         cold inspect               opens=8(fail 0) reads=8 bytes_read=10210 writes=0 bytes_written=0 retained=32 small=32 peak_small=378749 io_small=1115 allocs=7812 host=1.25 ms
+         cold list: [PV seq=2 'Avatar'] [PV seq=1 'Avatar']
+  GREEN C3    a cold inspect lists both generations (sequences 1 and 2, 'Avatar')
+
+[R] retention, peak, and what is allocated while the card is busy
+         bounds: I/O-time small bytes <= 33257 B (1/8 of one staged document); peak small <= 425101 B (one verify from an empty stage + 1/8)
+         inspect (fresh service)    opens=8(fail 0) reads=8 bytes_read=10210 writes=0 bytes_written=0 retained=32 small=32 peak_small=378749 io_small=1115 allocs=7812 host=1.85 ms
+  GREEN R1    an inspect keeps nothing allocated after it returns (<= 1 KiB)
+  GREEN R2    no staged generation is alive while the next slot's files are read
+  GREEN R6    two slots never hold two documents at once: the peak is one verify's
+         inspect again              opens=2(fail 0) reads=2 bytes_read=64 writes=0 bytes_written=0 retained=0 small=0 peak_small=142 io_small=174 allocs=11 host=0.12 ms
+  GREEN R2b   a second inspect: nothing kept, nothing alive at the card, the same peak
+         load (fresh service)       opens=8(fail 0) reads=8 bytes_read=10210 writes=0 bytes_written=0 retained=902 small=902 peak_small=380000 io_small=2366 allocs=13316 host=1.98 ms
+  GREEN R3    Continue Latest: no staged generation is alive while the other slot is read
+         save (fresh service)       opens=13(fail 0) reads=9 bytes_read=10242 writes=4 bytes_written=5105 retained=32 small=32 peak_small=384963 io_small=16401 allocs=6070 host=3.63 ms
+  GREEN R4    a save: no second document is alive while the generation is written and read back
+  GREEN R5    a save keeps nothing allocated after it returns (<= 2 KiB)
+         Alt+S (runtime)            opens=13(fail 0) reads=9 bytes_read=10242 writes=4 bytes_written=5105 retained=0 small=0 peak_small=384931 io_small=16401 allocs=6069 host=3.58 ms
+         Alt+L (runtime)            opens=8(fail 0) reads=8 bytes_read=10210 writes=0 bytes_written=0 retained=-2582 small=-2582 peak_small=379968 io_small=2334 allocs=13333 host=1.72 ms
+
+[S] 100 System Menu open/close cycles
+         live heap over cycles 1..100: min 418279 max 418279 (spread 0 B); files opened per open: first 2, then <= 2
+  GREEN S0    every Alt+M opens the System Menu and every Back closes it
+  GREEN S1    repeated opens leave the live heap exactly flat (no growth, no drift)
+  GREEN S2    no file handle is left open after any cycle
+  GREEN S3    one SD window per open, always closed (the storage transaction is balanced)
+  GREEN S4    the 8 KiB DMA headroom is re-reserved after every window
+  GREEN S5    opening and closing the menu writes nothing to the card
+
+[K] the save list: reuse and invalidation
+         warm open: opens=2 bytes_read=64; list 'Generation 1: Avatar' / 'Generation 2: Avatar'
+  GREEN K1    an unchanged card costs two 32-byte commit reads per open (was 8 files and both sidecars)
+  GREEN K2    a reused list equals a cold inspection, field for field
+         cold after save: [PV seq=6 'Avatar'] [PV seq=5 'Avatar']
+         open after save: opens=2; list 'Generation 1: Avatar' / 'Generation 2: Avatar'
+  GREEN K3a   after a save the menu lists what a cold inspection lists
+  GREEN K3b   the save's own post-write check supplies the new slot: two commit reads
+         commit rewritten: opens=5
+  GREEN K4    a changed commit record is a miss: that slot alone is read and verified again
+  GREEN K5a   a deleted generation is listed empty at once
+  GREEN K5b   the same generation put back is listed again
+  GREEN K6    a refused generation is listed corrupt and re-read on every open (never cached)
+  GREEN K6b   repaired, it is listed valid on the next open
+         cold after in-menu save: [PV seq=6 'Avatar'] [PV seq=5 'Avatar']
+         Load page after an in-menu save: 'Generation 1: Avatar' / 'Generation 2: Avatar'
+  GREEN K10   a Save made inside the menu is on its Load page at once (the card as it now is)
+
+[K] a failed save forgets the slot it touched
+         cold after failed save: [PV seq=6 'Avatar'] [P- seq=0 '']
+         menu after failed save: 'Generation 1: Avatar' / 'Generation 2: corrupt'
+  GREEN K7    after a save that failed mid-rename the menu lists the card as it is (the torn slot corrupt)
+  GREEN K8    after a failed temp write the menu lists the card as it is
+  GREEN K9    the next saves succeed and replace the torn slot
+
+[F] failure paths of the real shell
+  GREEN F1    no card: both slots empty, no handle left, the window closed
+  GREEN F1b   the card back: the same service lists it (nothing negative kept)
+  GREEN F2    an unreadable commit lists that slot empty only
+  GREEN F3    a short sidecar read lists that slot corrupt
+  GREEN F3b   the read good again: the same service lists it valid
+  GREEN F4    a CRC mismatch lists that slot corrupt
+  GREEN F5    no PSRAM for the workspace: an empty list, the window closed, the headroom restored
+  GREEN F5b   the next open allocates the workspace and lists the card
+  GREEN F6    a truncated commit record lists that slot empty
+
+[V] save and load through the real shell
+  GREEN V1    Alt+S then Alt+L restores the saved gold (555)
+  GREEN V2    a damaged newest generation: Continue Latest restores the older one
+  GREEN V3    Load Slot on a generation damaged out of band refuses and leaves the live game untouched
+
+a3_04g_storage_runtime: 44/44 checks GREEN, 0 RED

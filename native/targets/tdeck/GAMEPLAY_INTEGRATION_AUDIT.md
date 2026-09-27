@@ -8,7 +8,21 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 A3-HF3) — combat hit feedback parity (D-63); Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 A3-04G) — System Menu save inspection and the storage heap; Alpha 2 remains the released build; read this first
+>
+> **A3-04G is an Alpha 3 storage / performance batch, not a release.** It is the storage batch A3-04F's closeout queued (§26.18): the ~0.72 s System Menu open and the heap watch item share `AlphaSaveService::inspect`. **H-201 (A3-HF3) is still pending.**
+> - **Measured first**, with the first host build of the real `alpha_save.cpp` (a fake SD card, a census of every allocation): every open read all 4 files of both slots and imported each 4,192-byte GAM twice into a save document of ~2,700 nodes (≈ 193 KB on the device, all ≤ 4 KiB, so internal RAM first). The last document stayed in the save workspace: the 150 KB plateau (not a leak) and the fragmentation (largest block 7.5–23.5 KB). A two-slot inspect held 2.4 documents at its peak, which drove `heap_int_min` to ~200 B, and read the second slot while the first was alive.
+> - **Changed:** nothing is kept after a save, load or inspect; slots are released one by one; a verify never holds two documents; an unchanged card is listed from each slot's commit record (2 files / 64 B per open instead of 8 / 10,210, no import); a Save made in the System Menu updates its Load page (pre-existing stale list).
+> - **Heap watch item:** re-classified **fragmentation risk remains — explained and bounded** (`ALPHA3_AUDIO.md` §28.16, new triggers). A cold import still fills internal RAM briefly; no card I/O happens inside it.
+>
+> | | |
+> |---|---|
+> | Host suite | **149 / 149**, serial, 126.41 s. New: `a3_04g_storage_runtime` 44 (RED 12 before, on the real shell). **17 / 17 mutations killed.** No existing expectation changed. |
+> | Firmware | `3.0.0-alpha3-dev-a3-04g-debug`. Pre-commit build 980,672 B (`0xef6c0`), +1,760 B, 67,904 B (6 %) free, zero warnings; flash only (`.text` +1,604, `.rodata` +144), DIRAM and IRAM unchanged; image guards GREEN. Image path, SHA-256 and `Git`: tag `alpha3-a3-04g-storage-inspect`. **Not flashed.** |
+> | SD | **Unchanged.** Save format unchanged. |
+> | Next | H-201 and H-202 on the device (one flash of this image serves both). Then A3-04H, the storage import count (`ALPHA3_AUDIO.md` §28.20). |
+>
+> ### CURRENT STATE (Alpha 3 A3-HF3) — combat hit feedback parity (D-63) — **superseded as the current state by A3-04G above; H-201 still pending.**
 >
 > **A3-HF3 is a small Alpha 3 presentation hotfix, not a release.** A3-04F is hardware-validated (H-200 PASS). On its image a combat hit showed no visual cue.
 > - **The original** (ULTIMA.EXE `kernel_combat_hit_flash` 0x3564) runs for every decided hit, before the strike's result. It blits tile 0 (the `Explosion` star) opaquely over the struck cell. For a party member it also XORs the roster row (0x2a28). Both are held for the hit's noise burst, 9,000 half samples = 174 ms.
@@ -8056,3 +8070,42 @@ D-63 / H-201, found in H-200. The full write-up is [`ALPHA3_AUDIO.md`](ALPHA3_AU
 - `Died` → `CombatDefeat` (A3-03) cites 0x2fe3, which is inside the chest trap 0x2fd0, not a combat death. An audio adjudication for its own batch (`ALPHA3_AUDIO.md` §27.12).
 - The TypeScript skin has no combat roster flash, and describes the star as "not a tile". That belongs to the reference, at its own layer.
 - The storage batch (the 0.75 s System Menu open, with the heap watch item of §26.17.8).
+
+## Alpha 3 A3-04G — System Menu save inspection and the storage heap
+
+The storage batch §26.18 queued (the ~0.72 s System Menu open, with the heap watch item of §26.17.8). The full write-up is [`ALPHA3_AUDIO.md`](ALPHA3_AUDIO.md) §28; this section records the classification on its own axis. No save format, gameplay, RNG, audio, render or combat change.
+
+### 1. Items and classification
+
+| # | Item | Class | Change |
+|---|---|---|---|
+| 1 | The save workspace kept the last verified generation's save document (≈ 193 KB of ≤ 4 KiB blocks, internal RAM first) until the next storage operation: the ~150 KB plateau after the first System Menu open | **native defect (memory retention)**; not a leak — a plateau, device and host | every save / load / inspect releases the workspace on every exit |
+| 2 | Fragmentation from #1: largest internal / DMA block 7,552–23,552 B while a document was kept, inside the 48 KiB DMA pool | **native defect (consequence of #1)** | gone with #1 (device confirmation: H-202) |
+| 3 | A second verify on a stage still holding a document held both (peak 2.43 × the document) — the 200 B `heap_int_min` | **native defect (peak)** | `verify_candidate` empties the stage before importing |
+| 4 | The second slot's files (inspect) and the other slot's (Continue) were read while the first slot's document was alive: SD DMA bounce buffers requested with internal RAM full | **native defect (the Alpha 2.0 class, no margin)** | each slot released before the next is read |
+| 5 | Every System Menu open re-read and re-imported both generations (8 files, 10,210 B, 4 imports, ≈ 720 ms on the device) | **native performance item** | the save list: a VALID summary reused while its commit record's fields are unchanged; save() stores / forgets the slot it wrote; refused / empty slots always re-read; Load never uses it |
+| 6 | A Save made inside the System Menu left its Load page listing the card as it was when the menu opened | **native defect (stale UI), pre-existing** | the menu's list is refreshed after a menu Save (`SystemMenuSession::set_save_slots`) |
+| 7 | A cold import (boot title list, load, a save's own check) still peaks at ≈ 274 KB against ≈ 236 KB free internal RAM | **declared, bounded**: `SPIRAM_MALLOC_ALWAYSINTERNAL` fills internal RAM first; no card I/O inside it | none; PSRAM routing deferred to a measured batch |
+| 8 | `verify_candidate` imports twice; Continue imports 7 times; a save deep-copies the live document | **recorded** (core, parity-pinned layer) | none; A3-04H |
+| 9 | `AlphaSaveCommit`'s 4 padding bytes are written uninitialised | **recorded** (format unchanged, nothing CRCs the commit) | the cache compares fields, not bytes |
+
+### 2. Evidence
+
+- **Device (existing captures):** `a3-04e1-hw-soak.log` 5432–5611 (internal 227,903 → 77,411 B, PSRAM −84,132 B, largest 49,152 → 23,552 B, 720 ms window, plateau over six opens); `a3-04e1-hw-probes.log` 5, 130–141, 758–782 (title 46,571 / 7,552 B; Continue 1,057 ms → 237,075 / 49,152 B; `heap_int_min` 344 → 224 B in the first menu window).
+- **Host seam (new):** `a3_04g_storage_runtime` compiles the **real** `alpha_save.cpp` over `host_tests/sd_shims` (force-included renames of its stdio / POSIX calls onto a counting, fault-injecting fake card; a counting `esp_heap_caps.h`), runs the real `AlphaRuntime`, and counts every `operator new`.
+- **RED-first:** built against HEAD's `alpha_save.cpp`, `alpha_save_generation.{h,cpp}`, `alpha_runtime.cpp`: **32 / 44, 12 RED** (C4, R1, R2, R2b, R3, R5, R6, K1, K3b, K4, K6, K10); every control GREEN, including the 100-cycle no-leak group S1–S5 (`native/core/a3-04g-red.log`). GREEN **44 / 44** (`a3-04g-green.log`).
+- **Mutations:** `native/core/tools/a3_04g_mutation_check.py`, 17 mutants: **17 / 17 killed** (`a3-04g-mutation.log`). The first pass's one survivor was an equivalent mutant (a redundant release in `inspect`, since removed); M1 was re-aimed (`a3-04g-mutation-first.log`).
+- **A test artefact** (§28.11): the first S1 drifted 2,040 B in `std::vector`-doubling steps — the test's own record growing inside the heap it measured. Reserved up front, flat.
+- **Suite / firmware:** see the current-state table above.
+
+### 3. Rows
+
+- **H-202** (`ALPHA2_HARDWARE_CHECKLIST.md`): new, PENDING — the A3-04G image with a serial capture from boot.
+- **H-201**: unchanged, PENDING; it can run on the A3-04G image (A3-HF3's combat code is unchanged).
+- **§26.17.8 heap watch item:** re-classified "fragmentation risk remains — explained and bounded"; triggers replaced by `ALPHA3_AUDIO.md` §28.16.
+
+### 4. Not done in this batch
+
+- The import count (item 8) and PSRAM routing of the save document (item 7): A3-04H, gated by H-202.
+- Alt+M on an open System Menu writes `settings.json` every time (~270 ms card write), even unchanged. A settings item.
+- The memory stub (`alpha_save_memory_host_stub.cpp`) keeps its uncached `inspect`: it has no files or workspace; the shell is now tested for real by `a3_04g_storage_runtime`.

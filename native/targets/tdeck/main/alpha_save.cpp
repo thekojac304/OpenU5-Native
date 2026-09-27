@@ -61,6 +61,12 @@ using Candidate=AlphaSaveCandidate;
 // One main-task-owned workspace holds every large persistence temporary. The
 // save adapter is intentionally non-reentrant, and the application calls it
 // only from app_main, so sharing this PSRAM workspace is both bounded and safe.
+//
+// Alpha 3 A3-04G (ALPHA3_AUDIO.md section 28): the workspace no longer keeps
+// anything between calls. A verified generation stages a save document of
+// ~190 KB of small allocations (internal RAM first); until A3-04G the last one
+// stayed here after every inspect and save, ~150 KB of internal heap for the
+// rest of the run. Every public operation now releases it on every exit.
 struct AlphaSaveScratch {
     Candidate candidates[2]{};
     Candidate verified{};
@@ -70,15 +76,48 @@ struct AlphaSaveScratch {
     openu5::save::Json side{};
     std::string json{};
     Commit commits[2]{};
+    // A3-04G. The save list's memory, per slot: the summary of a generation
+    // the gate accepted and the commit record it was derived from. A summary
+    // is reused only while that commit reads back with the same fields (the
+    // sequence and the three files' CRCs; not memcmp: the record's 4 trailing
+    // padding bytes are written uninitialised and are not copied). This service is the
+    // card's only writer: save() stores the slot it wrote from its own
+    // post-write check, or forgets it on any failure. Only accepted
+    // generations are kept, so an empty, refused or unreadable slot is looked
+    // at again on every open, as before. Load never uses it.
+    struct InspectCache {
+        bool known[2]{};
+        Commit commit[2]{};
+        openu5::FrontendSaveSlot summary[2]{};
+        bool hit(int i,const Commit&c)const{const auto&k=commit[i];
+            return known[i]&&k.magic==c.magic&&k.version==c.version&&k.sequence==c.sequence&&k.gam==c.gam&&k.ool==c.ool&&k.json==c.json;}
+        void store(int i,const Commit&c,const openu5::FrontendSaveSlot&s){known[i]=true;commit[i]=c;summary[i]=s;}
+        void forget(int i){if(i>=0&&i<2)known[i]=false;}
+    } cache{};
 };
 
 namespace {
+// The three files of a slot whose commit record is already in v.commit.
+bool read_files(int slot,Candidate&v){
+    return read_file(path(slot,"gam"),v.gam)&&read_file(path(slot,"ool"),v.ool)&&read_file(path(slot,"json"),v.json);
+}
 // Read one slot's commit and files, then the shared semantic check.
 bool candidate(int slot,Candidate&v,AlphaSaveScratch&scratch){
     v=Candidate{};
-    if(!read_commit(slot,v.commit)||!read_file(path(slot,"gam"),v.gam)||!read_file(path(slot,"ool"),v.ool)||!read_file(path(slot,"json"),v.json))return false;
+    if(!read_commit(slot,v.commit)||!read_files(slot,v))return false;
     return verify_candidate(v,scratch.stage);
 }
+// A3-04G: give back every buffer the workspace holds; the fixed parts stay.
+void release_workspace(AlphaSaveScratch&s){
+    release_candidate(s.candidates[0]);release_candidate(s.candidates[1]);release_candidate(s.verified);
+    release_stage(s.stage);s.side=openu5::save::Json{};std::string().swap(s.json);
+}
+// Declared after the SdHeadroomGuard, so it runs first on the way out: the
+// workspace is empty before the DMA headroom is taken back.
+struct ReleaseOnExit {
+    AlphaSaveScratch &s;
+    ~ReleaseOnExit(){release_workspace(s);}
+};
 }
 
 AlphaSaveScratch *AlphaSaveService::scratch(){
@@ -101,6 +140,7 @@ bool AlphaSaveService::save(openu5::CommandContext &c,openu5::OutdoorServices&o,
     const int64_t start=esp_timer_get_time();last_failure_[0]=0;
     SdHeadroomGuard sd_window(new_journey?"frontend-new-journey":"gameplay-save");
     auto *workspace=scratch();if(!workspace){std::snprintf(last_failure_,sizeof(last_failure_),"PSRAM save workspace allocation failed");ms=0;return false;}auto &s=*workspace;
+    ReleaseOnExit release{s};
     auto stage=[&](const char*s,bool ok,const char*p=""){const int e=ok?0:errno;const auto margin=uxTaskGetStackHighWaterMark(nullptr)*sizeof(StackType_t);ESP_LOGI(kTag,"NEWGAME_SAVE stage=%s result=%s esp_err=%s errno=%d path=%s stack_margin=%u",s,ok?"ok":"fail",esp_err_to_name(ok?ESP_OK:ESP_FAIL),e,p,unsigned(margin));if(!ok)std::snprintf(last_failure_,sizeof(last_failure_),"%s failed (errno %d)",s,e);return ok;};
     auto directory=[&](const char*p){errno=0;if(mkdir(p,0777)==0)return true;if(errno!=EEXIST)return false;struct stat st{};return stat(p,&st)==0&&S_ISDIR(st.st_mode);};
     if(!stage("create-root-directory",directory("/sd/ultima5"),"/sd/ultima5")||!stage("create-save-directory",directory(kDirectory),kDirectory)){ms=uint32_t((esp_timer_get_time()-start+999)/1000);return false;}
@@ -150,6 +190,11 @@ bool AlphaSaveService::save(openu5::CommandContext &c,openu5::OutdoorServices&o,
     if(ok)ok=stage("write-commit-temp",write_file(path(slot,"commit",true),&next,sizeof(next)),path(slot,"commit",true).c_str());
     if(ok)ok=stage("rename-commit",move_temp(slot,"commit"),path(slot,"commit").c_str());
     if(ok)ok=stage("semantic-validation",candidate(slot,s.verified,s),path(slot,"commit").c_str());
+    // A3-04G: the save list. The written slot's summary is the one its own
+    // post-write check just derived from the card; after any failure the slot
+    // may hold new files under its old commit, so it is forgotten. The other
+    // slot's files were not touched.
+    if(ok)s.cache.store(slot,s.verified.commit,summarize_candidate(s.verified,s.stage));else s.cache.forget(slot);
     if(ok)stage("generation-final",true,path(slot,"commit").c_str());
     if(!ok){ESP_LOGE(kTag,"generation %d save failed (errno=%d); previous generation retained",slot,errno);}
     ms=uint32_t((esp_timer_get_time()-start+999)/1000);ESP_LOGI(kTag,"save generation=%llu slot=%d time=%lu ms json=%zu",(unsigned long long)next.sequence,slot,(unsigned long)ms,s.json.size());return ok;
@@ -158,14 +203,65 @@ bool AlphaSaveService::save(openu5::CommandContext &c,openu5::OutdoorServices&o,
 bool AlphaSaveService::load(openu5::CommandContext &c,openu5::OutdoorServices&o,
                             openu5::WorldTerrain&t,openu5::NpcActors&a,openu5::save::Json&retained,
                             uint32_t &ms){
-    const int64_t start=esp_timer_get_time();SdHeadroomGuard sd_window("load-latest");auto *workspace=scratch();if(!workspace){ms=0;return false;}auto &s=*workspace;for(int i=0;i<2;++i)candidate(i,s.candidates[i],s);
+    const int64_t start=esp_timer_get_time();SdHeadroomGuard sd_window("load-latest");auto *workspace=scratch();if(!workspace){ms=0;return false;}auto &s=*workspace;
+    // A3-04G: each slot's staged document is released before the other slot's
+    // files are read; restore_newest() stages the chosen one again.
+    ReleaseOnExit release{s};
+    for(int i=0;i<2;++i){candidate(i,s.candidates[i],s);release_stage(s.stage);}
     const int selected=restore_newest(s.candidates,c,o,t,a,retained,s.stage);ms=uint32_t((esp_timer_get_time()-start+999)/1000);
     if(selected>=0)ESP_LOGI(kTag,"load generation=%llu slot=%d time=%lu ms status=0",(unsigned long long)s.candidates[selected].commit.sequence,selected,(unsigned long)ms);
     return selected>=0;
 }
 
-bool AlphaSaveService::load_slot(int slot,openu5::CommandContext&c,openu5::OutdoorServices&o,openu5::WorldTerrain&t,openu5::NpcActors&a,openu5::save::Json&retained,uint32_t&ms){const int64_t start=esp_timer_get_time();SdHeadroomGuard sd_window("load-slot");auto *workspace=scratch();if(!workspace||slot<0||slot>1){ms=uint32_t((esp_timer_get_time()-start+999)/1000);return false;}auto&s=*workspace;auto&pick=s.candidates[slot];if(!candidate(slot,pick,s)){ms=uint32_t((esp_timer_get_time()-start+999)/1000);return false;}const bool ok=restore_candidate(pick,c,o,t,a,retained,s.stage);ms=uint32_t((esp_timer_get_time()-start+999)/1000);return ok;}
-void AlphaSaveService::inspect(openu5::FrontendSaveSlot(&slots)[2]){SdHeadroomGuard sd_window("save-inspect");auto*workspace=scratch();for(auto&slot:slots)slot={};if(!workspace)return;auto&s=*workspace;for(int i=0;i<2;++i){auto&v=s.candidates[i];if(!candidate(i,v,s)){Commit c{};slots[i].present=read_commit(i,c);continue;}slots[i].present=slots[i].valid=true;slots[i].sequence=v.commit.sequence;if(s.stage.game.party.character_count)std::snprintf(slots[i].name,sizeof(slots[i].name),"%.9s",s.stage.game.party.characters[0].name);}}
+bool AlphaSaveService::load_slot(int slot,openu5::CommandContext&c,openu5::OutdoorServices&o,openu5::WorldTerrain&t,openu5::NpcActors&a,openu5::save::Json&retained,uint32_t&ms){const int64_t start=esp_timer_get_time();SdHeadroomGuard sd_window("load-slot");auto *workspace=scratch();if(!workspace||slot<0||slot>1){ms=uint32_t((esp_timer_get_time()-start+999)/1000);return false;}auto&s=*workspace;ReleaseOnExit release{s};auto&pick=s.candidates[slot];if(!candidate(slot,pick,s)){ms=uint32_t((esp_timer_get_time()-start+999)/1000);return false;}const bool ok=restore_candidate(pick,c,o,t,a,retained,s.stage);ms=uint32_t((esp_timer_get_time()-start+999)/1000);return ok;}
+// The save list for the title screen and the System Menu.
+//
+// Alpha 3 A3-04G (ALPHA3_AUDIO.md section 28). Until A3-04G every open read all
+// four files of both slots over the TFT's 800 kHz SPI bus and staged both
+// generations whole (each import is a ~190 KB document), ~0.72 s on the device,
+// and kept the last one. Now, per slot: the commit record is read; if it is
+// the one an accepted summary was derived from (InspectCache), that summary is
+// the answer; otherwise the slot is read and verified exactly as before, and
+// its staging released before the next slot is read. The listing a player sees
+// is the same one a cold inspection gives (a3_04g_storage_runtime K2-K10).
+void AlphaSaveService::inspect(openu5::FrontendSaveSlot(&slots)[2]){
+    const int64_t start=esp_timer_get_time();
+    SdHeadroomGuard sd_window("save-inspect");
+    auto*workspace=scratch();
+    for(auto&slot:slots)slot={};
+    if(!workspace)return;
+    auto&s=*workspace;
+    const char*source[2]={"empty","empty"};
+    int64_t commit_us=0,read_us=0,verify_us=0;
+    size_t bytes=0;
+    for(int i=0;i<2;++i){
+        Commit commit{};
+        int64_t t=esp_timer_get_time();
+        const bool present=read_commit(i,commit);
+        commit_us+=esp_timer_get_time()-t;
+        if(!present)continue;
+        bytes+=sizeof(commit);
+        if(s.cache.hit(i,commit)){slots[i]=s.cache.summary[i];source[i]="cached";continue;}
+        s.cache.forget(i);
+        auto&v=s.candidates[i];
+        v=Candidate{};
+        v.commit=commit;
+        t=esp_timer_get_time();
+        const bool read=read_files(i,v);
+        read_us+=esp_timer_get_time()-t;
+        bytes+=v.gam.size()+v.ool.size()+v.json.size();
+        t=esp_timer_get_time();
+        const bool valid=read&&verify_candidate(v,s.stage);
+        verify_us+=esp_timer_get_time()-t;
+        if(valid){slots[i]=summarize_candidate(v,s.stage);s.cache.store(i,v.commit,slots[i]);source[i]="verified";}
+        else{slots[i].present=true;source[i]="refused";}
+        release_candidate(v);
+        release_stage(s.stage);
+    }
+    ESP_LOGI(kTag,"SAVE_INSPECT slot0=%s slot1=%s bytes=%zu commit_us=%lld read_us=%lld verify_us=%lld total_us=%lld",
+             source[0],source[1],bytes,(long long)commit_us,(long long)read_us,(long long)verify_us,
+             (long long)(esp_timer_get_time()-start));
+}
 
 bool AlphaSettingsService::load(openu5::FrontendSettings&s)const{SdHeadroomGuard sd_window("settings-load");std::vector<uint8_t>b;if(!read_file(kPath,b))return false;return openu5::decode_settings(std::string(reinterpret_cast<const char*>(b.data()),b.size()),s);}
 bool AlphaSettingsService::save(const openu5::FrontendSettings&s)const{SdHeadroomGuard sd_window("settings-save");mkdir("/sd/ultima5",0777);std::string text;if(!openu5::encode_settings(s,text))return false;const std::string tmp=std::string(kPath)+".tmp";if(!write_file(tmp,text.data(),text.size()))return false;unlink(kPath);return rename(tmp.c_str(),kPath)==0;}

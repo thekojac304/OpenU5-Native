@@ -1191,3 +1191,28 @@ Flash the A3-HF3 Launcher image (its path and SHA-256 are in tag `alpha3-hf3-com
 **FAIL:** a flash on the wrong row or cell, a row left inverted, no flash at all, a flash with no hit, or anything from the PASS list missing. Report it with the `FW` / `Git` lines and, if possible, a photo or video of the moment.
 
 *Known, not this check:* the star is drawn on the **cell**, so for a fraction of a second the struck combatant is hidden under it; that is the original's opaque blit. A monster's death still plays its own sound after the hit (A3-03's `CombatDefeat`, recorded for review in `ALPHA3_AUDIO.md` §27.12).
+
+### Phase H-202 — System Menu save inspection and the storage heap · *new firmware; SD pack unchanged* · about 20 minutes · **PENDING**
+
+Flash the A3-04G Launcher image (its path and SHA-256 are in tag `alpha3-a3-04g-storage-inspect`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-04g-debug` and that tag's `Git`; if not, stop. Music 80 %, SFX 80 %, SD diag logging off (the default). **Keep a serial monitor attached from power-on to the end** and send the whole capture: this check is read from the `SAVE_INSPECT`, `SD_HEAP`, `METRICS heartbeat` and `SYS_PERF` lines (`ALPHA3_AUDIO.md` §28). The card should hold two save generations; if it holds fewer, make them in step 3 with two saves.
+
+The A3-04G image contains A3-HF3's combat code unchanged, so H-201 can be run on this same flash; if so, record this image's `FW` / `Git` in H-201's result.
+
+1. **Boot to the title screen.** The two generations are listed correctly. Serial: one `SAVE_INSPECT slot0=verified slot1=verified …` line (this first look reads and checks both), and the `SD_HEAP operation=dma-reserve-restored state=save-inspect` line after it. Note that line's `free_internal` and `largest_internal`: the internal heap should be back near its pre-window value (the previous image showed 46,571 B free with a 7,552 B largest block here).
+2. **Continue.** The game loads. Note the `load generation=… time=… ms` line and the `SD_HEAP … state=load-latest` line after it.
+3. **Walk for about 30 s**, then note one heartbeat: `METRICS heartbeat internal=…` (call it *B*). If the card had fewer than two generations, press `Alt+S` twice now.
+4. **First System Menu open (`Alt+M`).** Judge by eye how long the menu takes to appear; the previous image took ~0.8 s. Serial: `SAVE_INSPECT slot0=cached slot1=cached bytes=64 … total_us=…` (both `cached` if nothing changed since the title), no `INPUT_SERVICE render_block_us` line near 720,000, and `SYSTEM_MENU_RENDER … us=…` (about 100 ms, unchanged). The `dma-reserve-restored` line shows `free_internal` ≈ *B* and `largest_internal` 49,152 (the previous image showed ≈ 77 KB and 23,552 after this first open).
+5. **The Load page.** `Down`, `Down`, `Enter`: *Generation 1* / *Generation 2* name the right characters, and neither says `empty` or `corrupt` wrongly. Back out and close with **Mic**.
+6. **Twenty open / close cycles** (`Alt+M`, then **Mic**). Every open is quick; every `SAVE_INSPECT` line says `cached`. The heartbeats before and after stay at *B* (± a few bytes; no step down, no slope).
+7. **Save from inside the menu.** `Alt+M`, `Down`, `Enter` (Save): "Save complete". Without closing, `Down`, `Enter` (Load / Save Management): the page lists the generation just written (the previous image listed the card as it was when the menu opened). Serial: the `save generation=… time=… ms` line, then `SAVE_INSPECT … cached … cached`.
+8. **Load a generation.** On that page choose a generation and `Enter`: "Load complete", and the game is the one saved.
+9. **Shortcuts.** Walk a little; `Alt+S` ("Save complete"); walk; `Alt+L` ("Load complete", back where you saved). Then one more `Alt+M` / Mic: `cached`, `cached`.
+10. **Music and SFX** keep playing through all of the above; the Developer report (Alt+D → Diagnostics → Audio/render stats) shows `und=0 hw=0 miss=0`.
+11. **Heap summary.** In the same report note internal heap now / min and PSRAM now / min. The **min** may still read a few hundred bytes to a few KB: a first look at the card (step 1), a load and a save each build a large document for a moment (§28.16). That alone is not a failure.
+12. **Search the capture** for `allocate_dma_buf`, `dma-reserve-restore-failed`, `LOW INTERNAL RAM`, `SAVE_SCRATCH allocation failed`, `sdmmc`, `diskio`, `task_wdt`, `Guru`, `abort`.
+
+**PASS:** steps 1–10 as described; every `dma-reserve-restored` line after a menu open shows `free_internal` within 4 KiB of the `release-reserved-dma` line before it and `largest_internal` of at least 32 KiB; the heartbeats do not fall across step 6; step 12 finds nothing; no crash, reboot, watchdog, or visual corruption.
+
+**FAIL:** a wrong, stale, `empty` or `corrupt` entry for a good generation; an open that is not clearly faster than before; `free_internal` staying ≈ 150 KB lower after a menu open; any line from step 12; a save or load that fails. Send the capture with the `FW` / `Git` lines.
+
+*Record for §28 in any case:* the `SAVE_INSPECT` lines of steps 1, 4 and 6 (`commit_us`, `read_us`, `verify_us`, `total_us`), every `SD_HEAP … dma-reserve-restored` line, the load time of step 2, and the step-11 figures. They replace §28.4's inferred split with a measured one.

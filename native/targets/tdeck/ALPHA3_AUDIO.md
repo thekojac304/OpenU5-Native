@@ -1,6 +1,13 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap)
 
-**Status (A3-HF3, 2026-09-27): COMBAT HIT FEEDBACK (D-63) FIXED ON THE HOST — HARDWARE CHECK H-201 PENDING.** H-200 found that a hit on a party member showed no cue (§26.17.9). §27 re-derives the original's cue from ULTIMA.EXE 0x3564: every decided hit, before its result, blits tile 0 (the `Explosion` star) opaquely over the struck cell, and for a party member XORs its roster row, both for the hit's burst (9,000 half samples = 174 ms).
+**Status (A3-04G, 2026-09-27): SYSTEM MENU SAVE INSPECTION AND THE STORAGE HEAP — EXPLAINED AND FIXED ON THE HOST — HARDWARE CHECK H-202 PENDING. H-201 (A3-HF3) IS STILL PENDING.** §28 measures the ~0.72 s System Menu open and the ~150 KB of internal heap the first open kept, with the first host build of the real `alpha_save.cpp` (over a fake SD card, with a census of every allocation):
+- Every open read all four files of both save slots over the TFT's 800 kHz bus and imported each 4,192-byte GAM **twice** into a save document of ~2,700 nodes, ≈ 193 KB on the device in blocks ≤ 4 KiB, so internal RAM first. The last document then **stayed** in the save workspace until the next storage operation: that is the 150 KB plateau (not a leak — flat over repeated opens on the device and on the host), and it fragmented the internal heap (largest block 7.5–23.5 KB).
+- A two-slot inspect peaked at 2.4 documents (≈ 470 KB) against ≈ 236 KB free, which is what drove `heap_int_min` to ~200 B, and the second slot's card reads ran with the first slot's document alive.
+- Now: nothing is kept after any storage call; each slot is released before the next is read; a verify never holds two documents (peak 2.43 → 1.42 ×); and an unchanged card is listed from a cache keyed on each slot's commit record — **2 files / 64 bytes per open instead of 8 files / 10,210 bytes, no import**. A Save made inside the menu now updates its Load page (a pre-existing stale list).
+
+RED-first 32 / 44 (12 RED) → GREEN 44 / 44 on the real shell; 17 / 17 mutations killed; host suite 149 / 149. Firmware +1,760 B, flash only (DIRAM and IRAM unchanged). The heap watch item is re-classified: **fragmentation risk remains — explained and bounded** (a cold import still fills internal RAM briefly, with no card I/O inside it), with new triggers (§28.16). Predicted, not yet measured: an open on an unchanged card ≈ 45–60 ms instead of ≈ 720 ms.
+
+**Status as A3-HF3 wrote it (2026-09-27): COMBAT HIT FEEDBACK (D-63) FIXED ON THE HOST — HARDWARE CHECK H-201 PENDING.** H-200 found that a hit on a party member showed no cue (§26.17.9). §27 re-derives the original's cue from ULTIMA.EXE 0x3564: every decided hit, before its result, blits tile 0 (the `Explosion` star) opaquely over the struck cell, and for a party member XORs its roster row, both for the hit's burst (9,000 half samples = 174 ms).
 - The device now queues one cue per hit event and plays them in order from the frame clock, without blocking anything. The star goes through the existing one-cell world-fx blit, the row through the existing `damage_flash` reverse video.
 - A party wipe waits for its cue before the arena closes.
 - The poisoning and sleep strikes get their side's burst too.
@@ -3307,6 +3314,8 @@ The viewport-frame TFT **maximum** rose 71.2 → 74.7 ms (+4.9 %) while the aver
   - `heap_caps_print_heap_info(MALLOC_CAP_INTERNAL)` per region, before and after the first `inspect`
   - an answer to what holds the ~150 KB
 
+*A3-04G (2026-09-27), §28: the ~150 KB was the last verified generation's save document, kept in the save workspace; the 200 B mark was a two-slot inspect holding 2.4 documents against ~236 KB of free internal RAM. The plateau is fixed on the host; the watch item is re-classified "fragmentation risk remains — explained and bounded", and §28.16 replaces the trigger list above.*
+
 #### 26.17.9 Combat damage feedback (new: D-63 / H-201)
 
 **The observation.** In H-200's fight the user could not tell which party member was hit: there was no clearly noticeable name flash or similar cue. H-200 step 6 expected "a hit member's row flashes in reverse video and returns to normal". Combat itself worked.
@@ -3359,7 +3368,7 @@ The one player-visible defect the run found is D-63. It is binary-cited and smal
 - **The TypeScript reference.** It lacks the roster half too. Adjudicate binary-first and decide at the pinned layer whether the reference is fixed as well.
 - **Device check.** H-201 on the device.
 
-After A3-HF3, the storage batch: §23.10.5's 0.75 s System Menu open together with §26.17.8's heap watch item, which share `AlphaSaveService::inspect`. The §26.8 render items wait for a device symptom. The synth's steady cost (CPU1 42 %, 0 underruns) is an audio item with no current symptom.
+After A3-HF3, the storage batch: §23.10.5's 0.75 s System Menu open together with §26.17.8's heap watch item, which share `AlphaSaveService::inspect`. *(Done: A3-04G, §28.)* The §26.8 render items wait for a device symptom. The synth's steady cost (CPU1 42 %, 0 underruns) is an audio item with no current symptom.
 
 *Done: A3-HF3, §27.*
 
@@ -3527,3 +3536,287 @@ In `ALPHA2_HARDWARE_CHECKLIST.md`. PASS needs, in a real fight:
 - Device: `native/targets/tdeck/main/alpha_runtime.{h,cpp}`; `native/targets/tdeck/CMakeLists.txt` (`PROJECT_VER`).
 - Tests / tools: `native/core/tests/a3_hf3_combat_hit_cue_test.cpp`, `native/targets/tdeck/host_tests/a3_hf3_combat_hit_runtime_test.cpp`, `native/core/tools/a3_hf3_{red_first,mutation_check}.py` (new); `native/core/CMakeLists.txt`.
 - Docs: this section and the status line; `ALPHA2_HARDWARE_CHECKLIST.md` (H-201); `ALPHA2_PRESERVATION_LEDGER.md` (D-63); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`.
+
+## 28. A3-04G — the System Menu's save inspection and the storage heap
+
+The storage batch §26.18 queued. It joins two observations that share `AlphaSaveService::inspect`: the ~0.72 s System Menu open (§23.10.5), and the ~150 KB of internal heap the first open kept for the rest of the run, with the 200 B low-water mark (§26.17.8). It measures first, then changes only the storage shell. No save format, gameplay, audio, render or combat change; A3-HF3 is untouched.
+
+**Status: EXPLAINED ON THE HOST WITH THE REAL `alpha_save.cpp` — FIXED ON THE HOST — HARDWARE CHECK H-202 PENDING. H-201 (A3-HF3) IS STILL PENDING.**
+
+Evidence axes used below: **proven** (host, deterministic), **device** (the committed A3-04E.1 captures), **inferred** (arithmetic over both), **device-only unknown** (H-202), **deferred**.
+
+### 28.1 Baseline
+
+- HEAD `2d1d2983` on `main`, clean; latest tag `alpha3-hf3-combat-hit-feedback` (`c3738572`), earlier `alpha3-a3-04f-render-efficiency`, `alpha3-hf2-1-cleanup`.
+- Fresh host build `native/core/build-a3-04g-base`: **148 / 148, serial, 126.35 s** (`native/core/a3-04g-baseline-{configure,build,ctest}.log`). Only the known w64devkit warning.
+- Firmware at baseline: A3-HF3, `0xeefe0` = 978,912 B, 69,664 B (7 %) free.
+
+### 28.2 The device evidence this batch starts from
+
+From `a3-04e1-hw-soak.log` (lines 5432–5611) and `a3-04e1-hw-probes.log` (lines 5, 130–141, 758–782), both A3-04E.1 serial captures:
+
+| Moment | internal free | largest internal (= largest DMA) | PSRAM free | Note |
+|---|---|---|---|---|
+| gameplay before the first menu (heartbeat) | 227,903 | 49,152 | 5,855,888 | the 48 KiB DMA pool is whole |
+| first System Menu: window open (headroom released) | 236,099 | 49,152 | — | `sd-window-open` 299,268 ms |
+| same window, closed | **77,411** | **23,552** | — | `dma-reserve-restored` 299,988 ms: **720 ms** |
+| heartbeats for the rest of the run | 77,355–77,411 | 23,552 | **5,771,756** | −150,492 B internal, −84,132 B PSRAM, flat |
+| second … sixth opens | 77,355–77,411 | 23,552 | — | ±56 B: a plateau, not a slope |
+| probes run: title screen after its inspect | 46,571 | **7,552** | — | boot, before Continue |
+| probes run: after Continue (load 1,057 ms) | 237,075 | 49,152 | 5,861,988 | the load released it |
+| probes run: first System Menu | 73,187 | 10,240 | 5,781,364 | `heap_int_min` 344 → **224** in this window |
+
+The key → frame time of the first open: `INPUT_EDGE … emitted=system-menu` at 299,268 ms, `SYSTEM_MENU_RENDER … us=98527` at 300,088 ms: **≈ 820 ms**, of which the SD window is 720 ms (`INPUT_SERVICE render_block_us=724017`) and the full-screen menu frame 98.5 ms. A Settings save costs ~270 ms the same way and moves no heap.
+
+### 28.3 The path, from the key to the first menu frame
+
+```
+TDeckInput task ─ queue ─▶ main loop (main.cpp:205)  runtime.handle(raw)
+  AlphaRuntime::handle → UiInputAdapter: Alt+M → UiActionKind::SystemMenu (alpha_runtime.cpp:1560)
+    AlphaSaveService::inspect(slots)                                   [alpha_save.cpp]
+      SdHeadroomGuard("save-inspect")
+        sdlog::begin_storage_transaction()          storage mutex (SD diag writer)
+        SD_HEAP ×2 (ESP_LOGI), heap_caps_free(8 KiB DMA headroom)
+      scratch()                                     PSRAM workspace, allocated once
+      for slot 0, 1:
+        read_commit   fopen/fseek/ftell/rewind/fread/fclose → VFS → FATFS → sdspi on SPI2 (the TFT's bus, 800 kHz)
+        read_file ×3  gam 4,192 B · ool 512 B · json (369 B here)
+        verify_candidate(v, stage)                  [alpha_save_generation.cpp]
+          complete_generation   CRC-32 ×3, parse the sidecar, import_save(GAM) → a whole document, discarded
+          stage_generation      load_native_state → import_save(GAM) again → stage.document
+                                restore_gameplay · restore_terrain · restore_npc_walk ·
+                                validate_world_objects · restore_dungeon · validate_moonstones
+        name / sequence  ← stage.game.party
+      ~SdHeadroomGuard: heap_caps_malloc(8 KiB DMA|INTERNAL), SD_HEAP, end_storage_transaction
+    SystemMenuSession::open(settings, slots)       page Root, cursor 0, copies the two slots
+    SYSTEM_MENU log, dirty_
+  main loop: input_dirty → AlphaRuntime::render → Board::show_frontend(SystemMenuSession::view())
+    full redraw, 11 dirty regions, 163,696 px → the first menu frame
+```
+
+No decompression is involved; "deserialization" is `import_save`, which turns the 4,192-byte GAM into the save document. Load and Continue Latest run the same reads and gate (§28.4).
+
+### 28.4 Where the 720 ms goes
+
+**Host (proven, host clock only).** The production `SAVE_INSPECT` line (§28.8) on the host: a cold inspect of two generations is ~1.0–1.3 ms, ~0.8–1.0 ms of it in `verify_candidate`; an unchanged card afterwards is ~50–60 µs. The host's file I/O says nothing about the card and is not compared with it.
+
+**What the device does per open (proven by the fake card's counters):** 8 file opens, 8 reads, **10,210 bytes**; 4 imports of the GAM (2 per `verify_candidate`) and 2 stagings; 7,812 heap allocations.
+
+**The device split (inferred, two independent estimates):**
+- *The card.* Each open walks `/ultima5/saves` (~3 directory sectors with FATFS's one-sector window); the data is 12 sectors per slot (commit 1, gam 9, ool 1, json 1). ≈ 48 sector reads; at 800 kHz a 512-byte sector is 5.12 ms of clock alone, so **≈ 250 ms** before command, CRC and bounce-buffer overhead (a PSRAM destination is read through a per-sector DMA bounce, `sdmmc_cmd.c:643–690`).
+- *The imports, by subtraction.* The boot `load-latest` window (1,057 ms) reads the same 8 files and imports 7 times (2 verifies = 4, `select_generation` → `complete_generation` ×2, the restore); the inspect imports 4 times. 3 extra imports ≈ 337 ms → **≈ 110 ms per import with its staging**, so ≈ 440 ms of the inspect is CPU and **≈ 280 ms** is the card. The two card estimates agree within ~10 %.
+- Caveat: that load ran with internal RAM nearly full (the title screen's inspect had kept its document, 46,571 B free), so its imports spilled to PSRAM and 110 ms may overstate an import made with internal RAM free.
+
+**Device-only unknown:** the real split. A3-04G's `SAVE_INSPECT` line reports `commit_us`, `read_us`, `verify_us` and `total_us` per open; H-202 records them.
+
+### 28.5 The allocation census
+
+The census (`a3_04g_storage_runtime` C, R) counts every `operator new` in the process with the real `alpha_save.cpp`. "Small" is ≤ 4,096 B: on the device `CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=4096` sends exactly these to internal RAM first. Host sizes are 64-bit; the device column is a 32-bit estimate from the same tree (`sizeof(Json)` 64, `u16string` 24 with a 7-unit buffer, TLSF header 4 B), labelled as such.
+
+**One generation (proven):** GAM 4,192 B, OOL 512 B, commit 32 B, sidecar JSON **369 B** (27 nodes, ~4.2 KB). The sidecar is not the cost. The **staged save document** that `import_save` builds from the GAM is: **2,717 nodes; 3,885 allocations per verify; host 266,058 B small; device estimate ≈ 193 KB in 303 blocks, every one ≤ 4 KiB** — so internal RAM first, all of it. One verify peaks at **1.42 ×** the document (the discarded import, growth slack).
+
+| Allocation | Size (device est.) | Internal / PSRAM | Lifetime (before → A3-04G) | Necessary? | Candidate for change? |
+|---|---|---|---|---|---|
+| staged save document `stage.document` | ≈ 193 KB, 303 blocks ≤ 4 KiB | internal first; spills to PSRAM and into the 48 KiB DMA pool when internal is full | **until the next storage operation** → released after each slot | during the verify only | **changed: released** |
+| `complete_generation`'s own import (`decoded`) | ≈ 193 KB | internal first | transient in the verify | validation (core, `persistence.cpp`) | deferred (§28.18) |
+| import slack (vector growth, strings) | ≈ 0.42 × the document | internal first | transient | — | — |
+| candidates' `gam` bytes | 4,192 B × 2 | PSRAM first (> 4 KiB) | until the next operation → per slot | yes | **changed: released** |
+| candidates' `ool`, `json`, `side` copy | 512 + 369 + 369 B × 2 | internal first | until the next operation → per slot | yes | **changed: released** |
+| stage owners (`outdoor`, `terrain` vectors) | small | internal first | until the next operation → per slot | yes | **changed: released** |
+| save: `s.side` (sidecar DOM), `s.json`, `s.verified` + its staging | ~4 KB + 369 B + a document | internal first | until the next operation → end of the save | yes | **changed: released** |
+| save: `export_native_state`'s copy of the live document | ≈ 193 KB | internal first | transient in export | core | deferred (§28.18) |
+| commit read buffer | 32 B | internal | per read | yes | — |
+| `AlphaSaveScratch` (fixed part) + the new `InspectCache` | fixed; cache ≈ 150 B | **PSRAM** (explicit `heap_caps_calloc`) | whole run, allocated once | yes | unchanged; cache added there, not in internal `.bss` |
+| DMA headroom (`SdHeadroomGuard`) | 8,192 B | internal DMA (explicit caps) | freed for each SD window, re-reserved after | yes (Alpha 2.0 guard) | unchanged |
+| sdmmc bounce buffer (`allocate_dma_buf`) | 512 B per chunk | internal DMA (`MALLOC_CAP_DMA`) | per sector into a PSRAM destination | yes | device-only; unchanged |
+| FATFS per-file sector buffer (`ff_memalloc`, dyn buffers) | one sector | PSRAM preferred (`FATFS_ALLOC_PREFER_EXTRAM`) | per open file | yes | unchanged |
+| FATFS LFN buffer (`FATFS_LFN_HEAP`) | ≈ 0.5–1 KB | PSRAM preferred | per path operation | yes | unchanged |
+| picolibc `FILE` + stdio buffer | small | internal first | per `fopen` | yes | unchanged |
+| menu model (`SystemMenuSession`, `view()`'s `static char d[8][96]`) | static | internal `.bss` | whole run | yes | unchanged |
+| audio / render buffers at menu entry | none allocated | — | — | — | — |
+
+The device-only rows come from the ESP-IDF 6.1 sources (`fatfs/port/freertos/ffsystem.c` `ff_memalloc`, `fatfs/src/ffconf.h`, `sdmmc/sdmmc_cmd.c`) and the project's `sdkconfig` (`FATFS_USE_DYN_BUFFERS`, `FATFS_ALLOC_PREFER_EXTRAM`, `FATFS_LFN_HEAP`, `FATFS_SECTOR_4096`, `LIBC_PICOLIBC`).
+
+**Against the device (inferred):** the soak kept −150,492 B internal and −84,132 B PSRAM after the first inspect, 234.6 KB in all. The retained set predicted here is one document (≈ 193 KB est.) + both candidates' bytes (≈ 11 KB) + the stage owners + allocator overhead, with the document split across internal RAM (until it was full) and PSRAM. The magnitudes agree within the estimate's precision; the split between the two is the allocator's fill order.
+
+### 28.6 Leak, retention, fragmentation
+
+**Not a leak (proven on the host, consistent with the device).** 100 open/close cycles through the real runtime leave the live heap exactly flat (S1, spread 0 B), with no open file handle (S2), one balanced storage transaction per open (S3), the DMA headroom re-reserved every time (S4) and no card write (S5). **The unmodified A3-HF3 shell passes S1–S5 too** (RED-first run, §28.10): it plateaued, as the device did (±56 B over six opens).
+
+**What the 150 KB was: retention (proven).** `AlphaSaveScratch` was moved to PSRAM in Alpha 2.0 (`ALPHA20_DEVICE_UI_CORRECTION_PASS.md` §1, "workspaces retained in internal RAM"), but only its fixed part. The document a verify stages inside it is ~2,700 small allocations, and every one went to internal RAM first. Nothing released it: the last inspect's or save's document stayed until the next storage operation replaced it. The host shows it directly: an inspect on a fresh service kept **295,038 B** (268,222 B small) after returning (R1 RED on HEAD). The probes run shows the same thing placed differently: after the title screen's inspect, internal RAM had 46,571 B free with a **7,552 B** largest block; Continue replaced the workspace's document and it rose to 237,075 B.
+
+**Allocator migration (device, explained).** Where a document lands depends on what is free when it is built. The same load that produced a PSRAM-heavy live document at boot would produce an internal-heavy one with internal RAM free. This is why the plateau value differs between runs (77,411 / 73,187 B).
+
+**Fragmentation (device, explained).** Free and largest diverge exactly when a document is kept: 77,411 B free with a 23,552 B largest block; 46,571 B with 7,552 B. `largest_dma` falls with `largest_internal` because the kept nodes are also in the 48 KiB pool `SPIRAM_MALLOC_RESERVE_INTERNAL` re-adds: a plain small `malloc` reaches that pool once the ordinary DRAM regions are full (`heap_caps_base.c:142–155`: a heap qualifies at a priority when it has *any* requested cap there and *all* of them overall).
+
+**The 200 B low-water (inferred from proven quantities).** One verify peaks at 1.42 × ≈ 193 KB ≈ 274 KB; with the old order (§28.8) a second slot's verify on a stage still holding the first document peaked at **2.43 ×** ≈ 469 KB (host: 645,688 B small, C4/R6 RED on HEAD). Internal RAM free at the window's start was ~236 KB. So every cold verify, and every inspect of two slots most of all, filled internal RAM (and the DMA pool) until small allocations spilled to PSRAM — the per-region minima that `heap_int_min` sums were driven to a few hundred bytes. The mark moved from 344 to 224 B inside the probes run's first menu window, as this predicts.
+
+**The old failure class, decomposed:**
+| Mechanism | Present before A3-04G? | Evidence |
+|---|---|---|
+| total internal RAM insufficient | **yes, transiently**: a cold verify does not fit and spills | proven sizes, device minima |
+| contiguous DMA-capable block insufficient | **yes**, while a document was kept (7,552 / 10,240 / 23,552 B) | device `largest_dma` |
+| capability constraint | the SD bounce needs `MALLOC_CAP_DMA` internal RAM (512 B per chunk); PSRAM cannot serve it | ESP-IDF source |
+| long-lived internal allocations pinning memory | **yes**: the kept document, the Alpha 2.0 class that the PSRAM move did not reach | proven retention |
+| card I/O while a document was alive | **yes**: slot 1's reads, and Continue's second slot, ran with slot 0's document alive (268 KB host small) | R2 / R3 RED on HEAD |
+
+The last row is the dangerous combination: the only allocations that must be internal and DMA-capable (the SD bounce buffers) were requested while a document had filled internal RAM. No run logged `allocate_dma_buf` or `dma-reserve-restore-failed`, so it never failed; it had no margin by construction.
+
+### 28.7 Internal RAM against PSRAM
+
+- **The document** needs neither DMA nor internal-RAM latency; it is in internal RAM only because its blocks are ≤ 4 KiB. It could live in PSRAM, but only by changing the core `Json` type's allocator (pinned core, out of scope) or by lowering the always-internal limit with `heap_caps_malloc_extmem_enable()` around the storage window (global, device-only, unmeasured). **Not done blindly:** deferred to a hardware-measured batch (§28.19).
+- **The `gam` bytes** are > 4 KiB and so PSRAM first; reading into PSRAM costs a DMA bounce per sector. Moving them to internal RAM would save bounces but spend 8 KiB of the scarcest memory. Unchanged; now short-lived.
+- **The DMA headroom and the bounce buffers** must be internal DMA RAM. Unchanged.
+- **FATFS buffers** are already PSRAM-preferred by `sdkconfig`.
+- **Nothing was moved to PSRAM by this batch.** The one new structure (the save-list cache, ≈ 150 B) is inside the existing PSRAM workspace, so internal `.data` / `.bss` do not grow for it.
+
+### 28.8 The change
+
+**`alpha_save_generation.{h,cpp}` (storage-independent, host-compiled):**
+- `verify_candidate` empties the stage **before** `complete_generation()` imports the generation, not after. A verify on a stage that still holds a document no longer holds both (C4).
+- New `release_candidate()`, `release_stage()` (every heap buffer back; fixed parts stay) and `summarize_candidate()` (the listing's present / valid / sequence / name, the same fields and the same `%.9s` as before).
+
+**`alpha_save.cpp` (the device shell):**
+- **Nothing is kept between calls.** `save`, `load` and `load_slot` release the whole workspace on every exit (`ReleaseOnExit`, declared after the `SdHeadroomGuard`, so the workspace is empty before the 8 KiB headroom is taken back). `inspect` releases each slot's staging and bytes before the next slot's files are read; `load` releases each slot's staging before reading the other (the restore stages the chosen one again).
+- **The save list (`InspectCache`, in the PSRAM workspace).** Per slot, the summary of a generation the gate accepted and the commit record it came from. An open reads both commit records (32 B each); a slot whose commit matches field for field is answered from the cache; any other slot is read and verified exactly as before, then released. §28.9 has the rules.
+- **`save()`** stores the slot it wrote from its own post-write check (`semantic-validation`), which has just read the generation back from the card; on any failure after the target slot is chosen it forgets that slot.
+- **One log line per inspect:** `SAVE_INSPECT slot0=<cached|verified|refused|empty> slot1=… bytes=… commit_us=… read_us=… verify_us=… total_us=…` — the device's timing breakdown for H-202.
+
+**`alpha_runtime.cpp` + `openu5/system_menu.h` (the stale Load page, K10):** a Save made from inside the System Menu used to leave the menu's Load page listing the card as it was when the menu opened ("Generation 1: empty" beside a generation just written, and that slot not selectable). After a menu Save — success or failure — the runtime inspects again (normally two commit reads) and hands the list to the open menu through the new, additive `SystemMenuSession::set_save_slots()`. Alt+S outside the menu is unchanged: the next open inspects.
+
+**A finding in passing:** `AlphaSaveCommit` has 4 trailing padding bytes, and `save()` writes them uninitialised (`Commit next;`). The format is unchanged and nothing CRCs the commit, but the bytes are not a stable identity: the first cache build compared with `memcmp` and missed on one slot every time. It compares the fields.
+
+### 28.9 The save list's rules (invalidation)
+
+| Rule | |
+|---|---|
+| Key | per slot, the commit record's fields: magic, version, sequence and the three files' CRC-32s |
+| Stored | only for a generation `verify_candidate()` accepted: by an inspect's full verification, or by `save()`'s post-write check of the slot it wrote |
+| Forgotten | on any miss, before the slot is read again; by `save()` for its target slot on any failure after the target is chosen (the slot may hold new `gam` / `ool` under its old commit, K7) |
+| Never stored | an empty slot (no or bad commit), a refused generation (CRC, parse, semantic gate), an unreadable file: those are looked at again on every open, so a transient failure is retried (K6, F3b) |
+| Never used | by Load, Continue Latest and Load Slot: they read and verify the generation again before anything live changes |
+| Where | inside the PSRAM workspace; if that allocation fails there is no list and no cache, as before (F5) |
+| Assumption | this service is the card's only writer while it is mounted (the card is mounted once at boot, `tdeck_board.cpp`; there is no card-detect or remount). A data file changed out of band under an unchanged commit is not seen by the list; Load Slot then refuses it and the live game is untouched (V3) |
+| Selection | `SystemMenuSession::open` resets page and cursor on every open, and a menu Save refreshes the open menu's list (K10); no stale selection survives a changed save set |
+
+### 28.10 Tests, RED / GREEN and mutations
+
+**The new host seam.** `a3_04g_storage_runtime` is the first target to compile the **real** `alpha_save.cpp`. `host_tests/sd_shims/`:
+- `host_sd_vfs.h` is force-included (`-include`) into `alpha_save.cpp` only. It includes every standard header the file uses first and then renames its stdio / POSIX calls, so the production source is compiled verbatim.
+- `host_sd_vfs.cpp`: "/sd/…" redirected under a per-run temp directory (real files), every open / read / write / rename / unlink / mkdir / stat counted with bytes, a probe at every read and write, faults by path substring (open, short read, write, rename, no card), a configurable `esp_vfs_fat_info`, and the storage-transaction stubs.
+- `esp_heap_caps.h`: the same constants; calls counted by capability, and one allocation can be failed on request.
+
+The test runs the real `AlphaRuntime` (Alt+M, Back, Save, Load through its keys), services of its own, and a census of every `operator new`. **44 checks:**
+- **C0–C4** census: the generation's files; the sidecar is small; the staged document is large and small-blocked; the cold list; **C4** a second verify on one stage peaks no higher than the first.
+- **R1–R6** retention and pressure: an inspect keeps ≤ 1 KiB (R1, R2b), no staged generation is alive at a card read in inspect (R2, R2b) or Continue (R3) or a save's writes (R4), a save keeps ≤ 2 KiB (R5), two slots never hold two documents (R6).
+- **S0–S5** 100 open/close cycles (§28.6).
+- **K1–K10** the list: two 32-byte reads on an unchanged card (K1), equal to a cold inspection field for field (K2), after a save (K3a/b), a changed commit re-verifies that slot only (K4), delete / re-create (K5a/b), a refused slot never cached and re-read each open, then valid when repaired (K6/K6b), a save failing mid-rename or at the temp write lists the card as it is (K7, K8), recovery (K9), the in-menu Save (K10).
+- **F1–F6** failure paths (§28.12).
+- **V1–V3** save / load correctness (§28.12).
+
+The I/O-time measure is taken against the operation's lowest point so far, so an operation that starts by freeing an earlier document is still measured by what it builds.
+
+**RED-first.** `native/core/tools/a3_04g_red_first.py` builds the same test against HEAD's `alpha_save.cpp`, `alpha_save_generation.{h,cpp}` and `alpha_runtime.cpp` (the test uses only what they declare): **32 / 44, 12 RED** — C4, R1, R2, R2b, R3, R5, R6, K1, K3b, K4, K6, K10 — and every control GREEN, including all of S (`native/core/a3-04g-red.log`). After: **44 / 44** (`a3-04g-green.log`).
+
+**Mutations.** `native/core/tools/a3_04g_mutation_check.py`, 17 mutants over the shell, the gate and the runtime: retention (M1 a slot's files kept, M2 a slot's staging kept, M3 Continue keeps a staged slot, M4 save keeps its workspace, M5 `release_stage` keeps the document, M6 the pre-A3-04G verify order); the list (M7 any commit hits, M8 the sequence ignored, M9 nothing reused, M10 refused slots cached, M11 a failed save not forgotten, M12 a good save not stored, M13 stored in the other slot, M14 wrong sequence, M15 no name, M16 a present unreadable slot listed empty); M17 the in-menu Save not refreshed.
+- First pass (`a3-04g-mutation-first.log`): 16 killed; the first M1 (inspect without its end-of-call release) **survived because it was equivalent** — inspect already released each slot inside its loop. The redundant release was removed from `inspect` and M1 re-aimed at the per-slot release.
+- Final pass on the final code (`a3-04g-mutation.log`): **17 / 17 killed**, restored build GREEN.
+
+### 28.11 Test artefact found and fixed
+
+The first S1 showed a 2,040 B drift over 100 cycles on both the old and the new shell, in steps of +24, +32, +64 … +1,024 B at cycles 1, 2, 4 … 64. That is `std::vector` doubling: the test's own record of the live heap growing inside the heap it measured. Reserved up front, S1 is flat (0 B) on both. Recorded so a later reader does not mistake it for a runtime leak.
+
+### 28.12 Save correctness and the failure paths (real shell)
+
+| Check | Result |
+|---|---|
+| save → load round trip (V1) | the saved gold comes back |
+| newest generation damaged: Continue Latest (V2) | restores the older one |
+| out-of-band damage under a cached commit: Load Slot (V3) | refused, live game untouched |
+| save fails at the json rename (K7) / at the temp write (K8) | "Save failed; prior kept"; the list shows the card as it is (the torn slot corrupt) |
+| no card (F1) | both slots empty, no handle left, window closed; card back → listed (nothing negative cached) |
+| unreadable commit (F2) / truncated commit (F6) | that slot empty, the other intact |
+| short sidecar read (F3) | that slot corrupt; read good again → valid |
+| CRC mismatch (F4) | corrupt |
+| no PSRAM for the workspace (F5) | empty list, window closed, headroom restored; next open lists the card |
+| repeated opens after a failure | F1b, F3b, F5b, K6b |
+
+The existing save / load suites all pass unchanged (§28.14): `batch24_reload_parity`, `batch26_dungeon_save`, `batch27_alt_load`, `batch28_save_validation`, `batch53_release_blockers` and the rest run the production `alpha_save_generation.cpp` through the memory stub, which is unchanged (it has no files, no workspace and no list: §28.18).
+
+*Not covered on the host (device-only):* full or near-full card at the FAT level (only the free-space query is faked), a card pulled mid-write, real `allocate_dma_buf` behaviour.
+
+### 28.13 Before / after (host only)
+
+All figures are host (64-bit) measurements of the same operations on the same card, from `a3-04g-red.log` (before) and `a3-04g-green.log` (after). No device improvement is claimed before H-202.
+
+| Operation | Metric | Before | After |
+|---|---|---|---|
+| **System Menu open, card unchanged** (the normal case) | files opened / bytes read | 8 / 10,210 | **2 / 64** |
+| | heap allocations | 7,809 | **11** |
+| | small-byte peak | 377,466 over a kept 268 KB | **142** |
+| | host CPU (`SAVE_INSPECT total_us`) | ≈ 1.2 ms | **≈ 0.055 ms** |
+| **cold inspect** (boot title, first open after a change) | files / bytes / allocations | 8 / 10,210 / 7,812 | 8 / 10,210 / 7,812 (the same work) |
+| | kept after return | 295,038 B | **32 B** |
+| | small-byte peak | 645,688 (2.43 ×) | **378,749 (1.42 ×)** |
+| | small bytes alive at a card read | 268,054 | **1,115** |
+| **Continue Latest** (fresh service) | small bytes alive at a card read | 268,054 | **2,366** |
+| | small-byte peak | 645,688 | **380,000** |
+| **save** (fresh service) | kept after return | 295,774 B | **32 B** |
+| | small bytes alive at a card write | 16,401 | 16,401 (the sidecar DOM and the export's temporaries; unchanged) |
+
+**Predicted on the device (inferred; H-202 measures):** an open on an unchanged card reads 2 × (≈ 3 directory sectors + 1 data sector) ≈ 8 sectors ≈ **45–60 ms**, with no import, instead of ≈ 720 ms; key → first frame ≈ 150 ms (the 98.5 ms full-screen menu frame is unchanged). After each window, internal free returns to its pre-window value and the largest block to 49,152 B. A cold inspect (boot, or after a change) costs what it did, minus the second document.
+
+### 28.14 Regression
+
+Fresh host build `native/core/build-a3-04g`: **149 / 149, serial, 126.41 s** (`native/core/a3-04g-{configure,build,ctest}.log`) — A3-HF3's 148 plus `a3_04g_storage_runtime`; the only warning is the known w64devkit one. Every save / load, A3-04F render, A3-HF3 combat, pacing and audio test passes unchanged.
+
+### 28.15 Firmware
+
+Pre-commit build `native/targets/tdeck/build-a3-04g` (`a3-04g-firmware-{configure,build}.log`). ESP-IDF 6.1, `--no-ccache`, `idf.py reconfigure` + `ninja -j 4`, first attempt clean, zero project warnings.
+
+- **`0xef6c0` = 980,672 B, +1,760 B** against A3-HF3; **`0x10940` = 67,904 B (6 %) free**.
+- Sections against A3-HF3's post-commit image (`esp_idf_size --diff`, `a3-04g-size-diff.log`; `a3-04g-size-image.log`): flash `.text` **+1,604 B**, `.rodata` **+144 B**. DIRAM is unchanged at 134,162 B (`.data` 21,627, `.bss` 51,888) and so is IRAM: the save-list cache lives in the PSRAM workspace, as §28.7 intended.
+- Image guards GREEN: `a3_04f_image_check.py`, `a3_04b_iram_check.py`, `a3_04a_hotpath_check.py` (`a3-04g-{image,iram,hotpath}-check.log`).
+- Version `3.0.0-alpha3-dev-a3-04g-debug`. Not flashed. The post-commit image (a fresh directory, which embeds the commit) is the one tag `alpha3-a3-04g-storage-inspect` names, with its path, size, SHA-256 and `Git`.
+
+### 28.16 The heap watch item: decision
+
+**Classification: fragmentation risk remains — explained and bounded.** Not "confirmed leak" (§28.6: a plateau on the device and exactly flat on the host, before and after). Not "explained and fixed" as a whole:
+- **Explained and fixed (host-proven, device pending):** the ~150 KB plateau after the first open (a kept document), the fragmentation it caused (largest block 7.5–23.5 KB), the second document in a two-slot inspect, and card I/O while a document was alive.
+- **Explained, bounded, still present by design:** a *cold* import — the title screen's inspect at boot, Continue / Load, a save's own check, the export's copy — still builds a ≈ 193 KB document of ≤ 4 KiB blocks, and ≈ 274 KB at its peak does not fit in the ≈ 236 KB of free internal RAM. `ALWAYSINTERNAL` fills internal RAM (and the DMA pool) before PSRAM takes the rest, so **`heap_int_min` will still read a few hundred bytes to a few KB after a boot**. The bound: after A3-04G no card read or write happens while a document is alive (R2–R4), and the document is gone when the window closes (R1, R5). What remains unguarded is another task needing internal or DMA memory during those few hundred milliseconds.
+
+**Re-escalation triggers (replacing §26.17.8's list):**
+1. any `allocate_dma_buf`, `dma-reserve-restore-failed`, `LOW INTERNAL RAM`, `SAVE_SCRATCH allocation failed`, sdmmc / diskio error, or a save failing with an I/O errno;
+2. a storage window whose `dma-reserve-restored` `free_internal` is more than 4 KiB below its own `release-reserved-dma` value (retention is back);
+3. `largest_internal` below 32 KiB in any `dma-reserve-restored` line or heartbeat;
+4. heartbeat `internal` falling across 20 or more menu opens;
+5. a new `heap_int_min` low set **outside** a storage window (no `SD_HEAP` lines in it);
+6. a batch adding ≥ 1 KiB of internal `.data` / `.bss` or IRAM without an offset;
+7. an Alpha 3 release candidate: H-202's serial capture is then required.
+
+`heap_int_min` below 1 KiB **inside** a cold storage window is expected and is no longer a trigger by itself.
+
+### 28.17 Hardware check H-202 (the user's; not done here)
+
+In `ALPHA2_HARDWARE_CHECKLIST.md`: the A3-04G image with a **serial capture from boot**; the title list; Continue; the first, second and twentieth System Menu opens (time, `SAVE_INSPECT`, `SD_HEAP`); the Load page; an in-menu Save and its Load page; Load Slot; Alt+S / Alt+L; the heartbeats' internal free and largest block; music continuity; no SD error, watchdog or crash.
+
+### 28.18 Recorded, not changed
+
+- **The import count** (core, `persistence.cpp`): `verify_candidate` imports the GAM twice (`complete_generation` discards a whole document); Continue Latest imports 7 times (`select_generation` re-runs `complete_generation` for both slots, then the restore imports again); a save deep-copies the live document in `export_native_state`. This is most of the 1,057 ms Continue and the reason a cold import overflows internal RAM. The layer is core and parity-pinned; it needs its own adjudication.
+- **PSRAM routing of the document** during storage windows (`heap_caps_malloc_extmem_enable`), §28.7: device-only, deferred to a measured batch.
+- **The memory stub** (`alpha_save_memory_host_stub.cpp`) keeps its own `inspect` with no list: it has no files or workspace, and the runtime tests that use it test the gate, not the shell. The shell is now tested for real by `a3_04g_storage_runtime`.
+- **Alt+M while the menu is open** writes `settings.json` every time (~270 ms of card write on the TFT's bus), even when nothing changed; Back / Mic writes nothing (S5). A settings item, not the open path.
+- **The first-frame deferral** (show the menu, inspect afterwards) was not built: on an unchanged card the inspect is now two commit reads, and the Load page must never act on an incomplete list. A cold inspect only happens at boot and after a change.
+
+### 28.19 Files
+
+- Device: `native/targets/tdeck/main/alpha_save.cpp`, `alpha_save_generation.{h,cpp}`, `alpha_runtime.cpp`; `native/targets/tdeck/CMakeLists.txt` (`PROJECT_VER`).
+- Core: `native/core/include/openu5/system_menu.h` (`set_save_slots`, additive).
+- Tests / tools: `native/targets/tdeck/host_tests/a3_04g_storage_runtime_test.cpp`, `host_tests/sd_shims/{host_sd_vfs.h,host_sd_vfs.cpp,host_sd_card.h,esp_heap_caps.h}` (new); `native/core/tools/a3_04g_{red_first,mutation_check}.py` (new); `native/core/CMakeLists.txt`.
+- Logs: `native/core/a3-04g-{baseline-configure,baseline-build,baseline-ctest,red,green,mutation-first,mutation,configure,build,ctest}.log`; `native/targets/tdeck/a3-04g-*.log` (firmware).
+- Docs: this section and the status line; `ALPHA2_HARDWARE_CHECKLIST.md` (H-202); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`.
+
+### 28.20 Next
+
+1. **The hardware round** (the user's): H-201 and H-202. The A3-04G image contains A3-HF3's combat code unchanged, so both can be run on one flash (H-201 then records the A3-04G `FW` / `Git`).
+2. **Then A3-04H — storage import cost**, gated by H-202's `SAVE_INSPECT` and `SD_HEAP` figures: adjudicate and remove the redundant imports at the pinned core layer (7 → 2 on Continue, 2 → 1 per verify), which shortens Continue and the cold window and lowers the peak; and measure on hardware whether routing the save document to PSRAM during storage windows removes the remaining internal fill without a latency cost.

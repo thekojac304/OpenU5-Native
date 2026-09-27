@@ -1,5 +1,6 @@
 #include "alpha_save_generation.h"
 
+#include <cstdio>
 #include <utility>
 
 #include "esp_log.h"
@@ -41,9 +42,28 @@ void capture_save_document(openu5::CommandContext&c,const openu5::OutdoorService
 }
 
 bool verify_candidate(AlphaSaveCandidate&v,AlphaSaveStage&s){
-    v.side.assign(reinterpret_cast<const char*>(v.json.data()),v.json.size());auto &g=v.generation;g.sequence=v.commit.sequence;g.committed=true;g.identity_matches=true;g.gam=v.gam.data();g.gam_size=v.gam.size();g.ool=v.ool.data();g.ool_size=v.ool.size();g.sidecar=&v.side;g.requires_ool=g.requires_sidecar=true;g.gam_crc=v.commit.gam;g.ool_crc=v.commit.ool;g.sidecar_crc=v.commit.json;if(!openu5::save::complete_generation(g))return false;
+    // A3-04G: empty the stage before complete_generation(), which imports the
+    // whole generation into a document of its own. Emptied after it, as until
+    // A3-04G, a second verify on one stage held the previous document while it
+    // built two more: ~2.4 documents at the peak instead of ~1.4.
     s.game={};s.turn={};s.document={};s.commands={};s.outdoor={};s.terrain={};s.actors={};
+    v.side.assign(reinterpret_cast<const char*>(v.json.data()),v.json.size());auto &g=v.generation;g.sequence=v.commit.sequence;g.committed=true;g.identity_matches=true;g.gam=v.gam.data();g.gam_size=v.gam.size();g.ool=v.ool.data();g.ool_size=v.ool.size();g.sidecar=&v.side;g.requires_ool=g.requires_sidecar=true;g.gam_crc=v.commit.gam;g.ool_crc=v.commit.ool;g.sidecar_crc=v.commit.json;if(!openu5::save::complete_generation(g))return false;
     return stage_generation(v,s);
+}
+
+void release_candidate(AlphaSaveCandidate&v){
+    std::vector<uint8_t>().swap(v.gam);std::vector<uint8_t>().swap(v.ool);std::vector<uint8_t>().swap(v.json);
+    std::string().swap(v.side);v.generation={};
+}
+
+void release_stage(AlphaSaveStage&s){
+    s.document=openu5::save::Json{};s.outdoor=openu5::OutdoorServices{};s.terrain=openu5::WorldTerrain{};
+}
+
+openu5::FrontendSaveSlot summarize_candidate(const AlphaSaveCandidate&v,const AlphaSaveStage&s){
+    openu5::FrontendSaveSlot out{};out.present=out.valid=true;out.sequence=v.commit.sequence;
+    if(s.game.party.character_count)std::snprintf(out.name,sizeof(out.name),"%.9s",s.game.party.characters[0].name);
+    return out;
 }
 
 bool restore_candidate(AlphaSaveCandidate&pick,openu5::CommandContext&c,openu5::OutdoorServices&o,openu5::WorldTerrain&t,openu5::NpcActors&a,openu5::save::Json&retained,AlphaSaveStage&s){

@@ -1,0 +1,72 @@
+# A3-04G mutation validation (2026-09-27 18:55)
+
+M1 inspect keeps each slot's files [native/targets/tdeck/main/alpha_save.cpp]: KILLED
+    a3_04g_storage_runtime exit=1  1 RED
+        RED   R1    an inspect keeps nothing allocated after it returns (<= 1 KiB)
+M2 inspect keeps each slot until the end [native/targets/tdeck/main/alpha_save.cpp]: KILLED
+    a3_04g_storage_runtime exit=1  2 RED
+        RED   R1    an inspect keeps nothing allocated after it returns (<= 1 KiB)
+        RED   R2    no staged generation is alive while the next slot's files are read
+M3 load keeps a staged slot while reading the other [native/targets/tdeck/main/alpha_save.cpp]: KILLED
+    a3_04g_storage_runtime exit=1  1 RED
+        RED   R3    Continue Latest: no staged generation is alive while the other slot is read
+M4 save keeps its workspace [native/targets/tdeck/main/alpha_save.cpp]: KILLED
+    a3_04g_storage_runtime exit=1  1 RED
+        RED   R5    a save keeps nothing allocated after it returns (<= 2 KiB)
+M5 release_stage leaves the document [native/targets/tdeck/main/alpha_save_generation.cpp]: KILLED
+    a3_04g_storage_runtime exit=1  4 RED
+        RED   R1    an inspect keeps nothing allocated after it returns (<= 1 KiB)
+        RED   R2    no staged generation is alive while the next slot's files are read
+        RED   R3    Continue Latest: no staged generation is alive while the other slot is read
+        RED   R5    a save keeps nothing allocated after it returns (<= 2 KiB)
+M6 verify empties the stage after the import (the pre-A3-04G order) [native/targets/tdeck/main/alpha_save_generation.cpp]: KILLED
+    a3_04g_storage_runtime exit=1  1 RED
+        RED   C4    a verify on a stage that still holds a document never holds both (peak = one verify's)
+M7 a cached summary is used whatever the commit says [native/targets/tdeck/main/alpha_save.cpp]: KILLED
+    a3_04g_storage_runtime exit=1  2 RED
+        RED   K4    a changed commit record is a miss: that slot alone is read and verified again
+        RED   K6    a refused generation is listed corrupt and re-read on every open (never cached)
+M8 the commit comparison ignores the sequence [native/targets/tdeck/main/alpha_save.cpp]: KILLED
+    a3_04g_storage_runtime exit=1  1 RED
+        RED   K4    a changed commit record is a miss: that slot alone is read and verified again
+M9 nothing is ever reused [native/targets/tdeck/main/alpha_save.cpp]: KILLED
+    a3_04g_storage_runtime exit=1  4 RED
+        RED   K1    an unchanged card costs two 32-byte commit reads per open (was 8 files and both sidecars)
+        RED   K3b   the save's own post-write check supplies the new slot: two commit reads
+        RED   K4    a changed commit record is a miss: that slot alone is read and verified again
+        RED   K6    a refused generation is listed corrupt and re-read on every open (never cached)
+M10 a refused generation is cached too [native/targets/tdeck/main/alpha_save.cpp]: KILLED
+    a3_04g_storage_runtime exit=1  2 RED
+        RED   K6    a refused generation is listed corrupt and re-read on every open (never cached)
+        RED   F3b   the read good again: the same service lists it valid
+M11 a failed save does not forget its slot [native/targets/tdeck/main/alpha_save.cpp]: KILLED
+    a3_04g_storage_runtime exit=1  2 RED
+        RED   K7    after a save that failed mid-rename the menu lists the card as it is (the torn slot corrupt)
+        RED   K8    after a failed temp write the menu lists the card as it is
+M12 a good save does not store its slot [native/targets/tdeck/main/alpha_save.cpp]: KILLED
+    a3_04g_storage_runtime exit=1  1 RED
+        RED   K3b   the save's own post-write check supplies the new slot: two commit reads
+M13 a good save stores the other slot [native/targets/tdeck/main/alpha_save.cpp]: KILLED
+    a3_04g_storage_runtime exit=1  1 RED
+        RED   K3b   the save's own post-write check supplies the new slot: two commit reads
+M14 the summary names the wrong sequence [native/targets/tdeck/main/alpha_save_generation.cpp]: KILLED
+    a3_04g_storage_runtime exit=1  1 RED
+        RED   C3    a cold inspect lists both generations (sequences 1 and 2, 'Avatar')
+M15 the summary drops the name [native/targets/tdeck/main/alpha_save_generation.cpp]: KILLED
+    a3_04g_storage_runtime exit=1  5 RED
+        RED   C3    a cold inspect lists both generations (sequences 1 and 2, 'Avatar')
+        RED   K3a   after a save the menu lists what a cold inspection lists
+        RED   K5b   the same generation put back is listed again
+        RED   K6b   repaired, it is listed valid on the next open
+        RED   K10   a Save made inside the menu is on its Load page at once (the card as it now is)
+M16 a present slot that fails to read is listed empty [native/targets/tdeck/main/alpha_save.cpp]: KILLED
+    a3_04g_storage_runtime exit=1  3 RED
+        RED   K6    a refused generation is listed corrupt and re-read on every open (never cached)
+        RED   F3    a short sidecar read lists that slot corrupt
+        RED   F4    a CRC mismatch lists that slot corrupt
+M17 the menu keeps its list after an in-menu Save [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_04g_storage_runtime exit=1  1 RED
+        RED   K10   a Save made inside the menu is on its Load page at once (the card as it now is)
+
+restored: build exit=0; a3_04g_storage_runtime exit=0
+mutations: 17, killed: 17, survived: 0, invalid: 0
