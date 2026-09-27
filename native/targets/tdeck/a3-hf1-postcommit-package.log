@@ -1,0 +1,7 @@
+﻿Launcher image: C:\Dev\OpenU5-Native\native\targets\tdeck\build-a3-hf1-post\launcher\OpenU5-TDeck-Alpha3.0.0-alpha3-dev-a3-hf1-Debug-Launcher.bin
+Firmware version: 3.0.0-alpha3-dev-a3-hf1-debug
+Size: 963152 bytes
+App partition minimum: 983040 bytes (64 KiB alignment)
+SHA-256: 948dcd5a7434d3daf031de0116204fd3dc12541a3af7158258e6688d3c979fa3
+Existing build ESP-IDF: v6.1
+EXIT 0
