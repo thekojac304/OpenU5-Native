@@ -74,8 +74,11 @@ struct Run {
     size_t renders = 0, viewport_mismatches = 0, gameplay_checks = 0;
     // G: the panel after every render call (consecutive repeats folded).
     std::vector<uint64_t> *panel = nullptr;
+    // A3-HF3: per panel state, whether it shows a D-63 hit cue (see hit_cue_visible).
+    std::vector<uint8_t> *cues = nullptr;
     uint64_t last_windows = ~0ull;
-    Run(uint32_t seed, bool timed, std::vector<uint64_t> *panel_log = nullptr) : panel(panel_log) {
+    Run(uint32_t seed, bool timed, std::vector<uint64_t> *panel_log = nullptr, std::vector<uint8_t> *cue_log = nullptr)
+        : panel(panel_log), cues(cue_log) {
         openu5_host_virtual_clock_us() = kClockStartUs;
         bus::install();
         bus::model() = bus::Model{};
@@ -127,7 +130,10 @@ struct Run {
         if (panel && bus::stats().windows != last_windows) {
             last_windows = bus::stats().windows;
             const uint64_t h = fnv(bus::gram(), 320 * 240);
-            if (panel->empty() || panel->back() != h) panel->push_back(h);
+            if (panel->empty() || panel->back() != h) {
+                panel->push_back(h);
+                if (cues) cues->push_back(hit_cue_visible() ? 1 : 0);
+            }
         }
         if (!rt->ui() || rt->ui()->mode() == UiMode::DebugMenu || !rt->composed_viewport()) return;
         ++gameplay_checks;
@@ -137,6 +143,34 @@ struct Run {
                 ++viewport_mismatches;
                 break;
             }
+    }
+    /**
+     * A3-HF3 (D-63): the frame shows a combat hit cue -- a viewport cell holding
+     * tile 0 (the 0x359f marker; the fixture's patterned tiles have a closed
+     * form, byte b of tile 0 = b*11 + (b>>3)*7) or a party row in reverse video
+     * (most of its rectangle the text colour, not black).
+     */
+    bool hit_cue_visible() const {
+        const uint16_t *vp = rt->composed_viewport();
+        if (vp && rt->ui() && rt->ui()->mode() != UiMode::DebugMenu)
+            for (int cy = 0; cy < 11; ++cy)
+                for (int cx = 0; cx < 11; ++cx) {
+                    bool tile0 = true;
+                    for (int b = 0; b < 128 && tile0; ++b) {
+                        const uint8_t v = uint8_t(b * 11 + (b >> 3) * 7);
+                        const uint16_t *px = vp + (cy * 16 + b / 8) * 176 + cx * 16 + (b % 8) * 2;
+                        tile0 = px[0] == uint16_t((v >> 4) * 0x1111) && px[1] == uint16_t((v & 15) * 0x1111);
+                    }
+                    if (tile0) return true;
+                }
+        const uint16_t *p = bus::gram();
+        for (int row = 0; row < 6; ++row) {
+            int black = 0, total = 0;
+            for (int y = 4 + row * 8; y < 12 + row * 8; ++y)
+                for (int x = kHudRightX; x < kHudRightX + kHudRightW; ++x, ++total) black += p[y * 320 + x] == 0;
+            if (black * 2 < total) return true;
+        }
+        return false;
     }
     void raw(tdeck::RawInputEvent e) {
         e.timestamp_us = now();
@@ -742,10 +776,11 @@ int main(int argc, char **argv) {
 
     // ---- G: the panel golden (untimed: the script alone moves the clock) ----
     std::vector<uint64_t> panel;
+    std::vector<uint8_t> cues;
     std::vector<size_t> phase_start;
     size_t renders = 0;
     {
-        Run h(kSeed, /*timed=*/false, &panel);
+        Run h(kSeed, /*timed=*/false, &panel, &cues);
         auto phase = [&] { phase_start.push_back(panel.size()); };
         phase(); // 0: boot, the first gameplay frame
         h.teleport(shore.x, shore.y);
@@ -823,18 +858,35 @@ int main(int argc, char **argv) {
         std::printf("recorded %zu panel states over %zu render calls to %s\n", panel.size(), renders, record);
     }
     {
+        // A3-HF3 (D-63, ALPHA3_AUDIO.md section 27.8): the fight (phase 4) now shows
+        // the combat hit cue -- a deliberate change of what is COMPOSED, the Board is
+        // untouched. A state may differ from the A3-04F baseline only if it visibly
+        // carries a cue; every other state, in every phase, must be the baseline's.
         size_t first_diff = std::min(panel.size(), a3_04f_goldens::kCount);
+        size_t cue_states = 0, cue_outside_fight = 0, cue_differs = 0;
+        const size_t fight_begin = phase_start.size() > 5 ? phase_start[4] : 0;
+        const size_t fight_end = phase_start.size() > 5 ? phase_start[5] : 0;
+        for (size_t i = 0; i < cues.size(); ++i)
+            if (cues[i]) {
+                ++cue_states;
+                if (i < fight_begin || i >= fight_end) ++cue_outside_fight;
+                if (i < a3_04f_goldens::kCount && panel[i] != a3_04f_goldens::kPanel[i]) ++cue_differs;
+            }
         for (size_t i = 0; i < first_diff; ++i)
-            if (panel[i] != a3_04f_goldens::kPanel[i]) {
+            if (panel[i] != a3_04f_goldens::kPanel[i] && !(i < cues.size() && cues[i])) {
                 first_diff = i;
                 break;
             }
+        check(cue_states > 0 && cue_outside_fight == 0 && cue_differs == cue_states,
+              "G2 the D-63 hit cue shows in " + n(cue_states) + " panel states, all of them in the fight and each "
+              "one different from the baseline's state there (" + n(cue_differs) + "); none outside it");
         size_t phase = 0;
         for (size_t p = 0; p < a3_04f_goldens::kPhaseCount; ++p)
             if (first_diff >= a3_04f_goldens::kPhaseStart[p]) phase = p;
         const bool same = a3_04f_goldens::kCount > 0 && panel.size() == a3_04f_goldens::kCount &&
                           first_diff == panel.size() && renders == a3_04f_goldens::kRenders;
-        check(same, "G1 the panel after every render call equals the A3-04F baseline's (" + n(panel.size()) + " states vs " +
+        check(same, "G1 the panel after every render call equals the A3-04F baseline's, bar the states that show a "
+                    "D-63 hit cue (G2) (" + n(panel.size()) + " states vs " +
                         n(a3_04f_goldens::kCount) + " recorded, " + n(renders) + " vs " + n(a3_04f_goldens::kRenders) +
                         " render calls" + (same ? "" : "; first difference at state " + n(first_diff) + ", phase " + n(phase)) +
                         "; source: " + a3_04f_goldens::kSource + ")");

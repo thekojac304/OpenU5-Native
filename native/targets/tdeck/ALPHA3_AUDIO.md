@@ -1,6 +1,14 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback)
 
-**Status (A3-04F hardware closeout, 2026-09-27): RENDER / TFT EFFICIENCY HARDWARE-VALIDATED — H-200 PASS — A3-04F CLOSED.** The user ran H-200 on the A3-04F image (`Git dcea95390676`) with Music 80 % and read the live report (§26.17, transcribed as `a3-04f-hw-h200-report.log`). There was no visual defect, no crash, reboot or watchdog, and music and SFX were normal. Hardware against hardware, against the A3-04E.1 soak:
+**Status (A3-HF3, 2026-09-27): COMBAT HIT FEEDBACK (D-63) FIXED ON THE HOST — HARDWARE CHECK H-201 PENDING.** H-200 found that a hit on a party member showed no cue (§26.17.9). §27 re-derives the original's cue from ULTIMA.EXE 0x3564: every decided hit, before its result, blits tile 0 (the `Explosion` star) opaquely over the struck cell, and for a party member XORs its roster row, both for the hit's burst (9,000 half samples = 174 ms).
+- The device now queues one cue per hit event and plays them in order from the frame clock, without blocking anything. The star goes through the existing one-cell world-fx blit, the row through the existing `damage_flash` reverse video.
+- A party wipe waits for its cue before the arena closes.
+- The poisoning and sleep strikes get their side's burst too.
+- The 55 ms restore between queued cues is a declared native choice.
+
+RED-first 13 / 24 → GREEN 24 / 24 on the real runtime and Board, 18 / 18 core, 19 / 19 mutations killed, host suite 148 / 148. Firmware +1,024 B, internal `.bss` +128 B.
+
+**Status as the A3-04F hardware closeout wrote it (2026-09-27): RENDER / TFT EFFICIENCY HARDWARE-VALIDATED — H-200 PASS — A3-04F CLOSED.** The user ran H-200 on the A3-04F image (`Git dcea95390676`) with Music 80 % and read the live report (§26.17, transcribed as `a3-04f-hw-h200-report.log`). There was no visual defect, no crash, reboot or watchdog, and music and SFX were normal. Hardware against hardware, against the A3-04E.1 soak:
 - compose avg 38.5 → 10.1 ms (**−73.8 %**); tiles max 37.4 → 9.9 ms (−73.5 %)
 - full-screen TFT max 148.8 → 120.1 ms (−19.3 %); viewport-frame TFT avg 51.9 → 33.5 ms (−35.5 %); animation-frame TFT avg 12.9–17.7 → 7.6 ms (−41 to −57 %)
 - `idle0` gap max 102.9 → 37.6 ms (−63.5 %); frame avg 61.9 → 19.9 ms (−67.9 %)
@@ -3352,3 +3360,170 @@ The one player-visible defect the run found is D-63. It is binary-cited and smal
 - **Device check.** H-201 on the device.
 
 After A3-HF3, the storage batch: §23.10.5's 0.75 s System Menu open together with §26.17.8's heap watch item, which share `AlphaSaveService::inspect`. The §26.8 render items wait for a device symptom. The synth's steady cost (CPU1 42 %, 0 underruns) is an audio item with no current symptom.
+
+*Done: A3-HF3, §27.*
+
+## 27. A3-HF3 — combat hit feedback parity (D-63)
+
+The follow-up §26.17.9 queued. On the A3-04F image a player could not tell which party member a hit landed on: the device showed no name flash or other cue. The original shows two cues for every hit. This batch adds both, derived from the binary, without blocking anything. No combat rule, RNG, save, audio mapping or Board change, and no other presentation change.
+
+**Status: FIXED ON THE HOST — HARDWARE CHECK H-201 PENDING.**
+
+### 27.1 Baseline
+
+- HEAD `6ce4f619` (the A3-04F hardware closeout) on `main`, clean. Latest tag `alpha3-a3-04f-render-efficiency` (`dcea9539`); earlier `alpha3-hf2-1-cleanup`, `alpha3-hf2-ambient-clock`.
+- Fresh host build `native/core/build-a3-hf3-base`: **146 / 146, serial, 126.38 s** (`native/core/a3-hf3-baseline-{configure,build,ctest}.log`). The only warning is the known w64devkit one.
+- Firmware at baseline: A3-04F, `0xeebe0` = 977,888 B, 70,688 B (7 %) free.
+
+### 27.2 The original, re-derived
+
+**The routine.** `kernel_combat_hit_flash`, ULTIMA.EXE 0x3564, read with `re/tools/dis16.py --exe`:
+
+| Address | Instruction | What it does |
+|---|---|---|
+| 0x356b | `cmp [0x5893],0x7f` | in combat (`g_location` ≥ 0x80) the argument indexes the combatant table 0xba14 |
+| 0x359f | `call 0x10e0` | `blit_tile(target cell, 0)`: **the marker** |
+| 0x35ac | `test [bx+2],0x80` | is the target a party member? |
+| 0x35ba | `call 0x2a28` | yes: XOR that member's roster row (slot `[bx+3]`) |
+| 0x35c9 | `call 0x223c` | noise_burst(band 0x1f4, dur 0xbb8, step 0x28) |
+| 0x35cd | `call 0x2a28` | XOR the row back (0x2a28 is involutive) |
+| 0x35de | `call 0x223c` | no: noise_burst(band 0x7d0, dur 0xbb8, step 0xa) |
+| 0x35e1 | `call 0x5910` | `viewport_redraw`: the marker is gone |
+
+**The marker.** `blit_tile` 0x10e0 sends EGA.DRV selector 0x51 (fn27, entry 0x1637) with `bx = 0`: tile 0. The driver writes whole plane bytes (`mov es:[di],dx`, 0x169a–0x173a), so the blit is **opaque**: the cell shows tile 0 in place of the combatant and the terrain until 0x5910 repaints. Tile 0, decoded from TILES.16, is TileData's `Explosion`: an 8-point star, red and bright-red outline, yellow body, white 3 × 3 core, on black. It is the tile `explosion_fx_at_cell` 0x3522 blits too. (The TypeScript skin draws the same star over the cell and calls it "not a tile"; the shape and colours are right, the mechanism is a tile.)
+
+**The duration.** 0x223c is a calibrated busy loop, and the original blocks in it: the row stays inverted and the marker stays up for exactly the burst. Both bursts program ⌈0xbb8 / step⌉ draws of `step` units: 75 × 40 and 300 × 10, 3,000 units each, **9,000 half sweep samples = 174.38 ms** on the speaker model every device SFX is rendered with (`kSpeakerSweepRate` 25,806 Hz, `kNoiseUnitHalfSamples` 3). The poison blip's 93 ms comes from the same model. No tick count and no BIOS timer is involved.
+
+**The order.** A caller decides the hit, runs 0x3564, and only then applies the strike. The melee strike COMSUBS 0x0bf8 runs:
+1. 0x0c26: the hit roll (0x14d6)
+2. 0x0c30: **0x3564**
+3. 0x0c39: 0x194A, the strike: damage, death, graze, poisoning, sleep
+4. 0x0c42: 0x0312, the " hit!" / "killed!" / " grazed!" line
+
+So on screen: the marker and the row, the burst, the restore, the result, then the next actor. A killing blow is cued like any hit; the death follows the cue. A graze, a poisoning of a healthy member (COMBAT 0x18c9) and a sleep strike (0x19ab) all happen inside 0x194A, so each of them is cued.
+
+**Every caller** (a census of every near call over the overlay bases): COMSUBS 0x0b99 (ranged) and 0x0c30 (melee); COMBAT 0x0200 (enemy ranged), 0x03c1 (enemy melee — food theft branches off before it, 0x0366–0x03bc), 0x0c12 (a member found dead at the top of the loop), 0x1c17 (fire field, before its damage), 0x1c5a (poison field, after its poison attack); CAST 0x0963, 0x20ad, 0x20d2, 0x20dd, 0x2113 (spells). The chest trap 0x2fd0 is a different routine and draws no cue.
+
+### 27.3 Native, before: the root cause
+
+- The roster inversion existed (Batch 7B, Y-04): `PoisonFlashPacer` → `DevicePartyHighlight::damage_flash` → reverse video in `Board::draw_party_rows`. Its only producer was `poison_.flash_row()`.
+- A hit reached the device as `CombatEventKind::Attacked` (`hit` 1). Its only consumer was `present_audio`, which plays the side's burst. Nothing fed `damage_flash` from it, and no arena marker existed.
+- The intent lived in comments only (`tdeck_board.cpp`, `openu5/poison_tick.h`, the audit's `PoisonTick` paragraph), and H-200 step 6 restated it. A3-04F's row cache was not involved: it keys on reverse video, and nothing ever set it.
+
+### 27.4 The change
+
+- **Core, `openu5/combat_hit_cue.{h,cpp}` (new).**
+  - `kCombatHitCueMs` is derived at compile time from the burst: `noise_burst_half_samples(0x28, 0xbb8)`, rounded to 174 ms. A `static_assert` checks that 0x35de's burst is exactly as long.
+  - `combat_hit_cue_target(event)` names the combatant a 0x3564 cue falls on. It is the `Attacked` target when `hit > 0`, and the target of the two status-only strikes the core reports as a message (" is poisoned!", " slept!"). It is −1 for everything else.
+  - `CombatHitCuePacer` is a FIFO of 32 cues (cell, roster slot or −1). It is pumped from the frame clock and never waits.
+- **Device, `alpha_runtime.{h,cpp}`.**
+  - `consume_event` queues a cue for every combat event the predicate names, at the target's cell, in the same call that submits its sound.
+  - `render` services the pacer and applies the marker as a one-cell `WorldFxOp` blit of tile 0, the same path the shard ritual's explosion uses. It goes after the actor animation, in the arena only.
+  - `compose_party_highlight` routes the cue's row to `damage_flash`; while a hit cue is up it wins over the poison blip.
+  - `present_audio` gives the two status-only strikes the side's burst, via the existing `sfx_for_combat_attack(false, 1, side)`. `Attacked` and `Died` keep exactly their A3-03 cues.
+  - `loop_may_sleep` stays false while a cue is owed, as for the poison blip.
+  - A load cancels the cues.
+  - `finish_combat_if_needed` defers the teardown while a cue is live, through the same "teardown deferred" return every caller already handles. Only a party wipe ("BATTLE IS LOST!") needs this: a victory does not end the fight in native (the latch prints "VICTORY!" and the party walks out).
+
+### 27.5 Timing, and consecutive hits
+
+| | Behaviour | Standing |
+|---|---|---|
+| Length | the row and the marker are up for 174 ms from the hit | **derived** (the burst) |
+| What starts it | the event, in the same call that submits the burst | **derived** (0x3564 starts both together) |
+| Several hits in one command (the triple strike, a spell, a field after a strike) | queued in event order, one at a time, none dropped up to 32 waiting | **derived** in effect: the original blocks in each 0x3564, so its cues are consecutive and never overlap |
+| Between two queued cues | 55 ms with the row and the cell restored (one presentation unit) | **native choice**. The original's pause is whatever 0x2a28 + 0x5910 + the strike + the message + the next attacker cost, which is not a constant. 55 ms is just long enough for the same row or cell hit twice to show two cues |
+| A hit arriving inside those 55 ms | waits for them to end | native choice, same reason |
+| Enemy turns | the device's 400 ms enemy beat (`kEnemyBeatUs`) always exceeds 174 + 55 ms, so each enemy hit is cued alone and starts with its sound | existing pacing, unchanged |
+
+**Sound.** The burst and the cue start in the same call, and the device's `SfxPlayer` plays combat bursts back to back in submission order. So the first cue of a command always coincides with its sound. A later cue in the same command trails its own burst by 55 ms per cue before it (110 ms for the third strike of a triple strike). That is the price of the restore gap; the audio side has no gap to match.
+
+### 27.6 Declared, and not changed
+
+- **State order** (as for the poison blip, `poison_tick.h`): the core commits the strike before it emits the event. So the inverted row already shows the new hit points, and a killed combatant's cell shows its remains once the marker goes. What the player sees in order is unchanged: the cue, then the result. The transcript line and "VICTORY!" are printed with the event, as before.
+- **The active combatant's box** is drawn over its cell after the composition. A cue on the actor whose turn is live, which the combat flow rarely produces, shows the box over the star.
+- **The TypeScript reference** draws the star but has no combat roster flash. The skin is not the device, and this batch does not change it. It is queued in §27.12.
+
+### 27.7 Tests, RED / GREEN and mutations
+
+- **`a3_hf3_combat_hit_cue`** (core, 18 checks):
+  - C1–C3: the length equals the compiled `CombatHitHeavy` / `CombatHit` programs (9,000 half samples each), 174 ms; the marker is tile 0.
+  - P0–P10: start, hold, end; two and three cues in order with the restore between; the same row twice; an enemy's cue marks no row; a late cue starts at once; the 32-cue queue and its refusal; cancel; clock wrap.
+  - E1–E3: which events are cues.
+- **`a3_hf3_combat_hit_runtime`** (24 checks): the real `AlphaRuntime` and `tdeck_board.cpp` over A3-04E's fake ST7789. The inversion is read off the panel's pixels, the marker off the composed viewport (the fixture's patterned tiles have a closed form), and the bursts off a recording audio backend. The fights are A3-HF1's troll encounter with real dice, with the combatants' stats set so that the attack in question must hit.
+  - H0: control.
+  - H1, H1b, H2: an enemy hits Iolo. Exactly row 2 inverts, for 174 ms, then restores.
+  - H4, S1: the marker is on Iolo's cell and no other, and `CombatHitHeavy` is submitted once, in the frame the row inverts.
+  - H3a, H3, H3c, H3d, S2: a member hits the troll. The marker is on the troll's cell, no row inverts, `CombatHit` plays once, and the marker clears.
+  - H5, H6, H7, H9, H10, L1: timing, through the runtime's own event sink.
+    - H5: two members in one instant — first, restore, second.
+    - H6: one member twice — two cues with a restored row between.
+    - H7: control. A miss, a move, "Nothing!", food theft, "passes out!" and a lone `Died` cue nothing and play no hit burst.
+    - H10: "is poisoned!" and "slept!" cue with the side's burst.
+    - H9: the A3-04F row cache. A poisoned row flashes and comes back byte-identical; the HP redraws while the row is reversed; a Developer-menu visit during a cue repaints the live inversion and leaves nothing stuck.
+    - L1: the loop does not sleep while a cue is owed.
+  - H8, H8b: a killing blow on Iolo is cued, then the death shows.
+  - H8c, H8d: the last enemy's killing blow is cued in the arena.
+  - H8e–H8g: a party wipe is cued before the teardown, which follows the cue.
+- **RED-first.** `native/core/tools/a3_hf3_red_first.py` builds the runtime test against HEAD's `alpha_runtime.{h,cpp}` (the test uses only seams HEAD already has): **13 / 24 RED** (H1, H1b, H3, H4, H5, H6, H8, H8d, H8f, H9, H10, L1, S1), and every control GREEN (`native/core/a3-hf3-red.log`). After: **24 / 24 and 18 / 18** (`a3-hf3-green.log`).
+- **Mutations.** `native/core/tools/a3_hf3_mutation_check.py`, 19 mutants over the pacer, the trigger, the wiring and the Board's row cache:
+  - the marker: K1 suppressed, K2 on the transposed cell
+  - the row: R1 the wrong member's, R2 an enemy hit flashes a party row, R3 the highlight ignores the cue, R4 the reverse video never clears
+  - timing: T1 half the burst, T2 never restored, T3 never serviced, T4 no dirty frame, T5 the loop may sleep
+  - sequencing: Q1 a new hit replaces the cue, Q2 no restore gap, Q3 newest first
+  - the trigger: E1 a miss cued, E2 status strikes not cued, E3 status strikes silent
+  - D1 a wiping blow tears down at once
+  - C1 the row cache ignores reverse video
+
+  First pass 18 killed. Q3 survived, because with two cues the first starts at once and the order of the rest is trivially right. P4b (three cues in one instant) was added, and **Q3 is killed** (`a3-hf3-mutation-rerun.log`). **19 / 19.**
+
+### 27.8 Regression
+
+Fresh build `native/core/build-a3-hf3`: **148 / 148, serial, 115.63 s** (`native/core/a3-hf3-{configure,build,ctest}.log`). That is A3-04F's 146 plus `a3_hf3_combat_hit_cue` and `a3_hf3_combat_hit_runtime`, and the only warning is the known w64devkit one.
+
+**One expectation changed, deliberately.** `a3_04f_render_runtime` G1 compares every panel state of its golden script with the A3-04F baseline, and the script's fight (phase 4) now shows a hit cue.
+- The first full run had G1 RED: "first difference at state 186, phase 4"; 297 states and 2,766 render calls, as recorded. That run's `ctest` log was overwritten by the final one.
+- G1 now lets a state differ only if it visibly carries a cue: a tile-0 cell in the composed viewport, or a reversed party row.
+- The new G2 requires that such states exist, all inside the fight phase, and each one different from the baseline's state there. The result: 1 of 297 states, and the other 296 are the baseline's.
+- The golden (`a3_04f_panel_goldens.h`) was not re-recorded, so it still anchors on the A3-04F baseline.
+
+Everything else passes unchanged: every other A3-04F check, the A3-04E / A3-04E.1 pacing and watchdog checks, A3-HF2 / A3-HF2.1, the A3-03 SFX tests, and every combat and gameplay test.
+
+### 27.9 Cost
+
+- **Per frame:** one pacer pump (a comparison), one cell write when a marker is up, one branch in the highlight. The actor loop in `queue_hit_cue` runs once per combat event, not per frame. No new wait: the cue is timed from the frame clock, and the loop stays awake only while one is owed.
+- **The TFT:** a cue costs what any viewport change costs. The viewport is resent when the marker goes up and when it comes down (its checksum changes), and one party row is redrawn twice. No new transaction pattern.
+- **Memory:** `CombatHitCuePacer` is 120 B inside the statically allocated `AlphaRuntime`. In the image, internal `.bss` is +128 B against A3-04F: the object and its placement. `.data` and IRAM are unchanged. That is well under §26.17.8's 1 KiB re-escalation line; by the watch item's arithmetic it lowers the internal heap's low point by the same 128 B.
+
+### 27.10 Firmware
+
+Pre-commit build `native/targets/tdeck/build-a3-hf3` (`a3-hf3-firmware-{configure,build}.log`). ESP-IDF 6.1, `--no-ccache`, `ninja -j 4`, first attempt clean, zero project warnings.
+
+- **`0xeefe0` = 978,912 B, +1,024 B** against A3-04F; **`0x11020` = 69,664 B (7 %) free**.
+- Sections against A3-04F's post-commit image (`esp_idf_size` on both `.map` files: `a3-04f-size-postcommit-image.log`, `a3-hf3-size-image.log`): flash `.text` +940 B, `.rodata` +96 B, internal `.bss` +128 B. `.data`, IRAM `.text` and the vectors are unchanged.
+- Image guards GREEN: `a3_04f_image_check.py`, `a3_04b_iram_check.py`, `a3_04a_hotpath_check.py` (`a3-hf3-{image,iram,hotpath}-check.log`).
+- Version `3.0.0-alpha3-dev-a3-hf3-debug`. Not flashed. The post-commit image (a fresh directory, which embeds the commit) is the one tag `alpha3-hf3-combat-hit-feedback` names, with its path, size, SHA-256 and `Git`.
+
+### 27.11 Hardware check H-201 (the user's; not done here)
+
+In `ALPHA2_HARDWARE_CHECKLIST.md`. PASS needs, in a real fight:
+- a party hit inverts exactly the struck member's row for about a fifth of a second, with a star on the member's cell;
+- a hit on an enemy shows the star on its cell and inverts no row;
+- consecutive hits are each identifiable;
+- nothing stays inverted;
+- the hit sounds are unchanged;
+- no stutter, watchdog or corruption.
+
+### 27.12 Recorded, not changed
+
+- **`Died` → `CombatDefeat`** (A3-03). The device plays a second burst on a kill and cites 0x2fe3, which is inside 0x2fd0, the chest trap (`re/notes/cmds.md` §8), not a combat death. From the reading here, the original's kill in combat has no burst of its own beyond 0x3564's. It is an audio adjudication for its own batch; this batch does not touch it.
+- **The TypeScript skin** has no combat roster flash (`setDamageFlash` is fed only by `PoisonTick`), and its comment says the star is "not a tile". Its fix belongs to the reference, at its own layer.
+- **Field sleep** (COMBAT's sleep field) has no 0x3564 call in the census, so it draws no cue. Native agrees.
+- **COMBAT 0x0c12** cues a member found dead at the top of the combat loop. Native has no such path.
+
+### 27.13 Files
+
+- Core: `native/core/include/openu5/combat_hit_cue.h`, `native/core/src/combat_hit_cue.cpp` (new); `native/core/sources.cmake`.
+- Device: `native/targets/tdeck/main/alpha_runtime.{h,cpp}`; `native/targets/tdeck/CMakeLists.txt` (`PROJECT_VER`).
+- Tests / tools: `native/core/tests/a3_hf3_combat_hit_cue_test.cpp`, `native/targets/tdeck/host_tests/a3_hf3_combat_hit_runtime_test.cpp`, `native/core/tools/a3_hf3_{red_first,mutation_check}.py` (new); `native/core/CMakeLists.txt`.
+- Docs: this section and the status line; `ALPHA2_HARDWARE_CHECKLIST.md` (H-201); `ALPHA2_PRESERVATION_LEDGER.md` (D-63); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`.

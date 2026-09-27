@@ -440,6 +440,7 @@ void AlphaRuntime::consume_event(const openu5::GameEvent&e){
         ESP_LOGI(kTag,"POISON_FEEDBACK slots=%u blip_ms=%lu row=%d modal=0",
                  unsigned(e.slot_count),(unsigned long)openu5::kPoisonBlipMs,int(poison_.flash_row()));
     }
+    if(e.kind==openu5::GameEventKind::Combat&&e.combat)queue_hit_cue(*e.combat);
     if(e.kind==openu5::GameEventKind::CellExplosion){
         // #201/#243. Presentation only: the world object the ritual destroys
         // has ALREADY been committed by the core, and `under_tile` is what
@@ -647,6 +648,33 @@ bool AlphaRuntime::service_poison_flash(){
     const auto row_before=poison_.flash_row();
     poison_.pump(uint32_t(esp_timer_get_time()/1000));
     return poison_.flash_row()!=row_before;
+}
+
+// D-63 (A3-HF3). kernel_combat_hit_flash 0x3564 runs for every decided hit,
+// before the strike's outcome: tile 0 over the target's cell, and for a party
+// member its roster row XORed around the burst (openu5/combat_hit_cue.h).
+// The core has already committed the strike, so the cue presents it; it is
+// queued in event order and played one at a time, never blocking.
+void AlphaRuntime::queue_hit_cue(const openu5::CombatEvent &c){
+    const int32_t target=openu5::combat_hit_cue_target(c);
+    if(target<0)return;
+    for(int32_t i=0;i<combat_.count;++i){
+        const auto &a=combat_.actors[i];
+        if(a.id!=target)continue;
+        openu5::CombatHitCue cue;
+        cue.x=int8_t(a.position.x);cue.y=int8_t(a.position.y);
+        cue.member=a.member!=255?int8_t(a.member):int8_t(-1);
+        const bool queued=hit_cue_.push(cue,uint32_t(esp_timer_get_time()/1000));
+        dirty_=true;dirty_reason_="combat-hit-cue";
+        ESP_LOGI(kTag,"COMBAT_HIT_CUE target=%ld cell=%d,%d row=%d waiting=%u queued=%d",
+                 long(target),int(cue.x),int(cue.y),int(cue.member),unsigned(hit_cue_.queued()),queued);
+        return;
+    }
+}
+
+bool AlphaRuntime::service_hit_cue(){
+    if(!hit_cue_.active())return false;
+    return hit_cue_.pump(uint32_t(esp_timer_get_time()/1000));
 }
 
 void AlphaRuntime::start_magic_ceremony(int index){
@@ -938,6 +966,10 @@ void AlphaRuntime::log_combat_world_restore(){
 
 bool AlphaRuntime::finish_combat_if_needed(){
     if(!context_.combat||!combat_.initialized||!combat_.ended)return true;
+    // D-63 (A3-HF3). A wiping blow's cue is drawn in the arena before it goes:
+    // 0x3564 precedes 0x194A's death, and the original leaves the arena only
+    // after it. Deferred like any unfinished teardown; the cue ends by the clock.
+    if(hit_cue_.active())return false;
     if(direct_troll_.active){
         int pending=0;for(int cell=0;cell<openu5::kCombatCells;++cell)pending+=(combat_.loot[cell]==1||combat_.loot[cell]==129)?1:0;
         ESP_LOGI(kTag,"COMBAT_FINISH_BEGIN reason=%s",combat_.victory?"normal-victory-exit":"normal-loss-or-escape-exit");
@@ -2013,6 +2045,9 @@ DevicePartyHighlight AlphaRuntime::compose_party_highlight() const{
     // the picker and combat markers, precisely because all three ARE the same
     // primitive in the binary and may not share a row.
     out.damage_flash=poison_.flash_row();
+    // D-63: the combat hit is the same 0x2a28 (0x35ba / 0x35cd). The original
+    // blocks in either, so the two never overlap there; here the hit wins.
+    if(hit_cue_.flash_row()>=0)out.damage_flash=hit_cue_.flash_row();
     if(context_.combat&&combat_.current>=0&&combat_.current<combat_.count){const auto &actor=combat_.actors[combat_.current];if(actor.member!=255)out.actor=int8_t(actor.member);}
     openu5::UiSelectionView view{};if(ui_&&ui_->selection_view(view)&&view.mode==openu5::UiMode::PartySelection&&view.cursor<selection_count_)out.selected=int8_t(selections_[view.cursor].value);
     else if(out.actor>=0)out.selected=out.actor;
@@ -2168,6 +2203,7 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     if(service_blackthorn_scene()){dirty_=true;dirty_reason_="blackthorn-scene";}
     if(service_narrative_scene()){dirty_=true;dirty_reason_="narrative-scene";}
     if(service_poison_flash()){dirty_=true;dirty_reason_="poison-tick";}
+    if(service_hit_cue()){dirty_=true;dirty_reason_="combat-hit-cue";}
     service_ambient(esp_timer_get_time());
     assert(!frontend_.active() && !system_menu_.active() && "gameplay renderer lacks display ownership");
     if(smoke_.pump()){dirty_=true;dirty_reason_="smoke-test-progress";}
@@ -2337,6 +2373,16 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     if(world_fx_paintable&&world_fx_count)
         openu5::apply_world_fx(snapshot,world_fx_ops,
                                std::min(world_fx_count,sizeof(world_fx_ops)/sizeof(world_fx_ops[0])));
+    // D-63 (A3-HF3). 0x359f blit_tile(target cell, 0): the same one-cell blit,
+    // in the arena, whose window is the 11x11 grid itself (centre 5,5).
+    int8_t hit_x=-1,hit_y=-1;
+    if(combat_source&&!debug_mode&&hit_cue_.marker(hit_x,hit_y)){
+        openu5::WorldFxOp hit_op;
+        hit_op.kind=openu5::WorldFxOpKind::Blit;
+        hit_op.tile=openu5::kCombatHitMarkerTile;
+        hit_op.dx=int16_t(hit_x-openu5::kPresentationWindow/2);hit_op.dy=int16_t(hit_y-openu5::kPresentationWindow/2);
+        openu5::apply_world_fx(snapshot,&hit_op,1);
+    }
     openu5::RenderReport report{};
     const int64_t start=esp_timer_get_time();
     esp_err_t e=ESP_OK;
@@ -2469,7 +2515,7 @@ void AlphaRuntime::synchronize_loaded_world(){
     // a stuck roster flash over a completely different world. The narrative
     // pacer is cancelled WITHOUT reporting a completion, so a load can never
     // trigger the resurrection the scene would otherwise have applied.
-    narrative_pacer_.cancel();world_fx_.clear();poison_.cancel();
+    narrative_pacer_.cancel();world_fx_.clear();poison_.cancel();hit_cue_.cancel();
     // A3-01. Sound is presentation too: a load drops the old world's queued
     // effects. Nothing here reads or writes game state.
     audio_.flush_for_load();
@@ -2879,6 +2925,10 @@ void AlphaRuntime::present_audio(const openu5::GameEvent &e){
             const auto id=openu5::sfx_for_combat_attack(died,c.hit,combat_actor_is_player(c.target));
             if(id!=openu5::SfxId::None)audio_.play_sfx(id);
         }
+        // D-63 (A3-HF3). A poisoning or a sleep strike is a hit inside 0x194A,
+        // after the caller's 0x3564: the same burst by the target's side.
+        else if(openu5::combat_status_hit(c))
+            audio_.play_sfx(openu5::sfx_for_combat_attack(false,1,combat_actor_is_player(c.target)));
         // A3-03. A party member's arena step calls sfx_footstep (SJOG 0x1d32);
         // the monsters' moves are silent.
         if(c.kind==openu5::CombatEventKind::Moved&&combat_actor_is_player(c.actor))audio_.play_sfx(openu5::SfxId::MoveStep);
@@ -3115,7 +3165,7 @@ bool AlphaRuntime::loop_may_sleep() const{
     if(next_enemy_step_us_)return false;                     // combat: the enemy beat
     if(blackthorn_pacer_.active()||blackthorn_pacer_.mounted())return false;
     if(narrative_pacer_.active()||narrative_pacer_.mounted())return false;
-    if(poison_.active()||camp_scene_active_)return false;
+    if(poison_.active()||hit_cue_.active()||camp_scene_active_)return false;
     if(audio_bench_.running()||smoke_.view().running)return false;
     return true;
 }

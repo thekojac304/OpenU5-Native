@@ -1,0 +1,34 @@
+﻿Memory Type Usage Summary
+┌─────────────────────┬──────────────┬──────────┬────────────────┬───────────────┐
+│ Memory Type/Section │ Used [bytes] │ Used [%] │ Remain [bytes] │ Total [bytes] │
+├─────────────────────┼──────────────┼──────────┼────────────────┼───────────────┤
+│ Flash Code          │       661542 │          │                │               │
+│    .text            │       661542 │          │                │               │
+│ Flash Data          │       218564 │          │                │               │
+│    .rodata          │       218292 │          │                │               │
+│    .appdesc         │          256 │          │                │               │
+│    .tdata           │           16 │          │                │               │
+│ DIRAM               │       134162 │    39.26 │         207598 │        341760 │
+│    .text            │        60647 │    17.75 │                │               │
+│    .bss             │        51888 │    15.18 │                │               │
+│    .data            │        21627 │     6.33 │                │               │
+│ IRAM                │        16384 │    100.0 │              0 │         16384 │
+│    .text            │        15356 │    93.73 │                │               │
+│    .vectors         │         1028 │     6.27 │                │               │
+│ RTC SLOW            │           48 │     0.59 │           8144 │          8192 │
+│    .force_slow      │           36 │     0.44 │                │               │
+│    .rtc_noinit      │           12 │     0.15 │                │               │
+│ RTC FAST            │           24 │     0.29 │           8168 │          8192 │
+│    .rtc_reserved    │           24 │     0.29 │                │               │
+└─────────────────────┴──────────────┴──────────┴────────────────┴───────────────┘
+python : Total image size: 978800 bytes (.bin may be padded larger)
+At line:1 char:493
++ ... ect).Count; python -m esp_idf_size build-a3-hf3/openu5_tdeck.map *> a ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Total image siz... padded larger):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Note: The reported total sizes may be smaller than those in the technical reference manual due to reserved memory and 
+application configuration. The total flash size available for the application is not included by default, as it cannot 
+be reliably determined due to the presence of other data like the bootloader, partition table, and application 
+partition size.

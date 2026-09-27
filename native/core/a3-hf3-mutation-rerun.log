@@ -1,0 +1,9 @@
+# A3-HF3 mutation validation (2026-09-27 17:40)
+
+Q3 queued cues play newest first [native/core/src/combat_hit_cue.cpp]: KILLED
+    a3_hf3_combat_hit_cue exit=1  1 RED
+        RED P4b three cues in one instant play in event order (first in, first shown)
+    a3_hf3_combat_hit_runtime exit=0  0 RED
+
+restored: build exit=0; a3_hf3_combat_hit_cue exit=0, a3_hf3_combat_hit_runtime exit=0
+mutations: 1, killed: 1, survived: 0, invalid: 0

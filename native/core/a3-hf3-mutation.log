@@ -1,0 +1,167 @@
+# A3-HF3 mutation validation (2026-09-27 17:38)
+
+K1 marker suppressed [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf3_combat_hit_cue exit=0  0 RED
+    a3_hf3_combat_hit_runtime exit=1  10 RED
+        RED H4 the same hit puts tile 0 (the 0x359f marker) on Iolo's arena cell, and on no other cell
+        RED H1b the cue is held for the burst: row and marker still up 164 ms after the hit
+        RED H3 a hit on the enemy puts the tile-0 marker on the enemy's cell
+        RED H5 two party hits in one instant: Avatar's cue first (174 ms), a visible restore, then Shamino's; nothing left inverted
+        RED H6 the same member hit twice shows two cues with a restored row between them, then none
+        RED H10 'is poisoned!' / 'slept!' (strikes inside 0x194A) cue like a hit: row + marker + the side's burst
+        RED H9 the retained rows: a poisoned row flashes and comes back byte-identical, HP redraws while reversed, a menu mid-cue leaves nothing stuck
+        RED H8 a killing blow on Iolo still gets the cue (0x3564 precedes 0x194A's death): row + marker
+        RED H8d the last enemy's killing blow gets its marker, which then clears in the arena
+        RED H8f the wiping blow's cue is drawn in the arena before the teardown
+K2 marker on the transposed cell [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf3_combat_hit_cue exit=0  0 RED
+    a3_hf3_combat_hit_runtime exit=1  4 RED
+        RED H3 a hit on the enemy puts the tile-0 marker on the enemy's cell
+        RED H5 two party hits in one instant: Avatar's cue first (174 ms), a visible restore, then Shamino's; nothing left inverted
+        RED H10 'is poisoned!' / 'slept!' (strikes inside 0x194A) cue like a hit: row + marker + the side's burst
+        RED H8d the last enemy's killing blow gets its marker, which then clears in the arena
+R1 the wrong member's row [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf3_combat_hit_cue exit=0  0 RED
+    a3_hf3_combat_hit_runtime exit=1  9 RED
+        RED H1 an enemy hit on Iolo (row 2) puts exactly that roster row in reverse video, in the frame of the hit
+        RED S1 the cue starts with its sound: CombatHitHeavy submitted once, at the frame the row inverts
+        RED H1b the cue is held for the burst: row and marker still up 164 ms after the hit
+        RED H5 two party hits in one instant: Avatar's cue first (174 ms), a visible restore, then Shamino's; nothing left inverted
+        RED H6 the same member hit twice shows two cues with a restored row between them, then none
+        RED H10 'is poisoned!' / 'slept!' (strikes inside 0x194A) cue like a hit: row + marker + the side's burst
+        RED H9 the retained rows: a poisoned row flashes and comes back byte-identical, HP redraws while reversed, a menu mid-cue leaves nothing stuck
+        RED H8 a killing blow on Iolo still gets the cue (0x3564 precedes 0x194A's death): row + marker
+        RED H8f the wiping blow's cue is drawn in the arena before the teardown
+R2 an enemy hit flashes a party row [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf3_combat_hit_cue exit=0  0 RED
+    a3_hf3_combat_hit_runtime exit=1  2 RED
+        RED H3c control: an enemy struck inverts NO roster row
+        RED H10 'is poisoned!' / 'slept!' (strikes inside 0x194A) cue like a hit: row + marker + the side's burst
+R3 the party highlight ignores the hit cue [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf3_combat_hit_cue exit=0  0 RED
+    a3_hf3_combat_hit_runtime exit=1  9 RED
+        RED H1 an enemy hit on Iolo (row 2) puts exactly that roster row in reverse video, in the frame of the hit
+        RED S1 the cue starts with its sound: CombatHitHeavy submitted once, at the frame the row inverts
+        RED H1b the cue is held for the burst: row and marker still up 164 ms after the hit
+        RED H5 two party hits in one instant: Avatar's cue first (174 ms), a visible restore, then Shamino's; nothing left inverted
+        RED H6 the same member hit twice shows two cues with a restored row between them, then none
+        RED H10 'is poisoned!' / 'slept!' (strikes inside 0x194A) cue like a hit: row + marker + the side's burst
+        RED H9 the retained rows: a poisoned row flashes and comes back byte-identical, HP redraws while reversed, a menu mid-cue leaves nothing stuck
+        RED H8 a killing blow on Iolo still gets the cue (0x3564 precedes 0x194A's death): row + marker
+        RED H8f the wiping blow's cue is drawn in the arena before the teardown
+R4 the reverse video never clears [native/core/include/openu5/combat_hit_cue.h]: KILLED
+    a3_hf3_combat_hit_cue exit=1  4 RED
+        RED P3 at 174 ms it ends; nothing is left on
+        RED P4 two cues in one instant play in order, 174 ms each, a 55 ms restore between, none lost
+        RED P5 the same cell and row twice: two cues, restored between
+        RED P10 the millisecond clock may wrap under a cue
+    a3_hf3_combat_hit_runtime exit=1  6 RED
+        RED H2 after 174 ms the row is back to normal and the cell shows the arena again
+        RED H5 two party hits in one instant: Avatar's cue first (174 ms), a visible restore, then Shamino's; nothing left inverted
+        RED H6 the same member hit twice shows two cues with a restored row between them, then none
+        RED H7 control: a miss, a move, 'Nothing!', food theft, 'passes out!' and a lone Died put up no marker and no row
+        RED H9 the retained rows: a poisoned row flashes and comes back byte-identical, HP redraws while reversed, a menu mid-cue leaves nothing stuck
+        RED H8b the cue clears and the death wins: no row inverted, the cell no longer marked, the fight goes on
+T1 the cue clears too early (half the burst) [native/core/src/combat_hit_cue.cpp]: KILLED
+    a3_hf3_combat_hit_cue exit=1  5 RED
+        RED P2 it is held for 173 ms
+        RED P3 at 174 ms it ends; nothing is left on
+        RED P4 two cues in one instant play in order, 174 ms each, a 55 ms restore between, none lost
+        RED P5 the same cell and row twice: two cues, restored between
+        RED P10 the millisecond clock may wrap under a cue
+    a3_hf3_combat_hit_runtime exit=1  4 RED
+        RED H1b the cue is held for the burst: row and marker still up 164 ms after the hit
+        RED H5 two party hits in one instant: Avatar's cue first (174 ms), a visible restore, then Shamino's; nothing left inverted
+        RED H6 the same member hit twice shows two cues with a restored row between them, then none
+        RED H9 the retained rows: a poisoned row flashes and comes back byte-identical, HP redraws while reversed, a menu mid-cue leaves nothing stuck
+T2 the cue is never restored [native/core/src/combat_hit_cue.cpp]: KILLED
+    a3_hf3_combat_hit_cue exit=1  4 RED
+        RED P3 at 174 ms it ends; nothing is left on
+        RED P4 two cues in one instant play in order, 174 ms each, a 55 ms restore between, none lost
+        RED P5 the same cell and row twice: two cues, restored between
+        RED P10 the millisecond clock may wrap under a cue
+    a3_hf3_combat_hit_runtime exit=1  10 RED
+        RED H2 after 174 ms the row is back to normal and the cell shows the arena again
+        RED H3d the enemy's marker is gone after 174 ms
+        RED L1 the main loop does not sleep while a cue is owed (it is timed from the last), and sleeps again after
+        RED H5 two party hits in one instant: Avatar's cue first (174 ms), a visible restore, then Shamino's; nothing left inverted
+        RED H6 the same member hit twice shows two cues with a restored row between them, then none
+        RED H7 control: a miss, a move, 'Nothing!', food theft, 'passes out!' and a lone Died put up no marker and no row
+        RED H10 'is poisoned!' / 'slept!' (strikes inside 0x194A) cue like a hit: row + marker + the side's burst
+        RED H9 the retained rows: a poisoned row flashes and comes back byte-identical, HP redraws while reversed, a menu mid-cue leaves nothing stuck
+        RED H8b the cue clears and the death wins: no row inverted, the cell no longer marked, the fight goes on
+        RED H8d the last enemy's killing blow gets its marker, which then clears in the arena
+T3 the render loop never services the cue [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf3_combat_hit_cue exit=0  0 RED
+    a3_hf3_combat_hit_runtime exit=1  10 RED
+        RED H2 after 174 ms the row is back to normal and the cell shows the arena again
+        RED H3d the enemy's marker is gone after 174 ms
+        RED L1 the main loop does not sleep while a cue is owed (it is timed from the last), and sleeps again after
+        RED H5 two party hits in one instant: Avatar's cue first (174 ms), a visible restore, then Shamino's; nothing left inverted
+        RED H6 the same member hit twice shows two cues with a restored row between them, then none
+        RED H7 control: a miss, a move, 'Nothing!', food theft, 'passes out!' and a lone Died put up no marker and no row
+        RED H10 'is poisoned!' / 'slept!' (strikes inside 0x194A) cue like a hit: row + marker + the side's burst
+        RED H9 the retained rows: a poisoned row flashes and comes back byte-identical, HP redraws while reversed, a menu mid-cue leaves nothing stuck
+        RED H8b the cue clears and the death wins: no row inverted, the cell no longer marked, the fight goes on
+        RED H8d the last enemy's killing blow gets its marker, which then clears in the arena
+T4 a queued hit marks no frame dirty [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf3_combat_hit_cue exit=0  0 RED
+    a3_hf3_combat_hit_runtime exit=1  4 RED
+        RED H5 two party hits in one instant: Avatar's cue first (174 ms), a visible restore, then Shamino's; nothing left inverted
+        RED H6 the same member hit twice shows two cues with a restored row between them, then none
+        RED H10 'is poisoned!' / 'slept!' (strikes inside 0x194A) cue like a hit: row + marker + the side's burst
+        RED H9 the retained rows: a poisoned row flashes and comes back byte-identical, HP redraws while reversed, a menu mid-cue leaves nothing stuck
+T5 the main loop may sleep through a cue [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf3_combat_hit_cue exit=0  0 RED
+    a3_hf3_combat_hit_runtime exit=1  1 RED
+        RED L1 the main loop does not sleep while a cue is owed (it is timed from the last), and sleeps again after
+Q1 a new hit replaces the cue on screen [native/core/src/combat_hit_cue.cpp]: KILLED
+    a3_hf3_combat_hit_cue exit=1  3 RED
+        RED P4 two cues in one instant play in order, 174 ms each, a 55 ms restore between, none lost
+        RED P5 the same cell and row twice: two cues, restored between
+        RED P8 32 cues wait behind the one showing; the 33rd waiting one is refused and counted
+    a3_hf3_combat_hit_runtime exit=1  3 RED
+        RED L1 the main loop does not sleep while a cue is owed (it is timed from the last), and sleeps again after
+        RED H5 two party hits in one instant: Avatar's cue first (174 ms), a visible restore, then Shamino's; nothing left inverted
+        RED H6 the same member hit twice shows two cues with a restored row between them, then none
+Q2 no restore between queued cues [native/core/src/combat_hit_cue.cpp]: KILLED
+    a3_hf3_combat_hit_cue exit=1  2 RED
+        RED P4 two cues in one instant play in order, 174 ms each, a 55 ms restore between, none lost
+        RED P5 the same cell and row twice: two cues, restored between
+    a3_hf3_combat_hit_runtime exit=1  2 RED
+        RED H5 two party hits in one instant: Avatar's cue first (174 ms), a visible restore, then Shamino's; nothing left inverted
+        RED H6 the same member hit twice shows two cues with a restored row between them, then none
+Q3 queued cues play newest first [native/core/src/combat_hit_cue.cpp]: SURVIVED
+    a3_hf3_combat_hit_cue exit=0  0 RED
+    a3_hf3_combat_hit_runtime exit=0  0 RED
+E1 a miss is cued [native/core/src/combat_hit_cue.cpp]: KILLED
+    a3_hf3_combat_hit_cue exit=1  1 RED
+        RED E3 control: a miss, a lone Died, an untargeted or other message and a move are not cues
+    a3_hf3_combat_hit_runtime exit=1  2 RED
+        RED H10 'is poisoned!' / 'slept!' (strikes inside 0x194A) cue like a hit: row + marker + the side's burst
+        RED H9 the retained rows: a poisoned row flashes and comes back byte-identical, HP redraws while reversed, a menu mid-cue leaves nothing stuck
+E2 the status-only strikes are not cued [native/core/src/combat_hit_cue.cpp]: KILLED
+    a3_hf3_combat_hit_cue exit=1  1 RED
+        RED E2 the status-only strikes 'is poisoned!' / 'slept!' are cues on their target
+    a3_hf3_combat_hit_runtime exit=1  1 RED
+        RED H10 'is poisoned!' / 'slept!' (strikes inside 0x194A) cue like a hit: row + marker + the side's burst
+E3 the status-only strikes stay silent [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf3_combat_hit_cue exit=0  0 RED
+    a3_hf3_combat_hit_runtime exit=1  1 RED
+        RED H10 'is poisoned!' / 'slept!' (strikes inside 0x194A) cue like a hit: row + marker + the side's burst
+D1 the wiping blow tears the arena down at once [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf3_combat_hit_cue exit=0  0 RED
+    a3_hf3_combat_hit_runtime exit=1  1 RED
+        RED H8f the wiping blow's cue is drawn in the arena before the teardown
+C1 the row cache ignores reverse video [native/targets/tdeck/main/tdeck_board.cpp]: KILLED
+    a3_hf3_combat_hit_cue exit=0  0 RED
+    a3_hf3_combat_hit_runtime exit=1  6 RED
+        RED H2 after 174 ms the row is back to normal and the cell shows the arena again
+        RED H5 two party hits in one instant: Avatar's cue first (174 ms), a visible restore, then Shamino's; nothing left inverted
+        RED H6 the same member hit twice shows two cues with a restored row between them, then none
+        RED H10 'is poisoned!' / 'slept!' (strikes inside 0x194A) cue like a hit: row + marker + the side's burst
+        RED H9 the retained rows: a poisoned row flashes and comes back byte-identical, HP redraws while reversed, a menu mid-cue leaves nothing stuck
+        RED H8b the cue clears and the death wins: no row inverted, the cell no longer marked, the fight goes on
+
+restored: build exit=0; a3_hf3_combat_hit_cue exit=0, a3_hf3_combat_hit_runtime exit=0
+mutations: 19, killed: 18, survived: 1, invalid: 0

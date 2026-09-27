@@ -17,6 +17,7 @@
 #include "openu5/perf_report.h"
 #include "openu5/command_char.h"
 #include "openu5/combat.h"
+#include "openu5/combat_hit_cue.h"
 #include "openu5/dialogue_orchestration.h"
 #include "openu5/dungeon_encounters.h"
 #include "openu5/look.h"
@@ -292,6 +293,10 @@ class AlphaRuntime {
     // like every other large runtime buffer here.
     openu5::WorldFxLayer world_fx_{};
     openu5::PoisonFlashPacer poison_{};
+    // D-63 (A3-HF3). The arena's hit cue, kernel_combat_hit_flash 0x3564: the
+    // tile-0 marker on the struck cell and, for a party member, its roster row
+    // in reverse video, for the 174 ms burst. Presentation only.
+    openu5::CombatHitCuePacer hit_cue_{};
     openu5::NarrativeScenePacer narrative_pacer_{};
     openu5::NarrativeSceneStep *narrative_steps_ = nullptr;
     char *narrative_text_ = nullptr;
@@ -542,6 +547,8 @@ class AlphaRuntime {
     static void release_scene_event(void *, const openu5::GameEvent &);
     /** Advance the poison roster flash; true = redraw. */
     bool service_poison_flash();
+    bool service_hit_cue();
+    void queue_hit_cue(const openu5::CombatEvent &);
     /** Beat sink for the narrative pacer (append / continue / cue / phase). */
     static void narrative_beat(void *, const openu5::NarrativeSceneBeat &);
     void open_selection(openu5::UiMode, openu5::UiRequestId);

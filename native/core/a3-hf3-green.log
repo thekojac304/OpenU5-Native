@@ -1,0 +1,47 @@
+# A3-HF3 GREEN: a3_hf3_combat_hit_cue and a3_hf3_combat_hit_runtime on the working tree (the fix). Test lines only.
+GREEN C1 the cue lasts exactly the device's CombatHitHeavy / CombatHit programs (9,000 half samples each)
+GREEN C2 9,000 half samples at 2 x 25,806 Hz = 174 ms (174.38)
+GREEN C3 the marker is tile 0, the tile explosion_fx_at_cell (0x3522) blits too
+GREEN P0 control: an idle pacer shows nothing
+GREEN P1 a cue starts at the instant it is pushed: marker + row
+GREEN P2 it is held for 173 ms
+GREEN P3 at 174 ms it ends; nothing is left on
+GREEN P4 two cues in one instant play in order, 174 ms each, a 55 ms restore between, none lost
+GREEN P4b three cues in one instant play in event order (first in, first shown)
+GREEN P5 the same cell and row twice: two cues, restored between
+GREEN P6 an enemy's cue marks the cell and inverts no row
+GREEN P7 a cue pushed after the pacer went quiet starts at once
+GREEN P8 32 cues wait behind the one showing; the 33rd waiting one is refused and counted
+GREEN P9 cancel drops everything
+GREEN P10 the millisecond clock may wrap under a cue
+GREEN E1 a hit and a graze are cues on their target (0x3564 precedes 0x194A's graze)
+GREEN E2 the status-only strikes 'is poisoned!' / 'slept!' are cues on their target
+GREEN E3 control: a miss, a lone Died, an untargeted or other message and a move are not cues
+a3_hf3_combat_hit_cue: 18 checks, 0 failures
+exit=0
+GREEN H0 control: the troll fight is entered, the struck member loses HP, nothing is inverted or marked before
+GREEN H1 an enemy hit on Iolo (row 2) puts exactly that roster row in reverse video, in the frame of the hit
+GREEN H4 the same hit puts tile 0 (the 0x359f marker) on Iolo's arena cell, and on no other cell
+GREEN S1 the cue starts with its sound: CombatHitHeavy submitted once, at the frame the row inverts
+GREEN H1b the cue is held for the burst: row and marker still up 164 ms after the hit
+GREEN H2 after 174 ms the row is back to normal and the cell shows the arena again
+GREEN H3a control: the member's bare-hand strike lands on the troll (its HP falls)
+GREEN H3 a hit on the enemy puts the tile-0 marker on the enemy's cell
+GREEN H3c control: an enemy struck inverts NO roster row
+GREEN S2 control: the enemy hit plays CombatHit once (the existing cue, unchanged)
+GREEN H3d the enemy's marker is gone after 174 ms
+GREEN L1 the main loop does not sleep while a cue is owed (it is timed from the last), and sleeps again after
+GREEN H5 two party hits in one instant: Avatar's cue first (174 ms), a visible restore, then Shamino's; nothing left inverted
+GREEN H6 the same member hit twice shows two cues with a restored row between them, then none
+GREEN H7 control: a miss, a move, 'Nothing!', food theft, 'passes out!' and a lone Died put up no marker and no row
+GREEN H10 'is poisoned!' / 'slept!' (strikes inside 0x194A) cue like a hit: row + marker + the side's burst
+GREEN H9 the retained rows: a poisoned row flashes and comes back byte-identical, HP redraws while reversed, a menu mid-cue leaves nothing stuck
+GREEN H8 a killing blow on Iolo still gets the cue (0x3564 precedes 0x194A's death): row + marker
+GREEN H8b the cue clears and the death wins: no row inverted, the cell no longer marked, the fight goes on
+GREEN H8c control: the final blow on the last enemy wins; the arena stays up (native's latch)
+GREEN H8d the last enemy's killing blow gets its marker, which then clears in the arena
+GREEN H8e control: killing the last standing member loses the fight (combat ended)
+GREEN H8f the wiping blow's cue is drawn in the arena before the teardown
+GREEN H8g the teardown follows the cue: the arena is gone and the UI has left combat
+a3_hf3_combat_hit_runtime: 24 checks, 0 failures
+exit=0

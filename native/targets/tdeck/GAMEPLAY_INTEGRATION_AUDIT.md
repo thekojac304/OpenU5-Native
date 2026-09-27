@@ -8,7 +8,21 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 A3-04F) — render / TFT efficiency, **hardware-validated (H-200 PASS, 2026-09-27)**; Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 A3-HF3) — combat hit feedback parity (D-63); Alpha 2 remains the released build; read this first
+>
+> **A3-HF3 is a small Alpha 3 presentation hotfix, not a release.** A3-04F is hardware-validated (H-200 PASS). On its image a combat hit showed no visual cue.
+> - **The original** (ULTIMA.EXE `kernel_combat_hit_flash` 0x3564) runs for every decided hit, before the strike's result. It blits tile 0 (the `Explosion` star) opaquely over the struck cell. For a party member it also XORs the roster row (0x2a28). Both are held for the hit's noise burst, 9,000 half samples = 174 ms.
+> - **Native now** queues one cue per hit event (`openu5/combat_hit_cue.h`) and plays them in order from the frame clock. The star goes through the existing one-cell world-fx blit; the row through the existing `damage_flash` reverse video. Nothing blocks; a party wipe waits for its cue before the arena closes. The poisoning and sleep strikes, which the core reports as messages, get their side's burst too.
+> - **Declared:** the 55 ms restore between queued cues is a native choice. The strike is committed before its cue, as for the poison blip.
+>
+> | | |
+> |---|---|
+> | Host suite | **148 / 148**, serial, 115.63 s. New: `a3_hf3_combat_hit_cue` 18, `a3_hf3_combat_hit_runtime` 24 (RED 13 before). Deliberately changed: A3-04F's G1 (bar the cue states), plus a new G2. **19 / 19 mutations killed.** |
+> | Firmware | `3.0.0-alpha3-dev-a3-hf3-debug`. Pre-commit build 978,912 B (`0xeefe0`), +1,024 B, 69,664 B (7 %) free, zero warnings; internal `.bss` +128 B; image guards GREEN. Image path, SHA-256 and `Git`: tag `alpha3-hf3-combat-hit-feedback`. **Not flashed.** |
+> | SD | **Unchanged.** |
+> | Next | H-201 on the device. Then the storage batch (the 0.75 s System Menu open, with the heap watch item). |
+>
+> ### CURRENT STATE (Alpha 3 A3-04F) — render / TFT efficiency, **hardware-validated (H-200 PASS, 2026-09-27)** — **superseded as the current state by A3-HF3 above.**
 >
 > **Hardware closeout (2026-09-27): H-200 PASS**, on the A3-04F image (`Git dcea95390676`), from the live report (`ALPHA3_AUDIO.md` §26.17).
 > - No visual defect, crash, reboot or watchdog.
@@ -8000,3 +8014,45 @@ None is a divergence from the 1988 original: the original's picture is what the 
 ### 4. Not done in this batch
 
 - `ALPHA3_AUDIO.md` §26.8: the stale viewport CRC after animation ticks, the full re-rasterization on animation ticks, text row building, the transcript's per-frame re-wrap, window setup, `-Og`. The synth's steady cost (audio).
+
+## Alpha 3 A3-HF3 — combat hit feedback parity (D-63)
+
+D-63 / H-201, found in H-200. The full write-up is [`ALPHA3_AUDIO.md`](ALPHA3_AUDIO.md) §27; this section records the classification on its own axis. No combat rule, RNG, save, audio mapping of `Attacked` / `Died`, Board or UI-layout change.
+
+### 1. Items and classification
+
+| # | Item | Class | Change |
+|---|---|---|---|
+| 1 | No arena marker for a hit. The original blits tile 0, opaque, on the target's cell (0x359f → 0x10e0, EGA fn27) until `viewport_redraw` 0x35e1 | **native defect (parity, presentation)** | a one-cell tile-0 blit on the arena cell for 174 ms, through `apply_world_fx` |
+| 2 | No roster reverse video for a party member hit. The original XORs its row around the burst (0x35ba / 0x35cd) | **native defect (parity, presentation)** | the struck member's row in the existing `damage_flash` reverse video for 174 ms |
+| 3 | Several hits in one command | derived: the original blocks in each 0x3564, so its cues are consecutive | FIFO of 32, one at a time, in event order |
+| 4 | The pause between two queued cues | **native choice, declared**: the original's is its repaint + strike + message + next attacker, not a constant | 55 ms restored (one presentation unit) |
+| 5 | The status-only strikes ("is poisoned!", "slept!") are hits inside 0x194A, after 0x3564, but the core reports them as messages | **native defect (parity, presentation and sound)** | cued like a hit, with the side's burst |
+| 6 | A party wipe tore the arena down on the killing blow's pass | consequence of #1–#2 | the teardown waits for the live cue (the existing "deferred" path) |
+| 7 | The strike is committed before its cue, so the inverted row shows the new HP | **declared** (as for the poison blip, `poison_tick.h`) | none |
+
+### 2. Evidence
+
+- **Binary:**
+  - 0x3564–0x35e8 read with `re/tools/dis16.py --exe`.
+  - 0x10e0 → EGA.DRV fn27 (0x1637–0x173a).
+  - Tile 0 decoded from TILES.16 (locally, never committed).
+  - COMSUBS 0x0bf8's order: 0x0c30 cue, 0x0c39 strike, 0x0c42 message.
+  - A census of every near call to 0x3564 across the overlay bases: COMSUBS 0x0b99 / 0x0c30, COMBAT 0x0200 / 0x03c1 / 0x0c12 / 0x1c17 / 0x1c5a, and CAST 0x0963 / 0x20ad / 0x20d2 / 0x20dd / 0x2113.
+- **Host, RED-first:** `a3_hf3_combat_hit_runtime` built against HEAD's `alpha_runtime.{h,cpp}`: **13 / 24 RED** (every defect check), every control GREEN (`native/core/a3-hf3-red.log`). GREEN 24 / 24; core `a3_hf3_combat_hit_cue` 18 / 18 (`a3-hf3-green.log`).
+- **Mutations:** `native/core/tools/a3_hf3_mutation_check.py`, **19 / 19 killed**. The first pass's surviving Q3 (newest-first) was invisible with two cues; P4b (three in one instant) kills it (`a3-hf3-mutation{,-rerun}.log`).
+- **Changed expectation (deliberate, not weakened):**
+  - `a3_04f_render_runtime` G1 now allows a state to differ from the A3-04F baseline only if it visibly carries a hit cue: a tile-0 cell in the composed viewport, or a reversed party row.
+  - The new G2 requires such states to exist, all in the fight phase, each one different from the baseline's.
+  - The golden itself is unchanged. 1 of 297 states carries a cue; the other 296 equal the baseline.
+- **Suite / firmware:** **148 / 148**, serial, 115.63 s. Pre-commit firmware 978,912 B (+1,024 B), 69,664 B free; flash `.text` +940 B, `.rodata` +96 B, internal `.bss` +128 B, `.data` and IRAM unchanged; image guards GREEN. Image path, SHA-256 and `Git`: tag `alpha3-hf3-combat-hit-feedback`. **Not flashed.** SD unchanged.
+
+### 3. Rows
+
+- **D-63** (ledger §4): **HOST FIXED — A3-HF3**, hardware check pending. **H-201** (`ALPHA2_HARDWARE_CHECKLIST.md`): now runnable.
+
+### 4. Not done in this batch
+
+- `Died` → `CombatDefeat` (A3-03) cites 0x2fe3, which is inside the chest trap 0x2fd0, not a combat death. An audio adjudication for its own batch (`ALPHA3_AUDIO.md` §27.12).
+- The TypeScript skin has no combat roster flash, and describes the star as "not a tile". That belongs to the reference, at its own layer.
+- The storage batch (the 0.75 s System Menu open, with the heap watch item of §26.17.8).

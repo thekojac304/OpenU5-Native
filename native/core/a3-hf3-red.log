@@ -1,0 +1,27 @@
+# A3-HF3 RED-first: a3_hf3_combat_hit_runtime built against HEAD's alpha_runtime.h / .cpp
+# (git show HEAD:<file>), every other file as in the working tree. Exit 1.
+GREEN H0 control: the troll fight is entered, the struck member loses HP, nothing is inverted or marked before
+RED H1 an enemy hit on Iolo (row 2) puts exactly that roster row in reverse video, in the frame of the hit
+RED H4 the same hit puts tile 0 (the 0x359f marker) on Iolo's arena cell, and on no other cell
+RED S1 the cue starts with its sound: CombatHitHeavy submitted once, at the frame the row inverts
+RED H1b the cue is held for the burst: row and marker still up 164 ms after the hit
+GREEN H2 after 174 ms the row is back to normal and the cell shows the arena again
+GREEN H3a control: the member's bare-hand strike lands on the troll (its HP falls)
+RED H3 a hit on the enemy puts the tile-0 marker on the enemy's cell
+GREEN H3c control: an enemy struck inverts NO roster row
+GREEN S2 control: the enemy hit plays CombatHit once (the existing cue, unchanged)
+GREEN H3d the enemy's marker is gone after 174 ms
+RED L1 the main loop does not sleep while a cue is owed (it is timed from the last), and sleeps again after
+RED H5 two party hits in one instant: Avatar's cue first (174 ms), a visible restore, then Shamino's; nothing left inverted
+RED H6 the same member hit twice shows two cues with a restored row between them, then none
+GREEN H7 control: a miss, a move, 'Nothing!', food theft, 'passes out!' and a lone Died put up no marker and no row
+RED H10 'is poisoned!' / 'slept!' (strikes inside 0x194A) cue like a hit: row + marker + the side's burst
+RED H9 the retained rows: a poisoned row flashes and comes back byte-identical, HP redraws while reversed, a menu mid-cue leaves nothing stuck
+RED H8 a killing blow on Iolo still gets the cue (0x3564 precedes 0x194A's death): row + marker
+GREEN H8b the cue clears and the death wins: no row inverted, the cell no longer marked, the fight goes on
+GREEN H8c control: the final blow on the last enemy wins; the arena stays up (native's latch)
+RED H8d the last enemy's killing blow gets its marker, which then clears in the arena
+GREEN H8e control: killing the last standing member loses the fight (combat ended)
+RED H8f the wiping blow's cue is drawn in the arena before the teardown
+GREEN H8g the teardown follows the cue: the arena is gone and the UI has left combat
+a3_hf3_combat_hit_runtime: 24 checks, 13 failures

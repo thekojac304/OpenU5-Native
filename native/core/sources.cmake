@@ -19,6 +19,7 @@ set(OPENU5_CORE_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/presentation.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/world_fx.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/poison_tick.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/combat_hit_cue.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/narrative_scene.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/scene_timing.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/ui_session.cpp"

@@ -1169,12 +1169,25 @@ Reference, A3-04E.1 image (11-minute soak, `ALPHA3_AUDIO.md` §23.10): compose a
 - Step 6: the fight worked, HP updated, and the arena repainted cleanly. **Its reverse-video clause does not apply.** The device has never flashed a hit member's row: the combat hit was never wired to the roster inversion, before or after A3-04F. The step restated an intent written in code comments. That clause is now **H-201 / D-63** below, a parity defect. It is not an H-200 failure, and A3-04F did not cause it.
 - Internal heap minimum 2,200 B (was 200–340 B): a watch item, not closed (`ALPHA3_AUDIO.md` §26.17.8).
 
-## Alpha 3 — queued from the A3-04F hardware closeout (2026-09-27)
+## Alpha 3 A3-HF3 — combat hit feedback (D-63) (2026-09-27)
 
-### Phase H-201 — combat hit feedback (D-63) · *needs a new image; none exists yet* · **QUEUED — NOT RUNNABLE**
+**Observation (H-200, A3-04F image):** in combat, when a party member took damage, it was not obvious which member was hit. There was no name flash or other cue. The only signs were the red "`<name>` hit!" line, the HP number and the hit sound.
 
-**Observation (H-200, A3-04F image):** in combat, when a party member takes damage, it is not obvious which member was hit. There is no name flash or similar cue. The only signs are the red "`<name>` hit!" transcript line, the HP number and the hit sound.
+**What the original does** (ULTIMA.EXE 0x3564, `ALPHA3_AUDIO.md` §27.2): every hit draws a star (tile 0) over the struck combatant's cell. If a party member was hit, its roster row also goes into reverse video. Both last as long as the hit's noise burst, about 174 ms, then the screen is restored. The cue comes before the result ("hit!", "killed!"). A3-HF3 does the same, without holding the game.
 
-**What the original does** (ULTIMA.EXE 0x3564, `ALPHA3_AUDIO.md` §26.17.9): the victim's roster row is shown in reverse video for about 174 ms, while its noise burst plays, and then restored. At the same time a marker is drawn on the target's arena cell. Enemies hit get the marker only, with no row. The native device does neither. **Classification: parity defect (presentation).**
+### Phase H-201 — combat hit feedback · *new firmware; SD pack unchanged* · about 10 minutes · **PENDING**
 
-**When a fix image exists, the check will be:** in a fight, each hit on a party member inverts exactly that member's row for a short, visible moment (about a fifth of a second), then restores it. A marker appears on the hit creature's or member's cell. Consecutive hits show one after another. No input is swallowed and no turn is delayed, and poison blips still work. Do not file this against any earlier image.
+Flash the A3-HF3 Launcher image (its path and SHA-256 are in tag `alpha3-hf3-combat-hit-feedback`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-hf3-debug` and that tag's `Git`; if not, stop. SFX 80 %, any music setting.
+
+1. **Get into a fight** with at least two members in the party. A roaming monster is enough. The trolls by the bridge are reliable: `Alt+D` → Teleport → Britannia X `76`, Y `120`, then walk north onto the bridge and back until trolls appear (as in H-197 step 3; press **N** at "Pay toll?"). Do not use a maxed party (DEX 30): nothing catches it.
+2. **Let a member be hit.** Pass (Space) with a member standing next to a monster. When a monster hits, watch the right panel. **Only the struck member's row** turns to reverse video (filled bar, dark letters), for about a fifth of a second, and then returns to normal. At the same moment a **star** (red outline, yellow body, white centre) covers that member's cell in the arena, and the hit sound plays. Then the "`<name>` hit!" line and the new HP stay.
+3. **Hit a monster.** Attack an adjacent monster (`A` + direction). When the blow lands, the star covers **the monster's** cell for about a fifth of a second. **No party row** changes. A miss shows nothing.
+4. **Several hits.** Fight on until two different members are hit in the same round, or one member twice. Each hit shows its own flash on the right row, one after the other. A second hit on the same row shows as two separate flashes.
+5. **Death (if it happens).** A killing blow on a member still flashes that row and cell first; then the row shows the member dead (`D`), not inverted.
+6. **After the fight.** Leave the arena as usual. No row stays inverted, no star is left on the map, and the game moves normally.
+
+**PASS:** steps 2–6 as described. The flashes are clearly visible and on the right row and cell. The hit sounds are the same as on the A3-04F image, and music does not stutter. No `task_wdt`, crash, reboot or visual corruption.
+
+**FAIL:** a flash on the wrong row or cell, a row left inverted, no flash at all, a flash with no hit, or anything from the PASS list missing. Report it with the `FW` / `Git` lines and, if possible, a photo or video of the moment.
+
+*Known, not this check:* the star is drawn on the **cell**, so for a fraction of a second the struck combatant is hidden under it; that is the original's opaque blit. A monster's death still plays its own sound after the hit (A3-03's `CombatDefeat`, recorded for review in `ALPHA3_AUDIO.md` §27.12).
