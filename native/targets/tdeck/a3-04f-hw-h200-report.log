@@ -1,0 +1,122 @@
+# H-200 -- A3-04F on the physical T-Deck (2026-09-27)
+#
+# Source: the user's reading of the on-device report, Developer > Diagnostics >
+# Audio/render stats (live), the final performance window of the H-200 run.
+# Transcribed from the user's chat message, figure for figure; nothing added.
+# No serial capture was taken, so there are no A3C_PERF / A3E_PACE / render
+# lines and no boot banner in this evidence.
+#
+# Image: FW 3.0.0-alpha3-dev-a3-04f-debug, Git dcea95390676
+# Launcher: build-a3-04f-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-dev-a3-04f-Debug-Launcher.bin
+# SHA-256 e5df0a6344a00f79564f7186829adf5c3a310767b8fbdb46f8ce76e5e972d05a
+# (tag alpha3-a3-04f-render-efficiency). Music 80 % throughout (checklist setup).
+#
+# Visual / functional (the user's observation): no map corruption; no frozen or
+# half-drawn coast / water tiles; no stale, duplicated or missing transcript
+# line; menus reopened and closed correctly; no ghosting; no crash or reboot;
+# music and SFX normal; no watchdog observed. Combat worked; a hit party member
+# was not obvious (no clearly noticeable name flash) -- recorded separately as
+# H-201, not an H-200 criterion failure.
+
+[render]
+gameplay_frames = 3630
+window_s = 213.7
+frame_avg_ms = 19.9
+frame_p95_ms = 40.0
+frame_p99_ms = 62.0
+frame_max_ms = 130.5
+late_gt55ms = 41
+compose_avg_ms = 10.1
+compose_max_ms = 12.3
+tiles_max_ms = 9.9
+tft_avg_ms = 9.8
+tft_max_ms = 120.1
+cadence_avg_ms = 54.9
+cadence_max_ms = 4453.1
+input_shown_avg_ms = 58.2
+input_shown_max_ms = 133.7
+key_handling_max_ms = 11.5
+game_busy_pct = 34
+
+[pacing]
+full_screen_frames = 5
+full_screen_tft_avg_ms = 119.1
+full_screen_tft_max_ms = 120.1
+viewport_wo_full_frames = 279
+viewport_wo_full_tft_avg_ms = 33.5
+viewport_wo_full_tft_max_ms = 74.7
+pauses_per_viewport_frame = 9.4
+pauses_all_ms = 19.4
+loop_rate_per_s = 779
+waits = 16163
+wait_avg_ms = 8.1
+wait_max_ms = 19.4
+loop_asleep_s = 132.4
+input_wakes = 379
+idle0_gap_max_ms = 37.6
+forced = 0
+miss = 0
+opl2_in_hz = 49716
+out_hz = 16000
+ring = 8x128
+
+[render breakdown]
+logic_avg_ms = 0.2
+logic_max_ms = 2.9
+viewport_frames = 284
+viewport_tft_avg_ms = 35.0
+viewport_tft_max_ms = 120.1
+other_frames = 3346
+other_tft_avg_ms = 7.6
+other_tft_max_ms = 46.2
+tft_fill_per_frame_ms = 1.5
+tft_transfer_per_frame_ms = 8.2
+yield_ms = 0.0
+yield_count = 2686
+late_sub_report = 0
+transfer_max_ms = 1.00
+slow = 1
+slow_with_audio = 0
+rows = 172742
+audio_running_pct = 42
+row_fill_audio_idle = 25.0
+row_fill_busy = 25.1
+
+[system]
+cpu0_pct = 31
+cpu1_pct = 42
+audio_pct = 42
+main_pct = 30
+input_pct = 1
+sdlog_pct = 0
+other_tasks_pct = 0
+heap_internal_current_b = 75543
+heap_internal_min_b = 2200
+psram_current_b = 5777600
+psram_min_b = 5546560
+stack_free_main_b = 16344
+stack_free_audio_b = 3188
+stack_free_input_b = 1632
+audio_stack_min_b = 3188
+failures = 0
+
+[audio]
+render_avg_ms = 3.27
+render_p99_ms = 4.08
+render_max_ms = 4.69
+music_avg_ms = 3.22
+music_max_ms = 4.66
+audio_cpu_pct = 41
+missed = 0
+underrun = 0
+hw = 0
+clip = 0
+buffered_min_ms = 64
+buffered_max_ms = 64
+schedule_max = 8.8
+voices_max = 9
+opl_channels_avg = 8.3
+opl_channels_max = 9
+sfx_count = 1005
+sfx_with_music = 1005
+runaway = 0

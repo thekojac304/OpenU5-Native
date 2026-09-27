@@ -8,7 +8,13 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 A3-04F) — render / TFT efficiency; Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 A3-04F) — render / TFT efficiency, **hardware-validated (H-200 PASS, 2026-09-27)**; Alpha 2 remains the released build; read this first
+>
+> **Hardware closeout (2026-09-27): H-200 PASS**, on the A3-04F image (`Git dcea95390676`), from the live report (`ALPHA3_AUDIO.md` §26.17).
+> - No visual defect, crash, reboot or watchdog.
+> - Hardware against the A3-04E.1 soak: compose avg 38.5 → 10.1 ms (−73.8 %); full-screen TFT max 148.8 → 120.1 ms (−19.3 %); viewport-frame TFT avg 51.9 → 33.5 ms (−35.5 %); `idle0` gap max 102.9 → 37.6 ms (−63.5 %); `und=0 hw=0 miss=0`.
+> - Internal-heap low-water 2,200 B (was 200–340 B): consistent with the −1,808 B of `.data`, still unexplained, **downgraded to a watch item** (§26.17.8).
+> - **New: D-63 / H-201.** A combat hit on a party member shows no visual cue. The original inverts the victim's roster row for ~174 ms and marks the cell (0x3564). Native was never wired to do either. It is a parity defect, not caused by A3-04F, and queued as A3-HF3 (§26.18).
 >
 > **A3-04F is an Alpha 3 performance batch, not a release.** It changes how the Board sends pixels and when it redraws panel rows, and how the viewport checksum is computed. Nothing the game does, draws, plays or saves changes. The host proves the panel identical after every render call of a 2,766-call script.
 > - Composition (38.5 ms per frame on the A3-04E.1 hardware soak, music or not) was ~90 % a bit-by-bit CRC-32 (4.71 M instructions per frame in the image). It is now table-driven and bit-identical (0.56 M).
@@ -20,7 +26,7 @@
 > | Host suite | **146 / 146**, serial, 126.49 s. New: `a3_04f_render_runtime` 16 (RED 8 before). Deliberately changed: A3-04E's Y1 / M1 / W7 / P8 (`ALPHA3_AUDIO.md` §26.10). **20 / 20 mutations killed.** |
 > | Firmware | `3.0.0-alpha3-dev-a3-04f-debug`. Pre-commit build 977,888 B (`0xeebe0`), +480 B, 70,688 B (7 %) free, zero warnings; audio image guards GREEN. Image path, SHA-256 and `Git`: tag `alpha3-a3-04f-render-efficiency`. **Not flashed.** |
 > | SD | **Unchanged.** |
-> | Next | H-200 on the device. §26.8's deferred items; the synth's steady cost is an audio item. |
+> | Next | H-200 on the device. §26.8's deferred items; the synth's steady cost is an audio item. *(H-200 PASS. Next is A3-HF3, combat hit feedback parity, D-63 / H-201; then storage with the heap watch item: `ALPHA3_AUDIO.md` §26.18.)* |
 >
 > ### CURRENT STATE (Alpha 3 A3-HF2.1) — cleanup: TypeScript clock parity, `PRESENTATION_DISPATCH` on change only — **superseded as the current state by A3-04F above.**
 >
@@ -7969,6 +7975,12 @@ None is a divergence from the 1988 original: the original's picture is what the 
 ### 2. Evidence
 
 - **Hardware (before):** the A3-04E.1 soak split by music (`native/core/a3-04f-hw-baseline.log`). Compose 38.5 ms with music 80 % and at 0 %, step median 87.3 / 87.4 ms, `und=0 hw=0 miss=0`, `idle0` gap 102.9 ms, `forced=0`. **After: not measured; H-200.**
+- **Hardware (after), H-200 PASS (2026-09-27):** the live report's final window (213.7 s, 3,630 frames, Music 80 %; `a3-04f-hw-h200-report.log`, compared by `native/core/tools/a3_04f_hw_compare.py` → `native/core/a3-04f-hw-compare.log`). No serial capture.
+  - compose avg 10.1 ms (−73.8 %); tiles max 9.9 ms (−73.5 %)
+  - full-screen TFT max 120.1 ms (−19.3 %); viewport-frame TFT avg 33.5 ms (−35.5 %); animation-frame TFT avg 7.6 ms (−41 to −57 %)
+  - `idle0` gap max 37.6 ms (−63.5 %), `forced=0`; frame avg 19.9 ms (−67.9 %); pixel transactions per frame 257.5 → 47.6
+  - `und=0 hw=0 miss=0`
+  - No visual defect, crash, reboot or watchdog. The model predicted the full-screen repaint's ratio (−18 % modelled, −19 % measured); the device gained more than the model on steps and animation (`ALPHA3_AUDIO.md` §26.17.6).
 - **Image (before / after):** `a3_04f_image_check.py` is RED on the A3-HF2.1 image (the 8-instruction per-bit loop) and GREEN on A3-04F's (18 instructions per pixel).
 - **Host model:** new target `a3_04f_render_runtime` (16 checks, the real runtime and Board over the fake ST7789). RED 8 / 16 against HEAD's Board and rasterizer (P1, P2, P3, R1–R4, T3; `native/core/a3-04f-red.log`), GREEN 16 / 16. G1: the whole panel after every one of 2,766 render calls equals the sequence recorded from the baseline Board. Transfer times are the documented model, not device timings.
 - **Mutations:** `native/core/tools/a3_04f_mutation_check.py`, **20 / 20 killed**. The first pass's surviving M1 was equivalent (a redundant second invalidation); the redefined M1 is killed.
@@ -7977,6 +7989,13 @@ None is a divergence from the 1988 original: the original's picture is what the 
 ### 3. Rows
 
 - No new D-row (no divergence). **H-200** (render correctness and speed) in `ALPHA2_HARDWARE_CHECKLIST.md`.
+- *Hardware closeout:* **H-200 PASS.**
+- **New: D-63 / H-201 (found in H-200, not caused by A3-04F).** A combat hit on a party member shows no visual cue on the device.
+  - The original's `kernel_combat_hit_flash` (ULTIMA.EXE 0x3564) marks the target's cell (0x10e0). For a party member it also inverts the roster row through 0x2a28 around the ≈ 174 ms noise burst.
+  - Native sends `CombatEventKind::Attacked` only to audio. The shared roster inversion (Y-04, `PoisonFlashPacer` → `damage_flash`) is fed by `PoisonTick` alone, and no hit marker exists.
+  - H-200 step 6 had restated the comment-only intent.
+  - **Parity defect (presentation)**, queued for A3-HF3 (`ALPHA3_AUDIO.md` §26.17.9, §26.18). It is not "too brief": zero frames are shown.
+- *Watch item:* the internal-heap low-water, 2,200 B on H-200 (was 200–340 B). Arithmetically consistent with the −1,808 B of `.data`; mechanism unexplained. Downgraded from "look before Alpha 3 ships" to a watch item with re-escalation triggers (`ALPHA3_AUDIO.md` §26.17.8).
 
 ### 4. Not done in this batch
 

@@ -1,6 +1,14 @@
 # Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency)
 
-**Status (A3-04F, 2026-09-27): RENDER / TFT EFFICIENCY — FOUR CHANGES HOST-PROVEN PIXEL FOR PIXEL — HARDWARE VALIDATION PENDING (H-200).** Measured first (§26):
+**Status (A3-04F hardware closeout, 2026-09-27): RENDER / TFT EFFICIENCY HARDWARE-VALIDATED — H-200 PASS — A3-04F CLOSED.** The user ran H-200 on the A3-04F image (`Git dcea95390676`) with Music 80 % and read the live report (§26.17, transcribed as `a3-04f-hw-h200-report.log`). There was no visual defect, no crash, reboot or watchdog, and music and SFX were normal. Hardware against hardware, against the A3-04E.1 soak:
+- compose avg 38.5 → 10.1 ms (**−73.8 %**); tiles max 37.4 → 9.9 ms (−73.5 %)
+- full-screen TFT max 148.8 → 120.1 ms (−19.3 %); viewport-frame TFT avg 51.9 → 33.5 ms (−35.5 %); animation-frame TFT avg 12.9–17.7 → 7.6 ms (−41 to −57 %)
+- `idle0` gap max 102.9 → 37.6 ms (−63.5 %); frame avg 61.9 → 19.9 ms (−67.9 %)
+- `und=0 hw=0 miss=0`, `forced=0`
+
+The internal-heap low-water mark is now 2,200 B (was 200–340 B). That fits the −1,808 B of `.data`, but it does not explain the old mark, so it stays a documented watch item and is not closed (§26.17.8). The run also found one combat issue: a hit party member is not obvious. A3-04F did not cause it; it is a parity defect. The original inverts the member's roster row (ULTIMA.EXE 0x3564 → 0x2a28) for ~174 ms and marks the target's cell, and native does neither (**D-63 / H-201**, §26.17.9). Next: §26.18.
+
+**Status as A3-04F wrote it (2026-09-27): RENDER / TFT EFFICIENCY — FOUR CHANGES HOST-PROVEN PIXEL FOR PIXEL — HARDWARE VALIDATION PENDING (H-200).** Measured first (§26):
 - On the A3-04E.1 hardware soak, composition was 38.5 ms of every drawn frame, music or not. The linked image shows ~90 % of it was a bit-by-bit viewport CRC-32 (4.71 M instructions per frame). It is now table-driven and bit-identical: 0.56 M instructions.
 - Whole pixel rows share an SPI transaction up to the bus's 640 B, fill chunks are 320 px, and adjacent animated cells are one window.
 - Party / status / transcript rows are redrawn only when what they show changed.
@@ -2940,6 +2948,8 @@ The render / TFT batch §22.11 queued. The rule was to measure first, rank the c
 | **Host model (before and after)** | the real `AlphaRuntime` and `tdeck_board.cpp` over A3-04E's fake ST7789. Transaction, window, byte and pixel counts are **exact**. Transfer times are the **documented model** (26 µs per DMA / 24 µs per CPU transaction plus the bits at 40 MHz), not device timings. Row building is not modelled | `a3_04f_render_runtime` → `native/core/a3-04f-red.log` (baseline), `a3-04f-green.log` |
 | **Hardware, after** | **not measured**. Pending H-200 | — |
 
+*H-200 closeout (2026-09-27): **PASS**. The hardware "after" is the H-200 live report, `a3-04f-hw-h200-report.log`, compared by `native/core/tools/a3_04f_hw_compare.py` → `native/core/a3-04f-hw-compare.log`. See §26.17.*
+
 ### 26.1 Baseline (Step 1)
 
 - HEAD `414e958a` on `main`, clean. Latest tag `alpha3-hf2-1-cleanup` (`94993d3d`); earlier `alpha3-hf2-ambient-clock`, `alpha3-a3-04e1-idle-service`, `alpha3-a3-04e-render-pacing`.
@@ -3112,6 +3122,8 @@ The 8 tiny transactions left in a repaint are the 6–7 px frame caps: one trans
 | idle0 gap max / forced | 102.9 ms / 0 | pending (host model I1: 234.7 → 208.9 ms worst case) |
 | und / hw / miss | 0 / 0 / 0 | pending |
 
+*H-200 filled the right-hand column (§26.17.4). Compose avg 10.1 ms, tiles max 9.9 ms, frame avg 19.9 ms, viewport-frame TFT avg 35.0 ms (33.5 ms without the full-screen frames), animation-frame TFT avg 7.6 ms, full-screen TFT max 120.1 ms, `idle0` gap max 37.6 ms / `forced` 0, und / hw / miss 0 / 0 / 0. The walking step median was not measured, because there was no serial capture.*
+
 ### 26.13 Firmware (Step 14)
 
 Pre-commit build `native/targets/tdeck/build-a3-04f` (`a3-04f-firmware-configure.log`; `a3-04f-firmware-build.log` is the incremental rebuild after the internal-RAM offset). ESP-IDF 6.1, `--no-ccache`, `ninja -j 4`, first attempt clean, zero project warnings.
@@ -3124,6 +3136,8 @@ Pre-commit build `native/targets/tdeck/build-a3-04f` (`a3-04f-firmware-configure
 ### 26.14 Hardware validation (the user's; not done here)
 
 **H-200** in `ALPHA2_HARDWARE_CHECKLIST.md`: identity, the coast's animation, a 60 s walk, 15 Passes, Z and the Developer screen three times each, a fight if one comes, and the live report. PASS needs, besides correct pixels everywhere: compose avg ≤ 26 ms (38.5 before), full-screen TFT max below 148.8 ms, `und=0 hw=0 miss=0`, `idle0 gap` < 250 ms and no `task_wdt`.
+
+*Done 2026-09-27: **PASS** (§26.17). Step 6's reverse-video clause described behaviour the device never had. It moves to D-63 / H-201 (§26.17.9).*
 
 ### 26.15 Outcome
 
@@ -3141,3 +3155,200 @@ Pre-commit build `native/targets/tdeck/build-a3-04f` (`a3-04f-firmware-configure
 - Device: `main/native_renderer.cpp` (the table CRC); `main/tdeck_board.{h,cpp}` (`row_batch_ends` and the three row loops, 320 px fill chunks, the coalesced animated runs, `draw_panel_row` and its cache, the transcript key, the scratch on the stack, the dead members removed, the census counters); `main/alpha_runtime.h` (the fixture's `patterned_test_tiles`); `CMakeLists.txt` (`PROJECT_VER`).
 - Tests / tools: `host_tests/a3_04f_render_runtime_test.cpp`, `host_tests/a3_04f_panel_goldens.h` (new); `host_tests/board_shims/fake_tdeck_bus.{h,cpp}` (window log, thin / tiny, `max_transfer_sz`); `host_tests/alpha_runtime_host_fixture.cpp`; `host_tests/a3_04e_pacing_runtime_test.cpp` (Y1, M1, W7); `native/core/tests/a3_04e_pacing_test.cpp` (P8); `native/core/CMakeLists.txt`; `a3_04f_image_check.py`, `native/core/tools/a3_04f_{hw_baseline,red_first,mutation_check}.py` (new).
 - Docs: this section, the status line and §22.11's note; `ALPHA2_HARDWARE_CHECKLIST.md` (H-200); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`.
+
+### 26.17 Hardware result: H-200 (closeout, 2026-09-27)
+
+**Verdict: PASS. A3-04F is hardware-validated and closed.** One clause of step 6 is the exception: "a hit member's row flashes in reverse video". It describes behaviour the device never had. It is not an A3-04F regression, and it is now D-63 / H-201 (§26.17.9).
+
+#### 26.17.1 Evidence and identity
+
+- **Image.** The user flashed the post-commit image that tag `alpha3-a3-04f-render-efficiency` names:
+  - `FW 3.0.0-alpha3-dev-a3-04f-debug`, `Git dcea95390676`
+  - Launcher `build-a3-04f-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-dev-a3-04f-Debug-Launcher.bin`, SHA-256 `e5df0a63…72d05a`
+  - Setup as H-200 asks: Music 80 %, SFX 80 %, SD diag logging off.
+- **The evidence is the device's own report, not a serial capture.** The user read the final window of Developer › Diagnostics › *Audio/render stats (live)* and sent the figures: 213.7 s, 3,630 gameplay frames. `a3-04f-hw-h200-report.log` is that transcription, figure for figure. There are no `render … us`, `A3C_PERF` or `A3E_PACE` lines, so this run has no per-step timing and no serial search for `task_wdt`.
+- **The comparison.** `native/core/tools/a3_04f_hw_compare.py` takes that file and the committed A3-04E.1 split (`native/core/a3-04f-hw-baseline.log`, §26.2) and writes `native/core/a3-04f-hw-compare.log`. Only hardware figures go into it; no host-model figure does.
+
+#### 26.17.2 Visual and functional
+
+The user's report on steps 1–7:
+- no map corruption; no frozen, misplaced or half-drawn coast or water cell
+- no stale, duplicated or missing transcript line
+- Z and the Developer menu reopened and closed with the right panel complete; no ghosting
+- no crash, reboot or watchdog; music and SFX normal
+- the fight worked, and entering and leaving the arena repainted cleanly
+
+The host already proves the panel pixel-identical to the baseline Board's (G1, §26.10). The device agrees by eye.
+
+#### 26.17.3 The window (hardware, A3-04F)
+
+| Group | Figures |
+|---|---|
+| Frames | 3,630 in 213.7 s (17.0 drawn per second). Frame avg **19.9**, p95 40.0, p99 62.0, max 130.5 ms. 41 late (> 55 ms, 1.1 %). Game busy 34 % |
+| Composition | compose avg **10.1**, max 12.3 ms; tiles max 9.9 ms; logic avg 0.2, max 2.9 ms |
+| TFT | avg 9.8 ms per frame (row building 1.5 + transfer 8.2), max 120.1 ms |
+| Latency | key handling max 11.5 ms; input shown avg 58.2, max 133.7 ms; cadence avg 54.9, max 4,453.1 ms (the maximum is standing still, when nothing is drawn) |
+| Frame classes | full-screen 5 × 119.1 avg / **120.1 max**; viewport without full-screen 279 × **33.5** / 74.7; viewport including full-screen 284 × 35.0 / 120.1; other (animation, panel) 3,346 × **7.6** / 46.2 ms |
+| SPI | 172,742 pixel transactions (47.6 per frame); transfer max 1.00 ms; 1 slow, 0 of them with audio. Audio was running during 42 % of rows. Row fill 25.0 µs with audio idle, 25.1 µs with it busy. Yields 2,686, 0.0 ms |
+| Pacing | 9.4 pauses per viewport frame, 19.4 ms in all. Loop 779 / s; 16,163 waits, avg 8.1, max 19.4 ms. Loop asleep 132.4 of 213.7 s (62 %); 379 input wakes. **`idle0` gap max 37.6 ms, `forced=0`, `miss=0`** |
+| System | CPU0 31 %, CPU1 42 % (audio 42, main 30, input 1, sdlog 0, other 0). Internal heap 75,543 B now, **min 2,200 B**. PSRAM 5,777,600 B now, min 5,546,560 B. Stack free: main 16,344, audio 3,188, input 1,632 B. Failures 0 |
+| Audio | OPL2 49,716 Hz → 16,000 Hz, ring 8 × 128. Render avg 3.27, p99 4.08, max 4.69 ms per block (music avg 3.22, max 4.66). Audio CPU 41 %. **missed 0, underrun 0, hw 0**, clip 0. Buffered 64 / 64 ms; schedule max 8.8; voices max 9; OPL channels avg 8.3, max 9. 1,005 SFX, all with music; runaway 0 |
+
+#### 26.17.4 Before / after (hardware only)
+
+"Before" is the A3-04E.1 11-minute soak (§23.10.1, §26.1, §26.2). That soak spans Music 80 % and 0 %; H-200 ran at Music 80 % throughout. Where the soak's music-80 % segment differs from its whole run, both are given. From `native/core/a3-04f-hw-compare.log`:
+
+| Metric | A3-04E.1 | A3-04F (H-200) | Change |
+|---|---|---|---|
+| **compose avg** | 38.5 ms | 10.1 ms | **−73.8 %** |
+| compose max | 43.3 ms | 12.3 ms | −71.6 % |
+| **tiles max** | 37.4 ms | 9.9 ms | **−73.5 %** |
+| **full-screen TFT max** | 148.8 ms | 120.1 ms | **−19.3 %** |
+| full-screen TFT avg | 147.0 ms | 119.1 ms | −19.0 % |
+| **viewport-frame TFT avg** (without full-screen) | 51.9 ms | 33.5 ms | **−35.5 %** |
+| viewport-frame TFT avg (with full-screen; whole run / music 80 %) | 54.1 / 55.2 ms | 35.0 ms | −35.3 / −36.6 % |
+| viewport-frame TFT max (without full-screen) | 71.2 ms | 74.7 ms | +4.9 % (one frame; see §26.17.7) |
+| **other (animation) frame TFT avg** (music 80 % / whole run / music 0 %) | 12.9 / 14.1 / 17.7 ms | 7.6 ms | **−41.1 / −46.1 / −57.1 %** |
+| **`idle0` gap max** | 102.9 ms | 37.6 ms | **−63.5 %** |
+| frame avg (whole run / music 80 %) | 61.9 / 59.3 ms | 19.9 ms | −67.9 / −66.4 % |
+| frame p95 | 94.0 ms | 40.0 ms | −57.4 % |
+| frame max | 186.1 ms | 130.5 ms | −29.9 % |
+| TFT per frame: all / row building / SPI transfer | 23.3 / 3.5 / 19.8 ms | 9.8 / 1.5 / 8.2 ms | −57.9 / −57.1 / −58.6 % |
+| pixel transactions per frame | 257.5 | 47.6 | −81.5 % |
+| `forced` / und / hw / miss | 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 | unchanged |
+| audio render per 8 ms block (music 80 %) | 3.21 ms | 3.27 ms | unchanged, as intended (no audio change) |
+| main-loop asleep | 58 % | 62 % | — |
+
+"Other" frames are every drawn frame that is not a viewport frame: animation ticks, and panel-only redraws. The soak's two music segments differ in scenery (§26.2), and H-200's coast stand is scenery-heavy. So the like-for-like figure is a range, not one number. Not comparable, and therefore not given as a percentage: the walking-step median (no serial capture this time), and slow SPI transactions (1 in 213.7 s against 15 in 11 minutes, windows of different length).
+
+#### 26.17.5 PASS criteria (§26.14, H-200)
+
+| Criterion | Result |
+|---|---|
+| no missing, stale, ghosted or misplaced pixels (steps 1–6) | **met** (the user's report, §26.17.2) |
+| compose avg ≤ 26 ms | **10.1 ms** |
+| full-screen TFT max < 148.8 ms | **120.1 ms** |
+| `und=0 hw=0 miss=0`; music and SFX continuous | **0 / 0 / 0**; normal by ear |
+| `idle0` gap max < 250 ms | **37.6 ms**, `forced=0` |
+| no `task_wdt`, crash or reboot | none observed. No serial was attached, so this rests on the report's continuous 213.7 s window (a reset restarts it) and on the user's observation |
+
+#### 26.17.6 Hardware against the host model
+
+| Quantity | Host model (§26.12; model timings) | Hardware (A3-04E.1 → A3-04F) |
+|---|---|---|
+| Developer-exit / full-screen repaint | 113.83 → 93.29 ms transfer (−18 %) | TFT max 148.8 → 120.1 ms (−19.3 %), avg 147.0 → 119.1 ms (−19.0 %) |
+| a step | 31.45 → 23.97 ms (−24 %); 436 → 280 transactions | viewport-frame TFT avg 51.9 → 33.5 ms (−35.5 %) |
+| a coast animation tick | 25.92 → 6.17 ms (−76 %); 852 → 87 transactions | other-frame TFT avg 12.9–17.7 → 7.6 ms (−41 to −57 %). Not the same class: "other" is every non-viewport frame |
+| composition | image: ≈ 4.15 M fewer instructions per frame (≥ 17 ms at one instruction per cycle) | compose avg −28.4 ms |
+| `idle0` | I1, starved model, worst case: 234.7 → 208.9 ms | default pacing: 102.9 → 37.6 ms. A different condition, so not comparable |
+
+Conclusions, kept separate from the evidence:
+1. **The model ranked the costs correctly and got the direction of every change right.** For the bus-bound full-screen repaint it got the ratio too: −18 % modelled, −19 % measured. In absolute terms the device takes 1.29–1.31 × the modelled transfer, before and after (148.8 / 113.83, 120.1 / 93.29). That factor is the row building and interrupt cost the model leaves out. The model is a good relative predictor and ~30 % optimistic in absolute terms.
+2. **On steps and animation the device gained more than the model predicted** (−35 % against −24 %). Each transaction costs the device more than the documented 24–26 µs, so removing 81.5 % of them paid off more than modelled. Row building also halved (3.5 → 1.5 ms per frame), and the model does not include it.
+3. **Composition matches the image evidence.** A3-04E.1's composition was 38.5 ms, ≈ 9.2 M cycles at 240 MHz, for ≈ 5.2 M rasterizer instructions (§26.2): about 1.8 cycles per instruction. At that rate the CRC's 4.15 M fewer instructions predict ≈ 31 ms saved. The device saved 28.4 ms.
+4. **Music no longer changes row building.** Row fill is 25.0 µs per row with the audio task idle and 25.1 µs with it busy. The shared-cache coupling of §19.8 is not measurable in the renderer any more.
+
+#### 26.17.7 The deferred render items (§26.8), re-ranked by the device
+
+**None is urgent.**
+- A drawn frame now averages 19.9 ms; 1.1 % are late. Core 0's loop sleeps 62 % of the time, and the idle loop never waits more than 37.6 ms.
+- The largest remaining frames are the 5 full-screen repaints per window: ~120 ms, on menu exits only.
+- A viewport frame's TFT is 33.5 ms. At 40 MHz, the viewport's own 61,952 B take ≈ 12.4 ms on the wire before any overhead.
+
+In order of what the device suggests:
+1. **The rest of the rasterizer** (§26.8: all 121 cells re-expanded on animation ticks). It is most of today's 10.1 ms composition, on every drawn frame. This is the largest remaining core-0 cost, but it has no visible symptom.
+2. **The stale viewport CRC after animation ticks.** The device cannot isolate it without per-frame serial lines; the model puts it at ~15 ms per affected redraw.
+3. **The full-screen repaint.** It is the largest single frame, but it only happens on menu exits.
+4. The rest (text row building, the transcript re-wrap, window setup, `-Og`) is small.
+
+The viewport-frame TFT **maximum** rose 71.2 → 74.7 ms (+4.9 %) while the average fell 35 %. It is one frame, most likely a step that also redrew several transcript rows, in a window a third as long. It is not a regression signal. If a later capture shows the maximum rising further, look at it again.
+
+#### 26.17.8 The internal-heap low-water mark
+
+**What H-200 shows.** `heap_internal_min` is 2,200 B. A3-04E.1's was 340 B at its first captured heartbeat and 200 B after the first System Menu open (§23.10.5). The current free value is 75,543 B. A3-04E.1's plateau after its first System Menu open was 77,355–77,411 B. H-200's value was read inside the Developer report, after an unknown sequence of actions. So the ~1.9 KB difference is noted, not interpreted.
+
+**Is 2,200 B consistent with −1,808 B of internal `.data`? Yes, arithmetically.** The internal heap is the DRAM left over after `.data` and `.bss`. If the worst-case demand is unchanged, the heap's lowest point sits 1,808 B higher:
+- 200 + 1,808 = 2,008 B
+- 340 + 1,808 = 2,148 B
+- measured: 2,200 B, 52–192 B above the prediction. Allocator headers and alignment easily cover that.
+
+**It does not explain the old mark, for three reasons, all from the source.**
+1. **The figure is a sum of per-region minima.** `heap_internal_min` is `heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT)` (`main/system_perf.cpp:94`). ESP-IDF computes it as the **sum of each internal region's own lifetime minimum** (`components/heap/heap_caps.c:306-316`). That includes the 48 KiB DMA pool that `CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL=49152` carves out of the heap and re-adds as its own region (`components/esp_psram/system_layer/esp_psram.c:647`). The minima can fall at different times, so the figure is a floor for the tightest moment, not a snapshot of it. What it does say is that every internal region came within a few hundred bytes of full at some point (now ~2 KB).
+2. **The same number fits a second mechanism.** With `CONFIG_SPIRAM_USE_MALLOC=y` and `CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=4096`, every `malloc` ≤ 4 KiB tries internal RAM first and falls back to PSRAM. A burst of small allocations therefore fills internal RAM until the next request does not fit. The residue it leaves depends on the layout and can be anywhere from 0 to ~4 KiB, and a 1,808 B layout shift can move it. So "+2,000 B" fits "the same bounded demand in a larger heap", and it fits "filled until full, different residue" equally well. H-200 cannot tell them apart.
+3. **When it happened is unknown.** In the A3-04E.1 soak the mark was already 340 B at 112.7 s, before the capture began. It reached 200 B inside the first System Menu's `save-inspect` SD window (~299 s). That window also kept ~150 KB of internal heap for the rest of the run: `sd-window-open` 236,099 B → `dma-reserve-restored` 77,411 B, with the largest internal block falling 49,152 → 23,552 B (`a3-04e1-hw-soak.log` lines 5433–5440). H-200's 75,543 B sits on the same plateau. H-200 had no serial capture, so its 2,200 B cannot be placed in time at all.
+
+**Why it still matters.** The Alpha 2.0 device failure was this class of problem: SDMMC `allocate_dma_buf: not enough mem` from a fragmented internal heap (`ALPHA20_DEVICE_UI_CORRECTION_PASS.md` §1). Since then the 8 KiB DMA headroom (`SdHeadroomGuard`, `alpha_save.cpp`) defends every SD transaction. Neither run logged `dma-reserve-restore-failed`, `LOW INTERNAL RAM` (which fires when free internal heap is below 32 KiB) or an allocation failure, and H-200 reports `failures 0`.
+
+**Recommendation: downgrade to a documented watch item.** It is neither closed nor an immediate investigation.
+- **Why not now:**
+  - The margin is 11 × larger.
+  - No run has shown a failure.
+  - The SD path has its own headroom.
+  - The render work does not touch the heap. A3-04F removed internal RAM; it did not add any.
+- **Why not closed:**
+  - Nothing explains the transient that takes internal RAM to ~2 KB.
+  - Nothing explains the ~150 KB that the first save inspection keeps.
+  - 2,200 B is one careless static addition away from where it was: A3-04F's first build added 272 B (§26.7).
+- **Re-escalate on any of these:**
+  - a `heap_internal_min` below 1,024 B
+  - any `dma-reserve-restore-failed`, `allocate_dma_buf` or `LOW INTERNAL RAM` line
+  - a batch that adds ≥ 1 KiB of internal `.data` / `.bss` or IRAM without an offset
+  - an Alpha 3 release candidate, whichever of these comes first
+- **The investigation, when it comes, belongs with the storage work.** §23.10.5's 0.75 s System Menu open is the same `AlphaSaveService::inspect` window. It needs:
+  - a serial capture from boot with `SD_HEAP` / `SYS_PERF`
+  - `heap_caps_print_heap_info(MALLOC_CAP_INTERNAL)` per region, before and after the first `inspect`
+  - an answer to what holds the ~150 KB
+
+#### 26.17.9 Combat damage feedback (new: D-63 / H-201)
+
+**The observation.** In H-200's fight the user could not tell which party member was hit: there was no clearly noticeable name flash or similar cue. H-200 step 6 expected "a hit member's row flashes in reverse video and returns to normal". Combat itself worked.
+
+**The original.** ULTIMA.EXE `kernel_combat_hit_flash` 0x3564, re-read for this closeout with `re/tools/dis16.py --exe`:
+- 0x359f `call 0x10e0` blits the target's arena cell. This is the hit marker (`re/notes/combat-ui-spec.md` §3).
+- 0x35ac `test [bx+2],0x80` tests whether the target is a party member. If it is:
+  - 0x35ba `call 0x2a28` XORs that slot's roster row (x 0xC0–0x137, y slot·8+8 … +0xF; `re/notes/realimentaciones-visuales-328.md`)
+  - 0x35c9 plays the noise burst (0x1f4, 0xbb8, 0x28)
+  - 0x35cd `call 0x2a28` restores the row
+- If the target is an enemy, there is only the burst (0x35de).
+- 0x35e1 `call 0x5910` repaints the arena, which removes the marker.
+
+So the member's row stays inverted while the burst blocks. On the project's speaker model (`kNoiseUnitHalfSamples`, `kSpeakerSweepRate`) that is 3,000 units × 1.5 samples / 25,806 Hz ≈ **174 ms**. The same model gives the poison blip its 93 ms. The marker is on the victim's cell at the same time; the TypeScript reference draws it for 196 ms. The cue is brief, but it is a whole inverted row plus a mark on the cell, and a player sees it. (`combat-ui-spec.md` glosses 0x2a28 as "sound-on/off". That is wrong: its body is the row XOR.)
+
+**Native.**
+- **The inversion primitive exists.** Batch 7B / Y-04 added it: `PoisonFlashPacer` (93 ms per poisoned member) → `DevicePartyHighlight::damage_flash` → `invert` in `Board::draw_party_rows`. Its only producer is `poison_.flash_row()` (`alpha_runtime.cpp:2015`).
+- **A combat hit never reaches it.** A hit emits `CombatEventKind::Attacked` with "`<name>` hit!" (`combat.cpp`). Its only device consumer is `present_audio` (`alpha_runtime.cpp:2872-2881`, the `CombatHitHeavy` burst), and nothing sets `damage_flash` from it.
+- **There is no hit marker either.** The device has no arena cell marker for 0x3564; the only cell effects are the cannon's.
+- **The intent was only ever written down.** It appears in comments (`tdeck_board.cpp:664-666`, `openu5/poison_tick.h`) and in the audit's `PoisonTick` paragraph ("the combat hit use[s] the same one"). No test drives a combat hit through the roster. H-200 step 6, written in `dcea9539`, restated that intent; it did not describe wired behaviour.
+- **The TypeScript reference has the marker but not the combat roster flash:** its `setDamageFlash` is fed only by `PoisonTick`.
+
+**A3-04F is not the cause.** `draw_panel_row` keys on reverse video (mutant B3 killed, §26.10), and A3-04F's `draw_party_rows` passes the same `invert` as before. No combat flash was ever produced, before or after A3-04F.
+
+**Classification: parity defect (presentation).** It is not "too brief or subtle", and it is not "working as the original". Native shows **zero frames** of either cue. What remains is the red "`<name>` hit!" transcript line, the HP number and the sound. Recorded as **D-63** (ledger §4) and **H-201** (checklist, audit). No production change in this closeout.
+
+#### 26.17.10 Tag and files
+
+- **No new tag; the existing tag was not moved.** Tag `alpha3-a3-04f-render-efficiency` (`dcea9539`) names the image the user flashed. This closeout is a documentation commit after the tag, as A3-04E.1's was (§23.10.6).
+- Files:
+  - `ALPHA3_AUDIO.md`: the top status, the notes in §26 / §26.12 / §26.14, this §26.17 and §26.18
+  - `ALPHA2_HARDWARE_CHECKLIST.md`: H-200 PASS; H-201 queued
+  - `ALPHA2_PRESERVATION_LEDGER.md`: D-63
+  - `GAMEPLAY_INTEGRATION_AUDIT.md`: the current state and the A3-04F section
+  - `LAUNCHER.md`: the A3-04F row
+  - `a3-04f-hw-h200-report.log`, `native/core/tools/a3_04f_hw_compare.py`, `native/core/a3-04f-hw-compare.log` (new)
+- No source, test or firmware change: the suite (146 / 146) and the image are A3-04F's. Not flashed by this closeout.
+
+### 26.18 Next batch: combat hit feedback parity (A3-HF3, D-63 / H-201)
+
+The new evidence moves the render list down:
+- The device now spends 19.9 ms per drawn frame, with 1.1 % of frames late.
+- No §26.8 item has a visible symptom (§26.17.7).
+
+The one player-visible defect the run found is D-63. It is binary-cited and small in scope, and the primitive it needs already exists. **Recommended next: A3-HF3, combat hit feedback parity.**
+- **Adjudicate first.** Adjudicate against 0x3564 / 0x2a28 / 0x10e0 / 0x5910. That includes whether 0x3564 also runs for hits on the overworld and in dungeons. The `[0x5893] > 0x7f` gate at 0x356b and 0x35a2 decides which branch runs.
+- **The roster row.** On `Attacked` with a hit on a party member, invert the victim's row for 174 ms through the existing roster-inversion path, and do not make it modal. Audio still never paces the game, as with D-60. Consecutive hits play one after another in event order, as the original's blocking calls did. Define precedence against the poison blip and the cursors (`roster_invert_row`).
+- **The marker.** Mark the target's cell for party and enemy targets alike. Take the duration from the binary / video evidence; the reference uses 196 ms.
+- **Proof.** RED-first on the real runtime and Board: a fight in which a named member is hit shows exactly that row inverted, on at least one drawn frame, for the paced duration, and then restored.
+- **The TypeScript reference.** It lacks the roster half too. Adjudicate binary-first and decide at the pinned layer whether the reference is fixed as well.
+- **Device check.** H-201 on the device.
+
+After A3-HF3, the storage batch: §23.10.5's 0.75 s System Menu open together with §26.17.8's heap watch item, which share `AlphaSaveService::inspect`. The §26.8 render items wait for a device symptom. The synth's steady cost (CPU1 42 %, 0 underruns) is an audio item with no current symptom.

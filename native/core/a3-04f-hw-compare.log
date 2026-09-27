@@ -1,0 +1,35 @@
+A3-04F H-200: hardware before (A3-04E.1 soak) / after (A3-04F report). Hardware only.
+after: native/targets/tdeck/a3-04f-hw-h200-report.log
+before: native/core/a3-04f-hw-baseline.log and ALPHA3_AUDIO.md sections 23.10.1 / 26.1
+
+metric                                  before     after   change  before source
+compose avg (ms)                          38.5      10.1   -73.8 %  baseline log, whole run
+compose max (ms)                          43.3      12.3   -71.6 %  section 26.1
+tiles max (ms)                            37.4       9.9   -73.5 %  section 26.1
+full-screen TFT max (ms)                 148.8     120.1   -19.3 %  section 23.10.1
+full-screen TFT avg (ms)                 147.0     119.1   -19.0 %  section 23.10.1
+viewport w/o full TFT avg (ms)            51.9      33.5   -35.5 %  section 23.10.1
+viewport w/o full TFT max (ms)            71.2      74.7    +4.9 %  section 23.10.1
+viewport incl. full TFT avg (ms)          54.1      35.0   -35.3 %  baseline log, whole run
+  same, music 80 % segment                55.2      35.0   -36.6 %  baseline log, music 80 %
+other (animation) TFT avg (ms)            14.1       7.6   -46.1 %  baseline log, whole run
+  same, music 80 % segment                12.9       7.6   -41.1 %  baseline log, music 80 %
+  same, music 0 % segment                 17.7       7.6   -57.1 %  baseline log, music 0 %
+idle0 gap max (ms)                       102.9      37.6   -63.5 %  section 23.10.1
+frame avg (ms)                            61.9      19.9   -67.9 %  baseline log, whole run
+  same, music 80 % segment                59.3      19.9   -66.4 %  baseline log, music 80 %
+frame p95 (ms)                            94.0      40.0   -57.4 %  section 26.1
+frame max (ms)                           186.1     130.5   -29.9 %  section 23.10.1
+TFT avg per frame (ms)                    23.3       9.8   -57.9 %  baseline log, whole run
+TFT row building per frame (ms)            3.5       1.5   -57.1 %  baseline log, whole run
+TFT SPI transfer per frame (ms)           19.8       8.2   -58.6 %  baseline log, whole run
+pixel transactions per frame             257.5      47.6   -81.5 %  baseline log, whole run
+
+drawn frames per second: 17.0; late > 55 ms: 41 of 3630 (1.1 %); loop asleep 62.0 % (A3-04E.1: 58 %)
+slow SPI transactions: 1 in 213.7 s (A3-04E.1: 15 over the 11-minute soak, section 23.10.5)
+audio: missed 0 underrun 0 hw 0; render avg 3.27 ms per block (A3-04E.1 music 80 %: 3.21 ms)
+
+H-200 criterion compose avg <= 26 ms             PASS
+H-200 criterion full-screen TFT max < 148.8 ms   PASS
+H-200 criterion und = hw = miss = 0              PASS
+H-200 criterion idle0 gap max < 250 ms           PASS

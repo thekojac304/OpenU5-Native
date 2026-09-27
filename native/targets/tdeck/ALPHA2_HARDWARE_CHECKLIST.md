@@ -1143,7 +1143,7 @@ Flash the A3-HF2.1 Launcher image (its path and SHA-256 are in tag `alpha3-hf2-1
 
 A3-04F changes how the Board sends pixels (whole rows share one SPI transaction; adjacent animated cells are one window; frame lines are one or two transactions, not one per row), redraws a party / status / transcript row only when its text, colour or reverse video changed, and computes the viewport checksum from a table instead of bit by bit. On the host the panel is pixel-identical to the A3-HF2.1 Board after every one of 2,766 render calls (`ALPHA3_AUDIO.md` §26). Nothing the game does, plays or saves changes.
 
-### Phase H-200 — render correctness and speed · *new firmware; SD pack unchanged* · about 15 minutes · **PENDING**
+### Phase H-200 — render correctness and speed · *new firmware; SD pack unchanged* · about 15 minutes · **PASS (2026-09-27, physical T-Deck; recorded in the A3-04F hardware closeout)**
 
 Flash the A3-04F Launcher image (its path and SHA-256 are in tag `alpha3-a3-04f-render-efficiency`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-04f-debug` and that tag's `Git`; if not, stop. Use the music-patched assets, Music 80 %, SFX 80 %, *Probe: SD diag logging* off (the boot default). Serial is optional; if attached, search the capture for `task_wdt` afterwards.
 
@@ -1160,3 +1160,21 @@ Reference, A3-04E.1 image (11-minute soak, `ALPHA3_AUDIO.md` §23.10): compose a
 **PASS:** steps 1–6 as described (no missing, stale, ghosted or misplaced pixels anywhere); compose avg **≤ 26 ms**; full-screen TFT max below 148.8 ms; `und=0 hw=0 miss=0` (0–1 at a song switch), music and SFX continuous and on time; `idle0 gap` max < 250 ms; no `task_wdt`, crash or reboot.
 
 **FAIL:** any visual defect (photograph it, say which screen and what you did just before), compose avg above 26 ms, underruns, a watchdog line or a reboot. Report it with the `FW` / `Git` lines and the report pages.
+
+**Result (2026-09-27): PASS.** Image `FW 3.0.0-alpha3-dev-a3-04f-debug`, `Git dcea95390676`. The evidence is the live report's final window (213.7 s, 3,630 frames, Music 80 %), transcribed in `a3-04f-hw-h200-report.log`. No serial capture. `ALPHA3_AUDIO.md` §26.17.
+- Steps 1–5 as described: no map corruption, no frozen or half-drawn water, no stale, duplicated or missing transcript line, menus closed cleanly, no ghosting. No crash, reboot or watchdog; music and SFX normal.
+- Compose avg **10.1 ms** (was 38.5; −73.8 %). Tiles max 9.9 ms (was 37.4; −73.5 %).
+- Full-screen TFT max **120.1 ms** (was 148.8; −19.3 %). Viewport-frame TFT avg 33.5 ms (was 51.9; −35.5 %). Animation-frame TFT avg 7.6 ms (was 12.9–17.7; −41 to −57 %).
+- `idle0` gap max **37.6 ms** (was 102.9; −63.5 %), `forced=0`. `und=0 hw=0 miss=0`.
+- Step 6: the fight worked, HP updated, and the arena repainted cleanly. **Its reverse-video clause does not apply.** The device has never flashed a hit member's row: the combat hit was never wired to the roster inversion, before or after A3-04F. The step restated an intent written in code comments. That clause is now **H-201 / D-63** below, a parity defect. It is not an H-200 failure, and A3-04F did not cause it.
+- Internal heap minimum 2,200 B (was 200–340 B): a watch item, not closed (`ALPHA3_AUDIO.md` §26.17.8).
+
+## Alpha 3 — queued from the A3-04F hardware closeout (2026-09-27)
+
+### Phase H-201 — combat hit feedback (D-63) · *needs a new image; none exists yet* · **QUEUED — NOT RUNNABLE**
+
+**Observation (H-200, A3-04F image):** in combat, when a party member takes damage, it is not obvious which member was hit. There is no name flash or similar cue. The only signs are the red "`<name>` hit!" transcript line, the HP number and the hit sound.
+
+**What the original does** (ULTIMA.EXE 0x3564, `ALPHA3_AUDIO.md` §26.17.9): the victim's roster row is shown in reverse video for about 174 ms, while its noise burst plays, and then restored. At the same time a marker is drawn on the target's arena cell. Enemies hit get the marker only, with no row. The native device does neither. **Classification: parity defect (presentation).**
+
+**When a fix image exists, the check will be:** in a fight, each hit on a party member inverts exactly that member's row for a short, visible moment (about a fifth of a second), then restores it. A marker appears on the hit creature's or member's cell. Consecutive hits show one after another. No input is swallowed and no turn is delayed, and poison blips still work. Do not file this against any earlier image.
