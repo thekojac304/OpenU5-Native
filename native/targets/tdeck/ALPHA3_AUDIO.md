@@ -1,6 +1,8 @@
 # Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service)
 
-**Status (A3-04E.1): TASK-WATCHDOG REGRESSION FIXED ON THE HOST — HARDWARE VALIDATION PENDING (watchdog soak first).** A pre-test run of the A3-04E image tripped the task watchdog on IDLE0 after ~71 s, with `main` running. A yield never gives core 0 to the lower-priority idle task, and A3-04E's assumption that the TFT rows' own waits let it finish a pass was never a guarantee. The model reproduces the trip: 6.1 s without an idle pass. A3-04E.1 (§23) keeps A3-04E's pacing and adds a guard that watches core 0's idle loop through a second idle hook (the same pass that feeds the watchdog). It blocks the game thread for one tick only when that loop has not run for 200 ms. In the model the longest gap is then 200.9 ms, costing 4.3 % in the worst case and nothing where the idle loop already runs. The watchdog is untouched. The §22.10 matrix waits for the §23.8 soak.
+**Status (A3-04E.1 hardware closeout, 2026-09-27): WATCHDOG REGRESSION FIXED ON HARDWARE — RENDERER PACING HARDWARE-VALIDATED — A3-04E / A3-04E.1 CLOSED.** Two serial captures of the A3-04E.1 image (§23.10, committed as `a3-04e1-hw-soak.log` and `a3-04e1-hw-probes.log`) contain no `task_wdt`, crash or reboot. The first covers 11 min of uptime in default pacing, with music at 80 % and then 0 %, walking, town changes, menus and 3 min standing still. Over that whole run core 0's idle loop never went more than 102.9 ms without a pass, the guard never had to act (`forced=0`), and audio stayed at `und=0 hw=0 miss=0`. All 110 heartbeats `hb=13`–`122` are present. In the second capture, the legacy probes reproduced A3-04D exactly: menu-exit repaint 441–442 ms, walking steps ~155 ms, TFT max 408.7 ms. Switching back to the yield pacing brought steps to ~88 ms and the repaint to ~184 ms. The deliberately starving loop-spin phases made the guard act 262 times, and it held the idle gap at ≤ 223.9 ms. The §22.10 matrix was abbreviated (§23.10.4). Next: the ambient-SFX parity batch (§23.11).
+
+**Status as A3-04E.1 wrote it: TASK-WATCHDOG REGRESSION FIXED ON THE HOST — HARDWARE VALIDATION PENDING (watchdog soak first).** A pre-test run of the A3-04E image tripped the task watchdog on IDLE0 after ~71 s, with `main` running. A yield never gives core 0 to the lower-priority idle task, and A3-04E's assumption that the TFT rows' own waits let it finish a pass was never a guarantee. The model reproduces the trip: 6.1 s without an idle pass. A3-04E.1 (§23) keeps A3-04E's pacing and adds a guard that watches core 0's idle loop through a second idle hook (the same pass that feeds the watchdog). It blocks the game thread for one tick only when that loop has not run for 200 ms. In the model the longest gap is then 200.9 ms, costing 4.3 % in the worst case and nothing where the idle loop already runs. The watchdog is untouched. The §22.10 matrix waits for the §23.8 soak.
 
 **Status as A3-04E wrote it: RENDERER TICK SLEEPS AND MAIN-LOOP SPIN REMOVED — HOST-PROVEN WITH THE REAL BOARD CODE — HARDWARE VALIDATION PENDING.** With SD logging off, A3-04D's device runs still showed a ~400–445 ms frame/TFT maximum and a ~122 ms viewport average, the same with and without the synth. A3-04E (§22) found that neither is a stall. Every draw loop slept to the next 10 ms tick every 16 rows. A walking step crossed 9 of those sleeps, and the full-screen repaint on leaving the Developer menu, which opens every measurement window, crossed 37. The real `tdeck_board.cpp`, built for the host over a fake ST7789, reproduces both counts; its model gives 391.7 ms for the repaint, against the device's 404–408 ms. The draw loops now yield at the same points instead of sleeping (modelled repaint 113.8 ms, step 27.7 ms; byte-identical panel stream). The main loop, whose `vTaskDelay(pdMS_TO_TICKS(5))` was 0 ticks, now blocks on the input queue for one tick when nothing relative-timed is running. Each half is behind its own Developer probe (*Probe: legacy TFT pacing* / *legacy loop spin*), so the device can measure it alone. Not hardware-validated until the §22.10 runs pass.
 
@@ -2251,6 +2253,8 @@ The SD stalls are gone (A3-04D confirmed). The ~400–445 ms worst case and the 
 
 **Status: OUTCOME A (host) — both stalls removed in production, each behind its own legacy probe so the device can measure them one at a time; HARDWARE VALIDATION PENDING.** The ~400 ms is not a stall at all. It is a deterministic, tick-quantised repaint, and the host reproduces it with the real Board code (§22.2). The draw loops now yield where they used to sleep to the next tick. An idle pass of the main loop now blocks on the input queue for one tick instead of spinning. Nothing the game does, draws, plays or saves changes, and the task placement and the tick rate are untouched.
 
+*Hardware (A3-04E.1 closeout, 2026-09-27, §23.10): validated on the A3-04E.1 image, which carries this pacing unchanged. Legacy pacing on the device: the menu-exit repaint took 441–442 ms and walking steps ~155 ms. The yield pacing: ~184 ms and ~88 ms. The TFT full-screen maximum fell from 408.7 ms to 148.8 ms, and the frame maximum over an 11-minute default-pacing run was 186.1 ms. A3-04E's own image is not hardware-valid (the watchdog trip, §23); A3-04E.1 is the validated image.*
+
 ### 22.1 Baseline (Phase 1)
 
 - HEAD `63c9e13b` on `main` (A3-04D's post-commit logs), tree clean. Latest tag `alpha3-a3-04d-sd-log-isolation` (`5cd8fd0b`).
@@ -2436,6 +2440,8 @@ Switch both probes off at the end (a reboot also does).
 
 **Outcome A (host):** the source of the ~400 ms worst case is exact. It is the full-screen repaint on leaving the Developer screen, which crosses 37 forced sleeps until the next 10 ms tick (§22.2), and the ~122 ms viewport average is the same mechanism (9 sleeps per step). No requirement for the sleeps exists (§22.3). Production now yields at the same points, and an idle loop pass waits for input for one tick. **Pending:** the device runs of §22.10. **Hardware validation is not claimed.**
 
+*A3-04E.1 closeout (2026-09-27): the pacing is hardware-validated on the A3-04E.1 image (§23.10). The numbers are in §22's status note.*
+
 Remaining, in the order the numbers suggest (each its own batch, measured with this report):
 1. **Composition time.** A3-04D's frame avg (79 ms) minus TFT avg (41 ms) leaves ~38 ms of composition and logic per frame, which becomes the largest term once the tick sleeps are gone. The report's `compose avg/max` and `tiles max` locate it.
 2. **`fill_rect` chunking by width.** A 1–2 px vertical line is one 4-byte transaction per row (~27 µs each: 180 of them per viewport-frame side). Chunking the pixel stream by up to 320 pixels regardless of width (the window auto-wraps) would take the repaint's ~530 small transactions to a handful. This is a renderer change with its own pixel-identity proof, and V1/V2 are the harness.
@@ -2454,6 +2460,8 @@ Remaining, in the order the numbers suggest (each its own batch, measured with t
 **The hardware report that opened this batch** (the user, a casual pre-test run of the A3-04E image before the §22.10 matrix, default pacing, SD logging off, normal gameplay): after ~71 s the task watchdog fired on IDLE0 with `main` running on CPU 0. Serial showed `task_wdt: Task watchdog got triggered`, `- IDLE0 (CPU 0)`, `CPU 0: main`, `CPU 1: IDLE1`. Audio stayed healthy (`und=0 hw=0 miss=0`). `A3E_PACE` did not appear in the capture, although the filter included it. **A3-04E is not hardware-valid**, and the §22.10 matrix is withdrawn until the watchdog soak of §23.8 passes.
 
 **Status: FIXED ON THE HOST, REPRODUCED IN THE MODEL; HARDWARE VALIDATION PENDING.** A3-04E's pacing is kept. The game thread now *guarantees* core 0's idle task a pass of its loop at least every 200 ms, and it does so by observing the pass rather than assuming one. The watchdog is neither disabled nor extended.
+
+*Hardware closeout (2026-09-27, §23.10): **FIXED ON HARDWARE.** No `task_wdt` in either capture. Default pacing: idle gap max 102.9 ms and `forced=0` over 11 minutes. The legacy loop-spin phases: 262 guard sleeps, idle gap max 223.9 ms.*
 
 ### 23.1 The scheduler, from the source (Phase: reproduce / analyse)
 
@@ -2486,6 +2494,8 @@ Remaining, in the order the numbers suggest (each its own batch, measured with t
 - **The observation.** `main.cpp` registers `IdleService::core0_hook` with `esp_register_freertos_idle_hook_for_cpu(.., 0)`. ESP-IDF calls **every** registered hook of the core in the same `esp_vApplicationIdleHook()` pass, the watchdog's included (the loop has no short-circuit). So the hook's counter moving means the watchdog was fed. The hook only counts, and returns `true` so the core still waits for an interrupt.
 - **The guarantee.** `enforce()` runs at the game thread's cooperative points: the draw loops' pause (A3-04E's yield now asks it first) and **the end of every loop pass**, after the idle wait or the reschedule. While the counter moves, it returns at once. When it has not moved for **`kIdleServiceBudgetUs` = 200 ms** (25× under the 5 s watchdog), it sleeps `vTaskDelay(1)` until the counter moves, at most `kIdleServiceMaxSleeps` = 3 ticks, because the first sleep can end a microsecond later at the next tick.
 - Everything else of A3-04E stays: the yields, the idle wait, the gate, both legacy probes. The guard is on in every probe state; it is a safety floor, not a pacing variant. Under the legacy tick-sleep pacing it never fires (W5), so A0 still reproduces A3-04D.
+
+  *Hardware refinement (2026-09-27, §23.10.2): W5 is about the draws, and the device agrees: the tick sleeps feed IDLE0. With **legacy loop spin** ON, though, a pass that draws nothing never blocks. This is the latent A3-04D case of §23.1. There the guard does fire, 169 times in the first 55 s of the full-legacy phase. A0 on this image is therefore A3-04D plus a one-tick sleep roughly every 200 ms while nothing is drawn. Its render figures still reproduce A3-04D (TFT max 408.7 ms against 404–408 ms). That phase is a deliberate starvation test, not production behaviour.*
 
 ### 23.4 Expected added latency (model)
 
@@ -2552,8 +2562,123 @@ Before S1 start a window (Alt+D › Diagnostics › *Audio/render stats (live)* 
 
 **Stage 2 — only after Stage 1 passes:** the §22.10 matrix (A0, A1, A2, R1–R4), unchanged, on this image. Add the `idle0 gap max`, `forced` and `miss` fields to every run's record, and treat any `task_wdt` as a FAIL.
 
+*As run (2026-09-27): Stage 1 was one continuous default-pacing soak. Stage 2 was abbreviated to one probe sequence. Both results and the reasoning are in §23.10.*
+
 ### 23.9 Files
 
 - Core: `include/openu5/render_pacing.h`, `src/render_pacing.cpp` (`IdleServiceGuard`, the budget); `include/openu5/perf_report.h`, `src/perf_report.cpp` (the `idle0` line, `A3E_PACE`'s `hb=` and `idle0` fields, buffer 680).
 - Device: `idle_service.{h,cpp}` (new), `CMakeLists.txt` (source list), `tdeck_board.{h,cpp}` (the yield asks the guard; `set_idle_service`), `main.cpp` (the hook, the guard at the end of every pass), `alpha_runtime.{h,cpp}` (`attach_idle_service`, the report, the heartbeat number, the window reset); `CMakeLists.txt` (`PROJECT_VER` `3.0.0-alpha3-dev-a3-04e1-debug`).
 - Tests / tools: `tests/a3_04e_pacing_test.cpp`, `host_tests/a3_04e_pacing_runtime_test.cpp`, `host_tests/board_shims/fake_tdeck_bus.{h,cpp}` (the idle model), `core/CMakeLists.txt`, `tools/a3_04e_mutation_check.py` (D1/R8 anchors, I1–I14).
+
+### 23.10 Hardware result (closeout, 2026-09-27)
+
+**Verdict: PASS. The watchdog regression is fixed on hardware, and A3-04E's renderer pacing is hardware-validated. A3-04E and A3-04E.1 are closed.**
+
+**Evidence.** The user flashed the A3-04E.1 image and captured serial with PlatformIO's device monitor (`COM11`, 115200). The monitor saved two UTF-16 files. They are committed here as UTF-8 with CRs stripped and nothing else changed:
+
+| File (committed) | Original (the user's) | SHA-256 of the original | Uptime covered |
+|---|---|---|---|
+| `a3-04e1-hw-soak.log` (10,487 lines) | `a3-04e1-soak.txt` | `6c3a417f…a535ef` | 109.4 → 660.0 s (9 min 11 s captured; one boot, attached mid-run) |
+| `a3-04e1-hw-probes.log` (3,872 lines) | `a3-04e1-soak2.txt` | `ad29e31c…093c40` | 51.3 → 260.0 s (a second boot: title, Continue, the probe sequence) |
+
+`native/core/tools/a3_04e1_hw_summary.py` reads a capture and prints four things. First, the watchdog, crash and reboot search. Second, every `A3E_PROBE` line. Third, the heartbeat sequence and one row per `A3E_PACE`. Fourth, the gameplay per-frame `render … us` lines, grouped by the probe state they were drawn in. The Developer screen draws with `crc=00000000` and is excluded. Its output for both files is `a3-04e1-hw-summary.log`.
+
+**Identity.** Neither capture includes the boot banner, so the `Git` hash was not captured on serial. The line formats identify the image: `A3E_PACE hb=` and the `idle0 gap=… forced=… miss=…` field exist only in A3-04E.1 (§23.5, §23.6).
+
+#### 23.10.1 Stage 1: the watchdog soak (`a3-04e1-hw-soak.log`, default pacing)
+
+The pacing line reads `tft yield  loop idle-wait` throughout, and no probe was switched. SD logging was OFF and SFX was at 80 %. The measurement window was never restarted: `win` grows from 112.0 to 659.2 s. Every maximum below is therefore over the **whole run since boot**, which is a stricter reading than the per-soak windows §23.8 asked for.
+
+| Segment (uptime) | Music | What happened |
+|---|---|---|
+| ≤ 319 s | **80 %**: *Britannic Land*, *Greyson's Tale*, *Villager Taran* (the song follows the location) | walking, location changes, Developer menu visits, six System Menu opens (~300–319 s, ending in Settings) |
+| 319–475 s | **0 %** (silent) | walking |
+| 475–660 s | 0 % | standing still: no gameplay frame drawn at all (the count stays at 3,195), which is the idle-wait case |
+
+| Criterion (§23.8, §22.10) | Result |
+|---|---|
+| no `task_wdt`, crash or reboot | **none**: no watchdog, Guru, abort, backtrace, `rst:` or E-level line |
+| `idle0 gap` max < 250 ms, `miss 0` | **102.9 ms** over the whole run (11.0 ms at `hb=13`, 54.7 ms by `hb=14`, 84.4 ms by `hb=29`, 102.9 ms by `hb=53`); `miss=0` |
+| `forced` (the S1 question) | **`0:0/0.0` on every heartbeat.** In default pacing on this board, the row waits, the SD waits and the idle wait let core 0's idle loop run often enough, and the guard never had to act |
+| audio | `und=0 hw=0 miss=0` on every heartbeat; every `AUDIO_PERF` line `missed=0 underruns=0 hw_underruns=0` |
+| heartbeats | `hb=13`–`122`: **110 consecutive**, none dropped, and 110 `A3C_PERF` lines |
+| frame max ≤ 250 ms (R1) | **186.1 ms** (avg 61.9 ms, p95 94.0 ms, 3,195 frames) |
+| full-screen repaint ≤ 250 ms (R3) | 17 repaints, TFT **avg 147.0, max 148.8 ms**; whole frame 180.9–183.6 ms for the six System Menu dismissals |
+| viewport without full-screen ≤ 60 ms avg (A1) | **51.9 ms avg**, 71.2 ms max, over 716 frames |
+| pauses | 9.7 per viewport frame, **0.0 ms**; 50.3 ms in total over the run; the longest single yield 0.21 ms |
+| main loop | asleep **385.1 of 659.2 s (58 %)**, 977 input wakes |
+| CPU1 with music (R2) | 41 % (the synth; A3-04D Test 3: ~43 %) |
+| per-frame gameplay renders | 753 walking/redraw frames: **median 87.4 ms**, p90 89.2 ms, max 183.7 ms |
+
+**What this settles and what it does not.** `forced=0` answers §23.8's question: on this board the draws and the idle wait feed IDLE0, and the guard was not needed in default pacing. So this soak did **not** reproduce A3-04E's 71 s trip, and that trip's exact trigger on the device remains unobserved. The guard was proven by Stage 2 instead: in the loop-spin phases the game thread never blocks between frames, which is the same starvation class, and the guard held the gap bounded (§23.10.2). Hardware-fixed therefore means two things: the watchdog never fired under default pacing, and when starvation is forced on purpose the guard stops it.
+
+#### 23.10.2 Stage 2, abbreviated: the probe sequence (`a3-04e1-hw-probes.log`)
+
+The captured boot loaded the save in 1,057 ms. The user then walked a few steps and switched the probes in the Developer menu. `A3E_PROBE` lines:
+
+| Uptime | Probes → pacing | Phase |
+|---|---|---|
+| boot | `tft=yield loop=idle-wait` | production: 5 steps, 69–87 ms |
+| 77.848 s | `tft=TICK loop=idle-wait` | 3.9 s inside the Developer menu (no gameplay frame) |
+| 81.698 s | `tft=TICK loop=SPIN` | **full legacy = A3-04D pacing (A0)** |
+| 136.688 s | `tft=yield loop=SPIN` | **renderer alone (A1)** |
+| 165.348 s | `tft=yield loop=idle-wait` | **production restored (R1; Music 80 % from 174 s)** |
+
+**The counters are cumulative across probe changes.** After the legacy phase, every `max` in `A3E_PACE`/`A3C_PERF` (frame 444.8, TFT 408.7, viewport 125.8) is still the legacy value, so those maxima say nothing about the new pacing. The per-phase evidence is the per-frame `render` lines and each counter's change across a phase:
+
+| Phase | Gameplay steps (render lines) | Full-screen / menu-exit repaint (whole frame) | Tick-sleep time | Guard |
+|---|---|---|---|---|
+| full legacy (`TICK`/`SPIN`) | 55 steps: **median 155.5 ms** (149.4–160.9) | **441.3, 441.6, 442.4 ms** (two Developer exits, one System Menu) | ~71 ms per viewport frame (`vpms` 70.9 at `hb=17`, cumulative); single sleep max **9.60 ms** (one 10 ms tick); 4.4 s in total | 169 sleeps by `hb=17` (55 s); gap max 200.1 → 219.2 ms |
+| renderer alone (`yield`/`SPIN`) | 52 steps: **median 88.0 ms** (86.6–89.1) | 183.0 ms | +3.3 ms over the whole phase (4,398.1 → 4,401.4 ms) | still acting: 169 → 256 (the spin starves IDLE0 while nothing is drawn); gap max 223.9 ms |
+| production (`yield`/`idle-wait`) | 65 steps: **median 87.9 ms** (48.8–89.8) | 184.3 ms (System Menu) | ~0 | **frozen at 262** from `hb=24` (169 s) to `hb=42` (260 s): no guard sleep in production, at Music 0 % and 80 % |
+
+From the counters over the legacy phase: the full-screen TFT maximum was **408.7 ms** (A3-04D: 404.4–408.1). The viewport TFT average reached **113.8 ms** at `hb=15` (A3-04D: ~122; §22.10's A0 band is 95–125). The frame max was **444.8 ms** (A3-04D: 443–445). **A0 reproduces A3-04D**, so the comparison is valid. The renderer change alone takes a walking step from ~155 to ~88 ms (−43 %) and the menu-exit repaint from ~442 to ~184 ms (−58 %). Stage 1 shows the same figures over 11 minutes: step median 87.4 ms, repaint TFT max 148.8 ms, which is −64 % against 408.7 ms and clears §22.10's 30 % bar. The loop setting does not change the step time (88.0 against 87.9 ms), as §22.4 predicted.
+
+Across all 262 guard sleeps (2,337.3 ms, 8.9 ms each, so one tick), the largest idle gap was 223.9 ms. That is 24 ms over the 200 ms budget: the guard only checks at the cooperative points, and composition (~38 ms per frame) has none. It stayed under §23.8's 250 ms line and far under the watchdog's 5 s. No `task_wdt`. `und=0 hw=0 miss=0` throughout.
+
+**The legacy phases are not production.** With legacy loop spin ON, the game thread never blocks when nothing is drawn. Those phases drive the idle-service guard on purpose: the 262 `forced` sleeps and the 200–224 ms gaps are the starvation test working. They are not a production figure. Production's are Stage 1's `forced=0` and 102.9 ms.
+
+#### 23.10.3 Visual and UI stress
+
+The user reports no visual corruption across Developer menu entry and exit, System Menu rendering and navigation (the Settings change to Music 0 %/80 %), full-screen redraws, normal movement, animated-world rendering, and play after the probes were restored. The host already proves that the panel always equals the composed viewport under both pacings (§22.8 V1–V3). The device agrees by eye.
+
+#### 23.10.4 Why the §22.10 matrix was abbreviated
+
+The full A0/A1/A2/R1–R4 matrix was not run as separate windows. The two captures already cover what it was designed to decide:
+
+| §22.10 run | Covered by |
+|---|---|
+| A0 (legacy baseline) | the `TICK`/`SPIN` phase: reproduces A3-04D (408.7 ms TFT, ~155 ms steps, ~442 ms repaint) |
+| A1 (renderer alone) | the `yield`/`SPIN` phase: steps 88.0 ms, repaint 183.0 ms, no tick-sleep time |
+| A2 (main loop alone) | not run as a window (the `TICK`/`idle-wait` phase was 3.9 s inside the Developer menu). The main-loop change is measured in Stage 1 instead: the loop asleep 58 % of 11 min, 977 input wakes, and step time unchanged by the loop setting (above) |
+| R1 (combined, Music 0 %) | Stage 1, 319–660 s, and Stage 2's production phase |
+| R2 (Music 80 %) | Stage 1 ≤ 319 s and Stage 2 from 174 s: `und=0 hw=0 miss=0`, CPU1 41 % |
+| R3 (heavy redraw, towns) | Stage 1's location changes (the song follows them), 17 full-screen repaints ≤ 148.8 ms TFT, animated-world rendering |
+| R4 (menus, responsiveness) | Stage 1's six System Menu opens and Developer visits, and Stage 2's menu navigation; the idle gap stayed ≤ 102.9 ms through every menu in default pacing |
+| watchdog (§23.8) | Stage 1 end to end, and Stage 2's forced-starvation phases |
+
+**Not assessed**, for the record:
+- **The `input shown` maximum.** The window was never restarted, so it includes time before the Stage 1 capture began (2,059.7 ms; 3,067.0 ms right after Continue in the Stage 2 capture) and one System Menu visit (7,016.1 ms, recorded at ~320 s, while a keypress stayed pending until the next gameplay frame). None of these is a gameplay latency. No run measured R4's ≤ 250 ms criterion in a clean window.
+- **R4's counted trackball flicks** (lost or doubled steps) were not recorded. The user reports no stuck or lost input.
+
+#### 23.10.5 Other observations (not A3-04E.1 defects; recorded, not acted on)
+
+- **The System Menu takes ~0.72–0.75 s to open.** Every open is preceded by an `AlphaSave: SD_HEAP … state=save-inspect` line. `TDeckInput: INPUT_SERVICE render_block_us=721502`–`747882` shows the input consumer waiting that long. This is SD save-slot inspection, not pacing. A Settings save costs ~270 ms the same way. The idle gap stayed ≤ 102.9 ms through all of them, because the SD waits block. A candidate for a storage batch.
+- **The internal-heap low-water mark is 200–344 B** (`SYS_PERF heap_int_min`). Free internal heap is ~230 KB at the first heartbeats and ~73–77 KB from around the first System Menu open onward (the `SD_HEAP` lines show the same figure). The low-water fell to 200 B during the System Menu opens at ~304 s. No allocation failure and no E-level line appear in either capture. The mark was never recorded before, so it is not known whether it is new. It deserves its own look before Alpha 3 ships.
+- **`INPUT_SERVICE` warnings fire on ordinary steps.** The threshold (75 ms, `tdeck_input.cpp`) is below a normal ~88 ms step, so most of the 296 such warnings across the two captures are routine.
+- **`PRESENTATION_DISPATCH` floods serial.** It is logged on every gameplay render (`alpha_runtime.cpp`): 2,532 of 10,487 lines (24 %) and 1,188 of 3,872 (31 %). It makes device captures harder to read and adds console busy-wait time on core 0 (§23.1 (d)). The fix is to log it on state change only, as a future cleanup.
+- 15 slow SPI transactions out of 822,703 rows (`xfer max=1.19 ms`, `insd=0`) over the 11 minutes. Not attributed. Harmless at this size.
+
+#### 23.10.6 Tag and files
+
+- **No new tag, and the existing tag was not moved.** The project tags the implementation commit of each batch. Tag `alpha3-a3-04e1-idle-service` (`cb423a69`) names the post-commit image the user flashed, whose embedded `Git` is that commit. Moving the tag would break that identity check. Earlier hardware results (A3-01, A3-02, A3-04D's confirmation in §22) were recorded in this document without a tag. This closeout is a documentation commit after the tag, and the tag's image is the validated one.
+- Files: `ALPHA3_AUDIO.md` (the top status, the notes in §22, §22.11, §23, §23.3 and §23.8, and this §23.10–§23.11); `GAMEPLAY_INTEGRATION_AUDIT.md` (the Alpha 3 note); `LAUNCHER.md` (the A3-04E.1 row); `a3-04e1-hw-soak.log`, `a3-04e1-hw-probes.log`, `a3-04e1-hw-summary.log` (new); `native/core/tools/a3_04e1_hw_summary.py` (new). No source, test or firmware change: the suite and the image are A3-04E.1's.
+
+### 23.11 Next batch: ambient-SFX parity (separate from A3-04E.1)
+
+Two device-observed ambient defects, for an audio-parity batch of their own:
+
+1. **The fountain does not sustain its PC-speaker "burble".** On the device it is heard only briefly around movement, never as a continuous sound while standing next to it. §16.4 pins one NB(10, 30, 25000) burble (1.7 ms) per 55 ms tick while eligible. The original ticks 0x4102 on every redraw of its key wait (`getkey_with_redraw` 0x266c). The batch must derive that redraw cadence, and so the sound's real density, from the binary. It must also check on the device that `service_ambient` (`alpha_runtime.cpp`, called from the gameplay render path) keeps ticking while the player stands still, and how the SFX policy treats back-to-back 1.7 ms cues.
+2. **Grandfather clocks play a wrong beep after movement before their tick-tock.** The runtime re-arms the clock's strike (`[0x5884]` ← the 12-hour clock) whenever the game time's **minute** changes (`service_ambient`: "the device sees that as the game clock moving"). A step advances the minute, so every step re-arms a strike. §16.4's C1–C2 pin exactly that ("after a step moves the clock, strikes the hour"). The batch must adjudicate `advance_clock` 0x5164–0x5183 against the binary, and find which advance re-arms `[0x5884]`, before touching the pinned row. A deliberate host row is not proof by itself: A3-HF1 found one that was invented.
+
+Also queued: `PRESENTATION_DISPATCH` on state change only (§23.10.5), then §22.11's remaining performance list (composition time, `fill_rect` chunking, the transcript redraw, the synth's steady cost).
