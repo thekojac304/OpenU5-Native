@@ -1,0 +1,6 @@
+R8 KILLED the heartbeat does not log A3E_PACE :: pacing: S10 | runtime: H1
+I11 KILLED A3E_PACE loses its heartbeat number :: pacing: F5b | runtime: W6, H1
+I13 KILLED every heartbeat carries the same number :: runtime: H1
+
+3/3 killed; 0 survived; 0 invalid/not applied
+exit 0

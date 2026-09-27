@@ -34,6 +34,11 @@ int g_param_count = 0;
 int g_x0 = 0, g_x1 = kWidth - 1, g_y0 = 0, g_y1 = kHeight - 1, g_x = 0, g_y = 0;
 openu5_host_spi_device g_display{1};
 std::vector<Pause> g_pauses;
+volatile uint32_t g_idle_passes = 0;
+
+void idle_blocked_for(uint64_t us) {
+    if (!g_model.timed || us >= g_model.idle_pass_us) g_idle_passes = g_idle_passes + 1;
+}
 
 void hash_byte(uint8_t b) {
     g_hash ^= b;
@@ -49,12 +54,14 @@ void on_delay(TickType_t ticks) {
     g_pauses.push_back({g_x0, g_y0, g_x1, g_y1, true});
     if (now < 0 || !g_model.timed) {
         ++g_stats.tick_sleeps;
+        idle_blocked_for(0);
         return; // real clock or an untimed run: counted, not modelled
     }
     const int64_t tick = int64_t(g_model.tick_us);
     const int64_t wake = (now / tick + int64_t(ticks)) * tick;
     ++g_stats.tick_sleeps;
     g_stats.sleep_us += uint64_t(wake - now);
+    idle_blocked_for(uint64_t(wake - now));
     now = wake;
     g_ns_remainder = 0;
 }
@@ -120,6 +127,19 @@ void reset_stats() {
     g_pauses.clear();
 }
 const std::vector<Pause> &pauses() { return g_pauses; }
+const volatile uint32_t *idle_passes() { return &g_idle_passes; }
+void idle_wait_one_tick() {
+    int64_t &now = openu5_host_virtual_clock_us();
+    if (now < 0 || !g_model.timed) {
+        idle_blocked_for(0);
+        return;
+    }
+    const int64_t tick = int64_t(g_model.tick_us);
+    const int64_t wake = (now / tick + 1) * tick;
+    idle_blocked_for(uint64_t(wake - now));
+    now = wake;
+    g_ns_remainder = 0;
+}
 void restart_stream() {
     reset_stats();
     g_hash = kFnvBasis;
@@ -193,6 +213,7 @@ esp_err_t spi_device_transmit(spi_device_handle_t handle, spi_transaction_t *t) 
     ++g_stats.transactions;
     g_stats.bytes += bytes;
     g_stats.xfer_ns += ns;
+    if (g_model.rows_feed_idle) idle_blocked_for(ns / 1000);
     advance_ns(ns);
     return ESP_OK;
 }

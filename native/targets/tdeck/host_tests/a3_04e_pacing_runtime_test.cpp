@@ -20,6 +20,7 @@
 //
 //   a3_04e_pacing_runtime <openu5-alpha1-resources.bin>
 #include "../main/alpha_runtime.h"
+#include "../main/idle_service.h"
 #include "../main/tdeck_board.h"
 #include "esp_timer.h"
 #include "fake_tdeck_bus.h"
@@ -29,6 +30,8 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <fstream>
+#include <io.h>
 #include <cstring>
 #include <map>
 #include <memory>
@@ -72,13 +75,29 @@ struct FakeAudioPerf final : AudioPerfSource {
 struct Run {
     std::unique_ptr<tdeck::AlphaRuntime> rt = std::make_unique<tdeck::AlphaRuntime>();
     tdeck::Board board{};
+    tdeck::IdleService idle{}; // A3-04E.1: the device's own guard, on the modelled idle counter
+    bool guard = true;
+    bool streaming = false; // input always queued: main.cpp's peek never waits
     size_t viewport_mismatches = 0, gameplay_checks = 0;
-    Run(int seed, bool timed, bool paced = false) {
+    // A model-level task watchdog: the longest time core 0's idle loop went unrun.
+    uint32_t seen_passes = 0;
+    int64_t seen_at = 0, idle_gap_max = 0;
+    Run(int seed, bool timed, bool paced = false, bool rows_feed_idle = true, bool with_guard = true) {
         openu5_host_virtual_clock_us() = kClockStartUs;
         bus::install();
+        bus::model() = bus::Model{};
         bus::model().timed = timed;
+        bus::model().rows_feed_idle = rows_feed_idle;
         board.initialize_display(); // the real ST7789 sequence and boot text, on the fake bus
         openu5_host_virtual_clock_us() = kClockStartUs;
+        guard = with_guard;
+        if (guard) { // as main.cpp wires it
+            idle.attach(bus::idle_passes());
+            board.set_idle_service(&idle);
+            rt->attach_idle_service(&idle);
+        }
+        seen_passes = *bus::idle_passes();
+        seen_at = openu5_host_virtual_clock_us();
         tdeck::AlphaRuntime::HostTestFixture f{};
         f.world = pack->world;
         f.npc_locations = pack->npc_locations;
@@ -126,10 +145,28 @@ struct Run {
                 break;
             }
     }
+    void observe_idle() {
+        const uint32_t passes = *bus::idle_passes();
+        const int64_t now = openu5_host_virtual_clock_us();
+        if (passes != seen_passes) {
+            seen_passes = passes;
+            seen_at = now;
+        } else if (now - seen_at > idle_gap_max) {
+            idle_gap_max = now - seen_at;
+        }
+    }
+    /** main.cpp's end of a pass: the idle wait (unless input is queued), then the guard. */
+    void pass_end() {
+        observe_idle();
+        if (!streaming && rt->loop_wait_ticks()) bus::idle_wait_one_tick();
+        if (guard) idle.enforce();
+        observe_idle();
+    }
     void raw(tdeck::RawInputEvent e) {
         e.timestamp_us = openu5_host_virtual_clock_us();
         rt->handle(e);
         render();
+        pass_end();
     }
     void key(uint8_t code, bool alt = false) {
         tdeck::RawInputEvent e{};
@@ -155,7 +192,30 @@ struct Run {
         while (openu5_host_virtual_clock_us() < end) {
             openu5_host_virtual_clock_us() += 5000;
             render();
+            pass_end();
         }
+    }
+    /**
+     * Continuous walking with the trackball's events always queued (main.cpp's
+     * peek returns at once): 1 ms passes of busy work, a step every 100 ms.
+     */
+    void stream_walk(int steps) {
+        streaming = true;
+        int64_t next_step = openu5_host_virtual_clock_us();
+        int step = 0;
+        while (step < steps || openu5_host_virtual_clock_us() < next_step) {
+            openu5_host_virtual_clock_us() += 1000;
+            if (step < steps && openu5_host_virtual_clock_us() >= next_step) {
+                tdeck::RawInputEvent e{};
+                e.kind = step++ % 2 ? RawInputKind::TrackballRight : RawInputKind::TrackballLeft;
+                e.timestamp_us = openu5_host_virtual_clock_us();
+                rt->handle(e);
+                next_step = openu5_host_virtual_clock_us() + 100000;
+            }
+            render();
+            pass_end();
+        }
+        streaming = false;
     }
     void camp() { key('h'); key('1'); key('\r'); key('n'); }
     void open_diagnostics() {
@@ -413,6 +473,105 @@ int main(int argc, char **argv) {
                   "L6 a paced Camp scene (resume_at = now + dwell): the loop never sleeps while the pacer is active "
                   "or mounted, so each dwell is A3-04D's to the microsecond");
         }
+    }
+
+    // ---- W: the idle-service guarantee (A3-04E.1, section 23) ----------------
+    // The hardware's worst case, modelled: the rows' own blocks do not let the
+    // idle task finish a pass (rows_feed_idle=false), and the trackball keeps
+    // an event queued, so main.cpp's peek never waits.
+    {
+        Run bare(21, true, false, /*rows_feed_idle=*/false, /*guard=*/false);
+        bare.stream_walk(60);
+        check(bare.idle_gap_max >= 5000000,
+              "W1 A3-04E as shipped (yields, no guard) reproduces the hardware's task watchdog in the model: core 0's "
+              "idle loop goes " + ms(uint64_t(bare.idle_gap_max)) + " without a pass while the game thread walks "
+              "(the watchdog's limit is 5 s)");
+        Run g(21, true, false, false, true);
+        g.stream_walk(60);
+        const auto &st = g.idle.stats();
+        const int64_t window = openu5_host_virtual_clock_us() - kClockStartUs;
+        check(g.idle_gap_max <= int64_t(kIdleServiceBudgetUs) + 50000 && st.unserviced == 0 && st.enforcements > 0 &&
+                  st.forced_us * 100 <= uint64_t(window) * 6,
+              "W2 with the guard the longest idle gap is " + ms(uint64_t(g.idle_gap_max)) + " (budget " +
+                  ms(kIdleServiceBudgetUs) + "); it slept " + std::to_string(st.forced_sleeps) + " ticks in " +
+                  std::to_string(st.enforcements) + " enforcements = " + ms(st.forced_us) + " of " +
+                  ms(uint64_t(window)) + " (60 steps), never in vain");
+        g.open_diagnostics();
+        g.ups(2);
+        g.key('\r'); // "Audio/render stats (live)": publishes this window, starts the next
+        const bool shown = report_text(*g.rt).find("idle0 gap max 200.") != std::string::npos;
+        check(shown && g.idle.stats().enforcements == 0 && g.idle.stats().forced_sleeps == 0,
+              "W7 the live report shows the idle gap, and the read starts a new idle-service window with the others");
+        check(g.state() == bare.state(),
+              "W3 ... and the 60 steps end where they do without the guard's sleeps (" + g.state() +
+                  "): the game is untouched");
+    }
+    {
+        Run h(7, true, false, /*rows_feed_idle=*/false);
+        h.streaming = true;
+        h.run(300);
+        h.open_diagnostics();
+        bus::reset_stats();
+        h.key('\b');
+        h.key('\b'); // leave: the full-screen repaint, with the idle loop starved throughout
+        const uint64_t sleeps = bus::stats().tick_sleeps;
+        check(sleeps <= 1, "W4 the menu-exit repaint under the worst case costs " + std::to_string(sleeps) +
+                               " guard tick sleep(s) at most one per 200 ms -- not the 37 of the legacy pause");
+    }
+    {
+        Run fed(22, true, false, /*rows_feed_idle=*/true);
+        fed.stream_walk(30);
+        Run legacy_tft(22, true, false, /*rows_feed_idle=*/false);
+        legacy_tft.set_legacy(true, false);
+        legacy_tft.idle.reset_stats();
+        legacy_tft.stream_walk(30);
+        Run standing(22, true, false, /*rows_feed_idle=*/false);
+        standing.run(3000);
+        check(fed.idle.stats().enforcements == 0 && legacy_tft.idle.stats().enforcements == 0 &&
+                  standing.idle.stats().enforcements == 0 && standing.idle_gap_max < int64_t(kIdleServiceBudgetUs),
+              "W5 the guard costs nothing wherever the idle loop already runs: rows that let it (A3-04E's model), "
+              "the legacy tick-sleep pacing, and the loop's own idle wait when nothing is queued (enforcements " +
+                  std::to_string(fed.idle.stats().enforcements) + "/" + std::to_string(legacy_tft.idle.stats().enforcements) +
+                  "/" + std::to_string(standing.idle.stats().enforcements) + "; the longest gap standing is the first full frame, " +
+                  ms(uint64_t(standing.idle_gap_max)) + ")");
+        char line[kPacingLineBytes];
+        fed.rt->pacing_line(line, sizeof line, 7);
+        const std::string l = line;
+        check(l.find("hb=7 pace=[tft yield  loop idle-wait]") == 0 && l.find(" | idle0 gap=") != std::string::npos &&
+                  l.find(" forced=0:0/0.0 miss=0") != std::string::npos,
+              "W6 A3E_PACE carries the heartbeat number and the idle-service window:\n    " + l);
+    }
+
+    // ---- H: A3E_PACE is emitted by every heartbeat, right after A3C_PERF -----
+    {
+        Run h(8, true);
+        h.walk(2);
+        const char *path = "a3_04e_heartbeat_capture.txt";
+        std::fflush(stdout);
+        const int saved = _dup(_fileno(stdout));
+        FILE *file = std::fopen(path, "w+");
+        _dup2(_fileno(file), _fileno(stdout));
+        h.rt->log_metrics("heartbeat");
+        h.rt->log_metrics("heartbeat");
+        std::fflush(stdout);
+        _dup2(saved, _fileno(stdout));
+        _close(saved);
+        std::fclose(file);
+        const std::string out = [&] {
+            std::ifstream in(path, std::ios::binary);
+            std::stringstream s;
+            s << in.rdbuf();
+            return s.str();
+        }();
+        std::remove(path);
+        const auto first_c = out.find("A3C_PERF "), first_e = out.find("A3E_PACE hb=1 pace=[");
+        const auto second_c = out.find("A3C_PERF ", first_c + 1), second_e = out.find("A3E_PACE hb=2 pace=[");
+        const auto npos = std::string::npos;
+        check(first_c != npos && first_e != npos && second_c != npos && second_e != npos && first_e > first_c &&
+                  second_c > first_e && second_e > second_c && out.find('\n', first_e) < second_c,
+              "H1 every heartbeat logs A3E_PACE (hb=1, hb=2) directly after A3C_PERF, as its last perf line -- the "
+              "code emits it; on the device the USB-Serial/JTAG console drops the tail of a burst once the host "
+              "stops reading for 50 ms (section 23)");
     }
 
     // ---- P: the probes ------------------------------------------------------

@@ -1,0 +1,83 @@
+GREEN P1 production is A3-04E (yield, idle wait); the legacy policy is what every image up to A3-04D did
+GREEN P2 the cooperative points are Alpha 2.0's exactly: after rows 16, 32, ... and after every 32nd fill chunk (row>0&&(row&15)==0, (++chunks&31)==0)
+GREEN P3 the pause: legacy sleeps one tick (vTaskDelay(1): until the next 10 ms tick), A3-04E none (taskYIELD)
+GREEN P4 the defect, pinned: the old loop's pdMS_TO_TICKS(5) is 0 ticks at the device's 100 Hz -- not a sleep, a reschedule (it would be 1 tick at 200 Hz, 5 at 1000 Hz)
+GREEN P5 no zero-tick regression: the A3-04E idle wait is a tick count (1), not milliseconds, so no tick rate rounds it to 0
+GREEN P6 the gate: no wait while the runtime has something paced relative to now, and none at all with the legacy spin
+GREEN P7 names: the legacy behaviour in upper case
+GREEN P8 derived from the geometry: a walking step's viewport (158 rows) pauses 9 times; the menu-exit repaint 37 (clear 7 + viewport 9 + panel reflow 7 + a 2 px x 180 frame side 5 each, one chunk per row) -- at one 10 ms tick each, ~90 ms and ~370 ms of sleep
+GREEN G1 the budget: 200 ms, 25x under the 5 s task watchdog and above one 10 ms tick; up to 3 sleeps per enforcement (the first can end a microsecond later, at the next tick)
+GREEN G2 while the idle loop keeps running, the guard never asks for a sleep
+GREEN G3 no pass for the budget: due exactly at 200 ms since the last seen pass, not a microsecond before
+GREEN G4 one idle pass (the counter moves) ends it at once
+GREEN G5 the enforcements, their ticks and time, and the ones that gave up
+GREEN G6 a new window clears the counters but keeps the service state (no false alarm after a read)
+GREEN C1 the full-screen repaint is counted apart from the walking viewport frames (and still, as in A3-04C, as a viewport frame)
+GREEN C2 pauses per viewport frame (14.6) and their time, and the window's total
+GREEN C3 the loop's idle waits: count, avg, max, total, and how many an input ended
+GREEN C4 a new window starts empty
+GREEN F1 the report's pacing section:
+AUDIO/RENDER PERF  live window
+-- Music: no audio played in this window --
+-- Render: 400 gameplay frames in 60.0s --
+frame avg 79.2 p95 0.0 p99 0.0
+frame max 443.0 ms  late (>55 ms) 0
+compose avg 0.0 max 0.0  tiles max 0.0
+tft avg 41.1 max 404.4 ms
+cadence avg 0.0 max 0.0 ms
+input 120 shown avg 150.0 max 450.0 ms
+key handling max 0.0 ms  game busy 0%
+-- Contention map (A3-04C) --
+music n/a  sfx 80% sdlog OFF
+logic avg 0.0 max 0.0  loop max 450.0 ms
+viewport 41 frm tft avg 0.0 max 0.0
+other 0 frm tft avg 0.0 max 0.0
+tft/frame fill 0.0 xfer 0.0 yield 0.0
+yield 400 max 0.0 ms late 0 (tick 10)
+xfer max 0.00 ms slow 0 (0 w/audio)
+slow in sd-log burst 0 max 0.0 ms
+rows 0  audio running at 0%
+row fill us: audio idle 0.0 busy 0.0
+row xfer us: audio idle 0.0 busy 0.0
+-- Pacing (A3-04E) --
+tft yield  loop idle-wait
+full-screen 1 frm tft avg 404.4 max 404.4
+viewport w/o full 40 frm avg 122.0 max 130.0
+pauses/vp frm 9.0 = 88.0 ms  all 3520.0 ms
+loop 83/s  waits 4800 avg 9.8 max 10.2 ms
+loop asleep 47.0 of 60.0 s  input wakes 12
+OPL2 49716 Hz -> 16000 Hz out, ring 8x128
+
+GREEN F1b no idle-service window attached (the host): no line
+GREEN F1c A3-04E.1: the section ends with core 0's longest idle gap and what the guard slept for it
+GREEN F2 the legacy pacing is named as such
+GREEN F3 no pacing reported: said, not guessed
+GREEN F4 the longest report (the benchmark: both phases, the guard, maximal values) keeps every row on the 51-column screen and its last line in the buffer (59 of 64 lines)
+GREEN F5 the A3E_PACE line: the pacing, frames, the repaint / viewport split, the pauses, the loop's waits, audio health, CPU:
+    pace=[tft yield  loop idle-wait] win=60.0s | frame n=400 avg=79.2 max=443.0 | tft=41.1/404.4 in=120:150.0/450.0 | full=1:404.4/4000000.0 vp=40:122.0/4000000.0 | yld n=400 /vp=9.0 vpms=88.0 tot=4000000.0 max=0.00 late=0 | loop n=4000000000 /s=66666666 max=450.0 wait=4000000000:9.8/4000000.0 in=4000000000 asleep=4000000.0 | idle0 gap=200.9 forced=30:30/274.2 miss=0 | und=4000000000 hw=4000000000 miss=4000000000 | cpu0=0 cpu1=0 main=0 aud=0
+GREEN F5b worst case 625 characters: whole, inside the buffer (680) and inside one SD-log record with its prefix (768)
+GREEN F6 a short buffer is filled, NUL-terminated, never overrun
+GREEN F7 A3C_PERF is byte-identical whatever the pacing: its format stays A3-04C/D's, so old and new runs diff field by field (the pacing has its own line)
+GREEN U1 Diagnostics has two more rows, directly above the SD log: "Probe: legacy TFT pacing: off", "Probe: legacy loop spin: off"
+GREEN U2 counted from the end the older rows are where they were: tone 1, stats 2, benchmark 3, bypass 4, SD log 5; the new rows are 6 (loop) and 7 (TFT) up
+GREEN U3 Enter toggles each through its own service, and the row reads ON
+GREEN U4 the older rows still do what they did ("sd! bypass! perf stats tone ")
+GREEN U5 no service attached: the row reads off and Enter does nothing
+GREEN S1 Board::tft_yield sleeps only when the policy says TickSleep (legacy) and otherwise yields; the Board starts at A3-04E's pacing
+GREEN S2 all four draw loops pause through the policy's cadence and nowhere else
+GREEN S3 both gameplay full-screen repaints are marked (the first game frame, leaving the Developer screen); entering the Developer screen is not a gameplay frame
+GREEN S4 main.cpp's loop: no milliseconds-to-ticks conversion left to round to 0; it waits the runtime's tick count on the input queue, records the wait, and reschedules (vTaskDelay(0), as before) only when told 0
+GREEN S5 no busy-wait in the loop
+GREEN S6 the input wait PEEKS: the event stays queued for poll(), which counts and logs it
+GREEN S7 render() hands the Board the pacing before anything can draw, in every mode
+GREEN S8 the gate consults every service scheduled relative to 'now' (the enemy beat, both scene pacers, the poison flash, Camp, the benchmark, the smoke tests) and a frame still owed
+GREEN S9 the probes are bound by the one production binder; the runtime starts at A3-04E
+GREEN S10 the heartbeat logs A3E_PACE after A3C_PERF
+GREEN S11 preserved: the audio task (prio 3, core 1), the input task (prio 4, core 0), the game thread on core 0, the 100 Hz tick -- A3-04E changes no task, core or tick rate
+GREEN S12 the pacing is never saved: no save, settings or persistence code names it
+RED S13 enforce() BLOCKS (vTaskDelay(1), bounded) only when the guard says so -- never a yield, which cannot hand core 0 to the idle task; the hook counts and lets the core idle
+RED S14 main.cpp registers the counting hook on core 0 (the core the watchdog's IDLE0 check and the game thread share) and hands the guard to the Board and the report
+RED S15 every loop pass ends with the guard, after the idle wait or the reschedule, whichever ran
+RED S16 the draw loops' yield asks the guard first (a tick sleep only when the idle loop is overdue)
+GREEN S17 the watchdog is neither disabled nor extended: 5 s, IDLE0 checked, as before
+A3-04E pacing: 46/50 checks

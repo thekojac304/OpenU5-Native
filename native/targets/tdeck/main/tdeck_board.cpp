@@ -24,6 +24,7 @@
 #include "sdkconfig.h"
 
 #include "tdeck_pins.h"
+#include "idle_service.h"
 #include "native_renderer.h"
 #include "location_names.h"
 
@@ -334,8 +335,13 @@ void Board::tft_yield()
     // 16 rows between two calls take ~2 ms: a 158-row viewport spent ~90 ms
     // asleep, the menu-exit repaint ~370 ms. The sleep stays behind Developer >
     // Diagnostics > "Probe: legacy TFT pacing".
+    // A3-04E.1 (section 23): a yield never hands core 0 to the lower-priority
+    // idle task, and hardware showed the rows' own blocks do not reliably let
+    // it finish a pass either (task watchdog on IDLE0). So the yield first asks
+    // the idle-service guard, which sleeps one tick when -- and only when --
+    // the idle loop has not run for 200 ms.
     if (const uint32_t ticks = openu5::tft_pause_ticks(tft_pacing_)) vTaskDelay(ticks);
-    else taskYIELD();
+    else if (!(idle_ && idle_->enforce())) taskYIELD();
     const uint32_t cycles = uint32_t(esp_cpu_get_cycle_count()) - c0;
     auto &t = tft_timing_;
     ++t.yields;

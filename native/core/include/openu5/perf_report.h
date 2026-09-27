@@ -242,6 +242,9 @@ struct PerfReportInput {
     const PerfScenario *scenario = nullptr;
     const ContentionSnapshot *contention = nullptr;
     const SdLogPerf *sdlog = nullptr;
+    // A3-04E.1 (section 23): the game thread's idle-service guard (device; null leaves the line out).
+    const IdleServiceStats *idle = nullptr;
+    uint32_t heartbeat = 0; // A3E_PACE's sequence number (0: not a heartbeat line)
 };
 
 /**
@@ -263,7 +266,7 @@ size_t format_contention_line(const PerfReportInput &, char *out, size_t cap);
  * serial `A3E_PACE` heartbeat, next to A3C_PERF, whose format is unchanged).
  * Always NUL-terminated; returns the characters written (< kPacingLineBytes).
  */
-constexpr size_t kPacingLineBytes = 600;
+constexpr size_t kPacingLineBytes = 680;
 size_t format_pacing_line(const PerfReportInput &, char *out, size_t cap);
 
 } // namespace openu5

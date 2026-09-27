@@ -17,6 +17,7 @@
 
 struct spi_transaction_t;
 namespace tdeck {
+class IdleService;
 
 constexpr size_t kDebugScreenRows = 9;
 constexpr size_t kAlphaTranscriptLines = openu5::kHudTranscriptLines;
@@ -131,6 +132,9 @@ public:
     // The runtime sets it before every draw from its (never saved) policy.
     void set_tft_pacing(openu5::TftPacing pacing) { tft_pacing_ = pacing; }
     openu5::TftPacing tft_pacing() const { return tft_pacing_; }
+    // A3-04E.1 (section 23): the idle-service guarantee the yield pause
+    // consults (a tick sleep when core 0's idle loop has not run for 200 ms).
+    void set_idle_service(IdleService *service) { idle_ = service; }
 
 private:
     // A3-04C: every TFT transaction and every draw-loop yield goes through
@@ -181,6 +185,7 @@ private:
     const volatile uint32_t *audio_active_ = nullptr;
     const volatile uint32_t *sd_active_ = nullptr;
     openu5::TftPacing tft_pacing_ = openu5::kPacingDefault.tft;
+    IdleService *idle_ = nullptr;
     // Sole app task; synchronous spi_device_transmit completes before reuse.
     alignas(4) std::array<uint8_t, 320 * 2> transfer_row_{};
     bool shared_spi_initialized_ = false;

@@ -1,6 +1,8 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service)
 
-**Status (A3-04E): RENDERER TICK SLEEPS AND MAIN-LOOP SPIN REMOVED — HOST-PROVEN WITH THE REAL BOARD CODE — HARDWARE VALIDATION PENDING.** With SD logging off, A3-04D's device runs still showed a ~400–445 ms frame/TFT maximum and a ~122 ms viewport average, the same with and without the synth. A3-04E (§22) found that neither is a stall. Every draw loop slept to the next 10 ms tick every 16 rows. A walking step crossed 9 of those sleeps, and the full-screen repaint on leaving the Developer menu, which opens every measurement window, crossed 37. The real `tdeck_board.cpp`, built for the host over a fake ST7789, reproduces both counts; its model gives 391.7 ms for the repaint, against the device's 404–408 ms. The draw loops now yield at the same points instead of sleeping (modelled repaint 113.8 ms, step 27.7 ms; byte-identical panel stream). The main loop, whose `vTaskDelay(pdMS_TO_TICKS(5))` was 0 ticks, now blocks on the input queue for one tick when nothing relative-timed is running. Each half is behind its own Developer probe (*Probe: legacy TFT pacing* / *legacy loop spin*), so the device can measure it alone. Not hardware-validated until the §22.10 runs pass.
+**Status (A3-04E.1): TASK-WATCHDOG REGRESSION FIXED ON THE HOST — HARDWARE VALIDATION PENDING (watchdog soak first).** A pre-test run of the A3-04E image tripped the task watchdog on IDLE0 after ~71 s, with `main` running. A yield never gives core 0 to the lower-priority idle task, and A3-04E's assumption that the TFT rows' own waits let it finish a pass was never a guarantee. The model reproduces the trip: 6.1 s without an idle pass. A3-04E.1 (§23) keeps A3-04E's pacing and adds a guard that watches core 0's idle loop through a second idle hook (the same pass that feeds the watchdog). It blocks the game thread for one tick only when that loop has not run for 200 ms. In the model the longest gap is then 200.9 ms, costing 4.3 % in the worst case and nothing where the idle loop already runs. The watchdog is untouched. The §22.10 matrix waits for the §23.8 soak.
+
+**Status as A3-04E wrote it: RENDERER TICK SLEEPS AND MAIN-LOOP SPIN REMOVED — HOST-PROVEN WITH THE REAL BOARD CODE — HARDWARE VALIDATION PENDING.** With SD logging off, A3-04D's device runs still showed a ~400–445 ms frame/TFT maximum and a ~122 ms viewport average, the same with and without the synth. A3-04E (§22) found that neither is a stall. Every draw loop slept to the next 10 ms tick every 16 rows. A walking step crossed 9 of those sleeps, and the full-screen repaint on leaving the Developer menu, which opens every measurement window, crossed 37. The real `tdeck_board.cpp`, built for the host over a fake ST7789, reproduces both counts; its model gives 391.7 ms for the repaint, against the device's 404–408 ms. The draw loops now yield at the same points instead of sleeping (modelled repaint 113.8 ms, step 27.7 ms; byte-identical panel stream). The main loop, whose `vTaskDelay(pdMS_TO_TICKS(5))` was 0 ticks, now blocks on the input queue for one tick when nothing relative-timed is running. Each half is behind its own Developer probe (*Probe: legacy TFT pacing* / *legacy loop spin*), so the device can measure it alone. Not hardware-validated until the §22.10 runs pass.
 
 **Status as A3-04D wrote it: SD DIAGNOSTIC LOGGING OFF BY DEFAULT — MECHANISM PROVEN FROM THE SOURCE — HARDWARE CONFIRMATION PENDING.** The A3-04C runs showed 0.8–1.5 s frame/TFT stalls with the synth bypassed and with music off, each within a few ms of the SD-log writer's longest burst. A3-04D (§21) traced why. The SD card shares SPI2 with the TFT, and ESP-IDF's sdspi driver holds that bus for a whole card command, the card's busy time included, at 800 kHz. The diagnostic SD log is therefore now **off at boot**, one Developer keypress (*Probe: SD diag logging*) turns it on for a session, and serial logging is unchanged. Every report and `A3C_PERF` line says `sdlog ON/OFF`, and slow TFT transactions are attributed to SD-log bursts (`insd=`). The ON/OFF device runs of §21.7 are pending, and the batch is not hardware-validated until they pass.
 
@@ -2297,6 +2299,8 @@ It came in with the Alpha 2.0 import (`c18f5b64`, 2026-09-18) in `fill_rect`, `d
 | Long critical sections | None in the draw loops |
 | Visible artifacts | The sleep *causes* the bands |
 
+*Correction (A3-04E.1, 2026-09-27, §23): the first row of this table is wrong as a guarantee. Hardware tripped the task watchdog on IDLE0. A row's wait lets the idle task in, but nothing makes it finish the pass whose hook feeds the watchdog, so the sleeps were doing that job. §23 adds an explicit, observed idle-service guarantee.*
+
 **Conclusion: an inherited conservative scheduling choice.** No requirement for it was found. It most likely dates from before the input task existed ("the native app polls and redraws synchronously in app_main", `DEBUG51.md`), but the history does not say so, and that is recorded as unclear. That is why the legacy pause stays one keypress away, rather than being deleted.
 
 ### 22.4 Candidate renderer pacings (Phase 4)
@@ -2444,3 +2448,112 @@ Remaining, in the order the numbers suggest (each its own batch, measured with t
 - Core: `include/openu5/render_pacing.h`, `src/render_pacing.cpp` (new: the policy), `sources.cmake`; `include/openu5/perf_report.h`, `src/perf_report.cpp` (`TftTiming::full_screen`, the pacing counters, the report section, `format_pacing_line`); `include/openu5/ui_debug_menu.h`, `src/ui_debug_menu.cpp` (the two rows).
 - Device: `tdeck_board.{h,cpp}` (the pause through the policy, `set_tft_pacing`, the repaint mark), `main.cpp` (the idle wait), `tdeck_input.{h,cpp}` (`wait_for_event`), `alpha_runtime.{h,cpp}` (pacing state, `loop_may_sleep`, the probes, the scenario, `A3E_PACE`, `composed_viewport`), `CMakeLists.txt` (`PROJECT_VER`).
 - Tests / tools: `tests/a3_04e_pacing_test.cpp`, `host_tests/a3_04e_pacing_runtime_test.cpp`, `host_tests/board_shims/*`, `host_tests/esp_shims/freertos/task.h`, `host_tests/alpha_runtime_host_fixture.cpp` (runes font), `tests/ui_debug_menu_test.cpp` (23 rows), `tests/a3_04c_contention_test.cpp` (S2), `core/CMakeLists.txt`, `tools/a3_04e_mutation_check.py`.
+
+## 23. A3-04E.1 — the task-watchdog regression: an idle-service guarantee
+
+**The hardware report that opened this batch** (the user, a casual pre-test run of the A3-04E image before the §22.10 matrix, default pacing, SD logging off, normal gameplay): after ~71 s the task watchdog fired on IDLE0 with `main` running on CPU 0. Serial showed `task_wdt: Task watchdog got triggered`, `- IDLE0 (CPU 0)`, `CPU 0: main`, `CPU 1: IDLE1`. Audio stayed healthy (`und=0 hw=0 miss=0`). `A3E_PACE` did not appear in the capture, although the filter included it. **A3-04E is not hardware-valid**, and the §22.10 matrix is withdrawn until the watchdog soak of §23.8 passes.
+
+**Status: FIXED ON THE HOST, REPRODUCED IN THE MODEL; HARDWARE VALIDATION PENDING.** A3-04E's pacing is kept. The game thread now *guarantees* core 0's idle task a pass of its loop at least every 200 ms, and it does so by observing the pass rather than assuming one. The watchdog is neither disabled nor extended.
+
+### 23.1 The scheduler, from the source (Phase: reproduce / analyse)
+
+- The watchdog (`CONFIG_ESP_TASK_WDT_TIMEOUT_S=5`, `CHECK_IDLE_TASK_CPU0=y`, warning only) is fed on core 0 by `esp_vApplicationIdleHook()` (`esp_system/freertos_hooks.c:41`). IDLE0 calls it **once per pass of its loop** (`FreeRTOS-Kernel/tasks.c` 4297–4350). Each pass first runs `prvCheckTasksWaitingTermination()`. It then runs a `taskYIELD()`, because the idle-priority ready list always holds IDLE0 and IDLE1 (`configIDLE_SHOULD_YIELD`). Only after that come the hooks. The kernel runs from flash (`CONFIG_FREERTOS_IN_IRAM` off).
+- `main` has priority 1 and IDLE0 priority 0, on the same core. **IDLE0 runs only while `main` is blocked.** A yield — `taskYIELD()`, or `vTaskDelay(0)`, which is the same reschedule — returns straight to `main`. The user's point is right: the A3-04E draw loops' `taskYIELD()` can never feed the watchdog.
+- A3-04E's §22.3 argued that the draws did not need to: every row blocks in `spi_device_transmit`'s result-queue wait, and "IDLE0 runs there". That was an argument from the source, never measured. **The hardware disproves it as a guarantee.** Many transactions are only a few microseconds long: 1–4-byte commands sent by the CPU, the 4-byte fill chunks of the thin frame lines, 32-byte animated-cell rows. Each is shorter than a switch into IDLE0 plus the flash-resident path to its hook. A row's wait lets IDLE0 in, but nothing makes it reach the hook, and IDLE0 is preempted at the end of every row. A3-04D's own numbers point the same way: its ~26 % idle on CPU 0 is about what the tick sleeps alone account for.
+- **Where the A3-04E game thread did not block at all:**
+  - (a) Draws: only yields, plus the row waits above.
+  - (b) The end of a pass while the trackball keeps an event queued: `wait_for_event` peeks and returns at once.
+  - (c) The spin branch (`vTaskDelay(0)`) while the gate says no.
+  - (d) **Console output.** Every log byte busy-waits on the calling task for USB-Serial/JTAG FIFO room (`esp_driver_usb_serial_jtag/src/usb_serial_jtag_vfs.c` 148–170). With a monitor attached, the per-frame log lines and the ~4 KB heartbeat burst are CPU time with no block in it.
+
+  Continuous walking with serial attached is (a) + (b) + (d): nothing guarantees IDLE0 a pass. Up to A3-04D the 16-row `vTaskDelay(1)` did, nine times per step.
+- **The model reproduces it** (`a3_04e_pacing_runtime` W1). The real `AlphaRuntime` drives the real Board, with only tick-long blocks letting the idle loop pass (the hardware-observed case) and the trackball's events always queued. **A3-04E as shipped leaves core 0's idle loop unrun for 6,144 ms**, past the watchdog's 5 s.
+- **The main-loop change is not the cause, and it does not help enough.** The idle wait only ever *adds* blocks compared with A3-04D. It cannot guarantee one: an input event ends it at once, and the gate skips it during paced scenes. With the legacy loop spin probe on, the A3-04E draws would starve IDLE0 the same way. *Latent in A3-04D too:* standing still with no animated cell in view, A3-04D drew nothing and spun, so IDLE0 could starve there as well. The A3-04E idle wait and now the guard cover that case.
+
+### 23.2 Candidates
+
+| Candidate | Verdict |
+|---|---|
+| Disable or extend the watchdog | refused (the requirement; S17 pins the configuration) |
+| Restore `vTaskDelay(1)` every 16 rows | restores the ~370 ms repaint: rejected |
+| A bounded row budget (sleep every N rows) | still a blind sleep: ~2 per viewport; does not cover (b)–(d), which draw nothing |
+| `vTaskDelayUntil` (a fixed-rate loop) | paces an event-driven loop to a period; adds input latency; does not cover the draw loops |
+| **An idle-service guard that watches the idle loop and blocks only when it is overdue** | **selected**: zero cost where the idle loop already runs; bounded where it does not; covers draws, spins and console time alike |
+
+### 23.3 The mechanism
+
+- `tdeck::IdleService` (`main/idle_service.{h,cpp}`, host-compilable) and the policy `openu5::IdleServiceGuard` (`render_pacing.{h,cpp}`).
+- **The observation.** `main.cpp` registers `IdleService::core0_hook` with `esp_register_freertos_idle_hook_for_cpu(.., 0)`. ESP-IDF calls **every** registered hook of the core in the same `esp_vApplicationIdleHook()` pass, the watchdog's included (the loop has no short-circuit). So the hook's counter moving means the watchdog was fed. The hook only counts, and returns `true` so the core still waits for an interrupt.
+- **The guarantee.** `enforce()` runs at the game thread's cooperative points: the draw loops' pause (A3-04E's yield now asks it first) and **the end of every loop pass**, after the idle wait or the reschedule. While the counter moves, it returns at once. When it has not moved for **`kIdleServiceBudgetUs` = 200 ms** (25× under the 5 s watchdog), it sleeps `vTaskDelay(1)` until the counter moves, at most `kIdleServiceMaxSleeps` = 3 ticks, because the first sleep can end a microsecond later at the next tick.
+- Everything else of A3-04E stays: the yields, the idle wait, the gate, both legacy probes. The guard is on in every probe state; it is a safety floor, not a pacing variant. Under the legacy tick-sleep pacing it never fires (W5), so A0 still reproduces A3-04D.
+
+### 23.4 Expected added latency (model)
+
+| Situation | Guard cost |
+|---|---|
+| The idle loop already runs: standing still (the idle wait), the legacy tick sleeps, or rows that do let it pass | **0** (W5: 0 enforcements in all three) |
+| Worst case: continuous walking, the trackball's events always queued, rows never letting the idle loop pass | one tick sleep per 200 ms: **30 sleeps = 274 ms in a 6.4 s, 60-step walk (4.3 %)**; the longest idle gap **200.9 ms**; no enforcement gave up (W2) |
+| The menu-exit repaint (113.8 ms modelled) | **0–1 tick** (< the budget); model: 0 (W4). Legacy: 37 |
+| Any single frame | at most one tick (≤ 10 ms; ≤ 30 ms in the three-sleep limit, never reached in the model) |
+
+The walk ends in the same game state with and without the guard's sleeps (W3).
+
+### 23.5 Why `A3E_PACE` did not appear
+
+- **The code emits it.** Every heartbeat logs it directly after `A3C_PERF` as the burst's last perf line (source; now also H1, which captures two real heartbeats on the host: `A3E_PACE hb=1` / `hb=2`, each right after its `A3C_PERF`). Logging is v1 with no length cap and no tag-level override. The SD-log hook forwards every call to serial whatever its state (A3-04D C1).
+- **The console drops the tail of a burst.** The USB-Serial/JTAG path (no driver installed) busy-waits per byte for FIFO room only while less than 50 ms has passed since the last byte that went out. After that it **drops every byte** until the FIFO takes one again (`usb_serial_jtag_vfs.c` 148–170). The heartbeat is one ~4 KB burst (METRICS, TRACKBALL_*, KEYBOARD_METRICS, AUDIO_PERF, RENDER_PERF, SYS_PERF, A3C_PERF ~700 B, then A3E_PACE ~450 B). A 50 ms stall of the host-side reader mid-burst loses exactly its tail, which is `A3E_PACE`.
+- **Or the filter:** `esp_idf_monitor --print_filter` matches tags, not message text. Both lines share one tag, though, so a tag filter would pass or drop both alike.
+- **To tell them apart:** `A3E_PACE` now starts with **`hb=N`**, the heartbeat number, so a dropped line shows as a gap in N. If `A3C_PERF` lines are present and `hb=` numbers are missing, the console dropped them. The Developer report (on screen) never depends on serial.
+
+### 23.6 Tests, RED / GREEN and mutations
+
+- `a3_04e_pacing` **50 checks** (was 37): G1–G6 the guard's policy (the budget against the watchdog; never due while the idle loop runs; due at exactly 200 ms; one pass ends it; the counters; a new window keeps the service state). F1b/F1c the report line. F5b the worst-case line with `hb=` and the idle fields (625 characters; buffer 680; inside one 768-byte SD-log record). S13–S17 the wiring: `enforce()` blocks (never yields), bounded; the hook is registered on core 0 and handed to the Board and the report; every pass ends with the guard; the draw loops' yield asks it first; **the watchdog configuration is unchanged**.
+- `a3_04e_pacing_runtime` **34 checks** (was 26): W1 the regression reproduced (A3-04E without the guard: 6,144 ms idle gap); W2 bounded with the guard (200.9 ms, 4.3 %, none in vain); W3 the game untouched; W4 the repaint's cost; W5 zero cost where the idle loop runs; W6 `A3E_PACE` carries `hb=` and the idle window; W7 a live read shows the gap and starts a new window; H1 the heartbeat emits `A3E_PACE` after `A3C_PERF`. The fake bus now models core 0's idle counter (`rows_feed_idle`, `idle_pass_us`, `idle_wait_one_tick`), and the test emulates `main.cpp`'s end of a pass (S15 pins the device's).
+- **RED-first:** S13–S16 are RED against the **A3-04E device sources as tagged** (`git archive HEAD`; `native/core/a3-04e1-red-device-scans-vs-a3-04e.log`); S17 is GREEN on both. W1 is the regression itself, reproduced on the same harness that shows the fix.
+- **Mutations:** `tools/a3_04e_mutation_check.py` now holds 50 mutants: A3-04E's 36 (D1 and R8 re-anchored) plus I1–I14 for the guard: a budget beyond the watchdog, a guard that never asks, an idle pass not recognised, an enforcement that yields instead of sleeping, no sleeps allowed, a hook that keeps the core from idling, the draw-loop yield or the loop pass skipping the guard, the hook on core 1, the report / `A3E_PACE` / runtime losing the idle window or the heartbeat number, a live read not restarting the window. `native/core/a3-04e1-mutation.log`: **49 killed, 1 survived**. I13 (every heartbeat the same number) survived because H1 compared string positions with `>` and a missing `hb=2` is `npos`, larger than anything. H1 now requires every line explicitly, and I13 is killed on the re-run (`a3-04e1-mutation-rerun.log`, with I11/R8). **50 of 50 killed.** I4 (an enforcement that yields) is the regression's own mechanism: it turns S13 and the runtime's W2/W7 RED.
+- **Full suite:** `build-a3-04e`, **serial ctest 143/143 passed** in 129.49 s (`native/core/a3-04e1-ctest-pass1.log`) and again, after the H1 fix, in 127.41 s (`a3-04e1-ctest-pass2.log`). The two A3-04E targets grew in place; no new target. The only warning is the known w64devkit one.
+
+### 23.7 Firmware
+
+Pre-commit build `native/targets/tdeck/build-a3-04e1` (`a3-04e1-firmware-configure.log`, `a3-04e1-firmware-build.log`): ESP-IDF 6.1, `idf.py --no-ccache reconfigure` then `ninja -j 4`, first attempt clean, zero project warnings under `-Werror`.
+
+- **Size: `0xee9f0` = 977,392 B, +1,056 B** vs A3-04E; **`0x11610` = 71,184 B (7 %) free**. Sections vs A3-04E (`esp_idf_size` on the `.map`, `a3-04e1-size-image.log`): **IRAM `.text` unchanged** (60,647 + 15,356); `.data` unchanged; `.bss` +80 B (the guard's state, the idle counter in internal DRAM); flash `.text` +876 B; `.rodata` +176 B.
+- `a3_04b_iram_check.py` **GREEN**, `a3_04a_hotpath_check.py` **GREEN** (the audio path is untouched).
+- The linked `Board::tft_yield` (`a3-04e1-tft-yield-disasm.log`) calls `vTaskDelay` (legacy), `tdeck::IdleService::enforce()` and `vPortYield` (`taskYIELD`). `IdleService::core0_hook/core0_count/attach/enforce` and the counter are in the image.
+- Version `3.0.0-alpha3-dev-a3-04e1-debug`. Not flashed. The post-commit image is the one tag `alpha3-a3-04e1-idle-service` names.
+
+### 23.8 Hardware validation (the user's; not done here)
+
+**0. Identity.** Flash the A3-04E.1 Launcher image `native/targets/tdeck/build-a3-04e1-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-dev-a3-04e1-Debug-Launcher.bin` through Launcher. The identity screen must read **`FW 3.0.0-alpha3-dev-a3-04e1-debug`** and the tag's `Git`. Same packs, same `openu5-audio.bin`.
+
+**Serial, unfiltered, to a file.** From an ESP-IDF PowerShell: `python -m esp_idf_monitor -p COMx -b 115200 --no-reset build-a3-04e1-post\openu5_tdeck.elf` (run from `native\targets\tdeck`; the ELF also decodes any watchdog backtrace), then **Ctrl+T, Ctrl+L** to start saving everything the monitor receives to a file. Do not filter while capturing; search the file afterwards. Keep the monitor window in the foreground and do not scroll or select text in it while testing, because a paused reader is exactly what makes the console drop lines (§23.5).
+
+**Stage 1 — the watchdog soak (first; nothing else until it passes).** Default pacing (both legacy probes off), SD diag logging off, synth bypass off.
+
+| Soak | Music | Activity | Time |
+|---|---|---|---|
+| **S1** | 0 % | continuous trackball walking on the overworld (hold it, turn at obstacles), including along a coastline | 3 min |
+| **S2** | 0 % | stand still in open grassland/forest with no water in view | 1 min |
+| **S3** | 0 % | open and close the Developer menu (Alt+D, Back) 5×, the System Menu 5× | ~1 min |
+| **S4** | **80 %** | normal play: walk, enter and leave a town twice, fight if a fight comes | 5 min |
+
+Before S1 start a window (Alt+D › Diagnostics › *Audio/render stats (live)* → Enter → Enter → Back → Back). After each soak read it (same row) and photograph the *Pacing (A3-04E)* section. Its last line is **`idle0 gap max … ms forced n/… ms miss …`**.
+
+**PASS (all four):**
+- the saved serial file contains **no `task_wdt`**;
+- `idle0 gap max` **< 250 ms**, and `miss 0`;
+- in S4, `und=0 hw=0 miss=0`;
+- no crash or reboot;
+- `A3E_PACE hb=` numbers **consecutive** in the file. If `A3C_PERF` lines are there but some `hb=` numbers are missing, send the file: that is the console dropping lines, not the firmware omitting them.
+
+**Record for S1** `forced n/… ms`. It answers the open hardware question directly. Close to 0 means the rows' own waits do feed IDLE0 on this board, and the 71 s trip came from the other unblocked paths (the queued-input peek, the console busy-wait). About 5 per second means they do not, as the model assumed.
+
+**FAIL:** any `task_wdt`; `idle0 gap max` ≥ 250 ms or `miss` > 0; audio underruns; a crash. Report and stop.
+
+**Stage 2 — only after Stage 1 passes:** the §22.10 matrix (A0, A1, A2, R1–R4), unchanged, on this image. Add the `idle0 gap max`, `forced` and `miss` fields to every run's record, and treat any `task_wdt` as a FAIL.
+
+### 23.9 Files
+
+- Core: `include/openu5/render_pacing.h`, `src/render_pacing.cpp` (`IdleServiceGuard`, the budget); `include/openu5/perf_report.h`, `src/perf_report.cpp` (the `idle0` line, `A3E_PACE`'s `hb=` and `idle0` fields, buffer 680).
+- Device: `idle_service.{h,cpp}` (new), `CMakeLists.txt` (source list), `tdeck_board.{h,cpp}` (the yield asks the guard; `set_idle_service`), `main.cpp` (the hook, the guard at the end of every pass), `alpha_runtime.{h,cpp}` (`attach_idle_service`, the report, the heartbeat number, the window reset); `CMakeLists.txt` (`PROJECT_VER` `3.0.0-alpha3-dev-a3-04e1-debug`).
+- Tests / tools: `tests/a3_04e_pacing_test.cpp`, `host_tests/a3_04e_pacing_runtime_test.cpp`, `host_tests/board_shims/fake_tdeck_bus.{h,cpp}` (the idle model), `core/CMakeLists.txt`, `tools/a3_04e_mutation_check.py` (D1/R8 anchors, I1–I14).

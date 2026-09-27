@@ -33,6 +33,13 @@ struct Model {
     // is then the test's script alone, so two pacing policies draw the same
     // content and their byte streams must match exactly.
     bool timed = true;
+    // A3-04E.1: core 0's idle loop (the task watchdog's feed), modelled. A
+    // block of the game thread lets the idle task finish a pass -- one count
+    // of the idle hook -- when it lasts at least idle_pass_us. rows_feed_idle
+    // is A3-04E's assumption that every TFT transaction's wait does; false is
+    // what the hardware showed (only tick-long sleeps reliably do).
+    bool rows_feed_idle = true;
+    uint32_t idle_pass_us = 20;
 };
 
 struct Stats {
@@ -65,5 +72,9 @@ uint64_t stream_hash();
 void restart_stream();
 /** Advances the virtual clock by `ns` (sub-microsecond remainders carry). */
 void advance_ns(uint64_t ns);
+/** The modelled core-0 idle-hook counter (what tdeck::IdleService watches on the device). */
+const volatile uint32_t *idle_passes();
+/** main.cpp's idle wait timing out: blocked until the next tick. */
+void idle_wait_one_tick();
 
 } // namespace openu5_host_bus

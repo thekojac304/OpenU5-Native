@@ -381,6 +381,12 @@ void pacing_section(Lines &out, const PerfReportInput &in) {
     // Seconds with one decimal: Ms() of a millisecond count.
     out.add("loop asleep %s of %s s  input wakes %lu", Ms(c->loop_wait_total_us / 1000, 1).s,
             Ms(c->window_us / 1000, 1).s, (unsigned long)c->loop_input_wakes);
+    // A3-04E.1: the longest time core 0's idle loop (the watchdog's feed) went
+    // unrun, and what the guard slept to end it.
+    if (const IdleServiceStats *i = in.idle)
+        out.add("idle0 gap max %s ms forced %lu/%s ms miss %lu", Ms(i->max_gap_us, 1).s,
+                (unsigned long)i->forced_sleeps, Ms(uint32_t(i->forced_us > UINT32_MAX ? UINT32_MAX : i->forced_us), 1).s,
+                (unsigned long)i->unserviced);
 }
 
 void contention_section(Lines &out, const PerfReportInput &in) {
@@ -578,6 +584,8 @@ size_t format_pacing_line(const PerfReportInput &in, char *out, size_t cap) {
     // draw-loop pauses per viewport frame; wait = the loop's idle waits, in = an input ended one.
     char pace[48];
     pacing_text(pace, sizeof pace, in.scenario);
+    // A3-04E.1: a heartbeat sequence number, so a line the console dropped shows as a gap.
+    if (in.heartbeat) line.add("hb=%lu ", (unsigned long)in.heartbeat);
     line.add("pace=[%s]", pace);
     const uint32_t window = in.render ? in.render->window_us : in.contention ? in.contention->window_us : 0;
     line.add(" win=%lu.%lus", (unsigned long)(window / 1000000), (unsigned long)((window / 100000) % 10));
@@ -597,6 +605,10 @@ size_t format_pacing_line(const PerfReportInput &in, char *out, size_t cap) {
                  Ms(c->loop_wait_avg_us, 1).s, Ms(c->loop_wait_max_us, 1).s, (unsigned long)c->loop_input_wakes,
                  Ms(c->loop_wait_total_us, 1).s);
     }
+    if (const IdleServiceStats *i = in.idle)
+        line.add(" | idle0 gap=%s forced=%lu:%lu/%s miss=%lu", Ms(i->max_gap_us, 1).s, (unsigned long)i->enforcements,
+                 (unsigned long)i->forced_sleeps, Ms(uint32_t(i->forced_us > UINT32_MAX ? UINT32_MAX : i->forced_us), 1).s,
+                 (unsigned long)i->unserviced);
     if (const AudioPerfSnapshot *a = in.audio)
         line.add(" | und=%lu hw=%lu miss=%lu", (unsigned long)a->underruns, (unsigned long)a->hw_underruns,
                  (unsigned long)a->missed_deadlines);

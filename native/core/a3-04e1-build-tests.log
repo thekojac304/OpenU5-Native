@@ -1,0 +1,12 @@
+[1/12] Building CXX object CMakeFiles/openu5_core.dir/src/render_pacing.cpp.obj
+[2/12] Building CXX object CMakeFiles/a3_04e_pacing_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/idle_service.cpp.obj
+[3/12] Building CXX object CMakeFiles/openu5_core.dir/src/perf_report.cpp.obj
+[4/12] Building CXX object CMakeFiles/a3_04e_pacing_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp.obj
+[5/12] Building CXX object CMakeFiles/a3_04e_pacing_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/board_shims/fake_tdeck_bus.cpp.obj
+[6/12] Linking CXX static library libopenu5_core.a
+[7/12] Building CXX object CMakeFiles/a3_04e_pacing_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/a3_04e_pacing_runtime_test.cpp.obj
+[8/12] Building CXX object CMakeFiles/a3_04e_pacing_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/tdeck_board.cpp.obj
+[9/12] Building CXX object CMakeFiles/a3_04e_pacing_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_runtime.cpp.obj
+[10/12] Linking CXX executable a3_04e_pacing_runtime.exe
+[11/12] Building CXX object CMakeFiles/a3_04e_pacing.dir/tests/a3_04e_pacing_test.cpp.obj
+[12/12] Linking CXX executable a3_04e_pacing.exe

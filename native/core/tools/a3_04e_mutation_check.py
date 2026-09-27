@@ -34,6 +34,7 @@ MAIN = "../targets/tdeck/main/main.cpp"
 INPUT = "../targets/tdeck/main/tdeck_input.cpp"
 AUDIO = "../targets/tdeck/main/tdeck_audio.cpp"
 SAVE = "../targets/tdeck/main/alpha_save.cpp"
+IDLE = "../targets/tdeck/main/idle_service.cpp"
 
 MUTATIONS = [
     # ---- the policy
@@ -116,11 +117,12 @@ MUTATIONS = [
      "    s.pacing_reported=true;s.pacing=pacing_; // A3-04E\n",
      ""),
     ("R8", "the heartbeat does not log A3E_PACE", RUNTIME,
-     '    {char line[openu5::kPacingLineBytes];pacing_line(line,sizeof(line));ESP_LOGI(kTag,"A3E_PACE %s",line);}\n',
+     '    {char line[openu5::kPacingLineBytes];pacing_line(line,sizeof(line),++heartbeat_seq_);ESP_LOGI(kTag,"A3E_PACE %s",line);}\n',
      ""),
     # ---- the Board (compiled into the runtime test) and the device wiring
     ("D1", "Board::tft_yield is A3-04D's: always vTaskDelay(1)", BOARD,
-     "    if (const uint32_t ticks = openu5::tft_pause_ticks(tft_pacing_)) vTaskDelay(ticks);\n    else taskYIELD();",
+     "    if (const uint32_t ticks = openu5::tft_pause_ticks(tft_pacing_)) vTaskDelay(ticks);\n"
+     "    else if (!(idle_ && idle_->enforce())) taskYIELD();",
      "    vTaskDelay(1);"),
     ("D2", "the viewport loop no longer pauses", BOARD,
      'ESP_RETURN_ON_ERROR(tft_row(transaction, mark), kTag, "write RGB565 row");\n'
@@ -152,6 +154,49 @@ MUTATIONS = [
     ("D10", "the save path starts to persist the pacing", SAVE,
      "bool AlphaSaveService::reserve_dma_headroom(){",
      "static const char *kPacingKey=\"pacing\";\nbool AlphaSaveService::reserve_dma_headroom(){"),
+    # ---- A3-04E.1 (section 23): the idle-service guarantee
+    ("I1", "the budget outlives the 5 s watchdog", POLICY,
+     "constexpr uint32_t kIdleServiceBudgetUs = 200000;",
+     "constexpr uint32_t kIdleServiceBudgetUs = 6000000;"),
+    ("I2", "the guard never asks for a sleep", "src/render_pacing.cpp",
+     "    return gap >= kIdleServiceBudgetUs;",
+     "    return gap >= kIdleServiceBudgetUs && false;"),
+    ("I3", "an idle pass is not recognised (the counter's movement ignored)", "src/render_pacing.cpp",
+     "    if (count != last_count_) { // the idle loop ran",
+     "    if (false) { // the idle loop ran"),
+    ("I4", "the enforcement yields instead of sleeping", IDLE,
+     "        vTaskDelay(1);\n        ++sleeps;",
+     "        taskYIELD();\n        ++sleeps;"),
+    ("I5", "no sleep at all per enforcement", POLICY,
+     "constexpr uint32_t kIdleServiceMaxSleeps = 3;",
+     "constexpr uint32_t kIdleServiceMaxSleeps = 0;"),
+    ("I6", "the hook keeps the core from idling (returns false)", IDLE,
+     "    return true; // the core may still wait for an interrupt (waiti) after the hooks",
+     "    return false;"),
+    ("I7", "the draw loops' yield skips the guard", BOARD,
+     "    else if (!(idle_ && idle_->enforce())) taskYIELD();",
+     "    else taskYIELD();"),
+    ("I8", "a loop pass ends without the guard", MAIN,
+     "        idle_service.enforce();\n    }",
+     "    }"),
+    ("I9", "the counting hook is registered on core 1", MAIN,
+     "esp_register_freertos_idle_hook_for_cpu(&tdeck::IdleService::core0_hook,0)",
+     "esp_register_freertos_idle_hook_for_cpu(&tdeck::IdleService::core0_hook,1)"),
+    ("I10", "the report leaves the idle gap out", REPORT,
+     "    if (const IdleServiceStats *i = in.idle)\n        out.add(\"idle0 gap max",
+     "    if (const IdleServiceStats *i = in.idle; i && false)\n        out.add(\"idle0 gap max"),
+    ("I11", "A3E_PACE loses its heartbeat number", REPORT,
+     '    if (in.heartbeat) line.add("hb=%lu ", (unsigned long)in.heartbeat);',
+     '    if (in.heartbeat && false) line.add("hb=%lu ", (unsigned long)in.heartbeat);'),
+    ("I12", "the runtime never reports the idle-service window", RUNTIME,
+     "    in.idle=idle_service_?&idle_service_->stats():nullptr;in.heartbeat=heartbeat; // A3-04E.1",
+     "    in.heartbeat=heartbeat; // A3-04E.1"),
+    ("I13", "every heartbeat carries the same number", RUNTIME,
+     "pacing_line(line,sizeof(line),++heartbeat_seq_)",
+     "pacing_line(line,sizeof(line),heartbeat_seq_+1)"),
+    ("I14", "a live read does not start a new idle-service window", RUNTIME,
+     "    if(idle_service_)idle_service_->reset_stats(); // A3-04E.1\n",
+     ""),
 ]
 
 

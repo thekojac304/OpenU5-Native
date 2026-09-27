@@ -43,6 +43,7 @@
 
 namespace tdeck {
 class Board;
+class IdleService;
 struct DeviceDebugScreen;
 
 class AlphaRuntime {
@@ -99,7 +100,9 @@ class AlphaRuntime {
     bool loop_may_sleep() const;
     uint32_t loop_wait_ticks() const { return openu5::loop_wait_ticks(pacing_.loop, loop_may_sleep()); }
     void note_loop_wait(uint32_t us, bool input) { contention_.on_loop_wait(us, input); }
-    size_t pacing_line(char *out, size_t cap) const; // the heartbeat's A3E_PACE line
+    size_t pacing_line(char *out, size_t cap, uint32_t heartbeat = 0) const; // the heartbeat's A3E_PACE line
+    // A3-04E.1 (section 23): the idle-service guard's window, for the report and A3E_PACE.
+    void attach_idle_service(IdleService *service) { idle_service_ = service; }
     // The combined AUDIO / RENDER PERF report: it replaces the Developer
     // screen's rows until dismissed (Enter / Back), and scrolls with Up/Down.
     // "Pending" = it finished while the Developer menu was closed: Alt+D shows it.
@@ -312,6 +315,8 @@ class AlphaRuntime {
     SdLogPerfHooks sd_log_perf_{};
     bool music_bypass_ = false;
     openu5::PacingPolicy pacing_ = openu5::kPacingDefault; // A3-04E
+    IdleService *idle_service_ = nullptr; // A3-04E.1
+    mutable uint32_t heartbeat_seq_ = 0;  // A3-04E.1: A3E_PACE's hb=
     openu5::PerfScenario perf_scenario() const;
     openu5::AudioPerfSnapshot bench_idle_{};
     bool bench_idle_valid_ = false;

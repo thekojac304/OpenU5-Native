@@ -20,6 +20,8 @@
 #include "alpha_audio.h"
 #include "alpha_resources.h"
 #include "alpha_runtime.h"
+#include "esp_freertos_hooks.h"
+#include "idle_service.h"
 #include "asset_pack.h"
 #include "boot_trace.h"
 #include "sd_diagnostic_logger.h"
@@ -183,6 +185,16 @@ extern "C" void app_main(void) {
         runtime.render(board,true);
         debug51::stack_checkpoint("after-alpha-render");
     }
+    // A3-04E.1 (ALPHA3_AUDIO.md section 23): watch core 0's idle loop -- the
+    // pass that feeds the task watchdog -- and make the game thread block for it
+    // whenever it has not run for 200 ms (draw-loop pauses, the end of a pass).
+    static tdeck::IdleService idle_service;
+    if(esp_register_freertos_idle_hook_for_cpu(&tdeck::IdleService::core0_hook,0)==ESP_OK){
+        idle_service.attach(tdeck::IdleService::core0_count());
+        board.set_idle_service(&idle_service);
+        if(ready)runtime.attach_idle_service(&idle_service);
+    }
+    else ESP_LOGE(kTag,"IDLE_SERVICE core-0 idle hook not registered; the loop's idle wait remains");
     ESP_LOGI(kTag,"Alpha input loop active; no physical-device success is asserted");debug51::stage(12,"alpha-input-loop");
     int64_t heartbeat=esp_timer_get_time()+5000000;
     for(;;){const int64_t loop_t0=esp_timer_get_time(); // A3-04C: one pass, input to yield
@@ -210,5 +222,9 @@ extern "C" void app_main(void) {
             if(ready)runtime.note_loop_wait(uint32_t(esp_timer_get_time()-wait_t0),woke);
         }
         else vTaskDelay(0); // a reschedule -- what pdMS_TO_TICKS(5) always was at 100 Hz
+        // A3-04E.1: neither of those guarantees core 0's idle task a pass (a
+        // reschedule never runs it; the wait ends early on input). This does,
+        // at no cost while the idle loop keeps running.
+        idle_service.enforce();
     }
 }

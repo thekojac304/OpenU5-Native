@@ -180,6 +180,37 @@ int main(int argc, char **argv) {
     }
 
     // ======================================================================
+    // G -- the idle-service guard (A3-04E.1, section 23)
+    // ======================================================================
+    {
+        check(kIdleServiceBudgetUs * 25 <= 5000000u && kIdleServiceBudgetUs >= 10000u && kIdleServiceMaxSleeps >= 2,
+              "G1 the budget: 200 ms, 25x under the 5 s task watchdog and above one 10 ms tick; up to 3 sleeps per "
+              "enforcement (the first can end a microsecond later, at the next tick)");
+        IdleServiceGuard g;
+        g.reset(5, 1000000);
+        bool quiet = true;
+        uint32_t count = 5;
+        for (uint64_t t = 1000000; t < 3000000; t += 50000) quiet = quiet && !g.due(++count, t); // it keeps running
+        check(quiet && g.stats().services == 40 && g.stats().max_gap_us == 0,
+              "G2 while the idle loop keeps running, the guard never asks for a sleep");
+        const uint64_t last = 2950000;
+        check(!g.due(count, last + kIdleServiceBudgetUs - 1) && g.due(count, last + kIdleServiceBudgetUs) &&
+                  g.stats().max_gap_us == kIdleServiceBudgetUs,
+              "G3 no pass for the budget: due exactly at 200 ms since the last seen pass, not a microsecond before");
+        check(!g.due(count + 1, last + kIdleServiceBudgetUs + 10000),
+              "G4 one idle pass (the counter moves) ends it at once");
+        g.note_enforcement(1, 7300, true);
+        g.note_enforcement(3, 30000, false);
+        check(g.stats().enforcements == 2 && g.stats().forced_sleeps == 4 && g.stats().forced_us == 37300 &&
+                  g.stats().unserviced == 1,
+              "G5 the enforcements, their ticks and time, and the ones that gave up");
+        g.reset_stats();
+        check(g.stats().enforcements == 0 && g.stats().checks == 0 &&
+                  !g.due(count + 1, last + kIdleServiceBudgetUs + 20000) && g.stats().services == 0,
+              "G6 a new window clears the counters but keeps the service state (no false alarm after a read)");
+    }
+
+    // ======================================================================
     // C -- the counters
     // ======================================================================
     {
@@ -272,6 +303,16 @@ int main(int argc, char **argv) {
                         "loop 83/s  waits 4800 avg 9.8 max 10.2 ms\n"
                         "loop asleep 47.0 of 60.0 s  input wakes 12\n") != std::string::npos,
               "F1 the report's pacing section:\n" + text);
+        check(text.find("idle0 gap") == std::string::npos, "F1b no idle-service window attached (the host): no line");
+        IdleServiceStats idle{};
+        idle.max_gap_us = 200900;
+        idle.enforcements = idle.forced_sleeps = 30;
+        idle.forced_us = 274200;
+        in.idle = &idle;
+        text = join(lines, format_perf_report(in, lines, kPerfReportMaxLines));
+        check(text.find("loop asleep 47.0 of 60.0 s  input wakes 12\nidle0 gap max 200.9 ms forced 30/274.2 ms miss 0\n") !=
+                  std::string::npos,
+              "F1c A3-04E.1: the section ends with core 0's longest idle gap and what the guard slept for it");
         sc.pacing = kPacingLegacy;
         text = join(lines, format_perf_report(in, lines, kPerfReportMaxLines));
         check(text.find("-- Pacing (A3-04E) --\ntft TICK  loop SPIN\n") != std::string::npos,
@@ -334,11 +375,15 @@ int main(int argc, char **argv) {
         c.yields = c.viewport_yields_x10 = c.viewport_yield_avg_us = c.yield_max_us = c.late_yields = 4000000000u;
         c.loop_max_us = c.loop_wait_avg_us = 4000000000u;
         sys.core_busy_permille[0] = sys.core_busy_permille[1] = sys.main_permille = sys.audio_permille = 4000000000u;
+        idle.max_gap_us = idle.enforcements = idle.forced_sleeps = idle.unserviced = 4000000000u;
+        idle.forced_us = 4000000000ull * 1000;
+        in.heartbeat = 4000000000u;
         sc.pacing = kPacingLegacy;
         char roomy[2048];
         pn = format_pacing_line(in, roomy, sizeof roomy); // the whole line, whatever the buffer
         pl = roomy;
         check(pn == pl.size() && pn < kPacingLineBytes - 1 && pl.find(" aud=") != std::string::npos &&
+                  pl.find("hb=4000000000 pace=") == 0 && pl.find(" | idle0 gap=") != std::string::npos &&
                   pn + 64 < kSdDiagLineBytes,
               "F5b worst case " + std::to_string(pn) + " characters: whole, inside the buffer (" +
                   std::to_string(kPacingLineBytes) + ") and inside one SD-log record with its prefix (" +
@@ -506,6 +551,30 @@ int main(int argc, char **argv) {
         for (const char *f : {"/src/persistence.cpp", "/src/frontend_settings.cpp", "/src/save_json.cpp"})
             unsaved = unsaved && strip_comments(slurp(core_dir + f)).find("pacing") == std::string::npos;
         check(unsaved, "S12 the pacing is never saved: no save, settings or persistence code names it");
+
+        // A3-04E.1 (section 23): the idle-service guarantee, wired.
+        const std::string idle_cpp = strip_comments(slurp(device_dir + "/main/idle_service.cpp"));
+        const std::string enforce = function_body(idle_cpp, "bool IdleService::enforce(");
+        const std::string hook = function_body(idle_cpp, "bool IdleService::core0_hook(");
+        check(std::regex_search(enforce, std::regex(R"(guard_\.due\([\s\S]*while \(sleeps < openu5::kIdleServiceMaxSleeps\)[\s\S]*vTaskDelay\(1\);)")) &&
+                  enforce.find("taskYIELD") == std::string::npos && enforce.find("vTaskDelay(0)") == std::string::npos &&
+                  hook.find("return true;") != std::string::npos,
+              "S13 enforce() BLOCKS (vTaskDelay(1), bounded) only when the guard says so -- never a yield, which "
+              "cannot hand core 0 to the idle task; the hook counts and lets the core idle");
+        check(std::regex_search(main_cpp, std::regex(R"(esp_register_freertos_idle_hook_for_cpu\(&tdeck::IdleService::core0_hook,0\))")) &&
+                  main_cpp.find("idle_service.attach(tdeck::IdleService::core0_count());") != std::string::npos &&
+                  main_cpp.find("board.set_idle_service(&idle_service);") != std::string::npos &&
+                  main_cpp.find("runtime.attach_idle_service(&idle_service);") != std::string::npos,
+              "S14 main.cpp registers the counting hook on core 0 (the core the watchdog's IDLE0 check and the game "
+              "thread share) and hands the guard to the Board and the report");
+        check(std::regex_search(loop, std::regex(R"(else vTaskDelay\(0\);[^\n]*\n\s*idle_service\.enforce\(\);\s*\}\s*$)")),
+              "S15 every loop pass ends with the guard, after the idle wait or the reschedule, whichever ran");
+        check(yield.find("else if (!(idle_ && idle_->enforce())) taskYIELD();") != std::string::npos,
+              "S16 the draw loops' yield asks the guard first (a tick sleep only when the idle loop is overdue)");
+        check(std::regex_search(sdk, std::regex("CONFIG_ESP_TASK_WDT_TIMEOUT_S=5\r?\n")) &&
+                  std::regex_search(sdk, std::regex("CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0=y\r?\n")) &&
+                  std::regex_search(sdk, std::regex("CONFIG_ESP_TASK_WDT_EN=y\r?\n")),
+              "S17 the watchdog is neither disabled nor extended: 5 s, IDLE0 checked, as before");
     }
 
     std::printf("A3-04E pacing: %d/%d checks\n", checks - failures, checks);

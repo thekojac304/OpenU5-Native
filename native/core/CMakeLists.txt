@@ -1612,6 +1612,7 @@ if(BUILD_TESTING)
     ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
     ../targets/tdeck/host_tests/board_shims/fake_tdeck_bus.cpp
     ../targets/tdeck/main/tdeck_board.cpp
+    ../targets/tdeck/main/idle_service.cpp
     ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
     ../targets/tdeck/main/alpha_save_generation.cpp
     ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp

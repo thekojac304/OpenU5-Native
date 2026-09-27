@@ -28,6 +28,7 @@
 #include "openu5/persistence.h"
 #include "openu5/rest.h"
 #include "tdeck_board.h"
+#include "idle_service.h"
 
 namespace tdeck {
 namespace {
@@ -2609,7 +2610,7 @@ void AlphaRuntime::log_metrics(const char*where)const{const auto stack=uxTaskGet
     // A3-04C (section 20): the whole window on one line, in a fixed order, so
     // runs diff field by field. Same window as the Developer report.
     {char line[openu5::kContentionLineBytes];contention_line(line,sizeof(line));ESP_LOGI(kTag,"A3C_PERF %s",line);}
-    {char line[openu5::kPacingLineBytes];pacing_line(line,sizeof(line));ESP_LOGI(kTag,"A3E_PACE %s",line);}
+    {char line[openu5::kPacingLineBytes];pacing_line(line,sizeof(line),++heartbeat_seq_);ESP_LOGI(kTag,"A3E_PACE %s",line);}
     if(internal<32768)ESP_LOGW(kTag,"LOW INTERNAL RAM: %zu",internal);
     if(stack<4096)ESP_LOGW(kTag,"LOW MAIN STACK MARGIN: %u",unsigned(stack));
 }
@@ -3037,6 +3038,7 @@ void AlphaRuntime::reset_perf_windows(){
     contention_.reset(uint64_t(esp_timer_get_time()));
     if(sd_log_perf_.reset)sd_log_perf_.reset();
     if(system_perf_)system_perf_->system_perf_reset();
+    if(idle_service_)idle_service_->reset_stats(); // A3-04E.1
 }
 
 // A3-04C (ALPHA3_AUDIO.md section 20): the label that makes two windows
@@ -3074,7 +3076,7 @@ size_t AlphaRuntime::contention_line(char *out,size_t cap) const{
 
 // A3-04E (ALPHA3_AUDIO.md section 22): the pacing window on one line, next
 // to A3C_PERF (whose format stays A3-04C/D's, so old and new runs diff).
-size_t AlphaRuntime::pacing_line(char *out,size_t cap) const{
+size_t AlphaRuntime::pacing_line(char *out,size_t cap,uint32_t heartbeat) const{
     const uint64_t now=uint64_t(esp_timer_get_time());
     openu5::RenderPerfSnapshot render{};render_perf_.snapshot(now,render);
     openu5::ContentionSnapshot contention{};contention_.snapshot(now,contention);
@@ -3084,6 +3086,7 @@ size_t AlphaRuntime::pacing_line(char *out,size_t cap) const{
     openu5::PerfReportInput in{};
     in.audio=has_audio?&audio:nullptr;in.render=&render;in.system=has_system?&system:nullptr;
     in.scenario=&scenario;in.contention=&contention;
+    in.idle=idle_service_?&idle_service_->stats():nullptr;in.heartbeat=heartbeat; // A3-04E.1
     return openu5::format_pacing_line(in,out,cap);
 }
 
@@ -3180,6 +3183,7 @@ void AlphaRuntime::publish_perf_report(const char *title,const openu5::AudioPerf
     openu5::SdLogPerf sd{};const bool has_sd=sd_log_perf_.snapshot&&(sd_log_perf_.snapshot(sd),true);
     const auto scenario=perf_scenario();
     in.scenario=&scenario;in.contention=&contention;in.sdlog=has_sd?&sd:nullptr;
+    in.idle=idle_service_?&idle_service_->stats():nullptr; // A3-04E.1
     if(with_guard){in.has_guard=true;in.guard_ns=bench_guard_ns_;
         in.guard_us_per_block=openu5::legacy_guard_us_per_block(bench_guard_ns_,bench_idle_channels_x100_);}
     perf_report_count_=perf_report_lines_?openu5::format_perf_report(in,perf_report_lines_,openu5::kPerfReportMaxLines):0;
