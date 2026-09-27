@@ -1,6 +1,8 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity)
 
-**Status (A3-04E.1 hardware closeout, 2026-09-27): WATCHDOG REGRESSION FIXED ON HARDWARE — RENDERER PACING HARDWARE-VALIDATED — A3-04E / A3-04E.1 CLOSED.** Two serial captures of the A3-04E.1 image (§23.10, committed as `a3-04e1-hw-soak.log` and `a3-04e1-hw-probes.log`) contain no `task_wdt`, crash or reboot. The first covers 11 min of uptime in default pacing, with music at 80 % and then 0 %, walking, town changes, menus and 3 min standing still. Over that whole run core 0's idle loop never went more than 102.9 ms without a pass, the guard never had to act (`forced=0`), and audio stayed at `und=0 hw=0 miss=0`. All 110 heartbeats `hb=13`–`122` are present. In the second capture, the legacy probes reproduced A3-04D exactly: menu-exit repaint 441–442 ms, walking steps ~155 ms, TFT max 408.7 ms. Switching back to the yield pacing brought steps to ~88 ms and the repaint to ~184 ms. The deliberately starving loop-spin phases made the guard act 262 times, and it held the idle gap at ≤ 223.9 ms. The §22.10 matrix was abbreviated (§23.10.4). Next: the ambient-SFX parity batch (§23.11).
+**Status (A3-HF2, 2026-09-27): GRANDFATHER-CLOCK STRIKE FIXED ON THE HOST — FOUNTAIN NOT REPRODUCED — HARDWARE RETEST PENDING.** On the A3-04E.1 image every move beside a grandfather clock was followed by a strike-like beep before the tick-tock. The bytes show why: `advance_clock` 0x4f7c saves the hour in `[0x5880]` (0x4fa0), and at 0x514a it skips the strike re-arm (0x5164) unless the hour changed. The device re-armed on every **minute**, so on every step. That model came from an unverified note, and A3-03's C2 row pinned it. The re-arm key is now the hour (one line, §24). Tick / tock and the genuine hour strike are unchanged, and the new `a3_hf2_ambient_parity` target proves both (RED 3 before the fix). The fountain was checked on the device-loop model: 25 s standing still, a burble in every 55 ms tick, nothing skipped. **Not reproduced, no change.** The §24.10 retest is five short steps.
+
+**Status as the A3-04E.1 hardware closeout wrote it (2026-09-27): WATCHDOG REGRESSION FIXED ON HARDWARE — RENDERER PACING HARDWARE-VALIDATED — A3-04E / A3-04E.1 CLOSED.** Two serial captures of the A3-04E.1 image (§23.10, committed as `a3-04e1-hw-soak.log` and `a3-04e1-hw-probes.log`) contain no `task_wdt`, crash or reboot. The first covers 11 min of uptime in default pacing, with music at 80 % and then 0 %, walking, town changes, menus and 3 min standing still. Over that whole run core 0's idle loop never went more than 102.9 ms without a pass, the guard never had to act (`forced=0`), and audio stayed at `und=0 hw=0 miss=0`. All 110 heartbeats `hb=13`–`122` are present. In the second capture, the legacy probes reproduced A3-04D exactly: menu-exit repaint 441–442 ms, walking steps ~155 ms, TFT max 408.7 ms. Switching back to the yield pacing brought steps to ~88 ms and the repaint to ~184 ms. The deliberately starving loop-spin phases made the guard act 262 times, and it held the idle gap at ≤ 223.9 ms. The §22.10 matrix was abbreviated (§23.10.4). Next: the ambient-SFX parity batch (§23.11).
 
 **Status as A3-04E.1 wrote it: TASK-WATCHDOG REGRESSION FIXED ON THE HOST — HARDWARE VALIDATION PENDING (watchdog soak first).** A pre-test run of the A3-04E image tripped the task watchdog on IDLE0 after ~71 s, with `main` running. A yield never gives core 0 to the lower-priority idle task, and A3-04E's assumption that the TFT rows' own waits let it finish a pass was never a guarantee. The model reproduces the trip: 6.1 s without an idle pass. A3-04E.1 (§23) keeps A3-04E's pacing and adds a guard that watches core 0's idle loop through a second idle hook (the same pass that feeds the watchdog). It blocks the game thread for one tick only when that loop has not run for 200 ms. In the model the longest gap is then 200.9 ms, costing 4.3 % in the worst case and nothing where the idle loop already runs. The watchdog is untouched. The §22.10 matrix waits for the §23.8 soak.
 
@@ -818,7 +820,7 @@ After A3-03: **set 2 is empty except the four markers** (their sound is the cere
 - scan the 11 × 11 window around the party (the arena's own cells, centre (5,5), in combat), x outer, y inner; keep the **nearest** object of a sounding class (squared distance strictly below the best so far, which starts at 0x33, so the far corner still counts; a tie goes to the first in scan order);
 - classes: 1 clock (0xfa / 0xfb), 2 waterfall (0xd4–0xd7), 3 **fountain (0xd8–0xdb)**; the bellows, the moongate and every sprite are silent; class 4 (a bard sprite) is not ported (§16.7);
 - sound: fountain and waterfall on **every** tick; the clock ticks at phase 0 and tocks at phase 4; while `[0x5884]` is non-zero it strikes instead (the chime TS), and `[0x5884]` runs down at phases 0 / 4 **whatever the class** (0x430e is outside the switch);
-- the phase `[0x6a34]` is `(phase + 1) & 7` per call; `[0x5884]` is re-armed to the 12-hour clock (midnight → 12) by `advance_clock` (0x5164–0x5183), which the device reads as "the game clock moved".
+- the phase `[0x6a34]` is `(phase + 1) & 7` per call; `[0x5884]` is re-armed to the 12-hour clock (midnight → 12) by `advance_clock` (0x5164–0x5183), which the device reads as "the game clock moved". *(Refuted in A3-HF2, §24.3: 0x514a–0x5151 skip the re-arm unless the hour moved.)*
 
 **Runtime** (`AlphaRuntime::service_ambient`, called from the gameplay render loop): one 0x4102 call per 55 ms tick while the original would be waiting in 0x266c — the world, a town or any arena (a dungeon room's too: an arena runs at `g_location` ≥ 0x80), **not** a dungeon corridor, a paced scene (Camp, Refuge, TrollSneak, Blackthorn), the Ending, the Developer menu, An Tym, a map reveal or a gem / zodiac view. The System Menu and the title never reach it (they own the render path). The window is the **raw** terrain (`WorldTerrain::effective`, with the hour / persistent / transient overrides), never the light-censored view, so a fountain burbles at night too. A new world (load, System Menu Load, title Continue, Return to Title) starts both counters over.
 
@@ -833,6 +835,8 @@ After A3-03: **set 2 is empty except the four markers** (their sound is the cere
 | Volume / mute | the SFX channel gain; at 0 % the service never submits (F6) |
 
 **Hardware-visible behaviour:** standing beside the fountain in location 1 at (6,25), the host counts **20 burbles in 1.1 s, exactly 55 ms apart**, each ending (F1–F3); a real clock in location 2 ticks and tocks once each per 440 ms and, after a step moves the clock, strikes the hour (12 at noon) before ticking again (C1–C2).
+
+**Correction (A3-HF2, 2026-09-27):** the clock half of that paragraph was wrong. `advance_clock` re-arms `[0x5884]` only when the hour moves (0x4fa0 saves the hour in `[0x5880]`; 0x514a–0x5151 `je 0x5186` skip the re-arm otherwise). A step inside the hour strikes nothing; the step that crosses the hour strikes the new one. C2 and M9 are corrected, and the fix and its proof are in §24. The fountain half stands.
 
 ### 16.5 Combat victory and leaving the arena (Phase E)
 
@@ -2676,9 +2680,128 @@ The full A0/A1/A2/R1–R4 matrix was not run as separate windows. The two captur
 
 ### 23.11 Next batch: ambient-SFX parity (separate from A3-04E.1)
 
-Two device-observed ambient defects, for an audio-parity batch of their own:
+Two device-observed ambient defects, for an audio-parity batch of their own *(done: A3-HF2, §24. The clock is fixed; the fountain is not reproduced)*:
 
 1. **The fountain does not sustain its PC-speaker "burble".** On the device it is heard only briefly around movement, never as a continuous sound while standing next to it. §16.4 pins one NB(10, 30, 25000) burble (1.7 ms) per 55 ms tick while eligible. The original ticks 0x4102 on every redraw of its key wait (`getkey_with_redraw` 0x266c). The batch must derive that redraw cadence, and so the sound's real density, from the binary. It must also check on the device that `service_ambient` (`alpha_runtime.cpp`, called from the gameplay render path) keeps ticking while the player stands still, and how the SFX policy treats back-to-back 1.7 ms cues.
 2. **Grandfather clocks play a wrong beep after movement before their tick-tock.** The runtime re-arms the clock's strike (`[0x5884]` ← the 12-hour clock) whenever the game time's **minute** changes (`service_ambient`: "the device sees that as the game clock moving"). A step advances the minute, so every step re-arms a strike. §16.4's C1–C2 pin exactly that ("after a step moves the clock, strikes the hour"). The batch must adjudicate `advance_clock` 0x5164–0x5183 against the binary, and find which advance re-arms `[0x5884]`, before touching the pinned row. A deliberate host row is not proof by itself: A3-HF1 found one that was invented.
 
 Also queued: `PRESENTATION_DISPATCH` on state change only (§23.10.5), then §22.11's remaining performance list (composition time, `fill_rect` chunking, the transcript redraw, the synth's steady cost).
+
+## 24. A3-HF2 — ambient SFX parity: the grandfather clock's strike, and the fountain
+
+An audio-parity hotfix, separate from the A3-04E.1 pacing work (§23.11 queued it). It covers one confirmed hardware defect (the clock) and one unconfirmed observation (the fountain). It does not touch renderer pacing, the watchdog / idle service, music, SD logging, UI or the `PRESENTATION_DISPATCH` log line. Music capability and the SFX / Music Volume controls are unchanged.
+
+### 24.1 The reports
+
+1. **Clock (confirmed, reproducible on the A3-04E.1 image):** beside a grandfather clock, every move is followed by a short strike-like beep, and then the normal tick-tock resumes.
+2. **Fountain (unconfirmed):** earlier, a fountain seemed to burble only briefly around movement rather than continuously. In the most recent hardware tests it sounded normal. It is treated as an observation to reproduce, not a defect.
+
+### 24.2 Baseline
+
+HEAD `29c5b7a7` (the A3-04E.1 hardware closeout), clean. Fresh build `native/core/build-a3-hf2-base`: **143 / 143, serial, 135.82 s** (`native/core/a3-hf2-baseline-{configure,build,ctest}.log`).
+
+### 24.3 The original clock, derived from the bytes
+
+Re-read from ULTIMA.EXE with `re/tools/dis16.py`. Every reference to the counter was found with a new census tool, `re/tools/a3_hf2_ds_census.py`, which searches ULTIMA.EXE and every overlay for any instruction naming a DS address. Everything is in `native/core/a3-hf2-derivation.log`. **Positive control:** the census finds exactly the three references already known inside `ambient_sfx_tick` (0x4262, 0x430e, 0x4323).
+
+| Where | What it does |
+|---|---|
+| `advance_clock` 0x4f7c, **0x4fa0–0x4fa3** | Before anything is added, `[0x5880]` ← the hour `[0x587f]`. |
+| 0x4fa6 / 0x4fb0 / 0x4fc8–0x4fe2 | An Tym (`'T'`) skips the addition. Otherwise the minute `[0x5881]` += n; past 59 it wraps and the hour increments (one carry per call; the native `turn.cpp` `advance_clock` is the same). |
+| **0x514a–0x5151** | `mov al,[0x5880]; cmp [0x587f],al; je 0x5186`: **if the hour did not change, the strike re-arm is skipped.** |
+| 0x5164–0x5183 | Only reached after an hour change: `[0x5884]` ← the hour on a 12-hour dial (0 → 12, 13–23 → 1–11). |
+| Census of DS:0x5884 | **Five references and one writer site** (0x516b / 0x5183, the two stores of the 0x5164 block). The other three are 0x4262 (read), 0x430e (read) and 0x4323 (`dec`). No overlay touches it. |
+| `ambient_sfx_tick` 0x4262–0x42ad | Clock class: while `[0x5884]` ≠ 0 at phase 0 or 4, the strike TS(3116, 1, 2000, 20000, −10) plays (0x428b). Otherwise phase 0 plays the tick beep(3000, 3) (0x42a1) and phase 4 the tock beep(2000, 3) (0x429c). |
+| 0x430e–0x4337 | At phase 0 or 4, `[0x5884]` counts down, **whatever the class**. The phase `[0x6a34]` = (phase + 1) & 7 on every call. |
+
+**The answers the brief asked for:**
+
+1. **When the strike is armed:** when an `advance_clock` call moves the hour, and only then. The counter is set to the new hour on the 12-hour dial.
+2. **Minute changes do not re-arm it.** 0x514a–0x5151 skip the re-arm while the hour is unchanged.
+3. **Movement triggers no clock sound of its own.** A step costs one minute (`town_turn` → `advance_clock(1)`), which arms nothing unless it carries the hour. The step's own viewport redraw also runs 0x4102 once. That advances the tick / tock phase by one, but plays no strike. (The device ticks by the 55 ms clock only; that cadence difference is §16.4's, unchanged here.)
+4. **Tick / tock cadence:** one 0x4102 call per `getkey_with_redraw` 0x266c pass (one 55 ms BIOS tick while idle) plus one per redraw. The phase runs 0..7, the tick sounds at phase 0 and the tock at phase 4: one of each per 440 ms while idle.
+5. **Separate state:** yes. The strike counter `[0x5884]` is armed by `advance_clock` and counted down by 0x4102. The phase `[0x6a34]` belongs to 0x4102 alone. While strikes remain, they replace the tick / tock at phases 0 / 4; when none remain, tick / tock resumes without any reset.
+6. **The A3-03 host rows encoded a native defect.** `service_ambient` keyed the re-arm on year / month / day / hour / **minute**, so every step re-armed the full hour's strikes. `a3_03_sfx_runtime` C2 pinned that behaviour ("after a step moves the clock, it strikes the hour", from 12:55), and M9 depended on it.
+
+**Where the defect came from.** `re/notes/ambient-audio-audit.md` §5.1 concluded that `[0x5884]` "re-arms to the hour every turn" because `advance_clock` runs on every time-costing action. It missed the `[0x5880]` compare at 0x514a. The note itself called the resulting pattern odd ("strikes per turn, not per hour"). It asked for an oracle witness and named the knob to turn if the pattern was refuted: "only on a CHANGE of hour". The TypeScript skin (`game/src/skin/coreview.ts`, `clockChimeCounter` re-armed in `notifyTurn`) and native A3-03 both implemented the unconfirmed model. The bytes now refute it. The note has a dated correction. The TypeScript skin is presentation-only and no parity fixture pins it; it is recorded, not changed (§24.9).
+
+### 24.4 Root cause
+
+`AlphaRuntime::service_ambient` (`alpha_runtime.cpp`) re-armed `[0x5884]` whenever the game-time key changed. That key included the **minute**, so every step (one minute) armed the current hour's full count. On hardware at, say, one o'clock, that is one strike after every move, followed by the tick / tock. At noon it is twelve strikes, 2.6 s long, restarted on each move.
+
+### 24.5 The fix
+
+One line in `service_ambient`: the re-arm key is year / month / day / **hour**. A step inside the hour no longer re-arms, and the step that carries the hour re-arms to the new hour, exactly as at 0x514a. `ambient_sfx.h`'s comments now cite 0x514a. Nothing else changed: the phase, the tick / tock, the strike program, the run-down at phases 0 / 4, the reset on load / title / New Journey, the ambient gates, the SFX classes and priorities, and the core `advance_clock`. **Game state and RNG are untouched:** the ambient path draws nothing and writes no game state.
+
+*Why a key, not a hook in `advance_clock`:* the core's `advance_clock` is pinned by the parity fixtures, and the presentation layer already owns `[0x5884]`. The hour key is equivalent. Time moves only through one-carry `advance_clock` calls, and the hour key changes exactly when one of them carried the hour. A load or title reset records the hour without arming, as before.
+
+### 24.6 Tests
+
+**New target `a3_hf2_ambient_parity`** (10 checks, `native/targets/tdeck/host_tests/a3_hf2_ambient_parity_test.cpp`). It runs through the REAL `AlphaRuntime` **on A3-04E's device-loop model**: the real `tdeck_board.cpp` over `board_shims`, timed SPI, the 100 Hz tick, main.cpp's idle wait and the IdleService guard. The SFX player sits behind a recording backend and is rendered in step with the virtual clock. The real clock is in location 2 at (13,2) and the real fountain in location 1 at (6,25), both found in the shipped maps.
+
+| Row | Checks |
+|---|---|
+| S0 | the maps hold a reachable clock and fountain |
+| K1 | control: at 12:30, 4 ticks + 4 tocks in 1.76 s, no strike |
+| **K2** | **six steps inside the hour (12:30 → 12:36) strike nothing** (the hardware report) |
+| **K3** | the tick / tock is intact after them (4 + 4, no strike) |
+| K4 | the step 12:59 → 13:00 strikes once (one o'clock), then tick / tock again |
+| **K5** | three more steps inside 13:xx strike nothing; the clock keeps ticking |
+| K6 | the step 11:59 → noon strikes twelve, then tick / tock |
+| F1 | standing still by the fountain for 25 s with no input: 455 burbles, **no 55 ms tick without one** |
+| F2 | all are heard: nothing else plays, none skipped, each a short click that ends |
+| F3 | after two steps it resumes and sustains for the next 5 s |
+
+**RED on unchanged production** (`native/core/a3-hf2-red.log`): **3 RED, 7 / 10**. K2 (21 strikes across the six steps), K3 (the leftover strikes still drown the tick / tock: 0 + 0) and K5 are RED. The controls K1, K4 and K6 are GREEN, because the legitimate strikes already occurred. The fountain rows F1–F3 are GREEN. **GREEN after the fix: 10 / 10** (`native/core/a3-hf2-green-full.log`).
+
+**Corrected A3-03 rows** (`a3_03_sfx_runtime`, 46 / 46, `native/core/a3-hf2-a3-03-runtime.log`):
+- **C2** had struck the hour after two steps from 12:55. Its step now crosses the hour (12:59 → 13:00, one strike), and it also asserts that the hour changed. The comment records the old expectation.
+- **M9** (a load drops armed strikes) needs a strike that is still armed when the probe runs. It now arms twelve by stepping 11:59 → noon after the save. The test's own 12:55 → 11:59 edit is an hour change, so its eleven strikes are run down before the save. This is a harness detail: a3_03's raw input does not render, so an edit and the steps with no ambient tick between them are one observation.
+
+**Mutations** (`native/core/tools/a3_hf2_mutation_check.py`, `native/core/a3-hf2-mutation.log`): **10 / 10 killed.**
+
+| Id | Mutation | Killed by |
+|---|---|---|
+| H1 | A3-03's minute key restored (the defect) | K2, K3, K5 |
+| H2 | the strike never re-armed | K4, K6; a3_03 C2, M9 |
+| H3 | re-armed on every ambient tick | K1–K6; a3_03 C1, C2, M9 |
+| H4 | re-armed per day (the key drops the hour) | K4, K6; C2, M9 |
+| H5 | the 24-hour hour struck (the dial dropped) | K4; C2; inventory A4 |
+| H6 | the strike ignores the phase gate 0x4269 | K6; C2 |
+| H7 | the tock lost | K1, K3; C1; inventory A3, A4 |
+| H8 | the ambience dies about a second after arriving (the unconfirmed fountain report, as a mutant) | 7 RED: K1, K3–K6, F1, …; a3_03 9 RED: F1, F4–F6, C1, … (the log lists six per test) |
+| H9 | the ambience ticks every other 55 ms tick | K1, K3, K6, F1, F3; a3_03 8 RED: F1, F2, F4, F6, F7, C1, … |
+| H10 | every ambient cue skipped by the player | F2; a3_03 F3; inventory Q1–Q3 |
+
+A3-03's own ambient mutations were re-run against the corrected rows (`a3-hf2-a3-03-mutation-rerun.log`): **M2, M8, M17 and M23 were all killed**. M8 (a load leaves the ambience running) is killed by the corrected M9, and M17 (never re-armed) by C2 and M9.
+
+### 24.7 The fountain: not reproduced
+
+- **The original:** `getkey_with_redraw` 0x266c calls the redraw 0x5910 on every pass while no key is down (0x2688–0x269a, outside `g_location` 0x21–0x7f). 0x5910 calls 0x4102 at 0x5a1a. The fountain branch (0x42c4, class 3) has no phase gate. **Standing still keeps burbling, one NB(10, 30, 25000) per pass.** The redraw's own gate `[0x5891]` is 0 only under An Tym (census: 0xff at 0x267a, 0 at 0x5924, 1 at 0x5a1d), which the device already models. The whole-body gate `[0x58a4]` (0x5929) is the unmodelled residue already declared in `defectos-d3d6d7-acta.md`, and this batch leaves it unchanged.
+- **The device path:** `service_ambient` runs on every gameplay render pass, and `main.cpp` renders on every loop pass, with or without input. It fires once per 55 ms tick index. Nothing in it depends on movement.
+- **Reproduction attempt:** under the device-loop model (timed frames, the idle wait, the guard), F1–F3 standing still for 25 s gave **455 burbles with no missed tick, 0 skipped by the player**, and the burble resumed and sustained after steps. The mutant that *does* reproduce the report's symptom (H8: the ambience dies about a second after arriving) is killed by F1 / F3.
+- **Verdict: not reproduced. No production change.** Consistent with the latest hardware report. A likely explanation for the earlier observation is recorded here as an inference, not a finding. Before A3-04E, the renderer slept to the tick every 16 rows. The main loop spun, and the SD diagnostic log stalled the SPI bus for up to 1.5 s (A3-04D). Frames that long skip ambient ticks, since one render pass services one tick, so the burble would have thinned out while standing and come back with the next frames. A3-04D / A3-04E removed those stalls. F1 / F3 now guard the result.
+
+### 24.8 Host suite, firmware
+
+**Full suite:** fresh `native/core/build-a3-hf2`, serial, **144 / 144 pass, 134.69 s** (`native/core/a3-hf2-ctest.log`; A3-04E.1's 143 plus `a3_hf2_ambient_parity`). The only build warning is the known w64devkit `stl_uninitialized.h` false positive (`a3-hf2-build.log`). All earlier ambient and audio timing proofs pass unchanged: `a3_03_sfx_runtime` (fountain, arena, victory, quake, shrines, Refuge, load / title / menu / dungeon / Ending safety), `a3_02_sfx_runtime`, `a3_01_audio_runtime`, `quest_parity` and `gameplay_parity` (no core file changed), `a3_04e_pacing_runtime`, `a3_04e_pacing`.
+
+**Firmware:** pre-commit build `native/targets/tdeck/build-a3-hf2` (`a3-hf2-firmware-configure.log`, `a3-hf2-firmware-build.log`): ESP-IDF 6.1, `idf.py --no-ccache reconfigure` then `ninja -j 4`, first attempt clean, **zero project warnings** under `-Werror`. **`0xee9d0` = 977,360 B, −32 B** against A3-04E.1's 977,392; **`0x11630` = 71,216 B (7 %) free.** Sections (`a3-hf2-size-image.log`): only flash `.text` moved (−28 B, the dropped `× 60 + minute`); **IRAM, `.data`, `.bss` and `.rodata` are identical.** `a3_04a_hotpath_check.py` and `a3_04b_iram_check.py` are **GREEN** (`a3-hf2-hotpath-check.log`, `a3-hf2-iram-check.log`). Version `3.0.0-alpha3-dev-a3-hf2-debug`. **Game packs and `openu5-audio.bin` unchanged; no SD change.** The post-commit image (path, SHA-256, embedded `Git`) is named in the annotated tag `alpha3-hf2-ambient-clock`. **Not flashed.**
+
+### 24.9 Recorded, not changed
+
+- **The TypeScript skin** (`game/src/skin/coreview.ts`) still re-arms `clockChimeCounter` on every `notifyTurn`, the refuted model. It is presentation-only; no gameplay or quest fixture pins it, and no native test reads it. Correcting it is a one-line follow-up for the TS track: re-arm only when `hour` differs from the previous turn's.
+- **The step's own ambient tick.** The original also ticks 0x4102 once per move redraw. The device ticks by wall time only (§16.4's "Movement / time" row). That can shift the tick / tock phase by one per step. It is not a sound of its own and is outside this report.
+- `PRESENTATION_DISPATCH` still logs on every gameplay render (§23.10.5); it is a separate cleanup, not done here.
+
+### 24.10 Hardware checklist (the user's; not done here)
+
+Flash the A3-HF2 Launcher image (path and SHA-256 in tag `alpha3-hf2-ambient-clock`). The boot screen shows `FW 3.0.0-alpha3-dev-a3-hf2-debug` and the tag's `Git`. Keep SFX Volume above 0 %.
+
+1. **Stand near a grandfather clock.** `Alt+D` → Teleport → Small map, location 2, X 13, Y 2. Stand still for 5 s: tick, tock, tick, tock (about 2 per second), with no strike.
+2. **Walk a few steps.** Move 5–6 steps near it, pausing between them. **PASS: no strike-like beep after any move**; the tick-tock just continues.
+3. **Tick-tock intact.** Stand still again for 5 s: tick / tock as in step 1.
+4. **A real strike (if feasible).** Watch the clock on the status line and keep stepping beside the clock until the hour turns (a step costs one minute). **PASS: at the turn of the hour, the clock strikes that hour on a 12-hour dial** (e.g. three strikes at 15:00, twelve at noon or midnight), then goes back to tick-tock. The next steps strike nothing.
+5. **Fountain, standing still.** Teleport → location 1, X 6, Y 25. Stand still for 20–30 s without touching anything. Report whether the soft fast burble continues the whole time.
+
+**FAIL:** report the step, the time shown and the `FW` / `Git` lines. A strike after an ordinary step (not an hour change) is a failure. A fountain that goes quiet while standing still is a new observation: say how long it took and whether the Developer SD diag log was on.

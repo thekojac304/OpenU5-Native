@@ -1,0 +1,20 @@
+# A3-03 mutation validation (2026-09-27 12:56)
+
+M2 the fountain loops every frame (ambient on every render, not per 55 ms tick) [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3-03 runtime   exit=1  3 RED
+        RED F1 standing by a real fountain: one burble per 55 ms tick (0x266c + 0x4102)
+        RED F2 the cadence is the BIOS tick exactly: 55 ms apart on the virtual clock
+        RED C1 a real clock ticks and tocks, one of each per 8 ticks (440 ms)
+M8 a load leaves the ambience state running [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3-03 runtime   exit=1  1 RED
+        RED M9 Alt+L beside a clock that was about to strike: the loaded world only ticks (no strike survives the load)
+M17 the clock is never re-armed [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3-03 runtime   exit=1  2 RED
+        RED C2 after a step crosses the hour it strikes the new 12-hour hour, then goes back to tick / tock
+        RED M9 Alt+L beside a clock that was about to strike: the loaded world only ticks (no strike survives the load)
+M23 the chimes do not run down outside the clock branch [native/core/src/ambient_sfx.cpp]: KILLED
+    a3-03 inventory exit=1  1 RED
+        RED A4 the chimes run down even with no clock in view (0x430e is outside the switch)
+
+restored build exit=0; a3-03 inventory exit=0, a3-03 runtime exit=0, a3-02 synth exit=0, a3-02 runtime exit=0, a3-01 contract exit=0
+mutations: 4, killed: 4, survived: 0

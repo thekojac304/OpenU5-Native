@@ -1,0 +1,96 @@
+# A3-HF2 mutation validation (2026-09-27 12:55)
+
+H1 A3-03's minute key: every step re-arms the strike (the hardware defect) [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3-hf2 parity   exit=1  3 RED
+        RED K2 six steps inside the hour (12:30 -> 12:36) strike nothing: advance_clock re-arms [0x5884] only when the hour moves (0x514a je 0x5186) -- 21 strikes
+        RED K3 after the steps the clock goes on ticking and tocking (0 / 0 in 1.76 s), no strike
+        RED K5 three more steps inside 13:xx (13:03) strike nothing; the clock keeps ticking
+H2 the strike is never re-armed [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3-hf2 parity   exit=1  2 RED
+        RED K4 the step from 12:59 to 13:00 strikes the new hour once (13 = one o'clock on the dial): 0 strike(s), then tick / tock again
+        RED K6 the step from 11:59 to noon strikes twelve (0), then tick / tock
+    a3-03 runtime   exit=1  2 RED
+        RED C2 after a step crosses the hour it strikes the new 12-hour hour, then goes back to tick / tock
+        RED M9 Alt+L beside a clock that was about to strike: the loaded world only ticks (no strike survives the load)
+H3 re-armed on every ambient tick, moved or not [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3-hf2 parity   exit=1  6 RED
+        RED K1 standing by a real clock at 12:30: tick / tock, one of each per 8 ambient ticks (0 / 0 in 1.76 s, 8 strikes)
+        RED K2 six steps inside the hour (12:30 -> 12:36) strike nothing: advance_clock re-arms [0x5884] only when the hour moves (0x514a je 0x5186) -- 21 strikes
+        RED K3 after the steps the clock goes on ticking and tocking (0 / 0 in 1.76 s), no strike
+        RED K4 the step from 12:59 to 13:00 strikes the new hour once (13 = one o'clock on the dial): 13 strike(s), then tick / tock again
+        RED K5 three more steps inside 13:xx (13:03) strike nothing; the clock keeps ticking
+        RED K6 the step from 11:59 to noon strikes twelve (35), then tick / tock
+    a3-03 runtime   exit=1  3 RED
+        RED C1 a real clock ticks and tocks, one of each per 8 ticks (440 ms)
+        RED C2 after a step crosses the hour it strikes the new 12-hour hour, then goes back to tick / tock
+        RED M9 Alt+L beside a clock that was about to strike: the loaded world only ticks (no strike survives the load)
+H4 re-armed per day, not per hour (the key drops the hour) [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3-hf2 parity   exit=1  2 RED
+        RED K4 the step from 12:59 to 13:00 strikes the new hour once (13 = one o'clock on the dial): 0 strike(s), then tick / tock again
+        RED K6 the step from 11:59 to noon strikes twelve (0), then tick / tock
+    a3-03 runtime   exit=1  2 RED
+        RED C2 after a step crosses the hour it strikes the new 12-hour hour, then goes back to tick / tock
+        RED M9 Alt+L beside a clock that was about to strike: the loaded world only ticks (no strike survives the load)
+H5 the strike counts the 24-hour hour (0x5164-0x5183 dial dropped) [native/core/include/openu5/ambient_sfx.h]: KILLED
+    a3-hf2 parity   exit=1  1 RED
+        RED K4 the step from 12:59 to 13:00 strikes the new hour once (13 = one o'clock on the dial): 13 strike(s), then tick / tock again
+    a3-03 runtime   exit=1  1 RED
+        RED C2 after a step crosses the hour it strikes the new 12-hour hour, then goes back to tick / tock
+    a3-03 inventory exit=1  2 RED
+        RED A4 after the clock moves, the clock strikes the 12-hour hour (3 pm: three), then ticks again
+        RED A4 0x5164: midnight strikes 12, 13 h strikes 1
+H6 the strike ignores the phase gate (0x4269) [native/core/src/ambient_sfx.cpp]: KILLED
+    a3-hf2 parity   exit=1  1 RED
+        RED K6 the step from 11:59 to noon strikes twelve (46), then tick / tock
+    a3-03 runtime   exit=1  1 RED
+        RED C2 after a step crosses the hour it strikes the new 12-hour hour, then goes back to tick / tock
+H7 the tock is lost [native/core/src/ambient_sfx.cpp]: KILLED
+    a3-hf2 parity   exit=1  2 RED
+        RED K1 standing by a real clock at 12:30: tick / tock, one of each per 8 ambient ticks (4 / 0 in 1.76 s, 0 strikes)
+        RED K3 after the steps the clock goes on ticking and tocking (4 / 0 in 1.76 s), no strike
+    a3-03 runtime   exit=1  1 RED
+        RED C1 a real clock ticks and tocks, one of each per 8 ticks (440 ms)
+    a3-03 inventory exit=1  2 RED
+        RED A3 a clock ticks at phase 0 and tocks at phase 4, silent between
+        RED A4 after the clock moves, the clock strikes the 12-hour hour (3 pm: three), then ticks again
+H8 the ambience dies out about a second after arriving (the unconfirmed fountain report) [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3-hf2 parity   exit=1  7 RED
+        RED K1 standing by a real clock at 12:30: tick / tock, one of each per 8 ambient ticks (0 / 0 in 1.76 s, 0 strikes)
+        RED K3 after the steps the clock goes on ticking and tocking (0 / 0 in 1.76 s), no strike
+        RED K4 the step from 12:59 to 13:00 strikes the new hour once (13 = one o'clock on the dial): 0 strike(s), then tick / tock again
+        RED K5 three more steps inside 13:xx (13:03) strike nothing; the clock keeps ticking
+        RED K6 the step from 11:59 to noon strikes twelve (0), then tick / tock
+        RED F1 standing still by a real fountain for 25 s, no input: one burble in every 55 ms tick throughout (11, 0 ticks missed) -- the sound never needs a move
+    a3-03 runtime   exit=1  9 RED
+        RED F1 standing by a real fountain: one burble per 55 ms tick (0x266c + 0x4102)
+        RED F4 walking out of range stops it (the ticker still runs; nothing sounding is near)
+        RED F4 and coming back starts it again
+        RED F5 walking by the fountain: ticks during a step are skipped, never queued; nothing overflows
+        RED F6 at SFX Volume 0 the fountain is exact silence (muted in the service, never submitted)
+        RED C1 a real clock ticks and tocks, one of each per 8 ticks (440 ms)
+H9 the ambience ticks every other 55 ms tick [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3-hf2 parity   exit=1  5 RED
+        RED K1 standing by a real clock at 12:30: tick / tock, one of each per 8 ambient ticks (2 / 2 in 1.76 s, 0 strikes)
+        RED K3 after the steps the clock goes on ticking and tocking (2 / 2 in 1.76 s), no strike
+        RED K6 the step from 11:59 to noon strikes twelve (12), then tick / tock
+        RED F1 standing still by a real fountain for 25 s, no input: one burble in every 55 ms tick throughout (227, 226 ticks missed) -- the sound never needs a move
+        RED F3 after two steps it resumes and sustains for the next 5 s (46 burbles)
+    a3-03 runtime   exit=1  8 RED
+        RED F1 standing by a real fountain: one burble per 55 ms tick (0x266c + 0x4102)
+        RED F2 the cadence is the BIOS tick exactly: 55 ms apart on the virtual clock
+        RED F4 and coming back starts it again
+        RED F6 at SFX Volume 0 the fountain is exact silence (muted in the service, never submitted)
+        RED F7 a fountain cell in an arena burbles: the scan reads the arena, centre (5,5)
+        RED C1 a real clock ticks and tocks, one of each per 8 ticks (440 ms)
+H10 an ambient cue is always skipped by the player (submitted, never heard) [native/core/src/sfx_synth.cpp]: KILLED
+    a3-hf2 parity   exit=1  1 RED
+        RED F2 ... and every one is heard: nothing else plays, none skipped, each a short click that ends
+    a3-03 runtime   exit=1  1 RED
+        RED F3 each burble is a ~1.7 ms click and ends: no continuous or stuck tone
+    a3-03 inventory exit=1  3 RED
+        RED Q1 an idle voice plays the ambient tick
+        RED Q2 a gameplay cue cuts a playing ambient tick at once (2 ms fade) and starts
+        RED Q3 standing by a fountain for 40 ticks: 40 short bursts, each ends, nothing piles up, no stuck tone
+
+restored build exit=0; a3-hf2 parity exit=0, a3-03 runtime exit=0, a3-03 inventory exit=0
+mutations: 10, killed: 10, survived: 0

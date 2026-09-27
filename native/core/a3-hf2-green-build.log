@@ -1,0 +1,23 @@
+ninja: Entering directory `build-a3-hf2'
+[1/10] Building CXX object CMakeFiles/openu5_core.dir/src/ambient_sfx.cpp.obj
+[2/10] Linking CXX static library libopenu5_core.a
+[3/10] Building CXX object CMakeFiles/a3_03_sfx_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp.obj
+[4/10] Building CXX object CMakeFiles/a3_hf2_ambient_parity.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp.obj
+[5/10] Building CXX object CMakeFiles/a3_hf2_ambient_parity.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/a3_hf2_ambient_parity_test.cpp.obj
+[6/10] Building CXX object CMakeFiles/a3_03_sfx_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/a3_03_sfx_runtime_test.cpp.obj
+[7/10] Building CXX object CMakeFiles/a3_03_sfx_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_runtime.cpp.obj
+[8/10] Building CXX object CMakeFiles/a3_hf2_ambient_parity.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_runtime.cpp.obj
+[9/10] Linking CXX executable a3_hf2_ambient_parity.exe
+[10/10] Linking CXX executable a3_03_sfx_runtime.exe
+ninja: Entering directory `build-a3-hf2'
+[1/2] Building CXX object CMakeFiles/a3_03_sfx_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/a3_03_sfx_runtime_test.cpp.obj
+[2/2] Linking CXX executable a3_03_sfx_runtime.exe
+ninja: Entering directory `build-a3-hf2'
+[1/2] Building CXX object CMakeFiles/a3_03_sfx_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/a3_03_sfx_runtime_test.cpp.obj
+[2/2] Linking CXX executable a3_03_sfx_runtime.exe
+ninja: Entering directory `build-a3-hf2'
+[1/2] Building CXX object CMakeFiles/a3_03_sfx_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/a3_03_sfx_runtime_test.cpp.obj
+[2/2] Linking CXX executable a3_03_sfx_runtime.exe
+ninja: Entering directory `build-a3-hf2'
+[1/2] Building CXX object CMakeFiles/a3_03_sfx_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/a3_03_sfx_runtime_test.cpp.obj
+[2/2] Linking CXX executable a3_03_sfx_runtime.exe

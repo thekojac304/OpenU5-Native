@@ -8,7 +8,20 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 A3-HF1) — gameplay hotfix: the troll-encounter reward chest; Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 A3-HF2) — ambient SFX parity: the grandfather clock; Alpha 2 remains the released build; read this first
+>
+> **A3-HF2 is a small Alpha 3 audio-parity hotfix, not a release.** A3-04E.1 is closed and hardware-validated (`ALPHA3_AUDIO.md` §23.10).
+> - Hardware (A3-04E.1 image): beside a grandfather clock, every move was followed by a strike-like beep before the tick-tock. Cause: the device re-armed the clock's strike `[0x5884]` on every game-time **minute**; `advance_clock` 0x4f7c re-arms it only when the **hour** moves (0x514a). The model came from an unverified note, and A3-03's C2 row pinned it. Fixed in `service_ambient` (one line). See §14 "Alpha 3 A3-HF2" and `ALPHA3_AUDIO.md` §24.
+> - Fountain (an earlier, unconfirmed observation): **not reproduced**, no change. Standing still, it burbles in every 55 ms tick on the device-loop model.
+>
+> | | |
+> |---|---|
+> | Host suite | **144 / 144**, serial, 134.69 s. New: `a3_hf2_ambient_parity` 10 (RED 3 before the fix: K2, K3, K5). **10 / 10 mutations killed**; A3-03 M2 / M8 / M17 / M23 re-run, 4 / 4 killed. |
+> | Firmware | `3.0.0-alpha3-dev-a3-hf2-debug`, 977,360 B (`0xee9d0`), −32 B, 71,216 B (7 %) free, zero warnings. Image path, SHA-256 and `Git`: tag `alpha3-hf2-ambient-clock`. **Not flashed; hardware retest pending.** |
+> | SD | **Unchanged.** |
+> | Next | Hardware retest H-198 (`ALPHA2_HARDWARE_CHECKLIST.md`, "Alpha 3 A3-HF2"); H-197 is still pending. |
+>
+> ### CURRENT STATE (Alpha 3 A3-HF1) — gameplay hotfix: the troll-encounter reward chest — **superseded as the current state by A3-HF2 above.**
 >
 > **A3-HF1 is a small Alpha 3 gameplay hotfix, not a release.** The audio and performance batches A3-04, A3-04A, A3-04B, A3-04C, A3-04D and A3-04E are recorded in [`ALPHA3_AUDIO.md`](ALPHA3_AUDIO.md) §17–§22. The music-on render lag was instrumented in A3-04C (§20). Its runs traced the 0.8–1.5 s stalls to the SD diagnostic log, whose card shares the TFT's SPI bus, so A3-04D (§21) turns that log off by default behind a Developer switch. A3-04E (§22) removed the renderer's tick sleeps (every 16 rows: 9 per walking step, 37 in the menu-exit repaint, the ~400 ms maximum) and the main loop's zero-tick spin, each behind a Developer probe for the device A/B. Its image tripped the task watchdog on IDLE0 before validation; A3-04E.1 (§23) adds an observed idle-service guarantee (a one-tick block only when core 0's idle loop has not run for 200 ms), and the hardware closeout (§23.10, 2026-09-27) confirms it: no watchdog trip, core 0 idle gap at most 102.9 ms with the guard never needed in default pacing, and A3-04E's pacing validated on the device (walking step ~155 → ~88 ms, menu-exit repaint ~442 → ~184 ms). None of these batches changes gameplay.
 > - Hardware: after a random troll fight by the bridge near Britain, the chest opened but every `Get` answered "Nothing to get!". Cause: the arena Get refused any item whose counter was already full (99 / 9999), a rule native invented and the 1988 Get (SJOG 0x1458) does not have. The Developer "Stocked inventory" and "Combat" presets fill every such counter. Fixed in `apply_loot_grant`; nothing else moves. See §14 "Alpha 3 A3-HF1".
@@ -7829,3 +7842,45 @@ The fix touches no world or loose-object state and no save field. Characterized 
 - The arena is still not saved (a save inside it loads back to the world); that is how the port has always behaved and is not this report.
 - The sandalwood-box refusal (§7) is recorded, not changed.
 - No loot-balance, chest-content, RNG, UI or presentation change.
+
+## Alpha 3 A3-HF2 — ambient SFX parity: the grandfather clock's strike, and the fountain
+
+An audio-parity hotfix after the A3-04E.1 hardware closeout. The full write-up is [`ALPHA3_AUDIO.md`](ALPHA3_AUDIO.md) §24; this section records the adjudication on its own axis. No gameplay, RNG, save, UI, pacing, music or SD change.
+
+### 1. Observations
+
+| # | Report | Status in this batch |
+|---|---|---|
+| 1 | Beside a grandfather clock, every move is followed by a short strike-like beep, then the normal tick-tock (A3-04E.1 image; reproducible) | **confirmed defect** |
+| 2 | A fountain seemed to burble only briefly around movement (earlier image); normal in the latest hardware tests | **observation only**: reproduce or close |
+
+### 2. The original (ULTIMA.EXE, re-derived; `native/core/a3-hf2-derivation.log`)
+
+`advance_clock` 0x4f7c saves the hour in `[0x5880]` before adding the minutes (0x4fa0). At 0x514a–0x5151 it compares the new hour against that saved value and **skips the strike re-arm** (`je 0x5186`) unless the hour changed. Only after an hour change does 0x5164–0x5183 set `[0x5884]` to the hour on a 12-hour dial. A census of DS:0x5884 over ULTIMA.EXE and every overlay (`re/tools/a3_hf2_ds_census.py`) finds one writer site, that block. The known readers inside `ambient_sfx_tick` (0x4262 / 0x430e / 0x4323) serve as the positive control. In 0x4102, the strike replaces tick / tock at phases 0 / 4 while strikes remain, and counts down at phases 0 / 4 whatever the class. For the fountain, `getkey_with_redraw` 0x266c redraws, and so ticks 0x4102, on every idle pass. The fountain branch has no phase gate, so **standing still keeps burbling**.
+
+### 3. Classification
+
+| Obs. | Class | Why |
+|---|---|---|
+| 1 | **native defect**, inherited from an unverified note | `service_ambient` keyed the re-arm on the minute. `re/notes/ambient-audio-audit.md` §5.1 derived "re-armed every turn" but missed the 0x514a compare, and asked for a witness that never came. The TypeScript skin (`coreview.ts`) carries the same model; it is presentation-only and pinned by nothing. `a3_03_sfx_runtime` C2 pinned the defect (as with A3-HF1, a host row is not proof by itself). |
+| 2 | **not reproduced**, no change | On the device-loop model (real Board, timed SPI, idle wait, IdleService): 25 s standing still, 455 burbles, no 55 ms tick without one, none skipped. The device path has no movement dependency. The likely cause of the earlier observation is the long pre-A3-04D/E frames, which skip ambient ticks; that is an inference, not a finding. |
+
+### 4. Fix, tests, evidence
+
+- **Fix:** `alpha_runtime.cpp` `service_ambient`: the re-arm key is year / month / day / **hour** (was … / minute). One line; comments in `ambient_sfx.h`.
+- **New target `a3_hf2_ambient_parity`** (10 checks): K1–K6 clock (control; steps inside the hour; tick / tock after; 12:59 → 13:00 = one strike; later steps; 11:59 → noon = twelve), F1–F3 fountain (25 s standing still, heard, sustained after steps). **RED on unchanged production: K2 (21 strikes over six steps), K3, K5; 7 / 10.** GREEN 10 / 10 after.
+- **Corrected rows:** `a3_03_sfx_runtime` C2 (the step now crosses the hour) and M9 (arms by crossing the hour); 46 / 46.
+- **Mutations:** `tools/a3_hf2_mutation_check.py` **10 / 10 killed**; A3-03's M2 / M8 / M17 / M23 re-run against the corrected rows, **4 / 4 killed**.
+- **Suite:** **144 / 144**, serial, 134.69 s (`native/core/a3-hf2-ctest.log`).
+- **Firmware:** `3.0.0-alpha3-dev-a3-hf2-debug`, `0xee9d0` = 977,360 B (−32 B), 71,216 B free, zero warnings, IRAM unchanged, audio image guards GREEN. Image path, SHA-256 and `Git`: tag `alpha3-hf2-ambient-clock`. **Not flashed.** SD unchanged.
+
+### 5. Rows
+
+- **New: D-62 / H-198.** The grandfather clock struck after every step (the strike was re-armed on every minute). **Host fixed (A3-HF2); hardware retest pending** (`ALPHA2_HARDWARE_CHECKLIST.md`, "Alpha 3 A3-HF2").
+- The fountain observation gets no row: it was not reproduced.
+
+### 6. Not done in this batch
+
+- The TypeScript skin's per-turn re-arm (`game/src/skin/coreview.ts`) is recorded, not changed.
+- The original's extra 0x4102 tick per move redraw is not modelled (§16.4's cadence row), as before.
+- `PRESENTATION_DISPATCH` logging, renderer pacing, the idle service, music, SD logging and UI are untouched.

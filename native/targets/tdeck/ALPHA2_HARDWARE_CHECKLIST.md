@@ -1100,3 +1100,25 @@ Flash the A3-HF1 Launcher image (its path and SHA-256 are in tag `alpha3-hf1-are
 **FAIL:** report the step, what the screen showed, the `FW` / `Git` lines, and the `COMBAT_GET_REQUEST` / `COMBAT_GET_CANDIDATE` / `COMBAT_GET_RESULT` lines from `/ultima5/logs/` if you have them. **If it fails with an ordinary, not-maxed pack, that is a different defect. Say so.**
 
 *Known, do not file:* a save taken inside the arena loads back to the overworld without the arena. That was already true before this hotfix and is not this report.
+
+## Alpha 3 A3-HF2 — ambient SFX parity: the grandfather clock (2026-09-27)
+
+### Observation that opened it (Alpha 3 A3-04E.1 image)
+
+Beside a grandfather clock, every move was followed by a short strike-like beep, and then the normal tick-tock. Separately, and unconfirmed: on an earlier image a fountain seemed to burble only around movement. In the latest tests it sounded normal.
+
+**Host finding** (`ALPHA3_AUDIO.md` §24): the 1988 clock strikes only when the game hour changes (`advance_clock` 0x514a). The device re-armed the strike on every minute, so on every step. Fixed. The fountain was not reproduced: standing still, it burbles continuously in the host model of the device loop. No change.
+
+### Phase H-198 — grandfather clock and fountain · *new firmware; SD pack unchanged* · about 5 minutes · **PENDING**
+
+Flash the A3-HF2 Launcher image (its path and SHA-256 are in tag `alpha3-hf2-ambient-clock`). The boot screen should show `FW 3.0.0-alpha3-dev-a3-hf2-debug` and that tag's `Git`. Keep SFX Volume above 0 %.
+
+1. **Stand near a clock.** `Alt+D` → Teleport → Small map, location 2, X `13`, Y `2`. Stand still for 5 s: tick, tock (about two a second), with no strike.
+2. **Move several steps** near it, pausing between them. **No strike-like beep after any move**; the tick-tock just continues.
+3. **Stand still again** for 5 s: the tick-tock plays normally.
+4. **A real strike, if feasible.** Keep stepping beside the clock until the hour on the status line turns (each step is one minute). At the turn the clock strikes that hour on a 12-hour dial (three at 15:00, twelve at noon), then ticks again. The following steps strike nothing.
+5. **Fountain, standing still.** Teleport → Small map, location 1, X `6`, Y `25`. Stand still for 20–30 s without touching anything, and note whether the soft fast burble continues the whole time.
+
+**PASS:** steps 1–3 as described, a strike only at an hour change (step 4, if done), and the fountain continuous while standing still.
+
+**FAIL:** report the step, the time shown and the `FW` / `Git` lines. A strike after an ordinary step is a failure. A fountain that goes quiet while standing still is a new observation: say after how long, and whether the Developer SD diag log was on.

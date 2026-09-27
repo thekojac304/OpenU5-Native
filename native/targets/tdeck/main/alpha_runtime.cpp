@@ -2963,10 +2963,12 @@ void AlphaRuntime::service_ambient(int64_t now_us){
     const uint32_t tick=uint32_t(now_us/(int64_t(openu5::kSceneTickMs)*1000));
     if(tick==ambient_tick_)return;
     ambient_tick_=tick;
-    // advance_clock re-arms [0x5884] to the 12-hour clock (0x5164-0x5183); the
-    // device sees that as the game clock moving. A new world only records it.
+    // advance_clock 0x4f7c saves the hour in [0x5880] (0x4fa0) and re-arms
+    // [0x5884] to the 12-hour clock (0x5164-0x5183) only when the hour moved:
+    // 0x514a-0x5151 skip it (je 0x5186) while [0x587f] == [0x5880]. A step's
+    // minute strikes nothing (A3-HF2). A new world only records the hour.
     const auto &t=game_.time;
-    const int64_t key=((((int64_t(t.year)*13+t.month)*32+t.day)*24+t.hour)*60)+t.minute;
+    const int64_t key=(((int64_t(t.year)*13+t.month)*32+t.day)*24)+t.hour;
     if(ambient_clock_key_<0)ambient_clock_key_=key;
     else if(key!=ambient_clock_key_){ambient_clock_key_=key;ambient_.rearm(uint8_t(t.hour));}
     // getkey_with_redraw 0x266c redraws (and so ticks 0x4102) only outside

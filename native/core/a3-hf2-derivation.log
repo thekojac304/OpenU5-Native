@@ -1,0 +1,151 @@
+# A3-HF2 derivation: the grandfather clock's strike and the fountain's redraw cadence
+# ULTIMA.EXE / overlays from original/u5/ultima5 (git-ignored). Offsets: CS (dis16 --exe) unless noted.
+# Mnemonics only: the opcode-byte column is stripped (no EA bytes are committed).
+# Tools: re/tools/dis16.py; re/tools/a3_hf2_ds_census.py (every instruction naming DS:<addr>, FILE offsets; ULTIMA.EXE code = file - 0x800).
+
+## 1. advance_clock 0x4f7c: the old hour is saved before the minute is added
+4f7c: push bp
+4f7d: mov bp, sp
+4f7f: sub sp, 0xa
+4f82: push di
+4f83: push si
+4f84: cmp word ptr [bp + 4], 0
+4f88: jne 0x4f8d
+4f8a: jmp 0x50a1
+4f8d: cmp byte ptr [0x587a], 0x51
+4f92: jne 0x4fa0
+4f94: sar word ptr [bp + 4], 1
+4f97: cmp word ptr [bp + 4], 0
+4f9b: jne 0x4fa0
+4f9d: inc word ptr [bp + 4]
+4fa0: mov al, byte ptr [0x587f]
+4fa3: mov byte ptr [0x5880], al
+4fa6: cmp byte ptr [0x587a], 0x54
+4fab: je 0x4fc8
+...
+4fc8: cmp byte ptr [0x5881], 0x3b
+4fcd: ja 0x4fd2
+4fcf: jmp 0x50a1
+4fd2: sub byte ptr [0x5881], 0x3c
+4fd7: mov ax, 0x588c
+4fda: push ax
+4fdb: mov ax, 1
+4fde: push ax
+4fdf: call 0x3f36
+4fe2: inc byte ptr [0x587f]
+
+## 2. advance_clock 0x514a-0x5186: [0x5884] re-armed ONLY when the hour moved
+514a: mov al, byte ptr [0x5880]
+514d: cmp byte ptr [0x587f], al
+5151: je 0x5186
+5153: cmp byte ptr [0x5893], 0x21
+5158: jae 0x5164
+515a: cmp byte ptr [0x5895], 0x80
+515f: jae 0x5164
+5161: call 0x4a84
+5164: cmp byte ptr [0x587f], 0
+5169: jne 0x5172
+516b: mov byte ptr [0x5884], 0xc
+5170: jmp 0x5186
+5172: cmp byte ptr [0x587f], 0xc
+5177: jbe 0x5180
+5179: mov al, byte ptr [0x587f]
+517c: sub al, 0xc
+517e: jmp 0x5183
+5180: mov al, byte ptr [0x587f]
+5183: mov byte ptr [0x5884], al
+5186: cmp byte ptr [0x5893], 0
+518b: je 0x5197
+518d: cmp byte ptr [0x5893], 0x21
+5192: jae 0x5197
+5194: call 0x71aa
+5197: pop si
+5198: pop di
+5199: mov sp, bp
+
+## 3. Census: every reference to DS:0x5884 (the strike counter) in ULTIMA.EXE and all *.OVL
+## (positive control: 0x4a62/0x4b0e/0x4b23 are the known readers/decrement in ambient_sfx_tick 0x4262/0x430e/0x4323)
+ULTIMA.EXE 0x4a62 cmp byte ptr [0x5884], 0
+ULTIMA.EXE 0x4b0e cmp byte ptr [0x5884], 0
+ULTIMA.EXE 0x4b23 dec byte ptr [0x5884]
+ULTIMA.EXE 0x596b mov byte ptr [0x5884], 0xc
+ULTIMA.EXE 0x5983 mov byte ptr [0x5884], al
+
+## 4. ambient_sfx_tick 0x4262-0x42b0 (clock branch) and 0x430e-0x4337 (strike run-down, phase)
+4262: cmp byte ptr [0x5884], 0
+4267: je 0x4292
+4269: cmp byte ptr [0x6a34], 0
+426e: je 0x4277
+4270: cmp byte ptr [0x6a34], 4
+4275: jne 0x4292
+4277: mov ax, 0xc2c
+427a: push ax
+427b: mov ax, 1
+427e: push ax
+427f: mov ax, 0x7d0
+4282: push ax
+4283: mov ax, 0x4e20
+4286: push ax
+4287: mov ax, 0xfff6
+428a: push ax
+428b: call 0x2192
+428e: jmp 0x430e
+4290: nop 
+4291: nop 
+4292: cmp byte ptr [0x6a34], 0
+4297: jne 0x42a6
+4299: mov ax, 0xbb8
+429c: push ax
+429d: mov ax, 3
+430e: cmp byte ptr [0x5884], 0
+4313: je 0x4327
+4315: cmp byte ptr [0x6a34], 0
+431a: je 0x4323
+431c: cmp byte ptr [0x6a34], 4
+4321: jne 0x4327
+4323: dec byte ptr [0x5884]
+4327: inc byte ptr [0x6a34]
+432b: cmp byte ptr [0x6a34], 7
+4330: jbe 0x4337
+4332: mov byte ptr [0x6a34], 0
+4337: pop si
+4338: pop di
+
+## 5. getkey_with_redraw 0x266c: one redraw 0x5910 per pass while no key is down (not in 0x21-0x7f)
+267f: call 0x1b38
+2682: push ax
+2683: call 0x2032
+2686: mov si, ax
+2688: or si, si
+268a: jne 0x269d
+268c: cmp byte ptr [0x5893], 0x21
+2691: jb 0x269a
+2693: cmp byte ptr [0x5893], 0x7f
+2698: jbe 0x269d
+269a: call 0x5910
+269d: or si, si
+
+## 6. viewport_redraw 0x5910: the ambient call's gates
+5918: mov byte ptr [0x545e], 0xff
+591d: cmp byte ptr [0x587a], 0x54
+5922: jne 0x5929
+5924: mov byte ptr [0x5891], 0
+5929: cmp byte ptr [0x58a4], 0
+592e: jne 0x5933
+5930: jmp 0x5a1d
+5a13: cmp byte ptr [0x5891], 0
+5a18: je 0x5a1d
+5a1a: call 0x4102
+5a1d: mov byte ptr [0x5891], 1
+## Census DS:0x5891 (the redraw's ambient gate): 0xff (0x267a), 0 under An Tym (0x5924), 1 after each redraw (0x5a1d)
+ULTIMA.EXE 0x2e7a mov byte ptr [0x5891], 0xff
+ULTIMA.EXE 0x6124 mov byte ptr [0x5891], 0
+ULTIMA.EXE 0x6133 cmp byte ptr [0x5891], 0
+ULTIMA.EXE 0x613a cmp byte ptr [0x5891], 0xff
+ULTIMA.EXE 0x6213 cmp byte ptr [0x5891], 0
+ULTIMA.EXE 0x621d mov byte ptr [0x5891], 1
+## Census DS:0x58a4 (the redraw's whole-body gate 0x5929; written only at the two sites below; the port does not model it -- pre-existing residue declared in defectos-d3d6d7-acta.md; A3-HF2 does not change it)
+MAINOUT.OVL 0x11 mov byte ptr [0x58a4], al
+TOWN.OVL 0x121d mov byte ptr [0x58a4], 1
+ULTIMA.EXE 0x42ed cmp byte ptr [0x58a4], 0
+ULTIMA.EXE 0x6129 cmp byte ptr [0x58a4], 0

@@ -19,7 +19,8 @@
 // 0x5910, which the key wait getkey_with_redraw 0x266c calls once per pass,
 // each pass spending delay(1) = one 55 ms BIOS tick while no key is down, and
 // only when g_location < 0x21 or > 0x7f (never in a dungeon). [0x5884] is
-// re-armed to the 12-hour clock by advance_clock (0x5164-0x5183).
+// re-armed to the 12-hour clock by advance_clock (0x5164-0x5183), and only
+// when that call moved the hour (0x514a: A3-HF2).
 //
 // Pure: no GameState, no clock, no RNG.
 namespace openu5 {
@@ -43,7 +44,7 @@ class AmbientTicker {
   public:
     /** A new world (load, title, New Journey): the redraw counters start over. */
     void reset() { phase_ = 0, chimes_ = 0; }
-    /** advance_clock ran: [0x5884] = the 12-hour hour. */
+    /** advance_clock moved the hour (0x514a): [0x5884] = the 12-hour hour. */
     void rearm(uint8_t hour) { chimes_ = ambient_chime_hour(hour); }
     /** One 0x4102 call for the nearest class; the cue it plays (None = silent pass). */
     SfxId tick(uint8_t nearest_class);

@@ -9,7 +9,7 @@
 // openu5::SfxPlayer the test pulls PCM from.
 //
 //   F  a real fountain: one burble per 55 ms tick, short, stops out of range, muted at 0 %
-//   C  a real clock: tick / tock, and the hour struck after the clock moves
+//   C  a real clock: tick / tock, and the hour struck after a step crosses the hour
 //   V  combat victory through the real engine (trolls, enemy 41, and another
 //      arena): exactly one fanfare, none for a lost battle or an escape, and
 //      exploration returns at the same instant with or without audio
@@ -499,7 +499,10 @@ int main(int argc, char **argv) {
         std::printf("  clock: %zu ticks, %zu tocks in 1.76 s\n", ticks, tocks);
         check(at && ticks == 4 && tocks == 4 && synth.count_after(SfxId::AmbientClockChime, t0) == 0,
               "C1 a real clock ticks and tocks, one of each per 8 ticks (440 ms)");
-        // a step passes time: advance_clock re-arms [0x5884], and the clock strikes the hour
+        // a step across the hour: advance_clock re-arms [0x5884] only when the hour
+        // moves (0x514a je 0x5186 -- A3-HF2; A3-03 re-armed on every minute, so
+        // this row once struck on the 12:55 step), and the clock strikes the new hour
+        h.rt->game().time.minute = 59;
         h.down();
         h.up();
         const int hour12 = ambient_chime_hour(uint8_t(h.rt->game().time.hour));
@@ -507,8 +510,9 @@ int main(int argc, char **argv) {
         h.run(2200 + 440 * hour12, [&] { synth.pull(5); });
         const size_t chimes = synth.count_after(SfxId::AmbientClockChime, t1);
         std::printf("  after the clock moved (hour %d): %zu chimes\n", int(h.rt->game().time.hour), chimes);
-        check(chimes >= size_t(hour12) && chimes <= size_t(hour12) + 1 && h.rt->ambient().chimes() == 0,
-              "C2 after the clock moves it strikes the 12-hour hour, then goes back to tick / tock");
+        check(h.rt->game().time.hour == 13 && chimes >= size_t(hour12) && chimes <= size_t(hour12) + 1 &&
+                  h.rt->ambient().chimes() == 0,
+              "C2 after a step crosses the hour it strikes the new 12-hour hour, then goes back to tick / tock");
     }
 
     // ---- V: combat victory -------------------------------------------------------
@@ -915,12 +919,20 @@ int main(int argc, char **argv) {
         Run h(67, false);
         h.rt->configure_audio(g_real, &synth);
         h.teleport(DebugDestinationKind::SmallMap, uint8_t(clock.location), 0, clock.x, clock.y);
+        // A3-HF2: only a step across the hour arms a strike. 11:59 -> noon arms
+        // twelve, which outlast the probe below (one o'clock's single strike rings
+        // before it). The 12:55 -> 11:59 edit is an hour change of its own: it
+        // strikes eleven, run down here before the save.
+        h.rt->game().time.hour = 11;
+        h.rt->game().time.minute = 59;
+        h.run(3000, [&] { synth.pull(5); });
         h.menu_save();
         h.run(110, [&] { synth.pull(5); });
+        const bool quiet = h.rt->ambient().chimes() == 0;
         h.down();
-        h.up(); // the clock moves: [0x5884] = the hour
+        h.up(); // the hour moves: [0x5884] = the new hour
         h.run(60, [&] { synth.pull(5); });
-        const bool armed = h.rt->ambient().chimes() > 0;
+        const bool armed = quiet && h.rt->game().time.hour == 12 && h.rt->ambient().chimes() > 0;
         h.key('l', true);
         const auto t0 = h.now();
         h.run(2200, [&] { synth.pull(5); });

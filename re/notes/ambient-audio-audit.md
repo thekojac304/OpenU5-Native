@@ -152,6 +152,14 @@ ENTRELAZADA y necesita testigo para no fabricar el patrón audible:
   el testigo BP 0x428b-vs-0x42a1 queda en la cola del usuario; si lo refuta, el knob es
   el re-armado (p. ej. sólo al CAMBIAR de hora), no la selección.
 
+  **CORRECCIÓN (A3-HF2, 2026-09-27) — el modelo «re-arma cada turno» es FALSO, refutado por los bytes.**
+  `advance_clock` 0x4f7c guarda la hora en `[0x5880]` ANTES de sumar (0x4fa0 `mov al,[0x587f]; mov [0x5880],al`)
+  y en 0x514a-0x5151 (`mov al,[0x5880]; cmp [0x587f],al; je 0x5186`) SALTA el bloque 0x5164-0x5183 si la hora
+  no cambió. ⇒ `[0x5884]` se re-arma **sólo al cambiar de hora** (el knob que esta nota ya nombraba). Censo de
+  DS:0x5884 en ULTIMA.EXE + todos los .OVL (`re/tools/a3_hf2_ds_census.py`): un único sitio escritor (0x516b/0x5183).
+  El port nativo lo corrigió en A3-HF2 (`ALPHA3_AUDIO.md` §24; `native/core/a3-hf2-derivation.log`). La piel TS
+  (`skin/coreview.ts` `notifyTurn`) sigue con el modelo viejo: sólo presentación, sin fixture que la fije.
+
 ### 5.2 Clase 4 — Codex/estantería (`0x5c–0x5f`) — spec exacto, sin cablear
 
 Condición (`0x41f8–0x420b`): `buf[0xab02+off]==0` (capa BASE vacía) **Y**
