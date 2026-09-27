@@ -1,0 +1,5 @@
+ninja: Entering directory `build-a3-hf2-1-base'
+[1/4] Building CXX object CMakeFiles/a3_hf2_1_dispatch_log.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp.obj
+[2/4] Building CXX object CMakeFiles/a3_hf2_1_dispatch_log.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/a3_hf2_1_dispatch_log_test.cpp.obj
+[3/4] Building CXX object CMakeFiles/a3_hf2_1_dispatch_log.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/alpha_runtime.cpp.obj
+[4/4] Linking CXX executable a3_hf2_1_dispatch_log.exe

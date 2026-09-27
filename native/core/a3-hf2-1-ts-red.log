@@ -1,0 +1,195 @@
+
+ RUN  v3.2.7 C:/Dev/OpenU5-Native/game
+
+ ❯ tests/sfx-bus.test.ts (38 tests | 6 failed | 29 skipped) 20ms
+   ↓ core/sfx — constructores y mapeadores puros > sfxEvent produce un GameEvent de kind 'sfx' con el cue
+   ↓ core/sfx — constructores y mapeadores puros > sfxForCombatEvent: el golpe suena POR BANDO (kernel 0x3564): PJ = heavy; enemigo = golpe; muerte = derrota
+   ↓ core/sfx — constructores y mapeadores puros > cofre atrapado en el arena ('Trapped!') suena dungeon-trap (kernel 0x2fd0 @0x2fe3)
+   ↓ core/sfx — constructores y mapeadores puros > un fallo (miss) o un movimiento no suenan
+   ↓ core/sfx — constructores y mapeadores puros > la huida del PJ ('Escape!') suena combat-escape; otros mensajes no (#52)
+   ↓ CoreViewImpl — enrutado de cues a onSfx > notifyTurn extrae los cues 'sfx' del turno y los publica en orden
+   ↓ CoreViewImpl — enrutado de cues a onSfx > emitSfx publica un cue directo (camino de combate/casting)
+   ↓ CoreViewImpl — enrutado de cues a onSfx > un listener sin onSfx no rompe el enrutado
+   ↓ Game.camp — partitura de la aparición (§4.7a) > emite materialización → arpegio → [campanilla+acorde] POR miembro vivo, en orden
+   ↓ Game.camp — partitura de la aparición (§4.7a) > el texto 'An apparition!' precede a la materialización y el arpegio le sigue
+   ↓ Game.camp — partitura de la aparición (§4.7a) > un miembro muerto no recibe campanilla de cura
+   ↓ Game.camp — partitura de la aparición (§4.7a) > cierra con el discurso de KARMA ('\n' + record entrecomillado) + 'vanishes' (0x090e-0x0964)
+   ↓ Game.camp — partitura de la aparición (§4.7a) > karma ≥ 80 recita el rec5 de KARMA.DAT (offset fijo 0x29f, 0x0940) — no el rec4 del refuge
+   ↓ Game.search — remate #3: search-fail + dungeon-trap > un (S)earch sin hallazgo es MUDO (07-25: el NB @0x237 no es de este camino — testigo del usuario; RE-ATRIBUIDO #54 pieza 6: ese NB es el «Plague!» de search_remains_outcome 0x1f2, no un «spring de trampa»)
+   ↓ Game.search — remate #3: search-fail + dungeon-trap > la DETECCIÓN de trampa por search es MUDA (re-baseline audio-costuras: trapCheck SJOG 0x2ea sin speaker)
+   ↓ Game.search — remate #3: search-fail + dungeon-trap > ABRIR un cofre-objeto atrapado dispara el bang 0x2fd0 (dungeon-trap) + blips de daño 0x2a52
+   ↓ Game.move — bump de pared emite move-blocked (MAINOUT 0x0344 / TOWN 0x0849) > chocar contra un tile no transitable emite move-blocked (bump)
+   ↓ Game.move — bump de pared emite move-blocked (MAINOUT 0x0344 / TOWN 0x0849) > un paso EXITOSO emite move-step (footstep) y no el bump
+   ↓ core/sfx — clasificación de tiles de ambiente (0x4102 §1a) > Clock 0xfa/0xfb=1, Waterfall 0xd4–d7=2, Fountain 0xd8–db=3, resto=0
+   ↓ core/sfx — ambientCueForTiles: el animado MÁS CERCANO gana (0x4102) > una fuente en el viewport → ambient-fountain
+   ↓ core/sfx — ambientCueForTiles: el animado MÁS CERCANO gana (0x4102) > una cascada → ambient-waterfall
+   ↓ core/sfx — ambientCueForTiles: el animado MÁS CERCANO gana (0x4102) > sin tile animado → null
+   ↓ core/sfx — ambientCueForTiles: el animado MÁS CERCANO gana (0x4102) > fuente (dist 1) vence a cascada (dist 4): gana la más cercana
+   ↓ core/sfx — ambientCueForTiles: el animado MÁS CERCANO gana (0x4102) > EMPATE de distancia: gana la de menor x (barrido del asm x-externo)
+   ↓ core/sfx — ambientCueForTiles: el animado MÁS CERCANO gana (0x4102) > el reloj SÓLO suena en fase 0 (tic) y 4 (tac); resto MUDO
+   ↓ core/sfx — ambientCueForTiles: el animado MÁS CERCANO gana (0x4102) > con [0x5884]≠0 el reloj DA LA HORA (chime 0x428b) en fase 0/4; resto MUDO igual
+   ↓ core/sfx — ambientCueForTiles: el animado MÁS CERCANO gana (0x4102) > chimeHour12 = [0x5884] (0x5164-0x5183): 0→12, 13→1, 12→12, 7→7
+   ↓ CoreViewImpl.ambientSfx — lee el mapa CRUDO y enruta por onSfx (0x4102) > fuente 2 casillas al este del party → emite ambient-fountain y lo devuelve
+   ↓ CoreViewImpl.ambientSfx — lee el mapa CRUDO y enruta por onSfx (0x4102) > sin animado cerca → null y NO emite nada
+   × CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) > TS-K1 12:55 → un minuto (12:56): NINGUNA campanada; tic/tac normal 10ms
+     → expected { chime: 4, tick: +0, tock: +0, …(1) } to match object { chime: +0, tick: 2, tock: 2 }
+(1 matching property omitted from actual)
+   × CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) > TS-K2 varios pasos dentro de la hora (12:55 → 12:59): ninguna campanada tras ninguno 1ms
+     → expected { chime: 2, tick: +0, tock: +0, …(1) } to match object { chime: +0, tick: 1, tock: 1 }
+(1 matching property omitted from actual)
+   ✓ CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) > TS-K3 12:59 → 13:00 da UNA campanada (13 = la una en la esfera) y vuelve el tic/tac 1ms
+   × CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) > TS-K4 tras cruzar la hora, más pasos dentro de 13:xx no re-arman nada 1ms
+     → expected { chime: 1, tick: +0, tock: 1, …(1) } to match object { chime: +0, tick: 1, tock: 1 }
+(1 matching property omitted from actual)
+   ✓ CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) > TS-K5 mediodía (11:59 → 12:00) y medianoche (23:59 → 00:00, cambio de día) dan DOCE 2ms
+   × CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) > TS-K6 un turno que cuesta varios minutos arma sólo si cruza la hora (12:50 +5 no; 12:58 +2 sí) 1ms
+     → expected 4 to be +0 // Object.is equality
+   × CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) > TS-K7 un turno REAL (Game.pass al aire libre, 2 min) a las 12:55 no da campanada 2ms
+     → expected { chime: 4, tick: +0, tock: +0, …(1) } to match object { chime: +0, tick: 2, tock: 2 }
+(1 matching property omitted from actual)
+   × CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) > TS-K8 cargar partida a OTRA hora no arma y suelta lo pendiente: la carga registra la hora 1ms
+     → r.view.resetAmbientClock is not a function
+   ✓ CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) > TS-K9 un turno de 24 h exactas (misma hora, otro día) SÍ arma: cada acarreo de hora re-armó 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/sfx-bus.test.ts > CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) > TS-K1 12:55 → un minuto (12:56): NINGUNA campanada; tic/tac normal
+AssertionError: expected { chime: 4, tick: +0, tock: +0, …(1) } to match object { chime: +0, tick: 2, tock: 2 }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "chime": 0,
+-   "tick": 2,
+-   "tock": 2,
++   "chime": 4,
++   "tick": 0,
++   "tock": 0,
+  }
+
+ ❯ tests/sfx-bus.test.ts:486:24
+    484|     r.turn(1);
+    485|     expect(r.clock()).toBe("12:56");
+    486|     expect(r.idle(16)).toMatchObject({ chime: 0, tick: 2, tock: 2 });
+       |                        ^
+    487|   });
+    488| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/sfx-bus.test.ts > CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) > TS-K2 varios pasos dentro de la hora (12:55 → 12:59): ninguna campanada tras ninguno
+AssertionError: expected { chime: 2, tick: +0, tock: +0, …(1) } to match object { chime: +0, tick: 1, tock: 1 }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "chime": 0,
+-   "tick": 1,
+-   "tock": 1,
++   "chime": 2,
++   "tick": 0,
++   "tock": 0,
+  }
+
+ ❯ tests/sfx-bus.test.ts:494:25
+    492|     for (let i = 0; i < 4; i++) {
+    493|       r.turn(1);
+    494|       expect(r.idle(8)).toMatchObject({ chime: 0, tick: 1, tock: 1 });
+       |                         ^
+    495|     }
+    496|     expect(r.clock()).toBe("12:59");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/sfx-bus.test.ts > CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) > TS-K4 tras cruzar la hora, más pasos dentro de 13:xx no re-arman nada
+AssertionError: expected { chime: 1, tick: +0, tock: 1, …(1) } to match object { chime: +0, tick: 1, tock: 1 }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "chime": 0,
+-   "tick": 1,
++   "chime": 1,
++   "tick": 0,
+    "tock": 1,
+  }
+
+ ❯ tests/sfx-bus.test.ts:516:25
+    514|     for (let i = 0; i < 3; i++) {
+    515|       r.turn(1);
+    516|       expect(r.idle(8)).toMatchObject({ chime: 0, tick: 1, tock: 1 });
+       |                         ^
+    517|     }
+    518|     expect(r.clock()).toBe("13:03");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/sfx-bus.test.ts > CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) > TS-K6 un turno que cuesta varios minutos arma sólo si cruza la hora (12:50 +5 no; 12:58 +2 sí)
+AssertionError: expected 4 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 4
+
+ ❯ tests/sfx-bus.test.ts:542:30
+    540|     a.idle(8);
+    541|     a.turn(5);
+    542|     expect(a.idle(16).chime).toBe(0);
+       |                              ^
+    543|     const b = rig(12, 58);
+    544|     b.idle(8);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/sfx-bus.test.ts > CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) > TS-K7 un turno REAL (Game.pass al aire libre, 2 min) a las 12:55 no da campanada
+AssertionError: expected { chime: 4, tick: +0, tock: +0, …(1) } to match object { chime: +0, tick: 2, tock: 2 }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "chime": 0,
+-   "tick": 2,
+-   "tock": 2,
++   "chime": 4,
++   "tick": 0,
++   "tock": 0,
+  }
+
+ ❯ tests/sfx-bus.test.ts:556:24
+    554|     expect(r.game.state.time.hour).toBe(12);
+    555|     expect(r.game.state.time.minute).toBeGreaterThan(55);
+    556|     expect(r.idle(16)).toMatchObject({ chime: 0, tick: 2, tock: 2 });
+       |                        ^
+    557|   });
+    558| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/sfx-bus.test.ts > CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) > TS-K8 cargar partida a OTRA hora no arma y suelta lo pendiente: la carga registra la hora
+TypeError: r.view.resetAmbientClock is not a function
+ ❯ tests/sfx-bus.test.ts:568:12
+    566|     expect(r.idle(1).ids).toEqual([]); // …que el tick de fase 1 obser…
+    567|     r.game.state.time = { ...r.game.state.time, hour: 17, minute: 20 };
+    568|     r.view.resetAmbientClock();
+       |            ^
+    569|     r.view.notifyTurn([{ kind: "map-changed" }]);
+    570|     expect(r.idle(16)).toMatchObject({ chime: 0, tick: 2, tock: 2 });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 3 passed | 29 skipped (38)
+   Start at  14:13:22
+   Duration  1.38s (transform 565ms, setup 0ms, collect 908ms, tests 20ms, environment 0ms, prepare 130ms)
+

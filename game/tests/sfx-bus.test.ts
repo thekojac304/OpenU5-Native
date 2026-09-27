@@ -22,6 +22,7 @@ import type { GameEvent } from "../src/core/game.js";
 import type { Game } from "../src/core/game.js";
 import { Game as GameClass, type CombatResources, type GameData } from "../src/core/game.js";
 import type { CharacterState, ExtractedInitialState, GameState } from "../src/core/state.js";
+import { advanceMinutes } from "../src/core/time.js";
 import type { RandFn } from "../src/core/world/survival.js";
 import type { WorldData } from "../src/core/world/map.js";
 import { describeConAssets } from "./assets-opcionales.js";
@@ -422,5 +423,165 @@ describe("CoreViewImpl.ambientSfx — lee el mapa CRUDO y enruta por onSfx (0x41
     view.subscribe({ onSfx: (c) => heard.push(c) });
     expect(view.ambientSfx(0)).toBeNull();
     expect(heard).toEqual([]);
+  });
+});
+
+/**
+ * A3-HF2.1 — la CAMPANADA del reloj se arma SÓLO cuando cambia la hora.
+ * `advance_clock` 0x4f7c guarda la hora en `[0x5880]` (0x4fa0) y 0x514a-0x5151
+ * (`mov al,[0x5880]; cmp [0x587f],al; je 0x5186`) SALTAN el re-armado 0x5164-0x5183
+ * si la hora no cambió; `[0x5884]` no tiene otro escritor (censo A3-HF2,
+ * `native/core/a3-hf2-derivation.log`). El modelo previo de la piel («re-arma en cada
+ * turno», ambient-audio-audit §5.1) queda refutado. Mismas filas que el nativo
+ * `a3_hf2_ambient_parity` K1-K6, sobre el `CoreViewImpl` real.
+ */
+describe("CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1)", () => {
+  type Heard = { chime: number; tick: number; tock: number; ids: string[] };
+  /** Mundo de hierba con un reloj 0xfa pegado al este del party (20,20). */
+  const clockWorld = (): WorldData => {
+    const grid = Array.from({ length: 64 }, () => Array.from({ length: 64 }, () => 5));
+    grid[20]![21] = 0xfa;
+    return { overworld: grid, underworld: grid, smallMaps: new Map() };
+  };
+  /** Reloj de pared de la piel fiel: `tickAmbient` = ambientSfx(fase) + fase=(fase+1)&7. */
+  const rig = (hour: number, minute: number) => {
+    const game = makeGame([makeChar()], clockWorld());
+    game.state.time.hour = hour;
+    game.state.time.minute = minute;
+    const view = new CoreViewImpl(game);
+    let phase = 0;
+    let heard: string[] = [];
+    view.subscribe({ onSfx: (c) => heard.push(c.id) });
+    /** `n` ticks de ambiente (55 ms cada uno en la piel); lo oído en ellos. */
+    const idle = (n: number): Heard => {
+      heard = [];
+      for (let i = 0; i < n; i++) {
+        view.ambientSfx(phase);
+        phase = (phase + 1) & 7;
+      }
+      const count = (id: string) => heard.filter((h) => h === id).length;
+      return {
+        chime: count("ambient-clock-chime"),
+        tick: count("ambient-clock-tick"),
+        tock: count("ambient-clock-tock"),
+        ids: heard,
+      };
+    };
+    /** Un turno de `minutes` minutos: advance_clock(n) + el `notifyTurn` de main.ts. */
+    const turn = (minutes: number): void => {
+      game.state.time = advanceMinutes(game.state.time, minutes);
+      view.notifyTurn([]);
+    };
+    const clock = () =>
+      `${String(game.state.time.hour).padStart(2, "0")}:${String(game.state.time.minute).padStart(2, "0")}`;
+    return { game, view, idle, turn, clock };
+  };
+
+  it("TS-K1 12:55 → un minuto (12:56): NINGUNA campanada; tic/tac normal", () => {
+    const r = rig(12, 55);
+    const before = r.idle(16); // control: tic/tac antes del paso
+    expect(before).toMatchObject({ chime: 0, tick: 2, tock: 2 });
+    r.turn(1);
+    expect(r.clock()).toBe("12:56");
+    expect(r.idle(16)).toMatchObject({ chime: 0, tick: 2, tock: 2 });
+  });
+
+  it("TS-K2 varios pasos dentro de la hora (12:55 → 12:59): ninguna campanada tras ninguno", () => {
+    const r = rig(12, 55);
+    r.idle(8);
+    for (let i = 0; i < 4; i++) {
+      r.turn(1);
+      expect(r.idle(8)).toMatchObject({ chime: 0, tick: 1, tock: 1 });
+    }
+    expect(r.clock()).toBe("12:59");
+  });
+
+  it("TS-K3 12:59 → 13:00 da UNA campanada (13 = la una en la esfera) y vuelve el tic/tac", () => {
+    const r = rig(12, 59);
+    r.idle(8);
+    r.turn(1);
+    expect(r.clock()).toBe("13:00");
+    const h = r.idle(16);
+    // La campanada sustituye al tic de la fase 0; en la fase 4 el contador ya es 0 → tac.
+    expect(h.ids).toEqual(["ambient-clock-chime", "ambient-clock-tock", "ambient-clock-tick", "ambient-clock-tock"]);
+  });
+
+  it("TS-K4 tras cruzar la hora, más pasos dentro de 13:xx no re-arman nada", () => {
+    const r = rig(12, 59);
+    r.idle(8);
+    r.turn(1);
+    r.idle(8); // se agota la una
+    for (let i = 0; i < 3; i++) {
+      r.turn(1);
+      expect(r.idle(8)).toMatchObject({ chime: 0, tick: 1, tock: 1 });
+    }
+    expect(r.clock()).toBe("13:03");
+  });
+
+  it("TS-K5 mediodía (11:59 → 12:00) y medianoche (23:59 → 00:00, cambio de día) dan DOCE", () => {
+    for (const [h, m] of [
+      [11, 59],
+      [23, 59],
+    ] as const) {
+      const r = rig(h, m);
+      r.idle(8);
+      r.turn(1);
+      const heard = r.idle(8 * 8); // doce campanadas = 24 fases 0/4 → sobra
+      expect(heard.chime).toBe(12);
+      // Tras la última campanada, el tic/tac sigue sin reiniciar la fase.
+      const last = heard.ids.lastIndexOf("ambient-clock-chime");
+      expect(heard.ids.slice(last + 1).length).toBeGreaterThan(0);
+      expect(heard.ids.slice(last + 1).every((id) => id !== "ambient-clock-chime")).toBe(true);
+    }
+  });
+
+  it("TS-K6 un turno que cuesta varios minutos arma sólo si cruza la hora (12:50 +5 no; 12:58 +2 sí)", () => {
+    const a = rig(12, 50);
+    a.idle(8);
+    a.turn(5);
+    expect(a.idle(16).chime).toBe(0);
+    const b = rig(12, 58);
+    b.idle(8);
+    b.turn(2);
+    expect(b.clock()).toBe("13:00");
+    expect(b.idle(16).chime).toBe(1);
+  });
+
+  it("TS-K7 un turno REAL (Game.pass al aire libre, 2 min) a las 12:55 no da campanada", () => {
+    const r = rig(12, 55);
+    r.idle(8);
+    r.view.notifyTurn(r.game.pass());
+    expect(r.game.state.time.hour).toBe(12);
+    expect(r.game.state.time.minute).toBeGreaterThan(55);
+    expect(r.idle(16)).toMatchObject({ chime: 0, tick: 2, tock: 2 });
+  });
+
+  it("TS-K8 cargar partida a OTRA hora no arma y suelta lo pendiente: la carga registra la hora", () => {
+    // main.ts `applyLoadedState`: Object.assign(game.state, loaded) → resetAmbientClock()
+    // → notifyTurn(map-changed). Cargar no pasa por advance_clock, así que no hay 0x514a;
+    // la campanada armada y aún no oída se suelta (como `reset_ambient` nativo, M9).
+    const r = rig(12, 59);
+    expect(r.idle(9).chime).toBe(0); // la fase queda en 1
+    r.turn(1); // 13:00: una campanada armada…
+    expect(r.idle(1).ids).toEqual([]); // …que el tick de fase 1 observa pero aún no da (sólo 0/4)
+    r.game.state.time = { ...r.game.state.time, hour: 17, minute: 20 };
+    r.view.resetAmbientClock();
+    r.view.notifyTurn([{ kind: "map-changed" }]);
+    expect(r.idle(16)).toMatchObject({ chime: 0, tick: 2, tock: 2 });
+    // …y el reloj sigue vivo: el paso que cruza la hora de la partida cargada SÍ arma.
+    r.game.state.time = { ...r.game.state.time, minute: 59 };
+    r.turn(1);
+    expect(r.idle(8 * 8).chime).toBe(6); // 18:00 → seis en la esfera de 12 h
+  });
+
+  it("TS-K9 un turno de 24 h exactas (misma hora, otro día) SÍ arma: cada acarreo de hora re-armó", () => {
+    // Clave año/mes/día/hora, la de `service_ambient` nativo: en el original cada una de
+    // las llamadas de un acarreo que cruzan una hora re-arma, y la última deja la hora final.
+    const r = rig(15, 10);
+    r.idle(8);
+    r.turn(24 * 60);
+    expect(r.clock()).toBe("15:10");
+    expect(r.game.state.time.day).toBe(8);
+    expect(r.idle(8 * 4).chime).toBe(3);
   });
 });

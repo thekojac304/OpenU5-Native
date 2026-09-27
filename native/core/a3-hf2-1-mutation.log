@@ -1,0 +1,73 @@
+# A3-HF2.1 mutation validation (2026-09-27 14:13)
+
+N1 logged on every frame again (the A3-04E.1 flood) [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf2_1_dispatch_log exit=1  6 RED
+        RED P1 standing still 5 s on open land: 91 frames drawn, 91 PRESENTATION_DISPATCH lines (nothing changed, nothing logged)
+        RED P2 six steps: 39 frames drawn, 39 PRESENTATION_DISPATCH lines
+        RED P3 Z opens a modal and Cancel closes it: one line each way (38: ui=party combat=0 dungeon=0 source=world / ui=explore combat=0 dungeon=0 source=world)
+        RED P4 a roaming troll's attack moves the source to the arena: 73 line(s) name source=combat, 73 in all over 73 frames
+        RED P6 camping moves the source to the camp scene and back: 1 camp-scene line(s), 548 source-only change(s), 551 lines over 551 frames
+        RED P5 the whole session's 242 PRESENTATION_DISPATCH lines hold no repeat of the previous one (238 repeats)
+N2 never logged [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf2_1_dispatch_log exit=1  5 RED
+        RED P0 the first gameplay frame logs its presentation source once (0 line(s))
+        RED P3 Z opens a modal and Cancel closes it: one line each way (0: none)
+        RED P4 a roaming troll's attack moves the source to the arena: 0 line(s) name source=combat, 0 in all over 73 frames
+        RED P6 camping moves the source to the camp scene and back: 0 camp-scene line(s), 0 source-only change(s), 0 lines over 551 frames
+        RED P5 the whole session's 0 PRESENTATION_DISPATCH lines hold no repeat of the previous one (0 repeats)
+N3 a UI-mode change is not compared [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf2_1_dispatch_log exit=1  1 RED
+        RED P3 Z opens a modal and Cancel closes it: one line each way (0: none)
+N4 a source change is not compared [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf2_1_dispatch_log exit=1  1 RED
+        RED P6 camping moves the source to the camp scene and back: 1 camp-scene line(s), 0 source-only change(s), 3 lines over 551 frames
+N5 the logged mode is never remembered [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf2_1_dispatch_log exit=1  6 RED
+        RED P1 standing still 5 s on open land: 91 frames drawn, 91 PRESENTATION_DISPATCH lines (nothing changed, nothing logged)
+        RED P2 six steps: 39 frames drawn, 39 PRESENTATION_DISPATCH lines
+        RED P3 Z opens a modal and Cancel closes it: one line each way (38: ui=party combat=0 dungeon=0 source=world / ui=explore combat=0 dungeon=0 source=world)
+        RED P4 a roaming troll's attack moves the source to the arena: 73 line(s) name source=combat, 73 in all over 73 frames
+        RED P6 camping moves the source to the camp scene and back: 1 camp-scene line(s), 548 source-only change(s), 551 lines over 551 frames
+        RED P5 the whole session's 242 PRESENTATION_DISPATCH lines hold no repeat of the previous one (238 repeats)
+N6 the logged source is never remembered [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf2_1_dispatch_log exit=1  6 RED
+        RED P1 standing still 5 s on open land: 91 frames drawn, 91 PRESENTATION_DISPATCH lines (nothing changed, nothing logged)
+        RED P2 six steps: 39 frames drawn, 39 PRESENTATION_DISPATCH lines
+        RED P3 Z opens a modal and Cancel closes it: one line each way (38: ui=party combat=0 dungeon=0 source=world / ui=explore combat=0 dungeon=0 source=world)
+        RED P4 a roaming troll's attack moves the source to the arena: 73 line(s) name source=combat, 73 in all over 73 frames
+        RED P6 camping moves the source to the camp scene and back: 1 camp-scene line(s), 548 source-only change(s), 551 lines over 551 frames
+        RED P5 the whole session's 242 PRESENTATION_DISPATCH lines hold no repeat of the previous one (238 repeats)
+T1 re-armed on every turn again (the refuted section 5.1 model) [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (7 failed | 31 passed (38))
+        RED CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) 
+        RED CoreViewImpl — enrutado de cues a onSfx 
+T2 never re-armed [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (5 failed | 33 passed (38))
+        RED CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) 
+T3 re-armed on every ambient tick [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (9 failed | 29 passed (38))
+        RED CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) 
+T4 the key carries the minute (native A3-03's defect) [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (5 failed | 33 passed (38))
+        RED CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) 
+T5 the key drops the day [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (1 failed | 37 passed (38))
+        RED CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) 
+T6 the first observation arms instead of recording [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (5 failed | 33 passed (38))
+        RED CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) 
+T7 a load keeps the pending strikes [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (1 failed | 37 passed (38))
+        RED CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) 
+T8 a load keeps the recorded hour [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (1 failed | 37 passed (38))
+        RED CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) 
+T9 the 24-hour hour is struck (0x5164-0x5183 dial dropped) [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (6 failed | 32 passed (38))
+        RED CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) 
+T10 the ambient tick never observes the clock [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (5 failed | 33 passed (38))
+        RED CoreViewImpl — campanada del reloj [0x5884] sólo al cambiar de hora (A3-HF2.1) 
+
+restored: native build exit=0, a3_hf2_1_dispatch_log exit=0; vitest sfx-bus exit=0 (38 passed (38))
+mutations: 16, killed: 16, survived: 0

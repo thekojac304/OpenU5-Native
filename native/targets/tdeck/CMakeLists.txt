@@ -11,6 +11,6 @@ endif()
 # file name); no save, pack or gameplay code reads it. Batch 54 set
 # 2.0.0-alpha2-rc1-debug for the Alpha 2 release image. A3-01 is an Alpha 3
 # DEVELOPMENT build -- not an Alpha 3 release -- and says so here.
-set(PROJECT_VER "3.0.0-alpha3-dev-a3-hf2-debug")
+set(PROJECT_VER "3.0.0-alpha3-dev-a3-hf2-1-debug")
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(openu5_tdeck)

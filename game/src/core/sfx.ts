@@ -491,10 +491,10 @@ export function ambientTileClass(tile: number): 0 | 1 | 2 | 3 {
 
 /**
  * HORA en formato 12h del contador de campanadas `[0x5884]` (kernel 0x5164-0x5183,
- * dentro de `advance_clock 0x4f7c` — corre en CADA acción que cobra tiempo):
- * `g_hour==0 → 12`; `>12 → hora−12`; resto → hora. El consumidor (CoreView) re-arma
- * su contador de campanadas con esto en cada turno y lo decrementa en fase 0/4
- * (epílogo global de 0x4102, `0x430e-0x4323` `dec [0x5884]`).
+ * dentro de `advance_clock 0x4f7c`, alcanzado SÓLO cuando la llamada movió la hora —
+ * 0x514a `je 0x5186`, A3-HF2): `g_hour==0 → 12`; `>12 → hora−12`; resto → hora. El
+ * consumidor (CoreView `observeClock`) re-arma su contador con esto al cambiar la hora
+ * y lo decrementa en fase 0/4 (epílogo global de 0x4102, `0x430e-0x4323` `dec [0x5884]`).
  */
 export function chimeHour12(hour: number): number {
   const h = hour & 0xff;
@@ -554,11 +554,11 @@ function ambientCueForClass(cls: 0 | 1 | 2 | 3, phase: number, chimeCounter: num
     case 1: {
       // Reloj (fases 0/4; resto MUDO): con `[0x5884]≠0` DA LA HORA — campanada
       // TS(3116,1,2000,20000,-10) @0x428b — y con 0 tictaquea (tic 0x42a1 fase 0 /
-      // tac 0x429c fase 4). El re-armado ([0x5884]=hora12 en advance_clock 0x5164)
-      // y el decremento global en fase 0/4 (0x430e-0x4323) los lleva el CONSUMIDOR
-      // (CoreView). Derivación §5.1 ambient-audio-audit.md; el patrón audible
-      // resultante (da la hora tras cada turno junto a un reloj) es consecuencia
-      // del modelo — ⚠ Clase C calibrable: testigo de oráculo en cola del usuario.
+      // tac 0x429c fase 4). El re-armado ([0x5884]=hora12 en advance_clock 0x5164,
+      // sólo al cambiar la hora: 0x514a) y el decremento global en fase 0/4
+      // (0x430e-0x4323) los lleva el CONSUMIDOR (CoreView). Derivación §5.1
+      // ambient-audio-audit.md con su corrección A3-HF2: da la hora al cruzarla, no
+      // tras cada turno (validado en hardware, H-198).
       const p = phase & 7;
       if (p !== 0 && p !== 4) return null;
       if (chimeCounter > 0) return { id: "ambient-clock-chime" }; // 0x4262 [0x5884]≠0 + 0x4269 fase 0/4 → 0x428b

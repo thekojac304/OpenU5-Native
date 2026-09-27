@@ -378,6 +378,10 @@ class AlphaRuntime {
     uint32_t frontend_render_high_us_ = 0;
     uint32_t command_high_us_ = 0;
     uint32_t rendered_animation_tick_ = UINT32_MAX;
+    // A3-HF2.1: the last PRESENTATION_DISPATCH logged (UI mode, source);
+    // render() logs the line only when one of them changes.
+    int32_t dispatch_logged_mode_ = -1;
+    const char *dispatch_logged_source_ = "";
     uint32_t rendered_frontend_title_frame_ = UINT32_MAX;
     uint32_t rendered_attract_frame_ = UINT32_MAX;
     uint8_t applied_brightness_ = 0;

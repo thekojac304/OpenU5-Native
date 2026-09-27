@@ -2293,7 +2293,16 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
                  int(game_.position.map.floor),unsigned(game_.position.xy.x),unsigned(game_.position.xy.y));
         return ESP_FAIL;
     }const int avatar=turn_.transport_tile>=0?turn_.transport_tile+0x100:tile_report_.avatar_tile;snapshot=openu5::compose_world_presentation(context_,active.value,game_.position.xy,avatar,map_reveal_active);u5obj_trace_present(snapshot);if(gem_view_active_){world_gem_map=active.value;world_gem_map_ready=true;}}
-    ESP_LOGI(kTag,"PRESENTATION_DISPATCH ui=%s combat=%d dungeon=%d source=%s",mode_name(ui_->mode()),combat_source,dungeon_source,presentation_source);
+    // A3-HF2.1: a change of source or mode is the information; a repeat of the
+    // previous line is not. Logging every frame made it 24-31 % of a hardware
+    // capture, and console time on this thread (ALPHA3_AUDIO.md section 23.10.5).
+    // combat= and dungeon= follow from the source, so (mode, source) is the whole line.
+    const int32_t dispatch_mode=int32_t(ui_->mode());
+    if(dispatch_mode!=dispatch_logged_mode_||std::strcmp(presentation_source,dispatch_logged_source_)!=0){
+        dispatch_logged_mode_=dispatch_mode;
+        dispatch_logged_source_=presentation_source;
+        ESP_LOGI(kTag,"PRESENTATION_DISPATCH ui=%s combat=%d dungeon=%d source=%s",mode_name(ui_->mode()),combat_source,dungeon_source,presentation_source);
+    }
     int16_t open_marker_x=-1,open_marker_y=-1;
     if(snapshot.combat&&ui_->take_target_render_marker(open_marker_x,open_marker_y)){
         snapshot.target_x=int8_t(open_marker_x);snapshot.target_y=int8_t(open_marker_y);snapshot.target_valid=true;

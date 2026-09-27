@@ -621,11 +621,15 @@ export class CoreViewImpl implements CoreView {
   private snapCache: ViewSnapshot | null = null;
   /**
    * Contador de campanadas del reloj `[0x5884]` (ambient-audio-audit §5.1): se
-   * re-arma a la hora (12h) en cada turno (advance_clock 0x4f7c → 0x5164) y se
-   * decrementa en fase 0/4 del tick de ambiente (epílogo global 0x430e-0x4323).
+   * re-arma a la hora (12h) SÓLO cuando cambia la hora (advance_clock 0x4f7c: 0x514a
+   * `je 0x5186` salta 0x5164 si `[0x587f]==[0x5880]`; A3-HF2.1, ver `observeClock`),
+   * no en cada turno (el modelo refutado de §5.1), y se decrementa en fase 0/4 del
+   * tick de ambiente (epílogo global 0x430e-0x4323).
    * Mientras >0 el reloj cercano DA LA HORA (chime 0x428b) en vez de tic/tac.
    */
   private clockChimeCounter = 0;
+  /** Hora de calendario vista por última vez (año/mes/día/hora; -1 = aún ninguna). */
+  private clockHourKey = -1;
 
   constructor(private game: Game) {
     // Cruce de moongate: el core llama este hook cuando el party ya está SOBRE la
@@ -1081,15 +1085,8 @@ export class CoreViewImpl implements CoreView {
   notifyTurn(events: readonly GameEvent[]): void {
     this.visCache = null; // la visibilidad puede cambiar (posición/luz/puertas)
     this.snapCache = null; // el turno muta el mundo → snapshot memoizado inválido (PERF-1)
-    // RE-ARMA el contador de campanadas [0x5884] = hora en 12h (kernel 0x5164-0x5183,
-    // dentro de advance_clock 0x4f7c — corre en CADA acción que cobra tiempo ≈ cada
-    // turno). Mientras >0, el reloj cercano DA LA HORA en fase 0/4 (0x428b) en vez
-    // de tictaquear; el decremento global vive en ambientSfx (epílogo 0x430e).
-    // Derivación §5.1 ambient-audio-audit.md; patrón audible ⚠ Clase C calibrable
-    // (testigo de oráculo en cola del usuario). Carril audio-costuras. (El guard
-    // de encadenado cubre los stubs de test sin `state`.)
-    const hour = this.game?.state?.time?.hour;
-    if (hour !== undefined) this.clockChimeCounter = chimeHour12(hour);
+    // La campanada [0x5884] NO se re-arma aquí: sólo cuando cambia la hora, y eso lo
+    // observa `ambientSfx` (su único lector) — ver `observeClock` (A3-HF2.1).
     for (const l of this.listeners) l.onTurn?.(events);
     // Enrutado automático de los cues de sonido que viajan en el turno (task #3):
     // la aparición del camp, moongate, etc. emiten `{kind:"sfx"}` en su array. Los
@@ -1128,6 +1125,7 @@ export class CoreViewImpl implements CoreView {
    */
   ambientSfx(phase: number): SfxCue | null {
     const game = this.game;
+    this.observeClock(); // antes de los gates, como `service_ambient` nativo
     if (game.dungeonState) return null;
     const map = game.activeMap;
     const cx = game.combat ? 5 : game.state.position.x;
@@ -1158,6 +1156,39 @@ export class CoreViewImpl implements CoreView {
   notifyDirty(): void {
     this.visCache = null; // el reloj cambió → el radio de luz puede cambiar
     this.emitDirty();
+  }
+
+  /**
+   * RE-ARMA la campanada `[0x5884]` = hora en 12h (0x5164-0x5183) SÓLO si la hora
+   * cambió desde la última observación. `advance_clock` 0x4f7c guarda la hora en
+   * `[0x5880]` (0x4fa0) antes de sumar, y 0x514a-0x5151 (`cmp [0x587f],[0x5880]; je
+   * 0x5186`) saltan el re-armado si no cambió: un paso de un minuto dentro de la hora
+   * NO campanea; el que la cruza da la hora nueva. Censo de DS:0x5884 (A3-HF2,
+   * `native/core/a3-hf2-derivation.log`): ningún otro escritor. Refuta el modelo previo
+   * «re-arma en cada turno» (§5.1, que pedía testigo). La clave es año/mes/día/hora, la
+   * misma que `service_ambient` nativo; como el tiempo sólo avanza por llamadas de un
+   * acarreo, cambia exactamente cuando una de ellas movió la hora. Se observa en cada
+   * tick de `ambientSfx`, el único lector del contador, así que cubre todo camino que
+   * mueva el reloj (turno, combate, sueño, menú debug). La PRIMERA observación sólo
+   * registra (partida nueva / arranque). Presentación pura: ni estado ni RNG. (El
+   * guard de encadenado cubre los stubs de test sin `state`.)
+   */
+  private observeClock(): void {
+    const t = this.game?.state?.time;
+    if (!t) return;
+    const key = ((t.year * 13 + t.month) * 32 + t.day) * 24 + t.hour;
+    if (this.clockHourKey >= 0 && key !== this.clockHourKey) this.clockChimeCounter = chimeHour12(t.hour);
+    this.clockHourKey = key;
+  }
+
+  /**
+   * Cargar partida (main.ts `applyLoadedState`) NO pasa por `advance_clock`: se sueltan
+   * las campanadas pendientes y la próxima observación sólo registra la hora cargada
+   * (como `reset_ambient` nativo en carga / título / New Journey).
+   */
+  resetAmbientClock(): void {
+    this.clockChimeCounter = 0;
+    this.clockHourKey = -1;
   }
 
   // ── Lado consumidor (pieles) ────────────────────────────────────────────

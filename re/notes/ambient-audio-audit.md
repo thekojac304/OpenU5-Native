@@ -159,6 +159,9 @@ ENTRELAZADA y necesita testigo para no fabricar el patrón audible:
   DS:0x5884 en ULTIMA.EXE + todos los .OVL (`re/tools/a3_hf2_ds_census.py`): un único sitio escritor (0x516b/0x5183).
   El port nativo lo corrigió en A3-HF2 (`ALPHA3_AUDIO.md` §24; `native/core/a3-hf2-derivation.log`). La piel TS
   (`skin/coreview.ts` `notifyTurn`) sigue con el modelo viejo: sólo presentación, sin fixture que la fije.
+  *(2026-09-27, A3-HF2.1: corregida. `CoreView.observeClock` re-arma sólo cuando cambia la clave año/mes/día/hora,
+  la del `service_ambient` nativo, observada en `ambientSfx`; la carga la reinicia (`resetAmbientClock`). Testigo en
+  hardware H-198 PASS: campanada sólo al cambiar la hora. `ALPHA3_AUDIO.md` §25.3; `game/tests/sfx-bus.test.ts` TS-K1–K9.)*
 
 ### 5.2 Clase 4 — Codex/estantería (`0x5c–0x5f`) — spec exacto, sin cablear
 

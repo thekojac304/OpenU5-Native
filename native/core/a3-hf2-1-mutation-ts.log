@@ -1,0 +1,70 @@
+# A3-HF2.1 mutation validation (2026-09-27 14:14)
+
+T1 re-armed on every turn again (the refuted section 5.1 model) [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (7 failed | 31 passed (38))
+        RED TS-K1
+        RED TS-K2
+        RED TS-K4
+        RED TS-K6
+        RED TS-K7
+        RED TS-K8
+        RED CoreViewImpl - enrutado de cues a onSfx
+T2 never re-armed [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (5 failed | 33 passed (38))
+        RED TS-K3
+        RED TS-K5
+        RED TS-K6
+        RED TS-K8
+        RED TS-K9
+T3 re-armed on every ambient tick [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (9 failed | 29 passed (38))
+        RED TS-K1
+        RED TS-K2
+        RED TS-K3
+        RED TS-K4
+        RED TS-K5
+        RED TS-K6
+        RED TS-K7
+        RED TS-K8
+        RED TS-K9
+T4 the key carries the minute (native A3-03's defect) [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (5 failed | 33 passed (38))
+        RED TS-K1
+        RED TS-K2
+        RED TS-K4
+        RED TS-K6
+        RED TS-K7
+T5 the key drops the day [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (1 failed | 37 passed (38))
+        RED TS-K9
+T6 the first observation arms instead of recording [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (5 failed | 33 passed (38))
+        RED TS-K1
+        RED TS-K2
+        RED TS-K6
+        RED TS-K7
+        RED TS-K8
+T7 a load keeps the pending strikes [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (1 failed | 37 passed (38))
+        RED TS-K8
+T8 a load keeps the recorded hour [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (1 failed | 37 passed (38))
+        RED TS-K8
+T9 the 24-hour hour is struck (0x5164-0x5183 dial dropped) [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (6 failed | 32 passed (38))
+        RED TS-K3
+        RED TS-K4
+        RED TS-K5
+        RED TS-K6
+        RED TS-K8
+        RED TS-K9
+T10 the ambient tick never observes the clock [game/src/skin/coreview.ts]: KILLED
+    vitest sfx-bus exit=1  (5 failed | 33 passed (38))
+        RED TS-K3
+        RED TS-K5
+        RED TS-K6
+        RED TS-K8
+        RED TS-K9
+
+restored: native build exit=0, a3_hf2_1_dispatch_log exit=0; vitest sfx-bus exit=0 (38 passed (38))
+mutations: 10, killed: 10, survived: 0

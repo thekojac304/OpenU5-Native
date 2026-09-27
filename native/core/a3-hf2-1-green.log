@@ -1,0 +1,24 @@
+[I][AlphaResources] Alpha resource pack v2.0 valid: 2041466 bytes, 42 entries, payload CRC=26f75ae6, expected SHA-256=a48abdbfc88e, firmware_match=1
+[I][AlphaResources] Loaded owners: 64 small floors, 8 dungeons, 1024 NPC records; PSRAM=1187190
+  grassland at (138,60)
+GREEN P0 the first gameplay frame logs its presentation source once (1 line(s): ui=explore combat=0 dungeon=0 source=world)
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=3 crc=3bc18126
+GREEN P1 standing still 5 s on open land: 91 frames drawn, 0 PRESENTATION_DISPATCH lines (nothing changed, nothing logged)
+GREEN P2 six steps: 39 frames drawn, 0 PRESENTATION_DISPATCH lines
+GREEN P3 Z opens a modal and Cancel closes it: one line each way (2: ui=party combat=0 dungeon=0 source=world / ui=explore combat=0 dungeon=0 source=world)
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=3 crc=3bc18126
+  combat phase: 73 frames, 1 dispatch lines
+    ui=combat combat=1 dungeon=0 source=combat
+GREEN P4 a roaming troll's attack moves the source to the arena: 1 line(s) name source=combat, 1 in all over 73 frames
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=5 crc=37d75f67
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=3 crc=45fd220c
+  camp phase: 551 frames, 4 dispatch lines
+    ui=number combat=0 dungeon=0 source=world
+    ui=explore combat=0 dungeon=0 source=camp-scene
+    ui=explore combat=0 dungeon=0 source=world
+    ui=party combat=0 dungeon=0 source=world
+GREEN P6 camping moves the source to the camp scene and back: 1 camp-scene line(s), 1 source-only change(s), 4 lines over 551 frames
+GREEN P5 the whole session's 4 PRESENTATION_DISPATCH lines hold no repeat of the previous one (0 repeats)
+A3-HF2.1 dispatch log: 7/7 checks

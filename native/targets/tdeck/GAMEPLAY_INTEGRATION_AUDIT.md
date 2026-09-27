@@ -8,7 +8,20 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 A3-HF2) — ambient SFX parity: the grandfather clock; Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 A3-HF2.1) — cleanup: TypeScript clock parity, `PRESENTATION_DISPATCH` on change only; Alpha 2 remains the released build; read this first
+>
+> **A3-HF2.1 is a small Alpha 3 cleanup, not a release.** A3-HF1 and A3-HF2 are hardware-validated: **H-197 PASS, H-198 PASS** (2026-09-27, physical T-Deck).
+> - The TypeScript skin (`game/src/skin/coreview.ts`) re-armed the grandfather clock's strike on every turn, the model A3-HF2 refuted from the bytes. It now arms only when the game hour changes (0x514a), with native's year / month / day / hour key, and a load resets it. See §14 "Alpha 3 A3-HF2.1" and `ALPHA3_AUDIO.md` §25.
+> - `PRESENTATION_DISPATCH` is logged when the UI mode or the presentation source changes, not on every gameplay frame (24–31 % of the A3-04E.1 captures).
+>
+> | | |
+> |---|---|
+> | Host suite | **145 / 145**, serial, 135.05 s. New: `a3_hf2_1_dispatch_log` 7 (RED 6 before the fix). TypeScript: 9 new rows (RED 6 before); the whole vitest run has 97 pre-existing, environment-bound failures, identical on HEAD. **16 / 16 mutations killed.** |
+> | Firmware | `3.0.0-alpha3-dev-a3-hf2-1-debug`, 977,408 B (`0xeea00`), +48 B, 71,168 B (7 %) free, zero warnings. Image path, SHA-256 and `Git`: tag `alpha3-hf2-1-cleanup`. **Not flashed.** |
+> | SD | **Unchanged.** |
+> | Next | §22.11's render / TFT performance list (`ALPHA3_AUDIO.md`). Optional serial check H-199. |
+>
+> ### CURRENT STATE (Alpha 3 A3-HF2) — ambient SFX parity: the grandfather clock — **superseded as the current state by A3-HF2.1 above.**
 >
 > **A3-HF2 is a small Alpha 3 audio-parity hotfix, not a release.** A3-04E.1 is closed and hardware-validated (`ALPHA3_AUDIO.md` §23.10).
 > - Hardware (A3-04E.1 image): beside a grandfather clock, every move was followed by a strike-like beep before the tick-tock. Cause: the device re-armed the clock's strike `[0x5884]` on every game-time **minute**; `advance_clock` 0x4f7c re-arms it only when the **hour** moves (0x514a). The model came from an unverified note, and A3-03's C2 row pinned it. Fixed in `service_ambient` (one line). See §14 "Alpha 3 A3-HF2" and `ALPHA3_AUDIO.md` §24.
@@ -7884,3 +7897,40 @@ An audio-parity hotfix after the A3-04E.1 hardware closeout. The full write-up i
 - The TypeScript skin's per-turn re-arm (`game/src/skin/coreview.ts`) is recorded, not changed.
 - The original's extra 0x4102 tick per move redraw is not modelled (§16.4's cadence row), as before.
 - `PRESENTATION_DISPATCH` logging, renderer pacing, the idle service, music, SD logging and UI are untouched.
+
+## Alpha 3 A3-HF2.1 — cleanup: the TypeScript skin's clock strike, and `PRESENTATION_DISPATCH` on change only
+
+The two follow-ups A3-HF2 queued. The full write-up is [`ALPHA3_AUDIO.md`](ALPHA3_AUDIO.md) §25; this section records the adjudication on its own axis. No gameplay, RNG, save, audio-program, pacing, UI or SD change on the device.
+
+### 1. Hardware results recorded (2026-09-27, the user, physical T-Deck)
+
+- **H-197 PASS** — A3-HF1's arena Get with a full pack. D-61 hardware-validated. Not reopened.
+- **H-198 PASS** — A3-HF2's clock: no strike after moves inside an hour, tick / tock intact, the hour rollover still strikes; the fountain sounded normal while idle. D-62 hardware-validated.
+
+The §14 A3-HF1 and A3-HF2 entries above said "hardware retest pending"; they are left as written, and this note supersedes them.
+
+### 2. Items and classification
+
+| # | Item | Class | Change |
+|---|---|---|---|
+| 1 | The TypeScript skin re-armed the strike `[0x5884]` on every `notifyTurn` | **reference defect** (presentation-only; the refuted `re/notes/ambient-audio-audit.md` §5.1 model; no fixture pinned it) | `coreview.ts`: re-arm only when the year / month / day / hour key changes (0x514a), observed at the top of `ambientSfx`, first observation records; `resetAmbientClock()` from `applyLoadedState` |
+| 2 | `PRESENTATION_DISPATCH` logged on every gameplay frame | **diagnostic noise** (no behaviour) | `alpha_runtime.cpp`: logged when (UI mode, source) differs from the last line |
+
+The TypeScript reference is secondary to the binary; here it was brought into line with the bytes and with native, never the other way round. No parity fixture changed.
+
+### 3. Evidence
+
+- **TypeScript:** `game/tests/sfx-bus.test.ts` TS-K1–K9 (the native K1–K6 cases plus a real `Game.pass()`, a load, and a 24-hour turn). RED 6 / 9 on HEAD's `coreview.ts` (controls K3, K5, K9 pass either way); GREEN 9 / 9; `tsc` clean. The full vitest run fails 97 tests in 40 files both on HEAD and with this batch — the identical set, environment-bound (`native/core/a3-hf2-1-ts-full{,-baseline}.log`).
+- **Native:** new target `a3_hf2_1_dispatch_log` (7 checks, real runtime, stdout captured). RED 1 / 7 on HEAD's `alpha_runtime` (91 lines for 91 idle frames, 39 / 39 walking, 73 / 73 in an arena, 551 / 551 camping; 238 repeats in 242 lines); GREEN 7 / 7 (4 lines).
+- **Mutations:** `native/core/tools/a3_hf2_1_mutation_check.py`, **16 / 16 killed** (N1–N6 native, T1–T10 TypeScript).
+- **Suite / firmware:** **145 / 145**, serial, 135.05 s (`native/core/a3-hf2-1-ctest.log`). Firmware `0xeea00` = 977,408 B (+48 B), 71,168 B free, only flash `.text` moved, audio image guards GREEN. Image path, SHA-256 and `Git`: tag `alpha3-hf2-1-cleanup`. **Not flashed.** SD unchanged.
+
+### 4. Rows
+
+- No new D-row: neither item is a device divergence from the original. D-61 and D-62 are now hardware-validated.
+- Optional H-199 (serial check of the log line) in `ALPHA2_HARDWARE_CHECKLIST.md`.
+
+### 5. Not done in this batch
+
+- §22.11's render / TFT performance work is next.
+- The TypeScript suite's 97 pre-existing failures are recorded, not investigated.

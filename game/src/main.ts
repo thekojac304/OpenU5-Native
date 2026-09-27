@@ -3841,6 +3841,7 @@ async function boot(): Promise<void> {
       // que una puerta abierta al guardar vuelve CERRADA. Batch 24, H-162.
       game.doors?.reset();
       game.refreshHourTiles(); // reja/puente por hora (TOWN 0x0170) tras cargar
+      view.resetAmbientClock(); // cargar no es advance_clock: registra la hora, no campanea (A3-HF2.1)
       view.notifyTurn([{ kind: "map-changed" }]); // pieles: snap de cámara
       updateMusic();
       hud.refresh();

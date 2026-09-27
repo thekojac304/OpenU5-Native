@@ -1,6 +1,8 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup)
 
-**Status (A3-HF2, 2026-09-27): GRANDFATHER-CLOCK STRIKE FIXED ON THE HOST — FOUNTAIN NOT REPRODUCED — HARDWARE RETEST PENDING.** On the A3-04E.1 image every move beside a grandfather clock was followed by a strike-like beep before the tick-tock. The bytes show why: `advance_clock` 0x4f7c saves the hour in `[0x5880]` (0x4fa0), and at 0x514a it skips the strike re-arm (0x5164) unless the hour changed. The device re-armed on every **minute**, so on every step. That model came from an unverified note, and A3-03's C2 row pinned it. The re-arm key is now the hour (one line, §24). Tick / tock and the genuine hour strike are unchanged, and the new `a3_hf2_ambient_parity` target proves both (RED 3 before the fix). The fountain was checked on the device-loop model: 25 s standing still, a burble in every 55 ms tick, nothing skipped. **Not reproduced, no change.** The §24.10 retest is five short steps.
+**Status (A3-HF2.1, 2026-09-27): CLEANUP — TYPESCRIPT CLOCK PARITY, `PRESENTATION_DISPATCH` ON CHANGE ONLY. A3-HF1 AND A3-HF2 HARDWARE-VALIDATED (H-197, H-198 PASS).** The two items A3-HF2 queued (§25). The TypeScript skin (`game/src/skin/coreview.ts`) re-armed the clock strike on every turn, the model the bytes refuted; it now arms only when the game hour changes, with the native key and reset (9 new vitest rows, RED 6 / 9 before). `PRESENTATION_DISPATCH` is logged when the UI mode or presentation source changes instead of on every frame: in the new `a3_hf2_1_dispatch_log` target the same session writes 4 lines instead of 242 (RED 1 / 7 before). 16 / 16 mutations killed. No gameplay, audio, pacing or SD change; the render performance work (§22.11) is next.
+
+**Status as A3-HF2 wrote it (2026-09-27): GRANDFATHER-CLOCK STRIKE FIXED ON THE HOST — FOUNTAIN NOT REPRODUCED — HARDWARE RETEST PENDING.** On the A3-04E.1 image every move beside a grandfather clock was followed by a strike-like beep before the tick-tock. The bytes show why: `advance_clock` 0x4f7c saves the hour in `[0x5880]` (0x4fa0), and at 0x514a it skips the strike re-arm (0x5164) unless the hour changed. The device re-armed on every **minute**, so on every step. That model came from an unverified note, and A3-03's C2 row pinned it. The re-arm key is now the hour (one line, §24). Tick / tock and the genuine hour strike are unchanged, and the new `a3_hf2_ambient_parity` target proves both (RED 3 before the fix). The fountain was checked on the device-loop model: 25 s standing still, a burble in every 55 ms tick, nothing skipped. **Not reproduced, no change.** The §24.10 retest is five short steps.
 
 **Status as the A3-04E.1 hardware closeout wrote it (2026-09-27): WATCHDOG REGRESSION FIXED ON HARDWARE — RENDERER PACING HARDWARE-VALIDATED — A3-04E / A3-04E.1 CLOSED.** Two serial captures of the A3-04E.1 image (§23.10, committed as `a3-04e1-hw-soak.log` and `a3-04e1-hw-probes.log`) contain no `task_wdt`, crash or reboot. The first covers 11 min of uptime in default pacing, with music at 80 % and then 0 %, walking, town changes, menus and 3 min standing still. Over that whole run core 0's idle loop never went more than 102.9 ms without a pass, the guard never had to act (`forced=0`), and audio stayed at `und=0 hw=0 miss=0`. All 110 heartbeats `hb=13`–`122` are present. In the second capture, the legacy probes reproduced A3-04D exactly: menu-exit repaint 441–442 ms, walking steps ~155 ms, TFT max 408.7 ms. Switching back to the yield pacing brought steps to ~88 ms and the repaint to ~184 ms. The deliberately starving loop-spin phases made the guard act 262 times, and it held the idle gap at ≤ 223.9 ms. The §22.10 matrix was abbreviated (§23.10.4). Next: the ambient-SFX parity batch (§23.11).
 
@@ -2685,7 +2687,7 @@ Two device-observed ambient defects, for an audio-parity batch of their own *(do
 1. **The fountain does not sustain its PC-speaker "burble".** On the device it is heard only briefly around movement, never as a continuous sound while standing next to it. §16.4 pins one NB(10, 30, 25000) burble (1.7 ms) per 55 ms tick while eligible. The original ticks 0x4102 on every redraw of its key wait (`getkey_with_redraw` 0x266c). The batch must derive that redraw cadence, and so the sound's real density, from the binary. It must also check on the device that `service_ambient` (`alpha_runtime.cpp`, called from the gameplay render path) keeps ticking while the player stands still, and how the SFX policy treats back-to-back 1.7 ms cues.
 2. **Grandfather clocks play a wrong beep after movement before their tick-tock.** The runtime re-arms the clock's strike (`[0x5884]` ← the 12-hour clock) whenever the game time's **minute** changes (`service_ambient`: "the device sees that as the game clock moving"). A step advances the minute, so every step re-arms a strike. §16.4's C1–C2 pin exactly that ("after a step moves the clock, strikes the hour"). The batch must adjudicate `advance_clock` 0x5164–0x5183 against the binary, and find which advance re-arms `[0x5884]`, before touching the pinned row. A deliberate host row is not proof by itself: A3-HF1 found one that was invented.
 
-Also queued: `PRESENTATION_DISPATCH` on state change only (§23.10.5), then §22.11's remaining performance list (composition time, `fill_rect` chunking, the transcript redraw, the synth's steady cost).
+Also queued: `PRESENTATION_DISPATCH` on state change only (§23.10.5; *done: A3-HF2.1, §25.4*), then §22.11's remaining performance list (composition time, `fill_rect` chunking, the transcript redraw, the synth's steady cost).
 
 ## 24. A3-HF2 — ambient SFX parity: the grandfather clock's strike, and the fountain
 
@@ -2790,9 +2792,9 @@ A3-03's own ambient mutations were re-run against the corrected rows (`a3-hf2-a3
 
 ### 24.9 Recorded, not changed
 
-- **The TypeScript skin** (`game/src/skin/coreview.ts`) still re-arms `clockChimeCounter` on every `notifyTurn`, the refuted model. It is presentation-only; no gameplay or quest fixture pins it, and no native test reads it. Correcting it is a one-line follow-up for the TS track: re-arm only when `hour` differs from the previous turn's.
+- **The TypeScript skin** (`game/src/skin/coreview.ts`) still re-arms `clockChimeCounter` on every `notifyTurn`, the refuted model *(done: A3-HF2.1, §25.3)*. It is presentation-only; no gameplay or quest fixture pins it, and no native test reads it. Correcting it is a one-line follow-up for the TS track: re-arm only when `hour` differs from the previous turn's.
 - **The step's own ambient tick.** The original also ticks 0x4102 once per move redraw. The device ticks by wall time only (§16.4's "Movement / time" row). That can shift the tick / tock phase by one per step. It is not a sound of its own and is outside this report.
-- `PRESENTATION_DISPATCH` still logs on every gameplay render (§23.10.5); it is a separate cleanup, not done here.
+- `PRESENTATION_DISPATCH` still logs on every gameplay render (§23.10.5); it is a separate cleanup, not done here *(done: A3-HF2.1, §25.4)*.
 
 ### 24.10 Hardware checklist (the user's; not done here)
 
@@ -2805,3 +2807,111 @@ Flash the A3-HF2 Launcher image (path and SHA-256 in tag `alpha3-hf2-ambient-clo
 5. **Fountain, standing still.** Teleport → location 1, X 6, Y 25. Stand still for 20–30 s without touching anything. Report whether the soft fast burble continues the whole time.
 
 **FAIL:** report the step, the time shown and the `FW` / `Git` lines. A strike after an ordinary step (not an hour change) is a failure. A fountain that goes quiet while standing still is a new observation: say how long it took and whether the Developer SD diag log was on.
+
+## 25. A3-HF2.1 — cleanup: the TypeScript skin's clock strike, and `PRESENTATION_DISPATCH` on change only
+
+A small cleanup batch for the two items A3-HF2 queued (§24.9, §23.10.5). It changes no gameplay, RNG, save, audio program, pacing, SD or UI behaviour on the device beyond when one log line is written. It does not start the render / TFT performance work (§22.11's list is next).
+
+### 25.1 Hardware results recorded here
+
+The user reported both hotfix retests on the physical T-Deck (2026-09-27):
+
+- **H-197 (A3-HF1, the arena chest with a full pack): PASS.** A3-HF1's production behaviour is validated as is and is not touched here.
+- **H-198 (A3-HF2, the grandfather clock): PASS.** Movement within an hour strikes nothing, tick / tock continues, a real hour rollover still strikes, and the fountain sounded normal while idle.
+
+D-61 and D-62 are now hardware-validated (`ALPHA2_PRESERVATION_LEDGER.md`); the checklist phases say PASS.
+
+### 25.2 Baseline
+
+HEAD `cda1d878` (A3-HF2's post-commit logs), branch `main`, clean. Fresh build `native/core/build-a3-hf2-1-base`: **144 / 144, serial, 149.02 s** (`native/core/a3-hf2-1-baseline-{configure,build,ctest}.log`). The only build warning is the known w64devkit `stl_uninitialized.h` false positive.
+
+### 25.3 The TypeScript skin's clock strike
+
+**The rule** (derived in A3-HF2 from ULTIMA.EXE, §24.3; validated on hardware by H-198): `advance_clock` 0x4f7c saves the hour in `[0x5880]` (0x4fa0) and re-arms the strike counter `[0x5884]` to the 12-hour dial (0x5164–0x5183) **only when the hour changed** (0x514a–0x5151 `je 0x5186`). Minute changes arm nothing, a step inside the hour strikes nothing, the strike and the tick / tock phase are separate state, and while strikes remain they replace the tick / tock beats at phases 0 / 4.
+
+**What the skin did** (`game/src/skin/coreview.ts`, the refuted model of `re/notes/ambient-audio-audit.md` §5.1): `notifyTurn` set `clockChimeCounter = chimeHour12(hour)` on **every** turn — every `notifyTurn` main.ts sends, including the `map-changed` one after a load. Beside a clock, any turn armed the whole current hour: a real `Game.pass()` at 12:55 outdoors (two minutes) was followed by strikes instead of tick / tock (TS-K7 on HEAD: 4 strikes and no tick / tock in 16 ticks). The pure selection (`ambientCueForTiles`), `chimeHour12` and the phase-0 / 4 run-down in `ambientSfx` were already right.
+
+**The fix** (`coreview.ts`, and one line in `main.ts`):
+
+- `notifyTurn` no longer touches the counter.
+- `observeClock()` compares a year / month / day / hour key with the last one seen and re-arms to `chimeHour12(hour)` only when it changed. The first observation only records (boot, new game). It is the same key as native `service_ambient` (§24.5), and it runs at the top of `ambientSfx`, before the dungeon gate, as native does it before its gates.
+- `resetAmbientClock()` drops pending strikes and forgets the hour; `applyLoadedState` (every load path: the save panel, the native-save import, the replay anchor) calls it before its `notifyTurn`. A load is not an `advance_clock` call, so it must not strike — the same rule as native `reset_ambient` (A3-03 M9).
+
+*Why the observation lives in `ambientSfx`:* it is the counter's only reader, and every path that moves the clock — turns, combat (`notifyDirty`), sleep, the debug menu — is seen at the next tick. Observing in `notifyTurn` / `notifyDirty` as well was tried and dropped: it cannot change what is heard, so it would only be an unkillable mutant.
+
+Comments corrected in `game/src/core/sfx.ts` (`chimeHour12`, the clock case of `ambientCueForClass`) and `re/notes/sfx-catalog.md`; `re/notes/ambient-audio-audit.md` §5.1 gets a dated note.
+
+**Tests** (`game/tests/sfx-bus.test.ts`, new block "A3-HF2.1", the real `CoreViewImpl` over a real `Game` with a clock tile beside the party; the skin's ambient clock is driven as `FaithfulSkin.tickAmbient` drives it). Rows mirror native `a3_hf2_ambient_parity` K1–K6:
+
+| Row | Checks |
+|---|---|
+| TS-K1 | 12:55 → one minute (12:56): no strike; 2 ticks + 2 tocks in 16 ambient ticks, before and after |
+| TS-K2 | four one-minute turns 12:55 → 12:59: no strike after any; tick / tock each time |
+| TS-K3 | 12:59 → 13:00 strikes once (one o'clock); the sequence is chime, tock, tick, tock |
+| TS-K4 | after crossing, three more turns inside 13:xx strike nothing |
+| TS-K5 | 11:59 → noon and 23:59 → midnight (a day rollover) strike twelve, then tick / tock without a phase reset |
+| TS-K6 | a multi-minute turn arms only if it crosses the hour (12:50 + 5 no; 12:58 + 2 yes, one) |
+| TS-K7 | a real `Game.pass()` at 12:55 (outdoors, 2 min) strikes nothing |
+| TS-K8 | a load at another hour arms nothing and drops a strike armed but not yet heard; the loaded game's own next hour (18:00) strikes six |
+| TS-K9 | a turn of exactly 24 h (same hour, next day) arms: the key carries the day, as native |
+
+**RED on HEAD's `coreview.ts`** (`native/core/a3-hf2-1-ts-red.log`): **6 of 9 fail** — K1, K2, K4, K6, K7 (strikes after turns inside the hour) and K8 (`resetAmbientClock` does not exist). The controls K3, K5 and K9 pass, because a legitimate hour change strikes under either model. **GREEN: 9 / 9**; `sfx-bus` + `skin-coreview` 106 / 106 (`a3-hf2-1-ts-green.log`); `tsc --noEmit` clean (`a3-hf2-1-ts-typecheck.log`).
+
+**Whole TypeScript suite** (`a3-hf2-1-ts-full.log`): 7,517 passed, **97 failed in 40 files, 106 skipped**. The same run with HEAD's versions of the four touched TS files (`a3-hf2-1-ts-full-baseline.log`) gives 7,508 passed and **the identical 97 failures** (the FAIL lines diff empty). They predate this batch and belong to this checkout's environment (material that is not distributed, the `re/tools` Python parity runners, worktree cache paths, and source-scanning guards around `main.ts`); none reads the clock. The +9 are TS-K1–K9.
+
+### 25.4 `PRESENTATION_DISPATCH` on change only
+
+**Before:** `AlphaRuntime::render()` logged `PRESENTATION_DISPATCH ui=… combat=… dungeon=… source=…` on every gameplay frame — 24–31 % of the A3-04E.1 hardware captures (§23.10.5), with console time on the game thread.
+
+**After:** the line is written when the UI mode or the presentation source differs from the last line written (`alpha_runtime.cpp`, two members in `alpha_runtime.h`). `combat=` and `dungeon=` follow from the source, so (mode, source) is the whole line. The format and the source decision are unchanged, the gem / zodiac overrides after it are unchanged, and `ALPHA2_HARDWARE_CHECKLIST.md`'s rule "no `PRESENTATION_DISPATCH` whose source contradicts `UI_MODE`" reads the same, since every transition is still logged. It is not behind a Developer switch: only repeats are dropped, and they carried nothing.
+
+**New target `a3_hf2_1_dispatch_log`** (7 checks, `native/targets/tdeck/host_tests/a3_hf2_1_dispatch_log_test.cpp`): the REAL `AlphaRuntime` on A3-HF1's harness, stdout captured per phase, lines counted against the runtime's own frame counter (`RenderPerfCounters`). The party stands on open land with animated water in view (Britannia (138,60)), so standing still keeps drawing frames.
+
+| Row | Checks |
+|---|---|
+| P0 | control: the first gameplay frame logs its source once (`ui=explore … source=world`) |
+| **P1** | standing still 5 s: **91 frames, 0 lines** |
+| **P2** | six steps: **39 frames, 0 lines** |
+| P3 | Z opens a modal, Cancel closes it: exactly two lines (`ui=party`, then `ui=explore`) |
+| **P4** | a roaming troll's attack: **one** `source=combat` line over 73 arena frames |
+| **P6** | camping: the source goes to `camp-scene` and back to `world` with the mode unchanged (the source-only transition); 4 lines over 551 frames |
+| P5 | the session's lines never repeat the previous one |
+
+**RED on HEAD's `alpha_runtime`** (`native/core/a3-hf2-1-red.log`): **1 / 7** (only P0) — 91 / 91, 39 / 39, 38, 73 / 73 and 551 / 551 lines; the session's 242 lines hold 238 repeats. **GREEN: 7 / 7** (`a3-hf2-1-green.log`): the same session logs 4 lines.
+
+### 25.5 Mutations
+
+`native/core/tools/a3_hf2_1_mutation_check.py` (`native/core/a3-hf2-1-mutation.log`; the TS re-run with per-row detail in `a3-hf2-1-mutation-ts.log`): **16 / 16 killed.**
+
+| Id | Mutation | Killed by |
+|---|---|---|
+| N1 | logged on every frame again (the defect) | P1–P4, P5, P6 |
+| N2 | never logged | P0, P3, P4, P5, P6 |
+| N3 | a mode change is not compared | P3 |
+| N4 | a source change is not compared | P6 |
+| N5 / N6 | the logged mode / source is never remembered | P1–P6 |
+| T1 | re-armed on every turn again (the refuted model) | TS-K1, K2, K4, K6, K7, K8; an existing `CoreViewImpl` routing row |
+| T2 | never re-armed | TS-K3, K5, K6, K8, K9 |
+| T3 | re-armed on every ambient tick | TS-K1–K9 |
+| T4 | the key carries the minute (A3-03's native defect) | TS-K1, K2, K4, K6, K7 |
+| T5 | the key drops the day | TS-K9 |
+| T6 | the first observation arms | TS-K1, K2, K6, K7, K8 |
+| T7 / T8 | a load keeps the pending strikes / the recorded hour | TS-K8 |
+| T9 | the 24-hour hour is struck | TS-K3, K4, K5, K6, K8, K9 |
+| T10 | the ambient tick never observes the clock | TS-K3, K5, K6, K8, K9 |
+
+### 25.6 Host suite, firmware
+
+**Full suite:** fresh `native/core/build-a3-hf2-1`, serial, **145 / 145 pass, 135.05 s** (`native/core/a3-hf2-1-ctest.log`; A3-HF2's 144 plus `a3_hf2_1_dispatch_log`). The only build warning is the known w64devkit `stl_uninitialized.h` false positive (`a3-hf2-1-build.log`). All earlier audio and ambient proofs pass unchanged, `a3_hf2_ambient_parity` and `a3_03_sfx_runtime` included; no core file changed.
+
+**Firmware:** pre-commit build `native/targets/tdeck/build-a3-hf2-1` (`a3-hf2-1-firmware-configure.log`, `a3-hf2-1-firmware-build.log`): ESP-IDF 6.1, `idf.py --no-ccache reconfigure` then `ninja -j 4`, first attempt clean, **zero project warnings** under `-Werror`. **`0xeea00` = 977,408 B, +48 B** against A3-HF2's 977,360; **`0x11600` = 71,168 B (7 %) free.** Sections (`a3-hf2-1-size-image.log`): only flash `.text` moved (+52 B, the compare and its two members); **IRAM, `.data`, `.bss` and `.rodata` are identical.** `a3_04a_hotpath_check.py` and `a3_04b_iram_check.py` are **GREEN** (`a3-hf2-1-hotpath-check.log`, `a3-hf2-1-iram-check.log`). Version `3.0.0-alpha3-dev-a3-hf2-1-debug`. **Game packs and `openu5-audio.bin` unchanged; no SD change.** The post-commit image (path, SHA-256, embedded `Git`) is named in the annotated tag `alpha3-hf2-1-cleanup`. **Not flashed.**
+
+### 25.7 Hardware check (the user's; optional, not done here)
+
+H-199 in `ALPHA2_HARDWARE_CHECKLIST.md`. Flash the A3-HF2.1 image with a serial monitor attached: standing still and walking add no `PRESENTATION_DISPATCH` lines; opening a menu, entering combat and leaving it add one line each; the grandfather clock behaves as in H-198.
+
+### 25.8 Not done here
+
+- The render / TFT performance work: §22.11's list (composition time, `fill_rect` chunking, the transcript redraw, the synth's steady cost) is the next batch.
+- The other §23.10.5 observations (the System Menu's SD inspection time, the internal-heap low-water mark, the 75 ms `INPUT_SERVICE` threshold) are unchanged.
+- The TypeScript suite's 97 pre-existing failures (§25.3) are recorded, not investigated.

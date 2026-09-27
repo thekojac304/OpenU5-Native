@@ -1,0 +1,14 @@
+
+ RUN  v3.2.7 C:/Dev/OpenU5-Native/game
+
+ ✓ tests/sfx-bus.test.ts (38 tests) 22ms
+stderr | tests/skin-coreview.test.ts > SkinManager swap > toggle es no-op con una sola piel (E1-S1: sólo dev)
+[skins] toggle() NO-OP: el ciclo aún no está listo (pieles user-facing: 1, actual: dev). La tecla de cambio de piel llegó antes de que terminara el registro del arranque.
+
+ ✓ tests/skin-coreview.test.ts (68 tests) 174ms
+
+ Test Files  2 passed (2)
+      Tests  106 passed (106)
+   Start at  14:24:29
+   Duration  1.50s (transform 626ms, setup 0ms, collect 1.75s, tests 196ms, environment 0ms, prepare 270ms)
+

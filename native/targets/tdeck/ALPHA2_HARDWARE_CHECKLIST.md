@@ -1078,7 +1078,7 @@ A random troll encounter by the bridge near Britain, won normally. A chest appea
 
 **Host finding** (`GAMEPLAY_INTEGRATION_AUDIT.md` §14 "Alpha 3 A3-HF1"): the loot was on the chest's cell and the Get found it, but refused it because its counter was already full (99, or 9999 for gold and food). The 1988 Get has no such refusal: it takes the item, names it, and the full counter stays full. The Developer "Stocked inventory" and "Combat" presets fill every counter a chest can hold, so with either one every item was refused. Because the Get takes the top of the stack, one full counter blocked the whole pile.
 
-### Phase H-197 — arena chest Get with a full pack · *new firmware; SD pack unchanged* · about 10 minutes · **PENDING**
+### Phase H-197 — arena chest Get with a full pack · *new firmware; SD pack unchanged* · about 10 minutes · **PASS (2026-09-27, physical T-Deck; recorded in A3-HF2.1)**
 
 Flash the A3-HF1 Launcher image (its path and SHA-256 are in tag `alpha3-hf1-arena-loot`). The boot screen should show `FW 3.0.0-alpha3-dev-a3-hf1-debug` and that tag's `Git`.
 
@@ -1109,7 +1109,7 @@ Beside a grandfather clock, every move was followed by a short strike-like beep,
 
 **Host finding** (`ALPHA3_AUDIO.md` §24): the 1988 clock strikes only when the game hour changes (`advance_clock` 0x514a). The device re-armed the strike on every minute, so on every step. Fixed. The fountain was not reproduced: standing still, it burbles continuously in the host model of the device loop. No change.
 
-### Phase H-198 — grandfather clock and fountain · *new firmware; SD pack unchanged* · about 5 minutes · **PENDING**
+### Phase H-198 — grandfather clock and fountain · *new firmware; SD pack unchanged* · about 5 minutes · **PASS (2026-09-27, physical T-Deck; recorded in A3-HF2.1)**
 
 Flash the A3-HF2 Launcher image (its path and SHA-256 are in tag `alpha3-hf2-ambient-clock`). The boot screen should show `FW 3.0.0-alpha3-dev-a3-hf2-debug` and that tag's `Git`. Keep SFX Volume above 0 %.
 
@@ -1122,3 +1122,19 @@ Flash the A3-HF2 Launcher image (its path and SHA-256 are in tag `alpha3-hf2-amb
 **PASS:** steps 1–3 as described, a strike only at an hour change (step 4, if done), and the fountain continuous while standing still.
 
 **FAIL:** report the step, the time shown and the `FW` / `Git` lines. A strike after an ordinary step is a failure. A fountain that goes quiet while standing still is a new observation: say after how long, and whether the Developer SD diag log was on.
+
+## Alpha 3 A3-HF2.1 — cleanup: `PRESENTATION_DISPATCH` on change only (2026-09-27)
+
+H-197 and H-198 above both **PASSED** on the physical T-Deck (2026-09-27). A3-HF2.1 changes only when one serial log line is written (and the TypeScript skin, which is not on the device). `ALPHA3_AUDIO.md` §25.
+
+### Phase H-199 — serial log check · *new firmware; SD pack unchanged* · about 5 minutes · **OPTIONAL, PENDING**
+
+Flash the A3-HF2.1 Launcher image (its path and SHA-256 are in tag `alpha3-hf2-1-cleanup`). The boot screen should show `FW 3.0.0-alpha3-dev-a3-hf2-1-debug` and that tag's `Git`. Attach a serial monitor.
+
+1. **Stand still** in the overworld near water for 30 s. **No `PRESENTATION_DISPATCH` line** appears after the first one for that screen.
+2. **Walk** 10 steps. No `PRESENTATION_DISPATCH` lines.
+3. **Open Z-stats and close it.** One `PRESENTATION_DISPATCH ui=party …` line, then one `ui=explore …` line.
+4. **A fight, if one comes.** Entering it logs one `… source=combat` line; the fight itself logs none; leaving it logs one `source=world` line.
+5. **The clock** (location 2, X 13, Y 2): as in H-198 — no strike after steps inside the hour.
+
+**PASS:** the line appears only at a change of screen, mode or source; the game and its sounds behave as on the A3-HF2 image. **FAIL:** a `PRESENTATION_DISPATCH` line repeated with no change between, a change with no line, or any gameplay / audio difference from the A3-HF2 image — report it with the `FW` / `Git` lines.
