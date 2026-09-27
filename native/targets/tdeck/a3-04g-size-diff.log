@@ -1,10 +1,4 @@
-﻿python : CURRENT   project file: "C:\Dev\OpenU5-Native\native\targets\tdeck\build-a3-04g\openu5_tdeck.map"
-At line:1 char:480
-+ ... -image.log; python -m esp_idf_size --diff build-a3-hf3-post/openu5_td ...
-+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (CURRENT   proje...enu5_tdeck.map":String) [], RemoteException
-    + FullyQualifiedErrorId : NativeCommandError
- 
+CURRENT   project file: "C:\Dev\OpenU5-Native\native\targets\tdeck\build-a3-04g\openu5_tdeck.map"
 REFERENCE project file: "C:\Dev\OpenU5-Native\native\targets\tdeck\build-a3-hf3-post\openu5_tdeck.map"
 Difference is counted as CURRENT - REFERENCE, i.e. a positive number means that CURRENT is larger.
 Memory Type Usage Summary
@@ -17,7 +11,4 @@ Memory Type Usage Summary
 │    .rodata          │ 218436   +144 │          │                │               │
 └─────────────────────┴───────────────┴──────────┴────────────────┴───────────────┘
 Total image size: 980548  +1748 bytes (.bin may be padded larger)
-Note: The reported total sizes may be smaller than those in the technical reference manual due to reserved memory and 
-application configuration. The total flash size available for the application is not included by default, as it cannot 
-be reliably determined due to the presence of other data like the bootloader, partition table, and application 
-partition size.
+Note: The reported total sizes may be smaller than those in the technical reference manual due to reserved memory and application configuration. The total flash size available for the application is not included by default, as it cannot be reliably determined due to the presence of other data like the bootloader, partition table, and application partition size.
