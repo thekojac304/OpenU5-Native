@@ -1,0 +1,9 @@
+# A3-04A firmware hot-path check: C:\Dev\OpenU5-Native\native\targets\tdeck\build-a3-hf9-post\openu5_tdeck.elf
+
+generate(): 483 instructions, 3 call sites: openu5::OplEmulator::Operator::envelope_step(unsigned long, unsigned char), openu5::OplEmulator::refresh_vibrato()
+functions reachable from generate(): 3
+    openu5::OplEmulator::Operator::envelope_step(unsigned long,     59 instructions
+    openu5::OplEmulator::Operator::refresh_envelope(unsigned cha    51 instructions
+    openu5::OplEmulator::refresh_vibrato()                          71 instructions
+
+GREEN no guard, lock, allocation, log or delay is reachable from the per-sample path
