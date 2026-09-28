@@ -8,7 +8,22 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 A3-HF7, 2026-09-28) — the rite's viewport negative and the Codex's XOR pulses are back; Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 A3-HF8, 2026-09-28) — the Blackthorn sacrifice burst is back, before the victim goes; Alpha 2 remains the released build; read this first
+>
+> **A3-HF8 is a presentation hotfix, not a release** (`ALPHA3_AUDIO.md` §34). **H-207 (A3-HF7) PASSED on the T-Deck** (the user's report). H-206 keeps its status.
+> - **The defect (H-186 / D-43, queued since Batch 51).** After the sacrifice siren the victim went dark with no explosion. `blackthorn.cpp` emitted the burst as a `CellExplosion` after the whole sacrifice script; the scene pacer released it after the victim's clear, to `UiSession`, which ignores it.
+> - **The original.** BLCKTHRN `0x041e` → `explosion_fx_at_cell` (ULTIMA.EXE `0x3522`) over slot 1's last cell (the capture's `[0x5893]` = `0xff` keeps it a scene cell): opaque tile 0, `noise_burst(0x7d0, 0xbb8, 0xa)` = 174 ms, redraw — then `0x0421`/`0x0429` clear the victim. No key is read.
+> - **Fix.** A burst beat in `build_sacrifice_script()` between the siren and the clear; the scene pacer holds it 174 ms and the existing compositor blits tile 0; cue → the `CombatHit` program; `bind_blackthorn_scene()` shared with the host fixture (which used to null the throne room).
+>
+> | | |
+> |---|---|
+> | Host suite | **159 / 159**, serial, 134.38 s. New: `a3_hf8_sacrifice_burst_runtime` 51 (**33 RED on HEAD**, pixels read from the fake panel). `blackthorn_scene` T7 re-stated from the binary (§34.7). **15 / 15 mutations killed**, 0 invalid. |
+> | Firmware | `3.0.0-alpha3-dev-a3-hf8-debug`. Pre-commit build 986,944 B (`0xf0f40`), **+352 B**, 61,632 B (5.9 %) free, zero warnings. Flash `.text` +276, `.rodata` +64, internal `.bss` +16 (the pacer's burst cell); `.data`, IRAM and PSRAM unchanged. Image guards GREEN. The image path, SHA-256 and `Git` are in tag `alpha3-hf8-sacrifice-burst`. **Not flashed.** |
+> | SD | **Unchanged.** Save format unchanged. |
+> | New, queued | **H-209 / D-67:** the shard ritual's seven `0x3522` bursts are 174 ms holds with sound in 1988; `WorldFxLayer` paints 60 ms on / off, mute. Not fixed. |
+> | Next | **H-208** (about 5 minutes: Preset Maxed party, Hour 12, the palace at (13,25), four wrong answers; menu and load during the siren). Then H-185 (Refuge cadence), H-209, or A3-04H. |
+>
+> ### CURRENT STATE (Alpha 3 A3-HF7, 2026-09-28) — the rite's viewport negative and the Codex's XOR pulses are back — **superseded as the current state by A3-HF8 above.**
 >
 > **A3-HF7 is a presentation hotfix, not a release** (`ALPHA3_AUDIO.md` §33). H-206 (A3-HF6) keeps its status (pending).
 > - **The defect (H-184 / D-41, queued since Batch 51).** "ALAKAZAM!", "WELL DONE!" and the Codex ceremony showed no inversion, and the reward lines and the ceremony's page arrived in the key's frame. `RitualInvert` had no device consumer, the Codex's pulses were never marked, and no sweep, shake or restore frame was held.
@@ -6377,7 +6392,7 @@ Every frame count in `blackthorn_scene.cpp` is the bytecode's literal **and** no
 | Blackthorn tick pacing | **CORRECT** (A — proven this batch) |
 | Blackthorn materialize / circle / siren | **TOO FAST — shared cause → HOST FIXED** (Y-32/D-10/H-122); NEEDS PHYSICAL TEST (7D-B) |
 | Blackthorn fizzle texture | EXACT TIMING UNKNOWN (C) — held at the D floor |
-| Blackthorn sacrifice explosion | **MISSING PRESENTATION BEAT + ORDERING WRONG — H-186/D-43, queued** |
+| Blackthorn sacrifice explosion | ~~**MISSING PRESENTATION BEAT + ORDERING WRONG — H-186/D-43, queued**~~ **HOST FIXED — A3-HF8** (`ALPHA3_AUDIO.md` §34; H-208 pending) |
 | Refuge | TOO FAST/SLOW — **scene-local**: Class-C 70 ms/unit + 900/260 ms floors vs exact 54.93 ms ticks; **MISSING ACKNOWLEDGEMENT** (karma getkey `0x0b3e`); sweeps/fizzles unheld — **H-185/D-42, queued** (script is `quest_parity`-pinned: fix belongs in the reference first); NEEDS PHYSICAL TEST |
 | TrollSneak | **CORRECT** (A); hardware PASS (H-137); unchanged control for the shared pacer |
 | Shrine ordained / Codex | **MISSING ACKNOWLEDGEMENT — H-183/D-40, queued** (probe: `native/core/batch51-shrine-keywait-probe.log` — after `ShrineKeyWait` the device session stays in Exploration and the post-wait text is already in the transcript) → **A3-HF6: host fixed** (the eleven getkeys are Key holds of `DialoguePacer`; `ALPHA3_AUDIO.md` §32; device check H-206) |

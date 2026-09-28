@@ -151,6 +151,9 @@ struct World {
     // What actually reached the session, in release order.
     std::vector<std::pair<GameEventKind, std::string>> released;
     int explosion_dx = 0, explosion_dy = 0, explosion_bursts = 0;
+    // A3-HF8: the sacrifice burst as the pacer SHOWS it, sampled per pump.
+    int burst_x = -1, burst_y = -1, burst_shows = 0;
+    bool burst_up = false, burst_over_visible_victim = false, burst_before_dark = false;
 
     explicit World(const std::vector<std::string> &miscmsg, const int16_t *room)
         : ctx(game, turn, travel, commands, world_data) {
@@ -220,7 +223,24 @@ struct World {
     EventSink release_sink() {
         return {this, [](void *p, const GameEvent &e) { static_cast<World *>(p)->deliver(e); }};
     }
-    void pump(uint32_t now_ms) { pacer.pump(now_ms, release_sink()); }
+    void pump(uint32_t now_ms) {
+        pacer.pump(now_ms, release_sink());
+        const auto v = pacer.view();
+        const bool up = v.burst_x >= 0;
+        // The victim is drawn either in its seat (slot 1) or, once warned, as
+        // the table's body tile (0x82) -- 0x0421 / 0x0429 take both away.
+        const bool victim = v.stage.slots[1].visible ||
+                            (v.tiles && v.tiles[7 * kBlackthornSceneCols + 5] == kBlackthornTortureBodyTile);
+        if (up && !burst_up) {
+            ++burst_shows;
+            burst_x = v.burst_x;
+            burst_y = v.burst_y;
+            burst_over_visible_victim = victim;
+        }
+        // The first pump after the burst is taken down shows the victim dark.
+        if (!up && burst_up) burst_before_dark = !victim;
+        burst_up = up;
+    }
     /** Tick the pacer at its own 55 ms unit for `units` units of scene time. */
     void advance(uint32_t &clock, int units) {
         for (int i = 0; i < units; ++i) {
@@ -505,13 +525,17 @@ int main(int argc, char **argv) {
               "T7: the sacrifice targets the torture table the victim was dragged to, not the "
               "empty manacle he was originally chained in");
         w.drain(clock);
-        check(w.saw(GameEventKind::CellExplosion, ""),
-              "T7: the sacrifice raises the explosion FX the port had no event for at all");
+        // A3-HF8 (H-186): the burst is the scene's own beat now. A sibling
+        // CellExplosion released after the whole script put it AFTER the
+        // victim went dark; BLCKTHRN calls 0x3522 at 0x041e, before 0x0421.
+        check(w.burst_shows == 1 && !w.saw(GameEventKind::CellExplosion, ""),
+              "T7: the sacrifice shows the explosion FX exactly once, as a scene beat (0x041e)");
         // The explosion aims at slot 1's retained coordinates -- the table at
-        // (5,7), i.e. dx=0, dy=+2 from the window's (5,5) centre.
-        check(w.explosion_dx == 0 && w.explosion_dy == 2 && w.explosion_bursts == 1,
-              "T7: the explosion burst is aimed at that cell as an offset from the scene centre, "
-              "one burst, exactly as explosion_fx_at_cell is called at 0x041e");
+        // (5,7), the scene cell itself (the capture set [0x5893]=0xff at
+        // 0x06fc, so 0x3522 skips its world-to-window shift).
+        check(w.burst_x == 5 && w.burst_y == 7 && w.burst_over_visible_victim && w.burst_before_dark,
+              "T7: the explosion burst covers that cell while the victim is still drawn, and "
+              "the victim goes dark only after it, exactly as 0x041e precedes 0x0421");
         check(w.pacer.view().tiles == nullptr || !w.pacer.mounted(),
               "T8: the escorted-exit finale (anim_vm 0x369e) takes the scene back down");
         check(!w.pacer.active() && w.pacer.state() == BlackthornPacerState::Idle,

@@ -597,6 +597,7 @@ class AlphaRuntime {
     void bind_scene_pacers(bool paced);
     void bind_dialogue_services();
     void bind_shrine_services();
+    void bind_blackthorn_scene();
     /** Apply a Camp scene visual event to the CampFire stage; false = not one. */
     bool apply_camp_scene_event(const openu5::GameEvent &);
     /** Forward sink of the narrative pacer: Camp stage, status panel, or session. */

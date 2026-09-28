@@ -1,0 +1,115 @@
+# A3-HF8 RED-first: built against HEAD:native/targets/tdeck/main/alpha_runtime.cpp, HEAD:native/core/src/blackthorn.cpp, HEAD:native/core/src/blackthorn_scene.cpp;
+# (alpha_runtime.cpp with bind_blackthorn_scene() extracted, nothing else);
+# every header, the fixture and the tests as in the working tree.
+## a3_hf8_sacrifice_burst_runtime against HEAD: exit 1
+    captured passing at (13,25) beside the guard at (13,24), location 18 floor 0
+GREEN P the real capture reaches the final answer (pendulum), the burst cell (5,7)
+    burst on -1 ms after the Enter, shown -1 ms, 0 phase(s); victim dark at 7685; rec line at 5; "sliced" at 7685
+RED N1 the explosion is drawn on the victim's cell (pendulum)
+RED N2 exactly one cell, the binary's (5,7): slot 1's last x/y (pendulum)
+RED N2.1 the side panels do not change while the burst is up (pendulum)
+RED N3 an opaque blit of tile 0 (the cell is tile 0 pixel for pixel), no viewport XOR (pendulum)
+RED N4 the burst starts after pause(10) + the siren: -1 ms (want 7680 +-11) (pendulum)
+RED N4.1 one phase, held for the noise burst: -1 ms (want 174) (pendulum)
+RED N5 the rec line, then the victim still drawn right up to the burst (pendulum)
+RED N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at 7685 (pendulum)
+RED N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; -1 ms), after the siren; no shake (pendulum)
+RED N5.3 "sliced in half!" follows the burst, never before it: 7685 (pendulum)
+GREEN N7 restored: no tile 0 anywhere afterwards, and the pacer holds no burst (pendulum)
+GREEN N10 the pendulum still waits at getkey 0x04f6 after "sliced in half!"
+GREEN N10.1 one Enter releases rec6 (0x04f9), as before
+GREEN B the real capture reaches the final answer (betrayal at once), the burst cell (7,5)
+    burst on -1 ms after the Enter, shown -1 ms, 0 phase(s); victim dark at 7685; rec line at 5; "sliced" at -1
+RED N1 the explosion is drawn on the victim's cell (betrayal at once)
+RED N2 exactly one cell, the binary's (7,5): slot 1's last x/y (betrayal at once)
+RED N2.1 the side panels do not change while the burst is up (betrayal at once)
+RED N3 an opaque blit of tile 0 (the cell is tile 0 pixel for pixel), no viewport XOR (betrayal at once)
+RED N4 the burst starts after pause(10) + the siren: -1 ms (want 7680 +-11) (betrayal at once)
+RED N4.1 one phase, held for the noise burst: -1 ms (want 174) (betrayal at once)
+RED N5 the rec line, then the victim still drawn right up to the burst (betrayal at once)
+RED N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at 7685 (betrayal at once)
+RED N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; -1 ms), after the siren; no shake (betrayal at once)
+GREEN N7 restored: no tile 0 anywhere afterwards, and the pacer holds no burst (betrayal at once)
+GREEN N10 the betrayal still waits at getkey 0x0510 before the finale
+GREEN W the real capture reaches the final answer (betrayal after a warning), the burst cell (5,7)
+    burst on -1 ms after the Enter, shown -1 ms, 0 phase(s); victim dark at 7685; rec line at 5; "sliced" at -1
+RED N1 the explosion is drawn on the victim's cell (betrayal after a warning)
+RED N2 exactly one cell, the binary's (5,7): slot 1's last x/y (betrayal after a warning)
+RED N2.1 the side panels do not change while the burst is up (betrayal after a warning)
+RED N3 an opaque blit of tile 0 (the cell is tile 0 pixel for pixel), no viewport XOR (betrayal after a warning)
+RED N4 the burst starts after pause(10) + the siren: -1 ms (want 7680 +-11) (betrayal after a warning)
+RED N4.1 one phase, held for the noise burst: -1 ms (want 174) (betrayal after a warning)
+RED N5 the rec line, then the victim still drawn right up to the burst (betrayal after a warning)
+RED N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at 7685 (betrayal after a warning)
+RED N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; -1 ms), after the siren; no shake (betrayal after a warning)
+GREEN N7 restored: no tile 0 anywhere afterwards, and the pacer holds no burst (betrayal after a warning)
+GREEN N10 the betrayal still waits at getkey 0x0510 before the finale
+RED N6.0 the burst is up
+RED N8.0 the burst is up (a save was made in the palace first)
+RED N8T.0 the burst is up (a save was made in the palace first)
+RED N9.0 the burst is up
+RED N9.2 closed after the siren's hold ran out behind it: the burst still shows once, for -1 ms, on the table, before the victim goes and before "sliced in half!"
+a3_hf8_sacrifice_burst_runtime: 43 checks, 33 failures
+## blackthorn_scene_tests against HEAD: exit 1
+[FAIL] blackthorn_scene check 44: T7: the sacrifice shows the explosion FX exactly once, as a scene beat (0x041e)
+[FAIL] blackthorn_scene check 45: T7: the explosion burst covers that cell while the victim is still drawn, and the victim goes dark only after it, exactly as 0x041e precedes 0x0421
+blackthorn_scene: 57 checks, 2 failures
+## a3_hf8_sacrifice_burst_runtime against the working tree: exit 0
+    captured passing at (13,25) beside the guard at (13,24), location 18 floor 0
+GREEN P the real capture reaches the final answer (pendulum), the burst cell (5,7)
+    burst on 7685 ms after the Enter, shown 175 ms, 1 phase(s); victim dark at 7860; rec line at 5; "sliced" at 7860
+GREEN N1 the explosion is drawn on the victim's cell (pendulum)
+GREEN N2 exactly one cell, the binary's (5,7): slot 1's last x/y (pendulum)
+GREEN N2.1 the side panels do not change while the burst is up (pendulum)
+GREEN N3 an opaque blit of tile 0 (the cell is tile 0 pixel for pixel), no viewport XOR (pendulum)
+GREEN N4 the burst starts after pause(10) + the siren: 7685 ms (want 7680 +-11) (pendulum)
+GREEN N4.1 one phase, held for the noise burst: 175 ms (want 174) (pendulum)
+GREEN N5 the rec line, then the victim still drawn right up to the burst (pendulum)
+GREEN N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at 7860 (pendulum)
+GREEN N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; 7685 ms), after the siren; no shake (pendulum)
+GREEN N5.3 "sliced in half!" follows the burst, never before it: 7860 (pendulum)
+GREEN N7 restored: no tile 0 anywhere afterwards, and the pacer holds no burst (pendulum)
+GREEN N10 the pendulum still waits at getkey 0x04f6 after "sliced in half!"
+GREEN N10.1 one Enter releases rec6 (0x04f9), as before
+GREEN B the real capture reaches the final answer (betrayal at once), the burst cell (7,5)
+    burst on 7685 ms after the Enter, shown 175 ms, 1 phase(s); victim dark at 7860; rec line at 5; "sliced" at -1
+GREEN N1 the explosion is drawn on the victim's cell (betrayal at once)
+GREEN N2 exactly one cell, the binary's (7,5): slot 1's last x/y (betrayal at once)
+GREEN N2.1 the side panels do not change while the burst is up (betrayal at once)
+GREEN N3 an opaque blit of tile 0 (the cell is tile 0 pixel for pixel), no viewport XOR (betrayal at once)
+GREEN N4 the burst starts after pause(10) + the siren: 7685 ms (want 7680 +-11) (betrayal at once)
+GREEN N4.1 one phase, held for the noise burst: 175 ms (want 174) (betrayal at once)
+GREEN N5 the rec line, then the victim still drawn right up to the burst (betrayal at once)
+GREEN N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at 7860 (betrayal at once)
+GREEN N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; 7685 ms), after the siren; no shake (betrayal at once)
+GREEN N7 restored: no tile 0 anywhere afterwards, and the pacer holds no burst (betrayal at once)
+GREEN N10 the betrayal still waits at getkey 0x0510 before the finale
+GREEN W the real capture reaches the final answer (betrayal after a warning), the burst cell (5,7)
+    burst on 7685 ms after the Enter, shown 175 ms, 1 phase(s); victim dark at 7860; rec line at 5; "sliced" at -1
+GREEN N1 the explosion is drawn on the victim's cell (betrayal after a warning)
+GREEN N2 exactly one cell, the binary's (5,7): slot 1's last x/y (betrayal after a warning)
+GREEN N2.1 the side panels do not change while the burst is up (betrayal after a warning)
+GREEN N3 an opaque blit of tile 0 (the cell is tile 0 pixel for pixel), no viewport XOR (betrayal after a warning)
+GREEN N4 the burst starts after pause(10) + the siren: 7685 ms (want 7680 +-11) (betrayal after a warning)
+GREEN N4.1 one phase, held for the noise burst: 175 ms (want 174) (betrayal after a warning)
+GREEN N5 the rec line, then the victim still drawn right up to the burst (betrayal after a warning)
+GREEN N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at 7860 (betrayal after a warning)
+GREEN N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; 7685 ms), after the siren; no shake (betrayal after a warning)
+GREEN N7 restored: no tile 0 anywhere afterwards, and the pacer holds no burst (betrayal after a warning)
+GREEN N10 the betrayal still waits at getkey 0x0510 before the finale
+GREEN N6.0 the burst is up
+GREEN N6 no command, no move and no released step (30 ms of input)
+GREEN N6.1 the burst ends by itself; the Enter inside it did not satisfy getkey 0x04f6
+GREEN N8.0 the burst is up (a save was made in the palace first)
+GREEN N8 the loaded game is drawn with no burst and no scene; the party is whole again
+GREEN N8.1 and nothing of the sacrifice replays later
+GREEN N8T.0 the burst is up (a save was made in the palace first)
+GREEN N8T Continue from the title shows the saved game: no scene, no burst, the party whole
+GREEN N8T.1 and nothing of the sacrifice replays later
+GREEN N9.0 the burst is up
+GREEN N9 nothing is released behind the open menu (no victim cleared, no "sliced")
+GREEN N9.1 closed: the scene resumes, the burst is gone, and it waits at getkey 0x04f6
+GREEN N9.2 closed after the siren's hold ran out behind it: the burst still shows once, for 175 ms, on the table, before the victim goes and before "sliced in half!"
+a3_hf8_sacrifice_burst_runtime: 51 checks, 0 failures
+## blackthorn_scene_tests against the working tree: exit 0
+blackthorn_scene: 57 checks, 0 failures

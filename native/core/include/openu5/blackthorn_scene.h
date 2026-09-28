@@ -86,8 +86,16 @@ struct BlackthornPatch {
     bool valid = false;
 };
 
-/** Point sound cues of the scene (tone_sweep 0x2192 families). */
-enum class BlackthornSfx : uint8_t { None, Materialize, ShardSweep };
+/** Point sound cues of the scene (tone_sweep 0x2192 families; A3-HF8 appended
+ *  the sacrifice burst's noise_burst 0x223c inside explosion_fx_at_cell). */
+enum class BlackthornSfx : uint8_t { None, Materialize, ShardSweep, Explosion };
+
+/**
+ * A3-HF8 (H-186 / D-43). What explosion_fx_at_cell (ULTIMA.EXE 0x3522) blits
+ * over the sacrifice victim's cell: tile 0, TileData `Explosion`, OPAQUE (the
+ * same blit_tile 0x10e0 as the combat hit cue's marker).
+ */
+constexpr int16_t kBlackthornBurstTile = 0;
 
 /**
  * One observable beat. `frames` is the pause that follows it, in run-n-frames
@@ -118,6 +126,13 @@ struct BlackthornBeat {
     bool blackout = false;
     /** The deposit (0x08e7) restores the screen: the scene comes down. */
     bool dismount = false;
+    /**
+     * A3-HF8. The sacrifice burst (BLCKTHRN 0x041e -> explosion_fx_at_cell):
+     * the cell tile 0 covers for exactly this beat's hold -- the noise_burst
+     * the kernel blocks in -- and which the next frame's viewport_redraw
+     * (0x355d) takes away again. -1 = no burst.
+     */
+    int8_t burst_x = -1, burst_y = -1;
 };
 
 /**
@@ -192,6 +207,8 @@ struct BlackthornSceneView {
     /** Live room grid with every accumulated patch; null during the blackout. */
     const int16_t *tiles = nullptr;
     BlackthornStage stage{};
+    /** A3-HF8: the sacrifice burst's cell while it is up, else -1. */
+    int8_t burst_x = -1, burst_y = -1;
 };
 
 /**
@@ -296,6 +313,7 @@ class BlackthornScenePacer {
     BlackthornPacerState state_ = BlackthornPacerState::Idle;
     size_t head_ = 0, count_ = 0, text_used_ = 0;
     uint32_t unit_ms_ = 55, resume_at_ms_ = 0, released_ = 0, dropped_ = 0;
+    int8_t burst_x_ = -1, burst_y_ = -1;
     bool waiting_ = false, saw_dismount_ = false, awaiting_prompt_ = false;
 
     bool push(const GameEvent &, BlackthornStepKind, const BlackthornBeat *);

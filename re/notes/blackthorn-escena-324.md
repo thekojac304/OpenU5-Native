@@ -130,3 +130,27 @@ en (5,9).
   mesa con cuerpo + reloj lleno, péndulo con silla vacía y roster compactado,
   depósito) — capturas del 19-08, vite propio 5297, `?scenebeat`.
 - e2e `blackthorn.spec.ts` 2/2 verde (drena síncrono bajo webdriver).
+
+## 6. A3-HF8 (2026-09-28, H-186 / D-43) — la explosión del sacrificio, releída del binario
+
+Leído para este lote con `re/tools/dis16.py` (BLCKTHRN near calls por base `0xA290`:
+`0x9292 → 0x3522`, `0x7f02 → 0x2192`, `0x9856 → 0x3ae6`, `0x75c0 → 0x1850`).
+
+- `0x0414`–`0x041e`: `push [0x5c64]` / `push [0x5c65]` → `call 0x3522` (`explosion_fx_at_cell`,
+  llamada ÚNICA, 1 burst), tras la sirena (`0x03d0`–`0x0411`) y ANTES de `0x0421`
+  (`[0x5c63]`/`[0x5c62]` = 0: el slot 1 se apaga) y `0x0429` (`[0xadf9]` = `0x80`, la mesa vacía).
+- ULTIMA.EXE `0x3522`: `cmp [0x5893],0x80 / jae` — la conversión mundo→ventana (−party+5)
+  sólo si la localización es < `0x80`. La captura pone `[0x5893] = 0xff` en `0x06fc`, así que
+  la celda es la coordenada de escena tal cual: la mesa (5,7) tras el aviso, el asiento si no.
+  Luego `0x354b` `blit_tile(x, y, 0)` (tile 0 = `Explosion`, opaco, el mismo `0x10e0` que el
+  marcador de golpe de combate), `0x355a` `noise_burst(0x7d0, 0xbb8, 0xa)` (bloquea
+  ceil(3000/10)·10·1,5 = 4.500 muestras = **174 ms**, idéntico al `0x35de` del golpe a un enemigo),
+  `0x355d` `viewport_redraw` (`0x5910`, sin delay propio): el tile desaparece. Sin sacudida, sin XOR.
+- Nadie lee tecla entre `0x03c9` y `0x04f6` (péndulo) / el retorno (traición).
+- El ritual del shard llama a la MISMA rutina siete veces seguidas (CAST `0x16e1`–`0x16fa`,
+  `call 0x75a2` por base `0xBF80`): siete ciclos de tile + 174 ms de ruido + redibujo. El puerto
+  (`world_fx.h`) lo pinta como 60 ms encendido / 60 apagado y mudo — queda en cola aparte (H-209 / D-67),
+  no se tocó en A3-HF8.
+- El puerto TS (`blackthorn-capture.ts`) emite `cell-explosion` DESPUÉS del segmento del sacrificio
+  (el apagado incluido); el binario la dispara antes. El nativo sigue al binario (beat del guion,
+  `ALPHA3_AUDIO.md` §34); el TS no se cambió (ningún fixture fija esa capa).

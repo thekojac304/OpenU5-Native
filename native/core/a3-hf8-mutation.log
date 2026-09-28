@@ -1,0 +1,174 @@
+# A3-HF8 mutation validation (2026-09-28 01:36)
+
+M1 omit the burst (no cell on the beat) [blackthorn_scene.cpp]: KILLED
+    a3_hf8_sacrifice_burst_runtime exit=1  33 RED
+        RED N1 the explosion is drawn on the victim's cell (pendulum)
+        RED N2 exactly one cell, the binary's (5,7): slot 1's last x/y (pendulum)
+        RED N2.1 the side panels do not change while the burst is up (pendulum)
+        RED N3 an opaque blit of tile 0 (the cell is tile 0 pixel for pixel), no viewport XOR (pendulum)
+        RED N4 the burst starts after pause(10) + the siren: -1 ms (want 7680 +-11) (pendulum)
+        RED N4.1 one phase, held for the noise burst: -1 ms (want 174) (pendulum)
+        RED N5 the rec line, then the victim still drawn right up to the burst (pendulum)
+        RED N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at 7860 (pendulum)
+        RED N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; 7685 ms), after the siren; no shake (pendulum)
+        RED N5.3 "sliced in half!" follows the burst, never before it: 7860 (pendulum)
+        RED N1 the explosion is drawn on the victim's cell (betrayal at once)
+        RED N2 exactly one cell, the binary's (7,5): slot 1's last x/y (betrayal at once)
+    blackthorn_scene_tests exit=1  2 RED
+        [FAIL] blackthorn_scene check 44: T7: the sacrifice shows the explosion FX exactly once, as a scene beat (0x041e)
+        [FAIL] blackthorn_scene check 45: T7: the explosion burst covers that cell while the victim is still drawn, and the victim goes dark only after it, exactly as 0x041e precedes 0x0421
+M2 wrong region (the cell to the right of slot 1) [blackthorn_scene.cpp]: KILLED
+    a3_hf8_sacrifice_burst_runtime exit=1  33 RED
+        RED N1 the explosion is drawn on the victim's cell (pendulum)
+        RED N2 exactly one cell, the binary's (5,7): slot 1's last x/y (pendulum)
+        RED N2.1 the side panels do not change while the burst is up (pendulum)
+        RED N3 an opaque blit of tile 0 (the cell is tile 0 pixel for pixel), no viewport XOR (pendulum)
+        RED N4 the burst starts after pause(10) + the siren: -1 ms (want 7680 +-11) (pendulum)
+        RED N4.1 one phase, held for the noise burst: -1 ms (want 174) (pendulum)
+        RED N5 the rec line, then the victim still drawn right up to the burst (pendulum)
+        RED N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at 7860 (pendulum)
+        RED N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; 7685 ms), after the siren; no shake (pendulum)
+        RED N5.3 "sliced in half!" follows the burst, never before it: 7860 (pendulum)
+        RED N1 the explosion is drawn on the victim's cell (betrayal at once)
+        RED N2 exactly one cell, the binary's (7,5): slot 1's last x/y (betrayal at once)
+    blackthorn_scene_tests exit=1  1 RED
+        [FAIL] blackthorn_scene check 45: T7: the explosion burst covers that cell while the victim is still drawn, and the victim goes dark only after it, exactly as 0x041e precedes 0x0421
+M3 wrong primitive (tile 1 instead of tile 0) [blackthorn_scene.cpp]: KILLED
+    a3_hf8_sacrifice_burst_runtime exit=1  33 RED
+        RED N1 the explosion is drawn on the victim's cell (pendulum)
+        RED N2 exactly one cell, the binary's (5,7): slot 1's last x/y (pendulum)
+        RED N2.1 the side panels do not change while the burst is up (pendulum)
+        RED N3 an opaque blit of tile 0 (the cell is tile 0 pixel for pixel), no viewport XOR (pendulum)
+        RED N4 the burst starts after pause(10) + the siren: -1 ms (want 7680 +-11) (pendulum)
+        RED N4.1 one phase, held for the noise burst: -1 ms (want 174) (pendulum)
+        RED N5 the rec line, then the victim still drawn right up to the burst (pendulum)
+        RED N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at 7860 (pendulum)
+        RED N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; 7685 ms), after the siren; no shake (pendulum)
+        RED N5.3 "sliced in half!" follows the burst, never before it: 7860 (pendulum)
+        RED N1 the explosion is drawn on the victim's cell (betrayal at once)
+        RED N2 exactly one cell, the binary's (7,5): slot 1's last x/y (betrayal at once)
+M4 wrong duration (the hold doubled) [blackthorn_scene.cpp]: KILLED
+    a3_hf8_sacrifice_burst_runtime exit=1  4 RED
+        RED N4.1 one phase, held for the noise burst: 350 ms (want 174) (pendulum)
+        RED N4.1 one phase, held for the noise burst: 350 ms (want 174) (betrayal at once)
+        RED N4.1 one phase, held for the noise burst: 350 ms (want 174) (betrayal after a warning)
+        RED N9.2 closed after the siren's hold ran out behind it: the burst still shows once, for 350 ms, on the table, before the victim goes and before "sliced in half!"
+M5 wrong number of phases (a second burst after one tick) [blackthorn_scene.cpp]: KILLED
+    a3_hf8_sacrifice_burst_runtime exit=1  7 RED
+        RED N4.1 one phase, held for the noise burst: 405 ms (want 174) (pendulum)
+        RED N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; 7685 ms), after the siren; no shake (pendulum)
+        RED N4.1 one phase, held for the noise burst: 405 ms (want 174) (betrayal at once)
+        RED N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; 7685 ms), after the siren; no shake (betrayal at once)
+        RED N4.1 one phase, held for the noise burst: 405 ms (want 174) (betrayal after a warning)
+        RED N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; 7685 ms), after the siren; no shake (betrayal after a warning)
+        RED N9.2 closed after the siren's hold ran out behind it: the burst still shows once, for 405 ms, on the table, before the victim goes and before "sliced in half!"
+    blackthorn_scene_tests exit=1  1 RED
+        [FAIL] blackthorn_scene check 44: T7: the sacrifice shows the explosion FX exactly once, as a scene beat (0x041e)
+M6 restore too early (the tile leaves 90 ms before the hold ends) [blackthorn_scene.cpp]: KILLED
+    a3_hf8_sacrifice_burst_runtime exit=1  6 RED
+        RED N4.1 one phase, held for the noise burst: 105 ms (want 174) (pendulum)
+        RED N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at 7860 (pendulum)
+        RED N5.3 "sliced in half!" follows the burst, never before it: 7860 (pendulum)
+        RED N4.1 one phase, held for the noise burst: 120 ms (want 174) (betrayal after a warning)
+        RED N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at 7860 (betrayal after a warning)
+        RED N9.2 closed after the siren's hold ran out behind it: the burst still shows once, for 105 ms, on the table, before the victim goes and before "sliced in half!"
+    blackthorn_scene_tests exit=1  1 RED
+        [FAIL] blackthorn_scene check 45: T7: the explosion burst covers that cell while the victim is still drawn, and the victim goes dark only after it, exactly as 0x041e precedes 0x0421
+M7 never restore (a burst sticks until the scene ends) [blackthorn_scene.cpp]: KILLED
+    a3_hf8_sacrifice_burst_runtime exit=1  13 RED
+        RED N2.1 the side panels do not change while the burst is up (pendulum)
+        RED N4.1 one phase, held for the noise burst: 4325 ms (want 174) (pendulum)
+        RED N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at -1 (pendulum)
+        RED N5.3 "sliced in half!" follows the burst, never before it: 7860 (pendulum)
+        RED N7 restored: no tile 0 anywhere afterwards, and the pacer holds no burst (pendulum)
+        RED N4.1 one phase, held for the noise burst: 4325 ms (want 174) (betrayal at once)
+        RED N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at -1 (betrayal at once)
+        RED N7 restored: no tile 0 anywhere afterwards, and the pacer holds no burst (betrayal at once)
+        RED N4.1 one phase, held for the noise burst: 4325 ms (want 174) (betrayal after a warning)
+        RED N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at -1 (betrayal after a warning)
+        RED N7 restored: no tile 0 anywhere afterwards, and the pacer holds no burst (betrayal after a warning)
+        RED N9.1 closed: the scene resumes, the burst is gone, and it waits at getkey 0x04f6
+M8 burst BEFORE the siren instead of after it [blackthorn_scene.cpp]: KILLED
+    a3_hf8_sacrifice_burst_runtime exit=1  13 RED
+        RED N4 the burst starts after pause(10) + the siren: 555 ms (want 7680 +-11) (pendulum)
+        RED N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at 7860 (pendulum)
+        RED N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; 555 ms), after the siren; no shake (pendulum)
+        RED N5.3 "sliced in half!" follows the burst, never before it: 7860 (pendulum)
+        RED N4 the burst starts after pause(10) + the siren: 555 ms (want 7680 +-11) (betrayal at once)
+        RED N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at 7860 (betrayal at once)
+        RED N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; 555 ms), after the siren; no shake (betrayal at once)
+        RED N4 the burst starts after pause(10) + the siren: 555 ms (want 7680 +-11) (betrayal after a warning)
+        RED N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at 7860 (betrayal after a warning)
+        RED N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; 555 ms), after the siren; no shake (betrayal after a warning)
+        RED N6.1 the burst ends by itself; the Enter inside it did not satisfy getkey 0x04f6
+        RED N9.1 closed: the scene resumes, the burst is gone, and it waits at getkey 0x04f6
+    blackthorn_scene_tests exit=1  1 RED
+        [FAIL] blackthorn_scene check 45: T7: the explosion burst covers that cell while the victim is still drawn, and the victim goes dark only after it, exactly as 0x041e precedes 0x0421
+M9 burst AFTER the victim clears (the HF7 order) [blackthorn_scene.cpp]: KILLED
+    blackthorn_scene_tests exit=1  1 RED
+        [FAIL] blackthorn_scene check 45: T7: the explosion burst covers that cell while the victim is still drawn, and the victim goes dark only after it, exactly as 0x041e precedes 0x0421
+M10 the pendulum path bypasses the burst [blackthorn.cpp]: KILLED
+    a3_hf8_sacrifice_burst_runtime exit=1  15 RED
+        RED N1 the explosion is drawn on the victim's cell (pendulum)
+        RED N2 exactly one cell, the binary's (5,7): slot 1's last x/y (pendulum)
+        RED N2.1 the side panels do not change while the burst is up (pendulum)
+        RED N3 an opaque blit of tile 0 (the cell is tile 0 pixel for pixel), no viewport XOR (pendulum)
+        RED N4 the burst starts after pause(10) + the siren: -1 ms (want 7680 +-11) (pendulum)
+        RED N4.1 one phase, held for the noise burst: -1 ms (want 174) (pendulum)
+        RED N5 the rec line, then the victim still drawn right up to the burst (pendulum)
+        RED N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at 7860 (pendulum)
+        RED N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; 7685 ms), after the siren; no shake (pendulum)
+        RED N5.3 "sliced in half!" follows the burst, never before it: 7860 (pendulum)
+        RED N6.0 the burst is up
+        RED N8.0 the burst is up (a save was made in the palace first)
+M11 the betrayal path bypasses the burst [blackthorn.cpp]: KILLED
+    a3_hf8_sacrifice_burst_runtime exit=1  18 RED
+        RED N1 the explosion is drawn on the victim's cell (betrayal at once)
+        RED N2 exactly one cell, the binary's (7,5): slot 1's last x/y (betrayal at once)
+        RED N2.1 the side panels do not change while the burst is up (betrayal at once)
+        RED N3 an opaque blit of tile 0 (the cell is tile 0 pixel for pixel), no viewport XOR (betrayal at once)
+        RED N4 the burst starts after pause(10) + the siren: -1 ms (want 7680 +-11) (betrayal at once)
+        RED N4.1 one phase, held for the noise burst: -1 ms (want 174) (betrayal at once)
+        RED N5 the rec line, then the victim still drawn right up to the burst (betrayal at once)
+        RED N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at 7860 (betrayal at once)
+        RED N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; 7685 ms), after the siren; no shake (betrayal at once)
+        RED N1 the explosion is drawn on the victim's cell (betrayal after a warning)
+        RED N2 exactly one cell, the binary's (5,7): slot 1's last x/y (betrayal after a warning)
+        RED N2.1 the side panels do not change while the burst is up (betrayal after a warning)
+    blackthorn_scene_tests exit=1  2 RED
+        [FAIL] blackthorn_scene check 44: T7: the sacrifice shows the explosion FX exactly once, as a scene beat (0x041e)
+        [FAIL] blackthorn_scene check 45: T7: the explosion burst covers that cell while the victim is still drawn, and the victim goes dark only after it, exactly as 0x041e precedes 0x0421
+M12 the burst is mute (no noise_burst cue) [alpha_runtime.cpp]: KILLED
+    a3_hf8_sacrifice_burst_runtime exit=1  3 RED
+        RED N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; -1 ms), after the siren; no shake (pendulum)
+        RED N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; -1 ms), after the siren; no shake (betrayal at once)
+        RED N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; -1 ms), after the siren; no shake (betrayal after a warning)
+M13 input leaks while the scene runs (only a getkey swallows) [alpha_runtime.cpp]: KILLED
+    a3_hf8_sacrifice_burst_runtime exit=1  1 RED
+        RED N6 no command, no move and no released step (30 ms of input)
+M14 a successful load keeps the scene (and its burst) [alpha_runtime.cpp]: KILLED
+    a3_hf8_sacrifice_burst_runtime exit=1  4 RED
+        RED N8 the loaded game is drawn with no burst and no scene; the party is whole again
+        RED N8.1 and nothing of the sacrifice replays later
+        RED N8T Continue from the title shows the saved game: no scene, no burst, the party whole
+        RED N8T.1 and nothing of the sacrifice replays later
+M15 the view hides the burst (the pacer holds it, nothing is drawn) [blackthorn_scene.cpp]: KILLED
+    a3_hf8_sacrifice_burst_runtime exit=1  33 RED
+        RED N1 the explosion is drawn on the victim's cell (pendulum)
+        RED N2 exactly one cell, the binary's (5,7): slot 1's last x/y (pendulum)
+        RED N2.1 the side panels do not change while the burst is up (pendulum)
+        RED N3 an opaque blit of tile 0 (the cell is tile 0 pixel for pixel), no viewport XOR (pendulum)
+        RED N4 the burst starts after pause(10) + the siren: -1 ms (want 7680 +-11) (pendulum)
+        RED N4.1 one phase, held for the noise burst: -1 ms (want 174) (pendulum)
+        RED N5 the rec line, then the victim still drawn right up to the burst (pendulum)
+        RED N5.1 the victim goes dark only when the burst ends (0x041e before 0x0421): dark at 7860 (pendulum)
+        RED N5.2 its sound is the kernel's noise burst, once, with the tile (0x355a; 7685 ms), after the siren; no shake (pendulum)
+        RED N5.3 "sliced in half!" follows the burst, never before it: 7860 (pendulum)
+        RED N1 the explosion is drawn on the victim's cell (betrayal at once)
+        RED N2 exactly one cell, the binary's (7,5): slot 1's last x/y (betrayal at once)
+    blackthorn_scene_tests exit=1  2 RED
+        [FAIL] blackthorn_scene check 44: T7: the sacrifice shows the explosion FX exactly once, as a scene beat (0x041e)
+        [FAIL] blackthorn_scene check 45: T7: the explosion burst covers that cell while the victim is still drawn, and the victim goes dark only after it, exactly as 0x041e precedes 0x0421
+
+restored: build exit=0; a3_hf8_sacrifice_burst_runtime exit=0, blackthorn_scene_tests exit=0, batch51_scene_pacing exit=0
+mutations: 15, killed: 15, survived: 0, invalid: 0

@@ -47,14 +47,9 @@ void emit_scene(const BlackthornSceneServices &s,EventSink sink){
 // 0x08cd, 0x053f, 0x04f6, 0x0510); same event kind as the shrine rite uses.
 void key_wait(EventSink s){event(s,GameEventKind::ShrineKeyWait);}
 // explosion_fx_at_cell (kernel 0x3522) over slot 1's LAST coordinates
-// (0x0414-0x041e). The scene window is centred on (5,5), so the cell travels
-// as an offset from the centre, exactly like every other CellExplosion.
-void emit_sacrifice_explosion(const BlackthornSceneServices &s,EventSink sink){
-    int x=0,y=0;sacrifice_victim_cell(*s.state,x,y);
-    GameEvent e;e.kind=GameEventKind::CellExplosion;
-    e.cell_fx={int16_t(x-kBlackthornSceneCols/2),int16_t(y-kBlackthornSceneRows/2),1,0,0};
-    if(sink.emit)sink.emit(sink.context,e);
-}
+// (0x0414-0x041e) is a beat of build_sacrifice_script() since A3-HF8 (H-186):
+// the burst precedes the victim's clear (0x0421), which a sibling event
+// released after the whole script could not.
 void password(CommandContext &c,EventSink s){c.blackthorn->password=true;event(s,GameEventKind::GuardPasswordPrompt,"\"Give now the\npassword, bearer\nof the Badge!\"\n\nYour response?");}
 }
 CommandStatus talk_guard(CommandContext &c,const NpcActor &npc,EventSink sink){if(!c.blackthorn)return CommandStatus::InvalidContext;if(c.game.position.map.location==18){if(c.turn.time_spell=='\x1d')password(c,sink);return CommandStatus::Success;}c.blackthorn->tribute=true;c.blackthorn->npc_slot=npc.schedule.slot;GameEvent e;e.kind=GameEventKind::GuardTributePrompt;e.note=c.game.position.map.location==5?-1:count_living(c.game)*10;if(sink.emit)sink.emit(sink.context,e);return CommandStatus::Success;}
@@ -125,14 +120,14 @@ CommandStatus blackthorn_action(CommandContext &c,BlackthornAction action,TalkTe
             // sacrifice_member(0) before the siren (0x03c2); alone it is the
             // pardon at 0x058e and nothing is sacrificed. Both then take the
             // common tail: getkey 0x0510, then anim_vm 0x369e.
-            if(s.living>1){build_sacrifice_script(*scene->state,*scene->script);emit_scene(*scene,sink);emit_sacrifice_explosion(*scene,sink);}
+            if(s.living>1){build_sacrifice_script(*scene->state,*scene->script);emit_scene(*scene,sink);}
             key_wait(sink);
             build_finale_script(*scene->state,*scene->script);emit_scene(*scene,sink);
         }}
     else if(s.living<2){event(sink,GameEventKind::Message,record(c,10));
         if(scene){key_wait(sink);build_finale_script(*scene->state,*scene->script);emit_scene(*scene,sink);}}
     else{auto victim=sacrifice_first_companion(g);event(sink,GameEventKind::Message,record(c,4));
-        if(scene){build_sacrifice_script(*scene->state,*scene->script);emit_scene(*scene,sink);emit_sacrifice_explosion(*scene,sink);}
+        if(scene){build_sacrifice_script(*scene->state,*scene->script);emit_scene(*scene,sink);}
         event(sink,GameEventKind::Message,"\n\n"+victim+" is sliced in half! ");
         if(scene)key_wait(sink);                                          // 0x04f6
         event(sink,GameEventKind::Message,record(c,6));

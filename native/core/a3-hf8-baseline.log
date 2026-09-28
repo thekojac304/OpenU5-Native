@@ -1,0 +1,22 @@
+# A3-HF8 baseline: build-a3-hf8-base built from the untouched tree at c73c001d (focused HF5/HF6/HF7 + Blackthorn)
+Test project C:/Dev/OpenU5-Native/native/core/build-a3-hf8-base
+    Start  75: batch51_scene_pacing
+1/8 Test  #75: batch51_scene_pacing .............   Passed    0.01 sec
+    Start 107: a3_hf5_dialogue_pacing_runtime
+2/8 Test #107: a3_hf5_dialogue_pacing_runtime ...   Passed    0.37 sec
+    Start 108: a3_hf6_shrine_key_wait_runtime
+3/8 Test #108: a3_hf6_shrine_key_wait_runtime ...   Passed    0.17 sec
+    Start 109: a3_hf6_shrine_key_wait_pacer
+4/8 Test #109: a3_hf6_shrine_key_wait_pacer .....   Passed    0.01 sec
+    Start 110: a3_hf7_ritual_fx_runtime
+5/8 Test #110: a3_hf7_ritual_fx_runtime .........   Passed    0.75 sec
+    Start 111: a3_hf7_ritual_fx
+6/8 Test #111: a3_hf7_ritual_fx .................   Passed    0.01 sec
+    Start 112: a3_hf5_dialogue_pacer
+7/8 Test #112: a3_hf5_dialogue_pacer ............   Passed    0.01 sec
+    Start 130: blackthorn_scene
+8/8 Test #130: blackthorn_scene .................   Passed    0.02 sec
+
+100% tests passed out of 8
+
+Total Test time (real) =   1.36 sec

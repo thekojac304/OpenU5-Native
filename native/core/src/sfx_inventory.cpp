@@ -96,7 +96,7 @@ constexpr SfxSite kSites[] = {
     {"ULTIMA.EXE", 0x311d, "SET_TONE", I::Quake, S::Implemented, C, "screen_shake_rumble pass 3"},
     {"ULTIMA.EXE", 0x3150, "SET_TONE", I::Quake, S::Implemented, C, "screen_shake_rumble pass 4"},
     {"ULTIMA.EXE", 0x316e, "SPK_STOP", I::Quake, S::Implemented, C, "screen_shake_rumble end"},
-    {"ULTIMA.EXE", 0x355a, "NOISE_BURST", I::None, S::EvidenceUnknown, C, "0x350a impact on a party-relative cell: callers not mapped"},
+    {"ULTIMA.EXE", 0x355a, "NOISE_BURST", I::CombatHit, S::Implemented, C, "0x3522 explosion_fx_at_cell: the Blackthorn sacrifice burst (BLCKTHRN 0x041e, A3-HF8); the shard ritual's CAST 0x16f4 bursts are still mute (H-209)"},
     {"ULTIMA.EXE", 0x35c9, "NOISE_BURST", I::CombatHitHeavy, S::Implemented, C, "0x3564 hit flash, target a party member"},
     {"ULTIMA.EXE", 0x35de, "NOISE_BURST", I::CombatHit, S::Implemented, C, "0x3564 hit flash, target an enemy"},
     {"ULTIMA.EXE", 0x428b, "TONE_SWEEP", I::AmbientClockChime, S::Implemented, C, "ambient class 1, [0x5884] != 0"},

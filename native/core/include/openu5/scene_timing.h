@@ -132,5 +132,16 @@ constexpr uint32_t kBlackthornMaterializeSamples = 0x32c8;
  */
 constexpr uint32_t kBlackthornSirenSweepsPerLeg = (0x61a8 - 0x7d0) / 0x32;
 constexpr uint32_t kBlackthornSirenSamples = 2 * kBlackthornSirenSweepsPerLeg * 0xc8;
+/**
+ * A3-HF8 (H-186). The sacrifice burst, 0x0414-0x041e -> explosion_fx_at_cell
+ * (ULTIMA.EXE 0x3522): blit_tile(cell, 0) @0x354b, noise_burst(0x7d0, 0xbb8,
+ * 0xa) @0x355a, viewport_redraw @0x355d. The tile stays up for exactly the
+ * noise burst the kernel blocks in: ceil(0xbb8 / 0xa) draws of 0xa x (C >> 4),
+ * each unit 1.5 speaker samples (sfx_synth.h kNoiseUnitHalfSamples = 3 half
+ * samples) -- 4,500 samples at tone_sweep's rate, 174 ms, the same length as
+ * the combat hit cue's 0x35de burst with these very arguments. [B]
+ */
+constexpr uint32_t kBlackthornBurstSamples = ((0xbb8 + 0xa - 1) / 0xa) * 0xa * 3 / 2;
+static_assert(tone_sweep_ms(kBlackthornBurstSamples) == 174, "9,000 half samples at 2 x 25,806 Hz");
 
 } // namespace openu5

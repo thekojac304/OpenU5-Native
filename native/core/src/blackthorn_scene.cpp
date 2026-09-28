@@ -255,14 +255,25 @@ void build_sacrifice_script(BlackthornSceneState &state, BlackthornSceneScript &
     Builder b(out, &state);
     // sacrifice_member 0x03ae: pause(10), the two mirrored tone_sweep loops
     // (the same five arguments as the shard ritual, so the same cue), then the
-    // explosion at slot 1's cell -- emitted as a sibling CellExplosion event --
-    // the victim's object going dark, and the table left empty (0x0429).
+    // explosion at slot 1's cell, the victim's object going dark, and the
+    // table left empty (0x0429).
     b.pause(10);
     auto &siren = b.emit();
     siren.sfx = BlackthornSfx::ShardSweep;
     // Batch 51: the two mirrored loops are 920 blocking sweeps; the victim
     // stays on screen, frozen, for all of them.
     siren.sweep_samples = kBlackthornSirenSamples;
+    // A3-HF8 (H-186): 0x041e explosion_fx_at_cell over slot 1's LAST cell,
+    // BEFORE 0x0421 turns the victim off. Tile 0 covers the victim for the
+    // kernel's noise burst; its viewport_redraw ends it (the pacer drops the
+    // burst when the hold runs out).
+    auto &burst = b.emit();
+    int burst_x = 0, burst_y = 0;
+    sacrifice_victim_cell(state, burst_x, burst_y);
+    burst.burst_x = int8_t(burst_x);
+    burst.burst_y = int8_t(burst_y);
+    burst.sfx = BlackthornSfx::Explosion;
+    burst.sweep_samples = kBlackthornBurstSamples;
     state.objects[1].visible = false;
     auto &after = b.emit();
     b.stamp(after);
@@ -350,6 +361,10 @@ PresentationSnapshot compose_blackthorn_presentation(const BlackthornSceneView &
                 continue;
             s.tiles[f.y * kBlackthornSceneCols + f.x] = f.tile;
         }
+        // A3-HF8: the burst is blitted over whatever the cell shows (0x354b).
+        if (view.burst_x >= 0 && view.burst_y >= 0 && view.burst_x < kBlackthornSceneCols &&
+            view.burst_y < kBlackthornSceneRows)
+            s.tiles[view.burst_y * kBlackthornSceneCols + view.burst_x] = kBlackthornBurstTile;
         // The throne room's braziers are the ordinary fire tiles, and the
         // hourglass is an ordinary animated group: classify them exactly as
         // the world composer does so the shared rasterizer keeps them alive
@@ -450,6 +465,9 @@ void BlackthornScenePacer::apply(const BlackthornBeat &beat) {
         beat.patch.x < kBlackthornSceneCols && beat.patch.y < kBlackthornSceneRows)
         storage_.grid[beat.patch.y * kBlackthornSceneCols + beat.patch.x] = beat.patch.tile;
     if (beat.has_stage) stage_ = beat.stage;
+    // A3-HF8: a burst lives for its own beat only.
+    burst_x_ = beat.burst_x;
+    burst_y_ = beat.burst_y;
     // The deposit (0x08e7) restores the screen. Take the room down the instant
     // the beat that says so is applied, not when the queue finally drains:
     // the map/party events that follow it must not be released over a stage
@@ -466,6 +484,8 @@ void BlackthornScenePacer::pump(uint32_t now_ms, EventSink out) {
         if (waiting_) {
             if (unit_ms_ && int32_t(now_ms - resume_at_ms_) < 0) return;
             waiting_ = false;
+            // 0x355d viewport_redraw: the burst's hold is over.
+            burst_x_ = burst_y_ = -1;
         }
         if (!count_) {
             // The turn's deferred tail is exhausted. Either the room is still
@@ -537,6 +557,7 @@ bool BlackthornScenePacer::advance_key() {
 void BlackthornScenePacer::tear_down_stage() {
     phase_ = BlackthornScenePhase::Inactive;
     stage_ = BlackthornStage{};
+    burst_x_ = burst_y_ = -1;
 }
 
 void BlackthornScenePacer::reset_queue() {
@@ -559,6 +580,10 @@ BlackthornSceneView BlackthornScenePacer::view() const {
     v.phase = phase_;
     v.tiles = phase_ == BlackthornScenePhase::Throne ? storage_.grid : nullptr;
     v.stage = stage_;
+    if (phase_ == BlackthornScenePhase::Throne) {
+        v.burst_x = burst_x_;
+        v.burst_y = burst_y_;
+    }
     return v;
 }
 

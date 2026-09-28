@@ -683,7 +683,7 @@ The physical Phase 7B run on the confirmed Batch 48 image showed every Camp appa
 | ~~H-183~~ | Shrine "Quest is ordained" and the Codex reading | ~~All the text after each altar/Codex key wait appears at once; no key is waited for.~~ **HOST FIXED — A3-HF6** (`ALPHA3_AUDIO.md` §32): each of the eleven getkeys now holds the rest of the rite until a key. Device check: **Phase H-206**. | CAST2 getkeys `0x0a9b`/`0x0abc`, `0x0d2b`…`0x0e5b` (base `0xE1E0` → kernel `0x266c`) | D-40 |
 | ~~H-184~~ | Donation "ALAKAZAM!", "WELL DONE!", Codex ceremony | ~~No viewport inversion at all; the Codex shows its three quakes but not its three XOR pulses.~~ **HOST FIXED — A3-HF7** (`ALPHA3_AUDIO.md` §33): the map viewport is XORed with 15 through the sweeps (and WELL DONE's shake) and restored with the reward line; the Codex XORs 4, 11, 15 over its three shakes and restores at the next getkey. Device check: **Phase H-207**. | `rect_XOR` `0x0bcd`/`0x0c41` held through 920 sweeps, then `run_n_frames(10)`; Codex XOR+shake ×3 `0x0dbd`–`0x0dee` | D-41 |
 | H-185 | Refuge | Cadence is Class C (70 ms/unit + reading floors); the karma speech holds on a timer instead of waiting for a key. | exact `delay(n)` ticks; `getkey` `0x0b3e` | D-42 |
-| H-186 | Blackthorn sacrifice | No explosion burst is drawn on the victim. | burst `0x041e` fires **before** the victim clears (`0x0421`) | D-43 |
+| ~~H-186~~ | Blackthorn sacrifice | ~~No explosion burst is drawn on the victim.~~ **HOST FIXED — A3-HF8** (`ALPHA3_AUDIO.md` §34): after the siren, tile 0 (the explosion star) covers the victim's cell for 174 ms with the kernel's noise burst, and only then does the victim go dark. Device check: **Phase H-208**. | burst `0x041e` (→ `0x3522`: blit tile 0, `noise_burst(0x7d0,0xbb8,0xa)`, redraw) fires **before** the victim clears (`0x0421`) | D-43 |
 
 ## Alpha 2 Readiness — Batch 52 (2026-09-25)
 
@@ -1378,7 +1378,7 @@ Flash the A3-HF6 Launcher image (its path and SHA-256 are in tag `alpha3-hf6-shr
 
 Report a failure with the `FW` / `Git` lines, and the serial `DIALOGUE_PAUSE` lines if captured.
 
-### Phase H-207 — the ritual negative and the Codex's pulses · *new firmware; SD pack unchanged* · about 5 minutes · **PENDING**
+### Phase H-207 — the ritual negative and the Codex's pulses · *new firmware; SD pack unchanged* · about 5 minutes · **PASS** (the user, on the A3-HF7 image, reported 2026-09-28; recorded by A3-HF8)
 
 Flash the A3-HF7 Launcher image (its path and SHA-256 are in tag `alpha3-hf7-ritual-inversion`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-hf7-debug` and that tag's `Git`; if they differ, stop. The image carries A3-HF6 unchanged (H-206 may be run on it too; see its step 12). A serial capture is optional: each change of the map prints `RITUAL_FX kind=… mask=…`, each held effect `DIALOGUE_PAUSE begin=effect`, and each key pressed inside one `DIALOGUE_PAUSE_INPUT … effect=ritual-effect-swallowed … gameplay_command=none`.
 
@@ -1426,3 +1426,42 @@ The colours below are the EGA index XOR the original uses: under the full negati
 - one key shows two parts.
 
 Report a failure with the `FW` / `Git` lines, and the serial `RITUAL_FX` / `DIALOGUE_PAUSE` lines if captured.
+
+### Phase H-208 — the Blackthorn sacrifice burst · *new firmware; SD pack unchanged* · about 5 minutes · **PENDING**
+
+Flash the A3-HF8 Launcher image (its path and SHA-256 are in tag `alpha3-hf8-sacrifice-burst`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-hf8-debug` and that tag's `Git`; if they differ, stop. The image carries A3-HF7 unchanged. A serial capture is optional: the burst prints `BLACKTHORN_BURST cell=(5,7) tile=0 hold_ms=174` and `SFX_CUE id=combat-hit source=blackthorn-scene`; every key pressed during the scene prints `BLACKTHORN_SCENE_INPUT … effect=swallowed … gameplay_command=none`.
+
+**What changed** (`ALPHA3_AUDIO.md` §34): at the end of the sacrifice siren, the explosion star (tile 0, the same star the combat hit shows) covers **one cell, the victim's**, for about a sixth of a second, with a short noise crack (the same sound as hitting an enemy in combat). Only then does the victim disappear. Nothing shakes, nothing inverts, and no key does anything during it.
+
+**Setup (about 1 minute).** Any game (New Journey is fine). `Alt+D`:
+1. Shortcuts → **Preset: Maxed party** (six members; the victim is the second living one, normally Shamino).
+2. Time → **Hour 12**, **Minute 0** (the guards stand where the steps below expect them at noon).
+3. Teleport → Destination **Palace of Blackthorn**, Floor **Ground Floor**, X **13**, Y **25**, Use default entrance **Off** → Teleport. Leave the Developer menu.
+4. `Alt+S`.
+
+**A. The pendulum (mandatory, about 2 minutes).**
+5. Press Space. The guard north of you at (13,24) captures the party ("Thou art subdued and blindfolded!") and the capture scene runs as before. *If Space alone does not start it, stand beside any palace guard and press Space again.* Press Enter at each `Enter: continue`.
+6. At each `Your response?` type **X** + Enter, four times (Enter at every `Enter: continue` between them). After the first wrong answer the companion is dragged to the table in front of Blackthorn and the hourglass is set down; that is unchanged.
+7. After the fourth answer: the pendulum line; about half a second later the rising-and-falling siren, about **7 s**, the companion's body frozen on the table. During the siren press `E` once and roll the trackball once.
+8. **At the end of the siren: the star covers the table cell, and only that cell, for a blink (about 0.17 s), with a short crack. Then the table is empty and "Shamino is sliced in half!" appears** (the name is your second member's), with `Enter: continue`.
+9. The `E` and the trackball did **nothing**: no "Enter what?", no move, and nothing past "sliced in half!" has appeared. One Enter shows the next line, as before.
+
+**B. The betrayal (optional, about 1 minute).**
+10. `Alt+L`, Space, and at the first `Your response?` type **AHM** + Enter (the question is about Honesty). After the merciful-death line and the same siren, the star covers the companion's **seat** (two cells right of the centre, not the table) for the same blink, and then the seat is empty.
+
+**C. Menu and load (mandatory, about 1 minute).**
+11. `Alt+L`, run step 5 and step 6 again. During the siren press `Alt+M`, wait 3 s, close with `Alt+M`: the scene continues; the star still appears **once**, on the table, before the table empties, and "sliced in half!" follows it.
+12. `Alt+L`, run steps 5–6 once more, and during the siren press `Alt+L`: "Load complete", the ordinary palace with the whole party, **no star** and no scene afterwards.
+
+**Regression.** The capture's own pacing is unchanged (the empty cell before Blackthorn appears, the holy-circle frame, the two getkeys; H-120 / 7D-B). Throughout: no crash, `task_wdt` or reboot; music and effects normal.
+
+**PASS:** steps 8, 9, 11 and 12 as described (and 10 if run).
+
+**FAIL:**
+- no star at all; the star on the wrong cell, on more than one cell, or over the whole viewport; a colour negative or a shake;
+- the victim disappears **before** or **with** the star, or "sliced in half!" appears before it;
+- the star stays after "sliced in half!", after the load or after leaving the palace;
+- two stars, or a star that lasts clearly longer than a blink (about 1 s or more);
+- a key pressed during the scene does something, or answers the `Enter: continue` after "sliced in half!".
+
+Report a failure with the `FW` / `Git` lines, and the serial `BLACKTHORN_BURST` / `BLACKTHORN_SCENE` lines if captured.

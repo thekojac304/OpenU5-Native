@@ -2080,6 +2080,45 @@ if(BUILD_TESTING)
   endif()
   add_test(NAME a3_hf7_ritual_fx_runtime COMMAND a3_hf7_ritual_fx_runtime
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+  # Alpha 3 A3-HF8 (H-186) -- the Blackthorn sacrifice burst, read back from
+  # the fake panel: the REAL capture, AlphaRuntime and Board.
+  add_executable(a3_hf8_sacrifice_burst_runtime
+    ../targets/tdeck/host_tests/a3_hf8_sacrifice_burst_runtime_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/board_shims/fake_tdeck_bus.cpp
+    ../targets/tdeck/main/tdeck_board.cpp
+    ../targets/tdeck/main/idle_service.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_audio.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(a3_hf8_sacrifice_burst_runtime PRIVATE openu5_core)
+  target_include_directories(a3_hf8_sacrifice_burst_runtime PRIVATE
+    ../targets/tdeck/host_tests/board_shims
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/host_tests
+    ../targets/tdeck/main)
+  target_compile_features(a3_hf8_sacrifice_burst_runtime PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(a3_hf8_sacrifice_burst_runtime PRIVATE /Gy)
+    target_link_options(a3_hf8_sacrifice_burst_runtime PRIVATE /OPT:REF)
+  else()
+    target_compile_options(a3_hf8_sacrifice_burst_runtime PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(a3_hf8_sacrifice_burst_runtime PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME a3_hf8_sacrifice_burst_runtime COMMAND a3_hf8_sacrifice_burst_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
   # A3-HF7 -- the effect model and the pacer's Effect hold, on their own.
   add_executable(a3_hf7_ritual_fx tests/a3_hf7_ritual_fx_test.cpp)
   target_link_libraries(a3_hf7_ritual_fx PRIVATE openu5_core)

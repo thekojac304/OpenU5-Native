@@ -161,11 +161,13 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     context_.services = {this, command_effect, command_reload, banner};
     context_.events = {this, dispatch_event};
 
-    blackthorn_scene_services_.capture_tiles = nullptr;
-    blackthorn_scene_services_.state = &blackthorn_scene_state_;
-    blackthorn_scene_services_.script = nullptr;
+    // A3-HF8: production's own binder over the pack's packed throne room
+    // (MISCMAPS record 0). Without a pack capture_tiles stays null and the
+    // capture keeps its text-only stream, exactly as before.
+    resources_.blackthorn_scene_tiles = fixture.pack ? fixture.pack->blackthorn_scene_tiles : nullptr;
+    blackthorn_script_ = new openu5::BlackthornSceneScript();
     context_.blackthorn = &blackthorn_;
-    context_.blackthorn_scene = &blackthorn_scene_services_;
+    bind_blackthorn_scene();
     // Batch 51: the scene pacers' storage, sized by the same class constants
     // initialize() uses and attached by the same production binder. Before
     // this the fixture attached none, so a Refuge/TrollSneak event reaching

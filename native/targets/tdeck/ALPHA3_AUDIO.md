@@ -1,6 +1,13 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap, A3-05 audio finalization, A3-HF4 load transient reset, A3-HF5 dialogue pacing, A3-HF6 shrine key waits, A3-HF7 ritual effects)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap, A3-05 audio finalization, A3-HF4 load transient reset, A3-HF5 dialogue pacing, A3-HF6 shrine key waits, A3-HF7 ritual effects, A3-HF8 sacrifice burst)
 
-**Status (A3-HF7, 2026-09-28): THE RITE'S VIEWPORT NEGATIVE AND THE CODEX'S THREE XOR PULSES REACH THE SCREEN (H-184 / D-41) — FIXED ON THE HOST; HARDWARE CHECK H-207 PENDING. H-206 KEEPS ITS STATUS.** §33:
+**Status (A3-HF8, 2026-09-28): THE BLACKTHORN SACRIFICE BURST REACHES THE SCREEN, BEFORE THE VICTIM GOES (H-186 / D-43) — FIXED ON THE HOST; HARDWARE CHECK H-208 PENDING. H-207 PASS (A3-HF7).** §34:
+- **The defect:** after the siren the victim simply went dark; no explosion was drawn. The burst travelled as a sibling `CellExplosion` after the whole sacrifice script, so the scene pacer released it after the victim's clear, to `UiSession`, which ignores it.
+- **The original:** BLCKTHRN `0x041e` calls `explosion_fx_at_cell` (ULTIMA.EXE `0x3522`) once over slot 1's last cell, after the siren and before `0x0421`/`0x0429` clear the victim: an opaque blit of tile 0, `noise_burst(0x7d0, 0xbb8, 0xa)` (the kernel blocks 174 ms), a redraw. One cell, one phase, no key read.
+- **Fix:** the burst is a beat of the sacrifice script (cell, 174 ms hold, the `CombatHit` noise program); the scene pacer shows it for its hold and the existing compositor blits tile 0; the host fixture stages the scene through production's new `bind_blackthorn_scene()`.
+
+RED-first 33 / 43 → GREEN 51 / 51 on the real capture, runtime and Board, pixels read from the fake panel (`blackthorn_scene` T7 2 RED → 57 / 57); 15 / 15 mutations killed; host suite **159 / 159**. Firmware +352 B, flash only apart from 16 B of internal `.bss`.
+
+**Status as A3-HF7 wrote it (2026-09-28): THE RITE'S VIEWPORT NEGATIVE AND THE CODEX'S THREE XOR PULSES REACH THE SCREEN (H-184 / D-41) — FIXED ON THE HOST; HARDWARE CHECK H-207 PENDING. H-206 KEEPS ITS STATUS.** §33:
 - **The defect:** "ALAKAZAM!", "WELL DONE!" and the Codex ceremony showed no inversion; the rewards and the ceremony's page arrived in the key's frame. `RitualInvert` had no device consumer, the Codex's pulses were never marked, and no sweep, shake or restore frame was held.
 - **The original:** CAST2 XORs the 176 × 176 viewport by palette index — 15 for the rite, held through two sweep loops (and WELL DONE's shake, rewards printed inside it) until run_n_frames(10) redraws; 4, 15, 4 around the Codex's three shakes (accumulating 4, 11, 15) until the next getkey redraws. Nothing reads a key meanwhile.
 - **Fix:** `openu5::RitualFx` (mask + holds) and an `Effect` state of the `DialoguePacer` (timed, a key is swallowed); the Codex quakes carry their XOR in `note`; the device XORs the viewport buffer with the existing magic-ceremony primitive, now masked.
@@ -4891,3 +4898,114 @@ The check is in `ALPHA2_HARDWARE_CHECKLIST.md`. The A3-HF7 image carries A3-HF6 
 - Device: `native/targets/tdeck/main/alpha_runtime.{h,cpp}`, `main/device_ui_views.h` (the mask argument); `native/targets/tdeck/CMakeLists.txt` (`PROJECT_VER`).
 - Tests and tools: new `native/targets/tdeck/host_tests/a3_hf7_ritual_fx_runtime_test.cpp`, `native/core/tests/a3_hf7_ritual_fx_test.cpp`, `native/core/tools/a3_hf7_{red_first,mutation_check}.py`; changed `native/core/CMakeLists.txt`, `host_tests/a3_hf6_shrine_key_wait_runtime_test.cpp` (§33.7).
 - Docs: this section and the status line; `ALPHA2_HARDWARE_CHECKLIST.md` (H-184, H-206 step 12, H-207); `ALPHA2_PRESERVATION_LEDGER.md` (D-41); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`; `re/notes/shrine-rito-cadencia-negativo.md` §9.
+
+## 34. A3-HF8 — the Blackthorn sacrifice burst reaches the screen, before the victim goes (H-186 / D-43)
+
+A presentation hotfix on the A3-HF5 … HF7 queue, queued since Batch 51. After the sacrifice siren the victim simply went dark; no explosion was ever drawn.
+
+### 34.1 Baseline
+
+- `main` at `c73c001d` (tag `alpha3-hf7-ritual-inversion` = `c76b9ef5`, plus its post-commit evidence), clean tree, byte-identical to the tree HF7 recorded **158 / 158** on; that record stands. **H-207 PASSED on the T-Deck** (the user's report, recorded here).
+- Focused baseline in a fresh `build-a3-hf8-base`: `a3_hf7_ritual_fx_runtime`, `a3_hf7_ritual_fx`, `a3_hf6_shrine_key_wait_runtime`, `a3_hf6_shrine_key_wait_pacer`, `a3_hf5_dialogue_pacing_runtime`, `a3_hf5_dialogue_pacer`, `blackthorn_scene`, `batch51_scene_pacing` — 8 / 8 (`native/core/a3-hf8-baseline.log`).
+- Firmware `3.0.0-alpha3-dev-a3-hf7-debug`, 986,592 B (`0xf0de0`), 61,984 B free.
+
+### 34.2 The original mechanism
+
+Read from the 1988 binary for this batch (`re/tools/dis16.py`; BLCKTHRN.OVL near calls through base `0xA290`: `0x9292 → 0x3522`, `0x7f02 → 0x2192` tone_sweep, `0x9856 → 0x3ae6` run_n_frames, `0x75c0 → 0x1850` print, `0x83dc → 0x266c` getkey). `sacrifice_member(mode)` `0x03ae`:
+
+| Offset | What | Screen |
+|---|---|---|
+| `0x03c6` | print rec4 (pendulum) / rec5 (betrayal) | text |
+| `0x03cd` | run_n_frames(10) | 550 ms, the victim drawn |
+| `0x03d0`–`0x0411` | the siren: 2 × 460 tone_sweeps, a2 = `0xc8` | 7,130 ms (Batch 51), victim frozen |
+| `0x0414`–`0x041e` | `explosion_fx_at_cell([0x5c64], [0x5c65])` — slot 1's **last** x/y, one call | the burst, below |
+| `0x0421`–`0x0426` | slot 1's tiles = 0 | the victim goes |
+| `0x0429` | `[0xadf9]` = `0x80` | the table is empty |
+| `0x0438`–`0x04d4` | the roster compaction (R-23) | — |
+| `0x04d8` | status redraw | roster |
+| `0x04e1`–`0x04f6` (mode 1) | "*name* is sliced in half! ", getkey | text, key |
+
+**`explosion_fx_at_cell`, ULTIMA.EXE `0x3522`:**
+- `0x3525 cmp [0x5893],0x80 / jae` — the world→window shift (−party + 5) applies only below location `0x80`. The capture sets `[0x5893]` = `0xff` at `0x06fc`, so the burst lands on the **scene cell itself**: the table (5,7) once the companion was dragged there (every pendulum, and a betrayal after a warning), the companion's seat (7,5) when the mantra is given at once.
+- `0x354b` `blit_tile(x, y, 0)` — tile 0, TileData `Explosion`, through the same EGA.DRV opaque cell blit as the combat hit cue's marker (§27): **one cell, opaque, no XOR, no palette change**.
+- `0x355a` `noise_burst(0x7d0, 0xbb8, 0xa)` — the kernel blocks in it: ceil(3000 / 10) draws of 10 × 1.5 samples = 4,500 samples = **174 ms** at the calibrated speaker rate. The same arguments as the combat hit on an enemy (`0x35de`), so the same sound and the same length.
+- `0x355d` `viewport_redraw` (`0x5910`, no delay of its own) — the tile is gone.
+
+One phase, 174 ms, **before** the victim is cleared. No shake, no inversion. Nothing between `0x03c9` and the getkey reads a key; the world does not tick.
+
+**Reference (TypeScript).** `blackthorn-capture.ts` emits the `cell-explosion` event **after** the whole sacrifice segment, i.e. after the victim's clear; the binary fires it before. Native follows the binary; the TypeScript was not changed (no fixture pins that layer: `quest_parity` runs the capture without the scene). Recorded in `re/notes/blackthorn-escena-324.md` §6.
+
+### 34.3 The native defect
+
+- `blackthorn.cpp` emitted the burst as a sibling `CellExplosion` **after** the whole sacrifice script, so the scene pacer deferred it behind the victim's clear, and then released it to `UiSession` (the pacer's sink), which ignores it. `WorldFxLayer` never saw it: **no burst, and the wrong order**.
+- The host fixture set `capture_tiles = nullptr` and `script = nullptr` (a copy of `initialize()`'s wiring), so the throne room could never be staged in a host runtime test; the defect was invisible there.
+
+### 34.4 The fix
+
+- **The burst is a beat of the scene** (`build_sacrifice_script()`): after the siren, one beat carries the cell (`BlackthornBeat::burst_x/y`, from `sacrifice_victim_cell()`, the binary's own rule), the hold (`kBlackthornBurstSamples` = 4,500 samples → 174 ms, `scene_timing.h`, through the pacer's existing sweep hold) and the cue (`BlackthornSfx::Explosion`, appended); then the clear beat as before. The sibling `CellExplosion` is no longer emitted. `batch51_scene_pacing`'s siren hold is untouched.
+- **`BlackthornScenePacer`** shows the burst for its own beat only: `apply()` takes it from the beat, the end of its hold (the `0x355d` redraw) drops it, `tear_down_stage()` / `cancel()` drop it. `view()` reports it while the room is mounted; `compose_blackthorn_presentation()` writes tile 0 into that cell after the cast. The existing rasterizer draws it — no new render code.
+- **Device:** the cue sink maps `Explosion` to `SfxId::CombatHit` (the same `noise_burst(0x7d0, 0xbb8, 0xa)` program) and logs `BLACKTHORN_BURST cell=(x,y) tile=0 hold_ms=174`. `bind_blackthorn_scene()` is extracted from `initialize()` and called by the host fixture too, over the pack's throne room.
+- **SFX inventory:** the kernel site `0x355a` (was `EvidenceUnknown`, "callers not mapped") is now `Implemented` as `CombatHit` for the Blackthorn caller; the shard ritual's seven calls stay mute (H-209). 22 → 21 `EvidenceUnknown` sites.
+
+### 34.5 Input, menus, load and lifecycle
+
+- **Keys** (letters, Enter, the trackball, Mic) during the siren and the burst are swallowed by the existing scene rule (`BLACKTHORN_SCENE_INPUT … swallowed`): no command, no move, no release, and an Enter inside the burst does not answer the getkey `0x04f6` that follows.
+- **System Menu:** the scene is not pumped behind it; nothing is released while it is open. Closed after the siren's hold has run out, the burst still shows once, for its full 174 ms, before the victim goes.
+- **Successful load, Return to Title + Continue:** `synchronize_loaded_world()` cancels the scene (and its burst); the loaded game is drawn without it.
+- **Unpaced harness** (`unit 0`): the burst beat and the clear apply in one pump; no hold.
+
+### 34.6 Declared divergences (presentation only)
+
+- The victim is cleared at the burst's end; in 1988 the redraw at `0x355d` shows the victim once more until the next redraw (the getkey's, a moment later). One frame, not modelled.
+- Keys are swallowed, not buffered as DOS typeahead (as HF6 / HF7).
+- The roster was already compacted by the core at the answer's Enter (R-23's commit point is unchanged); only the scene waits.
+
+### 34.7 One existing expectation changed
+
+`blackthorn_scene` T7 asserted that the sacrifice "raises" a `CellExplosion` event aimed at (0,+2). It now asserts the binary's shape: the burst is shown exactly once, as a scene beat, on the table (5,7), while the victim is still drawn, and the victim goes dark only after it (and no `CellExplosion` is emitted). Same cell, same single burst; the order is the new constraint.
+
+### 34.8 Tests, RED / GREEN and mutations
+
+- **`a3_hf8_sacrifice_burst_runtime`** (new, 51 checks): the real `AlphaRuntime` — a pass beside a palace guard (location 18, (13,25), noon), the answers typed at the real prompt, the pack's throne room, shrines and MISCMSG — drawing on the real `tdeck_board.cpp` over the fake ST7789 (bus untimed). Every visual check reads the panel's GRAM and compares the cell with the patterned tile's closed form.
+  - **N1** the burst exists: pendulum, betrayal at once, betrayal after a warning.
+  - **N2** exactly one cell, the binary's (5,7) / (7,5) / (5,7); the side panels unchanged while it is up.
+  - **N3** tile 0 pixel for pixel (opaque); no viewport XOR.
+  - **N4** it starts after pause(10) + the siren (7,685 ms, want 7,680 ± 11) and lasts one phase of 175 ms (want 174 ± 11).
+  - **N5** the rec line, the victim drawn up to the burst, the victim gone exactly at its end, the `CombatHit` noise once with the tile after the siren, no quake, "sliced in half!" after it.
+  - **N6** `E`, Enter, the trackball and Mic inside the burst: no command, no move, no released step; the Enter does not satisfy `0x04f6`.
+  - **N7** no tile 0 anywhere 1.5 s later. **N8** a successful load, and Return to Title + Continue, inside the burst. **N9** the System Menu inside the burst; **N9.2** inside the siren. **N10** the key waits `0x04f6` / `0x0510` unchanged.
+- **RED-first** (`native/core/tools/a3_hf8_red_first.py`: HEAD's `blackthorn.cpp`, `blackthorn_scene.cpp` and `alpha_runtime.cpp`, the last with only `bind_blackthorn_scene()` extracted so the fixture links): runtime **33 / 43 RED** (the ten GREEN are the capture's own and the unchanged controls), `blackthorn_scene` **2 RED** (T7); after the change **51 / 51** and **57 / 57** (`native/core/a3-hf8-red-first.log`).
+- **Mutations** (`native/core/tools/a3_hf8_mutation_check.py`, 15 mutants against the new test, `blackthorn_scene` and `batch51_scene_pacing`): **15 / 15 killed, 0 invalid, 0 survivors, restored build GREEN** (`native/core/a3-hf8-mutation.log`). M1 no burst, M2 wrong cell, M3 wrong tile, M4 hold doubled, M5 two phases, M6 restored 90 ms early, M7 never restored, M8 burst before the siren, M9 burst after the clear (the HF7 order), M10 the pendulum path bypasses it, M11 the betrayal path bypasses it, M12 mute, M13 input leaks, M14 a load keeps the scene, M15 the view hides it.
+
+### 34.9 Regression
+
+Fresh build directory `native/core/build-a3-hf8-final`: **159 / 159, serial**, 134.38 s, with only the known w64devkit `-Wstringop-overflow` warning (`native/core/a3-hf8-{configure,build,ctest}.log`). That is A3-HF7's 158 plus the new test.
+- HF7 / HF6 / HF5 unchanged: `a3_hf7_ritual_fx_runtime` 48 / 48, `a3_hf7_ritual_fx` 23 / 23, `a3_hf6_shrine_key_wait_runtime` 48 / 48, `a3_hf6_shrine_key_wait_pacer` 15 / 15, `a3_hf5_dialogue_pacing_runtime` 50 / 50, `a3_hf5_dialogue_pacer` 14 / 14.
+- Blackthorn: `blackthorn_scene` 57 / 57 (§34.7), `batch51_scene_pacing` 28 / 28 (the materialization, circle and siren holds), `batch15_sacrifice_roster`, `batch45b`, `batch4_group_a/b`, `quest_parity` (the capture without the scene) all GREEN.
+- Audio: `a3_03_sfx_inventory` (the reclassified `0x355a`), `a3_03_sfx_runtime` (B1 / B2: the siren and the pacer's hold), `a3_hf3_combat_hit_*` (the `CombatHit` program) GREEN.
+
+### 34.10 Firmware
+
+Pre-commit build `native/targets/tdeck/build-a3-hf8` (`a3-hf8-firmware-{configure,build}.log`): ESP-IDF 6.1, `--no-ccache`, `ninja -j 4`, first attempt clean, **zero project warnings**.
+
+- **`0xf0f40` = 986,944 B, +352 B** against A3-HF7's 986,592 B; **61,632 B (5.9 %) free** in the 1 MiB app partition.
+- **Sections** against A3-HF7's post-commit image (`esp_idf_size --diff`, `a3-hf8-size-diff.log`; absolute figures in `a3-hf8-size.log`): Flash `.text` **+276 B** (668,474 B), `.rodata` **+64 B** (219,380 B) — the burst beat, the pacer's hold/view/compose lines, the cue mapping and the `BLACKTHORN_BURST` log line. DIRAM `.bss` **+16 B** (51,968 B): the pacer's two `int8_t` burst coordinates, padded, inside the runtime object. Unchanged: DIRAM `.data`, DIRAM `.text`, IRAM (full, as before).
+- **RAM.** Internal: `.bss` +16 B, nothing else. **PSRAM unchanged**: no new allocation — the burst rides the existing 96-step Blackthorn queue and the existing script buffer.
+- **Image guards GREEN:** `a3_04f_image_check.py`, `a3_04b_iram_check.py`, `a3_04a_hotpath_check.py` (`a3-hf8-{image,iram,hotpath}-check.log`). Nothing on the per-sample audio path changed.
+- Version `3.0.0-alpha3-dev-a3-hf8-debug`. **Not flashed.** Tag `alpha3-hf8-sacrifice-burst` names the post-commit image (built in a fresh directory, so it embeds the commit), with its path, size, SHA-256 and `Git`.
+
+### 34.11 Hardware check H-208 (the user's; about 5 minutes)
+
+The check is in `ALPHA2_HARDWARE_CHECKLIST.md`: Preset Maxed party, Hour 12, Teleport to the Palace of Blackthorn (13,25), Space; four wrong answers for the pendulum (the burst on the table), optionally AHM at once for the betrayal (the burst on the seat); the menu and a load during the siren. The A3-HF8 image carries A3-HF7 unchanged.
+
+### 34.12 Recorded, not changed
+
+- **H-209 / D-67 (new, queued):** the shard ritual calls the same `0x3522` seven times (CAST `0x16e1`–`0x16fa`): seven 174 ms tile-0 holds with their noise bursts. `WorldFxLayer` paints 60 ms on / 60 ms off (class C in `world_fx.h`) and plays no sound. Not fixed here.
+- The TypeScript reference's order (§34.2) is not changed; **H-185 / D-42** (the Refuge cadence) is unchanged.
+
+### 34.13 Files
+
+- Core: `native/core/include/openu5/blackthorn_scene.h` (the beat's burst cell, `BlackthornSfx::Explosion`, `kBlackthornBurstTile`, the view's burst cell), `src/blackthorn_scene.cpp` (the beat, the pacer, the compose), `src/blackthorn.cpp` (no sibling `CellExplosion`), `include/openu5/scene_timing.h` (`kBlackthornBurstSamples`), `src/sfx_inventory.cpp` (`0x355a`).
+- Device: `native/targets/tdeck/main/alpha_runtime.{h,cpp}` (the cue, `bind_blackthorn_scene()`); `native/targets/tdeck/CMakeLists.txt` (`PROJECT_VER`).
+- Tests and tools: new `native/targets/tdeck/host_tests/a3_hf8_sacrifice_burst_runtime_test.cpp`, `native/core/tools/a3_hf8_{red_first,mutation_check}.py`; changed `native/core/CMakeLists.txt`, `native/core/tests/blackthorn_scene_test.cpp` (§34.7), `native/targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp` (the binder).
+- Docs: this section and the status line; `ALPHA2_HARDWARE_CHECKLIST.md` (H-186, H-207 PASS, H-208); `ALPHA2_PRESERVATION_LEDGER.md` (D-43, D-67); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`; `re/notes/blackthorn-escena-324.md` §6.

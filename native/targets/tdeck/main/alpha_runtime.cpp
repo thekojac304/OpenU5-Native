@@ -19,6 +19,7 @@
 #include "openu5/command_char.h"
 #include "openu5/sfx_synth.h"
 #include "openu5/sfx_inventory.h"
+#include "openu5/scene_timing.h"
 #include "openu5/debug_labels.h"
 #include "openu5/display_names.h"
 #include "openu5/inventory_picker.h"
@@ -215,14 +216,7 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
     context_.outdoor=&outdoor_;context_.terrain=&terrain_;context_.quest_world=&quest_;
     terrain_.writes={this,terrain_write};
     context_.blackthorn=&blackthorn_;
-    // #324 / R-32. Wiring capture_tiles is what turns the staged scene on:
-    // with the packed throne room absent the capture emits the same
-    // text-only stream it always did, which is the degradation every parity
-    // harness relies on.
-    blackthorn_scene_services_.capture_tiles=resources_.blackthorn_scene_tiles;
-    blackthorn_scene_services_.state=&blackthorn_scene_state_;
-    blackthorn_scene_services_.script=blackthorn_script_;
-    context_.blackthorn_scene=&blackthorn_scene_services_;
+    bind_blackthorn_scene();
     bind_scene_pacers(true);
     poison_.set_blip_ms(openu5::kPoisonBlipMs);
     look_services_.context=this;look_services_.describe=[](void*p,int32_t tile){auto&r=*static_cast<AlphaRuntime*>(p);return tile>=0&&size_t(tile)<r.resources_.look_count?r.resources_.look_text+r.resources_.look_offsets[tile]:"something";};look_services_.sign=[](void*p,openu5::MapId map,int32_t x,int32_t y){auto&r=*static_cast<AlphaRuntime*>(p);return openu5::resolve_look_sign(r.resources_.signs,r.resources_.sign_count,map,x,y);};context_.look=&look_services_;
@@ -318,6 +312,19 @@ void AlphaRuntime::bind_dialogue_services(){
 // A3-HF6. The single binder for the shrine rite's MISCMSG records (the
 // mantras, the Codex pages, the ceremony), so a host test that attaches the
 // pack runs the same altar and Codex text the device does (H-154/H-155 rule).
+// #324 / R-32. Wiring capture_tiles is what turns the staged scene on:
+// with the packed throne room absent the capture emits the same text-only
+// stream it always did, which is the degradation every parity harness relies
+// on. A3-HF8: one binder, so the host fixture stages the SAME scene the
+// device does (it used to null capture_tiles, and the sacrifice burst could
+// never be reached on the host runtime).
+void AlphaRuntime::bind_blackthorn_scene(){
+    blackthorn_scene_services_.capture_tiles=resources_.blackthorn_scene_tiles;
+    blackthorn_scene_services_.state=&blackthorn_scene_state_;
+    blackthorn_scene_services_.script=blackthorn_script_;
+    context_.blackthorn_scene=&blackthorn_scene_services_;
+}
+
 void AlphaRuntime::bind_shrine_services(){
     shrine_services_.data=&resources_.shrine_data;
     shrine_services_.context=this;
@@ -3260,8 +3267,16 @@ void AlphaRuntime::service_ambient(int64_t now_us){
 
 void AlphaRuntime::blackthorn_cue(void *p,openu5::BlackthornSfx sfx){
     auto &self=*static_cast<AlphaRuntime*>(p);
+    // A3-HF8: the sacrifice burst's noise_burst(0x7d0,0xbb8,0xa) @0x355a is
+    // the combat hit cue's 0x35de program with the same three arguments.
     const auto id=sfx==openu5::BlackthornSfx::Materialize?openu5::SfxId::BlackthornMaterialize:
-                  sfx==openu5::BlackthornSfx::ShardSweep?openu5::SfxId::ShardSweep:openu5::SfxId::None;
+                  sfx==openu5::BlackthornSfx::ShardSweep?openu5::SfxId::ShardSweep:
+                  sfx==openu5::BlackthornSfx::Explosion?openu5::SfxId::CombatHit:openu5::SfxId::None;
+    if(sfx==openu5::BlackthornSfx::Explosion){
+        const auto v=self.blackthorn_pacer_.view();
+        ESP_LOGI(kTag,"BLACKTHORN_BURST cell=(%d,%d) tile=%d hold_ms=%lu",int(v.burst_x),int(v.burst_y),
+                 int(openu5::kBlackthornBurstTile),(unsigned long)openu5::tone_sweep_ms(openu5::kBlackthornBurstSamples));
+    }
     ESP_LOGI(kTag,"SFX_CUE id=%s source=blackthorn-scene",openu5::sfx_cue(id)?openu5::sfx_cue(id):"none");
     self.audio_.play_sfx(id);
 }
