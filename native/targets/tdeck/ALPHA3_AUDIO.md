@@ -1,6 +1,13 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap, A3-05 audio finalization, A3-HF4 load transient reset)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap, A3-05 audio finalization, A3-HF4 load transient reset, A3-HF5 dialogue pacing)
 
-**Status (A3-HF4, 2026-09-27): A SUCCESSFUL LOAD NOW DISCARDS THE REPLACED GAME'S PROMPTS, PICKERS, VIEWS AND PENDING QUESTIONS (D-65) — FIXED ON THE HOST; HARDWARE CHECK H-204 PENDING. H-203 (A3-05) IS STILL PENDING.** §30:
+**Status (A3-HF5, 2026-09-27): EVERY TLK CONVERSATION'S SCRIPT PAUSES NOW REACH THE SCREEN (D-66) — CHUCKLES' SONG AND BLACKTHORN'S SPEECH UNFOLD AS IN 1988; FIXED ON THE HOST; HARDWARE CHECK H-205 PENDING. H-203 AND H-204 ARE STILL PENDING.** §31:
+- **The defect:** Chuckles' `ENTE` routine (9 rows) and Blackthorn's refusal (5 rows) landed in one frame. The core marked each TLK `Pause` / `KeyWait` on the line it follows (`DialogueOutput::pause`); nothing on the device ever read it. 116 of 135 scripts carry them (166 / 225).
+- **The original:** no typewriter. TALK prints a section at once; `0x83` Pause is `run_n_frames(28)` with a key exit (1,538 ms, the key consumed, the keyboard buffer flushed; TALK `0x0f92`), `0x8F` KeyWait is `getkey_with_redraw 0x266c` (any key, no timeout; TALK `0x1010`).
+- **Fix:** `openu5::DialoguePacer`, a presentation queue in `AlphaRuntime::consume_event()`: the paused line shows, the rest of the turn waits (28 × 55 ms, or a key), in order, nothing dropped; any key ends a pause and does nothing else; `Enter: continue` on a KeyWait; a successful load cancels it; the System Menu blocks it; an NPC approach waits for the last line. Combat and every unpaused line stay immediate.
+
+RED-first 23 / 50 → GREEN 50 / 50 on the real runtime and Board (plus 14 / 14 for the queue alone); 26 / 26 mutations killed; host suite **154 / 154**. Firmware +3,056 B.
+
+**Status as A3-HF4 wrote it (2026-09-27): A SUCCESSFUL LOAD NOW DISCARDS THE REPLACED GAME'S PROMPTS, PICKERS, VIEWS AND PENDING QUESTIONS (D-65) — FIXED ON THE HOST; HARDWARE CHECK H-204 PENDING. H-203 (A3-05) IS STILL PENDING.** §30:
 - **The defect:** the H-201 / H-202 capture kept a Mix picker open across an in-menu Load (`UI_MODE` stayed `spell`) until Mic. On the host every modal, session mode, device view and pending core question did the same, on both load routes; the stale Mix picker's Enter mixed from the old game's list.
 - **Root cause:** `synchronize_loaded_world()` re-derived the UI only through `set_base_mode()` (keeps a live modal, by design since H-118) and `resolve_synchronized_base_mode()` (keeps a Shop / Dialogue / Shrine base); nothing reset the runtime's views or the core's `awaiting_*` flags on a load.
 - **Parity target:** the 1988 game loads only at start-up (ULTIMA.EXE `main` 0x00b3–0x00f7), where no prompt exists; the reference's `applyLoadedState` drops every prompt, view and pending command.
@@ -4438,3 +4445,156 @@ The check is in `ALPHA2_HARDWARE_CHECKLIST.md`. The A3-HF4 image carries A3-05 u
   - New: `native/targets/tdeck/host_tests/a3_hf4_load_transient_runtime_test.cpp`, `native/core/tools/a3_hf4_{red_first,mutation_check}.py`.
   - Changed: `native/core/CMakeLists.txt`; `host_tests/host_stubs/batch37_board_capture_stub.cpp` (records the last frame's overlay line and picker panel).
 - Docs: this section and the status line; `ALPHA2_HARDWARE_CHECKLIST.md` (H-204); `ALPHA2_PRESERVATION_LEDGER.md` (D-65); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`.
+
+## 31. A3-HF5 — the TLK script's Pause and KeyWait reach the screen
+
+A presentation hotfix, not an audio change. The user noticed that Chuckles' entertainment in Lord British's castle and Blackthorn's speech arrive in the transcript all at once, where the original lets them unfold.
+
+### 31.1 Baseline
+
+- `main` at `02c844a0` (tag `alpha3-hf4-load-transient-reset` = `cfd4ab3e`, plus its post-commit evidence), clean tree. H-203 and H-204 are the user's and stay **PENDING** here.
+- Host suite **152 / 152**, serial, 138.19 s (`native/targets/tdeck/a3-hf5-baseline-ctest.log`, build dir `build-a3-hf5-base`).
+- Firmware `3.0.0-alpha3-dev-a3-hf4-debug`, 982,432 B (`0xefda0`), 66,144 B free.
+
+### 31.2 What native did
+
+Both anchors are ordinary TLK conversations, not scene code:
+- **Chuckles** (`CASTLE.TLK` dialog 9). `ENTE` jumps to label 0: `"Ho eyo he hum! "` three times and `"Bounce, bounce, bounce, bounce! "`, each section followed by `NewLine NewLine Pause`, then `"Didst thou enjoy that?"` and a question prompt. `WELC` is four sections separated by `KeyWait`.
+- **Blackthorn** (`CASTLE.TLK` dialog 10). His description ends `"the Dark Lord himself! " NewLine NewLine Pause`. Label 0 greets with `"Greetings, <name>, what an unexpected pleasure! " … Pause "Wilt thou be staying with us long?"`. Any answer but `Y` is `"I beg to differ! " … Pause "So very kind of thee to deliver thyself unto me! " … Pause "Prepare now to meet thy fate! " CallGuards … EndConversation`, which sets the guards on the Avatar and leads to the capture. The capture and interrogation themselves (BLCKTHRN.OVL) were already paced by the `BlackthornScenePacer` (#324, Batch 51) and are unchanged.
+
+The native path, traced on the real runtime (`a3_hf5_dialogue_pacing_runtime --probe` and the RED run):
+1. One `DialogueText` command. `Conversation::input()` emits every output of the answer at once: for `ENTE`, 5 text lines, 4 empty lines each carrying `DialoguePause::Timed`, and the prompt. `Conversation::flush()` has always recorded the opcode on the line it follows (`DialogueOutput::pause`); `dialogue_parity` even hashes it.
+2. `Delivery::render()` (`dialogue_orchestration.cpp`) emits one `GameEvent` per output, synchronously, and applies the effects (`CallGuards`, gold, karma) in the core as it goes.
+3. `AlphaRuntime::consume_event()` → `UiSession::consume()` appends every `Line` at once. **Nothing downstream ever read `pause`.** The whole routine, 9 rows, is in the transcript on the first frame after Enter (t = 0–5 ms); Blackthorn's refusal, 5 rows, likewise.
+
+So the pauses were represented and bypassed. The corpus scale: **116 of the 135 TLK scripts carry 166 `Pause` and 225 `KeyWait` opcodes**, so every one of those conversations was affected, not only the two anchors. (The Blackthorn cellmate Gorn, `CASTLE.TLK` dialog 11, has 1 `Pause` and 6 `KeyWait`s; he is the reference port's own precedent, `carcel-talk-error`.)
+
+### 31.3 The original mechanism
+
+Read from the 1988 binary for this batch (`re/tools/dis16.py` on `TALK.OVL` and `ULTIMA.EXE`). TALK's calls into the kernel resolve through **base `0xBF80`**: `0x617a → 0x20fa` is `delay(n)`, `0x5dde → 0x1d5e` is an `int 16h ah=1` key peek, `0x5b96 → 0x1b16` sets the BIOS keyboard buffer's head and tail equal (flush), and `0x66ec → 0x266c` is `getkey_with_redraw`. Each of these lands on a function entry. The `0xA290` that `re/tools/callers_banda.py` lists for `TALK.OVL` would put the KeyWait's call at `0x097c`, the middle of a function, so that table entry is wrong for these call sites (recorded, the tool is not changed here).
+
+- **No typewriter.** The interpreter prints each character through TALK `0x0574` → the kernel printer with no `delay` or `run_n_frames` on the path. A section appears at once; the cadence lives entirely in the two opcodes. **Granularity: one script section**, i.e. the text between two opcodes.
+- **`0x83` Pause** (TALK `0x0f92`–`0x0fb3`):
+  ```
+  si = 0
+  loop: call 0x5910            ; compositor: the map keeps animating, the ambient engine runs
+        key = 0x1d5e()         ; int 16h ah=1 peek, then int 21h ah=6 READS the key
+        if key: flush 0x1b24; continue the script
+        delay(1)               ; one INT 1Ch tick
+        if ++si >= 0x1c: flush 0x1b24; continue the script
+  ```
+  That is `run_n_frames(28)` with a key exit: **28 BIOS ticks = 1,538 ms** (1,540 ms in the port's 55 ms tick, `scene_timing.h`; `delay(1)`'s slow-machine shortcut does not apply on any machine whose `[0x5356]` calibration exceeds `0xF0`, 1,308 in the measured DOSBox run). A key ends it at once and is **consumed**, and either exit empties the keyboard buffer. No cursor (the loop never calls `0x266c`).
+- **`0x8F` KeyWait** (TALK `0x1010`): `call 0x66ec` = `getkey_with_redraw 0x266c`. It blocks until **any** key, discards it, and blinks the cursor meanwhile. There is no timeout.
+- **Audio.** No text step is timed to a sound. The Pause loop's compositor call keeps the ambient engine running (`camp-bard-anim.md` §4), and nothing in TALK plays a sound at a pause.
+- **What waits.** The next section, every effect after the opcode (in 1988 the gold, karma or guard call behind a pause does not run until the pause ends), the prompt, and the main loop: no NPC moves or approaches until the conversation returns.
+- **Reference (TypeScript).** `Conversation.flushLine()` marks `pause: "key" | "timed"`, and `ui/talk-console.ts` `TalkConsole` parks the rest of the outputs there, with `TALK_PAUSE_MS = 1538` and any key resuming. Under automation (`instant`) it drains synchronously. Native had the mark and not the console.
+
+### 31.4 The fix: `DialoguePacer`
+
+One presentation queue, `openu5::DialoguePacer` (`native/core/include/openu5/dialogue_pacer.h`, `src/dialogue_pacer.cpp`), and its device wiring in `AlphaRuntime`. It owns no game rule: the core has already run the conversation when the events reach it.
+- **Cadence.** `kTalkPauseMs = run_n_frames_ms(kTalkPauseTicks)` = 28 × 55 = **1,540 ms**. Unpaced (the host fixture's default, and the reference's automation rule) every pause drains synchronously, so every existing test and parity fixture sees the same event stream as before.
+- **Hold.** `AlphaRuntime::consume_event()` offers each event first. An idle pacer passes everything through, except a dialogue `Line` whose `pause` is set: that line goes out at once and the pause starts there (`Timed` on its clock, `Key` until a key).
+- **Queue.** While a pause holds, every later event of the turn is copied into the pacer's storage in order: lines (UTF-16 text, rune flag), prompts, effect outputs, effect messages, the end and handoff events, and any plain event with no borrowed payload (a message such as Faulinei's "Something was stolen!", an `Sfx`). When the pause ends, the queue is released through `route_event()`, the unchanged ordinary path, up to and including the next line that carries a pause, which starts the next hold.
+- **Nothing is dropped.** An event the pacer cannot own (a borrowed combat / shop / scene payload), or one that would overflow its storage, first releases everything already queued, in order, and is then handed back to the caller. The speech loses its cadence, never its content or order (`DIALOGUE_PAUSE collapsed` in the serial log).
+- **Storage.** 64 steps (116 B each on the target) and a 4 KiB text arena: **11,520 B of PSRAM**, allocated at start-up with the other scene queues. The corpus worst case for one input (Gorn: an answer plus the label it jumps to) is about 812 characters in at most 52 sections. The pacer object itself is 48 B inside `AlphaRuntime` (internal `.bss`).
+- **Serial.** `DIALOGUE_PAUSE begin=<timed|key>`, `DIALOGUE_PAUSE end`, `DIALOGUE_PAUSE_INPUT`.
+
+### 31.5 Input, save / load, the menus, the NPC turn
+
+- **Keys.** While a pause holds, **any** key or trackball press ends it and does nothing else: no command is routed and no character is typed (TALK's Pause consumes the key; `getkey` discards it). **Mic is a key like any other here**: it ends the pause and does not end the conversation (it would in the Dialogue base mode). A KeyWait shows the device cue `Enter: continue` on the status line, the same one the capture scene's getkeys use (the 1988 screen has only the blinking cursor); a Pause shows none. Transcript paging is the one exception, as in every paced scene.
+  - *Declared:* the Pause's keyboard flush has no device counterpart. Each press is one event, so a quick second press ends the next pause rather than being flushed. No "press to skip the rest" exists; each key ends one pause, as in 1988.
+- **Device shortcuts keep their meaning** (`Alt+S`, `Alt+L`, `Alt+M`, `Alt+D`, the mutes).
+- **Successful load (N3).** `synchronize_loaded_world()` cancels the queue with the other scene pacers: the rest of the speech never reaches the loaded game, and the next keys are ordinary commands. `transient_probe_for_test()` reports a held pause.
+- **Failed load (N4).** Nothing is cancelled: the routine continues on its own cadence ("No valid save" is appended in between).
+- **System Menu (N5).** The menu blocks every release, because `render()` returns before any pacer is serviced while it is open. The Pause's clock keeps running, so a pause that ran out behind the menu releases on the first frame after it closes. This is the existing rule for every scene pacer. The Developer menu does not freeze it: releases continue into the transcript under the Developer screen, as the other pacers' do.
+- **The NPC turn (N9).** An NPC approach queued in the same turn (R-10's `NpcInitiatesTalk`) waits until the last line is out. The drain refuses anything but the map, so draining under the paused speech would have dropped the approach. `drain_pending_npc_initiation()` now returns while a pause holds, and the pacer drains it when it goes idle.
+- **Save.** A save during a pause saves the core's already-final state; the queue is presentation and is not saved.
+
+### 31.6 What stays immediate
+
+Only a TLK line that carries a pause opcode starts a hold. Everything else is unchanged and immediate:
+- combat text (host P1 and mutant D17);
+- every conversation answer without a pause opcode (`"This one."`, N6.1), the goodbye (N6.2), `"Funny, no response!"` (N6.3), and the `0xFD` / `0xFE` refusals;
+- shop conversations (SHOPPES has its own phases and pauses), the guard password / tribute / arrest prompts, the Blackthorn capture scene (its own pacer), Camp, Refuge and TrollSneak (the narrative pacer);
+- system lines ("Save complete", "Load complete", "No valid save"), look / sign text and every other world message.
+
+### 31.7 The audit of other scripted multi-line output
+
+| Path | Class | Status |
+|---|---|---|
+| TLK conversations (116 scripts, 166 `Pause`, 225 `KeyWait`), Chuckles, Blackthorn, Gorn included | scripted narrative | **paced (this batch)** |
+| Blackthorn capture and interrogation (BLCKTHRN.OVL), its five getkeys | cinematic | already paced (`BlackthornScenePacer`, #324 / Batch 51); unchanged |
+| Camp apparition, Refuge, TrollSneak | cinematic | already paced (`NarrativeScenePacer`, Y-04 / Batch 51); Refuge cadence residual H-185 stays queued |
+| Shrine "ordained" / Codex reading (`shrine.cpp`, 7 `ShrineKeyWait`) | scripted narrative, **same getkey `0x266c`** | **not paced: H-183 / D-40, queued since Batch 51.** The session has no consumer for `ShrineKeyWait` outside the capture scene. Not taken here: it runs between the shrine's own prompts and beside the H-184 ritual inversion, and needs its own tests |
+| Ritual inversion and its holds; the sacrifice burst | cinematic | H-184 / H-186, queued |
+| Endgame (ENDGAME.OVL) | cinematic | D-54, open; see §31.10 |
+| Shop conversations; guard challenges | modal question / answer | own phases; unchanged |
+| Combat, world messages, signs, system lines | ordinary | immediate; unchanged |
+
+### 31.8 Tests, RED / GREEN and mutations
+
+- **`a3_hf5_dialogue_pacing_runtime`** (new, 50 checks). The real `AlphaRuntime` with raw keys, the pack's real TLK corpus (the fixture now binds `resources_.dialogue_data` through the production binder `bind_dialogue_services()`; before, it bound none), and the **real `tdeck_board.cpp`** over the fake ST7789, on the virtual clock.
+  - N1 Chuckles `ENTE`: only the first section before 1,540 ms; each later section one Pause on (1,544 / 3,086 / 4,630 / 6,173 ms from Enter); all nine rows in corpus order; the question prompt re-armed; one routed command; the unpaused `Y` answer immediate.
+  - N1C a key during a Pause ends it at once, is consumed, and the next Pause runs a full 28 ticks from the key; N1C.6 Mic does the same and does not end the conversation.
+  - N1K Chuckles `WELC`: nothing released after 10 s without a key; the `Enter: continue` cue; one key per section; four keys of any kind (space, Enter, trackball, a letter) release the speech and re-arm "Your interest?", with nothing routed or moved.
+  - N2 Blackthorn: the description's Pause holds "Greetings" for one Pause; `NO` gives "I beg to differ!" at once, then 1,543 / 3,084 ms; the core ends the conversation (and calls the guards) at once, and the screen returns to the map only after the last line.
+  - N3 / N4 / N5 load and menu (§31.5); N6 immediacy; N7 the unpaced contract; N9 the NPC approach.
+  - N8 the A3-04F row cache, with the transcript full so every release scrolls: each release that only adds text draws exactly the rows it changed (2/2, 2/2, 8/8); the last one, which also brings back the prompt's context bar, draws 18 windows for 10 changed rows and skips none; the 1,396 frames between releases draw no transcript row; the page ends with the whole routine, the repeated verse and the blank rows intact.
+- **`a3_hf5_dialogue_pacer`** (new, 14 checks): the queue on hand-built events: the constant, what an idle pacer never takes (combat text included), hold and release order, a KeyWait through ten minutes of clock, collapse on a borrowed payload and on a full ring or arena, cancel, the zero-cadence contract, copies not borrows, two paced turns that never interleave, arena reclamation over 200 turns.
+- **RED-first.** `native/core/tools/a3_hf5_red_first.py` builds the runtime test against HEAD's `alpha_runtime.cpp`, with only the binder extraction applied so the fixture links: **23 of 50 RED** (N1.1–N1.3, N1C.1–N1C.3, N1C.6, N1K.1–N1K.6, N2.1–N2.3, N3.1, N4.2, N5.1, N8.1, N8.1b, N9.1, N9.2). Every precondition and control is GREEN on HEAD: order and completeness (N1.4, N1C.4, N4.1, N5.2), immediacy (N1.7, N6), the unpaced contract (N7), and the scrolled page (N8.2, N8.3) (`native/targets/tdeck/a3-hf5-red-first.log`). After the change: **50 / 50** and **14 / 14** (`a3-hf5-green.log`, `a3-hf5-pacer-green.log`).
+- **Mutations.** `native/core/tools/a3_hf5_mutation_check.py`, 26 mutants over both new tests and `a3_hf4_load_transient_runtime`: **26 / 26 killed**, restored build GREEN (`a3-hf5-mutation.log`).
+  - First pass: 22 killed, 3 INVALID (D6, D13, D14 did not build under `-Werror`: an unused parameter, variable and function), and **one survivor, D19** (the key that ends a pause also reaches the game). In the Dialogue base mode a letter or a trackball press does nothing, so no check could see it. The one key that acts there is Mic, which ends the conversation; N1C.6 was added for it. The three invalid mutants were rewritten to keep their symbols referenced. The four re-run: **4 / 4 killed** (`a3-hf5-mutation-rerun.log`); then the full 26 again.
+  - Cadence: D1 every line at once (HEAD), D2 the device unpaced, D3 / D4 a wrong delay (14 or 30 ticks), D5 a Pause that never runs out, D6 a KeyWait that times out, D7 the unpaced fixture paced.
+  - Order: D8 newest first, D9 one line skipped, D10 the paused line swallowed, D11 a release that does not stop at the next pause, D12 two turns interleaved, D13 a collapse that drops, D14 a borrowed payload queued, D15 plain-event text lost, D16 the rune flag lost, D17 combat text paced.
+  - Input: D18 a key does not cut a Pause, D19 the key also reaches the game, D20 no key-wait cue.
+  - Load / menu / NPC: D21 a successful load keeps the speech, D22 a failed load cancels it, D23 the pause runs on behind the System Menu, D24 an approach drained under the speech, D25 the approach never drained.
+  - Presentation: D26 a release that does not mark the frame dirty.
+
+### 31.9 Regression
+
+Fresh build directory `native/core/build-a3-hf5-final`: **154 / 154, serial, 138.12 s**, with the known w64devkit warning only (`native/core/a3-hf5-{configure,build,ctest}.log`). That is A3-HF4's 152 plus the two new tests; no existing expectation changed. The unpaced fixture contract is why: every existing runtime test runs with `paced_scenes = false`, and there the pacer never takes an event. The focused set passes inside it:
+- dialogue: `dialogue_parity` (the core's outputs, `pause` included, unchanged), `dialogue_adapters`, `typescript_dialogue_fixture_drift`;
+- Blackthorn and the scene pacers: `blackthorn_scene`, `batch51_scene_pacing`, `batch51_camp_pacing`, `quest_parity`;
+- load and modal state: `a3_hf4_load_transient_runtime`, `batch27_alt_load`, `batch53a_ending_terminal`, `ui_mode_regression`, `alpha_runtime_integration_regression`;
+- render and pacing: `a3_04f_render_runtime` (its panel goldens unchanged), `a3_04e_pacing_runtime`;
+- audio: `a3_05_audio_mute`, `a3_05_audio_controls` and the A3-02 / A3-03 / A3-04 audio tests;
+- `gameplay_parity` and every other gameplay test.
+
+The host fixture now binds the pack's TLK corpus whenever a test attaches the pack. No existing test's expectation moved with it.
+
+### 31.10 The endgame (D-54): what this batch does and does not give it
+
+Not implemented here. What the reference's `EndgamePacer` needs (`game/src/ui/endgame-pacer.ts`, witness `re/notes/endgame-witness-20260721.md`), against what now exists on the device:
+- **Text beats advanced by a key** (`kernel_print_ds` + getkey `0x83dc`): the same "release on a key" rule as the TLK KeyWait. `DialoguePacer`'s ordered queue, key hold, load cancel, input swallow and `route_event()` seam are the reusable part.
+- **Silent holds of a given length** (`delayUnits` of `run_n_frames`): the pacer's Timed hold has one fixed length (28 ticks). The endgame needs a per-step duration. That is a small, contained extension (a duration on the step instead of the pacer), not done here.
+- **Staged pictures and animation phases** (the green re-tint, the orb and moongate timeline, the pixel dissolution, the story scroll) and the **three music changes** by phase: none of this is text. It belongs with the scene pacers (`NarrativeScenePacer` / `BlackthornScenePacer`: beats that carry a stage and a hold) and the endgame scene assets, which the device does not have yet.
+- **The terminal state** (Batch 53A's `UiMode::Ending`) exists already.
+
+So D-54 should build an endgame scene pacer on the scene-pacer model, and use the TLK queue's key-hold semantics for its text beats, rather than push pictures through a text queue. No endgame-specific pacing primitive is missing from the kernel side: `delay`, `run_n_frames` and getkey are all derived (`scene_timing.h`, this section).
+
+### 31.11 Firmware
+
+Pre-commit build `native/targets/tdeck/build-a3-hf5` (`a3-hf5-firmware-{configure,build}.log`): ESP-IDF 6.1, `--no-ccache`, `ninja -j 4`, zero project warnings.
+
+- **`0xf0990` = 985,488 B, +3,056 B** against A3-HF4; **63,088 B (6 %) free**.
+- Sections against A3-HF4's post-commit image (`esp_idf_size --diff`, `a3-hf5-size-diff.log`): Flash `.text` +2,668 B and `.rodata` +384 B (the `DIALOGUE_PAUSE` log formats); internal `.bss` +64 B (the 48-byte pacer object and its two storage pointers inside `AlphaRuntime`); IRAM and `.data` unchanged. The queue's storage (64 steps and the 4 KiB arena) is PSRAM, allocated at start-up with the other scene queues.
+- Image guards GREEN: `a3_04f_image_check.py`, `a3_04b_iram_check.py` and `a3_04a_hotpath_check.py` (`a3-hf5-{image,iram,hotpath}-check.log`). Nothing on the per-sample audio path changed.
+- Version `3.0.0-alpha3-dev-a3-hf5-debug`. Not flashed. Tag `alpha3-hf5-dialogue-pacing` names the post-commit image (a fresh directory, which embeds the commit), with its path, size, SHA-256 and `Git`.
+
+### 31.12 Hardware check H-205 (the user's; about 5 minutes)
+
+The check is in `ALPHA2_HARDWARE_CHECKLIST.md`. The A3-HF5 image carries A3-05 and A3-HF4 unchanged, so one flash serves H-203, H-204 and H-205.
+
+### 31.13 Recorded, not changed
+
+- **TypeScript drift.** The reference's `TALK_PAUSE_MS` is 1,538 ms (the exact 54.925 ms tick); native uses 1,540 ms (the port's 55 ms tick, like every other scene timer). The reference is not touched.
+- **Effects run before their text is shown.** The core applies a conversation's effects when the command runs (`Delivery::render`), as it always has. In 1988 an effect behind a pause runs only when the pause ends. The HUD therefore shows, for example, new gold during the pause before the line that gives it. Only presentation is deferred; moving effects into the presentation layer would split the core / UI boundary that `dialogue_parity` pins.
+- **`re/tools/callers_banda.py` lists `TALK.OVL` at base `0xA290`**; TALK's kernel calls resolve through `0xBF80` (§31.3). Not changed here.
+- **H-183 / D-40** (shrine and Codex key waits): same primitive, still queued. Reuse path: offer a bare `ShrineKeyWait` to the pacer as a Key hold when no capture scene is mounted.
+
+### 31.14 Files
+
+- Core: new `native/core/include/openu5/dialogue_pacer.h`, `src/dialogue_pacer.cpp`; `sources.cmake`.
+- Device: `native/targets/tdeck/main/alpha_runtime.{h,cpp}` (the pacer, its PSRAM storage, `consume_event()` → `route_event()`, `service_dialogue_pacer()`, the input rule, the overlay cue, the load cancel, the drain guard, `bind_dialogue_services()`); `native/targets/tdeck/CMakeLists.txt` (`PROJECT_VER`).
+- Tests and tools: new `native/targets/tdeck/host_tests/a3_hf5_dialogue_pacing_runtime_test.cpp`, `native/core/tests/a3_hf5_dialogue_pacer_test.cpp`, `native/core/tools/a3_hf5_{red_first,mutation_check}.py`; changed `native/core/CMakeLists.txt`, `host_tests/alpha_runtime_host_fixture.cpp` (the pacer's storage; the TLK corpus through the production binder).
+- Docs: this section and the status line; `ALPHA2_HARDWARE_CHECKLIST.md` (H-205); `ALPHA2_PRESERVATION_LEDGER.md` (D-66); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`.

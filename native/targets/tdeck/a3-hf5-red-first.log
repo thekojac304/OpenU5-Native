@@ -1,0 +1,106 @@
+# A3-HF5 RED-first: built against HEAD:native/targets/tdeck/main/alpha_runtime.cpp (plus the binder extraction),
+# every header, the fixture and the test as in the working tree.
+## a3_hf5_dialogue_pacing_runtime against HEAD: exit 1
+GREEN N1.0 (T)alk reaches Chuckles in Lord British's castle and arms "Your interest?"
+RED N1.1 before the first Pause expires only the first section is shown (9 rows, want 2: the verse and the Pause's blank row)
+RED N1.2 the second verse lands one Pause (28 x 55 ms) later: t=5
+RED N1.3 each later section one more Pause on: 5 / 5 / 5
+GREEN N1.4 all nine rows, in the corpus order, none lost or doubled
+GREEN N1.5 the question prompt is armed once the routine is out, the conversation still live
+GREEN N1.6 one routed command for the whole routine
+GREEN N1.7 the unpaused answer that follows is immediate
+GREEN N1C.0 Chuckles
+RED N1C.1 the key at t=326 ends the Pause at once (rows 9 -> 9)
+RED N1C.2 the key is consumed: no command routed, nothing typed into the prompt (routed +0, input 1)
+RED N1C.3 the next Pause runs a full 28 ticks from the key: t=5
+GREEN N1C.4 the routine completes in order
+GREEN N1C.5 Chuckles again
+RED N1C.6 Mic during a Pause ends the pause only: no EndConversation, the routine and its question follow (rows 9, routed +0)
+GREEN N1K.0 Chuckles
+RED N1K.1 a KeyWait holds: after 10 s only the first section (9 rows)
+RED N1K.2 the handheld shows the same key-wait cue the Blackthorn scene uses ("")
+RED N1K.3 one key releases exactly one section (9 rows)
+RED N1K.4 the key is consumed (no command, nothing typed)
+RED N1K.5 four keys of any kind release the whole speech and re-arm "Your interest?"
+RED N1K.6 the trackball press advanced the speech and moved nothing
+GREEN N2.0 Blackthorn is in his castle at noon
+RED N2.1 the description's Pause holds "Greetings" for one Pause (48 -> 48)
+RED N2.2 "I beg to differ!" at once, then one Pause per section: 5 / 5 / 5
+RED N2.3 the core ends the conversation (and calls the guards) at once; the screen returns to the map only after the last line
+GREEN N9.0 Blackthorn, label 0
+RED N9.1 while the speech is paused the approach is still pending, no conversation opened
+RED N9.2 once the last line is out the approach runs (his description at t=5, after the fate line at 5)
+GREEN N3.0 Chuckles
+RED N3.1 the rest of the routine never reaches the loaded game (4 verses shown)
+GREEN N3.2 the loaded game is back on the map
+GREEN N3.3 the next keys are ordinary commands again (routed 2, x 15)
+GREEN N4.0 Chuckles
+GREEN N4.1 a load that fails leaves the routine running to its end, in order
+RED N4.2 on its own cadence
+GREEN N5.0 Chuckles
+RED N5.1 nothing is released behind the menu (9 -> 9 rows over 3 s)
+GREEN N5.2 after the menu closes the routine completes, in order
+GREEN N6.0 Chuckles
+GREEN N6.1 an answer with no pause opcode arrives in the same frame, prompt re-armed
+GREEN N6.2 the goodbye is immediate and returns to the map
+GREEN N6.3 "Funny, no response!" is immediate
+GREEN N7.0 Chuckles
+GREEN N7.1 with a zero cadence the routine drains in the same frame (the reference's automation rule)
+GREEN N8.0 Chuckles
+RED N8.1 each Pause release that only adds text redraws exactly the rows it changed (0 of 0 releases exact)
+RED N8.1b the release that re-arms the prompt skips no changed row (0 changed, 0 drawn)
+GREEN N8.2 the 1400 frames between releases draw no transcript row
+GREEN N8.3 the page ends with the whole routine, scrolled in order (the repeated verse three times, the blank rows kept)
+A3-HF5 dialogue pacing: 50 checks, 23 failures
+## a3_hf5_dialogue_pacing_runtime against the working tree: exit 0
+GREEN N1.0 (T)alk reaches Chuckles in Lord British's castle and arms "Your interest?"
+GREEN N1.1 before the first Pause expires only the first section is shown (2 rows, want 2: the verse and the Pause's blank row)
+GREEN N1.2 the second verse lands one Pause (28 x 55 ms) later: t=1544
+GREEN N1.3 each later section one more Pause on: 3086 / 4630 / 6173
+GREEN N1.4 all nine rows, in the corpus order, none lost or doubled
+GREEN N1.5 the question prompt is armed once the routine is out, the conversation still live
+GREEN N1.6 one routed command for the whole routine
+GREEN N1.7 the unpaused answer that follows is immediate
+GREEN N1C.0 Chuckles
+GREEN N1C.1 the key at t=341 ends the Pause at once (rows 2 -> 4)
+GREEN N1C.2 the key is consumed: no command routed, nothing typed into the prompt (routed +0, input 0)
+GREEN N1C.3 the next Pause runs a full 28 ticks from the key: t=1881
+GREEN N1C.4 the routine completes in order
+GREEN N1C.5 Chuckles again
+GREEN N1C.6 Mic during a Pause ends the pause only: no EndConversation, the routine and its question follow (rows 4, routed +0)
+GREEN N1K.0 Chuckles
+GREEN N1K.1 a KeyWait holds: after 10 s only the first section (2 rows)
+GREEN N1K.2 the handheld shows the same key-wait cue the Blackthorn scene uses ("Enter: continue")
+GREEN N1K.3 one key releases exactly one section (4 rows)
+GREEN N1K.4 the key is consumed (no command, nothing typed)
+GREEN N1K.5 four keys of any kind release the whole speech and re-arm "Your interest?"
+GREEN N1K.6 the trackball press advanced the speech and moved nothing
+GREEN N2.0 Blackthorn is in his castle at noon
+GREEN N2.1 the description's Pause holds "Greetings" for one Pause (48 -> 1586)
+GREEN N2.2 "I beg to differ!" at once, then one Pause per section: 5 / 1543 / 3084
+GREEN N2.3 the core ends the conversation (and calls the guards) at once; the screen returns to the map only after the last line
+GREEN N9.0 Blackthorn, label 0
+GREEN N9.1 while the speech is paused the approach is still pending, no conversation opened
+GREEN N9.2 once the last line is out the approach runs (his description at t=3084, after the fate line at 3084)
+GREEN N3.0 Chuckles
+GREEN N3.1 the rest of the routine never reaches the loaded game (1 verses shown)
+GREEN N3.2 the loaded game is back on the map
+GREEN N3.3 the next keys are ordinary commands again (routed 2, x 15)
+GREEN N4.0 Chuckles
+GREEN N4.1 a load that fails leaves the routine running to its end, in order
+GREEN N4.2 on its own cadence
+GREEN N5.0 Chuckles
+GREEN N5.1 nothing is released behind the menu (2 -> 2 rows over 3 s)
+GREEN N5.2 after the menu closes the routine completes, in order
+GREEN N6.0 Chuckles
+GREEN N6.1 an answer with no pause opcode arrives in the same frame, prompt re-armed
+GREEN N6.2 the goodbye is immediate and returns to the map
+GREEN N6.3 "Funny, no response!" is immediate
+GREEN N7.0 Chuckles
+GREEN N7.1 with a zero cadence the routine drains in the same frame (the reference's automation rule)
+GREEN N8.0 Chuckles
+GREEN N8.1 each Pause release that only adds text redraws exactly the rows it changed (3 of 4 releases exact)
+GREEN N8.1b the release that re-arms the prompt skips no changed row (10 changed, 18 drawn)
+GREEN N8.2 the 1396 frames between releases draw no transcript row
+GREEN N8.3 the page ends with the whole routine, scrolled in order (the repeated verse three times, the blank rows kept)
+A3-HF5 dialogue pacing: 50 checks, 0 failures

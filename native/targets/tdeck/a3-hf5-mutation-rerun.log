@@ -1,0 +1,25 @@
+# A3-HF5 mutation validation (2026-09-27 23:15)
+
+D6 a KeyWait times out like a Pause [native/core/src/dialogue_pacer.cpp]: KILLED
+    a3_hf5_dialogue_pacing_runtime exit=1  6 RED
+        RED N1K.1 a KeyWait holds: after 10 s only the first section (9 rows)
+        RED N1K.2 the handheld shows the same key-wait cue the Blackthorn scene uses ("")
+        RED N1K.3 one key releases exactly one section (9 rows)
+        RED N1K.4 the key is consumed (no command, nothing typed)
+        RED N1K.5 four keys of any kind release the whole speech and re-arm "Your interest?"
+        RED N1K.6 the trackball press advanced the speech and moved nothing
+    a3_hf5_dialogue_pacer exit=1  1 RED
+        RED P5 a KeyWait holds through ten minutes of clock; each key releases one section; an idle pacer refuses a key (L:Welcome. |1@17/9 ; L:To the castle! |1@17/9 ; L:That's ME!|0@17/9)
+D13 a collapse drops the queue instead of releasing it [native/core/src/dialogue_pacer.cpp]: KILLED
+    a3_hf5_dialogue_pacer exit=1  2 RED
+        RED P6 a borrowed payload it cannot copy releases everything queued first and is handed back to the caller
+        RED P7 a full step ring or text arena releases the queue in order and hands the overflowing event back
+D14 a borrowed payload is queued (no collapse) [native/core/src/dialogue_pacer.cpp]: KILLED
+    a3_hf5_dialogue_pacer exit=1  1 RED
+        RED P6 a borrowed payload it cannot copy releases everything queued first and is handed back to the caller
+D19 the key that ends a pause also reaches the game [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf5_dialogue_pacing_runtime exit=1  1 RED
+        RED N1C.6 Mic during a Pause ends the pause only: no EndConversation, the routine and its question follow (rows 4, routed +1)
+
+restored: build exit=0; a3_hf5_dialogue_pacing_runtime exit=0, a3_hf5_dialogue_pacer exit=0, a3_hf4_load_transient_runtime exit=0
+mutations: 4, killed: 4, survived: 0, invalid: 0

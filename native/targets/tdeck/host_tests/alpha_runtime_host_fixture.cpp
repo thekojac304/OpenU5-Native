@@ -168,6 +168,9 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     blackthorn_scene_grid_ = new int16_t[openu5::kBlackthornSceneCells]();
     narrative_steps_ = new openu5::NarrativeSceneStep[kNarrativeSceneSteps]();
     narrative_text_ = new char[kNarrativeSceneTextBytes]();
+    // A3-HF5: the TLK pause queue, same class constants as initialize().
+    dialogue_pacer_steps_ = new openu5::DialoguePacerStep[kDialoguePacerSteps]();
+    dialogue_pacer_text_ = new char[kDialoguePacerTextBytes]();
     bind_scene_pacers(fixture.paced_scenes);
 
     look_services_.context = this;
@@ -188,8 +191,12 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     // end_record / karma / words / moonstones unbound (RB-1 .. RB-3).
     bind_quest_services();
 
-    dialogue_assets_.bind(nullptr, 0);
-    dialogue_services_.registry = {&dialogue_assets_, AlphaDialogueCache::lookup};
+    // A3-HF5: production's own binder. With a pack attached the fixture now
+    // talks through the real TLK corpus (resources_.dialogue_data); without
+    // one the registry stays empty, exactly as before.
+    resources_.dialogue_data = fixture.pack ? fixture.pack->dialogue_data : nullptr;
+    resources_.dialogue_data_size = fixture.pack ? fixture.pack->dialogue_data_size : 0;
+    bind_dialogue_services();
 
     shrine_services_.data = &resources_.shrine_data;
     shrine_services_.context = this;

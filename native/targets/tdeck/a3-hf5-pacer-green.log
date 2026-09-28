@@ -1,0 +1,16 @@
+GREEN P0 the Pause is run_n_frames(28): TALK 0x0fae cmp si,0x1c, 55 ms ticks -> 1540 ms
+GREEN P1 idle: an unpaused line, a message, combat text and a prompt all pass straight through (the caller forwards)
+GREEN P2 the paused line itself goes out at once, the pause starts there, and everything after it queues (L:|2@17/9, queued 5)
+GREEN P3 not a millisecond early; at 28 ticks it releases up to the next paused line and re-arms from there (L:|2@17/9 ; L:Bounce! |0@17/9 ; L:|2@17/9)
+GREEN P4 the tail comes out whole and in order, the prompt and the trailing message behind the last line
+GREEN P5 a KeyWait holds through ten minutes of clock; each key releases one section; an idle pacer refuses a key (L:Welcome. |1@17/9 ; L:To the castle! |1@17/9 ; L:That's ME!|0@17/9)
+GREEN P6 a borrowed payload it cannot copy releases everything queued first and is handed back to the caller
+GREEN P7 a full step ring or text arena releases the queue in order and hands the overflowing event back
+GREEN P8 cancel(): the queued tail is never shown and the pacer is idle again
+GREEN P9 with a 0 ms cadence nothing is ever taken
+GREEN P10 every queued kind is a copy: text, rune flag, effect, effect message, handoff, end, a plain event (L:first|2@17/9 ; L:survives|0R@17/9 ; G:0:kept ; E:1/100 ; M:Thou hast 100 gold! ; H:3 ; END ; G:6:alarm)
+GREEN P11 a second paced turn waits behind the first and keeps its own pause
+GREEN P12 200 paced turns through a 256-byte arena: never a collapse
+GREEN P13 only a Line output carries a pause
+
+A3-HF5 dialogue pacer: 14 checks, 0 failures

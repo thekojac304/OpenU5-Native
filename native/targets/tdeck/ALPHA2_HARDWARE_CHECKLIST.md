@@ -1308,3 +1308,27 @@ Flash the A3-HF4 Launcher image (its path and SHA-256 are in tag `alpha3-hf4-loa
 **PASS:** steps 2–5 return straight to normal play with nothing left open, and the next key acts in the loaded game; step 7 (if run) keeps the prompt.
 
 **FAIL:** a spell list, direction prompt, yes/no or picker still on screen after "Load complete"; a key after the load that answers the old prompt; commands refused after the load until Mic or a reboot; a failed load that closes the prompt. Report it with the `FW` / `Git` lines (and the serial `LOAD_TRANSIENT_RESET` line if captured).
+
+### Phase H-205 — conversations keep their pauses · *new firmware; SD pack unchanged* · about 5 minutes · **PENDING**
+
+Flash the A3-HF5 Launcher image (its path and SHA-256 are in tag `alpha3-hf5-dialogue-pacing`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-hf5-debug` and that tag's `Git`; if they differ, stop. The image carries A3-05 and A3-HF4 unchanged, so H-203 and H-204 can be run on it too. A serial capture is optional: each paused speech prints `DIALOGUE_PAUSE begin=timed|key` and `DIALOGUE_PAUSE end`.
+
+**Chuckles (mandatory).**
+1. Enter Lord British's castle at daytime and find **Chuckles**, the bouncing jester, on the ground floor.
+2. Talk to him (`T` + direction). At "Your interest?" type `ENTE` and Enter.
+   - "Ho eyo he hum!" appears **alone**. About **1.5 s** later the second "Ho eyo he hum!", then the third, then "Bounce, bounce, bounce, bounce!", then "Didst thou enjoy that?", each about 1.5 s after the one before (about 6 s in all). Only then does the "You respond-" prompt return. Answer `Y`: "I thought thou might!" appears at once.
+3. Ask `ENTE` again and press any key (a letter, space or the trackball) while a verse is waiting: the next verse appears **at once**, and the key does nothing else (nothing is typed, the Avatar does not move, the conversation does not end, Mic included).
+4. Ask `WELC`. "Welcome, welcome, welcome." appears and the status line shows **`Enter: continue`**. Nothing more appears however long you wait. Each key shows the next part (four keys in all), ending with "...That's ME!" and "Your interest?".
+
+**Blackthorn (optional; mandatory only if the host evidence is questioned).**
+5. In Blackthorn's palace, talk to **Blackthorn** in his throne room. "You see the Dark Lord himself!" is followed about 1.5 s later by the rest of his greeting.
+6. If he asks "Wilt thou be staying with us long?", answer `N`: "I beg to differ!", then about 1.5 s later "So very kind of thee to deliver thyself unto me!", then about 1.5 s later "Prepare now to meet thy fate!". The map returns only after that last line. (His guards then come for the Avatar and the capture scene follows; that scene was already paced and is not part of this check.)
+
+**Regression.**
+7. **Combat stays immediate.** Fight anything: every combat line appears as it happens, with no pause.
+8. **Menus and loads.** During Chuckles' `ENTE`: press `Alt+M` and wait five seconds. Nothing new appears behind the menu; after closing it the rest of the song follows. Then press `Alt+S`, ask `ENTE` again, and press `Alt+L` in the middle of the song: the song stops, "Load complete", and the next key is an ordinary command. No stuck pause, no garbled or doubled transcript lines, no audio stutter.
+9. Throughout: no crash, `task_wdt` or reboot; music and effects normal.
+
+**PASS:** steps 2–4 and 7–8 as described (and 5–6 if run).
+
+**FAIL:** a routine that still appears all at once; a verse that waits much longer than about 2 s with no key; a key that is typed into "Your interest?", moves the Avatar or ends the conversation during a pause; a `WELC` part that appears without a key; lines out of order, missing or doubled; combat text that waits; a pause still running after a load. Report it with the `FW` / `Git` lines (and the serial `DIALOGUE_PAUSE` lines if captured).

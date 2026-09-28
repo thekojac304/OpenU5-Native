@@ -183,10 +183,14 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
         blackthorn_scene_grid_=static_cast<int16_t*>(heap_caps_calloc(openu5::kBlackthornSceneCells,sizeof(int16_t),kPsram));
         narrative_steps_=static_cast<openu5::NarrativeSceneStep*>(heap_caps_calloc(kNarrativeSceneSteps,sizeof(openu5::NarrativeSceneStep),kPsram));
         narrative_text_=static_cast<char*>(heap_caps_calloc(kNarrativeSceneTextBytes,1,kPsram));
+        // A3-HF5: the TLK pause queue (kDialoguePacerSteps x DialoguePacerStep + a 4 KiB arena).
+        dialogue_pacer_steps_=static_cast<openu5::DialoguePacerStep*>(heap_caps_calloc(kDialoguePacerSteps,sizeof(openu5::DialoguePacerStep),kPsram));
+        dialogue_pacer_text_=static_cast<char*>(heap_caps_calloc(kDialoguePacerTextBytes,1,kPsram));
     }
     if(!astar_scratch_||!transcript_||!viewport_||!creation_canvas_||!tile_cache_storage_||!debug_view_||!ui_mem)return ESP_ERR_NO_MEM;
     if(!blackthorn_script_||!blackthorn_steps_||!blackthorn_scene_text_||!blackthorn_scene_grid_)return ESP_ERR_NO_MEM;
     if(!narrative_steps_||!narrative_text_)return ESP_ERR_NO_MEM;
+    if(!dialogue_pacer_steps_||!dialogue_pacer_text_)return ESP_ERR_NO_MEM;
     {
         debug51::Step trace("presentation-tile-cache-load");
         ESP_RETURN_ON_ERROR(openu5::initialize_tile_cache(tiles,tile_report,tile_cache_storage_,openu5::kCachedTileBytes,tile_cache_),kTag,"cache presentation tiles");
@@ -224,7 +228,7 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
     look_services_.context=this;look_services_.describe=[](void*p,int32_t tile){auto&r=*static_cast<AlphaRuntime*>(p);return tile>=0&&size_t(tile)<r.resources_.look_count?r.resources_.look_text+r.resources_.look_offsets[tile]:"something";};look_services_.sign=[](void*p,openu5::MapId map,int32_t x,int32_t y){auto&r=*static_cast<AlphaRuntime*>(p);return openu5::resolve_look_sign(r.resources_.signs,r.resources_.sign_count,map,x,y);};context_.look=&look_services_;
     context_.services={this,command_effect,command_reload,banner};context_.events={this,dispatch_event};
     bind_quest_services();
-    dialogue_assets_.bind(resources_.dialogue_data,resources_.dialogue_data_size);dialogue_services_.registry={&dialogue_assets_,AlphaDialogueCache::lookup};
+    bind_dialogue_services();
     shrine_services_.data=&resources_.shrine_data;
     shrine_services_.context=this;
     shrine_services_.record=[](void *p,int32_t index)->const char*{auto&r=*static_cast<AlphaRuntime*>(p);return tdeck::misc_text_record({r.resources_.misc_text_offsets,r.resources_.misc_text_records,r.resources_.misc_text_record_count},index);};
@@ -296,6 +300,18 @@ void AlphaRuntime::bind_scene_pacers(bool paced){
     blackthorn_pacer_.set_cue_sink({this,blackthorn_cue});
     narrative_pacer_.attach({narrative_steps_,kNarrativeSceneSteps,narrative_text_,kNarrativeSceneTextBytes});
     narrative_pacer_.set_paced(paced);
+    // A3-HF5. The TLK Pause is run_n_frames(28) (openu5/dialogue_pacer.h);
+    // unpaced, every pause drains synchronously, as the reference does under
+    // automation.
+    dialogue_pacer_.attach({dialogue_pacer_steps_,kDialoguePacerSteps,dialogue_pacer_text_,kDialoguePacerTextBytes});
+    dialogue_pacer_.set_pause_ms(paced?openu5::kTalkPauseMs:0);
+}
+
+// A3-HF5. The single binder for the TLK registry, so a host test that attaches
+// the pack talks through the same cache the device does (H-154/H-155 rule).
+void AlphaRuntime::bind_dialogue_services(){
+    dialogue_assets_.bind(resources_.dialogue_data,resources_.dialogue_data_size);
+    dialogue_services_.registry={&dialogue_assets_,AlphaDialogueCache::lookup};
 }
 
 void AlphaRuntime::dispatch_ui(void *p,const openu5::UiIntent&i){static_cast<AlphaRuntime*>(p)->dispatch(i);}
@@ -345,7 +361,46 @@ bool AlphaRuntime::apply_camp_scene_event(const openu5::GameEvent&e){
     return false;
 }
 
+// A3-HF5. The TLK script's Pause / KeyWait (openu5/dialogue_pacer.h). From
+// the first conversation line that carries one, the rest of the turn waits
+// in the dialogue pacer and comes back through route_event() -- the whole
+// ordinary path below, scene pacers included -- when the pause ends. The
+// NPC-initiation intercept is order-free bookkeeping (nothing is shown), so
+// it is never queued; the drain it feeds waits for the pacer instead.
 void AlphaRuntime::consume_event(const openu5::GameEvent&e){
+    if(e.kind!=openu5::GameEventKind::NpcInitiatesTalk&&e.kind!=openu5::GameEventKind::NpcInitiatesShop){
+        const bool was_holding=dialogue_pacer_.holding();
+        const auto collapsed=dialogue_pacer_.collapsed();
+        if(dialogue_pacer_.offer(e,uint32_t(esp_timer_get_time()/1000),{this,release_dialogue_event})){
+            if(!was_holding)ESP_LOGI(kTag,"DIALOGUE_PAUSE begin=%s pause_ms=%lu",
+                                     dialogue_pacer_.awaiting_key()?"key":"timed",(unsigned long)dialogue_pacer_.pause_ms());
+            dirty_=true;dirty_reason_="dialogue-pause";
+            return;
+        }
+        if(dialogue_pacer_.collapsed()!=collapsed)
+            ESP_LOGW(kTag,"DIALOGUE_PAUSE collapsed kind=%d released=%lu",int(e.kind),(unsigned long)dialogue_pacer_.released());
+    }
+    route_event(e);
+}
+
+void AlphaRuntime::release_dialogue_event(void *p,const openu5::GameEvent&e){static_cast<AlphaRuntime*>(p)->route_event(e);}
+
+// A3-HF5. Releases a Timed pause whose 28 ticks are up. A turn that ends in
+// the pacer may have left an NPC's approach waiting behind it (the drain
+// refuses while a pause holds); it runs once the last line is out.
+bool AlphaRuntime::service_dialogue_pacer(){
+    if(!dialogue_pacer_.holding())return false;
+    const auto released=dialogue_pacer_.released();
+    dialogue_pacer_.pump(uint32_t(esp_timer_get_time()/1000),{this,release_dialogue_event});
+    if(dialogue_pacer_.released()==released&&dialogue_pacer_.holding())return false;
+    if(!dialogue_pacer_.holding()){
+        ESP_LOGI(kTag,"DIALOGUE_PAUSE end released=%lu",(unsigned long)dialogue_pacer_.released());
+        drain_pending_npc_initiation();
+    }
+    return true;
+}
+
+void AlphaRuntime::route_event(const openu5::GameEvent&e){
     // Batch 51. The Camp apparition is PACED. The original spends its waits
     // inside camp_results -- the sweeps, the chord that freezes the XOR frame,
     // the restore frames -- and they block even with sound off; rendering each
@@ -1341,6 +1396,10 @@ void AlphaRuntime::open_selection(openu5::UiMode mode,openu5::UiRequestId reques
 // command() call that produced the pending initiation.
 void AlphaRuntime::drain_pending_npc_initiation(){
     if(pending_npc_initiation_==PendingNpcInitiation::None)return;
+    // A3-HF5. TALK runs its pauses before the main loop runs anyone's turn:
+    // an approach queued by the same turn waits until the last line is out
+    // (service_dialogue_pacer / the key that ends the pause drain it).
+    if(dialogue_pacer_.holding())return;
     const auto kind=pending_npc_initiation_;
     const auto slot=pending_npc_slot_;
     const auto location=pending_npc_location_;
@@ -1614,6 +1673,28 @@ bool AlphaRuntime::handle_input_event(const RawInputEvent&raw){service_combat();
                  action_name(action.kind),int(narrative_pacer_.scene()));
         return true;
     }
+    // A3-HF5. A TLK pause is the interpreter waiting inside TALK.OVL: a Pause
+    // (0x0f92) reads the first key and flushes the rest, a KeyWait (0x266c)
+    // takes any key and discards it. Either way the key ends the pause and
+    // does nothing else -- no command, no typed character. Transcript paging
+    // stays the one exception, as for every other paced scene; the device
+    // shortcuts (save, load, the menus) keep their meaning.
+    if(dialogue_pacer_.holding()&&shortcut==DeviceShortcut::None){
+        if(action.kind==openu5::UiActionKind::PageUp||action.kind==openu5::UiActionKind::PageDown){
+            refresh_session_context();
+            ui_->handle_input(action);
+            dirty_=true;dirty_reason_="transcript-page";
+            ESP_LOGI(kTag,"DIALOGUE_PAUSE_INPUT action=%s effect=transcript-page",action_name(action.kind));
+            return true;
+        }
+        const auto state=dialogue_pacer_.state();
+        dialogue_pacer_.advance_key(uint32_t(esp_timer_get_time()/1000),{this,release_dialogue_event});
+        ESP_LOGI(kTag,"DIALOGUE_PAUSE_INPUT action=%s effect=%s-ended state=%d gameplay_command=none",
+                 action_name(action.kind),state==openu5::DialoguePacerState::Key?"key-wait":"pause",int(dialogue_pacer_.state()));
+        if(!dialogue_pacer_.holding())drain_pending_npc_initiation();
+        dirty_=true;dirty_reason_="dialogue-pause";
+        return true;
+    }
     // R-12: "revealing traga el input" -- the reference's modal reveal loop
     // (main.ts runMapReveal/cancelMapReveal) reads no keyboard while armed and
     // re-censors itself automatically on the wall-clock timer in render(),
@@ -1752,6 +1833,10 @@ const char *AlphaRuntime::overlay() const {static char text[64]{};text[0]=0;
     // cue because a DOS player simply pressed a key; on the handheld the scene
     // would otherwise look frozen. A device affordance, not transcript text.
     if(blackthorn_pacer_.awaiting_key()){std::snprintf(text,sizeof(text),"Enter: continue");return text;}
+    // A3-HF5. The TLK KeyWait (getkey 0x266c) has only the blinking cursor in
+    // 1988; the same device cue as the capture scene's getkeys. A Timed Pause
+    // gets none: its loop (TALK 0x0f92) never runs the cursor.
+    if(dialogue_pacer_.awaiting_key()){std::snprintf(text,sizeof(text),"Enter: continue");return text;}
     if(ui_&&ui_->mode()==openu5::UiMode::Shop)return text;
     // Batch 53 (D-53 / H-12). Vas Rel Por's phase getkey (CAST.OVL 0x0cff
     // "To phase:", then a bare key) is not an aim: without this the generic
@@ -2207,6 +2292,7 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     service_combat();
     if(service_blackthorn_scene()){dirty_=true;dirty_reason_="blackthorn-scene";}
     if(service_narrative_scene()){dirty_=true;dirty_reason_="narrative-scene";}
+    if(service_dialogue_pacer()){dirty_=true;dirty_reason_="dialogue-pause";}
     if(service_poison_flash()){dirty_=true;dirty_reason_="poison-tick";}
     if(service_hit_cue()){dirty_=true;dirty_reason_="combat-hit-cue";}
     service_ambient(esp_timer_get_time());
@@ -2521,6 +2607,9 @@ void AlphaRuntime::synchronize_loaded_world(){
     // pacer is cancelled WITHOUT reporting a completion, so a load can never
     // trigger the resurrection the scene would otherwise have applied.
     narrative_pacer_.cancel();world_fx_.clear();poison_.cancel();hit_cue_.cancel();
+    // A3-HF5. The rest of a conversation's paused turn belongs to the game
+    // being replaced: none of it is shown over the loaded one.
+    dialogue_pacer_.cancel();
     // A3-01. Sound is presentation too: a load drops the old world's queued
     // effects. Nothing here reads or writes game state.
     audio_.flush_for_load();

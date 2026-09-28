@@ -8,7 +8,21 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 A3-HF4, 2026-09-27) — a successful load discards the replaced game's prompts and views; Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 A3-HF5, 2026-09-27) — TLK conversations keep their script pauses; Alpha 2 remains the released build; read this first
+>
+> **A3-HF5 is a presentation hotfix, not a release** (`ALPHA3_AUDIO.md` §31). **H-203 (A3-05) and H-204 (A3-HF4) are still pending.**
+> - **The defect (D-66).** Chuckles' entertainment and Blackthorn's speech appeared all at once. Both are TLK conversations whose scripts carry the interpreter's `0x83` Pause and `0x8F` KeyWait; the core marked them on each line (`DialogueOutput::pause`) and nothing on the device read the mark. 116 of the 135 scripts are affected.
+> - **The original.** TALK prints each section at once (no typewriter). A Pause is 28 BIOS ticks (TALK `0x0f92`, `run_n_frames(28)` with a key exit; the key is consumed); a KeyWait is `getkey 0x266c` (any key, no timeout).
+> - **Fix.** One presentation queue, `openu5::DialoguePacer`, at the front of `AlphaRuntime::consume_event()`: the paused line is shown and the rest of the turn waits for 1,540 ms or a key, in order, nothing dropped. Any key ends a pause and does nothing else. A KeyWait shows `Enter: continue`. A successful load cancels the rest; the System Menu blocks releases; an NPC approach queued by the same turn waits for the last line. Combat and every unpaused line stay immediate.
+>
+> | | |
+> |---|---|
+> | Host suite | **154 / 154**, serial, 138.12 s. New: `a3_hf5_dialogue_pacing_runtime` 50 (**23 RED on HEAD**, every control GREEN) and `a3_hf5_dialogue_pacer` 14. **26 / 26 mutations killed.** No existing expectation changed. |
+> | Firmware | `3.0.0-alpha3-dev-a3-hf5-debug`. Pre-commit build 985,488 B (`0xf0990`), +3,056 B, 63,088 B (6 %) free, zero warnings. Flash `.text` +2,668 B and `.rodata` +384 B (the `DIALOGUE_PAUSE` log formats); internal `.bss` +64 B (the 48-byte pacer object and its two storage pointers inside `AlphaRuntime`); IRAM and `.data` unchanged. Image guards GREEN. The image path, SHA-256 and `Git` are in tag `alpha3-hf5-dialogue-pacing`. **Not flashed.** |
+> | SD | **Unchanged.** Save format unchanged. |
+> | Next | **H-203**, **H-204** and **H-205** (about 5 minutes; one flash of the A3-HF5 image serves all three). Then H-183 (the shrine / Codex key waits, the same getkey, a small follow-up on this queue) or A3-04H. |
+>
+> ### CURRENT STATE (Alpha 3 A3-HF4, 2026-09-27) — a successful load discards the replaced game's prompts and views — **superseded as the current state by A3-HF5 above; H-204 still pending.**
 >
 > **A3-HF4 is a correctness hotfix, not a release** (`ALPHA3_AUDIO.md` §30). **H-203 (A3-05) is still pending**: the user is running it.
 > - **The defect (D-65).** In the H-201 / H-202 capture a Mix picker opened before an in-menu Load stayed open after it (`UI_MODE` stayed `spell`) until Mic. On the host the same held for every modal (a target selector, a yes/no with its core `awaiting_exit`, the Ready / Use pickers), a Shop / Dialogue session, the gem and zodiac views, (Z)-stats, the map reveal, the magic inversion, the quake, parked picks and a queued NPC approach, on both load routes. The stale Mix picker's Enter mixed from the old game's list in the loaded one.
@@ -8269,3 +8283,43 @@ A correctness hotfix of the load / UI boundary. The full write-up is [`ALPHA3_AU
 - Loading in combat (item 7) and the turn-phase question (item 8).
 - H-203 (A3-05): still the user's.
 - A3-04H (storage import count, PSRAM routing); narrative / transcript pacing; the TypeScript `died` routing.
+
+## Alpha 3 A3-HF5 — TLK conversations keep their script pauses
+
+A presentation hotfix of the dialogue path. The full write-up is [`ALPHA3_AUDIO.md`](ALPHA3_AUDIO.md) §31; this section records the classification on its own axis. No gameplay rule, save format or audio path changed.
+
+### 1. Items and classification
+
+| # | Item | Class | Change |
+|---|---|---|---|
+| 1 | Chuckles' `ENTE` routine (four Pauses) appeared all at once | **native defect (dialogue presentation, pre-existing since the dialogue port)**, ledger D-66 | fixed |
+| 2 | Blackthorn's description, greeting and refusal (three Pauses) appeared all at once | same defect | fixed |
+| 3 | Every other TLK Pause / KeyWait (116 scripts; Gorn's cell talk, six KeyWaits, included) | same defect | fixed |
+| 4 | An NPC approach queued by the conversation's own turn would have been dropped under a paused speech (the drain refuses anything but the map) | **latent defect, exposed by the fix**, fixed with it | fixed |
+| 5 | The `Enter: continue` cue on a KeyWait (1988: the blinking cursor only) | **declared native modernization** (the capture scene's existing cue) | — |
+| 6 | The Pause's keyboard-buffer flush | **declared divergence**: each device press is one event and ends one pause | — |
+| 7 | A conversation's effects (gold, karma, the guards' alarm) still run when the command runs, before a paused line shows them | **recorded, not changed** (the core / UI split `dialogue_parity` pins) | none |
+| 8 | The Blackthorn capture scene | **not affected**: already paced (#324, Batch 51) | none |
+| 9 | Shrine "ordained" / Codex key waits (`ShrineKeyWait`, the same getkey) | **still queued, H-183 / D-40** | none |
+| 10 | The reference's `TALK_PAUSE_MS` is 1,538 ms; native 1,540 ms (the port's 55 ms tick) | **drift recorded**, reference not touched | none |
+| 11 | `re/tools/callers_banda.py` lists `TALK.OVL` at base `0xA290`; TALK's kernel calls resolve through `0xBF80` | **tooling finding**, not changed | none |
+
+### 2. Evidence
+
+- **Original:** TALK `0x0f92`–`0x0fb3` (Pause: compositor `0x5910`, key read `0x1d5e`, `delay(1)` `0x20fa`, flush `0x1b24`, 28 passes) and TALK `0x1010` (KeyWait: `getkey_with_redraw 0x266c`); the character printer (TALK `0x0574`) has no delay.
+- **Reference:** `game/src/ui/talk-console.ts` (`TalkConsole`, `TALK_PAUSE_MS = 1538`) parks the rest of the outputs at each marked line.
+- **RED-first:** `native/core/tools/a3_hf5_red_first.py` builds the new runtime test against HEAD's `alpha_runtime.cpp`: **23 / 50 RED**; every precondition and control GREEN (`native/targets/tdeck/a3-hf5-red-first.log`).
+- **GREEN:** 50 / 50 and 14 / 14 (`a3-hf5-green.log`, `a3-hf5-pacer-green.log`).
+- **Mutations:** `native/core/tools/a3_hf5_mutation_check.py`, **26 / 26 killed** (`a3-hf5-mutation.log`; the first pass's one survivor and three invalid mutants are recorded in §31.8 and `a3-hf5-mutation-rerun.log`).
+- **Suite / firmware:** see the current-state table above.
+
+### 3. Rows
+
+- **H-205** (`ALPHA2_HARDWARE_CHECKLIST.md`): new, PENDING. About 5 minutes: Chuckles `ENTE` / `WELC` (mandatory), Blackthorn (optional), combat, the System Menu and a load mid-song.
+- **D-66** (ledger §4): new, host fixed.
+
+### 4. Not done in this batch
+
+- H-183 / D-40 (shrine and Codex key waits) and H-184 – H-186; D-54 (the endgame; the reuse assessment is §31.10).
+- H-203 and H-204: still the user's.
+- A3-04H (storage import count, PSRAM routing).

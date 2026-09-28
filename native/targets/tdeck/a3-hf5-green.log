@@ -1,0 +1,103 @@
+
+N1 Chuckles "entertain" (0x83 Pause x4)
+GREEN N1.0 (T)alk reaches Chuckles in Lord British's castle and arms "Your interest?"
+    timeline (9 rows)
+      t=     5 ms | Ho eyo he hum! 
+      t=     5 ms | 
+      t=  1544 ms | Ho eyo he hum! 
+      t=  1544 ms | 
+      t=  3086 ms | Ho eyo he hum! 
+      t=  3086 ms | 
+      t=  4630 ms | Bounce, bounce, bounce, bounce! 
+      t=  4630 ms | 
+      t=  6173 ms | Didst thou enjoy that?
+GREEN N1.1 before the first Pause expires only the first section is shown (2 rows, want 2: the verse and the Pause's blank row)
+GREEN N1.2 the second verse lands one Pause (28 x 55 ms) later: t=1544
+GREEN N1.3 each later section one more Pause on: 3086 / 4630 / 6173
+GREEN N1.4 all nine rows, in the corpus order, none lost or doubled
+GREEN N1.5 the question prompt is armed once the routine is out, the conversation still live
+GREEN N1.6 one routed command for the whole routine
+GREEN N1.7 the unpaused answer that follows is immediate
+
+N1C a key during a Pause
+GREEN N1C.0 Chuckles
+GREEN N1C.1 the key at t=341 ends the Pause at once (rows 2 -> 4)
+GREEN N1C.2 the key is consumed: no command routed, nothing typed into the prompt (routed +0, input 0)
+GREEN N1C.3 the next Pause runs a full 28 ticks from the key: t=1881
+GREEN N1C.4 the routine completes in order
+GREEN N1C.5 Chuckles again
+GREEN N1C.6 Mic during a Pause ends the pause only: no EndConversation, the routine and its question follow (rows 4, routed +0)
+
+N1K Chuckles "welcome" (0x8F KeyWait x4)
+GREEN N1K.0 Chuckles
+    after 10 s with no key (2 rows)
+      t=   -23 ms | "Welcome, welcome, welcome. 
+      t=   -23 ms | 
+GREEN N1K.1 a KeyWait holds: after 10 s only the first section (2 rows)
+GREEN N1K.2 the handheld shows the same key-wait cue the Blackthorn scene uses ("Enter: continue")
+GREEN N1K.3 one key releases exactly one section (4 rows)
+GREEN N1K.4 the key is consumed (no command, nothing typed)
+GREEN N1K.5 four keys of any kind release the whole speech and re-arm "Your interest?"
+GREEN N1K.6 the trackball press advanced the speech and moved nothing
+
+N2 Blackthorn's throne-room speech
+GREEN N2.0 Blackthorn is in his castle at noon
+    greeting (6 rows)
+      t=     5 ms | Talk-
+      t=    48 ms | north
+      t=    48 ms | You see the Dark Lord himself! 
+
+
+      t=  1586 ms | Greetings,  Avatar, what an unexpected pleasure! 
+      t=  1586 ms | 
+      t=  3128 ms | Wilt thou be staying with us long?
+GREEN N2.1 the description's Pause holds "Greetings" for one Pause (48 -> 1586)
+    "no" (5 rows)
+      t=     5 ms | I beg to differ! 
+      t=     5 ms | 
+      t=  1543 ms | So very kind of thee to deliver thyself unto me! 
+      t=  1543 ms | 
+      t=  3084 ms | Prepare now to meet thy fate! 
+GREEN N2.2 "I beg to differ!" at once, then one Pause per section: 5 / 1543 / 3084
+GREEN N2.3 the core ends the conversation (and calls the guards) at once; the screen returns to the map only after the last line
+
+N9 an NPC approach queued behind the speech
+GREEN N9.0 Blackthorn, label 0
+GREEN N9.1 while the speech is paused the approach is still pending, no conversation opened
+GREEN N9.2 once the last line is out the approach runs (his description at t=3084, after the fate line at 3084)
+
+N3 a successful load in the middle of the routine
+GREEN N3.0 Chuckles
+GREEN N3.1 the rest of the routine never reaches the loaded game (1 verses shown)
+GREEN N3.2 the loaded game is back on the map
+GREEN N3.3 the next keys are ordinary commands again (routed 2, x 15)
+
+N4 a failed load in the middle of the routine
+GREEN N4.0 Chuckles
+GREEN N4.1 a load that fails leaves the routine running to its end, in order
+GREEN N4.2 on its own cadence
+
+N5 the System Menu in the middle of the routine
+GREEN N5.0 Chuckles
+GREEN N5.1 nothing is released behind the menu (2 -> 2 rows over 3 s)
+GREEN N5.2 after the menu closes the routine completes, in order
+
+N6 ordinary text stays immediate
+GREEN N6.0 Chuckles
+GREEN N6.1 an answer with no pause opcode arrives in the same frame, prompt re-armed
+GREEN N6.2 the goodbye is immediate and returns to the map
+GREEN N6.3 "Funny, no response!" is immediate
+
+N7 the unpaced harness contract
+GREEN N7.0 Chuckles
+GREEN N7.1 with a zero cadence the routine drains in the same frame (the reference's automation rule)
+
+N8 the A3-04F transcript row cache
+GREEN N8.0 Chuckles
+    releases (t: changed/drawn): 1561ms:2/2 3104ms:2/2 4648ms:8/8 6204ms:10/18
+GREEN N8.1 each Pause release that only adds text redraws exactly the rows it changed (3 of 4 releases exact)
+GREEN N8.1b the release that re-arms the prompt skips no changed row (10 changed, 18 drawn)
+GREEN N8.2 the 1396 frames between releases draw no transcript row
+GREEN N8.3 the page ends with the whole routine, scrolled in order (the repeated verse three times, the blank rows kept)
+
+A3-HF5 dialogue pacing: 50 checks, 0 failures

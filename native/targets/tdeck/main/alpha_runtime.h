@@ -23,6 +23,7 @@
 #include "openu5/look.h"
 #include "openu5/blackthorn.h"
 #include "openu5/blackthorn_scene.h"
+#include "openu5/dialogue_pacer.h"
 #include "openu5/narrative_scene.h"
 #include "openu5/poison_tick.h"
 #include "openu5/world_fx.h"
@@ -179,6 +180,8 @@ class AlphaRuntime {
     // Batch 51 read-only windows on the scene pacers, for timing assertions.
     const openu5::NarrativeScenePacer &narrative_pacer() const { return narrative_pacer_; }
     const openu5::BlackthornScenePacer &blackthorn_pacer() const { return blackthorn_pacer_; }
+    // A3-HF5: the TLK Pause/KeyWait queue, for timing assertions.
+    const openu5::DialoguePacer &dialogue_pacer() const { return dialogue_pacer_; }
     bool camp_scene_inverted() const { return camp_scene_inverted_; }
     // A3-04E: the last composed 176x176 viewport -- what the Board was handed.
     const uint16_t *composed_viewport() const { return viewport_; }
@@ -199,6 +202,11 @@ class AlphaRuntime {
     // the Camp apparition's longest paced segment (six members, none levelling)
     // 2 + 1 + 6*6 + 3 = 42 steps; each can be followed by the rest of its turn.
     static constexpr size_t kNarrativeSceneSteps = 64, kNarrativeSceneTextBytes = 2048;
+    // A3-HF5. One conversation input's tail after its first pause. The corpus
+    // worst case (Gorn, the Blackthorn cellmate: an answer plus the label it
+    // jumps to) is ~812 characters in <= 52 sections; UTF-16 text, so the
+    // arena holds ~2.5x that. A turn that still overflows is released whole.
+    static constexpr size_t kDialoguePacerSteps = 64, kDialoguePacerTextBytes = 4096;
     openu5::TurnState &turn() { return turn_; }
     openu5::TravelState &travel() { return travel_; }
     openu5::CommandState &commands() { return commands_; }
@@ -231,6 +239,7 @@ class AlphaRuntime {
         bool gem_view = false, zodiac_view = false, zstats = false;
         bool map_reveal = false, magic_invert = false, quake = false;
         bool parked_pick = false, npc_initiation = false;
+        bool dialogue_pause = false; // A3-HF5
     };
     TransientProbe transient_probe_for_test() const {
         TransientProbe p;
@@ -244,6 +253,7 @@ class AlphaRuntime {
                         pending_order_from_ >= 0 || pending_search_active_ || pending_caster_ >= 0 ||
                         shrine_virtue_length_ != 0 || selection_request_ != openu5::UiRequestId::None;
         p.npc_initiation = pending_npc_initiation_ != PendingNpcInitiation::None;
+        p.dialogue_pause = dialogue_pacer_.holding() || dialogue_pacer_.queued() != 0;
         return p;
     }
 
@@ -322,6 +332,12 @@ class AlphaRuntime {
     openu5::NarrativeSceneStep *narrative_steps_ = nullptr;
     char *narrative_text_ = nullptr;
     uint32_t narrative_released_ = 0;
+    // A3-HF5 -- the TLK script's Pause (0x83) / KeyWait (0x8F), which every
+    // conversation turn used to collapse to zero (openu5/dialogue_pacer.h).
+    // Presentation only; its queue and text arena are PSRAM.
+    openu5::DialoguePacer dialogue_pacer_{};
+    openu5::DialoguePacerStep *dialogue_pacer_steps_ = nullptr;
+    char *dialogue_pacer_text_ = nullptr;
     openu5::CommandContext context_{game_,turn_,travel_,commands_,resources_.world};
     openu5::save::Json retained_{};
     AlphaSaveService save_{};
@@ -502,6 +518,11 @@ class AlphaRuntime {
     static void dispatch_ui(void *, const openu5::UiIntent &);
     static void dispatch_event(void *, const openu5::GameEvent &);
     void consume_event(const openu5::GameEvent &);
+    /** consume_event() past the dialogue pacer: where a released event goes. */
+    void route_event(const openu5::GameEvent &);
+    static void release_dialogue_event(void *, const openu5::GameEvent &);
+    /** Release a TLK Pause whose clock ran out; true = redraw. */
+    bool service_dialogue_pacer();
     void dispatch(const openu5::UiIntent &);
     void command(openu5::Command);
     // R-25 (Batch 19). The two halves of kernel 0x4988 that have to be spoken
@@ -565,6 +586,7 @@ class AlphaRuntime {
      * it, so a host test can never run a differently wired pacer.
      */
     void bind_scene_pacers(bool paced);
+    void bind_dialogue_services();
     /** Apply a Camp scene visual event to the CampFire stage; false = not one. */
     bool apply_camp_scene_event(const openu5::GameEvent &);
     /** Forward sink of the narrative pacer: Camp stage, status panel, or session. */
