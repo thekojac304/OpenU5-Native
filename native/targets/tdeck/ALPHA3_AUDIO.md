@@ -1,6 +1,14 @@
 # Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap)
 
-**Status (A3-04G, 2026-09-27): SYSTEM MENU SAVE INSPECTION AND THE STORAGE HEAP — EXPLAINED AND FIXED ON THE HOST — HARDWARE CHECK H-202 PENDING. H-201 (A3-HF3) IS STILL PENDING.** §28 measures the ~0.72 s System Menu open and the ~150 KB of internal heap the first open kept, with the first host build of the real `alpha_save.cpp` (over a fake SD card, with a census of every allocation):
+**Status (A3-04G hardware closeout, 2026-09-27): H-201 PASS — D-63 HARDWARE-VALIDATED AND CLOSED. H-202 PASS (System Menu responsiveness, save list, repeated opens, save / load). THE HEAP WATCH ITEM STAYS OPEN.** One serial capture of the A3-04G image (`Git c8fee48beda2`), committed as `a3-04g-hw-h201-h202.log` and summarised by `a3_04g_hw_closeout.py` (§28.21):
+- **H-201:** 8 hit cues in one troll fight: 5 on enemies (`row=-1`), 3 on party members (rows 0 and 2, row 2 twice). Each cue has exactly two frames, the cue and its restore. The killing blow's cue comes before the death on the same tick. The fight ended normally in victory, and audio stayed clean throughout. The user confirmed the cue by eye.
+- **H-202:** the boot inspection verified both slots cold (785.6 ms: commit 81.2 + read 363.0 + verify 328.1 ms) and kept nothing. Every later open was `cached / cached`, 64 B, **82.8–83.2 ms**; with the 98–101 ms menu frame the open takes **≈ 180 ms instead of ≈ 820 ms**, identical over 25 opens (23 in a row). All 29 inspection windows kept 0 B. One in-menu save (generation 33, 2,106 ms) and four loads (815–1,051 ms), no storage error.
+- **Heap:** after the second Continue, the internal heap's largest block was 23,552 B for 23 opens (§28.16 trigger 3). The same Continue moved 149,424 B of the live document into internal RAM, and free PSRAM rose by the same amount (± 28 B). This is **placement, not a leak**, and later windows reversed it (32,768 → 47,104 → 36,864 B). Re-classified as an **allocator placement / fragmentation watch — recoverable, not a leak — OPEN**.
+- 41 / 41 audio windows `missed=0 underruns=0 hw_underruns=0`; no watchdog, crash, reboot or error line; one recovered keyboard read error (unrelated).
+
+Next: **A3-05 (audio polish)**, with A3-04H (import count, PSRAM routing) queued behind it and its escalation conditions (§28.22). No source, test or firmware change.
+
+**Status as A3-04G wrote it (2026-09-27): SYSTEM MENU SAVE INSPECTION AND THE STORAGE HEAP — EXPLAINED AND FIXED ON THE HOST — HARDWARE CHECK H-202 PENDING. H-201 (A3-HF3) IS STILL PENDING.** §28 measures the ~0.72 s System Menu open and the ~150 KB of internal heap the first open kept, with the first host build of the real `alpha_save.cpp` (over a fake SD card, with a census of every allocation):
 - Every open read all four files of both save slots over the TFT's 800 kHz bus and imported each 4,192-byte GAM **twice** into a save document of ~2,700 nodes, ≈ 193 KB on the device in blocks ≤ 4 KiB, so internal RAM first. The last document then **stayed** in the save workspace until the next storage operation: that is the 150 KB plateau (not a leak — flat over repeated opens on the device and on the host), and it fragmented the internal heap (largest block 7.5–23.5 KB).
 - A two-slot inspect peaked at 2.4 documents (≈ 470 KB) against ≈ 236 KB free, which is what drove `heap_int_min` to ~200 B, and the second slot's card reads ran with the first slot's document alive.
 - Now: nothing is kept after any storage call; each slot is released before the next is read; a verify never holds two documents (peak 2.43 → 1.42 ×); and an unchanged card is listed from a cache keyed on each slot's commit record — **2 files / 64 bytes per open instead of 8 files / 10,210 bytes, no import**. A Save made inside the menu now updates its Load page (a pre-existing stale list).
@@ -3523,6 +3531,8 @@ In `ALPHA2_HARDWARE_CHECKLIST.md`. PASS needs, in a real fight:
 - the hit sounds are unchanged;
 - no stutter, watchdog or corruption.
 
+*Result (2026-09-27): **PASS** on the A3-04G image, which carries this code unchanged (`Git c8fee48beda2`). D-63 is hardware-validated and closed (§28.21.2).*
+
 ### 27.12 Recorded, not changed
 
 - **`Died` → `CombatDefeat`** (A3-03). The device plays a second burst on a kill and cites 0x2fe3, which is inside 0x2fd0, the chest trap (`re/notes/cmds.md` §8), not a combat death. From the reading here, the original's kill in combat has no burst of its own beyond 0x3564's. It is an audio adjudication for its own batch; this batch does not touch it.
@@ -3541,7 +3551,7 @@ In `ALPHA2_HARDWARE_CHECKLIST.md`. PASS needs, in a real fight:
 
 The storage batch §26.18 queued. It joins two observations that share `AlphaSaveService::inspect`: the ~0.72 s System Menu open (§23.10.5), and the ~150 KB of internal heap the first open kept for the rest of the run, with the 200 B low-water mark (§26.17.8). It measures first, then changes only the storage shell. No save format, gameplay, audio, render or combat change; A3-HF3 is untouched.
 
-**Status: EXPLAINED ON THE HOST WITH THE REAL `alpha_save.cpp` — FIXED ON THE HOST — HARDWARE CHECK H-202 PENDING. H-201 (A3-HF3) IS STILL PENDING.**
+**Status: EXPLAINED ON THE HOST WITH THE REAL `alpha_save.cpp` — FIXED ON THE HOST — HARDWARE CHECK H-202 PENDING. H-201 (A3-HF3) IS STILL PENDING.** *(Hardware closeout 2026-09-27, §28.21: H-201 PASS, H-202 PASS; the heap watch item stays open as an allocator placement / fragmentation watch.)*
 
 Evidence axes used below: **proven** (host, deterministic), **device** (the committed A3-04E.1 captures), **inferred** (arithmetic over both), **device-only unknown** (H-202), **deferred**.
 
@@ -3796,9 +3806,13 @@ Pre-commit build `native/targets/tdeck/build-a3-04g` (`a3-04g-firmware-{configur
 
 `heap_int_min` below 1 KiB **inside** a cold storage window is expected and is no longer a trigger by itself.
 
+*Device result (H-202, §28.21.7): triggers 2 and 3 fired on two Continues. Free PSRAM rose by the same amounts, so these were placement of the live document, not retention. The item stays open as an allocator placement / fragmentation watch. §28.21.7 adds the internal + PSRAM sum to the reading of trigger 2.*
+
 ### 28.17 Hardware check H-202 (the user's; not done here)
 
 In `ALPHA2_HARDWARE_CHECKLIST.md`: the A3-04G image with a **serial capture from boot**; the title list; Continue; the first, second and twentieth System Menu opens (time, `SAVE_INSPECT`, `SD_HEAP`); the Load page; an in-menu Save and its Load page; Load Slot; Alt+S / Alt+L; the heartbeats' internal free and largest block; music continuity; no SD error, watchdog or crash.
+
+*Result (2026-09-27): PASS, with the heap watch item left open (§28.21).*
 
 ### 28.18 Recorded, not changed
 
@@ -3820,3 +3834,205 @@ In `ALPHA2_HARDWARE_CHECKLIST.md`: the A3-04G image with a **serial capture from
 
 1. **The hardware round** (the user's): H-201 and H-202. The A3-04G image contains A3-HF3's combat code unchanged, so both can be run on one flash (H-201 then records the A3-04G `FW` / `Git`).
 2. **Then A3-04H — storage import cost**, gated by H-202's `SAVE_INSPECT` and `SD_HEAP` figures: adjudicate and remove the redundant imports at the pinned core layer (7 → 2 on Continue, 2 → 1 per verify), which shortens Continue and the cold window and lowers the peak; and measure on hardware whether routing the save document to PSRAM during storage windows removes the remaining internal fill without a latency cost.
+
+*Hardware closeout (2026-09-27): §28.21. The recommended next batch is A3-05 (§28.22); A3-04H stays queued behind it.*
+
+### 28.21 Hardware result: H-201 and H-202 (closeout, 2026-09-27)
+
+**Verdicts.**
+- **H-201: PASS. D-63 is hardware-validated and closed.**
+- **H-202: PASS** for the System Menu's responsiveness, the save list (cache), repeated-open stability, and save / load correctness.
+- **The heap watch item stays OPEN.** It is re-classified from "fragmentation risk remains" to **allocator placement / fragmentation watch — recoverable, not a leak** (§28.21.7). H-202's "largest block ≥ 32 KiB after a menu open" clause was not met on 23 opens; the opens did not cause it (§28.21.5).
+
+No source, test or firmware change.
+
+#### 28.21.1 Evidence and identity
+
+- **Image.** The A3-04G post-commit image that tag `alpha3-a3-04g-storage-inspect` names. The capture's `IDENTITY` line: `firmware=3.0.0-alpha3-dev-a3-04g-debug git=c8fee48beda2 build=Sep 27 2026_19:06:23`, resource pack v2.0 / CRC `26f75ae6`, `match=1`. Music 90 %, SFX 30 %, SD diag logging off (every `A3C_PERF` line says `sdlog OFF`).
+- **Capture.** One serial capture (PlatformIO monitor on COM11, 115,200 Bd), from the resource-pack check at 31.3 s to 258.0 s of uptime. The user's PowerShell tee wrote it as UTF-16; it is committed as UTF-8 in `a3-04g-hw-h201-h202.log` (3,877 lines). The first line splices the 3.2 s ST7789 line with a 31.3 s line, so boot output between them is missing; everything from the resource check on is there, including the boot-time save inspection.
+- **Run.** Boot → title → Continue → the troll fight at the bridge (H-201) → the System Menu (Quit to title, Continue again) → 23 consecutive open / close cycles → an in-menu Save and an in-menu Load → a third Quit to title and Continue. The user reports that everything felt good and snappy, and that the combat cue looked right.
+- **Analysis.** `native/core/tools/a3_04g_hw_closeout.py` (new, deterministic, reads UTF-8 or UTF-16) writes `a3-04g-hw-summary.log`. Every figure below is from that summary or the capture's own lines.
+- **Timing resolution.** The log's timestamps are the ESP-IDF tick, 10 ms here. The `*_us` fields are exact.
+
+#### 28.21.2 H-201 — combat hit feedback (D-63)
+
+One fight, 71.94 → 140.71 s: two trolls at the bridge (x 101, y 102) against three party members.
+
+| t | target | cell | row | class | frames (first / restore) | cue → restore frame |
+|---|---|---|---|---|---|---|
+| 87.90 s | 4 | 5,3 | −1 | enemy | 62.6 / 30.3 ms | 200 ms |
+| 88.30 s | 1 | 5,4 | 0 | **party** | 49.4 / 31.5 ms | 200 ms |
+| 93.58 s | 4 | 5,3 | −1 | enemy | 61.2 / 30.1 ms | 200 ms |
+| 111.79 s | 3 | 4,4 | 2 | **party** | 38.0 / 31.6 ms | 220 ms |
+| 115.92 s | 3 | 4,4 | 2 | **party** | 37.2 / 31.3 ms | 210 ms |
+| 121.64 s | 5 | 4,3 | −1 | enemy | 60.5 / 29.8 ms | 210 ms |
+| 122.72 s | 5 | 4,3 | −1 | enemy | 63.8 / 29.8 ms | 200 ms |
+| 131.63 s | 5 | 4,2 | −1 | enemy | 64.6 / 30.1 ms | 200 ms — **killing blow** |
+
+- **8 cues, 16 `combat-hit-cue` frames** (exactly two per cue: the star / row, then the restore). Enemy cues carry `row=-1` (5); party cues carry the roster row, and every one is `target − 1` (rows 0 and 2).
+- **Representative lines:**
+  - enemy: `COMBAT_HIT_CUE target=4 cell=5,3 row=-1 waiting=0 queued=1` (87.90 s)
+  - party: `COMBAT_HIT_CUE target=1 cell=5,4 row=0 waiting=0 queued=1` (88.30 s, on `enemy-step actor-before=4`)
+  - killing blow: `COMBAT_HIT_CUE target=5 cell=4,2 row=-1 …` then, on the same tick, `ENEMY_ID phase=death actor=5 … "Troll"`, `LOOT_CREATE`, `CORPSE_RENDER … Splat` (131.63 s). The cue is logged before the death, as the original orders it (0x3564 before the result).
+- **Cue → restore frame 200–220 ms**, from the cue's tick to the restoring frame's log line: the 174 ms burst plus frame alignment and the restore frame's own draw, at 10 ms resolution.
+- **Misses.** 8 player attacks (`combat command=15`); 5 produced a cue. The other 3 produced none. The log carries no miss line, so they are consistent with step 3's "a miss shows nothing", not proven to be misses.
+- **Repeated hits on one member.** Row 2 was hit twice (111.79 s, 115.92 s), each with its own two frames.
+- **Exit.** Troll 4 escaped; troll 5 died. `COMBAT_END reason=victory/all-hostiles-gone`, `COMBAT_FINISH_BEGIN reason=normal-victory-exit`, `combat finish result=0 victory=1`, `WORLD_TILE_RESTORE … before=106 after=106 unchanged=1`, `UI_MODE from=combat to=explore` (140.71 s). Walking resumed. No combat state stayed behind.
+- **Audio in the fight.** 14 `AUDIO_PERF` windows (Engagement and Melee, then the theme): all `missed=0 underruns=0 hw_underruns=0`, `fill_min=8/8`.
+- **Health.** No watchdog, crash or reboot. One keyboard read error happened in this fight, recovered at once (§28.21.8).
+- **Visual.** The user confirmed by eye that the feedback looked right.
+
+**Not exercised in this run** (caveats, not failures): a party member's death (step 5; no member died), and two cues queued at once (every cue has `waiting=0 queued=1`, so the 55 ms restore between queued cues did not run). Both remain host-proven (`a3_hf3_combat_hit_runtime`).
+
+#### 28.21.3 H-202 — the cold inspection at boot
+
+`SAVE_INSPECT slot0=verified slot1=verified bytes=14534 commit_us=81246 read_us=363022 verify_us=328111 total_us=785608` (51.43 s).
+- The full path ran: both slots read and verified. 14,534 bytes (§28.4's 10,210 was the host's card; the device card's sidecars differ).
+- **The split, measured for the first time:** commit records 81.2 ms, data files 363.0 ms, verification 328.1 ms, **785.6 ms** in all. §28.4 inferred ≈ 280 ms of card and ≈ 440 ms of CPU for the old 720 ms window: the card is 444 ms and the CPU 328 ms. Card I/O was underestimated and the imports overestimated.
+- **Nothing kept.** The window restored `free_internal` 74,363 B, exactly its release value, with a 58,368 B largest block. The A3-04E.1 image showed 46,571 B free and a **7,552 B** largest block at this point.
+
+#### 28.21.4 H-202 — cached opens and the visible latency
+
+**28 cached inspections, all `slot0=cached slot1=cached bytes=64 read_us=0 verify_us=0`:**
+- `total_us` **82.8 / 83.0 / 83.2 ms** (min / median / max)
+- `commit_us` 81.4–81.9 ms, 98 % of it. The two 32-byte commit reads (and the directory walk they need) are now the whole cost.
+
+**25 menu opens (Alt+M), key → first full menu frame:**
+
+| Measure | A3-04E.1 (`a3-04e1-hw-soak.log`, first open) | A3-04G (25 opens) |
+|---|---|---|
+| save inspection | ≈ 720 ms SD window | **82.8–83.2 ms** |
+| input blocked during the open (`INPUT_SERVICE render_block_us`) | 724,017 µs | **84,966–85,544 µs** (the 12 opens that logged it) |
+| full menu frame (`SYSTEM_MENU_RENDER full_redraw=1`, 163,696 px) | 98.5 ms | 98.3–101.2 ms (unchanged) |
+| inspection + frame (`*_us` sum) | ≈ 819 ms | **181.2–184.0 ms** |
+| key edge → menu-frame log line (10 ms ticks) | 820 ms | **180 ms, every open** |
+
+The visible open is **≈ 180 ms instead of ≈ 820 ms (−78 %)**. The 180 ms is two exact measurements added (inspection + frame) and agrees with the tick-stamped key → frame figure. The log has no single keypress-to-glass metric; the panel's own scan-out after the frame is not in either figure.
+
+**Against the host prediction (§28.13):** 45–60 ms predicted for an unchanged card's inspection, 83 ms measured; ≈ 150 ms predicted key → frame, 180 ms measured. The commit reads cost more than 8 sectors at 800 kHz predict. The ranking (card I/O dominates, no import) was right.
+
+#### 28.21.5 H-202 — repeated opens
+
+- **Opens 3–24:** 23 consecutive open / close cycles, 193.0–222.8 s, with no load or save between them. Every inspection 82.9–83.2 ms. First half mean 83.01 ms, second half 82.97 ms: no slowdown.
+- **Every one of the 29 save-inspect windows restored `free_internal` to exactly its release value (0 B kept).** A3-04E.1's first open kept 150,492 B.
+- **Heartbeats across the 23 opens: `internal=93831` on all 10**, flat to the byte. PSRAM flat too.
+- **The largest internal block was 23,552 B through all 23 opens.** It was set by the Continue before them (173.53 s: 51,200 → 23,552 B). No open changed it: before and after every window it read 23,552. It is below H-202's ≥ 32 KiB clause and §28.16 trigger 3; §28.21.7 classifies it.
+- **Leak / fragmentation / stable:** stable. No monotonic loss in free internal RAM, largest block or PSRAM across the opens; no failed DMA-reserve restore; no DMA allocation error; no watchdog.
+
+#### 28.21.6 H-202 — save / load
+
+| t | Operation | Result |
+|---|---|---|
+| 57.03 s | Continue (title) | `load generation=32 slot=0 time=1051 ms status=0` |
+| 174.42 s | Continue (title, after Quit) | `load generation=32 slot=0 time=890 ms status=0` |
+| 227.18 s | Save (System Menu) | `save generation=33 slot=1 time=2106 ms json=369`; every `NEWGAME_SAVE` stage `result=ok`, including `crc-readback`, `semantic-validation` and `generation-final` |
+| 227.27 s | the menu's list after that Save | `SAVE_INSPECT slot0=cached slot1=cached`: the save stored its own slot (K3 / K10 on the device); no re-verification |
+| 231.55 s | Load (System Menu) | `load generation=33 slot=1 time=843 ms status=0`; world objects, dungeon and world override restored |
+| 252.84 s | Continue (title, after Quit) | `load generation=33 slot=1 time=815 ms status=0` |
+
+- The save advanced the generation (32 → 33) into the other slot, and both later loads chose it.
+- No storage error of any kind (§28.21.8). The cached list stayed valid after the save: the Load that followed found generation 33.
+- Continue was 1,051 ms at boot (A3-04E.1: 1,057 ms) and 815–890 ms afterwards. The loads still run every import (§28.18): this is A3-04H's subject.
+- *From the user, not the log:* the Load page's entries and the in-menu messages. The log shows only that the menu's actions were accepted.
+- *Not exercised:* Alt+S / Alt+L outside the menu (step 9). Each save or load in the capture came from the menu or the title.
+
+#### 28.21.7 The heap watch item: device result and classification
+
+**The storage windows (release → restore, `free_internal` / `largest_internal`):**
+
+| t | Window | free before → after | largest before → after |
+|---|---|---|---|
+| 50.65 s | boot save-inspect (cold) | 74,363 → 74,363 (0) | 58,368 → 58,368 |
+| 55.98 s | Continue | 56,003 → 243,503 (+187,500) | 46,080 → 51,200 |
+| 165.74 s | save-inspect ×2 | 243,255 → 243,255 (0) | 51,200 → 51,200 |
+| 173.53 s | Continue | 243,255 → **93,831 (−149,424)** | 51,200 → **23,552** |
+| 183.51 s | save-inspect ×23 | 93,831 → 93,831 (0) | 23,552 → 23,552 |
+| 225.08 s | Save | 93,831 → 132,951 (+39,120) | 23,552 → 32,768 |
+| 227.19 s | save-inspect | 132,951 → 132,951 (0) | 32,768 → 32,768 |
+| 230.71 s | Load | 132,951 → 186,487 (+53,536) | 32,768 → 47,104 |
+| 249.58 s | save-inspect ×2 | 186,487 → 186,487 (0) | 47,104 → 47,104 |
+| 252.03 s | Continue | 186,487 → **139,295 (−47,192)** | 47,104 → 36,864 |
+
+**Heartbeats: internal and PSRAM free together.**
+
+| t | internal | PSRAM | sum | change (internal / PSRAM / sum) |
+|---|---|---|---|---|
+| 57.34 s | 243,503 | 5,863,816 | 6,107,319 | — |
+| 152.50 s | 243,255 | 5,863,816 | 6,107,071 | −248 / 0 / −248 (gameplay and the fight, before any menu open) |
+| 177.53 s | 93,831 | 6,013,268 | 6,107,099 | **−149,424 / +149,452 / +28** |
+| 227.59 s | 132,951 | 6,013,268 | 6,146,219 | +39,120 / 0 / +39,120 |
+| 232.59 s | 186,487 | 5,961,968 | 6,148,455 | +53,536 / −51,300 / +2,236 |
+| 252.98 s | 139,295 | 6,009,164 | 6,148,459 | **−47,192 / +47,196 / +4** |
+
+**What the log shows:**
+1. **Not a leak.** Every drop in internal RAM is matched byte for byte (± 28 B) by a rise in free PSRAM, and the total free memory ends the run **41,140 B higher** than it started. Nothing is retained: memory moved between regions.
+2. **The mover is the Continue, not the menu or the inspection.** A load frees the live game's save document and builds the next one (≈ 193 KB of ≤ 4 KiB blocks, internal RAM first, §28.5). Where it lands depends on what is free when it is built (§28.6, "allocator migration"). The boot Continue ran with 56 KB of internal RAM free, so its document went mostly to PSRAM. The second Continue ran with 243 KB free, so ≈ 149 KB of it went to internal RAM, and its small blocks cut the largest free block to 23,552 B.
+3. **Recoverable, not progressive.** The next storage windows moved it back up: the Save to 32,768 B, the in-menu Load to 47,104 B, the last Continue to 36,864 B. Free internal RAM went 243 → 94 → 133 → 186 → 139 KB: up and down, never a slope.
+4. **The A3-04G fix holds on the device.** All 29 inspection windows kept 0 B. The 150 KB after the first open, and the 7.5 KB largest block at the title, are gone.
+5. **The Save's +39,120 B** is a net release (the sum rose by the same amount and stayed there). The log does not say what was released. It is the opposite of retention and is recorded, not explained.
+
+**`heap_int_min`** (the sum of per-region lifetime minima, §26.17.8), from `SYS_PERF` every 5 s:
+- **332 B**, set before 57.34 s. That interval holds the boot windows: settings, the cold inspection and the first Continue.
+- **316 B**, set between 222.58 and 227.59 s. That interval holds the in-menu Save (225.08–227.19 s) and two cached inspections; no other storage.
+- Both are inside storage intervals, at 5 s resolution. §28.16 predicted "a few hundred bytes to a few KB after a boot"; it is.
+
+**§28.16's triggers:**
+
+| # | Trigger | This run |
+|---|---|---|
+| 1 | `allocate_dma_buf`, `dma-reserve-restore-failed`, `LOW INTERNAL RAM`, `SAVE_SCRATCH allocation failed`, sdmmc / diskio error, a save I/O errno | **none** |
+| 2 | a window restored > 4 KiB below its release value | **fired twice**, both Continues (−149,424, −47,192 B). PSRAM rose by the same amounts: placement, not the retention the trigger was written for |
+| 3 | `largest_internal` < 32 KiB | **fired**: 23,552 B from the second Continue until the Save, 53.7 s and 23 opens |
+| 4 | heartbeat `internal` falling across ≥ 20 opens | **not fired**: flat at 93,831 B |
+| 5 | a new `heap_int_min` outside a storage window | **not fired**, at 5 s resolution |
+| 6 | ≥ 1 KiB more internal `.data` / `.bss` / IRAM | not applicable (no build) |
+| 7 | an Alpha 3 release candidate | not yet |
+
+**Classification: allocator placement / fragmentation watch — recoverable, not a leak. The item stays OPEN.**
+- *Not a leak:* the internal + PSRAM sum is conserved across every load, and ends higher.
+- *Not closed:* triggers 2 and 3 fired. A load that finds internal RAM free fills it with the live document and fragments it, and 23,552 B is below the 32 KiB line. `heap_int_min` still reaches ~300 B inside cold windows (§28.16's bounded case).
+- *Not a present risk to storage:* every window released and re-reserved its 8 KiB DMA headroom, the SD bounce buffers need 512 B, and nothing failed. The fragmentation came from the live game state, not from anything the menu does.
+- *The remedy is known and queued:* route the save document to PSRAM (§28.7, §28.18), and cut the import count, in A3-04H. Both would remove the placement lottery, not just the symptom.
+- **Added watch rule (the trigger list is kept as it is):** read a trigger-2 hit together with the heartbeat PSRAM figure. If internal + PSRAM falls by more than 4 KiB across the window, that is retention: escalate at once. If the sum is conserved, it is placement: record it. Trigger 3 keeps its 32 KiB line; this run's floor, **23,552 B**, is the reference for the next capture.
+
+#### 28.21.8 Audio, input and system health
+
+- **Audio:** 41 / 41 `AUDIO_PERF` windows with `missed=0 underruns=0 hw_underruns=0 runaway=0 failures=0`, `fill_min=8/8`. The last is cumulative over 205.7 s: 25,712 blocks, render avg 3.18 ms, p99 4.00, max 4.57 ms; 362 SFX, all with music. It covers the fight, the 25 opens, the Save and every load.
+- **No** `task_wdt`, `Guru Meditation`, `abort()`, panic, backtrace, reset or reboot line, and **no** error-level (`E`) line.
+- **Storage:** no `allocate_dma_buf`, `dma-reserve-restore-failed`, `LOW INTERNAL RAM`, `SAVE_SCRATCH allocation failed`, sdmmc or diskio line; every `NEWGAME_SAVE` stage `ok`; every load `status=0`.
+- **Input:** one keyboard read error, in the fight while targeting: `SNAPSHOT n=2562 … result=ESP_ERR_INVALID_RESPONSE` and `KEYBOARD_ERROR … retry_ms=40 streak=1` (118.47 s), then `INPUT_RESYNC ui=target held gestures abandoned` (118.48 s) and `KEYBOARD_RECOVER stage=baseline result=usable … recoveries=1` (118.51 s). It is 1 error in 5,720 reads, with no repeat. The fight went on normally (`UI_MODE from=target to=combat` at 119.31 s). **Recorded as an unrelated, recovered input error.** It is not part of H-201 or H-202. `INPUT_QUEUE dropped=0`, 467 / 467 consumed.
+- **Stacks:** main 14,872 B free (min), audio 3,364 B, input 1,632 B.
+- **The longest input block** was the in-menu Save (`render_block_us=2196824`), then the loads (0.82–1.06 s). The save's 2.1 s is card writes, renames and its read-back check.
+
+#### 28.21.9 Recorded, not changed
+
+- **A pending prompt survives an in-menu Load.** At 191.29 s a Hold+M keypress (`action_char=77`) opened the Mix prompt (`UI_MODE from=explore to=spell`). Opens 3–24 were made from it. The in-menu Load at 231.55 s did not clear it: `UI_MODE` stayed `spell` until Mic cancelled it at 235.21 s. The loaded game was at the same place, so nothing visible changed, and gameplay went on normally. A load resetting the UI to the loaded game's base mode is the expected contract (the System Menu load skips the per-input resync). It is outside H-201 / H-202 and needs its own adjudication.
+- **The cached inspection is all commit-read time** (81.5 of 83.0 ms). Any further gain on an unchanged card is in the card / FATFS path (directory walk at 800 kHz), not the save shell.
+- **Continue after the first** is 815–890 ms and the save 2,106 ms. They are the import count and the card writes (§28.18): A3-04H.
+
+#### 28.21.10 Tag and files
+
+- **No new tag; the existing tag was not moved.** `alpha3-a3-04g-storage-inspect` (`c8fee48b`) names the image the user flashed. This closeout is a documentation commit after it.
+- Files:
+  - `ALPHA3_AUDIO.md`: the top status, notes in §27.11 and §28, this §28.21 and §28.22
+  - `ALPHA2_HARDWARE_CHECKLIST.md`: H-201 PASS, H-202 PASS (heap watch open)
+  - `ALPHA2_PRESERVATION_LEDGER.md`: D-63 hardware-validated
+  - `GAMEPLAY_INTEGRATION_AUDIT.md`: the current state and the closeout section
+  - `LAUNCHER.md`: the A3-HF3 and A3-04G rows
+  - `a3-04g-hw-h201-h202.log` (the capture), `a3-04g-hw-summary.log`, `native/core/tools/a3_04g_hw_closeout.py` (new)
+- No source, test or firmware change: the suite (149 / 149) and the image are A3-04G's.
+
+### 28.22 Next batch: recommendation
+
+**Recommended: Option B — A3-05, audio polish. A3-04H stays queued directly behind it.** The hardware evidence, not the host model:
+- **Storage is fast and stable now.** An open costs 83 ms of inspection and ≈ 180 ms to the frame (was 820 ms), identical over 25 opens. The user found it snappy.
+- **Nothing failed.** Across a cold inspection, 28 cached ones, 4 loads and a save there was no storage, DMA or allocation error, and every one of the 35 storage windows re-reserved its DMA headroom.
+- **The heap watch item is bounded.** Its fragmentation is live-document placement, recoverable, with total free memory conserved to ± 28 B. It does not touch the storage path's reserved DMA headroom.
+- **The audio is clean.** Zero underruns in 205.7 s that include the fight, every storage window and 362 SFX. A3-05 starts from a stable base.
+
+**What A3-04H still has to do** (unchanged from §28.20, now with device numbers): cut the imports (Continue 815–1,051 ms; the cold inspection's 328 ms of verification) and measure PSRAM routing of the save document. That routing is the direct cure for trigger 3's 23,552 B.
+
+**Escalate A3-04H ahead of A3-05 if any capture shows:**
+- a trigger-1 line;
+- a trigger-2 hit whose internal + PSRAM sum falls by more than 4 KiB;
+- a largest internal block below 23,552 B.

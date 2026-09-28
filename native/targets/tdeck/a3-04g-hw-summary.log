@@ -1,0 +1,184 @@
+native/targets/tdeck/a3-04g-hw-h201-h202.log - 3878 lines
+identity: firmware=3.0.0-alpha3-dev-a3-04g-debug git=c8fee48beda2
+watchdog / crash / reboot lines: 0
+storage error lines (section 28.16 trigger 1 + H-202 step 12): 0
+error-level (E) lines: 0
+
+==============================================================================
+H-201 - combat hit feedback (D-63)
+==============================================================================
+fight: 71.94 s -> 140.71 s (68.8 s)
+t         target  cell   row   class  frames   cue -> restore frame
+87.90 s   4       5,3    -1    enemy  2 (62.6/30.3) 200 ms
+88.30 s   1       5,4    0     party  2 (49.4/31.5) 200 ms
+93.58 s   4       5,3    -1    enemy  2 (61.2/30.1) 200 ms
+111.79 s  3       4,4    2     party  2 (38.0/31.6) 220 ms
+115.92 s  3       4,4    2     party  2 (37.2/31.3) 210 ms
+121.64 s  5       4,3    -1    enemy  2 (60.5/29.8) 210 ms
+122.72 s  5       4,3    -1    enemy  2 (63.8/29.8) 200 ms
+131.63 s  5       4,2    -1    enemy  2 (64.6/30.1) 200 ms KILLING BLOW (death same tick)
+cues: 8 (enemy row=-1: 5, party: 3, rows [0, 2]); combat-hit-cue frames: 16
+party rows = target - 1: True
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=1 dead=1 active=3 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=1 dead=1 active=0 scheduled=0
+   140.71 s COMBAT_END_CHECK reason=player-command result=end
+   140.71 s COMBAT_END reason=victory/all-hostiles-gone
+   140.71 s COMBAT_FINISH_BEGIN reason=normal-victory-exit
+   140.71 s combat finish result=0 victory=1
+   140.71 s WORLD_TILE_RESTORE x=101 y=102 source=authoritative-world+terrain before=106 after=106 unchanged=1
+   140.71 s UI_MODE from=combat to=explore
+   audio in fight 72.35 s: song=Engagement and Melee missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=229
+   audio in fight 77.35 s: song=Engagement and Melee missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=238
+   audio in fight 82.35 s: song=Engagement and Melee missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=241
+   audio in fight 87.36 s: song=Engagement and Melee missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=241
+   audio in fight 92.37 s: song=Engagement and Melee missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=243
+   audio in fight 97.38 s: song=Engagement and Melee missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=244
+   audio in fight 102.39 s: song=Engagement and Melee missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=244
+   audio in fight 107.39 s: song=Engagement and Melee missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=244
+   audio in fight 112.40 s: song=Engagement and Melee missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=245
+   audio in fight 117.41 s: song=Engagement and Melee missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=246
+   audio in fight 122.41 s: song=Engagement and Melee missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=247
+   audio in fight 127.42 s: song=Engagement and Melee missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=251
+   audio in fight 132.45 s: song=Ultima V Theme missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=256
+   audio in fight 137.46 s: song=Ultima V Theme missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=256
+
+==============================================================================
+H-202 - SAVE_INSPECT
+==============================================================================
+51.43 s   slot0=verified slot1=verified bytes=14534  commit=  81.2 read= 363.0 verify= 328.1 total= 785.6 ms
+165.82 s  slot0=cached   slot1=cached   bytes=64     commit=  81.9 read=   0.0 verify=   0.0 total=  83.1 ms
+167.29 s  slot0=cached   slot1=cached   bytes=64     commit=  81.6 read=   0.0 verify=   0.0 total=  82.9 ms
+183.59 s  slot0=cached   slot1=cached   bytes=64     commit=  81.7 read=   0.0 verify=   0.0 total=  83.1 ms
+193.09 s  slot0=cached   slot1=cached   bytes=64     commit=  81.5 read=   0.0 verify=   0.0 total=  83.0 ms
+199.56 s  slot0=cached   slot1=cached   bytes=64     commit=  81.8 read=   0.0 verify=   0.0 total=  83.2 ms
+200.55 s  slot0=cached   slot1=cached   bytes=64     commit=  81.6 read=   0.0 verify=   0.0 total=  83.0 ms
+201.37 s  slot0=cached   slot1=cached   bytes=64     commit=  81.5 read=   0.0 verify=   0.0 total=  82.9 ms
+202.38 s  slot0=cached   slot1=cached   bytes=64     commit=  81.5 read=   0.0 verify=   0.0 total=  83.0 ms
+203.27 s  slot0=cached   slot1=cached   bytes=64     commit=  81.5 read=   0.0 verify=   0.0 total=  82.9 ms
+204.39 s  slot0=cached   slot1=cached   bytes=64     commit=  81.4 read=   0.0 verify=   0.0 total=  82.9 ms
+205.28 s  slot0=cached   slot1=cached   bytes=64     commit=  81.5 read=   0.0 verify=   0.0 total=  82.9 ms
+206.17 s  slot0=cached   slot1=cached   bytes=64     commit=  81.6 read=   0.0 verify=   0.0 total=  83.0 ms
+207.11 s  slot0=cached   slot1=cached   bytes=64     commit=  81.5 read=   0.0 verify=   0.0 total=  83.0 ms
+208.03 s  slot0=cached   slot1=cached   bytes=64     commit=  81.7 read=   0.0 verify=   0.0 total=  83.1 ms
+208.94 s  slot0=cached   slot1=cached   bytes=64     commit=  81.7 read=   0.0 verify=   0.0 total=  83.1 ms
+209.80 s  slot0=cached   slot1=cached   bytes=64     commit=  81.7 read=   0.0 verify=   0.0 total=  83.0 ms
+210.65 s  slot0=cached   slot1=cached   bytes=64     commit=  81.7 read=   0.0 verify=   0.0 total=  83.2 ms
+211.48 s  slot0=cached   slot1=cached   bytes=64     commit=  81.5 read=   0.0 verify=   0.0 total=  82.9 ms
+212.32 s  slot0=cached   slot1=cached   bytes=64     commit=  81.4 read=   0.0 verify=   0.0 total=  82.9 ms
+213.15 s  slot0=cached   slot1=cached   bytes=64     commit=  81.5 read=   0.0 verify=   0.0 total=  83.0 ms
+213.98 s  slot0=cached   slot1=cached   bytes=64     commit=  81.5 read=   0.0 verify=   0.0 total=  82.9 ms
+214.83 s  slot0=cached   slot1=cached   bytes=64     commit=  81.5 read=   0.0 verify=   0.0 total=  82.9 ms
+215.62 s  slot0=cached   slot1=cached   bytes=64     commit=  81.8 read=   0.0 verify=   0.0 total=  83.2 ms
+216.47 s  slot0=cached   slot1=cached   bytes=64     commit=  81.4 read=   0.0 verify=   0.0 total=  82.9 ms
+222.88 s  slot0=cached   slot1=cached   bytes=64     commit=  81.6 read=   0.0 verify=   0.0 total=  83.0 ms
+227.27 s  slot0=cached   slot1=cached   bytes=64     commit=  81.6 read=   0.0 verify=   0.0 total=  82.9 ms
+249.66 s  slot0=cached   slot1=cached   bytes=64     commit=  81.6 read=   0.0 verify=   0.0 total=  82.9 ms
+250.62 s  slot0=cached   slot1=cached   bytes=64     commit=  81.5 read=   0.0 verify=   0.0 total=  82.8 ms
+cached: n=28  total min/median/max = 82.8 / 83.0 / 83.2 ms  commit 81.4-81.9 ms  read_us=0 all: True  verify_us=0 all: True  bytes=64 all: True
+cached total, first half mean 83.01 ms, second half mean 82.97 ms (slowdown check)
+
+==============================================================================
+H-202 - System Menu opens: Alt+M edge -> first full menu frame
+==============================================================================
+#   key       ui       inspect     menu frame key->frame inspect+frame
+1   165.74 s  explore     83.1 ms    99.5 ms     180 ms     182.7 ms
+2   183.51 s  explore     83.1 ms    99.8 ms     180 ms     182.9 ms
+3   193.01 s  spell       83.0 ms    98.7 ms     180 ms     181.7 ms
+4   199.48 s  spell       83.2 ms    98.7 ms     180 ms     181.9 ms
+5   200.47 s  spell       83.0 ms    98.4 ms     180 ms     181.5 ms
+6   201.29 s  spell       82.9 ms    99.7 ms     180 ms     182.6 ms
+7   202.30 s  spell       83.0 ms    99.4 ms     180 ms     182.3 ms
+8   203.19 s  spell       82.9 ms    98.3 ms     180 ms     181.2 ms
+9   204.31 s  spell       82.9 ms   100.7 ms     180 ms     183.6 ms
+10  205.20 s  spell       82.9 ms    99.6 ms     180 ms     182.5 ms
+11  206.09 s  spell       83.0 ms   100.3 ms     180 ms     183.3 ms
+12  207.03 s  spell       83.0 ms    98.4 ms     180 ms     181.4 ms
+13  207.95 s  spell       83.1 ms    98.6 ms     180 ms     181.7 ms
+14  208.86 s  spell       83.1 ms   100.7 ms     180 ms     183.8 ms
+15  209.72 s  spell       83.0 ms    99.7 ms     180 ms     182.8 ms
+16  210.57 s  spell       83.2 ms   100.8 ms     180 ms     184.0 ms
+17  211.40 s  spell       82.9 ms   100.2 ms     180 ms     183.1 ms
+18  212.24 s  spell       82.9 ms   101.2 ms     180 ms     184.0 ms
+19  213.07 s  spell       83.0 ms    99.6 ms     180 ms     182.5 ms
+20  213.90 s  spell       82.9 ms    99.7 ms     180 ms     182.7 ms
+21  214.75 s  spell       82.9 ms    99.6 ms     180 ms     182.5 ms
+22  215.54 s  spell       83.2 ms    99.9 ms     180 ms     183.1 ms
+23  216.39 s  spell       82.9 ms    99.7 ms     180 ms     182.6 ms
+24  222.80 s  spell       83.0 ms   100.7 ms     180 ms     183.6 ms
+25  249.58 s  explore     82.9 ms    99.8 ms     180 ms     182.7 ms
+opens: 25  key->frame min/median/max = 180 / 180 / 180 ms  menu frame 98.3-101.2 ms  inspect+frame 181.2-184.0 ms
+reference: A3-04E.1 first open, same method (a3-04e1-hw-soak.log): 299,268 -> 300,088 ms = 820 ms
+
+==============================================================================
+H-202 - SD windows (release-reserved-dma -> dma-reserve-restored)
+==============================================================================
+t         state              free0     free1     delta  largest0  largest1
+33.85 s   startup           270043    270043        +0    176128    176128
+50.61 s   settings-load      74363     74363        +0     58368     58368
+50.65 s   save-inspect       74363     74363        +0     58368     58368
+55.98 s   load-latest        56003    243503   +187500     46080     51200
+165.74 s  save-inspect      243255    243255        +0     51200     51200   x2 identical
+173.53 s  load-latest       243255     93831   -149424     51200     23552
+183.51 s  save-inspect       93831     93831        +0     23552     23552   x23 identical
+225.08 s  gameplay-save      93831    132951    +39120     23552     32768
+227.19 s  save-inspect      132951    132951        +0     32768     32768
+230.71 s  load-latest       132951    186487    +53536     32768     47104
+249.58 s  save-inspect      186487    186487        +0     47104     47104   x2 identical
+252.03 s  load-latest       186487    139295    -47192     47104     36864
+save-inspect windows: 29; restored == released (0 B retained) in all: True
+
+==============================================================================
+H-202 - heartbeat plateaus (internal + PSRAM free)
+==============================================================================
+57.34 s   internal= 243503 psram= 5863816 sum= 6107319
+147.49 s  internal= 243435 psram= 5863816 sum= 6107251  internal      -68  psram       +0  sum     -68
+152.50 s  internal= 243255 psram= 5863816 sum= 6107071  internal     -180  psram       +0  sum    -180
+177.53 s  internal=  93831 psram= 6013268 sum= 6107099  internal  -149424  psram  +149452  sum     +28
+227.59 s  internal= 132951 psram= 6013268 sum= 6146219  internal   +39120  psram       +0  sum  +39120
+232.59 s  internal= 186487 psram= 5961968 sum= 6148455  internal   +53536  psram   -51300  sum   +2236
+252.98 s  internal= 139295 psram= 6009164 sum= 6148459  internal   -47192  psram   +47196  sum      +4
+sum, last - first: +41140 B
+
+==============================================================================
+H-202 - heap_int_min (SYS_PERF, 5 s samples)
+==============================================================================
+57.34 s   heap_int_min=332 (set in (boot, 57.34 s]; storage windows in that interval: startup 33.85 s-33.85 s, settings-load 50.61 s-50.64 s, save-inspect 50.65 s-51.43 s, load-latest 55.98 s-57.03 s)
+227.59 s  heap_int_min=316 (set in (222.58 s, 227.59 s]; storage windows in that interval: save-inspect 222.80 s-222.88 s, gameplay-save 225.08 s-227.19 s, save-inspect 227.19 s-227.27 s)
+
+==============================================================================
+H-202 - saves and loads
+==============================================================================
+   AlphaSave: load generation=32 slot=0 time=1051 ms status=0
+   AlphaSave: load generation=32 slot=0 time=890 ms status=0
+   AlphaSave: save generation=33 slot=1 time=2106 ms json=369
+   AlphaSave: load generation=33 slot=1 time=843 ms status=0
+   AlphaSave: load generation=33 slot=1 time=815 ms status=0
+
+==============================================================================
+Audio / input health
+==============================================================================
+AUDIO_PERF lines: 41, all missed=0 underruns=0 hw_underruns=0 runaway=0 failures=0: 41
+last: 257.99 s song=Britannic Lands window_ms=205667 blocks=25712 fill_min=8/8 sfx=362
+   I (118470) M51: SNAPSHOT n=2562 t=117769230 io_us=378 result=ESP_ERR_INVALID_RESPONSE raw=00,00,00,00,00 prev=00,00,00,00,00 sync=1 int=1
+   W (118470) TDeckInput: KEYBOARD_ERROR snapshot=ESP_ERR_INVALID_RESPONSE retry_ms=40 streak=1 poll=2562
+   W (118480) AlphaRuntime: INPUT_RESYNC ui=target held gestures abandoned
+   W (118510) TDeckInput: KEYBOARD_RECOVER stage=baseline result=usable reads=2562 errors=1 recoveries=1
+last KEYBOARD_METRICS: reads=5720 errors=1 recoveries=1
+last INPUT_QUEUE: high_water=4 dropped=0 queued=467 consumed=467
+
+==============================================================================
+Section 28.16 re-escalation triggers
+==============================================================================
+1 storage / DMA error lines: 0
+2 windows restored > 4 KiB below their release value: 2
+    173.53 s load-latest: 243255 -> 93831 (-149424)
+    252.03 s load-latest: 186487 -> 139295 (-47192)
+3 dma-reserve-restored with largest_internal < 32 KiB: 24 (load-latest=23552, save-inspect=23552)
+4 heartbeat internal between loads / saves (opens in each span):
+    from 57.03 s   opens=1   heartbeats=24  internal 243255..243503 falling
+    from 174.42 s  opens=23  heartbeats=10  internal 93831..93831 flat
+    from 227.19 s  opens=0   heartbeats=1   internal 132951..132951 flat
+    from 231.55 s  opens=1   heartbeats=4   internal 186487..186487 flat
+    from 252.84 s  opens=0   heartbeats=2   internal 139295..139295 flat
+5 new heap_int_min outside a storage window: see the heap_int_min section
+6 internal .data/.bss/IRAM growth: not applicable (no build in this closeout)

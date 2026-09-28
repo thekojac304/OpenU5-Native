@@ -8,7 +8,28 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 A3-04G) — System Menu save inspection and the storage heap; Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 A3-04G hardware closeout, 2026-09-27) — H-201 PASS, H-202 PASS, heap watch item open; Alpha 2 remains the released build; read this first
+>
+> **The user ran H-201 and H-202 on the A3-04G image** (`FW 3.0.0-alpha3-dev-a3-04g-debug`, `Git c8fee48beda2`) with a serial capture (`a3-04g-hw-h201-h202.log`, summarised by `native/core/tools/a3_04g_hw_closeout.py` → `a3-04g-hw-summary.log`; `ALPHA3_AUDIO.md` §28.21). Documentation and evidence only: no source, test or firmware change, no tag moved.
+> - **H-201 PASS; D-63 hardware-validated and closed.** One troll fight produced 8 cues: 5 on enemies (`row=-1`) and 3 on party members (rows 0, 2, 2). Each cue has two frames. The killing blow's cue comes before the death on the same tick. The fight exited normally in victory, audio was clean, and the user confirmed the cue by eye. Not exercised: a member's death, and two cues queued at once.
+> - **H-202 PASS** (menu responsiveness, save list, repeated opens, save / load).
+>   - The cold boot inspection took 785.6 ms (commit 81.2, read 363.0, verify 328.1 ms) and kept 0 B.
+>   - Cached opens are 82.8–83.2 ms, `bytes=64`, with no read or verify. Key → menu frame is **≈ 180 ms, where it was ≈ 820 ms**, identical over 25 opens (23 in a row). All 29 inspection windows kept 0 B.
+>   - Save: generation 33, 2,106 ms, every stage `ok`. Four loads, 815–1,051 ms, `status=0`.
+> - **Heap watch item: OPEN, re-classified *allocator placement / fragmentation watch — recoverable, not a leak*.**
+>   - After the second Continue the largest internal block was 23,552 B for 23 opens (trigger 3). That Continue put 149,424 B of the live document into internal RAM (trigger 2), and free PSRAM rose by the same amount ± 28 B.
+>   - Later windows raised the block again (32,768 → 47,104 → 36,864 B), and total free memory ended 41,140 B higher than at the start.
+> - Audio 41 / 41 windows clean; no watchdog, crash, reboot or storage error; one recovered keyboard read error (unrelated).
+> - **Recorded, not changed:** a pending Mix prompt survived an in-menu Load (`UI_MODE` stayed `spell`); it needs its own adjudication (§28.21.9).
+>
+> | | |
+> |---|---|
+> | Host suite | Unchanged: A3-04G's **149 / 149**. |
+> | Firmware | Unchanged: the A3-04G image; tag `alpha3-a3-04g-storage-inspect` not moved. |
+> | SD | **Unchanged.** |
+> | Next | **A3-05, audio polish.** A3-04H (import count, PSRAM routing of the save document) stays queued behind it; escalate it first on a trigger-1 line, a trigger-2 hit whose internal + PSRAM sum falls > 4 KiB, or a largest internal block below 23,552 B (`ALPHA3_AUDIO.md` §28.22). |
+>
+> ### CURRENT STATE (Alpha 3 A3-04G) — System Menu save inspection and the storage heap — **superseded as the current state by the hardware closeout above (H-201, H-202 PASS).**
 >
 > **A3-04G is an Alpha 3 storage / performance batch, not a release.** It is the storage batch A3-04F's closeout queued (§26.18): the ~0.72 s System Menu open and the heap watch item share `AlphaSaveService::inspect`. **H-201 (A3-HF3) is still pending.**
 > - **Measured first**, with the first host build of the real `alpha_save.cpp` (a fake SD card, a census of every allocation): every open read all 4 files of both slots and imported each 4,192-byte GAM twice into a save document of ~2,700 nodes (≈ 193 KB on the device, all ≤ 4 KiB, so internal RAM first). The last document stayed in the save workspace: the 150 KB plateau (not a leak) and the fragmentation (largest block 7.5–23.5 KB). A two-slot inspect held 2.4 documents at its peak, which drove `heap_int_min` to ~200 B, and read the second slot while the first was alive.
@@ -22,7 +43,7 @@
 > | SD | **Unchanged.** Save format unchanged. |
 > | Next | H-201 and H-202 on the device (one flash of this image serves both). Then A3-04H, the storage import count (`ALPHA3_AUDIO.md` §28.20). |
 >
-> ### CURRENT STATE (Alpha 3 A3-HF3) — combat hit feedback parity (D-63) — **superseded as the current state by A3-04G above; H-201 still pending.**
+> ### CURRENT STATE (Alpha 3 A3-HF3) — combat hit feedback parity (D-63) — **superseded as the current state by A3-04G above.** *(H-201 PASS 2026-09-27, on the A3-04G image.)*
 >
 > **A3-HF3 is a small Alpha 3 presentation hotfix, not a release.** A3-04F is hardware-validated (H-200 PASS). On its image a combat hit showed no visual cue.
 > - **The original** (ULTIMA.EXE `kernel_combat_hit_flash` 0x3564) runs for every decided hit, before the strike's result. It blits tile 0 (the `Explosion` star) opaquely over the struck cell. For a party member it also XORs the roster row (0x2a28). Both are held for the hit's noise burst, 9,000 half samples = 174 ms.
@@ -8063,7 +8084,7 @@ D-63 / H-201, found in H-200. The full write-up is [`ALPHA3_AUDIO.md`](ALPHA3_AU
 
 ### 3. Rows
 
-- **D-63** (ledger §4): **HOST FIXED — A3-HF3**, hardware check pending. **H-201** (`ALPHA2_HARDWARE_CHECKLIST.md`): now runnable.
+- **D-63** (ledger §4): **HOST FIXED — A3-HF3**, hardware check pending. **H-201** (`ALPHA2_HARDWARE_CHECKLIST.md`): now runnable. *(Hardware-validated 2026-09-27: H-201 PASS, see the A3-04G hardware closeout below.)*
 
 ### 4. Not done in this batch
 
@@ -8109,3 +8130,36 @@ The storage batch §26.18 queued (the ~0.72 s System Menu open, with the heap wa
 - The import count (item 8) and PSRAM routing of the save document (item 7): A3-04H, gated by H-202.
 - Alt+M on an open System Menu writes `settings.json` every time (~270 ms card write), even unchanged. A settings item.
 - The memory stub (`alpha_save_memory_host_stub.cpp`) keeps its uncached `inspect`: it has no files or workspace; the shell is now tested for real by `a3_04g_storage_runtime`.
+
+## Alpha 3 A3-04G — hardware closeout (H-201, H-202)
+
+One serial capture of the A3-04G image (`Git c8fee48beda2`), 31.3–258.0 s of uptime, committed as `a3-04g-hw-h201-h202.log`. The analysis is `native/core/tools/a3_04g_hw_closeout.py` (deterministic; reads UTF-8 or UTF-16) → `a3-04g-hw-summary.log`. The full write-up is [`ALPHA3_AUDIO.md`](ALPHA3_AUDIO.md) §28.21; this section records the classification on its own axis. No source, test or firmware change.
+
+### 1. Items and classification
+
+| # | Item | Class | Result |
+|---|---|---|---|
+| 1 | Combat hit cue (D-63 / H-201) | **native defect, host fixed in A3-HF3** | **hardware-validated, closed.** 8 cues, 5 enemy `row=-1`, 3 party (rows 0, 2, 2), 16 cue frames, the killing blow cued before the death, a clean victory exit |
+| 2 | System Menu open on an unchanged card (A3-04G item 5) | **native performance item** | **hardware-validated.** Inspection 82.8–83.2 ms (was ≈ 720 ms); key → menu frame ≈ 180 ms (was ≈ 820 ms); input blocked 85 ms (was 724 ms) |
+| 3 | Save-workspace retention (A3-04G items 1–4) | **native defect, fixed** | **hardware-validated.** 29 / 29 inspection windows kept 0 B; the title's cold inspection kept 0 B (was 46,571 B free / 7,552 B largest) |
+| 4 | The in-menu Save's list (A3-04G item 6) | **native defect, fixed** | the save stored its own slot (`cached / cached` after it); the page's contents are from the user's report |
+| 5 | Live-document placement after a load: largest internal block 23,552 B, internal −149,424 B with PSRAM +149,452 B | **allocator placement / fragmentation — recoverable, not a leak** (was A3-04G item 7's "declared, bounded") | **watch item OPEN**; §28.16 triggers 2 and 3 fired; remedy queued in A3-04H |
+| 6 | A pending Mix prompt (`UI_MODE spell`) survived an in-menu Load | **unclassified observation** (outside H-201 / H-202) | recorded, to adjudicate (§28.21.9) |
+| 7 | One keyboard read error (`ESP_ERR_INVALID_RESPONSE`) during targeting, resync and recovery in 40 ms | **unrelated, recovered** | recorded; 1 in 5,720 reads |
+
+### 2. Evidence
+
+- **Identity:** `IDENTITY firmware=3.0.0-alpha3-dev-a3-04g-debug git=c8fee48beda2`, resource CRC `26f75ae6`, `match=1`.
+- **Health:** 41 / 41 `AUDIO_PERF` windows `missed=0 underruns=0 hw_underruns=0 runaway=0 failures=0`. No `task_wdt`, crash, reboot or error-level line. No `allocate_dma_buf`, `dma-reserve-restore-failed`, `LOW INTERNAL RAM`, sdmmc or diskio line. 35 / 35 DMA-reserve restores.
+- **Save / load:** save generation 33 (slot 1, 2,106 ms, every stage `ok`); loads of generation 32 (1,051 and 890 ms) and 33 (843 and 815 ms), all `status=0`.
+- **Heap:** internal + PSRAM free conserved across every load (+28 B, +2,236 B, +4 B), +39,120 B at the save; +41,140 B over the run. `heap_int_min` 332 B (boot windows) and 316 B (the in-menu save's interval).
+
+### 3. Rows
+
+- **H-201** (`ALPHA2_HARDWARE_CHECKLIST.md`): **PASS**. **D-63** (ledger §4): hardware-validated.
+- **H-202**: **PASS** for the menu, the save list, repeated opens and save / load. The "largest block ≥ 32 KiB after a menu open" clause was not met on 23 opens: the Continue before them set 23,552 B, and the opens did not change it. That clause is carried by the open heap watch item.
+- **Heap watch item** (`ALPHA3_AUDIO.md` §28.16 → §28.21.7): open, re-classified. Trigger 2 is now read together with the internal + PSRAM sum. Trigger 3's 32 KiB line is kept, and 23,552 B is the reference floor.
+
+### 4. Next
+
+- **A3-05, audio polish** (`ALPHA3_AUDIO.md` §28.22). A3-04H (the import count; PSRAM routing of the save document) stays queued behind it, with explicit escalation conditions.

@@ -1175,7 +1175,7 @@ Reference, A3-04E.1 image (11-minute soak, `ALPHA3_AUDIO.md` §23.10): compose a
 
 **What the original does** (ULTIMA.EXE 0x3564, `ALPHA3_AUDIO.md` §27.2): every hit draws a star (tile 0) over the struck combatant's cell. If a party member was hit, its roster row also goes into reverse video. Both last as long as the hit's noise burst, about 174 ms, then the screen is restored. The cue comes before the result ("hit!", "killed!"). A3-HF3 does the same, without holding the game.
 
-### Phase H-201 — combat hit feedback · *new firmware; SD pack unchanged* · about 10 minutes · **PENDING**
+### Phase H-201 — combat hit feedback · *new firmware; SD pack unchanged* · about 10 minutes · **PASS (2026-09-27)**
 
 Flash the A3-HF3 Launcher image (its path and SHA-256 are in tag `alpha3-hf3-combat-hit-feedback`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-hf3-debug` and that tag's `Git`; if not, stop. SFX 80 %, any music setting.
 
@@ -1192,7 +1192,21 @@ Flash the A3-HF3 Launcher image (its path and SHA-256 are in tag `alpha3-hf3-com
 
 *Known, not this check:* the star is drawn on the **cell**, so for a fraction of a second the struck combatant is hidden under it; that is the original's opaque blit. A monster's death still plays its own sound after the hit (A3-03's `CombatDefeat`, recorded for review in `ALPHA3_AUDIO.md` §27.12).
 
-### Phase H-202 — System Menu save inspection and the storage heap · *new firmware; SD pack unchanged* · about 20 minutes · **PENDING**
+**Result (2026-09-27): PASS. D-63 is hardware-validated and closed.**
+- **Image:** the A3-04G image, which carries A3-HF3's combat code unchanged: `FW 3.0.0-alpha3-dev-a3-04g-debug`, `Git c8fee48beda2`.
+- **Evidence:** one serial capture (`a3-04g-hw-h201-h202.log`) summarised by `native/core/tools/a3_04g_hw_closeout.py` (`a3-04g-hw-summary.log`), and the user's own look at the screen. Full write-up: `ALPHA3_AUDIO.md` §28.21.2.
+- **Steps 1–4:** one fight with two trolls at the bridge and three party members.
+  - 8 cues: 5 on trolls (`row=-1`), 3 on party members (`row=0` once, `row=2` twice), every party row equal to the struck member's roster slot.
+  - Each cue drew exactly two frames, the star / row and then the restore. The restore frame was logged 200–220 ms after the cue.
+  - 3 of 8 player attacks drew no cue (no miss line in the log, so consistent with misses).
+  - The user saw the right row and cell each time.
+- **Killing blow:** `COMBAT_HIT_CUE target=5 cell=4,2 row=-1`, then `ENEMY_ID phase=death actor=5` on the same tick.
+- **Step 6:** `COMBAT_END reason=victory/all-hostiles-gone`, `normal-victory-exit`, the bridge tile restored unchanged, `UI_MODE from=combat to=explore`. No row stayed inverted, and walking resumed.
+- **Audio:** every window in the fight `missed=0 underruns=0 hw_underruns=0`. No `task_wdt`, crash or reboot.
+- **Not exercised** (caveats, still host-proven): step 5, because no member died; and two cues queued at once (every cue `queued=1`).
+- **Unrelated:** one keyboard read error during targeting (`ESP_ERR_INVALID_RESPONSE`), recovered in 40 ms with a resync; 1 in 5,720 reads.
+
+### Phase H-202 — System Menu save inspection and the storage heap · *new firmware; SD pack unchanged* · about 20 minutes · **PASS (2026-09-27); heap watch item OPEN**
 
 Flash the A3-04G Launcher image (its path and SHA-256 are in tag `alpha3-a3-04g-storage-inspect`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-04g-debug` and that tag's `Git`; if not, stop. Music 80 %, SFX 80 %, SD diag logging off (the default). **Keep a serial monitor attached from power-on to the end** and send the whole capture: this check is read from the `SAVE_INSPECT`, `SD_HEAP`, `METRICS heartbeat` and `SYS_PERF` lines (`ALPHA3_AUDIO.md` §28). The card should hold two save generations; if it holds fewer, make them in step 3 with two saves.
 
@@ -1216,3 +1230,37 @@ The A3-04G image contains A3-HF3's combat code unchanged, so H-201 can be run on
 **FAIL:** a wrong, stale, `empty` or `corrupt` entry for a good generation; an open that is not clearly faster than before; `free_internal` staying ≈ 150 KB lower after a menu open; any line from step 12; a save or load that fails. Send the capture with the `FW` / `Git` lines.
 
 *Record for §28 in any case:* the `SAVE_INSPECT` lines of steps 1, 4 and 6 (`commit_us`, `read_us`, `verify_us`, `total_us`), every `SD_HEAP … dma-reserve-restored` line, the load time of step 2, and the step-11 figures. They replace §28.4's inferred split with a measured one.
+
+**Result (2026-09-27): PASS for the menu's responsiveness, the save list, repeated-open stability and save / load. The heap watch item stays OPEN.**
+- **Image:** `FW 3.0.0-alpha3-dev-a3-04g-debug`, `Git c8fee48beda2`.
+- **Evidence:** one serial capture from the resource check (31.3 s) to 258.0 s (`a3-04g-hw-h201-h202.log`; the boot lines before 31.3 s are missing), summarised in `a3-04g-hw-summary.log`. Music 90 %, SFX 30 %, SD diag logging off. Full write-up: `ALPHA3_AUDIO.md` §28.21.
+- **Step 1:** `SAVE_INSPECT slot0=verified slot1=verified bytes=14534 commit_us=81246 read_us=363022 verify_us=328111 total_us=785608`. The window restored 74,363 B, its own release value, with a 58,368 B largest block. The previous image showed 46,571 / 7,552 B here.
+- **Step 2:** `load generation=32 slot=0 time=1051 ms status=0`.
+- **Step 3:** *B* = 243,503 B, and 243,255 B just before the first open.
+- **Step 4:**
+  - `SAVE_INSPECT slot0=cached slot1=cached bytes=64 commit_us=81875 read_us=0 verify_us=0 total_us=83132`.
+  - Input blocked 85 ms, where it was 724 ms.
+  - Menu frame 99.5 ms.
+  - Key → menu frame 180 ms, where it was 820 ms.
+  - Restored 243,255 B (= *B*), largest 51,200 B.
+- **Step 5:** from the user's report; the log shows only that the menu actions were accepted.
+- **Step 6:** 25 opens in all, 23 of them in a row. Every one `cached / cached`, 82.8–83.2 ms, key → frame 180 ms. Heartbeats flat at 93,831 B; every window kept 0 B.
+- **Step 7:**
+  - `save generation=33 slot=1 time=2106 ms`, every stage `ok`.
+  - The next `SAVE_INSPECT` was `cached / cached`: the save stored its own slot.
+  - The page's contents are from the user's report.
+- **Step 8:** `load generation=33 slot=1 time=843 ms status=0`. A later Quit → Continue loaded generation 33 too (815 ms).
+- **Step 9:** not exercised (no Alt+S / Alt+L outside the menu in the capture).
+- **Step 10:** 41 / 41 audio windows `missed=0 underruns=0 hw_underruns=0`, across 205.7 s.
+- **Step 11:**
+  - `SYS_PERF` at the end: internal 139,295 B, `heap_int_min` 316 B, PSRAM 6,009,164 B.
+  - The minimum was set inside storage intervals (the boot windows; the in-menu Save).
+- **Step 12:** nothing. No `task_wdt`, crash, reboot or error-level line.
+- **PASS criteria:**
+  - Every `dma-reserve-restored` line after a menu open is within 4 KiB of its release value: **met, 0 B on all 29**.
+  - Largest internal block ≥ 32 KiB: **not met on 23 opens (23,552 B)**. The Continue before them set it (51,200 → 23,552 B), and no open changed it.
+  - The heartbeats did not fall across step 6. Step 12 found nothing, and there was no crash.
+- **Heap (the reason the watch item stays open):**
+  - Both Continues after boot moved the live document into internal RAM: −149,424 and −47,192 B, with free PSRAM rising by the same amounts ± 28 B. This fires §28.16 triggers 2 and 3.
+  - It is **placement, not a leak**: total free memory ended 41,140 B higher than at the start, and later windows raised the largest block again (32,768 → 47,104 → 36,864 B).
+  - Classified as an **allocator placement / fragmentation watch — recoverable, not a leak** (`ALPHA3_AUDIO.md` §28.21.7).
