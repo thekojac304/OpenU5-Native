@@ -70,7 +70,8 @@ set(OPENU5_CORE_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/dialogue.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/dialogue_effects.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/dialogue_orchestration.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/dialogue_pacer.cpp")
+    "${CMAKE_CURRENT_LIST_DIR}/src/dialogue_pacer.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/ritual_fx.cpp")
 if(OPENU5_ENABLE_DEVELOPER_TOOLS)
   list(APPEND OPENU5_CORE_SOURCES
       "${CMAKE_CURRENT_LIST_DIR}/src/ui_debug_menu.cpp"

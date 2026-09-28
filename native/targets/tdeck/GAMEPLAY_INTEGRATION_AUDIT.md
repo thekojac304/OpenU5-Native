@@ -8,7 +8,21 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 A3-HF6, 2026-09-27) — the shrine rite and the Codex wait for a key again; Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 A3-HF7, 2026-09-28) — the rite's viewport negative and the Codex's XOR pulses are back; Alpha 2 remains the released build; read this first
+>
+> **A3-HF7 is a presentation hotfix, not a release** (`ALPHA3_AUDIO.md` §33). H-206 (A3-HF6) keeps its status (pending).
+> - **The defect (H-184 / D-41, queued since Batch 51).** "ALAKAZAM!", "WELL DONE!" and the Codex ceremony showed no inversion, and the reward lines and the ceremony's page arrived in the key's frame. `RitualInvert` had no device consumer, the Codex's pulses were never marked, and no sweep, shake or restore frame was held.
+> - **The original.** CAST2 XORs the 176 × 176 map viewport by palette index: 15 for the donation / WELL DONE (`0x0bcd` / `0x0c41`), held through two 460-call sweep loops and WELL DONE's shake (rewards printed inside it) until `run_n_frames(10)` (`0x0d1a`) redraws; 4, 15, 4 around the Codex's three shakes (`0x0dbd` / `0x0dd4` / `0x0deb`, accumulating 4, 11, 15), "A STRANGE WIND…" over the negative, restored by the getkey `0x0df8`'s idle redraw. No key is read meanwhile.
+> - **Fix.** `openu5::RitualFx` (mask + holds) and an `Effect` state of the A3-HF5 `DialoguePacer` (timed, a key is swallowed, one key never cuts an effect and a getkey); the Codex quakes carry their XOR in `note` (`quest_parity` untouched); the device reuses the magic-ceremony viewport XOR with a mask; a load clears it.
+>
+> | | |
+> |---|---|
+> | Host suite | **158 / 158**, serial, 136.07 s. New: `a3_hf7_ritual_fx_runtime` 48 (**25 RED on HEAD**, pixels read from the fake panel) and `a3_hf7_ritual_fx` 23 (**12 RED on HEAD**). **24 / 24 mutations killed**, 0 invalid. One HF6 expectation corrected from the binary (§33.7). |
+> | Firmware | `3.0.0-alpha3-dev-a3-hf7-debug`. Pre-commit build 986,592 B (`0xf0de0`), **+992 B**, 61,984 B (5.9 %) free, zero warnings. Flash `.text` +844, `.rodata` +160; `.data`, `.bss`, IRAM, internal RAM and PSRAM unchanged. Image guards GREEN. The image path, SHA-256 and `Git` are in tag `alpha3-hf7-ritual-inversion`. **Not flashed.** |
+> | SD | **Unchanged.** Save format unchanged. |
+> | Next | **H-207** (about 5 minutes: Preset Shrine, the Codex ceremony, WELL DONE at Honesty, a donation with the menu and a load). Then H-185 (Refuge cadence) or H-186 (sacrifice burst), or A3-04H. |
+>
+> ### CURRENT STATE (Alpha 3 A3-HF6, 2026-09-27) — the shrine rite and the Codex wait for a key again — **superseded as the current state by A3-HF7 above.**
 >
 > **A3-HF6 is a presentation hotfix, not a release** (`ALPHA3_AUDIO.md` §32). **H-205 (A3-HF5) PASSED on the T-Deck** (the user's report). H-203 (A3-05) and H-204 (A3-HF4) keep their recorded status.
 > - **The defect (H-183 / D-40, queued since Batch 51).** After the mantra, "The Altar speaks and a Quest is ordained!", the Codex lesson and "Return again…" arrived in one frame. The Codex's four parts (nine in the final ceremony) did the same. The core marks each of the original's getkeys with `ShrineKeyWait`; outside a Blackthorn capture scene nothing on the device read the marker.
@@ -6367,7 +6381,7 @@ Every frame count in `blackthorn_scene.cpp` is the bytecode's literal **and** no
 | Refuge | TOO FAST/SLOW — **scene-local**: Class-C 70 ms/unit + 900/260 ms floors vs exact 54.93 ms ticks; **MISSING ACKNOWLEDGEMENT** (karma getkey `0x0b3e`); sweeps/fizzles unheld — **H-185/D-42, queued** (script is `quest_parity`-pinned: fix belongs in the reference first); NEEDS PHYSICAL TEST |
 | TrollSneak | **CORRECT** (A); hardware PASS (H-137); unchanged control for the shared pacer |
 | Shrine ordained / Codex | **MISSING ACKNOWLEDGEMENT — H-183/D-40, queued** (probe: `native/core/batch51-shrine-keywait-probe.log` — after `ShrineKeyWait` the device session stays in Exploration and the post-wait text is already in the transcript) → **A3-HF6: host fixed** (the eleven getkeys are Key holds of `DialoguePacer`; `ALPHA3_AUDIO.md` §32; device check H-206) |
-| Shrine donation / WELL DONE / Codex pulses | **MISSING PRESENTATION BEAT + MISSING DWELL — H-184/D-41, queued** (`RitualInvert` has no device consumer; 184,000 / 138,000-sample holds and the Codex XOR pulses absent) |
+| Shrine donation / WELL DONE / Codex pulses | ~~**MISSING PRESENTATION BEAT + MISSING DWELL — H-184/D-41, queued**~~ **HOST FIXED — A3-HF7** (`ALPHA3_AUDIO.md` §33; H-207 pending) |
 | Shard / Flame | CORRECT order (Batch 25 chains the burst after the quake window); siren EXACT TIMING UNKNOWN (B); NEEDS PHYSICAL TEST |
 | Word of Power / harpsichord quake | EXACT TIMING UNKNOWN (C, witness 0.94 s); device shake async, following text not deferred (≤0.94 s ordering deviation) — not fixed |
 | Crystal ball / gem / zodiac | NOT ACTUALLY SCRIPTED (key-closed modals) — out of scope |

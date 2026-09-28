@@ -1,0 +1,158 @@
+# A3-HF7 RED-first: built against HEAD:native/targets/tdeck/main/alpha_runtime.cpp, HEAD:native/core/src/dialogue_pacer.cpp, HEAD:native/core/src/shrine.cpp;
+# every header, ritual_fx.cpp, the fixture and the tests as in the working tree.
+## a3_hf7_ritual_fx_runtime against HEAD: exit 1
+GREEN N1.0 the rite of Honesty with its Quest done
+    screen masks: 0@5
+GREEN N7.1 karma +3, INT +1 and the Quest bit are committed at the Enter (the core is unchanged)
+RED N7.2 the first frame shows "WELL DONE!" but not yet "Intelligence +1" (printed at 0x0cfc, after the sweeps)
+RED N1.1 the first frame after the Enter shows the viewport XORed with 15 (0x0c41; mode 0 at 87%)
+RED N4.1 the screen goes negative once and returns once ( 0@5)
+RED N4.2 it is restored after the two sweep loops and the shake: -1 ms (want 6283)
+RED N6.1 the shake (0x0c88) starts when the sweeps end: 5 ms (want 5347)
+GREEN N6.2 the whole shake plays inside the negative
+RED N4.3 "Intelligence +1" prints after the shake, as the restore frame arrives: 5 ms
+RED N4.4 the turn is held through run_n_frames(10) after the restore: free at 105 ms
+GREEN N3.1 5 s later the viewport is the normal picture (mode 0) and no effect is pending
+GREEN N3.2 each line shown exactly once
+GREEN N3.3 the next input is an ordinary command again
+RED N2.1 all four quarters of the map viewport are XORed with 15 (0 of 4)
+GREEN N2.2 the party and status panels are not inverted (mode 0)
+GREEN N2.3 the device's sky and wind strips are not inverted (modes 0, 0)
+GREEN N2.4 the area below the viewport is not inverted (mode 0)
+GREEN N1.2 an already visited shrine
+GREEN N1.3 "How many cycles?"
+    screen masks: 0@5
+GREEN N7.3 the gold is taken at the Enter and ALAKAZAM is on the first frame
+RED N1.4 the donation inverts the viewport at once (0x0bcd;  0@5)
+RED N4.5 and restores it after its two sweep loops (no shake): -1 ms (want 7130)
+GREEN N6.3 the donation has no shake
+GREEN N3.4 the viewport is normal afterwards
+GREEN N5.0 the Codex, three keys: the page is up and 0x0d9f waits
+GREEN N5.1 while 0x0d9f waits (10 s) the viewport is normal: the pulses follow that getkey
+    screen masks: 0@5
+RED N1.5 the screen shows XOR 4, then 11, then 15, then normal ( 0@5)
+RED N4.6 a pulse per shake: at 0, 936, 1872 ms
+RED N4.7 "A STRANGE WIND..." prints after the third shake: 5 ms (want 2808)
+RED N4.8 it stands over the negative for the getkey's first idle pass (delay(1)), then the redraw restores: -1 ms
+GREEN N6.4 the three shakes run back to back from the key, each under its own XOR
+RED N5.2 the restore is the next getkey (0x0df8) starting: waiting from 105 ms
+GREEN N5.3 no key-wait inside the effect; the getkey after it wears its cue ("Enter: continue")
+GREEN N5.4 0x0df8 holds: "Thou dost read:" is not shown
+GREEN N5.5 one key releases one section; the viewport stays normal
+RED N5.6 seven inputs inside the pulses release nothing: 0x0df8 still waits
+RED N5.7 and they are consumed: no command, no movement, no second Codex, nothing typed
+RED N5.8 the next key ends exactly that one getkey
+RED N5.9 a command key, a step and a 'y' inside the sweeps start nothing and cut nothing
+RED N5.10 after the effect the next input is play again
+RED N8.1 nothing is released behind the menu (no shake, no reward line)
+RED N8.2 the closed menu shows the negative again, the rite resumes (shake, reward) and ends normal (0 -> 0)
+RED N9.1 the loaded game is drawn normal; the rest of the rite never plays (mode 0)
+RED N9F.1 a failed load leaves the rite running; it completes and restores
+RED N9.2 the continued game is drawn normal and the ceremony is gone (mode 0)
+GREEN N10.1 the unpaced harness (the reference's automation rule) drains WELL DONE at once and ends normal
+GREEN N10.2 the unpaced Codex ceremony drains at once and leaves no pulse behind
+GREEN N10.3 the ordained rite (0x0a9b) has no effect: its getkey waits over the normal viewport
+A3-HF7 ritual effects: 48 checks, 25 failures
+## a3_hf7_ritual_fx against HEAD: exit 1
+GREEN P0 the sweep windows: 2 x 460 x 0x96 = 138,000 and 2 x 460 x 0xc8 = 184,000 samples (5,347 / 7,130 ms)
+GREEN P1 WELL DONE: XOR 15 at the invert, held through the sweeps (5347) and the shake (936), restored by the last event with run_n_frames(10) (550) -- holds 0,0,5347,936,0,0,550, masks 0,15,15,15,15,15,0,
+GREEN P1B and nothing is left active
+GREEN P2 donation: XOR 15, its own sweeps (7130), no shake, restored -- holds 0,0,7130,550, masks 0,15,15,0,
+GREEN P3 Codex: the XORs accumulate 4, 11, 15 over three held shakes; the text holds one tick; the getkey restores -- holds 936,0,936,0,936,0,55,0, masks 4,4,11,11,15,15,15,0,
+GREEN P3B and nothing is left active
+GREEN P4 outside a rite a quake, a party change, a line and a getkey do nothing and hold nothing (the shard, the Word of Power and HF6 keep their behaviour)
+GREEN P5 clear() (a load) leaves no mask and no pending restore
+RED Q1 WELL DONE from idle: the sweep cue is delivered and holds the rest (M:WELL DONE!,E21,S:shrine-well-done,Q0,S:quake,M:Intelligence +1
+RED Q2 a key inside the effect is swallowed: taken, nothing released
+RED Q3 one ms before the sweeps end nothing moves
+RED Q4 at 5347 ms the shake is released and holds in turn
+RED Q5 after the shake the reward line and the restore; run_n_frames(10) still holds (M:WELL DONE!,E21,S:shrine-well-done,Q0,S:quake,M:Intelligence +1
+GREEN Q6 then the pacer is idle
+GREEN Q7 the ceremony waits behind the page's getkey with the viewport normal
+RED Q8 the key releases the first pulse and its shake, and the effect holds
+RED Q9 two more keys inside the shake release nothing
+RED Q10 the pulses accumulate on the shakes' clock: 15 after the third
+RED Q11 the text prints over the negative and holds one tick
+RED Q12 then 0x0df8 takes over and the viewport is restored
+RED Q13 one key = one getkey after the effect
+GREEN Q14 unpaced (pause 0): nothing is held, the stream drains and ends normal
+RED Q15 a queue too small collapses in order and still ends normal (M:WELL DONE!,E21,S:shrine-well-done,Q0,S:quake,M:Intelligence +1
+A3-HF7 ritual effect model: 23 checks, 12 failures
+## a3_hf7_ritual_fx_runtime against the working tree: exit 0
+GREEN N1.0 the rite of Honesty with its Quest done
+    screen masks: 15@5 0@6285
+GREEN N7.1 karma +3, INT +1 and the Quest bit are committed at the Enter (the core is unchanged)
+GREEN N7.2 the first frame shows "WELL DONE!" but not yet "Intelligence +1" (printed at 0x0cfc, after the sweeps)
+GREEN N1.1 the first frame after the Enter shows the viewport XORed with 15 (0x0c41; mode 15 at 87%)
+GREEN N4.1 the screen goes negative once and returns once ( 15@5 0@6285)
+GREEN N4.2 it is restored after the two sweep loops and the shake: 6285 ms (want 6283)
+GREEN N6.1 the shake (0x0c88) starts when the sweeps end: 5350 ms (want 5347)
+GREEN N6.2 the whole shake plays inside the negative
+GREEN N4.3 "Intelligence +1" prints after the shake, as the restore frame arrives: 6285 ms
+GREEN N4.4 the turn is held through run_n_frames(10) after the restore: free at 6835 ms
+GREEN N3.1 5 s later the viewport is the normal picture (mode 0) and no effect is pending
+GREEN N3.2 each line shown exactly once
+GREEN N3.3 the next input is an ordinary command again
+GREEN N2.1 all four quarters of the map viewport are XORed with 15 (4 of 4)
+GREEN N2.2 the party and status panels are not inverted (mode 0)
+GREEN N2.3 the device's sky and wind strips are not inverted (modes 0, 0)
+GREEN N2.4 the area below the viewport is not inverted (mode 0)
+GREEN N1.2 an already visited shrine
+GREEN N1.3 "How many cycles?"
+    screen masks: 15@5 0@7130
+GREEN N7.3 the gold is taken at the Enter and ALAKAZAM is on the first frame
+GREEN N1.4 the donation inverts the viewport at once (0x0bcd;  15@5 0@7130)
+GREEN N4.5 and restores it after its two sweep loops (no shake): 7130 ms (want 7130)
+GREEN N6.3 the donation has no shake
+GREEN N3.4 the viewport is normal afterwards
+GREEN N5.0 the Codex, three keys: the page is up and 0x0d9f waits
+GREEN N5.1 while 0x0d9f waits (10 s) the viewport is normal: the pulses follow that getkey
+    screen masks: 4@5 11@940 15@1875 0@2865
+GREEN N1.5 the screen shows XOR 4, then 11, then 15, then normal ( 4@5 11@940 15@1875 0@2865)
+GREEN N4.6 a pulse per shake: at 0, 936, 1872 ms
+GREEN N4.7 "A STRANGE WIND..." prints after the third shake: 2810 ms (want 2808)
+GREEN N4.8 it stands over the negative for the getkey's first idle pass (delay(1)), then the redraw restores: 2865 ms
+GREEN N6.4 the three shakes run back to back from the key, each under its own XOR
+GREEN N5.2 the restore is the next getkey (0x0df8) starting: waiting from 2865 ms
+GREEN N5.3 no key-wait inside the effect; the getkey after it wears its cue ("Enter: continue")
+GREEN N5.4 0x0df8 holds: "Thou dost read:" is not shown
+GREEN N5.5 one key releases one section; the viewport stays normal
+GREEN N5.6 seven inputs inside the pulses release nothing: 0x0df8 still waits
+GREEN N5.7 and they are consumed: no command, no movement, no second Codex, nothing typed
+GREEN N5.8 the next key ends exactly that one getkey
+GREEN N5.9 a command key, a step and a 'y' inside the sweeps start nothing and cut nothing
+GREEN N5.10 after the effect the next input is play again
+GREEN N8.1 nothing is released behind the menu (no shake, no reward line)
+GREEN N8.2 the closed menu shows the negative again, the rite resumes (shake, reward) and ends normal (15 -> 0)
+GREEN N9.1 the loaded game is drawn normal; the rest of the rite never plays (mode 0)
+GREEN N9F.1 a failed load leaves the rite running; it completes and restores
+GREEN N9.2 the continued game is drawn normal and the ceremony is gone (mode 0)
+GREEN N10.1 the unpaced harness (the reference's automation rule) drains WELL DONE at once and ends normal
+GREEN N10.2 the unpaced Codex ceremony drains at once and leaves no pulse behind
+GREEN N10.3 the ordained rite (0x0a9b) has no effect: its getkey waits over the normal viewport
+A3-HF7 ritual effects: 48 checks, 0 failures
+## a3_hf7_ritual_fx against the working tree: exit 0
+GREEN P0 the sweep windows: 2 x 460 x 0x96 = 138,000 and 2 x 460 x 0xc8 = 184,000 samples (5,347 / 7,130 ms)
+GREEN P1 WELL DONE: XOR 15 at the invert, held through the sweeps (5347) and the shake (936), restored by the last event with run_n_frames(10) (550) -- holds 0,0,5347,936,0,0,550, masks 0,15,15,15,15,15,0,
+GREEN P1B and nothing is left active
+GREEN P2 donation: XOR 15, its own sweeps (7130), no shake, restored -- holds 0,0,7130,550, masks 0,15,15,0,
+GREEN P3 Codex: the XORs accumulate 4, 11, 15 over three held shakes; the text holds one tick; the getkey restores -- holds 936,0,936,0,936,0,55,0, masks 4,4,11,11,15,15,15,0,
+GREEN P3B and nothing is left active
+GREEN P4 outside a rite a quake, a party change, a line and a getkey do nothing and hold nothing (the shard, the Word of Power and HF6 keep their behaviour)
+GREEN P5 clear() (a load) leaves no mask and no pending restore
+GREEN Q1 WELL DONE from idle: the sweep cue is delivered and holds the rest (M:WELL DONE!,E21,S:shrine-well-done,)
+GREEN Q2 a key inside the effect is swallowed: taken, nothing released
+GREEN Q3 one ms before the sweeps end nothing moves
+GREEN Q4 at 5347 ms the shake is released and holds in turn
+GREEN Q5 after the shake the reward line and the restore; run_n_frames(10) still holds (M:WELL DONE!,E21,S:shrine-well-done,Q0,S:quake,M:Intelligence +1
+GREEN Q6 then the pacer is idle
+GREEN Q7 the ceremony waits behind the page's getkey with the viewport normal
+GREEN Q8 the key releases the first pulse and its shake, and the effect holds
+GREEN Q9 two more keys inside the shake release nothing
+GREEN Q10 the pulses accumulate on the shakes' clock: 15 after the third
+GREEN Q11 the text prints over the negative and holds one tick
+GREEN Q12 then 0x0df8 takes over and the viewport is restored
+GREEN Q13 one key = one getkey after the effect
+GREEN Q14 unpaced (pause 0): nothing is held, the stream drains and ends normal
+GREEN Q15 a queue too small collapses in order and still ends normal (M:WELL DONE!,E21,S:shrine-well-done,Q0,S:quake,M:Intelligence +1
+A3-HF7 ritual effect model: 23 checks, 0 failures

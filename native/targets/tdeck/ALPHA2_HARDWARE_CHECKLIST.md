@@ -681,7 +681,7 @@ The physical Phase 7B run on the confirmed Batch 48 image showed every Camp appa
 | # | Scene | Observation to expect on the device | Original | Ledger |
 |---|---|---|---|---|
 | ~~H-183~~ | Shrine "Quest is ordained" and the Codex reading | ~~All the text after each altar/Codex key wait appears at once; no key is waited for.~~ **HOST FIXED — A3-HF6** (`ALPHA3_AUDIO.md` §32): each of the eleven getkeys now holds the rest of the rite until a key. Device check: **Phase H-206**. | CAST2 getkeys `0x0a9b`/`0x0abc`, `0x0d2b`…`0x0e5b` (base `0xE1E0` → kernel `0x266c`) | D-40 |
-| H-184 | Donation "ALAKAZAM!", "WELL DONE!", Codex ceremony | No viewport inversion at all; the Codex shows its three quakes but not its three XOR pulses. | `rect_XOR` `0x0bcd`/`0x0c41` held through 920 sweeps, then `run_n_frames(10)`; Codex XOR+shake ×3 `0x0dbd`–`0x0dee` | D-41 |
+| ~~H-184~~ | Donation "ALAKAZAM!", "WELL DONE!", Codex ceremony | ~~No viewport inversion at all; the Codex shows its three quakes but not its three XOR pulses.~~ **HOST FIXED — A3-HF7** (`ALPHA3_AUDIO.md` §33): the map viewport is XORed with 15 through the sweeps (and WELL DONE's shake) and restored with the reward line; the Codex XORs 4, 11, 15 over its three shakes and restores at the next getkey. Device check: **Phase H-207**. | `rect_XOR` `0x0bcd`/`0x0c41` held through 920 sweeps, then `run_n_frames(10)`; Codex XOR+shake ×3 `0x0dbd`–`0x0dee` | D-41 |
 | H-185 | Refuge | Cadence is Class C (70 ms/unit + reading floors); the karma speech holds on a timer instead of waiting for a key. | exact `delay(n)` ticks; `getkey` `0x0b3e` | D-42 |
 | H-186 | Blackthorn sacrifice | No explosion burst is drawn on the victim. | burst `0x041e` fires **before** the victim clears (`0x0421`) | D-43 |
 
@@ -1359,7 +1359,7 @@ Flash the A3-HF6 Launcher image (its path and SHA-256 are in tag `alpha3-hf6-shr
 
 **D. The ceremony (optional; about 2 minutes).**
 11. `Alt+D` → Shortcuts → **Preset: Shrine** (confirm "Shrine Test Setup"). Go back to the Codex (step 7) and press `E`.
-12. The ceremony takes nine keys. The fourth key brings the three quakes and "A STRANGE WIND CAUSES THE PAGE TO TURN!". The next four each bring one page: "Thou dost read:" with the first rune page, then one rune page per key. The ninth key only clears the cue. (The viewport inversion around the quakes is H-184 and is still absent: do not file it.)
+12. The ceremony takes nine keys. The fourth key brings the three quakes and "A STRANGE WIND CAUSES THE PAGE TO TURN!". The next four each bring one page: "Thou dost read:" with the first rune page, then one rune page per key. The ninth key only clears the cue. (On the A3-HF6 image the viewport inversion around the quakes is absent: do not file it. On the A3-HF7 image it is H-207: the fourth key's section arrives about 2.9 s later, after three coloured flashes, and keys pressed during them are ignored.)
 
 **Regression.**
 13. Talk to anyone whose speech has a KeyWait (Chuckles, `WELC`, H-205 step 4): it still waits for a key. Fight anything: combat text stays immediate.
@@ -1377,3 +1377,52 @@ Flash the A3-HF6 Launcher image (its path and SHA-256 are in tag `alpha3-hf6-shr
 - "WELL DONE!" or the donation prompt starts waiting for a key.
 
 Report a failure with the `FW` / `Git` lines, and the serial `DIALOGUE_PAUSE` lines if captured.
+
+### Phase H-207 — the ritual negative and the Codex's pulses · *new firmware; SD pack unchanged* · about 5 minutes · **PENDING**
+
+Flash the A3-HF7 Launcher image (its path and SHA-256 are in tag `alpha3-hf7-ritual-inversion`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-hf7-debug` and that tag's `Git`; if they differ, stop. The image carries A3-HF6 unchanged (H-206 may be run on it too; see its step 12). A serial capture is optional: each change of the map prints `RITUAL_FX kind=… mask=…`, each held effect `DIALOGUE_PAUSE begin=effect`, and each key pressed inside one `DIALOGUE_PAUSE_INPUT … effect=ritual-effect-swallowed … gameplay_command=none`.
+
+**What changed** (`ALPHA3_AUDIO.md` §33): the map viewport — only the map, never the side panels, the text or the sky / wind strips — turns to its colour negative during "WELL DONE!" and "ALAKAZAM!", and flashes three times during the Codex ceremony, each flash with its own quake. Nothing reads a key while an effect runs: a key pressed then is ignored.
+
+The colours below are the EGA index XOR the original uses: under the full negative black grass turns **white** and green specks **light magenta**; the Codex's first flash turns black **red**, its second **light cyan**, its third is the full negative.
+
+**Setup (one preset for everything).** `Alt+D` → Shortcuts → **Preset: Shrine** (confirm "Shrine Test Setup"): every shrine visited, the Quest of Honesty in hand. Run A, then B, then C, in that order.
+
+**A. The Codex's three pulses (mandatory, about 1 minute).**
+1. `Alt+D` → Teleport → **Britannia**, X **233**, Y **233** (the Codex) → Teleport. Leave the Developer menu. Press `E`.
+2. Press Space three times, a second apart: each press shows one more part ("The book is open…", "Upon the hallowed page…", the Honesty page in quotes) and the map stays normal. *(H-183 sanity: one key, one part, `Enter: continue` each time.)*
+3. Press Space a fourth time and watch the map. While it flashes, press `E` once and roll the trackball once:
+   - at once: the map **flashes red** (black → red) and shakes;
+   - about **1 s** later: it turns **light cyan** and shakes again;
+   - about **1 s** later: the **full negative** (black → white) and a third shake;
+   - about **2.8 s** after the key: "A STRANGE WIND CAUSES THE PAGE TO TURN!" appears, and within a blink the map is **normal** again and `Enter: continue` shows.
+4. The `E` and the trackball did **nothing**: no second "Enter the Shrine of the Codex!", no move, and "Thou dost read:" has **not** appeared; the page still waits for its own key.
+5. Press Space: "Thou dost read:" and the first rune page appear, nothing more. Four more Space presses finish the pages (the last only clears the cue).
+
+**B. WELL DONE's negative (mandatory, about 1 minute).**
+6. Teleport → **Britannia**, X **233**, Y **66** (the Shrine of Honesty). Press `E`, `Y` to "Visit?", `HONESTY` + Enter, `AHM` + Enter.
+7. "WELL DONE!" appears and **in the same instant the map turns negative** (white where it was black), with the rising-and-falling sweep sound. The side panels and the text stay normal.
+8. After about **5.3 s** the screen shakes (about 1 s), still negative.
+9. At the end of the shake "Intelligence +1" appears and **the map returns to normal at the same moment**. About half a second later the game accepts input again.
+10. During steps 7–8 press `E` once: nothing happens (no "Enter what?", no new rite).
+
+**C. The donation (optional, about 30 s).**
+11. Still on the altar: `E`, `Y`, `HONESTY` + Enter, `AHM` + Enter. At "How many cycles?" press `1` + Enter: "ALAKAZAM!" and the negative at once, with the sweeps, for about **7 s**, **no shake**; then the map is normal.
+
+**D. Menu and load (mandatory, about 1 minute).**
+12. `Alt+S` on the altar. Donate again (step 11). While the map is negative press `Alt+M`, wait 3 s, close with `Alt+M`: the map is negative again and finishes normally.
+13. Donate again and, while the map is negative, press `Alt+L`: "Load complete", the map is **normal at once**, and nothing of the rite appears afterwards.
+
+**Regression.** Talk to Chuckles or anyone with a KeyWait (H-205 step 4): still waits for a key. Throughout: no crash, `task_wdt` or reboot; music and effects normal.
+
+**PASS:** steps 3, 4, 5, 7, 8, 9, 10, 12 and 13 as described (and 11 if run).
+
+**FAIL:**
+- no negative / no flash; the side panels or the text invert; the whole screen inverts;
+- the negative stays after "Intelligence +1", after "A STRANGE WIND…", after the load or after leaving the shrine;
+- "Intelligence +1" appears together with "WELL DONE!" (before the sweeps and the shake);
+- the Codex's three flashes come without their quakes, or "A STRANGE WIND…" appears before the third;
+- a key pressed during an effect does something, or makes "Thou dost read:" appear without another key;
+- one key shows two parts.
+
+Report a failure with the `FW` / `Git` lines, and the serial `RITUAL_FX` / `DIALOGUE_PAUSE` lines if captured.

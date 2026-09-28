@@ -1,6 +1,13 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap, A3-05 audio finalization, A3-HF4 load transient reset, A3-HF5 dialogue pacing, A3-HF6 shrine key waits)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap, A3-05 audio finalization, A3-HF4 load transient reset, A3-HF5 dialogue pacing, A3-HF6 shrine key waits, A3-HF7 ritual effects)
 
-**Status (A3-HF6, 2026-09-27): THE SHRINE RITE AND THE CODEX WAIT FOR A KEY AGAIN (H-183 / D-40) — THE ELEVEN CAST2 GETKEYS ARE KEY HOLDS OF THE A3-HF5 QUEUE; FIXED ON THE HOST; HARDWARE CHECK H-206 PENDING. H-205 PASS (A3-HF5); H-203 AND H-204 KEEP THEIR STATUS.** §32:
+**Status (A3-HF7, 2026-09-28): THE RITE'S VIEWPORT NEGATIVE AND THE CODEX'S THREE XOR PULSES REACH THE SCREEN (H-184 / D-41) — FIXED ON THE HOST; HARDWARE CHECK H-207 PENDING. H-206 KEEPS ITS STATUS.** §33:
+- **The defect:** "ALAKAZAM!", "WELL DONE!" and the Codex ceremony showed no inversion; the rewards and the ceremony's page arrived in the key's frame. `RitualInvert` had no device consumer, the Codex's pulses were never marked, and no sweep, shake or restore frame was held.
+- **The original:** CAST2 XORs the 176 × 176 viewport by palette index — 15 for the rite, held through two sweep loops (and WELL DONE's shake, rewards printed inside it) until run_n_frames(10) redraws; 4, 15, 4 around the Codex's three shakes (accumulating 4, 11, 15) until the next getkey redraws. Nothing reads a key meanwhile.
+- **Fix:** `openu5::RitualFx` (mask + holds) and an `Effect` state of the `DialoguePacer` (timed, a key is swallowed); the Codex quakes carry their XOR in `note`; the device XORs the viewport buffer with the existing magic-ceremony primitive, now masked.
+
+RED-first 25 / 48 → GREEN 48 / 48 on the real runtime and Board, pixels read from the fake panel (plus 12 / 23 → 23 / 23 for the model and queue); 24 / 24 mutations killed; host suite **158 / 158**. Firmware +992 B, flash only.
+
+**Status as A3-HF6 wrote it (2026-09-27): THE SHRINE RITE AND THE CODEX WAIT FOR A KEY AGAIN (H-183 / D-40) — THE ELEVEN CAST2 GETKEYS ARE KEY HOLDS OF THE A3-HF5 QUEUE; FIXED ON THE HOST; HARDWARE CHECK H-206 PENDING. H-205 PASS (A3-HF5); H-203 AND H-204 KEEP THEIR STATUS.** §32:
 - **The defect:** after the mantra, the altar's three parts arrived in one frame, and the Codex's four (nine in the ceremony) likewise. The core marks each getkey with a `ShrineKeyWait`; outside a Blackthorn capture scene nothing on the device read it.
 - **The original:** CAST2 `0x0a9b`, `0x0abc` and `0x0d2b` … `0x0e5b` call `getkey_with_redraw 0x266c` through base `0xE1E0`, the TLK KeyWait's own primitive, with no flush, delay or timer around them. "WELL DONE!" has none.
 - **Fix:** `paced_event_pause()` makes the marker a Key pause of `DialoguePacer`. `consume_event()` leaves the marker to a mounted Blackthorn scene. Everything else (input, cue, load, menu) is HF5's.
@@ -4774,3 +4781,113 @@ The check is in `ALPHA2_HARDWARE_CHECKLIST.md`. The A3-HF6 image carries A3-05, 
   - new `native/targets/tdeck/host_tests/a3_hf6_shrine_key_wait_runtime_test.cpp`, `native/core/tests/a3_hf6_shrine_key_wait_pacer_test.cpp`, `native/core/tools/a3_hf6_{red_first,mutation_check}.py`;
   - changed `native/core/CMakeLists.txt`, `host_tests/alpha_runtime_host_fixture.cpp` (the shrine binder and data, the title art).
 - Docs: this section and the status line; `ALPHA2_HARDWARE_CHECKLIST.md` (H-183, H-205, H-206); `ALPHA2_PRESERVATION_LEDGER.md` (D-40); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`; `re/notes/shrine-rito-cadencia-negativo.md`.
+
+## 33. A3-HF7 — the shrine rite's viewport negative and the Codex's XOR pulses reach the screen (H-184 / D-41)
+
+A presentation hotfix on the A3-HF5/HF6 queue, queued since Batch 51. "ALAKAZAM!", "WELL DONE!" and the Codex ceremony showed no inversion at all, and everything after them — the reward lines, the ceremony's page — arrived in the key's own frame.
+
+### 33.1 Baseline
+
+- `main` at `9e297254` (tag `alpha3-hf6-shrine-key-waits` = `da249b38`, plus its post-commit evidence), clean tree, byte-identical to the tree HF6 recorded **156 / 156** on; that record stands.
+- Focused baseline in a fresh `build-a3-hf7`: `a3_hf6_shrine_key_wait_runtime` 48 / 48, `a3_hf6_shrine_key_wait_pacer` 15 / 15, `a3_hf5_dialogue_pacing_runtime` 50 / 50, `a3_hf5_dialogue_pacer` 14 / 14 (`a3-hf7-baseline.log`).
+- Firmware `3.0.0-alpha3-dev-a3-hf6-debug`, 985,600 B (`0xf0a00`), 62,976 B free.
+
+### 33.2 The original mechanism
+
+Read from the 1988 binary for this batch (`re/tools/dis16.py`; CAST2.OVL near calls through base `0xE1E0`: `0x2890 → 0x0a70` set_color, `0x29a6 → 0x0b86` rect with `stc`, `0x3fb2 → 0x2192` tone_sweep, `0x4e92 → 0x3072` screen_shake_fx, `0x448c → 0x266c` getkey, `0x5906 → 0x3ae6` run_n_frames).
+
+| Branch | Sequence | Restored by |
+|---|---|---|
+| Donation ("ALAKAZAM!") | `0x0bbc` set_color(`[0x13b0]`); `0x0bcd` XOR rect; `0x0bd0`–`0x0c0f` two tone_sweep loops, 460 calls each, a2 = `0xc8` (184,000 samples); `0x0c14 jmp 0x0d16` | `0x0d1a` run_n_frames(10) |
+| WELL DONE | `0x0c29` print; `0x0c34`/`0x0c41` XOR rect; `0x0c44`–`0x0c83` two loops, a2 = `0x96` (138,000 samples); `0x0c88` screen_shake_fx; `0x0c8b`–`0x0d11` karma, STR / DEX / INT and their prints | `0x0d1a` run_n_frames(10) |
+| Codex ceremony (after the page's getkey `0x0d9f`, all eight shrines) | `0x0dac` XOR `[0x13ae]`, `0x0dc0` shake; `0x0dc3` XOR `[0x13b0]`, `0x0dd7` shake; `0x0dda` XOR `[0x13ae]`, `0x0dee` shake; `0x0df1` print "A STRANGE WIND…" | the getkey `0x0df8`: its first idle pass (`0x1b38` delay(1), then `0x269a` → compositor `0x5910`) |
+
+- **Primitive.** The rect `(8,8)`–`(0xb7,0xb7)` is the 176 × 176 map viewport exactly. `0x0b86` sets carry before calling the driver; EGA.DRV fn21 (`0x1180`) then programs Graphics Controller register 3 with `0x18` (XOR; `re/notes/shrine-rito-cadencia-negativo.md` §2, not re-read here). So it is an XOR of each pixel's **palette index** with the set_color value: not a palette swap, not full-screen, not the panels.
+- **Colours.** INTRO.OVL `0x09f4 mov [0x13ae],4` and `0x09fa mov [0x13b0],0xf` (the EGA/Tandy branch). The rite's XOR is 15 (the full negative); the Codex's are 4, 15, 4.
+- **Nothing un-XORs.** screen_shake_fx moves the viewport's bands on the screen (`0x71ca` / `0x7200` / `0x0ace`) and never calls the compositor, so the Codex's three XORs **accumulate**: 4, 4 ^ 15 = 11, 11 ^ 4 = 15. What restores the picture is the next redraw: the first frame of run_n_frames(10) for the rite, the getkey's idle pass for the Codex (the Codex is on the surface, location 0 < `0x21`, so `0x266c` does redraw).
+- **Blocking, no key.** tone_sweep, screen_shake_fx and run_n_frames are busy loops. Nothing between the XOR and the restore reads the keyboard; the world does not tick.
+- **Ordering.** The rewards are printed **after** the sweeps and the shake, inside the negative; the ceremony's line is printed after the third shake, over the negative, and the getkey behind it restores. The Codex handler writes no attribute and no karma. Quest / virtue state is committed by the core at the Enter, as HF5 / HF6 declare.
+- **Timing.** tone_sweep holds at the project's calibrated floor (25,806 samples / s, `scene_timing.h`, class B): WELL DONE **5,347 ms**, donation **7,130 ms**. run_n_frames(10) = **550 ms**, delay(1) = **55 ms** (class A). The shake's 1988 length is render-bound (class C); the device keeps its established shake, **936 ms** (`kQuakeDurationMs`, Y-04).
+- **Reference (TypeScript).** `ui/ritual-invert.ts` (#295 / #330 / #364) implements the loose regime for WELL DONE and the donation as a wall-clock window derived from the same sweeps (plus the quake for WELL DONE). Divergences, the binary winning: it prints the reward lines at once under the negative (the binary prints them after the sweeps and the shake), and it does not wire the Codex bracket at all (#305 / #317). The note `re/notes/shrine-rito-cadencia-negativo.md` §9 records both.
+
+### 33.3 The native defect
+
+- `RitualInvert` (emitted by `shrine.cpp` for the donation and WELL DONE) reached only `UiSession`, which gives it the Quest text channel: **no consumer**.
+- The core never marked the Codex's pulses: its three `Quake`s were indistinguishable from any other.
+- Nothing held: the sweeps, the shake and run_n_frames were zero, so the rewards and the ceremony's page arrived in the key's frame, and the three Codex shakes merged into one asynchronous 2.8 s shake with the text already shown.
+- A reusable primitive existed: `magic_xor_palette_pixel` (the magic ceremony / Camp XOR of the viewport buffer, applied before the shake post-process) and the A3-HF5 `DialoguePacer` queue that HF6 already routes the rite through.
+
+### 33.4 The fix
+
+- **`openu5/ritual_fx.h` / `ritual_fx.cpp` (new, core).** `RitualFx` is the rite's presentation state: the viewport's XOR mask, whether a loose negative is pending, how many Codex pulses have landed. `present(e)` applies an event (RitualInvert → ^15; a tagged Codex `Quake` → ^note; the rite's closing `PartyChanged` or the Codex's next `ShrineKeyWait` → the redraw). `hold_after_ms(e)` says how long the original blocks after an event: the sweep cues, the rite's shakes, run_n_frames(10), and the getkey's idle tick under "A STRANGE WIND…". The constants are the binary's (`kRitualSweepCalls`, `kWellDoneSweepSamples`, `kDonationSweepSamples`, `kCodexPulseMasks`, `kRitualRestoreFrames`).
+- **`DialoguePacer` gains an `Effect` state** (appended to the enum): a hold on its own clock that **no key ends** — the key is swallowed. The effect-hold query is asked for each event just before it is delivered, idle or queued. Consecutive effects chain from their scheduled end (no drift over three shakes); a clock that stood still longer than a tick (the System Menu) restarts from now. `paced_event_pause()`, Timed and Key are unchanged.
+- **`shrine.cpp`:** the Codex's three `Quake`s carry their colour register in `note` (4, 15, 4). Kinds and texts are unchanged, so `quest_parity`'s fixture (kind + text) is untouched.
+- **`AlphaRuntime`:** wires the query (`set_effect_hold`), presents each routed event to `RitualFx` just before the session sees it (`RITUAL_FX` serial line), draws `magic_xor_palette_pixel(…, mask)` over the viewport buffer — now with a mask argument, 15 by default — and clears it in `synchronize_loaded_world()`. The input rule gains one branch: a key during an Effect logs `ritual-effect-swallowed`.
+
+### 33.5 Input, menus, load and lifecycle
+
+- **Keys inside an effect** (letters, Enter, Space, the trackball, Mic, a burst in one frame) are swallowed: no command, no movement, no text, no release. The next key after the effect ends exactly one getkey. Transcript paging and the device shortcuts keep their meaning.
+- **No cue** during an effect (1988 has no cursor inside a busy loop); `Enter: continue` returns at the getkey behind it.
+- **System Menu:** nothing is released behind it; on closing, the negative is drawn again and the rest of the rite plays out.
+- **Successful load, Return to Title + Continue, New Journey:** `synchronize_loaded_world()` cancels the queue and clears the mask; the loaded game is drawn normal. **A failed load** leaves the rite running to its restore.
+- **Unpaced harness** (`paced_scenes = false`): no hold; the mask is set and cleared inside the same turn (the reference's automation rule), so no existing runtime or parity test sees a different stream.
+
+### 33.6 Declared divergences (presentation only)
+
+- **Typeahead.** In 1988 a key pressed during a busy loop stays in the BIOS buffer and satisfies the next getkey (at `0x0df8` it would even skip the idle redraw, leaving the negative up through the next page). The device swallows it, so one key can never cut an effect and a getkey together.
+- **The shake** is the device's 936 ms shake, not the render-bound 1988 band loop; **the sweeps** are the calibrated floor (class B), as for the Camp apparition.
+- **The device's sky and wind strips** sit inside the viewport rectangle (A-series adaptation); they are HUD and are not inverted. The map between them is.
+- **The Codex's colours** follow INTRO.OVL (4, 15, 4). `ceremonia-de-conjuro-cast2-0000.md` §6.3 keeps open a hypothesis that `[0x13ae]` reads 0 in a SHOPPES witness; CAST2's own set_color is proven, and the WELL DONE's live mask 15 corroborates the INTRO block. A contrary Codex witness would change one table.
+- **The rules** (karma, the attribute, the quest bit, the gold) are committed at the Enter; only their lines wait (HF5 / HF6's class).
+
+### 33.7 One existing expectation corrected
+
+`a3_hf6_shrine_key_wait_runtime` N3.2 read "A STRANGE WIND…" in the frame of the key that ends `0x0d9f`. The binary prints it (`0x0df1`) after the three bracketed shakes (`0x0dc0` / `0x0dd7` / `0x0dee`); the test now lets the effect window pass before reading that section, and still checks the quakes land with that key (N6.2) and the transcript equals the unpaced run's (N6.3). No other expectation moved.
+
+### 33.8 Tests, RED / GREEN and mutations
+
+- **`a3_hf7_ritual_fx_runtime`** (new, 48 checks): the real `AlphaRuntime` with raw keys, the pack's shrines, overworld and MISCMSG, drawing on the real `tdeck_board.cpp` over the fake ST7789. **Every visual check reads the fake panel's GRAM**: the fixture's patterned tiles use palette entry i = i·0x1111, so each frame's XOR mask against a normal frame is the mode of index ^ index over the map (animated pixels excluded, the shake's 2 px shift searched). The bus runs untimed, so a transition's time is the pacer's, never the modelled SPI cost.
+  - **N1** the inversion exists: WELL DONE and the donation (mask 15 on the first frame), the Codex (4, 11, 15).
+  - **N2** region: all four quarters of the map inverted; party / status panels, sky / wind strips and the area below the viewport not.
+  - **N3** restoration: normal afterwards, still normal 5 s later, each line once, play resumes.
+  - **N4** cadence (± 2 frames): WELL DONE 0 → 15 → 0 with the restore at 6,283 ms and the turn free at 6,833; donation restore at 7,130; Codex transitions at 0 / 936 / 1,872, the line at 2,808 over the negative, the restore at 2,863.
+  - **N5** the HF6 getkeys: normal while `0x0d9f` waits 10 s; the restore is the start of `0x0df8`; no cue inside an effect; seven inputs (letters, Mic, trackball, a two-key burst) inside the pulses release nothing and route nothing; the next key ends one getkey; the same inside WELL DONE.
+  - **N6** quakes: WELL DONE's shake starts at 5,347 ms and plays inside the negative; the donation has none; the Codex's run back to back, each under its own XOR.
+  - **N7** rules at the Enter (INT +1, karma +3, quest bit, 100 gp) while the line is not yet shown.
+  - **N8** System Menu. **N9 / N9F** successful and failed load; Return to Title inside the pulses, then Continue. **N10** unpaced WELL DONE / Codex, and the ordained rite has no effect.
+- **`a3_hf7_ritual_fx`** (new, 23 checks): the model's holds and masks on streams shaped as `shrine.cpp` emits them (WELL DONE, donation, Codex; quakes and getkeys outside a rite hold nothing), and the queue's Effect contract (a key swallowed, released to the millisecond, the pulses after `0x0d9f`, one key per getkey after, unpaced drains, a collapse still ends normal).
+- **RED-first** (`native/core/tools/a3_hf7_red_first.py`, HEAD's `alpha_runtime.cpp`, `dialogue_pacer.cpp`, `shrine.cpp`, no edits): runtime **25 / 48 RED**, model **12 / 23 RED** (the model's own P-checks and the unpaced controls GREEN on HEAD); after the change **48 / 48** and **23 / 23** (`a3-hf7-red-first.log`).
+- **Mutations** (`native/core/tools/a3_hf7_mutation_check.py`, 24 mutants, each against both new tests and the HF6 / HF5 suites): **24 / 24 killed, 0 invalid, 0 survivors, restored build GREEN** (`a3-hf7-mutation.log`). Effect: M1 no inversion, M2 half the viewport, M3 the render ignores the mask, M4 never restored, M5 restored at the shake, M6 the Codex never restored, M7 two pulses, M8 pulses do not accumulate. Cadence: M9 half the sweep, M10 non-blocking shakes, M11 no run_n_frames(10), M12 no idle tick, M13 drifting chain, M14 hold not wired. Order: M15 pulses before `0x0d9f`, M16 WELL DONE XOR after the shake. Input: M17 a key ends an effect, M18 one key cuts effect + getkey, M19 the cue during an effect. Lifecycle: M20 a load / title keeps the negative, M21 the unpaced harness holds. Sites: M22 donation, M23 WELL DONE, M24 the Codex quakes untagged.
+
+### 33.9 Regression
+
+Fresh build directory `native/core/build-a3-hf7-final`: **158 / 158, serial, 136.07 s**, with only the known w64devkit `-Wstringop-overflow` warning (`native/core/a3-hf7-{configure,build,ctest}.log`). That is A3-HF6's 156 plus the two new tests.
+- **HF6 / HF5 unchanged in the suite and under every mutant's restore:** `a3_hf6_shrine_key_wait_runtime` 48 / 48 (with §33.7's one corrected expectation), `a3_hf6_shrine_key_wait_pacer` 15 / 15, `a3_hf5_dialogue_pacing_runtime` 50 / 50, `a3_hf5_dialogue_pacer` 14 / 14.
+- **The reused primitives:** `input_test` (the `magic_xor_palette_pixel` round trip, default mask 15), `a3_03_sfx_runtime` (the shrine's cues and the magic ceremony), `a3_hf3_combat_hit_runtime`, `batch51_scene_pacing` / `batch51_camp_pacing` (the Camp XOR) — all GREEN.
+- **`quest_parity`** passes unchanged: the Codex pulse lives in `note`, which the driver does not serialize; every kind and text is as before.
+
+### 33.10 Firmware
+
+Pre-commit build `native/targets/tdeck/build-a3-hf7` (`a3-hf7-firmware-{configure,build}.log`): ESP-IDF 6.1, `--no-ccache`, `ninja -j 4`, first attempt clean, **zero project warnings**.
+
+- **`0xf0de0` = 986,592 B, +992 B** against A3-HF6's 985,600 B; **61,984 B (5.9 %) free** in the 1 MiB app partition.
+- **Sections** against A3-HF6's post-commit image (`esp_idf_size --diff`, `a3-hf7-size-diff.log`; absolute figures in `a3-hf7-size.log`): Flash `.text` **+844 B** (668,198 B) and `.rodata` **+160 B** (219,316 B) — the model, the Effect branch, the masked XOR and the `RITUAL_FX` log line. Unchanged: DIRAM `.data` 21,627 B, `.bss` 51,952 B, DIRAM `.text` 60,647 B, IRAM 16,384 B (full, as before).
+- **RAM.** Internal `.data` / `.bss` unchanged (the 3-byte `RitualFx` is a member of the existing runtime object); **PSRAM unchanged**: no new allocation, the effects ride HF5's 64-step queue and 4 KiB arena.
+- **Image guards GREEN:** `a3_04f_image_check.py`, `a3_04b_iram_check.py`, `a3_04a_hotpath_check.py` (`a3-hf7-{image,iram,hotpath}-check.log`). Nothing on the per-sample audio path changed.
+- Version `3.0.0-alpha3-dev-a3-hf7-debug`. **Not flashed.** Tag `alpha3-hf7-ritual-inversion` names the post-commit image (built in a fresh directory, so it embeds the commit), with its path, size, SHA-256 and `Git`.
+
+### 33.11 Hardware check H-207 (the user's; about 5 minutes)
+
+The check is in `ALPHA2_HARDWARE_CHECKLIST.md`. The A3-HF7 image carries A3-HF6 unchanged.
+
+### 33.12 Recorded, not changed
+
+- The CAST2 / TALK overlay-base error in `re/tools/thunks.py --bases` / `callers_banda.py` (§32.12) is unchanged; this batch read the binary through `0xE1E0` directly.
+- **H-185 / D-42** (the Refuge cadence and its karma getkey) and **H-186 / D-43** (the sacrifice burst) are unchanged. The shard ritual's three quakes and the Word of Power's quake stay asynchronous (their `Quake`s carry no pulse; audit §6 "Word-of-Power / harpsichord quake").
+
+### 33.13 Files
+
+- Core: new `native/core/include/openu5/ritual_fx.h`, `src/ritual_fx.cpp`; `include/openu5/dialogue_pacer.h`, `src/dialogue_pacer.cpp` (the Effect state); `src/shrine.cpp` (the Codex pulse notes); `sources.cmake`.
+- Device: `native/targets/tdeck/main/alpha_runtime.{h,cpp}`, `main/device_ui_views.h` (the mask argument); `native/targets/tdeck/CMakeLists.txt` (`PROJECT_VER`).
+- Tests and tools: new `native/targets/tdeck/host_tests/a3_hf7_ritual_fx_runtime_test.cpp`, `native/core/tests/a3_hf7_ritual_fx_test.cpp`, `native/core/tools/a3_hf7_{red_first,mutation_check}.py`; changed `native/core/CMakeLists.txt`, `host_tests/a3_hf6_shrine_key_wait_runtime_test.cpp` (§33.7).
+- Docs: this section and the status line; `ALPHA2_HARDWARE_CHECKLIST.md` (H-184, H-206 step 12, H-207); `ALPHA2_PRESERVATION_LEDGER.md` (D-41); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`; `re/notes/shrine-rito-cadencia-negativo.md` §9.

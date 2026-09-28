@@ -57,6 +57,14 @@
 // text: everything already shown stays, everything after it waits). A
 // Blackthorn capture scene's getkeys use the same event; the runtime never
 // offers them here while that scene's pacer owns the turn.
+//
+// A3-HF7 (H-184 / D-41). The rite's own busy loops -- the sweeps held inside
+// the viewport negative, screen_shake_fx, run_n_frames(10) -- block CAST2
+// with no key read at all (openu5/ritual_fx.h). The pacer holds the rest of
+// the turn behind them as an Effect: timed like a Pause, but a key does NOT
+// end it (the key is swallowed, so one key can never cut an effect AND the
+// getkey behind it). Which event holds, and for how long, is the caller's
+// effect-hold query, asked for each event just before it is delivered.
 namespace openu5 {
 
 /** TALK 0x0fae `cmp si,0x1c`: the Pause opcode's 28 ticks. [A] */
@@ -68,6 +76,13 @@ enum class DialoguePacerState : uint8_t {
     Idle,  // nothing parked; events pass straight through
     Timed, // a 0x83 Pause is running: ends on its clock or at a key
     Key,   // a 0x8F KeyWait: ends only at a key
+    Effect, // A3-HF7: a rite effect's busy loop: ends only on its clock
+};
+
+/** A3-HF7. How long the presentation blocks after `e` (0 = not at all). */
+struct DialoguePacerEffectHold {
+    void *context = nullptr;
+    uint32_t (*after_ms)(void *context, const GameEvent &e) = nullptr;
 };
 
 enum class DialoguePacerStepKind : uint8_t { Line, Prompt, Effect, EffectMessage, Ended, Handoff, Event };
@@ -99,6 +114,8 @@ class DialoguePacer {
      *  reference's automation rule (TalkConsole `instant`), and every host
      *  harness that does not ask for the device's cadence. */
     void set_pause_ms(uint32_t ms) { pause_ms_ = ms; }
+    /** A3-HF7. The effect-hold query (openu5/ritual_fx.h on the device). */
+    void set_effect_hold(DialoguePacerEffectHold hold) { effect_ = hold; }
     uint32_t pause_ms() const { return pause_ms_; }
 
     /**
@@ -107,9 +124,10 @@ class DialoguePacer {
      * it. Returns false when the caller must forward it itself.
      */
     bool offer(const GameEvent &e, uint32_t now_ms, EventSink out);
-    /** Release a Timed pause whose clock has run out. */
+    /** Release a Timed pause or an Effect whose clock has run out. */
     void pump(uint32_t now_ms, EventSink out);
-    /** A key: ends the current pause of either kind. False when idle. */
+    /** A key: ends the current Timed or Key pause; during an Effect it is
+     *  swallowed and releases nothing. False when idle. */
     bool advance_key(uint32_t now_ms, EventSink out);
     /** Drop everything (a load, a new game): nothing queued is shown. */
     void cancel() { reset(); }
@@ -117,6 +135,7 @@ class DialoguePacer {
     DialoguePacerState state() const { return state_; }
     bool holding() const { return state_ != DialoguePacerState::Idle; }
     bool awaiting_key() const { return state_ == DialoguePacerState::Key; }
+    bool in_effect() const { return state_ == DialoguePacerState::Effect; }
     size_t queued() const { return count_; }
     uint32_t resume_at_ms() const { return resume_at_ms_; }
     uint32_t released() const { return released_; }
@@ -127,8 +146,11 @@ class DialoguePacer {
     uint32_t pause_ms_ = 0, resume_at_ms_ = 0, released_ = 0, collapsed_ = 0;
     size_t head_ = 0, count_ = 0, text_used_ = 0;
     DialoguePacerState state_ = DialoguePacerState::Idle;
+    DialoguePacerEffectHold effect_{};
 
     void reset();
+    uint32_t effect_ms(const GameEvent &e) const;
+    GameEvent event_of(const DialoguePacerStep &step) const;
     bool push(const GameEvent &e);
     void deliver(const DialoguePacerStep &step, EventSink out) const;
     void hold(DialoguePause pause, uint32_t now_ms);

@@ -136,6 +136,17 @@ void DialoguePacer::deliver(const DialoguePacerStep &step, EventSink out) const 
     out.emit(out.context, e);
 }
 
+uint32_t DialoguePacer::effect_ms(const GameEvent &e) const {
+    return effect_.after_ms ? effect_.after_ms(effect_.context, e) : 0;
+}
+
+// The queued event as the sink will see it (Event steps only).
+GameEvent DialoguePacer::event_of(const DialoguePacerStep &step) const {
+    GameEvent e = step.event;
+    e.text = step.has_text ? storage_.text + step.text_offset : nullptr;
+    return e;
+}
+
 void DialoguePacer::hold(DialoguePause pause, uint32_t now_ms) {
     state_ = pause == DialoguePause::Key ? DialoguePacerState::Key : DialoguePacerState::Timed;
     resume_at_ms_ = now_ms + pause_ms_;
@@ -148,10 +159,18 @@ void DialoguePacer::release(uint32_t now_ms, EventSink out) {
         head_ = (head_ + 1) % storage_.step_capacity;
         --count_;
         ++released_;
+        // Asked before the delivery: the query reads the effect state the
+        // events delivered so far have left.
+        const uint32_t effect = step.kind == DialoguePacerStepKind::Event ? effect_ms(event_of(step)) : 0;
         deliver(step, out);
         if ((step.kind == DialoguePacerStepKind::Line || step.kind == DialoguePacerStepKind::Event) &&
             step.pause != DialoguePause::None) {
             hold(step.pause, now_ms);
+            break;
+        }
+        if (effect) {
+            state_ = DialoguePacerState::Effect;
+            resume_at_ms_ = now_ms + effect;
             break;
         }
     }
@@ -177,10 +196,15 @@ bool DialoguePacer::offer(const GameEvent &e, uint32_t now_ms, EventSink out) {
     if (!pause_ms_) return false;
     if (state_ == DialoguePacerState::Idle) {
         const auto pause = paced_event_pause(e);
-        if (pause == DialoguePause::None) return false;
+        const uint32_t effect = pause == DialoguePause::None ? effect_ms(e) : 0;
+        if (pause == DialoguePause::None && !effect) return false;
         ++released_;
         if (out.emit) out.emit(out.context, e);
-        hold(pause, now_ms);
+        if (effect) {
+            state_ = DialoguePacerState::Effect;
+            resume_at_ms_ = now_ms + effect;
+        } else
+            hold(pause, now_ms);
         return true;
     }
     if (push(e)) return true;
@@ -190,11 +214,18 @@ bool DialoguePacer::offer(const GameEvent &e, uint32_t now_ms, EventSink out) {
 
 void DialoguePacer::pump(uint32_t now_ms, EventSink out) {
     if (state_ == DialoguePacerState::Timed && int32_t(now_ms - resume_at_ms_) >= 0) release(now_ms, out);
+    // A3-HF7. An Effect ends at its scheduled instant, not at the frame that
+    // notices: the rite's busy loops follow each other with no gap, so the
+    // next hold is timed from there (a chain of shakes does not drift). A
+    // clock that stood still for longer (the System Menu owns the screen and
+    // nothing pumps) restarts from now, so the rest of the rite is still shown.
+    else if (state_ == DialoguePacerState::Effect && int32_t(now_ms - resume_at_ms_) >= 0)
+        release(now_ms - resume_at_ms_ <= kSceneTickMs ? resume_at_ms_ : now_ms, out);
 }
 
 bool DialoguePacer::advance_key(uint32_t now_ms, EventSink out) {
     if (state_ == DialoguePacerState::Idle) return false;
-    release(now_ms, out);
+    if (state_ != DialoguePacerState::Effect) release(now_ms, out);
     return true;
 }
 

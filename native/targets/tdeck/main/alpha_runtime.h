@@ -24,6 +24,7 @@
 #include "openu5/blackthorn.h"
 #include "openu5/blackthorn_scene.h"
 #include "openu5/dialogue_pacer.h"
+#include "openu5/ritual_fx.h"
 #include "openu5/narrative_scene.h"
 #include "openu5/poison_tick.h"
 #include "openu5/world_fx.h"
@@ -182,6 +183,7 @@ class AlphaRuntime {
     const openu5::BlackthornScenePacer &blackthorn_pacer() const { return blackthorn_pacer_; }
     // A3-HF5: the TLK Pause/KeyWait queue, for timing assertions.
     const openu5::DialoguePacer &dialogue_pacer() const { return dialogue_pacer_; }
+    const openu5::RitualFx &ritual_fx() const { return ritual_fx_; }
     bool camp_scene_inverted() const { return camp_scene_inverted_; }
     // A3-04E: the last composed 176x176 viewport -- what the Board was handed.
     const uint16_t *composed_viewport() const { return viewport_; }
@@ -240,6 +242,7 @@ class AlphaRuntime {
         bool map_reveal = false, magic_invert = false, quake = false;
         bool parked_pick = false, npc_initiation = false;
         bool dialogue_pause = false; // A3-HF5
+        bool ritual_fx = false;      // A3-HF7
     };
     TransientProbe transient_probe_for_test() const {
         TransientProbe p;
@@ -254,6 +257,7 @@ class AlphaRuntime {
                         shrine_virtue_length_ != 0 || selection_request_ != openu5::UiRequestId::None;
         p.npc_initiation = pending_npc_initiation_ != PendingNpcInitiation::None;
         p.dialogue_pause = dialogue_pacer_.holding() || dialogue_pacer_.queued() != 0;
+        p.ritual_fx = ritual_fx_.active();
         return p;
     }
 
@@ -336,6 +340,10 @@ class AlphaRuntime {
     // conversation turn used to collapse to zero (openu5/dialogue_pacer.h).
     // Presentation only; its queue and text arena are PSRAM.
     openu5::DialoguePacer dialogue_pacer_{};
+    // A3-HF7 (H-184) -- the rite's viewport negative and the Codex's XOR
+    // pulses (openu5/ritual_fx.h). Presentation only; the pacer asks it how
+    // long each presented event blocks.
+    openu5::RitualFx ritual_fx_{};
     openu5::DialoguePacerStep *dialogue_pacer_steps_ = nullptr;
     char *dialogue_pacer_text_ = nullptr;
     openu5::CommandContext context_{game_,turn_,travel_,commands_,resources_.world};
@@ -521,6 +529,7 @@ class AlphaRuntime {
     /** consume_event() past the dialogue pacer: where a released event goes. */
     void route_event(const openu5::GameEvent &);
     static void release_dialogue_event(void *, const openu5::GameEvent &);
+    static uint32_t ritual_hold_ms(void *, const openu5::GameEvent &);
     /** Release a TLK Pause whose clock ran out; true = redraw. */
     bool service_dialogue_pacer();
     void dispatch(const openu5::UiIntent &);

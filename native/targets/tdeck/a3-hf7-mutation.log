@@ -1,0 +1,262 @@
+# A3-HF7 mutation validation (2026-09-28 00:39)
+
+M1 omit the rite inversion (the XOR mask is 0) [native/core/src/ritual_fx.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  9 RED
+        RED N1.1 the first frame after the Enter shows the viewport XORed with 15 (0x0c41; mode 0 at 87%)
+        RED N4.1 the screen goes negative once and returns once ( 0@5)
+        RED N4.2 it is restored after the two sweep loops and the shake: -1 ms (want 6283)
+        RED N4.3 "Intelligence +1" prints after the shake, as the restore frame arrives: 6285 ms
+        RED N2.1 all four quarters of the map viewport are XORed with 15 (0 of 4)
+        RED N1.4 the donation inverts the viewport at once (0x0bcd;  0@5)
+        RED N4.5 and restores it after its two sweep loops (no shake): -1 ms (want 7130)
+        RED N8.2 the closed menu shows the negative again, the rite resumes (shake, reward) and ends normal (0 -> 0)
+        RED N9F.1 a failed load leaves the rite running; it completes and restores
+    a3_hf7_ritual_fx exit=1  3 RED
+        RED P1 WELL DONE: XOR 15 at the invert, held through the sweeps (5347) and the shake (936), restored by the last event with run_n_frames(10) (550) -- holds 0,0,5347,936,0,0,550, masks 0,0,0,0,0,0,0,
+        RED P2 donation: XOR 15, its own sweeps (7130), no shake, restored -- holds 0,0,7130,550, masks 0,0,0,0,
+        RED Q1 WELL DONE from idle: the sweep cue is delivered and holds the rest (M:WELL DONE!,E21,S:shrine-well-done,)
+M2 invert the wrong region (half the viewport) [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  11 RED
+        RED N1.1 the first frame after the Enter shows the viewport XORed with 15 (0x0c41; mode 15 at 47%)
+        RED N4.1 the screen goes negative once and returns once ( 0@6285)
+        RED N4.2 it is restored after the two sweep loops and the shake: -1 ms (want 6283)
+        RED N4.3 "Intelligence +1" prints after the shake, as the restore frame arrives: 6285 ms
+        RED N2.1 all four quarters of the map viewport are XORed with 15 (2 of 4)
+        RED N1.4 the donation inverts the viewport at once (0x0bcd;  0@7130)
+        RED N4.5 and restores it after its two sweep loops (no shake): -1 ms (want 7130)
+        RED N1.5 the screen shows XOR 4, then 11, then 15, then normal ( 0@2865)
+        RED N4.6 a pulse per shake: at 0, 936, 1872 ms
+        RED N4.8 it stands over the negative for the getkey's first idle pass (delay(1)), then the redraw restores: -1 ms
+        RED N5.2 the restore is the next getkey (0x0df8) starting: waiting from 2865 ms
+M3 the render ignores the rite (mask never drawn) [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  13 RED
+        RED N1.1 the first frame after the Enter shows the viewport XORed with 15 (0x0c41; mode 0 at 87%)
+        RED N4.1 the screen goes negative once and returns once ( 0@5)
+        RED N4.2 it is restored after the two sweep loops and the shake: -1 ms (want 6283)
+        RED N4.3 "Intelligence +1" prints after the shake, as the restore frame arrives: 6285 ms
+        RED N2.1 all four quarters of the map viewport are XORed with 15 (0 of 4)
+        RED N1.4 the donation inverts the viewport at once (0x0bcd;  0@5)
+        RED N4.5 and restores it after its two sweep loops (no shake): -1 ms (want 7130)
+        RED N1.5 the screen shows XOR 4, then 11, then 15, then normal ( 0@5)
+        RED N4.6 a pulse per shake: at 0, 936, 1872 ms
+        RED N4.8 it stands over the negative for the getkey's first idle pass (delay(1)), then the redraw restores: -1 ms
+        RED N5.2 the restore is the next getkey (0x0df8) starting: waiting from 2865 ms
+        RED N8.2 the closed menu shows the negative again, the rite resumes (shake, reward) and ends normal (0 -> 0)
+M4 the donation / WELL DONE negative is never restored [native/core/src/ritual_fx.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  11 RED
+        RED N4.1 the screen goes negative once and returns once ( 15@5)
+        RED N4.2 it is restored after the two sweep loops and the shake: -1 ms (want 6283)
+        RED N4.3 "Intelligence +1" prints after the shake, as the restore frame arrives: 6285 ms
+        RED N3.1 5 s later the viewport is the normal picture (mode 15) and no effect is pending
+        RED N2.1 all four quarters of the map viewport are XORed with 15 (0 of 4)
+        RED N1.4 the donation inverts the viewport at once (0x0bcd;  15@5)
+        RED N4.5 and restores it after its two sweep loops (no shake): -1 ms (want 7130)
+        RED N3.4 the viewport is normal afterwards
+        RED N8.2 the closed menu shows the negative again, the rite resumes (shake, reward) and ends normal (15 -> 15)
+        RED N9F.1 a failed load leaves the rite running; it completes and restores
+        RED N10.1 the unpaced harness (the reference's automation rule) drains WELL DONE at once and ends normal
+    a3_hf7_ritual_fx exit=1  7 RED
+        RED P1 WELL DONE: XOR 15 at the invert, held through the sweeps (5347) and the shake (936), restored by the last event with run_n_frames(10) (550) -- holds 0,0,5347,936,0,0,550, masks 0,15,15,15,15,15
+        RED P1B and nothing is left active
+        RED P2 donation: XOR 15, its own sweeps (7130), no shake, restored -- holds 0,0,7130,550, masks 15,0,0,0,
+        RED P3 Codex: the XORs accumulate 4, 11, 15 over three held shakes; the text holds one tick; the getkey restores -- holds 936,0,936,0,936,0,0,0, masks 4,4,11,11,15,15,15,0,
+        RED Q5 after the shake the reward line and the restore; run_n_frames(10) still holds (M:WELL DONE!,E21,S:shrine-well-done,Q0,S:quake,M:Intelligence +1
+        RED Q14 unpaced (pause 0): nothing is held, the stream drains and ends normal
+        RED Q15 a queue too small collapses in order and still ends normal (M:WELL DONE!,E21,S:shrine-well-done,Q0,S:quake,M:Intelligence +1
+M5 restored too early (at the shake, not after the rewards) [native/core/src/ritual_fx.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  7 RED
+        RED N4.2 it is restored after the two sweep loops and the shake: 5350 ms (want 6283)
+        RED N4.3 "Intelligence +1" prints after the shake, as the restore frame arrives: 6285 ms
+        RED N4.4 the turn is held through run_n_frames(10) after the restore: free at 6285 ms
+        RED N1.4 the donation inverts the viewport at once (0x0bcd;  15@5)
+        RED N4.5 and restores it after its two sweep loops (no shake): -1 ms (want 7130)
+        RED N3.4 the viewport is normal afterwards
+        RED N8.2 the closed menu shows the negative again, the rite resumes (shake, reward) and ends normal (0 -> 0)
+    a3_hf7_ritual_fx exit=1  4 RED
+        RED P1 WELL DONE: XOR 15 at the invert, held through the sweeps (5347) and the shake (936), restored by the last event with run_n_frames(10) (550) -- holds 0,0,5347,936,0,0,0, masks 0,15,15,0,0,0,0,
+        RED P2 donation: XOR 15, its own sweeps (7130), no shake, restored -- holds 0,0,7130,550, masks 0,15,15,15,
+        RED P3 Codex: the XORs accumulate 4, 11, 15 over three held shakes; the text holds one tick; the getkey restores -- holds 936,0,936,0,936,0,0,0, masks 11,11,4,4,0,0,0,0,
+        RED Q5 after the shake the reward line and the restore; run_n_frames(10) still holds (M:WELL DONE!,E21,S:shrine-well-done,Q0,S:quake,M:Intelligence +1
+M6 the Codex negative is never restored (no getkey redraw) [native/core/src/ritual_fx.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  7 RED
+        RED N1.5 the screen shows XOR 4, then 11, then 15, then normal ( 4@5 11@940 15@1875)
+        RED N4.6 a pulse per shake: at 0, 936, 1872 ms
+        RED N4.8 it stands over the negative for the getkey's first idle pass (delay(1)), then the redraw restores: -1 ms
+        RED N5.2 the restore is the next getkey (0x0df8) starting: waiting from 2865 ms
+        RED N5.5 one key releases one section; the viewport stays normal
+        RED N5.8 the next key ends exactly that one getkey
+        RED N10.2 the unpaced Codex ceremony drains at once and leaves no pulse behind
+    a3_hf7_ritual_fx exit=1  5 RED
+        RED P3 Codex: the XORs accumulate 4, 11, 15 over three held shakes; the text holds one tick; the getkey restores -- holds 936,0,936,0,936,0,55,0, masks 4,4,11,11,15,15,15,15,
+        RED P3B and nothing is left active
+        RED P4 outside a rite a quake, a party change, a line and a getkey do nothing and hold nothing (the shard, the Word of Power and HF6 keep their behaviour)
+        RED Q12 then 0x0df8 takes over and the viewport is restored
+        RED Q13 one key = one getkey after the effect
+    a3_hf6_shrine_key_wait_runtime exit=1  2 RED
+        RED N3.2 each of the first eight keys releases one more section and stops at the next getkey (4 of 8)
+        RED N6.3 the paced transcript is byte-identical to the unpaced run's (same text, same order)
+M7 two Codex pulses instead of three [native/core/src/shrine.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  5 RED
+        RED N1.5 the screen shows XOR 4, then 11, then 15, then normal ( 4@5 11@940 0@1930)
+        RED N4.6 a pulse per shake: at 0, 936, 1872 ms
+        RED N4.7 "A STRANGE WIND..." prints after the third shake: 1875 ms (want 2808)
+        RED N4.8 it stands over the negative for the getkey's first idle pass (delay(1)), then the redraw restores: -1 ms
+        RED N5.2 the restore is the next getkey (0x0df8) starting: waiting from 1930 ms
+M8 the pulses do not accumulate (each replaces the last) [native/core/src/ritual_fx.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  4 RED
+        RED N1.5 the screen shows XOR 4, then 11, then 15, then normal ( 4@5 15@940 4@1875 0@2865)
+        RED N4.6 a pulse per shake: at 0, 936, 1872 ms
+        RED N4.8 it stands over the negative for the getkey's first idle pass (delay(1)), then the redraw restores: -1 ms
+        RED N5.2 the restore is the next getkey (0x0df8) starting: waiting from 2865 ms
+    a3_hf7_ritual_fx exit=1  3 RED
+        RED P3 Codex: the XORs accumulate 4, 11, 15 over three held shakes; the text holds one tick; the getkey restores -- holds 936,0,936,0,936,0,55,0, masks 4,4,15,15,4,4,4,0,
+        RED Q10 the pulses accumulate on the shakes' clock: 15 after the third
+        RED Q11 the text prints over the negative and holds one tick
+M9 the sweep hold is half its length [native/core/src/ritual_fx.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  4 RED
+        RED N4.2 it is restored after the two sweep loops and the shake: 3610 ms (want 6283)
+        RED N6.1 the shake (0x0c88) starts when the sweeps end: 2675 ms (want 5347)
+        RED N4.3 "Intelligence +1" prints after the shake, as the restore frame arrives: 3610 ms
+        RED N4.4 the turn is held through run_n_frames(10) after the restore: free at 4160 ms
+    a3_hf7_ritual_fx exit=1  2 RED
+        RED P1 WELL DONE: XOR 15 at the invert, held through the sweeps (5347) and the shake (936), restored by the last event with run_n_frames(10) (550) -- holds 0,0,2673,936,0,0,550, masks 0,15,15,15,15,15
+        RED Q3 one ms before the sweeps end nothing moves
+M10 the shakes do not block [native/core/src/ritual_fx.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  13 RED
+        RED N4.2 it is restored after the two sweep loops and the shake: 5350 ms (want 6283)
+        RED N4.3 "Intelligence +1" prints after the shake, as the restore frame arrives: 5350 ms
+        RED N4.4 the turn is held through run_n_frames(10) after the restore: free at 5900 ms
+        RED N1.5 the screen shows XOR 4, then 11, then 15, then normal ( 15@5 0@55)
+        RED N4.6 a pulse per shake: at 0, 936, 1872 ms
+        RED N4.7 "A STRANGE WIND..." prints after the third shake: 5 ms (want 2808)
+        RED N4.8 it stands over the negative for the getkey's first idle pass (delay(1)), then the redraw restores: -1 ms
+        RED N5.2 the restore is the next getkey (0x0df8) starting: waiting from 105 ms
+        RED N5.6 seven inputs inside the pulses release nothing: 0x0df8 still waits
+        RED N5.7 and they are consumed: no command, no movement, no second Codex, nothing typed
+        RED N5.8 the next key ends exactly that one getkey
+        RED N8.2 the closed menu shows the negative again, the rite resumes (shake, reward) and ends normal (0 -> 0)
+    a3_hf7_ritual_fx exit=1  8 RED
+        RED P1 WELL DONE: XOR 15 at the invert, held through the sweeps (5347) and the shake (936), restored by the last event with run_n_frames(10) (550) -- holds 0,0,5347,0,0,0,550, masks 0,15,15,15,15,15,0
+        RED P3 Codex: the XORs accumulate 4, 11, 15 over three held shakes; the text holds one tick; the getkey restores -- holds 0,0,0,0,0,0,55,0, masks 4,4,11,11,15,15,15,0,
+        RED Q4 at 5347 ms the shake is released and holds in turn
+        RED Q5 after the shake the reward line and the restore; run_n_frames(10) still holds (M:WELL DONE!,E21,S:shrine-well-done,Q0,S:quake,M:Intelligence +1
+        RED Q8 the key releases the first pulse and its shake, and the effect holds
+        RED Q9 two more keys inside the shake release nothing
+        RED Q10 the pulses accumulate on the shakes' clock: 15 after the third
+        RED Q11 the text prints over the negative and holds one tick
+M11 no run_n_frames(10) after the restore [native/core/src/ritual_fx.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  1 RED
+        RED N4.4 the turn is held through run_n_frames(10) after the restore: free at 6285 ms
+    a3_hf7_ritual_fx exit=1  3 RED
+        RED P1 WELL DONE: XOR 15 at the invert, held through the sweeps (5347) and the shake (936), restored by the last event with run_n_frames(10) (550) -- holds 0,0,5347,936,0,0,0, masks 0,15,15,15,15,15,0
+        RED P2 donation: XOR 15, its own sweeps (7130), no shake, restored -- holds 0,0,7130,0, masks 0,15,15,0,
+        RED Q5 after the shake the reward line and the restore; run_n_frames(10) still holds (M:WELL DONE!,E21,S:shrine-well-done,Q0,S:quake,M:Intelligence +1
+M12 no getkey idle tick: the text and the restore share a frame [native/core/src/ritual_fx.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  1 RED
+        RED N4.8 it stands over the negative for the getkey's first idle pass (delay(1)), then the redraw restores: 2810 ms
+    a3_hf7_ritual_fx exit=1  2 RED
+        RED P3 Codex: the XORs accumulate 4, 11, 15 over three held shakes; the text holds one tick; the getkey restores -- holds 936,0,936,0,936,0,0,0, masks 4,4,11,11,15,15,15,0,
+        RED Q11 the text prints over the negative and holds one tick
+M13 chained effects drift (each hold restarts at the noticing frame) [native/core/src/dialogue_pacer.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  2 RED
+        RED N4.7 "A STRANGE WIND..." prints after the third shake: 2820 ms (want 2808)
+        RED N4.8 it stands over the negative for the getkey's first idle pass (delay(1)), then the redraw restores: 2875 ms
+M14 the effect hold is not wired on the device [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  25 RED
+        RED N7.2 the first frame shows "WELL DONE!" but not yet "Intelligence +1" (printed at 0x0cfc, after the sweeps)
+        RED N1.1 the first frame after the Enter shows the viewport XORed with 15 (0x0c41; mode 0 at 87%)
+        RED N4.1 the screen goes negative once and returns once ( 0@5)
+        RED N4.2 it is restored after the two sweep loops and the shake: -1 ms (want 6283)
+        RED N6.1 the shake (0x0c88) starts when the sweeps end: 5 ms (want 5347)
+        RED N4.3 "Intelligence +1" prints after the shake, as the restore frame arrives: 5 ms
+        RED N4.4 the turn is held through run_n_frames(10) after the restore: free at 105 ms
+        RED N2.1 all four quarters of the map viewport are XORed with 15 (0 of 4)
+        RED N1.4 the donation inverts the viewport at once (0x0bcd;  0@5)
+        RED N4.5 and restores it after its two sweep loops (no shake): -1 ms (want 7130)
+        RED N1.5 the screen shows XOR 4, then 11, then 15, then normal ( 0@5)
+        RED N4.6 a pulse per shake: at 0, 936, 1872 ms
+M15 the Codex pulses before the page's getkey (0x0d9f) [native/core/src/shrine.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  2 RED
+        RED N5.0 the Codex, three keys: the page is up and 0x0d9f waits
+        RED N9.2 the continued game is drawn normal and the ceremony is gone (mode 4)
+    a3_hf6_shrine_key_wait_runtime exit=1  3 RED
+        RED N3.2 each of the first eight keys releases one more section and stops at the next getkey (5 of 8)
+        RED N3.3 the ninth key ends the last getkey (0x0e5b), with nothing left to show
+        RED N6.2 the ceremony's quakes (0x0dbd-0x0dee) land with the key that ends the page's getkey, not before
+M16 the WELL DONE XOR after the shake instead of before it [native/core/src/shrine.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  8 RED
+        RED N1.1 the first frame after the Enter shows the viewport XORed with 15 (0x0c41; mode 0 at 87%)
+        RED N4.1 the screen goes negative once and returns once ( 0@5)
+        RED N4.2 it is restored after the two sweep loops and the shake: -1 ms (want 6283)
+        RED N4.3 "Intelligence +1" prints after the shake, as the restore frame arrives: 5350 ms
+        RED N4.4 the turn is held through run_n_frames(10) after the restore: free at 5900 ms
+        RED N2.1 all four quarters of the map viewport are XORed with 15 (0 of 4)
+        RED N8.2 the closed menu shows the negative again, the rite resumes (shake, reward) and ends normal (0 -> 0)
+        RED N9F.1 a failed load leaves the rite running; it completes and restores
+M17 a key ends an effect (input leaks through) [native/core/src/dialogue_pacer.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  2 RED
+        RED N5.6 seven inputs inside the pulses release nothing: 0x0df8 still waits
+        RED N5.9 a command key, a step and a 'y' inside the sweeps start nothing and cut nothing
+    a3_hf7_ritual_fx exit=1  6 RED
+        RED Q2 a key inside the effect is swallowed: taken, nothing released
+        RED Q3 one ms before the sweeps end nothing moves
+        RED Q4 at 5347 ms the shake is released and holds in turn
+        RED Q5 after the shake the reward line and the restore; run_n_frames(10) still holds (M:WELL DONE!,E21,S:shrine-well-done,Q0,S:quake,M:Intelligence +1
+        RED Q9 two more keys inside the shake release nothing
+        RED Q11 the text prints over the negative and holds one tick
+M18 one key cuts the effect AND the getkey behind it [native/core/src/dialogue_pacer.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  2 RED
+        RED N5.6 seven inputs inside the pulses release nothing: 0x0df8 still waits
+        RED N5.9 a command key, a step and a 'y' inside the sweeps start nothing and cut nothing
+    a3_hf7_ritual_fx exit=1  6 RED
+        RED Q2 a key inside the effect is swallowed: taken, nothing released
+        RED Q3 one ms before the sweeps end nothing moves
+        RED Q4 at 5347 ms the shake is released and holds in turn
+        RED Q5 after the shake the reward line and the restore; run_n_frames(10) still holds (M:WELL DONE!,E21,S:shrine-well-done,Q0,S:quake,M:Intelligence +1
+        RED Q9 two more keys inside the shake release nothing
+        RED Q11 the text prints over the negative and holds one tick
+M19 the effect wears the getkey cue (awaiting_key during an Effect) [native/core/include/openu5/dialogue_pacer.h]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  2 RED
+        RED N5.2 the restore is the next getkey (0x0df8) starting: waiting from 105 ms
+        RED N5.3 no key-wait inside the effect; the getkey after it wears its cue ("Enter: continue")
+    a3_hf6_shrine_key_wait_runtime exit=1  1 RED
+        RED N10.1 "WELL DONE!" and its rewards arrive at once (0x0c18-0x0d1a has no getkey)
+M20 a load / Return to Title leaves the negative on screen [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  2 RED
+        RED N9.1 the loaded game is drawn normal; the rest of the rite never plays (mode 15)
+        RED N9.2 the continued game is drawn normal and the ceremony is gone (mode 11)
+M21 the unpaced harness holds effects too [native/core/src/dialogue_pacer.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  1 RED
+        RED N10.1 the unpaced harness (the reference's automation rule) drains WELL DONE at once and ends normal
+    a3_hf7_ritual_fx exit=1  1 RED
+        RED Q14 unpaced (pause 0): nothing is held, the stream drains and ends normal
+    a3_hf6_shrine_key_wait_runtime exit=1  1 RED
+        RED N6.3 the paced transcript is byte-identical to the unpaced run's (same text, same order)
+M22 the donation site emits no RitualInvert [native/core/src/shrine.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  2 RED
+        RED N1.4 the donation inverts the viewport at once (0x0bcd;  0@5)
+        RED N4.5 and restores it after its two sweep loops (no shake): -1 ms (want 7130)
+M23 the WELL DONE site emits no RitualInvert [native/core/src/shrine.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  8 RED
+        RED N1.1 the first frame after the Enter shows the viewport XORed with 15 (0x0c41; mode 0 at 87%)
+        RED N4.1 the screen goes negative once and returns once ( 0@5)
+        RED N4.2 it is restored after the two sweep loops and the shake: -1 ms (want 6283)
+        RED N4.3 "Intelligence +1" prints after the shake, as the restore frame arrives: 5350 ms
+        RED N4.4 the turn is held through run_n_frames(10) after the restore: free at 5350 ms
+        RED N2.1 all four quarters of the map viewport are XORed with 15 (0 of 4)
+        RED N8.2 the closed menu shows the negative again, the rite resumes (shake, reward) and ends normal (0 -> 0)
+        RED N9F.1 a failed load leaves the rite running; it completes and restores
+M24 the Codex quakes carry no pulse [native/core/src/shrine.cpp]: KILLED
+    a3_hf7_ritual_fx_runtime exit=1  9 RED
+        RED N1.5 the screen shows XOR 4, then 11, then 15, then normal ( 0@5)
+        RED N4.6 a pulse per shake: at 0, 936, 1872 ms
+        RED N4.7 "A STRANGE WIND..." prints after the third shake: 5 ms (want 2808)
+        RED N4.8 it stands over the negative for the getkey's first idle pass (delay(1)), then the redraw restores: -1 ms
+        RED N5.2 the restore is the next getkey (0x0df8) starting: waiting from 105 ms
+        RED N5.6 seven inputs inside the pulses release nothing: 0x0df8 still waits
+        RED N5.7 and they are consumed: no command, no movement, no second Codex, nothing typed
+        RED N5.8 the next key ends exactly that one getkey
+        RED N9.2 the continued game is drawn normal and the ceremony is gone (mode 0)
+
+restored: build exit=0; a3_hf7_ritual_fx_runtime exit=0, a3_hf7_ritual_fx exit=0, a3_hf6_shrine_key_wait_runtime exit=0, a3_hf6_shrine_key_wait_pacer exit=0, a3_hf5_dialogue_pacing_runtime exit=0, a3_hf5_dialogue_pacer exit=0
+mutations: 24, killed: 24, survived: 0, invalid: 0

@@ -271,3 +271,37 @@ en las once; hasta A3-HF6 el dispositivo sólo las consumía dentro de la escena
 Blackthorn. Desde A3-HF6 cada marcador es una espera de tecla del `DialoguePacer` de A3-HF5
 (`paced_event_pause`), idéntica al KeyWait `0x8F` de TALK — `native/targets/tdeck/ALPHA3_AUDIO.md`
 §32, H-183 / D-40. La rama WELL DONE sigue sin espera (§1 ⚠️).
+
+## 9. ADENDA A3-HF7 (28-09-2026, port nativo T-Deck) — el negativo del rito y las tres ráfagas del Códice, cableados en el dispositivo
+
+**Re-derivación independiente** (`re/tools/dis16.py`, base `0xE1E0`) de los tres tramos, con el
+mismo resultado que §2, §6 y `well-done-trueno-orden-premio.md` §0, y dos precisiones:
+
+| tramo | secuencia (CAST2) | restaura |
+|---|---|---|
+| donación | `0x0bbc` set_color([0x13b0]) · `0x0bcd` rect XOR · `0x0bd0`-`0x0c0f` 2×460 tonos a2=`0xc8` · `0x0c14 jmp 0xd16` | `0x0d1a` run_n_frames(10) |
+| WELL DONE | `0x0c29` print · `0x0c34`/`0x0c41` XOR · `0x0c44`-`0x0c83` 2×460 tonos a2=`0x96` · `0x0c88` sacudida · `0x0c8b`-`0x0d11` karma/atributos + prints | `0x0d1a` run_n_frames(10) |
+| Códice | tras la tecla `0x0d9f`, si los ocho: `0x0dac` XOR [0x13ae] · `0x0dc0` sacudida · `0x0dc3` XOR [0x13b0] · `0x0dd7` sacudida · `0x0dda` XOR [0x13ae] · `0x0dee` sacudida · `0x0df1` print «A STRANGE WIND…» | la tecla `0x0df8`: su primera vuelta ociosa (`0x1b38` delay(1), `0x269a` redibujo) |
+
+- **La sacudida no redibuja.** `0x3072` mueve las bandas del viewport en pantalla
+  (`0x71ca`/`0x7200`/`0x0ace`) y no llama a `0x5910`; por eso los tres XOR del Códice se
+  ACUMULAN: 4, 4^15 = 11, 11^4 = 15. Lo que queda tras la tercera sacudida es el negativo
+  pleno, y lo quita el redibujo de la espera `0x0df8` (el Códice está en la superficie,
+  location 0 < 0x21, así que `0x266c` sí redibuja).
+- **Los registros de color:** `INTRO.OVL 0x09f4 mov [0x13ae],4` y `0x09fa mov [0x13b0],0xf`
+  (rama EGA/Tandy, `0x09e0`-`0x09ec`). El control en vivo del WELL DONE (§6.2 de
+  `ceremonia-de-conjuro-cast2-0000.md`: máscara 15 medida) corrobora el bloque entero.
+  ⚠ Queda ABIERTA la hipótesis «`13ae = 0`» de esa misma nota (el curandero de SHOPPES.OVL
+  sólo enseña máscara 15); su objeción (b) —que el stub `0x67e0` de SHOPPES no sea
+  `set_color`— no alcanza a CAST2, cuyo `0x2890 → 0x0a70` sí lo es. El port nativo usa
+  4/15/4; si un testigo del Códice probase otra cosa, el cambio es una tabla
+  (`kCodexPulseMasks`).
+
+**Estado nativo (A3-HF7, H-184 / D-41).** `openu5/ritual_fx.h` modela el efecto (máscara XOR
+del viewport y cuánto bloquea cada evento) y el `DialoguePacer` de A3-HF5 gana un estado
+`Effect`: temporizado, **sin salida por tecla** (la tecla se traga). Las tres sacudidas del
+Códice llevan su registro de color en el `note` del `Quake` (fuera de lo que fija
+`quest_parity`, que serializa sólo tipo y texto). La referencia TS no cablea el bracket del
+Códice (#305/#317) e imprime «Strength +1» nada más invertir; el binario lo imprime tras
+barridos y sacudida (`0x0c9c` > `0x0c88`) y el nativo sigue al binario.
+`native/targets/tdeck/ALPHA3_AUDIO.md` §33.

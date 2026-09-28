@@ -338,7 +338,14 @@ void test_codex_ceremony() {
         const auto before = r.since_mark();
         if (k == 3) quake_early = r.rt->transient_probe_for_test().quake;
         r.key(k % 2 ? 'e' : 'y'); // command letters: must start nothing
-        if (k == 3) quake_on_time = r.rt->transient_probe_for_test().quake;
+        if (k == 3) {
+            quake_on_time = r.rt->transient_probe_for_test().quake;
+            // A3-HF7 (H-184): CAST2 prints "A STRANGE WIND..." (0x0df1) only
+            // after the three bracketed shakes (0x0dc0/0x0dd7/0x0dee) and the
+            // getkey's first idle pass; a key inside them is swallowed. This
+            // expectation read the section in the key's own frame (HF6).
+            r.run_ms(3 * kQuakeDurationMs + 2 * int64_t(kSceneTickMs));
+        }
         const auto after = r.since_mark();
         const bool grew = after.size() > before.size();
         const bool right = !sections[k] || after.find(sections[k], before.size() > 4 ? before.size() - 4 : 0) != std::string::npos;

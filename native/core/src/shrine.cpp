@@ -1,14 +1,15 @@
 #include "openu5/shrine.h"
+#include "openu5/ritual_fx.h"
 #include <cstdio>
 #include <string>
 namespace openu5 {
 namespace {
-void event(EventSink sink, GameEventKind kind, const char *text = nullptr) {
-    GameEvent e; e.kind=kind; e.text=text; if (sink.emit) sink.emit(sink.context,e);
+void event(EventSink sink, GameEventKind kind, const char *text = nullptr, int32_t note = 0) {
+    GameEvent e; e.kind=kind; e.text=text; e.note=note; if (sink.emit) sink.emit(sink.context,e);
 }
 struct Delivery {
     CommandContext &c; ActionResult result;
-    void emit(GameEventKind kind,const char *text=nullptr) { ++result.event_count; event(c.events,kind,text); }
+    void emit(GameEventKind kind,const char *text=nullptr,int32_t note=0) { ++result.event_count; event(c.events,kind,text,note); }
     void message(const char *text) { emit(GameEventKind::Message,text); }
     void wait() { emit(GameEventKind::ShrineKeyWait); }
     void sound(const char *id) { emit(GameEventKind::Sfx,id); }
@@ -137,7 +138,9 @@ ActionResult execute_shrine(CommandContext &c,ShrineInput input) {
     const auto page=std::string("\"")+record(20+lesson.virtue)+"\"\n\n"; d.message(page.c_str());
     d.emit(GameEventKind::PartyChanged); d.wait();
     if (lesson.ceremony) {
-        for (unsigned i=0;i<3;++i) { d.emit(GameEventKind::Quake); d.sound("quake"); }
+        // H-184: each shake is bracketed by an XOR of the viewport (CAST2
+        // 0x0dbd/0x0dd4/0x0deb); the note carries its colour register.
+        for (unsigned i=0;i<3;++i) { d.emit(GameEventKind::Quake,nullptr,kCodexPulseMasks[i]); d.sound("quake"); }
         d.message(record(40)); d.wait(); d.message("Thou dost read:\n\n");
         for (int32_t i=41;i<45;++i) { d.message(record(i)); d.wait(); }
     }

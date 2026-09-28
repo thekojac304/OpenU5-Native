@@ -1,0 +1,207 @@
+GREEN N1.0 the rite of Honesty with its Quest done
+    screen masks: 15@5 0@6285
+GREEN N7.1 karma +3, INT +1 and the Quest bit are committed at the Enter (the core is unchanged)
+GREEN N7.2 the first frame shows "WELL DONE!" but not yet "Intelligence +1" (printed at 0x0cfc, after the sweeps)
+GREEN N1.1 the first frame after the Enter shows the viewport XORed with 15 (0x0c41; mode 15 at 87%)
+GREEN N4.1 the screen goes negative once and returns once ( 15@5 0@6285)
+GREEN N4.2 it is restored after the two sweep loops and the shake: 6285 ms (want 6283)
+GREEN N6.1 the shake (0x0c88) starts when the sweeps end: 5350 ms (want 5347)
+GREEN N6.2 the whole shake plays inside the negative
+GREEN N4.3 "Intelligence +1" prints after the shake, as the restore frame arrives: 6285 ms
+GREEN N4.4 the turn is held through run_n_frames(10) after the restore: free at 6835 ms
+GREEN N3.1 5 s later the viewport is the normal picture (mode 0) and no effect is pending
+GREEN N3.2 each line shown exactly once
+GREEN N3.3 the next input is an ordinary command again
+GREEN N2.1 all four quarters of the map viewport are XORed with 15 (4 of 4)
+GREEN N2.2 the party and status panels are not inverted (mode 0)
+GREEN N2.3 the device's sky and wind strips are not inverted (modes 0, 0)
+GREEN N2.4 the area below the viewport is not inverted (mode 0)
+GREEN N1.2 an already visited shrine
+GREEN N1.3 "How many cycles?"
+    screen masks: 15@5 0@7130
+GREEN N7.3 the gold is taken at the Enter and ALAKAZAM is on the first frame
+GREEN N1.4 the donation inverts the viewport at once (0x0bcd;  15@5 0@7130)
+GREEN N4.5 and restores it after its two sweep loops (no shake): 7130 ms (want 7130)
+GREEN N6.3 the donation has no shake
+GREEN N3.4 the viewport is normal afterwards
+GREEN N5.0 the Codex, three keys: the page is up and 0x0d9f waits
+GREEN N5.1 while 0x0d9f waits (10 s) the viewport is normal: the pulses follow that getkey
+    screen masks: 4@5 11@940 15@1875 0@2865
+GREEN N1.5 the screen shows XOR 4, then 11, then 15, then normal ( 4@5 11@940 15@1875 0@2865)
+GREEN N4.6 a pulse per shake: at 0, 936, 1872 ms
+GREEN N4.7 "A STRANGE WIND..." prints after the third shake: 2810 ms (want 2808)
+GREEN N4.8 it stands over the negative for the getkey's first idle pass (delay(1)), then the redraw restores: 2865 ms
+GREEN N6.4 the three shakes run back to back from the key, each under its own XOR
+GREEN N5.2 the restore is the next getkey (0x0df8) starting: waiting from 2865 ms
+GREEN N5.3 no key-wait inside the effect; the getkey after it wears its cue ("Enter: continue")
+GREEN N5.4 0x0df8 holds: "Thou dost read:" is not shown
+GREEN N5.5 one key releases one section; the viewport stays normal
+GREEN N5.6 seven inputs inside the pulses release nothing: 0x0df8 still waits
+GREEN N5.7 and they are consumed: no command, no movement, no second Codex, nothing typed
+GREEN N5.8 the next key ends exactly that one getkey
+GREEN N5.9 a command key, a step and a 'y' inside the sweeps start nothing and cut nothing
+GREEN N5.10 after the effect the next input is play again
+GREEN N8.1 nothing is released behind the menu (no shake, no reward line)
+GREEN N8.2 the closed menu shows the negative again, the rite resumes (shake, reward) and ends normal (15 -> 0)
+GREEN N9.1 the loaded game is drawn normal; the rest of the rite never plays (mode 0)
+GREEN N9F.1 a failed load leaves the rite running; it completes and restores
+GREEN N9.2 the continued game is drawn normal and the ceremony is gone (mode 0)
+GREEN N10.1 the unpaced harness (the reference's automation rule) drains WELL DONE at once and ends normal
+GREEN N10.2 the unpaced Codex ceremony drains at once and leaves no pulse behind
+GREEN N10.3 the ordained rite (0x0a9b) has no effect: its getkey waits over the normal viewport
+A3-HF7 ritual effects: 48 checks, 0 failures
+GREEN N1.0 (E)nter the shrine of Honesty, Visit, virtue, mantra -- the mantra's Enter handled
+GREEN N1.1 the first getkey holds: 10 s after the Enter only "...a Quest is ordained!" is shown (page 0, return 0)
+GREEN N1.2 no timeout, and the handheld shows the key-wait cue ("Enter: continue")
+GREEN N1.3 the Quest bit is already set (CAST2 0x0a88 writes it before the print and the first getkey)
+GREEN N2.1 one key releases exactly one section and stops at the second getkey
+GREEN N2.2 the key is consumed: no command routed, nothing typed, no prompt re-opened (routed +0)
+GREEN N2.3 a trackball step ends the second wait and moves nothing
+GREEN N2.4 each section shown exactly once
+GREEN N2.5 after the last wait the next input is an ordinary command again (a step west is routed)
+GREEN N2.6 the rite again
+GREEN N2.7 Mic ends one wait, consumed
+GREEN N3.0 (E)nter the Codex
+GREEN N3.1 the first getkey (0x0d2b) holds for 10 s: only "...lies before thee..." is shown
+GREEN N6.1 the core's Codex state is complete at the Enter (presentation-only pacing)
+GREEN N3.2 each of the first eight keys releases one more section and stops at the next getkey (8 of 8)
+GREEN N3.3 the ninth key ends the last getkey (0x0e5b), with nothing left to show
+GREEN N5.1 the nine keys ('y'/'e' on the Codex tile) started nothing: no command, no second Codex, no prompt
+GREEN N6.2 the ceremony's quakes (0x0dbd-0x0dee) land with the key that ends the page's getkey, not before
+GREEN N6.3 the paced transcript is byte-identical to the unpaced run's (same text, same order)
+GREEN N6.4 the whole ceremony fits the pacer's queue (no collapse)
+GREEN N3B.0 the Codex
+GREEN N3B.1 two keys release two sections and the third getkey still holds
+GREEN N4.0 the rite of Compassion
+GREEN N4.1 the mantra's Enter closed the text entry and did not itself end the first getkey
+GREEN N4.2 a letter and an Enter end the two getkeys; neither became text or opened a prompt
+GREEN N4.3 the next (E)nter on the altar asks "Visit?" as before
+GREEN N7.0 the Codex (no ceremony: four getkeys)
+GREEN N7.1 nothing is released behind the menu; closing it leaves the getkey waiting
+GREEN N7.2 after the menu one key releases one section, as before
+GREEN N8.0 the Codex
+GREEN N8.1 the rest of the reading never reaches the loaded game
+GREEN N8.2 the next input is an ordinary command
+GREEN N8F.0 the Codex
+GREEN N8F.1 a load that fails leaves the getkey waiting
+GREEN N8F.2 and the reading completes, one key per getkey (four without the ceremony)
+GREEN N9.0 the rite
+GREEN N9.1 Return to Title, then Continue: the old rite's getkey and its text are gone, input is play
+GREEN N9.2 after the reading's last getkey the cue is gone and the next input steps off the Codex
+GREEN N10.0 the rite with the Quest done
+GREEN N10.1 "WELL DONE!" and its rewards arrive at once (0x0c18-0x0d1a has no getkey)
+GREEN N10.2 an already visited shrine asks "How many cycles?" at once
+GREEN N10.3 a wrong mantra is answered at once
+GREEN N10.4 the unpaced harness (the reference's automation rule) drains the Codex synchronously
+GREEN N10.5 inside a Blackthorn scene the getkey is the scene pacer's: one Enter releases it
+GREEN N11.0 the Codex
+GREEN N11.1 while the first getkey holds, the next section is not on the screen
+GREEN N11.2 frames at a getkey draw no transcript row (0)
+GREEN N11.3 each release draws transcript rows and never clears the screen (3/3, full clears 0)
+A3-HF6 shrine key waits: 48 checks, 0 failures
+GREEN N1.0 (T)alk reaches Chuckles in Lord British's castle and arms "Your interest?"
+GREEN N1.1 before the first Pause expires only the first section is shown (2 rows, want 2: the verse and the Pause's blank row)
+GREEN N1.2 the second verse lands one Pause (28 x 55 ms) later: t=1544
+GREEN N1.3 each later section one more Pause on: 3086 / 4630 / 6173
+GREEN N1.4 all nine rows, in the corpus order, none lost or doubled
+GREEN N1.5 the question prompt is armed once the routine is out, the conversation still live
+GREEN N1.6 one routed command for the whole routine
+GREEN N1.7 the unpaused answer that follows is immediate
+GREEN N1C.0 Chuckles
+GREEN N1C.1 the key at t=341 ends the Pause at once (rows 2 -> 4)
+GREEN N1C.2 the key is consumed: no command routed, nothing typed into the prompt (routed +0, input 0)
+GREEN N1C.3 the next Pause runs a full 28 ticks from the key: t=1881
+GREEN N1C.4 the routine completes in order
+GREEN N1C.5 Chuckles again
+GREEN N1C.6 Mic during a Pause ends the pause only: no EndConversation, the routine and its question follow (rows 4, routed +0)
+GREEN N1K.0 Chuckles
+GREEN N1K.1 a KeyWait holds: after 10 s only the first section (2 rows)
+GREEN N1K.2 the handheld shows the same key-wait cue the Blackthorn scene uses ("Enter: continue")
+GREEN N1K.3 one key releases exactly one section (4 rows)
+GREEN N1K.4 the key is consumed (no command, nothing typed)
+GREEN N1K.5 four keys of any kind release the whole speech and re-arm "Your interest?"
+GREEN N1K.6 the trackball press advanced the speech and moved nothing
+GREEN N2.0 Blackthorn is in his castle at noon
+GREEN N2.1 the description's Pause holds "Greetings" for one Pause (48 -> 1586)
+GREEN N2.2 "I beg to differ!" at once, then one Pause per section: 5 / 1543 / 3084
+GREEN N2.3 the core ends the conversation (and calls the guards) at once; the screen returns to the map only after the last line
+GREEN N9.0 Blackthorn, label 0
+GREEN N9.1 while the speech is paused the approach is still pending, no conversation opened
+GREEN N9.2 once the last line is out the approach runs (his description at t=3084, after the fate line at 3084)
+GREEN N3.0 Chuckles
+GREEN N3.1 the rest of the routine never reaches the loaded game (1 verses shown)
+GREEN N3.2 the loaded game is back on the map
+GREEN N3.3 the next keys are ordinary commands again (routed 2, x 15)
+GREEN N4.0 Chuckles
+GREEN N4.1 a load that fails leaves the routine running to its end, in order
+GREEN N4.2 on its own cadence
+GREEN N5.0 Chuckles
+GREEN N5.1 nothing is released behind the menu (2 -> 2 rows over 3 s)
+GREEN N5.2 after the menu closes the routine completes, in order
+GREEN N6.0 Chuckles
+GREEN N6.1 an answer with no pause opcode arrives in the same frame, prompt re-armed
+GREEN N6.2 the goodbye is immediate and returns to the map
+GREEN N6.3 "Funny, no response!" is immediate
+GREEN N7.0 Chuckles
+GREEN N7.1 with a zero cadence the routine drains in the same frame (the reference's automation rule)
+GREEN N8.0 Chuckles
+GREEN N8.1 each Pause release that only adds text redraws exactly the rows it changed (3 of 4 releases exact)
+GREEN N8.1b the release that re-arms the prompt skips no changed row (10 changed, 18 drawn)
+GREEN N8.2 the 1396 frames between releases draw no transcript row
+GREEN N8.3 the page ends with the whole routine, scrolled in order (the repeated verse three times, the blank rows kept)
+A3-HF5 dialogue pacing: 50 checks, 0 failures
+GREEN P0 the sweep windows: 2 x 460 x 0x96 = 138,000 and 2 x 460 x 0xc8 = 184,000 samples (5,347 / 7,130 ms)
+GREEN P1 WELL DONE: XOR 15 at the invert, held through the sweeps (5347) and the shake (936), restored by the last event with run_n_frames(10) (550) -- holds 0,0,5347,936,0,0,550, masks 0,15,15,15,15,15,0,
+GREEN P1B and nothing is left active
+GREEN P2 donation: XOR 15, its own sweeps (7130), no shake, restored -- holds 0,0,7130,550, masks 0,15,15,0,
+GREEN P3 Codex: the XORs accumulate 4, 11, 15 over three held shakes; the text holds one tick; the getkey restores -- holds 936,0,936,0,936,0,55,0, masks 4,4,11,11,15,15,15,0,
+GREEN P3B and nothing is left active
+GREEN P4 outside a rite a quake, a party change, a line and a getkey do nothing and hold nothing (the shard, the Word of Power and HF6 keep their behaviour)
+GREEN P5 clear() (a load) leaves no mask and no pending restore
+GREEN Q1 WELL DONE from idle: the sweep cue is delivered and holds the rest (M:WELL DONE!,E21,S:shrine-well-done,)
+GREEN Q2 a key inside the effect is swallowed: taken, nothing released
+GREEN Q3 one ms before the sweeps end nothing moves
+GREEN Q4 at 5347 ms the shake is released and holds in turn
+GREEN Q5 after the shake the reward line and the restore; run_n_frames(10) still holds (M:WELL DONE!,E21,S:shrine-well-done,Q0,S:quake,M:Intelligence +1
+GREEN Q6 then the pacer is idle
+GREEN Q7 the ceremony waits behind the page's getkey with the viewport normal
+GREEN Q8 the key releases the first pulse and its shake, and the effect holds
+GREEN Q9 two more keys inside the shake release nothing
+GREEN Q10 the pulses accumulate on the shakes' clock: 15 after the third
+GREEN Q11 the text prints over the negative and holds one tick
+GREEN Q12 then 0x0df8 takes over and the viewport is restored
+GREEN Q13 one key = one getkey after the effect
+GREEN Q14 unpaced (pause 0): nothing is held, the stream drains and ends normal
+GREEN Q15 a queue too small collapses in order and still ends normal (M:WELL DONE!,E21,S:shrine-well-done,Q0,S:quake,M:Intelligence +1
+A3-HF7 ritual effect model: 23 checks, 0 failures
+GREEN U1 idle: the text before the marker passes, the marker is delivered in its place and holds for a key (M:ordained,W,)
+GREEN U2 no clock ends it (pumped a thousand seconds on)
+GREEN U3 one key releases exactly one section and stops at the queued marker (M:ordained,W,M:page,W,)
+GREEN U4 the next key releases the rest and the pacer is idle
+GREEN U5 a key with nothing held is not the pacer's
+GREEN U6 a trailing marker holds with an empty queue
+GREEN U7 and one key ends it
+GREEN U8 the quake after the second marker waits with its section
+GREEN U9 and lands, in order, with the key that ends it
+GREEN U10 the unpaced cadence (the reference's automation rule) takes no marker
+GREEN U11 a TLK Pause still holds on its clock
+GREEN U12 at its end the queued marker is released and holds for a key (L:verse,W,)
+GREEN U13 one key releases the rest
+GREEN U14 cancel (a successful load) drops the wait and its section
+GREEN U15 only the marker is a Key pause; dialogue_event_pause (TLK lines only) is unchanged
+A3-HF6 shrine key-wait pacer: 15 checks, 0 failures
+GREEN P0 the Pause is run_n_frames(28): TALK 0x0fae cmp si,0x1c, 55 ms ticks -> 1540 ms
+GREEN P1 idle: an unpaused line, a message, combat text and a prompt all pass straight through (the caller forwards)
+GREEN P2 the paused line itself goes out at once, the pause starts there, and everything after it queues (L:|2@17/9, queued 5)
+GREEN P3 not a millisecond early; at 28 ticks it releases up to the next paused line and re-arms from there (L:|2@17/9 ; L:Bounce! |0@17/9 ; L:|2@17/9)
+GREEN P4 the tail comes out whole and in order, the prompt and the trailing message behind the last line
+GREEN P5 a KeyWait holds through ten minutes of clock; each key releases one section; an idle pacer refuses a key (L:Welcome. |1@17/9 ; L:To the castle! |1@17/9 ; L:That's ME!|0@17/9)
+GREEN P6 a borrowed payload it cannot copy releases everything queued first and is handed back to the caller
+GREEN P7 a full step ring or text arena releases the queue in order and hands the overflowing event back
+GREEN P8 cancel(): the queued tail is never shown and the pacer is idle again
+GREEN P9 with a 0 ms cadence nothing is ever taken
+GREEN P10 every queued kind is a copy: text, rune flag, effect, effect message, handoff, end, a plain event (L:first|2@17/9 ; L:survives|0R@17/9 ; G:0:kept ; E:1/100 ; M:Thou hast 100 gold! ; H:3 ; END ; G:6:alarm)
+GREEN P11 a second paced turn waits behind the first and keeps its own pause
+GREEN P12 200 paced turns through a 256-byte arena: never a collapse
+GREEN P13 only a Line output carries a pause
+A3-HF5 dialogue pacer: 14 checks, 0 failures

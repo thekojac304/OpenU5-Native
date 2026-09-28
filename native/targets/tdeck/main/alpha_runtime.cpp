@@ -303,6 +303,9 @@ void AlphaRuntime::bind_scene_pacers(bool paced){
     // automation.
     dialogue_pacer_.attach({dialogue_pacer_steps_,kDialoguePacerSteps,dialogue_pacer_text_,kDialoguePacerTextBytes});
     dialogue_pacer_.set_pause_ms(paced?openu5::kTalkPauseMs:0);
+    // A3-HF7 (H-184). The rite's busy loops hold the turn as Effects; the
+    // unpaced harness (pause 0) holds nothing, like every other pause.
+    dialogue_pacer_.set_effect_hold({this,ritual_hold_ms});
 }
 
 // A3-HF5. The single binder for the TLK registry, so a host test that attaches
@@ -385,7 +388,7 @@ void AlphaRuntime::consume_event(const openu5::GameEvent&e){
         const auto collapsed=dialogue_pacer_.collapsed();
         if(dialogue_pacer_.offer(e,uint32_t(esp_timer_get_time()/1000),{this,release_dialogue_event})){
             if(!was_holding)ESP_LOGI(kTag,"DIALOGUE_PAUSE begin=%s pause_ms=%lu",
-                                     dialogue_pacer_.awaiting_key()?"key":"timed",(unsigned long)dialogue_pacer_.pause_ms());
+                                     dialogue_pacer_.awaiting_key()?"key":dialogue_pacer_.in_effect()?"effect":"timed",(unsigned long)dialogue_pacer_.pause_ms());
             dirty_=true;dirty_reason_="dialogue-pause";
             return;
         }
@@ -396,6 +399,7 @@ void AlphaRuntime::consume_event(const openu5::GameEvent&e){
 }
 
 void AlphaRuntime::release_dialogue_event(void *p,const openu5::GameEvent&e){static_cast<AlphaRuntime*>(p)->route_event(e);}
+uint32_t AlphaRuntime::ritual_hold_ms(void *p,const openu5::GameEvent&e){return static_cast<AlphaRuntime*>(p)->ritual_fx_.hold_after_ms(e);}
 
 // A3-HF5. Releases a Timed pause whose 28 ticks are up. A turn that ends in
 // the pacer may have left an NPC's approach waiting behind it (the drain
@@ -495,6 +499,13 @@ void AlphaRuntime::route_event(const openu5::GameEvent&e){
                      int(narrative_pacer_.scene()),unsigned(narrative_pacer_.queued_steps()));
         dirty_=true;dirty_reason_="narrative-scene";
         return;
+    }
+    // A3-HF7 (H-184). The rite's XORs of the viewport and the redraws that
+    // undo them, at the instant the event is presented (the pacer has
+    // already asked how long this event holds).
+    if(ritual_fx_.present(e)){
+        dirty_=true;dirty_reason_="ritual-fx";
+        ESP_LOGI(kTag,"RITUAL_FX kind=%d mask=%u pulses=%u",int(e.kind),unsigned(ritual_fx_.mask()),unsigned(ritual_fx_.pulses()));
     }
     present_audio(e);
     ui_->consume(e);
@@ -1701,8 +1712,10 @@ bool AlphaRuntime::handle_input_event(const RawInputEvent&raw){service_combat();
         }
         const auto state=dialogue_pacer_.state();
         dialogue_pacer_.advance_key(uint32_t(esp_timer_get_time()/1000),{this,release_dialogue_event});
-        ESP_LOGI(kTag,"DIALOGUE_PAUSE_INPUT action=%s effect=%s-ended state=%d gameplay_command=none",
-                 action_name(action.kind),state==openu5::DialoguePacerState::Key?"key-wait":"pause",int(dialogue_pacer_.state()));
+        // A3-HF7: a rite effect is a busy loop in 1988; its key is swallowed.
+        ESP_LOGI(kTag,"DIALOGUE_PAUSE_INPUT action=%s effect=%s state=%d gameplay_command=none",
+                 action_name(action.kind),state==openu5::DialoguePacerState::Key?"key-wait-ended":
+                 state==openu5::DialoguePacerState::Effect?"ritual-effect-swallowed":"pause-ended",int(dialogue_pacer_.state()));
         if(!dialogue_pacer_.holding())drain_pending_npc_initiation();
         dirty_=true;dirty_reason_="dialogue-pause";
         return true;
@@ -2527,10 +2540,13 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
             report.viewport_crc32=openu5::recompute_viewport_crc32(viewport_,openu5::kViewportPixelCount);
         }
     }
-    if(e==ESP_OK&&(magic_inverted||camp_scene_inverted_)&&!debug_mode){
+    // A3-HF7 (H-184): the rite's negative and the Codex's pulses are the same
+    // palette-index XOR of the viewport rect, with their own mask.
+    const uint8_t viewport_xor=uint8_t(((magic_inverted||camp_scene_inverted_)?15U:0U)^ritual_fx_.mask());
+    if(e==ESP_OK&&viewport_xor&&!debug_mode){
         for(size_t p=0;p<openu5::kViewportPixelCount;++p)
-            viewport_[p]=magic_xor_palette_pixel(viewport_[p],tile_cache_.palette);
-        report.viewport_crc32^=0xa5c35a3cU;
+            viewport_[p]=magic_xor_palette_pixel(viewport_[p],tile_cache_.palette,viewport_xor);
+        report.viewport_crc32^=0xa5c35a3cU^(uint32_t(viewport_xor^15U)<<24);
     }
     if(e==ESP_OK&&quake_offset_px>0&&!debug_mode){
         openu5::shift_viewport_vertically(viewport_,quake_offset_px);
@@ -2623,6 +2639,8 @@ void AlphaRuntime::synchronize_loaded_world(){
     // A3-HF5. The rest of a conversation's paused turn belongs to the game
     // being replaced: none of it is shown over the loaded one.
     dialogue_pacer_.cancel();
+    // A3-HF7 (H-184). Nor does the rite's negative survive it.
+    ritual_fx_.clear();
     // A3-01. Sound is presentation too: a load drops the old world's queued
     // effects. Nothing here reads or writes game state.
     audio_.flush_for_load();

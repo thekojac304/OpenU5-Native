@@ -78,8 +78,10 @@ inline void format_ready_row(char *out,size_t capacity,const char *name,
     else std::snprintf(out,capacity,"%s",name);
 }
 
-inline uint16_t magic_xor_palette_pixel(uint16_t pixel,const uint16_t *palette) {
-    for(int color=0;color<16;++color)if(pixel==palette[color])return palette[color^15];
+// The EGA driver's XOR write mode on a palette index (c -> c ^ mask); 15 is the
+// full negative. A3-HF7: the Codex's pulses XOR with 4 and 15 too.
+inline uint16_t magic_xor_palette_pixel(uint16_t pixel,const uint16_t *palette,uint8_t mask=15) {
+    for(int color=0;color<16;++color)if(pixel==palette[color])return palette[color^(mask&15)];
     return pixel;
 }
 
