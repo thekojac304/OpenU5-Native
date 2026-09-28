@@ -1,0 +1,246 @@
+# A3-HF6 mutation validation (2026-09-27 23:56)
+
+S1 the marker is no pause (HEAD behaviour) [native/core/src/dialogue_pacer.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  19 RED
+        RED N1.1 the first getkey holds: 10 s after the Enter only "...a Quest is ordained!" is shown (page 1, return 1)
+        RED N1.2 no timeout, and the handheld shows the key-wait cue ("")
+        RED N2.1 one key releases exactly one section and stops at the second getkey
+        RED N2.5 after the last wait the next input is an ordinary command again (a step west is routed)
+        RED N2.7 Mic ends one wait, consumed
+        RED N3.1 the first getkey (0x0d2b) holds for 10 s: only "...lies before thee..." is shown
+        RED N3.2 each of the first eight keys releases one more section and stops at the next getkey (0 of 8)
+        RED N5.1 the nine keys ('y'/'e' on the Codex tile) started nothing: no command, no second Codex, no prompt
+        RED N6.2 the ceremony's quakes (0x0dbd-0x0dee) land with the key that ends the page's getkey, not before
+        RED N6.3 the paced transcript is byte-identical to the unpaced run's (same text, same order)
+        RED N3B.1 two keys release two sections and the third getkey still holds
+        RED N4.1 the mantra's Enter closed the text entry and did not itself end the first getkey
+    a3_hf6_shrine_key_wait_pacer exit=1  8 RED
+        RED U1 idle: the text before the marker passes, the marker is delivered in its place and holds for a key (M:ordained,W,M:page,W,M:return,)
+        RED U2 no clock ends it (pumped a thousand seconds on)
+        RED U3 one key releases exactly one section and stops at the queued marker (M:ordained,W,M:page,W,M:return,)
+        RED U6 a trailing marker holds with an empty queue
+        RED U8 the quake after the second marker waits with its section
+        RED U12 at its end the queued marker is released and holds for a key (L:verse,W,M:after,)
+        RED U14 cancel (a successful load) drops the wait and its section
+        RED U15 only the marker is a Key pause; dialogue_event_pause (TLK lines only) is unchanged
+S2 the wait is released as soon as it is taken [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  19 RED
+        RED N1.1 the first getkey holds: 10 s after the Enter only "...a Quest is ordained!" is shown (page 1, return 1)
+        RED N1.2 no timeout, and the handheld shows the key-wait cue ("")
+        RED N2.1 one key releases exactly one section and stops at the second getkey
+        RED N2.5 after the last wait the next input is an ordinary command again (a step west is routed)
+        RED N2.7 Mic ends one wait, consumed
+        RED N3.1 the first getkey (0x0d2b) holds for 10 s: only "...lies before thee..." is shown
+        RED N3.2 each of the first eight keys releases one more section and stops at the next getkey (0 of 8)
+        RED N5.1 the nine keys ('y'/'e' on the Codex tile) started nothing: no command, no second Codex, no prompt
+        RED N6.2 the ceremony's quakes (0x0dbd-0x0dee) land with the key that ends the page's getkey, not before
+        RED N6.3 the paced transcript is byte-identical to the unpaced run's (same text, same order)
+        RED N3B.1 two keys release two sections and the third getkey still holds
+        RED N4.1 the mantra's Enter closed the text entry and did not itself end the first getkey
+S3 the getkey times out like a TLK Pause (Timed) [native/core/src/dialogue_pacer.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  17 RED
+        RED N1.1 the first getkey holds: 10 s after the Enter only "...a Quest is ordained!" is shown (page 1, return 1)
+        RED N1.2 no timeout, and the handheld shows the key-wait cue ("")
+        RED N2.1 one key releases exactly one section and stops at the second getkey
+        RED N2.5 after the last wait the next input is an ordinary command again (a step west is routed)
+        RED N2.7 Mic ends one wait, consumed
+        RED N3.1 the first getkey (0x0d2b) holds for 10 s: only "...lies before thee..." is shown
+        RED N3.2 each of the first eight keys releases one more section and stops at the next getkey (0 of 8)
+        RED N3.3 the ninth key ends the last getkey (0x0e5b), with nothing left to show
+        RED N5.1 the nine keys ('y'/'e' on the Codex tile) started nothing: no command, no second Codex, no prompt
+        RED N6.2 the ceremony's quakes (0x0dbd-0x0dee) land with the key that ends the page's getkey, not before
+        RED N6.3 the paced transcript is byte-identical to the unpaced run's (same text, same order)
+        RED N3B.1 two keys release two sections and the third getkey still holds
+    a3_hf6_shrine_key_wait_pacer exit=1  6 RED
+        RED U1 idle: the text before the marker passes, the marker is delivered in its place and holds for a key (M:ordained,W,)
+        RED U2 no clock ends it (pumped a thousand seconds on)
+        RED U3 one key releases exactly one section and stops at the queued marker (M:ordained,W,M:page,W,M:return,)
+        RED U6 a trailing marker holds with an empty queue
+        RED U12 at its end the queued marker is released and holds for a key (L:verse,W,)
+        RED U15 only the marker is a Key pause; dialogue_event_pause (TLK lines only) is unchanged
+S4 every held pause times out on the clock [native/core/src/dialogue_pacer.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  11 RED
+        RED N1.1 the first getkey holds: 10 s after the Enter only "...a Quest is ordained!" is shown (page 1, return 1)
+        RED N1.2 no timeout, and the handheld shows the key-wait cue ("")
+        RED N2.1 one key releases exactly one section and stops at the second getkey
+        RED N2.5 after the last wait the next input is an ordinary command again (a step west is routed)
+        RED N3.1 the first getkey (0x0d2b) holds for 10 s: only "...lies before thee..." is shown
+        RED N3.2 each of the first eight keys releases one more section and stops at the next getkey (3 of 8)
+        RED N3.3 the ninth key ends the last getkey (0x0e5b), with nothing left to show
+        RED N5.1 the nine keys ('y'/'e' on the Codex tile) started nothing: no command, no second Codex, no prompt
+        RED N6.2 the ceremony's quakes (0x0dbd-0x0dee) land with the key that ends the page's getkey, not before
+        RED N6.3 the paced transcript is byte-identical to the unpaced run's (same text, same order)
+        RED N7.2 after the menu one key releases one section, as before
+    a3_hf6_shrine_key_wait_pacer exit=1  2 RED
+        RED U2 no clock ends it (pumped a thousand seconds on)
+        RED U3 one key releases exactly one section and stops at the queued marker (M:ordained,W,M:page,W,M:return,)
+    a3_hf5_dialogue_pacing_runtime exit=1  6 RED
+        RED N1K.1 a KeyWait holds: after 10 s only the first section (9 rows)
+        RED N1K.2 the handheld shows the same key-wait cue the Blackthorn scene uses ("")
+        RED N1K.3 one key releases exactly one section (9 rows)
+        RED N1K.4 the key is consumed (no command, nothing typed)
+        RED N1K.5 four keys of any kind release the whole speech and re-arm "Your interest?"
+        RED N1K.6 the trackball press advanced the speech and moved nothing
+    a3_hf5_dialogue_pacer exit=1  1 RED
+        RED P5 a KeyWait holds through ten minutes of clock; each key releases one section; an idle pacer refuses a key (L:Welcome. |1@17/9 ; L:To the castle! |1@17/9 ; L:That's ME!|0@17/9)
+S5 the key that ends a getkey also reaches the game [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  3 RED
+        RED N2.5 after the last wait the next input is an ordinary command again (a step west is routed)
+        RED N5.1 the nine keys ('y'/'e' on the Codex tile) started nothing: no command, no second Codex, no prompt
+        RED N6.3 the paced transcript is byte-identical to the unpaced run's (same text, same order)
+S6 a trackball step bypasses the hold (movement leaks) [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  3 RED
+        RED N2.3 a trackball step ends the second wait and moves nothing
+        RED N2.4 each section shown exactly once
+        RED N2.5 after the last wait the next input is an ordinary command again (a step west is routed)
+    a3_hf5_dialogue_pacing_runtime exit=1  1 RED
+        RED N1K.5 four keys of any kind release the whole speech and re-arm "Your interest?"
+S7 Mic bypasses the hold [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  1 RED
+        RED N2.7 Mic ends one wait, consumed
+    a3_hf5_dialogue_pacing_runtime exit=1  1 RED
+        RED N1C.6 Mic during a Pause ends the pause only: no EndConversation, the routine and its question follow (rows 2, routed +1)
+S8 the cue is not shown at a getkey [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  1 RED
+        RED N1.2 no timeout, and the handheld shows the key-wait cue ("")
+    a3_hf5_dialogue_pacing_runtime exit=1  1 RED
+        RED N1K.2 the handheld shows the same key-wait cue the Blackthorn scene uses ("")
+S9 a queued marker does not stop the release (one key skips waits) [native/core/src/dialogue_pacer.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  12 RED
+        RED N2.1 one key releases exactly one section and stops at the second getkey
+        RED N2.3 a trackball step ends the second wait and moves nothing
+        RED N2.5 after the last wait the next input is an ordinary command again (a step west is routed)
+        RED N2.7 Mic ends one wait, consumed
+        RED N3.2 each of the first eight keys releases one more section and stops at the next getkey (2 of 8)
+        RED N3.3 the ninth key ends the last getkey (0x0e5b), with nothing left to show
+        RED N5.1 the nine keys ('y'/'e' on the Codex tile) started nothing: no command, no second Codex, no prompt
+        RED N6.2 the ceremony's quakes (0x0dbd-0x0dee) land with the key that ends the page's getkey, not before
+        RED N6.3 the paced transcript is byte-identical to the unpaced run's (same text, same order)
+        RED N3B.1 two keys release two sections and the third getkey still holds
+        RED N7.2 after the menu one key releases one section, as before
+        RED N8F.2 and the reading completes, one key per getkey (four without the ceremony)
+    a3_hf6_shrine_key_wait_pacer exit=1  3 RED
+        RED U3 one key releases exactly one section and stops at the queued marker (M:ordained,W,M:page,W,M:return,)
+        RED U8 the quake after the second marker waits with its section
+        RED U12 at its end the queued marker is released and holds for a key (L:verse,W,M:after,)
+S10 a queued marker loses its pause [native/core/src/dialogue_pacer.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  12 RED
+        RED N2.1 one key releases exactly one section and stops at the second getkey
+        RED N2.3 a trackball step ends the second wait and moves nothing
+        RED N2.5 after the last wait the next input is an ordinary command again (a step west is routed)
+        RED N2.7 Mic ends one wait, consumed
+        RED N3.2 each of the first eight keys releases one more section and stops at the next getkey (2 of 8)
+        RED N3.3 the ninth key ends the last getkey (0x0e5b), with nothing left to show
+        RED N5.1 the nine keys ('y'/'e' on the Codex tile) started nothing: no command, no second Codex, no prompt
+        RED N6.2 the ceremony's quakes (0x0dbd-0x0dee) land with the key that ends the page's getkey, not before
+        RED N6.3 the paced transcript is byte-identical to the unpaced run's (same text, same order)
+        RED N3B.1 two keys release two sections and the third getkey still holds
+        RED N7.2 after the menu one key releases one section, as before
+        RED N8F.2 and the reading completes, one key per getkey (four without the ceremony)
+    a3_hf6_shrine_key_wait_pacer exit=1  3 RED
+        RED U3 one key releases exactly one section and stops at the queued marker (M:ordained,W,M:page,W,M:return,)
+        RED U8 the quake after the second marker waits with its section
+        RED U12 at its end the queued marker is released and holds for a key (L:verse,W,M:after,)
+S11 one key ends two getkeys [native/core/src/dialogue_pacer.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  12 RED
+        RED N2.1 one key releases exactly one section and stops at the second getkey
+        RED N2.3 a trackball step ends the second wait and moves nothing
+        RED N2.5 after the last wait the next input is an ordinary command again (a step west is routed)
+        RED N2.7 Mic ends one wait, consumed
+        RED N3.2 each of the first eight keys releases one more section and stops at the next getkey (4 of 8)
+        RED N3.3 the ninth key ends the last getkey (0x0e5b), with nothing left to show
+        RED N5.1 the nine keys ('y'/'e' on the Codex tile) started nothing: no command, no second Codex, no prompt
+        RED N6.2 the ceremony's quakes (0x0dbd-0x0dee) land with the key that ends the page's getkey, not before
+        RED N6.3 the paced transcript is byte-identical to the unpaced run's (same text, same order)
+        RED N3B.1 two keys release two sections and the third getkey still holds
+        RED N7.2 after the menu one key releases one section, as before
+        RED N8F.2 and the reading completes, one key per getkey (four without the ceremony)
+    a3_hf6_shrine_key_wait_pacer exit=1  2 RED
+        RED U3 one key releases exactly one section and stops at the queued marker (M:ordained,W,M:page,W,M:return,)
+        RED U8 the quake after the second marker waits with its section
+    a3_hf5_dialogue_pacing_runtime exit=1  1 RED
+        RED N1K.3 one key releases exactly one section (6 rows)
+    a3_hf5_dialogue_pacer exit=1  1 RED
+        RED P5 a KeyWait holds through ten minutes of clock; each key releases one section; an idle pacer refuses a key (L:Welcome. |1@17/9 ; L:To the castle! |1@17/9 ; L:That's ME!|0@17/9)
+S12 the last getkey (nothing queued) never ends [native/core/src/dialogue_pacer.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  3 RED
+        RED N3.3 the ninth key ends the last getkey (0x0e5b), with nothing left to show
+        RED N8F.2 and the reading completes, one key per getkey (four without the ceremony)
+        RED N9.2 after the reading's last getkey the cue is gone and the next input steps off the Codex
+    a3_hf6_shrine_key_wait_pacer exit=1  1 RED
+        RED U7 and one key ends it
+S13 the ceremony quakes jump the queue [native/core/src/dialogue_pacer.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  1 RED
+        RED N6.2 the ceremony's quakes (0x0dbd-0x0dee) land with the key that ends the page's getkey, not before
+    a3_hf6_shrine_key_wait_pacer exit=1  2 RED
+        RED U8 the quake after the second marker waits with its section
+        RED U9 and lands, in order, with the key that ends it
+S14 a successful load keeps the wait [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  3 RED
+        RED N8.1 the rest of the reading never reaches the loaded game
+        RED N8.2 the next input is an ordinary command
+        RED N9.1 Return to Title, then Continue: the old rite's getkey and its text are gone, input is play
+    a3_hf5_dialogue_pacing_runtime exit=1  3 RED
+        RED N3.1 the rest of the routine never reaches the loaded game (4 verses shown)
+        RED N3.2 the loaded game is back on the map
+        RED N3.3 the next keys are ordinary commands again (routed 0, x 15)
+S15 a failed load drops the wait [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  2 RED
+        RED N8F.1 a load that fails leaves the getkey waiting
+        RED N8F.2 and the reading completes, one key per getkey (four without the ceremony)
+    a3_hf5_dialogue_pacing_runtime exit=1  2 RED
+        RED N4.1 a load that fails leaves the routine running to its end, in order
+        RED N4.2 on its own cadence
+S16 opening the System Menu releases the getkey behind it [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  3 RED
+        RED N7.1 nothing is released behind the menu; closing it leaves the getkey waiting
+        RED N7.2 after the menu one key releases one section, as before
+        RED N9.1 Return to Title, then Continue: the old rite's getkey and its text are gone, input is play
+    a3_hf5_dialogue_pacing_runtime exit=1  1 RED
+        RED N5.1 nothing is released behind the menu (4 -> 4 rows over 3 s)
+S17 the Blackthorn scene loses its getkeys to this pacer [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  1 RED
+        RED N10.5 inside a Blackthorn scene the getkey is the scene pacer's: one Enter releases it
+S18 the unpaced harness pauses at markers [native/core/src/dialogue_pacer.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  1 RED
+        RED N10.4 the unpaced harness (the reference's automation rule) drains the Codex synchronously
+    a3_hf6_shrine_key_wait_pacer exit=1  1 RED
+        RED U10 the unpaced cadence (the reference's automation rule) takes no marker
+S19 the device shrine binder loses the Codex pages [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  7 RED
+        RED N3.0 (E)nter the Codex
+        RED N3B.0 the Codex
+        RED N7.0 the Codex (no ceremony: four getkeys)
+        RED N8.0 the Codex
+        RED N8F.0 the Codex
+        RED N10.4 the unpaced harness (the reference's automation rule) drains the Codex synchronously
+        RED N11.0 the Codex
+S20 ordained: the second getkey (0x0abc) is skipped [native/core/src/shrine.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  4 RED
+        RED N2.1 one key releases exactly one section and stops at the second getkey
+        RED N2.3 a trackball step ends the second wait and moves nothing
+        RED N2.5 after the last wait the next input is an ordinary command again (a step west is routed)
+        RED N2.7 Mic ends one wait, consumed
+S21 ceremony: the page getkeys (0x0e16..0x0e5b) are skipped [native/core/src/shrine.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  4 RED
+        RED N3.2 each of the first eight keys releases one more section and stops at the next getkey (7 of 8)
+        RED N3.3 the ninth key ends the last getkey (0x0e5b), with nothing left to show
+        RED N5.1 the nine keys ('y'/'e' on the Codex tile) started nothing: no command, no second Codex, no prompt
+        RED N6.3 the paced transcript is byte-identical to the unpaced run's (same text, same order)
+S22 Codex: the first getkey (0x0d2b) is skipped [native/core/src/shrine.cpp]: KILLED
+    a3_hf6_shrine_key_wait_runtime exit=1  14 RED
+        RED N3.1 the first getkey (0x0d2b) holds for 10 s: only "...lies before thee..." is shown
+        RED N3.2 each of the first eight keys releases one more section and stops at the next getkey (3 of 8)
+        RED N3.3 the ninth key ends the last getkey (0x0e5b), with nothing left to show
+        RED N5.1 the nine keys ('y'/'e' on the Codex tile) started nothing: no command, no second Codex, no prompt
+        RED N6.2 the ceremony's quakes (0x0dbd-0x0dee) land with the key that ends the page's getkey, not before
+        RED N6.3 the paced transcript is byte-identical to the unpaced run's (same text, same order)
+        RED N3B.1 two keys release two sections and the third getkey still holds
+        RED N7.1 nothing is released behind the menu; closing it leaves the getkey waiting
+        RED N7.2 after the menu one key releases one section, as before
+        RED N8.1 the rest of the reading never reaches the loaded game
+        RED N8F.1 a load that fails leaves the getkey waiting
+        RED N8F.2 and the reading completes, one key per getkey (four without the ceremony)
+
+restored: build exit=0; a3_hf6_shrine_key_wait_runtime exit=0, a3_hf6_shrine_key_wait_pacer exit=0, a3_hf5_dialogue_pacing_runtime exit=0, a3_hf5_dialogue_pacer exit=0
+mutations: 22, killed: 22, survived: 0, invalid: 0

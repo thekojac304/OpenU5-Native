@@ -44,6 +44,19 @@
 // (a borrowed payload other than the dialogue's own, or no room left)
 // releases everything already queued, in order, and is then forwarded by the
 // caller -- the text loses its cadence, never its content or order.
+//
+// A3-HF6 (H-183 / D-40). The shrine rite and the Codex wait on the same
+// primitive. CAST2.OVL (kernel calls through base 0xE1E0, not the thunk
+// table's 0xC29E: 0x448c -> 0x266c getkey, 0x29a6 -> 0x0b86 the XOR rect,
+// 0x3670 -> 0x1850 print) calls getkey_with_redraw at 0x0a9b / 0x0abc after
+// the altar ordains a Quest and at 0x0d2b 0x0d35 0x0d3f 0x0d9f (+ 0x0df8
+// 0x0e16 0x0e2d 0x0e44 0x0e5b in the ceremony) in the Codex handler 0x0d24,
+// with no flush, delay or timer around any of them: exactly the 0x8F
+// KeyWait. The core marks each with a bare GameEventKind::ShrineKeyWait, so
+// the pacer treats that event as a Key pause of its own (the marker has no
+// text: everything already shown stays, everything after it waits). A
+// Blackthorn capture scene's getkeys use the same event; the runtime never
+// offers them here while that scene's pacer owns the turn.
 namespace openu5 {
 
 /** TALK 0x0fae `cmp si,0x1c`: the Pause opcode's 28 ticks. [A] */
@@ -125,5 +138,7 @@ class DialoguePacer {
 
 /** Whether `e` is a dialogue line that carries a TLK pause (and which). */
 DialoguePause dialogue_event_pause(const GameEvent &e);
+/** dialogue_event_pause(), plus A3-HF6: a ShrineKeyWait is a Key pause. */
+DialoguePause paced_event_pause(const GameEvent &e);
 
 } // namespace openu5

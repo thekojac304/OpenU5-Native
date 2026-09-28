@@ -1999,6 +1999,49 @@ if(BUILD_TESTING)
   endif()
   add_test(NAME a3_hf5_dialogue_pacing_runtime COMMAND a3_hf5_dialogue_pacing_runtime
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+  # Alpha 3 A3-HF6 (H-183) -- the shrine rite's and the Codex's getkeys reach
+  # the screen: the REAL AlphaRuntime over the pack's shrine table and MISCMSG
+  # records, on the real Board + fake bus and the virtual clock.
+  add_executable(a3_hf6_shrine_key_wait_runtime
+    ../targets/tdeck/host_tests/a3_hf6_shrine_key_wait_runtime_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/board_shims/fake_tdeck_bus.cpp
+    ../targets/tdeck/main/tdeck_board.cpp
+    ../targets/tdeck/main/idle_service.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_audio.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(a3_hf6_shrine_key_wait_runtime PRIVATE openu5_core)
+  target_include_directories(a3_hf6_shrine_key_wait_runtime PRIVATE
+    ../targets/tdeck/host_tests/board_shims
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/host_tests
+    ../targets/tdeck/main)
+  target_compile_features(a3_hf6_shrine_key_wait_runtime PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(a3_hf6_shrine_key_wait_runtime PRIVATE /Gy)
+    target_link_options(a3_hf6_shrine_key_wait_runtime PRIVATE /OPT:REF)
+  else()
+    target_compile_options(a3_hf6_shrine_key_wait_runtime PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(a3_hf6_shrine_key_wait_runtime PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME a3_hf6_shrine_key_wait_runtime COMMAND a3_hf6_shrine_key_wait_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+  # A3-HF6 -- the ShrineKeyWait marker in the DialoguePacer, on its own.
+  add_executable(a3_hf6_shrine_key_wait_pacer tests/a3_hf6_shrine_key_wait_pacer_test.cpp)
+  target_link_libraries(a3_hf6_shrine_key_wait_pacer PRIVATE openu5_core)
+  add_test(NAME a3_hf6_shrine_key_wait_pacer COMMAND a3_hf6_shrine_key_wait_pacer)
   # A3-HF5 -- the DialoguePacer queue on its own (no pack, no runtime).
   add_executable(a3_hf5_dialogue_pacer tests/a3_hf5_dialogue_pacer_test.cpp)
   target_link_libraries(a3_hf5_dialogue_pacer PRIVATE openu5_core)

@@ -1,0 +1,17 @@
+GREEN U1 idle: the text before the marker passes, the marker is delivered in its place and holds for a key (M:ordained,W,)
+GREEN U2 no clock ends it (pumped a thousand seconds on)
+GREEN U3 one key releases exactly one section and stops at the queued marker (M:ordained,W,M:page,W,)
+GREEN U4 the next key releases the rest and the pacer is idle
+GREEN U5 a key with nothing held is not the pacer's
+GREEN U6 a trailing marker holds with an empty queue
+GREEN U7 and one key ends it
+GREEN U8 the quake after the second marker waits with its section
+GREEN U9 and lands, in order, with the key that ends it
+GREEN U10 the unpaced cadence (the reference's automation rule) takes no marker
+GREEN U11 a TLK Pause still holds on its clock
+GREEN U12 at its end the queued marker is released and holds for a key (L:verse,W,)
+GREEN U13 one key releases the rest
+GREEN U14 cancel (a successful load) drops the wait and its section
+GREEN U15 only the marker is a Key pause; dialogue_event_pause (TLK lines only) is unchanged
+
+A3-HF6 shrine key-wait pacer: 15 checks, 0 failures

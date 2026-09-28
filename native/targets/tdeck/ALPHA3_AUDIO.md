@@ -1,6 +1,13 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap, A3-05 audio finalization, A3-HF4 load transient reset, A3-HF5 dialogue pacing)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap, A3-05 audio finalization, A3-HF4 load transient reset, A3-HF5 dialogue pacing, A3-HF6 shrine key waits)
 
-**Status (A3-HF5, 2026-09-27): EVERY TLK CONVERSATION'S SCRIPT PAUSES NOW REACH THE SCREEN (D-66) — CHUCKLES' SONG AND BLACKTHORN'S SPEECH UNFOLD AS IN 1988; FIXED ON THE HOST; HARDWARE CHECK H-205 PENDING. H-203 AND H-204 ARE STILL PENDING.** §31:
+**Status (A3-HF6, 2026-09-27): THE SHRINE RITE AND THE CODEX WAIT FOR A KEY AGAIN (H-183 / D-40) — THE ELEVEN CAST2 GETKEYS ARE KEY HOLDS OF THE A3-HF5 QUEUE; FIXED ON THE HOST; HARDWARE CHECK H-206 PENDING. H-205 PASS (A3-HF5); H-203 AND H-204 KEEP THEIR STATUS.** §32:
+- **The defect:** after the mantra, the altar's three parts arrived in one frame, and the Codex's four (nine in the ceremony) likewise. The core marks each getkey with a `ShrineKeyWait`; outside a Blackthorn capture scene nothing on the device read it.
+- **The original:** CAST2 `0x0a9b`, `0x0abc` and `0x0d2b` … `0x0e5b` call `getkey_with_redraw 0x266c` through base `0xE1E0`, the TLK KeyWait's own primitive, with no flush, delay or timer around them. "WELL DONE!" has none.
+- **Fix:** `paced_event_pause()` makes the marker a Key pause of `DialoguePacer`. `consume_event()` leaves the marker to a mounted Blackthorn scene. Everything else (input, cue, load, menu) is HF5's.
+
+RED-first 19 / 48 → GREEN 48 / 48 on the real runtime and Board (plus 8 / 15 → 15 / 15 for the queue); 22 / 22 mutations killed; host suite **156 / 156**. Firmware +112 B, flash `.text` only.
+
+**Status as A3-HF5 wrote it (2026-09-27): EVERY TLK CONVERSATION'S SCRIPT PAUSES NOW REACH THE SCREEN (D-66) — CHUCKLES' SONG AND BLACKTHORN'S SPEECH UNFOLD AS IN 1988; FIXED ON THE HOST; HARDWARE CHECK H-205 PENDING. H-203 AND H-204 ARE STILL PENDING.** §31:
 - **The defect:** Chuckles' `ENTE` routine (9 rows) and Blackthorn's refusal (5 rows) landed in one frame. The core marked each TLK `Pause` / `KeyWait` on the line it follows (`DialogueOutput::pause`); nothing on the device ever read it. 116 of 135 scripts carry them (166 / 225).
 - **The original:** no typewriter. TALK prints a section at once; `0x83` Pause is `run_n_frames(28)` with a key exit (1,538 ms, the key consumed, the keyboard buffer flushed; TALK `0x0f92`), `0x8F` KeyWait is `getkey_with_redraw 0x266c` (any key, no timeout; TALK `0x1010`).
 - **Fix:** `openu5::DialoguePacer`, a presentation queue in `AlphaRuntime::consume_event()`: the paused line shows, the rest of the turn waits (28 × 55 ms, or a key), in order, nothing dropped; any key ends a pause and does nothing else; `Enter: continue` on a KeyWait; a successful load cancels it; the System Menu blocks it; an NPC approach waits for the last line. Combat and every unpaused line stay immediate.
@@ -4598,3 +4605,172 @@ The check is in `ALPHA2_HARDWARE_CHECKLIST.md`. The A3-HF5 image carries A3-05 a
 - Device: `native/targets/tdeck/main/alpha_runtime.{h,cpp}` (the pacer, its PSRAM storage, `consume_event()` → `route_event()`, `service_dialogue_pacer()`, the input rule, the overlay cue, the load cancel, the drain guard, `bind_dialogue_services()`); `native/targets/tdeck/CMakeLists.txt` (`PROJECT_VER`).
 - Tests and tools: new `native/targets/tdeck/host_tests/a3_hf5_dialogue_pacing_runtime_test.cpp`, `native/core/tests/a3_hf5_dialogue_pacer_test.cpp`, `native/core/tools/a3_hf5_{red_first,mutation_check}.py`; changed `native/core/CMakeLists.txt`, `host_tests/alpha_runtime_host_fixture.cpp` (the pacer's storage; the TLK corpus through the production binder).
 - Docs: this section and the status line; `ALPHA2_HARDWARE_CHECKLIST.md` (H-205); `ALPHA2_PRESERVATION_LEDGER.md` (D-66); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`.
+
+## 32. A3-HF6 — the shrine rite's and the Codex's key waits reach the screen (H-183 / D-40)
+
+A presentation hotfix on the A3-HF5 queue, queued since Batch 51. After the mantra, "The Altar speaks and a Quest is ordained!", the Codex lesson and "Return again when thy Quest is done!" arrived in one frame; the Codex's four pages (nine with the final ceremony) did the same.
+
+### 32.1 Baseline
+
+- `main` at `dd3b20fc` (tag `alpha3-hf5-dialogue-pacing` = `a8c2f676`, plus its post-commit evidence), clean tree. **H-205 PASS** on the T-Deck (the user's report, 2026-09-27). H-203 and H-204 have no recorded result here and keep their status.
+- Host suite **154 / 154**, serial, 134.60 s (`native/targets/tdeck/a3-hf6-baseline.log`, build dir `build-a3-hf6-base`).
+- Firmware `3.0.0-alpha3-dev-a3-hf5-debug`, 985,488 B (`0xf0990`), 63,088 B free.
+
+### 32.2 The native paths
+
+| Site (`shrine.cpp`) | When | Getkeys | What each one holds back |
+|---|---|---|---|
+| `execute_shrine(SubmitVisit)`, `ShrineMode::ShowMantra` | the mantra's Enter at a shrine not yet visited | 2 | the Codex lesson ("'Tis now thy sacred Quest…" + MISCMSG 12+v); then "Return again…" and the `shrine-ordained` cue |
+| `execute_shrine(Codex)` (`E` on tile 17, overworld 233,233) | a Quest in hand | 4 | "The book is open…"; "Upon the hallowed page…"; the page (MISCMSG 20+v); then nothing |
+| the same, final ceremony (all eight shrines visited) | the last Codex visit | +5 | three `Quake`s + MISCMSG 40; "Thou dost read:" + 41; 42; 43; 44; then nothing |
+
+There are seven `d.wait()` sites and eleven getkeys at run time. Each emits a bare `GameEventKind::ShrineKeyWait`, with no text and no payload.
+- **Prompts.** All the rite's prompts come BEFORE the waits: "Visit?" (Y/N), "Virtue?", "Mantra?" (text entry). No prompt follows a wait.
+- **State.** The Quest bit is set before the first print (`shrine_show_mantra`). The Codex marks the shrine visited (`shrine_codex_lesson`).
+- **No wait.** The donation ("How many cycles?"), "WELL DONE!" and "Thine thoughts are unfocused." paths have none.
+- **Blackthorn.** The same event kind carries the capture scene's getkeys (`blackthorn.cpp` `key_wait`). `BlackthornScenePacer` already consumes those while its scene is mounted.
+- **The defect.** Nothing else on the device read the marker: `UiSession::consume()` only gives it the Quest text channel. Every wait collapsed (the Batch 51 probe, `native/core/batch51-shrine-keywait-probe.log`). No scene pacer intercepted it.
+
+### 32.3 The original mechanism
+
+Read from the 1988 binary for this batch (`re/tools/dis16.py`).
+- **CAST2.OVL's kernel calls resolve through base `0xE1E0`**, not the `0xC29E` of `re/tools/thunks.py --bases` / `callers_banda.py`. Through `0xE1E0` these all land on function prologues: `0x448c → 0x266c` (getkey), `0x3670 → 0x1850` (print), `0x2890 → 0x0a70` (set_color), `0x29a6 → 0x0b86` (the XOR rect of `re/notes/shrine-rito-cadencia-negativo.md` §2) and `0x3072`. `0xC29E` puts the getkey call at kernel `0x072a`, mid-instruction. This is the same class of table error that A3-HF5 found for TALK (`0xBF80`).
+- **Census.** Every `E8` in CAST2, resolved through `0xE1E0`, gives **15 calls to `0x266c`**, the note's figure.
+  - Eleven are the rite: `0x0a9b` and `0x0abc` (the ordained branch of `shrine_visit`), and `0x0d2b`, `0x0d35`, `0x0d3f`, `0x0d9f`, `0x0df8`, `0x0e16`, `0x0e2d`, `0x0e44`, `0x0e5b` (the Codex handler `0x0d24`).
+  - The other four are not waits: `0x00f0`, `0x0347`, `0x0b6a` (the donation's digit loop) and `0x110b` (Quit & Save's Y/N loop).
+- **The primitive is the TALK KeyWait's, instruction for instruction.** `0x266c getkey_with_redraw` loops until a key arrives:
+  - `0x1b38` polls: it blinks the cursor, peeks with `int 16h`, reads with `int 21h ah=6`, and runs `delay(1)` when no key is waiting;
+  - `0x2032` upper-cases the key;
+  - while no key has arrived and `[0x5893]` is not a printable glyph, `0x5910` runs the compositor.
+  
+  Once a key arrives it applies the numpad translation for `1`–`9` when `[0x538a]` is set and returns the key. Any key ends it, the callers discard the key, and there is no timeout.
+- **Around the call sites.** In `0x0966`–`0x0e76` there is no keyboard flush (`0x1b16`), no `delay` (`0x20fa`) and no `run_n_frames` before or after any of the eleven. Each one is a bare `call 0x448c` between two `print`s. So:
+  - the text before a getkey is on the screen, and the next text waits;
+  - one key ends one getkey and is consumed;
+  - a buffered key (DOS typeahead) satisfies only the next getkey: one key per wait, never one key for several;
+  - the world does not tick (the main loop is not running), but the compositor keeps animating the map.
+- **Order around the waits.**
+  - The Quest bit (`or [0x58cc]`, `0x0a88`) is set before the first print and getkey, as native does.
+  - The avatar stands up (`0x0a93`–`0x0a98`) before the first getkey. This is Class C, handled by the reference's #277 exit script, and unchanged here.
+  - The Codex's visited bit is set by the scan at `0x0d42`, after its first three getkeys. Native sets it at the Enter (§32.7).
+- **"WELL DONE!"** (`0x0c18`–`0x0d1a`) has **no** getkey, as the reference already records: it prints, sweeps and returns. Native keeps it immediate (N10.1).
+- **Reference (TypeScript).** `ui/shrine-key-pacer.ts` (`ShrineKeyPacer`, #294) has the same semantics, and no divergence was found:
+  - at a `shrine-key-wait`, the dispatcher parks the rest of the turn until any key;
+  - under automation (`instant`) it parks nothing;
+  - `resetGame` cancels it.
+
+**Conclusion.** H-183 is exactly what the HF5 audit assumed: the same primitive, with no special behaviour around it.
+
+### 32.4 The fix: the marker is a Key pause of `DialoguePacer`
+
+This is Option A of the batch brief (reuse), because the marker needs nothing the queue lacks. Option B (extract a primitive) would move code without removing any. Option C (a dedicated shrine pacer) would duplicate the queue, its storage, its load cancel and its input rule for eleven getkeys.
+- **The rule.** `openu5::paced_event_pause()` (`dialogue_pacer.{h,cpp}`) is `dialogue_event_pause()` (TLK lines, unchanged) plus **`ShrineKeyWait` → `DialoguePause::Key`**.
+  - `offer()` uses it when the pacer is idle.
+  - `push()` records it on a queued plain event.
+  - `release()` stops at a queued `Event` step that carries a pause, exactly as it already stopped at a paused `Line`.
+  - The marker itself is still delivered in its place.
+- **The Blackthorn gate.** `AlphaRuntime::consume_event()` does **not** offer a `ShrineKeyWait` while `BlackthornScenePacer` is active (and this pacer is idle). The capture scene keeps its own getkeys exactly as before.
+- **Nothing else changes.** The input rule, the `Enter: continue` cue, the load cancel, the System Menu freeze, the NPC-approach drain and the PSRAM storage are HF5's, unchanged.
+- **Test seam (no behaviour change):** `AlphaRuntime::bind_shrine_services()`.
+  - It is the three shrine-service assignments that `initialize()` made inline, extracted so that the host fixture calls production's binder.
+  - The fixture had re-declared those hooks with a record lookup that always returned `nullptr`, so on the host the ordained branch and every Codex page were `InvalidContext` (the H-154 / H-155 rule).
+  - The fixture now copies the pack's MISCMSG records and shrine table first.
+
+### 32.5 Input, menus, load and lifecycle
+
+HF5's rules apply unchanged, now also at the eleven getkeys.
+- **Any key ends one getkey and does nothing else:** a letter, Enter, space, the trackball or **Mic**.
+  - No command is routed, no character is typed, no prompt opens and the avatar does not move.
+  - `E` on the Codex tile does not re-enter the Codex, and `Y` answers nothing.
+  - Transcript paging is the one exception. The device shortcuts (`Alt+S`, `Alt+L`, `Alt+M`, `Alt+D`, the mutes) keep their meaning.
+- **Cue:** `Enter: continue` on the status line, the one the TLK KeyWait and the capture scene use. In 1988 it is the blinking cursor of `0x1b38`.
+- **One key, one getkey.** Three presses handled between two frames release three sections (N3B). The Codex's last getkey (`0x0e5b`) has nothing after it and still waits for its key.
+- **Lifecycle:**
+  - **Successful load** (Alt+L, System Menu Load, title Continue, a New Journey): `synchronize_loaded_world()` drops the wait and the rest of the rite.
+  - **Failed load:** the wait stays, and later keys complete the reading.
+  - **System Menu:** nothing is released behind it; after it closes the getkey still waits.
+  - **Return to Title:** the hold stays, inert, until the title's Continue or New Journey replaces the world, which cancels it (N9.1).
+- **Save during a getkey** saves the core's already-final state (the Quest bit, the visited bit). The queue is presentation and is not saved. The original cannot save inside a getkey.
+- **Leaving the shrine.** The rite has no scene of its own on the device: after the last getkey the pacer is idle and the next input is play (N2.5, N9.2).
+
+### 32.6 What stays immediate
+
+- "WELL DONE!" and its attribute lines (no getkey in 1988), the donation prompt, "Thine thoughts are unfocused." and the shrine restore.
+- Every TLK line without a pause, combat text and world text.
+- The unpaced harness contract (`paced_scenes = false`) drains every marker synchronously, so no existing parity or runtime test sees a different stream.
+
+### 32.7 Declared divergences (presentation only)
+
+- **The Codex's visited bit** is set when the Enter is handled, because the core runs the rite synchronously, as every native command does. 1988 sets it after the Codex's third getkey.
+  - It is invisible on the screen.
+  - A save during those three getkeys records it one getkey early.
+  - This is the same class as HF5's "effects run before their text is shown".
+- **The ceremony's three quakes and their sound** are queued behind the page's getkey (`0x0d9f`) and play with the key that ends it, which is their 1988 place. The three XOR pulses around them belong to H-184 and are still absent.
+- **`shrine-ordained`** (the cue after "Return again…") now sounds after the second getkey, its place in the stream.
+
+### 32.8 Tests, RED / GREEN and mutations
+
+- **`a3_hf6_shrine_key_wait_runtime`** (new, 48 checks). It uses the real `AlphaRuntime` with raw keys; the pack's shrine table, MISCMSG records and overworld (Honesty 233,66; Compassion 128,92; Valour 36,229; the Codex 233,233); and the real `tdeck_board.cpp` over the fake ST7789, on the virtual clock.
+  - **N1** ordained: the first getkey holds for 10 s with the cue, and the Quest bit is already set.
+  - **N2** one key per section, consumed (no command, no text, no prompt, no step), for Mic and the trackball too; then play resumes.
+  - **N3** the ceremony: eight keys (`y` / `e` on the Codex) each release one section and stop at the next getkey; the ninth ends the last. **N3B** a three-key burst in one frame.
+  - **N4** the mantra's Enter does not end the first getkey, and the next letter and Enter become nothing.
+  - **N5** no second Codex, no answer.
+  - **N6** the core state is complete at the Enter; the quakes land with the fourth key; the transcript is byte-identical to the unpaced run's; nothing collapses.
+  - **N7** the System Menu. **N8 / N8F** successful and failed load. **N9** Return to Title + Continue, and the end of the reading.
+  - **N10** unchanged: WELL DONE, the donation, a wrong mantra, the unpaced harness and a mounted Blackthorn scene.
+  - **N11** the A3-04F row cache: during a getkey the next section is not on the screen and frames draw no transcript row; each release draws transcript rows and never clears the screen.
+- **`a3_hf6_shrine_key_wait_pacer`** (new, 15 checks): the marker on hand-built events. It covers the idle hold, that no clock ends it, one key per section, a trailing marker, a quake keeping its place, the unpaced contract, a marker queued behind a TLK Pause, cancel, and `dialogue_event_pause` unchanged.
+- **RED-first.** `native/core/tools/a3_hf6_red_first.py` builds both tests against HEAD's `alpha_runtime.cpp` and `dialogue_pacer.cpp`. Only two edits are applied so that the tests link: the binder extraction, and `paced_event_pause = dialogue_event_pause` (HEAD's rule).
+  - Runtime **19 / 48 RED**, pacer **8 / 15 RED**.
+  - Every control is GREEN on HEAD: WELL DONE, the donation, a wrong mantra, the unpaced drain, the Blackthorn scene, the core state, no collapse.
+  - After the change: **48 / 48** and **15 / 15** (`native/targets/tdeck/a3-hf6-red-first.log`).
+- **A harness fix found on the way.**
+  - The fixture never copied the pack's title art. `render()` offsets `intro_title` by the fire frame before the Board reads it.
+  - So the first real-Board host test to reach the title (N9) was handed a small non-null offset from `nullptr`, and segfaulted intermittently (never under gdb).
+  - The fixture now copies `intro_title` and `credits_panel`. The device always had them.
+- **Mutations.** `native/core/tools/a3_hf6_mutation_check.py`, 22 mutants, each run against both new tests and both HF5 tests: **22 / 22 killed, 0 invalid, 0 survivors, restored build GREEN** (`native/targets/tdeck/a3-hf6-mutation.log`).
+  - The defect: S1 the marker is no pause (HEAD), S2 released as soon as it is taken, S3 a Timed getkey, S4 every hold times out.
+  - Input: S5 the key also reaches the game, S6 movement bypasses the hold, S7 Mic bypasses it, S8 no cue.
+  - One key, one wait: S9 a queued marker does not stop the release, S10 a queued marker loses its pause, S11 one key ends two getkeys, S12 the last getkey never ends.
+  - Order: S13 the quakes jump the queue.
+  - Lifecycle: S14 a successful load keeps the wait, S15 a failed load drops it, S16 opening the System Menu releases it.
+  - Scope: S17 the Blackthorn scene loses its getkeys, S18 the unpaced harness pauses, S19 the device binder loses the Codex pages.
+  - Sites: S20 the ordained second getkey, S21 the ceremony's page getkeys, S22 the Codex's first getkey, each skipped in `shrine.cpp`.
+
+### 32.9 Regression
+
+Fresh build directory `native/core/build-a3-hf6-final`: **156 / 156, serial, 135.06 s**, with only the known w64devkit warning (`native/core/a3-hf6-{configure,build,ctest}.log`). That is A3-HF5's 154 plus the two new tests; no existing expectation changed.
+- **Why nothing else moved.** Every existing runtime test runs unpaced (`paced_scenes = false`), and there the pacer never takes a marker.
+- **The new fixture data.** The fixture now binds the pack's shrine table, MISCMSG records and title art whenever a test attaches the pack. No existing test's expectation moved with it.
+- **HF5's own tests pass unchanged** inside the suite and under every mutant's restore: `a3_hf5_dialogue_pacing_runtime` 50 / 50 and `a3_hf5_dialogue_pacer` 14 / 14.
+- **The focused set passes too:** `quest_parity` (it pins every `shrine-key-wait` of the core), `blackthorn_scene`, `batch45b` (the Blackthorn / shrine MISCMSG records), `batch51_scene_pacing`, `batch51_camp_pacing`, `a3_hf4_load_transient_runtime`, `batch27_alt_load`, `a3_04f_render_runtime`, `a3_04e_pacing_runtime` and `gameplay_parity`.
+
+### 32.10 Firmware
+
+Pre-commit build `native/targets/tdeck/build-a3-hf6` (`a3-hf6-firmware-{configure,build}.log`): ESP-IDF 6.1, `--no-ccache`, `ninja -j 4`, first attempt clean, **zero project warnings**.
+
+- **`0xf0a00` = 985,600 B, +112 B** against A3-HF5's 985,488 B; **62,976 B (6.0 %) free** in the 1 MiB app partition.
+- **Sections** against A3-HF5's post-commit image (`esp_idf_size --diff`, `a3-hf6-size-diff.log`; absolute figures in `a3-hf6-size.log`): only Flash `.text` moved, **+108 B** (667,354 B). The other sections are unchanged: `.rodata` 219,156 B, DIRAM `.data` 21,627 B, `.bss` 51,952 B, DIRAM `.text` 60,647 B and IRAM 16,384 B (full, as before).
+- **RAM.** Internal RAM is unchanged, and so is PSRAM: no new allocation. The markers ride HF5's 64-step queue and 4 KiB arena; the whole ceremony fits without a collapse (N6.4).
+- **Image guards GREEN:** `a3_04f_image_check.py`, `a3_04b_iram_check.py` and `a3_04a_hotpath_check.py` (`a3-hf6-{image,iram,hotpath}-check.log`). Nothing on the per-sample audio path changed.
+- Version `3.0.0-alpha3-dev-a3-hf6-debug`. **Not flashed.** Tag `alpha3-hf6-shrine-key-waits` names the post-commit image (built in a fresh directory, so it embeds the commit), with its path, size, SHA-256 and `Git`.
+
+### 32.11 Hardware check H-206 (the user's; about 8 minutes)
+
+The check is in `ALPHA2_HARDWARE_CHECKLIST.md`. The A3-HF6 image carries A3-05, A3-HF4 and A3-HF5 unchanged.
+
+### 32.12 Recorded, not changed
+
+- **`re/tools/thunks.py --bases` / `callers_banda.py` put CAST2.OVL at `0xC29E`**, but its kernel calls resolve through `0xE1E0` (§32.3). A by-band census through the tool misses every CAST2 caller. The tool is not changed here; it is queued as RE-tooling follow-up work (not a game defect), beside HF5's TALK entry.
+- **H-184 / D-41** (the ritual inversion, its holds, the Codex's XOR pulses), **H-185 / D-42** (the Refuge cadence and its karma getkey) and **H-186 / D-43** (the sacrifice burst) are unchanged. H-185's karma getkey is a Refuge beat on the narrative pacer, not a `ShrineKeyWait`, so it stays with H-185.
+- The Codex entry logs `DUNGEON_ENTER_REQUEST` on the serial line: the `E` key's instrumentation runs before the core decides that the tile is the Codex. Log noise only.
+
+### 32.13 Files
+
+- Core: `native/core/include/openu5/dialogue_pacer.h`, `src/dialogue_pacer.cpp` (`paced_event_pause`, the queued marker).
+- Device: `native/targets/tdeck/main/alpha_runtime.{h,cpp}` (the Blackthorn gate in `consume_event()`, `bind_shrine_services()`); `native/targets/tdeck/CMakeLists.txt` (`PROJECT_VER`).
+- Tests and tools:
+  - new `native/targets/tdeck/host_tests/a3_hf6_shrine_key_wait_runtime_test.cpp`, `native/core/tests/a3_hf6_shrine_key_wait_pacer_test.cpp`, `native/core/tools/a3_hf6_{red_first,mutation_check}.py`;
+  - changed `native/core/CMakeLists.txt`, `host_tests/alpha_runtime_host_fixture.cpp` (the shrine binder and data, the title art).
+- Docs: this section and the status line; `ALPHA2_HARDWARE_CHECKLIST.md` (H-183, H-205, H-206); `ALPHA2_PRESERVATION_LEDGER.md` (D-40); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`; `re/notes/shrine-rito-cadencia-negativo.md`.

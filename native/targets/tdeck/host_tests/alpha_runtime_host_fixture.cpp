@@ -113,6 +113,13 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
         // A3-04E: the sky strip's glyphs; the real Board (a3_04e_pacing_runtime)
         // refuses a world frame without them, the capture stub never read them.
         resources_.runes_font = pack->runes_font;
+        // A3-HF6: the title art. render() offsets intro_title by the fire
+        // frame before the Board reads it, so without the pack's art the real
+        // Board was handed a small non-null offset from nullptr the moment a
+        // host test reached the title (Return to Title) -- an intermittent
+        // segfault; the capture-stub harnesses never read the pointer.
+        resources_.intro_title = pack->intro_title;
+        resources_.credits_panel = pack->credits_panel;
         resources_.search_objects = pack->search_objects; resources_.search_count = pack->search_count;
         resources_.shard_spawns = pack->shard_spawns; resources_.shard_spawn_count = pack->shard_spawn_count;
         resources_.shop_data = pack->shop_data;
@@ -198,9 +205,18 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     resources_.dialogue_data_size = fixture.pack ? fixture.pack->dialogue_data_size : 0;
     bind_dialogue_services();
 
-    shrine_services_.data = &resources_.shrine_data;
-    shrine_services_.context = this;
-    shrine_services_.record = [](void *, int32_t) -> const char * { return nullptr; };
+    // A3-HF6: production's own binder. Until this batch the fixture re-declared
+    // the hooks with a record lookup that always failed, so the altar's
+    // "Quest is ordained" and every Codex page were InvalidContext on the host.
+    // With a pack attached the fixture now reads the real MISCMSG records and
+    // shrine table; without one both stay empty, exactly as before.
+    if (const auto *pack = fixture.pack) {
+        resources_.misc_text_offsets = pack->misc_text_offsets;
+        resources_.misc_text_records = pack->misc_text_records;
+        resources_.misc_text_record_count = pack->misc_text_record_count;
+        resources_.shrine_data = pack->shrine_data;
+    }
+    bind_shrine_services();
 
     // Batch 21A. The SAME combat storage initialize() carves out of PSRAM
     // (alpha_runtime.cpp: 32 overflow actors, 32 overflow loot piles, 32 arena

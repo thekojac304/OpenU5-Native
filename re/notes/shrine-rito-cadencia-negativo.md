@@ -242,3 +242,32 @@ dentro de la misma escena; ni estado ni RNG.
 lista de tokens del turno entero —para que quitar CUALQUIERA de las once desplace el array y
 la eche de menos por su sitio, no por el total— más los negativos con control positivo
 (WELL DONE, mantra equivocado, entrada vacía, donación) y el ciclo de vida del paceador.
+
+## 8. ADENDA A3-HF6 (27-09-2026, port nativo T-Deck) — las once esperas, re-derivadas y cableadas en el dispositivo
+
+**Re-derivación independiente** (`re/tools/dis16.py` sobre `original/u5/ultima5/CAST2.OVL` y
+`ULTIMA.EXE`): con base `0xE1E0` hay **15** `E8` que caen en `0x266c` — `0x00f0`, `0x0347`,
+`0x0a9b`, `0x0abc`, `0x0b6a`, `0x0d2b`, `0x0d35`, `0x0d3f`, `0x0d9f`, `0x0df8`, `0x0e16`,
+`0x0e2d`, `0x0e44`, `0x0e5b`, `0x110b` — exactamente el censo de §7 (2 + 9 del rito, 4
+ajenas). En el tramo `0x0966-0x0e76` no hay NINGUNA llamada a `0x1b16` (vaciado del buffer
+de teclado) ni a `0x20fa` (`delay`): cada espera es un `call 0x448c` pelado entre dos
+`print`. Consecuencia: una tecla por espera; una tecla en el buffer (typeahead) satisface
+sólo la SIGUIENTE espera, nunca varias.
+
+🔴 **Precisión sobre §0.** En el bucle
+de `0x266c`, `0x2683 call 0x2032` NO es el sondeo: `0x2032` es un `toupper` de 9
+instrucciones (`cmp 0x61`/`cmp 0x7a`/`sub 0x20`). El sondeo es `0x267f call 0x1b38`
+(`poll_key_blink_cursor`: parpadeo del cursor, `int 16h` + `int 21h ah=6` vía `0x0e0e` →
+`0x1d5e`, y `delay(1)` si no hay tecla), cuyo resultado va a `0x2032` por la pila. La
+conclusión de §0 no cambia: bloquea al llamador, la pantalla sigue animada.
+
+⚠️ **Herramientas.** `re/tools/thunks.py --bases` y `callers_banda.py` dan a CAST2 la base
+`0xC29E`; con ella `0x448c` cae en `0x072a`, a mitad de instrucción. La base buena es la de
+§0 (`0xE1E0`). Mismo tipo de error que A3-HF5 encontró para TALK (`0xBF80`, no `0xA290`).
+Las herramientas NO se cambian aquí.
+
+**Estado nativo.** El core (`native/core/src/shrine.cpp`) emite `GameEventKind::ShrineKeyWait`
+en las once; hasta A3-HF6 el dispositivo sólo las consumía dentro de la escena de captura de
+Blackthorn. Desde A3-HF6 cada marcador es una espera de tecla del `DialoguePacer` de A3-HF5
+(`paced_event_pause`), idéntica al KeyWait `0x8F` de TALK — `native/targets/tdeck/ALPHA3_AUDIO.md`
+§32, H-183 / D-40. La rama WELL DONE sigue sin espera (§1 ⚠️).

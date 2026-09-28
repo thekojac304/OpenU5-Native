@@ -8,7 +8,21 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 A3-HF5, 2026-09-27) — TLK conversations keep their script pauses; Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 A3-HF6, 2026-09-27) — the shrine rite and the Codex wait for a key again; Alpha 2 remains the released build; read this first
+>
+> **A3-HF6 is a presentation hotfix, not a release** (`ALPHA3_AUDIO.md` §32). **H-205 (A3-HF5) PASSED on the T-Deck** (the user's report). H-203 (A3-05) and H-204 (A3-HF4) keep their recorded status.
+> - **The defect (H-183 / D-40, queued since Batch 51).** After the mantra, "The Altar speaks and a Quest is ordained!", the Codex lesson and "Return again…" arrived in one frame. The Codex's four parts (nine in the final ceremony) did the same. The core marks each of the original's getkeys with `ShrineKeyWait`; outside a Blackthorn capture scene nothing on the device read the marker.
+> - **The original.** CAST2 calls `getkey_with_redraw 0x266c` (through base `0xE1E0`) at `0x0a9b` and `0x0abc` (the ordained branch) and at `0x0d2b` … `0x0e5b` (the Codex, nine in the ceremony). This is the TLK KeyWait's own primitive, with no flush, delay or timer around it: any key, discarded, no timeout. "WELL DONE!" has none.
+> - **Fix.** `paced_event_pause()` makes the marker a Key pause of the A3-HF5 `DialoguePacer`. `consume_event()` leaves the marker to a mounted Blackthorn scene. HF5's input rule, cue, load cancel and menu freeze apply unchanged. Test seam: `bind_shrine_services()`, so the host fixture reads the pack's real shrine records through production's binder.
+>
+> | | |
+> |---|---|
+> | Host suite | **156 / 156**, serial, 135.06 s. New: `a3_hf6_shrine_key_wait_runtime` 48 (**19 RED on HEAD**, every control GREEN) and `a3_hf6_shrine_key_wait_pacer` 15 (**8 RED on HEAD**). **22 / 22 mutations killed**, 0 invalid. No existing expectation changed. |
+> | Firmware | `3.0.0-alpha3-dev-a3-hf6-debug`. Pre-commit build 985,600 B (`0xf0a00`), **+112 B**, 62,976 B (6 %) free, zero warnings. Only Flash `.text` moved (+108 B); `.rodata`, `.data`, `.bss`, IRAM, internal RAM and PSRAM unchanged. Image guards GREEN. The image path, SHA-256 and `Git` are in tag `alpha3-hf6-shrine-key-waits`. **Not flashed.** |
+> | SD | **Unchanged.** Save format unchanged. |
+> | Next | **H-206** (about 8 minutes: the altar at Honesty, the Codex, the menu and a load; the ceremony optional). Then A3-04H, or the next scene-fidelity item (H-184, the ritual inversion, is the natural neighbour). |
+>
+> ### CURRENT STATE (Alpha 3 A3-HF5, 2026-09-27) — TLK conversations keep their script pauses — **superseded as the current state by A3-HF6 above; H-205 PASS (the user, 2026-09-27).**
 >
 > **A3-HF5 is a presentation hotfix, not a release** (`ALPHA3_AUDIO.md` §31). **H-203 (A3-05) and H-204 (A3-HF4) are still pending.**
 > - **The defect (D-66).** Chuckles' entertainment and Blackthorn's speech appeared all at once. Both are TLK conversations whose scripts carry the interpreter's `0x83` Pause and `0x8F` KeyWait; the core marked them on each line (`DialogueOutput::pause`) and nothing on the device read the mark. 116 of the 135 scripts are affected.
@@ -6352,7 +6366,7 @@ Every frame count in `blackthorn_scene.cpp` is the bytecode's literal **and** no
 | Blackthorn sacrifice explosion | **MISSING PRESENTATION BEAT + ORDERING WRONG — H-186/D-43, queued** |
 | Refuge | TOO FAST/SLOW — **scene-local**: Class-C 70 ms/unit + 900/260 ms floors vs exact 54.93 ms ticks; **MISSING ACKNOWLEDGEMENT** (karma getkey `0x0b3e`); sweeps/fizzles unheld — **H-185/D-42, queued** (script is `quest_parity`-pinned: fix belongs in the reference first); NEEDS PHYSICAL TEST |
 | TrollSneak | **CORRECT** (A); hardware PASS (H-137); unchanged control for the shared pacer |
-| Shrine ordained / Codex | **MISSING ACKNOWLEDGEMENT — H-183/D-40, queued** (probe: `native/core/batch51-shrine-keywait-probe.log` — after `ShrineKeyWait` the device session stays in Exploration and the post-wait text is already in the transcript) |
+| Shrine ordained / Codex | **MISSING ACKNOWLEDGEMENT — H-183/D-40, queued** (probe: `native/core/batch51-shrine-keywait-probe.log` — after `ShrineKeyWait` the device session stays in Exploration and the post-wait text is already in the transcript) → **A3-HF6: host fixed** (the eleven getkeys are Key holds of `DialoguePacer`; `ALPHA3_AUDIO.md` §32; device check H-206) |
 | Shrine donation / WELL DONE / Codex pulses | **MISSING PRESENTATION BEAT + MISSING DWELL — H-184/D-41, queued** (`RitualInvert` has no device consumer; 184,000 / 138,000-sample holds and the Codex XOR pulses absent) |
 | Shard / Flame | CORRECT order (Batch 25 chains the burst after the quake window); siren EXACT TIMING UNKNOWN (B); NEEDS PHYSICAL TEST |
 | Word of Power / harpsichord quake | EXACT TIMING UNKNOWN (C, witness 0.94 s); device shake async, following text not deferred (≤0.94 s ordering deviation) — not fixed |
@@ -8323,3 +8337,44 @@ A presentation hotfix of the dialogue path. The full write-up is [`ALPHA3_AUDIO.
 - H-183 / D-40 (shrine and Codex key waits) and H-184 – H-186; D-54 (the endgame; the reuse assessment is §31.10).
 - H-203 and H-204: still the user's.
 - A3-04H (storage import count, PSRAM routing).
+
+## Alpha 3 A3-HF6 — the shrine rite and the Codex wait for a key again (H-183)
+
+A presentation hotfix on the A3-HF5 queue. The full write-up is [`ALPHA3_AUDIO.md`](ALPHA3_AUDIO.md) §32; this section records the classification on its own axis. No gameplay rule, save format or audio path changed.
+
+### 1. Items and classification
+
+| # | Item | Class | Change |
+|---|---|---|---|
+| 1 | The altar's "ordained" rite: the lesson and "Return again…" arrived with "…a Quest is ordained!" (CAST2 `0x0a9b`, `0x0abc`) | **native defect (missing acknowledgement, pre-existing since the shrine port)**, H-183 / ledger D-40 | fixed |
+| 2 | The Codex reading: four parts at once (`0x0d2b`, `0x0d35`, `0x0d3f`, `0x0d9f`) | same defect | fixed |
+| 3 | The Codex ceremony: five more parts at once (`0x0df8` … `0x0e5b`) | same defect | fixed |
+| 4 | The Blackthorn capture scene's getkeys (the same event kind) | **not affected**: kept on `BlackthornScenePacer` by an explicit gate | none |
+| 5 | The `Enter: continue` cue at a getkey (1988: the blinking cursor) | **declared native modernization** (HF5's cue) | — |
+| 6 | The core sets the Codex's visited bit at the Enter; 1988 after the third getkey | **declared divergence** (invisible; the core / UI split, as HF5's effects) | none |
+| 7 | The host fixture's shrine hooks returned no record (the ordained branch and every Codex page were `InvalidContext` on the host) | **test-harness gap** (H-154 / H-155 class), fixed with a production binder | fixed |
+| 8 | The host fixture never copied the title art; a real-Board host test reaching the title segfaulted intermittently | **test-harness defect**, fixed in the fixture; the device always had the art | fixed |
+| 9 | `re/tools/thunks.py --bases` / `callers_banda.py` give CAST2 base `0xC29E`; its kernel calls resolve through `0xE1E0` | **tooling finding**, not changed (beside HF5's TALK entry) | none |
+| 10 | H-184 (ritual inversion, Codex XOR pulses), H-185 (Refuge cadence, karma getkey), H-186 (sacrifice burst) | **unchanged, still queued** | none |
+
+### 2. Evidence
+
+- **Original:** CAST2 census through `0xE1E0`: 15 calls to `0x266c`, 11 of them the rite; none flanked by a flush (`0x1b16`) or a delay (`0x20fa`). `0x266c` is `0x1b38` poll + `0x2032` upper-case + `0x5910` compositor until a key. The same routine TALK's `0x8F` KeyWait calls.
+- **Reference:** `game/src/ui/shrine-key-pacer.ts` (`ShrineKeyPacer`, #294): parks the rest of the turn at each marker until any key; instant under automation; cancelled by a reset. No divergence.
+- **RED-first:** `native/core/tools/a3_hf6_red_first.py`: **19 / 48** and **8 / 15 RED** against HEAD's logic; every control GREEN (`native/targets/tdeck/a3-hf6-red-first.log`).
+- **GREEN:** 48 / 48 and 15 / 15 (`a3-hf6-green.log`, `a3-hf6-pacer-green.log`).
+- **Mutations:** `native/core/tools/a3_hf6_mutation_check.py`, **22 / 22 killed**, 0 invalid, against both new tests and both HF5 tests (`a3-hf6-mutation.log`).
+- **Suite / firmware:** see the current-state table above.
+
+### 3. Rows
+
+- **H-183** (`ALPHA2_HARDWARE_CHECKLIST.md`, the Batch 51 queue): host fixed; device check **H-206**, new, PENDING.
+- **H-205:** PASS (the user, on the A3-HF5 image).
+- **D-40** (ledger §4): host fixed. **D-66:** hardware PASS.
+
+### 4. Not done in this batch
+
+- H-184 – H-186; D-54 (the endgame).
+- H-203 and H-204: still the user's.
+- A3-04H (storage import count, PSRAM routing).
+- The RE tools' overlay-base table (CAST2 and TALK).

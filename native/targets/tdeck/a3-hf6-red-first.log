@@ -1,0 +1,137 @@
+# A3-HF6 RED-first: built against HEAD:native/targets/tdeck/main/alpha_runtime.cpp (plus the binder extraction) and
+# HEAD:native/core/src/dialogue_pacer.cpp (plus paced_event_pause = the baseline rule); every header, the fixture
+# and the tests as in the working tree.
+## a3_hf6_shrine_key_wait_runtime against HEAD: exit 1
+GREEN N1.0 (E)nter the shrine of Honesty, Visit, virtue, mantra -- the mantra's Enter handled
+RED N1.1 the first getkey holds: 10 s after the Enter only "...a Quest is ordained!" is shown (page 1, return 1)
+RED N1.2 no timeout, and the handheld shows the key-wait cue ("")
+GREEN N1.3 the Quest bit is already set (CAST2 0x0a88 writes it before the print and the first getkey)
+RED N2.1 one key releases exactly one section and stops at the second getkey
+GREEN N2.2 the key is consumed: no command routed, nothing typed, no prompt re-opened (routed +0)
+GREEN N2.3 a trackball step ends the second wait and moves nothing
+GREEN N2.4 each section shown exactly once
+RED N2.5 after the last wait the next input is an ordinary command again (a step west is routed)
+GREEN N2.6 the rite again
+RED N2.7 Mic ends one wait, consumed
+GREEN N3.0 (E)nter the Codex
+RED N3.1 the first getkey (0x0d2b) holds for 10 s: only "...lies before thee..." is shown
+GREEN N6.1 the core's Codex state is complete at the Enter (presentation-only pacing)
+RED N3.2 each of the first eight keys releases one more section and stops at the next getkey (0 of 8)
+GREEN N3.3 the ninth key ends the last getkey (0x0e5b), with nothing left to show
+RED N5.1 the nine keys ('y'/'e' on the Codex tile) started nothing: no command, no second Codex, no prompt
+RED N6.2 the ceremony's quakes (0x0dbd-0x0dee) land with the key that ends the page's getkey, not before
+RED N6.3 the paced transcript is byte-identical to the unpaced run's (same text, same order)
+GREEN N6.4 the whole ceremony fits the pacer's queue (no collapse)
+GREEN N3B.0 the Codex
+RED N3B.1 two keys release two sections and the third getkey still holds
+GREEN N4.0 the rite of Compassion
+RED N4.1 the mantra's Enter closed the text entry and did not itself end the first getkey
+GREEN N4.2 a letter and an Enter end the two getkeys; neither became text or opened a prompt
+GREEN N4.3 the next (E)nter on the altar asks "Visit?" as before
+GREEN N7.0 the Codex (no ceremony: four getkeys)
+RED N7.1 nothing is released behind the menu; closing it leaves the getkey waiting
+RED N7.2 after the menu one key releases one section, as before
+GREEN N8.0 the Codex
+RED N8.1 the rest of the reading never reaches the loaded game
+GREEN N8.2 the next input is an ordinary command
+GREEN N8F.0 the Codex
+RED N8F.1 a load that fails leaves the getkey waiting
+RED N8F.2 and the reading completes, one key per getkey (four without the ceremony)
+GREEN N9.0 the rite
+RED N9.1 Return to Title, then Continue: the old rite's getkey and its text are gone, input is play
+GREEN N9.2 after the reading's last getkey the cue is gone and the next input steps off the Codex
+GREEN N10.0 the rite with the Quest done
+GREEN N10.1 "WELL DONE!" and its rewards arrive at once (0x0c18-0x0d1a has no getkey)
+GREEN N10.2 an already visited shrine asks "How many cycles?" at once
+GREEN N10.3 a wrong mantra is answered at once
+GREEN N10.4 the unpaced harness (the reference's automation rule) drains the Codex synchronously
+GREEN N10.5 inside a Blackthorn scene the getkey is the scene pacer's: one Enter releases it
+GREEN N11.0 the Codex
+RED N11.1 while the first getkey holds, the next section is not on the screen
+GREEN N11.2 frames at a getkey draw no transcript row (0)
+GREEN N11.3 each release draws transcript rows and never clears the screen (3/3, full clears 0)
+A3-HF6 shrine key waits: 48 checks, 19 failures
+## a3_hf6_shrine_key_wait_pacer against HEAD: exit 1
+RED U1 idle: the text before the marker passes, the marker is delivered in its place and holds for a key (M:ordained,W,M:page,W,M:return,)
+RED U2 no clock ends it (pumped a thousand seconds on)
+RED U3 one key releases exactly one section and stops at the queued marker (M:ordained,W,M:page,W,M:return,)
+GREEN U4 the next key releases the rest and the pacer is idle
+GREEN U5 a key with nothing held is not the pacer's
+RED U6 a trailing marker holds with an empty queue
+GREEN U7 and one key ends it
+RED U8 the quake after the second marker waits with its section
+GREEN U9 and lands, in order, with the key that ends it
+GREEN U10 the unpaced cadence (the reference's automation rule) takes no marker
+GREEN U11 a TLK Pause still holds on its clock
+RED U12 at its end the queued marker is released and holds for a key (L:verse,W,M:after,)
+GREEN U13 one key releases the rest
+RED U14 cancel (a successful load) drops the wait and its section
+RED U15 only the marker is a Key pause; dialogue_event_pause (TLK lines only) is unchanged
+A3-HF6 shrine key-wait pacer: 15 checks, 8 failures
+## a3_hf6_shrine_key_wait_runtime against the working tree: exit 0
+GREEN N1.0 (E)nter the shrine of Honesty, Visit, virtue, mantra -- the mantra's Enter handled
+GREEN N1.1 the first getkey holds: 10 s after the Enter only "...a Quest is ordained!" is shown (page 0, return 0)
+GREEN N1.2 no timeout, and the handheld shows the key-wait cue ("Enter: continue")
+GREEN N1.3 the Quest bit is already set (CAST2 0x0a88 writes it before the print and the first getkey)
+GREEN N2.1 one key releases exactly one section and stops at the second getkey
+GREEN N2.2 the key is consumed: no command routed, nothing typed, no prompt re-opened (routed +0)
+GREEN N2.3 a trackball step ends the second wait and moves nothing
+GREEN N2.4 each section shown exactly once
+GREEN N2.5 after the last wait the next input is an ordinary command again (a step west is routed)
+GREEN N2.6 the rite again
+GREEN N2.7 Mic ends one wait, consumed
+GREEN N3.0 (E)nter the Codex
+GREEN N3.1 the first getkey (0x0d2b) holds for 10 s: only "...lies before thee..." is shown
+GREEN N6.1 the core's Codex state is complete at the Enter (presentation-only pacing)
+GREEN N3.2 each of the first eight keys releases one more section and stops at the next getkey (8 of 8)
+GREEN N3.3 the ninth key ends the last getkey (0x0e5b), with nothing left to show
+GREEN N5.1 the nine keys ('y'/'e' on the Codex tile) started nothing: no command, no second Codex, no prompt
+GREEN N6.2 the ceremony's quakes (0x0dbd-0x0dee) land with the key that ends the page's getkey, not before
+GREEN N6.3 the paced transcript is byte-identical to the unpaced run's (same text, same order)
+GREEN N6.4 the whole ceremony fits the pacer's queue (no collapse)
+GREEN N3B.0 the Codex
+GREEN N3B.1 two keys release two sections and the third getkey still holds
+GREEN N4.0 the rite of Compassion
+GREEN N4.1 the mantra's Enter closed the text entry and did not itself end the first getkey
+GREEN N4.2 a letter and an Enter end the two getkeys; neither became text or opened a prompt
+GREEN N4.3 the next (E)nter on the altar asks "Visit?" as before
+GREEN N7.0 the Codex (no ceremony: four getkeys)
+GREEN N7.1 nothing is released behind the menu; closing it leaves the getkey waiting
+GREEN N7.2 after the menu one key releases one section, as before
+GREEN N8.0 the Codex
+GREEN N8.1 the rest of the reading never reaches the loaded game
+GREEN N8.2 the next input is an ordinary command
+GREEN N8F.0 the Codex
+GREEN N8F.1 a load that fails leaves the getkey waiting
+GREEN N8F.2 and the reading completes, one key per getkey (four without the ceremony)
+GREEN N9.0 the rite
+GREEN N9.1 Return to Title, then Continue: the old rite's getkey and its text are gone, input is play
+GREEN N9.2 after the reading's last getkey the cue is gone and the next input steps off the Codex
+GREEN N10.0 the rite with the Quest done
+GREEN N10.1 "WELL DONE!" and its rewards arrive at once (0x0c18-0x0d1a has no getkey)
+GREEN N10.2 an already visited shrine asks "How many cycles?" at once
+GREEN N10.3 a wrong mantra is answered at once
+GREEN N10.4 the unpaced harness (the reference's automation rule) drains the Codex synchronously
+GREEN N10.5 inside a Blackthorn scene the getkey is the scene pacer's: one Enter releases it
+GREEN N11.0 the Codex
+GREEN N11.1 while the first getkey holds, the next section is not on the screen
+GREEN N11.2 frames at a getkey draw no transcript row (0)
+GREEN N11.3 each release draws transcript rows and never clears the screen (3/3, full clears 0)
+A3-HF6 shrine key waits: 48 checks, 0 failures
+## a3_hf6_shrine_key_wait_pacer against the working tree: exit 0
+GREEN U1 idle: the text before the marker passes, the marker is delivered in its place and holds for a key (M:ordained,W,)
+GREEN U2 no clock ends it (pumped a thousand seconds on)
+GREEN U3 one key releases exactly one section and stops at the queued marker (M:ordained,W,M:page,W,)
+GREEN U4 the next key releases the rest and the pacer is idle
+GREEN U5 a key with nothing held is not the pacer's
+GREEN U6 a trailing marker holds with an empty queue
+GREEN U7 and one key ends it
+GREEN U8 the quake after the second marker waits with its section
+GREEN U9 and lands, in order, with the key that ends it
+GREEN U10 the unpaced cadence (the reference's automation rule) takes no marker
+GREEN U11 a TLK Pause still holds on its clock
+GREEN U12 at its end the queued marker is released and holds for a key (L:verse,W,)
+GREEN U13 one key releases the rest
+GREEN U14 cancel (a successful load) drops the wait and its section
+GREEN U15 only the marker is a Key pause; dialogue_event_pause (TLK lines only) is unchanged
+A3-HF6 shrine key-wait pacer: 15 checks, 0 failures

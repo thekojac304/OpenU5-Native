@@ -12,6 +12,10 @@ DialoguePause dialogue_event_pause(const GameEvent &e) {
     return e.dialogue->output->pause;
 }
 
+DialoguePause paced_event_pause(const GameEvent &e) {
+    return e.kind == GameEventKind::ShrineKeyWait ? DialoguePause::Key : dialogue_event_pause(e);
+}
+
 namespace {
 // Every payload pointer a GameEvent can borrow, other than `text`. A queued
 // event outlives its emit, so it may keep none of them.
@@ -63,6 +67,7 @@ bool DialoguePacer::push(const GameEvent &e) {
     } else {
         if (borrows_payload(e)) return false;
         step.kind = DialoguePacerStepKind::Event;
+        step.pause = paced_event_pause(e);
         step.event = e;
         step.event.text = nullptr;
         if (e.text) {
@@ -144,7 +149,8 @@ void DialoguePacer::release(uint32_t now_ms, EventSink out) {
         --count_;
         ++released_;
         deliver(step, out);
-        if (step.kind == DialoguePacerStepKind::Line && step.pause != DialoguePause::None) {
+        if ((step.kind == DialoguePacerStepKind::Line || step.kind == DialoguePacerStepKind::Event) &&
+            step.pause != DialoguePause::None) {
             hold(step.pause, now_ms);
             break;
         }
@@ -170,7 +176,7 @@ void DialoguePacer::collapse(EventSink out) {
 bool DialoguePacer::offer(const GameEvent &e, uint32_t now_ms, EventSink out) {
     if (!pause_ms_) return false;
     if (state_ == DialoguePacerState::Idle) {
-        const auto pause = dialogue_event_pause(e);
+        const auto pause = paced_event_pause(e);
         if (pause == DialoguePause::None) return false;
         ++released_;
         if (out.emit) out.emit(out.context, e);

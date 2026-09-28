@@ -229,9 +229,7 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
     context_.services={this,command_effect,command_reload,banner};context_.events={this,dispatch_event};
     bind_quest_services();
     bind_dialogue_services();
-    shrine_services_.data=&resources_.shrine_data;
-    shrine_services_.context=this;
-    shrine_services_.record=[](void *p,int32_t index)->const char*{auto&r=*static_cast<AlphaRuntime*>(p);return tdeck::misc_text_record({r.resources_.misc_text_offsets,r.resources_.misc_text_records,r.resources_.misc_text_record_count},index);};
+    bind_shrine_services();
     combat_actor_overflow_=static_cast<openu5::CombatActor*>(heap_caps_calloc(32,sizeof(openu5::CombatActor),kPsram));
     combat_pile_overflow_=static_cast<openu5::CombatLootPile*>(heap_caps_calloc(32,sizeof(openu5::CombatLootPile),kPsram));
     combat_fields_=static_cast<openu5::CombatField*>(heap_caps_calloc(32,sizeof(openu5::CombatField),kPsram));
@@ -314,6 +312,15 @@ void AlphaRuntime::bind_dialogue_services(){
     dialogue_services_.registry={&dialogue_assets_,AlphaDialogueCache::lookup};
 }
 
+// A3-HF6. The single binder for the shrine rite's MISCMSG records (the
+// mantras, the Codex pages, the ceremony), so a host test that attaches the
+// pack runs the same altar and Codex text the device does (H-154/H-155 rule).
+void AlphaRuntime::bind_shrine_services(){
+    shrine_services_.data=&resources_.shrine_data;
+    shrine_services_.context=this;
+    shrine_services_.record=[](void *p,int32_t index)->const char*{auto&r=*static_cast<AlphaRuntime*>(p);return tdeck::misc_text_record({r.resources_.misc_text_offsets,r.resources_.misc_text_records,r.resources_.misc_text_record_count},index);};
+}
+
 void AlphaRuntime::dispatch_ui(void *p,const openu5::UiIntent&i){static_cast<AlphaRuntime*>(p)->dispatch(i);}
 void AlphaRuntime::dispatch_event(void *p,const openu5::GameEvent&e){static_cast<AlphaRuntime*>(p)->consume_event(e);}
 // OUTSUBS 0x06b9/0x0850/0x08aa: all scene pixels are transient. The shipped
@@ -367,8 +374,13 @@ bool AlphaRuntime::apply_camp_scene_event(const openu5::GameEvent&e){
 // ordinary path below, scene pacers included -- when the pause ends. The
 // NPC-initiation intercept is order-free bookkeeping (nothing is shown), so
 // it is never queued; the drain it feeds waits for the pacer instead.
+// A3-HF6 (H-183). The shrine rite's and the Codex's getkeys (CAST2 0x448c ->
+// 0x266c) are ShrineKeyWait markers and take the same Key hold. Inside a
+// Blackthorn capture scene the marker is that scene's getkey: while its pacer
+// owns the turn the marker goes on to it, exactly as before.
 void AlphaRuntime::consume_event(const openu5::GameEvent&e){
-    if(e.kind!=openu5::GameEventKind::NpcInitiatesTalk&&e.kind!=openu5::GameEventKind::NpcInitiatesShop){
+    const bool scene_getkey=e.kind==openu5::GameEventKind::ShrineKeyWait&&blackthorn_pacer_.active()&&!dialogue_pacer_.holding();
+    if(e.kind!=openu5::GameEventKind::NpcInitiatesTalk&&e.kind!=openu5::GameEventKind::NpcInitiatesShop&&!scene_getkey){
         const bool was_holding=dialogue_pacer_.holding();
         const auto collapsed=dialogue_pacer_.collapsed();
         if(dialogue_pacer_.offer(e,uint32_t(esp_timer_get_time()/1000),{this,release_dialogue_event})){
@@ -1835,7 +1847,8 @@ const char *AlphaRuntime::overlay() const {static char text[64]{};text[0]=0;
     if(blackthorn_pacer_.awaiting_key()){std::snprintf(text,sizeof(text),"Enter: continue");return text;}
     // A3-HF5. The TLK KeyWait (getkey 0x266c) has only the blinking cursor in
     // 1988; the same device cue as the capture scene's getkeys. A Timed Pause
-    // gets none: its loop (TALK 0x0f92) never runs the cursor.
+    // gets none: its loop (TALK 0x0f92) never runs the cursor. A3-HF6: the
+    // shrine and Codex getkeys are the same 0x266c and wear the same cue.
     if(dialogue_pacer_.awaiting_key()){std::snprintf(text,sizeof(text),"Enter: continue");return text;}
     if(ui_&&ui_->mode()==openu5::UiMode::Shop)return text;
     // Batch 53 (D-53 / H-12). Vas Rel Por's phase getkey (CAST.OVL 0x0cff

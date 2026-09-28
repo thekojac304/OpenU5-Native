@@ -680,7 +680,7 @@ The physical Phase 7B run on the confirmed Batch 48 image showed every Camp appa
 
 | # | Scene | Observation to expect on the device | Original | Ledger |
 |---|---|---|---|---|
-| H-183 | Shrine "Quest is ordained" and the Codex reading | All the text after each altar/Codex key wait appears at once; no key is waited for. | CAST2 getkeys `0x0a9b`/`0x0abc`, `0x0d2b`…`0x0e5b` | D-40 |
+| ~~H-183~~ | Shrine "Quest is ordained" and the Codex reading | ~~All the text after each altar/Codex key wait appears at once; no key is waited for.~~ **HOST FIXED — A3-HF6** (`ALPHA3_AUDIO.md` §32): each of the eleven getkeys now holds the rest of the rite until a key. Device check: **Phase H-206**. | CAST2 getkeys `0x0a9b`/`0x0abc`, `0x0d2b`…`0x0e5b` (base `0xE1E0` → kernel `0x266c`) | D-40 |
 | H-184 | Donation "ALAKAZAM!", "WELL DONE!", Codex ceremony | No viewport inversion at all; the Codex shows its three quakes but not its three XOR pulses. | `rect_XOR` `0x0bcd`/`0x0c41` held through 920 sweeps, then `run_n_frames(10)`; Codex XOR+shake ×3 `0x0dbd`–`0x0dee` | D-41 |
 | H-185 | Refuge | Cadence is Class C (70 ms/unit + reading floors); the karma speech holds on a timer instead of waiting for a key. | exact `delay(n)` ticks; `getkey` `0x0b3e` | D-42 |
 | H-186 | Blackthorn sacrifice | No explosion burst is drawn on the victim. | burst `0x041e` fires **before** the victim clears (`0x0421`) | D-43 |
@@ -1309,7 +1309,7 @@ Flash the A3-HF4 Launcher image (its path and SHA-256 are in tag `alpha3-hf4-loa
 
 **FAIL:** a spell list, direction prompt, yes/no or picker still on screen after "Load complete"; a key after the load that answers the old prompt; commands refused after the load until Mic or a reboot; a failed load that closes the prompt. Report it with the `FW` / `Git` lines (and the serial `LOAD_TRANSIENT_RESET` line if captured).
 
-### Phase H-205 — conversations keep their pauses · *new firmware; SD pack unchanged* · about 5 minutes · **PENDING**
+### Phase H-205 — conversations keep their pauses · *new firmware; SD pack unchanged* · about 5 minutes · **PASS** (the user, on the A3-HF5 image, reported 2026-09-27; recorded by A3-HF6)
 
 Flash the A3-HF5 Launcher image (its path and SHA-256 are in tag `alpha3-hf5-dialogue-pacing`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-hf5-debug` and that tag's `Git`; if they differ, stop. The image carries A3-05 and A3-HF4 unchanged, so H-203 and H-204 can be run on it too. A serial capture is optional: each paused speech prints `DIALOGUE_PAUSE begin=timed|key` and `DIALOGUE_PAUSE end`.
 
@@ -1332,3 +1332,48 @@ Flash the A3-HF5 Launcher image (its path and SHA-256 are in tag `alpha3-hf5-dia
 **PASS:** steps 2–4 and 7–8 as described (and 5–6 if run).
 
 **FAIL:** a routine that still appears all at once; a verse that waits much longer than about 2 s with no key; a key that is typed into "Your interest?", moves the Avatar or ends the conversation during a pause; a `WELC` part that appears without a key; lines out of order, missing or doubled; combat text that waits; a pause still running after a load. Report it with the `FW` / `Git` lines (and the serial `DIALOGUE_PAUSE` lines if captured).
+
+### Phase H-206 — the shrine and the Codex wait for a key · *new firmware; SD pack unchanged* · about 8 minutes · **PENDING**
+
+Flash the A3-HF6 Launcher image (its path and SHA-256 are in tag `alpha3-hf6-shrine-key-waits`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-hf6-debug` and that tag's `Git`; if they differ, stop. The image carries A3-05, A3-HF4 and A3-HF5 unchanged. A serial capture is optional: each getkey prints `DIALOGUE_PAUSE begin=key`, and each key that ends one prints `DIALOGUE_PAUSE_INPUT ... effect=key-wait-ended ... gameplay_command=none`.
+
+**What changed** (`ALPHA3_AUDIO.md` §32): the altar and the Codex now stop at each of the original's key waits, like a conversation's KeyWait. The text before a wait is shown, the status line reads `Enter: continue`, and the next part appears only after a key. That key does nothing else.
+
+**Setup.** Start a **New Journey**, or load a save in which no shrine has been visited yet. Do part D last, because its preset marks every shrine visited.
+
+**A. The altar (mandatory).**
+1. `Alt+D` → Teleport → **Britannia**, X **233**, Y **66** (the Shrine of Honesty) → Teleport. Leave the Developer menu.
+2. Press `E`. After the approach text, answer `Y` to "Visit?", then type `HONESTY` + Enter at "Virtue?" and `AHM` + Enter at "Mantra?".
+3. "The Altar speaks and a Quest is ordained!" appears **alone**, and the status line shows **`Enter: continue`**. Wait 10 seconds: nothing more appears.
+4. Press `A`, as if still typing. The lesson appears ("'Tis now thy sacred Quest to go unto the Codex and learn …"). The cue stays. No `A` is typed anywhere and no prompt opens.
+5. Roll the trackball left once. "Return again when thy Quest is done!" appears, the cue goes, and **the Avatar does not move**.
+6. Roll the trackball again: the Avatar moves normally.
+
+**B. The Codex (mandatory).**
+7. Teleport → **Britannia**, X **233**, Y **233** (the Codex). Press `E`. "Enter the Shrine of the Codex!" and "The Codex of Ultimate Wisdom lies before thee..." appear, then `Enter: continue`.
+8. Press `E` four times, about a second apart. Each press shows exactly one more part: "The book is open to the page thou dost seek!", "Upon the hallowed page thou dost read:", the Honesty page in quotes ("A dishonest life brings unto thee temporary gain, …"), and then nothing new (the fourth `E` only clears the cue). The Codex is **not** entered again: "Enter the Shrine of the Codex!" appears only once.
+
+**C. Menu and load (mandatory).**
+9. Still on the Codex: `Alt+S`. Press `E` (the reading starts again). Press `Alt+M`, wait 5 seconds, and close the menu with `Alt+M`. Nothing new appeared behind the menu, and `Enter: continue` is still shown. Press Space: "The book is open…" appears, and nothing after it.
+10. Press `Alt+L`. "Load complete" appears, the cue is gone, and no more Codex text appears. Roll the trackball: the Avatar moves normally.
+
+**D. The ceremony (optional; about 2 minutes).**
+11. `Alt+D` → Shortcuts → **Preset: Shrine** (confirm "Shrine Test Setup"). Go back to the Codex (step 7) and press `E`.
+12. The ceremony takes nine keys. The fourth key brings the three quakes and "A STRANGE WIND CAUSES THE PAGE TO TURN!". The next four each bring one page: "Thou dost read:" with the first rune page, then one rune page per key. The ninth key only clears the cue. (The viewport inversion around the quakes is H-184 and is still absent: do not file it.)
+
+**Regression.**
+13. Talk to anyone whose speech has a KeyWait (Chuckles, `WELC`, H-205 step 4): it still waits for a key. Fight anything: combat text stays immediate.
+14. Throughout: no crash, `task_wdt` or reboot; music and effects normal.
+
+**PASS:** steps 3–10 as described (and 12 if run).
+
+**FAIL:**
+- any of the rite's text appears without its key, or a part waits without showing `Enter: continue`;
+- a wait ends by itself;
+- one key shows two parts;
+- the key that ends a wait types a letter, opens a prompt, moves the Avatar or enters the Codex again;
+- text is released behind the System Menu;
+- a wait or its text survives the load;
+- "WELL DONE!" or the donation prompt starts waiting for a key.
+
+Report a failure with the `FW` / `Git` lines, and the serial `DIALOGUE_PAUSE` lines if captured.
