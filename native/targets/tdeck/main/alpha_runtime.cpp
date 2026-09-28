@@ -126,7 +126,7 @@ const char *frontend_state_name(openu5::FrontendState s){static const char*n[]={
 const char *creation_phase_name(openu5::FrontendCreationPhase p){static const char*n[]={"name","gender","questionnaire"};return n[std::min<size_t>(size_t(p),2)];}
 const char *frontend_intent_name(openu5::FrontendIntentKind k){static const char*n[]={"none","continue","load-slot","create-initial-save","persist-settings","developer"};return n[std::min<size_t>(size_t(k),5)];}
 const char *intent_name(openu5::UiIntentKind k){static const char*n[]={"command","shop","modal","open-party","open-inventory","open-equipment","open-spell","open-target","open-status","open-debug"};return n[std::min<size_t>(size_t(k),9)];}
-const char *shortcut_name(DeviceShortcut s){static const char*n[]={"none","developer","save","load","movement-toggle"};return n[std::min<size_t>(size_t(s),4)];}
+const char *shortcut_name(DeviceShortcut s){static const char*n[]={"none","developer","save","load","movement-toggle","music-mute","sfx-mute"};return n[std::min<size_t>(size_t(s),6)];}
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
 int debug_depth(const openu5::UiDebugMenuView &v){return v.editing?2:v.category>=0?1:0;}
 #endif
@@ -1498,13 +1498,18 @@ bool AlphaRuntime::handle_input_event(const RawInputEvent&raw){service_combat();
     }else if(raw.kind==RawInputKind::KeyboardResynchronized)
         ESP_LOGW(kTag,"INPUT_RESYNC ui=%s held gestures abandoned",mode_name(mode_before));
     if(!translated)return false;
+    // A3-05. The session mutes are output controls, not commands: they act on
+    // every screen (title, Camp, the menus, modal scenes, combat) before any
+    // of them can swallow or route the key, and they change no game state.
+    if(shortcut==DeviceShortcut::MusicMute||shortcut==DeviceShortcut::SfxMute)
+        return toggle_audio_mute(shortcut==DeviceShortcut::MusicMute);
     if(in_frontend){
         const auto state_before=frontend_.state();const auto phase_before=frontend_.creation_phase();
         char name_before[9]{};std::snprintf(name_before,sizeof(name_before),"%s",frontend_.creation_name());
         bool accepted=false;
         if(shortcut==DeviceShortcut::MovementModeToggled){settings_.movement_mode=input_.movement_mode_enabled();accepted=settings_store_.save(settings_);}
         else accepted=frontend_.handle(action,uint32_t(raw.timestamp_us/1000));
-        if(accepted){settings_=frontend_.settings();apply_device_settings();}
+        if(accepted){settings_=frontend_.settings();apply_device_settings();apply_volume_edits(frontend_.take_volume_edits());}
         const auto state_after=frontend_.state();const auto phase_after=frontend_.creation_phase();
         ESP_LOGI(kTag,"FRONTEND_INPUT raw=%s action=%s char=%u accepted=%d state=%s->%s phase=%s->%s name=\"%s\"->\"%s\"",
                  raw_input_name(raw.kind),action_name(action.kind),unsigned(action.character),accepted,
@@ -1561,7 +1566,7 @@ bool AlphaRuntime::handle_input_event(const RawInputEvent&raw){service_combat();
         ESP_LOGI(kTag,"SYSTEM_MENU action=toggle open=%d gameplay_command=none",system_menu_.active());dirty_=true;dirty_reason_="system-menu";return true;
     }
     if(system_menu_.active()){
-        const bool accepted=system_menu_.handle(action);if(accepted){settings_=system_menu_.settings();apply_device_settings();}service_system_menu_intent();sync_music();
+        const bool accepted=system_menu_.handle(action);if(accepted){settings_=system_menu_.settings();apply_device_settings();apply_volume_edits(system_menu_.take_volume_edits());}service_system_menu_intent();sync_music();
         ESP_LOGI(kTag,"SYSTEM_MENU action=%s accepted=%d open=%d gameplay_command=none",action_name(action.kind),accepted,system_menu_.active());
         dirty_=true;dirty_reason_="system-menu";return accepted;
     }
@@ -2907,6 +2912,37 @@ void AlphaRuntime::apply_device_settings(){
     input_.set_trackball_responsiveness(settings_.trackball_responsiveness);
     audio_.set_sfx_volume(settings_.sound_volume);
     audio_.set_music_volume(settings_.music_volume);
+}
+
+// A3-05. A session mute: a flag on top of the volume (AudioService), never a
+// write to settings_ or settings.json, so a reboot is unmuted and the restore
+// is the configured volume. Without music there is nothing to mute.
+bool AlphaRuntime::toggle_audio_mute(bool music){
+    char line[80]{};
+    if(music&&!audio_.has_music())
+        std::snprintf(line,sizeof(line),"Music unavailable: %s",openu5::music_unavailable_reason(audio_.music_availability()));
+    else if(music){audio_.set_music_muted(!audio_.music_muted());std::snprintf(line,sizeof(line),"%s",audio_.music_muted()?"Music muted.":"Music restored.");}
+    else{audio_.set_sfx_muted(!audio_.sfx_muted());std::snprintf(line,sizeof(line),"%s",audio_.sfx_muted()?"SFX muted.":"SFX restored.");}
+    sync_audio_mutes();
+    // The title screen has no transcript: there the Settings rows and the sound itself show it.
+    if(!frontend_.active()&&ui_)ui_->append(openu5::UiTextChannel::System,line);
+    ESP_LOGI(kTag,"AUDIO_MUTE bus=%s sfx_muted=%d music_muted=%d sfx_volume=%u music_volume=%u line=\"%s\"",
+             music?"music":"sfx",audio_.sfx_muted(),audio_.music_muted(),unsigned(audio_.sfx_volume()),
+             unsigned(audio_.music_volume()),line);
+    dirty_=true;dirty_reason_="audio-mute";return true;
+}
+
+// A3-05. Editing a volume row unmutes that channel (after apply_device_settings,
+// so a music restore starts at the new volume); the other channel is untouched.
+void AlphaRuntime::apply_volume_edits(uint8_t edits){
+    if(edits&openu5::kSfxVolumeEdited)audio_.set_sfx_muted(false);
+    if(edits&openu5::kMusicVolumeEdited)audio_.set_music_muted(false);
+    if(edits)sync_audio_mutes();
+}
+
+void AlphaRuntime::sync_audio_mutes(){
+    system_menu_.set_audio_mutes(audio_.sfx_muted(),audio_.music_muted());
+    frontend_.set_audio_mutes(audio_.sfx_muted(),audio_.music_muted());
 }
 
 void AlphaRuntime::present_audio(const openu5::GameEvent &e){

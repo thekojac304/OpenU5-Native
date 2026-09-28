@@ -1,0 +1,224 @@
+# A3-05 mutation validation (2026-09-27 21:48)
+
+U1 the SFX mute zeroes the configured volume [native/core/src/audio.cpp]: KILLED
+    a3_05_audio_mute exit=1  1 RED
+        RED A1 an SFX mute is one SFX gain of 0; the volume stays 40 and music is not touched
+    a3_05_audio_controls exit=1  5 RED
+        RED X1 Alt+Shift+S silences the SFX channel only; the configured 40 % is untouched
+        RED X4 Alt+Shift+S again restores 40 %, not 100 %, and cues sound at it
+        RED X5 six more toggles: no drift, music untouched
+        RED X6 unmuting SFX does not unmute music
+        RED A2 ... and restores
+U2 the music mute is written to the settings [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_05_audio_mute exit=0  0 RED
+    a3_05_audio_controls exit=1  13 RED
+        RED K6 control: any other Alt+Shift chord keeps its Alt meaning (Alt+Shift+L loads)
+        RED M6 opening and closing the System Menu keeps the mute
+        RED M6 closing the menu persists the configured 70 %, never a muted 0
+        RED M7 the toggle works with the System Menu open, and leaves it open
+        RED M8 ... and it restores after the load
+        RED M9 the mute is session-only: a reboot plays music at the configured 70 %
+        RED S1 Settings shows the configured 60 % and marks the row muted
+        RED S2 a Music Volume edit while muted unmutes music at the new 70 %
+        RED S3 the SFX mute from inside Settings marks only the SFX row
+        RED S4 an SFX edit unmutes SFX only; music stays muted
+        RED S5 settings.json holds the configured volumes, not the mute
+        RED T2 a title Settings Music Volume edit unmutes music at the new 80 %
+        RED T4 ... and restores at the 80 % set on the title
+U3 the shortcuts swap buses [native/targets/tdeck/main/ui_input_adapter.cpp]: KILLED
+    a3_05_audio_mute exit=0  0 RED
+    a3_05_audio_controls exit=1  31 RED
+        RED K2 Alt+Shift+M is the music mute, not Alt+M's System Menu
+        RED K3 Alt+Shift+S is the SFX mute, not Alt+S's Save
+        RED M1 Alt+Shift+M stops the song; the configured 70 % is untouched
+        RED M1 the transcript says 'Music muted.'
+        RED M2 SFX still sound while music is muted, at their own gain
+        RED M3 a muted context does not restart its song on its own
+        RED M4 Alt+Shift+M again restores the context's song at 70 %, not 100 %
+        RED M4 the transcript says 'Music restored.'
+        RED M5 six more toggles: no drift, one line per toggle
+        RED M6 opening and closing the System Menu keeps the mute
+        RED M7 the toggle works with the System Menu open, and leaves it open
+        RED M8 a load keeps the mute
+        RED M8 ... and it restores after the load
+        RED X1 Alt+Shift+S silences the SFX channel only; the configured 40 % is untouched
+        RED X1 the transcript says 'SFX muted.'
+        RED X2 a cue while SFX are muted is not submitted
+        RED X3 music keeps playing while SFX are muted
+        RED X4 Alt+Shift+S again restores 40 %, not 100 %, and cues sound at it
+        RED X4 the transcript says 'SFX restored.'
+        RED X5 six more toggles: no drift, music untouched
+        RED X6 unmuting SFX does not unmute music
+        RED S1 Settings shows the configured 60 % and marks the row muted
+        RED S2 a Music Volume edit while muted unmutes music at the new 70 %
+        RED S3 the SFX mute from inside Settings marks only the SFX row
+        RED S6 muting a 0 % bus is a separate state on top of it
+        RED T1 Return to Title keeps the mute: the title song is not started
+        RED T2 a title Settings Music Volume edit unmutes music at the new 80 %
+        RED T3 the music mute works on the title screen (which has no transcript line)
+        RED T4 back in the game the mute still holds
+        RED A1 stock files: Alt+Shift+M does not pretend music exists
+        RED A2 ... and restores
+U8 an SFX edit unmutes music too [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_05_audio_mute exit=0  0 RED
+    a3_05_audio_controls exit=1  1 RED
+        RED S4 an SFX edit unmutes SFX only; music stays muted
+U4 the SFX unmute restores 100 % [native/core/include/openu5/audio.h]: KILLED
+    a3_05_audio_mute exit=1  2 RED
+        RED A4 the unmute restores the volume (50 %), not 100 %
+        RED A9 a configured 0 % is not a mute: unmuting it leaves it silent at 0 %
+    a3_05_audio_controls exit=1  3 RED
+        RED X4 Alt+Shift+S again restores 40 %, not 100 %, and cues sound at it
+        RED X5 six more toggles: no drift, music untouched
+        RED S4 an SFX edit unmutes SFX only; music stays muted
+U5 a restarted song plays at 100 % [native/core/src/audio.cpp]: KILLED
+    a3_05_audio_mute exit=1  1 RED
+        RED A7 the music unmute restarts the context's song at the current volume, SFX untouched
+    a3_05_audio_controls exit=1  6 RED
+        RED M4 Alt+Shift+M again restores the context's song at 70 %, not 100 %
+        RED M5 six more toggles: no drift, one line per toggle
+        RED M8 ... and it restores after the load
+        RED S2 a Music Volume edit while muted unmutes music at the new 70 %
+        RED T2 a title Settings Music Volume edit unmutes music at the new 80 %
+        RED T4 ... and restores at the 80 % set on the title
+U9 the music mute leaves the song playing [native/core/src/audio.cpp]: KILLED
+    a3_05_audio_mute exit=1  2 RED
+        RED A5 a music mute stops the song only; volume and context are kept
+        RED A7 the music unmute restarts the context's song at the current volume, SFX untouched
+    a3_05_audio_controls exit=1  17 RED
+        RED K2 Alt+Shift+M is the music mute, not Alt+M's System Menu
+        RED M1 Alt+Shift+M stops the song; the configured 70 % is untouched
+        RED M3 a muted context does not restart its song on its own
+        RED M4 Alt+Shift+M again restores the context's song at 70 %, not 100 %
+        RED M5 six more toggles: no drift, one line per toggle
+        RED M6 opening and closing the System Menu keeps the mute
+        RED M7 the toggle works with the System Menu open, and leaves it open
+        RED M8 a load keeps the mute
+        RED M8 ... and it restores after the load
+        RED X6 both muted at once
+        RED X6 unmuting SFX does not unmute music
+        RED S2 a Music Volume edit while muted unmutes music at the new 70 %
+        RED S4 an SFX edit unmutes SFX only; music stays muted
+        RED T1 Return to Title keeps the mute: the title song is not started
+        RED T2 a title Settings Music Volume edit unmutes music at the new 80 %
+        RED T3 the music mute works on the title screen (which has no transcript line)
+        RED T4 back in the game the mute still holds
+U10 a muted SFX request is still submitted [native/core/src/audio.cpp]: KILLED
+    a3_05_audio_mute exit=1  1 RED
+        RED A2 a muted SFX request is dropped and counted
+    a3_05_audio_controls exit=1  3 RED
+        RED X2 a cue while SFX are muted is not submitted
+        RED X6 both muted at once
+        RED A2 stock files: the SFX mute works
+U6 the toggle is ignored while the System Menu is open [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_05_audio_mute exit=0  0 RED
+    a3_05_audio_controls exit=1  8 RED
+        RED M7 the toggle works with the System Menu open, and leaves it open
+        RED M8 a load keeps the mute
+        RED M8 ... and it restores after the load
+        RED S3 the SFX mute from inside Settings marks only the SFX row
+        RED S4 an SFX edit unmutes SFX only; music stays muted
+        RED S5 settings.json holds the configured volumes, not the mute
+        RED S6 muting a 0 % bus is a separate state on top of it
+        RED S6 restoring it gives back 0 %, which stays silent
+U15 Shift is ignored (Alt+Shift+M is Alt+M again) [native/targets/tdeck/main/ui_input_adapter.cpp]: KILLED
+    a3_05_audio_mute exit=0  0 RED
+    a3_05_audio_controls exit=1  35 RED
+        RED K2 Alt+Shift+M is the music mute, not Alt+M's System Menu
+        RED K3 Alt+Shift+S is the SFX mute, not Alt+S's Save
+        RED M1 Alt+Shift+M stops the song; the configured 70 % is untouched
+        RED M1 the transcript says 'Music muted.'
+        RED M3 a muted context does not restart its song on its own
+        RED M4 Alt+Shift+M again restores the context's song at 70 %, not 100 %
+        RED M4 the transcript says 'Music restored.'
+        RED M5 six more toggles: no drift, one line per toggle
+        RED M6 opening and closing the System Menu keeps the mute
+        RED M7 the toggle works with the System Menu open, and leaves it open
+        RED M8 a load keeps the mute
+        RED M8 ... and it restores after the load
+        RED X1 Alt+Shift+S silences the SFX channel only; the configured 40 % is untouched
+        RED X1 the transcript says 'SFX muted.'
+        RED X2 a cue while SFX are muted is not submitted
+        RED X4 Alt+Shift+S again restores 40 %, not 100 %, and cues sound at it
+        RED X4 the transcript says 'SFX restored.'
+        RED X5 six more toggles: no drift, music untouched
+        RED X6 both muted at once
+        RED X6 unmuting SFX does not unmute music
+        RED S1 Settings shows the configured 60 % and marks the row muted
+        RED S2 a Music Volume edit while muted unmutes music at the new 70 %
+        RED S3 the SFX mute from inside Settings marks only the SFX row
+        RED S4 an SFX edit unmutes SFX only; music stays muted
+        RED S5 settings.json holds the configured volumes, not the mute
+        RED S6 muting a 0 % bus is a separate state on top of it
+        RED S6 restoring it gives back 0 %, which stays silent
+        RED T1 Return to Title keeps the mute: the title song is not started
+        RED T2 a title Settings Music Volume edit unmutes music at the new 80 %
+        RED T3 the music mute works on the title screen (which has no transcript line)
+        RED T4 back in the game the mute still holds
+        RED T4 ... and restores at the 80 % set on the title
+        RED A1 stock files: Alt+Shift+M does not pretend music exists
+        RED A1 ... and the Music row still reads Unavailable
+        RED A2 stock files: the SFX mute works
+U16 every Alt+Shift chord is a mute [native/targets/tdeck/main/ui_input_adapter.cpp]: KILLED
+    a3_05_audio_mute exit=0  0 RED
+    a3_05_audio_controls exit=1  1 RED
+        RED K6 control: any other Alt+Shift chord keeps its Alt meaning (Alt+Shift+L loads)
+U11 stock files pretend music can be muted [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_05_audio_mute exit=0  0 RED
+    a3_05_audio_controls exit=1  1 RED
+        RED A1 stock files: Alt+Shift+M does not pretend music exists
+U7 a System Menu edit does not unmute [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_05_audio_mute exit=0  0 RED
+    a3_05_audio_controls exit=1  3 RED
+        RED S2 a Music Volume edit while muted unmutes music at the new 70 %
+        RED S3 the SFX mute from inside Settings marks only the SFX row
+        RED S4 an SFX edit unmutes SFX only; music stays muted
+U18 a title Settings edit does not unmute [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_05_audio_mute exit=0  0 RED
+    a3_05_audio_controls exit=1  4 RED
+        RED T2 a title Settings Music Volume edit unmutes music at the new 80 %
+        RED T3 the music mute works on the title screen (which has no transcript line)
+        RED T4 back in the game the mute still holds
+        RED T4 ... and restores at the 80 % set on the title
+U19 the menus are never told the mutes [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_05_audio_mute exit=0  0 RED
+    a3_05_audio_controls exit=1  4 RED
+        RED S1 Settings shows the configured 60 % and marks the row muted
+        RED S3 the SFX mute from inside Settings marks only the SFX row
+        RED S4 an SFX edit unmutes SFX only; music stays muted
+        RED S6 muting a 0 % bus is a separate state on top of it
+U12 the System Menu SFX row ignores the mute [native/core/src/system_menu.cpp]: KILLED
+    a3_05_audio_mute exit=0  0 RED
+    a3_05_audio_controls exit=1  2 RED
+        RED S3 the SFX mute from inside Settings marks only the SFX row
+        RED S6 muting a 0 % bus is a separate state on top of it
+U13 the title SFX row ignores the mute [native/core/src/frontend.cpp]: KILLED
+    a3_05_audio_mute exit=1  1 RED
+        RED T1 the title rows show the session mutes
+    a3_05_audio_controls exit=0  0 RED
+U20 a Music Volume edit is not reported [native/core/src/system_menu.cpp]: KILLED
+    a3_05_audio_mute exit=1  1 RED
+        RED M4 a Music Volume key reports the Music row
+    a3_05_audio_controls exit=1  3 RED
+        RED S2 a Music Volume edit while muted unmutes music at the new 70 %
+        RED S3 the SFX mute from inside Settings marks only the SFX row
+        RED S4 an SFX edit unmutes SFX only; music stays muted
+U17 no transcript line [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_05_audio_mute exit=0  0 RED
+    a3_05_audio_controls exit=1  7 RED
+        RED M1 the transcript says 'Music muted.'
+        RED M4 the transcript says 'Music restored.'
+        RED M5 six more toggles: no drift, one line per toggle
+        RED X1 the transcript says 'SFX muted.'
+        RED X4 the transcript says 'SFX restored.'
+        RED A1 stock files: Alt+Shift+M does not pretend music exists
+        RED A2 stock files: the SFX mute works
+U14 the second kill burst restored [native/core/src/sfx_synth.cpp]: KILLED
+    a3_05_audio_mute exit=0  0 RED
+    a3_05_audio_controls exit=1  3 RED
+        RED D2 ... and no second (0x2fd0 chest-trap) burst
+        RED D3 a party member's death: the party burst once, nothing more
+        RED D4 a lone Died is silent
+
+restored: build exit=0; a3_05_audio_mute exit=0, a3_05_audio_controls exit=0
+mutations: 20, killed: 20, survived: 0, invalid: 0

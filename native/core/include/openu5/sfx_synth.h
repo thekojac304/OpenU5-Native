@@ -324,7 +324,11 @@ class SfxPlayer {
 /**
  * The reference's combat derivation (game/src/core/sfx.ts sfxForCombatEvent):
  * the hit bursts are the kernel 0x3564 flash, chosen by the TARGET's side
- * (0x35ac `test [bx+2],0x80`). A miss is silent. PURE.
+ * (0x35ac `test [bx+2],0x80`). A miss is silent. A death is silent too
+ * (A3-05): the killing blow's Attacked already carries 0x3564's burst, and
+ * neither the strike COMBAT 0x194A nor the " killed!" branch (COMSUBS 0x036b)
+ * reaches a speaker call. The reference's `died` -> combat-defeat cited 0x2fe3,
+ * which is the chest trap 0x2fd0. PURE.
  */
 SfxId sfx_for_combat_attack(bool died, int8_t hit, bool target_is_player);
 

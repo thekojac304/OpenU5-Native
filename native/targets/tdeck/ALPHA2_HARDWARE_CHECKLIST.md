@@ -1264,3 +1264,29 @@ The A3-04G image contains A3-HF3's combat code unchanged, so H-201 can be run on
   - Both Continues after boot moved the live document into internal RAM: −149,424 and −47,192 B, with free PSRAM rising by the same amounts ± 28 B. This fires §28.16 triggers 2 and 3.
   - It is **placement, not a leak**: total free memory ended 41,140 B higher than at the start, and later windows raised the largest block again (32,768 → 47,104 → 36,864 B).
   - Classified as an **allocator placement / fragmentation watch — recoverable, not a leak** (`ALPHA3_AUDIO.md` §28.21.7).
+
+## Alpha 3 A3-05 — audio finalization: session mutes and the kill burst (2026-09-27)
+
+**What changed** (`ALPHA3_AUDIO.md` §29):
+- **Alt+Shift+M** toggles music off and on, and **Alt+Shift+S** does the same for sound effects. A mute lasts for the session only. It never changes the volume set in Settings, and a reboot starts unmuted.
+- A kill in combat now plays **one** hit sound, as the original does. The second burst it used to play came from the chest-trap routine.
+- The volume curves are unchanged: the user already judged them good on the device.
+
+### Phase H-203 — mute shortcuts and the kill sound · *new firmware; SD pack unchanged* · about 5 minutes · **PENDING**
+
+Flash the A3-05 Launcher image (its path and SHA-256 are in tag `alpha3-a3-05-audio-finalization`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-05-debug` and that tag's `Git`; if they differ, stop. Use the music-patched card. No serial capture is needed.
+
+1. **Set odd volumes.** `Alt+M` → Settings: Music Volume **70%**, SFX Volume **40%**. Close the menu, then walk a few steps to hear both.
+2. **`Alt+Shift+M`.** The music stops, and the transcript says `Music muted.`. Footsteps and other effects still sound.
+3. **`Alt+Shift+M` again.** The music comes back at the same loudness as before (the song restarts from its beginning), and the transcript says `Music restored.`.
+4. **`Alt+Shift+S`.** Effects stop and the music keeps playing; the transcript says `SFX muted.`. Walk into a wall: no bump sound.
+5. **`Alt+Shift+S` again.** Effects come back at the same loudness; the transcript says `SFX restored.`.
+6. **Settings.** Mute the music (`Alt+Shift+M`), then `Alt+M` → Settings. The rows read `SFX Volume: 40%` and `Music Volume: 70% (muted)`. Press Right on the Music row: it reads `Music Volume: 80%`, and the music plays again. Close the menu.
+7. **Kill one enemy.** In any fight, land a killing blow. You hear **one** hit burst for it, not two.
+8. **Controls.** `Alt+M` still opens the System Menu, and `Alt+S` still says "Save complete".
+
+**PASS:** steps 2–8 as described. Music and effects never mute each other, and a restore comes back at the configured level, not louder. No stutter, `task_wdt`, crash or reboot.
+
+**FAIL:** a mute that silences the wrong channel or both; a restore at a different loudness; a Settings value that changed after a mute; `Alt+Shift+M` opening the menu or `Alt+Shift+S` saving; two bursts on a kill. Report it with the `FW` / `Git` lines.
+
+*Not in this check:* a reboot. The mute is session-only by design (host test M9). If you do reboot, the device must start unmuted at 80 % music.

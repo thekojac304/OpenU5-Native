@@ -350,9 +350,9 @@ int main(int argc, char **argv) {
         check(ceremony, "E11 the ceremony CAST2 0x0000(i) uses the DATA.OVL tables 0x4af6/0x4b08/0x4b1a/0x4b2c for all 9 i");
         check(sfx_for_combat_attack(false, 1, false) == SfxId::CombatHit &&
                   sfx_for_combat_attack(false, 1, true) == SfxId::CombatHitHeavy &&
-                  sfx_for_combat_attack(true, -1, false) == SfxId::CombatDefeat &&
+                  sfx_for_combat_attack(true, -1, false) == SfxId::None && // A3-05: a death adds no burst
                   sfx_for_combat_attack(false, 0, false) == SfxId::None && sfx_for_combat_attack(false, -1, true) == SfxId::None,
-              "E11 combat: a hit on an enemy / on the party / a death / a miss -> hit / heavy / defeat / silence");
+              "E11 combat: a hit on an enemy / on the party / a death / a miss -> hit / heavy / silence (A3-05) / silence");
     }
     {
         SpeakerProgram p;

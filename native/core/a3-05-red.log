@@ -1,0 +1,154 @@
+# A3-05 RED-first: built against HEAD's production files (git show HEAD:<file>),
+# every test file as in the working tree:
+#   native/core/include/openu5/audio.h
+#   native/core/src/audio.cpp
+#   native/core/include/openu5/system_menu.h
+#   native/core/src/system_menu.cpp
+#   native/core/include/openu5/frontend.h
+#   native/core/src/frontend.cpp
+#   native/core/include/openu5/sfx_synth.h
+#   native/core/src/sfx_synth.cpp
+#   native/core/src/sfx_inventory.cpp
+#   native/targets/tdeck/main/ui_input_adapter.h
+#   native/targets/tdeck/main/ui_input_adapter.cpp
+#   native/targets/tdeck/main/alpha_runtime.h
+#   native/targets/tdeck/main/alpha_runtime.cpp
+## a3_05_audio_controls: exit 1
+GREEN K0 control: the patched pack plays the context's song at the configured 70 %
+GREEN K1 Shift+M / Shift+S without Alt are ordinary keys: no mute
+RED K2 Alt+Shift+M is the music mute, not Alt+M's System Menu
+RED K3 Alt+Shift+S is the SFX mute, not Alt+S's Save
+GREEN K4 a mute key routes no game command
+GREEN K5 control: Alt+M still opens the System Menu
+GREEN K5 control: Alt+S still takes the Save route
+GREEN K6 control: any other Alt+Shift chord keeps its Alt meaning (Alt+Shift+L loads)
+RED M1 Alt+Shift+M stops the song; the configured 70 % is untouched
+RED M1 the transcript says 'Music muted.'
+GREEN M2 SFX still sound while music is muted, at their own gain
+RED M3 a muted context does not restart its song on its own
+RED M4 Alt+Shift+M again restores the context's song at 70 %, not 100 %
+RED M4 the transcript says 'Music restored.'
+RED M5 six more toggles: no drift, one line per toggle
+RED M6 opening and closing the System Menu keeps the mute
+GREEN M6 closing the menu persists the configured 70 %, never a muted 0
+RED M7 the toggle works with the System Menu open, and leaves it open
+RED M8 a load keeps the mute
+RED M8 ... and it restores after the load
+GREEN M9 the mute is session-only: a reboot plays music at the configured 70 %
+RED X1 Alt+Shift+S silences the SFX channel only; the configured 40 % is untouched
+RED X1 the transcript says 'SFX muted.'
+RED X2 a cue while SFX are muted is not submitted
+GREEN X3 music keeps playing while SFX are muted
+RED X4 Alt+Shift+S again restores 40 %, not 100 %, and cues sound at it
+RED X4 the transcript says 'SFX restored.'
+RED X5 six more toggles: no drift, music untouched
+RED X6 both muted at once
+RED X6 unmuting SFX does not unmute music
+RED S1 Settings shows the configured 60 % and marks the row muted
+RED S2 a Music Volume edit while muted unmutes music at the new 70 %
+RED S3 the SFX mute from inside Settings marks only the SFX row
+RED S4 an SFX edit unmutes SFX only; music stays muted
+RED S5 settings.json holds the configured volumes, not the mute
+GREEN S6 a configured 0 % is shown as 0 %, not as muted
+RED S6 muting a 0 % bus is a separate state on top of it
+RED S6 restoring it gives back 0 %, which stays silent
+RED T1 Return to Title keeps the mute: the title song is not started
+RED T2 a title Settings Music Volume edit unmutes music at the new 80 %
+RED T3 the music mute works on the title screen (which has no transcript line)
+RED T4 back in the game the mute still holds
+RED T4 ... and restores at the 80 % set on the title
+RED A1 stock files: Alt+Shift+M does not pretend music exists
+RED A1 ... and the Music row still reads Unavailable
+RED A2 stock files: the SFX mute works
+GREEN A2 ... and restores
+GREEN D1 a kill on an enemy plays the 0x3564 enemy burst once
+RED D2 ... and no second (0x2fd0 chest-trap) burst
+RED D3 a party member's death: the party burst once, nothing more
+RED D4 a lone Died is silent
+a3_05_audio_controls: 51 checks, 38 failures
+## a3_02_sfx_synth: exit 1
+GREEN Y1 a fixed tone (beep 1000) renders at the PIT's 1193182/1193 = 1000.15 Hz
+GREEN Y1 move-blocked beep(0xa5,0xc8) renders at 165 Hz
+GREEN Y1 a tone_sweep's pitch is inc/65536 x 25806 Hz (harpsichord digit 1 = 1227 Hz), measured
+GREEN Y2 the ceremony (idx 7) is NB lead + an UP sweep bx 1000 +1 and a DOWN sweep bx 39000 -1, 38000 each
+GREEN Y2 sweep direction: bx rising narrows the gate (up sweep), bx falling widens it (down sweep)
+GREEN Y2 sweep endpoints: both legs keep the one pitch of inc (1898 Hz) while the duty moves
+GREEN Y3 glide(1000->200,5,300): 60 steps of -13 Hz, the last step at 233 Hz, not 200
+GREEN Y3 glides fall (cannon, waterfall) as the staircase says; torch glide climbs +24 Hz x 50
+GREEN Y3 a glide with total <= 0 runs no pass (the signed jl at 0x43ef): silent
+GREEN Y4 the PRNG is 0x2255-0x2262 verbatim
+GREEN Y4 noise draws stay in [100, band] and reach BOTH ends (sub cx,bx; inc cx: closed interval)
+GREEN Y4 a rendered noise burst is bounded by the square's peak and not silent
+GREEN Y4 the PRNG word persists across bursts (never re-seeded): a repeated burst differs, 675 draws later
+GREEN Y4 the noise never touches the game RNG (its PRNG word is [0x545c], the player's own)
+GREEN Y5 frames = samples x 16000 / 25806: materialize 6200, arpeggio 6 x 3100, move-blocked 2976
+GREEN Y5 a scene cue lasts its paced hold to within one millisecond (both from kToneSweepSamplesPerSecond)
+GREEN Y5 the ceremony lead is ceil(dur/step) = 16 draws and lasts the inverted-viewport lead exactly
+GREEN Y5 the voice renders exactly the program's frames and then stops
+GREEN Y6 the loudest primitive stays within 2x the -12 dBFS peak: headroom
+GREEN Y7 0 % is exact digital silence (every sample 0)
+GREEN Y8/I gain is strictly monotonic 0 < 10 < 50 < 80 < 100 %
+GREEN Y8 the gain is applied ONCE: 50 % peak = 100 % peak x 8191/32767, 100 % = the unscaled peak
+GREEN Y8 a gain above unity (65535, or a 250 % volume) clamps to unity: no overflow
+GREEN Y8/I changing SFX Volume mid-tone: the following chunk is exactly the new gain, phase unbroken
+GREEN Y9 a flush fades the playing cue out within 2 ms, drops the queue, and leaves exact silence
+GREEN Y9 the player takes new cues after a flush
+GREEN Y10 20 rapid distinct requests: the first plays, the NEWEST 8 wait, the 11 oldest pending are dropped
+GREEN Y10 20 identical requests: one plays, one waits, 18 coalesce
+GREEN Y10 transport: a request posted before the latest flush epoch is dropped as stale
+GREEN E11 each cue compiles to the original's primitive sequence (beep / NB+gap+NB / NB / glide / sweeps)
+GREEN E11 the ceremony CAST2 0x0000(i) uses the DATA.OVL tables 0x4af6/0x4b08/0x4b1a/0x4b2c for all 9 i
+RED E11 combat: a hit on an enemy / on the party / a death / a miss -> hit / heavy / silence (A3-05) / silence
+GREEN E12 unknown / undeclared ids (None, Count, 250, bard-song) compile to nothing and leave the player idle
+GREEN E12 the spell-cast hook is a marker (its sound is the ceremony event's); invalid-magic has no adjudicated sound
+GREEN E13 a repeat of the NEWEST pending cue coalesces; the same cue after a different one queues again
+GREEN E14 a scene cue preempts the playing ordinary cue and discards the lower-class cues queued behind it
+GREEN E14 it starts the moment the 2 ms fade of the cut cue ends
+GREEN E14 a newer scene cue replaces the playing scene cue (the pacer is the clock: latest wins)
+GREEN E14 an ordinary cue never interrupts a scene cue: it waits
+GREEN E14 the diagnostic tone preempts everything and flushes the queue; a scene cue waits behind it
+GREEN H15 digit d plays note[d] of DATA.OVL 0x2746 (4000 samples, bx 20000 -4); out-of-range digits clamp
+GREEN H16 digits 1..9 rise in pitch and 0 is the highest key (the 10th, above the octave)
+GREEN H16 every note sounds at its table pitch; the intervals are the table's ratios
+GREEN H16 a note lasts 4000 samples = 155 ms (2480 frames)
+GREEN H18 rapid notes queue in key order and are never coalesced (a repeated key is a note); overflow drops the oldest
+GREEN H18 the same digit pressed three times fast is three notes (queued, never coalesced)
+GREEN H18 three queued notes each play in full, back to back, then silence
+GREEN H17 cancelling a note mid-way leaves no stuck tone
+GREEN R1 all 81 reference segments agree: kind, pitch (sweep exact, PIT tones within the divisor's 0.3 %), length within 0.1 ms, glide staircase and noise draw counts
+GREEN N1 sfx_synth.cpp holds no RTOS call, sleep, lock or heap allocation
+## a3_02_sfx_runtime: exit 1
+GREEN R0 the real audio pack loads (music capability only; SFX need none)
+GREEN R1 every wired cue the walk emitted reached the synthesizer exactly once, in order
+GREEN R1 and it is audible: the synthesizer rendered it
+GREEN R1 and it ends: silence after the last footstep
+GREEN R2 at SFX Volume 0 nothing is submitted and the output is exact silence
+GREEN P0 Developer Teleport to LB castle floor 2 (17,17): the party sits at the harpsichord
+GREEN P1 five digit keys play five notes, in key order, each as its digit (TOWN 0x0e34)
+GREEN P2 rapid notes never hold input: the next command runs at once, state as without audio
+GREEN P3 the five 155 ms notes and then the bump play back to back (none dropped, none overlapped) and stop
+GREEN P3 the step south into the instrument is the wall bump beep
+GREEN P4 the pitch follows the keys: 6 < 7 < 8 < 9, and 8 again is the same note
+GREEN P5 opening the System Menu mid-phrase leaves no stuck note
+GREEN P5 Alt+L during a note: faded out within 2 ms, nothing queued survives
+RED C1 arena events: hit on an enemy -> combat-hit, on the party -> heavy, miss and death silent
+GREEN C1 and each burst renders and ends
+RED C2 a ceremonial spell: the marker cue is declined, the MagicCeremony(3) event plays CAST2 0x0000(3) once
+GREEN C2 the ceremony renders for its lead + two sweeps and ends
+GREEN T0 a shipped-pack Camp reaches the apparition
+GREEN T19 the paced apparition reaches its Hail getkey under every audio setup
+GREEN T19 Camp: every 5 ms sample, every frame timestamp and the final state are identical with no audio, the synthesizer, SFX muted, a failing backend, audio stalled and audio racing ahead
+GREEN T20 the four apparition cues reach the synthesizer as the pacer releases them, in scene order
+GREEN T16 audible with the synthesizer; exact silence muted; nothing accepted by a failing backend
+GREEN T21 the Blackthorn entry segment runs paced through the device's pacer and comes down
+GREEN T21 Blackthorn: identical samples, frames and state with no audio, the synthesizer, muted, failing, stalled and racing audio
+GREEN T21 the materialization sweep sounds once, when its beat is applied, and the scene holds it for the PACER's 503 ms, not the sound's
+GREEN M0 a sustained cue is playing with another queued
+GREEN M1 Alt+L: the playing cue fades in 2 ms, the queued one is dropped, silence after the load
+GREEN M2 System Menu Load: the same
+GREEN M3 Return to Title flushes, and title Continue's load flushes again: silence in the loaded world
+GREEN M4 Return to Title alone flushes SFX (new in A3-02: the title replaces the world)
+GREEN M5 Developer: the test tone preempts the playing cue, plays, and the audio path is idle and healthy after
+GREEN M6 Ending: the cue playing when the game ends finishes on its own; nothing is stuck in the terminal mode
+GREEN M6 the audio path still works in Ending, and Return to Title from it flushes
+GREEN S25 settings.json's 30 % reaches the service after a reboot and a real effect renders at exactly that gain

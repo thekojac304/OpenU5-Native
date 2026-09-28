@@ -145,6 +145,9 @@ class FrontendSession {
     const FrontendSettings &settings() const { return settings_; }
     /** A3-01: whether the Music Volume row is live (openu5/audio.h). */
     void set_music_availability(MusicAvailability a) { music_availability_ = a; }
+    /** A3-05: as SystemMenuSession's (the title Settings shares the rows). */
+    void set_audio_mutes(bool sfx, bool music) { sfx_muted_ = sfx; music_muted_ = music; }
+    uint8_t take_volume_edits() { const uint8_t e = volume_edits_; volume_edits_ = 0; return e; }
     bool active() const { return state_ != FrontendState::EnterGame; }
     FrontendCreationPhase creation_phase() const { return creation_; }
     const char *creation_name() const { return name_; }
@@ -167,6 +170,8 @@ class FrontendSession {
     FrontendIntent pending_{};
     FrontendSettings settings_{};
     MusicAvailability music_availability_ = MusicAvailability::NoAudioPack;
+    bool sfx_muted_ = false, music_muted_ = false;
+    uint8_t volume_edits_ = 0;
     FrontendSaveSlot saves_[2]{};
     GypsyTournament tournament_{};
     uint32_t entered_ms_ = 0;

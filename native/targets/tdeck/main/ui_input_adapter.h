@@ -5,7 +5,8 @@
 
 namespace tdeck {
 
-enum class DeviceShortcut : uint8_t { None, DeveloperMenu, Save, Load, MovementModeToggled };
+// A3-05 appends the two session mutes; existing values keep their numbers.
+enum class DeviceShortcut : uint8_t { None, DeveloperMenu, Save, Load, MovementModeToggled, MusicMute, SfxMute };
 
 class UiInputAdapter {
   public:

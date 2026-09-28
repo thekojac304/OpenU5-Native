@@ -479,16 +479,17 @@ int main(int argc, char **argv) {
         combat(CombatEventKind::Attacked, 7, 0);
         combat(CombatEventKind::Died, 7, -1);
         combat(CombatEventKind::Message, 7, -1);
-        const bool mapped = synth.subs.size() == 3 && synth.subs[0].id == SfxId::CombatHit &&
-                            synth.subs[1].id == SfxId::CombatHitHeavy && synth.subs[2].id == SfxId::CombatDefeat;
-        check(mapped, "C1 arena events: hit on an enemy -> combat-hit, on the party -> heavy, miss silent, death -> defeat");
+        // A3-05: a death is silent; the killing blow's Attacked carries 0x3564's burst.
+        const bool mapped = synth.subs.size() == 2 && synth.subs[0].id == SfxId::CombatHit &&
+                            synth.subs[1].id == SfxId::CombatHitHeavy;
+        check(mapped, "C1 arena events: hit on an enemy -> combat-hit, on the party -> heavy, miss and death silent");
         check(synth.pull(1500) > 0 && synth.player.idle(), "C1 and each burst renders and ends");
         GameEvent m{};
         m.kind = GameEventKind::MagicCeremony;
         m.note = 3;
         h.cue("spell-cast");
         h.present(m);
-        check(synth.subs.size() == 4 && synth.subs[3].id == SfxId::TimeSpell && synth.subs[3].param == 3 &&
+        check(synth.subs.size() == 3 && synth.subs[2].id == SfxId::TimeSpell && synth.subs[2].param == 3 &&
                   h.rt->audio().stats().sfx_refused >= 1,
               "C2 a ceremonial spell: the marker cue is declined, the MagicCeremony(3) event plays CAST2 0x0000(3) once");
         SpeakerProgram p;

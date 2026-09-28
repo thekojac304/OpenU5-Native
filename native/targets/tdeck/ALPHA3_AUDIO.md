@@ -1,6 +1,17 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap, A3-05 audio finalization)
 
-**Status (A3-04G hardware closeout, 2026-09-27): H-201 PASS — D-63 HARDWARE-VALIDATED AND CLOSED. H-202 PASS (System Menu responsiveness, save list, repeated opens, save / load). THE HEAP WATCH ITEM STAYS OPEN.** One serial capture of the A3-04G image (`Git c8fee48beda2`), committed as `a3-04g-hw-h201-h202.log` and summarised by `a3_04g_hw_closeout.py` (§28.21):
+**Status (A3-05, 2026-09-27): AUDIO FINALIZATION — VOLUME CURVE ACCEPTED AS FINAL (UNCHANGED), MUTE SHORTCUTS ADDED, EXTRA KILL BURST REMOVED (D-64) — ON THE HOST; SHORT HARDWARE CHECK H-203 PENDING.** §29:
+- **Volume:** one square law shared by both channels (0 % silent with the synth stopped, 10 % = −40 dB, 50 % = −12 dB, 100 % = unity). No clipping or integer defect was found; the user's device verdict stands, and no production change was made.
+- **Alt+Shift+M / Alt+Shift+S** toggle a session-only music / SFX mute on top of the volume.
+  - The configured volume is never written, and a reboot starts unmuted.
+  - Each toggle prints one transcript line. The Settings rows read `NN% (muted)`, and editing a row unmutes that channel.
+  - With stock files, Alt+Shift+M answers `Music unavailable: …`.
+  - The audit found that Shift was ignored in Alt chords, so Alt+Shift+M opened the menu and Alt+Shift+S saved.
+- **The kill burst:** the second burst on a kill cited 0x2fe3, which is the chest trap 0x2fd0. The original's kill sounds 0x3564's hit burst only, and so does native now.
+
+RED-first 38 / 51 → GREEN 51 / 51 on the real runtime, 21 / 21 core; 20 / 20 mutations killed; host suite **151 / 151**. Firmware +944 B, flash only.
+
+**Status as the A3-04G hardware closeout wrote it (2026-09-27): H-201 PASS — D-63 HARDWARE-VALIDATED AND CLOSED. H-202 PASS (System Menu responsiveness, save list, repeated opens, save / load). THE HEAP WATCH ITEM STAYS OPEN.** One serial capture of the A3-04G image (`Git c8fee48beda2`), committed as `a3-04g-hw-h201-h202.log` and summarised by `a3_04g_hw_closeout.py` (§28.21):
 - **H-201:** 8 hit cues in one troll fight: 5 on enemies (`row=-1`), 3 on party members (rows 0 and 2, row 2 twice). Each cue has exactly two frames, the cue and its restore. The killing blow's cue comes before the death on the same tick. The fight ended normally in victory, and audio stayed clean throughout. The user confirmed the cue by eye.
 - **H-202:** the boot inspection verified both slots cold (785.6 ms: commit 81.2 + read 363.0 + verify 328.1 ms) and kept nothing. Every later open was `cached / cached`, 64 B, **82.8–83.2 ms**; with the 98–101 ms menu frame the open takes **≈ 180 ms instead of ≈ 820 ms**, identical over 25 opens (23 in a row). All 29 inspection windows kept 0 B. One in-menu save (generation 33, 2,106 ms) and four loads (815–1,051 ms), no storage error.
 - **Heap:** after the second Continue, the internal heap's largest block was 23,552 B for 23 opens (§28.16 trigger 3). The same Continue moved 149,424 B of the live document into internal RAM, and free PSRAM rose by the same amount (± 28 B). This is **placement, not a leak**, and later windows reversed it (32,768 → 47,104 → 36,864 B). Re-classified as an **allocator placement / fragmentation watch — recoverable, not a leak — OPEN**.
@@ -410,6 +421,8 @@ This is `openu5/audio.h`: `AudioService` over `AudioBackend`.
 | Applied | live, to the SFX channel only | live, to the music channel only |
 | Persisted | on leaving Settings and on closing the menu, in `/sd/ultima5/settings.json` `soundVolume` (the existing key) | `musicVolume` (the existing key) |
 | Without music | fully usable (it drives the test tone now, and the effects from A3-02) | the row says Unavailable, adjust keys do nothing, and the footer gives the reason |
+
+**Mutes (A3-05, §29.4–29.5).** Alt+Shift+M / Alt+Shift+S toggle a session-only mute per channel on top of these values. A muted row reads `SFX Volume: 40% (muted)`. Editing a row unmutes that channel. A mute is never persisted, and a configured 0 % is not a mute.
 
 **Missing-music UX.** The row stays visible and reads `Unavailable`. When it is selected, the footer names the reason (§0). This fits the existing Settings conventions: rows are plain text, there is no grey, and the footer already carries hints. It also gives better feedback than a hidden row, and it is not a dead control.
 
@@ -4036,3 +4049,231 @@ The visible open is **≈ 180 ms instead of ≈ 820 ms (−78 %)**. The 180 ms i
 - a trigger-1 line;
 - a trigger-2 hit whose internal + PSRAM sum falls by more than 4 KiB;
 - a largest internal block below 23,552 B.
+
+## 29. A3-05 — audio finalization: the volume verdict, session mutes and the kill burst
+
+The small closing pass of the audio track. The user had already judged the volume on the device: 10 % is quiet but clearly audible, 100 % is loud, both curves feel right, and no effect or song is out of balance. No retuning was wanted. This batch:
+- confirms the volume system and records it as final;
+- adds music and SFX mute shortcuts;
+- settles the second burst a kill played (§27.12).
+
+No volume curve, mix, song, cue program, save format or gameplay rule changed.
+
+**Status: MUTES ADDED AND KILL BURST FIXED ON THE HOST — SHORT HARDWARE CHECK H-203 PENDING.**
+
+### 29.1 Baseline
+
+- HEAD `04d977c5` (the A3-04G hardware closeout) on `main`, clean. Latest tag `alpha3-a3-04g-storage-inspect` (`c8fee48b`); before it `alpha3-hf3-combat-hit-feedback`, `alpha3-a3-04f-render-efficiency`.
+- Fresh host build `native/core/build-a3-05-base`: **149 / 149, serial, 135.71 s** (`native/core/a3-05-baseline-{configure,build,ctest}.log`). The only warning is the known w64devkit one.
+- Firmware at baseline: A3-04G, `3.0.0-alpha3-dev-a3-04g-debug`, `0xef6c0` = 980,672 B, 67,904 B (6 %) free.
+- **Already proven on hardware, not repeated here:**
+  - music and SFX together (A3-04 to A3-04G captures; in H-202, 41 / 41 windows `und=0 hw=0 miss=0 clip=0` at Music 90 % / SFX 30 %);
+  - combat audio and the hit cue (H-201);
+  - menus, rendering load, storage load and sustained playback.
+
+  This batch adds no soak.
+
+### 29.2 The volume curve: accepted as final, no production change
+
+`openu5::volume_to_gain_q15` (`audio.cpp`) is unchanged since A3-01. It is **one square law, the same for both channels**, in integer Q15: `gain = v² · 32767 / 10000`. There is no table and no per-channel shaping.
+
+| Setting | Q15 gain | Amplitude | Level | What happens |
+|---|---|---|---|---|
+| 0 % | 0 | 0 | silent | SFX: requests are dropped before the backend (`play_sfx`). Music: the song is stopped and the synth does not run (A3-04B); raising the volume restarts the context's song |
+| 10 % | 327 | 0.0100 | −40.0 dB | the quiet-but-audible level the user reported |
+| 50 % | 8,191 | 0.2500 | −12.0 dB | |
+| 80 % (default) | 20,970 | 0.6400 | −3.9 dB | |
+| 100 % | 32,767 | 1.0000 | 0 dB (unity) | |
+
+- **Steps:** 10 % in Settings, clamped to 0–100, no wrap (`step_volume`). Hand-edited off-step values are kept.
+- **Applied:** per sample, after each channel's own int16 clamp, as `(sample · gain) / 32768` with saturation (`apply_gain_q15`). The two channels are then summed and saturated, and every clipped sample is counted (`AudioRingPump`, the `clip=` field).
+- **Resolution:** at 10 %, a sample below ±101 rounds to 0. The loudest music peak is 25,240 and the loudest cue 15,688, so only tails more than about 48 dB below full scale are lost, at a setting that is itself −40 dB. That is not audible.
+- **Clipping:** the coincident worst case is 26,192 at the default 80 / 80 (no clip, A3-04B), 33,150 at 90 / 90 and 40,926 at 100 / 100. If a loudest-cue peak lands on a loudest-music peak with both channels at 90 % or more, the mix **saturates** (it never wraps) and the sample is counted. On hardware all 41 H-202 windows read `clip=0` (Music 90 %, SFX 30 %), and the user heard no distortion at 100 %.
+
+**Verdict: volume curve accepted as final; no production change.** Neither curve changed in A3-05. There is no defect:
+- 0 % is exact silence and stops the synth;
+- both ends are exact (0 and unity);
+- there is no overflow path;
+- the one theoretical clip, at 90 % or more on both channels, saturates as designed and was never observed.
+
+A different curve would be a matter of taste, and the user's device verdict decides that.
+
+### 29.3 The shortcut audit
+
+**Every shortcut before A3-05** (`ui_input_adapter.cpp`):
+- Alt+M: System Menu. Alt+D: Developer. Alt+S: Save. Alt+L: Load. Any other Alt+key is swallowed.
+- Shift+trackball Up / Down: page the transcript.
+- Mic, short press: Cancel / Back. Mic held 1.1 s: Movement Mode. Symbol+Mic: '0'.
+- Plain letters, with or without Shift, are game commands; `M` is Mix and `S` is Search.
+
+**The collision the audit found.** Alt chords compare `ascii_lower(code)`, so Shift was ignored. On the A3-04G image **Alt+Shift+M opened the System Menu and Alt+Shift+S saved** (both RED-first below, K2 and K3). A new Alt+Shift chord therefore has to be tested before the Alt branch.
+
+**The matrix** (`keyboard_matrix.cpp`, LilyGO's layout):
+- Positions (column, row): Alt (0, 4); the Shifts (1, 6) and (2, 3); M (4, 5); S (1, 1).
+- The modifiers are read from the same snapshot as the letter, so the letter's press event carries both flags.
+- No three of {Alt, a Shift, M} or {Alt, a Shift, S} sit on three corners of a row / column rectangle, so no phantom fourth key can appear. The chord is clean with either Shift key.
+
+**Chosen:**
+
+| Chord | Action | Why |
+|---|---|---|
+| **Alt+Shift+M** | toggle the **music** mute | the user's candidate; keeps the project's Alt-letter convention and the letter's mnemonic; Shift marks it as the capital variant of the menu key |
+| **Alt+Shift+S** | toggle the **SFX** mute | same; S for sound effects |
+
+Every other Alt+Shift chord keeps its Alt meaning: Alt+Shift+L still loads (K6). A slip is harmless and visible either way, because a mute prints a line and the menu and Save behave as they always have. No other letter pair is cleaner. M and S are the natural mnemonics, and a bare Alt+letter pair (U / X, say) would be arbitrary.
+
+### 29.4 Mute semantics
+
+- **What a mute is.** A per-channel flag in `AudioService` (`set_sfx_muted` / `set_music_muted`), on top of the volume.
+  - A muted SFX channel gets gain 0, and cues are dropped as at 0 % (counted in `sfx_muted`).
+  - A muted music channel stops its song exactly as 0 % does. The synth and the I2S stream stop, so a mute costs nothing (A3-04B). The music context is kept.
+  - **The configured volume is never written.** `sfx_volume()` / `music_volume()`, the Settings rows and `settings.json` keep it.
+- **Restore.** The same chord again.
+  - SFX get their configured gain back.
+  - Music restarts the current context's song, at the configured volume, from its beginning. That is what 0 % → up has always done. Resuming mid-song would mean keeping the synth running while muted, which is exactly the A3-04B contention the 0 % stop removed.
+- **Only its own channel.** A music mute never touches the SFX gain, and an SFX mute never stops a song (M2, X3, X6).
+- **Where it works.** Everywhere. The chord is handled before any screen can swallow or route the key: in-game, combat, the System Menu (which stays open, M7), Settings, the Developer screen, modal scenes, the Camp apparition and the title screen. It routes no game command and spends no turn (K4).
+- **Session-only.** The flag lives only in the running `AudioService`.
+  - It survives menu transitions, Return to Title, New Journey and loads (M6, M8, T1, T4).
+  - **A reboot starts unmuted** (M9).
+  - The project has no persistent-toggle convention for audio, and `settings.json` holds volumes only.
+- **Feedback.** One `System` transcript line per toggle: `Music muted.`, `Music restored.`, `SFX muted.` or `SFX restored.` It uses the existing `ui_->append` path, as "Save complete" does.
+  - The title screen has no transcript. There, the sound itself and the title Settings rows are the feedback.
+  - There is no dialog, overlay or HUD element.
+  - Serial: one `AUDIO_MUTE bus=… sfx_muted=… music_muted=… sfx_volume=… music_volume=…` line.
+- **No music.** With stock files, or with no or a bad audio pack, Alt+Shift+M changes nothing. It prints `Music unavailable: <reason>`, with the Settings footer's own reason (A1), and does not pretend music exists. The SFX mute works normally (A2).
+
+### 29.5 Settings interaction
+
+| Case | Behaviour | Tests |
+|---|---|---|
+| M1: Music 60 %, mute, open Settings | the row reads **`Music Volume: 60% (muted)`**: the configured value plus an explicit marker. The System Menu and the title Settings show the same text | S1, unit M1 / T1 |
+| M2: change Music Volume while muted | **the edit unmutes music**, at the new value. This is the usual system-volume convention: touching the slider means "I want to hear it" | S2, T2, unit M4 / T2 |
+| M3: the same for SFX | the same rule. An edit unmutes only its own channel; the other channel's mute stays | S3, S4, unit M3 / T3 |
+| M4: configured 0 % vs muted | **two distinct states.** 0 % is a stored setting (persisted, shown `0%`). A mute is a session flag (never stored, shown `(muted)`). Muting a 0 % channel shows `0% (muted)`; restoring it gives back 0 %, still silent | S6, unit A9 |
+| An adjust key on the Music row while music is unavailable | edits nothing and unmutes nothing, as before | unit M6 |
+
+`settings.json` is written exactly as before: on leaving Settings and on closing the menu. It holds the configured volumes, never a muted 0 (M6, S5).
+
+### 29.6 The extra kill burst: disproven, removed
+
+**Before.** `present_audio` played `CombatHit` / `CombatHitHeavy` for the killing blow's `Attacked` event, then `CombatDefeat` for the `Died` event that follows it. That is two 174 ms bursts per kill. `CombatDefeat`'s program is NB(0x28, 0xbb8, 0x1f4), cited as "kernel 0x2fe3 (the 0x2fd0 burst) — a death" (A3-02 §15.5).
+
+**Re-derived from the binaries** (`re/tools/dis16.py`, the census bases):
+1. **0x2fe3 is not a death.** It is the first call of kernel 0x2fd0, `chest_trap`.
+   - The routine sounds an unconditional noise burst on entry (0x2fd7–0x2fe3), then `rand` picks ACID / POISON / BOMB / GAS (0x2fe6–0x3020, `re/notes/cmds.md` §8).
+   - Its three callers are SJOG 0x1222 (a world chest), SJOG 0x1323 (a dungeon chest) and CMDS 0x1c04 (Mix with the wrong reagents). None of them is in combat.
+   - The "desvanecer / derrota" (fade / defeat) label came from the first catalogue pass (`re/notes/sfx-catalog.md` §3.1). `cmds.md` §8 later corrected it; the A3-02 citation copied the old label.
+2. **The strike makes no sound of its own.** Every combat strike is COMBAT.OVL 0x194A, called through the overlay stub 0x7d52. Its callers are COMSUBS 0x0ba9 (ranged), COMSUBS 0x0c39 (melee), COMBAT 0x0210 (enemy ranged) and COMBAT 0x03d1 (enemy melee). A transitive walk of its calls reaches only two speaker paths, and neither is tied to a kill:
+   - `ambient_sfx_tick` 0x4102, through the view refresh at 0x5a1a (the ambient cues, already modelled);
+   - 0x475a via 0x594e, which is skipped in combat (`cmp [0x5893],0x80 / jae`, 0x5947).
+
+   It never reaches 0x2fd0, 0x2a52, 0x350a or 0x3564.
+3. **The kill message makes no sound either.** COMSUBS 0x0312 prints the strike's result line. Its " killed!" branch (0x036b–0x037d, DS 0x99fc) prints, sets a flag and returns. The routine's only speaker calls are the glides after " grazed!" (0x0352) and " dragged under!" (0x03d6), which A3-03 already mapped.
+4. **The one burst of a kill is 0x3564's.** The caller runs 0x3564 before the strike (COMSUBS 0x0c30 → 0x0c39, §27.2). That is the hit burst by the target's side, which native already plays for the killing blow's `Attacked`.
+
+**Answers.**
+1. On a kill the original plays **only the normal hit burst**: no separate death sound, and not both.
+2. There is no second cue in combat. The routine at 0x2fe3 is the chest trap.
+3. **Yes, native double-played**, because of that address attribution.
+4. The TypeScript reference has the same misattribution, so it adds nothing. `game/src/core/sfx.ts` `sfxForCombatEvent` maps `died` → `combat-defeat` and cites "0x2fd0 @0x2fe3". No fixture pins that layer (the drift fixture pins programs, not routing). It is recorded in §29.12, not changed.
+
+**The change.**
+- `sfx_for_combat_attack(died, …)` returns `None` for a death. This is the only production audio-routing change.
+- Every native `Died` comes from `kill()`. `kill()` is reached only through `damage()`, which emits `Attacked` (hit 1) first (`combat.cpp`). So every kill still sounds its one burst.
+- The `CombatDefeat` program stays. It is the real 0x2fd0 burst, with the same bytes as `dungeon-trap`, and `a3_02_sfx_synth` pins it against the TypeScript fixture. It is no longer emitted.
+- **Provenance corrected.** The 0x2fe3 site row now names `DungeonTrap`: the chest trap 0x2fd0, its three callers, "not a combat death". The `CombatDefeat` status note and the `audio.cpp` catalogue comment say why the id is never emitted.
+- **Two existing expectations changed, deliberately:**
+  - `a3_02_sfx_synth` E11: a death → silence.
+  - `a3_02_sfx_runtime` C1: a death is silent, so the ceremony after it is now the third submission, not the fourth (C2).
+
+  Both are RED against HEAD's sources (§29.8).
+
+### 29.7 Stock and patched assets
+
+| | Stock DOS files (`StockNoMusic`), no pack or a bad pack | The supported music patch (`Available`) |
+|---|---|---|
+| Music | none; nothing reaches the music channel | the context's song, at Music Volume |
+| Music Volume row | `Music Volume: Unavailable`; the footer says why; keys do nothing; the stored value is kept (A3-01, unchanged) | live: `NN%`, or `NN% (muted)` |
+| Alt+Shift+M | `Music unavailable: <reason>`, no state change | mute / restore, as §29.4 |
+| SFX, SFX Volume, Alt+Shift+S | fully working | fully working |
+
+Capability still comes only from `openu5-audio.bin` (A3-01). Nothing is synthesised for stock files.
+
+### 29.8 Tests, RED / GREEN and mutations
+
+- **`a3_05_audio_controls`** (new, 51 checks). It drives the real `AlphaRuntime` with raw keys and records the backend's calls, on the patched pack and on the stock fixture. It uses only seams HEAD already had, so it builds against HEAD.
+  - K0–K6: the shortcut map. Shift alone types a letter; Alt+Shift+M / S are mutes, not the menu or a save; no command is routed; Alt+M, Alt+S and Alt+Shift+L keep their meaning.
+  - M1–M9: the music mute; the restore level (70 %, not 100 %); no drift over repeated toggles; the System Menu (both ways, and toggling with it open); a load; a reboot.
+  - X1–X6: the SFX mute, bus independence, and both channels muted at once.
+  - S1–S6: the Settings rows, an edit unmuting its own channel, `settings.json`, and 0 % vs muted.
+  - T1–T4: Return to Title, a title Settings edit, the mute on the title screen, and Continue.
+  - A1–A2: stock files.
+  - D1–D4: a kill plays a single burst, for an enemy and for a member; a lone `Died` is silent.
+- **`a3_05_audio_mute`** (new, core, 21 checks).
+  - A0–A10: the `AudioService` flags over a recording backend.
+  - R1: the row text.
+  - M1–M6 and T1–T3: the volume-edit reports of `SystemMenuSession` and `FrontendSession`.
+
+  It uses the new API, so it has no HEAD build; the mutations cover it.
+- **RED-first.** `native/core/tools/a3_05_red_first.py` builds against HEAD's 13 production files (`native/core/a3-05-red.log`):
+  - `a3_05_audio_controls`: **38 of 51 RED.** Every control is GREEN: K0, K1, K4, K5 ×2, K6, M2, M6-persist, M9, X3, S6-plain, A2-restore, D1.
+  - `a3_02_sfx_synth` E11 and `a3_02_sfx_runtime` C1 / C2: **RED**.
+  - After the change: **51 / 51 and 21 / 21** (`a3-05-green.log`).
+- **Mutations.** `native/core/tools/a3_05_mutation_check.py` ran 20 mutants: **20 / 20 killed** on the first pass, none invalid, restored build GREEN (`native/core/a3-05-mutation.log`, about 10 minutes).
+  - The configured volume: U1 an SFX mute zeroes it; U2 a music mute is written to the settings.
+  - The bus: U3 the chords swap buses; U8 an SFX edit unmutes music.
+  - The restore level: U4 SFX restore at 100 %; U5 a restarted song plays at 100 %.
+  - Silence: U9 the song keeps playing; U10 muted cues are still submitted.
+  - Reach: U6 ignored while the System Menu is open; U15 Shift ignored; U16 every Alt+Shift chord mutes; U11 stock files pretend.
+  - Settings: U7 / U18 an edit does not unmute (menu / title); U19 the menus are never told; U12 / U13 the SFX row ignores the mute (menu / title); U20 a Music edit is not reported.
+  - Feedback: U17 no transcript line.
+  - **U14 the second kill burst restored:** killed by D2–D4.
+  - The unchanged volume curve is deliberately not mutated.
+
+### 29.9 Regression
+
+Fresh build directory `native/core/build-a3-05`: **151 / 151, serial, 136.17 s**, with the known w64devkit warning only (`native/core/a3-05-{configure,build,ctest}.log`). That is A3-04G's 149 plus `a3_05_audio_mute` and `a3_05_audio_controls`. The focused set passes inside it:
+- volume, mutes and Settings: `a3_01_audio_contract`, `a3_01_audio_runtime`, both `a3_05_*`;
+- the A3-02 / A3-03 SFX runtime and inventory, with the two corrected kill expectations;
+- ambient: `a3_hf2_ambient_parity`, `a3_hf2_1_dispatch_log`;
+- combat hits and kills: `a3_hf3_combat_hit_cue`, `a3_hf3_combat_hit_runtime` (one comment updated, no expectation);
+- pacing, render and storage: `a3_04e_pacing`, `a3_04e_pacing_runtime`, `a3_04f_render_runtime`, `a3_04g_storage_runtime`;
+- music: `a3_04_*`, `a3_04a_audio_stream`;
+- `quest_parity` and every gameplay test.
+
+### 29.10 Firmware
+
+Pre-commit build `native/targets/tdeck/build-a3-05` (`a3-05-firmware-{configure,build}.log`): ESP-IDF 6.1, `--no-ccache`, `ninja -j 4`, first attempt clean, zero project warnings.
+
+- **`0xefa70` = 981,616 B, +944 B** against A3-04G; **`0x10590` = 66,960 B (6 %) free**.
+- Sections against A3-04G's post-commit image (`esp_idf_size --diff`, `a3-05-size-diff.log`): flash `.text` +688 B and `.rodata` +256 B. **DIRAM, IRAM, `.data` and `.bss` are unchanged**: the new state (2 bytes in `AudioService`, 3 in each Settings session) fits in padding of objects that already existed. That is the size a batch of this scope should have.
+- Image guards GREEN: `a3_04f_image_check.py`, `a3_04b_iram_check.py` (the per-sample path is still IRAM-only) and `a3_04a_hotpath_check.py` (`a3-05-{image,iram,hotpath}-check.log`). The mutes add nothing to the per-sample path: the SFX gain is the same atomic the synth already reads per block.
+- Version `3.0.0-alpha3-dev-a3-05-debug`. Not flashed. Tag `alpha3-a3-05-audio-finalization` names the post-commit image (a fresh directory, which embeds the commit), with its path, size, SHA-256 and `Git`.
+
+### 29.11 Hardware check H-203 (the user's; a few minutes)
+
+The check is in `ALPHA2_HARDWARE_CHECKLIST.md`. There is no soak; §29.1 lists what is already proven.
+
+### 29.12 Recorded, not changed
+
+- **The TypeScript reference's `died` → `combat-defeat`** (`game/src/core/sfx.ts`, with its comment "desvanecer / derrota 0x2fd0 @0x2fe3") carries the same misattribution. It is presentation routing at the reference's own layer, and no fixture pins it. It is queued for a reference cleanup like A3-HF2.1's.
+- **The melee swing glides.** Three census sites have been classified `EvidenceUnknown` since A3-03: COMSUBS 0x0c0b (the first call of the melee strike 0x0bf8, 400 → 750) and COMBAT 0x01b2 / 0x033c (750 → 400). They look like attack swings. Adding them would be a new sound, which is outside this batch.
+- **The Developer "Audio test" line** still prints the configured SFX Volume while SFX are muted; the tone is muted with them. This is a diagnostics nicety.
+- **A pending prompt surviving a load** (§28.21.9, the Mix prompt) is its own queued item. A3-05 does not touch it.
+
+### 29.13 Files
+
+- Core:
+  - `native/core/include/openu5/audio.h`, `src/audio.cpp`: the mutes and the row text.
+  - `include/openu5/system_menu.h`, `src/system_menu.cpp`, `include/openu5/frontend.h`, `src/frontend.cpp`: the rows and the edit report.
+  - `include/openu5/sfx_synth.h`, `src/sfx_synth.cpp`: the kill routing.
+  - `src/sfx_inventory.cpp`: the 0x2fe3 provenance.
+- Device:
+  - `native/targets/tdeck/main/ui_input_adapter.{h,cpp}`: the chords.
+  - `alpha_runtime.{h,cpp}`: the toggle, the unmute on edit, and the menus' mute display.
+  - `native/targets/tdeck/CMakeLists.txt`: `PROJECT_VER`.
+- Tests and tools:
+  - New: `native/targets/tdeck/host_tests/a3_05_audio_controls_test.cpp`, `native/core/tests/a3_05_audio_mute_test.cpp`, `native/core/tools/a3_05_{red_first,mutation_check}.py`.
+  - Changed: `native/core/CMakeLists.txt`; `a3_02_sfx_synth_test.cpp` (E11); `a3_02_sfx_runtime_test.cpp` (C1 / C2); a comment in `a3_hf3_combat_hit_runtime_test.cpp`.
+- Docs: this section, the status line and §11; `ALPHA2_HARDWARE_CHECKLIST.md` (H-203); `ALPHA2_PRESERVATION_LEDGER.md` (D-64); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`.

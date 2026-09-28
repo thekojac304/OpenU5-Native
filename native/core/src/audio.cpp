@@ -18,7 +18,7 @@ constexpr SfxRow kSfx[] = {
     {"combat-hit", SfxOrigin::Original},             // NB(10,3000,2000) kernel 0x35de
     {"combat-hit-heavy", SfxOrigin::Original},       // NB(40,3000,500) kernel 0x35c9
     {"combat-damage", SfxOrigin::Original},          // NB(10,1600,2000) kernel 0x2a68
-    {"combat-defeat", SfxOrigin::Original},          // NB(40,3000,500) kernel 0x2fe3
+    {"combat-defeat", SfxOrigin::Original},          // NB(40,3000,500) kernel 0x2fe3 = chest trap 0x2fd0; not emitted (A3-05)
     {"cast-spell", SfxOrigin::Original},             // reference attribution disputed (sfx.ts)
     {"spell-zap", SfxOrigin::Original},              // TS(0x2648,1,28000,1000,2) CAST 0x0d85
     {"line-spray", SfxOrigin::Original},             // NB + crackle, CAST2
@@ -259,7 +259,7 @@ void AudioService::attach(AudioBackend *backend) {
     backend_ = backend;
     song_ = MusicSong::None; // a newly attached backend is playing nothing
     if (backend_) {
-        backend_->set_gain(AudioChannel::Sfx, volume_to_gain_q15(sfx_volume_));
+        backend_->set_gain(AudioChannel::Sfx, sfx_gain());
         backend_->set_gain(AudioChannel::Music, volume_to_gain_q15(music_volume_));
     }
     sync_music();
@@ -277,7 +277,7 @@ void AudioService::set_sfx_volume(uint8_t volume) {
     const uint8_t v = volume > kVolumeMax ? kVolumeMax : volume;
     if (v == sfx_volume_) return;
     sfx_volume_ = v;
-    if (backend_) backend_->set_gain(AudioChannel::Sfx, volume_to_gain_q15(sfx_volume_));
+    if (backend_) backend_->set_gain(AudioChannel::Sfx, sfx_gain());
 }
 
 void AudioService::set_music_volume(uint8_t volume) {
@@ -288,20 +288,35 @@ void AudioService::set_music_volume(uint8_t volume) {
     sync_music();
 }
 
+// A3-05. The mute is a gain of 0 on top of the volume: the same silence as a
+// configured 0 % (SFX dropped at play_sfx, the song stopped by sync_music and
+// restarted on unmute), but the volume itself is kept for the restore.
+void AudioService::set_sfx_muted(bool muted) {
+    if (muted == sfx_muted_) return;
+    sfx_muted_ = muted;
+    if (backend_) backend_->set_gain(AudioChannel::Sfx, sfx_gain());
+}
+
+void AudioService::set_music_muted(bool muted) {
+    if (muted == music_muted_) return;
+    music_muted_ = muted;
+    sync_music();
+}
+
 void AudioService::play_sfx(SfxId id, int32_t param) {
     ++stats_.sfx_requested;
     if (id == SfxId::None || size_t(id) >= kSfxIdCount) {
         ++stats_.sfx_unknown;
         return;
     }
-    if (!backend_ || sfx_volume_ == 0) {
+    if (!backend_ || sfx_volume_ == 0 || sfx_muted_) {
         ++stats_.sfx_muted;
         return;
     }
     SfxRequest request{};
     request.id = id;
     request.param = param;
-    request.gain_q15 = volume_to_gain_q15(sfx_volume_);
+    request.gain_q15 = sfx_gain();
     request.sequence = ++sequence_;
     if (backend_->play_sfx(request)) ++stats_.sfx_submitted;
     else ++stats_.sfx_refused; // dropped: never retried, never waited on
@@ -330,7 +345,7 @@ void AudioService::flush_for_load() { stop_sfx(); }
 // that changes, so a repeated request never restarts a song.
 void AudioService::sync_music() {
     const MusicSong want =
-        has_music() && music_volume_ > 0 ? song_for_context(context_) : MusicSong::None;
+        has_music() && music_volume_ > 0 && !music_muted_ ? song_for_context(context_) : MusicSong::None;
     if (!backend_) {
         song_ = MusicSong::None;
         return;
@@ -350,13 +365,15 @@ void AudioService::sync_music() {
     }
 }
 
-void format_sfx_volume_row(char *out, size_t size, uint8_t volume) {
-    std::snprintf(out, size, "SFX Volume: %u%%", unsigned(volume > kVolumeMax ? kVolumeMax : volume));
+void format_sfx_volume_row(char *out, size_t size, uint8_t volume, bool muted) {
+    std::snprintf(out, size, "SFX Volume: %u%%%s", unsigned(volume > kVolumeMax ? kVolumeMax : volume),
+                  muted ? " (muted)" : "");
 }
 
-void format_music_volume_row(char *out, size_t size, uint8_t volume, MusicAvailability availability) {
+void format_music_volume_row(char *out, size_t size, uint8_t volume, MusicAvailability availability, bool muted) {
     if (availability == MusicAvailability::Available)
-        std::snprintf(out, size, "Music Volume: %u%%", unsigned(volume > kVolumeMax ? kVolumeMax : volume));
+        std::snprintf(out, size, "Music Volume: %u%%%s", unsigned(volume > kVolumeMax ? kVolumeMax : volume),
+                      muted ? " (muted)" : "");
     else
         std::snprintf(out, size, "Music Volume: Unavailable");
 }

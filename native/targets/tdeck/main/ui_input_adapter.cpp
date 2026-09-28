@@ -103,6 +103,14 @@ bool UiInputAdapter::translate(const RawInputEvent &raw, openu5::UiMode mode,
     if (raw.code == 0) return false;
     const uint8_t lower = ascii_lower(raw.code);
     if (raw.modifiers.alt) {
+        // A3-05. Alt+Shift+M / Alt+Shift+S toggle the music / SFX mute. They
+        // must be tested before Alt+M / Alt+S, which ignore Shift: without
+        // this branch they opened the System Menu and saved. Every other
+        // Alt+Shift chord keeps its Alt meaning.
+        if (raw.modifiers.shift && (lower == 'm' || lower == 's')) {
+            shortcut = lower == 'm' ? DeviceShortcut::MusicMute : DeviceShortcut::SfxMute;
+            return true;
+        }
         if (lower == 'm') { action={};action.kind=openu5::UiActionKind::SystemMenu;return true; }
         if (lower == 'd') shortcut = DeviceShortcut::DeveloperMenu;
         else if (lower == 's') shortcut = DeviceShortcut::Save;

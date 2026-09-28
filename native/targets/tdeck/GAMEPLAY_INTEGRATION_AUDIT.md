@@ -8,7 +8,22 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 A3-04G hardware closeout, 2026-09-27) — H-201 PASS, H-202 PASS, heap watch item open; Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 A3-05, 2026-09-27) — audio finalization: volume verdict, session mutes, the kill burst; Alpha 2 remains the released build; read this first
+>
+> **A3-05 is the small closing pass of the Alpha 3 audio track, not a release** (`ALPHA3_AUDIO.md` §29).
+> - **Volume curve: accepted as final; no production change.** One square law shared by both channels (0 % silent and the synth stopped; 10 % = −40 dB; 50 % = −12 dB; 100 % = unity). No clipping or integer defect was found. The user's device verdict stands.
+> - **New: Alt+Shift+M toggles music, Alt+Shift+S toggles SFX.** Each is a session-only mute on top of the volume: it never writes the configured volume, and a reboot starts unmuted. The transcript gets one line per toggle. The Settings rows show `NN% (muted)`, and editing a volume row unmutes that channel. With stock files, Alt+Shift+M answers `Music unavailable: …`.
+>   - The audit found that Shift was ignored in Alt chords: on the A3-04G image **Alt+Shift+M opened the System Menu and Alt+Shift+S saved**. The new chords are tested first; every other Alt+Shift chord keeps its Alt meaning.
+> - **D-64, host fixed: the extra kill burst.** Native played `CombatDefeat` after the killing blow's hit burst, citing 0x2fe3. That address is the entry burst of the chest trap 0x2fd0. The original's kill sounds 0x3564's hit burst only (the strike 0x194A and the " killed!" branch make no speaker call).
+>
+> | | |
+> |---|---|
+> | Host suite | **151 / 151**, serial, 136.17 s. New: `a3_05_audio_controls` 51 (**38 RED on HEAD**, every control GREEN) and `a3_05_audio_mute` 21. **20 / 20 mutations killed.** Two expectations deliberately changed: `a3_02_sfx_synth` E11 and `a3_02_sfx_runtime` C1 / C2 (a death is silent), both RED on HEAD. |
+> | Firmware | `3.0.0-alpha3-dev-a3-05-debug`. Pre-commit build 981,616 B (`0xefa70`), +944 B, 66,960 B (6 %) free, zero warnings. Flash only (`.text` +688, `.rodata` +256); DIRAM, IRAM, `.data` and `.bss` unchanged; image guards GREEN. The image path, SHA-256 and `Git` are in tag `alpha3-a3-05-audio-finalization`. **Not flashed.** |
+> | SD | **Unchanged.** Save format and `settings.json` unchanged. |
+> | Next | **H-203** on the device (about 5 minutes; no soak). Then A3-04H (the storage import count and PSRAM routing, `ALPHA3_AUDIO.md` §28.22), or the queued Mix-prompt-survives-load item. |
+>
+> ### CURRENT STATE (Alpha 3 A3-04G hardware closeout, 2026-09-27) — H-201 PASS, H-202 PASS, heap watch item open — **superseded as the current state by A3-05 above.**
 >
 > **The user ran H-201 and H-202 on the A3-04G image** (`FW 3.0.0-alpha3-dev-a3-04g-debug`, `Git c8fee48beda2`) with a serial capture (`a3-04g-hw-h201-h202.log`, summarised by `native/core/tools/a3_04g_hw_closeout.py` → `a3-04g-hw-summary.log`; `ALPHA3_AUDIO.md` §28.21). Documentation and evidence only: no source, test or firmware change, no tag moved.
 > - **H-201 PASS; D-63 hardware-validated and closed.** One troll fight produced 8 cues: 5 on enemies (`row=-1`) and 3 on party members (rows 0, 2, 2). Each cue has two frames. The killing blow's cue comes before the death on the same tick. The fight exited normally in victory, audio was clean, and the user confirmed the cue by eye. Not exercised: a member's death, and two cues queued at once.
@@ -8163,3 +8178,42 @@ One serial capture of the A3-04G image (`Git c8fee48beda2`), 31.3–258.0 s of u
 ### 4. Next
 
 - **A3-05, audio polish** (`ALPHA3_AUDIO.md` §28.22). A3-04H (the import count; PSRAM routing of the save document) stays queued behind it, with explicit escalation conditions.
+
+## Alpha 3 A3-05 — audio finalization: the volume verdict, session mutes and the kill burst
+
+The small closing pass of the audio track. The full write-up is [`ALPHA3_AUDIO.md`](ALPHA3_AUDIO.md) §29; this section records the classification on its own axis. No gameplay rule, save format, `settings.json` key, song, cue program or volume curve changed.
+
+### 1. Items and classification
+
+| # | Item | Class | Change |
+|---|---|---|---|
+| 1 | The SFX and music volume curves (square law, shared; 0 / 10 / 50 / 100 % = silent / −40 / −12 / 0 dB) | **verified; accepted as final** (the user's device verdict, no defect found) | none |
+| 2 | Theoretical mix saturation when both channels are at ≥ 90 % and a loudest-cue peak meets a loudest-music peak | **declared, by design** (saturates, never wraps, counted in `clip=`; 0 on hardware) | none |
+| 3 | Alt chords ignored Shift: Alt+Shift+M opened the System Menu, and Alt+Shift+S saved | **latent input ambiguity, pre-existing** (no user report) | the chords are tested before the Alt branch; all other Alt+Shift chords are unchanged |
+| 4 | Music / SFX mute shortcuts (Alt+Shift+M / Alt+Shift+S) | **intentional enhancement** (ledger E-5), session-only | new |
+| 5 | A kill played a second burst (`CombatDefeat`, cited to "0x2fe3 — a death") | **native defect (audio parity), from an A3-02 misattribution: 0x2fe3 is the chest trap 0x2fd0** (ledger D-64) | `Died` is silent; the killing blow's `Attacked` keeps 0x3564's burst |
+| 6 | The same `died` → `combat-defeat` in the TypeScript reference (`sfx.ts`) | **reference defect, not fixture-pinned** | recorded; queued for a reference cleanup |
+| 7 | Three melee-swing glides (COMSUBS 0x0c0b, COMBAT 0x01b2 / 0x033c), `EvidenceUnknown` since A3-03 | **recorded** (a new sound; out of scope) | none |
+
+### 2. Evidence
+
+- **Binary:** `re/tools/dis16.py` over ULTIMA.EXE, COMBAT.OVL and COMSUBS.OVL, with the census bases.
+  - 0x2fd0 is the chest trap: its burst is at entry, followed by the trap roll.
+  - The strike 0x194A has four callers. A transitive call walk reaches only the ambient tick 0x4102 and an overworld-only path.
+  - The " killed!" branch (COMSUBS 0x036b) makes no speaker call.
+- **RED-first:** `native/core/tools/a3_05_red_first.py` builds against HEAD's 13 production files. **38 / 51 RED** in `a3_05_audio_controls`, every control GREEN; `a3_02_sfx_synth` E11 and `a3_02_sfx_runtime` C1 / C2 RED (`native/core/a3-05-red.log`).
+- **GREEN:** 51 / 51 and 21 / 21 (`a3-05-green.log`).
+- **Mutations:** `native/core/tools/a3_05_mutation_check.py`, **20 / 20 killed** (`a3-05-mutation.log`).
+- **Suite / firmware:** see the current-state table above.
+
+### 3. Rows
+
+- **H-203** (`ALPHA2_HARDWARE_CHECKLIST.md`): new, PENDING. About 5 minutes: the two mutes, restore levels, the Settings rows, one kill.
+- **D-64** (ledger §4): new, host fixed. **E-5** (ledger §3): new.
+
+### 4. Not done in this batch
+
+- The TypeScript reference's `died` routing (item 6).
+- The melee swing glides (item 7): new sounds.
+- The Mix prompt that survives a load (§28.21.9): its own queued item.
+- A3-04H (storage import count, PSRAM routing).

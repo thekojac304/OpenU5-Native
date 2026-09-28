@@ -248,6 +248,10 @@ class NullAudioBackend final : public AudioBackend {
  *    raising the volume starts the context's song again.
  *  - No ducking and no SFX/music interaction: in the patched original the
  *    MIDI card and the PC speaker were separate hardware.
+ *  - A3-05 mutes (Alt+Shift+M / Alt+Shift+S): a per-channel flag on top of
+ *    the volume, session-only. A muted channel behaves exactly as volume 0
+ *    (SFX dropped, the song stopped) while the configured volume, which
+ *    Settings shows and settings.json stores, is never written.
  */
 class AudioService {
   public:
@@ -268,6 +272,10 @@ class AudioService {
     void set_music_volume(uint8_t);
     uint8_t sfx_volume() const { return sfx_volume_; }
     uint8_t music_volume() const { return music_volume_; }
+    void set_sfx_muted(bool);
+    void set_music_muted(bool);
+    bool sfx_muted() const { return sfx_muted_; }
+    bool music_muted() const { return music_muted_; }
 
     void play_sfx(SfxId, int32_t param = 0);
     void stop_sfx();
@@ -284,9 +292,12 @@ class AudioService {
 
   private:
     void sync_music();
+    // The SFX channel's live gain. Music needs none: its mute stops the song.
+    uint16_t sfx_gain() const { return sfx_muted_ ? 0 : volume_to_gain_q15(sfx_volume_); }
     AudioBackend *backend_ = nullptr;
     MusicAvailability availability_ = MusicAvailability::NoAudioPack;
     uint8_t sfx_volume_ = kDefaultSfxVolume, music_volume_ = kDefaultMusicVolume;
+    bool sfx_muted_ = false, music_muted_ = false;
     MusicContext context_ = MusicContext::Silence;
     MusicSong song_ = MusicSong::None;
     uint32_t sequence_ = 0;
@@ -296,9 +307,14 @@ class AudioService {
 // ---------------------------------------------------------------------------
 // Settings rows (System Menu and title Settings share these).
 // ---------------------------------------------------------------------------
-/** "SFX Volume: 80%" */
-void format_sfx_volume_row(char *out, size_t size, uint8_t volume);
+/**
+ * A3-05. Which volume rows a Settings key edited (SystemMenuSession /
+ * FrontendSession::take_volume_edits): editing a row unmutes that channel.
+ */
+enum VolumeEdit : uint8_t { kSfxVolumeEdited = 1, kMusicVolumeEdited = 2 };
+/** "SFX Volume: 80%", or "SFX Volume: 80% (muted)" under the A3-05 mute. */
+void format_sfx_volume_row(char *out, size_t size, uint8_t volume, bool muted = false);
 /** "Music Volume: 80%", or "Music Volume: Unavailable" when music is not available. */
-void format_music_volume_row(char *out, size_t size, uint8_t volume, MusicAvailability);
+void format_music_volume_row(char *out, size_t size, uint8_t volume, MusicAvailability, bool muted = false);
 
 } // namespace openu5

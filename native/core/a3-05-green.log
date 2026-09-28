@@ -1,0 +1,77 @@
+# A3-05 GREEN: build-a3-05 (the committed sources)
+## a3_05_audio_mute
+GREEN A0 control: nothing is muted at start; the song plays at 70 %
+GREEN A1 an SFX mute is one SFX gain of 0; the volume stays 40 and music is not touched
+GREEN A2 a muted SFX request is dropped and counted
+GREEN A3 a volume change while muted keeps the gain at 0
+GREEN A4 the unmute restores the volume (50 %), not 100 %
+GREEN A5 a music mute stops the song only; volume and context are kept
+GREEN A6 no song starts while music is muted, whatever the context or volume
+GREEN A7 the music unmute restarts the context's song at the current volume, SFX untouched
+GREEN A8 a newly attached backend gets the muted SFX gain and the music volume
+GREEN A9 a configured 0 % is not a mute: unmuting it leaves it silent at 0 %
+GREEN A10 without music a music mute reaches nothing
+GREEN R1 rows: '(muted)' after the configured value; Unavailable stays Unavailable
+GREEN M1 the System Menu rows show the session mutes
+GREEN M2 moving the cursor edits nothing
+GREEN M3 an SFX Volume key reports the SFX row once
+GREEN M4 a Music Volume key reports the Music row
+GREEN M5 another row's key reports no volume edit
+GREEN M6 without music the Music row's key edits nothing and reports nothing
+GREEN T1 the title rows show the session mutes
+GREEN T2 a title Music Volume key reports the Music row once
+GREEN T3 a title SFX Volume key reports the SFX row
+a3_05_audio_mute: 21 checks, 0 failures
+## a3_05_audio_controls
+GREEN K0 control: the patched pack plays the context's song at the configured 70 %
+GREEN K1 Shift+M / Shift+S without Alt are ordinary keys: no mute
+GREEN K2 Alt+Shift+M is the music mute, not Alt+M's System Menu
+GREEN K3 Alt+Shift+S is the SFX mute, not Alt+S's Save
+GREEN K4 a mute key routes no game command
+GREEN K5 control: Alt+M still opens the System Menu
+GREEN K5 control: Alt+S still takes the Save route
+GREEN K6 control: any other Alt+Shift chord keeps its Alt meaning (Alt+Shift+L loads)
+GREEN M1 Alt+Shift+M stops the song; the configured 70 % is untouched
+GREEN M1 the transcript says 'Music muted.'
+GREEN M2 SFX still sound while music is muted, at their own gain
+GREEN M3 a muted context does not restart its song on its own
+GREEN M4 Alt+Shift+M again restores the context's song at 70 %, not 100 %
+GREEN M4 the transcript says 'Music restored.'
+GREEN M5 six more toggles: no drift, one line per toggle
+GREEN M6 opening and closing the System Menu keeps the mute
+GREEN M6 closing the menu persists the configured 70 %, never a muted 0
+GREEN M7 the toggle works with the System Menu open, and leaves it open
+GREEN M8 a load keeps the mute
+GREEN M8 ... and it restores after the load
+GREEN M9 the mute is session-only: a reboot plays music at the configured 70 %
+GREEN X1 Alt+Shift+S silences the SFX channel only; the configured 40 % is untouched
+GREEN X1 the transcript says 'SFX muted.'
+GREEN X2 a cue while SFX are muted is not submitted
+GREEN X3 music keeps playing while SFX are muted
+GREEN X4 Alt+Shift+S again restores 40 %, not 100 %, and cues sound at it
+GREEN X4 the transcript says 'SFX restored.'
+GREEN X5 six more toggles: no drift, music untouched
+GREEN X6 both muted at once
+GREEN X6 unmuting SFX does not unmute music
+GREEN S1 Settings shows the configured 60 % and marks the row muted
+GREEN S2 a Music Volume edit while muted unmutes music at the new 70 %
+GREEN S3 the SFX mute from inside Settings marks only the SFX row
+GREEN S4 an SFX edit unmutes SFX only; music stays muted
+GREEN S5 settings.json holds the configured volumes, not the mute
+GREEN S6 a configured 0 % is shown as 0 %, not as muted
+GREEN S6 muting a 0 % bus is a separate state on top of it
+GREEN S6 restoring it gives back 0 %, which stays silent
+GREEN T1 Return to Title keeps the mute: the title song is not started
+GREEN T2 a title Settings Music Volume edit unmutes music at the new 80 %
+GREEN T3 the music mute works on the title screen (which has no transcript line)
+GREEN T4 back in the game the mute still holds
+GREEN T4 ... and restores at the 80 % set on the title
+GREEN A1 stock files: Alt+Shift+M does not pretend music exists
+GREEN A1 ... and the Music row still reads Unavailable
+GREEN A2 stock files: the SFX mute works
+GREEN A2 ... and restores
+GREEN D1 a kill on an enemy plays the 0x3564 enemy burst once
+GREEN D2 ... and no second (0x2fd0 chest-trap) burst
+GREEN D3 a party member's death: the party burst once, nothing more
+GREEN D4 a lone Died is silent
+a3_05_audio_controls: 51 checks, 0 failures

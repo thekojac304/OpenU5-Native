@@ -332,7 +332,7 @@ bool compile_sfx(SfxId id, int32_t param, SpeakerProgram &program) {
         b.add(speaker_noise(0xa, 0xbb8, 0x7d0));
         break;
     case SfxId::CombatHitHeavy: // target is a party member: NB(0x28,0xbb8,0x1f4) @0x35c9
-    case SfxId::CombatDefeat:   // the 0x2fd0 burst: NB(0x28,0xbb8,0x1f4) @0x2fe3
+    case SfxId::CombatDefeat:   // the 0x2fd0 chest-trap burst NB(0x28,0xbb8,0x1f4) @0x2fe3; never emitted (A3-05)
         b.add(speaker_noise(0x28, 0xbb8, 0x1f4));
         break;
     case SfxId::CombatDamage: // party_member_take_damage 0x2a52: NB(0xa,0x640,0x7d0) @0x2a68
@@ -882,7 +882,7 @@ size_t SfxPlayer::render(int16_t *out, size_t frames, uint16_t gain_q15) {
 }
 
 SfxId sfx_for_combat_attack(bool died, int8_t hit, bool target_is_player) {
-    if (died) return SfxId::CombatDefeat;
+    if (died) return SfxId::None; // A3-05: no second burst on a kill (see the header)
     if (hit > 0) return target_is_player ? SfxId::CombatHitHeavy : SfxId::CombatHit;
     return SfxId::None;
 }

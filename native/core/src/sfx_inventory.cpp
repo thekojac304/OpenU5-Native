@@ -58,8 +58,10 @@ const char *sfx_status_note(SfxId id) {
         return "ENDGAME 0x078f / 0x0987: the endgame cinematic is deferred (D-54)";
     case SfxId::MoveStep: return "emitted by the core (world steps); derived from the arena's Moved event (SJOG 0x1d32)";
     case SfxId::MoveBlocked: return "emitted by the core; derived from the arena's Blocked! / All must use the same exit!";
-    case SfxId::CombatHit: case SfxId::CombatHitHeavy: case SfxId::CombatDefeat:
-        return "derived from Combat Attacked / Died by the target's side";
+    case SfxId::CombatHit: case SfxId::CombatHitHeavy:
+        return "derived from Combat Attacked by the target's side";
+    case SfxId::CombatDefeat:
+        return "the reference's name for the 0x2fd0 chest-trap burst (= dungeon-trap); never emitted: a kill sounds only 0x3564's hit burst (A3-05)";
     case SfxId::TimeSpell: return "derived from MagicCeremony(index)";
     case SfxId::VictoryFanfare: return "derived from the latch's VICTORY! (not the Ended line); emitted by the shard ritual";
     case SfxId::AmbientFountain: case SfxId::AmbientWaterfall: case SfxId::AmbientClockTick:
@@ -88,7 +90,7 @@ constexpr SfxSite kSites[] = {
     {"ULTIMA.EXE", 0x22cd, "SET_TONE", I::None, S::Implemented, C, "beep 0x22c0's own set_tone"},
     {"ULTIMA.EXE", 0x22da, "SPK_STOP", I::None, S::Implemented, C, "beep 0x22c0's own stop"},
     {"ULTIMA.EXE", 0x2a68, "NOISE_BURST", I::CombatDamage, S::Implemented, C, "party_member_take_damage 0x2a52"},
-    {"ULTIMA.EXE", 0x2fe3, "NOISE_BURST", I::CombatDefeat, S::Implemented, C, "0x2fd0 dispatcher: death / chest trap", I::DungeonTrap},
+    {"ULTIMA.EXE", 0x2fe3, "NOISE_BURST", I::DungeonTrap, S::Implemented, C, "chest_trap 0x2fd0 (SJOG 0x1222/0x1323, CMDS 0x1c04); not a combat death (A3-05)", I::CombatDefeat},
     {"ULTIMA.EXE", 0x30b8, "SET_TONE", I::Quake, S::Implemented, C, "screen_shake_rumble 0x3072 pass 1 (rand 0x13..0x96)", I::RefugeThunder},
     {"ULTIMA.EXE", 0x30ec, "SET_TONE", I::Quake, S::Implemented, C, "screen_shake_rumble pass 2"},
     {"ULTIMA.EXE", 0x311d, "SET_TONE", I::Quake, S::Implemented, C, "screen_shake_rumble pass 3"},

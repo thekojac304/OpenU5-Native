@@ -642,6 +642,10 @@ class AlphaRuntime {
      * the arena hit/death bursts (the reference's sfxForCombatEvent).
      */
     void present_audio(const openu5::GameEvent &);
+    // A3-05: Alt+Shift+M / Alt+Shift+S, and a Settings volume edit unmuting its channel.
+    bool toggle_audio_mute(bool music);
+    void apply_volume_edits(uint8_t edits);
+    void sync_audio_mutes();
     // A3-04. Re-derives the music context from EXISTING runtime state (no
     // new gameplay events) and hands it to AudioService::play_music(), which
     // itself de-dupes by song -- so calling this liberally costs nothing

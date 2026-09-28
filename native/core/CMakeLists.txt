@@ -1883,6 +1883,48 @@ if(BUILD_TESTING)
   endif()
   add_test(NAME a3_04g_storage_runtime COMMAND a3_04g_storage_runtime
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+  # Alpha 3 A3-05 -- the audio finalization controls through the REAL
+  # AlphaRuntime: Alt+Shift+M / Alt+Shift+S mutes by raw keys, the Settings
+  # rows while muted, stock vs patched assets, and a kill's single hit burst.
+  # A3-01's source set, so tools/a3_05_red_first.py can swap HEAD's files in.
+  add_executable(a3_05_audio_mute tests/a3_05_audio_mute_test.cpp)
+  target_link_libraries(a3_05_audio_mute PRIVATE openu5_core)
+  target_compile_features(a3_05_audio_mute PRIVATE cxx_std_17)
+  add_test(NAME a3_05_audio_mute COMMAND a3_05_audio_mute)
+  add_executable(a3_05_audio_controls
+    ../targets/tdeck/host_tests/a3_05_audio_controls_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/batch37_board_capture_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_audio.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(a3_05_audio_controls PRIVATE openu5_core)
+  target_include_directories(a3_05_audio_controls PRIVATE
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/main)
+  target_compile_features(a3_05_audio_controls PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(a3_05_audio_controls PRIVATE /Gy)
+    target_link_options(a3_05_audio_controls PRIVATE /OPT:REF)
+  else()
+    target_compile_options(a3_05_audio_controls PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(a3_05_audio_controls PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME a3_05_audio_controls COMMAND a3_05_audio_controls
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/a3-01-audio-stock.bin")
   # Batch 14 / R-22 -- (Z)-stats navigation. Same seam and same stub/shim set
   # as alpha_runtime_integration_regression above: it links the REAL,
   # unmodified alpha_runtime.cpp so the modal is reached only by feeding raw

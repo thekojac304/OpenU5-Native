@@ -538,8 +538,8 @@ int main(int argc, char **argv) {
                 h.render();
                 h7 = h7 && h.inverted_rows() == 0 && h.marker_cells() == 0;
             }
-            // Their own text cues ('Nothing!', the theft, Died's burst) are A3-03's and untouched;
-            // none of them is a 0x3564 hit burst.
+            // Their own text cues ('Nothing!', the theft) are A3-03's and untouched; none of them
+            // is a 0x3564 hit burst. (A lone Died has had no burst at all since A3-05.)
             h7 = h7 && h.audio.count(SfxId::CombatHitHeavy) == heavy0 && h.audio.count(SfxId::CombatHit) == light0;
         }
         check(h7, "H7 control: a miss, a move, 'Nothing!', food theft, 'passes out!' and a lone Died put up no marker and no row");
