@@ -1290,3 +1290,21 @@ Flash the A3-05 Launcher image (its path and SHA-256 are in tag `alpha3-a3-05-au
 **FAIL:** a mute that silences the wrong channel or both; a restore at a different loudness; a Settings value that changed after a mute; `Alt+Shift+M` opening the menu or `Alt+Shift+S` saving; two bursts on a kill. Report it with the `FW` / `Git` lines.
 
 *Not in this check:* a reboot. The mute is session-only by design (host test M9). If you do reboot, the device must start unmuted at 80 % music.
+
+### Phase H-204 — a load leaves no prompt behind · *new firmware; SD pack unchanged* · about 3 minutes · **PENDING**
+
+Flash the A3-HF4 Launcher image (its path and SHA-256 are in tag `alpha3-hf4-load-transient-reset`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-hf4-debug` and that tag's `Git`; if they differ, stop. Any card with a save works. A serial capture is optional: each load prints one `LOAD_TRANSIENT_RESET ui=<before>-><after>` line.
+
+1. **Save.** Stand somewhere open and press `Alt+S` ("Save complete").
+2. **Mix, then load from the menu.** Press `M`: the Mix list opens. Press `Alt+M` → *Load / Save Management* → *Continue Latest*.
+   - The game is back at the saved place **with no spell list on screen**, and the status line shows no prompt. Walk one step: it walks. Mic is not needed.
+3. **The same with `Alt+L`.** Press `M` again, then `Alt+L`: same result as step 2.
+4. **A direction prompt.** Press `L` (Look); it asks for a direction. Press `Alt+L`. After "Load complete", a trackball move **walks**; no "Thou dost see" appears.
+5. **A yes/no.** Enter a town and walk out through its edge until it asks "Leave this place?". Do not answer; press `Alt+L`. You are back at the saved place with no question on screen, and the next moves and commands work.
+6. **A picker (optional).** Press `R` (Ready), then `Alt+L`: the picker is gone.
+7. **A failed load keeps the prompt (optional).** Only with a card that holds no valid save (an empty *Generation* row cannot be chosen, so there is no other way to make a load fail): press `M`, then `Alt+L`. It says "No valid save" and the Mix list is **still open**; Mic closes it as before. The host covers this case (L7).
+8. Throughout: no crash, `task_wdt` or reboot; no leftover highlight, inverted row or picker panel; music and effects normal.
+
+**PASS:** steps 2–5 return straight to normal play with nothing left open, and the next key acts in the loaded game; step 7 (if run) keeps the prompt.
+
+**FAIL:** a spell list, direction prompt, yes/no or picker still on screen after "Load complete"; a key after the load that answers the old prompt; commands refused after the load until Mic or a reboot; a failed load that closes the prompt. Report it with the `FW` / `Git` lines (and the serial `LOAD_TRANSIENT_RESET` line if captured).

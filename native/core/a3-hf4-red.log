@@ -1,0 +1,178 @@
+# A3-HF4 RED-first: built against HEAD's production files (git show HEAD:<file>),
+# every header and test file as in the working tree:
+#   native/core/src/ui_session.cpp
+#   native/targets/tdeck/main/alpha_runtime.cpp
+## a3_hf4_load_transient_runtime against HEAD: exit 1
+GREEN L1.0m precondition: Alt+S wrote a generation
+GREEN L1.1m precondition: 'm' opened the Mix picker (UI_MODE explore -> spell)
+GREEN L1.2m the load completes and restores the saved game
+RED L1.3m ** after the load no Mix picker remains: Explore, no request, no prompt, no picker panel **
+RED L1.4m Enter after the load is Explore's (P)ass: nothing is mixed from the old list
+GREEN L1.5m the loaded game takes commands at once (no Mic needed)
+GREEN L1.6m control: Mix opens afresh in the loaded game and Mic still closes it
+GREEN L1.0a precondition: Alt+S wrote a generation
+GREEN L1.1a precondition: 'm' opened the Mix picker (UI_MODE explore -> spell)
+GREEN L1.2a the load completes and restores the saved game
+RED L1.3a ** after the load no Mix picker remains: Explore, no request, no prompt, no picker panel **
+RED L1.4a Enter after the load is Explore's (P)ass: nothing is mixed from the old list
+GREEN L1.5a the loaded game takes commands at once (no Mic needed)
+GREEN L1.6a control: Mix opens afresh in the loaded game and Mic still closes it
+GREEN L2.1m precondition: (L)ook is waiting for a direction
+RED L2.2m ** the direction prompt is gone after the load **
+RED L2.3m the first direction after the load is not delivered to the old game's Look
+GREEN L2.1a precondition: (L)ook is waiting for a direction
+RED L2.2a ** the direction prompt is gone after the load **
+RED L2.3a the first direction after the load is not delivered to the old game's Look
+GREEN L3.1m precondition: the castle's west edge asks "Leave this place?" (UI + awaiting_exit)
+RED L3.2m ** the yes/no is gone after the load **
+RED L3.3m ** and so is its core half: awaiting_exit is clear **
+RED L3.4m the loaded game's commands are not refused by the old question (H-118's silent-refusal class)
+GREEN L3.1a precondition: the castle's west edge asks "Leave this place?" (UI + awaiting_exit)
+RED L3.2a ** the yes/no is gone after the load **
+RED L3.3a ** and so is its core half: awaiting_exit is clear **
+RED L3.4a the loaded game's commands are not refused by the old question (H-118's silent-refusal class)
+GREEN L3b.1 precondition: a pending troll toll refuses every world command
+GREEN L3b.2 precondition: a pending guard tribute refuses every world command
+RED L3b.3 ** the load drops the old game's troll toll and guard demand **
+RED L3b.4 and the loaded game takes commands
+GREEN L4.1m precondition: (R)eady opened a picker
+RED L4.2m ** the Ready picker is gone **
+GREEN L4.3m precondition: (U)se opened the inventory picker
+RED L4.4m ** the Use picker is gone and the saved inventory is back **
+GREEN L4.5m precondition: a potion is parked behind the member picker
+RED L4.6m ** the parked item and its member picker are gone **
+GREEN L4.1a precondition: (R)eady opened a picker
+RED L4.2a ** the Ready picker is gone **
+GREEN L4.3a precondition: (U)se opened the inventory picker
+RED L4.4a ** the Use picker is gone and the saved inventory is back **
+GREEN L4.5a precondition: a potion is parked behind the member picker
+RED L4.6a ** the parked item and its member picker are gone **
+GREEN L5.1 precondition: (Z)-stats is open
+RED L5.2 ** (Z)-stats is closed by the load **
+GREEN L5.3m precondition: the gem view is up
+RED L5.4m ** the gem view is closed and owes no turn in the loaded game **
+RED L5.5m the first key after the load is a command, not a view close
+GREEN L5.3a precondition: the gem view is up
+RED L5.4a ** the gem view is closed and owes no turn in the loaded game **
+RED L5.5a the first key after the load is a command, not a view close
+GREEN L5.6 precondition: zodiac view, map reveal, quake and magic inversion are all live
+RED L5.7 ** none of them survives the load **
+RED L5.8 input is not swallowed by the old game's map reveal
+GREEN L5.9 precondition: an NPC approach is queued
+RED L5.10 ** the old game's queued approach is dropped by the menu load **
+GREEN L5c.1 precondition: a conversation is open (base mode Dialogue, session active)
+RED L5c.2 ** the conversation and its session end with the load **
+RED L5c.3 Explore owns input in the loaded game
+GREEN L5c.4 precondition: a shop is open (base mode Shop)
+RED L5c.5 ** the shop closes with the load (UI and session) **
+GREEN L6.1m control: a load from Explore restores position and gold into Explore
+GREEN L6.2m the transcript is kept (the old lines and the new 'Load complete')
+GREEN L6.3m commands run in the loaded game
+GREEN L6.1a control: a load from Explore restores position and gold into Explore
+GREEN L6.2a the transcript is kept (the old lines and the new 'Load complete')
+GREEN L6.3a commands run in the loaded game
+GREEN L7.1m precondition: the menu's Continue Latest finds no save and stays open
+GREEN L7.2m ** a failed load leaves the Mix picker exactly as it was **
+GREEN L7.3m and Mic closes it as before
+GREEN L7.4m precondition: "Leave this place?" is pending
+GREEN L7.5m ** a refused (corrupt) load keeps both halves of the question and the world **
+GREEN L7.6m and the question still answers
+GREEN L7.1a precondition: Alt+L finds no save
+GREEN L7.2a ** a failed load leaves the Mix picker exactly as it was **
+GREEN L7.3a and Mic closes it as before
+GREEN L7.4a precondition: "Leave this place?" is pending
+GREEN L7.5a ** a refused (corrupt) load keeps both halves of the question and the world **
+GREEN L7.6a and the question still answers
+RED L8.1 releases after the load route nothing and open nothing
+RED L8.2 Alt+L's own release does nothing either
+GREEN L9.1 precondition: the Developer menu is open over the Mix picker
+GREEN L9.2 Alt+L inside the Developer menu loads and leaves the menu open
+RED L9.3 ** closing it returns to Explore, not to the old game's Mix picker **
+A3-HF4 load transient state: 85 checks, 36 failures
+## a3_hf4_load_transient_runtime against the working tree: exit 0
+GREEN L1.0m precondition: Alt+S wrote a generation
+GREEN L1.1m precondition: 'm' opened the Mix picker (UI_MODE explore -> spell)
+GREEN L1.2m the load completes and restores the saved game
+GREEN L1.3m ** after the load no Mix picker remains: Explore, no request, no prompt, no picker panel **
+GREEN L1.4m Enter after the load is Explore's (P)ass: nothing is mixed from the old list
+GREEN L1.5m the loaded game takes commands at once (no Mic needed)
+GREEN L1.6m control: Mix opens afresh in the loaded game and Mic still closes it
+GREEN L1.0a precondition: Alt+S wrote a generation
+GREEN L1.1a precondition: 'm' opened the Mix picker (UI_MODE explore -> spell)
+GREEN L1.2a the load completes and restores the saved game
+GREEN L1.3a ** after the load no Mix picker remains: Explore, no request, no prompt, no picker panel **
+GREEN L1.4a Enter after the load is Explore's (P)ass: nothing is mixed from the old list
+GREEN L1.5a the loaded game takes commands at once (no Mic needed)
+GREEN L1.6a control: Mix opens afresh in the loaded game and Mic still closes it
+GREEN L2.1m precondition: (L)ook is waiting for a direction
+GREEN L2.2m ** the direction prompt is gone after the load **
+GREEN L2.3m the first direction after the load is not delivered to the old game's Look
+GREEN L2.1a precondition: (L)ook is waiting for a direction
+GREEN L2.2a ** the direction prompt is gone after the load **
+GREEN L2.3a the first direction after the load is not delivered to the old game's Look
+GREEN L3.1m precondition: the castle's west edge asks "Leave this place?" (UI + awaiting_exit)
+GREEN L3.2m ** the yes/no is gone after the load **
+GREEN L3.3m ** and so is its core half: awaiting_exit is clear **
+GREEN L3.4m the loaded game's commands are not refused by the old question (H-118's silent-refusal class)
+GREEN L3.1a precondition: the castle's west edge asks "Leave this place?" (UI + awaiting_exit)
+GREEN L3.2a ** the yes/no is gone after the load **
+GREEN L3.3a ** and so is its core half: awaiting_exit is clear **
+GREEN L3.4a the loaded game's commands are not refused by the old question (H-118's silent-refusal class)
+GREEN L3b.1 precondition: a pending troll toll refuses every world command
+GREEN L3b.2 precondition: a pending guard tribute refuses every world command
+GREEN L3b.3 ** the load drops the old game's troll toll and guard demand **
+GREEN L3b.4 and the loaded game takes commands
+GREEN L4.1m precondition: (R)eady opened a picker
+GREEN L4.2m ** the Ready picker is gone **
+GREEN L4.3m precondition: (U)se opened the inventory picker
+GREEN L4.4m ** the Use picker is gone and the saved inventory is back **
+GREEN L4.5m precondition: a potion is parked behind the member picker
+GREEN L4.6m ** the parked item and its member picker are gone **
+GREEN L4.1a precondition: (R)eady opened a picker
+GREEN L4.2a ** the Ready picker is gone **
+GREEN L4.3a precondition: (U)se opened the inventory picker
+GREEN L4.4a ** the Use picker is gone and the saved inventory is back **
+GREEN L4.5a precondition: a potion is parked behind the member picker
+GREEN L4.6a ** the parked item and its member picker are gone **
+GREEN L5.1 precondition: (Z)-stats is open
+GREEN L5.2 ** (Z)-stats is closed by the load **
+GREEN L5.3m precondition: the gem view is up
+GREEN L5.4m ** the gem view is closed and owes no turn in the loaded game **
+GREEN L5.5m the first key after the load is a command, not a view close
+GREEN L5.3a precondition: the gem view is up
+GREEN L5.4a ** the gem view is closed and owes no turn in the loaded game **
+GREEN L5.5a the first key after the load is a command, not a view close
+GREEN L5.6 precondition: zodiac view, map reveal, quake and magic inversion are all live
+GREEN L5.7 ** none of them survives the load **
+GREEN L5.8 input is not swallowed by the old game's map reveal
+GREEN L5.9 precondition: an NPC approach is queued
+GREEN L5.10 ** the old game's queued approach is dropped by the menu load **
+GREEN L5c.1 precondition: a conversation is open (base mode Dialogue, session active)
+GREEN L5c.2 ** the conversation and its session end with the load **
+GREEN L5c.3 Explore owns input in the loaded game
+GREEN L5c.4 precondition: a shop is open (base mode Shop)
+GREEN L5c.5 ** the shop closes with the load (UI and session) **
+GREEN L6.1m control: a load from Explore restores position and gold into Explore
+GREEN L6.2m the transcript is kept (the old lines and the new 'Load complete')
+GREEN L6.3m commands run in the loaded game
+GREEN L6.1a control: a load from Explore restores position and gold into Explore
+GREEN L6.2a the transcript is kept (the old lines and the new 'Load complete')
+GREEN L6.3a commands run in the loaded game
+GREEN L7.1m precondition: the menu's Continue Latest finds no save and stays open
+GREEN L7.2m ** a failed load leaves the Mix picker exactly as it was **
+GREEN L7.3m and Mic closes it as before
+GREEN L7.4m precondition: "Leave this place?" is pending
+GREEN L7.5m ** a refused (corrupt) load keeps both halves of the question and the world **
+GREEN L7.6m and the question still answers
+GREEN L7.1a precondition: Alt+L finds no save
+GREEN L7.2a ** a failed load leaves the Mix picker exactly as it was **
+GREEN L7.3a and Mic closes it as before
+GREEN L7.4a precondition: "Leave this place?" is pending
+GREEN L7.5a ** a refused (corrupt) load keeps both halves of the question and the world **
+GREEN L7.6a and the question still answers
+GREEN L8.1 releases after the load route nothing and open nothing
+GREEN L8.2 Alt+L's own release does nothing either
+GREEN L9.1 precondition: the Developer menu is open over the Mix picker
+GREEN L9.2 Alt+L inside the Developer menu loads and leaves the menu open
+GREEN L9.3 ** closing it returns to Explore, not to the old game's Mix picker **
+A3-HF4 load transient state: 85 checks, 0 failures

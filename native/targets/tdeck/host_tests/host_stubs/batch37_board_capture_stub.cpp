@@ -3,6 +3,7 @@
 #include "esp_timer.h"
 #include <algorithm>
 #include <array>
+#include <string>
 #include <vector>
 
 namespace {
@@ -25,6 +26,10 @@ int debug_draws = 0;
 // frame's TFT write, and how long that write takes on the virtual clock.
 openu5::TftTiming tft_feed{};
 int64_t tft_feed_us = 0;
+// A3-HF4: the prompt/overlay line and the picker panel the last gameplay frame
+// was handed (a load must not leave either behind).
+std::string last_overlay;
+bool last_selection = false;
 void capture_panel(const openu5::GameState &game, tdeck::DevicePartyHighlight highlight) {
     for (int row = 0; row < 6; ++row) {
         const auto &member = game.party.characters[row];
@@ -47,7 +52,11 @@ void batch37_reset_screen() {
     debug_draws = 0;
     tft_feed = {};
     tft_feed_us = 0;
+    last_overlay.clear();
+    last_selection = false;
 }
+const char *batch37_last_overlay() { return last_overlay.c_str(); }
+bool batch37_last_selection_shown() { return last_selection; }
 void batch37_set_tft_feed(const openu5::TftTiming &timing, int64_t write_us) {
     tft_feed = timing;
     tft_feed_us = write_us;
@@ -87,12 +96,14 @@ void Board::show_runtime_identity(const char *, const char *, const char *, cons
 esp_err_t Board::show_view(const uint16_t *, int, int, const char *, const char *, bool) { return ESP_OK; }
 esp_err_t Board::show_alpha(const uint16_t *pixels, const openu5::UiSession &, const openu5::GameState &game,
                             const openu5::TurnState &, const openu5::HudWorldState &, const uint8_t *,
-                            const char *, const uint8_t *, bool, const DeviceDebugScreen *debug, bool,
-                            uint8_t, const DeviceShopView *, const DeviceSelectionView *,
+                            const char *overlay, const uint8_t *, bool, const DeviceDebugScreen *debug, bool,
+                            uint8_t, const DeviceShopView *, const DeviceSelectionView *selection,
                             const DeviceContextActionBar *, DevicePartyHighlight highlight, uint32_t,
                             const openu5::HudDungeonBands *, bool full_square_viewport, bool preserve_party_panel) {
     if (!pixels) return ESP_ERR_INVALID_ARG;
     ++draws;
+    last_overlay = overlay ? overlay : "";
+    last_selection = selection != nullptr;
     // A3-04B: what the Developer screen showed (null = the gameplay HUD).
     last_debug_valid = debug != nullptr;
     if (debug) {

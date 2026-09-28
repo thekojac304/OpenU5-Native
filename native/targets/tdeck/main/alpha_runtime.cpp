@@ -2556,11 +2556,49 @@ void AlphaRuntime::synchronize_loaded_world(){
     // the same rule, or the first input after the load is routed by the
     // pre-load mode (a world command instead of the dungeon turn/step).
     context_.dungeon=dungeon_.active;context_.combat=combat_.initialized&&!combat_.ended;
+    // A3-HF4: set_base_mode() keeps a live modal (H-118) and resolve keeps a
+    // Shop/Dialogue/ShrineSpecial base, so the base mode is reset here, with
+    // everything else that belonged to the replaced game.
+    reset_transient_after_load();
     // Batch 53A. Leave the Ending first: set_base_mode() cannot, by design.
     // A load is a new game on screen, so a won one says why once more.
     ending_announced_=false;synchronize_ending("load");
-    ui_->set_base_mode(resolve_synchronized_base_mode(ui_->base_mode(),context_.combat,dungeon_.active));
     dungeon_presentation_pending_=dungeon_.active;
+}
+
+void AlphaRuntime::reset_transient_after_load(){
+    // A3-HF4 (H-201/H-202 capture, ALPHA3_AUDIO.md section 30). A Mix picker
+    // opened before an in-menu Load stayed open over the loaded game until
+    // Mic. The 1988 game only loads at start-up (ULTIMA.EXE 0x00f7), so no
+    // prompt can exist then; the reference's applyLoadedState drops every
+    // prompt, view and scene of the game being replaced. Only runtime-owned
+    // state lives here: none of it is in the save, and nothing is answered,
+    // charged or cancelled on the old game's behalf. The scene pacers, world
+    // fx, poison flash, hit cue and audio queue are taken down at the top of
+    // synchronize_loaded_world() (Y-04, A3-01).
+    const auto ui_before=ui_->mode();const auto request_before=ui_->request();
+    const bool views=gem_view_active_||zodiac_view_active_||zstats_open_||map_reveal_end_us_||magic_invert_end_us_||quake_pulses_;
+    const bool questions=commands_.awaiting_exit||commands_.awaiting_troll||blackthorn_.shrine>=0||blackthorn_.password||blackthorn_.tribute||blackthorn_.arrest;
+    // Device views and presentation timers.
+    gem_view_active_=gem_view_charges_turn_=false;zodiac_view_active_=false;
+    zstats_open_=false;zstats_page_=0;zstats_scroll_=0;
+    map_reveal_end_us_=0;magic_invert_start_us_=magic_invert_end_us_=0;quake_start_us_=0;quake_pulses_=0;
+    // Picks parked across a modal, the picker rows, queued work.
+    pending_combat_spell_=pending_ready_member_=pending_use_item_=pending_order_from_=-1;
+    pending_search_={};pending_search_active_=false;pending_caster_=-1;shrine_virtue_length_=0;
+    selection_count_=0;selection_request_=openu5::UiRequestId::None;
+    pending_npc_initiation_=PendingNpcInitiation::None;pending_npc_slot_=-1;pending_npc_location_=0;
+    combat_input_count_=0;
+    // The core halves of the old game's questions: with the prompt gone, a
+    // stale flag would refuse every command in silence (H-118's class).
+    // CommandState's saved part (the door) was just restored; the turn
+    // phases are kept.
+    commands_.awaiting_exit=false;commands_.awaiting_troll=false;
+    commands_.troll_toll=commands_.troll_under_party=commands_.troll_x=commands_.troll_y=0;
+    blackthorn_={};dialogue_={};shop_={};shrine_={};
+    ui_->reset_after_load(resolve_synchronized_base_mode(openu5::UiMode::Exploration,context_.combat,dungeon_.active));
+    ESP_LOGI(kTag,"LOAD_TRANSIENT_RESET ui=%s->%s request=%d views=%d questions=%d",
+             mode_name(ui_before),mode_name(ui_->mode()),int(request_before),views,questions);
 }
 
 void AlphaRuntime::synchronize_ending(const char *site){

@@ -208,6 +208,21 @@ void UiSession::leave_ending(UiMode world) {
     mode_ = world;
 }
 
+void UiSession::reset_after_load(UiMode world) {
+    // The CombatEnded / enter_ending() teardown, for every modal and session.
+    request_=UiRequestId::None;selection_={};selection_cursor_=0;
+    input_[0]=0;input_length_=0;prompt_[0]=0;pending_command_={};target_render_marker_=false;
+    cancel_means_no_=escape_clears_=false;camp_hours_=0;
+    shop_phase_=ShopPhase::Closed;shop_cursor_=0;shop_offer_count_=0;
+    if (base_mode_ == UiMode::Ending) return; // leave_ending() owns the way out
+    base_mode_ = return_mode_ = pre_combat_mode_ = world;
+    shop_return_mode_ = dialogue_return_mode_ = shrine_return_mode_ = world;
+#if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
+    if (mode_ == UiMode::DebugMenu) { debug_return_mode_ = world; return; }
+#endif
+    mode_ = world;
+}
+
 UiMode UiSession::world_return_mode(UiMode m) const {
     if (m == UiMode::Shop) return shop_return_mode_;
     if (m == UiMode::Dialogue) return dialogue_return_mode_;

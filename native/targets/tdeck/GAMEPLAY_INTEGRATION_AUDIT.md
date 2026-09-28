@@ -8,7 +8,22 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 A3-05, 2026-09-27) — audio finalization: volume verdict, session mutes, the kill burst; Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 A3-HF4, 2026-09-27) — a successful load discards the replaced game's prompts and views; Alpha 2 remains the released build; read this first
+>
+> **A3-HF4 is a correctness hotfix, not a release** (`ALPHA3_AUDIO.md` §30). **H-203 (A3-05) is still pending**: the user is running it.
+> - **The defect (D-65).** In the H-201 / H-202 capture a Mix picker opened before an in-menu Load stayed open after it (`UI_MODE` stayed `spell`) until Mic. On the host the same held for every modal (a target selector, a yes/no with its core `awaiting_exit`, the Ready / Use pickers), a Shop / Dialogue session, the gem and zodiac views, (Z)-stats, the map reveal, the magic inversion, the quake, parked picks and a queued NPC approach, on both load routes. The stale Mix picker's Enter mixed from the old game's list in the loaded one.
+> - **Root cause.** `synchronize_loaded_world()` re-derived the UI only with `set_base_mode()`, which keeps a live modal by design (H-118), and `resolve_synchronized_base_mode()`, which keeps a session base. The runtime views and the core's pending-question flags were never reset by a load.
+> - **Parity target.** The 1988 game loads only at start-up (ULTIMA.EXE `main` 0x00b3–0x00f7), where no prompt exists; the reference's `applyLoadedState` drops every prompt, view and pending command.
+> - **Fix.** One cleanup, only after a successful load: `AlphaRuntime::reset_transient_after_load()` → `UiSession::reset_after_load()`. The loaded game starts in its own world mode (Dungeon or Explore) with nothing open. Nothing is answered, cancelled or charged for the old game. A failed load changes nothing. Presentation and input needed no change (existing invalidation; keys act on press only).
+>
+> | | |
+> |---|---|
+> | Host suite | **152 / 152**, serial, 136.73 s. New: `a3_hf4_load_transient_runtime` 85 (**36 RED on HEAD**, every control GREEN, the failed loads included). **29 / 29 mutations killed.** No existing expectation changed. |
+> | Firmware | `3.0.0-alpha3-dev-a3-hf4-debug`. Pre-commit build 982,432 B (`0xefda0`), +816 B, 66,144 (6 %) B free, zero warnings. Flash only (`.text` +744, `.rodata` +80); DIRAM, IRAM, `.data` and `.bss` unchanged; image guards GREEN. The image path, SHA-256 and `Git` are in tag `alpha3-hf4-load-transient-reset`. **Not flashed.** |
+> | SD | **Unchanged.** Save format unchanged. |
+> | Next | **H-203** (A3-05, in progress) and **H-204** (this batch, about 3 minutes; one flash of the A3-HF4 image serves both, since it carries A3-05 unchanged). Then A3-04H (storage import count, PSRAM routing, `ALPHA3_AUDIO.md` §28.22). |
+>
+> ### CURRENT STATE (Alpha 3 A3-05, 2026-09-27) — audio finalization: volume verdict, session mutes, the kill burst — **superseded as the current state by A3-HF4 above; H-203 still pending.**
 >
 > **A3-05 is the small closing pass of the Alpha 3 audio track, not a release** (`ALPHA3_AUDIO.md` §29).
 > - **Volume curve: accepted as final; no production change.** One square law shared by both channels (0 % silent and the synth stopped; 10 % = −40 dB; 50 % = −12 dB; 100 % = unity). No clipping or integer defect was found. The user's device verdict stands.
@@ -8217,3 +8232,40 @@ The small closing pass of the audio track. The full write-up is [`ALPHA3_AUDIO.m
 - The melee swing glides (item 7): new sounds.
 - The Mix prompt that survives a load (§28.21.9): its own queued item.
 - A3-04H (storage import count, PSRAM routing).
+
+## Alpha 3 A3-HF4 — a successful load discards the replaced game's prompts and views
+
+A correctness hotfix of the load / UI boundary. The full write-up is [`ALPHA3_AUDIO.md`](ALPHA3_AUDIO.md) §30; this section records the classification on its own axis. No gameplay rule, save format, audio or render path changed.
+
+### 1. Items and classification
+
+| # | Item | Class | Change |
+|---|---|---|---|
+| 1 | A Mix picker opened before an in-menu Load stayed open after it (the H-201 / H-202 capture, §28.21.9); its Enter mixed from the old game's list | **native defect (load / UI boundary, pre-existing)**, ledger D-65 | fixed |
+| 2 | The same for every modal (target selector, yes/no, Ready / Use / party pickers, text / number entry), on both load routes | same defect, same cause | fixed |
+| 3 | A load mid-conversation / mid-shop stayed in the Dialogue / Shop base mode, with the core session live | same defect (`resolve_synchronized_base_mode` keeps session bases) | fixed |
+| 4 | The core halves of pending questions (`awaiting_exit`, `awaiting_troll` and the toll, the Blackthorn guard demand) survived a load; with the prompt gone they would refuse every command in silence | **latent defect (H-118's class)**, exposed by the fix, fixed with it | fixed |
+| 5 | Device views and timers (gem view and its deferred turn, zodiac view, (Z)-stats, map reveal, magic inversion, quake), parked picks, picker rows, a queued NPC approach | same defect | fixed |
+| 6 | An open Developer menu across Alt+L | **declared native modernization**: it stays open and returns to the loaded game's world mode | — |
+| 7 | Alt+L and the System Menu Load are honoured mid-combat; the reference refuses its save panel in combat (`quitReject`) | **recorded, not changed** (a product question; the load itself is now clean) | none |
+| 8 | `CommandState` turn phases / `town_location` and `TravelState` flags carried across a load | **unclear, unchanged**: not prompt state; the 1988 start-up values are not derived here | none |
+
+### 2. Evidence
+
+- **Original:** the only load is `main`'s boot route (ULTIMA.EXE 0x00b3–0x00f7 → TOWN.OVL 0x11f0, `fresh = 0`; `re/notes/npc-carga-partida-fresh-gate.md` §2), so no prompt can exist at load time.
+- **Reference:** `applyLoadedState` (`game/src/main.ts`) sets `prompts.current = null`, closes the gem / zodiac views and the shop panel, cancels every scene and timer, and clears the pending direction / Klimb / search / look / cast / Use commands.
+- **RED-first:** `native/core/tools/a3_hf4_red_first.py` builds the new test against HEAD's `ui_session.cpp` and `alpha_runtime.cpp`: **36 / 85 RED**; every precondition and control GREEN, including an ordinary load (L6) and every failed load (L7) (`native/core/a3-hf4-red.log`).
+- **GREEN:** 85 / 85 (`a3-hf4-green.log`).
+- **Mutations:** `native/core/tools/a3_hf4_mutation_check.py`, **29 / 29 killed** over the new test and `batch24` / `batch26` / `batch27` / `batch53a` (`a3-hf4-mutation.log`, `a3-hf4-mutation-rerun.log`: one ambiguous anchor and one self-healing mutant corrected and re-run).
+- **Suite / firmware:** see the current-state table above.
+
+### 3. Rows
+
+- **H-204** (`ALPHA2_HARDWARE_CHECKLIST.md`): new, PENDING. About 3 minutes: Mix / Look / "Leave this place?" / Ready, then a load, on both routes.
+- **D-65** (ledger §4): new, host fixed.
+
+### 4. Not done in this batch
+
+- Loading in combat (item 7) and the turn-phase question (item 8).
+- H-203 (A3-05): still the user's.
+- A3-04H (storage import count, PSRAM routing); narrative / transcript pacing; the TypeScript `died` routing.

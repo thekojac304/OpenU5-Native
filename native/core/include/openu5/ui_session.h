@@ -238,6 +238,16 @@ class UiSession {
     bool ending_active() const { return base_mode_ == UiMode::Ending; }
     void enter_ending();
     void leave_ending(UiMode world);
+    // A3-HF4. A successful load replaces the game: every prompt, picker, aim,
+    // Shop/Dialogue/Shrine session mode and return register belonged to the
+    // game it replaced (the reference's applyLoadedState: `prompts.current =
+    // null`; the 1988 load is a fresh ULTIMA.EXE start, 0x00f7). Resets them
+    // to `world` WITHOUT a ModalResponse -- nothing is answered or cancelled
+    // on the old game's behalf. The transcript, its scroll and the
+    // owner-pushed context mirrors are kept. The Ending is left to its owner
+    // (leave_ending()); an open Developer menu stays open and returns to
+    // `world`. Call it only after the load has succeeded.
+    void reset_after_load(UiMode world);
     UiRequestId request() const { return request_; }
     const char *prompt() const { return prompt_; }
     const char16_t *input_buffer() const { return input_; }

@@ -1925,6 +1925,42 @@ if(BUILD_TESTING)
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin"
     "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/a3-01-audio-stock.bin")
+  # Alpha 3 A3-HF4 -- a successful load discards the replaced game's prompts,
+  # pickers, views and presentation timers (ALPHA3_AUDIO.md section 30). The
+  # A3-05 source set: the REAL AlphaRuntime over the two-slot memory card, and
+  # the capture Board that records the last overlay line and picker panel.
+  add_executable(a3_hf4_load_transient_runtime
+    ../targets/tdeck/host_tests/a3_hf4_load_transient_runtime_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/batch37_board_capture_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_audio.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(a3_hf4_load_transient_runtime PRIVATE openu5_core)
+  target_include_directories(a3_hf4_load_transient_runtime PRIVATE
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/main)
+  target_compile_features(a3_hf4_load_transient_runtime PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(a3_hf4_load_transient_runtime PRIVATE /Gy)
+    target_link_options(a3_hf4_load_transient_runtime PRIVATE /OPT:REF)
+  else()
+    target_compile_options(a3_hf4_load_transient_runtime PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(a3_hf4_load_transient_runtime PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME a3_hf4_load_transient_runtime COMMAND a3_hf4_load_transient_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
   # Batch 14 / R-22 -- (Z)-stats navigation. Same seam and same stub/shim set
   # as alpha_runtime_integration_regression above: it links the REAL,
   # unmodified alpha_runtime.cpp so the modal is reached only by feeding raw

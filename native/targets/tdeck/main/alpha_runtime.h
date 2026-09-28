@@ -225,6 +225,27 @@ class AlphaRuntime {
     // and the device panel cannot disagree about a row.
     bool zstats_active() const { return zstats_open_; }
     openu5::ZStatsPage zstats_view() const;
+    // A3-HF4 host-test seam: the device-owned interaction and presentation
+    // state a load must not carry into the loaded game. Read-only.
+    struct TransientProbe {
+        bool gem_view = false, zodiac_view = false, zstats = false;
+        bool map_reveal = false, magic_invert = false, quake = false;
+        bool parked_pick = false, npc_initiation = false;
+    };
+    TransientProbe transient_probe_for_test() const {
+        TransientProbe p;
+        p.gem_view = gem_view_active_ || gem_view_charges_turn_;
+        p.zodiac_view = zodiac_view_active_;
+        p.zstats = zstats_open_;
+        p.map_reveal = map_reveal_end_us_ != 0;
+        p.magic_invert = magic_invert_end_us_ != 0 || magic_invert_start_us_ != 0;
+        p.quake = quake_pulses_ != 0;
+        p.parked_pick = pending_combat_spell_ >= 0 || pending_ready_member_ >= 0 || pending_use_item_ >= 0 ||
+                        pending_order_from_ >= 0 || pending_search_active_ || pending_caster_ >= 0 ||
+                        shrine_virtue_length_ != 0 || selection_request_ != openu5::UiRequestId::None;
+        p.npc_initiation = pending_npc_initiation_ != PendingNpcInitiation::None;
+        return p;
+    }
 
   private:
     struct Selection { char label[40]{}; int16_t value = -1; bool enabled = true; };
@@ -514,6 +535,9 @@ class AlphaRuntime {
     void synchronize_after_debug(openu5::WorldPosition before, bool dungeon_before);
     void drain_pending_npc_initiation();
     void synchronize_loaded_world();
+    // A3-HF4: the one successful-load cleanup of the replaced game's prompts,
+    // pickers, views, presentation timers and pending core questions.
+    void reset_transient_after_load();
     // Batch 53A: keep UiMode::Ending in step with the live game's game-won.
     void synchronize_ending(const char *site);
     void service_frontend_intent();

@@ -1,6 +1,14 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap, A3-05 audio finalization)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap, A3-05 audio finalization, A3-HF4 load transient reset)
 
-**Status (A3-05, 2026-09-27): AUDIO FINALIZATION — VOLUME CURVE ACCEPTED AS FINAL (UNCHANGED), MUTE SHORTCUTS ADDED, EXTRA KILL BURST REMOVED (D-64) — ON THE HOST; SHORT HARDWARE CHECK H-203 PENDING.** §29:
+**Status (A3-HF4, 2026-09-27): A SUCCESSFUL LOAD NOW DISCARDS THE REPLACED GAME'S PROMPTS, PICKERS, VIEWS AND PENDING QUESTIONS (D-65) — FIXED ON THE HOST; HARDWARE CHECK H-204 PENDING. H-203 (A3-05) IS STILL PENDING.** §30:
+- **The defect:** the H-201 / H-202 capture kept a Mix picker open across an in-menu Load (`UI_MODE` stayed `spell`) until Mic. On the host every modal, session mode, device view and pending core question did the same, on both load routes; the stale Mix picker's Enter mixed from the old game's list.
+- **Root cause:** `synchronize_loaded_world()` re-derived the UI only through `set_base_mode()` (keeps a live modal, by design since H-118) and `resolve_synchronized_base_mode()` (keeps a Shop / Dialogue / Shrine base); nothing reset the runtime's views or the core's `awaiting_*` flags on a load.
+- **Parity target:** the 1988 game loads only at start-up (ULTIMA.EXE `main` 0x00b3–0x00f7), where no prompt exists; the reference's `applyLoadedState` drops every prompt, view and pending command.
+- **Fix:** one cleanup after a successful load (`AlphaRuntime::reset_transient_after_load()` → `UiSession::reset_after_load()`); nothing answered or charged for the old game; a failed load changes nothing. No audio, render or input change.
+
+RED-first 36 / 85 → GREEN 85 / 85 on the real runtime; 29 / 29 mutations killed; host suite **152 / 152**. Firmware +816 B, flash only.
+
+**Status as A3-05 wrote it (2026-09-27): AUDIO FINALIZATION — VOLUME CURVE ACCEPTED AS FINAL (UNCHANGED), MUTE SHORTCUTS ADDED, EXTRA KILL BURST REMOVED (D-64) — ON THE HOST; SHORT HARDWARE CHECK H-203 PENDING.** §29:
 - **Volume:** one square law shared by both channels (0 % silent with the synth stopped, 10 % = −40 dB, 50 % = −12 dB, 100 % = unity). No clipping or integer defect was found; the user's device verdict stands, and no production change was made.
 - **Alt+Shift+M / Alt+Shift+S** toggle a session-only music / SFX mute on top of the volume.
   - The configured volume is never written, and a reboot starts unmuted.
@@ -4277,3 +4285,156 @@ The check is in `ALPHA2_HARDWARE_CHECKLIST.md`. There is no soak; §29.1 lists w
   - New: `native/targets/tdeck/host_tests/a3_05_audio_controls_test.cpp`, `native/core/tests/a3_05_audio_mute_test.cpp`, `native/core/tools/a3_05_{red_first,mutation_check}.py`.
   - Changed: `native/core/CMakeLists.txt`; `a3_02_sfx_synth_test.cpp` (E11); `a3_02_sfx_runtime_test.cpp` (C1 / C2); a comment in `a3_hf3_combat_hit_runtime_test.cpp`.
 - Docs: this section, the status line and §11; `ALPHA2_HARDWARE_CHECKLIST.md` (H-203); `ALPHA2_PRESERVATION_LEDGER.md` (D-64); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`.
+
+## 30. A3-HF4 — a successful load discards the replaced game's prompts and views
+
+A correctness hotfix, not an audio change. During the H-201 / H-202 capture (§28.21.9) a Hold+M opened the Mix picker (`UI_MODE from=explore to=spell`, 191.29 s). The in-menu Load at 231.55 s completed, and `UI_MODE` stayed `spell` until Mic at 235.21 s. Nothing else visible changed, because the loaded game stood where the old one did.
+
+### 30.1 Baseline
+
+- `main` at `5d1affd5` (tag `alpha3-a3-05-audio-finalization` = `4264f34e`, plus its post-commit evidence), clean tree. H-203 is being run by the user and stays **PENDING** here.
+- Host suite **151 / 151**, serial, 130.70 s (`native/core/a3-hf4-baseline-{configure,build,ctest}.log`, build dir `build-a3-hf4-base`).
+- Firmware `3.0.0-alpha3-dev-a3-05-debug`, 981,616 B (`0xefa70`), 66,960 B free.
+
+### 30.2 The defect, reproduced
+
+`a3_hf4_load_transient_runtime` L1 reproduces the capture on the real `AlphaRuntime` with raw keys:
+1. `m` opens the Mix picker: `SpellSelection`, request `Custom`, prompt `Spell`, the picker panel drawn.
+2. Alt+M → *Load / Save Management* → *Continue Latest* completes and restores the saved game.
+3. After it: `mode=spell`, `request=Custom`, `prompt='Spell'`, and the picker panel is still drawn.
+
+It is more than cosmetic. The picker's rows were built from the **old** game's list, and Enter then mixed from them in the loaded game (L1.4 RED). Alt+L does the same.
+
+### 30.3 Root cause
+
+Every successful load ends in `AlphaRuntime::synchronize_loaded_world()`: System Menu *Continue Latest* / *Load Slot*, Alt+L, the title's *Continue* / *Load Slot*, and a New Journey. It re-derived the UI only through
+
+```
+ui_->set_base_mode(resolve_synchronized_base_mode(ui_->base_mode(), combat, dungeon));
+```
+
+and both halves of that call keep interaction state by design:
+- **`UiSession::set_base_mode()` never replaces a live modal** (`if (!is_modal(mode_)) mode_ = m;`, and since H-118 the Developer menu's parked `debug_return_mode_` too). The guard is right for the per-input resync, which must not drop a question the player is answering. On a load it kept **every** modal: the Mix picker (`SpellSelection`), a target selector, a yes/no, the Ready / Use / party pickers, text and number entry. Each kept its `request_`, `prompt_`, `input_`, `selection_` and `pending_command_`.
+- **`resolve_synchronized_base_mode()` keeps a `Shop`, `Dialogue` or `ShrineSpecial` base** (session-owned modes), so a load mid-conversation or mid-shop stayed in it.
+
+Beneath the UI, the load also kept:
+- the runtime's own views and parked work: the gem view and its deferred turn, the zodiac view, (Z)-stats, the map reveal, the magic-ceremony inversion, the quake, the parked Use / Ready / spell / search picks, the picker rows, and a queued NPC approach;
+- the core halves of pending questions: `CommandState::awaiting_exit`, `awaiting_troll` and the toll, `BlackthornSession`, and the Dialogue / Shop / Shrine sessions. `restore_candidate()` moves the **live** `CommandState` through the load and restores only its door from the save.
+
+**It is not Mix-specific:** L2–L5c are RED on HEAD for the same reason.
+
+### 30.4 The parity target
+
+- **Original (1988).** There is no in-game load. The only load is the boot route of `main` (ULTIMA.EXE 0x00b3–0x00f7 → TOWN.OVL 0x11f0 with `fresh = 0`, reached from *Journey Onward*; `re/notes/npc-carga-partida-fresh-gate.md` §2). No prompt, view or session can exist then. Every piece of interaction state is at its start-up value, and the game resumes in the loaded context's own loop (0x00db: `g_location ≥ 0x21` → the dungeon loop, else town / overworld).
+- **Reference (TypeScript).** `applyLoadedState` (`game/src/main.ts`) cancels every scene and timer and closes the gem and zodiac views. It sets `prompts.current = null`, which drops every yes/no, text, target, spell and shop prompt together with its callback. It closes the shop panel and clears the pending direction / Klimb / search / look / cast / Use commands. Its comment: the transient input prompts are cleared too, because they belonged to the previous game.
+- **Native rule (parity-derived).** A successful load resets the UI to the loaded game's own world mode: Dungeon if the save is in a dungeon, else Explore. No prompt, picker, view, timer or pending question survives, and nothing is answered, cancelled or charged on the old game's behalf.
+- **Native modernization, recorded.** The System Menu and Alt+L are modern affordances; they are what makes a mid-prompt load possible at all. An open Developer menu stays open across Alt+L and returns to the loaded game's world mode when closed.
+
+### 30.5 The transient-state audit
+
+| State | Owner | Class | A3-HF4 |
+|---|---|---|---|
+| UI mode, base mode and every return register (`return_mode_`, pre-combat, shop / dialogue / shrine) | `UiSession` | must clear | reset to the loaded world mode |
+| Modal request, prompt text, text / number input, `cancel_means_no_`, `escape_clears_` | `UiSession` | must clear | cleared |
+| Picker source and cursor (Mix, Cast, Ready, Use, party, Status) | `UiSession` | must clear | cleared |
+| Target / direction template and aim; the one-frame target marker | `UiSession` | must clear | cleared |
+| Camp-watch hours between its prompts | `UiSession` | must clear | cleared |
+| Shop phase, cursor and offer count | `UiSession` | must clear | `Closed` |
+| The Developer menu's parked return mode | `UiSession` | must clear (the menu stays open) | set to the world mode |
+| The Ending | `UiSession` + `synchronize_ending()` | follows the loaded save | unchanged path: `leave_ending()` / `enter_ending()` (Batch 53A) |
+| Gem view and its deferred turn; zodiac view; (Z)-stats and its page / scroll | runtime | must clear | cleared (no turn charged) |
+| Map-reveal window, magic-ceremony inversion window, quake pulses | runtime | must clear | cleared |
+| Parked picks: combat spell, Ready member, Use item, party-order source, search command, caster, shrine virtue | runtime | must clear | cleared |
+| Picker rows (`selections_`, count, request) | runtime | must clear | count 0, request None |
+| Queued NPC approach (R-10) | runtime | must clear | cleared (the menu load returns before its drain) |
+| Queued combat input | runtime | must clear | cleared; no test reaches it (a load always leaves combat) |
+| `CommandState::awaiting_exit`, `awaiting_troll`, the toll and bridge fields | core | must clear with their prompt (H-118's silent-refusal class) | cleared |
+| `BlackthornSession`, `DialogueSession`, `ShopSession`, `ShrineSession` | core | must clear (a New Journey already did) | reset |
+| Blackthorn and narrative scene pacers (Refuge, TrollSneak, Camp), world fx, poison flash, hit cue, queued audio, ambient | runtime | must clear | **already cleared** before A3-HF4 (#324, Y-04, A3-HF3, A3-01) |
+| Door tracker, NPC table, world objects, dungeon session, combat, moonstones | runtime / save | loaded state | **already restored or re-derived** (Batches 22–26, 53) |
+| Party, position, floor / dungeon, clock, inventory, quest flags, karma | save | must survive (loaded) | untouched |
+| Transcript text and scroll | `UiSession` | must survive (the player's log; *Load complete* is appended) | kept |
+| Context mirrors (sails, harpsichord, dungeon prompts, camp, view metrics) | `UiSession` | refreshed before every key | kept |
+| Settings, volumes, session mutes (A3-05), movement mode | runtime / input | must survive | kept |
+| Developer menu open, perf report, the System Menu's save list | runtime | device tools | kept |
+| `CommandState` turn phases and `town_location`; `TravelState` flags | core | not prompt state; existing load behaviour | **unclear**, unchanged: whether the 1988 start-up values apply is not derived, and nothing reports a symptom |
+| `status_member_` | runtime | re-seeded on every Status open | unchanged |
+| `camp_advance`, the Camp scene, `pending_camp_enemy` | core / runtime | **not applicable**: a load cannot happen then (`handle_input_event` swallows the System Menu and every shortcut) | unchanged |
+| The Blocked-repeat merge | `UiSession` | not applicable: any append resets it, and the load appends | unchanged |
+
+### 30.6 The fix
+
+One cleanup, run only after a load succeeded.
+- **`AlphaRuntime::reset_transient_after_load()`** (`alpha_runtime.cpp`). `synchronize_loaded_world()` calls it in place of the `set_base_mode` line, after the loaded context is derived.
+  - It clears the runtime and core rows of the audit above, one by one.
+  - It hands the UI to `UiSession::reset_after_load(world)`, with `world = resolve_synchronized_base_mode(Exploration, combat, dungeon)`.
+  - One serial line records what a load dropped: `LOAD_TRANSIENT_RESET ui=<before>-><after> request=<id> views=<0|1> questions=<0|1>`.
+- **`UiSession::reset_after_load(UiMode)`** (`ui_session.cpp`). The `CombatEnded` / `enter_ending()` teardown, extended to every return register and the shop phase.
+  - It dispatches no `ModalResponse`, so nothing is answered or cancelled on the old game's behalf: a combat Ready picker's close charges no turn, a gem view charges no deferred turn, and the camp watch does not rest.
+  - An open Ending is left to `leave_ending()`. An open Developer menu keeps its screen.
+- **A failed load never reaches it.** `synchronize_loaded_world()` runs only on success, on every route, so a refused or missing save leaves the live prompt exactly as it was (L7).
+- **Presentation: no new redraw.** The existing invalidation already runs on both routes: the System Menu's close and repaint, and Alt+L's `synchronize_after_debug`. The first frame after the load carries no prompt line and no picker panel (L1.3, checked on the captured frame). The stale overlay (`Aim: empty (-1,-1)` after a Look) goes with the mode.
+- **Input: no change needed, none made.** Keys act on the press edge only; releases route nothing (`UiInputAdapter::translate`), and an orphaned Mic release is ignored. L8 proves it on the device path: after the load, the Enter that loaded, an Alt+L release and a Mic release with no press route nothing. Mic is no longer needed to escape anything.
+
+### 30.7 Tests, RED / GREEN and mutations
+
+- **`a3_hf4_load_transient_runtime`** (new, 85 checks). The real `AlphaRuntime` over the two-slot memory card and the capture Board, raw keys, and both load routes (System Menu and Alt+L) wherever both apply.
+  - **L1 Mix.** The defect. Enter afterwards is Explore's (P)ass, with nothing mixed; the loaded game takes commands; Mix reopens afresh.
+  - **L2** Look's direction prompt. The next direction is not delivered to the old Look.
+  - **L3** "Leave this place?" at castle 17's west edge: the yes/no **and** `awaiting_exit`. The loaded game's commands are not refused.
+  - **L3b** the troll toll and a Blackthorn guard demand, seeded on the core's own objects. Each is first proven to refuse commands.
+  - **L4** the Ready picker, the Use picker, and a potion parked behind its member picker.
+  - **L5** (Z)-stats; the gem view on both routes (no deferred turn; the next key is a command); the zodiac view, map reveal, quake and magic inversion, raised through the core's own event sink; a queued NPC approach through the menu route.
+  - **L5c** a conversation and a shop. The host fixture binds no TLK data, so both are seeded through the event sink the core's orchestration emits into, with the core session live.
+  - **L6 control:** an ordinary load from Explore restores position and gold into Explore and keeps the transcript.
+  - **L7 failed loads:** no save (both routes) leaves the Mix picker intact. A corrupt generation keeps both halves of the town-exit question and the world, and the question still answers.
+  - **L8** the loading key, and releases after the load.
+  - **L9** Alt+L inside the Developer menu: the menu stays, and closing it returns to Explore, not to the old Mix picker.
+  - Test-only seams: an inline, read-only `AlphaRuntime::transient_probe_for_test()`, and the capture Board's record of the last frame's overlay line and picker panel.
+- **RED-first.** `native/core/tools/a3_hf4_red_first.py` builds the test against HEAD's `ui_session.cpp` and `alpha_runtime.cpp` (`native/core/a3-hf4-red.log`): **36 of 85 RED** — L1.3 / L1.4 on both routes, L2, L3, L3b, L4, L5, L5c, L8 and L9.3. Every precondition and every control is GREEN on HEAD: L6 (an ordinary load) and all of L7 (a failed load keeps the prompt). After the change: **85 / 85** (`a3-hf4-green.log`).
+- **Mutations.** `native/core/tools/a3_hf4_mutation_check.py` runs 29 mutants against the new test and the existing load tests (`batch24_reload_parity`, `batch26_dungeon_save`, `batch27_alt_load`, `batch53a_ending_terminal`): **29 / 29 killed**, restored build GREEN.
+  - First pass (`a3-hf4-mutation.log`): 27 killed. H23's anchor also matched the (Z)-stats close path (INVALID), and H26 as first written cleared only the quake's start time — self-healing, since the next frame ends a quake that began at t = 0, so it survived without changing behaviour. Both were corrected and re-run: **killed** (`a3-hf4-mutation-rerun.log`).
+  - The boundary: H1 the UI is not reset (HEAD); H2 the cleanup is never called; H3 / H4 a failed Alt+L / menu load clears too (killed by L7); H5 a load always lands in Explore (killed by `batch26_dungeon_save` and `batch27_alt_load`: a dungeon save).
+  - UiSession: H6 a target selector, H7 a yes/no, H8 a picker survives; H9 the prompt text or H10 the request is kept; H11 the shop phase stays open; H12 a session base mode survives; H13 the Developer menu is closed, H14 it returns to the old picker; H15 the transcript is cleared (a persistent state wrongly reset: 25 checks of the new test, `batch27_alt_load` and `batch53a_ending_terminal`).
+  - Core: H16 `awaiting_exit`, H17 the troll toll, H18 the guard demand, H19 the conversation, H20 the shop session survives.
+  - Runtime: H21 the gem view (and its turn), H22 the zodiac view, H23 (Z)-stats, H24 the map reveal, H25 the inversion, H26 the quake, H27 a parked Use item, H28 the old picker rows, H29 a queued NPC approach survives.
+
+### 30.8 Regression
+
+Fresh build directory `native/core/build-a3-hf4`: **152 / 152, serial, 136.73 s**, with the known w64devkit warning only (`native/core/a3-hf4-{configure,build,ctest}.log`). That is A3-05's 151 plus `a3_hf4_load_transient_runtime`; no existing expectation changed. The focused set passes inside it:
+- save / load / storage: `batch24_reload_parity`, `batch26_dungeon_save`, `batch27_alt_load`, `batch28_save_validation`, `batch53_release_blockers`, `batch53a_ending_terminal`, `a3_04g_storage_runtime` (the real `alpha_save.cpp`);
+- the resync rules this batch sits beside: `batch25_shard_ritual` (H-118's parked question across the Developer menu), `ui_mode_regression`, `alpha_runtime_integration_regression`;
+- A3-05 audio controls (a mute survives a load, M8), A3-HF3 combat hit cue, A3-04F render, A3-04E pacing and the A3-02 / A3-03 / A3-04 audio tests;
+- `quest_parity` and every gameplay test.
+
+The TypeScript reference is not touched: it already has the rule (`applyLoadedState`).
+
+### 30.9 Firmware
+
+Pre-commit build `native/targets/tdeck/build-a3-hf4` (`a3-hf4-firmware-{configure,build}.log`): ESP-IDF 6.1, `--no-ccache`, `ninja -j 4`, first attempt clean, zero project warnings.
+
+- **`0xefda0` = 982,432 B, +816 B** against A3-05; **`0x10260` = 66,144 B (6 %) free**.
+- Sections against A3-05's post-commit image (`esp_idf_size --diff`, `a3-hf4-size-diff.log`): flash `.text` +744 B and `.rodata` +80 B (the `LOAD_TRANSIENT_RESET` format string). **DIRAM, IRAM, `.data` and `.bss` are unchanged**: the fix adds code, not state.
+- Image guards GREEN: `a3_04f_image_check.py`, `a3_04b_iram_check.py` and `a3_04a_hotpath_check.py` (`a3-hf4-{image,iram,hotpath}-check.log`). Nothing on the per-sample path changed.
+- Version `3.0.0-alpha3-dev-a3-hf4-debug`. Not flashed. Tag `alpha3-hf4-load-transient-reset` names the post-commit image (a fresh directory, which embeds the commit), with its path, size, SHA-256 and `Git`.
+
+### 30.10 Hardware check H-204 (the user's; about 3 minutes)
+
+The check is in `ALPHA2_HARDWARE_CHECKLIST.md`. The A3-HF4 image carries A3-05 unchanged, so one flash serves H-203 and H-204.
+
+### 30.11 Recorded, not changed
+
+- **Loading in combat.** Alt+L and the System Menu Load are honoured mid-combat (the shortcut branch precedes combat routing), and the load leaves combat. The reference refuses its save panel in combat (`COMBAT_STRINGS.quitReject`; its comment cites COMBAT 0x0a78 → SJOG 0x1f26 code 2). The load is now clean either way; whether a load should be allowed in combat at all is a product question for a later batch.
+- **`CommandState` turn phases, `town_location`, and the `TravelState` flags** still carry across a load, as before. They are not prompt state. Whether the 1988 start-up values should apply is not derived here, and nothing reports a symptom.
+- **Queued combat input** is cleared but no test reaches it, because a load always leaves combat.
+
+### 30.12 Files
+
+- Core: `native/core/include/openu5/ui_session.h`, `src/ui_session.cpp`: `UiSession::reset_after_load()`.
+- Device:
+  - `native/targets/tdeck/main/alpha_runtime.{h,cpp}`: `reset_transient_after_load()` and its call in `synchronize_loaded_world()`; the read-only `transient_probe_for_test()`.
+  - `native/targets/tdeck/CMakeLists.txt`: `PROJECT_VER`.
+- Tests and tools:
+  - New: `native/targets/tdeck/host_tests/a3_hf4_load_transient_runtime_test.cpp`, `native/core/tools/a3_hf4_{red_first,mutation_check}.py`.
+  - Changed: `native/core/CMakeLists.txt`; `host_tests/host_stubs/batch37_board_capture_stub.cpp` (records the last frame's overlay line and picker panel).
+- Docs: this section and the status line; `ALPHA2_HARDWARE_CHECKLIST.md` (H-204); `ALPHA2_PRESERVATION_LEDGER.md` (D-65); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`.

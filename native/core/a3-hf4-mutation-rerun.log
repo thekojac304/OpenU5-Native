@@ -1,0 +1,11 @@
+# A3-HF4 mutation validation (2026-09-27 22:22)
+
+H23 (Z)-stats survives [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf4_load_transient_runtime exit=1  1 RED
+        RED L5.2 ** (Z)-stats is closed by the load **
+H26 the quake survives [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
+    a3_hf4_load_transient_runtime exit=1  1 RED
+        RED L5.7 ** none of them survives the load **
+
+restored: build exit=0; a3_hf4_load_transient_runtime exit=0, batch24_reload_parity exit=0, batch26_dungeon_save exit=0, batch27_alt_load exit=0, batch53a_ending_terminal exit=0
+mutations: 2, killed: 2, survived: 0, invalid: 0

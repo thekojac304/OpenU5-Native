@@ -1,0 +1,25 @@
+Memory Type Usage Summary
+┌─────────────────────┬──────────────┬──────────┬────────────────┬───────────────┐
+│ Memory Type/Section │ Used [bytes] │ Used [%] │ Remain [bytes] │ Total [bytes] │
+├─────────────────────┼──────────────┼──────────┼────────────────┼───────────────┤
+│ Flash Code          │       664578 │          │                │               │
+│    .text            │       664578 │          │                │               │
+│ Flash Data          │       219044 │          │                │               │
+│    .rodata          │       218772 │          │                │               │
+│    .appdesc         │          256 │          │                │               │
+│    .tdata           │           16 │          │                │               │
+│ DIRAM               │       134162 │    39.26 │         207598 │        341760 │
+│    .text            │        60647 │    17.75 │                │               │
+│    .bss             │        51888 │    15.18 │                │               │
+│    .data            │        21627 │     6.33 │                │               │
+│ IRAM                │        16384 │    100.0 │              0 │         16384 │
+│    .text            │        15356 │    93.73 │                │               │
+│    .vectors         │         1028 │     6.27 │                │               │
+│ RTC SLOW            │           48 │     0.59 │           8144 │          8192 │
+│    .force_slow      │           36 │     0.44 │                │               │
+│    .rtc_noinit      │           12 │     0.15 │                │               │
+│ RTC FAST            │           24 │     0.29 │           8168 │          8192 │
+│    .rtc_reserved    │           24 │     0.29 │                │               │
+└─────────────────────┴──────────────┴──────────┴────────────────┴───────────────┘
+Total image size: 982316 bytes (.bin may be padded larger)
+Note: The reported total sizes may be smaller than those in the technical reference manual due to reserved memory and application configuration. The total flash size available for the application is not included by default, as it cannot be reliably determined due to the presence of other data like the bootloader, partition table, and application partition size.
