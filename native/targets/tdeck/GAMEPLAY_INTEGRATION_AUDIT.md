@@ -8,7 +8,29 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 A3-HF10, 2026-09-28) — Mix is the original's again: the player marks the reagents and answers "How much?"; Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 pre-RC reconciliation, 2026-09-28) — no code changed; the Alpha 3 scope, deferrals and RC procedure are written down; four hardware checks stand between A3-HF10 and RC1; Alpha 2 remains the released build; read this first
+>
+> **A documentation batch, not a release** (`ALPHA3.md` at the repository root, a pre-release draft). The code is A3-HF10's (`028269fe`, tag `alpha3-hf10-mix-parity`). No production code, test, `PROJECT_VER`, firmware or tag changed.
+> - **Tracker corrections, each backed by a recorded result.**
+>   - H-206 PASS (the user) is recorded.
+>   - H-207's PASS is carried onto ledger D-41.
+>   - D-3 is resolved by the audio track, and E-6 (music from the supported patch, promised in A3-01) is added.
+>   - The A3-03 / A3-04 / A3-04A–D "retest pending" lines are marked superseded: each image was run, and its result opened the next batch.
+>   - H-199 is withdrawn.
+>   - The Batch 52 / 53 "HARDWARE RETEST PENDING" release-blocker labels now point to their Batch 54 results.
+>   - The ledger's stale 7B / 7D-A labels (D-32 – D-36, D-39) carry the results its own §6 held.
+>   - `ALPHA3_AUDIO.md` §0 no longer calls the music-on lag "hardware evidence pending".
+> - **Alpha 3 scope.** It includes the audio track (effects, patched-DOS music, stock-DOS musicless behaviour, the controls), A3-04A – A3-04G, and HF1 – HF10 with Mix parity, on the current ending and UI. **Deferred past Alpha 3:** H-209 / D-67, H-211 / D-68, H-212 / D-69, D-54, D-56, D-57, D-71, the UI track, A3-04H (only an RC heap-capture trigger starts it), and the other classified minor items. They are listed in `ALPHA3.md` §2.
+>
+> | | |
+> |---|---|
+> | Host suite | Not run: no code changed. The A3-HF10 record stands: **162 / 162**, serial, 152.76 s. |
+> | Firmware | Not built. The A3-HF10 image stands: 988,320 B (`0xf14a0`), 60,256 B (5.7 %) free, Launcher allocation 1,048,576 B (the whole 1 MiB partition). Internal RAM, IRAM (16,384 B, full) and PSRAM are unchanged by HF9 and HF10, and the image guards are GREEN. |
+> | Pending hardware | **H-210, H-213, H-203, H-204**, in one session on the A3-HF10 image (checklist, "Alpha 3 pre-RC reconciliation"). |
+> | RC | `ALPHA3.md` §12: gate → version `3.0.0-alpha3-rc1-debug` → fresh host and firmware builds → size and guards → commit → post-commit image → package → annotated tag → Phase A3-RC1 smoke and heap capture (reserved in the checklist). |
+> | Next | **Wait for / run the outstanding HF10 hardware session.** No code batch. |
+>
+> ### CURRENT STATE (Alpha 3 A3-HF10, 2026-09-28) — Mix is the original's again: the player marks the reagents and answers "How much?" — **superseded as the current state by the pre-RC reconciliation above.**
 >
 > **A3-HF10 is a gameplay-parity hotfix, not a release** (`ALPHA3_AUDIO.md` §36), and the last gameplay-code batch before the Alpha 3 RC. HF5 … HF8 are hardware-validated; H-210 (HF9) is pending.
 > - **The defect (D-6 / D-70).** After the spell, the device's `M`ix filled the reagent mask from the spell's own recipe and always mixed one (`alpha_runtime.cpp`'s `Custom` arm). D-6 recorded the quantity; the reconciliation found the auto-recipe (D-70): a wrong set, and its chest trap, could never happen.
@@ -8317,7 +8339,7 @@ The small closing pass of the audio track. The full write-up is [`ALPHA3_AUDIO.m
 
 - The TypeScript reference's `died` routing (item 6).
 - The melee swing glides (item 7): new sounds.
-- The Mix prompt that survives a load (§28.21.9): its own queued item.
+- The Mix prompt that survives a load (§28.21.9): its own queued item. *(Done: A3-HF4, D-65. H-204 is pending.)*
 - A3-04H (storage import count, PSRAM routing).
 
 ## Alpha 3 A3-HF4 — a successful load discards the replaced game's prompts and views

@@ -1,5 +1,11 @@
 # Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap, A3-05 audio finalization, A3-HF4 load transient reset, A3-HF5 dialogue pacing, A3-HF6 shrine key waits, A3-HF7 ritual effects, A3-HF8 sacrifice burst, A3-HF9 Refuge cadence, A3-HF10 Mix command parity)
 
+**Status (Alpha 3 pre-RC reconciliation, 2026-09-28): THE AUDIO TRACK IS CLOSED; NO CODE CHANGED.** The scope, the deferrals and the RC procedure are in `ALPHA3.md` at the repository root. The authoritative hardware table is the checklist's "Alpha 3 pre-RC reconciliation" section.
+- **Closed:** audio, music and the A3-04 performance work. The ledger's D-3 is resolved, and the patched-install music is its deliberate row E-6. The volume curve is final (§29.2).
+- **Superseded, not owed:** the retests of A3-03 (§16.17), A3-04 (§17.18), A3-04A (§18.18), A3-04B (§19.16), A3-04C (§20.10) and A3-04D (§21.7). Each image was run, and its result opened the next batch; the end state is the A3-04E.1 soak (§23.10) and H-200 (§26.17). H-199 (§25.7) is withdrawn.
+- **Hardware results:** H-206 PASS is recorded. **H-203 (§29), H-204 (§30), H-210 (§35) and H-213 (§36) are still pending**, with one A3-HF10 session for all four.
+- **Deferred past Alpha 3:** H-209, H-211, H-212, D-71, and A3-04H unless the RC heap capture (§28.16 trigger 7) calls for it.
+
 **Status (A3-HF10, 2026-09-28): MIX IS THE ORIGINAL'S AGAIN — THE PLAYER MARKS THE REAGENTS AND ANSWERS "HOW MUCH?" (D-6 / D-70) — FIXED ON THE HOST; HARDWARE CHECK H-213 PENDING (with H-210).** §36. The A3-HF9 status follows.
 
 **Status (A3-HF9, 2026-09-28): THE REFUGE KEEPS THE ORIGINAL'S CADENCE, AND LORD BRITISH'S KARMA SPEECH WAITS FOR A KEY (H-185 / D-42) — FIXED ON THE HOST; HARDWARE CHECK H-210 PENDING. H-208 PASS (A3-HF8).** §35:
@@ -121,7 +127,7 @@ This document is the audio track's reference. It records what the original does,
 | The user's DOS files | Sound effects | Music | What Settings shows |
 |---|---|---|---|
 | **Stock** (unpatched *Ultima V* DOS) | Supported. The effects are the original's PC-speaker sounds, synthesized from the original's own parameters: 22 since A3-02 (§15.5), 62 of the 73 cue ids since A3-03 (§16). No asset is needed. | **None.** The 1988 game has no music. | `Music Volume: Unavailable`, footer *Stock DOS game files have no music* |
-| **Supported music patch** (Exodus Project *Ultima V Upgrade* 1.0) | The same. | **Enabled** (§17); smooth real-time playback fixed in A3-04A (§18); its contention with rendering addressed in A3-04B (§19); the lag that remains with music on is instrumented in A3-04C (§20), hardware evidence pending. Loudness/tone balance is A3-05. | `Music Volume: 80%`, adjustable |
+| **Supported music patch** (Exodus Project *Ultima V Upgrade* 1.0) | The same. | **Enabled** (§17). A3-04A fixed real-time playback (§18) and A3-04B its contention with rendering (§19). The render lag with music on was traced and removed in A3-04C – A3-04F, and the end state is hardware-validated (§23.10, H-200 §26.17). The volume curve is final (A3-05, §29.2). *(Pre-RC reconciliation; this cell used to read "hardware evidence pending" and "loudness/tone balance is A3-05".)* | `Music Volume: 80%`, adjustable |
 | **Incomplete patch** (some of its files) | The same. | None. It is never guessed. | `Unavailable`, *Music patch files are incomplete* |
 | **Unknown music variant** (another driver or foreign XMI files) | The same. | None. It is never guessed. | `Unavailable`, *Unsupported music patch variant* |
 | No audio pack on the card, or a stale/corrupt one | The same. | None. | `Unavailable`, *No audio pack: npm run pack:audio* or *Audio pack stale or corrupt: rebuild* |
@@ -1139,6 +1145,8 @@ Copy the Launcher image named in the annotated tag. SD card unchanged; `openu5-a
 - **H. Volume.** Beside the fountain: 100 %, 50 %, 0 % — quieter each step, silent at 0 %.
 - Not in this check: music (A3-04), final loudness and tone (A3-05).
 
+*Pre-RC reconciliation (2026-09-28): superseded, not owed. The effects were heard on every later image: the fountain and clock in H-198, the combat hits and a won fight in H-201, the quakes and sweeps in H-207, and the siren in H-208.*
+
 ### 16.18 Remaining SFX (Phase S)
 
 **Cue ids that stay silent (11), each classified:**
@@ -1404,6 +1412,8 @@ The user is away from the device; nothing below has been run. Copy the Launcher 
 
 This file (`ALPHA3_AUDIO.md` §17, and the header/status line at the top). The audit ledger entry (batch record) is this report itself; A3-03's hardware line is recorded as **SOFTWARE COMPLETE — HARDWARE RETEST PENDING**, not re-run, because the user is away from the device.
 
+*Pre-RC reconciliation (2026-09-28): superseded. The A3-04 image played the right songs, with stutter, and that result opened A3-04A (§18). Music ran on every image after it. A3-03's line is closed as §16.17 is.*
+
 ### 17.20 Next batch (Phase T) — not started
 
 *(A3-04A was inserted before it after the first hardware run showed stutter — §18.)* **A3-05 — hardware music validation, loudness/tone balance, SFX/music balance, final audio polish and sign-off.** At minimum: run §17.18's plan together with A3-03's carried-forward retest; measure the OPL2 synth's actual CPU cost on-device against §17.4's estimate and adjust the mitigation there only if the measurement says to; tune absolute loudness and the SFX/music balance; decide whether a short crossfade is worth adding (§17.6 leaves the DOS-exact instant switch as the default); the endgame's own scene-by-scene music chain (Stones → Lady Nan → Reunion → Rule Britannia) waits on the endgame cinematic itself (D-54), which is explicitly not this batch's or A3-05's scope — a presentation batch, not an audio one.
@@ -1655,6 +1665,8 @@ Copy the Launcher image named in tag `alpha3-a3-04a-audio-realtime` as usual; ke
 ### 18.19 Documentation and status
 
 This section; the header and §0 above; `LAUNCHER.md`'s A3-04A row. **A3-04 music hardware status: PLAYBACK FUNCTIONAL — SMOOTHNESS RETEST PENDING** until the user validates the A3-04A image.
+
+*Pre-RC reconciliation (2026-09-28): done. On the A3-04A image the music played smoothly; the render lag that remained opened A3-04B (§19's status).*
 
 ## 19. A3-04B — music CPU contention, overworld render lag, and the invisible diagnostic
 
@@ -1967,6 +1979,8 @@ Copy the Launcher image named in tag `alpha3-a3-04b-render-contention` as usual;
 
 This section; the header and §0 above; `LAUNCHER.md`'s A3-04B row. **A3-04 music hardware status: MUSIC SMOOTHNESS IMPROVED — RENDER PERFORMANCE RETEST PENDING** until the user validates the A3-04B image.
 
+*Pre-RC reconciliation (2026-09-28): done. The A3-04B retest showed the map lag still present with music on, and that opened A3-04C (§20's status). The performance end state is hardware-validated in §23.10 and §26.17.*
+
 ## 20. A3-04C — music-on render/TFT and main-loop contention: measure first
 
 **Hardware observation that opened this batch** (the user, after A3-04A/A3-04B): music plays mostly smoothly, but with music enabled the overworld/map refresh is noticeably laggy, visual updates look tearing-like or uneven, responsiveness is worse, render/TFT timing spikes were visible in the performance diagnostics and the main/game side looked heavily loaded; **Music Volume 0 % is substantially better.** No device numbers or photographs came with the report, and the image it was seen on is not recorded (A3-04B `…-a3-04b-debug` and A3-HF1 `…-a3-hf1-debug` both carry A3-04B's IRAM placement). The checklist (§20.10) records both first.
@@ -2183,6 +2197,8 @@ The decision table the numbers feed:
 - *B′ ≈ C ≪ B with a row busy/idle gap:* locate the shared resource with the gap as the metric. Candidates: `CONFIG_FREERTOS_IN_IRAM`, the per-block flash functions into IRAM, the song events into internal RAM. One at a time, each measured.
 - *B ≈ B′ ≈ C:* audio is cleared. A renderer batch (not audio) takes the TFT pacing (the 16-row `vTaskDelay(1)`) and the per-frame `PRESENTATION_DISPATCH` log, with its own evidence rules.
 
+*Pre-RC reconciliation (2026-09-28): the §20.10 runs were done. Their table opens §21: the SD-log row, which A3-04D took.*
+
 ### 20.12 Files
 
 - Core: `include/openu5/perf_report.h`, `src/perf_report.cpp` (`TftTiming`, `SdLogPerf`, `ContentionCounters`, `PerfScenario`, the report section, `format_contention_line`, 64-line report); `include/openu5/audio_stream.h`, `src/audio_stream.cpp` (the probe, task busy, `AudioPerfSource::set_music_bypass`); `include/openu5/ui_debug_menu.h`, `src/ui_debug_menu.cpp` (the probe row).
@@ -2334,6 +2350,8 @@ Run 2 first, straight after boot, to confirm the default. Then 1 (switch the log
 The next step is chosen by the device result:
 - **Test 2 passes (stalls gone):** SD logging was the catastrophic-stall source. The next performance step is **renderer cadence/yield cleanup** (the 16-row `vTaskDelay(1)`: ~9 ticks ≈ 90 ms per viewport write, drawn in bands, §20.6), measured against Test 2/3 as the new baseline. It comes before synth optimisation because it sets the frame time with or without music. The synth's residual cost (Test 3 vs Test 4) decides whether synth work follows.
 - **Test 2 still shows ~1 s stalls:** the SD log is not the cause. Report, don't fix. The `insd`/`slow`/`yield late` fields then point at what held core 0 or the bus.
+
+*Pre-RC reconciliation (2026-09-28): the §21.7 runs were done. With SD logging off, the second-long stalls were gone and a ~400–445 ms maximum remained, which opened A3-04E (§22's status).*
 
 ### 21.9 Files
 
@@ -4064,7 +4082,7 @@ The visible open is **≈ 180 ms instead of ≈ 820 ms (−78 %)**. The 180 ms i
 
 #### 28.21.9 Recorded, not changed
 
-- **A pending prompt survives an in-menu Load.** At 191.29 s a Hold+M keypress (`action_char=77`) opened the Mix prompt (`UI_MODE from=explore to=spell`). Opens 3–24 were made from it. The in-menu Load at 231.55 s did not clear it: `UI_MODE` stayed `spell` until Mic cancelled it at 235.21 s. The loaded game was at the same place, so nothing visible changed, and gameplay went on normally. A load resetting the UI to the loaded game's base mode is the expected contract (the System Menu load skips the per-input resync). It is outside H-201 / H-202 and needs its own adjudication.
+- **A pending prompt survives an in-menu Load.** *(Fixed later: A3-HF4, D-65, §30. H-204 is pending.)* At 191.29 s a Hold+M keypress (`action_char=77`) opened the Mix prompt (`UI_MODE from=explore to=spell`). Opens 3–24 were made from it. The in-menu Load at 231.55 s did not clear it: `UI_MODE` stayed `spell` until Mic cancelled it at 235.21 s. The loaded game was at the same place, so nothing visible changed, and gameplay went on normally. A load resetting the UI to the loaded game's base mode is the expected contract (the System Menu load skips the per-input resync). It is outside H-201 / H-202 and needs its own adjudication.
 - **The cached inspection is all commit-read time** (81.5 of 83.0 ms). Any further gain on an unchanged card is in the card / FATFS path (directory walk at 800 kHz), not the save shell.
 - **Continue after the first** is 815–890 ms and the save 2,106 ms. They are the import count and the card writes (§28.18): A3-04H.
 
@@ -4305,7 +4323,7 @@ The check is in `ALPHA2_HARDWARE_CHECKLIST.md`. There is no soak; §29.1 lists w
 - **The TypeScript reference's `died` → `combat-defeat`** (`game/src/core/sfx.ts`, with its comment "desvanecer / derrota 0x2fd0 @0x2fe3") carries the same misattribution. It is presentation routing at the reference's own layer, and no fixture pins it. It is queued for a reference cleanup like A3-HF2.1's.
 - **The melee swing glides.** Three census sites have been classified `EvidenceUnknown` since A3-03: COMSUBS 0x0c0b (the first call of the melee strike 0x0bf8, 400 → 750) and COMBAT 0x01b2 / 0x033c (750 → 400). They look like attack swings. Adding them would be a new sound, which is outside this batch.
 - **The Developer "Audio test" line** still prints the configured SFX Volume while SFX are muted; the tone is muted with them. This is a diagnostics nicety.
-- **A pending prompt surviving a load** (§28.21.9, the Mix prompt) is its own queued item. A3-05 does not touch it.
+- **A pending prompt surviving a load** (§28.21.9, the Mix prompt) is its own queued item. A3-05 does not touch it. *(Done: A3-HF4, D-65, §30. Hardware check H-204 is pending.)*
 
 ### 29.13 Files
 

@@ -164,6 +164,8 @@ Every knowing difference from the original is listed, with its reason, in [`nati
 
 Alpha 2 is closed. The Alpha 3 tracks below are defined. Each starts only when it is asked for. **Status (A3-02, 2026-09-26):** the audio track is in progress. The UI/frontend and presentation tracks have not started.
 
+*Pre-RC reconciliation (2026-09-28): this handoff is superseded as a status. The audio track is closed, and the presentation track's H-183 – H-186 were done in A3-HF6 – A3-HF9. The Alpha 3 scope, what it defers (the UI track, D-54, D-56, D-57 and the rest) and its status are in [`ALPHA3.md`](ALPHA3.md). The lists below stay as written.*
+
 **1. Audio / music** — **A3-01 done** (tag `alpha3-a3-01-audio-architecture`). This is architecture, not an Alpha 3 release. The reference is [`native/targets/tdeck/ALPHA3_AUDIO.md`](native/targets/tdeck/ALPHA3_AUDIO.md).
 - Done in A3-01:
   - the T-Deck I2S speaker path;

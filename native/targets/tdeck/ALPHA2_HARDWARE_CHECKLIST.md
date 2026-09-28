@@ -707,7 +707,7 @@ The historical result cells above are left as recorded. Category numbers follow 
 
 | Row | Batch 20 result | Now | Where it was settled / what remains |
 |---|---|---|---|
-| H-12, H-13 | FAIL | **8** | Root-caused in Batch 52: the device owns no moonstones, so every phase fails (H-188 / RB-3). The `To phase:` text is also overdrawn by the `Aim:` overlay (D-53). Fix in Batch 53, then Phase 7E. → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-C)** |
+| H-12, H-13 | FAIL | **8** | Root-caused in Batch 52: the device owns no moonstones, so every phase fails (H-188 / RB-3). The `To phase:` text is also overdrawn by the `Aim:` overlay (D-53). Fix in Batch 53, then Phase 7E. → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-C)** → **Batch 54: HARDWARE PASS (7E-C)** |
 | H-15 (text half) | FAIL (presentation) | 7 | The same overlay. Harmless. |
 | H-22 | FAIL | 7 | The original folds case (kernel `0x6f1e`, proven this batch); native does not. Easter egg. D-50. |
 | H-23 | PASS (partial) | 2 | Blackthorn prompts were readable in 7D-B; the shrine chain passed in H-31. |
@@ -723,7 +723,7 @@ The historical result cells above are left as recorded. Category numbers follow 
 | H-106 | UNTESTED | 3 | Combat and magic parity. |
 | H-115 | FAIL | 2 | B26; 6U PASS. |
 | H-118 | FAIL CRITICAL | 2 | B25; 6T PASS. |
-| H-119 | UNTESTED | **8** | Cannot work on the device: Words of Power are unbound (H-187 / RB-2). → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-B)** |
+| H-119 | UNTESTED | **8** | Cannot work on the device: Words of Power are unbound (H-187 / RB-2). → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-B)** → **Batch 54: HARDWARE PASS (7E-B)** |
 | H-120 | UNTESTED | 2 | 7D-B (B51). |
 | H-121 | UNTESTED | 5 | Original; do not file. |
 | H-122 | KNOWN OPEN | 2 | 7D-B PASS. The residual class-B/C timing is category 6. The sacrifice burst is H-186 (7). |
@@ -732,22 +732,22 @@ The historical result cells above are left as recorded. Category numbers follow 
 | H-128, H-129 | UNTESTED | 6 | Internal auto-sleep (7C walked onto beds with no stray command); Developer-only. |
 | H-135 | UNTESTED | 6 | Its only normal trigger is H-119: Phase 7E. |
 | H-136, H-138 | UNTESTED | 6 | Y-04 host. |
-| H-137 (Refuge half) | UNTESTED | 6 | **Never device-run, and it is the party-wipe recovery path: Phase 7E (required).** |
+| H-137 (Refuge half) | UNTESTED | 6 | **Never device-run, and it is the party-wipe recovery path: Phase 7E (required).** → **Batch 54: ACCEPTED (7E-E, previously witnessed); the Alpha 2 RC smoke step 8 then ran it** |
 | H-139, H-140 | UNTESTED (known open) | 6 | D-8. Alpha 3. |
-| H-146 | FAIL | **8** | Still unbound: `ShopServices::ship` / `horse` / `reserve` (RB-4). → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-D)** |
+| H-146 | FAIL | **8** | Still unbound: `ShopServices::ship` / `horse` / `reserve` (RB-4). → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-D)** → **Batch 54: HARDWARE PASS (7E-D)** |
 | H-148 | INCONCLUSIVE | 1 | B21B fix; the reset was seen on the device (Batch 23 report). |
 | H-149, H-150, H-152 | FAIL CRITICAL | 5 | Original behaviour; H-150/H-152 were seen behaving as adjudicated (21A.3 report). |
-| H-151 | FAIL CRITICAL | 3 | Core fix B21A (RED-7). The device observation is owed: Phase 7E. |
+| H-151 | FAIL CRITICAL | 3 | Core fix B21A (RED-7). The device observation is owed: Phase 7E. → **Batch 54: HARDWARE PASS (7E-F)** |
 
 ### New rows — found by Batch 52 (code, bytes and the device-shape probe; no hardware run)
 
 | Row | Behaviour on the Batch 51 device | Status |
 |---|---|---|
-| H-187 | Yell a Word of Power at a dungeon entrance → always "No effect!", and the seal never opens. INIT.GAM starts all eight dungeons sealed, so no dungeon can be entered without Developer teleport. | **RELEASE BLOCKER (RB-2)** → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-B)** |
-| H-188 | Moongates never transit, Vas Rel Por always prints "Failed!", and searching for or using moonstones does nothing. The runtime owns no moonstones. | **RELEASE BLOCKER (RB-3)** → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-C)** |
-| H-189 | Final Doom battle with the Wooden Box: the victory ending is refused, and the arena never tears down (only `Alt+D` / `Alt+S` / `Alt+L` answer). | **RELEASE BLOCKER (RB-1)** → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-A)** |
-| H-190 | The Camp apparition and Refuge karma speech show an invented sentence instead of the KARMA.DAT text. | non-blocking; ride Batch 53 → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-E)** |
-| H-191 | No moongate tile is drawn at night. | **RELEASE BLOCKER (part of RB-3)** → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-C)** |
+| H-187 | Yell a Word of Power at a dungeon entrance → always "No effect!", and the seal never opens. INIT.GAM starts all eight dungeons sealed, so no dungeon can be entered without Developer teleport. | **RELEASE BLOCKER (RB-2)** → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-B)** → **Batch 54: HARDWARE PASS (7E-B)** |
+| H-188 | Moongates never transit, Vas Rel Por always prints "Failed!", and searching for or using moonstones does nothing. The runtime owns no moonstones. | **RELEASE BLOCKER (RB-3)** → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-C)** → **Batch 54: HARDWARE PASS (7E-C)** |
+| H-189 | Final Doom battle with the Wooden Box: the victory ending is refused, and the arena never tears down (only `Alt+D` / `Alt+S` / `Alt+L` answer). | **RELEASE BLOCKER (RB-1)** → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-A)** → **Batch 54: HARDWARE PASS (7E-A′)** |
+| H-190 | The Camp apparition and Refuge karma speech show an invented sentence instead of the KARMA.DAT text. | non-blocking; ride Batch 53 → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-E)** → **Batch 54: ACCEPTED (7E-E)** |
+| H-191 | No moongate tile is drawn at night. | **RELEASE BLOCKER (part of RB-3)** → **Batch 53: SOFTWARE FIXED — HARDWARE RETEST PENDING (7E-C)** → **Batch 54: HARDWARE PASS (7E-C)** |
 
 ### Reconciled disposition (Batch 52)
 
@@ -795,6 +795,8 @@ RC packaging and smoke are **Batch 54**, after 7E passes.
 | H-151 | host-certified (B21A); device observation owed | F |
 | H-158, H-161, H-162 | host-certified (B23/B24); device observation owed | G |
 | H-30 | host-certified (B4.5C.1); device observation owed | H |
+
+*Pre-RC reconciliation (2026-09-28): every row of this table was closed in Batch 54 — see its Phase 7E table below (A′, B, C, D, F HARDWARE PASS; E, G, H accepted). The "PENDING" cells are Batch 53's status as written.*
 
 ### Phase 7E — Batch 53 release-blocker retest · *firmware AND SD pack change*
 
@@ -1127,7 +1129,7 @@ Flash the A3-HF2 Launcher image (its path and SHA-256 are in tag `alpha3-hf2-amb
 
 H-197 and H-198 above both **PASSED** on the physical T-Deck (2026-09-27). A3-HF2.1 changes only when one serial log line is written (and the TypeScript skin, which is not on the device). `ALPHA3_AUDIO.md` §25.
 
-### Phase H-199 — serial log check · *new firmware; SD pack unchanged* · about 5 minutes · **OPTIONAL, PENDING**
+### Phase H-199 — serial log check · *new firmware; SD pack unchanged* · about 5 minutes · *OPTIONAL, PENDING* → **WITHDRAWN** (pre-RC reconciliation, 2026-09-28: never run and not owed for Alpha 3. The log line it checks is diagnostic only, and the RC serial capture contains it anyway.)
 
 Flash the A3-HF2.1 Launcher image (its path and SHA-256 are in tag `alpha3-hf2-1-cleanup`). The boot screen should show `FW 3.0.0-alpha3-dev-a3-hf2-1-debug` and that tag's `Git`. Attach a serial monitor.
 
@@ -1333,7 +1335,7 @@ Flash the A3-HF5 Launcher image (its path and SHA-256 are in tag `alpha3-hf5-dia
 
 **FAIL:** a routine that still appears all at once; a verse that waits much longer than about 2 s with no key; a key that is typed into "Your interest?", moves the Avatar or ends the conversation during a pause; a `WELC` part that appears without a key; lines out of order, missing or doubled; combat text that waits; a pause still running after a load. Report it with the `FW` / `Git` lines (and the serial `DIALOGUE_PAUSE` lines if captured).
 
-### Phase H-206 — the shrine and the Codex wait for a key · *new firmware; SD pack unchanged* · about 8 minutes · **PENDING**
+### Phase H-206 — the shrine and the Codex wait for a key · *new firmware; SD pack unchanged* · about 8 minutes · *PENDING* → **PASS** (the user, on the physical T-Deck, reported by 2026-09-28; recorded in the Alpha 3 pre-RC reconciliation. The image's `FW` / `Git` were not reported.)
 
 Flash the A3-HF6 Launcher image (its path and SHA-256 are in tag `alpha3-hf6-shrine-key-waits`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-hf6-debug` and that tag's `Git`; if they differ, stop. The image carries A3-05, A3-HF4 and A3-HF5 unchanged. A serial capture is optional: each getkey prints `DIALOGUE_PAUSE begin=key`, and each key that ends one prints `DIALOGUE_PAUSE_INPUT ... effect=key-wait-ended ... gameplay_command=none`.
 
@@ -1545,3 +1547,116 @@ Flash the A3-HF10 Launcher image (its path and SHA-256 are in tag `alpha3-hf10-m
 - a panel or question survives the load.
 
 Report a failure with the `FW` / `Git` lines.
+
+## Alpha 3 pre-RC reconciliation (2026-09-28)
+
+Documentation only. No production code, test, version or firmware changed, and no image was built. The current code is A3-HF10 (`Git 028269fec0c5`, tag `alpha3-hf10-mix-parity`). The Alpha 3 scope, its deferrals, the RC procedure and the resource baseline are in `ALPHA3.md` at the repository root.
+
+### Alpha 3 physical phases — authoritative status
+
+Each phase heading above keeps its own history. This table is the current reading.
+
+| Phase | Batch | Result |
+|---|---|---|
+| A3-01, A3-02 device checks | A3-01, A3-02 | **PASS** (the user, 2026-09-26; `ALPHA3_AUDIO.md` §13, ledger "Alpha 3 A3-03 status") |
+| A3-03 §16.17, A3-04 §17.18, A3-04A §18.18, A3-04B §19.16, A3-04C §20.10, A3-04D §21.7 | audio and performance | **Superseded, not owed.** Each image was run, and its result opened the next batch: A3-04A's smooth music and the remaining lag (A3-04B's status); A3-04B's lag (A3-04C's); the A3-04C runs (§21's opening table); the A3-04D runs (A3-04E's status). Effects, music and both volumes were heard on every later image. The end state is the A3-04E.1 soak and H-200. |
+| A3-04E §22.10 | A3-04E | **Withdrawn image** (the task watchdog, §23); its pacing is validated on A3-04E.1 |
+| A3-04E.1 soak and probes | A3-04E.1 | **PASS** (2026-09-27, §23.10) |
+| H-197 | A3-HF1 | **PASS** |
+| H-198 | A3-HF2 | **PASS** |
+| H-199 | A3-HF2.1 | **WITHDRAWN** (optional; never run; not owed) |
+| H-200 | A3-04F | **PASS** |
+| H-201 | A3-HF3 | **PASS** |
+| H-202 | A3-04G | **PASS**; the heap watch item stays open, and Phase A3-RC1 re-reads it |
+| H-203 | A3-05 | **PENDING** — host-green |
+| H-204 | A3-HF4 | **PENDING** — host-green |
+| H-205 | A3-HF5 | **PASS** |
+| H-206 | A3-HF6 | **PASS** (recorded here) |
+| H-207 | A3-HF7 | **PASS** |
+| H-208 | A3-HF8 | **PASS** |
+| H-209, H-211, H-212 | — | queued defects, not checks: **deferred past Alpha 3** (`ALPHA3.md` §2) |
+| H-210 | A3-HF9 | **PENDING** — host-green |
+| H-213 | A3-HF10 | **PENDING** — host-green |
+
+### The outstanding session — H-213, H-204, H-203, H-210 · *A3-HF10 image; SD packs unchanged* · about 20 minutes, one flash
+
+Run all four on the **A3-HF10** image. It carries A3-HF9, A3-HF4 and A3-05 unchanged, so no older image is needed. H-203 and H-204 name their own batch images in their headings: on this image, record its `FW` / `Git` in their results instead.
+- Launcher file: `OpenU5-TDeck-Alpha3.0.0-alpha3-dev-a3-hf10-Debug-Launcher.bin`, 988,320 B, SHA-256 `c14d96ff7b3b96983a2823cf54db69f094b84fa0837e6afed17b20ba1f5b8a79` (tag `alpha3-hf10-mix-parity`). It needs the full 1 MiB Launcher allocation.
+- Identity: `FW 3.0.0-alpha3-dev-a3-hf10-debug`, `Git 028269fec0c5`. If either differs, stop.
+- Use the music-patched card: H-203 needs music. Serial is optional for all four.
+- Order:
+  1. H-213 (Mix);
+  2. H-204 (a load leaves no prompt; its step 2 opens the Mix spell list);
+  3. H-203 (mutes, Settings, the kill burst);
+  4. H-210 (the Refuge, last, because it needs a party wipe).
+
+**Report back:** the `FW` / `Git` lines, then PASS / FAIL for each phase. A PASS is recorded in its phase heading. A FAIL is a hotfix batch, and the RC waits for it.
+
+### Phase A3-RC1 — Alpha 3 RC1 smoke and heap capture · *RESERVED for the RC1 image; SD packs unchanged* · about 25 minutes
+
+**Not run, and no RC1 image exists.** The RC1 batch writes this phase against its own image, with the path, SHA-256 and `Git` from its annotated tag. This is a smoke test for catastrophic regressions, not a replay of Alpha 3. Compared with the A3-HF10 image, RC1 changes only the version string and the embedded `Git`.
+
+**Setup.**
+- Steps 1–10 run in **one session with a serial capture from power-on to step 10**. That capture is the RC heap capture that `ALPHA3_AUDIO.md` §28.16 trigger 7 requires. To take it, run `python -m esp_idf_monitor -p COMx -b 115200 --no-reset` from an ESP-IDF PowerShell and save its output.
+- Use the music-patched card, with Music 80 % and SFX 80 %.
+- SD diag logging stays off (the boot default).
+- The card holds two save generations.
+
+1. **Boot / identity (1 min).**
+   - Do not recopy the packs. Install the RC1 Launcher file in a 1 MiB slot.
+   - The identity screen must read `FW 3.0.0-alpha3-rc1-debug`, `Git <the tag's 12 hex>`, `RES v2.0 2041466B CRC 26f75ae6` and `ASSET … 132284B CRC 933c9b82`.
+   - The title follows, with its music.
+   - Serial: `AUDIO_PACK … capability=supported-music-patch`, and one `SAVE_INSPECT slot0=verified slot1=verified …`.
+2. **Continue (1 min).** Journey Onward → **Continue Latest**. The saved game appears, its location's music plays, and the trackball walks.
+3. **Movement / input and SFX (2 min).**
+   - Walk, and bump a wall: footsteps and the bump sound over continuous music.
+   - `L`ook, then `T`alk (`NAME`, `BYE`). Open `Z` and close it with Mic.
+   - Hold Mic about 1 s to toggle movement mode, then hold it again to toggle back.
+   - `Alt+M` and `Alt+D` open and close. Typing never moves the party.
+4. **Settings and mutes (2 min).**
+   - `Alt+M` → Settings: set Music 70 % and SFX 40 %, and hear both change.
+   - `Alt+Shift+M` → `Music muted.`; again → `Music restored.`. Do the same with `Alt+Shift+S`.
+   - Put both back to 80 %.
+5. **Combat (3 min).** One fight: the bridge trolls, as in H-201 step 1.
+   - A hit shows the star on the struck cell, and a struck member's row inverts.
+   - A kill plays one burst.
+   - Victory plays the fanfare, the arena closes, and the location's music returns.
+6. **Mix (1 min).**
+   - `Alt+D` → Reagents: Ginseng `9`, Spider Silk `9`.
+   - `M` → **Mani**: the **Reagents:** panel opens with nothing marked. Mark Ginseng and Spider Silk, press `M`, and answer `1` at **How much?**: "Mixing...", then "Done!".
+7. **Save / load (2 min).**
+   - `Alt+S`, then walk 5 or more cells. `Alt+L`: back at the saved cell, and the next key walks.
+   - `Alt+M` → *Load / Save Management*: both generations are listed correctly. Close the menu.
+8. **System Menu, ten times (1 min).** Open with `Alt+M` and close with Mic, ten times. Every open is quick.
+9. **New Journey (2 min).**
+   - System Menu → Return to Title → **New Journey**, and create a character.
+   - Play starts with its music, and the trackball walks.
+   - Return to Title → **Continue Latest** brings back the step-7 save.
+10. **Audio and heap read (1 min).**
+    - Developer → Diagnostics → *Audio/render stats (live)*: `und=0 hw=0 miss=0` (0–1 at a song switch).
+    - Note the internal heap and the PSRAM, now and min.
+    - **Stop the capture here.**
+11. **Power-cycle Continue (1 min).** Switch off and on. The identity is as in step 1. Continue Latest loads the step-7 save, and input works.
+12. **Stock / missing music (optional, 2 min).**
+    - Rename `/ultima5/openu5-audio.bin` and boot. Settings shows `Music Volume: Unavailable` with the reason, and no music plays.
+    - Footsteps still sound, and `Alt+Shift+M` answers `Music unavailable: …`.
+    - Rename the file back.
+13. **Not run, as in Phase 8:**
+    - **The ending.** 7E-A′ passed on the device, and `batch53a_ending_terminal` certifies it on the RC tree.
+    - **The Refuge, and the scenes of H-205 – H-210.** RC1 carries their code unchanged. H-210 must already be PASS before RC1 is built (`ALPHA3.md` §12, step 1).
+
+**The heap capture.** Run `python native/core/tools/a3_04g_hw_closeout.py <capture>` and read its §28.16 trigger section.
+- The capture must show no `task_wdt`, crash, reboot, storage error or error-level line.
+- A trigger fired by placement only does not block. Placement means the internal + PSRAM sum stays steady (§28.21.7), and it is recorded with the result.
+- A trigger that the capture cannot explain opens A3-04H before the release.
+
+- **PASS requires steps 1–11, the heap capture, and all of these:**
+  - no crash, reset or watchdog;
+  - no lock, and no stale-resource refusal;
+  - no input-mode corruption;
+  - Save, Load and Continue restore the saved state;
+  - music and effects continuous.
+- **FAIL:** report the step, what the screen showed, the `FW` / `Git` lines and the capture.
+- *Known, do not file:* `ALPHA3.md` §2 (the deferred items) and §11.
+
+**Report back:** the `FW` and `Git` lines, PASS / FAIL for steps 1–11 (and 12 if run), and the capture file.
