@@ -8,7 +8,22 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 A3-HF8, 2026-09-28) — the Blackthorn sacrifice burst is back, before the victim goes; Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 A3-HF9, 2026-09-28) — the Refuge keeps the original's cadence and its karma speech waits for a key; Alpha 2 remains the released build; read this first
+>
+> **A3-HF9 is a presentation hotfix, not a release** (`ALPHA3_AUDIO.md` §35). **H-208 (A3-HF8) PASSED on the T-Deck** (the user's report): HF5 … HF8 are hardware-validated.
+> - **The defect (H-185 / D-42, queued since Batch 51).** The Refuge ran on a Class-C clock (70 ms per unit + 900 / 260 ms floors) that no instruction backs, and Lord British's karma speech left the screen by itself where the original waits for a key. The reference script (which `quest_parity` pins) had the first `delay(10)` after the darkness line and three invented delays.
+> - **The original.** BLCKTHRN `party_refuge` `0x0910`: `delay(10)` before any line; then each line or figure followed by `delay(n)` ticks, the 10 s slumber melody, one-tick fizzles/dissolves, two shakes; the quoted KARMA.DAT record ends in `getkey_with_redraw` `0x0b3e` (no timeout, one key); the revive and the karma floor come after it.
+> - **Fix.** Reference first (`waitKey`, each delay at its instruction); `check_refuge` emits that script with the device's holds; the pacer times beats from the bytes and holds the speech until a key; one key ends it and does nothing else; `Enter: continue`; the peals shake; a load drops the scene and its latch.
+>
+> | | |
+> |---|---|
+> | Host suite | **161 / 161**, serial, 153.51 s. New: `a3_hf9_refuge_cadence` 43 (**30 RED on HEAD**) and `a3_hf9_refuge_cadence_runtime` 61 (**28 RED on HEAD**, the real runtime and Board). **23 / 23 mutations killed**, 0 invalid. `batch7b` E, `a3_03_sfx_runtime` R and the TS `trapdoor-fall` #112 re-stated from the bytes (§35.7). TypeScript vitest FAIL set identical to HEAD (97 pre-existing). |
+> | Firmware | `3.0.0-alpha3-dev-a3-hf9-debug`. Pre-commit build 987,216 B (`0xf1050`), **+272 B**, 61,360 B (5.9 %) free, zero warnings. Flash `.text` +292, `.rodata` −16; `.data`, `.bss`, IRAM and PSRAM unchanged. Image guards GREEN. The image path, SHA-256 and `Git` are in tag `alpha3-hf9-refuge-cadence`. **Not flashed.** |
+> | SD | **Unchanged.** Save format unchanged. |
+> | New, queued | **H-211 / D-68:** the Refuge's stage content (when the Avatar appears; the final stage shows it alone). **H-212 / D-69:** the device shake over a static viewport is one 2 px drop, not eight pulses (every quake). Not fixed. |
+> | Next | **H-210** (about 5 minutes: `Alt+S`, Party size 1, Preset: Low health/status, Space until the Refuge; the stages, the key wait, keys during the melody, a load at the wait). Then **a hard Alpha 3 remaining-work reconciliation** before any further defect work. |
+>
+> ### CURRENT STATE (Alpha 3 A3-HF8, 2026-09-28) — the Blackthorn sacrifice burst is back, before the victim goes — **superseded as the current state by A3-HF9 above.**
 >
 > **A3-HF8 is a presentation hotfix, not a release** (`ALPHA3_AUDIO.md` §34). **H-207 (A3-HF7) PASSED on the T-Deck** (the user's report). H-206 keeps its status.
 > - **The defect (H-186 / D-43, queued since Batch 51).** After the sacrifice siren the victim went dark with no explosion. `blackthorn.cpp` emitted the burst as a `CellExplosion` after the whole sacrifice script; the scene pacer released it after the victim's clear, to `UiSession`, which ignores it.
@@ -6393,7 +6408,7 @@ Every frame count in `blackthorn_scene.cpp` is the bytecode's literal **and** no
 | Blackthorn materialize / circle / siren | **TOO FAST — shared cause → HOST FIXED** (Y-32/D-10/H-122); NEEDS PHYSICAL TEST (7D-B) |
 | Blackthorn fizzle texture | EXACT TIMING UNKNOWN (C) — held at the D floor |
 | Blackthorn sacrifice explosion | ~~**MISSING PRESENTATION BEAT + ORDERING WRONG — H-186/D-43, queued**~~ **HOST FIXED — A3-HF8** (`ALPHA3_AUDIO.md` §34; H-208 pending) |
-| Refuge | TOO FAST/SLOW — **scene-local**: Class-C 70 ms/unit + 900/260 ms floors vs exact 54.93 ms ticks; **MISSING ACKNOWLEDGEMENT** (karma getkey `0x0b3e`); sweeps/fizzles unheld — **H-185/D-42, queued** (script is `quest_parity`-pinned: fix belongs in the reference first); NEEDS PHYSICAL TEST |
+| Refuge | ~~TOO FAST/SLOW — **scene-local**: Class-C 70 ms/unit + 900/260 ms floors vs exact 54.93 ms ticks; **MISSING ACKNOWLEDGEMENT** (karma getkey `0x0b3e`); sweeps/fizzles unheld — **H-185/D-42, queued**~~ **HOST FIXED — A3-HF9** (the reference first, then the pacer; `ALPHA3_AUDIO.md` §35; H-210 pending) |
 | TrollSneak | **CORRECT** (A); hardware PASS (H-137); unchanged control for the shared pacer |
 | Shrine ordained / Codex | **MISSING ACKNOWLEDGEMENT — H-183/D-40, queued** (probe: `native/core/batch51-shrine-keywait-probe.log` — after `ShrineKeyWait` the device session stays in Exploration and the post-wait text is already in the transcript) → **A3-HF6: host fixed** (the eleven getkeys are Key holds of `DialoguePacer`; `ALPHA3_AUDIO.md` §32; device check H-206) |
 | Shrine donation / WELL DONE / Codex pulses | ~~**MISSING PRESENTATION BEAT + MISSING DWELL — H-184/D-41, queued**~~ **HOST FIXED — A3-HF7** (`ALPHA3_AUDIO.md` §33; H-207 pending) |

@@ -682,7 +682,7 @@ The physical Phase 7B run on the confirmed Batch 48 image showed every Camp appa
 |---|---|---|---|---|
 | ~~H-183~~ | Shrine "Quest is ordained" and the Codex reading | ~~All the text after each altar/Codex key wait appears at once; no key is waited for.~~ **HOST FIXED — A3-HF6** (`ALPHA3_AUDIO.md` §32): each of the eleven getkeys now holds the rest of the rite until a key. Device check: **Phase H-206**. | CAST2 getkeys `0x0a9b`/`0x0abc`, `0x0d2b`…`0x0e5b` (base `0xE1E0` → kernel `0x266c`) | D-40 |
 | ~~H-184~~ | Donation "ALAKAZAM!", "WELL DONE!", Codex ceremony | ~~No viewport inversion at all; the Codex shows its three quakes but not its three XOR pulses.~~ **HOST FIXED — A3-HF7** (`ALPHA3_AUDIO.md` §33): the map viewport is XORed with 15 through the sweeps (and WELL DONE's shake) and restored with the reward line; the Codex XORs 4, 11, 15 over its three shakes and restores at the next getkey. Device check: **Phase H-207**. | `rect_XOR` `0x0bcd`/`0x0c41` held through 920 sweeps, then `run_n_frames(10)`; Codex XOR+shake ×3 `0x0dbd`–`0x0dee` | D-41 |
-| H-185 | Refuge | Cadence is Class C (70 ms/unit + reading floors); the karma speech holds on a timer instead of waiting for a key. | exact `delay(n)` ticks; `getkey` `0x0b3e` | D-42 |
+| ~~H-185~~ | Refuge | ~~Cadence is Class C (70 ms/unit + reading floors); the karma speech holds on a timer instead of waiting for a key.~~ **HOST FIXED — A3-HF9** (`ALPHA3_AUDIO.md` §35): every line and figure now waits exactly what `party_refuge` blocks in (ticks, the 10 s slumber melody, two shakes, one-tick fizzle floors), and Lord British's karma speech waits for a key. Device check: **Phase H-210**. | exact `delay(n)` ticks; `getkey` `0x0b3e` | D-42 |
 | ~~H-186~~ | Blackthorn sacrifice | ~~No explosion burst is drawn on the victim.~~ **HOST FIXED — A3-HF8** (`ALPHA3_AUDIO.md` §34): after the siren, tile 0 (the explosion star) covers the victim's cell for 174 ms with the kernel's noise burst, and only then does the victim go dark. Device check: **Phase H-208**. | burst `0x041e` (→ `0x3522`: blit tile 0, `noise_burst(0x7d0,0xbb8,0xa)`, redraw) fires **before** the victim clears (`0x0421`) | D-43 |
 
 ## Alpha 2 Readiness — Batch 52 (2026-09-25)
@@ -1427,7 +1427,7 @@ The colours below are the EGA index XOR the original uses: under the full negati
 
 Report a failure with the `FW` / `Git` lines, and the serial `RITUAL_FX` / `DIALOGUE_PAUSE` lines if captured.
 
-### Phase H-208 — the Blackthorn sacrifice burst · *new firmware; SD pack unchanged* · about 5 minutes · **PENDING**
+### Phase H-208 — the Blackthorn sacrifice burst · *new firmware; SD pack unchanged* · about 5 minutes · **PASS** (the user, on the A3-HF8 image, reported 2026-09-28; recorded by A3-HF9)
 
 Flash the A3-HF8 Launcher image (its path and SHA-256 are in tag `alpha3-hf8-sacrifice-burst`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-hf8-debug` and that tag's `Git`; if they differ, stop. The image carries A3-HF7 unchanged. A serial capture is optional: the burst prints `BLACKTHORN_BURST cell=(5,7) tile=0 hold_ms=174` and `SFX_CUE id=combat-hit source=blackthorn-scene`; every key pressed during the scene prints `BLACKTHORN_SCENE_INPUT … effect=swallowed … gameplay_command=none`.
 
@@ -1465,3 +1465,41 @@ Flash the A3-HF8 Launcher image (its path and SHA-256 are in tag `alpha3-hf8-sac
 - a key pressed during the scene does something, or answers the `Enter: continue` after "sliced in half!".
 
 Report a failure with the `FW` / `Git` lines, and the serial `BLACKTHORN_BURST` / `BLACKTHORN_SCENE` lines if captured.
+
+### Phase H-210 — the Refuge's cadence and its karma key wait · *new firmware; SD pack unchanged* · about 5 minutes · **PENDING**
+
+Flash the A3-HF9 Launcher image (its path and SHA-256 are in tag `alpha3-hf9-refuge-cadence`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-hf9-debug` and that tag's `Git`; if they differ, stop. The image carries A3-HF8 unchanged. A serial capture is optional: each figure prints `REFUGE_SCENE phase=…`, each peal `QUAKE pulses=8`, the key that ends the wait `NARRATIVE_SCENE_INPUT … effect=key-wait-ended … gameplay_command=none`, every other key `… effect=swallowed …`, and the end `REFUGE_RESOLVE`.
+
+**What changed** (`ALPHA3_AUDIO.md` §35): the Refuge (the scene after the whole party dies) now keeps the original's own timing. It starts about half a second **before** the first line; "But thy slumber is disturbed!" stays alone for about **10 s** (its melody); the peal of thunder shakes the map; and Lord British's quoted speech **waits for a key** (`Enter: continue`) instead of leaving by itself. Any other key during the scene is ignored.
+
+**Setup (about 1 minute).** Any game (New Journey is fine), outdoors on foot. Sound on if you can (the melody and the thunder help), but it is not required.
+1. `Alt+S`.
+2. `Alt+D` → Party → **Party size 1**; then Shortcuts → **Preset: Low health/status** (the Avatar is poisoned at 1 HP). Close the Developer menu.
+
+**A. The cadence and the key wait (mandatory, about 2 minutes).** Press Space (Pass) once at a time until the poison kills the Avatar (usually one or two presses). From the Space that raises the scene, with a stopwatch or a phone video if you can:
+3. For about **½ s** nothing new: the map is still drawn and the music stops. Then "An unending darkness engulfs thee..." and, at once, the map goes **black** but for the Avatar in the middle, followed immediately by "Thou hast found refuge."
+4. About **¾ s** later: "No evil lives here, only peace and darkness." About **1½ s** later: "But thy slumber is disturbed!" (and its slow six-note melody).
+5. **About 10 s** of nothing new (the melody plays out). Then "Someone shouts" and "FORTIS FORTUNA AVENTARI" together.
+6. About ⅓ s later the left figure, ¼ s later the right one, ¼ s later "There is a peal of thunder!": the map **drops a couple of pixels** (the shake) with two rumbles for about **2 s**, then the cyan apparition appears at the top and, a blink later, Lord British's speech **in quotes**.
+7. **Wait at least 10 s.** The speech stays; `Enter: continue` is on the status line; "Strange words are intoned." does **not** appear.
+8. While it waits press `Alt+M`, wait 3 s, roll the trackball in the menu, close with `Alt+M`: still waiting, nothing new.
+9. Press **one** key (Space). "Strange words are intoned." appears at once (with a rising tone), then about **1½ s** later "Vertigo...", then a moment later the party wakes in Lord British's castle, healed.
+10. Step 9's key did nothing else: no command text, no prompt, the party did not step. The next key after waking plays normally.
+
+**B. Keys during the scene (mandatory, 30 s).** `Alt+L`, repeat step 2 and the Space presses. During the 10 s melody press Space and `E` several times: nothing happens, and the speech of step 6 still **waits** for its own key (the early presses were not kept). End it with Enter.
+
+**C. Load at the wait (mandatory, 30 s).** `Alt+L`, step 2, Space until the speech waits; press `Alt+L`: "Load complete", the ordinary map with the living Avatar, **no** "Strange words", no black map, no `Enter: continue`. Then repeat step 2 and Space: the **whole** Refuge plays again from its first half-second (it does not jump straight to the castle).
+
+**Regression.** A TLK KeyWait (H-205), a shrine getkey (H-206), WELL DONE's negative (H-207) and the Blackthorn burst (H-208) are unchanged. Throughout: no crash, `task_wdt` or reboot.
+
+**PASS:** steps 3–10, B and C as described (timings within roughly ±½ s by eye; the order and the key wait are what matter).
+
+**FAIL:**
+- the darkness line appears in the same instant as the Space, or the map goes black before it;
+- "Someone shouts" follows "But thy slumber is disturbed!" after only a second or so;
+- the speech leaves by itself, or "Strange words are intoned." appears without a key;
+- the key that ends the wait also moves the party, types, opens a prompt, or skips "Vertigo..."'s pause;
+- a key pressed before the speech ends it as soon as it appears;
+- the castle appears before "Vertigo...", or the Refuge replays (or the party is revived) after the load.
+
+Report a failure with the `FW` / `Git` lines, and the serial `REFUGE_SCENE` / `NARRATIVE_SCENE_INPUT` lines if captured.

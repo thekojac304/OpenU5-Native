@@ -11,6 +11,16 @@
 // the header; only the machinery lives here.
 namespace openu5 {
 
+uint32_t refuge_beat_hold_ms(const RefugeBeat &beat) {
+    // The order the binary blocks in after a beat is shown (delay, then the
+    // sweep / fizzle / shake that follows it) does not change the sum.
+    uint32_t ms = beat.delay > 0 ? delay_ticks_ms(uint32_t(beat.delay)) : 0;
+    ms += tone_sweep_ms(beat.sweep_samples);
+    if (beat.fizzle) ms += kFizzleFloorMs;
+    if (beat.shake) ms += kRefugeShakeMs;
+    return ms;
+}
+
 RefugePhase refuge_phase_from_name(const char *name) {
     if (!name) return RefugePhase::None;
     if (std::strcmp(name, "void") == 0) return RefugePhase::Void;
@@ -108,6 +118,7 @@ void NarrativeScenePacer::begin(NarrativeScene scene) {
         reset_queue();
         state_ = NarrativeScenePacerState::Running;
         waiting_ = false;
+        awaiting_key_ = false;
     }
     scene_ = scene;
 }
@@ -138,18 +149,20 @@ bool NarrativeScenePacer::enqueue(const GameEvent &e) {
         begin(NarrativeScene::Refuge);
         for (const auto &beat : script->beats) {
             // RefugeScript is a fixed array with no count: an unused slot is
-            // the all-null beat, and that is where the script ends.
-            if (!beat.scene && !beat.message && !beat.sfx) break;
+            // the all-null beat, and that is where the script ends. (A3-HF9:
+            // the first beat is a bare delay(10), so a delay alone is a beat.)
+            if (!beat.scene && !beat.message && !beat.sfx && beat.delay < 0 && !beat.key_wait) break;
             auto *step = push(NarrativeSceneStepKind::Beat);
             if (!step) break;
             step->phase = refuge_phase_from_name(beat.scene);
             step->has_text = copy_text(beat.message, step->text_offset, step->text_length);
             step->has_sfx = copy_text(beat.sfx, step->sfx_offset, step->sfx_length);
-            // A reading floor on beats that print, a short transition floor on
-            // the figure/sound beats; the raw `delay` units ride on top.
-            const uint32_t floor = beat.message ? kRefugeTextFloorMs : kRefugeSceneFloorMs;
-            const uint32_t units = beat.delay > 0 ? uint32_t(beat.delay) : 0;
-            step->dwell_ms = paced_ ? units * kRefugeUnitMs + floor : 0;
+            step->shake = beat.shake;
+            // A3-HF9 (H-185). The busy loop the original runs after the beat,
+            // or -- for the karma speech -- its getkey. Unpaced (a harness),
+            // neither holds: the scene drains in one pump as it always has.
+            step->key_wait = paced_ && beat.key_wait;
+            step->dwell_ms = paced_ ? refuge_beat_hold_ms(beat) : 0;
         }
         return true;
     }
@@ -192,6 +205,8 @@ bool NarrativeScenePacer::enqueue(const GameEvent &e) {
 void NarrativeScenePacer::pump(uint32_t now_ms, NarrativeSceneSink beats, EventSink forward) {
     if (state_ != NarrativeScenePacerState::Running) return;
     while (state_ == NarrativeScenePacerState::Running) {
+        // A3-HF9: getkey_with_redraw has no timeout; only advance_key() ends it.
+        if (awaiting_key_) return;
         if (waiting_) {
             // The beat on screen has not served its dwell: nothing may replace
             // it yet. This is the whole of the pacing contract, and it is why
@@ -223,7 +238,13 @@ void NarrativeScenePacer::pump(uint32_t now_ms, NarrativeSceneSink beats, EventS
                 out.sfx = step.has_sfx ? storage_.text + step.sfx_offset : nullptr;
                 out.phase = step.phase;
                 out.append = step.append;
+                out.shake = step.shake;
                 beats.beat(beats.context, out);
+            }
+            if (step.key_wait) {
+                // The beat is on screen; nothing after it may be, until a key.
+                awaiting_key_ = true;
+                return;
             }
             if (step.dwell_ms) {
                 resume_at_ms_ = now_ms + step.dwell_ms;
@@ -246,6 +267,12 @@ void NarrativeScenePacer::pump(uint32_t now_ms, NarrativeSceneSink beats, EventS
     }
 }
 
+bool NarrativeScenePacer::advance_key() {
+    if (!awaiting_key_) return false;
+    awaiting_key_ = false;
+    return true;
+}
+
 NarrativeScene NarrativeScenePacer::take_completion() {
     const auto out = completion_;
     completion_ = NarrativeScene::None;
@@ -265,6 +292,7 @@ void NarrativeScenePacer::cancel() {
     phase_ = RefugePhase::None;
     state_ = NarrativeScenePacerState::Idle;
     waiting_ = false;
+    awaiting_key_ = false;
     resume_at_ms_ = 0;
 }
 

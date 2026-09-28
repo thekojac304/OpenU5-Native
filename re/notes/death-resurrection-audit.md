@@ -243,3 +243,44 @@ mientras el flag no esté puesto (compose OUTSUBS 0x98/0x0, `0149: mov byte [bx]
   (derivado de `party+dir`). Confirmar con witness que el original no acepta también "encima".
 - **Doble impresión** "uttered"+"No effect" al gritar palabra válida lejos de su mazmorra: derivado
   del fall-through (12f2 imprime; 1408 imprime si bp-6==0). Confirmar orden/exactitud con witness.
+
+---
+
+## A3-HF9 (H-185 / D-42) — la CADENCIA del refuge y su GETKEY, leídas del binario
+
+`party_refuge` (BLCKTHRN `0x0910`, near calls por la base `0xA290`; listado en
+`native/core/batch51-original-scene-disasm.log`). Lo que el original BLOQUEA tras cada cosa
+que muestra — el sustituto Clase C (70 ms/unidad + suelos 900/260 ms de `runRefugeScene`)
+no tiene instrucción detrás:
+
+| addr | muestra | bloquea después | device |
+|---|---|---|---|
+| `0x093f` / `0x0946` | redraw del visor (sólo loc < `0x21`) | `delay(10)` **ANTES** de la primera línea | 550 ms [A], mundo visible |
+| `0x095f` / `0x0962`-`0x098c` | "An unending darkness…"; visor a negro | `RECT_DISSOLVE` (sin timer) | 55 ms [C→D] |
+| `0x09d6` / `0x09dd` | "Thou hast found refuge." | `delay(14)` | 770 ms [A] |
+| `0x09e4` / `0x09eb` | "No evil lives here…" | `delay(28)` | 1.540 ms [A] |
+| `0x09f2` / `0x0a0d`-`0x0a49` | "But thy slumber is disturbed!" | 6 `tone_sweep`, a2 = DS `0x372c` = 260.000 muestras | 10.075 ms [B] |
+| `0x0a4f` / `0x0a56` | "Someone shouts … AVENTARI" (UN print) | `delay(6)` | 330 ms [A] |
+| `0x0a7c` / `0x0a90` | FIZZLE_IN `0x5e` (2,7) | fizzle (sin timer) + `delay(4)` | 55 + 220 ms |
+| `0x0aae` / `0x0ac2` | FIZZLE_IN `0x5f` (8,7) | fizzle + `delay(4)` | 55 + 220 ms |
+| `0x0ac9` / `0x0acc` / `0x0acf` | "There is a peal of thunder!" | `screen_shake_fx` (`0x3072`) ×2 | 2 × 936 ms [C] |
+| `0x0af5` | FIZZLE_IN `0x174` (5,2) | fizzle | 55 ms |
+| `0x0b03`-`0x0b3b` / **`0x0b3e`** | `"` + record KARMA.DAT `karma/20` + `"` | **GETKEY** `0x83dc` → kernel `0x266c`: sin timeout, cualquier tecla, descartada | espera de tecla |
+| `0x0b45` / `0x0b4c` / `0x0b54`-`0x0bb1` | "Strange words are intoned." | `delay(4)` + un `tone_sweep` de `0x7530` por miembro (y su HP/roster) | 220 + N × 1.162 ms |
+| `0x0bba` / `0x0bc1` | "Vertigo..." | `delay(4)` | 220 ms |
+| `0x0bc4`-`0x0bfa` | visor a negro + `0x11c` en (5,5) | `RECT_DISSOLVE` | 55 ms |
+| `0x0bfd`-… | — | suelo de karma 75, castillo, reloj… | `resolve_refuge` |
+
+- **Orden de estado.** El índice del discurso se lee con el karma AL MORIR (`0x0b03`), ANTES del
+  getkey; el revive por miembro va DESPUÉS (`0x0b54`); el suelo 75 al FINAL (`0x0bfd`). Nada muta
+  antes del getkey.
+- **Entrada.** Entre `0x0910` y `0x0b3e` nada lee el teclado ni lo vacía (`0x1b16`): en 1988 una
+  tecla pulsada durante los bucles quedaría en el buffer de la BIOS y satisfaría el getkey al
+  instante (typeahead). El port la TRAGA (divergencia declarada, como A3-HF6…HF8).
+- **Referencia TS.** `buildRefugeScript` ponía el `delay(10)` DESPUÉS de la oscuridad y tres pausas
+  sin instrucción (2 tras el 2º trueno, 2 tras la aparición, 8 tras el discurso) y ningún getkey.
+  Corregido en A3-HF9 en la capa que fija `quest_parity` (`delayUnits` + `waitKey`); la piel web
+  conserva su reloj Clase C, pero ahora espera la tecla del discurso.
+- **Queda abierto (H-211 / D-68).** El contenido de la escena, no su cadencia: el Avatar sólo se
+  coloca en `0x09f5`-`0x0a07` (tras "But thy slumber"), y el negro final `0x0bc4` deja al Avatar
+  SOLO (el port mantiene las cuatro figuras en `vertigo`). Ver `ALPHA3_AUDIO.md` §35.

@@ -136,3 +136,11 @@ Mutaciones revertidas; `git diff` deja sólo el test y un comentario.
   fidelidad: rojo = «el port cambió de camino». La fidelidad la sostiene §3, no el expect.
 - `game/src/core/game.ts` — SOLO comentario de `stonegateLavaWipe`: la derivación del
   ennegrecimiento previo, en TOWN 0x0fa0-0x0fb0, que faltaba. Cero valores, cero comportamiento.
+
+---
+
+**Nota A3-HF9 (H-185).** «a negro ANTES de nada más» se precisa: lo primero de `party_refuge`
+es el redraw `0x093f` (sólo bajo loc `0x21`) y `delay(10)` (`0x0942`/`0x0946`); la línea de la
+oscuridad (`0x095f`) y el negro (`0x0962`) vienen DESPUÉS. El guión lleva ahora ese `delay(10)` como
+su primer beat (sin escena) y el negro llega con la línea; `trapdoor-fall.test.ts` #112 lo fija así.
+Si el redraw `0x093f` enseña o no la lava en el TPK de Stonegate no se ha adjudicado aquí.

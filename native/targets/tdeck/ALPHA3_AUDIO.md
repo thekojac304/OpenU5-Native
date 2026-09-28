@@ -1,6 +1,13 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap, A3-05 audio finalization, A3-HF4 load transient reset, A3-HF5 dialogue pacing, A3-HF6 shrine key waits, A3-HF7 ritual effects, A3-HF8 sacrifice burst)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap, A3-05 audio finalization, A3-HF4 load transient reset, A3-HF5 dialogue pacing, A3-HF6 shrine key waits, A3-HF7 ritual effects, A3-HF8 sacrifice burst, A3-HF9 Refuge cadence)
 
-**Status (A3-HF8, 2026-09-28): THE BLACKTHORN SACRIFICE BURST REACHES THE SCREEN, BEFORE THE VICTIM GOES (H-186 / D-43) — FIXED ON THE HOST; HARDWARE CHECK H-208 PENDING. H-207 PASS (A3-HF7).** §34:
+**Status (A3-HF9, 2026-09-28): THE REFUGE KEEPS THE ORIGINAL'S CADENCE, AND LORD BRITISH'S KARMA SPEECH WAITS FOR A KEY (H-185 / D-42) — FIXED ON THE HOST; HARDWARE CHECK H-210 PENDING. H-208 PASS (A3-HF8).** §35:
+- **The defect:** the Refuge ran on a Class-C clock no instruction backs (70 ms per unit + 900 / 260 ms floors), with the first `delay(10)` misplaced and three invented delays; the karma speech left by itself after ~1.5 s.
+- **The original:** `party_refuge` (BLCKTHRN `0x0910`) blocks in `delay(n)` ticks (the first one **before** any line), the 10 s slumber melody, one-tick-floor fizzles and dissolves, two `screen_shake_fx`, one revival sweep per member — and ends the karma speech in `getkey_with_redraw` `0x0b3e` (no timeout, any key). Nothing mutates before the key.
+- **Fix:** the TypeScript reference pins each delay at its instruction plus `waitKey`; `check_refuge` emits that script with the device's own holds; `NarrativeScenePacer` times each beat from the bytes and holds the speech until a key (`advance_key()`); the device routes one key to it, shows `Enter: continue`, draws the peals' shake, and clears the Refuge latch on a load.
+
+RED-first 30 / 43 and 28 / 37 → GREEN 43 / 43 and 61 / 61 (the real script and pacer; the real runtime and Board); the parity control fails with the old reference; 23 / 23 mutations killed; host suite **161 / 161**. Firmware +272 B, flash only.
+
+**Status as A3-HF8 wrote it (2026-09-28): THE BLACKTHORN SACRIFICE BURST REACHES THE SCREEN, BEFORE THE VICTIM GOES (H-186 / D-43) — FIXED ON THE HOST; HARDWARE CHECK H-208 PENDING. H-207 PASS (A3-HF7).** §34:
 - **The defect:** after the siren the victim simply went dark; no explosion was drawn. The burst travelled as a sibling `CellExplosion` after the whole sacrifice script, so the scene pacer released it after the victim's clear, to `UiSession`, which ignores it.
 - **The original:** BLCKTHRN `0x041e` calls `explosion_fx_at_cell` (ULTIMA.EXE `0x3522`) once over slot 1's last cell, after the siren and before `0x0421`/`0x0429` clear the victim: an opaque blit of tile 0, `noise_burst(0x7d0, 0xbb8, 0xa)` (the kernel blocks 174 ms), a redraw. One cell, one phase, no key read.
 - **Fix:** the burst is a beat of the sacrifice script (cell, 174 ms hold, the `CombatHit` noise program); the scene pacer shows it for its hold and the existing compositor blits tile 0; the host fixture stages the scene through production's new `bind_blackthorn_scene()`.
@@ -5009,3 +5016,122 @@ The check is in `ALPHA2_HARDWARE_CHECKLIST.md`: Preset Maxed party, Hour 12, Tel
 - Device: `native/targets/tdeck/main/alpha_runtime.{h,cpp}` (the cue, `bind_blackthorn_scene()`); `native/targets/tdeck/CMakeLists.txt` (`PROJECT_VER`).
 - Tests and tools: new `native/targets/tdeck/host_tests/a3_hf8_sacrifice_burst_runtime_test.cpp`, `native/core/tools/a3_hf8_{red_first,mutation_check}.py`; changed `native/core/CMakeLists.txt`, `native/core/tests/blackthorn_scene_test.cpp` (§34.7), `native/targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp` (the binder).
 - Docs: this section and the status line; `ALPHA2_HARDWARE_CHECKLIST.md` (H-186, H-207 PASS, H-208); `ALPHA2_PRESERVATION_LEDGER.md` (D-43, D-67); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`; `re/notes/blackthorn-escena-324.md` §6.
+
+## 35. A3-HF9 — the Refuge keeps the original's cadence, and Lord British's karma speech waits for a key (H-185 / D-42)
+
+A presentation hotfix on the A3-HF5 … HF8 queue, queued since Batch 51. After a party wipe the Refuge ran on a clock no instruction backs (70 ms per raw delay unit plus 900 / 260 ms reading floors), and Lord British's karma speech left the screen by itself after about 1.5 s where the original waits for a key.
+
+### 35.1 Baseline
+
+- `main` at `b2013d5e` (tag `alpha3-hf8-sacrifice-burst` = `602fa171`, plus its post-commit evidence), clean tree, byte-identical to the tree HF8 recorded **159 / 159** on; that record stands. **H-208 PASSED on the T-Deck** (the user's report, recorded here): HF8 is hardware-validated.
+- Focused baseline in a fresh `build-a3-hf9-base`: the HF5 … HF8 tests, `batch7b`, `blackthorn_scene`, `batch51_*`, `batch53_release_blockers`, `a3_03_sfx_runtime`, `quest_parity`, `gameplay_parity` — 15 / 15 (`native/core/a3-hf9-baseline.log`).
+- Firmware `3.0.0-alpha3-dev-a3-hf8-debug`, 986,944 B (`0xf0f40`), 61,632 B free.
+
+### 35.2 The original mechanism
+
+Read from the 1988 binary (BLCKTHRN.OVL `party_refuge` `0x0910`; near calls through base `0xA290`; the listing is `native/core/batch51-original-scene-disasm.log`, resolved with `re/tools/dis16.py`). The sequence begins at `0x0910` (entered through stub `0x7a5e` when the whole party is down, from TOWN, MAINOUT and DUNGEON — `0x1862` / `0x0af0` / `0x1014`, each stopping the music first, `re/notes/music-location-mapping.md`) and ends at `0x0bfd`–`0x0c4d` (the state). What it blocks in after each thing it shows:
+
+| Offset | Shown | Then blocks in | Device |
+|---|---|---|---|
+| `0x093f`, `0x0946` | a viewport redraw (only below location `0x21`) | `delay(10)` — **before** any line | 550 ms [A]; the world still drawn |
+| `0x095f`, `0x0962`–`0x098c` | "An unending darkness engulfs thee..."; the viewport goes black | `RECT_DISSOLVE` `0x0f46` (render-bound, no timer) | one tick, 55 ms [C → D] |
+| `0x09d6`, `0x09dd` | "Thou hast found refuge." | `delay(14)` | 770 ms [A] |
+| `0x09e4`, `0x09eb` | "No evil lives here, only peace and darkness." | `delay(28)` | 1,540 ms [A] |
+| `0x09f2`, `0x0a0d`–`0x0a49` | "But thy slumber is disturbed!" | six `tone_sweep`s, a2 from DS `0x372c` = 260,000 samples | 10,075 ms [B] |
+| `0x0a4f`, `0x0a56` | "Someone shouts … AVENTARI" (**one** print) | `delay(6)` | 330 ms [A] |
+| `0x0a7c`, `0x0a90` | the left figure, FIZZLE_IN `0x5e` at (2,7) | the fizzle (no timer), `delay(4)` | 55 + 220 ms |
+| `0x0aae`, `0x0ac2` | the right figure, FIZZLE_IN `0x5f` at (8,7) | the fizzle, `delay(4)` | 55 + 220 ms |
+| `0x0ac9`, `0x0acc`, `0x0acf` | "There is a peal of thunder!" | `screen_shake_fx` (`0x3072`) twice | 2 × 936 ms [C] |
+| `0x0af5` | the apparition, FIZZLE_IN `0x174` at (5,2) | the fizzle | 55 ms |
+| `0x0b03`–`0x0b3b`, **`0x0b3e`** | `"` + KARMA.DAT record `karma / 20` + `"` | **`getkey_with_redraw`** (`0x83dc` → kernel `0x266c`) | a key |
+| `0x0b45`, `0x0b4c`, `0x0b54`–`0x0bb1` | "Strange words are intoned." | `delay(4)`; then per member one `tone_sweep` of `0x7530` samples, HP = max, the roster redrawn | 220 + N × 1,162 ms |
+| `0x0bba`, `0x0bc1` | "Vertigo..." | `delay(4)` | 220 ms |
+| `0x0bc4`–`0x0bfa` | black again, the Avatar `0x11c` alone at (5,5) | `RECT_DISSOLVE` | 55 ms |
+| `0x0bfd`–`0x0c4d` | — | the karma floor 75, Lord British's castle, the clock, food | `resolve_refuge` |
+
+- **The getkey** is `0x266c`, instruction for instruction the TLK KeyWait's and the shrine's (§31, §32): it loops until a key, runs the compositor meanwhile, and returns the key, which the caller discards. **No timeout**; any key; one key ends it.
+- **Keys elsewhere.** Nothing between `0x0910` and `0x0b3e` reads or flushes the keyboard (`0x1b16`), so in 1988 a key pressed during a busy loop stays in the BIOS buffer and satisfies the getkey at once (typeahead). Nothing after `0x0b3e` reads a key either.
+- **Text after the wait** ("Strange words", "Vertigo...") is printed only after the key; the world does not tick (the main loop is not running).
+- **State order.** The speech's record is chosen with the karma **at death** (`0x0b03`), before the getkey. Nothing mutates before the getkey. After it: the per-member revive (`0x0b54`), then, after the last dissolve, the karma floor (`0x0bfd`) and the castle.
+- **Sound, shake, flash.** The slumber melody (`RefugeSlumber`), two thunder rumbles with the two shakes (`RefugeThunder`), one revival tone per member (`RefugeRevival`) — all already in A3-03 at these lines; the two dissolves are the only "flashes".
+
+**Reference (TypeScript).** `game.ts buildRefugeScript` put the `delay(10)` **after** the darkness line (with the viewport already black), had three delays with no instruction behind them (2 after the second thunder, 2 after the apparition, 8 after the speech) and **no getkey**; `main.ts runRefugeScene` presented it on the Class-C clock. The binary is followed; the reference was fixed at the layer `quest_parity` / `gameplay_parity` pin (§35.4).
+
+### 35.3 The native defect
+
+The device path is `check_refuge` (`quest_world.cpp`, reached from the command, dungeon and combat turn tails) → `GameEventKind::Refuge` with a `RefugeScript` → `AlphaRuntime::consume_event()` → `NarrativeScenePacer` (Y-04, Batch 7B) → `narrative_beat()` / `resolve_refuge()` at completion.
+- The core already emitted every beat in order, but each beat's `delay` was the reference's (misplaced / invented), and there was **no marker for the getkey**.
+- The pacer turned every beat into `units × 70 + (900 | 260)` ms: timing collapsed where the binary is long (the 10 s slumber held 900 ms) and stretched where it is short (the darkness → refuge dissolve held 1,600 ms). There was no key-wait state: the speech held 1,460 ms and moved on; a key during it was swallowed.
+- Karma and the revive were already applied at the right boundary (after the scene, `resolve_refuge`) — presentation only.
+- A load during the scene cancelled the pacer but left `QuestWorldServices::refuge_pending` set, so the **next** wipe resolved at once, with no scene and no speech. With a getkey that can wait forever, a load there becomes likely, so this batch clears the latch with the rest of the replaced game's transients.
+
+### 35.4 The fix
+
+Preference 3 of the brief: a small generalization of the pacer the Refuge already uses (the `DialoguePacer`'s event model does not carry a scene's beats and phases; the Blackthorn pacer is scene-specific).
+- **Reference first** (`game/src/core/game.ts`): `RefugeBeat.waitKey`; `buildRefugeScript` puts each `delayUnits` at its `call 0x7e6a` and nowhere else — a bare `{ delayUnits: 0xa }` beat first, the speech `{ waitKey: true }`. `main.ts runRefugeScene` parks at that beat until any key (not under automation, as #294's `instant`); its Class-C clock for the web skin is unchanged. `trapdoor-fall.test.ts` #112 re-stated from the bytes (§35.7).
+- **Core** (`quest_world.{h,cpp}`): `RefugeBeat` gains `key_wait` (pinned; both drivers serialize it as `waitKey`) and the device's own holds `sweep_samples`, `fizzle`, `shake` (not pinned, as Blackthorn's). `check_refuge` emits the 17 beats of §35.2, each commented with its offsets. `scene_timing.h`: `kRefugeSlumberSamples` (260,000), `kRefugeRevivalSamples` (`0x7530`).
+- **Pacer** (`narrative_scene.{h,cpp}`): `refuge_beat_hold_ms()` = `delay_ticks_ms(delay)` + `tone_sweep_ms(sweep_samples)` + the fizzle floor + `kRefugeShakeMs` (the device quake, 936 ms). A `key_wait` beat, once shown, sets `awaiting_key()`; `pump()` releases nothing until `advance_key()`; `cancel()` drops it. Unpaced (harnesses), no beat holds and none waits. The Class-C constants are gone.
+- **Device** (`alpha_runtime.{h,cpp}`): in the existing narrative-scene input rule, a key calls `advance_key()` (effect `key-wait-ended`) or is swallowed; `overlay()` shows `Enter: continue` at the getkey; a thunder beat starts the existing shake (`begin_quake()`, extracted from the `Quake` handler); the Refuge's silence starts with the scene's first beat, not with the black stage; `reset_transient_after_load()` clears `refuge_pending`.
+
+### 35.5 Input, menus, load and lifecycle
+
+- **One key ends the getkey and does nothing else**: Space, Enter, a letter (`K`), a trackball roll or **Mic** (N2, N3). No command is routed, no prompt opens, nothing is typed, the party does not move; three keys in one frame end the one getkey and cut no later hold (N3.b); the next key after the scene is ordinary play. Transcript paging stays the exception; the device shortcuts (`Alt+S/L/M/D`, the mutes) keep their meaning, as for HF5 … HF8.
+- **System Menu** at the getkey: nothing is released behind it or by its keys; closed, the getkey still waits (N6.1). During the slumber: nothing is released behind it; afterwards the shout still waits out the melody (N6.3).
+- **Successful load** (Alt+L; Return to Title + Continue): no scene, no getkey, no cue, no resurrection; the next wipe plays the whole Refuge again (N7, N8). **Failed load** ("No valid save"): the getkey keeps waiting (N7F).
+- **Save during the getkey** records the fallen party (no latch is saved); loading it raises a new Refuge on the next turn. The original cannot save inside a getkey.
+
+### 35.6 Declared divergences (presentation only)
+
+- Keys pressed in the busy loops are swallowed, not kept as DOS typeahead (as HF6 … HF8), so an early key never pre-answers the getkey (N9.1).
+- The per-member revive (`0x0b54`, before "Vertigo...") and the karma floor (`0x0bfd`) are both committed by `resolve_refuge` at the scene's end — after the getkey, as in 1988; the roster's per-member redraw is not staged. No gameplay state was moved.
+- Sweeps are held at the calibrated floor (B); fizzles and dissolves at the one-tick floor, texture not modelled (C → D); the shake is the device's (C) and over the black stage draws as one 2 px drop (H-212).
+- The web skin keeps its Class-C clock; only the script (placement, `waitKey`) is the binary's.
+
+### 35.7 Existing expectations changed
+
+- **`batch7b` E19–E26** pinned the Class-C cadence (`10 × kRefugeUnitMs + kRefugeTextFloorMs` after the darkness line). They now pin `0x0946`: `delay(10)` first, with no line and no stage; then the line and the black stage, held for the dissolve floor; and the scene's one getkey.
+- **`a3_03_sfx_runtime` R** drove the Refuge with no key; it now presses one Space when the getkey is shown, in every audio setup (R1 / R2 unchanged).
+- **`trapdoor-fall.test.ts` #112** asserted "the first beat blackens the viewport". The bytes put `0x0946 delay(10)` and the `0x095f` print before the `0x0962` blackening: it now asserts the bare `delay(10)` first and the black stage with the darkness line (`re/notes/tpk-112-acta.md`, A3-HF9 note).
+
+### 35.8 Tests, RED / GREEN and mutations
+
+- **`a3_hf9_refuge_cadence`** (new, 43 checks): the real `check_refuge` into the real pacer on a 5 ms virtual clock; every instant stated from the bytes (tick 55, 25,806 samples/s, 936 ms shake, one-tick floor). C1 the 17-beat script; C2 each beat's instant; C3 no timeout, one key; C4 keys in the busy loops swallowed; C5 the rest deferred to its clock; C6 the death karma picks the record, nothing mutates until the owner resolves (10 / 39 / 40 / 90); C7 unpaced; C8 cancel; C9 TrollSneak unchanged.
+- **`a3_hf9_refuge_cadence_runtime`** (new, 61 checks): a wiped party and one Space through the real `AlphaRuntime`, the pack's KARMA.DAT, drawn on the real `tdeck_board.cpp` over the fake ST7789 (bus untimed). N1 cadence from the key, the world during the first `delay(10)` and the black stage after it (GRAM), the shake drawn, the music stopped from the first beat; N2 / N3 the getkey and five kinds of key; N4 karma 50 / 90; N5 the deferred rest and the transcript rows (no row drawn during the getkey); N6 the menu; N7 / N7F load; N8 title; N9 unpaced and typeahead.
+- **RED-first** (`native/core/tools/a3_hf9_red_first.py`: HEAD's `narrative_scene.cpp`, `quest_world.cpp` and `alpha_runtime.cpp`, the first with a link shim — the three Class-C constants restated and `advance_key()` → false): core **30 / 43 RED**, runtime **28 / 37 RED** (it stops early where HEAD never reaches a getkey). GREEN on HEAD, as controls: the state ordering (C6, N4.2, N4.4), keys swallowed in the busy loops (C4.1), TrollSneak (C9), the black stage (N1.3), the sounds (N1.12, N5.2), the unpaced drain (N9.2). After the change **43 / 43** and **61 / 61**. **Parity control:** HEAD's `game.ts` against the new native script fails `quest_parity` (mismatch 5147); the new reference passes (`native/core/a3-hf9-red-first.log`).
+- **Mutations** (`native/core/tools/a3_hf9_mutation_check.py`, 23 mutants against both new tests, `batch7b` and `quest_parity`): **23 / 23 killed, 0 invalid, 0 survivors, restored build GREEN** (`native/core/a3-hf9-mutation.log`). M1 the speech timed again, M2 released at the next frame, M3 a 30 s timeout, M4 the ending key leaks into the game, M5 one key also ends the next hold, M6 DOS typeahead kept, M7 the Class-C clock, M8 70 ms per unit, M9 sweeps unheld, M10 fizzles unheld, M11 shakes unheld, M12 shakes not drawn, M13 the `0x0946` site bypassed (delay after the line), M14 karma floored before the wait, M15 the resurrection at the key, M16 the getkey after "Strange words", M17 a load keeps the scene, M18 a load keeps the latch, M19 a menu key ends the getkey, M20 cancel leaves it armed, M21 no cue, M22 music through the first delay, M23 the unpaced harness waits. The first pass had two INVALID mutants (M13's anchor missed its trailing comment; M14 tripped `-Werror=misleading-indentation`), rewritten and re-run (`a3-hf9-mutation-first-pass.log`).
+
+### 35.9 Regression
+
+Fresh build directory `native/core/build-a3-hf9-final`: **161 / 161, serial, 153.51 s**, with only the known w64devkit `-Wstringop-overflow` warning (`native/core/a3-hf9-{configure,build,ctest}.log`). That is A3-HF8's 159 plus the two new tests.
+- HF8 / HF7 / HF6 / HF5 unchanged: `a3_hf8_sacrifice_burst_runtime` 51 / 51, `a3_hf7_ritual_fx_runtime` 48 / 48, `a3_hf7_ritual_fx` 23 / 23, `a3_hf6_shrine_key_wait_runtime` 48 / 48, `a3_hf6_shrine_key_wait_pacer` 15 / 15, `a3_hf5_dialogue_pacing_runtime` 50 / 50, `a3_hf5_dialogue_pacer` 14 / 14.
+- Refuge / scene neighbours: `batch7b` (§35.7), `batch53_release_blockers` K (the Refuge with KARMA.DAT, unchanged: it presses Space throughout), `a3_03_sfx_runtime` R (§35.7), `batch51_scene_pacing` 28 / 28, `batch51_camp_pacing`, `blackthorn_scene` 57 / 57, `quest_parity` and `gameplay_parity` (both now pin `waitKey`) — all GREEN.
+- **TypeScript:** `tsc --noEmit` clean. The whole `game/` vitest run is identical on HEAD and the tree: 7,517 passed, the same **97** pre-existing environment-bound failures (i18n corpus, mirror tooling, vite cache, …; none Refuge-related), FAIL sets equal (`native/core/a3-hf9-ts-vitest.log`). The 23 files that touch the Refuge pass: 389 tests. `main.ts runRefugeScene`'s key wait has no unit test (the browser entry point; e2e not run).
+
+### 35.10 Firmware
+
+Pre-commit build `native/targets/tdeck/build-a3-hf9` (`a3-hf9-firmware-{configure,build}.log`): ESP-IDF 6.1, `--no-ccache`, `ninja -j 4`, first attempt clean, **zero project warnings**.
+
+- **`0xf1050` = 987,216 B, +272 B** against A3-HF8's 986,944 B; **61,360 B (5.9 %) free** in the 1 MiB app partition.
+- **Sections** against A3-HF8's post-commit image (`esp_idf_size --diff`, `a3-hf9-size-diff.log`; absolute figures in `a3-hf9-size.log`): Flash `.text` **+292 B** (668,766 B) — the getkey state, `refuge_beat_hold_ms()`, the input rule's branch, the cue and the shake call; `.rodata` **−16 B** (219,364 B) (not attributed further). Unchanged: DIRAM `.data` 21,627 B, `.bss` 51,968 B, DIRAM `.text` 60,647 B, IRAM 16,384 B (full, as before).
+- **RAM.** Internal: unchanged (the pacer's new flag sits in existing padding; `.bss` identical). **PSRAM unchanged**: `NarrativeSceneStep`, the 64-element PSRAM array's element, keeps its size (the two new flags fit its tail padding; host `sizeof` 176 B before and after). The only growth is `RefugeScript`, a stack temporary inside `check_refuge` (17 beats with four more fields; host 512 → 680 B, roughly +150 B on the 32-bit device).
+- **Image guards GREEN:** `a3_04f_image_check.py`, `a3_04b_iram_check.py`, `a3_04a_hotpath_check.py` (`a3-hf9-{image,iram,hotpath}-check.log`). Nothing on the per-sample audio path changed.
+- Version `3.0.0-alpha3-dev-a3-hf9-debug`. **Not flashed.** Tag `alpha3-hf9-refuge-cadence` names the post-commit image (built in a fresh directory, so it embeds the commit), with its path, size, SHA-256 and `Git`.
+
+### 35.11 Hardware check H-210 (the user's; about 5 minutes)
+
+The check is in `ALPHA2_HARDWARE_CHECKLIST.md`: `Alt+S`; Developer → Party size 1, Preset: Low health/status; Space until the Refuge; the timed stages; the speech waits (menu at the wait); one key; keys during the melody; a load at the wait, and a second wipe. H-210 is the next free ID in the shared H- namespace (H-209 is the shard-ritual defect). The A3-HF9 image carries A3-HF8 unchanged.
+
+### 35.12 Recorded, not changed
+
+- **H-211 / D-68 (new, queued):** the Refuge's stage content — in 1988 the Avatar is placed only at `0x09f5` (after "But thy slumber"), the final `0x0bc4` stage shows the Avatar alone, and `[0x587c]` = `0x1e` during the first `delay(10)`; native shows the Avatar from the darkness line and keeps all four figures in `Vertigo`. Presentation content, not cadence.
+- **H-212 / D-69 (new, queued):** the device's shake pushes whole-viewport pixels only on full frames (animation-only frames redraw animated cells), so over a static viewport it is one 2 px drop held for the shake. Pre-existing for every quake.
+- Whether the `0x093f` redraw shows the Stonegate lava during the first `delay(10)` (TPK #112) is not adjudicated here.
+- H-209 / D-67 (the shard ritual's bursts) is unchanged.
+
+### 35.13 Files
+
+- Core: `native/core/include/openu5/quest_world.h`, `src/quest_world.cpp` (the script), `include/openu5/narrative_scene.h`, `src/narrative_scene.cpp` (holds, getkey), `include/openu5/scene_timing.h` (the two sample counts).
+- Device: `native/targets/tdeck/main/alpha_runtime.{h,cpp}` (input rule, cue, shake, music, load latch); `native/targets/tdeck/CMakeLists.txt` (`PROJECT_VER`).
+- Reference: `game/src/core/game.ts` (`waitKey`, the script), `game/src/main.ts` (the presenter's key wait), `game/tests/trapdoor-fall.test.ts` (#112).
+- Tests and tools: new `native/core/tests/a3_hf9_refuge_cadence_test.cpp`, `native/targets/tdeck/host_tests/a3_hf9_refuge_cadence_runtime_test.cpp`, `native/core/tools/a3_hf9_{red_first,mutation_check}.py`; changed `native/core/CMakeLists.txt`, `tests/batch7b_test.cpp`, `tests/{quest,gameplay}_driver.cpp` (`waitKey`), `host_tests/a3_03_sfx_runtime_test.cpp`.
+- Docs: this section and the status line; `ALPHA2_HARDWARE_CHECKLIST.md` (H-185, H-208 PASS, H-210); `ALPHA2_PRESERVATION_LEDGER.md` (D-42, D-43, D-68, D-69); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`; `re/notes/death-resurrection-audit.md`, `re/notes/tpk-112-acta.md`.

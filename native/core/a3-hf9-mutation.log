@@ -1,0 +1,245 @@
+# A3-HF9 mutation validation (2026-09-28 10:05)
+
+M1 ignore the wait (the speech is a timed beat again) [quest_world.cpp]: KILLED
+    a3_hf9_refuge_cadence exit=1  12 RED
+        RED C1.3 exactly one getkey (0x0b3e), on the karma speech, and no timed delay there (was 8)
+        RED C4.2 and none of them was kept: the getkey still waits for its own key
+        RED C3.1 ten minutes later the speech still waits; nothing after it is shown
+        RED C3.2 one key ends the getkey
+        RED C5.1 "Strange words are intoned." at the key's frame (got +-644195)
+        RED C5.2 "Vertigo..." is not shown with it, and the next key is swallowed
+        RED C5.5 the scene ends one tick after the last dissolve, and reports its completion once
+        RED C6.k10 karma 10: "record 0" waits for its key; karma untouched
+    a3_hf9_refuge_cadence_runtime exit=1  17 RED
+        RED N1.11 the karma speech after the apparition's fizzle floor (+55), and there it waits
+        RED N4.1 at the getkey: KARMA.DAT record 2 (karma 50 / 20), quoted; karma still 50, the party fallen, still outdoors
+        RED N2.1 a minute later: still waiting (`Enter: continue`), no "Strange words", no transcript row drawn
+        RED N2.2 one Space ends it: "Strange words are intoned." in the key's frame, drawn to the transcript
+        RED N3.1 the key is consumed: no command routed, the party did not move
+        RED N5.1 "Vertigo..." is still deferred, and karma is still 50 after the key
+        RED N4.3 karma 90: record 4 is spoken at the getkey
+        RED N2.k1.0 the getkey for Enter
+    batch7b_tests exit=1  1 RED
+        batch7b check 234 failed: E26b exactly one getkey in the scene
+    quest_parity exit=8  2 RED
+        if(!isDeepStrictEqual(actual[i],expected[i])) {writeFileSync(dir+'/mismatch.json',JSON.stringify({input:inputs[i],expected:expected[i],actual:actual[i]},null,2));throw new Error(`Quest mismatch ${i}: 
+        Error: Quest mismatch 5147: world-flow
+M2 release immediately (the getkey ends at the next frame) [narrative_scene.cpp]: KILLED
+    a3_hf9_refuge_cadence exit=1  5 RED
+        RED C3.1 ten minutes later the speech still waits; nothing after it is shown
+        RED C3.2 one key ends the getkey
+        RED C5.1 "Strange words are intoned." at the key's frame (got +-599995)
+        RED C5.2 "Vertigo..." is not shown with it, and the next key is swallowed
+        RED C5.5 the scene ends one tick after the last dissolve, and reports its completion once
+    a3_hf9_refuge_cadence_runtime exit=1  7 RED
+        RED N2.1 a minute later: still waiting (`Enter: continue`), no "Strange words", no transcript row drawn
+        RED N2.2 one Space ends it: "Strange words are intoned." in the key's frame, drawn to the transcript
+        RED N3.1 the key is consumed: no command routed, the party did not move
+        RED N5.1 "Vertigo..." is still deferred, and karma is still 50 after the key
+        RED N9.1 forty keys pressed during the scene's busy loops: the getkey still waits for its own key
+        RED N6.1 the menu opens over the getkey; nothing is released behind it or by its keys; closed, it still waits
+        RED N7F.1 a load that fails leaves the getkey waiting
+M3 add a timeout (30 s) [narrative_scene.cpp]: KILLED
+    a3_hf9_refuge_cadence exit=1  5 RED
+        RED C3.1 ten minutes later the speech still waits; nothing after it is shown
+        RED C3.2 one key ends the getkey
+        RED C5.1 "Strange words are intoned." at the key's frame (got +-570000)
+        RED C5.2 "Vertigo..." is not shown with it, and the next key is swallowed
+        RED C5.5 the scene ends one tick after the last dissolve, and reports its completion once
+    a3_hf9_refuge_cadence_runtime exit=1  4 RED
+        RED N2.1 a minute later: still waiting (`Enter: continue`), no "Strange words", no transcript row drawn
+        RED N2.2 one Space ends it: "Strange words are intoned." in the key's frame, drawn to the transcript
+        RED N3.1 the key is consumed: no command routed, the party did not move
+        RED N5.1 "Vertigo..." is still deferred, and karma is still 50 after the key
+M4 the ending key leaks into the game (routed as a command) [alpha_runtime.cpp]: KILLED
+    a3_hf9_refuge_cadence_runtime exit=1  6 RED
+        RED N3.1 the key is consumed: no command routed, the party did not move
+        RED N5.1 "Vertigo..." is still deferred, and karma is still 50 after the key
+        RED N3.k1 Enter does nothing else: no command, no prompt, no move
+        RED N3.k2 a letter (K = Klimb) does nothing else: no command, no prompt, no move
+        RED N3.e2 and nothing of it surfaces after the scene: no prompt waiting, awake in the castle
+        RED N3.k3 the trackball (a move) does nothing else: no command, no prompt, no move
+M5 one key ends the getkey AND the next beat's hold [narrative_scene.h+narrative_scene.cpp]: KILLED
+    a3_hf9_refuge_cadence exit=1  2 RED
+        RED C5.2 "Vertigo..." is not shown with it, and the next key is swallowed
+        RED C5.3 "Vertigo..." after delay(4) + two revival tones (2545 ms; got +0)
+    a3_hf9_refuge_cadence_runtime exit=1  4 RED
+        RED N5.1 "Vertigo..." is still deferred, and karma is still 50 after the key
+        RED N5.3 "Vertigo..." after delay(4) + two revival sweeps (+0, want 2545)
+        RED N3.b1 three keys in one frame end the one getkey; they and 30 more cut no hold ("Vertigo..." +0, want 2545)
+        RED N6.2 then one key releases the next line, and only it
+M6 buffered keys (DOS typeahead): a key in a busy loop pre-satisfies the getkey [narrative_scene.h+narrative_scene.cpp]: KILLED
+    a3_hf9_refuge_cadence exit=1  6 RED
+        RED C4.2 and none of them was kept: the getkey still waits for its own key
+        RED C3.1 ten minutes later the speech still waits; nothing after it is shown
+        RED C3.2 one key ends the getkey
+        RED C5.1 "Strange words are intoned." at the key's frame (got +-644195)
+        RED C5.2 "Vertigo..." is not shown with it, and the next key is swallowed
+        RED C5.5 the scene ends one tick after the last dissolve, and reports its completion once
+    a3_hf9_refuge_cadence_runtime exit=1  1 RED
+        RED N9.1 forty keys pressed during the scene's busy loops: the getkey still waits for its own key
+M7 wrong cadence (the Class-C 70 ms/unit + 900/260 ms floors) [narrative_scene.cpp]: KILLED
+    a3_hf9_refuge_cadence exit=1  12 RED
+        RED C2.2 the darkness line and the black viewport after delay(10) = 550 ms (got 960)
+        RED C2.3 "Thou hast found refuge." right after the dissolve's one-tick floor (got +900)
+        RED C2.4 "No evil lives here" after delay(14) = 770 ms (got +1880)
+        RED C2.5 "But thy slumber" after delay(28) = 1,540 ms (got +2860)
+        RED C2.6 the shout after the six slumber sweeps, 10,075 ms, as one print (got +900)
+        RED C2.7 the left figure after delay(6) = 330 ms (got +1320)
+        RED C2.8 each figure: its fizzle floor + delay(4) = 275 ms (got +540, +540)
+        RED C2.9 two shakes of 936 ms each, the first with the line, then the apparition (got 2 at +900/+1160, apparition +1420)
+    a3_hf9_refuge_cadence_runtime exit=1  13 RED
+        RED N1.1 0x0946 delay(10) BEFORE the first line: the darkness line 965 ms after the key (want 550)
+        RED N1.4 "Thou hast found refuge." after the dissolve's one-tick floor (+900, want 55)
+        RED N1.5 "No evil lives here" after delay(14) (+1880, want 770)
+        RED N1.6 "But thy slumber" after delay(28) (+2860, want 1540)
+        RED N1.7 the shout, as one print, after the six slumber sweeps (+900, want 10075)
+        RED N1.8 the figures: delay(6), then fizzle + delay(4) twice (+2220, +540, +540; want 330, 275, 275)
+        RED N1.9 the apparition after two 936 ms shakes (+1420, want 1872)
+        RED N1.10 the peal shakes the viewport: dropped with the line, the device shake running 785 ms, restored with the apparition (screen_shake_fx x 2)
+    batch7b_tests exit=1  1 RED
+        batch7b check 217 failed: E21 ten exact ticks
+M8 wrong tick (70 ms per delay unit) [narrative_scene.cpp]: KILLED
+    a3_hf9_refuge_cadence exit=1  7 RED
+        RED C2.2 the darkness line and the black viewport after delay(10) = 550 ms (got 700)
+        RED C2.4 "No evil lives here" after delay(14) = 770 ms (got +980)
+        RED C2.5 "But thy slumber" after delay(28) = 1,540 ms (got +1960)
+        RED C2.7 the left figure after delay(6) = 330 ms (got +420)
+        RED C2.8 each figure: its fizzle floor + delay(4) = 275 ms (got +335, +335)
+        RED C5.3 "Vertigo..." after delay(4) + two revival tones (2545 ms; got +2605)
+        RED C5.4 the last dissolve after delay(4) (got +280)
+    a3_hf9_refuge_cadence_runtime exit=1  7 RED
+        RED N1.1 0x0946 delay(10) BEFORE the first line: the darkness line 705 ms after the key (want 550)
+        RED N1.5 "No evil lives here" after delay(14) (+980, want 770)
+        RED N1.6 "But thy slumber" after delay(28) (+1960, want 1540)
+        RED N1.8 the figures: delay(6), then fizzle + delay(4) twice (+420, +335, +335; want 330, 275, 275)
+        RED N5.3 "Vertigo..." after delay(4) + two revival sweeps (+2605, want 2545)
+        RED N5.4 the last dissolve after delay(4) (+280)
+        RED N3.b1 three keys in one frame end the one getkey; they and 30 more cut no hold ("Vertigo..." +2605, want 2545)
+    batch7b_tests exit=1  1 RED
+        batch7b check 217 failed: E21 ten exact ticks
+M9 the slumber / revival sweeps unheld [narrative_scene.cpp]: KILLED
+    a3_hf9_refuge_cadence exit=1  3 RED
+        RED C2.6 the shout after the six slumber sweeps, 10,075 ms, as one print (got +0)
+        RED C4.1 a key in any busy loop before the getkey is swallowed (12/12 refused)
+        RED C5.3 "Vertigo..." after delay(4) + two revival tones (2545 ms; got +220)
+    a3_hf9_refuge_cadence_runtime exit=1  4 RED
+        RED N1.7 the shout, as one print, after the six slumber sweeps (+0, want 10075)
+        RED N5.3 "Vertigo..." after delay(4) + two revival sweeps (+220, want 2545)
+        RED N3.b1 three keys in one frame end the one getkey; they and 30 more cut no hold ("Vertigo..." +220, want 2545)
+        RED N6.3 the menu during the slumber: nothing behind it; the shout still waits out the melody (+0)
+M10 the fizzle / dissolve floor dropped [narrative_scene.cpp]: KILLED
+    a3_hf9_refuge_cadence exit=1  4 RED
+        RED C2.3 "Thou hast found refuge." right after the dissolve's one-tick floor (got +0)
+        RED C2.8 each figure: its fizzle floor + delay(4) = 275 ms (got +220, +220)
+        RED C2.10 the karma speech right after the apparition's fizzle floor (got +0)
+        RED C5.5 the scene ends one tick after the last dissolve, and reports its completion once
+    a3_hf9_refuge_cadence_runtime exit=1  4 RED
+        RED N1.4 "Thou hast found refuge." after the dissolve's one-tick floor (+0, want 55)
+        RED N1.8 the figures: delay(6), then fizzle + delay(4) twice (+330, +220, +220; want 330, 275, 275)
+        RED N1.11 the karma speech after the apparition's fizzle floor (+0), and there it waits
+        RED N5.4 the last dissolve after delay(4) (+-83166)
+    batch7b_tests exit=1  1 RED
+        batch7b check 220 failed: E24 held for the dissolve's one-tick floor (C)
+M11 the shakes unheld [narrative_scene.cpp]: KILLED
+    a3_hf9_refuge_cadence exit=1  1 RED
+        RED C2.9 two shakes of 936 ms each, the first with the line, then the apparition (got 2 at +0/+0, apparition +0)
+    a3_hf9_refuge_cadence_runtime exit=1  2 RED
+        RED N1.9 the apparition after two 936 ms shakes (+0, want 1872)
+        RED N1.10 the peal shakes the viewport: dropped with the line, the device shake running 60 ms, restored with the apparition (screen_shake_fx x 2)
+M12 the shakes not drawn [alpha_runtime.cpp]: KILLED
+    a3_hf9_refuge_cadence_runtime exit=1  1 RED
+        RED N1.10 the peal shakes the viewport: dropped with the line, the device shake running -1 ms, restored with the apparition (screen_shake_fx x 2)
+M13 bypass the 0x0946 site (delay(10) after the darkness line, as before) [quest_world.cpp]: KILLED
+    a3_hf9_refuge_cadence exit=1  11 RED
+        RED C1.1 every delay is a `call 0x7e6a` at its instruction, and no other: 10,14,28,-1,-1,6,4,4,-1,-1,-1,-1,-1,4,4,-1,-1
+        RED C1.2 0x0946 delay(10) comes FIRST, before the darkness line (was after it)
+        RED C1.3 exactly one getkey (0x0b3e), on the karma speech, and no timed delay there (was 8)
+        RED C1.4 two screen_shake_fx, no delay after the second or after the apparition (were 2 and 2)
+        RED C1.5 the slumber melody (260,000 samples) and one 0x7530 revival tone per member (2 members)
+        RED C1.6 the render-bound dissolves and fizzles: darkness, both ghosts, the apparition, vertigo
+        RED C2.1 during delay(10) the viewport is not the scene's yet and no line is shown
+        RED C2.2 the darkness line and the black viewport after delay(10) = 550 ms (got 0)
+    a3_hf9_refuge_cadence_runtime exit=1  5 RED
+        RED N1.1 0x0946 delay(10) BEFORE the first line: the darkness line 5 ms after the key (want 550)
+        RED N1.2 during that delay the viewport still shows the world (-1 of 99 cells black)
+        RED N1.4 "Thou hast found refuge." after the dissolve's one-tick floor (+605, want 55)
+        RED N1.13 the music stops with the scene's first beat, before the darkness line (the callers stop it before party_refuge): silent at +5 ms
+        RED N7.3 a wipe after the load plays the whole Refuge again (not an instant resurrection); key at 41365
+    batch7b_tests exit=1  1 RED
+        batch7b check 216 failed: E20 0x0946 delay(10) runs first: the world is still drawn, no line yet
+    quest_parity exit=8  2 RED
+        if(!isDeepStrictEqual(actual[i],expected[i])) {writeFileSync(dir+'/mismatch.json',JSON.stringify({input:inputs[i],expected:expected[i],actual:actual[i]},null,2));throw new Error(`Quest mismatch ${i}: 
+        Error: Quest mismatch 5147: world-flow
+M14 karma floored BEFORE the wait (at check_refuge) [quest_world.cpp]: KILLED
+    a3_hf9_refuge_cadence exit=1  5 RED
+        RED C6.1 during the getkey nothing has mutated: karma 50, the party fallen, still at location 13
+        RED C6.2 still nothing mutated when the scene ends: the owner applies resolve_refuge
+        RED C6.k10 karma 10: "record 0" waits for its key; karma untouched
+        RED C6.k39 karma 39: "record 1" waits for its key; karma untouched
+        RED C6.k40 karma 40: "record 2" waits for its key; karma untouched
+    a3_hf9_refuge_cadence_runtime exit=1  2 RED
+        RED N4.1 at the getkey: KARMA.DAT record 2 (karma 50 / 20), quoted; karma still 50, the party fallen, still outdoors
+        RED N5.1 "Vertigo..." is still deferred, and karma is still 50 after the key
+    quest_parity exit=8  2 RED
+        if(!isDeepStrictEqual(actual[i],expected[i])) {writeFileSync(dir+'/mismatch.json',JSON.stringify({input:inputs[i],expected:expected[i],actual:actual[i]},null,2));throw new Error(`Quest mismatch ${i}: 
+        Error: Quest mismatch 5147: world-flow
+M15 the resurrection applied AT the key (not at the scene's end) [alpha_runtime.cpp]: KILLED
+    a3_hf9_refuge_cadence_runtime exit=1  6 RED
+        RED N3.1 the key is consumed: no command routed, the party did not move
+        RED N5.1 "Vertigo..." is still deferred, and karma is still 50 after the key
+        RED N3.k1 Enter does nothing else: no command, no prompt, no move
+        RED N3.k2 a letter (K = Klimb) does nothing else: no command, no prompt, no move
+        RED N3.k3 the trackball (a move) does nothing else: no command, no prompt, no move
+        RED N3.k4 Mic does nothing else: no command, no prompt, no move
+M16 post-wait text not deferred (the getkey after "Strange words") [quest_world.cpp]: KILLED
+    a3_hf9_refuge_cadence exit=1  5 RED
+        RED C1.3 exactly one getkey (0x0b3e), on the karma speech, and no timed delay there (was 8)
+        RED C3.1 ten minutes later the speech still waits; nothing after it is shown
+        RED C5.1 "Strange words are intoned." at the key's frame (got +-600000)
+        RED C5.2 "Vertigo..." is not shown with it, and the next key is swallowed
+        RED C5.3 "Vertigo..." after delay(4) + two revival tones (2545 ms; got +600000)
+    a3_hf9_refuge_cadence_runtime exit=1  11 RED
+        RED N2.1 a minute later: still waiting (`Enter: continue`), no "Strange words", no transcript row drawn
+        RED N2.2 one Space ends it: "Strange words are intoned." in the key's frame, drawn to the transcript
+        RED N5.1 "Vertigo..." is still deferred, and karma is still 50 after the key
+        RED N5.3 "Vertigo..." after delay(4) + two revival sweeps (+60005, want 2545)
+        RED N3.b1 three keys in one frame end the one getkey; they and 30 more cut no hold ("Vertigo..." +5, want 2545)
+        RED N9.1 forty keys pressed during the scene's busy loops: the getkey still waits for its own key
+        RED N6.1 the menu opens over the getkey; nothing is released behind it or by its keys; closed, it still waits
+        RED N6.2 then one key releases the next line, and only it
+    quest_parity exit=8  2 RED
+        if(!isDeepStrictEqual(actual[i],expected[i])) {writeFileSync(dir+'/mismatch.json',JSON.stringify({input:inputs[i],expected:expected[i],actual:actual[i]},null,2));throw new Error(`Quest mismatch ${i}: 
+        Error: Quest mismatch 5147: world-flow
+M17 a successful load keeps the scene [alpha_runtime.cpp]: KILLED
+    a3_hf9_refuge_cadence_runtime exit=1  4 RED
+        RED N7.1 the loaded game: no scene, no getkey, the party as saved
+        RED N7.3 a wipe after the load plays the whole Refuge again (not an instant resurrection); key at 41365
+        RED N8.1 Continue shows the saved game: no scene, no stale getkey
+        RED N8.2 and nothing of the Refuge replays later
+M18 a successful load keeps the Refuge latch [alpha_runtime.cpp]: KILLED
+    a3_hf9_refuge_cadence_runtime exit=1  1 RED
+        RED N7.3 a wipe after the load plays the whole Refuge again (not an instant resurrection); key at 41365
+M19 released behind the System Menu (a menu key ends the getkey) [alpha_runtime.cpp]: KILLED
+    a3_hf9_refuge_cadence_runtime exit=1  1 RED
+        RED N6.1 the menu opens over the getkey; nothing is released behind it or by its keys; closed, it still waits
+M20 cancel (scene exit) leaves the getkey armed [narrative_scene.cpp]: KILLED
+    a3_hf9_refuge_cadence exit=1  1 RED
+        RED C8.1 cancel drops the wait, the stage and the completion; a later key ends nothing
+    a3_hf9_refuge_cadence_runtime exit=1  2 RED
+        RED N7.1 the loaded game: no scene, no getkey, the party as saved
+        RED N8.1 Continue shows the saved game: no scene, no stale getkey
+M21 no `Enter: continue` cue at the getkey [alpha_runtime.cpp]: KILLED
+    a3_hf9_refuge_cadence_runtime exit=1  1 RED
+        RED N2.1 a minute later: still waiting (`Enter: continue`), no "Strange words", no transcript row drawn
+M22 the music plays on through the first delay(10) [alpha_runtime.cpp]: KILLED
+    a3_hf9_refuge_cadence_runtime exit=1  1 RED
+        RED N1.13 the music stops with the scene's first beat, before the darkness line (the callers stop it before party_refuge): silent at +-5026 ms
+M23 the unpaced harness waits for a key [narrative_scene.cpp]: KILLED
+    a3_hf9_refuge_cadence exit=1  1 RED
+        RED C7 unpaced, all 17 beats drain in one pump with no key, and the completion is reported
+    a3_hf9_refuge_cadence_runtime exit=1  1 RED
+        RED N9.2 unpaced, the whole Refuge drains with the turn, no key needed, and resolves
+
+restored: build exit=0; a3_hf9_refuge_cadence exit=0, a3_hf9_refuge_cadence_runtime exit=0, batch7b_tests exit=0, quest_parity exit=0
+mutations: 23, killed: 23, survived: 0, invalid: 0

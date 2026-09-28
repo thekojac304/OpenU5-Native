@@ -1186,6 +1186,9 @@ async function boot(): Promise<void> {
     // `game.resolveRefuge()` revive al party y lo despierta en el castillo. Ver `runRefugeScene`.
     let refugeTimer: number | null = null;
     let refuging = false;
+    // A3-HF9 (H-185): el beat aparcado en el GETKEY del discurso de karma (BLCKTHRN 0x0b3e →
+    // kernel 0x266c). `null` = la escena corre sola a reloj; si no, la PRÓXIMA tecla la reanuda.
+    let refugeKeyWait: (() => void) | null = null;
     // Cadencia de la escena (Clase C, calibrada a video-M): ms por unidad cruda de `delay`
     // (0x7e6a); un piso de LECTURA en los beats con texto (para que la línea se lea) y uno
     // corto en las transiciones de figura/sonido (que en el original son casi inmediatas).
@@ -1197,6 +1200,7 @@ async function boot(): Promise<void> {
         clearTimeout(refugeTimer);
         refugeTimer = null;
       }
+      refugeKeyWait = null;
     };
 
     // Reproduce el GUIÓN de la escena de muerte+resurrección (BLCKTHRN 0x0910) a reloj de
@@ -1232,6 +1236,13 @@ async function boot(): Promise<void> {
         if (beat.scene) view.setRefugeScene(beat.scene);
         if (beat.message) hud.message(beat.message);
         if (beat.sfx) view.emitSfx(beat.sfx);
+        // A3-HF9 (H-185): el discurso de karma acaba en getkey_with_redraw (0x0b3e), no en un
+        // reloj: el beat espera UNA tecla, sin timeout. Bajo automatización (unidad 0) no
+        // aparca nada, como el rito (#294 `instant`), para no colgar los digests.
+        if (beat.waitKey && TROLL_UNIT_MS !== 0) {
+          refugeKeyWait = step;
+          return;
+        }
         const floor = beat.message ? REFUGE_TEXT_MIN_MS : REFUGE_SCENE_MIN_MS;
         const ms = REFUGE_UNIT_MS * (beat.delayUnits ?? 0) + floor;
         refugeTimer = window.setTimeout(step, sceneMs(ms));
@@ -5553,9 +5564,18 @@ async function boot(): Promise<void> {
       // Party-wipe: la escena de muerte+resurrección (BLCKTHRN 0x0910) corre como modal a
       // reloj de pared; el input se traga hasta que despiertas en el castillo (igual que la
       // acampada). La secuencia se auto-avanza (no la interrumpe ninguna tecla). Ver runRefugeScene.
+      // A3-HF9 (H-185): salvo el GETKEY del discurso de karma (0x0b3e): ahí CUALQUIER tecla
+      // cierra esa espera y nada más. La tecla la consume el juego (no se descarta del
+      // grabador, como el rito #294); fuera de esa espera, se traga.
       if (refuging) {
-        keyRec.drop();
         ev.preventDefault();
+        if (refugeKeyWait) {
+          const resume = refugeKeyWait;
+          refugeKeyWait = null;
+          resume();
+          return;
+        }
+        keyRec.drop();
         return;
       }
       // ★ #326 — Revelado de la poción blanca: el bucle de CAST2 0x04a0-0x04b8 no

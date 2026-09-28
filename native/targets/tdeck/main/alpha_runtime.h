@@ -200,7 +200,7 @@ class AlphaRuntime {
     // arrival); the escorted finale is 44 beats. The arena holds the copied
     // narrative for one turn.
     static constexpr size_t kBlackthornSceneSteps = 96, kBlackthornSceneTextBytes = 4096;
-    // The troll crossing is 1 + 6*5 + 1 = 32 beats, the refuge script 16, and
+    // The troll crossing is 1 + 6*5 + 1 = 32 beats, the refuge script 17, and
     // the Camp apparition's longest paced segment (six members, none levelling)
     // 2 + 1 + 6*6 + 3 = 42 steps; each can be followed by the rest of its turn.
     static constexpr size_t kNarrativeSceneSteps = 64, kNarrativeSceneTextBytes = 2048;
@@ -587,6 +587,8 @@ class AlphaRuntime {
     bool service_blackthorn_scene();
     /** ms of this device's own shake window still owed at `now_us`. */
     int64_t quake_remaining_ms(int64_t now_us) const;
+    /** screen_shake_fx: start (or extend) the viewport shake. A3-HF9. */
+    void begin_quake();
     /** Release whatever of the deferred Refuge/TrollSneak/Camp scene is due. */
     bool service_narrative_scene();
     /**

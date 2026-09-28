@@ -220,13 +220,18 @@ describeConAssets([DS_STRINGS], "trampilla en STONEGATE: el TPK (TOWN 0x0fa0-0x1
  */
 describeConAssets([DS_STRINGS], "#112 · el visor NEGRO del TPK = escena de refuge, NO falta de luz", () => {
   conDsStrings();
-  it("★ el MISMO turno del TPK emite `refuge` y su PRIMER beat ennegrece el viewport", () => {
+  it("★ el MISMO turno del TPK emite `refuge` y su PRIMER beat VISUAL ennegrece el viewport", () => {
     const { game } = townGame(STONEGATE, [0], [{ z: 0, x: 10, y: 10 }], { karma: 50 });
     const ev = game.pass();
     const refuge = ev.find((e) => e.kind === "refuge");
     expect(refuge, "TOWN 0x1436: el death-check corre al cerrar el turno").toBeDefined();
     const beats = refuge!.refuge!.beats;
-    expect(beats[0]!.scene, "BLCKTHRN 0x0962: a negro ANTES de nada más").toBe("void");
+    // A3-HF9 (H-185): lo PRIMERO de `party_refuge` es 0x0942/0x0946 delay(10) (tras el
+    // redraw 0x093f, sólo bajo loc 0x21), y la línea 0x095f va ANTES del negro 0x0962; así
+    // que el primer beat es la pausa, y el primero que monta escena es el negro + la línea.
+    expect(beats[0], "BLCKTHRN 0x0946: delay(10) antes de la primera línea").toEqual({ delayUnits: 0xa });
+    expect(beats.find((b) => b.scene)?.scene, "BLCKTHRN 0x0962: la primera escena es el negro").toBe("void");
+    expect(beats[1]!.scene, "…con la línea de la oscuridad (0x095f → 0x0962)").toBe("void");
   });
 
   it("★ CONTROL: la lava SÍ quedó escrita — el negro no es «el mapa no se pintó»", () => {

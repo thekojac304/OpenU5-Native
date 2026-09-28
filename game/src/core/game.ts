@@ -304,6 +304,12 @@ export interface RefugeBeat {
   scene?: RefugeScenePhase;
   /** Pausa tras el beat en UNIDADES crudas de `delay` (0x7e6a). La piel las convierte a ms. */
   delayUnits?: number;
+  /**
+   * El beat ESPERA UNA TECLA (getkey_with_redraw 0x266c) en vez de un reloj: el discurso de
+   * karma de LB acaba en `0x0b3e call 0x83dc` (BLCKTHRN, base 0xA290 → kernel 0x266c), sin
+   * timeout; cualquier tecla lo cierra y se descarta (A3-HF9, H-185).
+   */
+  waitKey?: boolean;
 }
 
 /** GUIÓN completo de la escena de refuge — beats ordenados para que main.ts los pacee. */
@@ -6392,20 +6398,26 @@ export class Game {
   private buildRefugeScript(): RefugeScript {
     const N = Game.REFUGE_NARRATION;
     const speech = Game.refugeKarmaSpeech(this.state.karma); // karma AL MORIR
+    // A3-HF9 (H-185): cada `delayUnits` es el arg de un `call 0x7e6a` (→ delay 0x20fa) en su
+    // sitio del binario, y nada más. Antes el delay(0xa) iba TRAS la oscuridad (va ANTES:
+    // 0x0942/0x0946, con el mundo aún dibujado) y había tres pausas sin instrucción detrás
+    // (2 tras el 2º trueno, 2 tras la aparición, 8 tras el discurso): el discurso acaba en
+    // un GETKEY (0x0b3e), no en un reloj.
     const beats: RefugeBeat[] = [
-      { scene: "void", message: N[0]!, delayUnits: 0xa }, // 0x095b darkness + 0x0962 a negro
+      { delayUnits: 0xa }, // 0x0942/0x0946 delay(10) ANTES de la primera línea (mundo aún visible)
+      { scene: "void", message: N[0]! }, // 0x095f darkness + 0x0962-0x098c a negro (RECT_DISSOLVE)
       { message: N[1]!, delayUnits: 0xe }, // 0x09d2 "Thou hast found refuge."
       { message: N[2]!, delayUnits: 0x1c }, // 0x09e0 "No evil lives here…" (pausa larga)
-      { message: N[3]! }, // 0x09ee "But thy slumber is disturbed!"
+      { message: N[3]! }, // 0x09ee "But thy slumber is disturbed!" (+ 6 tone_sweeps 0x0a0d-0x0a49)
       { message: N[4]! }, // 0x0a4b "Someone shouts"
-      { message: N[5]!, delayUnits: 6 }, // …'"FORTIS FORTUNA AVENTARI"'
+      { message: N[5]!, delayUnits: 6 }, // …'"FORTIS FORTUNA AVENTARI"' (misma cadena), 0x0a52 delay(6)
       { scene: "ghostLeft", delayUnits: 4 }, // 0x0a70 blit figura 0x5e (izq)
       { scene: "ghostBoth", delayUnits: 4 }, // 0x0aa2 blit figura 0x5f (der)
       { message: N[6]! }, // 0x0ac5 "There is a peal of thunder!"
       { sfx: { id: "refuge-thunder" } }, // 0x0acc call 0x8de2 (peal 1)
-      { sfx: { id: "refuge-thunder" }, delayUnits: 2 }, // 0x0acf call 0x8de2 (peal 2)
-      { scene: "apparition", delayUnits: 2 }, // 0x0ae9 blit aparición 0x174 (5,2)
-      { message: speech, delayUnits: 8 }, // 0x0b03 discurso de LB (ya entrecomillado en el record)
+      { sfx: { id: "refuge-thunder" } }, // 0x0acf call 0x8de2 (peal 2)
+      { scene: "apparition" }, // 0x0ae9 blit aparición 0x174 (5,2)
+      { message: speech, waitKey: true }, // 0x0b03 discurso de LB (entrecomillado) + 0x0b3e GETKEY
       { message: N[7]!, delayUnits: 4 }, // 0x0b41 "Strange words are intoned."
       { message: N[8]!, delayUnits: 4 }, // 0x0bb6 "Vertigo..."
       { scene: "vertigo" }, // 0x0bc4 destello de transición → despertar en LB

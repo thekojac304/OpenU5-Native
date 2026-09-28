@@ -582,14 +582,7 @@ void AlphaRuntime::route_event(const openu5::GameEvent&e){
         dirty_=true;dirty_reason_="zodiac-view";
         ESP_LOGI(kTag,"VIEW_EFFECT type=zodiac presentation=night-sky deferred_turn=0");
     }
-    if(e.kind==openu5::GameEventKind::Quake){
-        const int64_t now=esp_timer_get_time();
-        const bool running=quake_pulses_>0&&(now-quake_start_us_)<int64_t(quake_pulses_)*openu5::kQuakePeriodMs*1000;
-        if(running)quake_pulses_+=openu5::kQuakePulses;
-        else{quake_start_us_=now;quake_pulses_=openu5::kQuakePulses;}
-        dirty_=true;dirty_reason_="quake";
-        ESP_LOGI(kTag,"QUAKE pulses=%d extended=%d",quake_pulses_,running);
-    }
+    if(e.kind==openu5::GameEventKind::Quake)begin_quake();
     if(e.kind==openu5::GameEventKind::MagicCeremony)start_magic_ceremony(e.note);
     if(e.kind==openu5::GameEventKind::MapReveal){
         // e.note is DEATH_VISION_FRAMES=20 (run-n-frames units, world_magic.cpp's
@@ -629,6 +622,17 @@ bool AlphaRuntime::service_blackthorn_scene(){
                  (unsigned long)released,(unsigned long)blackthorn_pacer_.dropped_steps());
     blackthorn_released_=released;
     return released!=released_before||state!=state_before||phase!=phase_before;
+}
+
+// screen_shake_fx (kernel 0x3072): the viewport's 8-pulse shake. A shake that
+// arrives while one is still running extends it.
+void AlphaRuntime::begin_quake(){
+    const int64_t now=esp_timer_get_time();
+    const bool running=quake_pulses_>0&&(now-quake_start_us_)<int64_t(quake_pulses_)*openu5::kQuakePeriodMs*1000;
+    if(running)quake_pulses_+=openu5::kQuakePulses;
+    else{quake_start_us_=now;quake_pulses_=openu5::kQuakePulses;}
+    dirty_=true;dirty_reason_="quake";
+    ESP_LOGI(kTag,"QUAKE pulses=%d extended=%d",quake_pulses_,running);
 }
 
 // Y-04. The reference's `cerrarVentanaDeSacudida` (skin/turn-phase.ts): an
@@ -685,6 +689,9 @@ void AlphaRuntime::narrative_beat(void *p,const openu5::NarrativeSceneBeat &beat
     if(beat.text&&std::strcmp(beat.text,"But thy slumber is disturbed!")==0)self.audio_.play_sfx(openu5::SfxId::RefugeSlumber);
     if(beat.text&&std::strcmp(beat.text,"Strange words are intoned.")==0)
         self.audio_.play_sfx(openu5::SfxId::RefugeRevival,int32_t(self.game_.party.character_count));
+    // A3-HF9 (H-185). Each peal of thunder is screen_shake_fx 0x3072 (BLCKTHRN
+    // 0x0acc / 0x0acf): the same shake as a Quake; the pacer holds its length.
+    if(beat.shake)self.begin_quake();
     if(beat.phase!=openu5::RefugePhase::None)
         ESP_LOGI(kTag,"REFUGE_SCENE phase=%d",int(beat.phase));
 }
@@ -1690,6 +1697,10 @@ bool AlphaRuntime::handle_input_event(const RawInputEvent&raw){service_combat();
     // for the whole scene, and neither has a dismissal key -- both advance on
     // their own clock and end by themselves. The same transcript-paging
     // exception applies, for the same reason as above.
+    // A3-HF9 (H-185). One exception: the Refuge's karma speech ends in
+    // getkey_with_redraw 0x266c (BLCKTHRN 0x0b3e), the TLK KeyWait's and the
+    // shrine's own primitive. Any key ends that one wait and does nothing
+    // else; every other beat is a busy loop that reads no key.
     if(narrative_pacer_.modal()&&shortcut==DeviceShortcut::None){
         if(action.kind==openu5::UiActionKind::PageUp||action.kind==openu5::UiActionKind::PageDown){
             refresh_session_context();
@@ -1699,8 +1710,10 @@ bool AlphaRuntime::handle_input_event(const RawInputEvent&raw){service_combat();
                      action_name(action.kind),int(narrative_pacer_.scene()));
             return true;
         }
-        ESP_LOGI(kTag,"NARRATIVE_SCENE_INPUT action=%s effect=swallowed scene=%d gameplay_command=none",
-                 action_name(action.kind),int(narrative_pacer_.scene()));
+        const bool ended=narrative_pacer_.advance_key();
+        if(ended){dirty_=true;dirty_reason_="narrative-scene";}
+        ESP_LOGI(kTag,"NARRATIVE_SCENE_INPUT action=%s effect=%s scene=%d gameplay_command=none",
+                 action_name(action.kind),ended?"key-wait-ended":"swallowed",int(narrative_pacer_.scene()));
         return true;
     }
     // A3-HF5. A TLK pause is the interpreter waiting inside TALK.OVL: a Pause
@@ -1870,6 +1883,8 @@ const char *AlphaRuntime::overlay() const {static char text[64]{};text[0]=0;
     // gets none: its loop (TALK 0x0f92) never runs the cursor. A3-HF6: the
     // shrine and Codex getkeys are the same 0x266c and wear the same cue.
     if(dialogue_pacer_.awaiting_key()){std::snprintf(text,sizeof(text),"Enter: continue");return text;}
+    // A3-HF9: the Refuge's karma getkey (0x0b3e) is the same 0x266c.
+    if(narrative_pacer_.awaiting_key()){std::snprintf(text,sizeof(text),"Enter: continue");return text;}
     if(ui_&&ui_->mode()==openu5::UiMode::Shop)return text;
     // Batch 53 (D-53 / H-12). Vas Rel Por's phase getkey (CAST.OVL 0x0cff
     // "To phase:", then a bare key) is not an aim: without this the generic
@@ -2722,6 +2737,10 @@ void AlphaRuntime::reset_transient_after_load(){
     // phases are kept.
     commands_.awaiting_exit=false;commands_.awaiting_troll=false;
     commands_.troll_toll=commands_.troll_under_party=commands_.troll_x=commands_.troll_y=0;
+    // A3-HF9 (H-185). The Refuge's pending latch belongs to the scene the load
+    // just cancelled (without its resurrection): kept, it would make the next
+    // party wipe resolve at once, with no scene and no karma speech.
+    quest_.refuge_pending=false;
     blackthorn_={};dialogue_={};shop_={};shrine_={};
     ui_->reset_after_load(resolve_synchronized_base_mode(openu5::UiMode::Exploration,context_.combat,dungeon_.active));
     ESP_LOGI(kTag,"LOAD_TRANSIENT_RESET ui=%s->%s request=%d views=%d questions=%d",
@@ -3188,7 +3207,9 @@ void AlphaRuntime::sync_music(){
     // deliberately NOT a case here: those are overlays on whatever already
     // plays, and the original's own selector never touches music for them.
     if(blackthorn_pacer_.mounted()){audio_.play_music(openu5::MusicContext::Silence);return;}
-    if(narrative_pacer_.mounted()&&narrative_pacer_.scene()==openu5::NarrativeScene::Refuge){
+    // A3-HF9: from the scene's first beat -- its delay(10) runs before the
+    // viewport goes dark, and every caller stopped the music before it.
+    if(narrative_pacer_.active()&&narrative_pacer_.scene()==openu5::NarrativeScene::Refuge){
         audio_.play_music(openu5::MusicContext::Silence);return;}
     if(camp_scene_active_||(narrative_pacer_.mounted()&&
        (narrative_pacer_.scene()==openu5::NarrativeScene::Camp||narrative_pacer_.scene()==openu5::NarrativeScene::TrollSneak))){

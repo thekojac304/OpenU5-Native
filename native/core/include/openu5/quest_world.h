@@ -5,8 +5,13 @@ namespace openu5 {
 struct CombatResources;
 struct EndgameBeat { const char *phase=nullptr,*message=nullptr,*reply=nullptr;int16_t delay=-1,page=-1; };
 struct EndgameScript { bool victory=false;EndgameBeat beats[21]{};uint8_t count=0;std::string greeting; };
-struct RefugeBeat {const char *scene=nullptr,*message=nullptr,*sfx=nullptr;int16_t delay=-1;};
-struct RefugeScript {RefugeBeat beats[16]{};};
+// A3-HF9 (H-185): `delay` and `key_wait` (getkey_with_redraw 0x266c, the
+// karma speech's 0x0b3e) are pinned by the reference; the holds are the
+// device's own, as Blackthorn's are: the busy loop the original runs after
+// the beat -- `sweep_samples` of tone_sweep, a render-bound fizzle/dissolve
+// (`fizzle`), a screen_shake_fx (`shake`). narrative_scene.h times them.
+struct RefugeBeat {const char *scene=nullptr,*message=nullptr,*sfx=nullptr;int16_t delay=-1;bool key_wait=false;uint32_t sweep_samples=0;bool fizzle=false,shake=false;};
+struct RefugeScript {RefugeBeat beats[17]{};};
 // A value view into the existing world owner. No object pool is allocated here.
 // The owner retains all fields not relevant to quests when erasing/inserting.
 struct QuestObject {

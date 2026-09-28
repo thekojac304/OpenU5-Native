@@ -498,33 +498,41 @@ int main() {
         check(game.party.characters[0].status == 'D',
               "E18 check_refuge mutates NOTHING: the party is still fallen");
 
+        // A3-HF9 (H-185): party_refuge's first instruction of note is delay(10)
+        // (0x0946), BEFORE the darkness line and before the viewport goes dark;
+        // the Class-C "line, then 10 x 70 ms + a 900 ms reading floor" is gone.
         uint32_t now = 100000;
         pacer.pump(now, router.sink(), tail.sink());
         check(pacer.active() && pacer.modal(), "E19 the scene is modal from its first beat");
-        check(pacer.phase() == RefugePhase::Void && pacer.mounted(),
-              "E20 0x0962: the viewport goes black with the Avatar alone");
-        check(transcript_contains(ui, "An unending darkness engulfs thee..."),
-              "E21 RED R2a: the narration reaches the player");
-        check(router.beats == 1, "E22 one beat, not the whole script");
-
-        // The first beat prints, so it carries the reading floor on top of
-        // its ten raw `delay` units.
-        check(pacer.resume_at_ms() == now + 10 * kRefugeUnitMs + kRefugeTextFloorMs,
-              "E23 delay units plus the reading floor");
+        check(!pacer.mounted() && router.beats == 1 &&
+                  !transcript_contains(ui, "An unending darkness engulfs thee..."),
+              "E20 0x0946 delay(10) runs first: the world is still drawn, no line yet");
+        check(pacer.resume_at_ms() == now + delay_ticks_ms(10), "E21 ten exact ticks");
         pacer.pump(pacer.resume_at_ms() - 1, router.sink(), tail.sink());
-        check(router.beats == 1, "E24 the line stays up for its whole interval");
+        check(router.beats == 1, "E22 nothing is shown before the ten ticks are over");
+        now = pacer.resume_at_ms();
+        pacer.pump(now, router.sink(), tail.sink());
+        check(pacer.phase() == RefugePhase::Void && pacer.mounted() &&
+                  transcript_contains(ui, "An unending darkness engulfs thee..."),
+              "E23 RED R2a: 0x095f the line, 0x0962 the viewport goes black");
+        check(pacer.resume_at_ms() == now + kFizzleFloorMs, "E24 held for the dissolve's one-tick floor (C)");
         check(!transcript_contains(ui, "Thou hast found refuge."), "E25 and the next one waits");
 
-        // Drive the scene to its end, one due beat at a time. Nothing about
-        // the world may change while it runs.
-        int guard = 0;
+        // Drive the scene to its end, one due beat at a time; its one getkey
+        // (0x0b3e) takes a key. Nothing about the world may change while it runs.
+        int guard = 0, keys = 0;
         while (pacer.active() && guard++ < 64) {
+            if (pacer.awaiting_key()) {
+                ++keys;
+                check(pacer.advance_key(), "E26a the karma speech's getkey takes a key");
+            }
             now = pacer.waiting() ? pacer.resume_at_ms() : now;
             pacer.pump(now, router.sink(), tail.sink());
             if (pacer.active())
                 check(game.party.characters[0].status == 'D' && game.position.map.location == 13,
                       "E26 no state mutation happens while the scene is on screen");
         }
+        check(keys == 1, "E26b exactly one getkey in the scene");
         check(guard < 64, "E27 the scene terminates on its own");
         check(transcript_contains(ui, "Thou hast found refuge."), "E28 RED R2b: every beat is printed");
         check(transcript_contains(ui, "\"FORTIS FORTUNA AVENTARI\""), "E29 the shout");

@@ -144,4 +144,19 @@ constexpr uint32_t kBlackthornSirenSamples = 2 * kBlackthornSirenSweepsPerLeg * 
 constexpr uint32_t kBlackthornBurstSamples = ((0xbb8 + 0xa - 1) / 0xa) * 0xa * 3 / 2;
 static_assert(tone_sweep_ms(kBlackthornBurstSamples) == 174, "9,000 half samples at 2 x 25,806 Hz");
 
+// ---------------------------------------------------------------------------
+// A3-HF9 (H-185). The Refuge -- BLCKTHRN.OVL party_refuge 0x0910 (near calls
+// rebased by 0xA290; tone_sweep argument a2 is the sample count).
+// ---------------------------------------------------------------------------
+
+/**
+ * 0x0a0d-0x0a49, after "But thy slumber is disturbed!": six tone_sweeps whose
+ * a2 is DS 0x372c = {0xc350, 0xc350, 0xc350, 0x7530, 0x9c40, 0x9c40} -- the
+ * RefugeSlumber program (sfx_synth.cpp kSlumberCount), 10,075 ms. [B]
+ */
+constexpr uint32_t kRefugeSlumberSamples = 3u * 0xc350 + 0x7530 + 2u * 0x9c40;
+static_assert(kRefugeSlumberSamples == 260000, "the six slumber sweeps");
+/** 0x0b81 `mov ax,0x7530`: the revival tone, once per member (0x0b54-0x0bb1). [B] */
+constexpr uint32_t kRefugeRevivalSamples = 0x7530;
+
 } // namespace openu5

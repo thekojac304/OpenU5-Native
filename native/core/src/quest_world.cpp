@@ -6,6 +6,7 @@
 #include "openu5/shrine.h"
 #include "openu5/dialogue_orchestration.h"
 #include "openu5/rest.h"
+#include "openu5/scene_timing.h"
 namespace openu5 {
 namespace {
 void event(EventSink s,GameEventKind k,const char *text=nullptr) { GameEvent e; e.kind=k;e.text=text;if(s.emit)s.emit(s.context,e); }
@@ -190,17 +191,27 @@ CommandStatus check_refuge(CommandContext &c,EventSink sink){
     int index=std::min<int32_t>(4,c.game.karma/20);
     const char *speech=s->karma_record?s->karma_record(s->context,index):c.rest_services&&c.rest_services->karma_record?c.rest_services->karma_record(c.rest_services->context,index):nullptr;
     if(!speech)return CommandStatus::InvalidContext;
+    // A3-HF9 (H-185): BLCKTHRN party_refuge 0x0910, instruction by instruction
+    // (near calls through 0xA290; `delay` = the arg of 0x7e6a -> delay 0x20fa).
+    const uint32_t revival=kRefugeRevivalSamples*uint32_t(c.game.party.party_size); // 0x0b54-0x0bb1: one tone per member
     RefugeScript script{{
-        {"void","An unending darkness engulfs thee...",nullptr,10},
-        {nullptr,"Thou hast found refuge.",nullptr,14},
-        {nullptr,"No evil lives here, only peace and darkness.",nullptr,28},
-        {nullptr,"But thy slumber is disturbed!"}, {nullptr,"Someone shouts"},
-        {nullptr,"\"FORTIS FORTUNA AVENTARI\"",nullptr,6},
-        {"ghostLeft",nullptr,nullptr,4},{"ghostBoth",nullptr,nullptr,4},
-        {nullptr,"There is a peal of thunder!"},{nullptr,nullptr,"refuge-thunder"},
-        {nullptr,nullptr,"refuge-thunder",2},{"apparition",nullptr,nullptr,2},
-        {nullptr,speech,nullptr,8},{nullptr,"Strange words are intoned.",nullptr,4},
-        {nullptr,"Vertigo...",nullptr,4},{"vertigo"}
+        {nullptr,nullptr,nullptr,10},                                          // 0x0946 delay(10): the world is still drawn
+        {"void","An unending darkness engulfs thee...",nullptr,-1,false,0,true},  // 0x095f; 0x0962-0x098c black + RECT_DISSOLVE
+        {nullptr,"Thou hast found refuge.",nullptr,14},                        // 0x09d2; 0x09dd delay(14)
+        {nullptr,"No evil lives here, only peace and darkness.",nullptr,28},   // 0x09e0; 0x09eb delay(28)
+        {nullptr,"But thy slumber is disturbed!",nullptr,-1,false,kRefugeSlumberSamples}, // 0x09ee; 0x0a0d-0x0a49 six tone_sweeps
+        {nullptr,"Someone shouts"},                                            // 0x0a4b: ONE print with the shout,
+        {nullptr,"\"FORTIS FORTUNA AVENTARI\"",nullptr,6},                     //   0x0a56 delay(6)
+        {"ghostLeft",nullptr,nullptr,4,false,0,true},                          // 0x0a7c FIZZLE_IN 0x5e; 0x0a90 delay(4)
+        {"ghostBoth",nullptr,nullptr,4,false,0,true},                          // 0x0aae FIZZLE_IN 0x5f; 0x0ac2 delay(4)
+        {nullptr,"There is a peal of thunder!"},                               // 0x0ac9
+        {nullptr,nullptr,"refuge-thunder",-1,false,0,false,true},              // 0x0acc screen_shake_fx 0x3072
+        {nullptr,nullptr,"refuge-thunder",-1,false,0,false,true},              // 0x0acf screen_shake_fx 0x3072
+        {"apparition",nullptr,nullptr,-1,false,0,true},                        // 0x0af5 FIZZLE_IN 0x174
+        {nullptr,speech,nullptr,-1,true},                                      // 0x0b03-0x0b3b the record; 0x0b3e GETKEY
+        {nullptr,"Strange words are intoned.",nullptr,4,false,revival},        // 0x0b45; 0x0b4c delay(4); the revival tones
+        {nullptr,"Vertigo...",nullptr,4},                                      // 0x0bba; 0x0bc1 delay(4)
+        {"vertigo",nullptr,nullptr,-1,false,0,true}                            // 0x0bc4-0x0bfa black + RECT_DISSOLVE; then 0x0bfd
     }};
     s->refuge_pending=true;GameEvent e;e.kind=GameEventKind::Refuge;e.refuge=&script;if(sink.emit)sink.emit(sink.context,e);return CommandStatus::Success;
 }

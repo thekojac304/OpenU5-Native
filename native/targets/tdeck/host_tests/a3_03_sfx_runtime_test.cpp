@@ -698,6 +698,9 @@ int main(int argc, char **argv) {
         const auto status = check_refuge(ctx, ctx.events);
         for (int64_t t = 0; t < 30000 && h->rt->narrative_pacer().active(); t += 5) {
             openu5_host_virtual_clock_us() += 5000;
+            // A3-HF9 (H-185): the karma speech waits for a key (getkey 0x0b3e);
+            // one Space, the frame it is shown, keeps every setup on one clock.
+            if (h->rt->narrative_pacer().awaiting_key()) h->key(' ');
             h->rt->render(h->board);
             pump_audio(*out, s);
             std::ostringstream line;

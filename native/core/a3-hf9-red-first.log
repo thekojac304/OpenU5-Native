@@ -1,0 +1,211 @@
+# A3-HF9 RED-first: built against HEAD:native/core/src/narrative_scene.cpp, HEAD:native/core/src/quest_world.cpp, HEAD:native/targets/tdeck/main/alpha_runtime.cpp;
+# (narrative_scene.cpp + the link shim and the three restated constants, nothing else);
+# every header, the fixture and the tests as in the working tree.
+## a3_hf9_refuge_cadence against HEAD: exit 1
+GREEN C1.0 a wiped party emits one Refuge script
+RED C1.1 every delay is a `call 0x7e6a` at its instruction, and no other: 10,14,28,-1,-1,6,4,4,-1,-1,2,2,8,4,4,-1,-1
+RED C1.2 0x0946 delay(10) comes FIRST, before the darkness line (was after it)
+RED C1.3 exactly one getkey (0x0b3e), on the karma speech, and no timed delay there (was 8)
+RED C1.4 two screen_shake_fx, no delay after the second or after the apparition (were 2 and 2)
+RED C1.5 the slumber melody (260,000 samples) and one 0x7530 revival tone per member (2 members)
+RED C1.6 the render-bound dissolves and fizzles: darkness, both ghosts, the apparition, vertigo
+GREEN C2.0 the scene is modal from its first beat
+RED C2.1 during delay(10) the viewport is not the scene's yet and no line is shown
+    darkness 0, refuge 1600, evil 3480, slumber 6340, shout 7240, ghosts 9460/10000, thunder 10540, apparition 12100, speech 12500 ms
+RED C2.2 the darkness line and the black viewport after delay(10) = 550 ms (got 0)
+RED C2.3 "Thou hast found refuge." right after the dissolve's one-tick floor (got +1600)
+RED C2.4 "No evil lives here" after delay(14) = 770 ms (got +1880)
+RED C2.5 "But thy slumber" after delay(28) = 1,540 ms (got +2860)
+RED C2.6 the shout after the six slumber sweeps, 10,075 ms, as one print (got +900)
+RED C2.7 the left figure after delay(6) = 330 ms (got +1320)
+RED C2.8 each figure: its fizzle floor + delay(4) = 275 ms (got +540, +540)
+RED C2.9 two shakes of 936 ms each, the first with the line, then the apparition (got 0 at +-10541/+-10541, apparition +1560)
+RED C2.10 the karma speech right after the apparition's fizzle floor (got +400)
+GREEN C4.1 a key in any busy loop before the getkey is swallowed (120/120 refused)
+RED C4.2 and none of them was kept: the getkey still waits for its own key
+RED C3.1 ten minutes later the speech still waits; nothing after it is shown
+GREEN C6.1 during the getkey nothing has mutated: karma 50, the party fallen, still at location 13
+RED C3.2 one key ends the getkey
+GREEN C3.3 a second key in the same frame ends nothing (one key, one wait)
+RED C5.1 "Strange words are intoned." at the key's frame (got +-646040)
+RED C5.2 "Vertigo..." is not shown with it, and the next key is swallowed
+RED C5.3 "Vertigo..." after delay(4) + two revival tones (2545 ms; got +1180)
+RED C5.4 the last dissolve after delay(4) (got +1180)
+RED C5.5 the scene ends one tick after the last dissolve, and reports its completion once
+GREEN C6.2 still nothing mutated when the scene ends: the owner applies resolve_refuge
+GREEN C6.3 resolve_refuge (0x0bfd): karma floored to 75, the party revived, in the castle
+RED C6.k10 karma 10: "record 0" waits for its key; karma untouched
+GREEN C6.f10 after the scene: karma 75 (the 0x0bfd floor only raises)
+RED C6.k39 karma 39: "record 1" waits for its key; karma untouched
+GREEN C6.f39 after the scene: karma 75 (the 0x0bfd floor only raises)
+RED C6.k40 karma 40: "record 2" waits for its key; karma untouched
+GREEN C6.f40 after the scene: karma 75 (the 0x0bfd floor only raises)
+RED C6.k90 karma 90: "record 4" waits for its key; karma untouched
+GREEN C6.f90 after the scene: karma 90 (the 0x0bfd floor only raises)
+RED C7 unpaced, all 17 beats drain in one pump with no key, and the completion is reported
+RED C8.1 cancel drops the wait, the stage and the completion; a later key ends nothing
+GREEN C8.2 a new Refuge after it starts over at its delay(10)
+GREEN C9 run_n_frames(10) then (5), no getkey, exactly as before
+a3_hf9_refuge_cadence: 43 checks, 30 failures
+## a3_hf9_refuge_cadence_runtime against HEAD: exit 1
+GREEN N1.0 one Space on a wiped party raises the Refuge scene
+    from the key: darkness 5, refuge 1605, evil 3485, slumber 6345, shout 7245, ghosts 9465/10005, thunder 10545, apparition 12105, speech 12505, getkey -5026 ms
+RED N1.1 0x0946 delay(10) BEFORE the first line: the darkness line 5 ms after the key (want 550)
+RED N1.2 during that delay the viewport still shows the world (-1 of 99 cells black)
+GREEN N1.3 with the line, 0x0962: the viewport goes black but for the Avatar (98 of 99 black)
+RED N1.4 "Thou hast found refuge." after the dissolve's one-tick floor (+1600, want 55)
+RED N1.5 "No evil lives here" after delay(14) (+1880, want 770)
+RED N1.6 "But thy slumber" after delay(28) (+2860, want 1540)
+RED N1.7 the shout, as one print, after the six slumber sweeps (+900, want 10075)
+RED N1.8 the figures: delay(6), then fizzle + delay(4) twice (+2220, +540, +540; want 330, 275, 275)
+RED N1.9 the apparition after two 936 ms shakes (+1560, want 1872)
+RED N1.10 the peal shakes the viewport: dropped with the line, the device shake running -1 ms, restored with the apparition (screen_shake_fx x 2)
+RED N1.11 the karma speech after the apparition's fizzle floor (+400), and there it waits
+GREEN N1.12 the slumber melody starts with its line
+RED N1.13 the music stops with the scene's first beat, before the darkness line (the callers stop it before party_refuge): silent at +-5026 ms
+RED N4.1 at the getkey: KARMA.DAT record 2 (karma 50 / 20), quoted; karma still 50, the party fallen, still outdoors
+RED N2.1 a minute later: still waiting (`Enter: continue`), no "Strange words", no transcript row drawn
+GREEN N2.2 one Space ends it: "Strange words are intoned." in the key's frame, drawn to the transcript
+RED N3.1 the key is consumed: no command routed, the party did not move
+RED N5.1 "Vertigo..." is still deferred, and karma is still 50 after the key
+GREEN N5.2 the revival tones start with "Strange words"
+RED N5.3 "Vertigo..." after delay(4) + two revival sweeps (+1180, want 2545)
+RED N5.4 the last dissolve after delay(4) (+1180)
+GREEN N4.2 only when the scene is down: karma floored to 75, the party revived in the castle (17, floor 1)
+GREEN N3.2 and the next key is ordinary play again
+RED N4.3 karma 90: record 4 is spoken at the getkey
+GREEN N4.4 after the scene: karma still 90, in the castle
+RED N2.k1.0 the getkey for Enter
+RED N2.k2.0 the getkey for a letter (K = Klimb)
+RED N2.k3.0 the getkey for the trackball (a move)
+RED N2.k4.0 the getkey for Mic
+RED N3.b0 the getkey
+RED N9.1 forty keys pressed during the scene's busy loops: the getkey still waits for its own key
+RED N6.0 the getkey
+RED N7.0 the getkey
+RED N7F.0 the getkey
+RED N8.0 the getkey (a save was made before the wipe)
+GREEN N9.2 unpaced, the whole Refuge drains with the turn, no key needed, and resolves
+a3_hf9_refuge_cadence_runtime: 37 checks, 28 failures
+## a3_hf9_refuge_cadence against the working tree: exit 0
+GREEN C1.0 a wiped party emits one Refuge script
+GREEN C1.1 every delay is a `call 0x7e6a` at its instruction, and no other: 10,-1,14,28,-1,-1,6,4,4,-1,-1,-1,-1,-1,4,4,-1
+GREEN C1.2 0x0946 delay(10) comes FIRST, before the darkness line (was after it)
+GREEN C1.3 exactly one getkey (0x0b3e), on the karma speech, and no timed delay there (was 8)
+GREEN C1.4 two screen_shake_fx, no delay after the second or after the apparition (were 2 and 2)
+GREEN C1.5 the slumber melody (260,000 samples) and one 0x7530 revival tone per member (2 members)
+GREEN C1.6 the render-bound dissolves and fizzles: darkness, both ghosts, the apparition, vertigo
+GREEN C2.0 the scene is modal from its first beat
+GREEN C2.1 during delay(10) the viewport is not the scene's yet and no line is shown
+    darkness 550, refuge 605, evil 1375, slumber 2915, shout 12990, ghosts 13320/13595, thunder 13870, apparition 15750, speech 15805 ms
+GREEN C2.2 the darkness line and the black viewport after delay(10) = 550 ms (got 550)
+GREEN C2.3 "Thou hast found refuge." right after the dissolve's one-tick floor (got +55)
+GREEN C2.4 "No evil lives here" after delay(14) = 770 ms (got +770)
+GREEN C2.5 "But thy slumber" after delay(28) = 1,540 ms (got +1540)
+GREEN C2.6 the shout after the six slumber sweeps, 10,075 ms, as one print (got +10075)
+GREEN C2.7 the left figure after delay(6) = 330 ms (got +330)
+GREEN C2.8 each figure: its fizzle floor + delay(4) = 275 ms (got +275, +275)
+GREEN C2.9 two shakes of 936 ms each, the first with the line, then the apparition (got 2 at +0/+940, apparition +1880)
+GREEN C2.10 the karma speech right after the apparition's fizzle floor (got +55)
+GREEN C4.1 a key in any busy loop before the getkey is swallowed (32/32 refused)
+GREEN C4.2 and none of them was kept: the getkey still waits for its own key
+GREEN C3.1 ten minutes later the speech still waits; nothing after it is shown
+GREEN C6.1 during the getkey nothing has mutated: karma 50, the party fallen, still at location 13
+GREEN C3.2 one key ends the getkey
+GREEN C3.3 a second key in the same frame ends nothing (one key, one wait)
+GREEN C5.1 "Strange words are intoned." at the key's frame (got +0)
+GREEN C5.2 "Vertigo..." is not shown with it, and the next key is swallowed
+GREEN C5.3 "Vertigo..." after delay(4) + two revival tones (2545 ms; got +2545)
+GREEN C5.4 the last dissolve after delay(4) (got +220)
+GREEN C5.5 the scene ends one tick after the last dissolve, and reports its completion once
+GREEN C6.2 still nothing mutated when the scene ends: the owner applies resolve_refuge
+GREEN C6.3 resolve_refuge (0x0bfd): karma floored to 75, the party revived, in the castle
+GREEN C6.k10 karma 10: "record 0" waits for its key; karma untouched
+GREEN C6.f10 after the scene: karma 75 (the 0x0bfd floor only raises)
+GREEN C6.k39 karma 39: "record 1" waits for its key; karma untouched
+GREEN C6.f39 after the scene: karma 75 (the 0x0bfd floor only raises)
+GREEN C6.k40 karma 40: "record 2" waits for its key; karma untouched
+GREEN C6.f40 after the scene: karma 75 (the 0x0bfd floor only raises)
+GREEN C6.k90 karma 90: "record 4" waits for its key; karma untouched
+GREEN C6.f90 after the scene: karma 90 (the 0x0bfd floor only raises)
+GREEN C7 unpaced, all 17 beats drain in one pump with no key, and the completion is reported
+GREEN C8.1 cancel drops the wait, the stage and the completion; a later key ends nothing
+GREEN C8.2 a new Refuge after it starts over at its delay(10)
+GREEN C9 run_n_frames(10) then (5), no getkey, exactly as before
+a3_hf9_refuge_cadence: 43 checks, 0 failures
+## a3_hf9_refuge_cadence_runtime against the working tree: exit 0
+GREEN N1.0 one Space on a wiped party raises the Refuge scene
+    from the key: darkness 555, refuge 610, evil 1380, slumber 2920, shout 12995, ghosts 13325/13600, thunder 13875, apparition 15755, speech 15810, getkey 15810 ms
+GREEN N1.1 0x0946 delay(10) BEFORE the first line: the darkness line 555 ms after the key (want 550)
+GREEN N1.2 during that delay the viewport still shows the world (0 of 99 cells black)
+GREEN N1.3 with the line, 0x0962: the viewport goes black but for the Avatar (98 of 99 black)
+GREEN N1.4 "Thou hast found refuge." after the dissolve's one-tick floor (+55, want 55)
+GREEN N1.5 "No evil lives here" after delay(14) (+770, want 770)
+GREEN N1.6 "But thy slumber" after delay(28) (+1540, want 1540)
+GREEN N1.7 the shout, as one print, after the six slumber sweeps (+10075, want 10075)
+GREEN N1.8 the figures: delay(6), then fizzle + delay(4) twice (+330, +275, +275; want 330, 275, 275)
+GREEN N1.9 the apparition after two 936 ms shakes (+1880, want 1872)
+GREEN N1.10 the peal shakes the viewport: dropped with the line, the device shake running 1880 ms, restored with the apparition (screen_shake_fx x 2)
+GREEN N1.11 the karma speech after the apparition's fizzle floor (+55), and there it waits
+GREEN N1.12 the slumber melody starts with its line
+GREEN N1.13 the music stops with the scene's first beat, before the darkness line (the callers stop it before party_refuge): silent at +5 ms
+GREEN N4.1 at the getkey: KARMA.DAT record 2 (karma 50 / 20), quoted; karma still 50, the party fallen, still outdoors
+GREEN N2.1 a minute later: still waiting (`Enter: continue`), no "Strange words", no transcript row drawn
+GREEN N2.2 one Space ends it: "Strange words are intoned." in the key's frame, drawn to the transcript
+GREEN N3.1 the key is consumed: no command routed, the party did not move
+GREEN N5.1 "Vertigo..." is still deferred, and karma is still 50 after the key
+GREEN N5.2 the revival tones start with "Strange words"
+GREEN N5.3 "Vertigo..." after delay(4) + two revival sweeps (+2545, want 2545)
+GREEN N5.4 the last dissolve after delay(4) (+220)
+GREEN N4.2 only when the scene is down: karma floored to 75, the party revived in the castle (17, floor 1)
+GREEN N3.2 and the next key is ordinary play again
+GREEN N4.3 karma 90: record 4 is spoken at the getkey
+GREEN N4.4 after the scene: karma still 90, in the castle
+GREEN N2.k1.0 the getkey for Enter
+GREEN N2.k1 Enter ends the getkey: "Strange words" follows
+GREEN N3.k1 Enter does nothing else: no command, no prompt, no move
+GREEN N3.e1 and nothing of it surfaces after the scene: no prompt waiting, awake in the castle
+GREEN N2.k2.0 the getkey for a letter (K = Klimb)
+GREEN N2.k2 a letter (K = Klimb) ends the getkey: "Strange words" follows
+GREEN N3.k2 a letter (K = Klimb) does nothing else: no command, no prompt, no move
+GREEN N3.e2 and nothing of it surfaces after the scene: no prompt waiting, awake in the castle
+GREEN N2.k3.0 the getkey for the trackball (a move)
+GREEN N2.k3 the trackball (a move) ends the getkey: "Strange words" follows
+GREEN N3.k3 the trackball (a move) does nothing else: no command, no prompt, no move
+GREEN N3.e3 and nothing of it surfaces after the scene: no prompt waiting, awake in the castle
+GREEN N2.k4.0 the getkey for Mic
+GREEN N2.k4 Mic ends the getkey: "Strange words" follows
+GREEN N3.k4 Mic does nothing else: no command, no prompt, no move
+GREEN N3.e4 and nothing of it surfaces after the scene: no prompt waiting, awake in the castle
+GREEN N3.b0 the getkey
+GREEN N3.b1 three keys in one frame end the one getkey; they and 30 more cut no hold ("Vertigo..." +2545, want 2545)
+GREEN N3.b2 none of them surfaces afterwards as a command or a prompt
+GREEN N9.1 forty keys pressed during the scene's busy loops: the getkey still waits for its own key
+GREEN N6.0 the getkey
+GREEN N6.1 the menu opens over the getkey; nothing is released behind it or by its keys; closed, it still waits
+GREEN N6.2 then one key releases the next line, and only it
+GREEN N6.3 the menu during the slumber: nothing behind it; the shout still waits out the melody (+10075)
+GREEN N7.0 the getkey
+GREEN N7.1 the loaded game: no scene, no getkey, the party as saved
+GREEN N7.2 nothing of the Refuge replays over it; no resurrection applied
+GREEN N7.3 a wipe after the load plays the whole Refuge again (not an instant resurrection); key at 41365
+GREEN N7F.0 the getkey
+GREEN N7F.1 a load that fails leaves the getkey waiting
+GREEN N7F.2 and one key goes on with the scene
+GREEN N8.0 the getkey (a save was made before the wipe)
+GREEN N8.1 Continue shows the saved game: no scene, no stale getkey
+GREEN N8.2 and nothing of the Refuge replays later
+GREEN N9.2 unpaced, the whole Refuge drains with the turn, no key needed, and resolves
+a3_hf9_refuge_cadence_runtime: 61 checks, 0 failures
+
+# Control: HEAD:game/src/core/game.ts (the old script) against the working tree native quest_driver
+## quest_parity with HEAD:game/src/core/game.ts: exit 8
+    1/1 Test #139: quest_parity .....................***Failed    4.73 sec
+     if(!isDeepStrictEqual(actual[i],expected[i])) {writeFileSync(dir+'/mismatch.json',JSON.stringify({input:inputs[i],expected:expected[i],actual:actual[i]},null,2));throw new Error(`Quest mismatch ${i}: ${inputs[i].op}`);}
+    Error: Quest mismatch 5147: world-flow
+    0% tests passed, 1 tests failed out of 1
+    	139 - quest_parity (Failed)
+## quest_parity with the working tree game.ts: exit 0
+    1/1 Test #139: quest_parity .....................   Passed    4.68 sec
+    100% tests passed out of 1
+# control: old reference FAILS (pinned); new reference passes

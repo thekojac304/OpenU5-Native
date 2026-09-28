@@ -43,7 +43,9 @@
 //   (col5,row2). Confirmed in video-M f042 (black viewport, Avatar alone) and
 //   f058 (apparition top-centre, the two spectral figures bottom left/right,
 //   speech in quotes). Authority: re/notes/death-resurrection-audit.md section
-//   3 plus the BLCKTHRN.OVL 0x0910 disassembly.
+//   3 plus the BLCKTHRN.OVL 0x0910 disassembly. A3-HF9 (H-185): every beat
+//   holds for the original's own busy loop (refuge_beat_hold_ms), and one --
+//   the karma speech -- waits for a key instead (getkey 0x0b3e).
 //
 // STATE MUTATION ORDER. `check_refuge` deliberately mutates NOTHING: it emits
 // the script and latches `refuge_pending`. The revive, the karma floor, the
@@ -79,15 +81,31 @@ constexpr uint32_t kSceneFrameUnitMs = 55;
 static_assert(kSceneFrameUnitMs == kSceneTickMs, "the narrative unit IS the shared INT 1Ch tick");
 
 /**
- * Refuge cadence (Class C, calibrated against video-M): ms per RAW unit of the
- * original's `delay` (0x7e6a), plus a READING floor on beats that print a line
- * (so the line can actually be read) and a short one on the figure/sound
- * transitions, which in the original are nearly immediate. These are the same
- * three numbers the reference presenter uses (main.ts `runRefugeScene`).
+ * A3-HF9 (H-185 / D-42). Refuge cadence, from the bytes of party_refuge
+ * (BLCKTHRN 0x0910; near calls through base 0xA290). It replaces the Class-C
+ * cadence the reference presenter uses (70 ms per raw unit plus 900 / 260 ms
+ * reading floors, main.ts `runRefugeScene`), which no instruction backs.
+ * After a beat is shown the original blocks in exactly these, in this order:
+ *
+ *   delay(n) 0x7e6a -> 0x20fa               n BIOS ticks           [A]
+ *   tone_sweep 0x7f02 -> 0x2192             the slumber melody and
+ *                                           the revival tones       [B]
+ *   FIZZLE_IN 0x6dd8 -> 0x1068 and
+ *   RECT_DISSOLVE 0x6cb6 -> 0x0f46          render-bound, no timer:
+ *                                           the one-tick floor      [C -> D]
+ *   screen_shake_fx 0x8de2 -> 0x3072        the device's shake      [C]
+ *   getkey_with_redraw 0x83dc -> 0x266c     the karma speech's 0x0b3e: no
+ *                                           clock ends it, one key does
+ *
+ * The TS reference pins each beat's `delay` and `key_wait`; the holds are the
+ * device's own (RefugeBeat, quest_world.h), as they are for Blackthorn.
+ * PURE: how long the scene holds after `beat` (0 for the getkey beat).
  */
-constexpr uint32_t kRefugeUnitMs = 70;
-constexpr uint32_t kRefugeTextFloorMs = 900;
-constexpr uint32_t kRefugeSceneFloorMs = 260;
+struct RefugeBeat;
+uint32_t refuge_beat_hold_ms(const RefugeBeat &);
+/** screen_shake_fx (kernel 0x3072) as the device draws it: the quake's own
+ *  8 pulses of 117 ms (presentation.h), the rumble's length too.  [C] */
+constexpr uint32_t kRefugeShakeMs = uint32_t(kQuakePulses) * uint32_t(kQuakePeriodMs);
 
 /** Which scene is on stage. `Camp` is appended (Batch 51): ordinals are logged. */
 enum class NarrativeScene : uint8_t { None, TrollSneak, Refuge, Camp };
@@ -151,6 +169,9 @@ struct NarrativeSceneBeat {
     /** True for `messageAppend`: continues the line already on screen (the
      *  three dots of `$ sneaks across...`, 0x1c56-0x1c65). */
     bool append = false;
+    /** A3-HF9: the beat is a screen_shake_fx (kernel 0x3072) -- the Refuge's
+     *  two peals of thunder, 0x0acc / 0x0acf. The owner draws the shake. */
+    bool shake = false;
 };
 
 /** Where released beats go. Deferred turn events go to an ordinary EventSink. */
@@ -170,6 +191,8 @@ struct NarrativeSceneStep {
     RefugePhase phase = RefugePhase::None;
     NarrativeSceneStepKind kind = NarrativeSceneStepKind::Forward;
     bool append = false, has_text = false, has_sfx = false;
+    /** A3-HF9: shown, the beat waits for a key (getkey 0x266c), not a clock. */
+    bool key_wait = false, shake = false;
 };
 
 /** Caller-owned storage, so the pacer itself stays a small object. */
@@ -220,6 +243,16 @@ class NarrativeScenePacer {
     /** Tear the scene down unconditionally (mode change, load, reset). */
     void cancel();
 
+    /**
+     * A3-HF9. A key while a key-wait beat is on screen ends that one wait
+     * (true); the rest of the scene then plays on its own clock at the next
+     * pump. Any other time the key is swallowed (false): the busy loops the
+     * other beats stand for read no key, and a key is never kept for later.
+     */
+    bool advance_key();
+    /** True while a shown key-wait beat is waiting for its key. */
+    bool awaiting_key() const { return awaiting_key_; }
+
     bool active() const { return state_ != NarrativeScenePacerState::Idle; }
     /** Input other than transcript paging is swallowed while this is true. */
     bool modal() const { return active(); }
@@ -250,7 +283,7 @@ class NarrativeScenePacer {
     NarrativeScenePacerState state_ = NarrativeScenePacerState::Idle;
     size_t head_ = 0, count_ = 0, text_used_ = 0;
     uint32_t resume_at_ms_ = 0, released_ = 0, dropped_ = 0;
-    bool waiting_ = false, paced_ = true;
+    bool waiting_ = false, paced_ = true, awaiting_key_ = false;
 
     NarrativeSceneStep *push(NarrativeSceneStepKind);
     bool copy_text(const char *, uint32_t &offset, uint32_t &length);
