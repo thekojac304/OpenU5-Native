@@ -1,0 +1,39 @@
+image: build-a3-hf10-post\openu5_tdeck.elf
+
+_ZN6openu512_GLOBAL__N_1L11crc32_u16leEPKtj  @ 0x420681a4, 70 bytes
+  loop 0x420681b0..0x420681e0 (bltu a11, a3, 420681b0): body 18 instructions
+  innermost loop body:
+    0x420681b0: addx2 a8, a11, a2
+    0x420681b3: l16ui a8, a8, 0
+    0x420681b6: xor a10, a9, a8
+    0x420681b9: extui a10, a10, 0, 8
+    0x420681bc: l32r a12, 42041ef8
+    0x420681bf: addx4 a10, a10, a12
+    0x420681c2: l32i.n a10, a10, 0
+    0x420681c4: srli a9, a9, 8
+    0x420681c7: xor a10, a10, a9
+    0x420681ca: srli a8, a8, 8
+    0x420681cd: xor a8, a8, a10
+    0x420681d0: extui a8, a8, 0, 8
+    0x420681d3: addx4 a8, a8, a12
+    0x420681d6: l32i.n a9, a8, 0
+    0x420681d8: srli a10, a10, 8
+    0x420681db: xor a9, a9, a10
+    0x420681de: addi.n a11, a11, 1
+    0x420681e0: bltu a11, a3, 420681b0
+  per frame (176x176): the innermost body 18 x 30,976 pixels = 557,568 instructions = 2.3 ms at 240 MHz, 1 instruction/cycle
+  C1 no per-bit loop (table-driven): GREEN
+  C2 innermost loop body <= 24 instructions: GREEN (18)
+
+_ZN6openu512_GLOBAL__N_1L11expand_tileERA128_KhRA16_KtPtii  @ 0x420953b4, 92 bytes
+  loop 0x420953d8..0x42095404 (blti a9, 8, 420953d8): body 17 instructions
+  loop 0x420953c2..0x4209540b (bge a8, a12, 420953c2): body 28 instructions
+
+_ZN6openu515render_snapshotERKNS_21PresentationTileCacheERKNS_20PresentationSnapshotEmxPtjRNS_12RenderReportE  @ 0x42068d48, 609 bytes
+  loop 0x42068d91..0x42068d98 (bne a10, a8, 42068d91): body 4 instructions
+  loop 0x42068dd0..0x42068e2a (bge a8, a7, 42068dd0): body 33 instructions
+  loop 0x42068e60..0x42068e98 (bge a8, a7, 42068e60): body 20 instructions
+  loop 0x42068e94..0x42068e9f (bge a8, a6, 42068e94): body 6 instructions
+  loop 0x42068e44..0x42068ea7 (bltu a4, a8, 42068e44): body 36 instructions
+
+A3-04F image check: GREEN
