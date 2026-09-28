@@ -1,0 +1,6 @@
+# A3-HF10: the whole game/ vitest run, baseline (HEAD, before any edit) vs the working tree.
+
+HEAD: Tests 97 failed | 7517 passed (7720)
+TREE: Tests 97 failed | 7525 passed (7728)
+FAIL set: IDENTICAL
+

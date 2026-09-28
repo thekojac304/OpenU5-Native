@@ -178,6 +178,7 @@ import {
   type MixReagentPickerModel,
   type MixReagentRow,
 } from "./core/magic/mixReagentPicker.js";
+import { mixQuantityVerdict } from "./core/magic/mix.js";
 import { castSpell, applyMani, applyVasMani, applyCure, applyAwaken, applyResurrect, inWisPeerText, DEATH_VISION_FRAMES, type CastEffect } from "./core/magic/cast.js";
 import { PAUSE_UNIT_MS } from "./skin/world-fx.js";
 import { CombatRng, combatDistance } from "./core/combat/formulas.js";
@@ -4251,10 +4252,13 @@ async function boot(): Promise<void> {
           buffer: "",
           max: 2,
           submit: (n) => {
-            if (n <= 0) return; // N<=0: aborta en silencio (0x1b71)
-            if (selected.length === 0) { hud.message(t(MIX_UI.nothingToMix)); return; } // DS 0x9004 (0x1b78)
-            const short = selected.some((r) => (game.state.reagentQuantities[r] ?? 0) < n);
-            if (short) {
+            // A3-HF10: el orden exacto de 0x1a70/0x1b71/0x1b78 vive en `mixQuantityVerdict`
+            // (0 aborta sin comprobar; un marcado corto — o un "-N" — re-pregunta; N<0 con
+            // la máscara vacía aborta; máscara vacía → "Nothing to mix!").
+            const verdict = mixQuantityVerdict(n, selected, (r) => game.state.reagentQuantities[r] ?? 0);
+            if (verdict === "abort") return; // 0x1b71: en silencio
+            if (verdict === "nothing") { hud.message(t(MIX_UI.nothingToMix)); return; } // DS 0x9004 (0x1b78)
+            if (verdict === "insufficient") {
               hud.message(t(MIX_UI.insufficient)); // DS 0x8f7e
               arm(); // re-pregunta (0x1ac6)
               return;

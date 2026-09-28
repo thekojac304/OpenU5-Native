@@ -1,0 +1,5 @@
+# A3-HF10 mutation check: native mutants rebuild and run a3_hf10_mix_parity_runtime; TypeScript mutants run vitest tests/mix-hf10-quantity.test.ts tests/prompt-manager.test.ts
+M4 KILLED by 14 -- reject the correct recipe: every set is "wrong"
+    N2.1 N2.2 N2.3 N5.4 N6.2 N6.3 N6.4 N7.3 N7.4 N8.5 N11.1 N11.2 N12.6 N13.8
+# restored: a3_hf10_mix_parity_runtime 0 RED; vitest 0 failing
+# 1 killed, 0 survived, 0 invalid

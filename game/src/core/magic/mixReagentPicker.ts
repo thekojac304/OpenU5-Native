@@ -17,7 +17,8 @@
  *   · `main.ts`: aplica y republica la vista; la piel fiel reutiliza el overlay de
  *     lista de Ready (`ReadyPickerView`, marca = glifo en la separación).
  *
- * Cita: re/disasm/CMDS.OVL.asm 0x18be-0x1a6f; re/notes/mix-flow-acta.md §2-§3.
+ * Cita: CMDS.OVL 0x18be-0x1a6f; derivación en re/notes/mix-hf10-command-parity.md §2
+ * (A3-HF10: `re/notes/mix-flow-acta.md`, la cita anterior, no existe en el árbol).
  */
 import { MIX_ARROW_GLYPHS, MIX_UI } from "../world/cmd-strings.js";
 

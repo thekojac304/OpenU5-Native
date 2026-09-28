@@ -8,7 +8,22 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 A3-HF9, 2026-09-28) — the Refuge keeps the original's cadence and its karma speech waits for a key; Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 A3-HF10, 2026-09-28) — Mix is the original's again: the player marks the reagents and answers "How much?"; Alpha 2 remains the released build; read this first
+>
+> **A3-HF10 is a gameplay-parity hotfix, not a release** (`ALPHA3_AUDIO.md` §36), and the last gameplay-code batch before the Alpha 3 RC. HF5 … HF8 are hardware-validated; H-210 (HF9) is pending.
+> - **The defect (D-6 / D-70).** After the spell, the device's `M`ix filled the reagent mask from the spell's own recipe and always mixed one (`alpha_runtime.cpp`'s `Custom` arm). D-6 recorded the quantity; the reconciliation found the auto-recipe (D-70): a wrong set, and its chest trap, could never happen.
+> - **The original.** CMDS `0x1ad8`: "No reagents owned!" precheck; the picker `0x18be` (owned reagents, nothing marked, clamped arrows, RETURN/Space toggle, `M` mixes, ESC cancels silently); "How much?" `0x1a70` with the kernel getnum `0x3b9e` (2 characters, leading sign, ESC erases, only RETURN leaves); 0 aborts silently; a marked reagent short (unsigned) → "Insufficient reagents!" and ask again; empty mask → "Nothing to mix!"; then deduct `n` of every marked reagent; exact recipe → "Done!" + `n` (cap 99), else the trap.
+> - **Fix.** Two `UiSession` requests (`MixReagents`, `MixQuantity`) with those keys; the runtime keeps the spell and the marks until the answer and only then dispatches the core Mix (unchanged); `mix_quantity_short()` is `0x1a70`'s test; a load drops the pending Mix. The TypeScript reference's getnum and quantity order follow the binary (`mixQuantityVerdict`).
+>
+> | | |
+> |---|---|
+> | Host suite | **162 / 162**, serial, 152.76 s. New: `a3_hf10_mix_parity_runtime` 71 (**54 RED on HEAD**, the real runtime and Board, raw keys). **28 / 28 mutations killed** (23 native, 5 TypeScript; one first-pass INVALID rewritten). TypeScript: 8 new tests (8 RED on HEAD); vitest FAIL set identical to the baseline (97 pre-existing); `tsc` clean. |
+> | Firmware | `3.0.0-alpha3-dev-a3-hf10-debug`. Pre-commit build 988,320 B (`0xf14a0`), **+1,104 B**, 60,256 B (5.7 %) free, zero warnings. Flash `.text` +1,004, `.rodata` +96; `.data`, `.bss`, IRAM and PSRAM unchanged. Image guards GREEN. The image path, SHA-256 and `Git` are in tag `alpha3-hf10-mix-parity`. **Not flashed.** |
+> | SD | **Unchanged.** Save format unchanged. |
+> | New, queued | **D-71:** Mix presentation residue (the 10-tick wait after "Mixing...", the "Mix Reagents" echo, the console footer, the typed spell name). Not fixed. |
+> | Next | **H-213** (about 5 minutes, with H-210 / H-203 / H-204 in one session). Then **Alpha 3 RC preparation / tracker reconciliation** — no further gameplay defect batch. |
+>
+> ### CURRENT STATE (Alpha 3 A3-HF9, 2026-09-28) — the Refuge keeps the original's cadence and its karma speech waits for a key — **superseded as the current state by A3-HF10 above.**
 >
 > **A3-HF9 is a presentation hotfix, not a release** (`ALPHA3_AUDIO.md` §35). **H-208 (A3-HF8) PASSED on the T-Deck** (the user's report): HF5 … HF8 are hardware-validated.
 > - **The defect (H-185 / D-42, queued since Batch 51).** The Refuge ran on a Class-C clock (70 ms per unit + 900 / 260 ms floors) that no instruction backs, and Lord British's karma speech left the screen by itself where the original waits for a key. The reference script (which `quest_parity` pins) had the first `delay(10)` after the darkness line and three invented delays.

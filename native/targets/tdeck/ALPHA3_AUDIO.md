@@ -1,4 +1,6 @@
-# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap, A3-05 audio finalization, A3-HF4 load transient reset, A3-HF5 dialogue pacing, A3-HF6 shrine key waits, A3-HF7 ritual effects, A3-HF8 sacrifice burst, A3-HF9 Refuge cadence)
+# Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap, A3-05 audio finalization, A3-HF4 load transient reset, A3-HF5 dialogue pacing, A3-HF6 shrine key waits, A3-HF7 ritual effects, A3-HF8 sacrifice burst, A3-HF9 Refuge cadence, A3-HF10 Mix command parity)
+
+**Status (A3-HF10, 2026-09-28): MIX IS THE ORIGINAL'S AGAIN — THE PLAYER MARKS THE REAGENTS AND ANSWERS "HOW MUCH?" (D-6 / D-70) — FIXED ON THE HOST; HARDWARE CHECK H-213 PENDING (with H-210).** §36. The A3-HF9 status follows.
 
 **Status (A3-HF9, 2026-09-28): THE REFUGE KEEPS THE ORIGINAL'S CADENCE, AND LORD BRITISH'S KARMA SPEECH WAITS FOR A KEY (H-185 / D-42) — FIXED ON THE HOST; HARDWARE CHECK H-210 PENDING. H-208 PASS (A3-HF8).** §35:
 - **The defect:** the Refuge ran on a Class-C clock no instruction backs (70 ms per unit + 900 / 260 ms floors), with the first `delay(10)` misplaced and three invented delays; the karma speech left by itself after ~1.5 s.
@@ -5135,3 +5137,99 @@ The check is in `ALPHA2_HARDWARE_CHECKLIST.md`: `Alt+S`; Developer → Party siz
 - Reference: `game/src/core/game.ts` (`waitKey`, the script), `game/src/main.ts` (the presenter's key wait), `game/tests/trapdoor-fall.test.ts` (#112).
 - Tests and tools: new `native/core/tests/a3_hf9_refuge_cadence_test.cpp`, `native/targets/tdeck/host_tests/a3_hf9_refuge_cadence_runtime_test.cpp`, `native/core/tools/a3_hf9_{red_first,mutation_check}.py`; changed `native/core/CMakeLists.txt`, `tests/batch7b_test.cpp`, `tests/{quest,gameplay}_driver.cpp` (`waitKey`), `host_tests/a3_03_sfx_runtime_test.cpp`.
 - Docs: this section and the status line; `ALPHA2_HARDWARE_CHECKLIST.md` (H-185, H-208 PASS, H-210); `ALPHA2_PRESERVATION_LEDGER.md` (D-42, D-43, D-68, D-69); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`; `re/notes/death-resurrection-audit.md`, `re/notes/tpk-112-acta.md`.
+
+## 36. A3-HF10 — Mix: the player marks the reagents and answers "How much?" (D-6 / D-70)
+
+The last gameplay-code batch before the Alpha 3 RC, from the 2026-09-28 reconciliation. The device's `M`ix chose the reagents for the player (the spell's own recipe) and always mixed one; the 1988 command lets the player mark the reagents by hand, asks "How much?", and punishes a wrong set.
+
+### 36.1 Baseline
+
+- `main` at `5a0b6607` (tag `alpha3-hf9-refuge-cadence` = `4802262f`, plus its post-commit evidence), clean tree. Serial suite in a fresh `native/core/build-a3-hf10`: **161 / 161, 151.98 s** (`native/core/a3-hf10-baseline.log`). TypeScript: the whole `game/` vitest run, **97** pre-existing failures, 7,517 passed (`native/core/a3-hf10-ts-base-fails.txt`, the FAIL set).
+- Firmware `3.0.0-alpha3-dev-a3-hf9-debug`, 987,216 B (`0xf1050`), 61,360 B free. HF5 … HF8 hardware-validated; H-210 (HF9) pending.
+
+### 36.2 The original command
+
+Derived from the binaries with `re/tools/dis16.py` (CMDS near calls through `0xBF80`); the full derivation is `re/notes/mix-hf10-command-parity.md`.
+
+| Offset | What |
+|---|---|
+| CMDS `0x1ae0`–`0x1afa` | the eight reagent counts summed; none → "No reagents owned!" (DS `0x8f98`), return |
+| `0x1b06` | "For what spell?\n:" (DS `0x8fac`), the spell name (getstring); ESC → "None!" |
+| `0x1b1e`–`0x1b5a` | console footer: CP437 arrows + " to move, / RETURN selects. / Type M to mix:" (DS `0x8fc6`) |
+| `0x18be` (picker) | rows = the reagents with a non-zero count, id order, `" NN NAME"` (two `'0'`-filled digits); mask starts at 0; up/left and down/right move a **clamped** cursor; RETURN **or** Space toggles `0x80 >> id` and redraws the mark (`0x0f` / blank); `M` returns the mask (getkey upper-cases, so `m` too); ESC returns −1; every other key (backspace included) is re-read |
+| `0x1b63` | mask < 0 → end, **no message** |
+| `0x1a70` (quantity) | "How much? " (DS `0x8f72`); `n = getnum(2)`; `n == 0` → return 0 at once; for each MARKED reagent, count < `n` compared **unsigned** (`0x1aa5 jae`) → "Insufficient reagents!" (DS `0x8f7e`) and the question again (`0x1ac6`). Nothing is spent here |
+| kernel `0x3b9e` (getnum) | at most 2 characters; digits; `+`/`-` only as the first character (it takes a slot); backspace deletes one (on empty: ignored); **ESC erases the buffer and keeps reading** (on empty: ignored) — no cancel, only RETURN leaves. So 0…99 or −9…+9. RETURN on an empty buffer reads a never-written stack byte (residue; see §36.6) |
+| `0x1b71` | `n <= 0` → end, **no message** |
+| `0x1b78` | mask 0 → "Nothing to mix!" (DS `0x9004`) |
+| `0x1b81`–`0x1b9c` | "Mixing..." (DS `0x8ff0`), then a 10-tick wait |
+| `0x1b9f`–`0x1bba` | `n` subtracted from **every marked** reagent — before the recipe test |
+| `0x1bc2`–`0x1bf3` | spell ≥ 0 and `recipe[0x1cc0 + spell] == mask` (exact) → "Done!" (DS `0x8ffc`), `spell += n`, capped at 99 |
+| `0x1bf6`–`0x1c04` | otherwise the chest trap on the first conscious member (kernel `0x2fd0`, `re/notes/mix-trap-105-acta.md`) |
+
+So: an extra reagent, a missing one and a wrong one are all "wrong" (spent, no charge, the trap); there is no check that the party owns the recipe (an unowned reagent is just not a row); `M` with nothing marked still asks the quantity, then prints "Nothing to mix!"; a negative answer with anything marked is always "Insufficient reagents!"; nothing mutates before a valid answer; the reagents are spent in full even when the charge caps at 99.
+
+**Reference (TypeScript).** `mixReagentPicker.ts` (picker) and `mix.ts mixSelected` (deduct, exact mask, trap) already matched the binary; `main.ts askMixQuantity` + `prompt-manager.ts` did not in four details: ESC and backspace-on-empty **cancelled** the question (the kernel erases / ignores), a leading sign was refused, and a negative answer could not exist. The binary is followed (§36.4).
+
+### 36.3 The native defect
+
+Path: `'m'` (`ui_session.cpp`, `handle_exploration`) → `OpenSpellSelection(Custom)` → `AlphaRuntime::open_selection(SpellSelection, Custom)` (all 48 spells) → the pick → `AlphaRuntime::modal()`'s `Custom` arm → `CommandKind::Mix` → `commands.cpp` (the core Mix: "Nothing to mix!", "Insufficient reagents!", "Mixing...", deduct the mask, exact recipe → "Done!" + cap 99, else the trap).
+- The core already implemented `0x1b71`…`0x1c04` with `Command::reagent_mask` and `Command::hours`, and `gameplay_parity` drives it with arbitrary masks and quantities.
+- The `Custom` arm set `c.reagent_mask = spell_definition(spell)->reagents` and `c.hours = 1` and dispatched at once (D-6, D-70). So no picker, no "How much?", a wrong set was impossible (the trap unreachable), and no "No reagents owned!" precheck (the spell list opened with no reagents; the core then refused with "Insufficient reagents!").
+- Save/load: nothing of Mix is in the save; a picker open at a load was already closed by HF4's reset.
+
+### 36.4 The fix
+
+The smallest change that reuses the device's selection and numeric-entry modals:
+- **`UiSession`** (`ui_session.{h,cpp}`): two request ids appended after `Custom` — `MixReagents`, `MixQuantity`. For `MixReagents` the selection keys are `0x18be`'s: clamped arrows, Confirm or Space → `ModalResponse{index = row}` (a toggle), `M`/`m` → `ModalResponse{yes}`, Cancel → the ordinary cancel, everything else (Back included) swallowed. For `MixQuantity` the numeric entry is the kernel getnum: Cancel/Back erase the buffer and keep the question, `+`/`-` accepted as the first character, the parse honours the sign. The generic pickers and numeric prompts are unchanged.
+- **Core** (`magic.{h,cpp}`): `mix_quantity_short(game, mask, n)` — `0x1a70`'s test (0 never short; marked reagents only; unsigned 16-bit). The core Mix command is unchanged.
+- **Device** (`alpha_runtime.{h,cpp}`): the `Custom` arm records `pending_mix_spell_` and opens `open_mix_reagents(0)` (the owned reagents, `"%02d %c %s"` with `*` for a mark, title `Reagents:`, `Mix: <spell>`, legend `Enter Mark|M Mix|Mic`); a toggle flips `pending_mix_mask_` and reopens on the same row; `M` asks `begin_number(MixQuantity, "How much? ", -9, 99, 2)`; the answer is re-asked with "Insufficient reagents!" when `mix_quantity_short`, dropped when `n <= 0`, else dispatched as `Mix{spell, hours = n, mask}`. `OpenSpellSelection(Custom)` prints "No reagents owned!" and opens nothing when every count is 0. `reset_transient_after_load()` and the cancel path clear the pending Mix; the transient probe counts it.
+- **Reference** (`game/`): `prompt-manager.ts` number prompt = the kernel getnum (ESC erases, backspace-on-empty ignored, leading sign, signed parse; the unused `cancel` hook removed); `mix.ts mixQuantityVerdict()` (the order of `0x1a70` → `0x1b71` → `0x1b78`, unsigned test) used by `main.ts askMixQuantity`; the picker's citation now points at the new note. No fixture changes: the Mix mechanic the fixtures pin is untouched.
+
+### 36.5 State ordering, input, load
+
+- **Ordering (locked by N2 … N11):** the spell, the marks, `M` and the answer mutate nothing; "Insufficient reagents!" mutates nothing; only a valid answer reaches the core, which prints "Mixing...", deducts `n` of each marked reagent, then charges (exact) or springs the trap (wrong). Cancel at either step mutates nothing.
+- **Input:** picker and question are modal — letters, digits and the trackball neither move the party nor run a command nor echo (N12); the cursor clamps; the next `m` after a mix is a fresh command; Mix spends no turn (unchanged).
+- **Load:** a successful load at the picker or at "How much?" leaves no picker, question or pending spell, and the keys after it are Explore's (N13.1–N13.6); a failed load ("No valid save") leaves the question where it was, and its answer still mixes with the earlier marks (N13.7–N13.8).
+
+### 36.6 Declared, and not changed
+
+- **Declared:** the spell is chosen from the device's list (as Cast), not typed by its initials; the picker's legend is on its context bar, not the three console lines; the mark is `*`, not `0x0f`; RETURN on an empty "How much?" is 0 (the binary reads a stack byte never written by getnum — residue, not modelled, as the reference).
+- **Queued, not fixed — D-71 (new):** the 10-tick wait after "Mixing..." (`0x1b88`), the dispatcher echo "Mix Reagents" (DS `0xa1b4`, the device echoes "Mix"), the console footer, and the typed spell name. Presentation only.
+- Unchanged: D-4 (Mix underground), spell effects, recipes, Cast, combat magic, shops, the save format.
+
+### 36.7 Tests, RED / GREEN and mutations
+
+- **`a3_hf10_mix_parity_runtime`** (new, 71 checks): the real `AlphaRuntime` with raw keys, drawn on the real `tdeck_board.cpp` over the fake ST7789 (bus untimed). N1 the picker (and on the GRAM: title, `>` cursor, no mark, a mark on RETURN, Space unmarks); N2 exact recipes (one and two reagents, either order); N3 wrong, extra, missing marks (spent, no charge, the trap); N4 an unowned reagent is no row, and "No reagents owned!"; N5 "How much?" (the context bar on the GRAM changes with the question and the digit); N6 ×3, ×12, "123" = 12, the redrawn count; N7 "Insufficient reagents!" re-asks and mutates nothing, only marked reagents count; N8 0, empty, letters, `-5`, `+3`, the empty mask; N9 cancel at the picker (backspace ignored, marks gone); N10 ESC erases, backspace, RETURN on nothing; N11 the 99 cap; N12 leakage; N13 successful and failed loads; N14 Cast, Use, Ready (wraps) and Hole up (Mic still cancels) unchanged.
+- **`game/tests/mix-hf10-quantity.test.ts`** (new, 8 tests): `mixQuantityVerdict` and the getnum prompt.
+- **RED-first** (`native/core/tools/a3_hf10_red_first.py`: HEAD's `ui_session.{h,cpp}`, `magic.{h,cpp}`, `alpha_runtime.{h,cpp}`, no shim — the test uses only pre-HF10 APIs): **54 / 71 RED** on HEAD; GREEN on HEAD (17): the neighbours N14.1–N14.5 and the load cleanup HF4 already gives (N13.1–N13.4), as controls; "nothing before the answer" (N5.2, N7.2) and "a fresh Mix" (N12.7, N12.8), trivially true when nothing is ever asked; and N2.2, N2.4, N12.6, N13.8, which HEAD passes by its own auto-mix of In Lor ×1 at the spell pick (coincidence, not behaviour). After the change **71 / 71**. TypeScript: HEAD's `prompt-manager.ts`, `mix.ts`, `main.ts` → **8 / 22 failing** (the two files); tree 22 / 22 (`native/core/a3-hf10-red-first.log`).
+- **Mutations** (`native/core/tools/a3_hf10_mutation_check.py`, 23 native + 5 TypeScript): **28 / 28 killed, 0 survivors, restored GREEN** (`native/core/a3-hf10-mutation-first-pass.log`, `a3-hf10-mutation-m4.log`). M1 no picker, M2 the recipe pre-marked, M3 an overlapping set accepted, M4 the exact set rejected, M5 the wrong reagent's bit, M6 one reagent spent whatever `n`, M7 one charge whatever `n`, M8 no question, M9 `n` read and ignored, M10 no shortage test (device and core), M11 a mark spends, M12 ESC mixes, M13 a non-modal picker, M14 a load keeps the pending Mix, M15 a wrapping cursor, M16 Space inert, M17 ESC cancels "How much?", M18 no sign, M19 the sign ignored, M20 a signed shortage test, M21 unmarked reagents tested, M22 no precheck, M23 backspace cancels; T1 ESC cancels, T2 no sign, T3 signed, T4 unmarked read, T5 0 tested. The first pass had one INVALID mutant (M4's `cmd.item < 0` guard tripped `-Werror=array-bounds` in the core); rewritten as a mask mismatch and re-run alone.
+
+### 36.8 Regression
+
+Fresh `native/core/build-a3-hf10-final`: **162 / 162, serial, 152.76 s** (A3-HF9's 161 plus the new test), with only the known w64devkit `-Wstringop-overflow` warning (`native/core/a3-hf10-{configure,build,ctest}.log`).
+- HF9 … HF5 unchanged (the same counts as recorded): `a3_hf9_refuge_cadence_runtime` 61 / 61, `a3_hf9_refuge_cadence` 43 / 43, `a3_hf8_sacrifice_burst_runtime` 51 / 51, `a3_hf7_ritual_fx_runtime` 48 / 48, `a3_hf7_ritual_fx` 23 / 23, `a3_hf6_shrine_key_wait_runtime` 48 / 48, `a3_hf6_shrine_key_wait_pacer` 15 / 15, `a3_hf5_dialogue_pacing_runtime` 50 / 50, `a3_hf5_dialogue_pacer` 14 / 14; `a3_hf4_load_transient_runtime` 85 / 85 (its L1 opens the Mix spell list and loads, unchanged).
+- Mix / magic / prompt neighbours in the suite: `gameplay_parity` and `command_parity` (they drive the core Mix with arbitrary masks and quantities; the core is unchanged), `quest_parity`, `batch19_command_char_regression` (Cast's caster picker), `typescript_magic_fixture_drift`, `batch28_save_validation`, `batch53_release_blockers` — all GREEN.
+- **TypeScript:** `tsc --noEmit` clean. The whole `game/` vitest run: **97** failures, the SAME set as the baseline (none Mix-related; `mix-flow-presentation`'s LF-anchor test is one of them), 7,525 passed (+8, the new file) (`native/core/a3-hf10-ts-vitest.log`). The Mix files (`mix-hf10-quantity`, `prompt-manager`, `mix-reagent-picker`, `magic`, `espejo-key-leak`) pass. `main.ts askMixQuantity`'s wiring has no unit test of its own (the browser entry point; e2e not run); its logic is `mixQuantityVerdict`, which is tested.
+
+### 36.9 Firmware
+
+Pre-commit build `native/targets/tdeck/build-a3-hf10` (`a3-hf10-firmware-{configure,build}.log`): ESP-IDF 6.1, `--no-ccache`, `ninja -j 4`, first attempt clean, **zero project warnings**.
+
+- **`0xf14a0` = 988,320 B, +1,104 B** against A3-HF9's 987,216 B; **60,256 B (5.7 %) free** in the 1 MiB app partition.
+- **Sections** against A3-HF9's post-commit image (`esp_idf_size --diff`, `a3-hf10-size-diff.log`; per object `a3-hf10-size-files-diff.log`; absolute `a3-hf10-size.log`): Flash `.text` **+1,004 B** (669,770 B) — `alpha_runtime.cpp` +633 (the Mix arms, `open_mix_reagents()`, the panel text), `ui_session.cpp` +348 (the picker and getnum keys), `magic.cpp` +52 (`mix_quantity_short`); `.rodata` **+96 B** (219,460 B), the new strings. Unchanged: DIRAM `.data` 21,627 B, `.bss` 51,968 B, DIRAM `.text` 60,647 B, IRAM 16,384 B (full, as before).
+- **RAM.** Internal: unchanged (the runtime's two new members, `int16_t` + `uint8_t`, sit in existing padding of the static `AlphaRuntime`; `.bss` identical). **PSRAM unchanged.** No new heap allocation: the picker reuses the runtime's selection rows.
+- **Image guards GREEN:** `a3_04f_image_check.py`, `a3_04b_iram_check.py`, `a3_04a_hotpath_check.py` (`a3-hf10-{image,iram,hotpath}-check.log`). Nothing on the audio path changed.
+- Version `3.0.0-alpha3-dev-a3-hf10-debug`. **Not flashed.** Tag `alpha3-hf10-mix-parity` names the post-commit image (built in a fresh directory, so it embeds the commit), with its path, size, SHA-256 and `Git`.
+
+### 36.10 Hardware check H-213 (the user's; about 5 minutes)
+
+In `ALPHA2_HARDWARE_CHECKLIST.md`: `Alt+S`; Developer → Reagents: Ginseng 9, Spider Silk 9; `M` → Mani: the list with nothing marked; mark both; `M`, `3`: Ginseng and Spider Silk 06, Mani +3; a wrong set (the trap); `9` → "Insufficient reagents!"; Mic at the question and at the picker; optionally a load mid-question. H-213 is the next free ID (H-209 … H-212 are taken). The A3-HF10 image carries A3-HF9 unchanged, so H-213 can share a session with H-210, H-203 and H-204.
+
+### 36.11 Files
+
+- Core: `native/core/include/openu5/ui_session.h`, `src/ui_session.cpp` (the two request ids, the picker and getnum keys), `include/openu5/magic.h`, `src/magic.cpp` (`mix_quantity_short`).
+- Device: `native/targets/tdeck/main/alpha_runtime.{h,cpp}` (the Mix arms, the picker rows and panel text, the precheck, the load reset); `native/targets/tdeck/CMakeLists.txt` (`PROJECT_VER`).
+- Reference: `game/src/ui/prompt-manager.ts`, `game/src/core/magic/mix.ts`, `game/src/main.ts`, `game/src/core/magic/mixReagentPicker.ts` (citation).
+- Tests and tools: new `native/targets/tdeck/host_tests/a3_hf10_mix_parity_runtime_test.cpp`, `game/tests/mix-hf10-quantity.test.ts`, `native/core/tools/a3_hf10_{red_first,mutation_check}.py`; changed `native/core/CMakeLists.txt`.
+- Docs: this section and the status line; `ALPHA2_PRESERVATION_LEDGER.md` (D-6, D-70, D-71); `ALPHA2_HARDWARE_CHECKLIST.md` (H-53 note, H-213); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`; new `re/notes/mix-hf10-command-parity.md`, `re/notes/cmds.md` §12 pointer.

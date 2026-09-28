@@ -60,11 +60,13 @@ export type PendingPrompt =
   // CMDS 0x1418, ceremonia CAST2 0x09cc, rumor de taberna) NO lo ponen y conservan
   // su `cancel` declarado.
   | { type: "text"; prefix: string; buffer: string; max: number; resolve: (text: string) => void; cancel?: () => void; escKernel?: boolean }
-  // getstring NUMÉRICO de consola (cantidad de Mix "How much?"): sólo dígitos,
-  // ecoados en vivo tras el prefijo hasta `max` dígitos (CMDS.OVL 0x7c1e con
-  // arg 2 → 2 dígitos, tope 99). Enter envía (buffer vacío → 0); ESC / backspace-
-  // en-vacío cancelan (equiv. a 0). Réplica del getnum de `mix_quantity` (0x1a70).
-  | { type: "number"; prefix: string; buffer: string; max: number; submit: (n: number) => void; cancel?: () => void }
+  // getnum de consola (cantidad de Mix "How much?"; CMDS 0x7c1e → kernel 0x3b9e,
+  // arg 2): dígitos ecoados en vivo hasta `max` caracteres; un '+'/'-' SÓLO como
+  // primer carácter (0x3be2, ocupa una casilla). Enter envía (vacío → 0). ESC
+  // BORRA el buffer y sigue leyendo (0x3c0e) y backspace-en-vacío se ignora: el
+  // getnum NO tiene cancelación, sólo Enter sale (A3-HF10,
+  // re/notes/mix-hf10-command-parity.md §4). Réplica del de `mix_quantity` (0x1a70).
+  | { type: "number"; prefix: string; buffer: string; max: number; submit: (n: number) => void }
   // getstring RÚNICO de consola (Cast/Mix): se teclea la INICIAL de cada sílaba
   // (A-Z, salvo J/O que no tienen runa) y se ecoa la palabra rúnica completa en
   // MAYÚSCULAS ("I"→"IN", "L"→"LOR"); máx 4 sílabas. Enter/Space envía, Backspace
@@ -171,26 +173,30 @@ export class PromptManager {
       return true;
     }
     if (p.type === "number") {
-      // getnum de consola (cantidad de Mix, CMDS.OVL 0x7c1e): sólo dígitos
-      // ecoados en vivo hasta `max`. Enter envía (buffer vacío → 0, que Mix trata
-      // como abortar; 0x1b71 `jle`); ESC y backspace-en-vacío cancelan (≡ 0).
+      // getnum del kernel (0x3b9e; cantidad de Mix vía CMDS 0x7c1e): dígitos
+      // ecoados en vivo hasta `max`; '+'/'-' sólo en la 1ª casilla (0x3be2). Enter
+      // envía: vacío (o un signo solo) → 0, que Mix trata como abortar (0x1b71).
+      // ESC borra lo tecleado y SIGUE leyendo (0x3c0e; en vacío no hace nada) y
+      // backspace-en-vacío se ignora (0x3c00): no hay tecla de cancelar (A3-HF10).
       if (ev.key === "Enter") {
         this._current = null;
-        p.submit(p.buffer === "" ? 0 : Number(p.buffer));
+        const digits = p.buffer.replace(/^[+-]/, "");
+        const n = digits === "" ? 0 : Number(digits);
+        p.submit(p.buffer.startsWith("-") ? -n : n);
       } else if (ev.key === "Escape") {
-        this._current = null;
-        hud.echoSetLast(p.prefix); // deja el eco sin cursor colgando
-        p.cancel?.();
-      } else if (ev.key === "Backspace") {
-        if (p.buffer.length === 0) {
-          this._current = null;
+        if (p.buffer.length > 0) {
+          p.buffer = "";
           hud.echoSetLast(p.prefix);
-          p.cancel?.();
-        } else {
+        }
+      } else if (ev.key === "Backspace") {
+        if (p.buffer.length > 0) {
           p.buffer = p.buffer.slice(0, -1);
           hud.echoSetLast(p.prefix + p.buffer);
         }
-      } else if (/^[0-9]$/.test(ev.key) && p.buffer.length < p.max) {
+      } else if (
+        p.buffer.length < p.max &&
+        (/^[0-9]$/.test(ev.key) || ((ev.key === "+" || ev.key === "-") && p.buffer.length === 0))
+      ) {
         p.buffer += ev.key;
         hud.echoSetLast(p.prefix + p.buffer);
       }

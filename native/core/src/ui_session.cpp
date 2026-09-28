@@ -644,6 +644,20 @@ bool UiSession::handle_modal(const UiAction &a) {
         return true;
     }
     if (mode_ == UiMode::TextEntry || mode_ == UiMode::NumericEntry) {
+        if (mode_ == UiMode::NumericEntry && request_ == UiRequestId::MixQuantity) {
+            // A3-HF10. Mix's "How much? " is kernel getnum 0x3b9e: ESC (0x3c0e)
+            // erases the answer and keeps reading -- on an empty answer it does
+            // nothing -- so RETURN is the only way out; a '+' or '-' is taken
+            // as the FIRST character only (0x3be2) and uses one of the slots.
+            if (a.kind == UiActionKind::Cancel || a.kind == UiActionKind::Back) {
+                input_length_ = 0; input_[0] = 0;
+                return true;
+            }
+            if (a.kind == UiActionKind::Character && (a.character == u'+' || a.character == u'-')) {
+                if (!input_length_ && input_limit_) { input_[input_length_++] = a.character; input_[input_length_] = 0; }
+                return true;
+            }
+        }
         if (mode_ == UiMode::NumericEntry && request_ == UiRequestId::RestHours && camp_eligible_) {
             // Kernel 0x3ddc/0x3de5: zero or Space abandons Camp before any
             // watch choice, turn, or random draw. Escape is the device Cancel.
@@ -656,7 +670,11 @@ bool UiSession::handle_modal(const UiAction &a) {
         if (a.kind == UiActionKind::Confirm) {
             if (mode_ == UiMode::NumericEntry) {
                 int64_t n = 0;
-                for (size_t i = 0; i < input_length_; ++i) n = n * 10 + (input_[i] - u'0');
+                size_t i = 0;
+                const bool negative = input_length_ && input_[0] == u'-';
+                if (input_length_ && (input_[0] == u'-' || input_[0] == u'+')) i = 1; // MixQuantity only
+                for (; i < input_length_; ++i) n = n * 10 + (input_[i] - u'0');
+                if (negative) n = -n;
                 n = std::max<int64_t>(number_min_, std::min<int64_t>(number_max_, n));
                 finish_modal(true, false, int32_t(n));
             } else finish_modal(true);
@@ -697,6 +715,23 @@ bool UiSession::handle_modal(const UiAction &a) {
     }
     if (is_selection(mode_)) {
         const auto count = selection_.count ? selection_.count(selection_.context) : 0;
+        if (request_ == UiRequestId::MixReagents) {
+            // A3-HF10. CMDS 0x18be: the arrows move a CLAMPED cursor (0x19b2 /
+            // 0x19d0), RETURN or Space toggles the row under it (0x19ee), 'M'
+            // mixes (0x19e0; getkey upper-cases), ESC cancels (0x1a2e); every
+            // other key, backspace included, is read and dropped (0x1a50).
+            if (a.kind == UiActionKind::Cancel) cancel_modal();
+            else if (count && a.kind == UiActionKind::Direction) {
+                const bool down = a.direction == Direction::South || a.direction == Direction::East;
+                if (down && selection_cursor_ + 1 < count) ++selection_cursor_;
+                else if (!down && selection_cursor_ > 0) --selection_cursor_;
+            } else if (count && (a.kind == UiActionKind::Confirm ||
+                                 (a.kind == UiActionKind::Character && a.character == u' ')))
+                finish_modal(true, false, 0, int32_t(selection_cursor_));
+            else if (a.kind == UiActionKind::Character && (a.character == u'm' || a.character == u'M'))
+                finish_modal(true, true);
+            return true;
+        }
         if (request_ == UiRequestId::CampGuard && a.kind == UiActionKind::Character) {
             if (a.character == 27) { cancel_modal(); return true; }
             if (a.character >= u'1' && a.character <= u'9') {

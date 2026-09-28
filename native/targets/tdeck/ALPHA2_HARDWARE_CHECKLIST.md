@@ -141,7 +141,7 @@ In Nox Grav field, and In \*Grav seeding **no** field in a combat arena.
 | H-145 | Party of 2+, **no** active player | `S`earch a direction, then `C`ast | **both** raise the same `Player: ` picker. `S` asks **after** the direction; `C` asks **before** the spell list. Cancelling either prints `None!` and abandons the command (no search result, no spell menu). With an active player set, **neither** asks | per command | `None!` | PASS (Batch 20, hardware) — retested with a healthy party of 2+ |
 | H-51 | Cast Wis An Ylem, or read an In Quas Wis scroll | observe | the map reveals for ~1.1 s and input is swallowed for the same window (R-12) | 1 turn | — | INCONCLUSIVE — likely test-location confound (Batch 20, hardware, `a357e28c…`). Tester saw the ceremony flash and cast confirmation but no visible map change. Code-verified real: `alpha_runtime.cpp:396` arms a timed window, and `presentation.cpp:76-77` force-fills the entire visibility buffer to "visible" during that window, overriding normal line-of-sight — a real, meaningful effect, but only visible where sightlines are normally obstructed. Tested near an open area (Lycaeum) where LOS may already be unobstructed, so there was nothing extra to reveal. Needs retest somewhere with normally blocked sightlines (forest/hills) |
 | H-52 | `U`se the Spyglass at night | observe | the zodiac view draws stars/signs/Shadowlord lines and closes on any key, charging no turn (R-13). *Expected residual: the view is clipped by the 9 px strips — D-12* | none | any key | PASS (Batch 20, hardware, `a357e28c…`) |
-| H-53 | Any party | `M`ix a spell | the spell list opens and the mix resolves. *Expected residual: quantity is always 1 — D-6* | reagents spent | — | PASS (Batch 20, hardware, `a357e28c…`) |
+| H-53 | Any party | `M`ix a spell | the spell list opens and the mix resolves. *Expected residual: quantity is always 1 — D-6* **(A3-HF10: superseded — the reagents are now marked by hand and the quantity asked; Phase H-213)** | reagents spent | — | PASS (Batch 20, hardware, `a357e28c…`) |
 
 ---
 
@@ -1503,3 +1503,45 @@ Flash the A3-HF9 Launcher image (its path and SHA-256 are in tag `alpha3-hf9-ref
 - the castle appears before "Vertigo...", or the Refuge replays (or the party is revived) after the load.
 
 Report a failure with the `FW` / `Git` lines, and the serial `REFUGE_SCENE` / `NARRATIVE_SCENE_INPUT` lines if captured.
+
+### Phase H-213 — Mix: mark the reagents, answer "How much?" · *new firmware; SD pack unchanged* · about 5 minutes · **PENDING**
+
+Flash the A3-HF10 Launcher image (its path and SHA-256 are in tag `alpha3-hf10-mix-parity`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-hf10-debug` and that tag's `Git`; if they differ, stop. The image carries A3-HF9 unchanged, so this phase can share a session with H-210, H-203 and H-204.
+
+**What changed** (`ALPHA3_AUDIO.md` §36, D-6 / D-70): after choosing a spell, `M`ix no longer picks the reagents or mixes one by itself. A **Reagents:** list opens with nothing marked; you mark the reagents yourself (Enter or Space), press `M`, and answer **How much?** with a number. A wrong set of reagents is spent and sets off a trap, exactly as in 1988.
+
+**Setup (about 1 minute).** Any game, outdoors on foot (not in a dungeon: there `M` is Cast).
+1. `Alt+S`.
+2. `Alt+D` → **Reagents**: Reagent index `1` (Ginseng) → Quantity `9`; Reagent index `3` (Spider Silk) → Quantity `9`. Close the Developer menu.
+
+**A. The picker (mandatory, 1 minute).**
+3. Press `M`: the **Mix Spell** list. Scroll to **Mani** and note its count N (`Mani xN`; a bare `Mani` means 0 or 1 — then expect `x3` or `x4` in step 7). Press Enter.
+4. A **Reagents:** panel opens: one row per reagent you own, each with a two-digit count (`09   Ginseng`, `09   Spider Silk`, …), **no row marked**, and `Mix: Mani` above the list. The context bar reads `Enter Mark|M Mix|Mic`. Nothing has been spent.
+5. Move to Ginseng and press Enter: a `*` appears between its count and name (`09 * Ginseng`). Press Enter again: it goes; once more: it is back. Move to Spider Silk and press **Space**: `*`. The cursor stops at the first and last rows (it does not wrap).
+
+**B. Quantity 3 (mandatory, 1 minute).**
+6. Press `M`: the panel closes and the status line asks `How much?`. Type `3` (the line shows `How much? >3`) and press Enter: "Mixing..." then "Done!".
+7. Press `M` again: the list shows **Mani x(N+3)** (capped at 99). Enter on Mani: the panel shows Ginseng **06** and Spider Silk **06** (3 × each). Keep the panel open for C.
+
+**C. A wrong recipe (mandatory, 30 s).** Mark **only Ginseng**, `M`, `1`, Enter: "Mixing...", **no** "Done!", then a trap line (`ACID!`, `POISON!`, `BOMB!` or `GAS!`; a member may lose HP or be poisoned). `M` + Enter on Mani: Ginseng is **05**, Spider Silk still **06**, and the Mani count did not change.
+
+**D. Too many (mandatory, 30 s).** In that panel mark Ginseng and Spider Silk, `M`, type `9`, Enter: "Insufficient reagents!" and `How much?` again, with nothing spent. Press **Mic**: the typed digits vanish but the question stays. Press Enter on the empty answer: the question closes, nothing mixed, nothing spent.
+
+**E. Cancel (mandatory, 20 s).** `M`, Mani, mark Ginseng, press **Mic**: the panel closes silently; the counts are unchanged. `M`, Mani again: **nothing is marked**. Mic to close.
+
+**F. Load (optional, 30 s).** `M`, Mani, mark both, `M`, type `2`, then `Alt+L`: "Load complete", no panel, no `How much?`; the counts are the saved ones (Setup step 1). Press `2` and Enter: nothing is mixed (Enter is Pass).
+
+**Regression.** Cast (`C`) still lists only mixed spells and casts; Hole up (`H`) still asks its hours and Mic still cancels it. Throughout: no crash, `task_wdt` or reboot.
+
+**PASS:** steps 3–7 and C–E as described.
+
+**FAIL:**
+- choosing the spell mixes at once, or the panel opens with the recipe already marked;
+- a mix spends 1 of each reagent or adds 1 to the spell whatever the answer;
+- a wrong or incomplete set of marks gives "Done!" or a charge;
+- "Insufficient reagents!" spends anything, or does not ask again;
+- Mic at the panel or at `How much?` spends anything;
+- a key typed in the panel or at `How much?` moves the party, opens a command or appears in the text;
+- a panel or question survives the load.
+
+Report a failure with the `FW` / `Git` lines.

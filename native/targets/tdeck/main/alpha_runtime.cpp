@@ -820,6 +820,12 @@ void AlphaRuntime::dispatch(const openu5::UiIntent&i){
     // menu opens, not after it. Combat is branch 1 (no prompt, the acting
     // combatant) and (M)ix is a different routine, so both keep the plain menu.
     else if(i.kind==openu5::UiIntentKind::OpenSpellSelection){
+        // A3-HF10. cmd_mix's precheck (CMDS 0x1ae0-0x1afa): with no reagent at
+        // all it prints DS 0x8f98 and returns before "For what spell?".
+        if(i.request==openu5::UiRequestId::Custom){
+            int32_t owned=0;for(const auto q:game_.reagent_quantities)owned+=std::max<int32_t>(q,0);
+            if(!owned){ui_->append(openu5::UiTextChannel::Message,"No reagents owned!");dirty_=true;return;}
+        }
         if(i.request==openu5::UiRequestId::Spell&&!context_.combat){
             pending_caster_=-1;
             int16_t caster=-1;
@@ -1178,7 +1184,7 @@ void AlphaRuntime::service_combat(){
     }
 }
 
-void AlphaRuntime::modal(const openu5::UiIntent&i){if(!i.value.accepted){if(i.request==openu5::UiRequestId::Party)pending_order_from_=-1;if(i.request==openu5::UiRequestId::EquipmentMember||i.request==openu5::UiRequestId::Equipment)pending_ready_member_=-1;if(i.request==openu5::UiRequestId::UseTarget||i.request==openu5::UiRequestId::Inventory)pending_use_item_=-1;if(i.request==openu5::UiRequestId::Target)pending_combat_spell_=-1;if(i.request==openu5::UiRequestId::ShrineVisit||i.request==openu5::UiRequestId::ShrineRestore){shrine_.visit=shrine_.restore=-1;shrine_virtue_length_=0;}
+void AlphaRuntime::modal(const openu5::UiIntent&i){if(!i.value.accepted){if(i.request==openu5::UiRequestId::Party)pending_order_from_=-1;if(i.request==openu5::UiRequestId::EquipmentMember||i.request==openu5::UiRequestId::Equipment)pending_ready_member_=-1;if(i.request==openu5::UiRequestId::UseTarget||i.request==openu5::UiRequestId::Inventory)pending_use_item_=-1;if(i.request==openu5::UiRequestId::Target)pending_combat_spell_=-1;if(i.request==openu5::UiRequestId::MixReagents||i.request==openu5::UiRequestId::MixQuantity){pending_mix_spell_=-1;pending_mix_mask_=0;}if(i.request==openu5::UiRequestId::ShrineVisit||i.request==openu5::UiRequestId::ShrineRestore){shrine_.visit=shrine_.restore=-1;shrine_virtue_length_=0;}
     // FountainDrink (R-09 E): pure flavour text, no command, no HP/state/turn.
     if(i.request==openu5::UiRequestId::FountainDrink)ui_->append(openu5::UiTextChannel::Message,openu5::fountain_drink_result(0,true));
     // R-25 (Batch 19). Cancelling the kernel 0x4988 picker is not "nothing":
@@ -1212,7 +1218,33 @@ void AlphaRuntime::modal(const openu5::UiIntent&i){if(!i.value.accepted){if(i.re
     // never the arrow-marked active member. Same correction cast_selected_spell()
     // carries; this arm rebuilds the command from scratch, so it needs it too.
     else if(i.request==openu5::UiRequestId::Target){if(pending_combat_spell_>=0){auto *caster=openu5::current_combat_actor(combat_context_);c.kind=openu5::CommandKind::Cast;c.caster=caster&&caster->member!=255?int16_t(caster->member):int16_t(active_member(game_));c.item=pending_combat_spell_;c.member=int16_t(i.value.index);pending_combat_spell_=-1;command(c);}}
-    else if(i.request==openu5::UiRequestId::Custom&&i.value.index>=0&&size_t(i.value.index)<selection_count_){c.kind=openu5::CommandKind::Mix;c.item=selections_[i.value.index].value;c.hours=1;auto*d=openu5::spell_definition(openu5::SpellId(c.item));c.reagent_mask=d?d->reagents:0;command(c);}
+    // A3-HF10 (D-6 / D-70). The spell is only cmd_mix's first question (CMDS
+    // 0x1ad8): the reagents are the player's own marks (0x18be, nothing marked
+    // to begin with) and the batch is the answer to "How much? " (0x1a70).
+    // This arm used to send the recipe's own mask and a quantity of 1 at once.
+    else if(i.request==openu5::UiRequestId::Custom&&i.value.index>=0&&size_t(i.value.index)<selection_count_){pending_mix_spell_=selections_[i.value.index].value;pending_mix_mask_=0;open_mix_reagents(0);}
+    else if(i.request==openu5::UiRequestId::MixReagents&&pending_mix_spell_>=0){
+        // 'M' asks the quantity even with nothing marked (0x1a70 runs before
+        // the empty-mask test of 0x1b78); RETURN / Space toggles a row and the
+        // picker comes back with the cursor where it was.
+        if(i.value.yes)ui_->begin_number(openu5::UiRequestId::MixQuantity,"How much? ",-9,99,2);
+        else if(i.value.index>=0&&size_t(i.value.index)<selection_count_){pending_mix_mask_^=uint8_t(1u<<selections_[i.value.index].value);open_mix_reagents(size_t(i.value.index));}
+    }
+    else if(i.request==openu5::UiRequestId::MixQuantity&&pending_mix_spell_>=0){
+        // 0x1a70: a MARKED reagent short of the answer is "Insufficient
+        // reagents!" and the same question again, before anything is spent.
+        if(openu5::mix_quantity_short(game_,pending_mix_mask_,i.value.number)){
+            ui_->append(openu5::UiTextChannel::Message,"Insufficient reagents!");
+            ui_->begin_number(openu5::UiRequestId::MixQuantity,"How much? ",-9,99,2);
+        }else{
+            c.kind=openu5::CommandKind::Mix;c.item=pending_mix_spell_;c.hours=int16_t(i.value.number);c.reagent_mask=pending_mix_mask_;
+            pending_mix_spell_=-1;pending_mix_mask_=0;
+            // n <= 0 ends cmd_mix in silence (0x1b71). Everything after it --
+            // "Nothing to mix!", "Mixing...", the deduction, "Done!" or the
+            // trap -- is the core's Mix command.
+            if(c.hours>0)command(c);
+        }
+    }
     else if(i.request==openu5::UiRequestId::TrollToll){c.kind=openu5::CommandKind::TrollToll;c.member=i.value.yes?1:0;command(c);}
     // R-25 (Batch 19). Was a yes/no arm that dispatched with Command::member
     // left at its never-set -1, which look.cpp rejected outright -- the whole
@@ -1426,6 +1458,19 @@ void AlphaRuntime::open_selection(openu5::UiMode mode,openu5::UiRequestId reques
     const char *prompt=mode==openu5::UiMode::PartySelection?(request==openu5::UiRequestId::CampGuard?"Who will stand guard?":request==openu5::UiRequestId::EquipmentMember?"Ready whom?":request==openu5::UiRequestId::UseTarget?"Use on whom?":request==openu5::UiRequestId::FountainDrink?"Who will drink?":request==openu5::UiRequestId::CrystalBall||request==openu5::UiRequestId::SearchMember||request==openu5::UiRequestId::CastMember?openu5::command_char_prompt():"Party"):mode==openu5::UiMode::InventorySelection?"Use item":mode==openu5::UiMode::EquipmentSelection?"Ready":"Spell";
     const size_t initial=mode==openu5::UiMode::PartySelection?size_t(request==openu5::UiRequestId::Status&&status_member_>=0?status_member_:active_member(game_)):0;
     ui_->begin_selection(mode,request,prompt,{this,selection_count,selection_item},initial);
+}
+
+void AlphaRuntime::open_mix_reagents(size_t row){
+    // A3-HF10. CMDS 0x18be's list: the reagents with a non-zero count in id
+    // order, " NN NAME" with the count in two '0'-filled digits (0x194c) and
+    // the mark between them (0x0f or blank, 0x1a19; '*' here).
+    selection_count_=0;selection_request_=openu5::UiRequestId::MixReagents;
+    for(int r=0;r<8;++r){
+        const int32_t q=game_.reagent_quantities[r];if(q<=0)continue;
+        auto&s=selections_[selection_count_++];s.value=int16_t(r);s.enabled=true;
+        std::snprintf(s.label,sizeof(s.label),"%02d %c %s",int(q),(pending_mix_mask_&(1u<<r))?'*':' ',openu5::reagent_display_name(r));
+    }
+    ui_->begin_selection(openu5::UiMode::InventorySelection,openu5::UiRequestId::MixReagents,"Reagents:",{this,selection_count,selection_item},row);
 }
 
 // R-10 deferred drain. Runs once the outer input has fully unwound (called
@@ -2132,7 +2177,7 @@ const DeviceSelectionView *AlphaRuntime::compose_selection_view(){
     }
     openu5::UiSelectionView current{};if(!ui_->selection_view(current))return nullptr;
     selection_view_={};selection_view_.active=true;selection_view_.mode=uint8_t(current.mode);selection_view_.total=current.count;
-    const char *title=current.mode==openu5::UiMode::SpellSelection?(selection_request_==openu5::UiRequestId::Custom?"Mix Spell":"Cast Spell"):
+    const char *title=selection_request_==openu5::UiRequestId::MixReagents?"Reagents:":current.mode==openu5::UiMode::SpellSelection?(selection_request_==openu5::UiRequestId::Custom?"Mix Spell":"Cast Spell"):
         current.mode==openu5::UiMode::EquipmentSelection?"Ready Equipment":current.mode==openu5::UiMode::InventorySelection?"Use Item":
         selection_request_==openu5::UiRequestId::EquipmentMember?"Ready Whom?":selection_request_==openu5::UiRequestId::UseTarget?"Use On Whom?":selection_request_==openu5::UiRequestId::Target?"Spell Target":selection_request_==openu5::UiRequestId::Party?(pending_order_from_>=0?"Move To":"Move From"):"Choose Companion";
     std::snprintf(selection_view_.title,sizeof(selection_view_.title),"%s",title);
@@ -2170,10 +2215,12 @@ const DeviceSelectionView *AlphaRuntime::compose_selection_view(){
         if(current.mode==openu5::UiMode::SpellSelection){const auto*def=openu5::spell_definition(openu5::SpellId(value));std::snprintf(selection_view_.detail,sizeof(selection_view_.detail),"%.31s",openu5::spell_effect_summary(openu5::SpellId(value)));std::snprintf(selection_view_.detail2,sizeof(selection_view_.detail2),"Target: %.16s  MP%u",openu5::spell_target_label(openu5::SpellId(value)),unsigned(std::min<int>(def?def->circle:0,9)));}
         else if(current.mode==openu5::UiMode::EquipmentSelection){const int member=pending_ready_member_>=0?pending_ready_member_:active_member(game_);const auto slot=openu5::slot_for_equip(value);const int equipped=equipped_in_slot(game_.party.characters[member],slot);std::snprintf(selection_view_.detail,sizeof(selection_view_.detail),"Slot: %s",equip_slot_name(slot));std::snprintf(selection_view_.detail2,sizeof(selection_view_.detail2),"Current: %.18s",equipped>=0&&equipped<48?openu5::equipment_display_name(equipped):"None");}
         else if(current.mode==openu5::UiMode::PartySelection&&value>=0&&value<game_.party.character_count){const auto&m=game_.party.characters[value];std::snprintf(selection_view_.detail,sizeof(selection_view_.detail),"HP %u/%u  MP %u  %c",unsigned(m.current_hp),unsigned(m.max_hp),unsigned(m.current_mp),m.status?m.status:'G');}
+        else if(selection_request_==openu5::UiRequestId::MixReagents){const char*spell=openu5::spell_display_name(pending_mix_spell_);std::snprintf(selection_view_.detail,sizeof(selection_view_.detail),"Mix: %.24s",spell?spell:"?");}
         else if(current.mode==openu5::UiMode::InventorySelection)std::snprintf(selection_view_.detail,sizeof(selection_view_.detail),"Choose an item to use");}
     selection_view_.context.active=true;
     std::snprintf(selection_view_.context.status,sizeof(selection_view_.context.status),"%zu/%zu",cursor+1,current.count);
-    std::snprintf(selection_view_.context.actions,sizeof(selection_view_.context.actions),"Move|Confirm|Mic Back");
+    std::snprintf(selection_view_.context.actions,sizeof(selection_view_.context.actions),"%s",
+                  selection_request_==openu5::UiRequestId::MixReagents?"Enter Mark|M Mix|Mic":"Move|Confirm|Mic Back");
     return &selection_view_;
 }
 
@@ -2728,6 +2775,7 @@ void AlphaRuntime::reset_transient_after_load(){
     // Picks parked across a modal, the picker rows, queued work.
     pending_combat_spell_=pending_ready_member_=pending_use_item_=pending_order_from_=-1;
     pending_search_={};pending_search_active_=false;pending_caster_=-1;shrine_virtue_length_=0;
+    pending_mix_spell_=-1;pending_mix_mask_=0; // A3-HF10
     selection_count_=0;selection_request_=openu5::UiRequestId::None;
     pending_npc_initiation_=PendingNpcInitiation::None;pending_npc_slot_=-1;pending_npc_location_=0;
     combat_input_count_=0;

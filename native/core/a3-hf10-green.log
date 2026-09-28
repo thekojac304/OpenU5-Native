@@ -1,0 +1,1542 @@
+[I][AlphaResources] Alpha resource pack v2.0 valid: 2041466 bytes, 42 entries, payload CRC=26f75ae6, expected SHA-256=a48abdbfc88e, firmware_match=1
+[I][AlphaResources] Loaded owners: 64 small floors, 8 dungeons, 1024 NPC records; PSRAM=1187190
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N1.1 ** choosing a spell opens the reagent picker ("Reagents:") **
+GREEN N1.2 ** nothing is mixed or deducted by choosing the spell (no auto-recipe) **
+GREEN N1.3 the rows are the four OWNED reagents, cursor on the first (0x18ca-0x18dd)
+GREEN N1.4 real Board: the title and list are drawn, the cursor '>' is on row 0, NO row carries a mark
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N1.5 real Board: RETURN marks the row under the cursor, and only that row
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=20 symbol=00 ui=inventory emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N1.6 Space toggles the same row back off; the picker stays open (0x19ee)
+GREEN N1.7 marking and unmarking mutate nothing
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=31 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=56 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=56 sequence=1
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N2.1 In Lor with Sulfur Ash marked, 1: Ash 5->4, the others untouched, In Lor 2->3
+GREEN N2.2 "Mixing..." then "Done!", no trap
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=spell gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=spell gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=spell gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=32 symbol=00 ui=number emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=56 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=56 sequence=2
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N2.3 a two-reagent recipe marked in either order is exact: An Nox +2, Ginseng/Garlic -2
+GREEN N2.4 the command ends back in Explore
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=31 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] POISON_FEEDBACK slots=1 blip_ms=93 row=0 modal=0
+[I][AlphaRuntime] combat command=56 status=success turns=0 events=4 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=56 sequence=1
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=poison-tick animated=0 crc=85303253
+GREEN N3.1 the WRONG reagent marked: it is spent anyway (0x1baa), the recipe's own is not touched
+GREEN N3.2 no spell is charged
+GREEN N3.3 "Mixing...", no "Done!", and the chest trap fires (0x1bf6-0x1c04)
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=31 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] POISON_FEEDBACK slots=1 blip_ms=93 row=0 modal=0
+[I][AlphaRuntime] combat command=56 status=success turns=0 events=4 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=56 sequence=1
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=poison-tick animated=0 crc=85303253
+GREEN N3.4 an EXTRA reagent is a wrong set too: both spent, nothing charged, the trap
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=spell gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=spell gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=spell gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=spell gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=31 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] POISON_FEEDBACK slots=1 blip_ms=93 row=0 modal=0
+[I][AlphaRuntime] combat command=56 status=success turns=0 events=4 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=56 sequence=1
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=poison-tick animated=0 crc=85303253
+GREEN N3.5 a MISSING mark is a wrong set: Mani with only Ginseng marked explodes
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=spell gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=spell gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=spell gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=spell gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N4.1 Mani without Spider Silk still opens the picker; Spider Silk is simply not a row
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=31 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] POISON_FEEDBACK slots=1 blip_ms=93 row=0 modal=0
+[I][AlphaRuntime] combat command=56 status=success turns=0 events=4 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=56 sequence=1
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=poison-tick animated=0 crc=85303253
+GREEN N4.2 mixing without it is a wrong set: Ginseng spent, no charge, the trap (no ownership pre-check)
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N4.3 no reagent at all: "No reagents owned!" and nothing opens (0x1af8)
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N5.1 ** M closes the picker and asks "How much? " (0x1a7d) **
+GREEN N5.2 nothing is deducted before the answer
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=33 base=33 symbol=00 ui=number emitted=character action_char=51 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N5.3 real Board: the question reaches the context bar, and the typed digit follows it
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=56 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=56 sequence=1
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N5.4 the answer is the quantity
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=spell gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=spell gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=spell gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=spell gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=33 base=33 symbol=00 ui=number emitted=character action_char=51 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=56 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=56 sequence=1
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N6.1 ** Mani x3: Ginseng 9->6 and Spider Silk 8->5 (3 x recipe), Ash untouched **
+GREEN N6.2 ** Mani 1->4 (+3) **
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=31 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=32 symbol=00 ui=number emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=56 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=56 sequence=1
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N6.3 two digits: 12 -> Ash 20->8, In Lor +12 (getnum(2))
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=31 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=32 symbol=00 ui=number emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=33 base=33 symbol=00 ui=number emitted=character action_char=51 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=56 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=56 sequence=1
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N6.4 a third digit is ignored, not clamped: "123" is 12
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=33 base=33 symbol=00 ui=number emitted=character action_char=51 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=56 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=56 sequence=1
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N6.5 real Board: reopening the picker shows the Sulfur Ash count 05 -> 02 (units cell redrawn)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=spell gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=spell gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=spell gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=spell gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=33 base=33 symbol=00 ui=number emitted=character action_char=51 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N7.1 ** 3 with Ginseng 2: "Insufficient reagents!" and "How much? " again (0x1ac6) **
+GREEN N7.2 ** nothing deducted, nothing charged **
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=32 symbol=00 ui=number emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=56 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=56 sequence=1
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N7.3 the re-asked answer mixes: 2 -> Ginseng 2->0, Silk 8->6, Mani +2
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=33 base=33 symbol=00 ui=number emitted=character action_char=51 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=56 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=56 sequence=1
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N7.4 only MARKED reagents are tested: an unmarked short reagent does not refuse
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=30 base=30 symbol=00 ui=number emitted=character action_char=48 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N8.1 0: a silent abort, nothing mutated (0x1a8e / 0x1b71)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N8.2 RETURN on an empty answer: the same silent abort
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=78 base=78 symbol=00 ui=number emitted=character action_char=120 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=3f base=3f symbol=00 ui=number emitted=character action_char=63 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=61 symbol=00 ui=number emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N8.3 letters are not digits: ignored
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=2d base=2d symbol=00 ui=number emitted=character action_char=45 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=35 base=35 symbol=00 ui=number emitted=character action_char=53 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N8.4 "-5" with a reagent marked: unsigned 0xfffb > count -> "Insufficient reagents!", asked again
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=2b base=2b symbol=00 ui=number emitted=character action_char=43 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=33 base=33 symbol=00 ui=number emitted=character action_char=51 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=56 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=56 sequence=1
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N8.5 "+3" is 3 (kernel 0x3be2 accepts a leading sign)
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N8.6 M with nothing marked still asks "How much? " (0x1a70 before 0x1b78)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=32 symbol=00 ui=number emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=56 status=success turns=0 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=56 sequence=1
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N8.7 then "Nothing to mix!", nothing mutated
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=2d base=2d symbol=00 ui=number emitted=character action_char=45 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=32 symbol=00 ui=number emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N8.8 an empty mask with -2: returned as is, then n <= 0 aborts in silence
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=08 base=08 symbol=00 ui=inventory emitted=back action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=back ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N9.1 backspace is not ESC in the picker: ignored (0x1a50)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N9.2 ** ESC (Mic) closes it: nothing mutated, no message (0x1a2e -> -1) **
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N9.3 reopened, nothing is marked: the marks died with the picker
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=34 base=34 symbol=00 ui=number emitted=character action_char=52 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=number emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=number emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N10.1 ESC (Mic) erases the typed answer and keeps asking (kernel 0x3c0e)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=number emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=number emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N10.2 ESC on an empty answer is ignored: getnum has no cancel
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=34 base=34 symbol=00 ui=number emitted=character action_char=52 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=35 base=35 symbol=00 ui=number emitted=character action_char=53 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=08 base=08 symbol=00 ui=number emitted=delete action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=delete ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N10.3 backspace deletes one digit
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=08 base=08 symbol=00 ui=number emitted=delete action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=delete ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=08 base=08 symbol=00 ui=number emitted=delete action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=delete ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N10.4 backspace on an empty answer is ignored
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N10.5 ** leaving it (RETURN on nothing) mutates nothing **
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=35 base=35 symbol=00 ui=number emitted=character action_char=53 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=56 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=56 sequence=1
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N11.1 97 + 5 caps at 99 (0x1be7), and all 5 reagents are spent
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=31 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=56 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=56 sequence=2
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N11.2 at 99 a further mix still spends its reagents and stays at 99
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N12.1 up on the first row stays there (clamped, 0x19b2)
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N12.2 down/right on the last row stay there (clamped, 0x19d0)
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N12.3 left moves up like up (getkey 3)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=31 symbol=00 ui=inventory emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6c base=6c symbol=00 ui=inventory emitted=character action_char=108 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6b base=6b symbol=00 ui=inventory emitted=character action_char=107 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=67 base=67 symbol=00 ui=inventory emitted=character action_char=103 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=77 base=77 symbol=00 ui=inventory emitted=character action_char=119 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=35 base=35 symbol=00 ui=inventory emitted=character action_char=53 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N12.4 digits and command letters in the picker: swallowed, no echo, no move, no command
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6c base=6c symbol=00 ui=number emitted=character action_char=108 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6b base=6b symbol=00 ui=number emitted=character action_char=107 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N12.5 letters and the trackball at "How much? ": swallowed
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=31 base=31 symbol=00 ui=number emitted=character action_char=49 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=56 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=56 sequence=1
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N12.6 precondition: mixed
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N12.7 the next 'm' is a fresh Mix, not a leftover
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=spell emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=spell emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N12.8 and Mic leaves it; no turn was spent
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=73 base=73 symbol=00 ui=explore emitted=confirm action_char=0 shortcut=save
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=explore gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6c base=6c symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=load
+[I][AlphaRuntime] U5OBJ CLEAR site=load-restore pool_before=0
+[I][AlphaRuntime] WORLD_OBJECTS_RESTORE count=0
+[I][AlphaRuntime] DUNGEON_RESTORE active=0 dungeon=33 depth=0
+[I][AlphaRuntime] LOAD_TRANSIENT_RESET ui=inventory->explore request=36 views=0 questions=0
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N13.1 ** a load at the picker leaves no Mix state behind **
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=32 symbol=00 ui=explore emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] combat command=60 status=success turns=0 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=60 sequence=1
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=explore emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=explore gameplay_command=1 sequence=2
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N13.3 the keys after it reach Explore; nothing mixes from the old question
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N13.5 Mix opens afresh with nothing marked
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=73 base=73 symbol=00 ui=explore emitted=confirm action_char=0 shortcut=save
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=explore gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=32 symbol=00 ui=number emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6c base=6c symbol=00 ui=number emitted=confirm action_char=0 shortcut=load
+[I][AlphaRuntime] U5OBJ CLEAR site=load-restore pool_before=0
+[I][AlphaRuntime] WORLD_OBJECTS_RESTORE count=0
+[I][AlphaRuntime] DUNGEON_RESTORE active=0 dungeon=33 depth=0
+[I][AlphaRuntime] LOAD_TRANSIENT_RESET ui=number->explore request=37 views=0 questions=0
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N13.2 ** a load at "How much? " leaves no Mix state behind **
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=32 symbol=00 ui=explore emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] combat command=60 status=success turns=0 events=1 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=60 sequence=1
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=explore emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=explore gameplay_command=1 sequence=2
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N13.4 the keys after it reach Explore; nothing mixes from the old question
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N13.6 Mix opens afresh with nothing marked
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=explore emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=inventory gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6d base=6d symbol=00 ui=inventory emitted=character action_char=109 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6c base=6c symbol=00 ui=number emitted=confirm action_char=0 shortcut=load
+[W][AlphaSave] no restorable save generation
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N13.7 a FAILED load leaves the question exactly where it was
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=32 base=32 symbol=00 ui=number emitted=character action_char=50 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=number gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=number emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=56 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=number gameplay_command=56 sequence=1
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N13.8 and its answer still mixes with the marks made before
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=mode-entry animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=63 base=63 symbol=00 ui=explore emitted=character action_char=99 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=party
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=party combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=party emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=party to=spell
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=party gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=spell combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N14.1 Cast still opens its spell list
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=spell emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] MAGIC_FEEDBACK index=1 lead_us=558009 invert_us=1085018 audio=semantic async=1
+[I][AlphaRuntime] combat command=22 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=spell to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=spell gameplay_command=22 sequence=1
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=magic-ceremony animated=0 crc=85303253
+GREEN N14.2 casting In Lor spends one charge and no reagent
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=75 base=75 symbol=00 ui=explore emitted=character action_char=117 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=inventory
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=inventory combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=inventory to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=inventory gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N14.3 the (U)se picker opens and Mic still closes it
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=72 base=72 symbol=00 ui=explore emitted=character action_char=114 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=party
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=party combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=party gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=party emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=party emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=party to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=party gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N14.4 other pickers keep their wrap-around cursor (Ready whom?: up from the first row wraps)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=68 base=68 symbol=00 ui=explore emitted=character action_char=104 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=number
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=number combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=number emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=number emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=90,100 dungeon=0
+[I][AlphaRuntime] UI_MODE from=number to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=number gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=0 crc=85303253
+GREEN N14.5 a non-Mix numeric prompt still cancels on Mic (the ESC-erases rule is Mix's getnum only)
+
+a3_hf10_mix_parity_runtime: 71 checks, 0 failures

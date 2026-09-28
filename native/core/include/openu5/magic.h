@@ -150,5 +150,11 @@ CastTargetPrompt cast_target_prompt(SpellId, bool in_combat, bool in_dungeon, bo
 // The caller supplies the active RNG stream; combat must use CombatState.rng.
 CastResult cast_spell(GameState &, TurnState &, CharacterState &, SpellId, CastContext, Rand);
 bool mix_spell(GameState &, SpellId, int32_t quantity);
+// A3-HF10. The "How much? " test of CMDS 0x1a70: true when a MARKED reagent
+// (mask bit 1 << r) holds fewer than `quantity`. 0 is never short (0x1a8e);
+// the count is compared UNSIGNED against the 16-bit answer (0x1aa5 `jae`), so
+// a negative answer is short whenever anything is marked. Unmarked reagents
+// are never read.
+bool mix_quantity_short(const GameState &, uint8_t reagent_mask, int32_t quantity);
 bool apply_target_spell(CharacterState &, MagicEffect, uint8_t karma, Rand);
 } // namespace openu5

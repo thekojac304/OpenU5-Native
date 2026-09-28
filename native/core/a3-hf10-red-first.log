@@ -1,0 +1,169 @@
+# A3-HF10 RED-first: a3_hf10_mix_parity_runtime built against HEAD:native/core/include/openu5/ui_session.h, HEAD:native/core/src/ui_session.cpp, HEAD:native/core/include/openu5/magic.h, HEAD:native/core/src/magic.cpp, HEAD:native/targets/tdeck/main/alpha_runtime.h, HEAD:native/targets/tdeck/main/alpha_runtime.cpp;
+# the fixture and the test as in the working tree, no shim.
+## a3_hf10_mix_parity_runtime against HEAD: exit 1, 17 GREEN, 54 RED
+    RED N1.1 ** choosing a spell opens the reagent picker ("Reagents:") **
+    RED N1.2 ** nothing is mixed or deducted by choosing the spell (no auto-recipe) **
+    RED N1.3 the rows are the four OWNED reagents, cursor on the first (0x18ca-0x18dd)
+    RED N1.4 real Board: the title and list are drawn, the cursor '>' is on row 0, NO row carries a mark
+    RED N1.5 real Board: RETURN marks the row under the cursor, and only that row
+    RED N1.6 Space toggles the same row back off; the picker stays open (0x19ee)
+    RED N1.7 marking and unmarking mutate nothing
+    RED N2.1 In Lor with Sulfur Ash marked, 1: Ash 5->4, the others untouched, In Lor 2->3
+    GREEN N2.2 "Mixing..." then "Done!", no trap
+    RED N2.3 a two-reagent recipe marked in either order is exact: An Nox +2, Ginseng/Garlic -2
+    GREEN N2.4 the command ends back in Explore
+    RED N3.1 the WRONG reagent marked: it is spent anyway (0x1baa), the recipe's own is not touched
+    RED N3.2 no spell is charged
+    RED N3.3 "Mixing...", no "Done!", and the chest trap fires (0x1bf6-0x1c04)
+    RED N3.4 an EXTRA reagent is a wrong set too: both spent, nothing charged, the trap
+    RED N3.5 a MISSING mark is a wrong set: Mani with only Ginseng marked explodes
+    RED N4.1 Mani without Spider Silk still opens the picker; Spider Silk is simply not a row
+    RED N4.2 mixing without it is a wrong set: Ginseng spent, no charge, the trap (no ownership pre-check)
+    RED N4.3 no reagent at all: "No reagents owned!" and nothing opens (0x1af8)
+    RED N5.1 ** M closes the picker and asks "How much? " (0x1a7d) **
+    GREEN N5.2 nothing is deducted before the answer
+    RED N5.3 real Board: the question reaches the context bar, and the typed digit follows it
+    RED N5.4 the answer is the quantity
+    RED N6.1 ** Mani x3: Ginseng 9->6 and Spider Silk 8->5 (3 x recipe), Ash untouched **
+    RED N6.2 ** Mani 1->4 (+3) **
+    RED N6.3 two digits: 12 -> Ash 20->8, In Lor +12 (getnum(2))
+    RED N6.4 a third digit is ignored, not clamped: "123" is 12
+    RED N6.5 real Board: reopening the picker shows the Sulfur Ash count 05 -> 02 (units cell redrawn)
+    RED N7.1 ** 3 with Ginseng 2: "Insufficient reagents!" and "How much? " again (0x1ac6) **
+    GREEN N7.2 ** nothing deducted, nothing charged **
+    RED N7.3 the re-asked answer mixes: 2 -> Ginseng 2->0, Silk 8->6, Mani +2
+    RED N7.4 only MARKED reagents are tested: an unmarked short reagent does not refuse
+    RED N8.1 0: a silent abort, nothing mutated (0x1a8e / 0x1b71)
+    RED N8.2 RETURN on an empty answer: the same silent abort
+    RED N8.3 letters are not digits: ignored
+    RED N8.4 "-5" with a reagent marked: unsigned 0xfffb > count -> "Insufficient reagents!", asked again
+    RED N8.5 "+3" is 3 (kernel 0x3be2 accepts a leading sign)
+    RED N8.6 M with nothing marked still asks "How much? " (0x1a70 before 0x1b78)
+    RED N8.7 then "Nothing to mix!", nothing mutated
+    RED N8.8 an empty mask with -2: returned as is, then n <= 0 aborts in silence
+    RED N9.1 backspace is not ESC in the picker: ignored (0x1a50)
+    RED N9.2 ** ESC (Mic) closes it: nothing mutated, no message (0x1a2e -> -1) **
+    RED N9.3 reopened, nothing is marked: the marks died with the picker
+    RED N10.1 ESC (Mic) erases the typed answer and keeps asking (kernel 0x3c0e)
+    RED N10.2 ESC on an empty answer is ignored: getnum has no cancel
+    RED N10.3 backspace deletes one digit
+    RED N10.4 backspace on an empty answer is ignored
+    RED N10.5 ** leaving it (RETURN on nothing) mutates nothing **
+    RED N11.1 97 + 5 caps at 99 (0x1be7), and all 5 reagents are spent
+    RED N11.2 at 99 a further mix still spends its reagents and stays at 99
+    RED N12.1 up on the first row stays there (clamped, 0x19b2)
+    RED N12.2 down/right on the last row stay there (clamped, 0x19d0)
+    RED N12.3 left moves up like up (getkey 3)
+    RED N12.4 digits and command letters in the picker: swallowed, no echo, no move, no command
+    RED N12.5 letters and the trackball at "How much? ": swallowed
+    GREEN N12.6 precondition: mixed
+    GREEN N12.7 the next 'm' is a fresh Mix, not a leftover
+    GREEN N12.8 and Mic leaves it; no turn was spent
+    GREEN N13.1 ** a load at the picker leaves no Mix state behind **
+    GREEN N13.3 the keys after it reach Explore; nothing mixes from the old question
+    RED N13.5 Mix opens afresh with nothing marked
+    GREEN N13.2 ** a load at "How much? " leaves no Mix state behind **
+    GREEN N13.4 the keys after it reach Explore; nothing mixes from the old question
+    RED N13.6 Mix opens afresh with nothing marked
+    RED N13.7 a FAILED load leaves the question exactly where it was
+    GREEN N13.8 and its answer still mixes with the marks made before
+    GREEN N14.1 Cast still opens its spell list
+    GREEN N14.2 casting In Lor spends one charge and no reagent
+    GREEN N14.3 the (U)se picker opens and Mic still closes it
+    GREEN N14.4 other pickers keep their wrap-around cursor (Ready whom?: up from the first row wraps)
+    GREEN N14.5 a non-Mix numeric prompt still cancels on Mic (the ESC-erases rule is Mix's getnum only)
+    a3_hf10_mix_parity_runtime: 71 checks, 54 failures
+## a3_hf10_mix_parity_runtime against the working tree: exit 0, 71 GREEN, 0 RED
+    GREEN N1.1 ** choosing a spell opens the reagent picker ("Reagents:") **
+    GREEN N1.2 ** nothing is mixed or deducted by choosing the spell (no auto-recipe) **
+    GREEN N1.3 the rows are the four OWNED reagents, cursor on the first (0x18ca-0x18dd)
+    GREEN N1.4 real Board: the title and list are drawn, the cursor '>' is on row 0, NO row carries a mark
+    GREEN N1.5 real Board: RETURN marks the row under the cursor, and only that row
+    GREEN N1.6 Space toggles the same row back off; the picker stays open (0x19ee)
+    GREEN N1.7 marking and unmarking mutate nothing
+    GREEN N2.1 In Lor with Sulfur Ash marked, 1: Ash 5->4, the others untouched, In Lor 2->3
+    GREEN N2.2 "Mixing..." then "Done!", no trap
+    GREEN N2.3 a two-reagent recipe marked in either order is exact: An Nox +2, Ginseng/Garlic -2
+    GREEN N2.4 the command ends back in Explore
+    GREEN N3.1 the WRONG reagent marked: it is spent anyway (0x1baa), the recipe's own is not touched
+    GREEN N3.2 no spell is charged
+    GREEN N3.3 "Mixing...", no "Done!", and the chest trap fires (0x1bf6-0x1c04)
+    GREEN N3.4 an EXTRA reagent is a wrong set too: both spent, nothing charged, the trap
+    GREEN N3.5 a MISSING mark is a wrong set: Mani with only Ginseng marked explodes
+    GREEN N4.1 Mani without Spider Silk still opens the picker; Spider Silk is simply not a row
+    GREEN N4.2 mixing without it is a wrong set: Ginseng spent, no charge, the trap (no ownership pre-check)
+    GREEN N4.3 no reagent at all: "No reagents owned!" and nothing opens (0x1af8)
+    GREEN N5.1 ** M closes the picker and asks "How much? " (0x1a7d) **
+    GREEN N5.2 nothing is deducted before the answer
+    GREEN N5.3 real Board: the question reaches the context bar, and the typed digit follows it
+    GREEN N5.4 the answer is the quantity
+    GREEN N6.1 ** Mani x3: Ginseng 9->6 and Spider Silk 8->5 (3 x recipe), Ash untouched **
+    GREEN N6.2 ** Mani 1->4 (+3) **
+    GREEN N6.3 two digits: 12 -> Ash 20->8, In Lor +12 (getnum(2))
+    GREEN N6.4 a third digit is ignored, not clamped: "123" is 12
+    GREEN N6.5 real Board: reopening the picker shows the Sulfur Ash count 05 -> 02 (units cell redrawn)
+    GREEN N7.1 ** 3 with Ginseng 2: "Insufficient reagents!" and "How much? " again (0x1ac6) **
+    GREEN N7.2 ** nothing deducted, nothing charged **
+    GREEN N7.3 the re-asked answer mixes: 2 -> Ginseng 2->0, Silk 8->6, Mani +2
+    GREEN N7.4 only MARKED reagents are tested: an unmarked short reagent does not refuse
+    GREEN N8.1 0: a silent abort, nothing mutated (0x1a8e / 0x1b71)
+    GREEN N8.2 RETURN on an empty answer: the same silent abort
+    GREEN N8.3 letters are not digits: ignored
+    GREEN N8.4 "-5" with a reagent marked: unsigned 0xfffb > count -> "Insufficient reagents!", asked again
+    GREEN N8.5 "+3" is 3 (kernel 0x3be2 accepts a leading sign)
+    GREEN N8.6 M with nothing marked still asks "How much? " (0x1a70 before 0x1b78)
+    GREEN N8.7 then "Nothing to mix!", nothing mutated
+    GREEN N8.8 an empty mask with -2: returned as is, then n <= 0 aborts in silence
+    GREEN N9.1 backspace is not ESC in the picker: ignored (0x1a50)
+    GREEN N9.2 ** ESC (Mic) closes it: nothing mutated, no message (0x1a2e -> -1) **
+    GREEN N9.3 reopened, nothing is marked: the marks died with the picker
+    GREEN N10.1 ESC (Mic) erases the typed answer and keeps asking (kernel 0x3c0e)
+    GREEN N10.2 ESC on an empty answer is ignored: getnum has no cancel
+    GREEN N10.3 backspace deletes one digit
+    GREEN N10.4 backspace on an empty answer is ignored
+    GREEN N10.5 ** leaving it (RETURN on nothing) mutates nothing **
+    GREEN N11.1 97 + 5 caps at 99 (0x1be7), and all 5 reagents are spent
+    GREEN N11.2 at 99 a further mix still spends its reagents and stays at 99
+    GREEN N12.1 up on the first row stays there (clamped, 0x19b2)
+    GREEN N12.2 down/right on the last row stay there (clamped, 0x19d0)
+    GREEN N12.3 left moves up like up (getkey 3)
+    GREEN N12.4 digits and command letters in the picker: swallowed, no echo, no move, no command
+    GREEN N12.5 letters and the trackball at "How much? ": swallowed
+    GREEN N12.6 precondition: mixed
+    GREEN N12.7 the next 'm' is a fresh Mix, not a leftover
+    GREEN N12.8 and Mic leaves it; no turn was spent
+    GREEN N13.1 ** a load at the picker leaves no Mix state behind **
+    GREEN N13.3 the keys after it reach Explore; nothing mixes from the old question
+    GREEN N13.5 Mix opens afresh with nothing marked
+    GREEN N13.2 ** a load at "How much? " leaves no Mix state behind **
+    GREEN N13.4 the keys after it reach Explore; nothing mixes from the old question
+    GREEN N13.6 Mix opens afresh with nothing marked
+    GREEN N13.7 a FAILED load leaves the question exactly where it was
+    GREEN N13.8 and its answer still mixes with the marks made before
+    GREEN N14.1 Cast still opens its spell list
+    GREEN N14.2 casting In Lor spends one charge and no reagent
+    GREEN N14.3 the (U)se picker opens and Mic still closes it
+    GREEN N14.4 other pickers keep their wrap-around cursor (Ready whom?: up from the first row wraps)
+    GREEN N14.5 a non-Mix numeric prompt still cancels on Mic (the ESC-erases rule is Mix's getnum only)
+    a3_hf10_mix_parity_runtime: 71 checks, 0 failures
+
+# TypeScript: HEAD:game/src/ui/prompt-manager.ts, HEAD:game/src/core/magic/mix.ts, HEAD:game/src/main.ts (checkout EOL) against the working-tree tests
+## vitest tests/mix-hf10-quantity.test.ts tests/prompt-manager.test.ts against HEAD: exit 1  Test Files  1 failed | 1 passed (2) | Tests  8 failed | 14 passed (22)
+    - PromptManager - number = getnum del kernel (0x3b9e) > '+'/'-' s-lo en la 1- casilla y ocupan una (0x3be2) 2ms
+    - PromptManager - number = getnum del kernel (0x3b9e) > ESC borra lo tecleado y SIGUE preguntando (0x3c0e); en vac-o no hace nada 1ms
+    - PromptManager - number = getnum del kernel (0x3b9e) > backspace borra una cifra; en vac-o se ignora (0x3c00) 0ms
+    - mixQuantityVerdict (CMDS 0x1a70 - 0x1b71 - 0x1b78) > 0 aborta en silencio SIN comprobar reagentes (0x1a8e) 2ms
+    - mixQuantityVerdict (CMDS 0x1a70 - 0x1b71 - 0x1b78) > la respuesta de dos cifras se compara entera (no hay tope oculto) 0ms
+    - mixQuantityVerdict (CMDS 0x1a70 - 0x1b71 - 0x1b78) > m-scara vac-a: N>0 - nothing ("Nothing to mix!"), N<0 - abort en silencio 0ms
+    - mixQuantityVerdict (CMDS 0x1a70 - 0x1b71 - 0x1b78) > un N negativo es 0xfffb sin signo: siempre corto con algo marcado 0ms
+    - mixQuantityVerdict (CMDS 0x1a70 - 0x1b71 - 0x1b78) > un reagente MARCADO corto - insufficient (re-pregunta); los no marcados no cuentan 0ms
+    FAIL  tests/mix-hf10-quantity.test.ts > PromptManager - number = getnum del kernel (0x3b9e) > '+'/'-' s-lo en la 1- casilla y ocupan una (0x3be2)
+    FAIL  tests/mix-hf10-quantity.test.ts > PromptManager - number = getnum del kernel (0x3b9e) > ESC borra lo tecleado y SIGUE preguntando (0x3c0e); en vac-o no hace nada
+    FAIL  tests/mix-hf10-quantity.test.ts > PromptManager - number = getnum del kernel (0x3b9e) > backspace borra una cifra; en vac-o se ignora (0x3c00)
+    FAIL  tests/mix-hf10-quantity.test.ts > mixQuantityVerdict (CMDS 0x1a70 - 0x1b71 - 0x1b78) > 0 aborta en silencio SIN comprobar reagentes (0x1a8e)
+    FAIL  tests/mix-hf10-quantity.test.ts > mixQuantityVerdict (CMDS 0x1a70 - 0x1b71 - 0x1b78) > la respuesta de dos cifras se compara entera (no hay tope oculto)
+    FAIL  tests/mix-hf10-quantity.test.ts > mixQuantityVerdict (CMDS 0x1a70 - 0x1b71 - 0x1b78) > m-scara vac-a: N>0 - nothing ("Nothing to mix!"), N<0 - abort en silencio
+    FAIL  tests/mix-hf10-quantity.test.ts > mixQuantityVerdict (CMDS 0x1a70 - 0x1b71 - 0x1b78) > un N negativo es 0xfffb sin signo: siempre corto con algo marcado
+    FAIL  tests/mix-hf10-quantity.test.ts > mixQuantityVerdict (CMDS 0x1a70 - 0x1b71 - 0x1b78) > un reagente MARCADO corto - insufficient (re-pregunta); los no marcados no cuentan
+## vitest tests/mix-hf10-quantity.test.ts tests/prompt-manager.test.ts against the working tree: exit 0  Test Files  2 passed (2) | Tests  22 passed (22)
+# native: HEAD 54 RED / 17 GREEN -> tree 0 RED / 71 GREEN; TS: HEAD exit 1 -> tree exit 0; RED-first PROVEN

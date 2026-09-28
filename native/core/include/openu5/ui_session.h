@@ -159,7 +159,14 @@ enum class UiRequestId : uint8_t {
     // picker's own rules live once, in openu5/command_char.h.
     SearchMember,
     CastMember,
-    Custom
+    Custom,
+    // A3-HF10 (D-6 / D-70). (M)ix after the spell (Custom): the reagent picker
+    // of CMDS 0x18be and the "How much? " getnum of 0x1a70 / kernel 0x3b9e.
+    // The picker answers ModalResponse with value.yes == false and the row in
+    // value.index for a RETURN / Space toggle (it stays the owner's to reopen),
+    // and value.yes == true for 'M'; ESC is the ordinary accepted == false.
+    MixReagents,
+    MixQuantity
 };
 
 enum class UiIntentKind : uint8_t {

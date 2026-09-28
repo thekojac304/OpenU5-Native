@@ -87,6 +87,34 @@ export interface MixTrap {
   result: TrapResult;
 }
 
+/**
+ * Veredicto de la respuesta a "How much? " (CMDS.OVL 0x1a70 + el tramo 0x1b6b-0x1b78
+ * de `cmd_mix`), en el orden del binario — A3-HF10, re/notes/mix-hf10-command-parity.md §3:
+ *
+ *   · `n === 0` → "abort": 0x1a8e sale sin comprobar nada y 0x1b71 (`jg`) aborta en silencio.
+ *   · algún reagente MARCADO con cuenta < n → "insufficient" ("Insufficient reagents!" y
+ *     RE-PREGUNTA, 0x1ac6). La comparación es SIN SIGNO de 16 bits (0x1aa5 `jae`): un `n`
+ *     negativo ("-5", el getnum acepta signo) es 0xfffb y siempre falta si hay algo marcado.
+ *     Los reagentes NO marcados no se leen.
+ *   · `n < 0` (sólo posible con la máscara vacía) → "abort" (0x1b71).
+ *   · máscara vacía → "nothing" ("Nothing to mix!", 0x1b78).
+ *   · si no → "mix".
+ */
+export type MixQuantityVerdict = "abort" | "insufficient" | "nothing" | "mix";
+
+export function mixQuantityVerdict(
+  n: number,
+  selected: readonly number[],
+  qtyOf: (reagentId: number) => number,
+): MixQuantityVerdict {
+  if (n === 0) return "abort";
+  const wanted = n & 0xffff;
+  if (selected.some((r) => Math.max(0, qtyOf(r)) < wanted)) return "insufficient";
+  if (n < 0) return "abort";
+  if (selected.length === 0) return "nothing";
+  return "mix";
+}
+
 export function mixSelected(
   state: GameState,
   def: SpellDef,

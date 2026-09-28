@@ -254,6 +254,7 @@ class AlphaRuntime {
         p.quake = quake_pulses_ != 0;
         p.parked_pick = pending_combat_spell_ >= 0 || pending_ready_member_ >= 0 || pending_use_item_ >= 0 ||
                         pending_order_from_ >= 0 || pending_search_active_ || pending_caster_ >= 0 ||
+                        pending_mix_spell_ >= 0 ||
                         shrine_virtue_length_ != 0 || selection_request_ != openu5::UiRequestId::None;
         p.npc_initiation = pending_npc_initiation_ != PendingNpcInitiation::None;
         p.dialogue_pause = dialogue_pacer_.holding() || dialogue_pacer_.queued() != 0;
@@ -469,6 +470,12 @@ class AlphaRuntime {
     openu5::Command pending_search_{};
     bool pending_search_active_ = false;
     int16_t pending_caster_ = -1;
+    // A3-HF10 (D-6 / D-70). (M)ix between the spell and the answer to
+    // "How much? ": the spell (CMDS 0x1ad8's [bp-4]) and the reagents the
+    // player has marked so far (0x18be's `di`, bit 1 << r). Nothing reaches
+    // the GameState before the answer.
+    int16_t pending_mix_spell_ = -1;
+    uint8_t pending_mix_mask_ = 0;
     // R-22. The (Z)-stats page modal: the axis slot of ztats-layout.md
     // section 2 plus the current list's scroll offset. Presentation only --
     // while it is open nothing is dispatched, no turn is charged and no RNG
@@ -611,6 +618,8 @@ class AlphaRuntime {
     /** Beat sink for the narrative pacer (append / continue / cue / phase). */
     static void narrative_beat(void *, const openu5::NarrativeSceneBeat &);
     void open_selection(openu5::UiMode, openu5::UiRequestId);
+    /** A3-HF10: the Mix reagent picker (CMDS 0x18be), cursor on `row`. */
+    void open_mix_reagents(size_t row);
     /** Open the (Z)-stats page axis on `member`'s stats page (R-22). */
     void open_zstats(int member);
     /** Route one input into the open (Z)-stats modal; true = it was consumed. */

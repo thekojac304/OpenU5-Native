@@ -438,7 +438,8 @@ cofre. Censo de tiradas real: **1..7**, no 0 y tampoco «1» — 1 para el tipo,
 (familia #173). El censo correcto es `re/tools/callers_por_banda.py 0x2fd0`.
 
 Derivación completa, careo con el port y el defecto que deja abierto:
-`re/notes/mix-trap-105-acta.md`.
+`re/notes/mix-trap-105-acta.md`. El flujo entero (precheck, selector 0x18be, cantidad 0x1a70,
+getnum 0x3b9e) está en `re/notes/mix-hf10-command-parity.md` (A3-HF10).
 
 ## 13. Yell-en-tierra (CMDS 0x1202/0x12c8) — word-of-power (Task 3.8)
 

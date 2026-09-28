@@ -138,6 +138,13 @@ bool mix_spell(GameState &g, SpellId id, int32_t qty) {
         int32_t(std::min<int64_t>(99, int64_t(g.spell_quantities[unsigned(id)]) + qty));
     return true;
 }
+bool mix_quantity_short(const GameState &g, uint8_t mask, int32_t quantity) {
+    if (!quantity) return false;
+    const auto wanted = uint32_t(uint16_t(quantity));
+    for (int i = 0; i < 8; ++i)
+        if ((mask & (1 << i)) && uint32_t(std::max<int32_t>(g.reagent_quantities[i], 0)) < wanted) return true;
+    return false;
+}
 CastResult cast_spell(GameState &g, TurnState &t, CharacterState &caster, SpellId id,
                       CastContext ctx, Rand r) {
     const auto *d = spell_definition(id);

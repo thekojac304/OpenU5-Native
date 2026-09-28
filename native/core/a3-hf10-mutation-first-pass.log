@@ -1,0 +1,64 @@
+# A3-HF10 mutation check: native mutants rebuild and run a3_hf10_mix_parity_runtime; TypeScript mutants run vitest tests/mix-hf10-quantity.test.ts tests/prompt-manager.test.ts
+M1 KILLED by 51 -- skip the reagent picker: the spell goes straight to "How much?" with nothing marked
+    N1.1 N1.3 N1.4 N1.5 N1.6 N2.1 N2.2 N2.3 N2.4 N3.1 N3.3 N3.4 N3.5 N4.1 N4.2 N5.1 ...
+M2 KILLED by 29 -- auto-select the recipe: the picker opens with the spell's own reagents marked
+    N1.4 N1.5 N2.1 N2.2 N2.3 N3.1 N3.4 N3.5 N4.2 N5.4 N6.1 N6.2 N6.3 N6.4 N6.5 N7.1 ...
+M3 KILLED by 3 -- accept a wrong recipe: any overlap with the recipe counts as exact
+    N3.4 N3.5 N4.2
+M4 INVALID (does not build) -- reject the correct recipe: every set is "wrong"
+          |                                                                                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+    C:/Dev/OpenU5-Native/native/core/include/openu5/state.h:36:13: note: while referencing 'openu5::InitialState::spell_quantities'
+       36 |     int32_t spell_quantities[48]{};
+          |             ^~~~~~~~~~~~~~~~
+    cc1plus.exe: all warnings being treated as errors
+    ninja: build stopped: subcommand failed.
+M5 KILLED by 22 -- deduct the wrong reagent: a mark sets the NEXT reagent's bit
+    N1.5 N2.1 N2.2 N2.3 N2.4 N3.1 N3.4 N3.5 N4.2 N5.4 N6.1 N6.2 N6.3 N6.4 N6.5 N7.3 ...
+M6 KILLED by 11 -- deduct one copy regardless of the quantity
+    N2.3 N5.4 N6.1 N6.3 N6.4 N7.3 N7.4 N8.5 N11.1 N11.2 N13.8
+M7 KILLED by 10 -- charge one spell regardless of the quantity
+    N2.3 N5.4 N6.2 N6.3 N6.4 N7.3 N7.4 N8.5 N11.1 N13.8
+M8 KILLED by 31 -- omit the quantity prompt: M mixes one at once
+    N2.3 N4.2 N5.1 N5.2 N5.3 N5.4 N6.1 N6.2 N6.3 N6.4 N7.1 N7.3 N7.4 N8.1 N8.2 N8.3 ...
+M9 KILLED by 12 -- hard-code the quantity to 1 (the answer is read and ignored)
+    N2.3 N5.4 N6.1 N6.2 N6.3 N6.4 N7.3 N7.4 N8.5 N11.1 N11.2 N13.8
+M10 KILLED by 5 -- allow more than the marked reagents hold: no re-ask, no core refusal
+    N7.1 N7.2 N7.3 N8.4 N8.5
+M11 KILLED by 22 -- mutate the inventory before the answer: a mark spends one of the reagent
+    N1.7 N2.1 N2.3 N3.1 N3.4 N3.5 N4.2 N5.4 N6.1 N6.3 N6.4 N7.3 N7.4 N8.1 N8.2 N8.4 ...
+M12 KILLED by 1 -- cancel still mutates: ESC at the picker mixes one with the marks
+    N9.2
+M13 KILLED by 48 -- keys leak into gameplay: the picker is not modal (Explore keeps the keys)
+    N1.1 N1.3 N1.4 N1.5 N1.6 N2.1 N2.2 N2.3 N3.1 N3.3 N3.4 N3.5 N4.1 N4.2 N5.1 N5.3 ...
+M14 KILLED by 2 -- a successful load keeps the pending Mix
+    N13.1 N13.2
+M15 KILLED by 2 -- the picker cursor wraps (the generic selection rule) instead of clamping
+    N12.2 N12.3
+M16 KILLED by 1 -- Space does not toggle (RETURN only)
+    N1.6
+M17 KILLED by 4 -- ESC cancels "How much?" (the generic numeric rule) instead of erasing
+    N10.1 N10.2 N10.3 N10.4
+M18 KILLED by 3 -- no leading sign: + and - are dropped
+    N8.4 N8.5 N8.8
+M19 KILLED by 3 -- the sign is read and ignored: "-5" is 5
+    N8.4 N8.5 N8.8
+M20 KILLED by 2 -- the shortage test is signed: "-5" is never short
+    N8.4 N8.5
+M21 KILLED by 24 -- the shortage test reads the UNMARKED reagents too
+    N2.1 N2.2 N2.3 N2.4 N3.1 N3.3 N3.4 N3.5 N4.2 N5.4 N6.1 N6.2 N6.3 N6.4 N6.5 N7.3 ...
+M22 KILLED by 1 -- no "No reagents owned!" precheck: the list opens with nothing to mark
+    N4.3
+M23 KILLED by 1 -- backspace cancels the picker (the generic selection rule)
+    N9.1
+T1 KILLED by 1 -- TS getnum: ESC cancels (the pre-HF10 prompt)
+    ESC borra lo tecleado y SIGUE preguntando (0x3c0e); en vac-o
+T2 KILLED by 1 -- TS getnum: no leading sign
+    '+'/'-' s-lo en la 1- casilla y ocupan una (0x3be2)
+T3 KILLED by 1 -- TS verdict: signed comparison
+    un N negativo es 0xfffb sin signo: siempre corto con algo ma
+T4 KILLED by 3 -- TS verdict: unmarked reagents are read
+    0 - nothing ("Nothing to mix!"), N<0 - abort en silencio la respuesta de dos cifras se compara entera (no hay tope oc un reagente MARCADO corto - insufficient (re-pregunta); los 
+T5 KILLED by 1 -- TS verdict: 0 is tested like any answer (empty mask 0 -> "nothing")
+    0 aborta en silencio SIN comprobar reagentes (0x1a8e)
+# restored: a3_hf10_mix_parity_runtime 0 RED; vitest 0 failing
+# 27 killed, 0 survived, 1 invalid
