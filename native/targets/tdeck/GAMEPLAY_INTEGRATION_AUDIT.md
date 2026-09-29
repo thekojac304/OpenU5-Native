@@ -8487,3 +8487,31 @@ A presentation hotfix on the A3-HF5 queue. The full write-up is [`ALPHA3_AUDIO.m
 - H-203 and H-204: still the user's.
 - A3-04H (storage import count, PSRAM routing).
 - The RE tools' overlay-base table (CAST2 and TALK).
+
+## Alpha 4 A4-UI2 — title polish, death/resurrection music, save/load presentation
+
+A UI/presentation batch. The full write-up is [`ALPHA4_UI.md`](ALPHA4_UI.md) §2; this section records the classification on its own axis. No gameplay rule, save format, resource pack or audio pack changed.
+
+### 1. Items and classification
+
+| # | Item | Class | Change |
+|---|---|---|---|
+| 1 | Title credits: left-aligned 5x7 lines at x=20; "Press a key" in the bottom-left footer | **native presentation** (never the original's layout) | centred IBM.CH block and prompt (A) |
+| 2 | Battle music plays on through the death and resurrection (hardware) | **native defect**: a render-driven state transition never re-derived the music; the patch stops music for Death (History.txt; selector 0x03 before BLCKTHRN 0x0910) | fixed (B) |
+| 3 | After any Refuge, the castle stayed silent (world path) or kept the battle song (combat) until the next key | same defect; the original's castle prompt derives The Missing Monarch at once | fixed (B) |
+| 4 | Save menus listed physical slots ("Generation 1/2", which one newer flipped per save), leader only, no overwrite hint; a refused Generation row did nothing silently | **native presentation** | Latest / Backup by age, place, date, party, per-row help, notices (C) |
+| 5 | The shell body clear (y=20) cut the last glyph rows of a subtitle (y=15..22) | **native defect, latent since UI1** (no shell page used a subtitle) | fixed (C) |
+| 6 | The save target is chosen by commit sequence regardless of validity: after a refused newest generation the next save overwrites the only valid one | **native defect, latent (storage)** | not changed; queued (ALPHA4_UI.md §2.3, the prerequisite of §2.4) |
+| 7 | Multiple manual save slots | **feature, deferred**: invasive for a UI batch | design in ALPHA4_UI.md §2.4 |
+| 8 | The end of the Blackthorn capture scene also ends in `render()` | **not examined** (silence is the pacer's own rule; nothing reported) | none |
+
+### 2. Evidence
+
+- **RED-first** (`native/core/tools/a4_ui2_red_first.py`): title 5 / 10, death music 6 / 13, save menus 2 / 22 against the production files before each subtrack; every control GREEN (`native/core/a4-ui2-{A,B,C}-red-first.log`).
+- **GREEN:** 10 / 10, 13 / 13, 22 / 22 (`a4-ui2-{A,B,C}-green.log`).
+- **Mutations** (`native/core/tools/a4_ui2_mutation_check.py`): see ALPHA4_UI.md §2.6 (`a4-ui2-mutation.log`).
+- **Suite / firmware:** ALPHA4_UI.md §2.6.
+
+### 3. Rows
+
+- Hardware checks: ALPHA4_UI.md §2.7 (steps 1–5), PENDING.

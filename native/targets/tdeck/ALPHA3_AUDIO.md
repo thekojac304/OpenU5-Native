@@ -1298,6 +1298,8 @@ No new state was added. `AlphaRuntime::sync_music()` re-derives the context from
 | `handle()`'s own final line (every ordinary gameplay input reaches this unless an earlier, deliberately silent branch returns first — §17.6) | movement/location changes, Camp, Alt+L / Alt+S, combat routing, the Ending sync that already runs earlier in the same call (`synchronize_after_debug`) |
 | `configure_audio()`, once, at boot | starts the correct track immediately, with no key poll needed (§17.14 G1) |
 
+**Correction (Alpha 4 UI Batch 2, 2026-09-29).** Two more call sites exist since `ALPHA4_UI.md` §2.2: the Refuge event's intake and `resolve_refuge()`'s completion both call `sync_music()`. A battle lost to an enemy's blow reaches the Refuge and leaves it inside `render()`, where no key poll follows, so the battle music used to play on through the whole death and resurrection. The table above, §17.8's "the same input that started/ended combat", and §35.4's "the Refuge's silence starts with the scene's first beat" all assumed an input drove the change.
+
 No `GameEvent` was added. Every signal `sync_music()` reads (`game_.position`, `turn_.transport_tile`, `combat_.victory`, `ui_->base_mode()`/`ending_active()`, `frontend_.state()`, the scene pacers' `mounted()`/`scene()`) already existed before this batch.
 
 ### 17.8 Load / mode / restart safety (Phase H)

@@ -1,0 +1,23 @@
+A1 KILLED -- credits in the compact 5x7 font -- a4_ui2_title_runtime exit=1 RED=T2,T3,T4,T6
+A2 KILLED -- credits not centred (+8 px) -- a4_ui2_title_runtime exit=1 RED=T2,T3,T4,T5,T6
+A3 KILLED -- "Press a key" also left in the footer row -- a4_ui2_title_runtime exit=1 RED=T5,T6
+A4 KILLED -- the block resent on every animation frame -- a4_ui2_title_runtime exit=1 RED=T7
+A5 KILLED -- the Title view keeps the generic kind -- a4_ui2_title_runtime exit=1 RED=T2,T3,T4,T5,T6
+A6 KILLED -- the credit block at the old y=116 -- a4_ui2_title_runtime exit=1 RED=T2,T3,T5,T6
+B1 KILLED -- no re-derive when the Refuge begins -- a4_ui2_death_music_runtime exit=1 RED=D2,D3,D6
+B2 KILLED -- no re-derive when the Refuge resolves -- a4_ui2_death_music_runtime exit=1 RED=D4,D6,D7,D9,W2
+B3 KILLED -- the intake re-derives for TrollSneak, not the Refuge -- a4_ui2_death_music_runtime exit=1 RED=D2,D3,D6
+C1 KILLED -- Latest by physical slot, not by age -- a4_ui2_save_menu_runtime exit=1 RED=L5,L6
+C2 KILLED -- System Menu Backup row loads the latest -- a4_ui2_save_menu_runtime exit=1 RED=L3
+C3 KILLED -- no footer notice after a save -- a4_ui2_save_menu_runtime exit=1 RED=M3,M4
+C4 KILLED -- the shell body clear back at y=20 -- a4_ui2_save_menu_runtime exit=1 RED=F2b
+C5 KILLED -- rows not cut to 36 cells -- a4_ui2_save_menu_runtime exit=1 RED=Z1
+C6 KILLED -- a refused slot loses its sequence (memory card) -- a4_ui2_save_menu_runtime exit=1 RED=L6
+C7 KILLED -- a refused slot loses its sequence (the real alpha_save.cpp) -- a3_04g_storage_runtime exit=1 RED=K6
+C8 KILLED -- title Load Game: Back goes to the main menu -- a4_ui2_save_menu_runtime exit=1 RED=F4,F5
+C9 KILLED -- no place in the summary -- a4_ui2_save_menu_runtime exit=1 RED=L1,L5,L6,L8,F2,F3,Z1
+C10 KILLED -- the Save row does not say what it overwrites -- a4_ui2_save_menu_runtime exit=1 RED=M2
+C11 KILLED -- no warning on Create New Character -- a4_ui2_save_menu_runtime exit=1 RED=F1
+C12 KILLED -- a damaged or missing backup does nothing silently -- a4_ui2_save_menu_runtime exit=1 RED=L8,L9
+C13 KILLED -- no party size in the summary -- a4_ui2_save_menu_runtime exit=1 RED=L2,L5,F3
+A4-UI2 mutation check: 22 killed, 0 survived, 0 invalid; restored build GREEN

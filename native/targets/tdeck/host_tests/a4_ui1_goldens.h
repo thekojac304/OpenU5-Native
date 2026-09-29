@@ -14,7 +14,9 @@ constexpr uint64_t kScreen[8] = {
     0x5bcf6f5a31e7850cull, // dungeon-bands
     0x3d7a8aeca46494cbull, // settings
     0x498bcd9840b130ebull, // settings-large
-    0x272ffb60ba52478dull, // system-menu
+    // Alpha 4 UI Batch 2 (ALPHA4_UI.md section 2.3): re-recorded from the A4-UI2 Board for the new
+    // System Menu labels ("Save Game", "Load Game"); the other seven states are unchanged.
+    0x9b4da31f3546ca4full, // system-menu
     0x089fde73b423dfffull, // main-menu
 };
 } // namespace a4_ui1_goldens
