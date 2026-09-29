@@ -254,7 +254,7 @@ void AlphaSaveService::inspect(openu5::FrontendSaveSlot(&slots)[2]){
         const bool valid=read&&verify_candidate(v,s.stage);
         verify_us+=esp_timer_get_time()-t;
         if(valid){slots[i]=summarize_candidate(v,s.stage);s.cache.store(i,v.commit,slots[i]);source[i]="verified";}
-        else{slots[i].present=true;source[i]="refused";}
+        else{slots[i].present=true;slots[i].sequence=commit.sequence;source[i]="refused";} // A4-UI2: ordered by age
         release_candidate(v);
         release_stage(s.stage);
     }

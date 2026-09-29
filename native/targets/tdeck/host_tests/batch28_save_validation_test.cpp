@@ -148,11 +148,20 @@ struct Harness {
         raw_key('m', true); ball(RawInputKind::TrackballDown); ball(RawInputKind::TrackballDown);
         key('\r'); key('\r');
     }
-    void menu_load_row(int row) {                                         // Load / Save Management -> Generation <row+1>
+    // Alpha 4 UI Batch 2: Load Game lists the two generations by AGE -- row 0
+    // "Latest" (Continue Latest, with its fallback), row 1 "Backup" (load_slot
+    // of the older generation). It was "Continue Latest" then one row per
+    // physical slot; here NEW (sequence 2) is slot 0 and OLD slot 1, so the
+    // row numbers below (kNewRow 0, kOldRow 1) name the same generations.
+    void menu_load_row(int row) {                                         // Load Game -> Latest (0) / Backup (1)
         raw_key('m', true); ball(RawInputKind::TrackballDown); ball(RawInputKind::TrackballDown);
         key('\r');
-        for (int i = 0; i <= row; ++i) ball(RawInputKind::TrackballDown);
+        for (int i = 0; i < row; ++i) ball(RawInputKind::TrackballDown);
         key('\r');
+    }
+    std::string menu_row(int row) const {
+        const auto v = rt->system_menu_view();
+        return size_t(row) < v.line_count && v.lines[row] ? v.lines[row] : "";
     }
     void alt_load() { raw_key('l', true); }                                // DeviceShortcut::Load
     void title_continue() {                                               // Return to Title -> Journey Onward -> Continue
@@ -257,7 +266,9 @@ bool build_two(Harness &h) {
     return tdeck::host_memory_save_generations_for_test() == 2;
 }
 // What each generation restores ON ITS OWN, taken through the production
-// Generation row (load_slot) in a runtime of its own. slot = sequence & 1.
+// Load Game row in a runtime of its own: OLD through Backup (load_slot), NEW
+// through Latest (Continue Latest; NEW is valid in every oracle run). Until
+// A4-UI2 both went through a per-slot Generation row (slot = sequence & 1).
 constexpr int kOldRow = 1, kNewRow = 0;
 Snapshot oracle(int row) {
     Harness o;
@@ -456,15 +467,28 @@ void test_routes(const Snapshot &old_s) {
             expect((!r.transcript || h.saw("Load complete")) && looks_old(s) && equivalent(s, old_s, id), id, what);
         }
     {
-        // The Generation row of the refused generation: listed corrupt, so Enter does nothing.
+        // Alpha 4 UI Batch 2: the refused generation is the Latest row, listed
+        // damaged; Enter there is Continue Latest, whose fallback restores OLD.
         Harness h;
         build_two(h);
         tdeck::host_memory_save_edit_for_test(true, dungeon_level_8);
-        const auto before = snap(h);
         h.set_mark();
         h.menu_load_row(kNewRow);
-        expect(!h.saw("Load complete") && equivalent(snap(h), before, "F3"), "F3",
-               "System Menu Generation row of the refused generation: nothing loads, nothing changes");
+        const auto s = snap(h);
+        expect(h.saw("Load complete") && looks_old(s) && equivalent(s, old_s, "F3"), "F3",
+               "System Menu Latest row of the refused generation (listed damaged): Continue falls back, OLD whole");
+    }
+    {
+        // A refused Backup: listed damaged, so Enter loads nothing and changes nothing.
+        Harness h;
+        build_two(h);
+        tdeck::host_memory_save_edit_for_test(false, dungeon_level_8);
+        const auto before = snap(h);
+        h.set_mark();
+        h.menu_load_row(kOldRow);
+        const std::string row = h.menu_row(1);
+        expect(!h.saw("Load complete") && row == "Backup: damaged" && equivalent(snap(h), before, "F3b"), "F3b",
+               "System Menu Backup row of a refused generation: listed damaged, nothing loads, nothing changes");
         h.close_menu(); h.close_menu();
     }
 }

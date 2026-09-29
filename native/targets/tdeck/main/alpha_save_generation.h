@@ -80,7 +80,8 @@ void release_candidate(AlphaSaveCandidate &);
 void release_stage(AlphaSaveStage &);
 // What the title screen and the System Menu list for a generation that
 // verify_candidate() accepted: present, valid, its sequence and the first
-// member's name, from the staged game.
+// member's name, from the staged game; since Alpha 4 UI Batch 2 also where
+// (the HUD's caption), the game date and time, and the party's size.
 openu5::FrontendSaveSlot summarize_candidate(const AlphaSaveCandidate &, const AlphaSaveStage &);
 
 } // namespace tdeck

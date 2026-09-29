@@ -4,6 +4,8 @@
 #include <utility>
 
 #include "esp_log.h"
+#include "location_names.h"
+#include "openu5/hud.h"
 
 namespace tdeck {
 namespace {
@@ -63,6 +65,14 @@ void release_stage(AlphaSaveStage&s){
 openu5::FrontendSaveSlot summarize_candidate(const AlphaSaveCandidate&v,const AlphaSaveStage&s){
     openu5::FrontendSaveSlot out{};out.present=out.valid=true;out.sequence=v.commit.sequence;
     if(s.game.party.character_count)std::snprintf(out.name,sizeof(out.name),"%.9s",s.game.party.characters[0].name);
+    // Alpha 4 UI Batch 2: where and when, as the HUD would caption the staged
+    // game (a dungeon session names the dungeon, not its surface return).
+    const auto bands=openu5::hud_dungeon_bands(s.dungeon,s.dungeon.active);
+    std::snprintf(out.place,sizeof(out.place),"%s",hud_location_caption(uint8_t(s.game.position.map.location),
+                  int16_t(s.game.position.map.floor),bands.active,bands.dungeon_id));
+    out.year=s.game.time.year;out.month=s.game.time.month;out.day=s.game.time.day;
+    out.hour=s.game.time.hour;out.minute=s.game.time.minute;
+    out.party=openu5::party_members(s.game.party).count;
     return out;
 }
 

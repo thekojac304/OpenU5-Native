@@ -1,0 +1,28 @@
+# a4_ui2_save_menu_runtime against the production files of d81733f4 (frontend.h, frontend.cpp, system_menu.h, system_menu.cpp, alpha_runtime.cpp, alpha_save.cpp, alpha_save_generation.h, alpha_save_generation.cpp, alpha_save_memory_host_stub.cpp, tdeck_board.cpp)
+M  the System Menu
+RED M1 the rows name the actions: Resume | Save | Load / Save Management | Settings | Return to Title
+RED M2 the selected row says what it will do (Save: "Alt+M or Mic: resume"; Return to Title: "Alt+M or Mic: resume")
+RED M3 the first save: the footer says "Alt+M or Mic: resume" (the transcript line is kept)
+RED M4 a save over a save says what it overwrote: "Alt+M or Mic: resume"
+RED M5 the notice lasts until the next key
+L  Load Game
+RED L1 two rows by age, leader and place: "Continue Latest" / "Generation 1: Avery" (was "Generation 1/2" by slot)
+RED L2 the selected row's date, time and party: "Enter loads; Mic returns" / "Enter loads; Mic returns"
+RED L3 Enter on Backup loads that older save (back at Iolo's Hut, 12:00)
+GREEN L4 Enter on Latest is Continue: the newer save (Britannia, 13:05)
+RED L5 after a third save (the newer save now in the HIGHER slot) Latest is still the newest: "Enter loads; Mic returns"
+RED L6 a damaged latest save says so, and what Enter does: "Enter loads; Mic returns"
+GREEN L7 ... and Enter on it loads the backup (Continue's fallback, unchanged)
+RED L8 a damaged backup: listed damaged, and Enter says it cannot load (was a silent no-op): "Alt+M or Mic: resume"
+RED L9 one save: "Backup: none yet", its footer explains backups, Enter says there is none
+RED L10 an empty card: "Latest: no save yet"; Enter still reports "No valid save" (unchanged)
+F  the title
+RED F1 "Create New Character" warns that the current save becomes the backup: "Select: arrows / Enter / J C T U A R"
+RED F2 Journey Onward: "Continue Latest | Recovery / Load Previous", naming the save Continue loads: ""
+RED F2b the subtitle is drawn whole: its bottom glyph rows (y=20..21) survive the body (0 px lit)
+RED F3 the title's Load Game lists the same rows: "Generation 1: Avery | Generation 2: Avery"
+RED F4 Back from Load Game returns to Journey Onward, on Load Game (it went to the main menu)
+RED F5 Backup loads the older save and enters the game
+Z  fit
+RED Z1 the longest row is cut to the 36 cells Large text shows ("Continue Latest"); footers fit 50 (24)
+A4-UI2 save menu runtime: 2/22 checks

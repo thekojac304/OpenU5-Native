@@ -1886,6 +1886,11 @@ if(BUILD_TESTING)
   add_test(NAME a4_ui2_death_music_runtime COMMAND a4_ui2_death_music_runtime
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
+  # C: the System Menu and title save/load pages (Latest / Backup by age, with
+  # place, date and party; what Save does to the card), over the memory card.
+  openu5_a4_ui2_runtime(a4_ui2_save_menu_runtime)
+  add_test(NAME a4_ui2_save_menu_runtime COMMAND a4_ui2_save_menu_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
   # Alpha 3 A3-HF3 -- D-63, combat hit feedback (ALPHA3_AUDIO.md section 27).
   # The core half: the 0x3564 cue's length against the rendered burst, the
   # queue, and which combat events are a cue.

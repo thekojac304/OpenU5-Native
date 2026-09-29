@@ -1157,7 +1157,9 @@ esp_err_t Board::show_frontend(const openu5::FrontendView&v,const uint16_t*previ
         bool body_changed=layout_changed||v.line_count!=frontend_cache_.line_count||v.selected_line!=frontend_cache_.selected_line;
         for(size_t i=0;!body_changed&&i<v.line_count;++i)body_changed=std::strcmp(v.lines[i]?v.lines[i]:"",frontend_cache_.lines[i])!=0;
         if(body_changed){
-            const int body_y=title_art?114:20;
+            // Alpha 4 UI Batch 2: the shell's body starts under the subtitle
+            // (y=15..22); clearing from y=20 cut its last glyph rows.
+            const int body_y=title_art?114:23;
             ESP_RETURN_ON_ERROR(fill_rect(shell?3:0,body_y,shell?314:320,224-body_y,kBlack),kTag,"prepare frontend body");account(320*(224-body_y));
             ESP_RETURN_ON_ERROR(draw_generic_body(),kTag,"draw frontend body");
         }

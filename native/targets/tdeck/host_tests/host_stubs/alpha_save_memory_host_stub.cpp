@@ -165,11 +165,12 @@ void AlphaSaveService::inspect(openu5::FrontendSaveSlot (&slots)[2]) {
     for (auto &slot : slots) slot = openu5::FrontendSaveSlot{};
     for (int i = 0; i < 2; ++i) {
         auto &v = g_candidates[i];
-        if (!candidate(i, v)) { slots[i].present = g_slots[i].present; continue; }
-        slots[i].present = slots[i].valid = true;
-        slots[i].sequence = v.commit.sequence;
-        if (g_stage.game.party.character_count)
-            std::snprintf(slots[i].name, sizeof(slots[i].name), "%.9s", g_stage.game.party.characters[0].name);
+        if (!candidate(i, v)) {
+            slots[i].present = g_slots[i].present;
+            slots[i].sequence = g_slots[i].present ? g_slots[i].commit.sequence : 0; // as alpha_save.cpp
+            continue;
+        }
+        slots[i] = summarize_candidate(v, g_stage); // the production summary (A4-UI2: place, date, party)
     }
 }
 

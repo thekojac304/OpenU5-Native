@@ -70,9 +70,31 @@ struct FrontendIntent {
 struct FrontendSaveSlot {
     bool present = false;
     bool valid = false;
-    uint64_t sequence = 0;
+    uint64_t sequence = 0; // the commit's; also for a refused generation, so the list can order it
     char name[10]{};
+    // Alpha 4 UI Batch 2: what the save list shows about a valid generation,
+    // read from the generation the gate staged (never from the live game).
+    char place[24]{};                 // the HUD's location caption
+    int32_t year = 0, month = 0, day = 0, hour = 0, minute = 0;
+    uint8_t party = 0;                // members in the party
 };
+
+// Alpha 4 UI Batch 2 (ALPHA4_UI.md section 2.3). The card holds two
+// generations of ONE journey: every save replaces the older one, so the
+// newer is the player's "Latest" save and the other its "Backup". The list
+// is ordered by age (commit sequence), never by physical slot. Latest means
+// Continue: its load falls back to the backup if the latest is refused.
+struct SaveList {
+    int8_t latest = -1, backup = -1; // physical slot, or -1
+};
+SaveList order_saves(const FrontendSaveSlot (&slots)[2]);
+/** Row text, at most kSaveRowChars: "Latest: Avery, Iolo's Hut", "Backup: damaged", ... */
+constexpr size_t kSaveRowChars = 36;
+void format_save_row(char *out, size_t cap, const FrontendSaveSlot (&slots)[2], bool latest);
+/** The selected row's footer, at most 50 characters: date, time, party, or what Enter will do. */
+void format_save_detail(char *out, size_t cap, const FrontendSaveSlot (&slots)[2], bool latest);
+/** Whether any generation on the card is valid. */
+bool any_valid_save(const FrontendSaveSlot (&slots)[2]);
 
 enum class FrontendViewKind : uint8_t {
     Generic,

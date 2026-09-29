@@ -1,0 +1,30 @@
+# a4_ui2_title_runtime against the production files of 9ab2564e (tdeck_board.cpp, device_ui_views.h)
+T  the title screen
+GREEN T1 control: Return to Title shows the art unchanged -- rows 4..113 are one of the pack's four frames (frame 3), rows 0..3 black
+RED T2 "Lord British presents" is IBM.CH (8x8, was the 5x7 compact font) in white, centred: x=76 y=130 (430 pixels differ)
+RED T3 "Copyright 1988 Lord British" likewise, centred on the next line: x=52 y=144 (484 pixels differ)
+RED T4 "Press a key" is the prompt under the credits, centred, IBM.CH in the footers' grey: x=116 y=184 (186 pixels differ)
+RED T5 nothing else is lit below the art: no left-aligned x=20 lines, no bottom-left footer (519 stray pixels)
+RED T6 spacing: the block starts 2 px under the art, lines 14 px apart, the prompt 32 px below them, 5 px clear to the bottom; ink x 8..180
+GREEN T7 the fire animation still sends only its 288x49 strip (14112 px); the credit block and the prompt are not resent
+GREEN T8 timing unchanged: Title until 1,400 ms, the startup intro until 5,600 ms, then the attract demo
+GREEN T9 the startup intro shows the identical credit block and prompt
+GREEN T10 a key on the Title opens the main menu, whose rows and footer replace the credit block and prompt
+A4-UI2 title runtime: 5/10 checks
+# a4_ui2_death_music_runtime against the production files of 8aa930e3 (alpha_runtime.cpp)
+D  a party wiped in battle, then Lord British's resurrection
+GREEN D0 control: the troll fight plays Engagement and Melee (the song this defect carried into the death)
+GREEN D1 control: the troll's blow ends the battle inside render() -- no key after it -- and the Refuge begins
+RED D2 the music stops when the Refuge begins (context at its first frame: combat; stop_music x0 before "An unending darkness engulfs thee...")
+RED D3 silence through every beat, the karma getkey and the key that ends it (0 songs started during the scene)
+RED D4 at the frame the resurrection resolves (Lord British's castle), The Missing Monarch starts -- no key needed, started once (context combat, song Engagement and Melee, 0 start(s) since the blow)
+GREEN D5 control: the scene's sounds are unchanged: slumber x1, thunder x2, revival x1 (one cue carrying the member count)
+RED D6 muted: no song starts through the fight, the death or the resurrection; the context still follows (Silence in the scene, Castle after it)
+RED D7 unmuting after the resurrection starts the castle's song, not the battle's (Engagement and Melee)
+GREEN D8 the music mute leaves the scene's sounds alone (same slumber / thunder / revival counts)
+RED D9 Music Volume 0 %: silent throughout; raised after the resurrection, the castle's song starts (The Missing Monarch)
+GREEN D10 the scene's timing is the same with music, muted and at 0 %: getkey 15985 ms after the blow, resolved 3990 ms after the key
+W  the out-of-combat Refuge (A3-HF9's path: a wiped party and one Space)
+GREEN W1 control: the area's song (Greyson's Tale) stops with the Space that raises the Refuge, silence throughout (A3-HF9 N1.13)
+RED W2 the resurrection resolves into The Missing Monarch at once, no key needed ()
+A4-UI2 death music runtime: 6/13 checks

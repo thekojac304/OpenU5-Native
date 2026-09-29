@@ -74,6 +74,34 @@ void FrontendSession::enter(FrontendState s,uint32_t now){
 }
 size_t FrontendSession::menu_count()const{return developer_build_&&settings_.developer_tools_visible?8:7;}
 void FrontendSession::set_save_slots(const FrontendSaveSlot(&s)[2]){saves_[0]=s[0];saves_[1]=s[1];}
+// Alpha 4 UI Batch 2 (ALPHA4_UI.md section 2.3): the save list, shared by the
+// title's Load Game page and the System Menu's.
+SaveList order_saves(const FrontendSaveSlot(&s)[2]){
+    SaveList l;
+    if(s[0].present&&s[1].present){l.latest=int8_t(s[1].sequence>s[0].sequence?1:0);l.backup=int8_t(1-l.latest);}
+    else if(s[0].present)l.latest=0;else if(s[1].present)l.latest=1;
+    return l;
+}
+bool any_valid_save(const FrontendSaveSlot(&s)[2]){return s[0].valid||s[1].valid;}
+void format_save_row(char*out,size_t cap,const FrontendSaveSlot(&s)[2],bool latest){
+    if(!out||!cap)return;
+    const auto l=order_saves(s);const int slot=latest?l.latest:l.backup;const char*label=latest?"Latest":"Backup";
+    char row[96];
+    if(slot<0)std::snprintf(row,sizeof(row),"%s: %s",label,latest?"no save yet":"none yet");
+    else if(!s[slot].valid)std::snprintf(row,sizeof(row),"%s: damaged",label);
+    else std::snprintf(row,sizeof(row),"%s: %s, %s",label,s[slot].name[0]?s[slot].name:"saved game",s[slot].place[0]?s[slot].place:"unknown place");
+    std::snprintf(out,cap,"%.*s",int(std::min(kSaveRowChars,cap-1)),row);
+}
+void format_save_detail(char*out,size_t cap,const FrontendSaveSlot(&s)[2],bool latest){
+    if(!out||!cap)return;
+    const auto l=order_saves(s);const int slot=latest?l.latest:l.backup;
+    const bool backup_valid=l.backup>=0&&s[l.backup].valid;
+    if(slot<0)std::snprintf(out,cap,"%s",latest?"No save on this card yet":"Each save keeps the one before as backup");
+    else if(!s[slot].valid)std::snprintf(out,cap,"%s",!latest?"Damaged: this backup cannot be loaded":
+                                         backup_valid?"Damaged: Enter loads the backup instead":"Damaged, and no backup can be loaded");
+    else{const auto&v=s[slot];std::snprintf(out,cap,"%ld-%ld-%ld %02ld:%02ld, party of %u. Enter loads",long(v.month),long(v.day),long(v.year),
+                                           long(v.hour),long(v.minute),unsigned(v.party));}
+}
 bool FrontendSession::tick(uint32_t now){
     if(state_==FrontendState::Title&&now-entered_ms_>=1400){enter(FrontendState::IntroAnimation,now);return true;}
     if(state_==FrontendState::IntroAnimation&&intro_page_==0&&now-entered_ms_>=4200){enter(FrontendState::AttractDemo,now);return true;}
@@ -124,8 +152,14 @@ bool FrontendSession::handle(const UiAction&a,uint32_t now){
         return true;
     }
     if(state_==FrontendState::Load){
-        if(is_up(a)||is_down(a))cursor_^=1;else if(a.kind==UiActionKind::Cancel||a.kind==UiActionKind::Back){enter(FrontendState::MainMenu,now);}
-        else if(a.kind==UiActionKind::Confirm){if(saves_[cursor_].valid){pending_.kind=FrontendIntentKind::LoadSlot;pending_.slot=int8_t(cursor_);}else std::snprintf(notice_,sizeof(notice_),"No valid save in this slot");}
+        // Alpha 4 UI Batch 2: row 0 is the Latest save (Continue, with its
+        // fallback), row 1 its Backup (that generation alone). Back returns
+        // to the Journey Onward page it was opened from.
+        if(is_up(a)||is_down(a)){cursor_^=1;notice_[0]=0;}else if(a.kind==UiActionKind::Cancel||a.kind==UiActionKind::Back){enter(FrontendState::Continue,now);cursor_=1;}
+        else if(a.kind==UiActionKind::Confirm){const auto l=order_saves(saves_);
+            if(cursor_==0)pending_.kind=FrontendIntentKind::ContinueLatest;
+            else if(l.backup>=0&&saves_[l.backup].valid){pending_.kind=FrontendIntentKind::LoadSlot;pending_.slot=l.backup;}
+            else std::snprintf(notice_,sizeof(notice_),"%s",l.backup<0?"No backup save yet":"That backup is damaged and cannot load");}
         else return false;
         return true;
     }
@@ -156,10 +190,16 @@ FrontendView FrontendSession::view()const{
     FrontendView v{};v.state=state_;static char dynamic[12][96]{};for(auto &line:dynamic)line[0]=0;
     if(state_==FrontendState::Title||state_==FrontendState::IntroAnimation){if(!intro_page_)v.kind=FrontendViewKind::TitleCredits;v.title="ULTIMA V";v.subtitle="WARRIORS OF DESTINY";v.lines[v.line_count++]="Lord British presents";v.lines[v.line_count++]="Copyright 1988 Lord British";v.footer=intro_page_?"Enter advances; Mic returns":"Press a key";if(intro_page_){std::snprintf(dynamic[0],96,"The Summoning - scene %u of 21",unsigned(intro_page_));v.lines[0]=dynamic[0];v.line_count=1;if(intro_texts_&&intro_page_<=intro_text_count_)v.lines[v.line_count++]=intro_texts_[intro_page_-1];}return v;}
     if(state_==FrontendState::AttractDemo){v.kind=FrontendViewKind::Attract;v.title="ULTIMA V";v.subtitle="The Summoning";v.lines[v.line_count++]="A moongate opens in the View";v.lines[v.line_count++]="The Avatar approaches Britannia";v.footer="Any key returns to the menu";return v;}
-    if(state_==FrontendState::MainMenu){v.kind=FrontendViewKind::Menu;v.title="ULTIMA V";v.subtitle="WARRIORS OF DESTINY";for(size_t i=0;i<menu_count();++i)v.lines[v.line_count++]=kMenu[i];v.selected_line=cursor_;v.footer=notice_[0]?notice_:"Select: arrows / Enter / J C T U A R";return v;}
+    if(state_==FrontendState::MainMenu){v.kind=FrontendViewKind::Menu;v.title="ULTIMA V";v.subtitle="WARRIORS OF DESTINY";for(size_t i=0;i<menu_count();++i)v.lines[v.line_count++]=kMenu[i];v.selected_line=cursor_;v.footer=notice_[0]?notice_:cursor_==1&&any_valid_save(saves_)?"New game: your current save becomes the backup":"Select: arrows / Enter / J C T U A R";return v;}
     if(state_==FrontendState::Credits){v.kind=FrontendViewKind::Credits;v.title="Acknowledgements";v.lines[v.line_count++]="Produced and Designed by Lord British";v.footer="Press a key";return v;}
-    if(state_==FrontendState::Continue){v.kind=FrontendViewKind::Menu;v.title="Journey Onward";v.lines[v.line_count++]="Continue Latest";v.lines[v.line_count++]="Recovery / Load Previous";v.selected_line=cursor_;v.footer="Enter selects; Mic returns";return v;}
-    if(state_==FrontendState::Load){v.kind=FrontendViewKind::Menu;v.title="Recovery / Load Previous";for(int i=0;i<2;++i){std::snprintf(dynamic[i],96,"Generation %d: %s",i+1,saves_[i].valid?(saves_[i].name[0]?saves_[i].name:"valid save"):saves_[i].present?"corrupt":"empty");v.lines[v.line_count++]=dynamic[i];}v.selected_line=cursor_;v.footer=notice_[0]?notice_:"Enter loads; Mic returns";return v;}
+    if(state_==FrontendState::Continue){v.kind=FrontendViewKind::Menu;v.title="Journey Onward";const auto l=order_saves(saves_);
+        if(l.latest>=0&&saves_[l.latest].valid)std::snprintf(dynamic[0],96,"Latest save: %s, %s",saves_[l.latest].name,saves_[l.latest].place);
+        else std::snprintf(dynamic[0],96,"%s",any_valid_save(saves_)?"Latest save damaged; Continue uses the backup":"No saved journey on this card");
+        v.subtitle=dynamic[0];v.lines[v.line_count++]="Continue";v.lines[v.line_count++]="Load Game";v.selected_line=cursor_;
+        v.footer=cursor_==0?"Enter continues; Mic returns":"The latest save and its backup";return v;}
+    if(state_==FrontendState::Load){v.kind=FrontendViewKind::Menu;v.title="Load Game";v.subtitle="Each save keeps the one before as a backup";
+        format_save_row(dynamic[0],96,saves_,true);format_save_row(dynamic[1],96,saves_,false);v.lines[v.line_count++]=dynamic[0];v.lines[v.line_count++]=dynamic[1];
+        v.selected_line=cursor_;format_save_detail(dynamic[2],96,saves_,cursor_==0);v.footer=notice_[0]?notice_:dynamic[2];return v;}
     if(state_==FrontendState::Settings){v.kind=FrontendViewKind::Settings;v.title="Settings";static const char*ui_sizes[]={"Small","Medium","Large"};std::snprintf(dynamic[0],96,"Brightness: %u%%",settings_.brightness);std::snprintf(dynamic[1],96,"Movement default: %s",settings_.movement_mode?"On":"Off");std::snprintf(dynamic[2],96,"Trackball: %u%%",unsigned(settings_.trackball_responsiveness));std::snprintf(dynamic[3],96,"Text / UI: %s",ui_sizes[std::min<unsigned>(settings_.ui_size,2)]);format_sfx_volume_row(dynamic[4],96,settings_.sound_volume,sfx_muted_);format_music_volume_row(dynamic[5],96,settings_.music_volume,music_availability_,music_muted_);for(int i=0;i<6;++i)v.lines[v.line_count++]=dynamic[i];if(developer_build_){std::snprintf(dynamic[6],96,"Developer: %s",settings_.developer_tools_visible?"Visible":"Hidden");v.lines[v.line_count++]=dynamic[6];}v.selected_line=settings_cursor_;const char*why=settings_cursor_==5?music_unavailable_reason(music_availability_):nullptr;v.footer=why?why:"Left/right changes; Mic saves";return v;}
     if(state_==FrontendState::CharacterCreation){v.title="The Summoning";if(creation_==FrontendCreationPhase::Name){v.kind=FrontendViewKind::CharacterName;v.lines[v.line_count++]="By what name shalt thou be known?";std::snprintf(dynamic[0],96,": %s_",name_);v.lines[v.line_count++]=dynamic[0];v.footer="Enter accepts; Mic returns";}else if(creation_==FrontendCreationPhase::Sex){v.kind=FrontendViewKind::CharacterGender;v.lines[v.line_count++]="Art thou Male or Female?";v.lines[v.line_count++]="(M)ale     (F)emale";v.footer="Choose M or F; Mic returns";}else{v.kind=FrontendViewKind::CharacterQuiz;std::snprintf(dynamic[0],96,"Question %u of 7",unsigned(tournament_.answered()+1));v.lines[v.line_count++]=dynamic[0];const auto qi=tournament_.question_index();if(questions_&&qi<question_count_)v.lines[v.line_count++]=questions_[qi];else{std::snprintf(dynamic[1],96,"A) %s",virtue_name(tournament_.virtue_a()));std::snprintf(dynamic[2],96,"B) %s",virtue_name(tournament_.virtue_b()));v.lines[v.line_count++]=dynamic[1];v.lines[v.line_count++]=dynamic[2];}v.footer="Choose A or B; Mic returns";}return v;}
     if(state_==FrontendState::Error){v.title="Journey interrupted";v.lines[v.line_count++]=notice_;v.footer="Press a key to return";return v;}

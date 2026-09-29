@@ -66,10 +66,13 @@ int main(int argc,char**argv){
     f.complete_intent(true);CHECK(f.state()==FrontendState::EnterGame);
 
     FrontendSession load_flow;load_flow.start(0,false,{});CHECK(load_flow.handle(confirm(),1));
-    FrontendSaveSlot slots[2]{};slots[0].present=true;slots[1].present=true;slots[1].valid=true;slots[1].sequence=9;std::strcpy(slots[1].name,"Avery");load_flow.set_save_slots(slots);
+    // Alpha 4 UI Batch 2: Load Game lists Latest (row 0) and Backup (row 1) by age: here the older generation is in slot 0.
+    FrontendSaveSlot slots[2]{};slots[0].present=true;slots[0].valid=true;slots[0].sequence=8;std::strcpy(slots[0].name,"Iolo");slots[1].present=true;slots[1].valid=true;slots[1].sequence=9;std::strcpy(slots[1].name,"Avery");load_flow.set_save_slots(slots);
     CHECK(load_flow.handle(character('j'),2)&&load_flow.state()==FrontendState::Continue);
     UiAction next{};next.kind=UiActionKind::Next;CHECK(load_flow.handle(next,3));CHECK(load_flow.handle(confirm(),4)&&load_flow.state()==FrontendState::Load);CHECK(load_flow.handle(next,5));CHECK(load_flow.handle(confirm(),6));
-    auto load_intent=load_flow.take_intent();CHECK(load_intent.kind==FrontendIntentKind::LoadSlot&&load_intent.slot==1);load_flow.complete_intent(true);CHECK(load_flow.state()==FrontendState::EnterGame);
+    auto load_intent=load_flow.take_intent();CHECK(load_intent.kind==FrontendIntentKind::LoadSlot&&load_intent.slot==0);CHECK(std::strcmp(load_flow.view().lines[0],"Latest: Avery, unknown place")==0&&std::strcmp(load_flow.view().lines[1],"Backup: Iolo, unknown place")==0);load_flow.complete_intent(true);CHECK(load_flow.state()==FrontendState::EnterGame);
+
+    FrontendSession damaged_flow;damaged_flow.start(0,false,{});damaged_flow.handle(confirm(),1);slots[0].valid=false;damaged_flow.set_save_slots(slots);CHECK(damaged_flow.handle(character('j'),2));CHECK(damaged_flow.handle(next,3));CHECK(damaged_flow.handle(confirm(),4)&&damaged_flow.state()==FrontendState::Load);CHECK(damaged_flow.handle(next,5));CHECK(damaged_flow.handle(confirm(),6));CHECK(damaged_flow.take_intent().kind==FrontendIntentKind::None&&damaged_flow.state()==FrontendState::Load);CHECK(std::strcmp(damaged_flow.view().footer,"That backup is damaged and cannot load")==0);UiAction back_action{};back_action.kind=UiActionKind::Back;CHECK(damaged_flow.handle(back_action,7)&&damaged_flow.state()==FrontendState::Continue);
 
     FrontendSession settings_flow;settings_flow.start(0,false,{});settings_flow.handle(confirm(),1);CHECK(settings_flow.handle(character('s'),2)&&settings_flow.state()==FrontendState::Settings);
     const auto settings_before=settings_flow.view();
