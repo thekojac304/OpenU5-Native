@@ -440,8 +440,15 @@ void test_region() {
     const auto wind = xor_mode(inv, restored, kMapX0, kHudWindBarY, kMapX1, kHudViewportY + kHudViewportH);
     check(sky.mask == 0 && wind.mask == 0, "N2.3",
           "the device's sky and wind strips are not inverted (modes " + n(sky.mask) + ", " + n(wind.mask) + ")");
-    const auto touch = xor_mode(inv, restored, kHudTouchX, kHudTouchY, kHudTouchX + kHudTouchW, kH);
-    check(touch.mask == 0, "N2.4", "the area below the viewport is not inverted (mode " + n(touch.mask) + ")");
+    // Alpha 4 UI Batch 1: the area below the viewport is the frame band
+    // (#0000AA, not a palette index -- xor_mode() would count nothing there).
+    // Not inverted = byte for byte the same mid-sweep as restored.
+    size_t touch_differ = 0;
+    for (int y = kHudTouchY; y < kH; ++y)
+        for (int x = kHudTouchX; x < kHudTouchX + kHudTouchW; ++x)
+            touch_differ += inv[size_t(y * kW + x)] != restored[size_t(y * kW + x)];
+    check(touch_differ == 0, "N2.4", "the area below the viewport is not inverted: identical mid-sweep and restored (" +
+                                         n(touch_differ) + " pixels differ)");
 }
 
 void test_donation() {

@@ -110,6 +110,11 @@ public:
                             const uint16_t *creation_art = nullptr,
                             uint8_t ui_size = 1);
     esp_err_t set_brightness(uint8_t percent);
+    // Alpha 4 UI Batch 1 (ALPHA4_UI.md): IBM.CH, the game's 8x8 font, for the
+    // fixed chrome only -- band captions, the roster, the food/gold/date box.
+    // The runtime hands it over before every draw; the transcript never uses it.
+    // Without it the chrome falls back to the 5x7 font (nothing is refused).
+    void set_chrome_font(const uint8_t *ibm8x8) { ibm_font_ = ibm8x8; }
     // CMDS bed entry: fill only the map image; the relocated sky/wind strips
     // and viewport frame remain visible. The next normal draw restores it.
     esp_err_t fill_bed_viewport();
@@ -180,13 +185,33 @@ private:
     }
     /** `force`: draw every row whatever it last showed (the panel was painted over). */
     esp_err_t draw_party_rows(const openu5::GameState &, DevicePartyHighlight, bool force);
+    // Alpha 4 UI Batch 1: which font a chrome row is drawn in.
+    enum class ChromeFont : uint8_t { Compact, Ibm };
     /**
      * A3-04F: one 8-px row of the right panel's party / status block, drawn only
      * when its text, colour or reverse video differs from what that row last
-     * drew, or when `force`d. Slots 0-5 are the party, 6 the location, 7 the
-     * clock, 8 the movement mode.
+     * drew, or when `force`d. Slots 0-5 are the party, 6 the location (and
+     * MOVE), 7 food/gold, 8 the date and clock (Alpha 4 UI Batch 1). Characters
+     * from `accent_from` on are drawn in `accent`.
      */
-    esp_err_t draw_panel_row(size_t slot, int y, const char *text, uint16_t color, bool invert, bool force);
+    esp_err_t draw_panel_row(size_t slot, int y, const char *text, uint16_t color, bool invert, bool force,
+                             ChromeFont font = ChromeFont::Compact, size_t accent_from = SIZE_MAX,
+                             uint16_t accent = 0);
+    /** Alpha 4 UI Batch 1: the status box's three rows, shared by show_alpha and the bed refresh. */
+    esp_err_t draw_status_rows(const openu5::GameState &, const char *place, bool move, bool force);
+    /** One window of 6-px (Compact) or 8-px (IBM.CH) cells; text starts at `text_x`. */
+    esp_err_t draw_cells(int x, int y, int width, int height, int text_x, const char *text, uint16_t color,
+                         size_t accent_from, uint16_t accent, bool invert, ChromeFont font);
+    /**
+     * A band of the frame with the original's notch and >< ends (bandBracket.ts):
+     * `rule_row` (or -1) is a white rule row; the other rows are the band. The
+     * notch holds `caption` in IBM.CH, or the 12-cell sky track of `sky`.
+     */
+    esp_err_t draw_band_strip(int x, int y, int width, int height, int rule_row, const char *caption,
+                              const openu5::HudWorldState *sky, const uint8_t *runes_font);
+    /** The frontend shell: blue band, >title< caption, white-ruled content window. */
+    esp_err_t draw_frontend_shell(const char *title);
+    bool chrome_glyph_bit(char c, int row, int col) const;
     esp_err_t initialize_shared_spi();
     esp_err_t write_display_command(uint8_t command, const uint8_t *data = nullptr,
                                     size_t data_length = 0);
@@ -202,8 +227,12 @@ private:
     esp_err_t draw_text_box(int x, int y, int width, int height, const char *text,
                             uint16_t color, int scale_x = 1, int scale_y = 1,
                             bool invert = false);
+    // Alpha 4 UI Batch 1: `invert` is draw_text_box's reverse video (kernel
+    // 0x2a28's look) and `top_pad` the background rows above the glyphs, for
+    // the menus' selection bar. The defaults draw exactly what they always did.
     esp_err_t draw_text_box_metrics(int x,int y,int width,int height,const char *text,
-                                    uint16_t color,DeviceTextMetrics metrics);
+                                    uint16_t color,DeviceTextMetrics metrics,
+                                    bool invert = false,int top_pad = 0);
     esp_err_t draw_shared_bus_marker(int pass);
 
     void *display_device_ = nullptr;
@@ -247,6 +276,11 @@ private:
     // and section 23.10.5 left the internal heap's low-water mark unexplained.
     bool alpha_ui_cache_valid_ = false;
     uint8_t alpha_ui_size_cache_ = 0xff;
+    // Alpha 4 UI Batch 1: the chrome font (owned by the resource pack) and the
+    // Movement Mode the status box last showed, so the bed refresh draws the
+    // same caption show_alpha would.
+    const uint8_t *ibm_font_ = nullptr;
+    bool status_move_ = false;
     bool viewport_cache_valid_ = false;
     uint32_t viewport_crc_ = 0;
     uint32_t sky_bar_signature_ = 0;
@@ -276,6 +310,7 @@ private:
         bool preview = false;
         bool panel = false;
         bool creation_art = false;
+        bool shell = false; // Alpha 4 UI Batch 1: the band shell was drawn
         uint8_t ui_size = 0xff;
     } frontend_cache_{};
     bool frontend_cache_valid_ = false;

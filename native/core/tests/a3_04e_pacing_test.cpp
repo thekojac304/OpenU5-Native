@@ -488,11 +488,11 @@ int main(int argc, char **argv) {
                   count_of(board, "tft_yield();") == 4,
               "S2 all four draw loops pause through the policy's cadence and nowhere else");
         const std::string show = function_body(board, "esp_err_t Board::show_alpha(");
-        check(std::regex_search(show, std::regex(R"(\+\+tft_timing_\.full_screen;ESP_RETURN_ON_ERROR\(fill_rect\(0,0,kDisplayWidth,kDisplayHeight,kBlack\),kTag,"initialize Alpha 2\.0 game screen"\))")) &&
-                  std::regex_search(show, std::regex(R"(\+\+tft_timing_\.full_screen;ESP_RETURN_ON_ERROR\(fill_rect\(0,0,kDisplayWidth,kDisplayHeight,kBlack\),kTag,"leave developer screen"\))")) &&
+        check(std::regex_search(show, std::regex(R"(\+\+tft_timing_\.full_screen;ESP_RETURN_ON_ERROR\(fill_rect\(0,0,kDisplayWidth,kDisplayHeight,kChromeBand\),kTag,"initialize Alpha 2\.0 game screen"\))")) &&
+                  std::regex_search(show, std::regex(R"(\+\+tft_timing_\.full_screen;ESP_RETURN_ON_ERROR\(fill_rect\(0,0,kDisplayWidth,kDisplayHeight,kChromeBand\),kTag,"leave developer screen"\))")) &&
                   count_of(show, "full_screen") == 2,
               "S3 both gameplay full-screen repaints are marked (the first game frame, leaving the Developer screen); "
-              "entering the Developer screen is not a gameplay frame");
+              "entering the Developer screen is not a gameplay frame (Alpha 4 UI Batch 1: they paint the frame band)");
 
         const std::string main_cpp = strip_comments(slurp(device_dir + "/main/main.cpp"));
         const auto loop_at = main_cpp.find("for(;;)");

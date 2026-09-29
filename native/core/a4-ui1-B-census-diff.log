@@ -1,0 +1,42 @@
+scenario                                    frames        txns/frame       windows      pixels/frame   xfer ms/frame
+B1 stand 2 s, nothing animated               0->0       0.0->0.0        0.0->0.0          0->0          0.00->0.00   
+B2 stand 2 s, water in view                 37->37     12.0->12.0       2.0->2.0        480->480        0.50->0.50   
+B3 one step (the step frame)                 1->1     181.0->181.0      3.0->3.0      29968->29960     16.68->16.68    *
+B4 step, full transcript, zig-zag            1->1     280.0->280.0     14.0->14.0     41848->41840     23.97->23.96    *
+B5 step, full transcript, zig-zag            1->1     294.0->294.0     15.0->15.0     43432->43424     24.96->24.96    *
+B6 Pass (one line + clock)                   1->1     280.0->280.0     14.0->14.0     41848->41840     23.97->23.96    *
+B6b Pass, 12 Passes above it                 1->1     172.0->172.0      2.0->2.0      28888->28880     16.02->16.02    *
+B6d "Pass" as a prompt line                  1->1     172.0->172.0      2.0->2.0      28888->28888     16.02->16.02  
+B6c a wrapped 3-row message                  1->1     208.0->208.0      6.0->6.0      33208->33208     18.67->18.67  
+B7 status only (HP -1, redraw)               1->1     172.0->172.0      2.0->2.0      28888->28880     16.02->16.02    *
+B8 nothing changed (forced redraw)           1->1     163.0->163.0      1.0->1.0      27808->27808     15.36->15.36  
+B9 Z modal open                              1->1     503.0->503.0     28.0->28.0     86864->86864     47.72->47.72  
+B10 Z modal close                            1->1     654.0->614.0     51.0->45.0     93513->93070     54.22->53.02    *
+B11 Developer menu open                      0->0     536.0->536.0     16.0->16.0    142820->142820    71.00->71.00  
+B12 Developer menu close (repaint)           1->1     927.0->887.0     54.0->48.0    173481->173038    93.29->92.09    *
+B13 combat entry (+1.5 s)                   29->29     26.7->26.7       3.3->3.3       2147->2147       1.54->1.54   
+B14 the fight (all frames)                 155->157   160.8->158.8      6.7->6.6      26531->26163     14.77->14.57    *
+B15 leave the victory arena                  1->1     235.0->235.0      9.0->9.0      36448->36440     20.66->20.65    *
+B16 back on the map 1 s                     20->20     19.6->19.6       1.9->1.9       1846->1846       1.24->1.24   
+B17 stand 2 s on the coast                  42->42     98.0->98.0      10.0->10.0     11632->11632      7.16->7.16   
+B18 step on the coast                        1->1     280.0->280.0     14.0->14.0     41848->41840     23.97->23.96    *
+B19 one animation tick, coast                1->1      87.0->87.0      10.0->10.0      9872->9872       6.17->6.17   
+
+census checks before -> after:
+  B0: GREEN -> GREEN
+  C1: GREEN -> GREEN
+  G0: GREEN -> GREEN
+  G1: GREEN -> RED
+  G2: GREEN -> GREEN
+  I1: GREEN -> GREEN
+  P1: GREEN -> GREEN
+  P2: GREEN -> GREEN
+  P3: GREEN -> GREEN
+  R1: GREEN -> GREEN
+  R2: GREEN -> GREEN
+  R3: GREEN -> GREEN
+  R4: GREEN -> GREEN
+  T1: GREEN -> GREEN
+  T2: GREEN -> GREEN
+  T3: GREEN -> GREEN
+  T5: GREEN -> GREEN

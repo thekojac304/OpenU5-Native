@@ -10,8 +10,10 @@
 //      the draw-primitive calls and the modelled transfer time
 //   G  the panel golden: over one fixed, untimed script the panel (all
 //      320x240 pixels) after EVERY render call is hashed and compared with the
-//      sequence recorded from the A3-04F baseline (a3_04f_panel_goldens.h), so
-//      a change to how the Board draws cannot change what the panel shows
+//      recorded sequence (a3_04f_panel_goldens.h), so a change to how the Board
+//      draws cannot change what the panel shows. Recorded from the A3-04F
+//      baseline; re-recorded ONCE, in its own commit, from the Alpha 4 UI
+//      Batch 1 Board, whose restyle is the one intended change (ALPHA4_UI.md)
 //
 //   a3_04f_render_runtime <openu5-alpha1-resources.bin> [--record <goldens.h>]
 #include "../main/alpha_runtime.h"
@@ -840,11 +842,12 @@ int main(int argc, char **argv) {
         if (!out) return 3;
         std::fprintf(out, "#pragma once\n// A3-04F (ALPHA3_AUDIO.md section 26): the panel after every render call of\n"
                           "// a3_04f_render_runtime's golden script (consecutive repeats folded), FNV-1a\n"
-                          "// over all 320x240 pixels. Recorded from the A3-04F BASELINE Board with\n"
-                          "// `a3_04f_render_runtime <pack> --record <this file>`; never regenerate it from\n"
-                          "// an optimised Board -- that would compare the change with itself.\n"
+                          "// over all 320x240 pixels, with `a3_04f_render_runtime <pack> --record <this file>`.\n"
+                          "// Re-recorded ONCE from the Alpha 4 UI Batch 1 Board (ALPHA4_UI.md): its restyle is\n"
+                          "// the one intended change; the census (R/T/P) that guards A3-04F's efficiency is\n"
+                          "// unchanged. Never regenerate it from a Board that changes how, not what, it draws.\n"
                           "#include <cstddef>\n#include <cstdint>\nnamespace a3_04f_goldens {\n");
-        std::fprintf(out, "constexpr const char *kSource = \"A3-04F baseline (HEAD 414e958a + census counters)\";\n");
+        std::fprintf(out, "constexpr const char *kSource = \"Alpha 4 UI Batch 1 restyle (the reviewed A4-UI1 Board)\";\n");
         std::fprintf(out, "constexpr size_t kRenders = %zu;\n", renders);
         std::fprintf(out, "constexpr size_t kPhaseCount = %zu;\nconstexpr size_t kPhaseStart[%zu] = {", phase_start.size(),
                      phase_start.size());
@@ -858,35 +861,33 @@ int main(int argc, char **argv) {
         std::printf("recorded %zu panel states over %zu render calls to %s\n", panel.size(), renders, record);
     }
     {
-        // A3-HF3 (D-63, ALPHA3_AUDIO.md section 27.8): the fight (phase 4) now shows
-        // the combat hit cue -- a deliberate change of what is COMPOSED, the Board is
-        // untouched. A state may differ from the A3-04F baseline only if it visibly
-        // carries a cue; every other state, in every phase, must be the baseline's.
+        // A3-HF3 (D-63, ALPHA3_AUDIO.md section 27.8): the fight (phase 4) shows the
+        // combat hit cue. Alpha 4 UI Batch 1 re-recorded the golden from its
+        // restyled Board, cues included, so G1 is plain equality and G2 reads the
+        // cue off the pixels (hit_cue_visible()): it shows, and only in the fight.
         size_t first_diff = std::min(panel.size(), a3_04f_goldens::kCount);
-        size_t cue_states = 0, cue_outside_fight = 0, cue_differs = 0;
+        size_t cue_states = 0, cue_outside_fight = 0;
         const size_t fight_begin = phase_start.size() > 5 ? phase_start[4] : 0;
         const size_t fight_end = phase_start.size() > 5 ? phase_start[5] : 0;
         for (size_t i = 0; i < cues.size(); ++i)
             if (cues[i]) {
                 ++cue_states;
                 if (i < fight_begin || i >= fight_end) ++cue_outside_fight;
-                if (i < a3_04f_goldens::kCount && panel[i] != a3_04f_goldens::kPanel[i]) ++cue_differs;
             }
         for (size_t i = 0; i < first_diff; ++i)
-            if (panel[i] != a3_04f_goldens::kPanel[i] && !(i < cues.size() && cues[i])) {
+            if (panel[i] != a3_04f_goldens::kPanel[i]) {
                 first_diff = i;
                 break;
             }
-        check(cue_states > 0 && cue_outside_fight == 0 && cue_differs == cue_states,
-              "G2 the D-63 hit cue shows in " + n(cue_states) + " panel states, all of them in the fight and each "
-              "one different from the baseline's state there (" + n(cue_differs) + "); none outside it");
+        check(cue_states > 0 && cue_outside_fight == 0,
+              "G2 the D-63 hit cue shows (reverse video / tile 0 read off the panel) in " + n(cue_states) +
+                  " panel states, all of them in the fight; none outside it");
         size_t phase = 0;
         for (size_t p = 0; p < a3_04f_goldens::kPhaseCount; ++p)
             if (first_diff >= a3_04f_goldens::kPhaseStart[p]) phase = p;
         const bool same = a3_04f_goldens::kCount > 0 && panel.size() == a3_04f_goldens::kCount &&
                           first_diff == panel.size() && renders == a3_04f_goldens::kRenders;
-        check(same, "G1 the panel after every render call equals the A3-04F baseline's, bar the states that show a "
-                    "D-63 hit cue (G2) (" + n(panel.size()) + " states vs " +
+        check(same, "G1 the panel after every render call equals the recorded golden (" + n(panel.size()) + " states vs " +
                         n(a3_04f_goldens::kCount) + " recorded, " + n(renders) + " vs " + n(a3_04f_goldens::kRenders) +
                         " render calls" + (same ? "" : "; first difference at state " + n(first_diff) + ", phase " + n(phase)) +
                         "; source: " + a3_04f_goldens::kSource + ")");

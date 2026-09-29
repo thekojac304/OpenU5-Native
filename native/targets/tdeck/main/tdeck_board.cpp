@@ -47,6 +47,30 @@ constexpr uint16_t kCyan = 0x07FF;
 constexpr uint16_t kGreen = 0x07E0;
 constexpr uint16_t kRed = 0xF800;
 constexpr uint16_t kYellow = 0xFFE0;
+// Alpha 4 UI Batch 1 (ALPHA4_UI.md): the original's frame palette -- the web
+// port's skin/fiel/frame.ts DEFAULT_FRAME_COLORS: the frame EGA 1 (#0000AA),
+// its border EGA 15 (#FFFFFF) -- and EGA 7 (#AAAAAA) for footers.
+constexpr uint16_t kChromeBand = 0x0015;
+constexpr uint16_t kChromeRule = kWhite;
+constexpr uint16_t kChromeDim = 0xAD55;
+// bandBracket.ts BAND_BRACKET_BLUE / _WHITE: the > that closes a band's notch
+// (8x8, bit 7 = left); the < is its mirror. Everything else in the cell is the
+// notch (black), bar the base column, which is the band itself.
+constexpr uint8_t kBracketBlue[8] = {0x00, 0x00, 0x60, 0x78, 0x78, 0x60, 0x00, 0x00};
+constexpr uint8_t kBracketWhite[8] = {0x00, 0x60, 0x18, 0x04, 0x04, 0x18, 0x60, 0x00};
+// roster.ts: the roster row is 15 IBM.CH cells; they start 4 px into the row.
+constexpr int kRosterTextX = 188;
+
+// Left part at cell 0, right part right-aligned to cell `cells`, spaces between.
+void split_cells(char *out, size_t cap, const char *left, const char *right, size_t cells) {
+    if (!cap) return;
+    const size_t width = std::min(cells, cap - 1);
+    for (size_t i = 0; i < width; ++i) out[i] = ' ';
+    out[width] = 0;
+    for (size_t i = 0; left[i] && i < width; ++i) out[i] = left[i];
+    const size_t n = std::strlen(right);
+    for (size_t i = 0; i < n && i < width; ++i) out[width - std::min(n, width) + i] = right[i];
+}
 constexpr size_t kReadLimit = 160;
 constexpr uint8_t kMadctlRgb = 0x00;
 constexpr uint8_t kMadctlMirrorX = 0x40;
@@ -648,13 +672,18 @@ esp_err_t Board::fill_bed_viewport()
     return result;
 }
 
-esp_err_t Board::draw_panel_row(size_t slot,int y,const char *text,uint16_t color,bool invert,bool force) {
+esp_err_t Board::draw_panel_row(size_t slot,int y,const char *text,uint16_t color,bool invert,bool force,
+                                ChromeFont font,size_t accent_from,uint16_t accent) {
     // A3-04F (ALPHA3_AUDIO.md section 26): up to A3-HF2.1 all nine rows were
     // rewritten on every frame that was not an animation tick -- 117 SPI
     // transactions (~7 ms of transfers) when nothing in them had changed.
     auto &cached=panel_rows_[slot];
     if(!force&&cached.valid&&cached.color==color&&cached.invert==invert&&std::strcmp(cached.text,text)==0)return ESP_OK;
-    ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudRightX,y,openu5::kHudRightW,8,text,color,1,1,invert),kTag,"draw panel row");
+    // Alpha 4 UI Batch 1: 134 px, one short of kHudRightW -- the 135th column
+    // (x=318) is the boxes' right rule, which every row used to paint black.
+    ESP_RETURN_ON_ERROR(draw_cells(openu5::kHudRightX,y,openu5::kHudRightW-1,8,
+                                   font==ChromeFont::Ibm?kRosterTextX:openu5::kHudRightX,text,color,
+                                   accent_from,accent,invert,font),kTag,"draw panel row");
     std::snprintf(cached.text,sizeof(cached.text),"%s",text);cached.color=color;cached.invert=invert;cached.valid=true;
     return ESP_OK;
 }
@@ -664,7 +693,11 @@ esp_err_t Board::draw_party_rows(const openu5::GameState &game,DevicePartyHighli
     // Y-04 (#213): `damage_flash` puts ONE row in reverse video -- the binary's
     // 0x2a28, an XOR of the row's rectangle, shared with the picker cursor and
     // the combat hit. It is the top of openu5::roster_invert_row's precedence.
-    for(size_t row=0;row<6;++row){char line[24]{};uint16_t color=kWhite;bool invert=false;if(row<members.count){const auto index=members.indices[row];const auto&a=game.party.characters[index];const bool selected=index==party_highlight.selected,actor=index==party_highlight.actor;std::snprintf(line,sizeof(line),"%c%u %-7.7s %3u/%3u %c",selected?'>':actor?'*':' ',unsigned(row+1),a.name,unsigned(std::min<uint16_t>(a.current_hp,999)),unsigned(std::min<uint16_t>(a.max_hp,999)),a.status?a.status:'G');color=selected?kGreen:actor?kCyan:kWhite;invert=index==party_highlight.damage_flash;}ESP_RETURN_ON_ERROR(draw_panel_row(row,4+int(row)*8,line,color,invert,force),kTag,"draw party row");}
+    // Alpha 4 UI Batch 1: the original's roster row (web port roster.ts, kernel
+    // draw_roster_row 0x27ab): the name padded to 9, the -> (IBM.CH 0x1a) on the
+    // ACTIVE member unless asleep or dead, HP right-aligned in 4, the status
+    // letter -- in IBM.CH. The picker / combat-actor tints are today's.
+    for(size_t row=0;row<6;++row){char line[24]{};uint16_t color=kWhite;bool invert=false;if(row<members.count){const auto index=members.indices[row];const auto&a=game.party.characters[index];const bool selected=index==party_highlight.selected,actor=index==party_highlight.actor;const char status=a.status?char(a.status):'G';const bool arrow=index==game.party.active_character&&status!='D'&&status!='S';std::snprintf(line,sizeof(line),"%-9.9s%c%4u%c",a.name,arrow?'\x1a':' ',unsigned(std::min<uint16_t>(a.current_hp,9999)),status);color=selected?kGreen:actor?kCyan:kWhite;invert=index==party_highlight.damage_flash;}ESP_RETURN_ON_ERROR(draw_panel_row(row,4+int(row)*8,line,color,invert,force,ChromeFont::Ibm),kTag,"draw party row");}
     return ESP_OK;
 }
 
@@ -672,13 +705,32 @@ esp_err_t Board::refresh_bed_status_panel(const openu5::GameState &game,DevicePa
     if(!display_initialized_||!alpha_drawn_)return ESP_ERR_INVALID_STATE;
     // Drawn unconditionally, as before; the rows' caches learn what is shown.
     ESP_RETURN_ON_ERROR(draw_party_rows(game,party_highlight,true),kTag,"refresh bed party rows");
-    char location[24]{};
+    // Alpha 4 UI Batch 1: the same three status rows show_alpha draws, with
+    // the Movement Mode it last showed.
     const char *name=hud_location_caption(game.position.map.location,game.position.map.floor,false,0);
-    std::snprintf(location,sizeof(location),"%.22s",name);
-    ESP_RETURN_ON_ERROR(draw_panel_row(6,58,location,kCyan,false,true),kTag,"refresh bed location");
-    char clock[24]{};
-    std::snprintf(clock,sizeof(clock),"Day %ld  %02ld:%02ld",long(game.time.day),long(game.time.hour),long(game.time.minute));
-    return draw_panel_row(7,68,clock,kWhite,false,true);
+    return draw_status_rows(game,name,status_move_,true);
+}
+
+esp_err_t Board::draw_status_rows(const openu5::GameState &game,const char *place,bool move,bool force) {
+    // Row A (compact): the native location caption; in Movement Mode it is
+    // clipped to 17 characters and MOVE (green) takes cells 18-21.
+    char location[24]{};
+    if(move)std::snprintf(location,sizeof(location),"%-17.17s MOVE",place);
+    else std::snprintf(location,sizeof(location),"%.22s",place);
+    ESP_RETURN_ON_ERROR(draw_panel_row(6,58,location,kCyan,false,force,ChromeFont::Compact,move?size_t(18):SIZE_MAX,kGreen),
+                        kTag,"draw location caption");
+    // Rows B and C (IBM.CH): the original's food/gold/date box (web port
+    // panel.ts) -- F: left, G: right; the date month-day-year, with the
+    // digital clock kept on its right.
+    char left[48]{},right[48]{},line[24]{};
+    std::snprintf(left,sizeof(left),"F:%u",unsigned(game.food));
+    std::snprintf(right,sizeof(right),"G:%u",unsigned(game.gold));
+    split_cells(line,sizeof(line),left,right,15);
+    ESP_RETURN_ON_ERROR(draw_panel_row(7,68,line,kWhite,false,force,ChromeFont::Ibm),kTag,"draw food and gold");
+    std::snprintf(left,sizeof(left),"%ld-%ld-%ld",long(game.time.month),long(game.time.day),long(game.time.year));
+    std::snprintf(right,sizeof(right),"%02ld:%02ld",long(game.time.hour),long(game.time.minute));
+    split_cells(line,sizeof(line),left,right,15);
+    return draw_panel_row(8,78,line,kWhite,false,force,ChromeFont::Ibm);
 }
 
 esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
@@ -701,7 +753,7 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
     if(!display_initialized_||!pixels)return ESP_ERR_INVALID_STATE;
     (void)turn;(void)overlay;
     debug_last_full_redraw_=false;debug_last_dirty_regions_=0;debug_last_pixels_=0;
-    if(!alpha_drawn_||frontend_drawn_){++tft_timing_.full_screen;ESP_RETURN_ON_ERROR(fill_rect(0,0,kDisplayWidth,kDisplayHeight,kBlack),kTag,"initialize Alpha 2.0 game screen");alpha_drawn_=true;frontend_drawn_=false;alpha_ui_cache_valid_=false;alpha_ui_size_cache_=0xff;viewport_cache_valid_=false;sky_bar_cache_valid_=false;shop_cache_valid_=false;selection_cache_valid_=false;context_cache_valid_=false;animation_only=false;debug_last_full_redraw_=true;debug_last_pixels_=kDisplayWidth*kDisplayHeight;}
+    if(!alpha_drawn_||frontend_drawn_){++tft_timing_.full_screen;ESP_RETURN_ON_ERROR(fill_rect(0,0,kDisplayWidth,kDisplayHeight,kChromeBand),kTag,"initialize Alpha 2.0 game screen");alpha_drawn_=true;frontend_drawn_=false;alpha_ui_cache_valid_=false;alpha_ui_size_cache_=0xff;viewport_cache_valid_=false;sky_bar_cache_valid_=false;shop_cache_valid_=false;selection_cache_valid_=false;context_cache_valid_=false;animation_only=false;debug_last_full_redraw_=true;debug_last_pixels_=kDisplayWidth*kDisplayHeight;}
     if(debug){
         const bool full=!debug_drawn_||!debug_cache_valid_;
         debug_last_full_redraw_=full;debug_last_dirty_regions_=0;debug_last_pixels_=0;
@@ -742,7 +794,7 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
         debug_cache_=*debug;debug_cache_valid_=true;debug_drawn_=true;
         return ESP_OK;
     }
-    if(debug_drawn_){++tft_timing_.full_screen;ESP_RETURN_ON_ERROR(fill_rect(0,0,kDisplayWidth,kDisplayHeight,kBlack),kTag,"leave developer screen");debug_drawn_=false;debug_cache_valid_=false;alpha_ui_cache_valid_=false;alpha_ui_size_cache_=0xff;viewport_cache_valid_=false;sky_bar_cache_valid_=false;shop_cache_valid_=false;selection_cache_valid_=false;context_cache_valid_=false;animation_only=false;}
+    if(debug_drawn_){++tft_timing_.full_screen;ESP_RETURN_ON_ERROR(fill_rect(0,0,kDisplayWidth,kDisplayHeight,kChromeBand),kTag,"leave developer screen");debug_drawn_=false;debug_cache_valid_=false;alpha_ui_cache_valid_=false;alpha_ui_size_cache_=0xff;viewport_cache_valid_=false;sky_bar_cache_valid_=false;shop_cache_valid_=false;selection_cache_valid_=false;context_cache_valid_=false;animation_only=false;}
     if((!shop||!shop->active)&&shop_cache_valid_){
         ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudPartyFrameX,0,kDisplayWidth-openu5::kHudPartyFrameX,kDisplayHeight,kBlack),kTag,"leave shop panel");
         shop_cache_valid_=false;context_cache_valid_=false;alpha_ui_cache_valid_=false;
@@ -751,47 +803,25 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
         ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudPartyFrameX,0,kDisplayWidth-openu5::kHudPartyFrameX,kDisplayHeight,kBlack),kTag,"leave compact selector");
         selection_cache_valid_=false;context_cache_valid_=false;alpha_ui_cache_valid_=false;
     }
-    // Centre a band caption in the 9 px strip, the T-Deck stand-in for the
-    // original's bracketed centred band (skin.ts drawCenteredBand).
-    auto band_text=[](char *out,size_t cap,const char *text){
-        const int columns=openu5::kHudSkyBarW/openu5::kHudCellWidth;
-        int n=0;while(text[n])++n;
-        int pad=(columns-n)/2;if(pad<0)pad=0;
-        size_t at=0;
-        for(int i=0;i<pad&&at+1<cap;++i)out[at++]=' ';
-        for(int i=0;i<n&&at+1<cap;++i)out[at++]=text[i];
-        out[at]=0;
-    };
+    // Alpha 4 UI Batch 1 (ALPHA4_UI.md): the two 9 px strips keep their
+    // rectangles and become frame -- 8 rows of band with the original's notch
+    // and >< ends (bandBracket.ts), plus the white rule that bounds the map
+    // (the sky strip's last row, the wind strip's first). The sky track sits in
+    // the notch as before; the wind and the dungeon's level / facing are
+    // captions in IBM.CH, as the original's band text is.
     auto draw_sky_bar=[&]()->esp_err_t{
-        if(bands_active){
-            char line[34]{};band_text(line,sizeof(line),dungeon_bands->level);
-            ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudSkyBarX,openu5::kHudSkyBarY,
-                                openu5::kHudSkyBarW,openu5::kHudSkyBarH,line,kWhite),kTag,"draw dungeon level band");
-            return ESP_OK;
-        }
+        if(bands_active)
+            return draw_band_strip(openu5::kHudSkyBarX,openu5::kHudSkyBarY,openu5::kHudSkyBarW,openu5::kHudSkyBarH,
+                                   openu5::kHudSkyBarH-1,dungeon_bands->level,nullptr,nullptr);
         if(!runes_font)return ESP_ERR_INVALID_ARG;
         ++draw_calls_.sky_strips;
-        ESP_RETURN_ON_ERROR(set_display_window(openu5::kHudSkyBarX,openu5::kHudSkyBarY,
-                            openu5::kHudSkyBarW,openu5::kHudSkyBarH),kTag,"set U5 sky window");
-        gpio_set_level(pins::kTftDataCommand,1);
-        constexpr int origin=(openu5::kHudSkyBarW-12*8)/2;
-        for(int row=0;row<openu5::kHudSkyBarH;++row){
-            const RowMark mark=row_mark();
-            for(int x=0;x<openu5::kHudSkyBarW;++x){uint16_t color=kBlack;
-                if(row<8&&hud.sky_visible)for(size_t i=0;i<hud.mark_count;++i){const int gx=origin+int(hud.marks[i].cell)*8;if(x>=gx&&x<gx+8){const uint8_t code=hud.marks[i].sun?0x2a:hud.marks[i].glyph;const uint8_t bits=runes_font[size_t(code&0x7f)*8+size_t(row)];if(bits&(0x80U>>unsigned(x-gx)))color=hud.marks[i].sun?kYellow:kWhite;}}
-                transfer_row_[size_t(x)*2]=uint8_t(color>>8);transfer_row_[size_t(x)*2+1]=uint8_t(color);}
-            spi_transaction_t transaction{};transaction.length=openu5::kHudSkyBarW*16;transaction.tx_buffer=transfer_row_.data();
-            ESP_RETURN_ON_ERROR(tft_row(transaction,mark),kTag,"write authentic U5 sky row");
-        }
-        return ESP_OK;
+        return draw_band_strip(openu5::kHudSkyBarX,openu5::kHudSkyBarY,openu5::kHudSkyBarW,openu5::kHudSkyBarH,
+                               openu5::kHudSkyBarH-1,nullptr,&hud,runes_font);
     };
     auto draw_wind_bar=[&]()->esp_err_t{
-        char line[34]{};
-        if(bands_active)band_text(line,sizeof(line),dungeon_bands->direction);
-        else std::snprintf(line,sizeof(line)," Wind: %-16.16s",hud.wind_visible?hud.wind:"--");
-        ESP_RETURN_ON_ERROR(draw_text_box(openu5::kHudWindBarX,openu5::kHudWindBarY,
-                            openu5::kHudWindBarW,openu5::kHudWindBarH,line,kWhite),kTag,"draw lower strip");
-        return ESP_OK;
+        const char *caption=bands_active?dungeon_bands->direction:hud.wind_visible?hud.wind:"";
+        return draw_band_strip(openu5::kHudWindBarX,openu5::kHudWindBarY,openu5::kHudWindBarW,openu5::kHudWindBarH,
+                               0,caption,nullptr,nullptr);
     };
     if(animation_only&&animated_cells){
         // A3-04F (ALPHA3_AUDIO.md section 26): a run of adjacent animated cells
@@ -822,7 +852,7 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
     else for(size_t i=0;i<hud.mark_count;++i)sky_signature=sky_signature*16777619U^(uint32_t(hud.marks[i].cell)<<16|uint32_t(hud.marks[i].glyph)<<8|uint32_t(hud.marks[i].sun));
     char wind_text[34]{};
     if(bands_active)std::snprintf(wind_text,sizeof(wind_text),"%.30s",dungeon_bands->direction);
-    else std::snprintf(wind_text,sizeof(wind_text)," Wind: %-16.16s",hud.wind_visible?hud.wind:"--");
+    else std::snprintf(wind_text,sizeof(wind_text),"%.30s",hud.wind_visible?hud.wind:"");
     const bool viewport_changed=!viewport_cache_valid_||viewport_crc_!=viewport_crc;
     if(viewport_changed){
         ++tft_timing_.viewport_full; // A3-04C: a whole-viewport frame
@@ -842,25 +872,38 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
         std::memset(transcript_cache_,0,sizeof(transcript_cache_));
     }
     if(!alpha_ui_cache_valid_){
-        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudViewportFrameX,openu5::kHudViewportFrameY,openu5::kHudViewportFrameW,2,kCyan),kTag,"viewport frame top");
-        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudViewportFrameX,openu5::kHudViewportFrameY+openu5::kHudViewportFrameH-2,openu5::kHudViewportFrameW,2,kCyan),kTag,"viewport frame bottom");
-        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudViewportFrameX,openu5::kHudViewportFrameY,2,openu5::kHudViewportFrameH,kCyan),kTag,"viewport frame left");
-        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudViewportFrameX+openu5::kHudViewportFrameW-2,openu5::kHudViewportFrameY,2,openu5::kHudViewportFrameH,kCyan),kTag,"viewport frame right");
-        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudPartyFrameX,openu5::kHudPartyFrameY,openu5::kHudPartyFrameW,1,kCyan),kTag,"party frame top");
-        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudPartyFrameX,openu5::kHudPartyFrameY+openu5::kHudPartyFrameH-1,openu5::kHudPartyFrameW,1,kCyan),kTag,"party frame bottom");
-        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudPartyFrameX,openu5::kHudPartyFrameY,1,openu5::kHudPartyFrameH,kCyan),kTag,"party frame left");
-        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudPartyFrameX+openu5::kHudPartyFrameW-1,openu5::kHudPartyFrameY,1,openu5::kHudPartyFrameH,kCyan),kTag,"party frame right");
-        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudWorldFrameX,openu5::kHudWorldFrameY,openu5::kHudWorldFrameW,1,kCyan),kTag,"world frame top");
-        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudWorldFrameX,openu5::kHudWorldFrameY+openu5::kHudWorldFrameH-1,openu5::kHudWorldFrameW,1,kCyan),kTag,"world frame bottom");
-        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudWorldFrameX,openu5::kHudWorldFrameY,1,openu5::kHudWorldFrameH,kCyan),kTag,"world frame left");
-        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudWorldFrameX+openu5::kHudWorldFrameW-1,openu5::kHudWorldFrameY,1,openu5::kHudWorldFrameH,kCyan),kTag,"world frame right");
-        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudPartyFrameX,openu5::kHudTranscriptSeparatorY,openu5::kHudPartyFrameW,1,kCyan),kTag,"transcript separator");
-        for(const auto &p:std::array<std::array<int,4>,8>{{{{2,2,7,1}},{{2,2,1,7}},{{175,2,7,1}},{{181,2,1,7}},{{182,2,6,1}},{{182,2,1,6}},{{313,2,6,1}},{{318,2,1,6}}}})
-            ESP_RETURN_ON_ERROR(fill_rect(p[0],p[1],p[2],p[3],kWhite),kTag,"draw restrained frame cap");
+        // Alpha 4 UI Batch 1 (ALPHA4_UI.md): the original's frame structure
+        // (web port frame.ts) inside the unchanged HUD rectangles. Everything
+        // that is not a content window is band (the full clears paint it; the
+        // touch reserve stays band); the play window gets a 1 px white rule on
+        // its sides (the strips carry its top and bottom rows); the roster and
+        // status boxes are white-ruled and joined by a 2 px blue bar; the
+        // console below them is unboxed and runs to the glass, as the
+        // original's does. The right column's interior is black already: every
+        // path that clears this cache has filled x=182..319 black first.
+        const int top=openu5::kHudViewportY+openu5::kHudSkyBarH-1,bottom=openu5::kHudWindBarY;
+        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudViewportX-1,top,1,bottom-top+1,kChromeRule),kTag,"play window rule left");
+        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudViewportX+openu5::kHudViewportW,top,1,bottom-top+1,kChromeRule),kTag,"play window rule right");
+        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudPartyFrameX,0,kDisplayWidth-openu5::kHudPartyFrameX,openu5::kHudPartyFrameY,kChromeBand),kTag,"band above the boxes");
+        ESP_RETURN_ON_ERROR(fill_rect(kDisplayWidth-1,openu5::kHudPartyFrameY,1,openu5::kHudTranscriptSeparatorY-openu5::kHudPartyFrameY+1,kChromeBand),kTag,"band right of the boxes");
+        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudWorldFrameX,openu5::kHudWorldFrameY,openu5::kHudWorldFrameW,2,kChromeBand),kTag,"bar between the boxes");
+        ESP_RETURN_ON_ERROR(fill_rect(kDisplayWidth-1,openu5::kHudTranscriptSeparatorY+1,1,kDisplayHeight-openu5::kHudTranscriptSeparatorY-1,kBlack),kTag,"console to the glass");
+        const int box_right=openu5::kHudPartyFrameX+openu5::kHudPartyFrameW-1,status_top=openu5::kHudWorldFrameY+2;
+        for(const auto &r:std::array<std::array<int,4>,9>{{
+                {{openu5::kHudPartyFrameX,openu5::kHudPartyFrameY,openu5::kHudPartyFrameW,1}},
+                {{openu5::kHudPartyFrameX,openu5::kHudPartyFrameY+openu5::kHudPartyFrameH-1,openu5::kHudPartyFrameW,1}},
+                {{openu5::kHudPartyFrameX,openu5::kHudPartyFrameY,1,openu5::kHudPartyFrameH}},
+                {{box_right,openu5::kHudPartyFrameY,1,openu5::kHudPartyFrameH}},
+                {{openu5::kHudWorldFrameX,status_top,openu5::kHudWorldFrameW,1}},
+                {{openu5::kHudPartyFrameX,openu5::kHudTranscriptSeparatorY,openu5::kHudPartyFrameW,1}},
+                {{openu5::kHudWorldFrameX,status_top,1,openu5::kHudTranscriptSeparatorY-status_top}},
+                {{box_right,status_top,1,openu5::kHudTranscriptSeparatorY-status_top}},
+                {{openu5::kHudPartyFrameX,openu5::kHudTranscriptSeparatorY,1,kDisplayHeight-openu5::kHudTranscriptSeparatorY}}}})
+            ESP_RETURN_ON_ERROR(fill_rect(r[0],r[1],r[2],r[3],kChromeRule),kTag,"draw box rule");
     }
     auto draw_context_bar=[&](const DeviceContextActionBar &bar,int x,int width,bool first)->esp_err_t{
         if(first||!context_cache_valid_){
-            ESP_RETURN_ON_ERROR(fill_rect(x,kContextBarTop,width,1,kCyan),kTag,"context action separator");
+            ESP_RETURN_ON_ERROR(fill_rect(x,kContextBarTop,width,1,kChromeDim),kTag,"context action separator");
         }
         if(first||!context_cache_valid_||std::strcmp(context_cache_.status,bar.status)!=0)
             ESP_RETURN_ON_ERROR(draw_text_box(x+2,kContextBarStatusY,width-4,kContextBarStatusH,bar.status,kCyan),kTag,"context active status");
@@ -878,7 +921,7 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
             ESP_RETURN_ON_ERROR(fill_rect(182,0,138,240,kBlack),kTag,"initialize U5 shop panel");account(138*240);
             context_cache_valid_=false;
             for(const auto &r:std::array<std::array<int,4>,8>{{{{182,2,137,1}},{{182,33,137,1}},{{182,35,137,1}},{{182,124,137,1}},{{182,149,137,1}},{{182,239,137,1}},{{182,2,1,238}},{{318,2,1,238}}}})
-                {ESP_RETURN_ON_ERROR(fill_rect(r[0],r[1],r[2],r[3],kCyan),kTag,"draw shop separator");account(size_t(r[2]*r[3]));}
+                {ESP_RETURN_ON_ERROR(fill_rect(r[0],r[1],r[2],r[3],kChromeRule),kTag,"draw shop separator");account(size_t(r[2]*r[3]));}
         }
         auto changed=[&](const char*a,const char*b){return first||std::strcmp(a,b)!=0;};
         if(changed(shop->title,shop_cache_.title)){ESP_RETURN_ON_ERROR(draw_text_box(184,4,134,8,shop->title,kCyan),kTag,"shop title");account(134*8);}
@@ -910,7 +953,7 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
             ESP_RETURN_ON_ERROR(fill_rect(182,0,138,240,kBlack),kTag,"initialize compact selector");account(138*240);
             context_cache_valid_=false;
             for(const auto&r:std::array<std::array<int,4>,7>{{{{182,2,137,1}},{{182,23,137,1}},{{182,43,137,1}},{{182,160,137,1}},{{182,213,137,1}},{{182,2,1,238}},{{318,2,1,238}}}}){
-                ESP_RETURN_ON_ERROR(fill_rect(r[0],r[1],r[2],r[3],kCyan),kTag,"draw selector separator");account(size_t(r[2]*r[3]));}
+                ESP_RETURN_ON_ERROR(fill_rect(r[0],r[1],r[2],r[3],kChromeRule),kTag,"draw selector separator");account(size_t(r[2]*r[3]));}
         }
         auto changed=[&](const char*a,const char*b){return first||std::strcmp(a,b)!=0;};
         if(changed(selection->title,selection_cache_.title)){ESP_RETURN_ON_ERROR(draw_text_box(184,5,134,14,selection->title,kCyan),kTag,"selector title");account(134*14);}
@@ -930,12 +973,10 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
     // Batch 9B.  While a dungeon session is mounted the caption is the DUNGEON's
     // name, not game.position's -- that field holds the surface RETURN context
     // for the whole descent and is stale by design (see hud_location_caption()).
-    char location[24]{};const char*name=hud_location_caption(game.position.map.location,game.position.map.floor,bands_active,bands_active?dungeon_bands->dungeon_id:uint8_t(0));std::snprintf(location,sizeof(location),"%.22s",name);
-    char clock[24]{};std::snprintf(clock,sizeof(clock),"Day %ld  %02ld:%02ld",long(game.time.day),long(game.time.hour),long(game.time.minute));
+    const char*name=hud_location_caption(game.position.map.location,game.position.map.floor,bands_active,bands_active?dungeon_bands->dungeon_id:uint8_t(0));
     if(!preserve_party_panel){
-        const char*world[]={location,clock};for(int i=0;i<2;++i)ESP_RETURN_ON_ERROR(draw_panel_row(6+size_t(i),58+i*10,world[i],i==0?kCyan:kWhite,false,!alpha_ui_cache_valid_),kTag,"draw world status");
-        ESP_RETURN_ON_ERROR(draw_panel_row(8,78,movement_mode?"MOVE MODE: ON":"",movement_mode?kGreen:kWhite,false,
-                            !alpha_ui_cache_valid_),kTag,"draw movement mode indicator");
+        status_move_=movement_mode;
+        ESP_RETURN_ON_ERROR(draw_status_rows(game,name,movement_mode,!alpha_ui_cache_valid_),kTag,"draw world status");
     }
 
     // Transcript history and active modal state have separate retained regions.
@@ -943,11 +984,13 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
     const auto text_metrics=ui_text_metrics(ui_size);
     const bool context_active=context_bar&&context_bar->active;
     if(context_active!=context_cache_valid_){
-        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudPartyFrameX,openu5::kHudTranscriptSeparatorY,
-                            openu5::kHudPartyFrameW,kDisplayHeight-openu5::kHudTranscriptSeparatorY,kBlack),
+        // Alpha 4 UI Batch 1: inside the console's rules (x=182, y=86), so
+        // neither is erased; x=319 stays the console's black edge.
+        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudPartyFrameX+1,openu5::kHudTranscriptSeparatorY+1,
+                            kDisplayWidth-openu5::kHudPartyFrameX-1,kDisplayHeight-openu5::kHudTranscriptSeparatorY-1,kBlack),
                             kTag,"reflow transcript context region");
         ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudPartyFrameX,openu5::kHudTranscriptSeparatorY,
-                            openu5::kHudPartyFrameW,1,kCyan),kTag,"restore transcript separator");
+                            openu5::kHudPartyFrameW,1,kChromeRule),kTag,"restore transcript separator");
         std::memset(transcript_cache_,0,sizeof(transcript_cache_));alpha_ui_cache_valid_=false;
         if(!context_active)context_cache_valid_=false;
     }
@@ -995,10 +1038,14 @@ esp_err_t Board::draw_rgb565_scaled(int x,int y,int width,int height,
 esp_err_t Board::show_frontend(const openu5::FrontendView&v,const uint16_t*preview,const uint16_t*title_art,const uint16_t*panel_art,const uint16_t*creation_art,uint8_t ui_size){
     if(!display_initialized_)return ESP_ERR_INVALID_STATE;
     const bool first=!frontend_drawn_||!frontend_cache_valid_;
+    // Alpha 4 UI Batch 1 (ALPHA4_UI.md): every screen with a text title is
+    // drawn in the band shell (>Title< in the top band, a white-ruled window).
+    const bool shell=!title_art&&!creation_art;
     const bool layout_changed=first||frontend_cache_.state!=v.state||frontend_cache_.kind!=v.kind||ui_scale_requires_full_layout(frontend_cache_.ui_size,ui_size)||
                                (frontend_cache_.title_art!=nullptr)!=(title_art!=nullptr)||
                                frontend_cache_.panel!=(panel_art!=nullptr)||
-                               frontend_cache_.creation_art!=(creation_art!=nullptr);
+                               frontend_cache_.creation_art!=(creation_art!=nullptr)||
+                               frontend_cache_.shell!=shell;
     debug_last_full_redraw_=first;debug_last_dirty_regions_=0;debug_last_pixels_=0;
     auto account=[&](size_t pixels){++debug_last_dirty_regions_;debug_last_pixels_+=pixels;};
     if(first){
@@ -1012,6 +1059,7 @@ esp_err_t Board::show_frontend(const openu5::FrontendView&v,const uint16_t*previ
         account(320*152);
     }else if(title_art){
         if(first||!frontend_cache_.title_art){
+            if(!first&&frontend_cache_.shell){ESP_RETURN_ON_ERROR(fill_rect(0,0,kDisplayWidth,kDisplayHeight,kBlack),kTag,"leave frontend shell");account(kDisplayWidth*kDisplayHeight);}
             ESP_RETURN_ON_ERROR(draw_rgb565(0,kCharacterTitleArtY,320,kCharacterTitleArtH,title_art),kTag,"draw original Ultima V title art");
             account(320*110);
         }else if(frontend_cache_.title_art!=title_art){
@@ -1022,29 +1070,31 @@ esp_err_t Board::show_frontend(const openu5::FrontendView&v,const uint16_t*previ
             account(288*49);
         }
     }else{
-        if(first||frontend_cache_.title_art){
-            if(!first){ESP_RETURN_ON_ERROR(fill_rect(0,4,320,110,kBlack),kTag,"replace frontend title art");account(320*110);}
-            ESP_RETURN_ON_ERROR(draw_text_box(0,10,320,22,v.title?v.title:"",kCyan,3,3),kTag,"frontend title");account(320*22);
-            ESP_RETURN_ON_ERROR(draw_text_box(0,38,320,12,v.subtitle?v.subtitle:"",kWhite,2,2),kTag,"frontend subtitle");account(320*12);
+        if(first||!frontend_cache_.shell){
+            if(!first){ESP_RETURN_ON_ERROR(fill_rect(0,0,kDisplayWidth,kDisplayHeight,kBlack),kTag,"replace frontend title art");account(kDisplayWidth*kDisplayHeight);}
+            ESP_RETURN_ON_ERROR(draw_frontend_shell(v.title?v.title:""),kTag,"frontend shell");account(320*12+2*228*2+316*2+4*316);
+            ESP_RETURN_ON_ERROR(draw_text_box(8,15,304,8,v.subtitle?v.subtitle:"",kChromeDim),kTag,"frontend subtitle");account(304*8);
         }else{
-            if(std::strcmp(frontend_cache_.title,v.title?v.title:"")!=0){ESP_RETURN_ON_ERROR(draw_text_box(0,10,320,22,v.title?v.title:"",kCyan,3,3),kTag,"update frontend title");account(320*22);}
-            if(std::strcmp(frontend_cache_.subtitle,v.subtitle?v.subtitle:"")!=0){ESP_RETURN_ON_ERROR(draw_text_box(0,38,320,12,v.subtitle?v.subtitle:"",kWhite,2,2),kTag,"update frontend subtitle");account(320*12);}
+            if(std::strcmp(frontend_cache_.title,v.title?v.title:"")!=0){ESP_RETURN_ON_ERROR(draw_band_strip(0,2,kDisplayWidth,8,-1,v.title?v.title:"",nullptr,nullptr),kTag,"update frontend title");account(320*8);}
+            if(std::strcmp(frontend_cache_.subtitle,v.subtitle?v.subtitle:"")!=0){ESP_RETURN_ON_ERROR(draw_text_box(8,15,304,8,v.subtitle?v.subtitle:"",kChromeDim),kTag,"update frontend subtitle");account(304*8);}
         }
     }
 
     const bool sized_menu=v.kind==openu5::FrontendViewKind::Menu||v.kind==openu5::FrontendViewKind::Settings||v.kind==openu5::FrontendViewKind::SystemMenu;
     const auto menu_metrics=ui_text_metrics(ui_size);
     auto draw_generic_body=[&]()->esp_err_t{
-        int y=title_art?116:62;
+        int y=title_art?116:24;
         for(size_t i=0;i<v.line_count&&y<218;++i){
             const char*source=v.lines[i]?v.lines[i]:"";const bool selected=int(i)==v.selected_line;size_t at=0;
             do{
                 char line[51]{};size_t n=std::min<size_t>(selected&&at==0?48:50,std::strlen(source+at));
                 if(source[at+n]&&n==(selected&&at==0?48U:50U)){size_t cut=n;while(cut>20&&source[at+cut]!=' ')--cut;if(cut>20)n=cut;}
-                if(v.selected_line>=0&&at==0){line[0]=selected?'>':' ';line[1]=' ';std::memcpy(line+2,source+at,n);line[n+2]=0;}else{std::memcpy(line,source+at,n);line[n]=0;}
-                if(sized_menu)ESP_RETURN_ON_ERROR(draw_text_box_metrics(8,y,304,menu_metrics.line_height,line,selected?kGreen:kWhite,menu_metrics),kTag,"frontend sized line");
+                // Alpha 4 UI Batch 1: the selection is reverse video (kernel
+                // 0x2a28's look), not a green '>'; the gutter cell stays.
+                if(v.selected_line>=0&&at==0){line[0]=sized_menu?' ':selected?'>':' ';line[1]=' ';std::memcpy(line+2,source+at,n);line[n+2]=0;}else{std::memcpy(line,source+at,n);line[n]=0;}
+                if(sized_menu)ESP_RETURN_ON_ERROR(draw_text_box_metrics(8,y-1,304,menu_metrics.line_height+2,line,kWhite,menu_metrics,selected,1),kTag,"frontend sized line");
                 else ESP_RETURN_ON_ERROR(draw_text_box(20,y,280,9,line,selected?kGreen:kWhite),kTag,"frontend line");
-                account((sized_menu?304:280)*(sized_menu?menu_metrics.line_height:9));
+                account((sized_menu?304:280)*(sized_menu?menu_metrics.line_height+2:9));
                 at+=n;while(source[at]==' ')++at;y+=sized_menu?menu_metrics.line_height+3:11;
             }while(source[at]&&y<218);
         }
@@ -1068,17 +1118,18 @@ esp_err_t Board::show_frontend(const openu5::FrontendView&v,const uint16_t*previ
         else if(std::strcmp(frontend_cache_.subtitle,v.subtitle?v.subtitle:"")!=0){ESP_RETURN_ON_ERROR(draw_text_box(8,116,304,14,v.subtitle?v.subtitle:"The View",kCyan,2,2),kTag,"update attract scene title");account(304*14);}
         if(preview){ESP_RETURN_ON_ERROR(draw_rgb565(8,136,304,64,preview),kTag,"draw scripted attract band");account(304*64);}
     }else if(panel_art){
-        if(layout_changed){ESP_RETURN_ON_ERROR(fill_rect(0,50,320,174,kBlack),kTag,"prepare acknowledgements panel");account(320*174);}
+        if(layout_changed){ESP_RETURN_ON_ERROR(fill_rect(shell?3:0,50,shell?314:320,174,kBlack),kTag,"prepare acknowledgements panel");account(320*174);}
         if(layout_changed||!frontend_cache_.panel){ESP_RETURN_ON_ERROR(draw_rgb565(16,54,288,137,panel_art),kTag,"draw original acknowledgements panel");account(288*137);}
     }else if(!layout_changed&&(v.kind==openu5::FrontendViewKind::Menu||v.kind==openu5::FrontendViewKind::Settings||v.kind==openu5::FrontendViewKind::SystemMenu)){
         const size_t count=std::max(v.line_count,frontend_cache_.line_count);
-        const int row_y=title_art?116:62;const int row_step=int(menu_metrics.line_height)+3;const int row_height=menu_metrics.line_height;
+        const int row_y=title_art?116:24;const int row_step=int(menu_metrics.line_height)+3;const int row_height=menu_metrics.line_height;
         for(size_t i=0;i<count&&i<12;++i){
             const char*current=i<v.line_count&&v.lines[i]?v.lines[i]:"";
             const char*cached=i<frontend_cache_.line_count?frontend_cache_.lines[i]:"";
             if(std::strcmp(current,cached)==0&&int(i)!=v.selected_line&&int(i)!=frontend_cache_.selected_line)continue;
-            char line[64]{};if(i<v.line_count)std::snprintf(line,sizeof(line),"%c %.48s",int(i)==v.selected_line?'>':' ',current);
-            ESP_RETURN_ON_ERROR(draw_text_box_metrics(8,row_y+int(i)*row_step,304,row_height,line,int(i)==v.selected_line?kGreen:kWhite,menu_metrics),kTag,"update retained frontend row");account(304*row_height);
+            char line[64]{};if(i<v.line_count)std::snprintf(line,sizeof(line),"  %.48s",current);
+            ESP_RETURN_ON_ERROR(draw_text_box_metrics(8,row_y+int(i)*row_step-1,304,row_height+2,line,kWhite,menu_metrics,
+                                i<v.line_count&&int(i)==v.selected_line,1),kTag,"update retained frontend row");account(304*(row_height+2));
         }
     }else if(!layout_changed&&v.kind==openu5::FrontendViewKind::CharacterName){
         for(size_t i=0;i<2;++i){const char*current=i<v.line_count&&v.lines[i]?v.lines[i]:"";const char*cached=i<frontend_cache_.line_count?frontend_cache_.lines[i]:"";if(std::strcmp(current,cached)==0)continue;
@@ -1087,8 +1138,8 @@ esp_err_t Board::show_frontend(const openu5::FrontendView&v,const uint16_t*previ
         bool body_changed=layout_changed||v.line_count!=frontend_cache_.line_count||v.selected_line!=frontend_cache_.selected_line;
         for(size_t i=0;!body_changed&&i<v.line_count;++i)body_changed=std::strcmp(v.lines[i]?v.lines[i]:"",frontend_cache_.lines[i])!=0;
         if(body_changed){
-            const int body_y=title_art?114:52;
-            ESP_RETURN_ON_ERROR(fill_rect(0,body_y,320,224-body_y,kBlack),kTag,"prepare frontend body");account(320*(224-body_y));
+            const int body_y=title_art?114:20;
+            ESP_RETURN_ON_ERROR(fill_rect(shell?3:0,body_y,shell?314:320,224-body_y,kBlack),kTag,"prepare frontend body");account(320*(224-body_y));
             ESP_RETURN_ON_ERROR(draw_generic_body(),kTag,"draw frontend body");
         }
     }
@@ -1099,7 +1150,7 @@ esp_err_t Board::show_frontend(const openu5::FrontendView&v,const uint16_t*previ
         account(296*menu_metrics.line_height);
     }
     const char*footer=creation_art?"":v.footer?v.footer:"";
-    if(first||layout_changed||std::strcmp(frontend_cache_.footer,footer)!=0){ESP_RETURN_ON_ERROR(draw_text_box(8,228,304,9,footer,kGreen),kTag,"frontend footer");account(304*9);}
+    if(first||layout_changed||std::strcmp(frontend_cache_.footer,footer)!=0){ESP_RETURN_ON_ERROR(draw_text_box(8,228,304,9,footer,kChromeDim),kTag,"frontend footer");account(304*9);}
 
     frontend_cache_={};frontend_cache_.state=v.state;frontend_cache_.kind=v.kind;
     std::snprintf(frontend_cache_.title,sizeof(frontend_cache_.title),"%s",v.title?v.title:"");
@@ -1107,7 +1158,7 @@ esp_err_t Board::show_frontend(const openu5::FrontendView&v,const uint16_t*previ
     frontend_cache_.line_count=std::min<size_t>(v.line_count,12);frontend_cache_.selected_line=v.selected_line;
     for(size_t i=0;i<frontend_cache_.line_count;++i)std::snprintf(frontend_cache_.lines[i],sizeof(frontend_cache_.lines[i]),"%s",v.lines[i]?v.lines[i]:"");
     std::snprintf(frontend_cache_.footer,sizeof(frontend_cache_.footer),"%s",footer);
-    frontend_cache_.title_art=title_art;frontend_cache_.preview=preview!=nullptr;frontend_cache_.panel=panel_art!=nullptr;frontend_cache_.creation_art=creation_art!=nullptr;frontend_cache_.ui_size=ui_size;frontend_cache_valid_=true;
+    frontend_cache_.title_art=title_art;frontend_cache_.preview=preview!=nullptr;frontend_cache_.panel=panel_art!=nullptr;frontend_cache_.creation_art=creation_art!=nullptr;frontend_cache_.shell=shell;frontend_cache_.ui_size=ui_size;frontend_cache_valid_=true;
     return ESP_OK;
 }
 
@@ -1151,7 +1202,7 @@ esp_err_t Board::draw_text_box(int x,int y,int width,int height,const char *text
 }
 
 esp_err_t Board::draw_text_box_metrics(int x,int y,int width,int height,const char *text,
-                                       uint16_t color,DeviceTextMetrics metrics)
+                                       uint16_t color,DeviceTextMetrics metrics,bool invert,int top_pad)
 {
     if(!display_initialized_||!text||width<=0||height<=0||x<0||y<0||
        x+width>kDisplayWidth||y+height>kDisplayHeight||!metrics.glyph_width||
@@ -1168,13 +1219,13 @@ esp_err_t Board::draw_text_box_metrics(int x,int y,int width,int height,const ch
         if(used==0)mark=row_mark();
         uint8_t *out=row_bytes.data()+used;
         for(int col=0;col<width;++col){
-            uint16_t pixel=kBlack;const size_t char_index=size_t(col/metrics.cell_width);
-            const int within_x=col%metrics.cell_width;
-            if(row<metrics.glyph_height&&within_x<metrics.glyph_width&&char_index<text_length){
+            uint16_t pixel=invert?color:kBlack;const size_t char_index=size_t(col/metrics.cell_width);
+            const int within_x=col%metrics.cell_width,glyph_y=row-top_pad;
+            if(glyph_y>=0&&glyph_y<metrics.glyph_height&&within_x<metrics.glyph_width&&char_index<text_length){
                 const int glyph_col=within_x*5/metrics.glyph_width;
-                const int glyph_row=row*7/metrics.glyph_height;
+                const int glyph_row=glyph_y*7/metrics.glyph_height;
                 const auto bitmap=glyph(text[char_index]);
-                if(bitmap[glyph_col]&(1U<<glyph_row))pixel=color;
+                if(bitmap[glyph_col]&(1U<<glyph_row))pixel=invert?kBlack:color;
             }
             out[col*2]=uint8_t(pixel>>8);out[col*2+1]=uint8_t(pixel);
         }
@@ -1184,6 +1235,121 @@ esp_err_t Board::draw_text_box_metrics(int x,int y,int width,int height,const ch
         ESP_RETURN_ON_ERROR(tft_row(transaction,mark),kTag,"write metric text row");
     }
     return ESP_OK;
+}
+
+bool Board::chrome_glyph_bit(char c,int row,int col) const
+{
+    if(row<0||row>=8||col<0||col>=8)return false;
+    // IBM.CH: 8 bytes a glyph, bit 7 = left (as runes.ch). Without the font
+    // (a stubbed pack) the 5x7 glyph stands in, one column in from the left.
+    if(ibm_font_)return (ibm_font_[size_t(uint8_t(c)&0x7fU)*8+size_t(row)]&(0x80U>>unsigned(col)))!=0;
+    if(row>=7||col<1||col>5)return false;
+    return (glyph(c)[size_t(col-1)]&(1U<<unsigned(row)))!=0;
+}
+
+esp_err_t Board::draw_cells(int x,int y,int width,int height,int text_x,const char *text,uint16_t color,
+                            size_t accent_from,uint16_t accent,bool invert,ChromeFont font)
+{
+    if(!display_initialized_||!text||width<=0||height<=0||x<0||y<0||
+       x+width>kDisplayWidth||y+height>kDisplayHeight)return ESP_ERR_INVALID_ARG;
+    ++draw_calls_.text_boxes;
+    ESP_RETURN_ON_ERROR(set_display_window(x,y,width,height),kTag,"set chrome row window");
+    gpio_set_level(pins::kTftDataCommand,1);
+    const bool ibm=font==ChromeFont::Ibm;const int cell=ibm?8:6;
+    const size_t text_length=std::strlen(text);
+    const size_t row_length=size_t(width)*2;
+    size_t used=0; // A3-04F: whole rows share a transaction (row_batch_ends)
+    RowMark mark{};
+    for(int row=0;row<height;++row){
+        if(used==0)mark=row_mark();
+        uint8_t *out=transfer_row_.data()+used;
+        for(int col=0;col<width;++col){
+            const int dx=x+col-text_x;bool on=false;uint16_t ink=color;
+            if(dx>=0){
+                const size_t index=size_t(dx/cell);const int gx=dx%cell;
+                if(index<text_length){
+                    if(index>=accent_from)ink=accent;
+                    on=ibm?chrome_glyph_bit(text[index],row,gx):row<7&&gx<5&&(glyph(text[index])[size_t(gx)]&(1U<<unsigned(row)))!=0;
+                }
+            }
+            // Reverse video as draw_text_box: the glyph punched out of the row.
+            const uint16_t pixel=invert?(on?kBlack:ink):(on?ink:kBlack);
+            out[col*2]=uint8_t(pixel>>8);out[col*2+1]=uint8_t(pixel);
+        }
+        used+=row_length;
+        if(!row_batch_ends(used,row_length,row,height))continue;
+        spi_transaction_t transaction{};transaction.length=used*8;transaction.tx_buffer=transfer_row_.data();used=0;
+        ESP_RETURN_ON_ERROR(tft_row(transaction,mark),kTag,"write chrome row");
+    }
+    return ESP_OK;
+}
+
+esp_err_t Board::draw_band_strip(int x,int y,int width,int height,int rule_row,const char *caption,
+                                 const openu5::HudWorldState *sky,const uint8_t *runes)
+{
+    if(!display_initialized_||width<=0||height<=0||x<0||y<0||
+       x+width>kDisplayWidth||y+height>kDisplayHeight)return ESP_ERR_INVALID_ARG;
+    const size_t length=caption?std::strlen(caption):0;
+    const bool track=sky&&sky->sky_visible&&runes;
+    int notch0=-1,notch1=-1;
+    if(track){notch0=(width-12*8)/2;notch1=notch0+12*8;}
+    else if(length){const int w=int(length)*8+4;notch0=(width-w)/2;notch1=notch0+w;}
+    ESP_RETURN_ON_ERROR(set_display_window(x,y,width,height),kTag,"set band strip window");
+    gpio_set_level(pins::kTftDataCommand,1);
+    const size_t row_length=size_t(width)*2;
+    size_t used=0;
+    RowMark mark{};
+    int band_row=0;
+    for(int row=0;row<height;++row){
+        if(used==0)mark=row_mark();
+        uint8_t *out=transfer_row_.data()+used;
+        const bool rule=row==rule_row;
+        for(int col=0;col<width;++col){
+            uint16_t pixel=rule?kChromeRule:kChromeBand;
+            if(!rule&&notch0>=0&&band_row<8){
+                if(col>=notch0&&col<notch1){
+                    pixel=kBlack;
+                    if(track){
+                        const int cell=(col-notch0)/8,gx=(col-notch0)%8;
+                        for(size_t i=0;i<sky->mark_count;++i){
+                            if(sky->marks[i].cell!=cell)continue;
+                            const uint8_t code=sky->marks[i].sun?0x2a:sky->marks[i].glyph;
+                            if(runes[size_t(code&0x7f)*8+size_t(band_row)]&(0x80U>>unsigned(gx)))pixel=sky->marks[i].sun?kYellow:kWhite;
+                        }
+                    }else{
+                        const int cx=col-notch0-2;
+                        if(cx>=0&&size_t(cx/8)<length&&chrome_glyph_bit(caption[cx/8],band_row,cx%8))pixel=kWhite;
+                    }
+                }else if(col>=notch0-8&&col<notch0){
+                    const int i=col-(notch0-8);const uint8_t bit=uint8_t(0x80U>>unsigned(i));
+                    pixel=(kBracketWhite[band_row]&bit)?kChromeRule:(kBracketBlue[band_row]&bit)?kChromeBand:i>0?kBlack:kChromeBand;
+                }else if(col>=notch1&&col<notch1+8){
+                    const int i=col-notch1;const uint8_t bit=uint8_t(0x80U>>unsigned(7-i));
+                    pixel=(kBracketWhite[band_row]&bit)?kChromeRule:(kBracketBlue[band_row]&bit)?kChromeBand:i<7?kBlack:kChromeBand;
+                }
+            }
+            out[col*2]=uint8_t(pixel>>8);out[col*2+1]=uint8_t(pixel);
+        }
+        if(!rule)++band_row;
+        used+=row_length;
+        if(!row_batch_ends(used,row_length,row,height))continue;
+        spi_transaction_t transaction{};transaction.length=used*8;transaction.tx_buffer=transfer_row_.data();used=0;
+        ESP_RETURN_ON_ERROR(tft_row(transaction,mark),kTag,"write band strip rows");
+    }
+    return ESP_OK;
+}
+
+esp_err_t Board::draw_frontend_shell(const char *title)
+{
+    // The band everywhere outside the content window, a white rule around it,
+    // and the >title< caption in the top band (rows 2-9).
+    ESP_RETURN_ON_ERROR(fill_rect(0,0,kDisplayWidth,12,kChromeBand),kTag,"shell top band");
+    ESP_RETURN_ON_ERROR(fill_rect(0,12,2,kDisplayHeight-12,kChromeBand),kTag,"shell left band");
+    ESP_RETURN_ON_ERROR(fill_rect(kDisplayWidth-2,12,2,kDisplayHeight-12,kChromeBand),kTag,"shell right band");
+    ESP_RETURN_ON_ERROR(fill_rect(2,kDisplayHeight-2,kDisplayWidth-4,2,kChromeBand),kTag,"shell bottom band");
+    for(const auto &r:std::array<std::array<int,4>,4>{{{{2,12,316,1}},{{2,237,316,1}},{{2,13,1,224}},{{317,13,1,224}}}})
+        ESP_RETURN_ON_ERROR(fill_rect(r[0],r[1],r[2],r[3],kChromeRule),kTag,"shell rule");
+    return draw_band_strip(0,2,kDisplayWidth,8,-1,title,nullptr,nullptr);
 }
 
 esp_err_t Board::draw_shared_bus_marker(int pass)

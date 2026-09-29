@@ -1,0 +1,16 @@
+MB1 rows paint over the right rule again (135 px): KILLED by C1
+MB2 the -> ignores a sleeping member: KILLED by R2
+MB3 the roster in the compact font: KILLED by R1,R2
+MB4 the date day-month-year: KILLED by S2
+MB5 the digital clock dropped: KILLED by S2
+MB6 MOVE clips the caption to 18: KILLED by S4,S5
+MB7 no > < ends on the notch: KILLED by B2
+MB8 the wind caption keeps the old prefix: KILLED by B3
+MB9 menus lose the reverse video: KILLED by F1,F4,F3,F6
+MB10 no frontend shell: KILLED by F1,F4,F3
+MB11 the footer stays green: KILLED by F1,F4,F3,F6
+MB12 the touch reserve black again: KILLED by C2
+MB13 no play-window rule: KILLED by C2
+MB14 the chrome font never handed over: KILLED by R1,R2,S1,S2,B3,B4,F1,F4,F3
+MB15 the retained menu row not inverted: KILLED by F2,F7,F5,F8
+15/15 killed; restored tree: clean

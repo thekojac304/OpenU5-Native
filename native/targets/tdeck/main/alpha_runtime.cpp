@@ -2290,6 +2290,7 @@ void AlphaRuntime::compose_creation_art(){
 esp_err_t AlphaRuntime::render(Board&board,bool force){
     board_=&board;
     board.set_tft_pacing(pacing_.tft); // A3-04E: the draw loops' pause (section 22)
+    board.set_chrome_font(resources_.ibm_font); // Alpha 4 UI Batch 1: the chrome's IBM.CH
     // A3-04A: the Developer audio benchmark is a timeline, not a wait; it
     // ticks here in every mode so leaving the menu (or the game) cannot stall it.
     service_audio_benchmark(esp_timer_get_time());
