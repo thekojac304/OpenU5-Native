@@ -373,7 +373,14 @@ Every row checked against the Phase 6T–7D hardware results and the Batch 52 au
   - 21 deliberate: A-1 … A-15 and E-1 … E-6. E-5 (A3-05) was never added to a totals line, so the last recorded total, 19, predates it.
   - Software-fixed rows awaiting hardware: D-6, D-42, D-64, D-65, D-70.
 
-**Alpha 3 RC1 status (2026-09-28; `ALPHA3.md`, checklist Phase A3-RC1): ALPHA 3 RC1 — HARDWARE SMOKE PENDING.** No ledger row changed.
+**Alpha 3 release status (2026-09-28; `ALPHA3.md`, checklist Phase A3-RC1): ALPHA 3 RELEASED.** No ledger row changed; no historical defect evidence was edited.
+- Phase A3-RC1 passed on the RC1 image (`FW 3.0.0-alpha3-rc1-debug`, `Git f85575b96f05`), which is promoted byte for byte to the release: SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`, tag `alpha3-release`.
+- **Heap / watch disposition:** RC1 HEAP GATE PASSED — A3-04H DEFERRED (`ALPHA3_AUDIO.md` §37). §28.16 triggers 2 and 3 fired and were explained (a save rewrites the live save document in place; the sum recovered when a load and a New Journey replaced it; the inspect and workspace windows retained 0 B). The watch is closed for Alpha 3. It is not a divergence from the original and adds no row.
+- The RC capture's three keyboard-controller read errors were recovered (`recoveries=2`, `dropped=0`); recorded as successful recovery evidence, not a defect and not a row.
+- **Deferred past Alpha 3, unchanged:** D-67 / D-68 / D-69, D-71, D-54, D-56, D-57, D-48 and the other classified rows, the UI track, A3-04H.
+- **No software-fixed row awaits hardware.** Totals: 21 deliberate (A-1 … A-15, E-1 … E-6).
+
+**Alpha 3 RC1 status (2026-09-28; `ALPHA3.md`, checklist Phase A3-RC1): ALPHA 3 RC1 — HARDWARE SMOKE PENDING — superseded by the release status above; kept as written.** No ledger row changed.
 - The RC1 image is A3-HF10's firmware with `PROJECT_VER` `3.0.0-alpha3-rc1-debug`; no behaviour, pack or save-format change, so no row moves.
 - **Hardware-validated rows (A3-HF10 session):** D-6 / D-70, D-42, D-64, D-65. No software-fixed row awaits hardware.
 - **Physical gate left:** Phase A3-RC1 (smoke and heap capture). Deferred past Alpha 3, unchanged: D-67 / D-68 / D-69, D-71, D-54, D-56, D-57, the UI track.

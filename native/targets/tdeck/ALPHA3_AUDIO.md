@@ -1,6 +1,11 @@
 # Alpha 3 — Audio (A3-01 architecture, A3-02 PC-speaker synthesizer, A3-03 remaining SFX, A3-04 music playback, A3-04A real-time playback, A3-04B render contention, A3-04C contention map, A3-04D SD-log isolation, A3-04E render pacing, A3-04E.1 idle service, A3-HF2 ambient clock parity, A3-HF2.1 cleanup, A3-04F render efficiency, A3-HF3 combat hit feedback, A3-04G save inspection and the storage heap, A3-05 audio finalization, A3-HF4 load transient reset, A3-HF5 dialogue pacing, A3-HF6 shrine key waits, A3-HF7 ritual effects, A3-HF8 sacrifice burst, A3-HF9 Refuge cadence, A3-HF10 Mix command parity)
 
-**Status (Alpha 3 RC1, 2026-09-28): ALPHA 3 RC1 — HARDWARE SMOKE PENDING — NO CODE CHANGED.** `PROJECT_VER` is `3.0.0-alpha3-rc1-debug`; the image is A3-HF10's, byte for byte in size (988,320 B) and in every memory section, so §28.16 trigger 6 did not fire. Trigger 7 (the RC's serial heap capture) is owed with Phase A3-RC1. The A3-HF10 hardware session (H-203, H-204, H-210, H-213) PASSED. The pre-RC reconciliation status follows.
+**Status (Alpha 3 release closeout, 2026-09-28): ALPHA 3 RELEASED — NO CODE CHANGED. RC1 HEAP GATE PASSED — A3-04H DEFERRED.** The hardware-tested RC1 image (`FW 3.0.0-alpha3-rc1-debug`, `Git f85575b96f05`, SHA-256 `4b5b9d1f…53b1`) is the final Alpha 3 firmware, byte for byte; `ALPHA3.md` is the release note. **§37** records the RC smoke, the RC heap capture and its adjudication:
+- **No leak.** Trigger 2 fired once, on a gameplay save (−52,136 B), and trigger 3 fired (30,720 B). Both are explained: a save rewrites the live save document in place, and a later load or New Journey replaces it. Internal + PSRAM ended within 4,664 B of the first heartbeat, with no downward slope; the workspace and inspect windows retained 0 B.
+- **§28.21.7's assumption is amended (§37.3):** a save does not conserve internal + PSRAM across its window. The old "recorded, not explained" reading of A3-04G's +39,120 B is corrected.
+- **Deferred past Alpha 3:** A3-04H, H-209, H-211, H-212, D-54, D-56, D-57, D-71, the UI track. Nothing here changes them.
+
+**Status as the RC1 batch wrote it (2026-09-28): ALPHA 3 RC1 — HARDWARE SMOKE PENDING — NO CODE CHANGED. Superseded by the release status above.** `PROJECT_VER` is `3.0.0-alpha3-rc1-debug`; the image is A3-HF10's, byte for byte in size (988,320 B) and in every memory section, so §28.16 trigger 6 did not fire. Trigger 7 (the RC's serial heap capture) is owed with Phase A3-RC1. The A3-HF10 hardware session (H-203, H-204, H-210, H-213) PASSED. The pre-RC reconciliation status follows.
 
 **Status (Alpha 3 pre-RC reconciliation, 2026-09-28): THE AUDIO TRACK IS CLOSED; NO CODE CHANGED.** The scope, the deferrals and the RC procedure are in `ALPHA3.md` at the repository root. The authoritative hardware table is the checklist's "Alpha 3 pre-RC reconciliation" section.
 - **Closed:** audio, music and the A3-04 performance work. The ledger's D-3 is resolved, and the patched-install music is its deliberate row E-6. The volume curve is final (§29.2).
@@ -3884,7 +3889,7 @@ Pre-commit build `native/targets/tdeck/build-a3-04g` (`a3-04g-firmware-{configur
 
 `heap_int_min` below 1 KiB **inside** a cold storage window is expected and is no longer a trigger by itself.
 
-*Device result (H-202, §28.21.7): triggers 2 and 3 fired on two Continues. Free PSRAM rose by the same amounts, so these were placement of the live document, not retention. The item stays open as an allocator placement / fragmentation watch. §28.21.7 adds the internal + PSRAM sum to the reading of trigger 2.*
+*Device result (H-202, §28.21.7): triggers 2 and 3 fired on two Continues. Free PSRAM rose by the same amounts, so these were placement of the live document, not retention. The item stays open as an allocator placement / fragmentation watch. §28.21.7 adds the internal + PSRAM sum to the reading of trigger 2.* *(RC1 heap capture, §37: trigger 7 satisfied, no leak, the watch is closed for Alpha 3 and its remedy A3-04H is deferred. §37.3 amends how a save window is read.)*
 
 ### 28.17 Hardware check H-202 (the user's; not done here)
 
@@ -4047,7 +4052,7 @@ The visible open is **≈ 180 ms instead of ≈ 820 ms (−78 %)**. The 180 ms i
 2. **The mover is the Continue, not the menu or the inspection.** A load frees the live game's save document and builds the next one (≈ 193 KB of ≤ 4 KiB blocks, internal RAM first, §28.5). Where it lands depends on what is free when it is built (§28.6, "allocator migration"). The boot Continue ran with 56 KB of internal RAM free, so its document went mostly to PSRAM. The second Continue ran with 243 KB free, so ≈ 149 KB of it went to internal RAM, and its small blocks cut the largest free block to 23,552 B.
 3. **Recoverable, not progressive.** The next storage windows moved it back up: the Save to 32,768 B, the in-menu Load to 47,104 B, the last Continue to 36,864 B. Free internal RAM went 243 → 94 → 133 → 186 → 139 KB: up and down, never a slope.
 4. **The A3-04G fix holds on the device.** All 29 inspection windows kept 0 B. The 150 KB after the first open, and the 7.5 KB largest block at the title, are gone.
-5. **The Save's +39,120 B** is a net release (the sum rose by the same amount and stayed there). The log does not say what was released. It is the opposite of retention and is recorded, not explained.
+5. **The Save's +39,120 B** is a net release (the sum rose by the same amount and stayed there). The log does not say what was released. It is the opposite of retention and is recorded, not explained. *(Explained at the RC1 heap adjudication, §37.3: `capture_save_document()` re-captures the save sections into the live document in place, so a save moves the document's footprint, by +39,120 B here and −52,136 B at RC1. It is not an unexplained release.)*
 
 **`heap_int_min`** (the sum of per-region lifetime minima, §26.17.8), from `SYS_PERF` every 5 s:
 - **332 B**, set before 57.34 s. That interval holds the boot windows: settings, the cold inspection and the first Continue.
@@ -4071,7 +4076,7 @@ The visible open is **≈ 180 ms instead of ≈ 820 ms (−78 %)**. The 180 ms i
 - *Not closed:* triggers 2 and 3 fired. A load that finds internal RAM free fills it with the live document and fragments it, and 23,552 B is below the 32 KiB line. `heap_int_min` still reaches ~300 B inside cold windows (§28.16's bounded case).
 - *Not a present risk to storage:* every window released and re-reserved its 8 KiB DMA headroom, the SD bounce buffers need 512 B, and nothing failed. The fragmentation came from the live game state, not from anything the menu does.
 - *The remedy is known and queued:* route the save document to PSRAM (§28.7, §28.18), and cut the import count, in A3-04H. Both would remove the placement lottery, not just the symptom.
-- **Added watch rule (the trigger list is kept as it is):** read a trigger-2 hit together with the heartbeat PSRAM figure. If internal + PSRAM falls by more than 4 KiB across the window, that is retention: escalate at once. If the sum is conserved, it is placement: record it. Trigger 3 keeps its 32 KiB line; this run's floor, **23,552 B**, is the reference for the next capture.
+- **Added watch rule (the trigger list is kept as it is):** read a trigger-2 hit together with the heartbeat PSRAM figure. If internal + PSRAM falls by more than 4 KiB across the window, that is retention: escalate at once. If the sum is conserved, it is placement: record it. Trigger 3 keeps its 32 KiB line; this run's floor, **23,552 B**, is the reference for the next capture. *(Amended by §37.3: the sum is NOT conserved across a gameplay-save window. Read a save window's sum against the sum after the next clean load or New Journey.)*
 
 #### 28.21.8 Audio, input and system health
 
@@ -5253,3 +5258,78 @@ In `ALPHA2_HARDWARE_CHECKLIST.md`: `Alt+S`; Developer → Reagents: Ginseng 9, S
 - Reference: `game/src/ui/prompt-manager.ts`, `game/src/core/magic/mix.ts`, `game/src/main.ts`, `game/src/core/magic/mixReagentPicker.ts` (citation).
 - Tests and tools: new `native/targets/tdeck/host_tests/a3_hf10_mix_parity_runtime_test.cpp`, `game/tests/mix-hf10-quantity.test.ts`, `native/core/tools/a3_hf10_{red_first,mutation_check}.py`; changed `native/core/CMakeLists.txt`.
 - Docs: this section and the status line; `ALPHA2_PRESERVATION_LEDGER.md` (D-6, D-70, D-71); `ALPHA2_HARDWARE_CHECKLIST.md` (H-53 note, H-213); `GAMEPLAY_INTEGRATION_AUDIT.md`; `LAUNCHER.md`; new `re/notes/mix-hf10-command-parity.md`, `re/notes/cmds.md` §12 pointer.
+
+## 37. Alpha 3 RC1 — hardware smoke, the RC heap capture and its adjudication (release closeout)
+
+The last Alpha 3 section. A documentation batch: no code, test, `PROJECT_VER`, firmware or pack changed since RC1. It records what the RC1 image did on the device, closes §28.16 trigger 7, and corrects two readings of §28.21.7. Verdict: **RC1 HEAP GATE PASSED — A3-04H DEFERRED**, and the RC1 image is promoted byte for byte to the Alpha 3 release.
+
+### 37.1 Image and evidence
+
+| | |
+|---|---|
+| Image | `native/targets/tdeck/build-a3-rc1-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`, 988,320 B (`0xf14a0`), 60,256 B free, SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1` |
+| Identity | `FW 3.0.0-alpha3-rc1-debug`, `Git f85575b96f05` (the RC commit `f85575b96f05bd7250ef41347f858bfc954e276b`, tag `alpha3-rc1`) |
+| Capture | `native/targets/tdeck/a3-rc1-hw-capture.log`: the user's PowerShell `Tee-Object` capture from `esp_idf_monitor` (UTF-16), converted to UTF-8 with the ANSI colour codes removed; 6,318 lines |
+| Summary | `native/targets/tdeck/a3-rc1-hw-summary.log`: `a3_04g_hw_closeout.py` on the capture, as run. Re-run on the converted file it is identical but for its header path |
+| Adjudication | `native/targets/tdeck/a3-rc1-heap-adjudication.log` (the figures below, with their sources) |
+| Caveat | The tee lost 7.4 s – 99.9 s of the boot (line 11 joins tick 7,361 to tick 99,891), so `IDENTITY`, `AUDIO_PACK` and the boot inspect are not in the file. The identity is the user's report of the device screen |
+
+### 37.2 The device result
+
+- Health: watchdog / crash / reboot 0; storage error lines 0; error-level lines 0. Audio: 71 / 71 `AUDIO_PERF` windows clean (`missed=0 underruns=0 hw_underruns=0 runaway=0 failures=0`).
+- System Menu: 13 opens, key → first frame 180–190 ms (median 180; A3-04E.1's first open was 820 ms). 15 cached `SAVE_INSPECT` at 82.4–83.1 ms, first-half mean 82.98 ms against second-half 82.79 ms (no slowdown), `read_us=0`, 0 B retained in all 15 windows.
+- Combat: 13 hit cues (10 enemy, 3 party), a killing blow, a victory; audio clean through the fight.
+- Save / load: `load generation=41`, `save generation=42` (2,247 ms), `load generation=42` (875 ms), `save generation=43` (a New Journey); no error.
+- Input: `INPUT_QUEUE high_water=4 dropped=0 queued=836 consumed=836`. `KEYBOARD_METRICS reads=10248 errors=3 recoveries=2` (§37.4).
+- Phase A3-RC1 in `ALPHA2_HARDWARE_CHECKLIST.md`: **PASS**.
+
+### 37.3 The heap adjudication
+
+**The mechanism (not a leak).** `AlphaRuntime::retained_` is the live save document. `save()` calls `capture_save_document()` (`alpha_save_generation.cpp`), which re-captures the gameplay, terrain, NPC-walk, world-object, moonstone and dungeon sections into it **in place**, and `export_native_state` then deep-copies it (transient). So a save changes the live document's footprint by the difference between what the load put there and what the save captures, and the document stays alive after the save by design. A later load, or a New Journey, replaces it and frees the change. The host test names the first half of this: `a3_04g_storage_runtime_test.cpp`, "the document gains its captured sections once". The workspace and the inspection paths keep nothing: 15 `save-inspect` windows restored exactly what they released.
+
+**The figures** (`a3-rc1-heap-adjudication.log`):
+
+| Step | internal | PSRAM | sum |
+|---|---:|---:|---:|
+| first heartbeat, 102.21 s | 55,923 | 6,081,064 | 6,136,987 |
+| after the boot Continue | 198,599 | 5,937,432 | 6,136,031 (−956: placement only) |
+| pre-save plateau, 187.31 s | 196,419 | 5,937,432 | 6,133,851 |
+| **after the gameplay save, 404.25 s** | **144,283** | 5,937,432 | 6,081,715 (**−52,136**) |
+| after the load of that save | 160,271 | 5,932,400 | 6,092,671 (+10,956) |
+| after New Journey, 440.97 s | 168,223 | 5,964,100 | 6,132,323 (+39,652) |
+
+The sum ends **4,664 B** below the first heartbeat and **1,528 B** below the pre-save plateau, and the difference is live state, not a slope: 6,136,987 → 6,133,851 → 6,081,715 → 6,092,671 → 6,132,323. A retained allocation cannot come back. This one came back in two steps, each time the live document was replaced.
+
+**The triggers (§28.16):**
+
+| # | Trigger | RC1 capture |
+|---|---|---|
+| 1 | storage / DMA error lines | 0, not fired |
+| 2 | a window restored > 4 KiB below its release | **fired once**: `gameplay-save`, −52,136 B. Explained above |
+| 3 | `largest_internal` < 32 KiB | **fired**: 30,720 B in 13 windows (`load-latest`, `save-inspect`). Above the 23,552 B floor accepted in §28.21.7, and the DMA headroom was released and restored in every window |
+| 4 | heartbeat `internal` falling across ≥ 20 opens | not fired (the longest span is 11 opens, flat at 160,271) |
+| 5 | a new `heap_int_min` outside a storage window | not fired: 376 B (`load-latest`) and 168 B (`gameplay-save`) sit inside storage windows; the 4,700 B at 102.21 s is the capture's first sample, in the spliced boot |
+| 6 | ≥ 1 KiB of internal `.data` / `.bss` / IRAM | not fired: the RC1 section diff against A3-HF10 is empty |
+| 7 | an Alpha 3 release candidate: serial capture | **satisfied by this capture** |
+
+**Amendments to §28.21.7, which is otherwise kept as written:**
+1. *The old rule* — "if internal + PSRAM falls by more than 4 KiB across the window, that is retention: escalate at once" — assumed that a save conserves the sum. It does not: a **gameplay-save** window can move the sum by tens of KB in either direction, because the document is rewritten in place (A3-04G: +39,120 B; RC1: −52,136 B; a New Journey's save: −2,444 B of internal).
+2. *The reading now.* A load, settings and inspection window is still judged by its own `free0 → free1`, and any of them keeping bytes is retention. A **save** window is judged by recovery: compare the sum before the save with the sum after the next clean load or New Journey (§37.3's table), and by whether repeated warm saves show a downward slope. Retention does not recover.
+3. *The A3-04G "+39,120 B … recorded, not explained"* is explained here: the same in-place rewrite, in the other direction.
+4. §28.21.7's *trigger 3 floor* (23,552 B) is unchanged. This capture's 30,720 B is above it.
+
+### 37.4 Keyboard recovery observation
+
+Three `ESP_ERR_INVALID_RESPONSE` keyboard-controller reads out of 10,248, in two incidents: `n=4113` and `n=4114` (186.56 s) and `n=4309` (195.36 s). Each incident logged `KEYBOARD_ERROR`, ran `KEYBOARD_RECOVER` to a `baseline result=usable` (`errors=3 recoveries=2`), and `INPUT_RESYNC` abandoned only the held gestures. `INPUT_QUEUE`: `dropped=0`, `queued=836`, `consumed=836`. No lock, no mode corruption. This is **recovery working as designed**, recorded as evidence. It is not a defect and has no blocker ID.
+
+### 37.5 Disposition
+
+- **The heap watch item is closed for Alpha 3.** No leak, no retained workspace, no slope, no storage or DMA error. The placement / fragmentation trait (a load that finds internal RAM free fills and fragments it; `heap_int_min` reaches a few hundred bytes inside cold storage windows) remains a known characteristic, not a release risk.
+- **A3-04H is deferred, unchanged** (§28.18: PSRAM routing of the save document and the import count). Nothing in the capture calls for it.
+- **Release:** the RC1 image is the Alpha 3 release, byte for byte, tag `alpha3-release` (`ALPHA3.md`).
+
+### 37.6 Files
+
+- Evidence: `native/targets/tdeck/a3-rc1-hw-capture.log`, `a3-rc1-hw-summary.log`, `a3-rc1-heap-adjudication.log`; `native/core/a3-release-ctest.log` (serial host suite, release tree).
+- Docs: this section and its status line; `ALPHA3.md`; `ALPHA2_HARDWARE_CHECKLIST.md` (Phase A3-RC1); `GAMEPLAY_INTEGRATION_AUDIT.md`; `ALPHA2_PRESERVATION_LEDGER.md`; `LAUNCHER.md`; `README.md`.
+- Nothing else. No source, test, `PROJECT_VER`, firmware or pack changed.

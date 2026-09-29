@@ -1575,7 +1575,7 @@ Each phase heading above keeps its own history. This table is the current readin
 | H-199 | A3-HF2.1 | **WITHDRAWN** (optional; never run; not owed) |
 | H-200 | A3-04F | **PASS** |
 | H-201 | A3-HF3 | **PASS** |
-| H-202 | A3-04G | **PASS**; the heap watch item stays open, and Phase A3-RC1 re-reads it |
+| H-202 | A3-04G | **PASS**; the heap watch item stayed open until Phase A3-RC1 re-read it: **no leak, gate PASSED** (`ALPHA3_AUDIO.md` §37) |
 | H-203 | A3-05 | **PASS** (A3-HF10 image, 2026-09-28) |
 | H-204 | A3-HF4 | **PASS** (A3-HF10 image, 2026-09-28) |
 | H-205 | A3-HF5 | **PASS** |
@@ -1602,9 +1602,17 @@ Run all four on the **A3-HF10** image. It carries A3-HF9, A3-HF4 and A3-05 uncha
 
 **Reported 2026-09-28: H-213, H-204, H-203 and H-210 all PASS** on `FW 3.0.0-alpha3-dev-a3-hf10-debug`, `Git 028269fec0c5`. No pre-RC hardware gate is pending; the next physical phase is A3-RC1 below.
 
-### Phase A3-RC1 — Alpha 3 RC1 smoke and heap capture · *RC1 image built; SD packs unchanged* · about 25 minutes · **PENDING — HARDWARE SMOKE / HEAP CAPTURE**
+### Phase A3-RC1 — Alpha 3 RC1 smoke and heap capture · *RC1 image built; SD packs unchanged* · about 25 minutes · **PASS (2026-09-28)** — heap gate **PASSED**, A3-04H deferred
 
-**Not run yet.** This is the only gate left before Alpha 3 can be released. It is a smoke test for catastrophic regressions plus the heap capture, not a replay of Alpha 3. Compared with the A3-HF10 image, RC1 changes only the version string and the embedded `Git` (988,320 B, every memory section equal).
+**Run 2026-09-28: PASS** (the result is below; the procedure that follows is kept as run). It was the only gate left before Alpha 3 could be released. It is a smoke test for catastrophic regressions plus the heap capture, not a replay of Alpha 3. Compared with the A3-HF10 image, RC1 changes only the version string and the embedded `Git` (988,320 B, every memory section equal).
+
+**Result (2026-09-28): PASS.** The user ran the phase on the RC1 image and reported it PASS; the serial capture confirms it.
+- **Tested image:** `FW 3.0.0-alpha3-rc1-debug`, `Git f85575b96f05` (the user's report of the identity screen; the capture is missing 7.4 s – 99.9 s of the boot, so no `IDENTITY` line is in it). `OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`, 988,320 B, SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`.
+- **Capture identity:** `native/targets/tdeck/a3-rc1-hw-capture.log` (converted from the user's UTF-16 `a3-rc1-capture.log`; 6,318 lines) and `a3-rc1-hw-summary.log` (the closeout tool's output, `a3-rc1-closeout.txt` as run). The heap adjudication is `a3-rc1-heap-adjudication.log`; `ALPHA3_AUDIO.md` §37.
+- **Smoke:** watchdog / crash / reboot 0, storage errors 0, error-level lines 0; 71 / 71 audio windows clean (`missed=0 underruns=0 hw_underruns=0 runaway=0 failures=0`); 13 System Menu opens, 180–190 ms key → first frame, no slowdown; 15 cached `SAVE_INSPECT` at 82.4–83.1 ms with 0 B retained; internal heap flat across the repeated opens; a 13-cue fight to victory; a save, a load and a New Journey without error; input queue `dropped=0` (`queued=836`, `consumed=836`).
+- **Keyboard recovery observation:** 3 `ESP_ERR_INVALID_RESPONSE` reads of 10,248 (`errors=3 recoveries=2`), two incidents; both recovered to a usable baseline, only held gestures were abandoned, no input was lost, no lock or mode corruption. Evidence that the recovery works. Not a defect, no blocker ID.
+- **Heap adjudication: RC1 HEAP GATE PASSED — A3-04H DEFERRED.** Trigger 2 fired once (gameplay save, 196,419 → 144,283, −52,136 B) and is not a leak: the save rewrites the live save document in place and a later load or New Journey replaces it; internal + PSRAM ended within 4,664 B of the first heartbeat; workspace and inspect windows retained 0 B. Trigger 3 (30,720 B) is above the 23,552 B floor, DMA headroom restored every time. Trigger 5 did not fire (376 B and 168 B are inside storage windows), trigger 6 did not fire, trigger 7 is this capture.
+- **Release blocker:** none. Alpha 3 is released with the RC1 image, byte for byte (`ALPHA3.md`, tag `alpha3-release`).
 
 **The image.** `native/targets/tdeck/build-a3-rc1-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`, a 1 MiB Launcher slot. 988,320 B, SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`, also in the annotated tag `alpha3-rc1` and `ALPHA3.md` §5. Identity: `FW 3.0.0-alpha3-rc1-debug`, `Git f85575b96f05`. If the boot screen shows the HF10 `FW` or `Git 028269fec0c5`, that is the old image: stop.
 

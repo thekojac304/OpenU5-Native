@@ -1,4 +1,4 @@
-# Launcher packaging — Alpha 2 (RC1, released as final)
+# Launcher packaging — Alpha 2 and Alpha 3 (RC1 images, released as final)
 
 > **Batch 55: Alpha 2 final is the RC1 image below, byte for byte.** It passed the
 > Phase 8 hardware smoke. No final-version image is built: a rebuild would be a new,
@@ -6,11 +6,11 @@
 > commit, and its embedded `Git`, is `211c676a1dca` (`alpha2-batch54-rc1`).
 > SHA-256 `ff3dfe193973547db2648c5f486aa381086505eb80b5f2dadec7432194fb5828`.
 >
-> **Alpha 3 RC1 is built — ALPHA 3 RC1 — HARDWARE SMOKE PENDING** (2026-09-28). Not released, not flashed.
-> - Image: `OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin` (`3.0.0-alpha3-rc1-debug`), at `native/targets/tdeck/build-a3-rc1-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`: 988,320 B, SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`, embedded `Git f85575b96f05` (the RC commit `f85575b96f05bd7250ef41347f858bfc954e276b`, annotated tag `alpha3-rc1`).
-> - It is A3-HF10's firmware with a new version string: 988,320 B, every memory section equal, all image guards GREEN.
+> **Alpha 3 final is the RC1 image below, byte for byte — ALPHA 3 RELEASED** (2026-09-28). It passed Phase A3-RC1 on the device and the RC heap gate. No final-version image is built: a rebuild would be a new, untested image. The release tag is `alpha3-release`; the firmware's source commit, and its embedded `Git`, is `f85575b96f05` (`alpha3-rc1`).
+> - The final tested Alpha 3 artifact: `OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin` (`3.0.0-alpha3-rc1-debug`), at `native/targets/tdeck/build-a3-rc1-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`: 988,320 B (`0xf14a0`), 60,256 B (5.7 %) free, SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`, embedded `Git f85575b96f05` (`f85575b96f05bd7250ef41347f858bfc954e276b`, annotated tag `alpha3-rc1`).
+> - It is A3-HF10's firmware with a new version string: every memory section equal, all three image guards GREEN. The `rc1` in `FW 3.0.0-alpha3-rc1-debug` is kept on purpose.
 > - An Alpha 3 image needs the whole 1 MiB app allocation: the packager reports its minimum as 1,048,576 B; Alpha 2 needed 896 KiB.
-> - Remaining gate: Phase A3-RC1 (smoke and heap capture), `ALPHA2_HARDWARE_CHECKLIST.md`.
+> - Release notes and install instructions: [`../../../ALPHA3.md`](../../../ALPHA3.md). Heap verdict: RC1 heap gate PASSED, A3-04H deferred (`ALPHA3_AUDIO.md` §37).
 
 From an activated ESP-IDF v6.1 shell, on a clean, committed tree (the firmware
 embeds `git rev-parse --short=12 HEAD` at CMake configure time):
@@ -56,7 +56,7 @@ release candidate never shares a name with an ordinary batch image:
 | `3.0.0-alpha3-dev-a3-hf8-debug` (Alpha 3 A3-HF8, **development build, not a release**) | `OpenU5-TDeck-Alpha3.0.0-alpha3-dev-a3-hf8-Debug-Launcher.bin`; its path, size, SHA-256 and `Git` are in tag `alpha3-hf8-sacrifice-burst`. A3-HF7 plus the Blackthorn sacrifice burst (H-186 / D-43, `ALPHA3_AUDIO.md` §34): at the end of the siren the explosion star covers the victim's cell for 174 ms with the kernel's noise burst, and only then does the victim go. Keys during the scene are ignored, as before. Serial `BLACKTHORN_BURST` line. No save-format, gameplay or storage change. Same packs, same `openu5-audio.bin`. **Hardware check H-208 PASS.** |
 | `3.0.0-alpha3-dev-a3-hf9-debug` (Alpha 3 A3-HF9, **development build, not a release**) | `OpenU5-TDeck-Alpha3.0.0-alpha3-dev-a3-hf9-Debug-Launcher.bin`; its path, size, SHA-256 and `Git` are in tag `alpha3-hf9-refuge-cadence`. A3-HF8 plus the Refuge cadence (H-185 / D-42, `ALPHA3_AUDIO.md` §35): after a party wipe the Refuge waits exactly what the 1988 scene waits (half a second before the first line, the 10 s slumber melody, the shake of the peals), and Lord British's karma speech waits for a key (`Enter: continue`). Serial `NARRATIVE_SCENE_INPUT … effect=key-wait-ended`. No save-format, gameplay or storage change. Same packs, same `openu5-audio.bin`. **Hardware check H-210: PASS** (A3-HF10 image, 2026-09-28). |
 | `3.0.0-alpha3-dev-a3-hf10-debug` (Alpha 3 A3-HF10, **development build, not a release**) | `OpenU5-TDeck-Alpha3.0.0-alpha3-dev-a3-hf10-Debug-Launcher.bin`; its path, size, SHA-256 and `Git` are in tag `alpha3-hf10-mix-parity`. A3-HF9 plus Mix command parity (D-6 / D-70, `ALPHA3_AUDIO.md` §36): after the spell, a **Reagents:** list with nothing marked (Enter/Space mark, `M` mixes, Mic cancels), then **How much?**; a wrong set is spent and springs the trap; "Insufficient reagents!" asks again. No save-format or storage change. Same packs, same `openu5-audio.bin`. **Hardware check H-213: PASS** (2026-09-28), with H-203, H-204 and H-210 on this image. |
-| `3.0.0-alpha3-rc1-debug` (Alpha 3 **RC1 — hardware smoke pending**, not a release) | `OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`; SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`, `Git f85575b96f05` (tag `alpha3-rc1`). A3-HF10's firmware, version string only: 988,320 B (`0xf14a0`), 60,256 B (5.7 %) free, 1,048,576 B Launcher allocation. No code, save-format, pack or storage change. Same packs, same `openu5-audio.bin`. **Phase A3-RC1 pending.** |
+| `3.0.0-alpha3-rc1-debug` (Alpha 3 **RC1 — the final Alpha 3 release image**, hardware smoke PASS 2026-09-28) | `OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`; SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`, `Git f85575b96f05` (tag `alpha3-rc1`). A3-HF10's firmware, version string only: 988,320 B (`0xf14a0`), 60,256 B (5.7 %) free, 1,048,576 B Launcher allocation. No code, save-format, pack or storage change. Same packs, same `openu5-audio.bin`. **Phase A3-RC1 PASS; promoted unchanged as Alpha 3 (tag `alpha3-release`).** |
 
 - Firmware version: `2.0.0-alpha2-rc1-debug` (identity screen: `FW 2.0.0-alpha2-rc1-debug`)
 - Size: 878,752 bytes (`0xd68a0`). This leaves 169,824 B (16 %) free in the 1 MiB app partition.

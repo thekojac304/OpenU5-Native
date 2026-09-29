@@ -1,13 +1,14 @@
-# OpenU5 T-Deck Plus — Alpha 3 (release candidate 1)
+# OpenU5 T-Deck Plus — Alpha 3 (released)
 
-**Status: ALPHA 3 RC1 — HARDWARE SMOKE PENDING. NOT RELEASED.**
-- **Release candidate: `3.0.0-alpha3-rc1-debug`** (identity screen `FW 3.0.0-alpha3-rc1-debug`). Its image path, size, SHA-256 and embedded `Git` are in §5 and in the annotated tag **`alpha3-rc1`** (RC commit `f85575b96f05`).
-- Code baseline: **A3-HF10** (implementation `028269fe`, evidence `ba8a565f`, tag `alpha3-hf10-mix-parity`). RC1 changes only `PROJECT_VER`, and with it the embedded `Git`: the image is the same size, and every memory section equals A3-HF10's (§10).
-- **H-210, H-213, H-203 and H-204 PASSED on the A3-HF10 image (2026-09-28)**: `FW 3.0.0-alpha3-dev-a3-hf10-debug`, `Git 028269fec0c5`. **The only remaining gate is Phase A3-RC1** (the RC smoke and the heap capture, `ALPHA2_HARDWARE_CHECKLIST.md`), on the RC1 image. Neither has been run.
-- Not flashed, not pushed. Release closeout waits for the Phase A3-RC1 results.
-- Alpha 2 (tag `alpha2-batch55-release`, [`ALPHA2.md`](ALPHA2.md)) remains the current release until Alpha 3 is released.
+**Status: ALPHA 3 RELEASED (2026-09-28).** The hardware-tested RC1 image is the final Alpha 3 firmware, byte for byte.
+- **Release image:** `OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin` — 988,320 B (`0xf14a0`), 60,256 B (5.7 %) free in the 1 MiB app partition, SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`, `FW 3.0.0-alpha3-rc1-debug`, embedded `Git f85575b96f05`.
+- **Promoted unchanged** (Option A, as Alpha 2's Batch 55): no rebuild, `PROJECT_VER` untouched, no second file name. The `rc1` in the version string is kept on purpose: the physical validation applies to this exact file, and a rebuild would be a new, untested image.
+- **Tags:** `alpha3-rc1` is the source commit `f85575b96f05bd7250ef41347f858bfc954e276b` (its evidence commit is `0f15e8736b3b37b2266297c044e197275b0373d9`); **`alpha3-release`** is the closeout commit, which changes documents and logs only. Excluding `*.md` and `*.log`, its diff against `alpha3-rc1` is empty.
+- **Validation:** host **162 / 162** serial on the release tree (134.68 s); `tsc --noEmit` clean and the `game/` vitest FAIL set equal to the A3-HF10 baseline's 97 (RC1 tree; `game/` is unchanged since); the three image guards GREEN (RC1 image). **Phase A3-RC1: PASS** on the device (§9). **RC1 heap gate: PASSED — A3-04H deferred** (`native/targets/tdeck/ALPHA3_AUDIO.md` §37).
+- **Release blockers: none.** Everything §2 lists is deferred past Alpha 3, and none of it locks the game, loses state or hides a control.
+- Alpha 2 (tag `alpha2-batch55-release`, [`ALPHA2.md`](ALPHA2.md)) is the previous release.
 
-> *History:* drafted in the Alpha 3 pre-RC reconciliation (2026-09-28), from the tracker state after A3-HF10; the RC1 batch (2026-09-28) replaced this status block and filled the RC1 fields, and rewrote nothing else.
+> *History:* drafted in the Alpha 3 pre-RC reconciliation (2026-09-28); the RC1 batch replaced its status with "RC1 — hardware smoke pending"; the release closeout (2026-09-28) replaced that with the release status, recorded the Phase A3-RC1 result in §9 and §10, and updated the rows that named the pending gate (§2 A3-04H, §11, §12). The RC1 wording is superseded and remains in tag `alpha3-rc1` and the git history.
 
 ## 1. What Alpha 3 is
 
@@ -30,7 +31,7 @@ Its rules still come from the original binary, with the browser/TypeScript refer
 - the current functional ending (Alpha 2's: ENDMSG text, then the terminal state);
 - the current device UI (Alpha 2's frontend, plus the Alpha 3 rows and diagnostics).
 
-**Deferred until after Alpha 3.** These are known and catalogued, not forgotten. None of them locks the game, loses state or hides a control.
+**Deferred until after Alpha 3 (the final list).** These are known and catalogued, not forgotten. None of them locks the game, loses state or hides a control. The release does not fix any of them.
 
 | Item | What is missing | Record |
 |---|---|---|
@@ -42,7 +43,7 @@ Its rules still come from the original binary, with the browser/TypeScript refer
 | D-57 (H-194) | Two literal `victory` lines follow the ending's report text. Still applicable. | ledger D-57 |
 | D-71 | Mix presentation residue: the 10-tick wait after "Mixing...", the "Mix Reagents" echo, the console footer, the typed spell name. | ledger D-71; §36.6 |
 | UI / frontend | The redesign and polish track (HUD, Settings, the Ready picker D-8, the `^` glyph D-52, the `Direction?` overlay H-15). No mockups exist yet. | `ALPHA2.md` "Alpha 3 handoff" §2 |
-| A3-04H | Storage import count and PSRAM routing of the save document. Starts only if the RC heap capture fires a §28.16 trigger it cannot explain (§12, step 19). | `ALPHA3_AUDIO.md` §28.18, §28.20 |
+| A3-04H | Storage import count and PSRAM routing of the save document. **Deferred:** the RC heap capture fired no trigger it could not explain (`ALPHA3_AUDIO.md` §37), so it did not start. | `ALPHA3_AUDIO.md` §28.18, §28.20, §37 |
 | Other classified items | D-48 moongate transit animation; D-58 / D-59 (moongate); D-50 (H-22), D-51 (H-45); D-38's NPC sleeping pose (needs an original witness); D-10 / D-39 sweep-duration residuals; D-60 (the fanfare does not hold the game — the A3-01 rule); the open decisions and questions D-1, D-2, D-4, D-5, D-7, D-9, D-12 – D-16; hygiene D-17 / D-18; §19.17 F-3 (host-only synth rates). | ledger §4 |
 
 ## 3. What is new since Alpha 2
@@ -106,12 +107,12 @@ In every row the game is fully playable; none changes a save, the game packs or 
 
 | File | Size | Identity |
 |---|---:|---|
-| `native/targets/tdeck/build-a3-rc1-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin` | 988,320 B (identical to A3-HF10's) | SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`; embedded `Git f85575b96f05` (the RC commit `f85575b96f05bd7250ef41347f858bfc954e276b`, tag **`alpha3-rc1`**) |
+| `native/targets/tdeck/build-a3-rc1-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin` — **the Alpha 3 release image** | 988,320 B (`0xf14a0`; identical in size to A3-HF10's) | SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`; embedded `Git f85575b96f05` (the source commit `f85575b96f05bd7250ef41347f858bfc954e276b`, tag **`alpha3-rc1`**; release tag **`alpha3-release`**) |
 | `/ultima5/openu5-alpha1-resources.bin` (SD) | 2,041,466 B | CRC32 `26f75ae6`, SHA-256 `a48abdbfc88eb5ab43453880a8ea029a1ea0684dfec2045f9dae941b31aa379b` — unchanged since Batch 53 |
 | `/ultima5/openu5-assets.bin` (SD) | 132,284 B | CRC32 `933c9b82`, SHA-256 `6eb001ed2a7729e683896998f693d02aeaf1327f3cddd661d1c726ef7414e188` — unchanged |
 | `/ultima5/openu5-audio.bin` (SD, **optional**) | 56,148 B patched / 112 B stock | OU5AUDIO 1.0, derived locally by `npm run pack:audio`, never committed; its CRCs are checked at boot |
 
-The RC image's file name follows `PROJECT_VER` through `package_launcher.py`: `3.0.0-alpha3-rc1-debug` → `OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`. On boot the identity screen will show:
+The release image keeps the RC1 name, which follows `PROJECT_VER` through `package_launcher.py`: `3.0.0-alpha3-rc1-debug` → `OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`. The `Git` it embeds is the `alpha3-rc1` commit, not the release tag's. On boot the identity screen shows:
 - `FW 3.0.0-alpha3-rc1-debug`
 - `Git f85575b96f05`
 - `RES v2.0 2041466B CRC 26f75ae6`
@@ -121,7 +122,7 @@ The firmware refuses to start with any other resource pack. The image is a Debug
 
 ## 6. Installing or updating
 
-- **Launcher allocation: the full 1 MiB (1,048,576 B).** The A3-HF10 image is 988,320 B; rounded up to 64 KiB that is 1,048,576 B. Alpha 2 needed 896 KiB, so a Launcher slot sized for Alpha 2 is too small. (RC1: the packager's `App partition minimum` line reads **1,048,576 B**.)
+- **Launcher allocation: the full 1 MiB (1,048,576 B).** The release image is 988,320 B; rounded up to 64 KiB that is 1,048,576 B. Alpha 2 needed 896 KiB, so a Launcher slot sized for Alpha 2 is too small. (The packager's `App partition minimum` line reads **1,048,576 B**.)
 - **Firmware:** copy the Launcher image anywhere on the card, then install it from Launcher (**SD** → select the file).
 - **Game packs:** unchanged since Batch 53. Build them only if you do not have them: `npm run extract`, `npm run pack:native`, `npm run pack:alpha1`, then copy both to `/ultima5/`.
 - **Music (optional):** only with the Exodus *Ultima V Upgrade* 1.0 installed over your DOS files. Extract from that install, run `npm run pack:audio` (or `npm run pack:audio -- --source <dir> --output <file>`), and copy `native/assets/openu5-audio.bin` to `/ultima5/openu5-audio.bin`. Without it, or with stock files, the game is complete and silent of music.
@@ -171,6 +172,8 @@ The firmware refuses to start with any other resource pack. The image is a Debug
 
 **Host.** At A3-HF10: **162 / 162**, serial, 152.76 s, in a fresh build; the one known w64devkit warning. Every Alpha 3 fix was proven RED-first on the unmodified tree and by mutation (A3-HF10: 54 / 71 RED, 28 / 28 mutations killed). TypeScript: `tsc --noEmit` clean; the whole `game/` vitest run has the same 97 pre-existing, environment-bound failures as its baseline (`native/core/a3-hf10-ts-base-fails.txt`), compared as a FAIL set. **RC1 tree (2026-09-28):** fresh `native/core/build-a3-rc1`, built in 1 m 48 s with the one known w64devkit warning; **162 / 162**, serial, **139.25 s**, 0 skipped. `tsc --noEmit` clean. The whole `game/` vitest run: 7,728 tests, 7,525 passed, **97 failed — the same 97** as `a3-hf10-ts-base-fails.txt`, compared as a FAIL set (`native/core/a3-rc1-ts-compare.log`). Eighteen suites fail to load (11 "Invalid or unexpected token", 7 `ENOENT` on git-ignored `original/` or `re/` data); the baseline file never listed suites, and `game/`, `re/` and `extractor/` are byte-identical to tag `alpha3-hf10-mix-parity`, so none is new.
 
+**Release tree (closeout, 2026-09-28).** No source, test or build changed after RC1 (the diff against `alpha3-rc1`, excluding `*.md` and `*.log`, is empty). The existing `native/core/build-a3-rc1` was run again, serially and without a rebuild: **162 / 162, 134.68 s** (`native/core/a3-release-ctest.log`). No firmware was rebuilt.
+
 **Hardware.** Every phase is in `native/targets/tdeck/ALPHA2_HARDWARE_CHECKLIST.md`.
 
 | Check | Covers | Status |
@@ -190,13 +193,24 @@ The firmware refuses to start with any other resource pack. The image is a Debug
 | **H-204** | a load leaves no prompt (A3-HF4) | **PASS** (A3-HF10 image, 2026-09-28) |
 | **H-210** | Refuge cadence and key wait (A3-HF9) | **PASS** (A3-HF10 image, 2026-09-28) |
 | **H-213** | Mix reagent picker and quantity (A3-HF10) | **PASS** (A3-HF10 image, 2026-09-28) |
-| **Phase A3-RC1** | the RC smoke and the RC heap capture | **PENDING** — RC1 image built; hardware smoke and heap capture owed |
+| **Phase A3-RC1** | the RC smoke and the RC heap capture, on the RC1 image (`FW 3.0.0-alpha3-rc1-debug`, `Git f85575b96f05`) | **PASS** (2026-09-28); heap gate **PASSED** — A3-04H deferred |
 
 H-199 (an optional serial check of one log line, A3-HF2.1) is withdrawn: not owed for Alpha 3.
 
+**Phase A3-RC1 (2026-09-28): PASS.** On the exact release image: `FW 3.0.0-alpha3-rc1-debug`, `Git f85575b96f05`. The user ran the RC smoke and reported it PASS; the serial capture (`native/targets/tdeck/a3-rc1-hw-capture.log`, summarised by `a3-rc1-hw-summary.log`) shows:
+- **Health:** watchdog / crash / reboot lines 0; storage error lines 0; error-level (`E`) lines 0.
+- **Audio:** 71 / 71 `AUDIO_PERF` windows clean (`missed=0 underruns=0 hw_underruns=0 runaway=0 failures=0`); a 13-cue fight with a killing blow and a victory.
+- **System Menu:** 13 opens, 180–190 ms from key to first frame (median 180), no slowdown; 15 cached `SAVE_INSPECT` at 82.4–83.1 ms with 0 B retained in every window; internal heap flat across the repeated opens.
+- **Save / load:** a gameplay save, a load of it and a New Journey, no error.
+- **Input:** queue `dropped=0`, `queued=836`, `consumed=836`. Three recoverable keyboard-controller read errors occurred (below); the recovery worked and no input was lost.
+- **Heap gate: PASSED — A3-04H deferred.** No leak (§10, `ALPHA3_AUDIO.md` §37).
+- **Capture caveat:** the PowerShell tee lost 7.4 s – 99.9 s of the boot, so the `IDENTITY` and `AUDIO_PACK` lines are not in the file; the identity above is the user's report of the device's identity screen.
+
+**Keyboard recovery (evidence, not a defect).** The controller returned `ESP_ERR_INVALID_RESPONSE` on 3 of 10,248 reads, in two incidents (two reads in a row at 186.56 s, one at 195.36 s). `TDeckInput` logged `KEYBOARD_ERROR`, ran `KEYBOARD_RECOVER` to a usable baseline both times (`errors=3 recoveries=2`), and `INPUT_RESYNC` abandoned only the held gestures. No lock, no mode corruption, no lost or duplicated input. It is recorded as a successful recovery; it has no blocker ID.
+
 ## 10. Firmware and resources
 
-| | A3-HF10 (current baseline) | RC1 |
+| | A3-HF10 (code baseline) | RC1 = the Alpha 3 release image |
 |---|---|---|
 | Version | `3.0.0-alpha3-dev-a3-hf10-debug` | `3.0.0-alpha3-rc1-debug` |
 | Image | 988,320 B (`0xf14a0`), SHA-256 `c14d96ff7b3b96983a2823cf54db69f094b84fa0837e6afed17b20ba1f5b8a79`, `Git 028269fec0c5` | 988,320 B (`0xf14a0`), **+0 B** vs A3-HF10, SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`, `Git f85575b96f05` (post-commit image; tag `alpha3-rc1`) |
@@ -207,6 +221,10 @@ H-199 (an optional serial check of one log line, A3-HF2.1) is withdrawn: not owe
 | IRAM | 16,384 B, full; the audio hot path is checked by `a3_04b_iram_check.py` | 16,384 B, full (unchanged) |
 | PSRAM | unchanged by A3-HF9 and A3-HF10 | unchanged (no static PSRAM section moved; the section diff is empty) |
 | Image guards | `a3_04f_image_check.py`, `a3_04b_iram_check.py`, `a3_04a_hotpath_check.py`: GREEN | GREEN, all three (pre-commit and post-commit images) |
+
+**Heap.** The RC1 heap capture found no leak (`native/targets/tdeck/a3-rc1-heap-adjudication.log`, `ALPHA3_AUDIO.md` §37):
+- §28.16 trigger 2 fired once, on a gameplay save (`196,419 → 144,283`, −52,136 B). `capture_save_document()` rewrites the live save document in place, and the document stays alive after a save by design; a later load or New Journey replaces it. Internal + PSRAM returned to within 4,664 B of the first heartbeat.
+- Trigger 3 fired (largest internal block 30,720 B): above the 23,552 B floor accepted at A3-04G, and the DMA headroom was restored in every window. Trigger 5 did not fire (the 376 B and 168 B minima sit inside storage windows). Trigger 6 did not fire (`.data`, `.bss`, IRAM equal to A3-HF10). Trigger 7 is this capture. Workspace and inspect windows retained 0 B.
 
 **Size tripwires.**
 - The image must stay ≤ 1,048,576 B: the partition is 1 MiB, and the Launcher allocation is already the whole partition.
@@ -221,13 +239,13 @@ The deferred items of §2 are the known differences. These points are not bugs:
 - **Audio never holds the game** (the A3-01 rule, D-60): the victory fanfare plays while play continues. The original's silent waits are kept silently.
 - **Stepping back onto the gate you arrived by keeps you there.** That is the original's behaviour.
 - **Debug logging is kept on purpose**, on serial. SD logging is off until the Developer switch turns it on.
-- **The heap watch item stays open** as an allocator placement / fragmentation watch — recoverable, not a leak (`ALPHA3_AUDIO.md` §28.21.7). The RC heap capture re-reads it.
+- **Free internal RAM moves with the save document.** A save rewrites the live document in place, so free internal RAM can change by tens of KB across a save and comes back when a load or New Journey replaces the document. The RC heap capture found no leak (`ALPHA3_AUDIO.md` §37); the placement / fragmentation watch stays a known trait, and its remedy, A3-04H, is post-Alpha-3 work.
 
 Every knowing difference from the original is in [`native/targets/tdeck/ALPHA2_PRESERVATION_LEDGER.md`](native/targets/tdeck/ALPHA2_PRESERVATION_LEDGER.md). The original's own defects, which the port keeps, are in [`docs/bugs-del-original.md`](docs/bugs-del-original.md).
 
 **Not reopened for Alpha 3** (decisions, recorded so they are not re-litigated):
 - Audio is closed. Music is closed. The volume curve is final.
-- A3-04 performance work is closed. A3-04H starts only on an RC heap-capture trigger.
+- A3-04 performance work is closed. A3-04H is deferred: the RC heap capture did not call for it.
 - UI redesign is deferred. The full D-54 ending cinematic is deferred.
 - H-209, H-211, H-212 and D-71 are deferred.
 - Mix gameplay behaviour is fixed (A3-HF10).
@@ -258,3 +276,5 @@ A mechanical batch: no code, test or behaviour change. Stop at the first step th
 19. **RC heap capture** (`ALPHA3_AUDIO.md` §28.16 trigger 7): the serial capture from power-on, taken in the same Phase A3-RC1 session, summarised with `native/core/tools/a3_04g_hw_closeout.py`. A trigger fired by placement only (internal + PSRAM sum steady) is recorded and does not block. A trigger it cannot explain opens A3-04H before the release.
 
 **Release, after Phase A3-RC1 passes:** promote the RC1 image byte for byte, as Batch 55 did. The release commit changes documents and logs only; it gets its own annotated tag, and no new image is built.
+
+**Release closeout (done, 2026-09-28).** Phase A3-RC1 passed and the heap gate passed, so the RC1 image was promoted unchanged: the file's SHA-256 (`4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`), size (988,320 B), `FW` and embedded `Git` were re-read from the file, not from a build. The closeout commit adds the evidence (`a3-rc1-hw-capture.log`, `a3-rc1-hw-summary.log`, `a3-rc1-heap-adjudication.log`, `native/core/a3-release-ctest.log`) and updates documents only. Its annotated tag is `alpha3-release`, on the closeout commit, the way `alpha2-batch55-release` sits on Batch 55's; `alpha3-rc1` stays on the source commit.

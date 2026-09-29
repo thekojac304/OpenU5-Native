@@ -1,0 +1,65 @@
+Alpha 3 RC1 - heap gate adjudication (ALPHA3_AUDIO.md section 37)
+==================================================================
+Image      : OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin, 988,320 B
+             SHA-256 4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1
+             FW 3.0.0-alpha3-rc1-debug, Git f85575b96f05 (tag alpha3-rc1)
+Capture    : a3-rc1-hw-capture.log (6,318 lines; the user's UTF-16 PowerShell tee, converted to UTF-8, ANSI colour codes removed)
+Raw files  : the user's originals (UTF-16, kept outside the repository): a3-rc1-capture.log 1,588,160 B SHA-256 b5d1c3aa45e9b546d2c505df2e61933f23c9545a4f5b13ba0b4fd934ed474898;
+             a3-rc1-closeout.txt 28,098 B SHA-256 06c661b313ba399b0bb1b67fc55b441e056f1afe73e63e11264f532d433cbd5a
+Summary    : a3-rc1-hw-summary.log = a3_04g_hw_closeout.py on that capture (re-run on the converted file: identical but for the header path)
+Splice     : the tee lost 7.4 s -> 99.9 s (line 11: tick 7361 joins tick 99891), so IDENTITY, AUDIO_PACK and the boot inspect are not in the file.
+             The image identity is the user's report of the device's identity screen, not a log line.
+Verdict    : RC1 HEAP GATE PASSED - A3-04H DEFERRED
+
+Source of every figure below: a3-rc1-hw-summary.log (sections "SD windows", "heartbeat plateaus", "heap_int_min", "re-escalation triggers").
+
+1. The only trigger-2 hit is a save window
+------------------------------------------
+  window          free0    free1    delta    largest0 -> largest1
+  gameplay-save   196419   144283   -52136   51200 -> 52224        (401.96 s)
+  every other window: load-latest +142676, +15988; settings-save 0; frontend-new-journey -2444; save-inspect x15: 0 (0 B retained in all 15)
+
+  AlphaRuntime::retained_ is the live save document. save() -> capture_save_document() (alpha_save_generation.cpp) re-captures
+  gameplay, terrain, npcWalk, worldObjects, moonstones and dungeon into it IN PLACE, so a save changes the live document's footprint
+  by the size difference between what the load put there and what the save captures. The document stays alive by design until the
+  next load / new journey replaces it. The host test names it: a3_04g_storage_runtime_test.cpp "the document gains its captured
+  sections once". A3-04G's Save moved the same way in the other direction (+39,120 B).
+
+2. Internal + PSRAM: the sum recovers when the document is replaced
+--------------------------------------------------------------------
+  t          internal  psram     sum        step
+  102.21 s      55923  6081064   6136987    first heartbeat
+  107.22 s     198599  5937432   6136031    boot Continue: placement only (internal +142676, PSRAM -143632, sum -956)
+  187.31 s     196419  5937432   6133851    pre-save plateau
+  404.25 s     144283  5937432   6081715    after the gameplay save: -52136 (internal), PSRAM flat  <- the trigger-2 window
+  409.25 s     160271  5932400   6092671    after the load of that save: sum +10956
+  440.97 s     168223  5964100   6132323    after New Journey (the live document replaced): sum +39652
+
+  sum, last - first          : -4,664 B  (6,132,323 - 6,136,987)
+  sum, last - pre-save       : -1,528 B  (6,132,323 - 6,133,851)
+  A retained allocation cannot come back; this one did, in two steps, when the load and the new journey replaced the document.
+  No downward slope: 6,136,987 -> 6,133,851 -> 6,081,715 -> 6,092,671 -> 6,132,323.
+
+3. Workspace and inspect retain nothing
+---------------------------------------
+  save-inspect windows: 15, restored == released in all (0 B). 12 identical opens in the 411.68 s span: internal flat at 160271.
+
+4. The section 28.16 triggers
+-----------------------------
+  1 storage / DMA error lines                              0                      not fired
+  2 window restored > 4 KiB below its release value        1 (gameplay-save)      fired: a live-document rewrite, not retention (sections 1, 2)
+  3 largest_internal < 32 KiB in a dma-reserve-restored    13 (30,720 B)          fired: above the 23,552 B floor accepted in section 28.21.7;
+                                                                                  the 8 KiB DMA headroom was released and restored in every window
+  4 heartbeat internal falling across >= 20 opens          longest span 11 opens  not fired (flat at 160271)
+  5 new heap_int_min outside a storage window              none                   not fired: 376 B (load-latest 104.85-105.68 s) and
+                                                                                  168 B (gameplay-save 401.96-404.21 s) both sit inside storage windows;
+                                                                                  the 4,700 B at 102.21 s is the capture's first sample (the boot's
+                                                                                  cold storage windows fall in the spliced gap), not a new low
+  6 internal .data / .bss / IRAM growth                    none                   not fired: the RC1 section diff against A3-HF10 is empty
+  7 release candidate: serial capture                      this capture           satisfied
+
+5. Result
+---------
+  No leak, no retained workspace, no downward slope, no storage / DMA / watchdog line. Triggers 2 and 3 are placement / live-document
+  effects with the sum recovered. A3-04H (PSRAM routing of the save document, the import count) stays DEFERRED: nothing in this capture
+  calls for it.

@@ -1,0 +1,180 @@
+a3-rc1-capture.log - 6319 lines
+watchdog / crash / reboot lines: 0
+storage error lines (section 28.16 trigger 1 + H-202 step 12): 0
+error-level (E) lines: 0
+
+==============================================================================
+H-201 - combat hit feedback (D-63)
+==============================================================================
+fight: 305.71 s -> 360.87 s (55.2 s)
+t         target  cell   row   class  frames   cue -> restore frame
+310.89 s  2       7,6    1     party  2 (49.2/31.4) 220 ms
+319.35 s  4       7,5    -1    enemy  2 (61.8/30.3) 200 ms
+319.92 s  4       7,5    -1    enemy  2 (63.8/30.0) 210 ms
+320.77 s  4       7,5    -1    enemy  2 (61.5/30.0) 200 ms
+323.02 s  4       7,5    -1    enemy  2 (61.5/31.1) 210 ms
+324.29 s  4       7,5    -1    enemy  2 (62.7/30.0) 200 ms
+326.24 s  4       7,5    -1    enemy  2 (64.5/30.0) 220 ms
+327.01 s  4       7,5    -1    enemy  2 (63.0/30.0) 210 ms
+327.41 s  3       6,6    2     party  2 (48.0/31.7) 210 ms
+329.52 s  4       7,5    -1    enemy  2 (63.1/30.0) 200 ms
+329.92 s  3       6,6    2     party  2 (48.3/31.4) 220 ms
+330.56 s  4       7,5    -1    enemy  2 (61.8/31.4) 200 ms
+332.33 s  4       7,5    -1    enemy  2 (64.8/30.1) 200 ms KILLING BLOW (death same tick)
+cues: 13 (enemy row=-1: 10, party: 3, rows [1, 2]); combat-hit-cue frames: 26
+party rows = target - 1: True
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=2 scheduled=1
+   COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=0 scheduled=0
+   360.87 s COMBAT_END_CHECK reason=player-command result=end
+   360.87 s COMBAT_END reason=victory/all-hostiles-gone
+   360.87 s COMBAT_FINISH_BEGIN reason=normal-victory-exit
+   360.87 s combat finish result=0 victory=1
+   360.87 s WORLD_TILE_RESTORE x=101 y=102 source=authoritative-world+terrain before=106 after=106 unchanged=1
+   360.87 s UI_MODE from=combat to=explore
+   audio in fight 307.74 s: song=Engagement and Melee missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=621
+   audio in fight 312.74 s: song=Engagement and Melee missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=631
+   audio in fight 317.75 s: song=Engagement and Melee missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=631
+   audio in fight 322.75 s: song=Engagement and Melee missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=635
+   audio in fight 327.79 s: song=Engagement and Melee missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=642
+   audio in fight 332.82 s: song=Ultima V Theme missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=647
+   audio in fight 337.83 s: song=Ultima V Theme missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=647
+   audio in fight 342.83 s: song=Ultima V Theme missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=647
+   audio in fight 347.84 s: song=Ultima V Theme missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=647
+   audio in fight 352.84 s: song=Ultima V Theme missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=647
+   audio in fight 357.87 s: song=Ultima V Theme missed=0 underruns=0 hw_underruns=0 fill_min=8/8 sfx=648
+
+==============================================================================
+H-202 - SAVE_INSPECT
+==============================================================================
+265.96 s  slot0=cached   slot1=cached   bytes=64     commit=  81.7 read=   0.0 verify=   0.0 total=  83.1 ms
+273.72 s  slot0=cached   slot1=cached   bytes=64     commit=  81.3 read=   0.0 verify=   0.0 total=  82.7 ms
+411.76 s  slot0=cached   slot1=cached   bytes=64     commit=  81.5 read=   0.0 verify=   0.0 total=  82.9 ms
+412.49 s  slot0=cached   slot1=cached   bytes=64     commit=  81.6 read=   0.0 verify=   0.0 total=  83.1 ms
+413.20 s  slot0=cached   slot1=cached   bytes=64     commit=  81.7 read=   0.0 verify=   0.0 total=  83.1 ms
+413.89 s  slot0=cached   slot1=cached   bytes=64     commit=  81.5 read=   0.0 verify=   0.0 total=  83.0 ms
+414.68 s  slot0=cached   slot1=cached   bytes=64     commit=  81.7 read=   0.0 verify=   0.0 total=  83.1 ms
+415.41 s  slot0=cached   slot1=cached   bytes=64     commit=  81.3 read=   0.0 verify=   0.0 total=  82.8 ms
+416.15 s  slot0=cached   slot1=cached   bytes=64     commit=  81.5 read=   0.0 verify=   0.0 total=  82.9 ms
+417.27 s  slot0=cached   slot1=cached   bytes=64     commit=  81.4 read=   0.0 verify=   0.0 total=  82.8 ms
+418.03 s  slot0=cached   slot1=cached   bytes=64     commit=  81.4 read=   0.0 verify=   0.0 total=  82.8 ms
+418.87 s  slot0=cached   slot1=cached   bytes=64     commit=  81.7 read=   0.0 verify=   0.0 total=  83.0 ms
+427.88 s  slot0=cached   slot1=cached   bytes=64     commit=  81.4 read=   0.0 verify=   0.0 total=  82.8 ms
+429.55 s  slot0=cached   slot1=cached   bytes=64     commit=  81.4 read=   0.0 verify=   0.0 total=  82.8 ms
+440.82 s  slot0=cached   slot1=cached   bytes=64     commit=  81.1 read=   0.0 verify=   0.0 total=  82.4 ms
+cached: n=15  total min/median/max = 82.4 / 82.9 / 83.1 ms  commit 81.1-81.7 ms  read_us=0 all: True  verify_us=0 all: True  bytes=64 all: True
+cached total, first half mean 82.98 ms, second half mean 82.79 ms (slowdown check)
+
+==============================================================================
+H-202 - System Menu opens: Alt+M edge -> first full menu frame
+==============================================================================
+#   key       ui       inspect     menu frame key->frame inspect+frame
+1   265.87 s  explore     83.1 ms    99.5 ms     190 ms     182.6 ms
+2   273.64 s  explore     82.7 ms   100.3 ms     180 ms     183.0 ms
+3   411.68 s  explore     82.9 ms   100.2 ms     180 ms     183.1 ms
+4   412.41 s  explore     83.1 ms    99.5 ms     180 ms     182.6 ms
+5   413.12 s  explore     83.1 ms    99.9 ms     180 ms     183.0 ms
+6   413.81 s  explore     83.0 ms   100.0 ms     180 ms     182.9 ms
+7   414.60 s  explore     83.1 ms    99.9 ms     180 ms     182.9 ms
+8   415.33 s  explore     82.8 ms    99.8 ms     180 ms     182.6 ms
+9   416.07 s  explore     82.9 ms    99.8 ms     180 ms     182.7 ms
+10  417.19 s  explore     82.8 ms    99.9 ms     180 ms     182.6 ms
+11  417.95 s  explore     82.8 ms   100.8 ms     180 ms     183.6 ms
+12  418.79 s  explore     83.0 ms   100.6 ms     180 ms     183.7 ms
+13  427.80 s  explore     82.8 ms    99.6 ms     180 ms     182.5 ms
+opens: 13  key->frame min/median/max = 180 / 180 / 190 ms  menu frame 99.5-100.8 ms  inspect+frame 182.5-183.7 ms
+reference: A3-04E.1 first open, same method (a3-04e1-hw-soak.log): 299,268 -> 300,088 ms = 820 ms
+
+==============================================================================
+H-202 - SD windows (release-reserved-dma -> dma-reserve-restored)
+==============================================================================
+t         state              free0     free1     delta  largest0  largest1
+104.85 s  load-latest        55923    198599   +142676     46080     51200
+265.87 s  save-inspect      196419    196419        +0     51200     51200   x2 identical
+287.26 s  settings-save     196419    196419        +0     51200     51200
+401.96 s  gameplay-save     196419    144283    -52136     51200     52224
+406.42 s  load-latest       144283    160271    +15988     52224     30720
+411.68 s  save-inspect      160271    160271        +0     30720     30720   x12 identical
+438.64 s  frontend-new-journey    170667    168223     -2444     47104     47104
+440.74 s  save-inspect      168223    168223        +0     47104     47104
+save-inspect windows: 15; restored == released (0 B retained) in all: True
+
+==============================================================================
+H-202 - heartbeat plateaus (internal + PSRAM free)
+==============================================================================
+102.21 s  internal=  55923 psram= 6081064 sum= 6136987
+107.22 s  internal= 198599 psram= 5937432 sum= 6136031  internal  +142676  psram  -143632  sum    -956
+187.31 s  internal= 196419 psram= 5937432 sum= 6133851  internal    -2180  psram       +0  sum   -2180
+404.25 s  internal= 144283 psram= 5937432 sum= 6081715  internal   -52136  psram       +0  sum  -52136
+409.25 s  internal= 160271 psram= 5932400 sum= 6092671  internal   +15988  psram    -5032  sum  +10956
+440.97 s  internal= 168223 psram= 5964100 sum= 6132323  internal    +7952  psram   +31700  sum  +39652
+sum, last - first: -4664 B
+
+==============================================================================
+H-202 - heap_int_min (SYS_PERF, 5 s samples)
+==============================================================================
+102.21 s  heap_int_min=4700 (set in (boot, 102.21 s]; storage windows in that interval: none)
+107.22 s  heap_int_min=376 (set in (102.21 s, 107.22 s]; storage windows in that interval: load-latest 104.85 s-105.68 s)
+404.25 s  heap_int_min=168 (set in (397.97 s, 404.25 s]; storage windows in that interval: gameplay-save 401.96 s-404.21 s)
+
+==============================================================================
+H-202 - saves and loads
+==============================================================================
+   AlphaSave: load generation=41 slot=1 time=830 ms status=0
+   AlphaSave: save generation=42 slot=0 time=2247 ms json=2526
+   AlphaSave: load generation=42 slot=0 time=875 ms status=0
+   AlphaSave: save generation=43 slot=1 time=2093 ms json=370
+
+==============================================================================
+Audio / input health
+==============================================================================
+AUDIO_PERF lines: 71, all missed=0 underruns=0 hw_underruns=0 runaway=0 failures=0: 71
+last: 456.00 s song=Greyson's Tale window_ms=403888 blocks=50337 fill_min=8/8 sfx=750
+   I (186561) M51: SNAPSHOT n=4113 t=185859084 io_us=521 result=ESP_ERR_INVALID_RESPONSE raw=00,00,00,00,00 prev=00,00,00,00,00 sync=1 int=1
+   W (186561) TDeckInput: KEYBOARD_ERROR snapshot=ESP_ERR_INVALID_RESPONSE retry_ms=40 streak=1 poll=4113
+   W (186561) AlphaRuntime: INPUT_RESYNC ui=explore held gestures abandoned
+   I (186601) M51: SNAPSHOT n=4114 t=185899548 io_us=910 result=ESP_ERR_INVALID_RESPONSE raw=ab,00,00,00,00 prev=00,00,00,00,00 sync=0 int=1
+   W (186611) TDeckInput: KEYBOARD_RECOVER stage=bus-reset result=ESP_OK failures=2 next_ms=9
+   W (186631) TDeckInput: KEYBOARD_RECOVER stage=raw-mode-once result=ESP_OK attempt=2 next_ms=39
+   W (186671) TDeckInput: KEYBOARD_RECOVER stage=baseline result=usable reads=4114 errors=2 recoveries=1
+   I (195361) M51: SNAPSHOT n=4309 t=194658800 io_us=804 result=ESP_ERR_INVALID_RESPONSE raw=00,00,00,00,00 prev=00,00,00,00,00 sync=1 int=1
+   W (195361) TDeckInput: KEYBOARD_ERROR snapshot=ESP_ERR_INVALID_RESPONSE retry_ms=40 streak=1 poll=4309
+   W (195371) AlphaRuntime: INPUT_RESYNC ui=explore held gestures abandoned
+   W (195401) TDeckInput: KEYBOARD_RECOVER stage=baseline result=usable reads=4309 errors=3 recoveries=2
+last KEYBOARD_METRICS: reads=10248 errors=3 recoveries=2
+last INPUT_QUEUE: high_water=4 dropped=0 queued=836 consumed=836
+
+==============================================================================
+Section 28.16 re-escalation triggers
+==============================================================================
+1 storage / DMA error lines: 0
+2 windows restored > 4 KiB below their release value: 1
+    401.96 s gameplay-save: 196419 -> 144283 (-52136)
+3 dma-reserve-restored with largest_internal < 32 KiB: 13 (load-latest=30720, save-inspect=30720)
+4 heartbeat internal between loads / saves (opens in each span):
+    from 0.00 s    opens=0   heartbeats=1   internal 55923..55923 flat
+    from 105.68 s  opens=2   heartbeats=36  internal 196419..198599 falling
+    from 287.54 s  opens=0   heartbeats=23  internal 196419..196419 flat
+    from 404.21 s  opens=0   heartbeats=1   internal 144283..144283 flat
+    from 407.29 s  opens=11  heartbeats=6   internal 160271..160271 flat
+    from 440.74 s  opens=0   heartbeats=4   internal 168223..168223 flat
+5 new heap_int_min outside a storage window: see the heap_int_min section
+6 internal .data/.bss/IRAM growth: not applicable (no build in this closeout)

@@ -8,7 +8,22 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 RC1, 2026-09-28) — ALPHA 3 RC1 — HARDWARE SMOKE PENDING; no code changed; 0 release blockers; read this first
+> ### CURRENT STATE (Alpha 3 release, 2026-09-28) — ALPHA 3 RELEASED; the RC1 image promoted byte for byte; RC1 heap gate PASSED, A3-04H deferred; no code changed; 0 release blockers; read this first
+>
+> **The closeout batch: documents and evidence only.** Phase A3-RC1 passed on the device and the RC heap capture was adjudicated, so the RC1 image is the Alpha 3 release (tag **`alpha3-release`**; `alpha3-rc1` stays on the source commit `f85575b96f05`). Release notes: [`../../../ALPHA3.md`](../../../ALPHA3.md). No deferred parity row was reopened.
+>
+> | | |
+> |---|---|
+> | Blockers | **0 active.** Every open row is deferred and non-blocking (`ALPHA3.md` §2, §11). |
+> | Hardware | **Phase A3-RC1 PASS** on `FW 3.0.0-alpha3-rc1-debug`, `Git f85575b96f05`: watchdog / crash / reboot 0, storage errors 0, error lines 0; 71 / 71 audio windows clean; 13 System Menu opens at 180–190 ms; 15 cached inspections at 82.4–83.1 ms retaining 0 B; input queue `dropped=0`. Three recoverable keyboard-controller read errors (`errors=3 recoveries=2`): recovery worked, no input lost, not a defect. |
+> | Heap | **RC1 HEAP GATE PASSED — A3-04H DEFERRED.** Trigger 2 fired once (a gameplay save, −52,136 B) and trigger 3 fired (30,720 B): both explained. A save rewrites the live save document in place, a later load or New Journey replaces it, internal + PSRAM ended within 4,664 B of the first heartbeat, workspace and inspect windows retained 0 B. `ALPHA3_AUDIO.md` §37 amends §28.21.7's "a save conserves the sum". |
+> | Release image | `OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`, unchanged: 988,320 B (`0xf14a0`), 60,256 B (5.7 %) free, SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`, embedded `Git f85575b96f05`. No rebuild, no flash needed beyond the tested image. |
+> | Host suite | **162 / 162**, serial (134.68 s), on the release tree without a rebuild (`native/core/a3-release-ctest.log`); `tsc --noEmit` clean; the vitest FAIL set is the A3-HF10 baseline's 97. |
+> | Change | Docs and evidence logs only. No source, test, `PROJECT_VER`, save, pack or UI change since `alpha3-rc1`. |
+> | Deferred (post-Alpha-3) | H-209 / D-67, H-211 / D-68, H-212 / D-69, D-54, D-56, D-57, D-71, A3-04H, the UI / frontend track, the moongate transit animation, and the other classified minor rows. |
+> | Next | Nothing for Alpha 3. |
+
+> ### PRIOR STATE (Alpha 3 RC1, 2026-09-28) — ALPHA 3 RC1 — HARDWARE SMOKE PENDING; no code changed; 0 release blockers — **superseded as the current state by the release block above; kept as history**
 >
 > **A release-candidate batch, not a release.** The code is A3-HF10's (`028269fe`); the only source change is `PROJECT_VER` = `3.0.0-alpha3-rc1-debug` (`native/targets/tdeck/CMakeLists.txt`). H-203, H-204, H-210 and H-213 all PASSED on the A3-HF10 image; the only gate left is Phase A3-RC1 (`ALPHA2_HARDWARE_CHECKLIST.md`).
 >

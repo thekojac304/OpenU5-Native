@@ -1,12 +1,11 @@
 # OpenU5-TDeck: Milestone 5 native movement
 
-> **Current release: Alpha 2 (released and closed, Batch 55, tag `alpha2-batch55-release`).**
+> **Current release: Alpha 3 (released 2026-09-28, tag `alpha3-release`).**
 > It is the hardware-validated RC1 image, promoted byte for byte; its identity screen reads
-> `FW 2.0.0-alpha2-rc1-debug`. Release notes, install and SD layout are in
-> [`../../../ALPHA2.md`](../../../ALPHA2.md); packaging in [LAUNCHER.md](LAUNCHER.md).
-> **Alpha 3 is at RC1 — hardware smoke pending, not released.** The candidate is
-> `FW 3.0.0-alpha3-rc1-debug`, `Git f85575b96f05` (`OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`, SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`); the record is tag `alpha3-rc1`.
-> Scope, deferrals and the RC procedure are in [`../../../ALPHA3.md`](../../../ALPHA3.md).
+> `FW 3.0.0-alpha3-rc1-debug`, `Git f85575b96f05` (`OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`, 988,320 B, SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`).
+> Release notes, install and SD layout are in [`../../../ALPHA3.md`](../../../ALPHA3.md); packaging in [LAUNCHER.md](LAUNCHER.md);
+> the heap verdict (RC1 heap gate PASSED, A3-04H deferred) in [ALPHA3_AUDIO.md](ALPHA3_AUDIO.md) §37.
+> Previous release: Alpha 2 (Batch 55, tag `alpha2-batch55-release`, [`../../../ALPHA2.md`](../../../ALPHA2.md)).
 > The Milestone 5 text below is historical.
 
 The foundational native core is now under [../../core](../../core/README.md).
