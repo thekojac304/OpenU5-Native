@@ -113,6 +113,8 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
         // A3-04E: the sky strip's glyphs; the real Board (a3_04e_pacing_runtime)
         // refuses a world frame without them, the capture stub never read them.
         resources_.runes_font = pack->runes_font;
+        // Alpha 4 UI Batch 1: the chrome font (band captions, roster, status box).
+        resources_.ibm_font = pack->ibm_font;
         // A3-HF6: the title art. render() offsets intro_title by the fire
         // frame before the Board reads it, so without the pack's art the real
         // Board was handed a small non-null offset from nullptr the moment a

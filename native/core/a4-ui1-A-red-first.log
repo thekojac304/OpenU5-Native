@@ -1,0 +1,8 @@
+P  the resource pack carries IBM.CH
+RED P1 the pack has an "ibm.ch" entry of 1,024 B (128 records x 8) among its 42 entries
+RED P2 its bytes are the game's IBM.CH, byte for byte (1024 B on disk)
+[E][AlphaResources] Required entry missing: ibm.ch
+RED P3 load() puts the 1,024 font bytes in the owners (ibm_font), unchanged
+RED P4 the firmware's identity lock names THIS pack (2041466 B)
+RED P5 a pack without "ibm.ch" is refused by NAME at open() (ESP_ERR_NOT_FOUND, got -1)
+A4-UI1 chrome runtime: 0/5 checks

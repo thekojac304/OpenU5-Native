@@ -1,0 +1,3 @@
+MA1 drop "ibm.ch" from required[]: KILLED by P5
+MA2 load the runes into ibm_font: KILLED by P3
+MA3 never load ibm_font: KILLED by P3

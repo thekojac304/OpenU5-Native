@@ -510,6 +510,11 @@ const entries: Entry[] = [
   { name: "dungeon-items.art", data: dungeonArt.items, records: 20 },
   { name: "dungeon-mon.art", data: dungeonArt.mon, records: 8 * 6 },
   file("runes.ch", "original/u5/ultima5/runes.ch"),
+  // Alpha 4 UI Batch 1: the game's own 8x8 font (IBM.CH, 128 glyphs x 8 rows,
+  // bit 7 = left). RUNES.CH has the same Latin capitals but runes in the
+  // lowercase slots, so the fixed chrome (band captions, roster, food/gold/date
+  // box) needs IBM.CH itself. Packed raw, like runes.ch.
+  { name: "ibm.ch", data: readFileSync(resolve(ROOT, "original/u5/ultima5/IBM.CH")), records: 128, stride: 8 },
   file("combatmaps.json", "game/assets/maps/combatmaps.json"),
   file("data.json", "game/assets/data.json"),
   file("shoppe.json", "game/assets/shoppe.json"),

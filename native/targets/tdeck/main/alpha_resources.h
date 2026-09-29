@@ -22,12 +22,13 @@ namespace tdeck {
 constexpr char kAlphaResourcePath[] = "/sd/ultima5/openu5-alpha1-resources.bin";
 constexpr uint16_t kAlphaResourceVersionMajor = 2;
 constexpr uint16_t kAlphaResourceVersionMinor = 0;
-// Batch 53: + endmsg-records.bin, karma-records.bin, words-of-power.bin
-// (Batch 9C..52: 2,039,545 B, CRC 0x2065ad91, SHA-256 434cd664..b4ea).
-constexpr uint32_t kExpectedAlphaResourceSize = 2041466;
-constexpr uint32_t kExpectedAlphaResourceCrc32 = 0x26f75ae6U;
+// Alpha 4 UI Batch 1: + ibm.ch, the game's IBM.CH chrome font (43 entries).
+// (Batch 53..Alpha 3: 2,041,466 B, CRC 0x26f75ae6, SHA-256 a48abdbf..379b;
+//  Batch 9C..52: 2,039,545 B, CRC 0x2065ad91, SHA-256 434cd664..b4ea.)
+constexpr uint32_t kExpectedAlphaResourceSize = 2042554;
+constexpr uint32_t kExpectedAlphaResourceCrc32 = 0x9c10874fU;
 constexpr char kExpectedAlphaResourceSha256[] =
-    "a48abdbfc88eb5ab43453880a8ea029a1ea0684dfec2045f9dae941b31aa379b";
+    "11d72c7784d45aacb13e0c79d21e8e64d24bcc9263d279e79d337814d05d325a";
 
 struct CreationSprite {
     uint16_t width = 0, height = 0;
@@ -126,6 +127,9 @@ struct AlphaResourceOwners {
     CreationSprite creation_sprites[11]{};
     uint8_t *demo_scene = nullptr;
     uint8_t *runes_font = nullptr;
+    // Alpha 4 UI Batch 1: IBM.CH, the original's 8x8 text font (128 x 8 bytes,
+    // bit 7 = left). Drawn only in the fixed chrome, never in the transcript.
+    uint8_t *ibm_font = nullptr;
     // Blackthorn's private throne room (#324 / R-32): MISCMAPS.DAT record 0 as
     // an 11x11 int16 grid, the stage the capture scene mounts. Borrowed by
     // BlackthornSceneServices::capture_tiles; never mutated (the scene pacer

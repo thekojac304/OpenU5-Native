@@ -1,0 +1,10 @@
+P  the resource pack carries IBM.CH
+GREEN P1 the pack has an "ibm.ch" entry of 1,024 B (128 records x 8) among its 43 entries
+GREEN P2 its bytes are the game's IBM.CH, byte for byte (1024 B on disk)
+[I][AlphaResources] Alpha resource pack v2.0 valid: 2042554 bytes, 43 entries, payload CRC=9c10874f, expected SHA-256=11d72c7784d4, firmware_match=1
+[I][AlphaResources] Loaded owners: 64 small floors, 8 dungeons, 1024 NPC records; PSRAM=1188214
+GREEN P3 load() puts the 1,024 font bytes in the owners (ibm_font), unchanged
+GREEN P4 the firmware's identity lock names THIS pack (2042554 B)
+[E][AlphaResources] Required entry missing: ibm.ch
+GREEN P5 a pack without "ibm.ch" is refused by NAME at open() (ESP_ERR_NOT_FOUND, got 261)
+A4-UI1 chrome runtime: 5/5 checks
