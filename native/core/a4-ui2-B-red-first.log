@@ -1,0 +1,17 @@
+# a4_ui2_death_music_runtime against the UNMODIFIED alpha_runtime.cpp (HEAD 8aa930e3 + the test only)
+D  a party wiped in battle, then Lord British's resurrection
+GREEN D0 control: the troll fight plays Engagement and Melee (the song this defect carried into the death)
+GREEN D1 control: the troll's blow ends the battle inside render() -- no key after it -- and the Refuge begins
+RED D2 the music stops when the Refuge begins (context at its first frame: combat; stop_music x0 before "An unending darkness engulfs thee...")
+RED D3 silence through every beat, the karma getkey and the key that ends it (0 songs started during the scene)
+RED D4 at the frame the resurrection resolves (Lord British's castle), The Missing Monarch starts -- no key needed, started once (context combat, song Engagement and Melee, 0 start(s) since the blow)
+GREEN D5 control: the scene's sounds are unchanged: slumber x1, thunder x2, revival x1 (one cue carrying the member count)
+RED D6 muted: no song starts through the fight, the death or the resurrection; the context still follows (Silence in the scene, Castle after it)
+RED D7 unmuting after the resurrection starts the castle's song, not the battle's (Engagement and Melee)
+GREEN D8 the music mute leaves the scene's sounds alone (same slumber / thunder / revival counts)
+RED D9 Music Volume 0 %: silent throughout; raised after the resurrection, the castle's song starts (The Missing Monarch)
+GREEN D10 the scene's timing is the same with music, muted and at 0 %: getkey 15985 ms after the blow, resolved 3990 ms after the key
+W  the out-of-combat Refuge (A3-HF9's path: a wiped party and one Space)
+GREEN W1 control: the area's song (Greyson's Tale) stops with the Space that raises the Refuge, silence throughout (A3-HF9 N1.13)
+RED W2 the resurrection resolves into The Missing Monarch at once, no key needed ()
+A4-UI2 death music runtime: 6/13 checks

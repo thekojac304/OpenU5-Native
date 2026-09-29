@@ -1,0 +1,335 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-a4-ui2
+        Start   1: frontend
+  1/165 Test   #1: frontend ...................................   Passed    0.01 sec
+        Start   2: ui_session
+  2/165 Test   #2: ui_session .................................   Passed    0.01 sec
+        Start   3: display_names
+  3/165 Test   #3: display_names ..............................   Passed    0.01 sec
+        Start   4: quest_search
+  4/165 Test   #4: quest_search ...............................   Passed    0.01 sec
+        Start   5: batch21b_chest_reset
+  5/165 Test   #5: batch21b_chest_reset .......................   Passed    0.01 sec
+        Start   6: debug_labels
+  6/165 Test   #6: debug_labels ...............................   Passed    0.01 sec
+        Start   7: ui_debug_menu
+  7/165 Test   #7: ui_debug_menu ..............................   Passed    0.01 sec
+        Start   8: debug_map_picker
+  8/165 Test   #8: debug_map_picker ...........................   Passed    0.01 sec
+        Start   9: debug_developer
+  9/165 Test   #9: debug_developer ............................   Passed    0.01 sec
+        Start  10: gameplay_integration
+ 10/165 Test  #10: gameplay_integration .......................   Passed    0.01 sec
+        Start  11: look_sign
+ 11/165 Test  #11: look_sign ..................................   Passed    0.01 sec
+        Start  12: movement_flow_parity
+ 12/165 Test  #12: movement_flow_parity .......................   Passed    0.13 sec
+        Start  13: shop_adapters
+ 13/165 Test  #13: shop_adapters ..............................   Passed    0.01 sec
+        Start  14: shop_flow
+ 14/165 Test  #14: shop_flow ..................................   Passed    0.96 sec
+        Start  15: shop_parity
+ 15/165 Test  #15: shop_parity ................................   Passed    0.30 sec
+        Start  16: dialogue_adapters
+ 16/165 Test  #16: dialogue_adapters ..........................   Passed    0.01 sec
+        Start  17: dialogue_parity
+ 17/165 Test  #17: dialogue_parity ............................   Passed    0.42 sec
+        Start  18: transport_flow_parity
+ 18/165 Test  #18: transport_flow_parity ......................   Passed    0.02 sec
+        Start  19: world_flow_adapters
+ 19/165 Test  #19: world_flow_adapters ........................   Passed    0.01 sec
+        Start  20: dungeon_flow_parity
+ 20/165 Test  #20: dungeon_flow_parity ........................   Passed    0.02 sec
+        Start  21: world_flow_parity
+ 21/165 Test  #21: world_flow_parity ..........................   Passed    0.18 sec
+        Start  22: dungeon_parity
+ 22/165 Test  #22: dungeon_parity .............................   Passed    0.52 sec
+        Start  23: advanced_combat_parity
+ 23/165 Test  #23: advanced_combat_parity .....................   Passed    1.07 sec
+        Start  24: magic_parity
+ 24/165 Test  #24: magic_parity ...............................   Passed    0.06 sec
+        Start  25: combat_parity
+ 25/165 Test  #25: combat_parity ..............................   Passed    0.34 sec
+        Start  26: item_parity
+ 26/165 Test  #26: item_parity ................................   Passed    0.46 sec
+        Start  27: command_parity
+ 27/165 Test  #27: command_parity .............................   Passed    0.17 sec
+        Start  28: core_parity
+ 28/165 Test  #28: core_parity ................................   Passed    0.01 sec
+        Start  29: travel_parity
+ 29/165 Test  #29: travel_parity ..............................   Passed    0.20 sec
+        Start  30: turn_parity
+ 30/165 Test  #30: turn_parity ................................   Passed    0.03 sec
+        Start  31: movement_regression
+ 31/165 Test  #31: movement_regression ........................   Passed    0.01 sec
+        Start  32: presentation_regression
+ 32/165 Test  #32: presentation_regression ....................   Passed    0.01 sec
+        Start  33: dungeon_view_regression
+ 33/165 Test  #33: dungeon_view_regression ....................   Passed    0.01 sec
+        Start  34: dungeon_art_regression
+ 34/165 Test  #34: dungeon_art_regression .....................   Passed    0.01 sec
+        Start  35: gem_view_regression
+ 35/165 Test  #35: gem_view_regression ........................   Passed    0.01 sec
+        Start  36: combat_escape_regression
+ 36/165 Test  #36: combat_escape_regression ...................   Passed    0.01 sec
+        Start  37: direct_troll_handoff_regression
+ 37/165 Test  #37: direct_troll_handoff_regression ............   Passed    0.01 sec
+        Start  38: combat_loot_open_regression
+ 38/165 Test  #38: combat_loot_open_regression ................   Passed    0.01 sec
+        Start  39: batch21a3_combat_active_player
+ 39/165 Test  #39: batch21a3_combat_active_player .............   Passed    0.01 sec
+        Start  40: input_regression
+ 40/165 Test  #40: input_regression ...........................   Passed    0.01 sec
+        Start  41: dungeon_input_regression
+ 41/165 Test  #41: dungeon_input_regression ...................   Passed    0.01 sec
+        Start  42: dungeon_combat_regression
+ 42/165 Test  #42: dungeon_combat_regression ..................   Passed    0.01 sec
+        Start  43: batch12b_hardware_regression
+ 43/165 Test  #43: batch12b_hardware_regression ...............   Passed    0.04 sec
+        Start  44: action_feedback_regression
+ 44/165 Test  #44: action_feedback_regression .................   Passed    0.02 sec
+        Start  45: ui_mode_regression
+ 45/165 Test  #45: ui_mode_regression .........................   Passed    0.01 sec
+        Start  46: alpha_runtime_integration_regression
+ 46/165 Test  #46: alpha_runtime_integration_regression .......   Passed    0.16 sec
+        Start  47: batch21a_dungeon_room_regression
+ 47/165 Test  #47: batch21a_dungeon_room_regression ...........   Passed    6.46 sec
+        Start  48: batch22_basement_objects
+ 48/165 Test  #48: batch22_basement_objects ...................   Passed    0.11 sec
+        Start  49: batch23_vault_parity
+ 49/165 Test  #49: batch23_vault_parity .......................   Passed    0.10 sec
+        Start  50: batch24_reload_parity
+ 50/165 Test  #50: batch24_reload_parity ......................   Passed    0.18 sec
+        Start  51: batch25_shard_ritual
+ 51/165 Test  #51: batch25_shard_ritual .......................   Passed    0.11 sec
+        Start  52: batch26_dungeon_save
+ 52/165 Test  #52: batch26_dungeon_save .......................   Passed    0.13 sec
+        Start  53: batch27_alt_load
+ 53/165 Test  #53: batch27_alt_load ...........................   Passed    0.17 sec
+        Start  54: batch28_save_validation
+ 54/165 Test  #54: batch28_save_validation ....................   Passed    0.33 sec
+        Start  55: batch29_rest_wiring
+ 55/165 Test  #55: batch29_rest_wiring ........................   Passed    0.17 sec
+        Start  56: batch45_npc_beds
+ 56/165 Test  #56: batch45_npc_beds ...........................   Passed    0.04 sec
+        Start  57: batch48_bed_pose
+ 57/165 Test  #57: batch48_bed_pose ...........................   Passed    0.04 sec
+        Start  58: batch30_sleep_parity
+ 58/165 Test  #58: batch30_sleep_parity .......................   Passed    0.10 sec
+        Start  59: batch31_h165_dungeon_entry
+ 59/165 Test  #59: batch31_h165_dungeon_entry .................   Passed    0.09 sec
+        Start  60: batch32_camp_watch
+ 60/165 Test  #60: batch32_camp_watch .........................   Passed    0.09 sec
+        Start  61: batch33_cannon_npc_death
+ 61/165 Test  #61: batch33_cannon_npc_death ...................   Passed    0.09 sec
+        Start  62: batch34_pre_sleep_npc
+ 62/165 Test  #62: batch34_pre_sleep_npc ......................   Passed    0.09 sec
+        Start  63: batch35_q_sleep_target
+ 63/165 Test  #63: batch35_q_sleep_target .....................   Passed    0.09 sec
+        Start  64: batch36_camp_housekeeping
+ 64/165 Test  #64: batch36_camp_housekeeping ..................   Passed    0.09 sec
+        Start  65: batch37_bed_viewport
+ 65/165 Test  #65: batch37_bed_viewport .......................   Passed    0.09 sec
+        Start  66: batch39_party_panel
+ 66/165 Test  #66: batch39_party_panel ........................   Passed    0.09 sec
+        Start  67: batch41_raw_key
+ 67/165 Test  #67: batch41_raw_key ............................   Passed    0.10 sec
+        Start  68: batch42_advancement_flash
+ 68/165 Test  #68: batch42_advancement_flash ..................   Passed    0.11 sec
+        Start  69: batch43_sleep_scene
+ 69/165 Test  #69: batch43_sleep_scene ........................   Passed    0.21 sec
+        Start  70: batch46_camp_invisibility
+ 70/165 Test  #70: batch46_camp_invisibility ..................   Passed    0.13 sec
+        Start  71: batch44_camp_ring_entry
+ 71/165 Test  #71: batch44_camp_ring_entry ....................   Passed    0.09 sec
+        Start  72: batch38_camp_duration
+ 72/165 Test  #72: batch38_camp_duration ......................   Passed    0.11 sec
+        Start  73: batch40_advancement
+ 73/165 Test  #73: batch40_advancement ........................   Passed    0.01 sec
+        Start  74: batch41_staged_advancement
+ 74/165 Test  #74: batch41_staged_advancement .................   Passed    0.01 sec
+        Start  75: batch51_scene_pacing
+ 75/165 Test  #75: batch51_scene_pacing .......................   Passed    0.01 sec
+        Start  76: batch51_camp_pacing
+ 76/165 Test  #76: batch51_camp_pacing ........................   Passed    0.10 sec
+        Start  77: batch53_release_blockers
+ 77/165 Test  #77: batch53_release_blockers ...................   Passed    0.30 sec
+        Start  78: batch53a_ending_terminal
+ 78/165 Test  #78: batch53a_ending_terminal ...................   Passed    0.13 sec
+        Start  79: batch53b_moongate_return
+ 79/165 Test  #79: batch53b_moongate_return ...................   Passed    0.12 sec
+        Start  80: a3_01_audio_contract
+ 80/165 Test  #80: a3_01_audio_contract .......................   Passed    0.03 sec
+        Start  81: a3_02_sfx_synth
+ 81/165 Test  #81: a3_02_sfx_synth ............................   Passed    0.02 sec
+        Start  82: a3_03_sfx_inventory
+ 82/165 Test  #82: a3_03_sfx_inventory ........................   Passed    0.05 sec
+        Start  83: a3_04_music_synth
+ 83/165 Test  #83: a3_04_music_synth ..........................   Passed    3.70 sec
+        Start  84: a3_04a_audio_stream
+ 84/165 Test  #84: a3_04a_audio_stream ........................   Passed    1.28 sec
+        Start  85: a3_04b_perf
+ 85/165 Test  #85: a3_04b_perf ................................   Passed   11.43 sec
+        Start  86: a3_01_audio_runtime
+ 86/165 Test  #86: a3_01_audio_runtime ........................   Passed    0.18 sec
+        Start  87: a3_02_sfx_runtime
+ 87/165 Test  #87: a3_02_sfx_runtime ..........................   Passed    0.20 sec
+        Start  88: a3_03_sfx_runtime
+ 88/165 Test  #88: a3_03_sfx_runtime ..........................   Passed    0.57 sec
+        Start  89: a3_04_music_runtime
+ 89/165 Test  #89: a3_04_music_runtime ........................   Passed    0.14 sec
+        Start  90: a3_04b_perf_runtime
+ 90/165 Test  #90: a3_04b_perf_runtime ........................   Passed    0.12 sec
+        Start  91: a3_04c_contention
+ 91/165 Test  #91: a3_04c_contention ..........................   Passed    0.03 sec
+        Start  92: a3_04c_contention_runtime
+ 92/165 Test  #92: a3_04c_contention_runtime ..................   Passed    0.18 sec
+        Start  93: a3_04d_sd_log
+ 93/165 Test  #93: a3_04d_sd_log ..............................   Passed    0.02 sec
+        Start  94: a3_04d_sd_log_runtime
+ 94/165 Test  #94: a3_04d_sd_log_runtime ......................   Passed    0.15 sec
+        Start  95: a3_04e_pacing
+ 95/165 Test  #95: a3_04e_pacing ..............................   Passed    0.02 sec
+        Start  96: a3_04e_pacing_runtime
+ 96/165 Test  #96: a3_04e_pacing_runtime ......................   Passed    0.31 sec
+        Start  97: a3_hf1_arena_loot
+ 97/165 Test  #97: a3_hf1_arena_loot ..........................   Passed    0.22 sec
+        Start  98: a3_hf2_ambient_parity
+ 98/165 Test  #98: a3_hf2_ambient_parity ......................   Passed    0.22 sec
+        Start  99: a3_hf2_1_dispatch_log
+ 99/165 Test  #99: a3_hf2_1_dispatch_log ......................   Passed    0.24 sec
+        Start 100: a3_04f_render_runtime
+100/165 Test #100: a3_04f_render_runtime ......................   Passed    0.35 sec
+        Start 101: a4_ui1_chrome_runtime
+101/165 Test #101: a4_ui1_chrome_runtime ......................   Passed    0.22 sec
+        Start 102: a4_ui2_title_runtime
+102/165 Test #102: a4_ui2_title_runtime .......................   Passed    0.17 sec
+        Start 103: a4_ui2_death_music_runtime
+103/165 Test #103: a4_ui2_death_music_runtime .................   Passed    0.10 sec
+        Start 104: a3_hf3_combat_hit_cue
+104/165 Test #104: a3_hf3_combat_hit_cue ......................   Passed    0.01 sec
+        Start 105: a3_hf3_combat_hit_runtime
+105/165 Test #105: a3_hf3_combat_hit_runtime ..................   Passed    0.16 sec
+        Start 106: a3_04g_storage_runtime
+106/165 Test #106: a3_04g_storage_runtime .....................   Passed    0.24 sec
+        Start 107: a3_05_audio_mute
+107/165 Test #107: a3_05_audio_mute ...........................   Passed    0.01 sec
+        Start 108: a3_05_audio_controls
+108/165 Test #108: a3_05_audio_controls .......................   Passed    0.14 sec
+        Start 109: a3_hf4_load_transient_runtime
+109/165 Test #109: a3_hf4_load_transient_runtime ..............   Passed    0.17 sec
+        Start 110: a3_hf5_dialogue_pacing_runtime
+110/165 Test #110: a3_hf5_dialogue_pacing_runtime .............   Passed    0.43 sec
+        Start 111: a3_hf6_shrine_key_wait_runtime
+111/165 Test #111: a3_hf6_shrine_key_wait_runtime .............   Passed    0.23 sec
+        Start 112: a3_hf6_shrine_key_wait_pacer
+112/165 Test #112: a3_hf6_shrine_key_wait_pacer ...............   Passed    0.01 sec
+        Start 113: a3_hf7_ritual_fx_runtime
+113/165 Test #113: a3_hf7_ritual_fx_runtime ...................   Passed    0.83 sec
+        Start 114: a3_hf8_sacrifice_burst_runtime
+114/165 Test #114: a3_hf8_sacrifice_burst_runtime .............   Passed    1.05 sec
+        Start 115: a3_hf9_refuge_cadence
+115/165 Test #115: a3_hf9_refuge_cadence ......................   Passed    0.01 sec
+        Start 116: a3_hf9_refuge_cadence_runtime
+116/165 Test #116: a3_hf9_refuge_cadence_runtime ..............   Passed    0.77 sec
+        Start 117: a3_hf10_mix_parity_runtime
+117/165 Test #117: a3_hf10_mix_parity_runtime .................   Passed    0.21 sec
+        Start 118: a3_hf7_ritual_fx
+118/165 Test #118: a3_hf7_ritual_fx ...........................   Passed    0.01 sec
+        Start 119: a3_hf5_dialogue_pacer
+119/165 Test #119: a3_hf5_dialogue_pacer ......................   Passed    0.01 sec
+        Start 120: batch14_zstats_runtime
+120/165 Test #120: batch14_zstats_runtime .....................   Passed    0.21 sec
+        Start 121: batch18_well_ceremony
+121/165 Test #121: batch18_well_ceremony ......................   Passed    0.15 sec
+        Start 122: batch19_command_char_runtime
+122/165 Test #122: batch19_command_char_runtime ...............   Passed    0.22 sec
+        Start 123: batch3_group_a
+123/165 Test #123: batch3_group_a .............................   Passed    0.01 sec
+        Start 124: batch3_group_b
+124/165 Test #124: batch3_group_b .............................   Passed    0.01 sec
+        Start 125: batch3_group_c
+125/165 Test #125: batch3_group_c .............................   Passed    0.01 sec
+        Start 126: batch4_group_a
+126/165 Test #126: batch4_group_a .............................   Passed    0.01 sec
+        Start 127: batch4_group_b
+127/165 Test #127: batch4_group_b .............................   Passed    0.01 sec
+        Start 128: batch5
+128/165 Test #128: batch5 .....................................   Passed    0.01 sec
+        Start 129: batch7b
+129/165 Test #129: batch7b ....................................   Passed    0.01 sec
+        Start 130: batch12_combat_field
+130/165 Test #130: batch12_combat_field .......................   Passed    0.02 sec
+        Start 131: batch13
+131/165 Test #131: batch13 ....................................   Passed    0.01 sec
+        Start 132: batch14_zstats_model
+132/165 Test #132: batch14_zstats_model .......................   Passed    0.02 sec
+        Start 133: batch15_sacrifice_roster
+133/165 Test #133: batch15_sacrifice_roster ...................   Passed    0.01 sec
+        Start 134: batch17_theft_watchdog
+134/165 Test #134: batch17_theft_watchdog .....................   Passed    0.01 sec
+        Start 135: batch19_command_char
+135/165 Test #135: batch19_command_char .......................   Passed    0.01 sec
+        Start 136: batch45b
+136/165 Test #136: batch45b ...................................   Passed    0.01 sec
+        Start 137: blackthorn_scene
+137/165 Test #137: blackthorn_scene ...........................   Passed    0.02 sec
+        Start 138: alpha_resource_capacity
+138/165 Test #138: alpha_resource_capacity ....................   Passed    0.03 sec
+        Start 139: gameplay_parity
+139/165 Test #139: gameplay_parity ............................   Passed    9.04 sec
+        Start 140: outdoor_table_drift
+140/165 Test #140: outdoor_table_drift ........................   Passed    0.10 sec
+        Start 141: gem_category_table_drift
+141/165 Test #141: gem_category_table_drift ...................   Passed    0.09 sec
+        Start 142: movement_flow_drift
+142/165 Test #142: movement_flow_drift ........................   Passed    4.56 sec
+        Start 143: quest_parity
+143/165 Test #143: quest_parity ...............................   Passed    4.57 sec
+        Start 144: quest_case_table_drift
+144/165 Test #144: quest_case_table_drift .....................   Passed    0.10 sec
+        Start 145: typescript_shop_fixture_drift
+145/165 Test #145: typescript_shop_fixture_drift ..............   Passed    1.04 sec
+        Start 146: typescript_shop_flow_drift
+146/165 Test #146: typescript_shop_flow_drift .................   Passed    4.16 sec
+        Start 147: typescript_shop_tables_drift
+147/165 Test #147: typescript_shop_tables_drift ...............   Passed    0.09 sec
+        Start 148: typescript_shop_greetings_drift
+148/165 Test #148: typescript_shop_greetings_drift ............   Passed    0.08 sec
+        Start 149: persistence_parity
+149/165 Test #149: persistence_parity .........................   Passed    0.81 sec
+        Start 150: typescript_dialogue_fixture_drift
+150/165 Test #150: typescript_dialogue_fixture_drift ..........   Passed    9.75 sec
+        Start 151: typescript_transport_flow_fixture_drift
+151/165 Test #151: typescript_transport_flow_fixture_drift ....   Passed    0.24 sec
+        Start 152: typescript_dungeon_flow_fixture_drift
+152/165 Test #152: typescript_dungeon_flow_fixture_drift ......   Passed    3.80 sec
+        Start 153: typescript_dungeon_art_identity
+153/165 Test #153: typescript_dungeon_art_identity ............   Passed    0.15 sec
+        Start 154: typescript_world_flow_fixture_drift
+154/165 Test #154: typescript_world_flow_fixture_drift ........   Passed    0.92 sec
+        Start 155: typescript_dungeon_fixture_drift
+155/165 Test #155: typescript_dungeon_fixture_drift ...........   Passed   32.53 sec
+        Start 156: typescript_advanced_combat_fixture_drift
+156/165 Test #156: typescript_advanced_combat_fixture_drift ...   Passed    3.79 sec
+        Start 157: typescript_magic_fixture_drift
+157/165 Test #157: typescript_magic_fixture_drift .............   Passed    0.21 sec
+        Start 158: typescript_combat_fixture_drift
+158/165 Test #158: typescript_combat_fixture_drift ............   Passed    2.24 sec
+        Start 159: typescript_item_fixture_drift
+159/165 Test #159: typescript_item_fixture_drift ..............   Passed    1.62 sec
+        Start 160: typescript_command_fixture_drift
+160/165 Test #160: typescript_command_fixture_drift ...........   Passed    1.26 sec
+        Start 161: typescript_travel_fixture_drift
+161/165 Test #161: typescript_travel_fixture_drift ............   Passed    1.97 sec
+        Start 162: typescript_fixture_drift
+162/165 Test #162: typescript_fixture_drift ...................   Passed    0.13 sec
+        Start 163: typescript_turn_fixture_drift
+163/165 Test #163: typescript_turn_fixture_drift ..............   Passed    0.73 sec
+        Start 164: a3_01_audio_capability
+164/165 Test #164: a3_01_audio_capability .....................   Passed    0.24 sec
+        Start 165: a3_02_sfx_reference_drift
+165/165 Test #165: a3_02_sfx_reference_drift ..................   Passed    0.09 sec
+
+100% tests passed out of 165
+
+Total Test time (real) = 125.02 sec

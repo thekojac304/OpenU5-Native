@@ -1880,6 +1880,12 @@ if(BUILD_TESTING)
   openu5_a4_ui2_runtime(a4_ui2_title_runtime)
   add_test(NAME a4_ui2_title_runtime COMMAND a4_ui2_title_runtime
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+  # B: the music across a party death and Lord British's resurrection (the
+  # real troll arena, paced scenes, the real audio pack).
+  openu5_a4_ui2_runtime(a4_ui2_death_music_runtime)
+  add_test(NAME a4_ui2_death_music_runtime COMMAND a4_ui2_death_music_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
   # Alpha 3 A3-HF3 -- D-63, combat hit feedback (ALPHA3_AUDIO.md section 27).
   # The core half: the 0x3564 cue's length against the rendered burst, the
   # queue, and which combat events are a cue.

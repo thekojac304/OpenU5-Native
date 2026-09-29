@@ -504,6 +504,13 @@ void AlphaRuntime::route_event(const openu5::GameEvent&e){
         if(e.kind==openu5::GameEventKind::Refuge||e.kind==openu5::GameEventKind::TrollSneak)
             ESP_LOGI(kTag,"NARRATIVE_SCENE_BEGIN scene=%d queued=%u",
                      int(narrative_pacer_.scene()),unsigned(narrative_pacer_.queued_steps()));
+        // Alpha 4 UI Batch 2 (ALPHA4_UI.md section 2.2). The three callers of
+        // party_refuge stop the music (selector 0x03) before its first beat
+        // (TOWN 0x1862 / MAINOUT 0x0af0 / DUNGEON 0x1014). A battle lost to an
+        // enemy's blow reaches here from render() (the enemy step, then the
+        // teardown's check_refuge), where no key poll follows to re-derive the
+        // music, so the scene's start re-derives it itself: Silence.
+        if(e.kind==openu5::GameEventKind::Refuge)sync_music();
         dirty_=true;dirty_reason_="narrative-scene";
         return;
     }
@@ -728,6 +735,11 @@ bool AlphaRuntime::service_narrative_scene(){
         const auto status=openu5::resolve_refuge(context_,ui_->event_sink());
         ESP_LOGI(kTag,"REFUGE_RESOLVE status=%d location=%u karma=%ld",
                  int(status),unsigned(game_.position.map.location),long(game_.karma));
+        // Alpha 4 UI Batch 2: the callers re-enable the location rule after
+        // party_refuge and the castle prompt's key poll derives the song at
+        // once (game/src/main.ts: resumeMusic() right after resolveRefuge).
+        // The scene ends in render(), so re-derive here: The Missing Monarch.
+        sync_music();
         dirty_=true;dirty_reason_="refuge-resolve";
     }
     return released!=released_before||phase!=phase_before||finished!=openu5::NarrativeScene::None;
