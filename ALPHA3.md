@@ -1,12 +1,13 @@
-# OpenU5 T-Deck Plus — Alpha 3 (pre-release draft)
+# OpenU5 T-Deck Plus — Alpha 3 (release candidate 1)
 
-**Status: ALPHA 3 PRE-RC — NOT RELEASED. All pre-RC hardware checks PASS; no release candidate has been built yet.**
-- Code baseline: **A3-HF10** (implementation `028269fe`, evidence `ba8a565f`, tag `alpha3-hf10-mix-parity`). No further gameplay-code batch is planned before the RC.
-- **H-210, H-213, H-203 and H-204 PASSED on the A3-HF10 image (2026-09-28)**: `FW 3.0.0-alpha3-dev-a3-hf10-debug`, `Git 028269fec0c5`. No pre-RC hardware gate is pending; the RC1 batch (§12) is next.
-- Every field marked **(RC1: fill in)** is written by the RC1 batch from the built artifact. Nothing in this file describes an RC image yet.
+**Status: ALPHA 3 RC1 — HARDWARE SMOKE PENDING. NOT RELEASED.**
+- **Release candidate: `3.0.0-alpha3-rc1-debug`** (identity screen `FW 3.0.0-alpha3-rc1-debug`). Its image path, size, SHA-256 and embedded `Git` are in the annotated tag **`alpha3-rc1`** and in §5 and §10.
+- Code baseline: **A3-HF10** (implementation `028269fe`, evidence `ba8a565f`, tag `alpha3-hf10-mix-parity`). RC1 changes only `PROJECT_VER`, and with it the embedded `Git`: the image is the same size, and every memory section equals A3-HF10's (§10).
+- **H-210, H-213, H-203 and H-204 PASSED on the A3-HF10 image (2026-09-28)**: `FW 3.0.0-alpha3-dev-a3-hf10-debug`, `Git 028269fec0c5`. **The only remaining gate is Phase A3-RC1** (the RC smoke and the heap capture, `ALPHA2_HARDWARE_CHECKLIST.md`), on the RC1 image. Neither has been run.
+- Not flashed, not pushed. Release closeout waits for the Phase A3-RC1 results.
 - Alpha 2 (tag `alpha2-batch55-release`, [`ALPHA2.md`](ALPHA2.md)) remains the current release until Alpha 3 is released.
 
-> *History:* drafted in the Alpha 3 pre-RC reconciliation (2026-09-28), from the tracker state after A3-HF10. The RC1 batch replaces this status block; it does not rewrite the sections below except to fill the RC1 fields.
+> *History:* drafted in the Alpha 3 pre-RC reconciliation (2026-09-28), from the tracker state after A3-HF10; the RC1 batch (2026-09-28) replaced this status block and filled the RC1 fields, and rewrote nothing else.
 
 ## 1. What Alpha 3 is
 
@@ -105,14 +106,14 @@ In every row the game is fully playable; none changes a save, the game packs or 
 
 | File | Size | Identity |
 |---|---:|---|
-| `native/targets/tdeck/build-(RC1: fill in)/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin` | (RC1: fill in) | SHA-256 and embedded `Git`: annotated tag **(RC1: fill in)** |
+| `native/targets/tdeck/build-a3-rc1-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin` | 988,320 B (identical to A3-HF10's) | SHA-256 and embedded `Git`: annotated tag **`alpha3-rc1`** |
 | `/ultima5/openu5-alpha1-resources.bin` (SD) | 2,041,466 B | CRC32 `26f75ae6`, SHA-256 `a48abdbfc88eb5ab43453880a8ea029a1ea0684dfec2045f9dae941b31aa379b` — unchanged since Batch 53 |
 | `/ultima5/openu5-assets.bin` (SD) | 132,284 B | CRC32 `933c9b82`, SHA-256 `6eb001ed2a7729e683896998f693d02aeaf1327f3cddd661d1c726ef7414e188` — unchanged |
 | `/ultima5/openu5-audio.bin` (SD, **optional**) | 56,148 B patched / 112 B stock | OU5AUDIO 1.0, derived locally by `npm run pack:audio`, never committed; its CRCs are checked at boot |
 
 The RC image's file name follows `PROJECT_VER` through `package_launcher.py`: `3.0.0-alpha3-rc1-debug` → `OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`. On boot the identity screen will show:
 - `FW 3.0.0-alpha3-rc1-debug`
-- `Git (RC1: fill in)`
+- `Git` the 12 hex of the RC1 commit, as printed in tag `alpha3-rc1`
 - `RES v2.0 2041466B CRC 26f75ae6`
 - `ASSET … 132284B CRC 933c9b82`
 
@@ -120,7 +121,7 @@ The firmware refuses to start with any other resource pack. The image is a Debug
 
 ## 6. Installing or updating
 
-- **Launcher allocation: the full 1 MiB (1,048,576 B).** The A3-HF10 image is 988,320 B; rounded up to 64 KiB that is 1,048,576 B. Alpha 2 needed 896 KiB, so a Launcher slot sized for Alpha 2 is too small. (RC1: confirm from the packager's `App partition minimum` line.)
+- **Launcher allocation: the full 1 MiB (1,048,576 B).** The A3-HF10 image is 988,320 B; rounded up to 64 KiB that is 1,048,576 B. Alpha 2 needed 896 KiB, so a Launcher slot sized for Alpha 2 is too small. (RC1: the packager's `App partition minimum` line reads 1,048,576 B; see §10.)
 - **Firmware:** copy the Launcher image anywhere on the card, then install it from Launcher (**SD** → select the file).
 - **Game packs:** unchanged since Batch 53. Build them only if you do not have them: `npm run extract`, `npm run pack:native`, `npm run pack:alpha1`, then copy both to `/ultima5/`.
 - **Music (optional):** only with the Exodus *Ultima V Upgrade* 1.0 installed over your DOS files. Extract from that install, run `npm run pack:audio` (or `npm run pack:audio -- --source <dir> --output <file>`), and copy `native/assets/openu5-audio.bin` to `/ultima5/openu5-audio.bin`. Without it, or with stock files, the game is complete and silent of music.
@@ -168,7 +169,7 @@ The firmware refuses to start with any other resource pack. The image is a Debug
 
 ## 9. Validation
 
-**Host.** At A3-HF10: **162 / 162**, serial, 152.76 s, in a fresh build; the one known w64devkit warning. Every Alpha 3 fix was proven RED-first on the unmodified tree and by mutation (A3-HF10: 54 / 71 RED, 28 / 28 mutations killed). TypeScript: `tsc --noEmit` clean; the whole `game/` vitest run has the same 97 pre-existing, environment-bound failures as its baseline (`native/core/a3-hf10-ts-base-fails.txt`), compared as a FAIL set. (RC1: fill in the RC tree's totals.)
+**Host.** At A3-HF10: **162 / 162**, serial, 152.76 s, in a fresh build; the one known w64devkit warning. Every Alpha 3 fix was proven RED-first on the unmodified tree and by mutation (A3-HF10: 54 / 71 RED, 28 / 28 mutations killed). TypeScript: `tsc --noEmit` clean; the whole `game/` vitest run has the same 97 pre-existing, environment-bound failures as its baseline (`native/core/a3-hf10-ts-base-fails.txt`), compared as a FAIL set. **RC1 tree (2026-09-28):** fresh `native/core/build-a3-rc1`, built in 1 m 48 s with the one known w64devkit warning; **162 / 162**, serial, **139.25 s**, 0 skipped. `tsc --noEmit` clean. The whole `game/` vitest run: 7,728 tests, 7,525 passed, **97 failed — the same 97** as `a3-hf10-ts-base-fails.txt`, compared as a FAIL set (`native/core/a3-rc1-ts-compare.log`). Eighteen suites fail to load (11 "Invalid or unexpected token", 7 `ENOENT` on git-ignored `original/` or `re/` data); the baseline file never listed suites, and `game/`, `re/` and `extractor/` are byte-identical to tag `alpha3-hf10-mix-parity`, so none is new.
 
 **Hardware.** Every phase is in `native/targets/tdeck/ALPHA2_HARDWARE_CHECKLIST.md`.
 
@@ -189,7 +190,7 @@ The firmware refuses to start with any other resource pack. The image is a Debug
 | **H-204** | a load leaves no prompt (A3-HF4) | **PASS** (A3-HF10 image, 2026-09-28) |
 | **H-210** | Refuge cadence and key wait (A3-HF9) | **PASS** (A3-HF10 image, 2026-09-28) |
 | **H-213** | Mix reagent picker and quantity (A3-HF10) | **PASS** (A3-HF10 image, 2026-09-28) |
-| Phase A3-RC1 | the RC smoke and the RC heap capture | *reserved for the RC1 image* |
+| **Phase A3-RC1** | the RC smoke and the RC heap capture | **PENDING** — RC1 image built; hardware smoke and heap capture owed |
 
 H-199 (an optional serial check of one log line, A3-HF2.1) is withdrawn: not owed for Alpha 3.
 
@@ -198,14 +199,14 @@ H-199 (an optional serial check of one log line, A3-HF2.1) is withdrawn: not owe
 | | A3-HF10 (current baseline) | RC1 |
 |---|---|---|
 | Version | `3.0.0-alpha3-dev-a3-hf10-debug` | `3.0.0-alpha3-rc1-debug` |
-| Image | 988,320 B (`0xf14a0`), SHA-256 `c14d96ff7b3b96983a2823cf54db69f094b84fa0837e6afed17b20ba1f5b8a79`, `Git 028269fec0c5` | (RC1: fill in) |
-| App partition free (1 MiB) | 60,256 B (5.7 %) | (RC1: fill in) |
-| Launcher allocation | 1,048,576 B | (RC1: fill in) |
-| Flash `.text` / `.rodata` | 669,770 B / 219,460 B | (RC1: fill in) |
-| Internal RAM (DIRAM `.data` / `.bss`) | 21,627 B / 51,968 B — unchanged by A3-HF9 and A3-HF10 | (RC1: fill in) |
-| IRAM | 16,384 B, full; the audio hot path is checked by `a3_04b_iram_check.py` | (RC1: fill in) |
-| PSRAM | unchanged by A3-HF9 and A3-HF10 | — |
-| Image guards | `a3_04f_image_check.py`, `a3_04b_iram_check.py`, `a3_04a_hotpath_check.py`: GREEN | (RC1: fill in) |
+| Image | 988,320 B (`0xf14a0`), SHA-256 `c14d96ff7b3b96983a2823cf54db69f094b84fa0837e6afed17b20ba1f5b8a79`, `Git 028269fec0c5` | 988,320 B (`0xf14a0`), **+0 B** vs A3-HF10; SHA-256 and `Git`: tag `alpha3-rc1` |
+| App partition free (1 MiB) | 60,256 B (5.7 %) | 60,256 B (5.7 %) |
+| Launcher allocation | 1,048,576 B | 1,048,576 B (the whole 1 MiB partition) |
+| Flash `.text` / `.rodata` | 669,770 B / 219,460 B | 669,770 B / 219,460 B (diff 0; the per-object-file diff is empty) |
+| Internal RAM (DIRAM `.data` / `.bss`) | 21,627 B / 51,968 B — unchanged by A3-HF9 and A3-HF10 | 21,627 B / 51,968 B (unchanged) |
+| IRAM | 16,384 B, full; the audio hot path is checked by `a3_04b_iram_check.py` | 16,384 B, full (unchanged) |
+| PSRAM | unchanged by A3-HF9 and A3-HF10 | unchanged (no static PSRAM section moved; the section diff is empty) |
+| Image guards | `a3_04f_image_check.py`, `a3_04b_iram_check.py`, `a3_04a_hotpath_check.py`: GREEN | GREEN, all three (pre-commit and post-commit images) |
 
 **Size tripwires.**
 - The image must stay ≤ 1,048,576 B: the partition is 1 MiB, and the Launcher allocation is already the whole partition.

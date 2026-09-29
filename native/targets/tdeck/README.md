@@ -4,9 +4,9 @@
 > It is the hardware-validated RC1 image, promoted byte for byte; its identity screen reads
 > `FW 2.0.0-alpha2-rc1-debug`. Release notes, install and SD layout are in
 > [`../../../ALPHA2.md`](../../../ALPHA2.md); packaging in [LAUNCHER.md](LAUNCHER.md).
-> **Alpha 3 is in preparation and not released.** No release candidate has been built.
-> Its pre-release notes (scope, deferrals, the RC procedure) are in
-> [`../../../ALPHA3.md`](../../../ALPHA3.md).
+> **Alpha 3 is at RC1 — hardware smoke pending, not released.** The candidate is
+> `FW 3.0.0-alpha3-rc1-debug` (`OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`); its size, SHA-256 and `Git` are in tag `alpha3-rc1`.
+> Scope, deferrals and the RC procedure are in [`../../../ALPHA3.md`](../../../ALPHA3.md).
 > The Milestone 5 text below is historical.
 
 The foundational native core is now under [../../core](../../core/README.md).

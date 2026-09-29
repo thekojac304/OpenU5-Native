@@ -373,6 +373,12 @@ Every row checked against the Phase 6T–7D hardware results and the Batch 52 au
   - 21 deliberate: A-1 … A-15 and E-1 … E-6. E-5 (A3-05) was never added to a totals line, so the last recorded total, 19, predates it.
   - Software-fixed rows awaiting hardware: D-6, D-42, D-64, D-65, D-70.
 
+**Alpha 3 RC1 status (2026-09-28; `ALPHA3.md`, checklist Phase A3-RC1): ALPHA 3 RC1 — HARDWARE SMOKE PENDING.** No ledger row changed.
+- The RC1 image is A3-HF10's firmware with `PROJECT_VER` `3.0.0-alpha3-rc1-debug`; no behaviour, pack or save-format change, so no row moves.
+- **Hardware-validated rows (A3-HF10 session):** D-6 / D-70, D-42, D-64, D-65. No software-fixed row awaits hardware.
+- **Physical gate left:** Phase A3-RC1 (smoke and heap capture). Deferred past Alpha 3, unchanged: D-67 / D-68 / D-69, D-71, D-54, D-56, D-57, the UI track.
+- Totals: 21 deliberate (A-1 … A-15, E-1 … E-6).
+
 **Alpha 3 pre-RC hardware passes (2026-09-28).** Documentation only.
 - H-213, H-204, H-203 and H-210 all PASS on the A3-HF10 image (`FW 3.0.0-alpha3-dev-a3-hf10-debug`, `Git 028269fec0c5`; the user).
 - D-6 / D-70 (Mix), D-65 (a load leaves no prompt), D-64 (one kill burst; the mute shortcuts of E-5) and D-42 (the Refuge's cadence and key wait) are hardware-validated.

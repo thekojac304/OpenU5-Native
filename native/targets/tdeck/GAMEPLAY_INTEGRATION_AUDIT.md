@@ -8,7 +8,20 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 pre-RC reconciliation, 2026-09-28) — no code changed; the Alpha 3 scope, deferrals and RC procedure are written down; the four hardware checks between A3-HF10 and RC1 have PASSED (2026-09-28); Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 RC1, 2026-09-28) — ALPHA 3 RC1 — HARDWARE SMOKE PENDING; no code changed; 0 release blockers; read this first
+>
+> **A release-candidate batch, not a release.** The code is A3-HF10's (`028269fe`); the only source change is `PROJECT_VER` = `3.0.0-alpha3-rc1-debug` (`native/targets/tdeck/CMakeLists.txt`). H-203, H-204, H-210 and H-213 all PASSED on the A3-HF10 image; the only gate left is Phase A3-RC1 (`ALPHA2_HARDWARE_CHECKLIST.md`).
+>
+> | | |
+> |---|---|
+> | Blockers | **0 active.** Every open row is deferred and non-blocking (`ALPHA3.md` §2, §11). |
+> | Host suite | **162 / 162**, serial, 139.25 s, fresh `build-a3-rc1`; the one known w64devkit warning; 0 skipped. |
+> | TypeScript | `tsc --noEmit` clean; the `game/` vitest FAIL set is the A3-HF10 baseline's 97, identical as a set. |
+> | Firmware | 988,320 B (`0xf14a0`), +0 B vs A3-HF10, 60,256 B (5.7 %) free, zero warnings; `.text` / `.rodata` / `.data` / `.bss` / IRAM unchanged; the three image guards GREEN. Launcher allocation 1,048,576 B. |
+> | Image | `OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`; SHA-256, `Git` and path: tag `alpha3-rc1`. |
+> | Next | **Phase A3-RC1**: the smoke and the heap capture, on the device. Then the release closeout. |
+>
+> ### PRIOR STATE (Alpha 3 pre-RC reconciliation, 2026-09-28) — no code changed; the Alpha 3 scope, deferrals and RC procedure are written down; the four hardware checks between A3-HF10 and RC1 have PASSED (2026-09-28); Alpha 2 remains the released build; **superseded as the current state by the RC1 block above**
 >
 > **A documentation batch, not a release** (`ALPHA3.md` at the repository root, a pre-release draft). The code is A3-HF10's (`028269fe`, tag `alpha3-hf10-mix-parity`). No production code, test, `PROJECT_VER`, firmware or tag changed.
 > - **Tracker corrections, each backed by a recorded result.**

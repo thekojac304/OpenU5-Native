@@ -1602,15 +1602,23 @@ Run all four on the **A3-HF10** image. It carries A3-HF9, A3-HF4 and A3-05 uncha
 
 **Reported 2026-09-28: H-213, H-204, H-203 and H-210 all PASS** on `FW 3.0.0-alpha3-dev-a3-hf10-debug`, `Git 028269fec0c5`. No pre-RC hardware gate is pending; the next physical phase is A3-RC1 below.
 
-### Phase A3-RC1 — Alpha 3 RC1 smoke and heap capture · *RESERVED for the RC1 image; SD packs unchanged* · about 25 minutes
+### Phase A3-RC1 — Alpha 3 RC1 smoke and heap capture · *RC1 image built; SD packs unchanged* · about 25 minutes · **PENDING — HARDWARE SMOKE / HEAP CAPTURE**
 
-**Not run, and no RC1 image exists.** The RC1 batch writes this phase against its own image, with the path, SHA-256 and `Git` from its annotated tag. This is a smoke test for catastrophic regressions, not a replay of Alpha 3. Compared with the A3-HF10 image, RC1 changes only the version string and the embedded `Git`.
+**Not run yet.** This is the only gate left before Alpha 3 can be released. It is a smoke test for catastrophic regressions plus the heap capture, not a replay of Alpha 3. Compared with the A3-HF10 image, RC1 changes only the version string and the embedded `Git` (988,320 B, every memory section equal).
+
+**The image.** `native/targets/tdeck/build-a3-rc1-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`, a 1 MiB Launcher slot. Its exact size, SHA-256 and `Git` are in the annotated tag `alpha3-rc1` (and, after the RC1 evidence commit, in `ALPHA3.md` §5). Identity: `FW 3.0.0-alpha3-rc1-debug`. If the boot screen shows the HF10 `FW` or `Git 028269fec0c5`, that is the old image: stop.
 
 **Setup.**
 - Steps 1–10 run in **one session with a serial capture from power-on to step 10**. That capture is the RC heap capture that `ALPHA3_AUDIO.md` §28.16 trigger 7 requires. To take it, run `python -m esp_idf_monitor -p COMx -b 115200 --no-reset` from an ESP-IDF PowerShell and save its output.
 - Use the music-patched card, with Music 80 % and SFX 80 %.
 - SD diag logging stays off (the boot default).
 - The card holds two save generations.
+- **Capture commands** (an ESP-IDF PowerShell; replace `COM5`). Start the monitor first, then switch the device on (or press reset), and keep it running to step 10:
+  ```powershell
+  python -m esp_idf_monitor -p COM5 -b 115200 --no-reset 2>&1 | Tee-Object -FilePath a3-rc1-capture.log
+  ```
+  Afterwards: `python native/core/tools/a3_04g_hw_closeout.py a3-rc1-capture.log > a3-rc1-closeout.txt`.
+- **Fields the capture must show:** `IDENTITY firmware=3.0.0-alpha3-rc1-debug git=<the tag's 12 hex>` (no other identity line); `AUDIO_PACK … capability=supported-music-patch`; `SAVE_INSPECT slot0=verified slot1=verified`; `SYSTEM_MENU_RENDER` for every open; the `METRICS heartbeat internal=… psram=…` lines; the `SD_HEAP` windows; `AUDIO_PERF … underruns=0 hw_underruns=0`.
 
 1. **Boot / identity (1 min).**
    - Do not recopy the packs. Install the RC1 Launcher file in a 1 MiB slot.
@@ -1655,7 +1663,9 @@ Run all four on the **A3-HF10** image. It carries A3-HF9, A3-HF4 and A3-05 uncha
     - **The ending.** 7E-A′ passed on the device, and `batch53a_ending_terminal` certifies it on the RC tree.
     - **The Refuge, and the scenes of H-205 – H-210.** RC1 carries their code unchanged. H-210 must already be PASS before RC1 is built (`ALPHA3.md` §12, step 1).
 
-**The heap capture.** Run `python native/core/tools/a3_04g_hw_closeout.py <capture>` and read its §28.16 trigger section.
+**The heap capture.** Run `python native/core/tools/a3_04g_hw_closeout.py <capture>` and read its §28.16 trigger section. The thresholds are the existing ones (`ALPHA3_AUDIO.md` §28.16); none is new in RC1.
+- Record from it: the minimum internal free heap (`heap_int_min`), the internal + PSRAM sum across the heartbeats, any drift of the heartbeat `internal` across the ten menu opens of step 8, the watchdog / crash / reboot search, the storage-error search, `und` / `hw` / `miss` from the audio stats, and the render health lines (key-to-frame of each menu open, `fill_min`).
+- Trigger 6 (internal `.data` / `.bss` / IRAM growth) is already answered by the build: **not fired**, the RC1 section diff against A3-HF10 is empty. Trigger 7 is this capture.
 - The capture must show no `task_wdt`, crash, reboot, storage error or error-level line.
 - A trigger fired by placement only does not block. Placement means the internal + PSRAM sum stays steady (§28.21.7), and it is recorded with the result.
 - A trigger that the capture cannot explain opens A3-04H before the release.
