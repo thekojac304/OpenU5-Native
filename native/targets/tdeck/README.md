@@ -5,7 +5,7 @@
 > `FW 2.0.0-alpha2-rc1-debug`. Release notes, install and SD layout are in
 > [`../../../ALPHA2.md`](../../../ALPHA2.md); packaging in [LAUNCHER.md](LAUNCHER.md).
 > **Alpha 3 is at RC1 — hardware smoke pending, not released.** The candidate is
-> `FW 3.0.0-alpha3-rc1-debug` (`OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`); its size, SHA-256 and `Git` are in tag `alpha3-rc1`.
+> `FW 3.0.0-alpha3-rc1-debug`, `Git f85575b96f05` (`OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`, SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`); the record is tag `alpha3-rc1`.
 > Scope, deferrals and the RC procedure are in [`../../../ALPHA3.md`](../../../ALPHA3.md).
 > The Milestone 5 text below is historical.
 

@@ -1,7 +1,7 @@
 # OpenU5 T-Deck Plus — Alpha 3 (release candidate 1)
 
 **Status: ALPHA 3 RC1 — HARDWARE SMOKE PENDING. NOT RELEASED.**
-- **Release candidate: `3.0.0-alpha3-rc1-debug`** (identity screen `FW 3.0.0-alpha3-rc1-debug`). Its image path, size, SHA-256 and embedded `Git` are in the annotated tag **`alpha3-rc1`** and in §5 and §10.
+- **Release candidate: `3.0.0-alpha3-rc1-debug`** (identity screen `FW 3.0.0-alpha3-rc1-debug`). Its image path, size, SHA-256 and embedded `Git` are in §5 and in the annotated tag **`alpha3-rc1`** (RC commit `f85575b96f05`).
 - Code baseline: **A3-HF10** (implementation `028269fe`, evidence `ba8a565f`, tag `alpha3-hf10-mix-parity`). RC1 changes only `PROJECT_VER`, and with it the embedded `Git`: the image is the same size, and every memory section equals A3-HF10's (§10).
 - **H-210, H-213, H-203 and H-204 PASSED on the A3-HF10 image (2026-09-28)**: `FW 3.0.0-alpha3-dev-a3-hf10-debug`, `Git 028269fec0c5`. **The only remaining gate is Phase A3-RC1** (the RC smoke and the heap capture, `ALPHA2_HARDWARE_CHECKLIST.md`), on the RC1 image. Neither has been run.
 - Not flashed, not pushed. Release closeout waits for the Phase A3-RC1 results.
@@ -106,14 +106,14 @@ In every row the game is fully playable; none changes a save, the game packs or 
 
 | File | Size | Identity |
 |---|---:|---|
-| `native/targets/tdeck/build-a3-rc1-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin` | 988,320 B (identical to A3-HF10's) | SHA-256 and embedded `Git`: annotated tag **`alpha3-rc1`** |
+| `native/targets/tdeck/build-a3-rc1-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin` | 988,320 B (identical to A3-HF10's) | SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`; embedded `Git f85575b96f05` (the RC commit `f85575b96f05bd7250ef41347f858bfc954e276b`, tag **`alpha3-rc1`**) |
 | `/ultima5/openu5-alpha1-resources.bin` (SD) | 2,041,466 B | CRC32 `26f75ae6`, SHA-256 `a48abdbfc88eb5ab43453880a8ea029a1ea0684dfec2045f9dae941b31aa379b` — unchanged since Batch 53 |
 | `/ultima5/openu5-assets.bin` (SD) | 132,284 B | CRC32 `933c9b82`, SHA-256 `6eb001ed2a7729e683896998f693d02aeaf1327f3cddd661d1c726ef7414e188` — unchanged |
 | `/ultima5/openu5-audio.bin` (SD, **optional**) | 56,148 B patched / 112 B stock | OU5AUDIO 1.0, derived locally by `npm run pack:audio`, never committed; its CRCs are checked at boot |
 
 The RC image's file name follows `PROJECT_VER` through `package_launcher.py`: `3.0.0-alpha3-rc1-debug` → `OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`. On boot the identity screen will show:
 - `FW 3.0.0-alpha3-rc1-debug`
-- `Git` the 12 hex of the RC1 commit, as printed in tag `alpha3-rc1`
+- `Git f85575b96f05`
 - `RES v2.0 2041466B CRC 26f75ae6`
 - `ASSET … 132284B CRC 933c9b82`
 
@@ -121,7 +121,7 @@ The firmware refuses to start with any other resource pack. The image is a Debug
 
 ## 6. Installing or updating
 
-- **Launcher allocation: the full 1 MiB (1,048,576 B).** The A3-HF10 image is 988,320 B; rounded up to 64 KiB that is 1,048,576 B. Alpha 2 needed 896 KiB, so a Launcher slot sized for Alpha 2 is too small. (RC1: the packager's `App partition minimum` line reads 1,048,576 B; see §10.)
+- **Launcher allocation: the full 1 MiB (1,048,576 B).** The A3-HF10 image is 988,320 B; rounded up to 64 KiB that is 1,048,576 B. Alpha 2 needed 896 KiB, so a Launcher slot sized for Alpha 2 is too small. (RC1: the packager's `App partition minimum` line reads **1,048,576 B**.)
 - **Firmware:** copy the Launcher image anywhere on the card, then install it from Launcher (**SD** → select the file).
 - **Game packs:** unchanged since Batch 53. Build them only if you do not have them: `npm run extract`, `npm run pack:native`, `npm run pack:alpha1`, then copy both to `/ultima5/`.
 - **Music (optional):** only with the Exodus *Ultima V Upgrade* 1.0 installed over your DOS files. Extract from that install, run `npm run pack:audio` (or `npm run pack:audio -- --source <dir> --output <file>`), and copy `native/assets/openu5-audio.bin` to `/ultima5/openu5-audio.bin`. Without it, or with stock files, the game is complete and silent of music.
@@ -199,7 +199,7 @@ H-199 (an optional serial check of one log line, A3-HF2.1) is withdrawn: not owe
 | | A3-HF10 (current baseline) | RC1 |
 |---|---|---|
 | Version | `3.0.0-alpha3-dev-a3-hf10-debug` | `3.0.0-alpha3-rc1-debug` |
-| Image | 988,320 B (`0xf14a0`), SHA-256 `c14d96ff7b3b96983a2823cf54db69f094b84fa0837e6afed17b20ba1f5b8a79`, `Git 028269fec0c5` | 988,320 B (`0xf14a0`), **+0 B** vs A3-HF10; SHA-256 and `Git`: tag `alpha3-rc1` |
+| Image | 988,320 B (`0xf14a0`), SHA-256 `c14d96ff7b3b96983a2823cf54db69f094b84fa0837e6afed17b20ba1f5b8a79`, `Git 028269fec0c5` | 988,320 B (`0xf14a0`), **+0 B** vs A3-HF10, SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`, `Git f85575b96f05` (post-commit image; tag `alpha3-rc1`) |
 | App partition free (1 MiB) | 60,256 B (5.7 %) | 60,256 B (5.7 %) |
 | Launcher allocation | 1,048,576 B | 1,048,576 B (the whole 1 MiB partition) |
 | Flash `.text` / `.rodata` | 669,770 B / 219,460 B | 669,770 B / 219,460 B (diff 0; the per-object-file diff is empty) |

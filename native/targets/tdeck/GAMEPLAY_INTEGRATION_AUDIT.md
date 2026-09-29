@@ -18,7 +18,7 @@
 > | Host suite | **162 / 162**, serial, 139.25 s, fresh `build-a3-rc1`; the one known w64devkit warning; 0 skipped. |
 > | TypeScript | `tsc --noEmit` clean; the `game/` vitest FAIL set is the A3-HF10 baseline's 97, identical as a set. |
 > | Firmware | 988,320 B (`0xf14a0`), +0 B vs A3-HF10, 60,256 B (5.7 %) free, zero warnings; `.text` / `.rodata` / `.data` / `.bss` / IRAM unchanged; the three image guards GREEN. Launcher allocation 1,048,576 B. |
-> | Image | `OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`; SHA-256, `Git` and path: tag `alpha3-rc1`. |
+> | Image | `OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`; SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`; `Git f85575b96f05` (RC commit `f85575b96f05bd7250ef41347f858bfc954e276b`, tag `alpha3-rc1`). |
 > | Next | **Phase A3-RC1**: the smoke and the heap capture, on the device. Then the release closeout. |
 >
 > ### PRIOR STATE (Alpha 3 pre-RC reconciliation, 2026-09-28) — no code changed; the Alpha 3 scope, deferrals and RC procedure are written down; the four hardware checks between A3-HF10 and RC1 have PASSED (2026-09-28); Alpha 2 remains the released build; **superseded as the current state by the RC1 block above**

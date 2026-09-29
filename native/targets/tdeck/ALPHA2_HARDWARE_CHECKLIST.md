@@ -1606,7 +1606,7 @@ Run all four on the **A3-HF10** image. It carries A3-HF9, A3-HF4 and A3-05 uncha
 
 **Not run yet.** This is the only gate left before Alpha 3 can be released. It is a smoke test for catastrophic regressions plus the heap capture, not a replay of Alpha 3. Compared with the A3-HF10 image, RC1 changes only the version string and the embedded `Git` (988,320 B, every memory section equal).
 
-**The image.** `native/targets/tdeck/build-a3-rc1-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`, a 1 MiB Launcher slot. Its exact size, SHA-256 and `Git` are in the annotated tag `alpha3-rc1` (and, after the RC1 evidence commit, in `ALPHA3.md` §5). Identity: `FW 3.0.0-alpha3-rc1-debug`. If the boot screen shows the HF10 `FW` or `Git 028269fec0c5`, that is the old image: stop.
+**The image.** `native/targets/tdeck/build-a3-rc1-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`, a 1 MiB Launcher slot. 988,320 B, SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`, also in the annotated tag `alpha3-rc1` and `ALPHA3.md` §5. Identity: `FW 3.0.0-alpha3-rc1-debug`, `Git f85575b96f05`. If the boot screen shows the HF10 `FW` or `Git 028269fec0c5`, that is the old image: stop.
 
 **Setup.**
 - Steps 1–10 run in **one session with a serial capture from power-on to step 10**. That capture is the RC heap capture that `ALPHA3_AUDIO.md` §28.16 trigger 7 requires. To take it, run `python -m esp_idf_monitor -p COMx -b 115200 --no-reset` from an ESP-IDF PowerShell and save its output.
@@ -1618,11 +1618,11 @@ Run all four on the **A3-HF10** image. It carries A3-HF9, A3-HF4 and A3-05 uncha
   python -m esp_idf_monitor -p COM5 -b 115200 --no-reset 2>&1 | Tee-Object -FilePath a3-rc1-capture.log
   ```
   Afterwards: `python native/core/tools/a3_04g_hw_closeout.py a3-rc1-capture.log > a3-rc1-closeout.txt`.
-- **Fields the capture must show:** `IDENTITY firmware=3.0.0-alpha3-rc1-debug git=<the tag's 12 hex>` (no other identity line); `AUDIO_PACK … capability=supported-music-patch`; `SAVE_INSPECT slot0=verified slot1=verified`; `SYSTEM_MENU_RENDER` for every open; the `METRICS heartbeat internal=… psram=…` lines; the `SD_HEAP` windows; `AUDIO_PERF … underruns=0 hw_underruns=0`.
+- **Fields the capture must show:** `IDENTITY firmware=3.0.0-alpha3-rc1-debug git=f85575b96f05` (no other identity line); `AUDIO_PACK … capability=supported-music-patch`; `SAVE_INSPECT slot0=verified slot1=verified`; `SYSTEM_MENU_RENDER` for every open; the `METRICS heartbeat internal=… psram=…` lines; the `SD_HEAP` windows; `AUDIO_PERF … underruns=0 hw_underruns=0`.
 
 1. **Boot / identity (1 min).**
    - Do not recopy the packs. Install the RC1 Launcher file in a 1 MiB slot.
-   - The identity screen must read `FW 3.0.0-alpha3-rc1-debug`, `Git <the tag's 12 hex>`, `RES v2.0 2041466B CRC 26f75ae6` and `ASSET … 132284B CRC 933c9b82`.
+   - The identity screen must read `FW 3.0.0-alpha3-rc1-debug`, `Git f85575b96f05`, `RES v2.0 2041466B CRC 26f75ae6` and `ASSET … 132284B CRC 933c9b82`.
    - The title follows, with its music.
    - Serial: `AUDIO_PACK … capability=supported-music-patch`, and one `SAVE_INSPECT slot0=verified slot1=verified …`.
 2. **Continue (1 min).** Journey Onward → **Continue Latest**. The saved game appears, its location's music plays, and the trackball walks.
