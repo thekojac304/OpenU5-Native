@@ -39,6 +39,9 @@ constexpr bool context_action_bar_does_not_overlap(int content_bottom) {
 
 constexpr int kCharacterTitleArtY=4,kCharacterTitleArtH=110;
 constexpr int kCharacterTextY=116,kCharacterTextRowH=9;
+// Alpha 4 UI Batch 2 (ALPHA4_UI.md section 2.1): the title's credit block and
+// prompt, IBM.CH lines centred under the art (which ends at y=113).
+constexpr int kTitleCreditsY=130,kTitleCreditsStep=14,kTitlePromptY=184;
 constexpr int kCharacterQuizArtH=152,kCharacterQuizTextY=154;
 
 constexpr size_t kShopVisibleRows=6;

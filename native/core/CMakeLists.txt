@@ -1836,6 +1836,50 @@ if(BUILD_TESTING)
   add_test(NAME a4_ui1_chrome_runtime COMMAND a4_ui1_chrome_runtime
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../original/u5/ultima5/IBM.CH")
+  # Alpha 4 UI Batch 2 (targets/tdeck/ALPHA4_UI.md section 2) -- the title
+  # screen, the death/resurrection music lifecycle and the save/load menus,
+  # each through the REAL AlphaRuntime on the REAL tdeck_board.cpp over the
+  # fake ST7789 (host_tests/a4_ui2_harness.h), with the two-slot memory card.
+  function(openu5_a4_ui2_runtime name)
+    add_executable(${name}
+      ../targets/tdeck/host_tests/${name}_test.cpp
+      ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+      ../targets/tdeck/host_tests/board_shims/fake_tdeck_bus.cpp
+      ../targets/tdeck/main/tdeck_board.cpp
+      ../targets/tdeck/main/idle_service.cpp
+      ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+      ../targets/tdeck/main/alpha_save_generation.cpp
+      ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+      ../targets/tdeck/main/alpha_audio.cpp
+      ../targets/tdeck/main/alpha_runtime.cpp
+      ../targets/tdeck/main/ui_input_adapter.cpp
+      ../targets/tdeck/main/input_controller.cpp
+      ../targets/tdeck/main/keyboard_matrix.cpp
+      ../targets/tdeck/main/alpha_resources.cpp
+      ../targets/tdeck/main/asset_pack.cpp
+      ../targets/tdeck/main/dungeon_art_cache.cpp
+      ../targets/tdeck/main/alpha_dialogue.cpp
+      ../targets/tdeck/main/native_renderer.cpp
+      ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+    target_link_libraries(${name} PRIVATE openu5_core)
+    target_include_directories(${name} PRIVATE
+      ../targets/tdeck/host_tests/board_shims
+      ../targets/tdeck/host_tests/esp_shims
+      ../targets/tdeck/host_tests
+      ../targets/tdeck/main)
+    target_compile_features(${name} PRIVATE cxx_std_20)
+    if(MSVC)
+      target_compile_options(${name} PRIVATE /Gy)
+      target_link_options(${name} PRIVATE /OPT:REF)
+    else()
+      target_compile_options(${name} PRIVATE -ffunction-sections -fdata-sections)
+      target_link_options(${name} PRIVATE -Wl,--gc-sections)
+    endif()
+  endfunction()
+  # A: the credit block and the prompt, centred in IBM.CH under the title art.
+  openu5_a4_ui2_runtime(a4_ui2_title_runtime)
+  add_test(NAME a4_ui2_title_runtime COMMAND a4_ui2_title_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
   # Alpha 3 A3-HF3 -- D-63, combat hit feedback (ALPHA3_AUDIO.md section 27).
   # The core half: the 0x3564 cue's length against the rendered burst, the
   # queue, and which combat events are a cue.

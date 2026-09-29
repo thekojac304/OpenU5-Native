@@ -84,6 +84,9 @@ enum class FrontendViewKind : uint8_t {
     Credits,
     Settings,
     SystemMenu,
+    // Alpha 4 UI Batch 2: the Title (and the startup intro that shows it): the
+    // credit lines and the "Press a key" prompt, centred under the title art.
+    TitleCredits,
 };
 
 enum class FrontendCreationPhase : uint8_t { Name, Sex, Quiz };

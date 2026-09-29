@@ -188,6 +188,10 @@ class AlphaRuntime {
     // A3-04E: the last composed 176x176 viewport -- what the Board was handed.
     const uint16_t *composed_viewport() const { return viewport_; }
     bool system_menu_open() const { return system_menu_.active(); }
+    // Alpha 4 UI Batch 2: the title/menu screen state and page (read-only).
+    bool frontend_open() const { return frontend_.active(); }
+    openu5::FrontendState frontend_state() const { return frontend_.state(); }
+    openu5::FrontendView frontend_view() const { return frontend_.view(); }
     // A3-01: the System Menu page as it would be drawn (read-only).
     openu5::FrontendView system_menu_view() const { return system_menu_.view(); }
     // Batch 53 (D-53): the status/prompt line render() hands to the Board.

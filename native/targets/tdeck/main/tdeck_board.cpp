@@ -1041,6 +1041,7 @@ esp_err_t Board::show_frontend(const openu5::FrontendView&v,const uint16_t*previ
     // Alpha 4 UI Batch 1 (ALPHA4_UI.md): every screen with a text title is
     // drawn in the band shell (>Title< in the top band, a white-ruled window).
     const bool shell=!title_art&&!creation_art;
+    const bool title_credits=title_art&&v.kind==openu5::FrontendViewKind::TitleCredits;
     const bool layout_changed=first||frontend_cache_.state!=v.state||frontend_cache_.kind!=v.kind||ui_scale_requires_full_layout(frontend_cache_.ui_size,ui_size)||
                                (frontend_cache_.title_art!=nullptr)!=(title_art!=nullptr)||
                                frontend_cache_.panel!=(panel_art!=nullptr)||
@@ -1117,6 +1118,24 @@ esp_err_t Board::show_frontend(const openu5::FrontendView&v,const uint16_t*previ
         }
         else if(std::strcmp(frontend_cache_.subtitle,v.subtitle?v.subtitle:"")!=0){ESP_RETURN_ON_ERROR(draw_text_box(8,116,304,14,v.subtitle?v.subtitle:"The View",kCyan,2,2),kTag,"update attract scene title");account(304*14);}
         if(preview){ESP_RETURN_ON_ERROR(draw_rgb565(8,136,304,64,preview),kTag,"draw scripted attract band");account(304*64);}
+    }else if(title_credits){
+        // Alpha 4 UI Batch 2 (ALPHA4_UI.md section 2.1): the credit lines in
+        // IBM.CH, each centred under the art, and the prompt centred beneath
+        // them in the footers' grey. Redrawn only when the screen or its text
+        // changes, so a fire-animation frame still sends the strip alone.
+        bool changed=layout_changed||v.line_count!=frontend_cache_.line_count;
+        for(size_t i=0;!changed&&i<v.line_count;++i)changed=std::strcmp(v.lines[i]?v.lines[i]:"",frontend_cache_.lines[i])!=0;
+        if(changed){
+            ESP_RETURN_ON_ERROR(fill_rect(0,114,320,110,kBlack),kTag,"prepare title credits");account(320*110);
+            auto centred=[&](int y,const char*text,uint16_t color)->esp_err_t{
+                const int width=int(std::min<size_t>(std::strlen(text),40))*8;if(!width)return ESP_OK;
+                const int x=(kDisplayWidth-width)/2;account(size_t(width)*8);
+                return draw_cells(x,y,width,8,x,text,color,SIZE_MAX,color,false,ChromeFont::Ibm);
+            };
+            for(size_t i=0;i<v.line_count&&i<2;++i)
+                ESP_RETURN_ON_ERROR(centred(kTitleCreditsY+int(i)*kTitleCreditsStep,v.lines[i]?v.lines[i]:"",kWhite),kTag,"title credit line");
+            ESP_RETURN_ON_ERROR(centred(kTitlePromptY,v.footer?v.footer:"",kChromeDim),kTag,"title prompt");
+        }
     }else if(panel_art){
         if(layout_changed){ESP_RETURN_ON_ERROR(fill_rect(shell?3:0,50,shell?314:320,174,kBlack),kTag,"prepare acknowledgements panel");account(320*174);}
         if(layout_changed||!frontend_cache_.panel){ESP_RETURN_ON_ERROR(draw_rgb565(16,54,288,137,panel_art),kTag,"draw original acknowledgements panel");account(288*137);}
@@ -1149,7 +1168,8 @@ esp_err_t Board::show_frontend(const openu5::FrontendView&v,const uint16_t*previ
                             "Sample: The Avatar",kCyan,menu_metrics),kTag,"draw settings type preview");
         account(296*menu_metrics.line_height);
     }
-    const char*footer=creation_art?"":v.footer?v.footer:"";
+    // The title's prompt is drawn with its credit block, not in the footer row.
+    const char*footer=creation_art||title_credits?"":v.footer?v.footer:"";
     if(first||layout_changed||std::strcmp(frontend_cache_.footer,footer)!=0){ESP_RETURN_ON_ERROR(draw_text_box(8,228,304,9,footer,kChromeDim),kTag,"frontend footer");account(304*9);}
 
     frontend_cache_={};frontend_cache_.state=v.state;frontend_cache_.kind=v.kind;
