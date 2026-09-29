@@ -8,7 +8,7 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 pre-RC reconciliation, 2026-09-28) — no code changed; the Alpha 3 scope, deferrals and RC procedure are written down; four hardware checks stand between A3-HF10 and RC1; Alpha 2 remains the released build; read this first
+> ### CURRENT STATE (Alpha 3 pre-RC reconciliation, 2026-09-28) — no code changed; the Alpha 3 scope, deferrals and RC procedure are written down; the four hardware checks between A3-HF10 and RC1 have PASSED (2026-09-28); Alpha 2 remains the released build; read this first
 >
 > **A documentation batch, not a release** (`ALPHA3.md` at the repository root, a pre-release draft). The code is A3-HF10's (`028269fe`, tag `alpha3-hf10-mix-parity`). No production code, test, `PROJECT_VER`, firmware or tag changed.
 > - **Tracker corrections, each backed by a recorded result.**
@@ -26,9 +26,9 @@
 > |---|---|
 > | Host suite | Not run: no code changed. The A3-HF10 record stands: **162 / 162**, serial, 152.76 s. |
 > | Firmware | Not built. The A3-HF10 image stands: 988,320 B (`0xf14a0`), 60,256 B (5.7 %) free, Launcher allocation 1,048,576 B (the whole 1 MiB partition). Internal RAM, IRAM (16,384 B, full) and PSRAM are unchanged by HF9 and HF10, and the image guards are GREEN. |
-> | Pending hardware | **H-210, H-213, H-203, H-204**, in one session on the A3-HF10 image (checklist, "Alpha 3 pre-RC reconciliation"). |
+> | Hardware | **H-210, H-213, H-203, H-204: all PASS** in one session on the A3-HF10 image (`FW 3.0.0-alpha3-dev-a3-hf10-debug`, `Git 028269fec0c5`; the user, 2026-09-28). None is pending. |
 > | RC | `ALPHA3.md` §12: gate → version `3.0.0-alpha3-rc1-debug` → fresh host and firmware builds → size and guards → commit → post-commit image → package → annotated tag → Phase A3-RC1 smoke and heap capture (reserved in the checklist). |
-> | Next | **Wait for / run the outstanding HF10 hardware session.** No code batch. |
+> | Next | **The RC1 batch** (`ALPHA3.md` §12). No code batch. |
 >
 > ### CURRENT STATE (Alpha 3 A3-HF10, 2026-09-28) — Mix is the original's again: the player marks the reagents and answers "How much?" — **superseded as the current state by the pre-RC reconciliation above.**
 >
@@ -6445,7 +6445,7 @@ Every frame count in `blackthorn_scene.cpp` is the bytecode's literal **and** no
 | Blackthorn materialize / circle / siren | **TOO FAST — shared cause → HOST FIXED** (Y-32/D-10/H-122); NEEDS PHYSICAL TEST (7D-B) |
 | Blackthorn fizzle texture | EXACT TIMING UNKNOWN (C) — held at the D floor |
 | Blackthorn sacrifice explosion | ~~**MISSING PRESENTATION BEAT + ORDERING WRONG — H-186/D-43, queued**~~ **HOST FIXED — A3-HF8** (`ALPHA3_AUDIO.md` §34; H-208 pending) |
-| Refuge | ~~TOO FAST/SLOW — **scene-local**: Class-C 70 ms/unit + 900/260 ms floors vs exact 54.93 ms ticks; **MISSING ACKNOWLEDGEMENT** (karma getkey `0x0b3e`); sweeps/fizzles unheld — **H-185/D-42, queued**~~ **HOST FIXED — A3-HF9** (the reference first, then the pacer; `ALPHA3_AUDIO.md` §35; H-210 pending) |
+| Refuge | ~~TOO FAST/SLOW — **scene-local**: Class-C 70 ms/unit + 900/260 ms floors vs exact 54.93 ms ticks; **MISSING ACKNOWLEDGEMENT** (karma getkey `0x0b3e`); sweeps/fizzles unheld — **H-185/D-42, queued**~~ **HOST FIXED — A3-HF9** (the reference first, then the pacer; `ALPHA3_AUDIO.md` §35; H-210 PASS, A3-HF10 image, 2026-09-28) |
 | TrollSneak | **CORRECT** (A); hardware PASS (H-137); unchanged control for the shared pacer |
 | Shrine ordained / Codex | **MISSING ACKNOWLEDGEMENT — H-183/D-40, queued** (probe: `native/core/batch51-shrine-keywait-probe.log` — after `ShrineKeyWait` the device session stays in Exploration and the post-wait text is already in the transcript) → **A3-HF6: host fixed** (the eleven getkeys are Key holds of `DialoguePacer`; `ALPHA3_AUDIO.md` §32; device check H-206) |
 | Shrine donation / WELL DONE / Codex pulses | ~~**MISSING PRESENTATION BEAT + MISSING DWELL — H-184/D-41, queued**~~ **HOST FIXED — A3-HF7** (`ALPHA3_AUDIO.md` §33; H-207 pending) |
@@ -8332,7 +8332,7 @@ The small closing pass of the audio track. The full write-up is [`ALPHA3_AUDIO.m
 
 ### 3. Rows
 
-- **H-203** (`ALPHA2_HARDWARE_CHECKLIST.md`): new, PENDING. About 5 minutes: the two mutes, restore levels, the Settings rows, one kill.
+- **H-203** (`ALPHA2_HARDWARE_CHECKLIST.md`): new; **PASS on the A3-HF10 image (2026-09-28)**. About 5 minutes: the two mutes, restore levels, the Settings rows, one kill.
 - **D-64** (ledger §4): new, host fixed. **E-5** (ledger §3): new.
 
 ### 4. Not done in this batch
@@ -8370,7 +8370,7 @@ A correctness hotfix of the load / UI boundary. The full write-up is [`ALPHA3_AU
 
 ### 3. Rows
 
-- **H-204** (`ALPHA2_HARDWARE_CHECKLIST.md`): new, PENDING. About 3 minutes: Mix / Look / "Leave this place?" / Ready, then a load, on both routes.
+- **H-204** (`ALPHA2_HARDWARE_CHECKLIST.md`): new; **PASS on the A3-HF10 image (2026-09-28)**. About 3 minutes: Mix / Look / "Leave this place?" / Ready, then a load, on both routes.
 - **D-65** (ledger §4): new, host fixed.
 
 ### 4. Not done in this batch

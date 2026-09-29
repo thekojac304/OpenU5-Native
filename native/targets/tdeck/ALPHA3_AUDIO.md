@@ -3,12 +3,12 @@
 **Status (Alpha 3 pre-RC reconciliation, 2026-09-28): THE AUDIO TRACK IS CLOSED; NO CODE CHANGED.** The scope, the deferrals and the RC procedure are in `ALPHA3.md` at the repository root. The authoritative hardware table is the checklist's "Alpha 3 pre-RC reconciliation" section.
 - **Closed:** audio, music and the A3-04 performance work. The ledger's D-3 is resolved, and the patched-install music is its deliberate row E-6. The volume curve is final (§29.2).
 - **Superseded, not owed:** the retests of A3-03 (§16.17), A3-04 (§17.18), A3-04A (§18.18), A3-04B (§19.16), A3-04C (§20.10) and A3-04D (§21.7). Each image was run, and its result opened the next batch; the end state is the A3-04E.1 soak (§23.10) and H-200 (§26.17). H-199 (§25.7) is withdrawn.
-- **Hardware results:** H-206 PASS is recorded. **H-203 (§29), H-204 (§30), H-210 (§35) and H-213 (§36) are still pending**, with one A3-HF10 session for all four.
+- **Hardware results:** H-206 PASS is recorded. **H-203 (§29), H-204 (§30), H-210 (§35) and H-213 (§36) PASSED** in one session on the A3-HF10 image (the user, 2026-09-28; `Git 028269fec0c5`); no pre-RC hardware gate is pending. Every "pending" for those four checks in the dated sections below is the status as that batch wrote it, and is superseded by this line.
 - **Deferred past Alpha 3:** H-209, H-211, H-212, D-71, and A3-04H unless the RC heap capture (§28.16 trigger 7) calls for it.
 
-**Status (A3-HF10, 2026-09-28): MIX IS THE ORIGINAL'S AGAIN — THE PLAYER MARKS THE REAGENTS AND ANSWERS "HOW MUCH?" (D-6 / D-70) — FIXED ON THE HOST; HARDWARE CHECK H-213 PENDING (with H-210).** §36. The A3-HF9 status follows.
+**Status (A3-HF10, 2026-09-28): MIX IS THE ORIGINAL'S AGAIN — THE PLAYER MARKS THE REAGENTS AND ANSWERS "HOW MUCH?" (D-6 / D-70) — FIXED ON THE HOST; HARDWARE CHECK H-213 PASS (A3-HF10 image, 2026-09-28; with H-210).** §36. The A3-HF9 status follows.
 
-**Status (A3-HF9, 2026-09-28): THE REFUGE KEEPS THE ORIGINAL'S CADENCE, AND LORD BRITISH'S KARMA SPEECH WAITS FOR A KEY (H-185 / D-42) — FIXED ON THE HOST; HARDWARE CHECK H-210 PENDING. H-208 PASS (A3-HF8).** §35:
+**Status (A3-HF9, 2026-09-28): THE REFUGE KEEPS THE ORIGINAL'S CADENCE, AND LORD BRITISH'S KARMA SPEECH WAITS FOR A KEY (H-185 / D-42) — FIXED ON THE HOST; HARDWARE CHECK H-210 PASS (A3-HF10 image, 2026-09-28). H-208 PASS (A3-HF8).** §35:
 - **The defect:** the Refuge ran on a Class-C clock no instruction backs (70 ms per unit + 900 / 260 ms floors), with the first `delay(10)` misplaced and three invented delays; the karma speech left by itself after ~1.5 s.
 - **The original:** `party_refuge` (BLCKTHRN `0x0910`) blocks in `delay(n)` ticks (the first one **before** any line), the 10 s slumber melody, one-tick-floor fizzles and dissolves, two `screen_shake_fx`, one revival sweep per member — and ends the karma speech in `getkey_with_redraw` `0x0b3e` (no timeout, any key). Nothing mutates before the key.
 - **Fix:** the TypeScript reference pins each delay at its instruction plus `waitKey`; `check_refuge` emits that script with the device's own holds; `NarrativeScenePacer` times each beat from the bytes and holds the speech until a key (`advance_key()`); the device routes one key to it, shows `Enter: continue`, draws the peals' shake, and clears the Refuge latch on a load.
@@ -4122,7 +4122,7 @@ The small closing pass of the audio track. The user had already judged the volum
 
 No volume curve, mix, song, cue program, save format or gameplay rule changed.
 
-**Status: MUTES ADDED AND KILL BURST FIXED ON THE HOST — SHORT HARDWARE CHECK H-203 PENDING.**
+**Status: MUTES ADDED AND KILL BURST FIXED ON THE HOST — SHORT HARDWARE CHECK H-203 PASS (A3-HF10 image, 2026-09-28).**
 
 ### 29.1 Baseline
 

@@ -1274,7 +1274,9 @@ The A3-04G image contains A3-HF3's combat code unchanged, so H-201 can be run on
 - A kill in combat now plays **one** hit sound, as the original does. The second burst it used to play came from the chest-trap routine.
 - The volume curves are unchanged: the user already judged them good on the device.
 
-### Phase H-203 — mute shortcuts and the kill sound · *new firmware; SD pack unchanged* · about 5 minutes · **PENDING**
+### Phase H-203 — mute shortcuts and the kill sound · *new firmware; SD pack unchanged* · about 5 minutes · **PASS** (the user, on the A3-HF10 image, reported 2026-09-28; recorded by the RC1 batch)
+
+**Result: PASS** (the user, 2026-09-28). H-203 was run on the A3-HF10 image (which carries A3-05 unchanged), not on the A3-05 image named below. Identity: `FW 3.0.0-alpha3-dev-a3-hf10-debug`, `Git 028269fec0c5`, `OpenU5-TDeck-Alpha3.0.0-alpha3-dev-a3-hf10-Debug-Launcher.bin`, SHA-256 `c14d96ff7b3b96983a2823cf54db69f094b84fa0837e6afed17b20ba1f5b8a79`. The instructions below are kept as run.
 
 Flash the A3-05 Launcher image (its path and SHA-256 are in tag `alpha3-a3-05-audio-finalization`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-05-debug` and that tag's `Git`; if they differ, stop. Use the music-patched card. No serial capture is needed.
 
@@ -1293,7 +1295,9 @@ Flash the A3-05 Launcher image (its path and SHA-256 are in tag `alpha3-a3-05-au
 
 *Not in this check:* a reboot. The mute is session-only by design (host test M9). If you do reboot, the device must start unmuted at 80 % music.
 
-### Phase H-204 — a load leaves no prompt behind · *new firmware; SD pack unchanged* · about 3 minutes · **PENDING**
+### Phase H-204 — a load leaves no prompt behind · *new firmware; SD pack unchanged* · about 3 minutes · **PASS** (the user, on the A3-HF10 image, reported 2026-09-28; recorded by the RC1 batch)
+
+**Result: PASS** (the user, 2026-09-28). H-204 was run on the A3-HF10 image (which carries A3-HF4 unchanged), not on the A3-HF4 image named below. Identity: `FW 3.0.0-alpha3-dev-a3-hf10-debug`, `Git 028269fec0c5`, `OpenU5-TDeck-Alpha3.0.0-alpha3-dev-a3-hf10-Debug-Launcher.bin`, SHA-256 `c14d96ff7b3b96983a2823cf54db69f094b84fa0837e6afed17b20ba1f5b8a79`. The instructions below are kept as run.
 
 Flash the A3-HF4 Launcher image (its path and SHA-256 are in tag `alpha3-hf4-load-transient-reset`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-hf4-debug` and that tag's `Git`; if they differ, stop. Any card with a save works. A serial capture is optional: each load prints one `LOAD_TRANSIENT_RESET ui=<before>-><after>` line.
 
@@ -1468,7 +1472,9 @@ Flash the A3-HF8 Launcher image (its path and SHA-256 are in tag `alpha3-hf8-sac
 
 Report a failure with the `FW` / `Git` lines, and the serial `BLACKTHORN_BURST` / `BLACKTHORN_SCENE` lines if captured.
 
-### Phase H-210 — the Refuge's cadence and its karma key wait · *new firmware; SD pack unchanged* · about 5 minutes · **PENDING**
+### Phase H-210 — the Refuge's cadence and its karma key wait · *new firmware; SD pack unchanged* · about 5 minutes · **PASS** (the user, on the A3-HF10 image, reported 2026-09-28; recorded by the RC1 batch)
+
+**Result: PASS** (the user, 2026-09-28). H-210 was run on the A3-HF10 image (which carries A3-HF9 unchanged), not on the A3-HF9 image named below. Identity: `FW 3.0.0-alpha3-dev-a3-hf10-debug`, `Git 028269fec0c5`, `OpenU5-TDeck-Alpha3.0.0-alpha3-dev-a3-hf10-Debug-Launcher.bin`, SHA-256 `c14d96ff7b3b96983a2823cf54db69f094b84fa0837e6afed17b20ba1f5b8a79`. The instructions below are kept as run.
 
 Flash the A3-HF9 Launcher image (its path and SHA-256 are in tag `alpha3-hf9-refuge-cadence`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-hf9-debug` and that tag's `Git`; if they differ, stop. The image carries A3-HF8 unchanged. A serial capture is optional: each figure prints `REFUGE_SCENE phase=…`, each peal `QUAKE pulses=8`, the key that ends the wait `NARRATIVE_SCENE_INPUT … effect=key-wait-ended … gameplay_command=none`, every other key `… effect=swallowed …`, and the end `REFUGE_RESOLVE`.
 
@@ -1506,7 +1512,9 @@ Flash the A3-HF9 Launcher image (its path and SHA-256 are in tag `alpha3-hf9-ref
 
 Report a failure with the `FW` / `Git` lines, and the serial `REFUGE_SCENE` / `NARRATIVE_SCENE_INPUT` lines if captured.
 
-### Phase H-213 — Mix: mark the reagents, answer "How much?" · *new firmware; SD pack unchanged* · about 5 minutes · **PENDING**
+### Phase H-213 — Mix: mark the reagents, answer "How much?" · *new firmware; SD pack unchanged* · about 5 minutes · **PASS** (the user, on the A3-HF10 image, reported 2026-09-28; recorded by the RC1 batch)
+
+**Result: PASS** (the user, 2026-09-28). H-213 was run on the A3-HF10 image. Identity: `FW 3.0.0-alpha3-dev-a3-hf10-debug`, `Git 028269fec0c5`, `OpenU5-TDeck-Alpha3.0.0-alpha3-dev-a3-hf10-Debug-Launcher.bin`, SHA-256 `c14d96ff7b3b96983a2823cf54db69f094b84fa0837e6afed17b20ba1f5b8a79`. The instructions below are kept as run.
 
 Flash the A3-HF10 Launcher image (its path and SHA-256 are in tag `alpha3-hf10-mix-parity`). The boot screen must show `FW 3.0.0-alpha3-dev-a3-hf10-debug` and that tag's `Git`; if they differ, stop. The image carries A3-HF9 unchanged, so this phase can share a session with H-210, H-203 and H-204.
 
@@ -1568,17 +1576,17 @@ Each phase heading above keeps its own history. This table is the current readin
 | H-200 | A3-04F | **PASS** |
 | H-201 | A3-HF3 | **PASS** |
 | H-202 | A3-04G | **PASS**; the heap watch item stays open, and Phase A3-RC1 re-reads it |
-| H-203 | A3-05 | **PENDING** — host-green |
-| H-204 | A3-HF4 | **PENDING** — host-green |
+| H-203 | A3-05 | **PASS** (A3-HF10 image, 2026-09-28) |
+| H-204 | A3-HF4 | **PASS** (A3-HF10 image, 2026-09-28) |
 | H-205 | A3-HF5 | **PASS** |
 | H-206 | A3-HF6 | **PASS** (recorded here) |
 | H-207 | A3-HF7 | **PASS** |
 | H-208 | A3-HF8 | **PASS** |
 | H-209, H-211, H-212 | — | queued defects, not checks: **deferred past Alpha 3** (`ALPHA3.md` §2) |
-| H-210 | A3-HF9 | **PENDING** — host-green |
-| H-213 | A3-HF10 | **PENDING** — host-green |
+| H-210 | A3-HF9 | **PASS** (A3-HF10 image, 2026-09-28) |
+| H-213 | A3-HF10 | **PASS** (A3-HF10 image, 2026-09-28) |
 
-### The outstanding session — H-213, H-204, H-203, H-210 · *A3-HF10 image; SD packs unchanged* · about 20 minutes, one flash
+### The outstanding session — H-213, H-204, H-203, H-210 · *A3-HF10 image; SD packs unchanged* · about 20 minutes, one flash · **COMPLETE — all four PASS (2026-09-28)**
 
 Run all four on the **A3-HF10** image. It carries A3-HF9, A3-HF4 and A3-05 unchanged, so no older image is needed. H-203 and H-204 name their own batch images in their headings: on this image, record its `FW` / `Git` in their results instead.
 - Launcher file: `OpenU5-TDeck-Alpha3.0.0-alpha3-dev-a3-hf10-Debug-Launcher.bin`, 988,320 B, SHA-256 `c14d96ff7b3b96983a2823cf54db69f094b84fa0837e6afed17b20ba1f5b8a79` (tag `alpha3-hf10-mix-parity`). It needs the full 1 MiB Launcher allocation.
@@ -1591,6 +1599,8 @@ Run all four on the **A3-HF10** image. It carries A3-HF9, A3-HF4 and A3-05 uncha
   4. H-210 (the Refuge, last, because it needs a party wipe).
 
 **Report back:** the `FW` / `Git` lines, then PASS / FAIL for each phase. A PASS is recorded in its phase heading. A FAIL is a hotfix batch, and the RC waits for it.
+
+**Reported 2026-09-28: H-213, H-204, H-203 and H-210 all PASS** on `FW 3.0.0-alpha3-dev-a3-hf10-debug`, `Git 028269fec0c5`. No pre-RC hardware gate is pending; the next physical phase is A3-RC1 below.
 
 ### Phase A3-RC1 — Alpha 3 RC1 smoke and heap capture · *RESERVED for the RC1 image; SD packs unchanged* · about 25 minutes
 

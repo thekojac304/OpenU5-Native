@@ -1,8 +1,8 @@
 # OpenU5 T-Deck Plus — Alpha 3 (pre-release draft)
 
-**Status: ALPHA 3 PRE-RC — NOT RELEASED. No release candidate has been built.**
+**Status: ALPHA 3 PRE-RC — NOT RELEASED. All pre-RC hardware checks PASS; no release candidate has been built yet.**
 - Code baseline: **A3-HF10** (implementation `028269fe`, evidence `ba8a565f`, tag `alpha3-hf10-mix-parity`). No further gameplay-code batch is planned before the RC.
-- **Four hardware checks are still pending: H-210, H-213, H-203 and H-204.** RC1 is built only after all four pass (§12).
+- **H-210, H-213, H-203 and H-204 PASSED on the A3-HF10 image (2026-09-28)**: `FW 3.0.0-alpha3-dev-a3-hf10-debug`, `Git 028269fec0c5`. No pre-RC hardware gate is pending; the RC1 batch (§12) is next.
 - Every field marked **(RC1: fill in)** is written by the RC1 batch from the built artifact. Nothing in this file describes an RC image yet.
 - Alpha 2 (tag `alpha2-batch55-release`, [`ALPHA2.md`](ALPHA2.md)) remains the current release until Alpha 3 is released.
 
@@ -185,10 +185,10 @@ The firmware refuses to start with any other resource pack. The image is a Debug
 | H-206 | shrine and Codex key waits (A3-HF6) | **PASS** |
 | H-207 | ritual negative and Codex pulses (A3-HF7) | **PASS** |
 | H-208 | Blackthorn sacrifice burst (A3-HF8) | **PASS** |
-| **H-203** | mute shortcuts, Settings, the kill burst (A3-05) | **PENDING** — host-green |
-| **H-204** | a load leaves no prompt (A3-HF4) | **PENDING** — host-green |
-| **H-210** | Refuge cadence and key wait (A3-HF9) | **PENDING** — host-green |
-| **H-213** | Mix reagent picker and quantity (A3-HF10) | **PENDING** — host-green |
+| **H-203** | mute shortcuts, Settings, the kill burst (A3-05) | **PASS** (A3-HF10 image, 2026-09-28) |
+| **H-204** | a load leaves no prompt (A3-HF4) | **PASS** (A3-HF10 image, 2026-09-28) |
+| **H-210** | Refuge cadence and key wait (A3-HF9) | **PASS** (A3-HF10 image, 2026-09-28) |
+| **H-213** | Mix reagent picker and quantity (A3-HF10) | **PASS** (A3-HF10 image, 2026-09-28) |
 | Phase A3-RC1 | the RC smoke and the RC heap capture | *reserved for the RC1 image* |
 
 H-199 (an optional serial check of one log line, A3-HF2.1) is withdrawn: not owed for Alpha 3.
