@@ -1,0 +1,31 @@
+GREEN P1 the pack has an "ibm.ch" entry of 1,024 B (128 records x 8) among its 43 entries
+GREEN P2 its bytes are the game's IBM.CH, byte for byte (1024 B on disk)
+GREEN P3 load() puts the 1,024 font bytes in the owners (ibm_font), unchanged
+GREEN P4 the firmware's identity lock names THIS pack (2042554 B)
+GREEN P5 a pack without "ibm.ch" is refused by NAME at open() (ESP_ERR_NOT_FOUND, got 261)
+GREEN C1 the right rule x=318 is whole beside the roster and status boxes after a full render (83 of 83 rows white)
+GREEN C2 the frame band, rules and boxes are where the approved mockup puts them (18 of 18)
+GREEN C3 no #00FFFF frame is left anywhere outside the location caption and the console (0 cyan pixels)
+GREEN R1 the roster rows are IBM.CH at x=188: name(9) -> HP(4) status, the active member tinted as before (0 pixels differ)
+GREEN R2 no -> on an active member who is asleep (roster.ts: the arrow is suppressed for 'S' and 'D')
+GREEN S1 F:246 on the left, G:411 on the right, IBM.CH at y=68 (0 pixels differ)
+GREEN S2 the date 4-5-139 (month-day-year) with the digital time 06:40 kept on the right, IBM.CH at y=78 (0 pixels differ)
+GREEN S3 the location caption ("Iolo's Hut") keeps its compact font at y=58 (######.###............)
+GREEN S4 Movement Mode at "Lord British's Castle": the caption reads "Lord British's Ca MOVE" -- clipped to 17, one blank cell, MOVE in green (####.#########.##.####)
+GREEN S6 out of Movement Mode the whole name shows (####.#########.######.)
+GREEN S5 Movement Mode at "Palace of Blackthorn": the caption reads "Palace of Blackth MOVE" -- clipped to 17, one blank cell, MOVE in green (######.##.#######.####)
+GREEN S7 out of Movement Mode the whole name shows (######.##.##########..)
+GREEN B1 the sky strip's last row and the wind strip's first row are the white rule that bounds the map (176, 176 of 176)
+GREEN B2 the sky strip is band with a black notch over the 12-cell track and the original's > < ends
+GREEN B3 the wind strip's caption is the wind table's own text in IBM.CH, centred in the notch ("Calm  Winds", 0 pixels differ)
+GREEN B4 a mounted dungeon captions the same bands: L3 above, Dir:  North below (0, 0 pixels differ)
+GREEN F1 title Settings: >Settings< in the top band, white-ruled content window, row 0 in reverse video, grey footer
+GREEN F2 moving the selection moves the reverse video (row 0 plain, row 1 inverted) and redraws exactly those two rows: 2 windows, 6080 px (Alpha 3: 2 x 304 x 8 = 4864)
+GREEN F7 changing a value redraws that one row, still inverted: 1 window, 3040 px
+GREEN F4 title Settings (Large): >Settings< in the top band, white-ruled content window, row 0 in reverse video, grey footer
+GREEN F5 moving the selection moves the reverse video (Large) (row 0 plain, row 1 inverted) and redraws exactly those two rows: 2 windows, 7296 px (Alpha 3: 2 x 304 x 10 = 6080)
+GREEN F8 changing a value redraws that one row, still inverted (Large): 1 window, 3648 px
+GREEN F3 System Menu: >System Menu< band caption, Resume in reverse video, grey footer
+GREEN F6 the main menu under the title art uses the same reverse-video selection (Journey Onward) and grey footer
+GREEN G1 every scripted screen equals the recorded A4-UI1 golden (8 of 8 states; 8 recorded)
+A4-UI1 chrome runtime: 30/30 checks
