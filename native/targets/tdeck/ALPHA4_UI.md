@@ -243,3 +243,28 @@ The boot screen must show `FW 4.0.0-alpha4-ui2-debug` and the Git of the image b
    - The System Menu's Settings and Developer rows are unchanged.
 
 **PASS** requires steps 1–5, with no crash, lock or watchdog. **Report back:** the `FW`/`Git` lines and PASS/FAIL per step.
+
+### 2.8 Hardware result and closeout (A4-UI2)
+
+**PASS on the T-Deck.** Tested image: `FW 4.0.0-alpha4-ui2-debug`, Git `9105950ef13d`, 993,232 B (`0xf27d0`), Launcher SHA-256 `1c5787610282a553f03b0af5857630d984dddaf203d6a05f83639b3136c69896`. SD packs were the UI1 packs, unchanged.
+
+| Step | Result |
+|---|---|
+| 1. Title: credits/prompt presentation | PASS |
+| 1. Main-menu reverse-video selection | PASS |
+| 2. Death/resurrection music lifecycle | PASS |
+| 2. SFX during resurrection | PASS |
+| 3. Muted / 0 % music behaviour | PASS |
+| 4. Latest / Backup save-load presentation | PASS |
+| 4. Loading the Backup; save rotation | PASS |
+| 4. Create New Character warning | PASS |
+| 4. System Menu / Load Management presentation | PASS |
+| 5. Power-cycle Continue | PASS |
+| 5. Settings persistence and text sizes | PASS |
+| 5. General gameplay / UI regression | PASS |
+
+No new hardware issue was observed. No crash, lock or watchdog.
+
+Closeout checks on the tagged tree: the serial host suite is **166/166** (144.6 s, `a4-ui2-closeout-ctest.log`); the tree had no source changes since `9105950e`; the resource-pack identity lock is unchanged since UI1 (`kExpectedAlphaResourceSize` 2,042,554 B, CRC `0x9c10874f`; no diff to `alpha_resources.*` since `9ab2564e`); the image embeds `4.0.0-alpha4-ui2-debug` and Git `9105950ef13d`. Post-commit build/package evidence: `a4-ui2-postcommit-{configure,build,package}.log`. The earlier UI1 batch C logs (`a4-ui1-C-*.log`) were committed separately as historical evidence.
+
+Next known engineering item: a latent save-target weakness. A save made after the newest generation is corrupted can overwrite the only good generation.
