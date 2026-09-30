@@ -1,0 +1,116 @@
+ninja: Entering directory `build-a4-save1'
+[1/106] Building C object esp-idf/esp_app_format/CMakeFiles/__idf_esp_app_format.dir/esp_app_desc.c.obj
+[2/106] Linking C static library esp-idf\esp_app_format\libesp_app_format.a
+[3/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/sd_diagnostic_logger.cpp.obj
+[4/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/input_controller.cpp.obj
+[5/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/tdeck_board.cpp.obj
+[6/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/tdeck_input.cpp.obj
+[7/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/keyboard_matrix.cpp.obj
+[8/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/device_smoke_tests.cpp.obj
+[9/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/native_renderer.cpp.obj
+[10/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/asset_pack.cpp.obj
+[11/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/alpha_dialogue.cpp.obj
+[12/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/alpha_resources.cpp.obj
+[13/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/main.cpp.obj
+[14/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/alpha_save_generation.cpp.obj
+[15/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/alpha_save.cpp.obj
+[16/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/ui_input_adapter.cpp.obj
+[17/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/alpha_runtime.cpp.obj
+[18/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/dungeon_art_cache.cpp.obj
+[19/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/alpha_audio.cpp.obj
+[20/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/tdeck_audio.cpp.obj
+[21/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/idle_service.cpp.obj
+[22/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/audio.cpp.obj
+[23/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/sfx_synth.cpp.obj
+[24/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/system_perf.cpp.obj
+[25/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/audio_pack.cpp.obj
+[26/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/music_synth.cpp.obj
+[27/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/audio_stream.cpp.obj
+[28/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/perf_report.cpp.obj
+[29/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/sd_diag_log.cpp.obj
+[30/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/render_pacing.cpp.obj
+[31/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/sfx_inventory.cpp.obj
+[32/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/ambient_sfx.cpp.obj
+[33/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/frontend.cpp.obj
+[34/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/hud.cpp.obj
+[35/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/intro_view.cpp.obj
+[36/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/frontend_settings.cpp.obj
+[37/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/system_menu.cpp.obj
+[38/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/display_names.cpp.obj
+[39/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/poison_tick.cpp.obj
+[40/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/world_fx.cpp.obj
+[41/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/combat_hit_cue.cpp.obj
+[42/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/presentation.cpp.obj
+[43/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/scene_timing.cpp.obj
+[44/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/dungeon_encounters.cpp.obj
+[45/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/narrative_scene.cpp.obj
+[46/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/ui_session.cpp.obj
+[47/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/world_terrain.cpp.obj
+[48/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/world_commands.cpp.obj
+[49/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/look.cpp.obj
+[50/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/command_char.cpp.obj
+[51/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/world_magic.cpp.obj
+[52/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/shrine.cpp.obj
+[53/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/outdoor.cpp.obj
+[54/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/gameplay_save.cpp.obj
+[55/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/quest.cpp.obj
+[56/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/quest_world.cpp.obj
+[57/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/quest_search.cpp.obj
+[58/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/blackthorn.cpp.obj
+[59/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/blackthorn_scene.cpp.obj
+[60/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/shops.cpp.obj
+[61/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/shop_orchestration.cpp.obj
+[62/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/save_json.cpp.obj
+[63/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/persistence.cpp.obj
+[64/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/dungeon.cpp.obj
+[65/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/save_core.cpp.obj
+[66/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/dungeon_view.cpp.obj
+[67/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/dungeon_orchestration.cpp.obj
+[68/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/dungeon_art.cpp.obj
+[69/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/transport.cpp.obj
+[70/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/gem_view.cpp.obj
+[71/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/loot.cpp.obj
+[72/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/rng.cpp.obj
+[73/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/scripted_encounter.cpp.obj
+[74/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/time.cpp.obj
+[75/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/state.cpp.obj
+[76/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/world.cpp.obj
+[77/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/movement.cpp.obj
+[78/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/turn.cpp.obj
+[79/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/actors.cpp.obj
+[80/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/npc_path.cpp.obj
+[81/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/transitions.cpp.obj
+[82/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/pathfind.cpp.obj
+[83/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/inventory.cpp.obj
+[84/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/inventory_picker.cpp.obj
+[85/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/commands.cpp.obj
+[86/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/zstats.cpp.obj
+[87/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/rest.cpp.obj
+[88/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/magic.cpp.obj
+[89/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/combat.cpp.obj
+[90/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/dialogue.cpp.obj
+[91/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/dialogue_effects.cpp.obj
+[92/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/dialogue_orchestration.cpp.obj
+[93/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/dialogue_pacer.cpp.obj
+[94/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/ritual_fx.cpp.obj
+[95/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/ui_debug_menu.cpp.obj
+[96/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/debug_labels.cpp.obj
+[97/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/debug_map_picker.cpp.obj
+[98/106] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/debug_developer.cpp.obj
+[99/106] Performing build step for 'bootloader'
+[1/1] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-save1\bootloader && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-save1/bootloader/bootloader.bin"
+Bootloader binary size 0x5850 bytes. 0x27b0 bytes (31%) free.
+[100/106] No install step for 'bootloader'
+[101/106] Completed 'bootloader'
+[102/106] Linking C static library esp-idf\main\libmain.a
+[103/106] Generating esp-idf/esp_system/ld/sections.ld
+Skipping linker script generation, section names unchanged
+[104/106] Linking CXX executable openu5_tdeck.elf
+[105/106] Generating binary image from built executable
+esptool v5.4.0
+Creating ESP32-S3 image...
+Merged 3 ELF sections.
+Successfully created ESP32-S3 image.
+Generated C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-save1/openu5_tdeck.bin
+[106/106] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-save1 && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-save1/partition_table/partition-table.bin C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-save1/openu5_tdeck.bin"
+openu5_tdeck.bin binary size 0xf2af0 bytes. Smallest app partition is 0x100000 bytes. 0xd510 bytes (5%) free.

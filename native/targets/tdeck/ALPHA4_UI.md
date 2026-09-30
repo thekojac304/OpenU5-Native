@@ -386,9 +386,23 @@ The state is derived from the card each time: no flag, no remembered "last loade
   - IRAM, DIRAM, `.data` and `.bss` are unchanged (`a4-save1-fw-size-diff.log`, against `build-a4-ui2`).
 - **Post-commit image:** after the commit, `idf.py reconfigure` and a rebuild embed the commit's Git hash (`a4-save1-postcommit-*.log`).
 
-### 3.6 Hardware validation (pending)
+### 3.6 Hardware validation (PASS)
 
-Status: **software-complete, hardware-pending.** Nothing was flashed. The SD packs are unchanged from UI1/UI2.
+Status: **software-complete, hardware PASS / COMPLETE.** The SD packs are unchanged from UI1/UI2.
+
+The physical T-Deck validation passed every planned check (§3.7) on the image `4.0.0-alpha4-save1-debug`, embedded Git `5193a81f`, 994,032 B (`0xf2af0`), SHA-256 `a1e4d613bae4c0ed9ea48b7ef39af1af8adc143b9029239e0272925c1f9ad1fa`:
+
+- normal two-generation Latest/Backup save and load, both generations loading;
+- deliberate corruption of the newest generation (its generation JSON deleted);
+- damaged-newest detection, and Continue's fallback to the older valid generation at the right place;
+- a Save Game immediately after the fallback: the list showed the new save as Latest and the recovered generation as a healthy Backup (not reported damaged), and loading the Backup restored the recovered pre-save state;
+- a full power cycle: Continue loaded the newly committed generation and Backup still loaded the protected prior one;
+- a further ordinary save: Latest/Backup rotation was back to normal, with no persistent recovery-mode behaviour;
+- no crash, lockup or watchdog.
+
+**Significance.** After Continue falls back from a rejected newest generation to an older valid one, the next save does not overwrite that only known-good generation. The rejected generation is expendable, the recovered one stays as Backup, and normal rotation resumes. No serial log was supplied with the result, so none is recorded here.
+
+**Closeout.** The closeout commit is documentation and evidence only. It was not built into, or tested as, firmware; the hardware-tested image embeds `5193a81f`. Closeout checks: the serial host suite is **167/167** (`a4-save1-closeout-ctest.log`); the retained post-commit build/package evidence is `a4-save1-postcommit-{configure,build,package}.log`. No production code changed and nothing was flashed at closeout.
 
 To protect the real save, the test works on a copy of the card's saves and restores them at the end. The steps are in §3.7.
 
