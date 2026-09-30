@@ -76,6 +76,28 @@ openu5::FrontendSaveSlot summarize_candidate(const AlphaSaveCandidate&v,const Al
     return out;
 }
 
+int newest_committed_slot(const bool(&present)[2],const AlphaSaveCommit(&commits)[2]){
+    int best=-1;
+    for(int i=0;i<2;++i)if(present[i]&&(best<0||commits[i].sequence>commits[best].sequence))best=i;
+    return best;
+}
+
+AlphaSaveTarget choose_save_target(const bool(&present)[2],const AlphaSaveCommit(&commits)[2],bool newest_accepted){
+    AlphaSaveTarget t{};
+    const int newest=newest_committed_slot(present,commits);
+    if(newest<0)return t;
+    t.sequence=commits[newest].sequence+1;
+    if(newest_accepted){t.slot=1-newest;t.keep=newest;}
+    else{t.slot=newest;t.keep=present[1-newest]?1-newest:-1;}
+    return t;
+}
+
+bool files_match_commit(const AlphaSaveCandidate&v){
+    return openu5::save::save_crc32(v.gam.data(),v.gam.size())==v.commit.gam&&
+           openu5::save::save_crc32(v.ool.data(),v.ool.size())==v.commit.ool&&
+           openu5::save::save_crc32(v.json.data(),v.json.size())==v.commit.json;
+}
+
 bool restore_candidate(AlphaSaveCandidate&pick,openu5::CommandContext&c,openu5::OutdoorServices&o,openu5::WorldTerrain&t,openu5::NpcActors&a,openu5::save::Json&retained,AlphaSaveStage&s){
     // Validate and restore transactionally. A newer generation with a valid
     // commit/CRC but incompatible semantic payload must not partially replace

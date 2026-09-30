@@ -107,6 +107,20 @@ bool candidate(int slot,Candidate&v,AlphaSaveScratch&scratch){
     if(!read_commit(slot,v.commit)||!read_files(slot,v))return false;
     return verify_candidate(v,scratch.stage);
 }
+// Alpha 4 A4-SAVE1: whether slot `n`'s generation (commit already in
+// s.commits[n]) is one the load gate accepts. Its files are read and their
+// CRCs checked every time; the semantic gate runs unless the save list holds
+// an accepted summary for this very commit (same sequence and CRCs, so with
+// matching CRCs the same bytes). A refused slot is dropped from the list.
+// Runs before the save encodes anything and releases what it staged, so the
+// save never holds this document and its own at once.
+bool generation_accepted(AlphaSaveScratch&s,int n){
+    auto&v=s.candidates[n];v=Candidate{};v.commit=s.commits[n];
+    bool ok=read_files(n,v)&&files_match_commit(v);
+    if(ok&&!s.cache.hit(n,v.commit)){ok=verify_candidate(v,s.stage);if(ok)s.cache.store(n,v.commit,summarize_candidate(v,s.stage));}
+    if(!ok)s.cache.forget(n);
+    release_candidate(v);release_stage(s.stage);return ok;
+}
 // A3-04G: give back every buffer the workspace holds; the fixed parts stay.
 void release_workspace(AlphaSaveScratch&s){
     release_candidate(s.candidates[0]);release_candidate(s.candidates[1]);release_candidate(s.verified);
@@ -166,14 +180,21 @@ bool AlphaSaveService::save(openu5::CommandContext &c,openu5::OutdoorServices&o,
     }
     const bool space_ok=free_bytes>32768U;
     if(!stage("free-space",space_ok,kFatMountPath)){std::snprintf(last_failure_,sizeof(last_failure_),"Insufficient SD free space");ms=uint32_t((esp_timer_get_time()-start+999)/1000);return false;}
+    // Alpha 4 A4-SAVE1: the target. The newest generation by sequence is kept
+    // when the gate accepts it; when it is refused it is the one replaced, and
+    // the older generation -- what Continue restores -- is left untouched.
+    bool present[2]={};s.commits[0]={};s.commits[1]={};for(int i=0;i<2;++i)present[i]=read_commit(i,s.commits[i]);
+    const int newest=newest_committed_slot(present,s.commits);
+    const bool newest_ok=newest>=0&&generation_accepted(s,newest);
+    const AlphaSaveTarget target=choose_save_target(present,s.commits,newest_ok);
+    ESP_LOGI(kTag,"SAVE_TARGET newest=%d accepted=%d slot=%d keep=%d sequence=%llu",newest,int(newest_ok),target.slot,target.keep,(unsigned long long)target.sequence);
     capture_save_document(c,o,t,a,retained);
     s.gam={};s.side={};s.json.clear();
     if(!stage("gam-encode",openu5::save::export_native_state(c.game,c.turn,retained,base,base_size,s.gam,s.side,true)==openu5::save::Error::None,"INIT.GAM")){ms=uint32_t((esp_timer_get_time()-start+999)/1000);return false;}
     if(new_journey)openu5::save::preserve_new_journey_template_bytes(s.gam,base,base_size);
     s.ool=openu5::save::build_ool(retained,base_ool,base_ool_size);
     if(!stage("ool-encode",s.ool.size()==openu5::save::kOolSize,"INIT.OOL")||!stage("json-encode",openu5::save::encode_json(s.side,s.json)==openu5::save::JsonError::None,"sidecar")){ms=uint32_t((esp_timer_get_time()-start+999)/1000);return false;}
-    s.commits[0]={};s.commits[1]={};uint64_t newest=0;for(int i=0;i<2;++i)if(read_commit(i,s.commits[i]))newest=std::max(newest,s.commits[i].sequence);
-    const int slot=int((newest+1)&1);Commit next;next.sequence=newest+1;
+    const int slot=target.slot;Commit next;next.sequence=target.sequence;
     next.gam=openu5::save::save_crc32(s.gam.data(),s.gam.size());next.ool=openu5::save::save_crc32(s.ool.data(),s.ool.size());
     next.json=openu5::save::save_crc32(reinterpret_cast<const uint8_t*>(s.json.data()),s.json.size());
     heap_diagnostic("write-gam-temp",new_journey?"frontend-new-journey":"gameplay-save",512);

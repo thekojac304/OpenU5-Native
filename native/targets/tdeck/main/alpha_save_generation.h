@@ -84,4 +84,34 @@ void release_stage(AlphaSaveStage &);
 // (the HUD's caption), the game date and time, and the party's size.
 openu5::FrontendSaveSlot summarize_candidate(const AlphaSaveCandidate &, const AlphaSaveStage &);
 
+// Alpha 4 A4-SAVE1 (ALPHA4_UI.md section 3): which slot a save may write.
+//
+// A save replaces its target slot's files one by one before the new commit
+// record exists, so from the first rename until the post-write check the
+// target holds no loadable generation; only the other slot is left to load.
+// The invariant: that other slot is the generation Continue would restore.
+// Until A4-SAVE1 the target was (newest sequence + 1) & 1, chosen from the
+// commit records alone; with a refused newest generation (torn files under an
+// intact commit, or a post-write check that failed after the commit) that was
+// the older slot -- the only valid generation.
+//
+// `present[i]`: slot i has a readable commit record `commits[i]`. The newest
+// is the highest sequence (uint64_t; on a tie the lower slot, as
+// openu5::save::select_generation picks). Returns -1 when neither is present.
+int newest_committed_slot(const bool (&present)[2], const AlphaSaveCommit (&commits)[2]);
+struct AlphaSaveTarget {
+    int slot = 1;           // the slot the save writes (a blank card: slot 1, as always)
+    uint64_t sequence = 1;  // newest sequence + 1: the new generation is always the newest
+    int keep = -1;          // the slot left untouched (-1: no generation to keep)
+};
+// `newest_accepted`: the newest slot's generation is one the load gate
+// accepts. Accepted, it is kept and the other slot written (the rotation);
+// refused, it is the expendable one and the older generation -- Continue's
+// fallback -- is kept. Physical slot and sequence parity are never assumed to
+// agree (an earlier recovery save breaks the parity).
+AlphaSaveTarget choose_save_target(const bool (&present)[2], const AlphaSaveCommit (&commits)[2], bool newest_accepted);
+// Whether the three files' CRC-32s are the ones the commit record names:
+// the bytes are the ones that record was written for.
+bool files_match_commit(const AlphaSaveCandidate &);
+
 } // namespace tdeck

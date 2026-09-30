@@ -9,7 +9,9 @@
 //   save()  -- the same capture chain: since Batch 53 the production
 //              capture_save_document() itself (alpha_save_generation.cpp),
 //              export_native_state over the INIT.GAM template, build_ool,
-//              encode_json; the generation goes to slot (newest+1)&1 with a
+//              encode_json; the generation goes to the slot the production
+//              choose_save_target() names (A4-SAVE1: never the newest
+//              generation the gate accepts) with a
 //              commit record carrying the three CRCs, then the post-write
 //              self-check verify_candidate(), exactly as the device does.
 //   load(), load_slot(), inspect() -- read the slots and hand them to the
@@ -76,6 +78,11 @@ void host_memory_save_damage_for_test() {
     const int n = newest_slot();
     if (n >= 0) g_slots[n].json.resize(g_slots[n].json.size() / 2);
 }
+// A4-SAVE1: the same tear, applied to the older generation.
+void host_memory_save_damage_older_for_test() {
+    const int o = older_slot();
+    if (o >= 0) g_slots[o].json.resize(g_slots[o].json.size() / 2);
+}
 bool host_memory_save_edit_for_test(bool newest, void (*edit)(openu5::save::Json &game_state)) {
     const int slot = newest ? newest_slot() : older_slot();
     if (slot < 0) return false;
@@ -123,9 +130,15 @@ bool AlphaSaveService::save(openu5::CommandContext &c, openu5::OutdoorServices &
         std::snprintf(last_failure_, sizeof(last_failure_), "%s", "host memory save: ool/json-encode failed");
         return false;
     }
-    const int newest = newest_slot();
-    const uint64_t sequence = newest >= 0 ? g_slots[newest].commit.sequence + 1 : 1;
-    const int slot = int(sequence & 1);
+    // A4-SAVE1: the production target rule (alpha_save_generation.cpp): the
+    // newest generation is kept only when the gate accepts it.
+    bool present[2] = {g_slots[0].present, g_slots[1].present};
+    AlphaSaveCommit commits[2] = {g_slots[0].commit, g_slots[1].commit};
+    const int newest = newest_committed_slot(present, commits);
+    const bool newest_ok = newest >= 0 && candidate(newest, g_candidates[newest]);
+    const AlphaSaveTarget target = choose_save_target(present, commits, newest_ok);
+    const uint64_t sequence = target.sequence;
+    const int slot = target.slot;
     Slot next;
     next.present = true;
     next.gam.assign(gam.begin(), gam.end());

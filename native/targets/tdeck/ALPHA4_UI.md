@@ -129,7 +129,7 @@ D, the multi-slot implementation, was **not** done; §2.4 explains why and gives
   - The only metadata was the leader's name. Saving said nothing about what it overwrites.
   - A refused Generation row in the System Menu did nothing, silently.
   - "Create New Character" silently makes the current journey the backup.
-- **Latent (not changed, queued as a separate task).** The save target is chosen by sequence regardless of validity. If the newest generation is refused (torn files under an intact commit, or a failed post-write check after the commit rename), the next save overwrites the older, valid one. A failure of that save leaves no restorable generation. Test L8 shows the first half. The fix belongs to the storage batch that §2.4 describes.
+- **Latent (not changed, queued as a separate task).** The save target is chosen by sequence regardless of validity. If the newest generation is refused (torn files under an intact commit, or a failed post-write check after the commit rename), the next save overwrites the older, valid one. A failure of that save leaves no restorable generation. Test L8 shows the first half. The fix belongs to the storage batch that §2.4 describes. *(Fixed in A4-SAVE1, §3.)*
 
 **The new presentation.** There is no storage change: file names, the commit record, generation choice, fallback and the gate are untouched.
 
@@ -268,3 +268,163 @@ No new hardware issue was observed. No crash, lock or watchdog.
 Closeout checks on the tagged tree: the serial host suite is **166/166** (144.6 s, `a4-ui2-closeout-ctest.log`); the tree had no source changes since `9105950e`; the resource-pack identity lock is unchanged since UI1 (`kExpectedAlphaResourceSize` 2,042,554 B, CRC `0x9c10874f`; no diff to `alpha_resources.*` since `9ab2564e`); the image embeds `4.0.0-alpha4-ui2-debug` and Git `9105950ef13d`. Post-commit build/package evidence: `a4-ui2-postcommit-{configure,build,package}.log`. The earlier UI1 batch C logs (`a4-ui1-C-*.log`) were committed separately as historical evidence.
 
 Next known engineering item: a latent save-target weakness. A save made after the newest generation is corrupted can overwrite the only good generation.
+*(A4-SAVE1, §3, fixed it.)*
+
+## 3. A4-SAVE1 — recovery hardening
+
+A storage fix, not a UI batch. It is scoped to one defect: the one §2.3 recorded as latent and §2.4 made step 1 of any slot work. Out of scope and unchanged: the two-generation design, manual save slots (§2.4 stays deferred), the file names, the commit record, the transaction order, the load gate, generation choice on load, and every menu.
+
+**Baseline.** HEAD `c0ece5a4` on `main`, clean tree. Serial host suite 166/166 (182.5 s, `native/core/a4-save1-baseline-ctest.log`).
+
+### 3.1 The defect
+
+After Continue fell back from a refused newest generation to the older one, the next save wrote over that older generation, the only valid one.
+
+The exact sequence (test group C, over the real `alpha_save.cpp`):
+1. Slot 1 holds sequence 1 (valid). Slot 0 holds sequence 2.
+2. Slot 0's sidecar is torn under its intact commit (or re-sealed with content the semantic gate refuses).
+3. Continue refuses slot 0 and restores slot 1, which is correct.
+4. Save. On HEAD the target was `(2 + 1) & 1` = **slot 1**:
+   - temps, CRC readback;
+   - the gam/ool/json renames replace slot 1's files;
+   - the commit is written last.
+
+Recorded pre-fix results (`a4-save1-red-first.log`):
+- **When every stage succeeded:** the card ended as slot 0 = refused sequence 2, slot 1 = the new sequence 3. There was one valid generation and no backup, and the refused one was never replaced.
+- **When any stage from the first rename to the commit rename failed (D3–D5):** slot 1 held new files under its old commit, and slot 0 was still torn. **Neither generation loaded.** A reboot's Continue found nothing.
+- **When the temp write or readback failed (D1, D2):** the save failed harmlessly, but the retry in the same session overwrote slot 1 (D1r, D2r).
+
+The same rule also broke in two more cases:
+- **A post-write self-check that fails after the commit.** It leaves a committed-but-refused newest generation, which is the same state (D6).
+- **Sequences that no longer follow the slots.** `(newest + 1) & 1` then writes over the NEWEST generation (G1, G2, G3).
+
+**Root cause.** In `AlphaSaveService::save()` the target came from the commit records alone: `newest = max(sequence of every readable commit)`, then `slot = (newest + 1) & 1`. A commit record says nothing about whether its files are intact or its content passes the gate.
+
+The error came from two assumptions:
+- the highest sequence is the generation to keep;
+- sequence parity names its slot.
+
+Both hold only while every generation is valid and every save succeeds. The transaction itself is sound: it protects the other slot perfectly. The target selection pointed that protection at the wrong slot.
+
+This is not a validation or commit defect. The gate refused the right generation, and load chose the right fallback.
+
+### 3.2 The invariant
+
+> From the first rename of a save until its generation is written, read back, committed and accepted by the post-write check, the generation that Continue would restore is on the card byte for byte and loadable.
+
+A save's target holds no loadable generation between its first rename and its commit, so the invariant fixes the target:
+- **The generation Continue restores is never the target.** That is the newest generation by sequence that the gate accepts.
+- **The newest is accepted:** keep it and write the other slot. This is the normal rotation.
+- **The newest is refused:** it is expendable. Write over it and keep the older generation (Continue's fallback).
+- **Sequence:** the new sequence is the newest sequence + 1, so the new generation is always the newest. Sequences are `uint64_t` and compared with `>`. On a tie, the lower slot is the newest, exactly as `openu5::save::select_generation` picks.
+- **Slot identity and parity are never assumed.** A physical slot says nothing about age or validity.
+
+### 3.3 The fix
+
+The files changed:
+- **`main/alpha_save_generation.{h,cpp}`** (the storage-independent half) adds three functions:
+  - `newest_committed_slot()`;
+  - `choose_save_target(present, commits, newest_accepted)`, which returns `{slot, sequence, keep}`;
+  - `files_match_commit()`.
+- **`main/alpha_save.cpp`** `save()`. Before capturing or encoding anything, it:
+  - reads both commit records;
+  - asks `generation_accepted()` about the newest;
+  - takes the target from `choose_save_target()`;
+  - logs `SAVE_TARGET newest= accepted= slot= keep= sequence=`.
+
+  The rest of the transaction is untouched and in the same order: temps with fflush+fsync, CRC readback, the three renames, the commit temp and rename last, the post-write semantic check, and the save-list update.
+- **`generation_accepted()`:**
+  - It reads the newest slot's three files and checks their CRC-32s against its commit on every save.
+  - It then runs the full gate (`verify_candidate`) unless the save list (InspectCache) holds an accepted summary for this exact commit. Same sequence and CRCs, plus matching file CRCs, means the same bytes the gate accepted, so re-staging would repeat a known answer.
+  - A refused slot is dropped from the list.
+  - Everything it stages is released before the save builds its own document.
+
+  A stale list entry cannot protect a damaged generation, because the CRC check runs every time. Test R2 has the list naming the damaged generation as valid.
+- **`host_tests/host_stubs/alpha_save_memory_host_stub.cpp`** used its own copy of the old rule. It now calls the same `choose_save_target()`, with the gate as `newest_accepted`. It also gains the seam `host_memory_save_damage_older_for_test()`.
+
+The state is derived from the card each time: no flag, no remembered "last loaded slot", and no format change. The commit record (v1), file names and sidecar are byte-identical in layout. Older firmware reads every card this one writes, and the reverse.
+
+**What it costs.**
+- **A save's first card reads:** one generation's commit records plus its three files (about 7–10 KB).
+- **A cold save** (after a reboot with no menu opened, or with the newest refused) also runs one gate verify. That is the same work as one slot of a cold list, about 0.39 s on the device by H-202's 785 ms for two.
+- **A warm save** (after the title's list or an earlier save) skips it.
+- **The small-heap peak** of a cold save is +32 B over a warm one (H1: 384,963 vs 384,931 host bytes). The verify runs and is released before the export, so its document never coexists with the save's own. Retention is unchanged (H2).
+
+### 3.4 Tests
+
+`a4_save1_recovery_runtime` (new ctest). It runs the real `alpha_save.cpp` over the fake SD card (`sd_shims`, as `a3_04g_storage_runtime`) and the real `AlphaRuntime`. A fresh service object models a reboot.
+
+| Group | What it proves |
+|---|---|
+| A1–A4 | Five saves on a blank card: sequence k in slot k&1, the other slot byte for byte, a reboot's Continue restores each save, both listed valid. |
+| B1–B2 | Torn newest, and newest refused by the semantic gate: Continue restores the older generation (unchanged behaviour). |
+| Ca1–Ca5, Cb1–Cb5 | The defect, torn and semantically refused. Continue falls back; Save keeps the valid slot byte for byte; the refused slot is replaced as sequence 3 and accepted; a reboot loads the new save; two valid generations again. |
+| D1–D6 (+ D1r–D6r) | Faults during that save: temp write, CRC readback, gam rename, json rename, commit rename, and a post-write check that fails after the commit. Each save reports failure, the valid slot is byte for byte and Continue recovers. A retry in the same session succeeds without touching the generation it loaded. |
+| E1–E3 | After the recovery save: the next saves alternate slot 1, slot 0, and after a reboot slot 1 again. The sequences are 4, 5, 6. |
+| F1–F3 | Both refused: Continue refuses and leaves the live game untouched. A save then succeeds. With a refused newest and no older commit, the save succeeds and loads. |
+| G1–G4 | Sequence 7 in slot 0 with 4 in slot 1; `0x100000001` vs 2; a tie (9/9, Continue takes slot 0 and the save keeps it); a refused newest in slot 1. |
+| R1–R4 | Through the runtime's own service with a warm list: Alt+S ×2, menu, the newest torn behind the service, Alt+L, Alt+S. The 701 generation is kept although the list still named the torn one valid. Repeated with the menu opened after the damage. |
+| H1–H2 | Heap: cold vs warm save peak and retention. |
+
+- **RED-first:** `native/core/tools/a4_save1_red_first.py build-a4-save1` swaps HEAD's `alpha_save.cpp` and `alpha_save_generation.{h,cpp}` into the tree. The file is converted to the checkout's line endings, then built, run and restored.
+  - **On HEAD's production: 19/45 GREEN, 26 RED** (`a4-save1-red-first.log`). A, B, F1, F2, R1, H and the D1/D2 first saves are GREEN; every C, D-rename, retry, E, G and R2–R4 check is RED.
+  - **After the fix: 45/45.**
+- **Intentional expectation update:** `a4_ui2_save_menu_runtime` L8 recorded the defect: "Saving now replaces the damaged generation? No: it replaces the OLDER one". The Backup row then read "damaged".
+  - The new check L8a asserts the fix: after the save, Latest is 15:20 and Backup is the 13:05 generation Continue fell back to, valid.
+  - L8 keeps its purpose (a damaged backup is listed and refused) by damaging the backup directly with the new stub seam.
+  - That test is now 23/23; it was 22.
+- **Unchanged and GREEN:** `a3_04g_storage_runtime` (including its K7–K9 failed-save cases and the R peak bounds), `batch28_save_validation`, `batch24`–`batch27`, `a3_hf4_load_transient_runtime`, `batch53*`.
+- **Host suite (serial):** **167/167** (160.7 s, `a4-save1-ctest.log`). That is 166 plus the new target, with zero project warnings.
+
+### 3.5 Firmware
+
+- **Build:** `idf.py -B build-a4-save1 reconfigure`, then `ninja -j 4`. It built first time, with zero project warnings. `PROJECT_VER` is `4.0.0-alpha4-save1-debug`.
+- **Size:**
+  - binary `0xf2af0` (994,032 B), **+800 B** against A4-UI2 (`0xf27d0`);
+  - 54,544 B (5 %) of the 1 MiB slot is free;
+  - flash only: `.text` +708, `.rodata` +96;
+  - IRAM, DIRAM, `.data` and `.bss` are unchanged (`a4-save1-fw-size-diff.log`, against `build-a4-ui2`).
+- **Post-commit image:** after the commit, `idf.py reconfigure` and a rebuild embed the commit's Git hash (`a4-save1-postcommit-*.log`).
+
+### 3.6 Hardware validation (pending)
+
+Status: **software-complete, hardware-pending.** Nothing was flashed. The SD packs are unchanged from UI1/UI2.
+
+To protect the real save, the test works on a copy of the card's saves and restores them at the end. The steps are in §3.7.
+
+### 3.7 Hardware checklist (A4-SAVE1 image)
+
+0. **Protect the real save.**
+   - With the T-Deck off, put the SD card in a PC.
+   - Copy the whole folder `ultima5/saves/` to the PC (for example `saves-before-a4-save1/`).
+   - Put the card back. Flash the image.
+   - The boot screen must show `FW 4.0.0-alpha4-save1-debug` and the Git hash of the A4-SAVE1 commit. Stop if it does not.
+1. **Ordinary save/load.**
+   - Continue. Walk somewhere recognisable (place **X**), then Alt+M → Save Game. The footer reads "Saved. The previous save is now the backup."
+   - Walk to a different place **Y**. Save Game again.
+   - Load Game shows **Latest: …, Y** and **Backup: …, X**. Load the Backup (you are at X), then Load Game → Latest (you are at Y).
+2. **Damage the newest generation (on the PC).**
+   - Power off and put the card in the PC.
+   - In `ultima5/saves/` find the pair whose files are newest by modified time: `alpha1-g0.*` or `alpha1-g1.*`. Call its digit **N**.
+   - Delete only `alpha1-gN.json`. Keep `alpha1-gN.commit`, `.gam` and `.ool`.
+   - Put the card back.
+3. **Fallback.**
+   - Boot, then Journey Onward. The subtitle reads "Latest save damaged; Continue uses the backup". Load Game shows **Latest: damaged**.
+   - Continue. You are at **X**.
+4. **The A4-SAVE1 case: save after the fallback.**
+   - Walk to a third place **Z**, then Save Game.
+   - Open Load Game. It must show **Latest: …, Z** and **Backup: …, X**, **not "Backup: damaged"**. The old firmware overwrote X here.
+   - Load the Backup: you are at X.
+5. **Reboot and reload.**
+   - Power-cycle, then Continue. You are at **Z**.
+   - Load Game → Backup: you are at **X**.
+6. **Rotation resumes.**
+   - Continue (you are at Z). Walk to **W** and Save Game.
+   - Load Game shows **Latest: W** and **Backup: Z**.
+   - Optional, on the PC: `alpha1-gN.json` exists again, and both pairs have four files.
+7. **Restore the real save.**
+   - Power off.
+   - On the PC, delete `ultima5/saves/` on the card and copy `saves-before-a4-save1/` back as `ultima5/saves/`.
+   - Boot and Continue: your own journey loads.
+
+**PASS** requires steps 1–6 as written, with no crash, lock or watchdog. **Report back:** the `FW`/`Git` lines and PASS/FAIL per step. If a serial log is attached, each save prints `SAVE_TARGET newest=<slot> accepted=<0|1> slot=<written> keep=<kept>`. At step 4 expect `accepted=0 slot=N`.

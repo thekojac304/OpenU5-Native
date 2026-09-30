@@ -27,10 +27,12 @@
 namespace tdeck {
 void host_memory_save_forget_for_test();
 void host_memory_save_damage_for_test();
+void host_memory_save_damage_older_for_test();
 } // namespace tdeck
 
 using namespace a4_ui2;
 using tdeck::host_memory_save_damage_for_test;
+using tdeck::host_memory_save_damage_older_for_test;
 using tdeck::host_memory_save_forget_for_test;
 
 namespace {
@@ -175,10 +177,22 @@ void test_load_page() {
     h.key('\r');
     check(!h.rt->system_menu_open() && h.rt->game().time.hour == 13 && h.transcript().find("Load complete") != std::string::npos,
           "L7 ... and Enter on it loads the backup (Continue's fallback, unchanged)");
-    // Saving now replaces the damaged generation? No: it replaces the OLDER one (the order is the commit's).
+    // Saving now replaces the damaged generation, and the backup is the save
+    // Continue just fell back to. A4-SAVE1: until then it replaced the OLDER,
+    // only valid one, and this row read "Backup: damaged".
     c.at(122, 110, 15, 20);
     c.save();
     c.close();
+    c.open_load();
+    v = menu(h);
+    h.down();
+    const std::string kept = footer(menu(h));
+    check(line(v, 0) == "Latest: Avery, Britannia" && line(v, 1) == "Backup: Avery, Britannia" &&
+              kept == "4-5-139 13:05, party of 2. Enter loads",
+          "L8a A4-SAVE1: a save after the fallback replaces the damaged latest; the backup is the 13:05 save: \"" + kept + "\"");
+    c.close();
+    // A damaged backup, then (the older generation damaged behind the service).
+    host_memory_save_damage_older_for_test();
     c.open_load();
     v = menu(h);
     h.down();

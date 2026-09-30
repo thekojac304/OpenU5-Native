@@ -1981,6 +1981,45 @@ if(BUILD_TESTING)
   endif()
   add_test(NAME a3_04g_storage_runtime COMMAND a3_04g_storage_runtime
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+  # Alpha 4 A4-SAVE1 (ALPHA4_UI.md section 3) -- recovery hardening: which
+  # generation a save may overwrite, after a fallback, under faults, and with
+  # sequences that do not follow the slots. The REAL alpha_save.cpp over the
+  # fake SD card, as a3_04g_storage_runtime (same sources, same force-include).
+  add_executable(a4_save1_recovery_runtime
+    ../targets/tdeck/host_tests/a4_save1_recovery_runtime_test.cpp
+    ../targets/tdeck/host_tests/sd_shims/host_sd_vfs.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_board_host_stub.cpp
+    ../targets/tdeck/main/alpha_save.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(a4_save1_recovery_runtime PRIVATE openu5_core)
+  target_include_directories(a4_save1_recovery_runtime PRIVATE
+    ../targets/tdeck/host_tests/sd_shims
+    ../targets/tdeck/host_tests/board_shims
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/host_tests
+    ../targets/tdeck/main)
+  target_compile_features(a4_save1_recovery_runtime PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(a4_save1_recovery_runtime PRIVATE /Gy)
+    target_link_options(a4_save1_recovery_runtime PRIVATE /OPT:REF)
+  else()
+    target_compile_options(a4_save1_recovery_runtime PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(a4_save1_recovery_runtime PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME a4_save1_recovery_runtime COMMAND a4_save1_recovery_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
   # Alpha 3 A3-05 -- the audio finalization controls through the REAL
   # AlphaRuntime: Alt+Shift+M / Alt+Shift+S mutes by raw keys, the Settings
   # rows while muted, stock vs patched assets, and a kill's single hit burst.

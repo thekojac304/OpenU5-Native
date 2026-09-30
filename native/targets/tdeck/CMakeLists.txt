@@ -13,6 +13,6 @@ endif()
 # sets 3.0.0-alpha3-rc1-debug: a release CANDIDATE (hardware smoke pending),
 # not a final Alpha 3 release. A3-01 .. A3-HF10 were development builds.
 # Alpha 4 UI Batch 1 sets 4.0.0-alpha4-ui1-debug (ALPHA4_UI.md).
-set(PROJECT_VER "4.0.0-alpha4-ui2-debug")
+set(PROJECT_VER "4.0.0-alpha4-save1-debug")
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(openu5_tdeck)
