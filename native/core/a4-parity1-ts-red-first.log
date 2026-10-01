@@ -1,0 +1,15 @@
+   ✓ restaurar santuario destruido (CMDS 0x1202) > virtud + mantra×3 + coord correctos → restaura (limpia bit alto) 0ms
+   × pozo de deseos (LOOKOBJ 0x0042): easter egg de caballos > A4-PARITY1 — el match pliega mayúsculas como 0x6f1e: 'horse', 'HORSE' y 'a ferrari, please' valen 4ms
+   × pozo de deseos (LOOKOBJ 0x0042): easter egg de caballos > A4-PARITY1 — kernelStristr clona el plegado y el salto de 0x6f1e byte a byte 0ms
+   × castSpell — el gate CABLEADO: corta antes del maná, del hechizo y del RNG > Mani en el Palacio (0x12) SIN corona → 'Absorbed!'; con la corona EN EL INVENTARIO sale adelante 3ms
+   × A4-PARITY1 negatesEnemyMagic — 'N' y 0x1c, nada más > Negate y la corona puesta anulan la magia enemiga; el resto de efectos no 4ms
+   × (U)se artefactos de LB + Box > A4-PARITY1 (P1b) — Corona: escribe g_time_spell = 0x1c permanente (CAST.OVL 0x193e → CAST2 0x08f8), no un flag 3ms
+   × (U)se artefactos de LB + Box > A4-PARITY1 (P1b) — con Negate activo, ponerse la corona lo reemplaza (no hay "Removed!") 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/cast-absorbed-gate.test.ts > castSpell — el gate CABLEADO: corta antes del maná, del hechizo y del RNG > Mani en el Palacio (0x12) SIN corona → 'Absorbed!'; con la corona EN EL INVENTARIO sale adelante
+ FAIL  tests/combat-spells.test.ts > A4-PARITY1 negatesEnemyMagic — 'N' y 0x1c, nada más > Negate y la corona puesta anulan la magia enemiga; el resto de efectos no
+ FAIL  tests/shrines.test.ts > pozo de deseos (LOOKOBJ 0x0042): easter egg de caballos > A4-PARITY1 — el match pliega mayúsculas como 0x6f1e: 'horse', 'HORSE' y 'a ferrari, please' valen
+ FAIL  tests/shrines.test.ts > pozo de deseos (LOOKOBJ 0x0042): easter egg de caballos > A4-PARITY1 — kernelStristr clona el plegado y el salto de 0x6f1e byte a byte
+ FAIL  tests/use-tools.test.ts > (U)se artefactos de LB + Box > A4-PARITY1 (P1b) — Corona: escribe g_time_spell = 0x1c permanente (CAST.OVL 0x193e → CAST2 0x08f8), no un flag
+ FAIL  tests/use-tools.test.ts > (U)se artefactos de LB + Box > A4-PARITY1 (P1b) — con Negate activo, ponerse la corona lo reemplaza (no hay "Removed!")
+      Tests  6 failed | 84 passed (90)

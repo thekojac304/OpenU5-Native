@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
         std::fill_n(g.spell_quantities, 48, v % 11 == 0 ? 0 : 3);
         std::fill_n(g.reagent_quantities, 8, v % 3 == 0 ? 0 : 10);
         g.food = 9998;
-        g.worn_crown = v % 2 == 0;
+        g.quest.artifacts[1] = v % 2 == 0; // A4-PARITY1 (NEW-1): crown POSSESSION (g_crown, .gam 0x20E)
         struct Stream {
             OriginalRng rng;
             std::vector<int> draws;

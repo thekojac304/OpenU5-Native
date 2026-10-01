@@ -1,0 +1,65 @@
+N1   KILLED   the out-of-combat gate reads the worn flag again
+     3/9 Test  #24: magic_parity .....................***Failed    0.07 sec | 7/9 Test #119: a4_parity1_runtime ...............***Failed    0.17 sec | 24 - magic_parity (Failed) | 119 - a4_parity1_runtime (Failed)
+N2   KILLED   the combat gate reads the worn flag again
+     2/9 Test  #23: advanced_combat_parity ...........***Failed    0.07 sec | 23 - advanced_combat_parity (Failed)
+N3   KILLED   the palace absorbs whatever the party carries
+     3/9 Test  #24: magic_parity .....................***Failed    0.07 sec | 7/9 Test #119: a4_parity1_runtime ...............***Failed    0.18 sec | 24 - magic_parity (Failed) | 119 - a4_parity1_runtime (Failed)
+N4   KILLED   Use crown toggles the invented worn flag again
+     7/9 Test #119: a4_parity1_runtime ...............***Failed    0.16 sec | 8/9 Test #154: gameplay_parity ..................***Failed   10.23 sec | 9/9 Test #158: quest_parity .....................***Failed    4.52 sec | 119 - a4_parity1_runtime (Failed) | 154 - gameplay_parity (Failed) | 158 - quest_parity (Failed)
+N5   KILLED   the worn crown is not permanent (20 turns)
+     7/9 Test #119: a4_parity1_runtime ...............***Failed    0.17 sec | 8/9 Test #154: gameplay_parity ..................***Failed   10.53 sec | 9/9 Test #158: quest_parity .....................***Failed    4.65 sec | 119 - a4_parity1_runtime (Failed) | 154 - gameplay_parity (Failed) | 158 - quest_parity (Failed)
+N6   KILLED   the crown writes the amulet's value 0x0e
+     7/9 Test #119: a4_parity1_runtime ...............***Failed    0.15 sec | 8/9 Test #154: gameplay_parity ..................***Failed   10.21 sec | 9/9 Test #158: quest_parity .....................***Failed    4.49 sec | 119 - a4_parity1_runtime (Failed) | 154 - gameplay_parity (Failed) | 158 - quest_parity (Failed)
+N7   KILLED   the magic-projectile gate removed (COMBAT 0x0185)
+     2/9 Test  #23: advanced_combat_parity ...........***Failed    0.79 sec | 5/9 Test  #26: combat_negate_parity .............***Failed    0.03 sec | 8/9 Test #154: gameplay_parity ..................***Failed   10.30 sec | 23 - advanced_combat_parity (Failed) | 26 - combat_negate_parity (Failed) | 154 - gameplay_parity (Failed)
+N8   KILLED   the projectile gate before the 50 % roll (the roll's draw skipped)
+     2/9 Test  #23: advanced_combat_parity ...........***Failed    0.79 sec | 5/9 Test  #26: combat_negate_parity .............***Failed    0.03 sec | 8/9 Test #154: gameplay_parity ..................***Failed   10.33 sec | 23 - advanced_combat_parity (Failed) | 26 - combat_negate_parity (Failed) | 154 - gameplay_parity (Failed)
+N9   KILLED   the teleport gate removed (COMBAT 0x0f27)
+     2/9 Test  #23: advanced_combat_parity ...........***Failed    0.80 sec | 5/9 Test  #26: combat_negate_parity .............***Failed    0.01 sec | 23 - advanced_combat_parity (Failed) | 26 - combat_negate_parity (Failed)
+N10  KILLED   the special-ability gate removed (COMSUBS 0x0112)
+     2/9 Test  #23: advanced_combat_parity ...........***Failed    0.07 sec | 5/9 Test  #26: combat_negate_parity .............***Failed    0.01 sec | 23 - advanced_combat_parity (Failed) | 26 - combat_negate_parity (Failed)
+N11  KILLED   only Negate gates, not the worn crown
+     5/9 Test  #26: combat_negate_parity .............***Failed    0.01 sec | 8/9 Test #154: gameplay_parity ..................***Failed   10.40 sec | 26 - combat_negate_parity (Failed) | 154 - gameplay_parity (Failed)
+N12  KILLED   only the worn crown gates, not Negate
+     2/9 Test  #23: advanced_combat_parity ...........***Failed    0.08 sec | 5/9 Test  #26: combat_negate_parity .............***Failed    0.01 sec | 8/9 Test #154: gameplay_parity ..................***Failed    9.94 sec | 23 - advanced_combat_parity (Failed) | 26 - combat_negate_parity (Failed) | 154 - gameplay_parity (Failed)
+N13  KILLED   dungeon M opens Cast again (the A-7 alias)
+     1/9 Test   #2: ui_session .......................***Failed    0.10 sec | 7/9 Test #119: a4_parity1_runtime ...............***Failed    0.15 sec | 2 - ui_session (Failed) | 119 - a4_parity1_runtime (Failed)
+N14  KILLED   dungeon N falls back to "What?"
+     7/9 Test #119: a4_parity1_runtime ...............***Failed    0.17 sec | 119 - a4_parity1_runtime (Failed)
+N15  KILLED   B refuses without the turn
+     7/9 Test #119: a4_parity1_runtime ...............***Failed    0.17 sec | 119 - a4_parity1_runtime (Failed)
+N16  KILLED   P refuses with a turn
+     7/9 Test #119: a4_parity1_runtime ...............***Failed    0.17 sec | 119 - a4_parity1_runtime (Failed)
+N17  KILLED   T's string loses its '!'
+     7/9 Test #119: a4_parity1_runtime ...............***Failed    0.15 sec | 119 - a4_parity1_runtime (Failed)
+N18  KILLED   the core refuses Yell underground again ("What?")
+     7/9 Test #119: a4_parity1_runtime ...............***Failed    0.17 sec | 119 - a4_parity1_runtime (Failed)
+N19  KILLED   X's string capitalised ('what?' is DS 0x4368's lower case)
+     7/9 Test #119: a4_parity1_runtime ...............***Failed    0.17 sec | 119 - a4_parity1_runtime (Failed)
+N20  KILLED   F refuses without the turn
+     7/9 Test #119: a4_parity1_runtime ...............***Failed    0.18 sec | 119 - a4_parity1_runtime (Failed)
+N21  KILLED   E's string capitalised
+     7/9 Test #119: a4_parity1_runtime ...............***Failed    0.17 sec | 119 - a4_parity1_runtime (Failed)
+N22  KILLED   the wish matches case-sensitively again
+     7/9 Test #119: a4_parity1_runtime ...............***Failed    0.17 sec | 8/9 Test #154: gameplay_parity ..................***Failed   10.29 sec | 119 - a4_parity1_runtime (Failed) | 154 - gameplay_parity (Failed)
+N23  KILLED   a plain substring search (0x6f1e's skip after a partial match dropped)
+     7/9 Test #119: a4_parity1_runtime ...............***Failed    0.18 sec | 119 - a4_parity1_runtime (Failed)
+N24  KILLED   speaker_segment_frames left in flash
+     6/9 Test  #86: a3_04b_perf ......................***Failed   14.90 sec | 86 - a3_04b_perf (Failed)
+T1   KILLED   reference: the out-of-combat gate reads wornCrown
+     vitest | generate-magic-fixtures.ts --check
+T2   KILLED   reference: Use crown sets the worn flag, not 0x1c
+     vitest | 154 - gameplay_parity (Failed) | 158 - quest_parity (Failed)
+T3   KILLED   reference: only Negate gates enemy magic
+     vitest | generate-combat-fixtures.ts --negate --check | 154 - gameplay_parity (Failed)
+T4   KILLED   reference: the magic-projectile gate removed
+     generate-advanced-combat-fixtures.ts --check | generate-combat-fixtures.ts --negate --check | 154 - gameplay_parity (Failed)
+T5   KILLED   reference: the special-ability gate removed
+     generate-advanced-combat-fixtures.ts --check | generate-combat-fixtures.ts --negate --check
+T6   KILLED   reference: the teleport gate removed
+     generate-advanced-combat-fixtures.ts --check | generate-combat-fixtures.ts --negate --check
+T7   KILLED   reference: the wish matches case-sensitively
+     vitest | 154 - gameplay_parity (Failed)
+restored tree: native GREEN ; reference GREEN 
+
+A4-PARITY1 mutations: 31/31 killed

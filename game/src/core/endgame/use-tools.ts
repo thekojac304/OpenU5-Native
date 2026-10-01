@@ -29,6 +29,7 @@ import { castShardIntoFlame, SHADOWLORD_TILE, type RitualInput } from "../quest/
 import {
   TIME_SPELL_AMULET,
   TIME_SPELL_BADGE,
+  TIME_SPELL_CROWN,
   TIME_SPELL_PERMANENT,
 } from "../world/blackthorn.js";
 
@@ -379,15 +380,26 @@ export function useAmulet(ctx: UseToolsCtx): GameEvent[] {
 /**
  * (U)se Corona de Lord British (CAST.OVL 0x193e). Toggle g_time_spell 0x1c:
  * puesto → "Removed!\n"; si no → "Thou dost don the Crown of Lord British...\n" +
- * set_time_spell(0x1c, 0xff, 9). Efecto de combate diferido (state.wornCrown).
+ * set_time_spell(0x1c, 0xff, 9).
+ *
+ * ★ A4-PARITY1 (P1b) — escribe el byte de los efectos temporales [0x587a], como la
+ * insignia y el amuleto, no un flag aparte: 0x1945 push 0x1c → 0x1764 (toggle: si ya vale
+ * 0x1c, "Removed!" y limpia 0x587a/0x588e) → 0x1961 push 0x1c / 0xff / 9 → thunk
+ * ULTIMA.EXE 0x80b2 (overlay 0x12) → CAST2 0x08f8 `set_time_spell` (0x08fe escribe 0x587a,
+ * 0x0904 0x588e). PISA cualquier efecto temporal y viaja en el save (0x2D4/0x2E8). El
+ * `state.wornCrown` anterior era un invento: no viajaba en el save y no es lo que lee el
+ * gate del Palacio (ese lee la POSESIÓN, `lbArtifacts.crown`). Sus lectores de combate
+ * (COMBAT 0x0196 / 0x0f36, COMSUBS 0x0112) tratan 0x1c como Negate: `negatesEnemyMagic`.
  */
 export function useCrown(ctx: UseToolsCtx): GameEvent[] {
   const events: GameEvent[] = [{ kind: "message", text: "Crown" }]; // str 0x4930
-  if (ctx.state.wornCrown) {
-    ctx.state.wornCrown = false;
+  if (ctx.state.timeSpell === TIME_SPELL_CROWN) {
+    ctx.state.timeSpell = undefined; // toggle-off 0x1764
+    ctx.state.timeSpellTurns = undefined;
     events.push({ kind: "message", text: "Removed!" }); // 0x4895
   } else {
-    ctx.state.wornCrown = true;
+    ctx.state.timeSpell = TIME_SPELL_CROWN; // set_time_spell(0x1c, 0xff, efecto 9)
+    ctx.state.timeSpellTurns = TIME_SPELL_PERMANENT;
     events.push({ kind: "message", text: "Thou dost don the Crown of Lord British..." }); // 0x4938+0x4a84
   }
   return events;

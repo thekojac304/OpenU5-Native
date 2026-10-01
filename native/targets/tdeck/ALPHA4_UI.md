@@ -2190,3 +2190,315 @@ D-52 was already PASS. Two items stay **hardware pending**, because their steps 
 - The tree is A4-UI4/PRES1 + hf1 alone. A4-PARITY1, developed on top of it and still uncommitted, was set aside first.
 - The tree was verified byte-identical to the copy preserved before PARITY1 began: 100 files, plus the tracked diff.
 - Suite: **178 / 178** serial on a fresh `build-a4-ui4-closeout` (157.86 s, `a4-ui4-closeout-ctest.log`), and again after these records (146.84 s, `a4-ui4-closeout-final-ctest.log`). No project warnings: the one warning line is w64devkit's `stl_uninitialized.h` false positive.
+
+## 9. A4-PARITY1 — release-readiness parity sweep
+
+A final parity audit before an Alpha 4 release candidate, then the fixes the user ruled release-blocking. Investigation first (no production change), then reference-first fixes. The audit's own axis is `GAMEPLAY_INTEGRATION_AUDIT.md`, "Alpha 4 A4-PARITY1"; the ledger rows are D-50, D-78 – D-82, A-19, A-20.
+
+### 9.1 Baseline
+
+- `main` at `e53741b2` (tag `alpha4-end1-hardware-validated`) **plus the uncommitted A4-UI4/PRES1 + hf1 tree** (45 tracked files changed, 55 untracked). That tree is still hardware-retest pending (§8.22.6); its image is untouched: `build-a4-ui4-hf1/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-ui4-hf1-Debug-Launcher.bin`, 1,032,528 B, SHA-256 `1d57efcefec3eec385a36b753f1e57a4d4825d3b03ab3726f30ab14737be3a44` (re-hashed before and after this batch). Every PARITY1 build uses new directories.
+- A copy of the UI4/hf1 working tree (its 45 changed and 55 new files) was kept outside the repository before any edit, so the UI4 commit can still be made without PARITY1 (`C:\dev\parity1-scratch\ui4-hf1-baseline`; the patch `baseline-tracked.patch`).
+- Host: a fresh build of that tree, serial ctest **178 / 178** (157.16 s).
+- Packs: resource 2,266,819 B `85b38994…d01e`, tiles 132,284 B `6eb001ed…`, audio 56,148 B `28c1533b…`.
+
+### 9.2 The audit and the user's decisions
+
+The investigation report (2026-10-01) reconciled the ledger, this document, the audit, the hardware checklist and the Alpha 2/3 records, and proposed the scope below. The user decided:
+
+| # | Item | Decision |
+|---|---|---|
+| 1 | NEW-1, the palace crown gate (D-78) | **RC blocker — fix** |
+| 2 | P1b, Use crown's time-spell write (D-79) | **include**, if the bytes confirm it (they do, §9.4) |
+| 3 | NEW-2, the dungeon's command keys (D-81) | **RC blocker — fix** M, N and the B / E / P / T / Y strings as one pass |
+| 4 | NEW-3, `speaker_segment_frames` in flash | **RC blocker — smallest targeted change** |
+| 5 | D-50, the well's case-folding | include only if small and self-contained (it is, §9.8) |
+| 6 | the credits curtain, the intro's story plates, the title's walking figures | **deferred past Alpha 4** |
+| 7 | D-60 | a documented deliberate row (A-19) |
+| 8 | D-1, D-2 | stay deferred |
+| 9 | D-7 | documented as the intended Movement Mode contract (A-20) |
+| 10 | the RC build | stays Debug, with the Developer menu |
+| 11 | NEW-4, the underworld skiff | classify; fix only if a tiny, sourced omission (it is not, §9.8) |
+| 12 | push | nothing |
+| 13 | the UI4/hf1 artifact | untouched; UI4/PRES1 stays hardware-retest pending |
+
+### 9.3 NEW-1 — the palace gate reads possession (D-78)
+
+**The binary** (independently re-derived this batch; every overlay and ULTIMA.EXE scanned for instructions on `[0x57b3..0x57b5]`):
+
+| Address | Instruction | Meaning |
+|---|---|---|
+| SJOG 0x16e6 | `mov byte [0x57b4], 0xff` | the **only** writer: the Get of the crown |
+| CAST 0x0e45 | `cmp byte [0x57b4], 0` / `je 0x0e53` ("Absorbed!") | the out-of-combat gate in location 0x12 |
+| COMBAT 0x092f | `cmp byte [0x57b4], 0` / `jne 0x095e` | the arena's twin (after 0x0928's `'N'` test) |
+| ZSTATS 0x09e1 | `mov al, [0x57b4]` | the inventory display |
+
+`[0x57b4]` is SAVED.GAM +0x20E (the window starts at DS 0x55A6): `lbArtifacts.crown` in the reference, `quest.artifacts[1]` in native — the crown's **possession**. Both ports gated on a separate "worn" flag (`wornCrown` / `worn_crown`) that only (U)se set and no save carried: a party that picked the crown up in the palace still had its spells absorbed until it "wore" it, and again after any load.
+
+**The fix.** `castAbsorbedOutOfCombat` / `combatCastAbsorbed` (reference) and `cast_spell` / `combat_cast` (native) read possession. The parity drivers (`generate-magic-fixtures.ts`, `generate-advanced-combat-fixtures.ts`, `magic_parity_test`, `advanced_combat_parity_test`) now feed possession from the same expression the worn flag used, so the NEW-1 change alone leaves both corpora byte-identical; the RED proof is native against the corrected drivers (§9.12).
+
+### 9.4 P1b — the worn crown is time spell 0x1c (D-79)
+
+**The binary:** CAST 0x193e prints "Crown", pushes 0x1c to the toggle 0x1764 (if `[0x587a]` already holds it: "Removed!", `[0x587a]` = `[0x588e]` = 0, `[0xa9fa]` = 1) and otherwise prints "Thou dost don the Crown of Lord British...", pushes 0x1c / 0xff / 9 and calls 0xc132 — with CAST's load base 0xBF80, kernel 0x80b2, an overlay thunk (load overlay 0x12, `ljmp 0:0xead8`) to CAST2 0x08f8, `set_time_spell(anim, turns, status)`: `[0x587a]` = 0x1c, `[0x588e]` = 0xff, then the animation 9. The amulet (0x1908, value 0x0e) and the badge (0x1b47, 0x1d) use the same byte; the reference had already corrected the badge the same way.
+
+**The fix.** `useCrown` (reference) and `use_quest_item` (native, the crown joins the amulet / badge arm) toggle `timeSpell` 0x1c with 255 turns. The worn crown therefore replaces Quickness, Negate or any other time effect, is removed by a second Use, and is saved and loaded with the time spell (SAVED.GAM 0x2D4 / 0x2E8). `wornCrown` / `worn_crown` stay in the state for old saves but are no longer written. The animation 9 is not drawn (as for the amulet and badge).
+
+### 9.5 P1c — Negate and the worn crown stop enemy magic (D-80)
+
+Proving P1b found the time-spell byte's readers: 0x1c is read in three places, each beside Negate's 'N', and neither port had any of them:
+
+| Site | Instructions | Effect with `'N'` or 0x1c |
+|---|---|---|
+| COMBAT 0x0185–0x019b | after the 50 % roll (0x017a), `test word [type*2 + 0x153c], 0x8000` (LE 0x8000 = the clone's `rangedMagic`, `re/notes/combat.md` §11) | a magic projectile is **not fired** (0x019d: the roll's own "no shot") |
+| COMBAT 0x0f27–0x0f3b | `test word [...0x153c], 0x2000` (teleport) | no teleport and no `rand(0,3)`; the creature moves normally (0x0fab) |
+| COMSUBS 0x0112–0x011e | before any special (`re/notes/comsubs-ataque-jugador.md` §19, where 0x1c was "unnamed") | no possession, invisibility or daemon, **zero draws** |
+
+**The fix.** `negatesEnemyMagic()` (reference) / `negates_enemy_magic()` (native) and the three gates, at the same points of `enemyAttack`, `enemyMove` and `enemySpecial` / `enemy_attack`, `enemy_move` and `enemy_special`. Negate magic (In An, the spell and the scroll) now does what the original's does to a mage or a daemon; the worn crown does the same.
+
+**The corpus.** The default combat corpus mounts none of the gated abilities and no time spell. `generate-combat-fixtures.ts --negate` (new; default and real-arena modes unchanged, `--check` byte-identical) mounts exactly them — rangedMagic, teleport, possess, invisibility, daemon — under no time spell, 'N' and 0x1c, and fails if a gated ability fires under 'N' or 0x1c (`NEGATE_FORBIDDEN`) or if none fires without one. `combat_parity_tests ... --negate` replays it draw by draw: `fixtures/combat-negate.txt`, 56,160 rows (ctest `combat_negate_parity`, drift `typescript_combat_negate_fixture_drift`).
+
+### 9.6 NEW-2 — the dungeon's command keys (D-81, closes D-4)
+
+**The binary** (`re/notes/dungeon-dispatch-gates.md` §3, re-read; the strings re-read from DATA.OVL by offset): DUNGEON.OVL's `sub_06C4` handles only movement, `5`, the digits, Enter / `.` and two control keys, and hands every other key to the shared kernel dispatcher (0x07a0 → 0x3178). M (CMDS 0x1AD8) and N (CMDS 0x0DDC) are therefore the overworld's handlers, ungated underground; the refusals print:
+
+| Key | Original output (DATA.OVL) | Turn |
+|---|---|---|
+| B | `Board ` (DS 0xa13a) + `\nNot here!\n` (0x4252) | yes |
+| E | `Enter what?\n` (0xa156) | yes |
+| F | `Fire-` (0xa164) + `What?\n` (0x42e4) | yes |
+| P | `Push\nNot here!\n` (0xa1d4) | no |
+| T | `Talk-Funny, no response!\n` (0xa22c) | yes |
+| X | `X-it ` (0xa280) + `what?\n` (0x4368) | yes |
+| Y | `Yell what?` + a word, then `\nNo effect!\n` (CMDS 0x14ac, DS 0x453a) | no |
+
+**The device before:** M opened **Cast** (A-7's "alias"), and every other key here printed the kernel default "What?" with no turn. The core already accepted Mix and New order underground (`commands.cpp` handles both before the dungeon gate).
+
+**The fix** (`UiSession::handle_dungeon`, plus one core branch): M = the overworld's Mix ("Mix Reagents", the spell list for a mix, the reagent picker); N = New order's party picker; B / E / F / T / X print their row(s) and spend the dungeon's cast turn (`DungeonAction::Tick`: the clock, the dungeon's tick, the Refuge check — the reference's `dungeonSpellTurn`); P prints and spends nothing; Y asks for its word and the core answers through `yell_in_world()`'s own "\nNo effect!\n" branch (a new pass-through before the dungeon gate). D keeps the E-3 "Drink"; Q keeps the device shell (A-5). A-7 loses its Mix clause.
+
+### 9.7 NEW-3 — the IRAM guard
+
+`a3_04b_iram_check` was GREEN on Alpha 3's release image and RED on the A4-END1, A4-UI4 and hf1 images: `speaker_segment_frames` (16 instructions), called by `SpeakerVoice::begin_segment` (IRAM) on the audio task, had become an out-of-line flash function. One entry in `main/audio_iram.lf` places it in IRAM again; `a3_04b_perf` gains **I1b** (the entry is present). The ELF guard on the new image: §9.16.
+
+### 9.8 D-50 (fixed) and NEW-4 (D-82, deferred)
+
+**D-50.** The well matches with kernel 0x6f1e (LOOKOBJ 0x00aa; `native/core/batch52-h22-wish-stristr-disasm.log`). The clone, in the reference (`kernelStristr`) and native (`look.cpp`), is exact: each byte loses bit 7 (`and 0x7f7f`) and is folded with `and 0x5f` when above 0x60; a needle longer than the haystack is −1; and after a mismatch the start advances by the characters already matched plus one, so the original misses an overlapping match ("HHorse" does not contain "Horse") — kept. Small and self-contained: one function a port, no other text input changed. `horse` and `HORSE` now work as `Horse` did (the T-Deck types lower case).
+
+**NEW-4 → D-82, deferred.** INIT.OOL / UNDER.OOL seed five outdoor objects in the underworld: slot 23, a `SkiffRight` (0x29) at (14,242); slots 24–27, four `DeadBody` (0x1e) beside the Amulet's cell (105,225) (`re/notes/moonstone-loc-y-pozo-doom.md` §2.5; BRIT.OOL seeds nothing). Neither port places them: both read `init.ool` only as the template for **writing** SAVED.OOL. Not fixed: how the original reads `.OOL` into the actor table is not derived (the same note, §2.4), the skiff's Native representation is open (A4-SAVE3 carries it as a terrain cell), and the change would move new-game state in both ports and their fixtures. Not a blocker: a skiff also travels with a ship, and the bodies are decor.
+
+### 9.9 Deliberate rows and the ledger
+
+- **A-19** (was D-60): audio never paces the game; the fanfare plays while play continues.
+- **A-20** (was D-7): dungeon keyboard movement is the Movement Mode contract.
+- **A-7** revised (no Mix alias); **A-9 / A-10 / A-12** keep their behaviour, with the stale "ASCII-only" cause corrected.
+- **Stale rows struck from their own records** (no hardware status raised): D-17 (the function is in the map's *discarded* sections — dead source, not image bytes), D-21, D-22 (7E-G accepted), D-44 – D-46, D-49 (7E PASS), D-47 (7E-E accepted), D-55 (7E-A′ PASS), D-53's `To phase:` half (7E-C PASS).
+- Not changed: A4-SAVE2 / SAVE3 / UI3 stay hardware pending (§8.21). The UI4/PRES1 rows keep their own status: hardware PASS at UI4's closeout (§8.22.8), except D-74.
+
+### 9.10 Files
+
+- **Reference** (`game/src/core/`): `magic/cast.ts`, `combat/combat.ts`, `endgame/use-tools.ts`, `world/wishingwell.ts`, `world/blackthorn.ts` (`TIME_SPELL_CROWN`); `game/src/main.ts` (the arena gate's caller).
+- **Reference tests** (`game/tests/`): `cast-absorbed-gate`, `use-tools`, `shrines`, `combat-spells`.
+- **Native core:** `src/magic.cpp`, `src/combat.cpp`, `src/combat_magic.inc`, `src/quest_world.cpp`, `src/commands.cpp`, `src/look.cpp`, `src/ui_session.cpp`.
+- **Device:** `main/audio_iram.lf`; `CMakeLists.txt` (`PROJECT_VER` `4.0.0-alpha4-parity1-debug`).
+- **Corpora and drivers:** `tools/generate-combat-fixtures.ts` (`--negate`), `tools/generate-magic-fixtures.ts`, `tools/generate-advanced-combat-fixtures.ts`; `fixtures/advanced-combat.txt` (+ coverage) regenerated, `fixtures/combat-negate.txt` (+ coverage) new; `tests/combat_parity_test.cpp` (`--negate`), `tests/magic_parity_test.cpp`, `tests/advanced_combat_parity_test.cpp`.
+- **Tests:** `targets/tdeck/host_tests/a4_parity1_runtime_test.cpp` (new), `tests/a3_04b_perf_test.cpp` (I1b), `tests/ui_session_test.cpp`; `native/core/CMakeLists.txt` (3 new ctest entries).
+- **Tools:** `tools/a4_parity1_red_first.py`, `tools/a4_parity1_mutation_check.py`.
+- **Docs:** this section, the ledger, the audit.
+
+### 9.11 Existing tests changed on purpose
+
+- `ui_session_test.cpp`: dungeon `m` asserted the Cast alias (`UiRequestId::Spell`); now Mix (`UiRequestId::Custom`).
+- `game/tests/cast-absorbed-gate.test.ts`: the palace case set `wornCrown`; it now sets `lbArtifacts.crown` (the reference's FAIL set showed this one case and no other).
+- `magic_parity_test` / `advanced_combat_parity_test` and their generators: the crown input is possession.
+
+### 9.12 New tests and RED-first
+
+| Test | What | RED-first | GREEN |
+|---|---|---|---|
+| `a4_parity1_runtime` (real runtime and Board, raw keys) | C1–C4 the crown (a cast in the palace with the crown carried, the control without it, Use writes 0x1c permanent and replaces Quickness, it survives Alt+S / Alt+L, a second Use removes it); D1–D4 the dungeon keys (M, N, the six refusals with their turn cost, Y); W1–W4 the well (`horse`, `HORSE`, `HHorse` no match, the `Horse` control) | **2 / 18** against the pre-PARITY1 production (`tools/a4_parity1_red_first.py`; the two GREEN are the controls C2 and W4) | **18 / 18** |
+| `magic_parity`, `advanced_combat_parity` (drivers feed possession) | NEW-1 | RED on the unfixed native | GREEN |
+| `combat_negate_parity` (new corpus) | P1c, draw by draw | RED on the unfixed native | GREEN |
+| `a3_04b_perf` I1b | NEW-3 | RED (only I1b) | GREEN |
+| reference vitest (new cases in 4 files) | possession, 0x1c, `negatesEnemyMagic`, `kernelStristr` | **6 / 90 RED** on HEAD's reference (`a4-parity1-ts-red-first.log`) | 90 / 90 |
+
+### 9.13 Parity corpus diffs (`native/core/a4-parity1-corpus-diff.log`)
+
+| Corpus | Change | Proof |
+|---|---|---|
+| `magic.txt` (25,088) | none | `--check` byte-identical |
+| `combat.txt` (97,344) | none | `--check` byte-identical |
+| `advanced-combat.txt` (125,440) | 2,794 rows | every changed row is a Negate scenario — variant 18 (`timeSpell 'N'`) or spell 32 (In An); **0 rows outside**, 0 scenario keys changed |
+| `combat-negate.txt` (new, 56,160) | vs a corpus generated from the **unfixed** reference: 16,256 rows | only 'N' and 0x1c rows change (none of the no-spell rows); gated-ability texts under 'N' / 0x1c: 86 / 87 → 0 / 0, without a spell 213 → 213 |
+| live `gameplay_parity` (4,802 driver rows) | 9 rows | 4 wishes (D-50), 4 combats reading scroll 3 (In An → 'N', D-80), 1 Use crown in combat (D-79 / D-80) |
+| live `quest_parity` (5,377) | 6 rows | all Use crown: only `timeSpell` (→ 0x1c) and `timeSpellTurns` (→ 255) |
+
+### 9.14 Mutations
+
+`tools/a4_parity1_mutation_check.py`: 31 mutants, each one production edit (24 native, 7 in the reference). A native mutant is rebuilt and checked against `magic_parity`, `advanced_combat_parity`, `combat_parity`, `combat_negate_parity`, `ui_session`, `a4_parity1_runtime`, `gameplay_parity`, `quest_parity` and `a3_04b_perf`; a reference mutant against the touched vitest suites, the four corpus generators under `--check` and the live `gameplay_parity` / `quest_parity`. **31 / 31 killed**, 0 survived, 0 invalid; the restored tree GREEN on both sides (`native/core/a4-parity1-mutation.log`).
+
+| Fix | Mutants | Killed by |
+|---|---|---|
+| NEW-1 | N1 the world gate reads the worn flag; N2 the arena gate does; N3 the palace absorbs whatever is carried | `magic_parity` + runtime C1; `advanced_combat_parity`; `magic_parity` + C1 |
+| P1b | N4 Use crown toggles the flag again; N5 the worn crown lasts 20 turns; N6 it writes the amulet's 0x0e | runtime C3 / C4 + live `gameplay_parity` / `quest_parity`; runtime + `quest_parity`; runtime |
+| P1c | N7 / N9 / N10 each gate removed; N8 the projectile gate before the roll; N11 / N12 only 'N' / only 0x1c | `combat_negate_parity` (N7–N10), `advanced_combat_parity`, live `gameplay_parity` |
+| NEW-2 | N13 M is Cast again; N14 N is "What?"; N15 / N20 B / F without the turn; N16 P with one; N17 / N19 / N21 T / X / E's strings; N18 the core refuses Yell | `a4_parity1_runtime` (and `ui_session` for N13) |
+| D-50 | N22 case-sensitive again; N23 a plain substring search (the skip dropped) | runtime W1 / W2 + live `gameplay_parity`; runtime W3 |
+| NEW-3 | N24 the fragment entry removed | `a3_04b_perf` I1b |
+| reference | T1 the world gate on `wornCrown`; T2 Use crown sets the flag; T3 only 'N'; T4 / T5 / T6 each gate removed; T7 case-sensitive | vitest + `generate-magic --check`; vitest + live parity; the negate / advanced corpora `--check` + live parity; vitest + live parity |
+
+Not mutated, declared: two details of 0x6f1e cannot be observed on the device — the fold's threshold (0x60 itself) and the bit-7 strip — because the six needles are letters and the keyboard types ASCII; the reference's unit test pins both.
+
+### 9.15 Host results
+
+| Run | Result | Log |
+|---|---|---|
+| Baseline (a fresh build of the UI4/hf1 tree, outside the repository) | **178 / 178**, 157.16 s | `C:\dev\parity1-scratch\ctest.log` (scratch; numbers recorded here) |
+| RED-first, parity drivers against the unfixed native | `magic_parity`, `advanced_combat_parity`, `combat_negate_parity` RED; `combat_parity` (control) GREEN | `a4-parity1-red-p1-parity.log` |
+| GREEN, the same set + the four drift checks | 8 / 8 | `a4-parity1-green-p1-parity.log` |
+| RED-first, `a4_parity1_runtime` (pre-PARITY1 production) | **2 / 18** (the controls C2, W4) | `a4-parity1-red-first.log` |
+| GREEN, `a4_parity1_runtime` | **18 / 18** | `a4-parity1-runtime-green.log` |
+| `a3_04b_perf` I1b | RED → GREEN | `a4-parity1-red-new3-i1b.log`, `a4-parity1-green-new3-i1b.log` |
+| First full run | 180 / 181: `ui_session` (the dungeon M assertion, changed on purpose, §9.11) | `a4-parity1-ctest-pass1.log` |
+| **Full suite, final tree** | **181 / 181**, serial, 158.26 s; host build 0 warnings. 181 = 178 + `combat_negate_parity`, `typescript_combat_negate_fixture_drift`, `a4_parity1_runtime`. The SAVE (A4-SAVE1/2/3, A4-UI3, A3-04G, Batch 28), combat (`combat_parity`, `advanced_combat_parity`, real arenas, A3-HF1/HF3), dungeon, UI (A4-UI1 – UI4), END1 and audio (A3-01 – A3-05) groups are inside it, all GREEN | `a4-parity1-ctest.log` |
+| Reference | `tsc --noEmit` clean; vitest 7,735 tests (+7), assertion-level FAIL set **identical** to the A3-HF10 baseline (97); reference RED-first 6 / 90 → 90 / 90 on the touched files | `a4-parity1-vitest.log`, `a4-parity1-ts-red-first.log` |
+
+### 9.16 Firmware and packs
+
+Built from scratch in a new directory, `build-a4-parity1` (`idf.py --no-ccache -B build-a4-parity1 reconfigure`, `ninja -C build-a4-parity1 -j 4 all` 1180 / 1180 at the first attempt, `python package_launcher.py --build-dir build-a4-parity1`; `native/core/a4-parity1-{idf-export,fw-configure,fw-build,package}.log`). No project warnings: the only warning lines are ESP-IDF's "nearly full (1 % free)" notice and its `component_validation` notices.
+
+- **Launcher:** `native/targets/tdeck/build-a4-parity1/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-parity1-Debug-Launcher.bin`, byte-identical to `build-a4-parity1/openu5_tdeck.bin`.
+- **SHA-256** `72fc1aeebf37db8ca5761cb24fc62ae5689683db8bc462ccc3bf40bd4a1dd306`.
+- **Embedded** (read back): `FW 4.0.0-alpha4-parity1-debug`, `Git e53741b23fbc-dirty` (`a4-parity1-image-identity.log`).
+- **Size: 1,033,232 B (`0xfc410`), +704 B** against the hf1 image (`0xfc150`), inside the batch's ~1 KB budget. **15,344 B (1.5 %) of the 1 MiB app partition free** (was 16,048 B).
+- **By section** against the hf1 image (`a4-parity1-fw-size-diff.log`): flash `.text` +600, `.rodata` +64; DIRAM `.text` +36 (`speaker_segment_frames`, now in IRAM); internal `.data` / `.bss`, IRAM and PSRAM unchanged.
+- **ELF guards** (`a4-parity1-elf-checks.log`): `a3_04a_hotpath_check` GREEN; **`a3_04b_iram_check` GREEN** again (only the three by-design per-event / one-time functions stay in flash); `a3_04f_image_check` GREEN.
+- **Packs unchanged, no SD recopy:** resource 2,266,819 B `85b38994…d01e`; tiles 132,284 B `6eb001ed…`; audio 56,148 B `28c1533b…`. No save-format change: the worn crown rides the existing time-spell fields (SAVED.GAM 0x2D4 / 0x2E8); cross-image loading was not tested.
+- **The hf1 image is untouched:** `1d57efcefec3eec385a36b753f1e57a4d4825d3b03ab3726f30ab14737be3a44`, re-hashed after this build.
+- **Not flashed.**
+
+### 9.17 What remains before an Alpha 4 RC
+
+**No known software blocker remains** for an Alpha 4 RC: the four gameplay defects the audit found (D-78 – D-81) and the IRAM regression are fixed and host-proven; D-50 is fixed; D-82 is a queued, non-blocking divergence.
+
+What stands between this tree and an RC:
+
+1. ~~**The UI4/PRES1 hf1 retest** (§8.22.6, on the hf1 image as planned), then UI4/PRES1's own commit and closeout.~~ **Done 2026-10-01:** retest PASS (§8.22.8); UI4/PRES1 committed alone as `48bd39ef`; PARITY1 restored on top and verified (§9.20).
+2. **PARITY1's commit** (software-only, hardware pending).
+3. **The RC image** built after both commits (`4.0.0-alpha4-rc1-debug`, a clean committed tree so `Git` names the commit), and its RC record (an `ALPHA4.md`, the Launcher table).
+4. **One consolidated hardware session** on that image (§9.18).
+
+Hardware-validation debt it settles (none of it is raised here without evidence):
+
+| Item | Class | Where |
+|---|---|---|
+| A4-SAVE2 (§4.11), A4-UI3 (§6.14 A) | tested indirectly (Continue, Alt+S / Alt+L and the slot rows ran in the END1 and UI4 sessions) but never recorded | RC part 4 |
+| A4-SAVE3 on the device (§6.14 B steps 1–7) | never tested | RC part 5 |
+| A4-SAVE3's real-DOS round trip (§5.15 B / C) | never tested; needs a DOS install | RC part 5, optional — without it the RC notes must say the PC bridge is host-validated only |
+| UI4/PRES1: the console height, D-67's bursts (and the shard route) | **hardware PASS** 2026-10-01 (§8.22.8) | closed |
+| UI4/PRES1's other rows (D-12, D-48, D-53, D-68, D-69, D-71, D-72, D-74, D-75, D-76, D-77) | recorded hardware PASS at UI4's closeout (§8.22.8), except D-74 and the arena's single `Cast...` (optional steps, not reported) | RC part 2, optional |
+| PARITY1: D-50, D-78 – D-81 | never tested | RC part 3 |
+| A4-END1's dead-companion revival | not physically tested (no Developer kill) | optional; automated evidence stands |
+| The Alpha 4 heap capture | owed: internal `.data` + `.bss` grew 1,104 B across Alpha 4 (A3 trigger 6, cumulative) and an RC needs its capture (trigger 7) | RC part 6 |
+| SAVE2's `SAVE_CATALOG` cold / warm times | never measured | RC part 4 (serial) |
+
+Category D (no physical run owed): H-51, H-84, H-128, H-129, H-136 / H-138 (superseded by H-201), H-139 / H-140 (known D-8), H-123 (certified by `quest_parity`).
+
+### 9.18 The consolidated Alpha 4 RC hardware checklist (proposed)
+
+One session, about 2 hours (plus an optional DOS round trip), on **the RC image** (built after the UI4/PRES1 and PARITY1 commits). Parts 1 and 3 can also be run on this batch's image if PARITY1 is to be seen before the RC is built. Every Developer value applies only on **Enter**; Mic while it is open cancels it (§8.22.8). Serial capture from power-on through part 6 (`python -m esp_idf_monitor -p COMx -b 115200 --no-reset 2>&1 | Tee-Object -FilePath a4-rc1-capture.log`; afterwards `python native/core/tools/a3_04g_hw_closeout.py a4-rc1-capture.log`).
+
+**0. Before anything.** Copy the SD card's whole `ultima5/` folder to a PC (`saves/`, `settings.json`, the packs) and keep it. The packs stay as for A4-END1 (resource `85b38994…`, tiles `6eb001ed…`, audio `28c1533b…`); nothing to recopy. Flash the RC image. The identity screen must show its `FW` and `Git`, `RES … 2266819B` and `ASSET … 132284B`. **Stop if not.**
+
+**1. Boot and title.** Splash "Alpha 4"; the main menu's footer names `J C T U A R S P`; Small text legible; Journey Onward → Continue loads your journey with its music.
+
+**2. A4-UI4/PRES1.** Nothing owed: the hf1 retest passed (§8.22.8). Optional, D-74: with a low-health party (Alt+D → Party size 1, Preset: Low health/status), lose a fight: `BATTLE IS LOST!` appears **once**; win one: `VICTORY!` once, not again as the party walks off the board. In any fight, **C** on a member's turn: **one** `►Cast...` row.
+
+**3. A4-PARITY1.**
+- 3.1 **The crown carried, not worn** (D-78). Alt+D → Quest Items → **Crown of Lord British: On**. Alt+D → Inventory → Inventory index **4** → Spell quantity **3** (Mani). Stats → Current MP **30**. Teleport → **Palace of Blackthorn**, default entrance On. **C** → Mani → the Avatar: `Success!` — **not** `Absorbed!`.
+- 3.2 **Control.** Quest Items → Crown **Off**; **C** → Mani: `Absorbed!`, no MP spent. Crown back **On**.
+- 3.3 **Wearing it** (D-79). **U** → Crown: `Thou dost don the Crown of Lord British...`. **Alt+S**, walk a few steps, **Alt+L**. **U** → Crown: `Removed!` (it was still worn after the load). **U** → Crown again to wear it.
+- 3.4 **Optional, Negate in a fight** (D-80): with the crown worn, or after casting In An, fight a spell-casting monster: it fires no magic missile; a teleporting one does not teleport. (Draw-by-draw host evidence: `combat-negate.txt`.)
+- 3.5 **The dungeon keys** (D-81). Teleport → **Deceit**, default entrance On. Note the HUD clock.
+  - **M**: `Mix Reagents` and the spell list (not `Cast...`). Mic.
+  - **N**: the party picker (New order). Mic.
+  - **B**: `Board`, `Not here!`. **E**: `Enter what?`. **F**: `Fire-What?`. **T**: `Talk-Funny, no response!`. **X**: `X-it what?` — each advances the clock.
+  - **P**: `Push`, `Not here!` — the clock does not move.
+  - **Y**: `Yell what?`; type `ABC`, Enter: `No effect!`; the clock does not move.
+- 3.6 **The well** (D-50). Teleport → **Paws**, X **4**, Y **21**, default entrance **Off** (the well is the cell to the west). **L**, roll west: `Drop a coin?` → **Y** → `Thy wish?` → type `horse` (lower case), Enter: `Poof!` and a horse appears east of the party; gold −1.
+
+**4. A4-SAVE2 + A4-UI3** (from §4.11 and §6.14 A, condensed; the card backup from step 0 is the safety net).
+- 4.1 Journey Onward: `Latest: Slot N, …`; Load Game: two-row slots, `LATEST` on N, empty slots `EMPTY`.
+- 4.2 Three places A, B, C saved into Slots 1, 2, 3 (an occupied slot asks `Overwrite Slot N?` with **No, keep it** first; No → `Slot N kept`; Yes → the menu closes, `Save complete: Slot N`).
+- 4.3 Load each slot in game: the place and party match; `CURRENT` follows the load.
+- 4.4 Return to Title: the footer names the slot saved last; Continue loads it. Alt+S then Alt+L stay in the current slot.
+- 4.5 Power-cycle: the same three rows; each loads its own state.
+- 4.6 Create New Character with every slot used: `Replace Slot N?`, No → back to the list, nothing changed.
+- 4.7 Text Large: two rows per slot, nothing clipped; back to Medium.
+- 4.8 Optional (PC): delete the newest `.json` of one slot's pair: the row reads `RECOVERED`, Enter loads the save before, `Recovered previous save (Slot N)`.
+- 4.9 Serial: the first and a second System Menu open's `SAVE_CATALOG … total_us=` (cold / warm).
+
+**5. A4-SAVE3, the PC bridge** (§6.14 B).
+- 5.1 With DOS `SAVED.GAM` + `SAVED.OOL` (your own, or `original/u5/ultima5/`) in `ultima5/import/`: title → **P** → `PC save: <Avatar>, <place>` → Import into an EMPTY slot → `Imported into Slot N. The PC files are kept`. Load it: party, place, gold, food, date and any ship as in DOS (townsfolk at their posts for the hour). Save, power-cycle, load again.
+- 5.2 Change something (odd gold), save, PC Save Transfer → Export → `Slot N written to /ultima5/export/slotN`; on the PC the folder holds `SAVED.GAM` (4,192 B), `SAVED.OOL` (512 B), `EXPORT.TXT`.
+- 5.3 Optional, the gold standard: those files in a real DOS Ultima V → Journey Onward shows the changed state; Quit & Save works. Without it, the RC notes say "PC bridge host-validated only".
+
+**6. Smoke and heap** (as Phase A3-RC1, condensed): walk / bump with music; Settings volumes and the two mutes; one fight to victory (hit cues, one kill burst, the fanfare); Mix with How much? 1; Alt+S / Alt+L; the System Menu ten times; New Journey and back to Continue; Developer → Diagnostics → Audio/render stats `und=0 hw=0 miss=0`. **Stop the capture.**
+
+**7. Power-cycle Continue**: the identity as in step 0; Continue loads; input works. Restore the card from step 0 if wanted.
+
+**8. Optional: the END1 revival** — only if a companion has fallen in play and stays dead into the Doom route (§7.15 B.2; the Developer has no kill shortcut, and Preset: Endgame's Max Party touches the roster, so take the route without it). Otherwise its automated evidence stands.
+
+**PASS** needs parts 1–7 with no crash, reset, watchdog, lock, stale-resource refusal or input-mode corruption; Save, Load and Continue restore the saved state; music and effects continuous; the heap capture explained (A3 §28.16 triggers; a placement-only trigger does not block). **Report:** the `FW` / `Git` lines, PASS / FAIL per step, the capture, photos of anything odd.
+
+### 9.19 Status
+
+| Axis | State |
+|---|---|
+| Investigation and plan | delivered before production code (the PARITY1 report); decisions §9.2 |
+| NEW-1 / D-78, P1b / D-79, P1c / D-80, NEW-2 / D-81, D-50 | **software fixed**, reference first, host-proven |
+| NEW-3 (IRAM guard) | **fixed**: `a3_04b_iram_check` GREEN on the image |
+| NEW-4 / D-82 | classified, **deferred** (§9.8) |
+| Ledger | A-19, A-20 added; A-7 revised; stale rows reconciled; D-82 queued |
+| Host | **181 / 181** serial; runtime 2 / 18 → 18 / 18; mutations **31 / 31**; corpora diffs exactly the predicted rows; reference vitest FAIL set identical |
+| Firmware | `0xfc410` (1,033,232 B), **15,344 B free**, SHA-256 `72fc1aee…d306`, `FW 4.0.0-alpha4-parity1-debug`; packs unchanged |
+| Hardware | **pending** — the consolidated RC session (§9.18) |
+| A4-UI4/PRES1 | **closed**: hf1 retest PASS (§8.22.8); committed alone as `48bd39ef`; its hf1 image untouched |
+| Closed (commit, tag, push, flash) | **committed** on top of `48bd39ef` after the revalidation of §9.20; not tagged, pushed or flashed |
+
+### 9.20 Separation from A4-UI4/PRES1 and revalidation (2026-10-01)
+
+PARITY1 was developed on the uncommitted UI4/PRES1 + hf1 tree. UI4/PRES1 had to be committed on its own first, after its hardware retest. This is how the two were split and joined again.
+
+**Preserved before anything moved.** The finished PARITY1 tree (153 changed or new files) was saved three ways, outside the repository:
+- a tar with a SHA-256 manifest;
+- a byte-checked directory copy;
+- a snapshot commit on the local branch `preserve/a4-parity1-wip`.
+
+`parity1-only.patch` was checked against it: all 38 sections match, and the live tree was exactly the UI4 baseline + those 38 files + 23 PARITY1 logs.
+
+**UI4/PRES1 alone.**
+- The tree went back to the copy kept before PARITY1 began. The check was byte-for-byte: the same 100 files, the tracked diff identical, the untracked hashes equal.
+- The 28 PARITY1-only files were moved out, not deleted.
+- Suite 178 / 178 serial, then the hardware retest (§8.22.8).
+- UI4/PRES1 committed as `48bd39ef`, with no PARITY1 file in it.
+
+**PARITY1 restored on `48bd39ef`.**
+- 150 files copied back from the preserved copy; each is byte-identical to the finished PARITY1 tree.
+- The three shared documents are PARITY1's own, with UI4's closeout edits re-applied by the same script that made them. Proof: applied to the UI4 baseline, that script reproduces the committed closeout documents byte for byte, and the restored documents differ from PARITY1's by exactly those edits.
+- The change set against `48bd39ef` is exactly PARITY1: 38 patch files + 23 logs.
+- This section and the RC lines above are the only new text.
+
+**Revalidation on the restored tree.**
+- **Host:** **181 / 181** serial, 158.53 s, on a fresh `build-a4-parity1-commit` (0 project warnings; `a4-parity1-commit-ctest.log`), and again after these records (148.24 s, `a4-parity1-commit-final-ctest.log`). That includes `a4_parity1_runtime`, `combat_negate_parity`, `a3_04b_perf`, `magic_parity`, `advanced_combat_parity`, `gameplay_parity`, `quest_parity` and every drift test.
+- **Reference:** `tsc --noEmit` clean; the four touched test files 90 / 90; full vitest 7,735, assertion-level FAIL set **identical** to this batch's recorded run (97, all pre-existing) (`a4-parity1-commit-vitest.log`).
+- **Corpora:**
+  - `magic.txt` and `combat.txt` are unchanged against `48bd39ef`;
+  - `advanced-combat.txt` and `combat-negate.txt` are byte-identical to the batch's, so §9.13's row analysis stands;
+  - the four combat / magic drift tests are GREEN.
+- **Mutations:** not re-run. The restored production and test files are byte-identical to the ones the 31 / 31 pass ran against.
+- **Firmware:** a fresh `--no-ccache` build of the restored tree, `build-a4-parity1-precommit` (`a4-parity1-precommit-*.log`):
+  - 1,033,232 B (`0xfc410`), 15,344 B free; the section diff against `build-a4-parity1` is empty;
+  - 85 bytes differ from that image: the `Git` string (`48bd39effb0b-dirty`), the build times and the SHA;
+  - all three ELF guards GREEN;
+  - packs unchanged (`85b38994…`, `6eb001ed…`, `28c1533b…`);
+  - the hf1 and the first PARITY1 images re-hashed unchanged.
+- **NEW-4 / D-82:** still deferred and queued (§9.8).

@@ -8668,3 +8668,36 @@ The full record is `ALPHA4_UI.md` §8.22. The first hardware run passed every st
   - The first ritual attempt's `No effect!` came from the checklist's setup: a Developer value left with Mic, or an Alt+L after the rows, keeps Astaroth destroyed (`a4-ui4-hf1-retest-probe.log`). The step now says Enter.
   - Closeout suite 178 / 178.
   - The batch is closed: committed without A4-PARITY1, not tagged or pushed.
+
+## Alpha 4 A4-PARITY1 — release-readiness parity sweep
+
+An audit of everything still open before an Alpha 4 release candidate, then the fixes the user ruled blocking. The full write-up is [`ALPHA4_UI.md`](ALPHA4_UI.md) §9; this section records the classification on its own axis. It sits on the uncommitted A4-UI4/PRES1 + hf1 tree, whose hardware image (`4.0.0-alpha4-ui4-hf1-debug`, SHA-256 `1d57efce…3a44`) is untouched. No save format, slot rule, generation rule, resource pack or audio pack changed; the END1 ending, the PC bridge codec, the console package, audio pacing and the build configuration are untouched.
+
+### 1. Items and classification
+
+| # | Item | Class | Change |
+|---|---|---|---|
+| 1 | **D-78**: Blackthorn's palace absorbed every cast from a party that *carried* the crown but had not "used" it; the worn flag was saved nowhere, so a load absorbed again | **native and reference divergence; gameplay** (proven from the bytes: `[0x57b4]` read by CAST 0x0e45 / COMBAT 0x092f / ZSTATS 0x09e1, written only by SJOG 0x16e6) | both gates read possession (`quest.artifacts[1]` / `lbArtifacts.crown`), reference first |
+| 2 | **D-79**: (U)se crown toggled an invented flag; CAST 0x193e writes the time-spell byte 0x1c (permanent) through `set_time_spell` (CAST2 0x08f8, via the kernel thunk 0x80b2) | **native and reference divergence; state** | the crown is the third wearable on `[0x587a]` (with the amulet 0x0e and the badge 0x1d) |
+| 3 | **D-80**: Negate ('N') and the worn crown (0x1c) never stopped an enemy's magic projectile (COMBAT 0x0185), teleport (0x0f27) or special ability (COMSUBS 0x0112) | **native and reference divergence; gameplay (combat)**, found while proving item 2 (the byte's three readers) | the three gates, reference first; a new corpus `combat-negate.txt` |
+| 4 | **D-81** (with D-4): in a dungeon M opened Cast; N, B, E, F, P, T, X, Y answered "What?" | **native routing / presentation; gameplay keys** (`re/notes/dungeon-dispatch-gates.md` §3; the reference's dungeon handler) | M = Mix, N = New order; each refusal prints its DATA.OVL string with the binary's turn cost; Y reaches the core's own "No effect!" branch |
+| 5 | `a3_04b_iram_check` RED: `speaker_segment_frames` (called by `SpeakerVoice::begin_segment` on the audio task) left in flash once GCC stopped inlining it (by A4-END1) | **native placement regression** against the released Alpha 3 guard | one `noflash` entry in `audio_iram.lf`; `a3_04b_perf` I1b pins it |
+| 6 | **D-50**: the well's six words matched case-sensitively; kernel 0x6f1e folds case | **native and reference divergence; minor** (proven in Batch 52) | a byte-for-byte clone of 0x6f1e in both ports, its skip after a partial match included |
+| 7 | **D-82**: a new game lacks INIT.OOL's outdoor objects (an underworld skiff at (14,242), four dead bodies by the Amulet's cell) | **native and reference divergence; minor** | queued: the `.OOL` read site is not derived and the representation is open — not a small initialization omission |
+| 8 | **D-60** (the fanfare does not hold the game) | **decision** | the user's decision: deliberate row **A-19** |
+| 9 | **D-7** (dungeon keyboard movement is the Movement Mode contract) | **decision** | the user's decision: deliberate row **A-20** |
+| 10 | Ledger rows stale against their own records: D-17 ("still linked" — it is in the map's discarded sections), D-21, D-22, D-44 – D-47, D-49, D-55, D-53's `To phase:` half (all HW PASS or accepted in Batch 54); A-7's Mix clause; A-9 / A-10 / A-12's "ASCII-only" cause (IBM.CH and RUNES.CH are on the device since A4-UI1) | **documentation** | struck / corrected; no hardware status raised |
+| 11 | Deferred by the user: the credits curtain, the intro's story plates, the title's walking figures (post-Alpha 4); D-1, D-2 | **scope / decision** | unchanged |
+
+### 2. Evidence
+
+- **Binary:** `re/tools/dis16.py` over CAST.OVL 0x0e3e / 0x1764 / 0x1908 / 0x193e, CAST2.OVL 0x08f8, ULTIMA.EXE 0x80b2, COMBAT.OVL 0x0150–0x01a2 / 0x0f0c–0x0f5d / 0x092f, COMSUBS.OVL 0x0108–0x012c; a scan of every overlay and ULTIMA.EXE for instructions on `[0x57b3..0x57b5]` and `[0x587a]`; DATA.OVL's refusal strings by offset (ALPHA4_UI.md §9.3–§9.6).
+- **Reference first:** the TypeScript fix, then the corpora regenerated under `--check` controls (`native/core/a4-parity1-corpus-diff.log`): `magic.txt` and `combat.txt` byte-identical; `advanced-combat.txt` 2,794 rows changed, every one in a Negate scenario (variant 18 or spell 32, In An), 0 outside; the new `combat-negate.txt` changes only its Negate / crown rows against a corpus generated from the unfixed reference; the live `gameplay_parity` / `quest_parity` driver outputs change in 9 / 6 rows, each a wish, a Use crown or a Negate scroll in combat.
+- **RED-first:** `a4_parity1_runtime` 2 / 18 on the pre-PARITY1 production (the two GREEN are its controls) → 18 / 18; `magic_parity`, `advanced_combat_parity`, `combat_negate_parity` RED on the unfixed native, GREEN after; `a3_04b_perf` I1b RED → GREEN; the reference's new vitest cases 6 RED on HEAD's reference (`a4-parity1-ts-red-first.log`).
+- **Mutations, suite, firmware:** ALPHA4_UI.md §9.14–§9.16.
+
+### 3. Rows
+
+- D-50, D-78, D-79, D-80, D-81: software fixed, **hardware pending** (the consolidated RC checklist, ALPHA4_UI.md §9.18).
+- D-4 answered and closed by D-81; D-60 → A-19; D-7 → A-20; A-7 revised.
+- D-82 new and queued. The UI4/PRES1 rows keep their own status: hardware PASS at UI4's closeout (`ALPHA4_UI.md` §8.22.8), except D-74.

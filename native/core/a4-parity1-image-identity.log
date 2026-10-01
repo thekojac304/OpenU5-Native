@@ -1,0 +1,7 @@
+A4-PARITY1 image identity (read back)
+72fc1aeebf37db8ca5761cb24fc62ae5689683db8bc462ccc3bf40bd4a1dd306 *build-a4-parity1/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-parity1-Debug-Launcher.bin
+1033232 bytes
+FW 4.0.0-alpha4-parity1-debug
+Git e53741b23fbc-dirty
+launcher byte-identical to build-a4-parity1/openu5_tdeck.bin
+hf1 artifact re-hashed after the build: 1d57efcefec3eec385a36b753f1e57a4d4825d3b03ab3726f30ab14737be3a44 (unchanged)

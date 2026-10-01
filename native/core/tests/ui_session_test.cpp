@@ -164,9 +164,11 @@ int main(){
  check(dungeon_spy.intents.back().command.kind==CommandKind::ViewGem);
  dungeon_ui.handle_input(ch('z'));
  check(dungeon_spy.intents.back().kind==UiIntentKind::OpenStatusSelection);
+ // A4-PARITY1 (NEW-2, D-4): (M) underground is Mix, the shared kernel dispatcher's
+ // handler (CMDS 0x1AD8), not the old Cast alias (ledger A-7): changed on purpose.
  dungeon_ui.handle_input(ch('m'));
  check(dungeon_spy.intents.back().kind==UiIntentKind::OpenSpellSelection&&
-       dungeon_spy.intents.back().request==UiRequestId::Spell);
+       dungeon_spy.intents.back().request==UiRequestId::Custom);
  dungeon_ui.begin_selection(UiMode::InventorySelection,UiRequestId::Inventory,"Use?",{nullptr,item_count,item});
  dungeon_ui.handle_input(action(UiActionKind::Cancel));
  check(dungeon_ui.mode()==UiMode::Dungeon&&dungeon_ui.base_mode()==UiMode::Dungeon);

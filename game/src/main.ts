@@ -3237,7 +3237,7 @@ async function boot(): Promise<void> {
         // "Absorbed!\n" y turno consumido, sin pedir el nombre del hechizo. Por eso en el
         // binario teclear c,i,v,p,y no casteaba: la 'c' consumía el turno y las runas caían
         // como comandos sueltos. Task #65 (ver `combatCastAbsorbed`).
-        if (combatCastAbsorbed(game.state.timeSpell, game.state.position.location, !!game.state.wornCrown)) {
+        if (combatCastAbsorbed(game.state.timeSpell, game.state.position.location, !!game.state.lbArtifacts?.crown)) {
           const cb0 = game.combat;
           if (!cb0) return;
           hud.message(COMBAT_ABSORBED_MESSAGE);

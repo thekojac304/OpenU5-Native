@@ -19,6 +19,7 @@ import {
 import {
   Combat,
   combatCastAbsorbed,
+  negatesEnemyMagic,
   LOC_PALACE_OF_BLACKTHORN,
   type Combatant,
   type CombatMapData,
@@ -388,5 +389,24 @@ describe("#65 combatCastAbsorbed — gate de (C)ast en combate (COMBAT.OVL 0x08F
   it("fuera del Palacio y sin negate-magic NO absorbe (caso normal)", () => {
     expect(combatCastAbsorbed(undefined, 6, false)).toBe(false); // Trinsic, sin corona
     expect(combatCastAbsorbed("T", 6, false)).toBe(false); // time-stop 'T' no es el gate de magia
+  });
+
+  it("A4-PARITY1 (NEW-1) — el tercer argumento es la POSESIÓN (g_crown), no la corona puesta (0x1c)", () => {
+    // Puesta pero sin poseerla (estado imposible en juego, pero separa los dos bytes): absorbe.
+    expect(combatCastAbsorbed("\x1c", LOC_PALACE_OF_BLACKTHORN, false)).toBe(true);
+    // Poseída, sin ponérsela: el binario deja lanzar.
+    expect(combatCastAbsorbed(undefined, LOC_PALACE_OF_BLACKTHORN, true)).toBe(false);
+  });
+});
+
+// A4-PARITY1 (P1c) — los tres gates que tratan la Corona puesta (0x1c) como Negate ('N'):
+// COMBAT 0x0185 (proyectil mágico), 0x0f27 (teletransporte), COMSUBS 0x0112 (especiales).
+// El comportamiento del motor lo fija el corpus `combat-negate.txt` (generate-combat-fixtures
+// --negate, comparado con el nativo tirada a tirada); aquí, el predicado compartido.
+describe("A4-PARITY1 negatesEnemyMagic — 'N' y 0x1c, nada más", () => {
+  it("Negate y la corona puesta anulan la magia enemiga; el resto de efectos no", () => {
+    expect(negatesEnemyMagic("N")).toBe(true);
+    expect(negatesEnemyMagic("\x1c")).toBe(true);
+    for (const t of [undefined, "", "Q", "T", "P", "C", "\x0e", "\x1d"]) expect(negatesEnemyMagic(t), String(t)).toBe(false);
   });
 });

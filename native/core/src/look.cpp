@@ -5,6 +5,22 @@
 #include <string>
 namespace openu5 {
 namespace {
+// A4-PARITY1 (D-50, H-22): the wish matches with the kernel's stristr, ULTIMA.EXE 0x6f1e
+// (LOOKOBJ 0x00aa; native/core/batch52-h22-wish-stristr-disasm.log), the reference's
+// kernelStristr(). Each byte loses bit 7 (0x6f5c) and is folded with `and 0x5f` when above
+// 0x60 (0x6f5f-0x6f6b); after a mismatch the start advances by the characters already
+// matched plus one (0x6f75-0x6f7d), so "HHorse" does not contain "Horse". Cloned as is.
+int kernel_stristr(const std::u16string &haystack, const char16_t *needle) {
+    auto fold = [](char16_t c) { int b = c & 0x7f; return b > 0x60 ? (b & 0x5f) : b; };
+    const int n = int(std::char_traits<char16_t>::length(needle)), last = int(haystack.size()) - n;
+    for (int start = 0; start <= last;) {
+        int matched = 0;
+        while (matched < n && fold(haystack[size_t(start + matched)]) == fold(needle[matched])) ++matched;
+        if (matched == n) return start;
+        start += matched + 1;
+    }
+    return -1;
+}
 void emit(EventSink s,GameEventKind k,const char *text=nullptr){GameEvent e;e.kind=k;e.text=text;if(s.emit)s.emit(s.context,e);}
 // LOOKOBJ 0x09f6-0x0a3e: the tail of cmd_look's crystal-ball branch, once the
 // picker at 0x09ea has produced a member.  Defined once so the auto-resolved
@@ -46,7 +62,7 @@ CommandStatus world_look(CommandContext &c,Command cmd,const ActiveMap &map,Even
         if(!g.gold)return CommandStatus::Success;
         if(cmd.text_length&&!cmd.text)return CommandStatus::InvalidContext;
         std::u16string wish(cmd.text?cmd.text:u"",cmd.text_length);bool match=false;
-        for(auto word:{u"Corvette",u"Ferrari",u"Lamborghini",u"Lotus",u"Porsche",u"Horse"})if(wish.find(word)!=std::u16string::npos)match=true;
+        for(auto word:{u"Corvette",u"Ferrari",u"Lamborghini",u"Lotus",u"Porsche",u"Horse"})if(kernel_stristr(wish,word)>=0)match=true;
         bool horse=match&&(g.position.map.location==22||g.position.map.location==31);int x=int(g.position.xy.x)+1,y=g.position.xy.y;auto tile=map.tile_at(x,y);auto props=tile_properties(tile);bool place=horse&&tile>=0&&props.error==Error::None&&props.value.walkable;
         if(place&&(!c.quest_world||!c.quest_world->persistent_tile))return CommandStatus::InvalidContext;
         --g.gold;

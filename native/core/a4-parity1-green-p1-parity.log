@@ -1,0 +1,21 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-a4-parity1
+    Start  23: advanced_combat_parity
+1/8 Test  #23: advanced_combat_parity .....................   Passed    1.16 sec
+    Start  24: magic_parity
+2/8 Test  #24: magic_parity ...............................   Passed    0.11 sec
+    Start  25: combat_parity
+3/8 Test  #25: combat_parity ..............................   Passed    0.40 sec
+    Start  26: combat_negate_parity
+4/8 Test  #26: combat_negate_parity .......................   Passed    0.20 sec
+    Start 170: typescript_advanced_combat_fixture_drift
+5/8 Test #170: typescript_advanced_combat_fixture_drift ...   Passed    4.13 sec
+    Start 171: typescript_magic_fixture_drift
+6/8 Test #171: typescript_magic_fixture_drift .............   Passed    0.23 sec
+    Start 172: typescript_combat_fixture_drift
+7/8 Test #172: typescript_combat_fixture_drift ............   Passed    2.27 sec
+    Start 173: typescript_combat_negate_fixture_drift
+8/8 Test #173: typescript_combat_negate_fixture_drift .....   Passed    1.46 sec
+
+100% tests passed out of 8
+
+Total Test time (real) =   9.97 sec

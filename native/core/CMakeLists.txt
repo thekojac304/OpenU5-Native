@@ -119,6 +119,8 @@ if(BUILD_TESTING)
   add_executable(combat_parity_tests tests/combat_parity_test.cpp)
   target_link_libraries(combat_parity_tests PRIVATE openu5_core)
   add_test(NAME combat_parity COMMAND combat_parity_tests "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/combat.txt")
+  # A4-PARITY1 (P1c): Negate / worn crown against the enemy abilities the default corpus never mounts.
+  add_test(NAME combat_negate_parity COMMAND combat_parity_tests "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/combat-negate.txt" --negate)
   add_executable(item_parity_tests tests/item_parity_test.cpp)
   target_link_libraries(item_parity_tests PRIVATE openu5_core)
   add_test(NAME item_parity COMMAND item_parity_tests "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/items.txt")
@@ -2194,6 +2196,13 @@ if(BUILD_TESTING)
   add_test(NAME a4_ui4_console_runtime COMMAND a4_ui4_console_runtime
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
+  # Alpha 4 A4-PARITY1 (ALPHA4_UI.md section 9): the crown (possession gate, the worn
+  # crown as time spell 0x1c), the dungeon's command keys (M = Mix, N = New order, the
+  # refusals) and the wishing well's case-folding, through raw keys on the real runtime.
+  openu5_a4_ui2_runtime(a4_parity1_runtime)
+  add_test(NAME a4_parity1_runtime COMMAND a4_parity1_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
   # Alpha 3 A3-05 -- the audio finalization controls through the REAL
   # AlphaRuntime: Alt+Shift+M / Alt+Shift+S mutes by raw keys, the Settings
   # rows while muted, stock vs patched assets, and a kill's single hit burst.
@@ -2823,6 +2832,9 @@ if(BUILD_TESTING)
     add_test(NAME typescript_combat_fixture_drift COMMAND "${NODE_EXECUTABLE}" --import tsx
       "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate-combat-fixtures.ts" --check)
     set_tests_properties(typescript_combat_fixture_drift PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+    add_test(NAME typescript_combat_negate_fixture_drift COMMAND "${NODE_EXECUTABLE}" --import tsx
+      "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate-combat-fixtures.ts" --negate --check)
+    set_tests_properties(typescript_combat_negate_fixture_drift PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
     add_test(NAME typescript_item_fixture_drift COMMAND "${NODE_EXECUTABLE}" --import tsx
       "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate-item-fixtures.ts" --check)
     set_tests_properties(typescript_item_fixture_drift PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")

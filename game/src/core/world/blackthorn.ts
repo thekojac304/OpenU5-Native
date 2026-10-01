@@ -56,6 +56,14 @@ export const BLACKTHORN_PASSWORD = "IMPE";
 export const TIME_SPELL_BADGE = "\x1d";
 /** Amuleto de Lord British — el MISMO byte que la insignia, otro valor (0x0e). */
 export const TIME_SPELL_AMULET = "\x0e";
+/**
+ * Corona de Lord British PUESTA — el MISMO byte, valor 0x1c (A4-PARITY1, P1b). Escrito
+ * por (U)se Corona: CAST.OVL 0x193e → toggle 0x1764(0x1c) → set_time_spell(anim 9,
+ * turnos 0xff, 0x1c) vía el thunk ULTIMA.EXE 0x80b2 → CAST2 0x08f8. Leído por COMBAT
+ * 0x0196 / 0x0f36 y COMSUBS 0x0112, siempre junto a Negate 'N'. NO es la posesión: el gate
+ * de "Absorbed!" del Palacio lee `g_crown` [0x57b4] (= `lbArtifacts.crown`).
+ */
+export const TIME_SPELL_CROWN = "\x1c";
 /** Turnos de un efecto PERMANENTE (`g_time_spell_turns` = 0xFF): no lo toca el decay. */
 export const TIME_SPELL_PERMANENT = 0xff;
 /**

@@ -1,0 +1,4 @@
+86: GREEN I1 the linker fragment puts the per-sample audio path in IRAM (noflash)
+86: GREEN I1b the fragment also places speaker_segment_frames, begin_segment's leaf, in IRAM
+The following tests passed:
+100% tests passed out of 1

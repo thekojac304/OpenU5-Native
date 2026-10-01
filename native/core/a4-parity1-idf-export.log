@@ -1,0 +1,17 @@
+Activating ESP-IDF 6.1
+Setting IDF_PATH to 'C:\esp\v6.1\esp-idf'.
+* Checking python version ... 3.14.5
+* Checking python dependencies ... OK
+* Deactivating the current ESP-IDF environment (if any) ... OK
+* Establishing a new ESP-IDF environment ... OK
+* Identifying shell ... pwsh.exe
+* Detecting outdated tools in system ... Found tools that are not used by active ESP-IDF version.
+For removing old versions of cmake, openocd-esp32, riscv32-esp-elf, riscv32-esp-elf-gdb, xtensa-esp-elf, xtensa-esp-elf-gdb use command 'python.exe C:\esp\v6.1\esp-idf\tools\idf_tools.py uninstall'
+To free up even more space, remove installation packages of those tools.
+Use option python.exe C:\esp\v6.1\esp-idf\tools\idf_tools.py uninstall --remove-archives.
+
+Done! You can now compile ESP-IDF projects.
+Go to the project directory and run:
+
+  idf.py build
+

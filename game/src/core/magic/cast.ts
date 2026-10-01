@@ -93,16 +93,20 @@ export const LOC_STONEGATE = 0x1d;
  * resto entero: no consume el hechizo mezclado (`0x0ec8`), no cobra maná (`0x0ef8`) y no
  * llega a ningún efecto ⇒ `consumed: false` y CERO tiradas.
  *
- * `wornCrown` es la misma fuente que ya usa el gate de combate para `g_crown` (DS:0x57B4):
- * las dos mitades tienen que leer lo mismo o vuelven a contradecirse.
+ * `hasCrown` es `g_crown` (DS:0x57B4 = SAVED.GAM +0x20E = `lbArtifacts.crown`): la POSESIÓN.
+ * A4-PARITY1 (NEW-1): su único escritor es el (G)et SJOG 0x16e6 (`mov byte [0x57b4],0xff`);
+ * lo leen este gate, su gemelo de combate COMBAT 0x092f y ZSTATS 0x09e1. El (U)se de la
+ * corona NO lo toca (escribe 0x1c en g_time_spell). Antes se pasaba `wornCrown`, un toggle
+ * inventado: quien LLEVABA la corona sin "ponérsela" se comía "Absorbed!". Las dos mitades
+ * leen lo mismo o vuelven a contradecirse.
  */
 export function castAbsorbedOutOfCombat(
   location: number,
   inCombat: boolean,
-  wornCrown: boolean,
+  hasCrown: boolean,
 ): boolean {
   if (inCombat || location === 0 || location > 0x7f) return false; // 0x0e1a / 0x0e2c
-  if (location === LOC_PALACE_OF_BLACKTHORN && !wornCrown) return true; // 0x0e3e + 0x0e45
+  if (location === LOC_PALACE_OF_BLACKTHORN && !hasCrown) return true; // 0x0e3e + 0x0e45
   return location === LOC_STONEGATE; // 0x0e4c — incondicional
 }
 
@@ -350,7 +354,7 @@ export function castSpell(
   // pueda volver a quedarse sin escritor; `ctx.magicAbsorbed` sigue mandando si se fija.
   // El orden de este `if` respecto al bit de ubicación ya era el del binario para pueblos.
   const absorbed =
-    ctx.magicAbsorbed ?? castAbsorbedOutOfCombat(ctx.location, ctx.inCombat, !!state.wornCrown);
+    ctx.magicAbsorbed ?? castAbsorbedOutOfCombat(ctx.location, ctx.inCombat, !!state.lbArtifacts?.crown);
   if (absorbed) {
     return { ok: false, message: "Absorbed!", effect: null, consumed: false };
   }

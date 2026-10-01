@@ -5,7 +5,7 @@
  * (U)se no rueda turno ni consume RNG en el port (igual que useSkullKey).
  */
 import { describe, expect, it } from "vitest";
-import { TIME_SPELL_BADGE } from "../src/core/world/blackthorn.js";
+import { TIME_SPELL_BADGE, TIME_SPELL_CROWN } from "../src/core/world/blackthorn.js";
 import type { CharacterState, ExtractedInitialState, GameState } from "../src/core/state.js";
 import { ACTOR_TILE_BANK, Game, type GameData } from "../src/core/game.js";
 import type { WorldData } from "../src/core/world/map.js";
@@ -164,6 +164,24 @@ describe("(U)se artefactos de LB + Box", () => {
     const s = makeState();
     expect(msgs(makeGame(s).useCrown())).toEqual(["Crown", "Thou dost don the Crown of Lord British..."]);
     expect(msgs(makeGame(s).useCrown())).toEqual(["Crown", "Removed!"]);
+  });
+  it("A4-PARITY1 (P1b) — Corona: escribe g_time_spell = 0x1c permanente (CAST.OVL 0x193e → CAST2 0x08f8), no un flag", () => {
+    const s = makeState();
+    s.timeSpell = "Q";
+    s.timeSpellTurns = 9;
+    makeGame(s).useCrown();
+    expect(s.timeSpell).toBe(TIME_SPELL_CROWN); // PISA el efecto temporal (mismo byte 0x587a)
+    expect(s.timeSpellTurns).toBe(0xff); // 0x588e = 0xff
+    expect(s.wornCrown).toBeFalsy(); // el flag inventado ya no se escribe
+    makeGame(s).useCrown();
+    expect(s.timeSpell).toBeUndefined(); // toggle-off 0x1764 limpia 0x587a / 0x588e
+    expect(s.timeSpellTurns).toBeUndefined();
+  });
+  it("A4-PARITY1 (P1b) — con Negate activo, ponerse la corona lo reemplaza (no hay \"Removed!\")", () => {
+    const s = makeState();
+    s.timeSpell = "N";
+    expect(msgs(makeGame(s).useCrown())).toEqual(["Crown", "Thou dost don the Crown of Lord British..."]);
+    expect(s.timeSpell).toBe(TIME_SPELL_CROWN);
   });
   it("Cetro: 'No effect!' sin campos contiguos", () => {
     expect(msgs(makeGame(makeState()).useSceptre()))

@@ -1168,7 +1168,28 @@ bool UiSession::handle_dungeon(const UiAction &a) {
     case 'c': { command_echo("Cast...");UiIntent i; i.kind=UiIntentKind::OpenSpellSelection; i.request=UiRequestId::Spell; dispatch(i); return true; }
     // The dungeon has its own command context, but these menus are deliberately
     // shared UI affordances.  They return to UiMode::Dungeon via return_mode_.
-    case 'm': { command_echo("Cast...");UiIntent i; i.kind=UiIntentKind::OpenSpellSelection; i.request=UiRequestId::Spell; dispatch(i); return true; }
+    //
+    // A4-PARITY1 (NEW-2, D-4). The dungeon loop has no dispatcher of its own: DUNGEON.OVL
+    // sub_06C4 hands every key it does not own to the shared kernel_cmd_dispatch (0x07a0 ->
+    // 0x3178), so (M)ix and (N)ew order are the overworld's handlers, ungated underground
+    // (CMDS 0x1AD8 / 0x0DDC; re/notes/dungeon-dispatch-gates.md section 3). 'm' used to open
+    // Cast here; the core already accepted Mix and NewOrder underground.
+    case 'm': { command_echo("Mix Reagents");command_echo("");UiIntent i; i.kind=UiIntentKind::OpenSpellSelection; i.request=UiRequestId::Custom; dispatch(i); return true; }
+    case 'n': { UiIntent i; i.kind=UiIntentKind::OpenPartySelection; i.request=UiRequestId::Party; dispatch(i); return true; }
+    // The keys the kernel or the command's overlay refuses underground, each with the
+    // binary's own string (DATA.OVL) and turn. A refusal "with a turn" returns 1 to the
+    // dungeon loop, which spends the dungeon's cast turn (the reference's dungeonSpellTurn:
+    // DungeonAction::Tick). Strings without a newline continue on the same row.
+    case 'b': command_echo("Board"); append(UiTextChannel::Message, "Not here!"); // 0x3236 "Board " + CMDS 0x080a "\nNot here!\n"
+              c.item=int16_t(DungeonAction::Tick); break;
+    case 'e': command_echo("Enter what?"); c.item=int16_t(DungeonAction::Tick); break; // 0x3260 DS 0xa156
+    case 'f': command_echo("Fire-What?"); c.item=int16_t(DungeonAction::Tick); break;  // 0x3266 "Fire-" + CMDS 0x0afe "What?\n"
+    case 'p': command_echo("Push"); append(UiTextChannel::Message, "Not here!"); return true; // 0x3378 DS 0xa1d4, no turn
+    case 't': command_echo("Talk-Funny, no response!"); c.item=int16_t(DungeonAction::Tick); break; // 0x33e7 DS 0xa22c
+    case 'x': command_echo("X-it what?"); c.item=int16_t(DungeonAction::Tick); break;  // 0x3456 "X-it " + CMDS 0x0f14 "what?\n"
+    // (Y)ell asks for its word as above ground; the core answers "\nNo effect!\n" with no
+    // turn (CMDS 0x14ac, DS 0x453a).
+    case 'y': command_echo("Yell"); begin_text(UiRequestId::YellText,"Yell what?",15); return true;
     case 'r': { command_echo("Ready...");command_echo("");UiIntent i; i.kind=UiIntentKind::OpenEquipmentSelection; i.request=UiRequestId::Equipment; dispatch(i); return true; }
     case 'u': { command_echo("Use item");command_echo("");UiIntent i; i.kind=UiIntentKind::OpenInventorySelection; i.request=UiRequestId::Inventory; dispatch(i); return true; }
     case 'v': command_echo("View a gem!"); c.kind=CommandKind::ViewGem; break;

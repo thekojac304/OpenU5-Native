@@ -1,0 +1,16 @@
+CURRENT   project file: "C:\dev\openu5-native\native\targets\tdeck\build-a4-parity1\openu5_tdeck.map"
+REFERENCE project file: "C:\dev\openu5-native\native\targets\tdeck\build-a4-ui4-hf1\openu5_tdeck.map"
+Difference is counted as CURRENT - REFERENCE, i.e. a positive number means that CURRENT is larger.
+Memory Type Usage Summary
++-------------------------------------------------------------------------------------+
+| Memory Type/Section |  Used [bytes] |     Used [%] | Remain [bytes] | Total [bytes] |
+|---------------------+---------------+--------------+----------------+---------------|
+| Flash Code          | 706962   +600 |              |                |               |
+|    .text            | 706962   +600 |              |                |               |
+| Flash Data          | 227148    +64 |              |                |               |
+|    .rodata          | 226876    +64 |              |                |               |
+| DIRAM               | 135382    +36 | 39.61  +0.01 |  206378    -36 | 341760      0 |
+|    .text            |  60683    +36 | 17.76  +0.01 |                |               |
++-------------------------------------------------------------------------------------+
+Total image size: 1033112   +700 bytes (.bin may be padded larger)
+Note: The reported total sizes may be smaller than those in the technical reference manual due to reserved memory and application configuration. The total flash size available for the application is not included by default, as it cannot be reliably determined due to the presence of other data like the bootloader, partition table, and application partition size.

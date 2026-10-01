@@ -45,6 +45,7 @@ entries:
     sfx_synth:_ZN6openu512SpeakerVoice10fine_levelEv (noflash)
     sfx_synth:_ZN6openu512SpeakerVoice15begin_iterationEv (noflash)
     sfx_synth:_ZN6openu512SpeakerVoice13begin_segmentEv (noflash)
+    sfx_synth:_ZN6openu522speaker_segment_framesERKNS_14SpeakerSegmentE (noflash)
     sfx_synth:_ZN6openu512_GLOBAL__N_1L11pit_divisorEm (noflash)
     sfx_synth:_ZN6openu512_GLOBAL__N_1L13pit_phase_incEm (noflash)
     sfx_synth:_ZN6openu518speaker_noise_nextEt (noflash)

@@ -724,6 +724,12 @@ int main(int argc, char **argv) {
             if (lf.find(std::string(h) + " (noflash)") == std::string::npos) missing += std::string(" ") + h;
         check(!lf.empty() && lf.find("archive: libmain.a") != std::string::npos && missing.empty(),
               "I1 the linker fragment puts the per-sample audio path in IRAM (noflash)" + missing);
+        // A4-PARITY1 (NEW-3): SpeakerVoice::begin_segment (IRAM) calls this leaf on the audio
+        // task. Once GCC stopped inlining it (by A4-END1), the flash copy put the per-sample
+        // path back on the shared instruction cache and a3_04b_iram_check went RED.
+        check(lf.find("sfx_synth:_ZN6openu522speaker_segment_framesERKNS_14SpeakerSegmentE (noflash)") !=
+                  std::string::npos,
+              "I1b the fragment also places speaker_segment_frames, begin_segment's leaf, in IRAM");
         const std::string cmake = strip_comments(slurp(device_dir + "/main/CMakeLists.txt"));
         check(std::regex_search(cmake, std::regex(R"(LDFRAGMENTS\s+"audio_iram\.lf")")) &&
                   std::regex_search(cmake, std::regex(R"(music_synth\.cpp[^)]*COMPILE_OPTIONS[^)]*-O2[^)]*-ffp-contract=off[^)]*-fno-jump-tables)")) &&

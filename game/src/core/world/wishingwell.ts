@@ -36,9 +36,10 @@ export const WELL_TILE = 0xa1;
  * call 0xcc8e). Cadenas byte-exactas de DATA.OVL (DS ptr → fileoff = DS+0x10):
  *   Corvette 0x7242/0x7252, Ferrari 0x724c/0x725c, Lamborghini 0x7254/0x7264,
  *   Lotus 0x7260/0x7270, Porsche 0x7266/0x7276, Horse 0x726e/0x727e.
- * NOTA: la rutina de match (0xcc8e) cae fuera del rango desensamblado, así que si
- * distingue mayúsculas es una PREGUNTA ABIERTA de oráculo; el clon asume
- * case-sensitive (String.includes) — pendiente de confirmar en runtime.
+ * A4-PARITY1 (D-50, H-22): la rutina de match es el `stristr` del kernel, ULTIMA.EXE
+ * 0x6f1e (LOOKOBJ 0x00aa `call 0xffffcc8e` + base 0xA290; desensamblado en
+ * native/core/batch52-h22-wish-stristr-disasm.log). NO distingue mayúsculas: ver
+ * `kernelStristr`. El clon asumía String.includes (case-sensitive) — cerrado.
  */
 const WISH_HORSE_WORDS: readonly string[] = [
   "Corvette",
@@ -48,6 +49,34 @@ const WISH_HORSE_WORDS: readonly string[] = [
   "Porsche",
   "Horse",
 ];
+
+/**
+ * `stristr` del kernel (ULTIMA.EXE 0x6f1e), byte a byte. Devuelve el índice del primer
+ * match de `needle` en `haystack` o −1. Tal cual el binario:
+ *  - cada byte pierde el bit 7 (0x6f5c `and ax,0x7f7f`) y, si queda por ENCIMA de 0x60,
+ *    se pliega con `and 0x5f` (0x6f5f-0x6f6b): a-z → A-Z, y también `{|}~` DEL → `[\]^_`;
+ *  - needle más largo que haystack → −1 (0x6f37/0x6f3b);
+ *  - ⚠ tras un fallo el inicio avanza en (caracteres ya casados + 1) (0x6f75-0x6f7d), no en
+ *    1: "HHorse" NO contiene "Horse" para el original (salta la segunda H). Se clona.
+ */
+export function kernelStristr(haystack: string, needle: string): number {
+  const fold = (c: number): number => {
+    const b = c & 0x7f;
+    return b > 0x60 ? b & 0x5f : b;
+  };
+  const n = needle.length;
+  const last = haystack.length - n; // [0x6aa6]
+  if (last < 0) return -1;
+  let start = 0; // bx
+  while (start <= last) {
+    let matched = 0;
+    while (matched < n && fold(haystack.charCodeAt(start + matched)) === fold(needle.charCodeAt(matched)))
+      matched++;
+    if (matched === n) return start;
+    start += matched + 1; // 0x6f75 dx = len − cx (lo casado) ; add bx,dx ; inc bx
+  }
+  return -1;
+}
 
 export type WishOutcome =
   | { kind: "no-coin" } // g_gold==0: no llega a pedir deseo
@@ -66,7 +95,7 @@ export function wishingWell(state: GameState, wish: string): WishOutcome {
   if (state.gold <= 0) return { kind: "no-coin" };
   state.gold -= 1; // la moneda cuesta 1 de oro (LOOKOBJ 0x0086)
   if (wish.length === 0) return { kind: "nothing" };
-  const matched = WISH_HORSE_WORDS.some((w) => wish.includes(w));
+  const matched = WISH_HORSE_WORDS.some((w) => kernelStristr(wish, w) >= 0); // 0x00ad cmp ax,0xffff / jg
   if (!matched) return { kind: "no-effect" };
   if (!WISH_LOCATIONS.includes(state.position.location)) return { kind: "no-effect" };
   return { kind: "horse" };

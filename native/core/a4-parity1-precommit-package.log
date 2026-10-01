@@ -1,0 +1,6 @@
+Launcher image: C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-parity1-precommit\launcher\OpenU5-TDeck-Alpha4.0.0-alpha4-parity1-Debug-Launcher.bin
+Firmware version: 4.0.0-alpha4-parity1-debug
+Size: 1033232 bytes
+App partition minimum: 1048576 bytes (64 KiB alignment)
+SHA-256: 5426d66ca9522fa7702704c0a6cdb816f9e1b13ff971b8bdc4b7421fb045445b
+Existing build ESP-IDF: v6.1

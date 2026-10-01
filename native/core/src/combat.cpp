@@ -61,6 +61,12 @@ void load_equipment_cache(CombatActor &a, const CharacterState &r, const CombatT
     a.range = std::max<int32_t>(1, a.weapons[0].range);
 }
 
+// A4-PARITY1 (P1c). Negate 'N' and the worn crown 0x1c share three gates on g_time_spell
+// [0x587a]: COMBAT 0x0185 (no magic projectile, after the 50 % roll), COMBAT 0x0f27 (no
+// teleport, no rand(0,3)) and COMSUBS 0x0112 (no special ability, zero draws). The
+// reference's negatesEnemyMagic().
+bool negates_enemy_magic(char time_spell) { return time_spell == 'N' || time_spell == '\x1c'; }
+
 struct Engine {
     CombatContext &c;
     CombatState &s;
@@ -829,6 +835,10 @@ struct Engine {
         if (dist > 1) {
             if (a.enemy->index != 26 && rand(0, 255) >= 128)
                 return false;
+            // A4-PARITY1 (P1c): COMBAT 0x0185-0x019b, a magic projectile under Negate / the
+            // worn crown is the same "no shot" as the roll (0x019d), after the roll.
+            if ((a.enemy->abilities & 0x80) && negates_enemy_magic(c.turn.time_spell))
+                return false;
             if (!los(a, *b))
                 return false;
             attack_with(a, *b, {-1, a.attack, a.range}, true, negate);
@@ -874,7 +884,9 @@ struct Engine {
         if (a.enemy && (a.enemy->stationary || a.enemy->index == 26 || a.enemy->index == 27))
             return false;
         auto *b = target(a);
-        if (a.enemy && (a.enemy->abilities & 0x20)) {
+        // A4-PARITY1 (P1c): COMBAT 0x0f2f-0x0f3b, no teleport (and no rand(0,3)) under
+        // Negate / the worn crown; the creature moves normally (0x0fab).
+        if (a.enemy && (a.enemy->abilities & 0x20) && !negates_enemy_magic(c.turn.time_spell)) {
             bool adjacent = b && combat_distance(a.position.x - b->position.x,
                                                  a.position.y - b->position.y) <= 1;
             if (!adjacent || rand(0, 3) == 3) {
@@ -1047,7 +1059,8 @@ CombatResult combat_cast(CombatContext &c, SpellId spell, const CombatPoint *aim
     if (!a || !player(*a))
         return CombatResult::Ok;
     e.message("Cast...\n", -1, -1, CombatEventKind::Echo);
-    if (c.turn.time_spell == 'N' || (c.game.position.map.location == 18 && !c.game.worn_crown)) {
+    // A4-PARITY1 (NEW-1): COMBAT 0x092f reads g_crown [0x57b4], crown POSSESSION.
+    if (c.turn.time_spell == 'N' || (c.game.position.map.location == 18 && !c.game.quest.artifacts[1])) {
         e.message("Absorbed!\n");
         e.advance();
         return CombatResult::Ok;

@@ -1,0 +1,24 @@
+C  the crown
+RED C1 carrying the crown (not worn), Mani casts in Blackthorn's palace (mp spent 0): Cast... | Absorbed!
+GREEN C2 control: without the crown the same cast is Absorbed! and costs nothing: Cast... | Absorbed!
+RED C3a Use crown: the don line, time spell 0x1c permanent (was Quickness): Use item | Crown | Thou dost don the Crown of Lord British... spell=81 turns=9
+RED C4 the worn crown survives Alt+S / Alt+L (spell=81)
+RED C3b a second Use removes it and clears the time spell: Use item | Crown | Thou dost don the Crown of Lord British...
+D  the dungeon keys
+RED D1 M underground is Mix (CMDS 0x1AD8): Cast...
+RED D2 N underground opens New order's party picker (CMDS 0x0DDC): What?
+RED D3 b refuses with the binary's string and a turn (turns +0): What?
+RED D3 e refuses with the binary's string and a turn (turns +0): What?
+RED D3 f refuses with the binary's string and a turn (turns +0): What?
+RED D3 t refuses with the binary's string and a turn (turns +0): What?
+RED D3 x refuses with the binary's string and a turn (turns +0): What?
+RED D3 p refuses with the binary's string, no turn (turns +0): What?
+RED D4 Y asks for a word and answers No effect!, no turn (CMDS 0x14ac): What? | Attack | What? | What? | Cast... | M.P. too low! | Failed! turns +0
+W  the wishing well
+RED W1 'horse' in Paws: Poof! (0x6f1e folds case): No effect...
+RED W2 'HORSE' too: No effect...
+RED W3 'HHorse' is no match: 0x6f1e skips past a partial match: Poof!
+GREEN W4 control: 'Horse' as typed in 1988 still works: Poof!
+A4-PARITY1 runtime: 2/18 checks
+exit 1
+restored 7 files and rebuilt

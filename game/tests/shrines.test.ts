@@ -20,7 +20,7 @@ import {
   SHRINE_INT_FLAG,
   type ShrineData,
 } from "../src/core/world/shrines.js";
-import { wishingWell } from "../src/core/world/wishingwell.js";
+import { kernelStristr, wishingWell } from "../src/core/world/wishingwell.js";
 import { isMidnightGateEdge } from "../src/core/world/moongates.js";
 import { createNewGame, type ExtractedInitialState, type GameState } from "../src/core/state.js";
 
@@ -232,6 +232,26 @@ describe("pozo de deseos (LOOKOBJ 0x0042): easter egg de caballos", () => {
     const s = wellState(100, 1);
     expect(wishingWell(s, "Horse").kind).toBe("no-effect");
     expect(s.gold).toBe(99);
+  });
+
+  // A4-PARITY1 (D-50, H-22): el match es el stristr del kernel (ULTIMA.EXE 0x6f1e).
+  it("A4-PARITY1 — el match pliega mayúsculas como 0x6f1e: 'horse', 'HORSE' y 'a ferrari, please' valen", () => {
+    for (const w of ["horse", "HORSE", "hOrSe", "a ferrari, please", "my lotus"]) {
+      const s = wellState(100, 0x16);
+      expect(wishingWell(s, w).kind, w).toBe("horse");
+    }
+  });
+
+  it("A4-PARITY1 — kernelStristr clona el plegado y el salto de 0x6f1e byte a byte", () => {
+    expect(kernelStristr("a horse", "Horse")).toBe(2);
+    expect(kernelStristr("Hors", "Horse")).toBe(-1); // needle más largo → −1 (0x6f3b)
+    // ⚠ el salto tras un fallo avanza lo casado + 1 (0x6f75-0x6f7d): "HHorse" NO casa.
+    expect(kernelStristr("HHorse", "Horse")).toBe(-1);
+    expect(kernelStristr("xHorse", "Horse")).toBe(1);
+    // bit 7 fuera y `and 0x5f` por encima de 0x60: '{' (0x7b) pliega a '[' (0x5b).
+    expect(kernelStristr("[", "{")).toBe(0);
+    expect(kernelStristr("È", "H")).toBe(0); // 0xC8 & 0x7f = 0x48 'H'
+    expect(kernelStristr("@", "`")).toBe(-1); // 0x60 NO se pliega (cmp 0x60 / jle)
   });
 
   it("palabra no reconocida → sin efecto", () => {

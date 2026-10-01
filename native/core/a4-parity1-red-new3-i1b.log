@@ -1,0 +1,4 @@
+1/1 Test #86: a3_04b_perf ......................***Failed   14.40 sec
+RED I1b the fragment also places speaker_segment_frames, begin_segment's leaf, in IRAM
+0% tests passed, 1 tests failed out of 1
+	 86 - a3_04b_perf (Failed)

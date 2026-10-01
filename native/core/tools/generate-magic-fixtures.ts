@@ -23,7 +23,7 @@ const rows:string[]=[];let cases=0;
 for(let spell=0;spell<49;++spell)for(let variant=0;variant<32;++variant)for(let si=0;si<16;++si){
  const seed=(si*4051+variant*31+spell)&65535;
  const caster:any={name:'MEM0',status:['G','P','S','D'][variant%4],class:['A','M','B','F'][variant%4],currentHp:variant%3===0?100:10,maxHp:100,currentMp:variant%5===0?0:30,level:variant%7===0?1:8,intelligence:20,exp:1000};
- const state:any={characters:[caster],spellQuantities:Array(48).fill(variant%11===0?0:3),reagentQuantities:Array(8).fill(variant%3===0?0:10),position:{location:[0,1,18,29,33,128][variant%6]},food:9998,wornCrown:variant%2===0,timeSpell:'',timeSpellTurns:0,lightSpellMins:0,wind:0,windDriftCtr:9};
+ const state:any={characters:[caster],spellQuantities:Array(48).fill(variant%11===0?0:3),reagentQuantities:Array(8).fill(variant%3===0?0:10),position:{location:[0,1,18,29,33,128][variant%6]},food:9998,lbArtifacts:{amulet:false,crown:variant%2===0,sceptre:false},timeSpell:'',timeSpellTurns:0,lightSpellMins:0,wind:0,windDriftCtr:9};
  const raw=new OriginalRng(seed),draws:number[]=[];const next=raw.next.bind(raw);raw.next=(lo,hi)=>{const v=next(lo,hi);draws.push(lo,hi,v);return v;};
  const rng=new CombatRng(raw);
  const mix=mixSpell(state,defs[spell]!,variant%5-1);

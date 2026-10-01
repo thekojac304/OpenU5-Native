@@ -122,17 +122,29 @@ describe("castSpell — el gate CABLEADO: corta antes del maná, del hechizo y d
     expect(g.spellQuantities[4]).toBe(qtyAntes); // no llegó al 0x0ec8
   });
 
-  it("Mani en el Palacio (0x12) SIN corona → 'Absorbed!'; con la corona PUESTA sale adelante", () => {
+  // A4-PARITY1 (NEW-1): el gate lee g_crown [0x57b4] = la POSESIÓN (`lbArtifacts.crown`,
+  // SAVED.GAM +0x20E; único escritor el (G)et SJOG 0x16e6). Antes este caso fijaba un
+  // "corona PUESTA" (`wornCrown`) que el binario no lee: cambiado a propósito.
+  it("Mani en el Palacio (0x12) SIN corona → 'Absorbed!'; con la corona EN EL INVENTARIO sale adelante", () => {
     const sin = gameReadyToCastMani();
-    sin.g.wornCrown = false;
+    sin.g.lbArtifacts.crown = false;
     const rSin = castSpell(sin.g, sin.caster, MANI(), { location: LOC_PALACE_OF_BLACKTHORN, inCombat: false }, rng());
     expect(rSin.message).toBe("Absorbed!");
 
     const con = gameReadyToCastMani();
-    con.g.wornCrown = true;
+    con.g.lbArtifacts.crown = true;
     const rCon = castSpell(con.g, con.caster, MANI(), { location: LOC_PALACE_OF_BLACKTHORN, inCombat: false }, rng());
     expect(rCon.message).not.toBe("Absorbed!");
     expect(rCon.ok).toBe(true); // Mani está permitido en pueblo (máscara DS:0x1c90 índice 4)
+  });
+
+  it("A4-PARITY1 — ponerse la corona (0x1c en g_time_spell) NO es tenerla: sin posesión, absorbe", () => {
+    const { g, caster } = gameReadyToCastMani();
+    g.lbArtifacts.crown = false;
+    g.timeSpell = "\x1c";
+    g.timeSpellTurns = 0xff;
+    const r = castSpell(g, caster, MANI(), { location: LOC_PALACE_OF_BLACKTHORN, inCombat: false }, rng());
+    expect(r.message).toBe("Absorbed!");
   });
 
   it("CONTROL — en un pueblo normal (0x0a) el mismo Mani pasa: el gate no se ha vuelto un veto global", () => {

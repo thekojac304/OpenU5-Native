@@ -787,6 +787,15 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
         if(c.dungeon){auto tr=advance_turn(c.game,c.turn,1,r.rand,c.sky);for(uint8_t i=0;i<tr.message_count;++i)r.message(turn_message_text(tr.messages[i]));}else r.turn();
         return r.result;
     }
+    // A4-PARITY1 (NEW-2): (Y)ell underground. DUNGEON.OVL hands Y to the shared kernel
+    // dispatcher (0x07a0 -> 0x3178) and CMDS 0x1418 sends every location but 0 and the
+    // Flame rooms to "\nNo effect!\n" with no turn (0x14ac, DS 0x453a): the reference's
+    // yellWord() location gate. yell_in_world() already has that branch; only the dungeon
+    // context gate below kept the command out ("What?").
+    if(!c.combat&&c.dungeon&&cmd.kind==CommandKind::Yell){
+        auto q=yell_in_world(c,TalkText(cmd.text?cmd.text:u"",cmd.text_length),r.sink());
+        r.result.status=q.status;return r.result;
+    }
     const bool dungeon_camp=c.dungeon&&(cmd.kind==CommandKind::Rest||cmd.kind==CommandKind::RestCancel);
     // R-06: (R)eady is legal in ALL three contexts, not just the overworld. The
     // reference reaches the same ZSTATS try_equip_or_unequip picker from the

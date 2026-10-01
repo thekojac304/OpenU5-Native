@@ -1,0 +1,30 @@
+A4-PARITY1 -- parity corpus and live-driver diffs, pre vs post (2026-10-01).
+PRE = the A4-UI4/hf1 tree (reference and native as before PARITY1); POST = the PARITY1 tree.
+
+== stored corpora (generate-*-fixtures.ts --check against the stored file) ==
+magic.txt (25,088 rows): byte-identical after the reference change (the driver feeds crown possession from the same expression the worn flag used)
+combat.txt (97,344 rows): byte-identical (its enemies mount none of the three gated abilities; no time spell)
+advanced-combat.txt (125,440 rows): 2,794 rows changed; predicted set = variant 18 (timeSpell 'N') or spell 32 (In An, the player's own Negate)
+  rows outside the predicted set: 0; rows whose scenario key (arena, spell, variant, seed) changed: 0
+  changed rows by (spell, variant): [((0, 18), 48), ((1, 18), 48), ((2, 18), 48), ((3, 18), 45), ((4, 18), 48), ((5, 18), 48), ((6, 18), 48), ((7, 18), 48), ((8, 18), 48), ((9, 18), 48), ((10, 18), 48), ((11, 18), 45), ((12, 18), 48), ((13, 18), 48), ((14, 18), 48), ((15, 18), 48), ((16, 18), 48), ((17, 18), 48), ((18, 18), 48), ((19, 18), 48), ((20, 18), 48), ((21, 18), 48), ((22, 18), 48), ((23, 18), 48), ((24, 18), 48), ((25, 18), 48), ((26, 18), 48), ((27, 18), 47), ((28, 18), 48), ((29, 18), 48), ((30, 18), 48), ((31, 18), 48), ((32, 2), 48), ((32, 3), 48), ((32, 4), 48), ((32, 5), 32), ((32, 6), 22), ((32, 10), 48), ((32, 18), 48), ((32, 19), 48), ((32, 20), 48), ((32, 27), 8), ((32, 36), 48), ((32, 37), 20), ((32, 38), 36), ((33, 18), 45), ((34, 18), 48), ((35, 18), 48), ((36, 18), 48), ((37, 18), 48), ((38, 18), 48), ((39, 18), 48), ((40, 18), 48), ((41, 18), 48), ((42, 18), 48), ((43, 18), 48), ((44, 18), 47), ((45, 18), 47), ((46, 18), 48), ((47, 18), 48), ((48, 18), 48)]
+combat-negate.txt (new, 56,160 rows; PRE = generated from the unfixed reference): 16,256 rows changed
+  by time spell (k%3: 0 none, 1 'N', 2 0x1c): {1: 9847, 2: 6409} ; scenario keys changed: 0
+  PRE none:    enemy-ability texts: 213 {'text:Rat disappears!': 96, 'text:Rat reappears!': 10, 'text:MEM2 possessed!': 4, 'text:MEM3 possessed!': 6, 'text:MEM1 possessed!': 5, 'text:MEM4 possessed!': 3, 'text:MEM0 possessed!': 4, 'text:MEM5 possessed!': 4, 'text:Rat teleports!': 81}
+  PRE negate:  enemy-ability texts: 86 {'text:MEM0 possessed!': 4, 'text:Rat disappears!': 72, 'text:Rat reappears!': 7, 'text:MEM1 possessed!': 3}
+  PRE crown:   enemy-ability texts: 87 {'text:MEM0 possessed!': 2, 'text:Rat teleports!': 81, 'text:Rat disappears!': 4}
+  POST none:    enemy-ability texts: 213 {'text:Rat disappears!': 96, 'text:Rat reappears!': 10, 'text:MEM2 possessed!': 4, 'text:MEM3 possessed!': 6, 'text:MEM1 possessed!': 5, 'text:MEM4 possessed!': 3, 'text:MEM0 possessed!': 4, 'text:MEM5 possessed!': 4, 'text:Rat teleports!': 81}
+  POST negate:  enemy-ability texts: 0 {}
+  POST crown:   enemy-ability texts: 0 {}
+
+== live drivers (check-gameplay.ts / check-quests.ts inputs, the native driver run pre and post) ==
+gameplay: rows pre=4802 post=4802 inputs=4802
+gameplay: changed rows 9: [2977, 2981, 2982, 2983, 3096, 3097, 3108, 3109, 3158]
+gameplay: changed rows by input features: {'other': 4, 'wish': 4, 'use-crown': 1}
+gameplay: differing fields (path roots): [('', 81)]
+  the 4 'other' rows (2977, 2981-2983) read scroll 3 (In An -> 'N') in combat [actions attack, cbuse:3, flee, end]: the enemy no longer fires magic (D-80); 3158 uses the crown in combat (cbuse:19, D-79 + D-80); 3096/3097/3108/3109 are wishes (D-50)
+quest: rows pre=5377 post=5377 inputs=5377
+quest: changed rows 6: [264, 265, 266, 267, 268, 269]
+quest: changed rows by input features: {'use-crown': 6}
+quest: differing fields (path roots): [('.steps', 216), ('.state.timeSpellTurns', 6), ('.state.timeSpell', 6)]
+  quest: only .state/.steps timeSpell (None -> 0x1c) and timeSpellTurns (None -> 255) after Use crown (D-79)
+gameplay_parity and quest_parity: GREEN against the fixed reference (ctest)

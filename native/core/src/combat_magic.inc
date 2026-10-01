@@ -322,6 +322,10 @@ void cast_effect(CombatActor &a, SpellEffect fx, const CombatPoint *aim) {
     }
 }
 bool enemy_special(CombatActor &a) {
+    // A4-PARITY1 (P1c): COMSUBS 0x0112-0x011e, the worn crown (0x1c) or Negate ('N')
+    // returns 0 with zero draws before any special is looked at.
+    if (negates_enemy_magic(c.turn.time_spell))
+        return false;
     const auto &d = *a.enemy;
     if (d.abilities & 0x4000) {
         int slot = rand(0, 31);

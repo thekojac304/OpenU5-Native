@@ -150,10 +150,13 @@ CastResult cast_spell(GameState &g, TurnState &t, CharacterState &caster, SpellI
     const auto *d = spell_definition(id);
     if (!d)
         return {false, false, "No effect!", {}};
+    // A4-PARITY1 (NEW-1): CAST 0x0e45 reads g_crown [0x57b4] = crown POSSESSION
+    // (quest.artifacts[1], .gam 0x20E; its only writer is the Get, SJOG 0x16e6), not the
+    // worn crown (time spell 0x1c).
     bool absorbed = ctx.absorbed >= 0
                         ? ctx.absorbed != 0
                         : !ctx.combat && ctx.location > 0 && ctx.location < 128 &&
-                              ((ctx.location == 18 && !g.worn_crown) || ctx.location == 29);
+                              ((ctx.location == 18 && !g.quest.artifacts[1]) || ctx.location == 29);
     if (absorbed)
         return {false, false, "Absorbed!", {}};
     int bit = ctx.combat || ctx.location >= 128 ? 1

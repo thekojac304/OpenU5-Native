@@ -9,6 +9,9 @@ using namespace openu5;
 using V = std::vector<int64_t>;
 struct Harness {
     std::vector<CombatMap> real_maps;
+    // A4-PARITY1 (P1c): the --negate corpus (generate-combat-fixtures.ts --negate) mounts the
+    // abilities the three Negate / worn-crown gates test, under no time spell, 'N' and 0x1c.
+    bool negate = false;
     GameState g{}, initial{};
     TurnState t{};
     CombatState s{};
@@ -143,7 +146,8 @@ struct Harness {
             map.tiles[5 * 11 + 7] = 12;
         if (k % 9 == 0)
             map.tiles[4 * 11 + 5] = 4;
-        const int masks[] = {0, 0x2000, 0x800, 0x100, 0x8000, 0x200, 2, 0x400, 0x10},
+        const int default_masks[] = {0, 0x2000, 0x800, 0x100, 0x8000, 0x200, 2, 0x400, 0x10},
+                  negate_masks[] = {0x80, 0x20, 0x4000, 0x08, 0x04},
                   ehps[] = {1, 25, 100};
         enemy = {};
         enemy.index = k % 10 == 0 ? 30 : k % 14 == 0 ? 45 : 20;
@@ -158,7 +162,12 @@ struct Harness {
         enemy.max_per_map = 3;
         enemy.treasure = k % 3 * 15;
         enemy.range = k % 2 ? 4 : 1;
-        enemy.abilities = uint16_t(masks[k % 9]);
+        enemy.abilities = uint16_t(negate ? negate_masks[k % 5] : default_masks[k % 9]);
+        if (negate) {
+            const char spells[] = {0, 'N', '\x1c'};
+            t.time_spell = spells[k % 3];
+            t.spell_turns = 255;
+        }
         const int classes[] = {0, 1, 2, 4, 7, 8, 9, 10, 255};
         enemy.move_class = uint8_t(classes[k % 9]);
         if (k % 13 == 12) {
@@ -254,7 +263,9 @@ int main(int argc, char **argv) {
     if (!file)
         return 2;
     Harness h;
-    if (argc == 3) {
+    if (argc == 3 && std::string(argv[2]) == "--negate")
+        h.negate = true;
+    else if (argc == 3) {
         // Read the test transport generated from combatmaps.json, never the CBT bytes.
         std::ifstream maps(argv[2]);
         for (int i = 0; i < 128; ++i) {

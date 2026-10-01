@@ -23,7 +23,7 @@ const flags=[0,0x1000,0x4000,8,4,0x20,0x80,0x2000,0x800,0x402,0x402c,0x1080,0,0,
 const spells=real?[1,10,24,28,30,34,35,38,40,43,44,45,47]:Array.from({length:49},(_,i)=>i);
 for(let arena=0;arena<(real?512:1);++arena)for(const spell of spells)for(let variant=0;variant<(real?2:40);++variant)for(let si=0;si<(real?1:8);++si){
  const v=real?(variant===0?1:10):variant,seed=(si*8191+v*101+spell*31+arena*17)&65535;
- const s:any={characters:Array.from({length:2},(_,i)=>({name:`MEM${i}`,class:'A',status:i===1?['G','P','S','D'][v%4]:'G',currentHp:v%9===0?100:50,maxHp:100,currentMp:v%7===0?0:30,level:v%11===0?1:8,strength:20,dexterity:30,intelligence:v%3===0?1:30,exp:1000,helmet:255,armor:255,weapon:255,shield:255,ring:255,amulet:v%2===0?45:255,partyStatus:0})),partySize:2,activeCharacter:255,equipmentQuantities:Array(256).fill(0),reagentQuantities:Array(8).fill(10),spellQuantities:Array(48).fill(v%13===0?0:5),food:100,position:{location:v%17===0?18:0,floor:0,x:5,y:5},transportTile:28,karma:75,wornCrown:v%2===0,timeSpell:v===18?'N':v===19?'C':v===20?'T':v===21?'Q':'',timeSpellTurns:30};
+ const s:any={characters:Array.from({length:2},(_,i)=>({name:`MEM${i}`,class:'A',status:i===1?['G','P','S','D'][v%4]:'G',currentHp:v%9===0?100:50,maxHp:100,currentMp:v%7===0?0:30,level:v%11===0?1:8,strength:20,dexterity:30,intelligence:v%3===0?1:30,exp:1000,helmet:255,armor:255,weapon:255,shield:255,ring:255,amulet:v%2===0?45:255,partyStatus:0})),partySize:2,activeCharacter:255,equipmentQuantities:Array(256).fill(0),reagentQuantities:Array(8).fill(10),spellQuantities:Array(48).fill(v%13===0?0:5),food:100,position:{location:v%17===0?18:0,floor:0,x:5,y:5},transportTile:28,karma:75,lbArtifacts:{amulet:false,crown:v%2===0,sceptre:false},timeSpell:v===18?'N':v===19?'C':v===20?'T':v===21?'Q':'',timeSpellTurns:30};
  const enemies:any[]=Array.from({length:48},(_,i)=>({index:i,name:'Enemy',groupName:'ENEMIES',str:15,dex:10,int:v%3===0?30:1,armour:v%5===0?20:0,damage:10,hp:v%5===0?10:100,maxPerMap:3,treasure:10,attackRange:5,moveClass:0,abilities:decodeAbilities(i===20?flags[v%16]!:0),doesNotMove:false}));
  let map:CombatMapData={index:0,territory:'test',name:null,tiles:Array.from({length:11},()=>Array(11).fill(v===22?12:5)),playerStarts:{east:[{x:2,y:2},{x:3,y:3}],west:[{x:2,y:2},{x:3,y:3}],south:[{x:2,y:2},{x:3,y:3}],north:[{x:2,y:2},{x:3,y:3}]},units:Array.from({length:16},(_,i)=>({sprite:0,x:4+i%5,y:2+Math.floor(i/5)})),triggers:[]};
  if(v===23)map.tiles[2]![3]=12;if(v===24)map.tiles[2]![2]=143;
@@ -53,7 +53,7 @@ for(let arena=0;arena<(real?512:1);++arena)for(const spell of spells)for(let var
   let x=aim?.x??-1,y=aim?.y??-1;
   if(op===0 && cur?.kind==='player'){
    ev.push({kind:'echo',text:'Cast...\n'});
-   if(combatCastAbsorbed(s.timeSpell,s.position.location,s.wornCrown)){ev.push({kind:'message',text:'Absorbed!\n'});ev.push(...c.playerCast(null,null));}
+   if(combatCastAbsorbed(s.timeSpell,s.position.location,s.lbArtifacts.crown)){ev.push({kind:'message',text:'Absorbed!\n'});ev.push(...c.playerCast(null,null));}
    else {
     const r=castSpell(s,s.characters[cur.charIdx],defs[spell]!,{location:s.position.location,inCombat:true},c.rng);
     if(r.message)ev.push({kind:'message',text:r.message});if(!r.ok&&r.consumed)ev.push({kind:'message',text:'Failed!'});

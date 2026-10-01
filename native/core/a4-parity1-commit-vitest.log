@@ -1,0 +1,15 @@
+A4-PARITY1 revalidation after the UI4/PRES1 commit (48bd39ef) and the PARITY1 restore -- reference
+tsc --noEmit: rc=0
+
+targeted (cast-absorbed-gate, combat-spells, shrines, use-tools):
+ Test Files  4 passed (4)
+      Tests  90 passed (90)
+
+full vitest (JSON report; exit 1 = the pre-existing failures):
+recorded PARITY1 run: {'numTotalTests': 7735, 'numPassedTests': 7532, 'numFailedTests': 97, 'numPendingTests': 106, 'numFailedTestSuites': 77}
+this run:             {'numTotalTests': 7735, 'numPassedTests': 7532, 'numFailedTests': 97, 'numPendingTests': 106, 'numFailedTestSuites': 77}
+assertion-level fails: recorded 97 | this run 97
+only in recorded: []
+only in this run: []
+assertion-level FAIL set: IDENTICAL
+recorded fails.txt agrees with recorded json: True

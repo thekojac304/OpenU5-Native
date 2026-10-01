@@ -53,6 +53,7 @@ import {
   revealSecretDoor,
 } from "../world/commands.js";
 import { trapCheck } from "../world/traps.js";
+import { TIME_SPELL_CROWN } from "../world/blackthorn.js";
 import { furnitureSearchProse } from "../world/search.js";
 import { isFrigate, TILE_FOOT, TILE_INVISIBLE } from "../world/transport.js";
 import type { LootGrant } from "../world/commands.js";
@@ -522,6 +523,21 @@ export const SPELL_WEAPON_STATS: Record<number, { attack: number; range: number 
  *  guardada desde g_location en ULTIMA.EXE 0x5fab al entrar en combate). */
 export const LOC_PALACE_OF_BLACKTHORN = 0x12;
 
+/**
+ * A4-PARITY1 (P1c) — ¿anula la magia enemiga el efecto temporal activo? Negate 'N' (In An)
+ * y la Corona PUESTA (0x1c, `TIME_SPELL_CROWN`) comparten tres gates del binario, todos
+ * sobre g_time_spell [0x587a]:
+ *  - COMBAT 0x0185-0x019b: tras la tirada del 50 % (0x017a), un proyectil MÁGICO (LE 0x8000
+ *    = `rangedMagic`) NO se dispara (0x019d: ret 0, el turno sigue como un "no dispara");
+ *  - COMBAT 0x0f27-0x0f3b: una criatura que TELETRANSPORTA (LE 0x2000 = `teleport`) no lo
+ *    hace (salta a 0x0fab, el movimiento normal; sin la tirada rand0(3));
+ *  - COMSUBS 0x0112-0x011e: las especiales (poseer / invisibilidad / daemon) devuelven 0
+ *    con CERO tiradas.
+ */
+export function negatesEnemyMagic(timeSpell: string | undefined): boolean {
+  return timeSpell === "N" || timeSpell === TIME_SPELL_CROWN;
+}
+
 /** "Absorbed!\n" — DATA.OVL DS 0x6e00, impreso por el gate de (C)ast en combate. */
 export const COMBAT_ABSORBED_MESSAGE = "Absorbed!\n";
 
@@ -565,10 +581,12 @@ export function combatCastEffect(fx: CastEffect | null | undefined): CastEffect 
 export function combatCastAbsorbed(
   timeSpell: string | undefined,
   combatOriginLocation: number,
-  wornCrown: boolean,
+  hasCrown: boolean,
 ): boolean {
   if (timeSpell === "N") return true; // 0x0928: negate-magic (In An)
-  if (combatOriginLocation === LOC_PALACE_OF_BLACKTHORN && !wornCrown) return true; // 0x0936
+  // A4-PARITY1 (NEW-1): 0x092f `cmp byte [0x57b4],0` lee g_crown = la POSESIÓN
+  // (`lbArtifacts.crown`, escrita sólo por el (G)et SJOG 0x16e6), no un "puesta".
+  if (combatOriginLocation === LOC_PALACE_OF_BLACKTHORN && !hasCrown) return true; // 0x0936
   return false;
 }
 
@@ -4756,6 +4774,9 @@ export class Combat {
    * ejecutarse devuelve null (ret 0) y el enemigo ataca/mueve.
    */
   private enemySpecial(enemy: Combatant, def: EnemyDef): CombatEvent[] | null {
+    // A4-PARITY1 (P1c) — COMSUBS 0x0112-0x011e: Corona puesta (0x1c) o Negate ('N') →
+    // ret 0 con CERO tiradas, antes de mirar ninguna especial.
+    if (negatesEnemyMagic(this.opts.state.timeSpell)) return null;
     if (def.abilities.possessCharm) {
       // Slot aleatorio 0..31 (consume 1 rand); SOLO si es un jugador
       // "limpio" (sin flags 0x3D: 0x157/0x15d) hay contest de INT
@@ -4910,6 +4931,11 @@ export class Combat {
       if (def?.index !== MIMIC_TYPE && this.crng.rand0(0xff) >= 0x80) {
         return null;
       }
+      // A4-PARITY1 (P1c) — 0x0185-0x019b: proyectil mágico bajo Negate / Corona puesta →
+      // el mismo "no dispara" que la tirada (0x019d), DESPUÉS de consumirla.
+      if (def?.abilities.rangedMagic && negatesEnemyMagic(this.opts.state.timeSpell)) {
+        return null;
+      }
       if (!this.isRangedPathClear(enemy.x, enemy.y, target.x, target.y)) return null;
       const events: CombatEvent[] = [];
       // amulet_negate fuerza el fallo SIN tirar el hit (0x014E 01b5-01c0): no consume
@@ -4982,7 +5008,9 @@ export class Combat {
 
     // Teleport (flags LE 0x2000) — 0x0EE4 0f20-0fa8: si no está en contacto
     // o rand0(3)==3, UN intento de celda aleatoria.
-    if (def?.abilities.teleport && enemy.kind === "enemy") {
+    // A4-PARITY1 (P1c) — 0x0f2f-0x0f3b: bajo Negate / Corona puesta no teletransporta
+    // (salta a 0x0fab, el movimiento normal) y no tira rand0(3).
+    if (def?.abilities.teleport && enemy.kind === "enemy" && !negatesEnemyMagic(this.opts.state.timeSpell)) {
       const adjacent =
         target !== null && combatDistance(enemy.x - target.x, enemy.y - target.y) <= 1;
       if (!adjacent || this.crng.rand0(3) === 3) {

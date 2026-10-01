@@ -76,7 +76,7 @@ struct Advanced : Harness {
         g.party.active_character = 255;
         g.food = 100;
         g.karma = 75;
-        g.worn_crown = v % 2 == 0;
+        g.quest.artifacts[1] = v % 2 == 0; // A4-PARITY1 (NEW-1): crown POSSESSION (g_crown, .gam 0x20E)
         g.position.map.location = uint8_t(v % 17 == 0 ? 18 : 0);
         g.rng.seed(seed);
         t.transport_tile = 28;

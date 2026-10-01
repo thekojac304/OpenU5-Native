@@ -19,6 +19,6 @@ endif()
 # 4.0.0-alpha4-ui4-debug; its hardware follow-up (section 8.22: the console
 # height) sets 4.0.0-alpha4-ui4-hf1-debug, so the retest image never shares
 # a name or an FW line with the first A4-UI4 image.
-set(PROJECT_VER "4.0.0-alpha4-ui4-hf1-debug")
+set(PROJECT_VER "4.0.0-alpha4-parity1-debug")
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(openu5_tdeck)
