@@ -202,7 +202,8 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
         debug51::Step trace("intro-view-bind");
         if(!intro_view_.bind(resources_.intro_view)){ESP_LOGE(kTag,"Derived INTRO.OVL View data invalid");return ESP_ERR_INVALID_SIZE;}
     }
-    ui_=new(ui_mem)openu5::UiSession({transcript_,kTranscriptBlocks},{this,dispatch_ui},{11,12,63});
+    construct_session(ui_mem,transcript_,kTranscriptBlocks);
+    configure_session();
     openu5::save::SidecarSource source;
     openu5::save::Error load{};
     {
@@ -408,7 +409,13 @@ void AlphaRuntime::consume_event(const openu5::GameEvent&e){
 }
 
 void AlphaRuntime::release_dialogue_event(void *p,const openu5::GameEvent&e){static_cast<AlphaRuntime*>(p)->route_event(e);}
-uint32_t AlphaRuntime::ritual_hold_ms(void *p,const openu5::GameEvent&e){return static_cast<AlphaRuntime*>(p)->ritual_fx_.hold_after_ms(e);}
+uint32_t AlphaRuntime::ritual_hold_ms(void *p,const openu5::GameEvent&e){
+    // A4-UI4 (D-71): Mix prints "Mixing..." (DS 0x8ff0) and waits 10 ticks
+    // (CMDS 0x1b88-0x1b9c: delay(10) or run_n_frames(10)) before it deducts the
+    // reagents and says "Done!" or springs the trap; keys are swallowed, as in
+    // every timed beat (A3-HF7). The core's own literal is the cue.
+    if(e.kind==openu5::GameEventKind::Message&&e.text&&std::strcmp(e.text,"Mixing...")==0)return openu5::delay_ticks_ms(10);
+    return static_cast<AlphaRuntime*>(p)->ritual_fx_.hold_after_ms(e);}
 
 // A3-HF5. Releases a Timed pause whose 28 ticks are up. A turn that ends in
 // the pacer may have left an NPC's approach waiting behind it (the drain
@@ -589,6 +596,7 @@ void AlphaRuntime::route_event(const openu5::GameEvent&e){
         ESP_LOGI(kTag,"VIEW_EFFECT type=gem presentation=%s deferred_turn=%d dungeon=%d",
                  dungeon_.active?"dungeon-floor-map":"world-map",gem_view_charges_turn_,dungeon_.active);
     }
+    if(e.kind==openu5::GameEventKind::Sfx&&e.text&&std::strcmp(e.text,"moongate")==0)begin_moongate_transit();
     if(e.kind==openu5::GameEventKind::Zodiac&&e.zodiac){
         zodiac_view_=*e.zodiac;zodiac_view_active_=true;
         dirty_=true;dirty_reason_="zodiac-view";
@@ -652,6 +660,37 @@ void AlphaRuntime::begin_quake(){
 // screen_shake_fx blocks until it is done. Native has no audio catalogue, so
 // the shake window is the only lead this device can derive, and it is the one
 // the ritual actually needs (three quakes precede its burst).
+// A4-UI4 (D-48). kernel 0x48a8, the party on a gate: run_n_frames(1); the
+// activation sweep (0x48e5, tone_sweep count 0x7530: its calibrated hold);
+// fx_tile_fizzle_in 0xdc over the party at (5,5) (no timer: one tick); run_n_
+// frames(1); then the gate closes over the cell, 0x1112(stage) from 15 to 1
+// with delay(2) after each (15 x 2 ticks = 1,648 ms); grass; the teleport (or,
+// at midnight, none). The core has already moved the party when this starts --
+// its cue is emitted on the origin, before the teleport -- so the presenter
+// keeps the origin on screen and lets nothing else through until it ends.
+namespace {
+constexpr uint32_t kMoongateFizzleMs=openu5::run_n_frames_ms(1)+openu5::tone_sweep_ms(0x7530);
+constexpr uint32_t kMoongateCloseMs=kMoongateFizzleMs+openu5::kSceneTickMs+openu5::run_n_frames_ms(1);
+constexpr uint32_t kMoongateTransitMs=kMoongateCloseMs+15*openu5::delay_ticks_ms(2);
+// A4-UI4 (ALPHA4_UI.md section 8.20): poll_key_blink_cursor 0x1b38 draws the
+// next wave glyph on every pass of getkey_with_redraw 0x266c, which waits one
+// tick (0x20fa(1)) and redraws the map (0x5910) between passes. The video
+// measures ~100 ms a frame (getkey-cursor-derivacion.md; the web port's 110 ms):
+// two ticks.
+constexpr uint32_t kConsoleCursorPhaseMs=openu5::delay_ticks_ms(2);
+}
+void AlphaRuntime::begin_moongate_transit(){
+    moongate_transit_=true;moongate_transit_us_=esp_timer_get_time();moongate_origin_=game_.position;
+    moongate_transit_shown_=-1;dirty_=true;dirty_reason_="moongate-transit";
+    ESP_LOGI(kTag,"MOONGATE_TRANSIT origin=%u,%u floor=%d sweep_ms=%lu total_ms=%lu",unsigned(game_.position.xy.x),
+             unsigned(game_.position.xy.y),int(game_.position.map.floor),(unsigned long)openu5::tone_sweep_ms(0x7530),
+             (unsigned long)kMoongateTransitMs);
+}
+uint32_t AlphaRuntime::moongate_transit_elapsed_ms() const{
+    return moongate_transit_?uint32_t((esp_timer_get_time()-moongate_transit_us_)/1000):0;
+}
+bool AlphaRuntime::moongate_transit_active() const{return moongate_transit_&&moongate_transit_elapsed_ms()<kMoongateTransitMs;}
+
 int64_t AlphaRuntime::quake_remaining_ms(int64_t now_us) const{
     if(quake_pulses_<=0)return 0;
     const int64_t elapsed_ms=(now_us-quake_start_us_)/1000;
@@ -1967,6 +2006,11 @@ bool AlphaRuntime::handle_input_event(const RawInputEvent&raw){service_combat();
         ESP_LOGI(kTag,"MAP_REVEAL_INPUT action=%s effect=swallowed gameplay_command=none",action_name(action.kind));
         return true;
     }
+    // A4-UI4 (D-48): 0x48a8's sweep, fizzle and closing loop read no key.
+    if(moongate_transit_active()&&shortcut==DeviceShortcut::None){
+        ESP_LOGI(kTag,"MOONGATE_INPUT action=%s effect=swallowed gameplay_command=none",action_name(action.kind));
+        return true;
+    }
     if(gem_view_active_&&shortcut==DeviceShortcut::None){
         const bool charge=gem_view_charges_turn_;
         gem_view_active_=false;gem_view_charges_turn_=false;
@@ -2117,6 +2161,12 @@ const char *AlphaRuntime::overlay() const {static char text[64]{};text[0]=0;
     // "To phase:", then a bare key) is not an aim: without this the generic
     // reticle text below replaced the prompt with "Aim: empty (-1,-1)".
     if(ui_&&ui_->mode()==openu5::UiMode::TargetSelection&&ui_->request()==openu5::UiRequestId::GatePhase){std::snprintf(text,sizeof(text),"To phase:");return text;}
+    // A4-UI4 (H-15 / D-53's other half): a getdir -- Look-, Talk-, Attack- and
+    // the rest in the world, Get- / Open- / Search- in the arena -- reads only a
+    // direction (kernel 0x35EC); the reticle readout below belongs to the
+    // arena's aim. The 1988 screen shows the echo and the cursor.
+    if(ui_&&ui_->mode()==openu5::UiMode::TargetSelection&&ui_->request()==openu5::UiRequestId::Direction&&
+       ui_->target_command_kind()!=openu5::CommandKind::Fire){std::snprintf(text,sizeof(text),"Direction?");return text;}
     if(ui_&&ui_->mode()==openu5::UiMode::TargetSelection){const int x=ui_->target_x(),y=ui_->target_y();if(ui_->target_command_kind()==openu5::CommandKind::Fire){if(ui_->target_has_direction())std::snprintf(text,sizeof(text),"Fire: %s",openu5::direction_name(ui_->target_direction()));else std::snprintf(text,sizeof(text),"Fire: choose direction");}else{const openu5::CombatActor *target=nullptr;if(context_.combat)for(int i=0;i<combat_.count;++i){const auto&a=combat_.actors[i];if(combat_actor_live(a)&&a.position.x==x&&a.position.y==y){target=&a;break;}}if(target){const char *name=target->enemy&&target->enemy->name?target->enemy->name:target->member<game_.party.character_count?game_.party.characters[target->member].name:"Actor";std::snprintf(text,sizeof(text),"Aim: %.16s (%d,%d)",name,x,y);}else std::snprintf(text,sizeof(text),"Aim: empty (%d,%d)",x,y);}}
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
     else if(ui_&&ui_->mode()==openu5::UiMode::DebugMenu&&debug_){auto v=debug_->view();std::snprintf(text,sizeof(text),"%s > %s",v.title?v.title:"Debug",v.item?v.item:"");}
@@ -2619,8 +2669,32 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
         if(elapsed_ms>=int64_t(quake_pulses_)*openu5::kQuakePeriodMs)quake_pulses_=0;
         else quake_offset_px=openu5::quake_offset_at(int32_t(elapsed_ms),quake_pulses_);
     }
+    // A4-UI4 (D-48): one 0x475a pass per tick on the surface (the idle getkey
+    // redraws outdoors every tick, 0x266c -> 0x5910); each stage a gate in view
+    // shows is a full frame. The transit owns the counter while it runs.
+    if(moongate_transit_){
+        const uint32_t ms=moongate_transit_elapsed_ms();
+        const int shown=ms>=kMoongateTransitMs?-2:ms<kMoongateFizzleMs?0:ms<kMoongateCloseMs?1:
+                        int(2+(ms-kMoongateCloseMs)/openu5::delay_ticks_ms(2));
+        if(shown==-2){moongate_transit_=false;moongate_stage_=0;moongate_stage_tick_=uint32_t(now/55000);
+            dirty_=true;dirty_reason_="moongate-transit-end";ESP_LOGI(kTag,"MOONGATE_TRANSIT end");}
+        else if(shown!=moongate_transit_shown_){moongate_transit_shown_=shown;dirty_=true;dirty_reason_="moongate-transit";}
+    }else if(!game_.position.map.location&&!dungeon_.active&&!context_.combat){
+        const uint32_t t=uint32_t(now/55000);const bool night=openu5::moongate_night(game_);
+        const uint8_t before=moongate_stage_;
+        if(moongate_settle_)moongate_stage_=night?uint8_t(openu5::kMoongateStages):0;
+        else if(t!=moongate_stage_tick_){const int steps=int(std::min<uint32_t>(t-moongate_stage_tick_,uint32_t(openu5::kMoongateStages)));
+            moongate_stage_=uint8_t(night?std::min(int(openu5::kMoongateStages),moongate_stage_+steps):std::max(0,moongate_stage_-steps));}
+        moongate_settle_=false;moongate_stage_tick_=t;
+        if(moongate_stage_!=before){dirty_=true;dirty_reason_="moongate-stage";}
+    }
     const bool quake_active=quake_pulses_>0;
     if(quake_active!=quake_was_active_){dirty_=true;dirty_reason_=quake_active?"quake":"quake-end";}
+    // A4-UI4 (H-212 / D-69): an animation-only frame redraws the animated cells
+    // alone, so over a still view a quake showed one 2 px drop for the whole
+    // shake. Each change of the offset (a pulse down, its rest) is a full frame.
+    else if(quake_offset_px!=quake_drawn_px_){dirty_=true;dirty_reason_="quake-pulse";}
+    quake_drawn_px_=quake_offset_px;
     quake_was_active_=quake_active;
     // Y-04 (Batch 7B). Three more presentation timers, all of them on the same
     // frame clock as the quake above: none blocks, none freezes the loop.
@@ -2628,6 +2702,13 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     const size_t world_fx_count=world_fx_.paint(uint32_t(now/1000),world_fx_ops,
                                                 sizeof(world_fx_ops)/sizeof(world_fx_ops[0]));
     const bool world_fx_active=world_fx_.active();
+    // A4-UI4 (H-209 / D-67): 0x3522's noise_burst, one per burst as it lands --
+    // the combat hit cue's program with the same arguments (A3-HF8).
+    for(uint32_t burst=world_fx_.take_burst_starts();burst;--burst){
+        ESP_LOGI(kTag,"SFX_CUE id=%s source=cell-explosion",openu5::sfx_cue(openu5::SfxId::CombatHit));
+        audio_.play_sfx(openu5::SfxId::CombatHit);
+        dirty_=true;dirty_reason_="cell-explosion-burst";
+    }
     if(world_fx_active!=world_fx_was_active_){dirty_=true;dirty_reason_=world_fx_active?"world-fx":"world-fx-end";}
     world_fx_was_active_=world_fx_active;
     const bool poison_active=poison_.active();
@@ -2649,7 +2730,14 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     // the start/stop transition.
     bool animation_only=!debug_mode&&!dirty_&&!force&&(animation_visible_||quake_active||world_fx_active||poison_active)&&tick!=rendered_animation_tick_;
     if(dungeon_presentation_pending_){force=true;animation_only=false;}
-    if(!dirty_&&!force&&!animation_only)return ESP_OK;
+    // A4-UI4 (ALPHA4_UI.md section 8.20): the console's prompt row and wait
+    // cursor follow getkey; their coming and going redraws the console, and
+    // a frame with nothing else to draw still moves the cursor's wave.
+    ui_->set_console_ready(console_ready());
+    const auto console_cursor=ui_->console_cursor();
+    if(console_cursor!=console_cursor_shown_){dirty_=true;dirty_reason_="console-cursor";animation_only=false;}
+    board.set_console_cursor_phase(uint8_t((uint64_t(now)/1000U/kConsoleCursorPhaseMs)&3U));
+    if(!dirty_&&!force&&!animation_only)return board.animate_console_cursor();
     const int64_t frame_t0=esp_timer_get_time(); // A3-04B: the frame's own time starts here
     const char *render_reason=force?"full-redraw":animation_only?"animation-tick":dirty_reason_;
     auto &snapshot=presentation_;snapshot={};
@@ -2682,7 +2770,8 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     if(endgame_source){endgame_pose_rng_.seed(int32_t(tick));endgame_->compose(snapshot,endgame_pose_rng_);}
     else if(blackthorn_source)snapshot=openu5::compose_blackthorn_presentation(blackthorn_pacer_.view());
     else if(refuge_source)snapshot=openu5::compose_refuge_presentation(narrative_pacer_.phase(),
-        turn_.transport_tile>=0?int16_t(turn_.transport_tile+0x100):int16_t(tile_report_.avatar_tile));
+        turn_.transport_tile>=0?int16_t(turn_.transport_tile+0x100):int16_t(tile_report_.avatar_tile),
+        narrative_pacer_.refuge_avatar_placed());
     else if(camp_source){
         const auto &arena=*resources_.combat_map_views[0];
         snapshot.center={5,5};
@@ -2718,7 +2807,8 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     }
     else if(combat_source)snapshot=openu5::compose_combat_presentation(combat_,game_);
     else if(dungeon_source)snapshot.center={dungeon_.pos.x,dungeon_.pos.y};
-    else{auto active=openu5::get_active_map(resources_.world,game_.position.map);if(active.error!=openu5::Error::None){
+    else{const auto &place=moongate_transit_?moongate_origin_:game_.position;
+        auto active=openu5::get_active_map(resources_.world,place.map);if(active.error!=openu5::Error::None){
         // A missing {location,floor} map (e.g. a resource pack built before a
         // forced-relocation destination such as Blackthorn's deposit() target
         // was authored) leaves this render bailing out silently every tick,
@@ -2729,7 +2819,17 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
         ESP_LOGE(kTag,"WORLD_MAP_MISSING location=%u floor=%d xy=%u,%u",unsigned(game_.position.map.location),
                  int(game_.position.map.floor),unsigned(game_.position.xy.x),unsigned(game_.position.xy.y));
         return ESP_FAIL;
-    }const int avatar=turn_.transport_tile>=0?turn_.transport_tile+0x100:tile_report_.avatar_tile;snapshot=openu5::compose_world_presentation(context_,active.value,game_.position.xy,avatar,map_reveal_active);u5obj_trace_present(snapshot);if(gem_view_active_){world_gem_map=active.value;world_gem_map_ready=true;}}
+    }const int avatar=turn_.transport_tile>=0?turn_.transport_tile+0x100:tile_report_.avatar_tile;snapshot=openu5::compose_world_presentation(context_,active.value,place.xy,avatar,map_reveal_active,moongate_stage_);
+        if(moongate_transit_&&moongate_transit_shown_>=1){
+            // A4-UI4 (D-48): the origin's own cell -- the gate fizzled over the
+            // party (1), then closing from stage 15 (2..16) on grass.
+            constexpr int centre=(openu5::kPresentationWindow/2)*openu5::kPresentationWindow+openu5::kPresentationWindow/2;
+            snapshot.visible[centre]=1;snapshot.animated[centre]=0;
+            snapshot.gate_x=snapshot.gate_y=int8_t(openu5::kPresentationWindow/2);snapshot.gate_ground=int16_t(openu5::kMoongateGroundTile);
+            if(moongate_transit_shown_==1){snapshot.tiles[centre]=int16_t(openu5::kMoongateTile);snapshot.gate_rows=16;}
+            else{snapshot.tiles[centre]=int16_t(openu5::kMoongateGroundTile);snapshot.gate_rows=uint8_t(std::max(1,17-moongate_transit_shown_));}
+        }
+        u5obj_trace_present(snapshot);if(gem_view_active_){world_gem_map=active.value;world_gem_map_ready=true;}}
     // A3-HF2.1: a change of source or mode is the information; a repeat of the
     // previous line is not. Logging every frame made it 24-31 % of a hardware
     // capture, and console time on this thread (ALPHA3_AUDIO.md section 23.10.5).
@@ -2845,8 +2945,8 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     // R-05: while the dungeon3d source owns the viewport, the two strips carry
     // the dungeon's level and facing. R-17/Y-14: the gem view is instead its
     // own full-square composition -- `full_square_viewport` below drops the
-    // strips entirely rather than overdrawing them across it. The zodiac view
-    // still keeps the world bars (unchanged, out of this batch's scope).
+    // strips entirely rather than overdrawing them across it. A4-UI4 (D-12):
+    // so is the spyglass's zodiac view.
     const auto dungeon_bands=openu5::hud_dungeon_bands(dungeon_,dungeon_source&&!gem_view_active_&&!zodiac_view_active_);
     // A3-04C: what the Board measured inside THIS frame's TFT write only.
     openu5::TftTiming tft_timing{};board.take_tft_timing(tft_timing);
@@ -2870,7 +2970,7 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
                                input_.movement_mode_active(ui_->mode(),ui_->accepts_direction_input()),
                                settings_.ui_size,compose_shop_view(),compose_selection_view(),compose_context_bar(),
                                compose_party_highlight(),report.viewport_crc32,&dungeon_bands,
-                               gem_view_active_||camp_source,camp_source);
+                               gem_view_active_||zodiac_view_active_||camp_source,camp_source);
     }
     if(endgame_capture&&endgame_dissolve_==1){
         board.end_endgame_capture();
@@ -2922,7 +3022,29 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
                                 (unsigned long)us,render_reason,unsigned(report.animated_cell_count),
                                 (unsigned long)report.viewport_crc32);
     animation_visible_=debug_mode?false:snapshot.any_animated;rendered_animation_tick_=tick;magic_was_inverted_=magic_inverted;if(!magic_inverted&&magic_invert_end_us_&&now>=magic_invert_end_us_)magic_invert_end_us_=magic_invert_start_us_=0;
+    if(e==ESP_OK)console_cursor_shown_=console_cursor;
     dirty_=e!=ESP_OK;if(e==ESP_OK)dirty_reason_="input-dirty";return e;
+}
+
+void AlphaRuntime::construct_session(void *memory,openu5::UiTextBlock *blocks,size_t block_count)
+{
+    ui_=new(memory)openu5::UiSession({blocks,block_count},{this,dispatch_ui},session_config());
+}
+
+void AlphaRuntime::configure_session(){
+    // Alpha 4 A4-UI4 (ALPHA4_UI.md section 8.20): the original console's
+    // layout -- bullets, getkey's blank rows, the live prompt row.
+    ui_->set_console_layout(true);
+}
+
+bool AlphaRuntime::console_ready(){
+    if(endgame_&&endgame_->active())return false;
+    if(blackthorn_pacer_.modal()||narrative_pacer_.modal())return false;
+    if(dialogue_pacer_.holding()||dialogue_pacer_.queued()!=0)return false;
+    if(map_reveal_end_us_>esp_timer_get_time()||moongate_transit_active())return false;
+    if(gem_view_active_||zodiac_view_active_||zstats_open_)return false;
+    if(ritual_fx_.active()||world_fx_.active()||quake_pulses_>0)return false;
+    return !(context_.combat&&combat_ai_turn());
 }
 
 void AlphaRuntime::synchronize_loaded_world(){
@@ -3009,6 +3131,7 @@ void AlphaRuntime::reset_transient_after_load(){
     gem_view_active_=gem_view_charges_turn_=false;zodiac_view_active_=false;
     zstats_open_=false;zstats_page_=0;zstats_scroll_=0;
     map_reveal_end_us_=0;magic_invert_start_us_=magic_invert_end_us_=0;quake_start_us_=0;quake_pulses_=0;
+    moongate_transit_=false;moongate_settle_=true; // A4-UI4 (D-48)
     // Picks parked across a modal, the picker rows, queued work.
     pending_combat_spell_=pending_ready_member_=pending_use_item_=pending_order_from_=-1;
     pending_search_={};pending_search_active_=false;pending_caster_=-1;shrine_virtue_length_=0;

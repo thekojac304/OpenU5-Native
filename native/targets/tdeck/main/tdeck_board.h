@@ -21,7 +21,10 @@ namespace tdeck {
 class IdleService;
 
 constexpr size_t kDebugScreenRows = 9;
-constexpr size_t kAlphaTranscriptLines = openu5::kHudTranscriptLines;
+// A4-UI4 hardware follow-up (section 8.22): sized for the smallest text's rows
+// (21), not the 8 px cell's 19, so Small fills the console to the glass too.
+constexpr size_t kAlphaTranscriptLines = kConsoleMaxRows;
+static_assert(openu5::kHudTranscriptY == 88, "kConsoleMaxRows counts its rows from y 88");
 // Shop and selector panels reserve a fixed-size transcript log strip that
 // does not resize with the text-size setting (device_ui_views.h/tdeck_board.cpp).
 constexpr size_t kShopLogRows = 7;
@@ -72,6 +75,9 @@ constexpr BedViewportRect bed_viewport_rect() {
 }
 class Board {
 public:
+    // Alpha 4 A4-UI4: the release the boot screens name (device_ui_views.h
+    // firmware_release_label); set before initialize_display().
+    void set_release_label(const char *label) { release_label_ = label; }
     esp_err_t initialize_display();
     SdStatus initialize_and_test_sd();
     void show_diagnostics(bool sd_ok);
@@ -135,9 +141,24 @@ public:
     const uint16_t *endgame_capture_for_test() const { return endgame_shadow_; }
     // Alpha 4 UI Batch 1 (ALPHA4_UI.md): IBM.CH, the game's 8x8 font, for the
     // fixed chrome only -- band captions, the roster, the food/gold/date box.
-    // The runtime hands it over before every draw; the transcript never uses it.
+    // The runtime hands it over before every draw; the transcript's text never
+    // uses it (A4-UI4: its wait cursor does, below).
     // Without it the chrome falls back to the 5x7 font (nothing is refused).
     void set_chrome_font(const uint8_t *ibm8x8) { ibm_font_ = ibm8x8; }
+    // Alpha 4 A4-UI4 (ALPHA4_UI.md section 8.20): the console's wait cursor,
+    // poll_key_blink_cursor 0x1b38's flame wave (IBM.CH 0x05 + phase, from the
+    // pack's font; none without it). show_alpha places it where the session's
+    // console_cursor() says; the runtime sets the phase before every draw, and
+    // animate_console_cursor() redraws the cursor's one cell when the phase
+    // moved and nothing else is being drawn.
+    struct ConsoleCursorState {
+        int16_t x = 0, y = 0;
+        uint8_t width = 0, height = 0, phase = 0xff;
+        bool visible = false;
+    };
+    void set_console_cursor_phase(uint8_t phase) { console_phase_ = uint8_t(phase & 3U); }
+    esp_err_t animate_console_cursor();
+    const ConsoleCursorState &console_cursor_state() const { return console_cursor_; }
     // CMDS bed entry: fill only the map image; the relocated sky/wind strips
     // and viewport frame remain visible. The next normal draw restores it.
     esp_err_t fill_bed_viewport();
@@ -311,6 +332,10 @@ private:
     // Movement Mode the status box last showed, so the bed refresh draws the
     // same caption show_alpha would.
     const uint8_t *ibm_font_ = nullptr;
+    const char *release_label_ = nullptr;
+    ConsoleCursorState console_cursor_{}; // A4-UI4 (section 8.20)
+    uint8_t console_phase_ = 0;
+    esp_err_t draw_console_cursor_cell();
     bool status_move_ = false;
     bool viewport_cache_valid_ = false;
     uint32_t viewport_crc_ = 0;

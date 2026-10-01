@@ -13,6 +13,7 @@ bool WorldFxLayer::push(const WorldFx &fx, uint32_t now_ms) {
     if (count_ >= kWorldFxSlots) return false;
     live_[count_].fx = fx;
     live_[count_].t0 = now_ms;
+    live_[count_].started = 0;
     ++count_;
     return true;
 }
@@ -30,7 +31,7 @@ uint32_t WorldFxLayer::duration_ms(const WorldFx &fx) {
     const int32_t bursts = fx.bursts > 0 ? fx.bursts : 0;
     const int32_t pause = fx.pre_delay_units > 0 ? fx.pre_delay_units : 0;
     return fx.lead_ms + uint32_t(pause) * kWorldFxPauseUnitMs +
-           uint32_t(bursts) * kWorldFxExplosionBurstMs;
+           uint32_t(bursts) * kWorldFxExplosionSlotMs;
 }
 
 bool WorldFxLayer::projectile_at(uint32_t now_ms, int32_t &dx_milli,
@@ -73,12 +74,13 @@ size_t WorldFxLayer::paint(uint32_t now_ms, WorldFxOp *out, size_t capacity) {
         ++written;
     };
     for (size_t i = 0; i < count_; ++i) {
-        const auto item = live_[i];
+        auto item = live_[i];
         const auto &fx = item.fx;
         const uint32_t duration = duration_ms(fx);
         const uint32_t dt = now_ms - item.t0;
         if (dt >= duration) continue; // expired
-        live_[survivors++] = item;
+        auto &kept = live_[survivors++];
+        kept = item;
         if (fx.kind == WorldFxKind::Projectile) {
             int32_t dx_milli = 0, dy_milli = 0;
             if (projectile_at(now_ms, dx_milli, dy_milli)) {
@@ -111,11 +113,15 @@ size_t WorldFxLayer::paint(uint32_t now_ms, WorldFxOp *out, size_t capacity) {
             uint32_t(fx.pre_delay_units > 0 ? fx.pre_delay_units : 0) * kWorldFxPauseUnitMs;
         if (after_lead < pause_ms) continue; // still in the pause: silence, no paint
         const uint32_t after_pause = after_lead - pause_ms;
-        // The blits alternate presence and absence: the original repaints the
-        // viewport between one and the next, so the cell FLICKERS. Painting all
-        // seven back to back would be a tile held still for 420 ms.
-        const uint32_t index = after_pause / kWorldFxExplosionBurstMs;
-        if (index % 2 == 0) {
+        // Each call is a burst held 174 ms, then the viewport_redraw that
+        // clears it before the next call: the cell FLICKERS seven times. A4-UI4:
+        // the burst that begins in this frame is counted once, for its sound.
+        const uint32_t index = after_pause / kWorldFxExplosionSlotMs;
+        if (int32_t(index) >= kept.started && int32_t(index) < fx.bursts) {
+            kept.started = int16_t(index + 1);
+            ++burst_starts_;
+        }
+        if (after_pause % kWorldFxExplosionSlotMs < kWorldFxExplosionBurstMs) {
             WorldFxOp op;
             op.kind = WorldFxOpKind::Blit;
             op.tile = kWorldFxExplosionTile;

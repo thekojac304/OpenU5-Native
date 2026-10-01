@@ -276,7 +276,11 @@ void test_reproduction() {
     h.set_mark();
     walk_to_soul(h);
     expect(h.saw("is absorbed!"), "R2", "absorption: \"Avatar is absorbed!\"");
-    expect(h.saw("VICTORY!"), "R3", "\"VICTORY!\" is printed as the arena closes");
+    // A4-UI4 (D-72): the original goes from absorb straight to the overlay;
+    // Doom's cell latches the victory silently (no enemy at entry, COMBAT
+    // 0x0bb2-0x0bc0) and the arena's own "ended" line is never printed. Until
+    // A4-UI4 this check pinned the native "VICTORY!" (hardware 7E-A saw it).
+    expect(!h.saw("VICTORY!"), "R3", "no \"VICTORY!\" as the arena closes on the absorption (D-72)");
     expect(quest_flag(h.g().quest, QuestFlag::GameWon), "R4", "game-won is set");
     // A4-END1: the ending is played, not dumped; the report is the scroll's.
     drive_ending(h, 'y');

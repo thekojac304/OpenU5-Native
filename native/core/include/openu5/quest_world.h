@@ -126,5 +126,18 @@ bool moongate_at(const GameState &,const TurnState &,const QuestWorldServices &)
 // its stone test with moongate_at; compose_world_presentation draws from it.
 bool moongate_visible_at(const GameState &,const TurnState &,const QuestWorldServices &,int32_t x,int32_t y);
 constexpr int32_t kMoongateTile=0xdc;
+// Alpha 4 A4-UI4 (H-191 / D-48, ALPHA4_UI.md section 8). 0x475a also keeps the
+// cosmetic counter [0x5887] (0..16, SAVED.GAM +0x2E1): at night (hour >= 20 or
+// < 5, 0x4767-0x4773) each compositor pass raises it (0x3ef0, cap 16), by day
+// it sinks (0x3f36) and at 0 the gate cell is grass again (0x4798). The blit
+// loop (0x56e6) draws a gate cell at 1..15 as the partial composite 0x1112:
+// grass (tile 5) whose bottom `stage` rows are the TOP rows of 0xdc (EGA.DRV fn
+// 0x60, 0x24d6; floor 0x44 instead only when [0x5893] == 0xff, the ending).
+// moongate_night is that window; moongate_stone_at is 0x4702's stone test,
+// whatever the hour (a sinking gate still stands by day).
+constexpr int32_t kMoongateStages=16;
+constexpr int32_t kMoongateGroundTile=5;
+inline bool moongate_night(const GameState &g){return g.time.hour>=20||g.time.hour<5;}
+bool moongate_stone_at(const GameState &,const QuestWorldServices &,int32_t x,int32_t y);
 int32_t quest_world_tile(CommandContext &,MapId,int32_t,int32_t,int32_t);
 }

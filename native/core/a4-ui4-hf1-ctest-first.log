@@ -1,0 +1,1811 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-a4-ui4
+        Start   1: frontend
+  1/178 Test   #1: frontend ...................................   Passed    0.02 sec
+        Start   2: ui_session
+  2/178 Test   #2: ui_session .................................   Passed    0.01 sec
+        Start   3: display_names
+  3/178 Test   #3: display_names ..............................   Passed    0.01 sec
+        Start   4: quest_search
+  4/178 Test   #4: quest_search ...............................   Passed    0.01 sec
+        Start   5: batch21b_chest_reset
+  5/178 Test   #5: batch21b_chest_reset .......................   Passed    0.01 sec
+        Start   6: debug_labels
+  6/178 Test   #6: debug_labels ...............................   Passed    0.01 sec
+        Start   7: ui_debug_menu
+  7/178 Test   #7: ui_debug_menu ..............................   Passed    0.02 sec
+        Start   8: debug_map_picker
+  8/178 Test   #8: debug_map_picker ...........................   Passed    0.01 sec
+        Start   9: debug_developer
+  9/178 Test   #9: debug_developer ............................   Passed    0.01 sec
+        Start  10: gameplay_integration
+ 10/178 Test  #10: gameplay_integration .......................   Passed    0.01 sec
+        Start  11: look_sign
+ 11/178 Test  #11: look_sign ..................................   Passed    0.01 sec
+        Start  12: movement_flow_parity
+ 12/178 Test  #12: movement_flow_parity .......................   Passed    0.13 sec
+        Start  13: shop_adapters
+ 13/178 Test  #13: shop_adapters ..............................   Passed    0.01 sec
+        Start  14: shop_flow
+ 14/178 Test  #14: shop_flow ..................................   Passed    0.97 sec
+        Start  15: shop_parity
+ 15/178 Test  #15: shop_parity ................................   Passed    0.31 sec
+        Start  16: dialogue_adapters
+ 16/178 Test  #16: dialogue_adapters ..........................   Passed    0.01 sec
+        Start  17: dialogue_parity
+ 17/178 Test  #17: dialogue_parity ............................   Passed    0.42 sec
+        Start  18: transport_flow_parity
+ 18/178 Test  #18: transport_flow_parity ......................   Passed    0.02 sec
+        Start  19: world_flow_adapters
+ 19/178 Test  #19: world_flow_adapters ........................   Passed    0.01 sec
+        Start  20: dungeon_flow_parity
+ 20/178 Test  #20: dungeon_flow_parity ........................   Passed    0.03 sec
+        Start  21: world_flow_parity
+ 21/178 Test  #21: world_flow_parity ..........................   Passed    0.20 sec
+        Start  22: dungeon_parity
+ 22/178 Test  #22: dungeon_parity .............................   Passed    0.52 sec
+        Start  23: advanced_combat_parity
+ 23/178 Test  #23: advanced_combat_parity .....................   Passed    1.07 sec
+        Start  24: magic_parity
+ 24/178 Test  #24: magic_parity ...............................   Passed    0.06 sec
+        Start  25: combat_parity
+ 25/178 Test  #25: combat_parity ..............................   Passed    0.35 sec
+        Start  26: item_parity
+ 26/178 Test  #26: item_parity ................................   Passed    0.46 sec
+        Start  27: command_parity
+ 27/178 Test  #27: command_parity .............................   Passed    0.17 sec
+        Start  28: core_parity
+ 28/178 Test  #28: core_parity ................................   Passed    0.01 sec
+        Start  29: travel_parity
+ 29/178 Test  #29: travel_parity ..............................   Passed    0.20 sec
+        Start  30: turn_parity
+ 30/178 Test  #30: turn_parity ................................   Passed    0.03 sec
+        Start  31: movement_regression
+ 31/178 Test  #31: movement_regression ........................   Passed    0.01 sec
+        Start  32: presentation_regression
+ 32/178 Test  #32: presentation_regression ....................   Passed    0.01 sec
+        Start  33: dungeon_view_regression
+ 33/178 Test  #33: dungeon_view_regression ....................   Passed    0.01 sec
+        Start  34: dungeon_art_regression
+ 34/178 Test  #34: dungeon_art_regression .....................   Passed    0.01 sec
+        Start  35: gem_view_regression
+ 35/178 Test  #35: gem_view_regression ........................   Passed    0.01 sec
+        Start  36: combat_escape_regression
+ 36/178 Test  #36: combat_escape_regression ...................   Passed    0.01 sec
+        Start  37: direct_troll_handoff_regression
+ 37/178 Test  #37: direct_troll_handoff_regression ............   Passed    0.01 sec
+        Start  38: combat_loot_open_regression
+ 38/178 Test  #38: combat_loot_open_regression ................   Passed    0.01 sec
+        Start  39: batch21a3_combat_active_player
+ 39/178 Test  #39: batch21a3_combat_active_player .............   Passed    0.01 sec
+        Start  40: input_regression
+ 40/178 Test  #40: input_regression ...........................   Passed    0.03 sec
+        Start  41: dungeon_input_regression
+ 41/178 Test  #41: dungeon_input_regression ...................   Passed    0.01 sec
+        Start  42: dungeon_combat_regression
+ 42/178 Test  #42: dungeon_combat_regression ..................   Passed    0.01 sec
+        Start  43: batch12b_hardware_regression
+ 43/178 Test  #43: batch12b_hardware_regression ...............   Passed    0.05 sec
+        Start  44: action_feedback_regression
+ 44/178 Test  #44: action_feedback_regression .................   Passed    0.02 sec
+        Start  45: ui_mode_regression
+ 45/178 Test  #45: ui_mode_regression .........................   Passed    0.01 sec
+        Start  46: alpha_runtime_integration_regression
+ 46/178 Test  #46: alpha_runtime_integration_regression .......   Passed    0.13 sec
+        Start  47: batch21a_dungeon_room_regression
+ 47/178 Test  #47: batch21a_dungeon_room_regression ...........   Passed    6.47 sec
+        Start  48: batch22_basement_objects
+ 48/178 Test  #48: batch22_basement_objects ...................   Passed    0.10 sec
+        Start  49: batch23_vault_parity
+ 49/178 Test  #49: batch23_vault_parity .......................   Passed    0.14 sec
+        Start  50: batch24_reload_parity
+ 50/178 Test  #50: batch24_reload_parity ......................   Passed    0.19 sec
+        Start  51: batch25_shard_ritual
+ 51/178 Test  #51: batch25_shard_ritual .......................   Passed    0.05 sec
+        Start  52: batch26_dungeon_save
+ 52/178 Test  #52: batch26_dungeon_save .......................   Passed    0.16 sec
+        Start  53: batch27_alt_load
+ 53/178 Test  #53: batch27_alt_load ...........................   Passed    0.16 sec
+        Start  54: batch28_save_validation
+ 54/178 Test  #54: batch28_save_validation ....................   Passed    0.30 sec
+        Start  55: batch29_rest_wiring
+ 55/178 Test  #55: batch29_rest_wiring ........................   Passed    0.16 sec
+        Start  56: batch45_npc_beds
+ 56/178 Test  #56: batch45_npc_beds ...........................   Passed    0.04 sec
+        Start  57: batch48_bed_pose
+ 57/178 Test  #57: batch48_bed_pose ...........................   Passed    0.04 sec
+        Start  58: batch30_sleep_parity
+ 58/178 Test  #58: batch30_sleep_parity .......................   Passed    0.10 sec
+        Start  59: batch31_h165_dungeon_entry
+ 59/178 Test  #59: batch31_h165_dungeon_entry .................   Passed    0.12 sec
+        Start  60: batch32_camp_watch
+ 60/178 Test  #60: batch32_camp_watch .........................   Passed    0.12 sec
+        Start  61: batch33_cannon_npc_death
+ 61/178 Test  #61: batch33_cannon_npc_death ...................   Passed    0.09 sec
+        Start  62: batch34_pre_sleep_npc
+ 62/178 Test  #62: batch34_pre_sleep_npc ......................   Passed    0.10 sec
+        Start  63: batch35_q_sleep_target
+ 63/178 Test  #63: batch35_q_sleep_target .....................   Passed    0.10 sec
+        Start  64: batch36_camp_housekeeping
+ 64/178 Test  #64: batch36_camp_housekeeping ..................   Passed    0.09 sec
+        Start  65: batch37_bed_viewport
+ 65/178 Test  #65: batch37_bed_viewport .......................   Passed    0.09 sec
+        Start  66: batch39_party_panel
+ 66/178 Test  #66: batch39_party_panel ........................   Passed    0.11 sec
+        Start  67: batch41_raw_key
+ 67/178 Test  #67: batch41_raw_key ............................   Passed    0.13 sec
+        Start  68: batch42_advancement_flash
+ 68/178 Test  #68: batch42_advancement_flash ..................   Passed    0.11 sec
+        Start  69: batch43_sleep_scene
+ 69/178 Test  #69: batch43_sleep_scene ........................   Passed    0.20 sec
+        Start  70: batch46_camp_invisibility
+ 70/178 Test  #70: batch46_camp_invisibility ..................   Passed    0.11 sec
+        Start  71: batch44_camp_ring_entry
+ 71/178 Test  #71: batch44_camp_ring_entry ....................   Passed    0.10 sec
+        Start  72: batch38_camp_duration
+ 72/178 Test  #72: batch38_camp_duration ......................   Passed    0.10 sec
+        Start  73: batch40_advancement
+ 73/178 Test  #73: batch40_advancement ........................   Passed    0.01 sec
+        Start  74: batch41_staged_advancement
+ 74/178 Test  #74: batch41_staged_advancement .................   Passed    0.01 sec
+        Start  75: batch51_scene_pacing
+ 75/178 Test  #75: batch51_scene_pacing .......................   Passed    0.01 sec
+        Start  76: batch51_camp_pacing
+ 76/178 Test  #76: batch51_camp_pacing ........................   Passed    0.10 sec
+        Start  77: batch53_release_blockers
+ 77/178 Test  #77: batch53_release_blockers ...................   Passed    0.33 sec
+        Start  78: batch53a_ending_terminal
+ 78/178 Test  #78: batch53a_ending_terminal ...................   Passed    0.12 sec
+        Start  79: batch53b_moongate_return
+ 79/178 Test  #79: batch53b_moongate_return ...................   Passed    0.10 sec
+        Start  80: a3_01_audio_contract
+ 80/178 Test  #80: a3_01_audio_contract .......................   Passed    0.04 sec
+        Start  81: a3_02_sfx_synth
+ 81/178 Test  #81: a3_02_sfx_synth ............................   Passed    0.02 sec
+        Start  82: a3_03_sfx_inventory
+ 82/178 Test  #82: a3_03_sfx_inventory ........................   Passed    0.05 sec
+        Start  83: a3_04_music_synth
+ 83/178 Test  #83: a3_04_music_synth ..........................   Passed    3.97 sec
+        Start  84: a3_04a_audio_stream
+ 84/178 Test  #84: a3_04a_audio_stream ........................   Passed    1.28 sec
+        Start  85: a3_04b_perf
+ 85/178 Test  #85: a3_04b_perf ................................   Passed   14.52 sec
+        Start  86: a3_01_audio_runtime
+ 86/178 Test  #86: a3_01_audio_runtime ........................   Passed    0.16 sec
+        Start  87: a3_02_sfx_runtime
+ 87/178 Test  #87: a3_02_sfx_runtime ..........................   Passed    0.19 sec
+        Start  88: a3_03_sfx_runtime
+ 88/178 Test  #88: a3_03_sfx_runtime ..........................   Passed    0.64 sec
+        Start  89: a3_04_music_runtime
+ 89/178 Test  #89: a3_04_music_runtime ........................   Passed    0.16 sec
+        Start  90: a3_04b_perf_runtime
+ 90/178 Test  #90: a3_04b_perf_runtime ........................   Passed    0.16 sec
+        Start  91: a3_04c_contention
+ 91/178 Test  #91: a3_04c_contention ..........................   Passed    0.03 sec
+        Start  92: a3_04c_contention_runtime
+ 92/178 Test  #92: a3_04c_contention_runtime ..................   Passed    0.15 sec
+        Start  93: a3_04d_sd_log
+ 93/178 Test  #93: a3_04d_sd_log ..............................   Passed    0.01 sec
+        Start  94: a3_04d_sd_log_runtime
+ 94/178 Test  #94: a3_04d_sd_log_runtime ......................   Passed    0.12 sec
+        Start  95: a3_04e_pacing
+ 95/178 Test  #95: a3_04e_pacing ..............................   Passed    0.03 sec
+        Start  96: a3_04e_pacing_runtime
+ 96/178 Test  #96: a3_04e_pacing_runtime ......................   Passed    0.30 sec
+        Start  97: a3_hf1_arena_loot
+ 97/178 Test  #97: a3_hf1_arena_loot ..........................   Passed    0.23 sec
+        Start  98: a3_hf2_ambient_parity
+ 98/178 Test  #98: a3_hf2_ambient_parity ......................   Passed    0.25 sec
+        Start  99: a3_hf2_1_dispatch_log
+ 99/178 Test  #99: a3_hf2_1_dispatch_log ......................   Passed    0.30 sec
+        Start 100: a3_04f_render_runtime
+100/178 Test #100: a3_04f_render_runtime ......................***Failed    0.35 sec
+[I][AlphaResources] Alpha resource pack v2.0 valid: 2266819 bytes, 45 entries, payload CRC=5c0d175d, expected SHA-256=85b38994eea6, firmware_match=1
+[I][AlphaResources] Loaded owners: 64 small floors, 8 dungeons, 1024 NPC records; PSRAM=1412335
+grass with water in view at (138,60); grass with nothing animated near at (105,60); the coast with the most animated cells in view (55) at (111,22)
+
+B  census (modelled bus: 40 MHz, 26 us per DMA / 24 us per CPU transaction; row building not modelled)
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 92286 us reason=full-redraw animated=5 crc=9e056531
+[I][AlphaRuntime] render 16196 us reason=full-redraw animated=0 crc=bc8b5365
+[I][AlphaRuntime] render 15366 us reason=full-redraw animated=3 crc=8b95e908
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=1
+[I][AlphaRuntime] render 16859 us reason=input-dirty animated=3 crc=bfa8cebc
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=2
+[I][AlphaRuntime] render 17521 us reason=input-dirty animated=3 crc=28f9fe1b
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=3
+[I][AlphaRuntime] render 18012 us reason=input-dirty animated=3 crc=ee85fc24
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=4
+[I][AlphaRuntime] render 18846 us reason=input-dirty animated=3 crc=3043fef9
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=5
+[I][AlphaRuntime] render 19508 us reason=input-dirty animated=3 crc=ac85a589
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=6
+[I][AlphaRuntime] render 20170 us reason=input-dirty animated=3 crc=111f6baa
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=7
+[I][AlphaRuntime] render 20832 us reason=input-dirty animated=3 crc=7b854a26
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=8
+[I][AlphaRuntime] render 21495 us reason=input-dirty animated=3 crc=81735fae
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=9
+[I][AlphaRuntime] render 22157 us reason=input-dirty animated=3 crc=c42f4ce7
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=10
+[I][AlphaRuntime] render 22157 us reason=input-dirty animated=3 crc=056096ff
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=11
+[I][AlphaRuntime] render 22156 us reason=input-dirty animated=3 crc=82b9a553
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=12
+[I][AlphaRuntime] render 22156 us reason=input-dirty animated=3 crc=88c009f3
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=13
+[I][AlphaRuntime] render 22156 us reason=input-dirty animated=3 crc=0341a928
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=14
+[I][AlphaRuntime] render 22156 us reason=input-dirty animated=3 crc=9203c137
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=15
+[I][AlphaRuntime] render 22156 us reason=input-dirty animated=3 crc=1cb811c2
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=16
+[I][AlphaRuntime] render 22156 us reason=input-dirty animated=3 crc=4a2aae9a
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=17
+[I][AlphaRuntime] render 22156 us reason=input-dirty animated=3 crc=bfa8cebc
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=18
+[I][AlphaRuntime] render 22156 us reason=input-dirty animated=3 crc=056096ff
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=19
+[I][AlphaRuntime] render 22156 us reason=input-dirty animated=3 crc=82b9a553
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=20
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=3 crc=e9a8eda4
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=21
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=3 crc=7e6d4ffd
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=22
+[I][AlphaRuntime] render 22156 us reason=input-dirty animated=3 crc=db75c675
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=23
+[I][AlphaRuntime] render 22156 us reason=input-dirty animated=3 crc=568c8d21
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=24
+[I][AlphaRuntime] render 22156 us reason=input-dirty animated=3 crc=fd97e01f
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=25
+[I][AlphaRuntime] render 22156 us reason=input-dirty animated=3 crc=26a67ad7
+  transcript after 24 steps: 19 visible rows, the last: "" / ""
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=26
+[I][AlphaRuntime] render 22156 us reason=input-dirty animated=3 crc=9c07a1fe
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=27
+[I][AlphaRuntime] render 23150 us reason=input-dirty animated=3 crc=ee85fc24
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=28
+[I][AlphaRuntime] render 22156 us reason=input-dirty animated=3 crc=1cb811c2
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=29
+[I][AlphaRuntime] render 21494 us reason=input-dirty animated=3 crc=82b9a553
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=30
+[I][AlphaRuntime] render 21826 us reason=input-dirty animated=3 crc=bfa8cebc
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=31
+[I][AlphaRuntime] render 20170 us reason=input-dirty animated=3 crc=1cb811c2
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=32
+[I][AlphaRuntime] render 19508 us reason=input-dirty animated=3 crc=0341a928
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=33
+[I][AlphaRuntime] render 18846 us reason=input-dirty animated=3 crc=82b9a553
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=34
+[I][AlphaRuntime] render 18183 us reason=input-dirty animated=3 crc=bfa8cebc
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=35
+[I][AlphaRuntime] render 17522 us reason=input-dirty animated=3 crc=1cb811c2
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=36
+[I][AlphaRuntime] render 16859 us reason=input-dirty animated=3 crc=0341a928
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=37
+[I][AlphaRuntime] render 16197 us reason=input-dirty animated=3 crc=82b9a553
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=38
+[I][AlphaRuntime] render 16197 us reason=input-dirty animated=3 crc=bfa8cebc
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=39
+[I][AlphaRuntime] render 16197 us reason=input-dirty animated=3 crc=1cb811c2
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=40
+[I][AlphaRuntime] render 16197 us reason=input-dirty animated=3 crc=0341a928
+  transcript after 12 more Passes: "" / ""
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=41
+[I][AlphaRuntime] render 16197 us reason=input-dirty animated=3 crc=82b9a553
+[I][AlphaRuntime] render 26624 us reason=full-redraw animated=3 crc=3b8416a8
+[I][AlphaRuntime] render 18677 us reason=full-redraw animated=3 crc=0341a928
+[I][AlphaRuntime] render 16025 us reason=full-redraw animated=3 crc=304f0a8c
+[I][AlphaRuntime] render 15366 us reason=full-redraw animated=3 crc=568c8d21
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=7a base=00 symbol=00 ui=explore emitted=character action_char=122 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=party
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=party combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 48795 us reason=console-cursor animated=3 crc=de07be0f
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=party emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=party emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=party to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=party gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 53204 us reason=console-cursor animated=3 crc=26a67ad7
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=64 base=00 symbol=00 ui=explore emitted=confirm action_char=0 shortcut=developer
+[I][AlphaRuntime] DEBUG_OPEN count=1 called=1 opened=1 mode_before=explore mode_after=debug reconstructed=1
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=debug
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=debug combat=0 dungeon=0 source=world
+[I][AlphaRuntime] DEBUG_RENDER count=1 reason=console-cursor clear=1 full_redraw=1 dirty_regions=15 pixels=142820 reconstructed=0 category=-1 index=0 depth=0 us=71019
+[I][AlphaRuntime] render 71019 us reason=console-cursor animated=0 crc=00000000
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=08 base=00 symbol=00 ui=debug emitted=back action_char=0 shortcut=none
+[I][AlphaRuntime] DEBUG_ACTION action=back prior_depth=0 prior_category=-1 prior_index=0 new_depth=0 new_category=-1 new_index=0 mode=debug->explore
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=debug to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=back ui=debug gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 92285 us reason=console-cursor animated=3 crc=8267fd0d
+[I][AlphaRuntime] render 16684 us reason=full-redraw animated=3 crc=c42f4ce7
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=4 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] ENEMY_ID phase=create actor=3 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=139,60 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=42
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 28113 us reason=input-dirty animated=3 crc=a1183f40
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=3 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=43
+[I][AlphaRuntime] render 15366 us reason=input-dirty animated=3 crc=cecd8078
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=3 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=44
+[I][AlphaRuntime] render 24805 us reason=console-cursor animated=3 crc=b963ebb8
+[I][AlphaRuntime] combat enemy-step actor-before=2 status=success actor-after=0 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=2 escaped=0 dead=0 active=3 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] render 24806 us reason=console-cursor animated=3 crc=f6f47355
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=3 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=45
+[I][AlphaRuntime] render 24805 us reason=console-cursor animated=3 crc=5bab8155
+[I][AlphaRuntime] COMBAT_HIT_CUE target=1 cell=7,6 row=0 waiting=0 queued=1
+[I][AlphaRuntime] combat enemy-step actor-before=1 status=success actor-after=0 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=2 escaped=0 dead=0 active=3 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] render 28778 us reason=console-cursor animated=2 crc=fd48f156
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 37412 us reason=console-cursor animated=2 crc=d67aeb08
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 16761 us reason=combat-hit-cue animated=3 crc=ec867611
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 16101 us reason=input-dirty animated=3 crc=73cea54b
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] COMBAT_HIT_CUE target=2 cell=8,5 row=-1 waiting=0 queued=1
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=2 escaped=0 dead=0 active=3 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=46
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 38555 us reason=console-cursor animated=2 crc=b15e7ae0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 37412 us reason=console-cursor animated=2 crc=652927c6
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15367 us reason=combat-hit-cue animated=3 crc=2f2816a5
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15366 us reason=input-dirty animated=3 crc=231d8da5
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] COMBAT_HIT_CUE target=2 cell=8,5 row=-1 waiting=0 queued=1
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=4 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=death actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 displayed="Troll" res=v0.0/00000000
+[I][AlphaRuntime] LOOT_CREATE actor=2 def=41 encounter=roaming encoded=31 trapped=0 contents=-1 combat_x=8 combat_y=5 world_origin=0,0 loc=0 floor=0
+[I][AlphaRuntime] CORPSE_RENDER actor=2 definition=41 corpse_definition=31 tile=0x11f resource=Splat
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=47
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 38555 us reason=console-cursor animated=2 crc=c1dc0a7b
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=48
+[I][AlphaRuntime] render 28117 us reason=console-cursor animated=2 crc=5128f8e0
+[I][AlphaRuntime] render 15366 us reason=combat-hit-cue animated=2 crc=30ac8dcf
+[I][AlphaRuntime] combat enemy-step actor-before=2 status=success actor-after=0 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] render 28116 us reason=console-cursor animated=2 crc=538be7ee
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=49
+[I][AlphaRuntime] render 15538 us reason=input-dirty animated=2 crc=cf7b6965
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 37412 us reason=console-cursor animated=2 crc=936b2519
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 16102 us reason=input-dirty animated=2 crc=d6799ae8
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 16101 us reason=input-dirty animated=2 crc=eff2b86e
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] COMBAT_HIT_CUE target=3 cell=4,5 row=-1 waiting=0 queued=1
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=3 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=50
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 38555 us reason=console-cursor animated=1 crc=5561ee92
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 37412 us reason=console-cursor animated=1 crc=fe3486d5
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15367 us reason=combat-hit-cue animated=2 crc=ad030eed
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=2 crc=ad030eed
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] COMBAT_HIT_CUE target=3 cell=4,5 row=-1 waiting=0 queued=1
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=51
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 39042 us reason=combat-hit-cue animated=1 crc=48b40b54
+[I][AlphaRuntime] render 15366 us reason=combat-hit-cue animated=2 crc=ccb4b9f3
+[I][AlphaRuntime] combat enemy-step actor-before=2 status=success actor-after=0 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] render 28778 us reason=console-cursor animated=2 crc=cf7b6965
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 37412 us reason=console-cursor animated=2 crc=03be023c
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=2 crc=03be023c
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15367 us reason=input-dirty animated=2 crc=3a0d3653
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=52
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 38555 us reason=console-cursor animated=2 crc=ece0a312
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 37412 us reason=console-cursor animated=2 crc=f5da4676
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15366 us reason=input-dirty animated=2 crc=eff2b86e
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15367 us reason=input-dirty animated=2 crc=d721b8cd
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] COMBAT_HIT_CUE target=3 cell=4,5 row=-1 waiting=0 queued=1
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=3 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=53
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 39042 us reason=combat-hit-cue animated=1 crc=f2fc46dd
+[I][AlphaRuntime] render 15366 us reason=combat-hit-cue animated=2 crc=9a544f45
+[I][AlphaRuntime] combat enemy-step actor-before=2 status=success actor-after=0 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] render 28778 us reason=console-cursor animated=2 crc=b2585612
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 37412 us reason=console-cursor animated=2 crc=ad030eed
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15367 us reason=input-dirty animated=2 crc=414fb4bf
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=2 crc=414fb4bf
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] COMBAT_HIT_CUE target=3 cell=4,5 row=-1 waiting=0 queued=1
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=3 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=54
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 38555 us reason=console-cursor animated=1 crc=5561ee92
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 37412 us reason=console-cursor animated=1 crc=fe3486d5
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15366 us reason=combat-hit-cue animated=2 crc=95d00e4e
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15367 us reason=input-dirty animated=2 crc=ad030eed
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] COMBAT_HIT_CUE target=3 cell=4,5 row=-1 waiting=0 queued=1
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=55
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 38555 us reason=console-cursor animated=1 crc=5561ee92
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 37412 us reason=console-cursor animated=1 crc=fe3486d5
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15366 us reason=combat-hit-cue animated=2 crc=853d6d2f
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=2 crc=853d6d2f
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] COMBAT_HIT_CUE target=3 cell=4,5 row=-1 waiting=0 queued=1
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=3 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=56
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 39043 us reason=combat-hit-cue animated=1 crc=48b40b54
+[I][AlphaRuntime] render 15367 us reason=combat-hit-cue animated=2 crc=372be8d2
+[I][AlphaRuntime] COMBAT_HIT_CUE target=1 cell=5,6 row=0 waiting=0 queued=1
+[I][AlphaRuntime] combat enemy-step actor-before=2 status=success actor-after=0 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] render 21495 us reason=console-cursor animated=1 crc=b039f469
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 37412 us reason=console-cursor animated=1 crc=ca223b2a
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 16025 us reason=combat-hit-cue animated=2 crc=dde425b4
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15366 us reason=input-dirty animated=2 crc=c7ccdbac
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] COMBAT_HIT_CUE target=3 cell=4,5 row=-1 waiting=0 queued=1
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=3 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=57
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 38556 us reason=console-cursor animated=1 crc=17905811
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 37412 us reason=console-cursor animated=1 crc=bcc53056
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15366 us reason=combat-hit-cue animated=2 crc=c7ccdbac
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15366 us reason=input-dirty animated=2 crc=dde425b4
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] COMBAT_HIT_CUE target=3 cell=4,5 row=-1 waiting=0 queued=1
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=3 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=58
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 38556 us reason=console-cursor animated=1 crc=17905811
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 37412 us reason=console-cursor animated=1 crc=bcc53056
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15366 us reason=combat-hit-cue animated=2 crc=853d6d2f
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=2 crc=853d6d2f
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=59
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 39043 us reason=input-dirty animated=2 crc=76fcf47a
+[I][AlphaRuntime] combat enemy-step actor-before=2 status=success actor-after=0 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] render 28779 us reason=console-cursor animated=2 crc=97a221fe
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 37412 us reason=console-cursor animated=2 crc=d6418c01
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=2 crc=d6418c01
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=2 crc=d6418c01
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] COMBAT_HIT_CUE target=3 cell=4,5 row=-1 waiting=0 queued=1
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=3 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=60
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 38555 us reason=console-cursor animated=1 crc=0db8a609
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 37412 us reason=console-cursor animated=1 crc=a6edce4e
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15366 us reason=combat-hit-cue animated=2 crc=eff2b86e
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15367 us reason=input-dirty animated=2 crc=ee928ca2
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=61
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 39043 us reason=input-dirty animated=2 crc=3a1754ea
+[I][AlphaRuntime] combat enemy-step actor-before=2 status=success actor-after=0 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] render 28778 us reason=console-cursor animated=2 crc=d18d2b6a
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=62
+[I][AlphaRuntime] render 15538 us reason=input-dirty animated=2 crc=df92fad4
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 37412 us reason=console-cursor animated=2 crc=e1c419c7
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=2 crc=e1c419c7
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=2 crc=e1c419c7
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] COMBAT_HIT_CUE target=3 cell=4,4 row=-1 waiting=0 queued=1
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=63
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 38555 us reason=console-cursor animated=1 crc=1ab10efd
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 37412 us reason=console-cursor animated=1 crc=cf79082e
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15367 us reason=combat-hit-cue animated=2 crc=e1c419c7
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15366 us reason=input-dirty animated=2 crc=37997494
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=64
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 39043 us reason=input-dirty animated=2 crc=92904812
+[I][AlphaRuntime] combat enemy-step actor-before=2 status=success actor-after=0 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] render 28779 us reason=console-cursor animated=2 crc=111f0ae0
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=65
+[I][AlphaRuntime] render 15538 us reason=input-dirty animated=2 crc=b9f6ec6c
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 37412 us reason=console-cursor animated=2 crc=a28a7d7c
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15366 us reason=input-dirty animated=2 crc=c5b26c3d
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=2 crc=c5b26c3d
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] COMBAT_HIT_CUE target=3 cell=3,4 row=-1 waiting=0 queued=1
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=66
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 38555 us reason=console-cursor animated=1 crc=1c4041bf
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 37412 us reason=console-cursor animated=1 crc=a76eb8fd
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15367 us reason=combat-hit-cue animated=2 crc=7c50c92b
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 15366 us reason=input-dirty animated=2 crc=f6fdcf50
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=67
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 39043 us reason=input-dirty animated=2 crc=fe2e9289
+[I][AlphaRuntime] combat enemy-step actor-before=2 status=success actor-after=0 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] render 28779 us reason=console-cursor animated=2 crc=46ca5ac2
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=1 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=68
+[I][AlphaRuntime] render 15537 us reason=input-dirty animated=2 crc=cbc579af
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 37412 us reason=console-cursor animated=2 crc=46b9122b
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=2 crc=46b9122b
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=2 crc=46b9122b
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] COMBAT_HIT_CUE target=3 cell=3,3 row=-1 waiting=0 queued=1
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=4 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=death actor=3 definition=41 sprite_family=484 render_tile=-1 name_index=41 displayed="Troll" res=v0.0/00000000
+[I][AlphaRuntime] LOOT_CREATE actor=3 def=41 encounter=roaming encoded=129 trapped=1 contents=15 combat_x=3 combat_y=3 world_origin=0,0 loc=0 floor=0
+[I][AlphaRuntime] CORPSE_RENDER actor=3 definition=41 corpse_definition=129 tile=0x101 resource=Chest
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=2 active=1 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=69
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 38556 us reason=console-cursor animated=1 crc=68d732e3
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=08 base=00 symbol=00 ui=combat emitted=back action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=18 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=2 active=0 scheduled=0
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=end
+[I][AlphaRuntime] COMBAT_END reason=victory/all-hostiles-gone
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=back ui=combat gameplay_command=18 sequence=70
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 27454 us reason=input-dirty animated=3 crc=de07be0f
+[I][AlphaRuntime] render 15366 us reason=combat-hit-cue animated=3 crc=82b9a553
+[I][AlphaRuntime] render 15367 us reason=full-redraw animated=55 crc=6e287f4a
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] ENEMY_ID phase=create actor=3 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=112,22 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=112,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=71
+[I][AlphaRuntime] render 26792 us reason=input-dirty animated=47 crc=a0199bda
+  B1 stand 2 s, nothing animated     frames    0 | per frame: txns   114.0 (cmd   95.0 pix   19.0 thin   19.0 tiny    0.0) windows   19.0 px      912 xfer   3.26 ms | fills 0.0 text 0.0 mtext 19.0 rgb 0.0 sky 0.0 | max txn 96 B
+                                       regions per frame: cursor 19.0w/912px | solid windows 0.0
+  B2 stand 2 s, water in view        frames   37 | per frame: txns    15.1 (cmd   12.6 pix    2.5 thin    0.5 tiny    0.0) windows    2.5 px      505 xfer   0.58 ms | fills 0.0 text 0.0 mtext 0.5 rgb 2.0 sky 0.0 | max txn 512 B
+                                       regions per frame: cursor 0.5w/25px viewport 2.0w/480px | solid windows 0.0
+  B3 one step (the step frame)       frames    1 | per frame: txns   187.0 (cmd   20.0 pix  167.0 thin    1.0 tiny    0.0) windows    4.0 px    30008 xfer  16.85 ms | fills 0.0 text 1.0 mtext 2.0 rgb 1.0 sky 0.0 | max txn 540 B
+                                       regions per frame: cursor 1.0w/48px status 1.0w/1072px transcript 1.0w/1080px viewport 1.0w/27808px | solid windows 0.0
+  B4 step, full transcript, zig-zag  frames    1 | per frame: txns   259.0 (cmd   60.0 pix  199.0 thin    1.0 tiny    0.0) windows   12.0 px    38648 xfer  22.15 ms | fills 0.0 text 1.0 mtext 10.0 rgb 1.0 sky 0.0 | max txn 540 B
+                                       regions per frame: cursor 1.0w/48px status 1.0w/1072px transcript 9.0w/9720px viewport 1.0w/27808px | solid windows 0.0
+  B5 step, full transcript, zig-zag  frames    1 | per frame: txns   273.0 (cmd   65.0 pix  208.0 thin    1.0 tiny    0.0) windows   13.0 px    40232 xfer  23.14 ms | fills 0.0 text 1.0 mtext 10.0 rgb 1.0 sky 0.0 | max txn 540 B
+                                       regions per frame: cursor 1.0w/48px status 1.0w/1072px transcript 9.0w/9720px viewport 1.0w/27808px wind 1.0w/1584px | solid windows 0.0
+  B6 Pass (one line + clock)         frames    1 | per frame: txns   259.0 (cmd   60.0 pix  199.0 thin    1.0 tiny    0.0) windows   12.0 px    38648 xfer  22.15 ms | fills 0.0 text 1.0 mtext 10.0 rgb 1.0 sky 0.0 | max txn 540 B
+                                       regions per frame: cursor 1.0w/48px status 1.0w/1072px transcript 9.0w/9720px viewport 1.0w/27808px | solid windows 0.0
+  B6b Pass, 12 Passes above it       frames    1 | per frame: txns   178.0 (cmd   15.0 pix  163.0 thin    1.0 tiny    0.0) windows    3.0 px    28928 xfer  16.19 ms | fills 0.0 text 1.0 mtext 1.0 rgb 1.0 sky 0.0 | max txn 536 B
+                                       regions per frame: cursor 1.0w/48px status 1.0w/1072px viewport 1.0w/27808px | solid windows 0.0
+  B6d "Pass" as a prompt line        frames    1 | per frame: txns   316.0 (cmd   90.0 pix  226.0 thin    0.0 tiny    0.0) windows   18.0 px    46168 xfer  26.61 ms | fills 0.0 text 0.0 mtext 17.0 rgb 1.0 sky 0.0 | max txn 540 B
+                                       regions per frame: transcript 17.0w/18360px viewport 1.0w/27808px | solid windows 8.0
+  B6c a wrapped 3-row message        frames    1 | per frame: txns   208.0 (cmd   30.0 pix  178.0 thin    0.0 tiny    0.0) windows    6.0 px    33208 xfer  18.67 ms | fills 0.0 text 0.0 mtext 5.0 rgb 1.0 sky 0.0 | max txn 540 B
+                                       regions per frame: transcript 5.0w/5400px viewport 1.0w/27808px | solid windows 0.0
+  B7 status only (HP -1, redraw)     frames    1 | per frame: txns   172.0 (cmd   10.0 pix  162.0 thin    0.0 tiny    0.0) windows    2.0 px    28880 xfer  16.02 ms | fills 0.0 text 1.0 mtext 0.0 rgb 1.0 sky 0.0 | max txn 536 B
+                                       regions per frame: party 1.0w/1072px viewport 1.0w/27808px | solid windows 0.0
+  B8 nothing changed (forced redraw) frames    1 | per frame: txns   163.0 (cmd    5.0 pix  158.0 thin    0.0 tiny    0.0) windows    1.0 px    27808 xfer  15.36 ms | fills 0.0 text 0.0 mtext 0.0 rgb 1.0 sky 0.0 | max txn 352 B
+                                       regions per frame: viewport 1.0w/27808px | solid windows 0.0
+  B9 Z modal open                    frames    1 | per frame: txns   511.0 (cmd  140.0 pix  371.0 thin    0.0 tiny    0.0) windows   28.0 px    89008 xfer  48.78 ms | fills 9.0 text 10.0 mtext 8.0 rgb 1.0 sky 0.0 | max txn 640 B
+                                       regions per frame: lines 8.0w/1298px panel-clear 1.0w/33120px party 3.0w/4020px status 3.0w/5628px transcript 12.0w/17134px viewport 1.0w/27808px | solid windows 14.0
+  B10 Z modal close                  frames    1 | per frame: txns   620.0 (cmd  230.0 pix  390.0 thin    5.0 tiny    0.0) windows   46.0 px    93118 xfer  53.19 ms | fills 16.0 text 9.0 mtext 20.0 rgb 1.0 sky 0.0 | max txn 640 B
+                                       regions per frame: cursor 1.0w/48px lines 15.0w/1974px panel-clear 1.0w/33120px party 6.0w/6432px status 3.0w/3216px transcript 19.0w/20520px viewport 1.0w/27808px | solid windows 28.0
+  B11 Developer menu open            frames    0 | per frame: txns   536.0 (cmd   80.0 pix  456.0 thin    1.0 tiny    0.0) windows   16.0 px   142820 xfer  71.00 ms | fills 1.0 text 15.0 mtext 0.0 rgb 0.0 sky 0.0 | max txn 640 B
+                                       regions per frame: full-clear 1.0w/76800px party 3.0w/8252px status 2.0w/10608px transcript 10.0w/47160px | solid windows 2.0
+  B12 Developer menu close (repaint) frames    1 | per frame: txns   893.0 (cmd  245.0 pix  648.0 thin    5.0 tiny    0.0) windows   49.0 px   173086 xfer  92.27 ms | fills 17.0 text 9.0 mtext 20.0 rgb 1.0 sky 1.0 | max txn 640 B
+                                       regions per frame: cursor 1.0w/48px full-clear 1.0w/76800px lines 15.0w/1974px panel-clear 1.0w/33120px party 6.0w/6432px sky 1.0w/1584px status 3.0w/3216px transcript 19.0w/20520px viewport 1.0w/27808px wind 1.0w/1584px | solid windows 29.0
+  B13 combat entry (+1.5 s)          frames   30 | per frame: txns    31.7 (cmd   20.5 pix   11.2 thin    0.5 tiny    0.0) windows    4.1 px     2378 xfer   1.76 ms | fills 0.0 text 0.1 mtext 1.1 rgb 2.9 sky 0.0 | max txn 540 B
+                                       regions per frame: cursor 0.5w/26px party 0.0w/36px status 0.0w/36px transcript 0.6w/612px viewport 2.9w/1669px | solid windows 0.1
+  B14 the fight (all frames)         frames  156 | per frame: txns   168.9 (cmd   40.4 pix  128.5 thin    0.2 tiny    0.0) windows    8.1 px    27138 xfer  15.22 ms | fills 0.6 text 0.4 mtext 5.7 rgb 1.3 sky 0.0 | max txn 640 B
+                                       regions per frame: cursor 0.2w/9px lines 0.4w/50px party 0.1w/151px transcript 6.0w/11396px viewport 1.3w/15532px | solid windows 2.2
+  B15 leave the victory arena        frames    1 | per frame: txns   331.0 (cmd  100.0 pix  231.0 thin    1.0 tiny    0.0) windows   20.0 px    47288 xfer  27.45 ms | fills 0.0 text 1.0 mtext 18.0 rgb 1.0 sky 0.0 | max txn 540 B
+                                       regions per frame: cursor 1.0w/48px party 1.0w/1072px transcript 17.0w/18360px viewport 1.0w/27808px | solid windows 5.0
+  B16 back on the map 1 s            frames   21 | per frame: txns    22.0 (cmd   12.1 pix    9.9 thin    0.5 tiny    0.0) windows    2.4 px     1804 xfer   1.29 ms | fills 0.0 text 0.0 mtext 0.5 rgb 2.0 sky 0.0 | max txn 512 B
+                                       regions per frame: cursor 0.5w/23px viewport 2.0w/1781px | solid windows 0.0
+  B17 stand 2 s on the coast         frames   42 | per frame: txns   101.0 (cmd   52.5 pix   48.5 thin    0.5 tiny    0.0) windows   10.5 px    11656 xfer   7.25 ms | fills 0.0 text 0.0 mtext 0.5 rgb 10.0 sky 0.0 | max txn 640 B
+                                       regions per frame: cursor 0.5w/24px viewport 10.0w/11632px | solid windows 0.0
+  B18 step on the coast              frames    1 | per frame: txns   322.0 (cmd   95.0 pix  227.0 thin    1.0 tiny    0.0) windows   19.0 px    46208 xfer  26.78 ms | fills 0.0 text 1.0 mtext 17.0 rgb 1.0 sky 0.0 | max txn 540 B
+                                       regions per frame: cursor 1.0w/48px status 1.0w/1072px transcript 16.0w/17280px viewport 1.0w/27808px | solid windows 5.0
+  B19 one animation tick, coast      frames    1 | per frame: txns    87.0 (cmd   50.0 pix   37.0 thin    0.0 tiny    0.0) windows   10.0 px     9872 xfer   6.17 ms | fills 0.0 text 0.0 mtext 0.0 rgb 10.0 sky 0.0 | max txn 640 B
+                                       regions per frame: viewport 10.0w/9872px | solid windows 0.0
+GREEN B0 the census ran every scenario (inland, shore, 24 steps, Pass, status, Z, Developer, a won fight and back) with the panel's viewport equal to the composed one after all 4138 gameplay renders and no malformed transaction
+GREEN P1 every window's pixels travel as whole rows packed up to the bus's 640 B: 0 of 2245 windows use more transactions than their rows need
+GREEN P2 one animation tick on the coast: 10 windows, 0 of them side by side in one tile row, 0 tiny transactions of 87 (6.17 ms modelled)
+GREEN R1 a redraw with nothing changed draws no party or status row (0 party, 0 status)
+GREEN R2 one member's HP changes: exactly that party row is drawn (1 party, 0 status)
+[I][AlphaRuntime] render 16025 us reason=full-redraw animated=47 crc=b0b1330b
+GREEN R3 a row the bed refresh drew in reverse video (same text) is redrawn by the next frame, and only it (1 party, 0 status): the panel is as before
+[I][AlphaRuntime] render 659 us reason=full-redraw animated=47 crc=b0b1330b
+GREEN R4 a row the bed refresh drew with other text is redrawn by the next frame, and only it (1 party, 0 status): the panel is as before
+GREEN P3 a 16 x 64 window pauses after rows 16, 32 and 48 (3 pauses) and its 64 rows arrive intact in 4 transactions (17 + 16 + 16 + 15 rows: a batch ends at each pause row)
+GREEN T1 animation ticks and a redraw with nothing changed draw no transcript row (control)
+GREEN T2 a new short line while the transcript is not yet full: one row (control, 1)
+GREEN T3 on a line, a scroll and a wrapped message the rows drawn are exactly the rows whose text or colour changed (drawn/changed: B3 1/1 B4 9/9 B5 9/9 B6 9/9 B6b 0/0 B6c 5/5 B6d 17/17)
+GREEN T5 closing the Z modal and leaving the Developer screen still redraw all 19 transcript rows (the retained rows are invalidated, control)
+GREEN C1 the viewport CRC equals the bit-by-bit CRC-32 it replaces on 64/64 buffers (empty, all 0, all 1, random, odd lengths): the Board's change detector and every logged crc= are unchanged
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 92286 us reason=full-redraw animated=5 crc=9e056531
+[I][AlphaRuntime] render 16196 us reason=full-redraw animated=55 crc=586a204b
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=1
+[I][AlphaRuntime] render 16688 us reason=input-dirty animated=62 crc=bb70efdf
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=2
+[I][AlphaRuntime] render 17350 us reason=input-dirty animated=55 crc=479b9baa
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=3
+[I][AlphaRuntime] render 18012 us reason=input-dirty animated=62 crc=5d148145
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=4
+[I][AlphaRuntime] render 18674 us reason=input-dirty animated=55 crc=537b771f
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=5
+[I][AlphaRuntime] render 19336 us reason=input-dirty animated=62 crc=36d3e89d
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=6
+[I][AlphaRuntime] render 19999 us reason=input-dirty animated=55 crc=6e287f4a
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=7
+[I][AlphaRuntime] render 20661 us reason=input-dirty animated=62 crc=bb70efdf
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=8
+[I][AlphaRuntime] render 21323 us reason=input-dirty animated=55 crc=7240f094
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=9
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=62 crc=5d148145
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=10
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=55 crc=537b771f
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=11
+[I][AlphaRuntime] render 31362 us reason=input-dirty animated=62 crc=d9a71cb7
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=12
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=55 crc=6e287f4a
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=13
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=62 crc=bb70efdf
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=14
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=55 crc=479b9baa
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=15
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=62 crc=5d148145
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=16
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=55 crc=537b771f
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=17
+[I][AlphaRuntime] render 21986 us reason=input-dirty animated=62 crc=36d3e89d
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=18
+[I][AlphaRuntime] render 30751 us reason=input-dirty animated=55 crc=e56b00ee
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=19
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=62 crc=bb70efdf
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=20
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=55 crc=479b9baa
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=21
+[I][AlphaRuntime] render 30707 us reason=input-dirty animated=62 crc=5d148145
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=22
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=55 crc=537b771f
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=23
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=62 crc=36d3e89d
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=24
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=55 crc=e56b00ee
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=25
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=62 crc=bb70efdf
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=26
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=55 crc=479b9baa
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=27
+[I][AlphaRuntime] render 22979 us reason=input-dirty animated=62 crc=b53ffa26
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=28
+[I][AlphaRuntime] render 31588 us reason=input-dirty animated=55 crc=537b771f
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=29
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=62 crc=36d3e89d
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=30
+[I][AlphaRuntime] render 22979 us reason=input-dirty animated=55 crc=e56b00ee
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=31
+[I][AlphaRuntime] render 21986 us reason=input-dirty animated=62 crc=8d84e1b4
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=32
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=55 crc=479b9baa
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=33
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=62 crc=b53ffa26
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=34
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=55 crc=696c01a8
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=35
+[I][AlphaRuntime] render 30990 us reason=input-dirty animated=62 crc=36d3e89d
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=36
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=55 crc=e56b00ee
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=37
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=62 crc=8d84e1b4
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=38
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=55 crc=d4e0e69c
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=110,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=39
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=62 crc=b53ffa26
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=40
+[I][AlphaRuntime] render 21985 us reason=input-dirty animated=55 crc=696c01a8
+GREEN I1 walking the coast with input always queued and rows that never let the idle task finish a pass: the longest idle gap is 208.6 ms (budget 200.0 ms), no enforcement in vain (control)
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=5 crc=9e056531
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=3 crc=8b95e908
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=1
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=1cb811c2
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=2
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=7fa41a36
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=3
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=304f0a8c
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=4
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=88c009f3
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=5
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=7e6d4ffd
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=6
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=ff9dbff9
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=7
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=bfa8cebc
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=8
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=881ae14f
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=9
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=ac85a589
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=10
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=e4990c6c
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=11
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=3b8416a8
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=12
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=056096ff
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=13
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=de07be0f
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=14
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=83110291
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=15
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=1cb811c2
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=16
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=fd97e01f
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=17
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=ee85fc24
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=18
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=f58a01d6
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=19
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=a1508f92
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=20
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=81735fae
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=21
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=26a67ad7
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=22
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=357c0707
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=23
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=0341a928
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=24
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=db75c675
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=25
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=3b8416a8
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=26
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=2b72f4d9
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=27
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=de07be0f
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=138,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=28
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=111f6baa
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=29
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=1cb811c2
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=30
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=ad5e6bcb
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=31
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=e4990c6c
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=3 crc=f58a01d6
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=3 crc=f58a01d6
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=7a base=00 symbol=00 ui=explore emitted=character action_char=122 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=party
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=party combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=console-cursor animated=3 crc=2bba29b1
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=party emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=party emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=party to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=cancel ui=party gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=console-cursor animated=3 crc=f58a01d6
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=64 base=00 symbol=00 ui=explore emitted=confirm action_char=0 shortcut=developer
+[I][AlphaRuntime] DEBUG_OPEN count=1 called=1 opened=1 mode_before=explore mode_after=debug reconstructed=1
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=debug
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=explore gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=debug combat=0 dungeon=0 source=world
+[I][AlphaRuntime] DEBUG_RENDER count=1 reason=console-cursor clear=1 full_redraw=1 dirty_regions=15 pixels=142820 reconstructed=0 category=-1 index=0 depth=0 us=0
+[I][AlphaRuntime] render 0 us reason=console-cursor animated=0 crc=00000000
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=08 base=00 symbol=00 ui=debug emitted=back action_char=0 shortcut=none
+[I][AlphaRuntime] DEBUG_ACTION action=back prior_depth=0 prior_category=-1 prior_index=0 new_depth=0 new_category=-1 new_index=0 mode=debug->explore
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=debug to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=back ui=debug gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=console-cursor animated=3 crc=422d21fe
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=3 crc=357c0707
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=4 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=140,60 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=explore to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=32
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=2 crc=878e047e
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=0 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=33
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=2 crc=24d3cab1
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=0 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=34
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=2 crc=1bfd0cf5
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=0 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=35
+[I][AlphaRuntime] render 0 us reason=console-cursor animated=2 crc=344a6d41
+[I][AlphaRuntime] combat enemy-step actor-before=1 status=success actor-after=0 ended=0
+[I][AlphaRuntime] COMBAT_COUNTS reason=enemy-step alive_hostile=1 escaped=0 dead=0 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=enemy-step result=continue
+[I][AlphaRuntime] render 0 us reason=console-cursor animated=2 crc=1e70698f
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=0 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=36
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=2 crc=6675792c
+[I][AlphaRuntime] combat command=14 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=0 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=combat gameplay_command=14 sequence=37
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=2 crc=c6315d27
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 0 us reason=console-cursor animated=2 crc=2432832d
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=2 crc=b3e290cc
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=1 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=1 escaped=0 dead=0 active=2 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=38
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 0 us reason=console-cursor animated=2 crc=be09685a
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=00 symbol=00 ui=combat emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=target
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=combat gameplay_command=none
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=target combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 0 us reason=console-cursor animated=2 crc=a1af6fbf
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=target gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=2 crc=a1af6fbf
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=00 symbol=00 ui=target emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] COMBAT_HIT_CUE target=2 cell=5,1 row=-1 waiting=0 queued=1
+[I][AlphaRuntime] combat command=15 status=success turns=0 events=5 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=death actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 displayed="Troll" res=v0.0/00000000
+[I][AlphaRuntime] LOOT_CREATE actor=2 def=41 encounter=roaming encoded=129 trapped=1 contents=15 combat_x=5 combat_y=1 world_origin=0,0 loc=0 floor=0
+[I][AlphaRuntime] CORPSE_RENDER actor=2 definition=41 corpse_definition=129 tile=0x101 resource=Chest
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=1 scheduled=1
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=continue
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=target to=combat
+[I][AlphaRuntime] INPUT_ROUTE action=confirm ui=target gameplay_command=15 sequence=39
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=combat combat=1 dungeon=0 source=combat
+[I][AlphaRuntime] render 0 us reason=console-cursor animated=1 crc=ee0c6df3
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=08 base=00 symbol=00 ui=combat emitted=back action_char=0 shortcut=none
+[I][AlphaRuntime] combat command=18 status=success turns=0 events=2 time=0 us
+[I][AlphaRuntime] COMBAT_COUNTS reason=player-command alive_hostile=0 escaped=0 dead=1 active=0 scheduled=0
+[I][AlphaRuntime] COMBAT_END_CHECK reason=player-command result=end
+[I][AlphaRuntime] COMBAT_END reason=victory/all-hostiles-gone
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] UI_MODE from=combat to=explore
+[I][AlphaRuntime] INPUT_ROUTE action=back ui=combat gameplay_command=18 sequence=40
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=422d21fe
+[I][AlphaRuntime] render 0 us reason=combat-hit-cue animated=3 crc=3dd5a3a1
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=139,60 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=41
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=3b8416a8
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=140,60 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=42
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=0b0cca64
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=139,60 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=43
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=de07be0f
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=140,60 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=44
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=83110291
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=139,60 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=139,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=45
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=1cb811c2
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=140,60 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=140,60 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=46
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=3 crc=7fa41a36
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=55 crc=ab493f2f
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=112,22 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=112,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=47
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=47 crc=c3e79129
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=111,22 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=48
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=55 crc=f2223ce5
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=112,22 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=112,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=49
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=47 crc=b0b1330b
+[I][AlphaRuntime] combat command=0 status=success turns=1 events=3 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=111,22 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=1 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=direction ui=explore gameplay_command=0 sequence=50
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=55 crc=ac7dcb20
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=111,22 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=51
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=55 crc=f2223ce5
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=111,22 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=52
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=55 crc=586a204b
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=111,22 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=53
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=55 crc=479b9baa
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=111,22 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=54
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=55 crc=ac7dcb20
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=111,22 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=55
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=55 crc=846dbd8e
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=111,22 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=56
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=55 crc=e56b00ee
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=111,22 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=57
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=55 crc=7240f094
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=111,22 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=58
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=55 crc=540ec45e
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=111,22 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=59
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=55 crc=696c01a8
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=111,22 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=60
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=55 crc=6e287f4a
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=111,22 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=61
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=55 crc=586a204b
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=111,22 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=62
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=55 crc=d4e0e69c
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=111,22 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=63
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=55 crc=537b771f
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=00 symbol=00 ui=explore emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] combat command=1 status=success turns=1 events=0 time=0 us
+[I][AlphaRuntime] ENEMY_ID phase=create actor=2 definition=41 sprite_family=484 render_tile=-1 name_index=41 name="Troll" res=v0.0/00000000
+[I][AlphaRuntime] WORLD_PRE_COMBAT loc=0 floor=0 player=111,22 origin=0,0
+[I][AlphaRuntime] WORLD_TILE_SAVE x=0 y=0 tile=1 raw=1 source=authoritative-world+terrain
+[I][AlphaRuntime] debug teleport rebind moved=0 prior_dungeon=0 location=0 floor=0 xy=111,22 dungeon=0
+[I][AlphaRuntime] INPUT_ROUTE action=character ui=explore gameplay_command=1 sequence=64
+[I][AlphaRuntime] render 0 us reason=input-dirty animated=55 crc=846dbd8e
+GREEN G0 the golden script: 2766 render calls, 301 distinct panel states, the viewport always the composed one, no malformed or oversize transaction
+GREEN G2 the D-63 hit cue shows (reverse video / tile 0 read off the panel) in 1 panel states, all of them in the fight; none outside it
+RED G1 the panel after every render call equals the recorded golden (301 states vs 301 recorded, 2766 vs 2766 render calls; first difference at state 39, phase 1; source: A4-UI4 console package over the A4-UI1 restyle)
+A3-04F render runtime: 16/17 checks
+
+        Start 101: a4_ui1_chrome_runtime
+101/178 Test #101: a4_ui1_chrome_runtime ......................   Passed    0.23 sec
+        Start 102: a4_ui2_title_runtime
+102/178 Test #102: a4_ui2_title_runtime .......................   Passed    0.15 sec
+        Start 103: a4_ui2_death_music_runtime
+103/178 Test #103: a4_ui2_death_music_runtime .................   Passed    0.18 sec
+        Start 104: a4_ui2_save_menu_runtime
+104/178 Test #104: a4_ui2_save_menu_runtime ...................   Passed    0.22 sec
+        Start 105: a3_hf3_combat_hit_cue
+105/178 Test #105: a3_hf3_combat_hit_cue ......................   Passed    0.01 sec
+        Start 106: a3_hf3_combat_hit_runtime
+106/178 Test #106: a3_hf3_combat_hit_runtime ..................   Passed    0.15 sec
+        Start 107: a3_04g_storage_runtime
+107/178 Test #107: a3_04g_storage_runtime .....................   Passed    0.28 sec
+        Start 108: a4_save1_recovery_runtime
+108/178 Test #108: a4_save1_recovery_runtime ..................   Passed    0.69 sec
+        Start 109: a4_save2_slots_runtime
+109/178 Test #109: a4_save2_slots_runtime .....................   Passed    0.82 sec
+        Start 110: a4_save3_pc_bridge_runtime
+110/178 Test #110: a4_save3_pc_bridge_runtime .................   Passed    0.69 sec
+        Start 111: a4_ui3_slot_rows
+111/178 Test #111: a4_ui3_slot_rows ...........................   Passed    0.01 sec
+        Start 112: a4_ui3_save_ux_runtime
+112/178 Test #112: a4_ui3_save_ux_runtime .....................   Passed    0.34 sec
+        Start 113: a4_end1_endgame_scene
+113/178 Test #113: a4_end1_endgame_scene ......................   Passed    0.02 sec
+        Start 114: a4_end1_ending_runtime
+114/178 Test #114: a4_end1_ending_runtime .....................   Passed    3.95 sec
+        Start 115: a4_ui4_presentation_runtime
+115/178 Test #115: a4_ui4_presentation_runtime ................   Passed    0.21 sec
+        Start 116: a4_ui4_moongate_runtime
+116/178 Test #116: a4_ui4_moongate_runtime ....................   Passed    0.19 sec
+        Start 117: a4_ui4_console_runtime
+117/178 Test #117: a4_ui4_console_runtime .....................   Passed    0.11 sec
+        Start 118: a3_05_audio_mute
+118/178 Test #118: a3_05_audio_mute ...........................   Passed    0.01 sec
+        Start 119: a3_05_audio_controls
+119/178 Test #119: a3_05_audio_controls .......................   Passed    0.15 sec
+        Start 120: a3_hf4_load_transient_runtime
+120/178 Test #120: a3_hf4_load_transient_runtime ..............   Passed    0.17 sec
+        Start 121: a3_hf5_dialogue_pacing_runtime
+121/178 Test #121: a3_hf5_dialogue_pacing_runtime .............   Passed    0.45 sec
+        Start 122: a3_hf6_shrine_key_wait_runtime
+122/178 Test #122: a3_hf6_shrine_key_wait_runtime .............   Passed    0.25 sec
+        Start 123: a3_hf6_shrine_key_wait_pacer
+123/178 Test #123: a3_hf6_shrine_key_wait_pacer ...............   Passed    0.01 sec
+        Start 124: a3_hf7_ritual_fx_runtime
+124/178 Test #124: a3_hf7_ritual_fx_runtime ...................   Passed    0.85 sec
+        Start 125: a3_hf8_sacrifice_burst_runtime
+125/178 Test #125: a3_hf8_sacrifice_burst_runtime .............   Passed    1.10 sec
+        Start 126: a3_hf9_refuge_cadence
+126/178 Test #126: a3_hf9_refuge_cadence ......................   Passed    0.01 sec
+        Start 127: a3_hf9_refuge_cadence_runtime
+127/178 Test #127: a3_hf9_refuge_cadence_runtime ..............   Passed    0.84 sec
+        Start 128: a3_hf10_mix_parity_runtime
+128/178 Test #128: a3_hf10_mix_parity_runtime .................   Passed    0.19 sec
+        Start 129: a3_hf7_ritual_fx
+129/178 Test #129: a3_hf7_ritual_fx ...........................   Passed    0.01 sec
+        Start 130: a3_hf5_dialogue_pacer
+130/178 Test #130: a3_hf5_dialogue_pacer ......................   Passed    0.01 sec
+        Start 131: batch14_zstats_runtime
+131/178 Test #131: batch14_zstats_runtime .....................   Passed    0.16 sec
+        Start 132: batch18_well_ceremony
+132/178 Test #132: batch18_well_ceremony ......................   Passed    0.12 sec
+        Start 133: batch19_command_char_runtime
+133/178 Test #133: batch19_command_char_runtime ...............   Passed    0.21 sec
+        Start 134: batch3_group_a
+134/178 Test #134: batch3_group_a .............................   Passed    0.01 sec
+        Start 135: batch3_group_b
+135/178 Test #135: batch3_group_b .............................   Passed    0.01 sec
+        Start 136: batch3_group_c
+136/178 Test #136: batch3_group_c .............................   Passed    0.01 sec
+        Start 137: batch4_group_a
+137/178 Test #137: batch4_group_a .............................   Passed    0.01 sec
+        Start 138: batch4_group_b
+138/178 Test #138: batch4_group_b .............................   Passed    0.01 sec
+        Start 139: batch5
+139/178 Test #139: batch5 .....................................   Passed    0.01 sec
+        Start 140: batch7b
+140/178 Test #140: batch7b ....................................   Passed    0.01 sec
+        Start 141: batch12_combat_field
+141/178 Test #141: batch12_combat_field .......................   Passed    0.02 sec
+        Start 142: batch13
+142/178 Test #142: batch13 ....................................   Passed    0.01 sec
+        Start 143: batch14_zstats_model
+143/178 Test #143: batch14_zstats_model .......................   Passed    0.10 sec
+        Start 144: batch15_sacrifice_roster
+144/178 Test #144: batch15_sacrifice_roster ...................   Passed    0.01 sec
+        Start 145: batch17_theft_watchdog
+145/178 Test #145: batch17_theft_watchdog .....................   Passed    0.01 sec
+        Start 146: batch19_command_char
+146/178 Test #146: batch19_command_char .......................   Passed    0.02 sec
+        Start 147: batch45b
+147/178 Test #147: batch45b ...................................   Passed    0.01 sec
+        Start 148: blackthorn_scene
+148/178 Test #148: blackthorn_scene ...........................   Passed    0.02 sec
+        Start 149: alpha_resource_capacity
+149/178 Test #149: alpha_resource_capacity ....................   Passed    0.01 sec
+        Start 150: a4_save3_pc_reference
+150/178 Test #150: a4_save3_pc_reference ......................   Passed    0.87 sec
+        Start 151: a4_end1_endgame_pages
+151/178 Test #151: a4_end1_endgame_pages ......................   Passed    0.39 sec
+        Start 152: gameplay_parity
+152/178 Test #152: gameplay_parity ............................   Passed   10.51 sec
+        Start 153: outdoor_table_drift
+153/178 Test #153: outdoor_table_drift ........................   Passed    0.09 sec
+        Start 154: gem_category_table_drift
+154/178 Test #154: gem_category_table_drift ...................   Passed    0.09 sec
+        Start 155: movement_flow_drift
+155/178 Test #155: movement_flow_drift ........................   Passed    4.81 sec
+        Start 156: quest_parity
+156/178 Test #156: quest_parity ...............................   Passed    4.85 sec
+        Start 157: quest_case_table_drift
+157/178 Test #157: quest_case_table_drift .....................   Passed    0.10 sec
+        Start 158: typescript_shop_fixture_drift
+158/178 Test #158: typescript_shop_fixture_drift ..............   Passed    1.06 sec
+        Start 159: typescript_shop_flow_drift
+159/178 Test #159: typescript_shop_flow_drift .................   Passed    4.60 sec
+        Start 160: typescript_shop_tables_drift
+160/178 Test #160: typescript_shop_tables_drift ...............   Passed    0.08 sec
+        Start 161: typescript_shop_greetings_drift
+161/178 Test #161: typescript_shop_greetings_drift ............   Passed    0.08 sec
+        Start 162: persistence_parity
+162/178 Test #162: persistence_parity .........................   Passed    0.88 sec
+        Start 163: typescript_dialogue_fixture_drift
+163/178 Test #163: typescript_dialogue_fixture_drift ..........   Passed   12.14 sec
+        Start 164: typescript_transport_flow_fixture_drift
+164/178 Test #164: typescript_transport_flow_fixture_drift ....   Passed    0.25 sec
+        Start 165: typescript_dungeon_flow_fixture_drift
+165/178 Test #165: typescript_dungeon_flow_fixture_drift ......   Passed    4.09 sec
+        Start 166: typescript_dungeon_art_identity
+166/178 Test #166: typescript_dungeon_art_identity ............   Passed    0.15 sec
+        Start 167: typescript_world_flow_fixture_drift
+167/178 Test #167: typescript_world_flow_fixture_drift ........   Passed    0.92 sec
+        Start 168: typescript_dungeon_fixture_drift
+168/178 Test #168: typescript_dungeon_fixture_drift ...........   Passed   42.55 sec
+        Start 169: typescript_advanced_combat_fixture_drift
+169/178 Test #169: typescript_advanced_combat_fixture_drift ...   Passed    3.98 sec
+        Start 170: typescript_magic_fixture_drift
+170/178 Test #170: typescript_magic_fixture_drift .............   Passed    0.20 sec
+        Start 171: typescript_combat_fixture_drift
+171/178 Test #171: typescript_combat_fixture_drift ............   Passed    2.37 sec
+        Start 172: typescript_item_fixture_drift
+172/178 Test #172: typescript_item_fixture_drift ..............   Passed    1.62 sec
+        Start 173: typescript_command_fixture_drift
+173/178 Test #173: typescript_command_fixture_drift ...........   Passed    1.29 sec
+        Start 174: typescript_travel_fixture_drift
+174/178 Test #174: typescript_travel_fixture_drift ............   Passed    2.00 sec
+        Start 175: typescript_fixture_drift
+175/178 Test #175: typescript_fixture_drift ...................   Passed    0.13 sec
+        Start 176: typescript_turn_fixture_drift
+176/178 Test #176: typescript_turn_fixture_drift ..............   Passed    0.77 sec
+        Start 177: a3_01_audio_capability
+177/178 Test #177: a3_01_audio_capability .....................   Passed    0.24 sec
+        Start 178: a3_02_sfx_reference_drift
+178/178 Test #178: a3_02_sfx_reference_drift ..................   Passed    0.08 sec
+
+99% tests passed, 1 tests failed out of 178
+
+Total Test time (real) = 159.57 sec
+
+The following tests FAILED:
+	100 - a3_04f_render_runtime (Failed)
+Errors while running CTest

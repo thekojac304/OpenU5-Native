@@ -21,6 +21,7 @@
 // native/targets/tdeck/host_tests links this file, so it never reaches
 // T-Deck firmware; production's initialize() is untouched and does not call
 // this method.
+#include <new>
 #include "../main/alpha_runtime.h"
 #include "../main/tdeck_board.h"
 #include "openu5/npc_path.h"
@@ -67,7 +68,15 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     // null debug_view_ on the host.
     debug_view_ = new DeviceDebugScreen();
     perf_report_lines_ = new char[openu5::kPerfReportMaxLines][openu5::kPerfReportLineBytes]();
+#ifndef A4_UI4_HF_HEAD_API // RED-first builds against a runtime without the binder
+    // A4-UI4 hardware follow-up: the production constructor, not a copy.
+    construct_session(::operator new(sizeof(openu5::UiSession)), transcript_, kHostTestTranscriptBlocks);
+#else
     ui_ = new openu5::UiSession({transcript_, kHostTestTranscriptBlocks}, {this, dispatch_ui}, {11, 12, 63});
+#endif
+#ifndef A4_UI4_HEAD_API // RED-first builds against a runtime without the binder
+    configure_session(); // A4-UI4: the production binder, not a copy
+#endif
 
     context_.actors = &actors_;
     // commands.cpp's context gate rejects EVERY command (Move included) when

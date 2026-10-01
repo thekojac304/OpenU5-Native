@@ -52,6 +52,7 @@ esp_err_t Board::show_frontend(const openu5::FrontendView &, const uint16_t *, c
 esp_err_t Board::refresh_bed_status_panel(const openu5::GameState &, DevicePartyHighlight) { return ESP_OK; }
 esp_err_t Board::show_camp_viewport(const uint16_t *,uint32_t) { return ESP_OK; }
 esp_err_t Board::fill_bed_viewport() { return ESP_OK; }
+esp_err_t Board::animate_console_cursor() { return ESP_OK; } // A4-UI4 (section 8.20)
 esp_err_t Board::set_brightness(uint8_t) { return ESP_OK; }
 // A4-END1: the ending's full-screen frames; this stub draws nothing.
 esp_err_t Board::show_endgame_page(const uint8_t *, const uint16_t *, const openu5::EndgameScrollCell *,

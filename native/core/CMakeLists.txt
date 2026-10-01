@@ -2171,6 +2171,29 @@ if(BUILD_TESTING)
   add_test(NAME a4_end1_ending_runtime COMMAND a4_end1_ending_runtime
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
+  # Alpha 4 A4-UI4/PRES1 (targets/tdeck/ALPHA4_UI.md section 8) -- the frontend
+  # and presentation finalization on the REAL AlphaRuntime and the REAL Board:
+  # the menu footer, the boot label, Small text, the Direction? status, the
+  # underworld caption, the full-square zodiac, the caret glyph, the console
+  # echoes (Look-North, one ended line, Mix Reagents and its hold), the shard
+  # ritual bursts, the quake pulses and the Refuge stage.
+  openu5_a4_ui2_runtime(a4_ui4_presentation_runtime)
+  add_test(NAME a4_ui4_presentation_runtime COMMAND a4_ui4_presentation_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
+  # The moongates as the original draws them (D-48): the rise and fall by
+  # stages, the transit's closing over the party, and midnight.
+  openu5_a4_ui2_runtime(a4_ui4_moongate_runtime)
+  add_test(NAME a4_ui4_moongate_runtime COMMAND a4_ui4_moongate_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
+  # The console package and the reverse-video lists (ALPHA4_UI.md section
+  # 8.20): bullets, getkey's blank rows, bottom anchoring, the live prompt row
+  # and the flame-wave cursor at every text size; pickers and shops as bars.
+  openu5_a4_ui2_runtime(a4_ui4_console_runtime)
+  add_test(NAME a4_ui4_console_runtime COMMAND a4_ui4_console_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
   # Alpha 3 A3-05 -- the audio finalization controls through the REAL
   # AlphaRuntime: Alt+Shift+M / Alt+Shift+S mutes by raw keys, the Settings
   # rows while muted, stock vs patched assets, and a kill's single hit burst.

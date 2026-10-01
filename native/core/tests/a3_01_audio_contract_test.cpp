@@ -671,7 +671,7 @@ int main(int argc, char **argv) {
         m.handle(west);
         const auto v = m.view();
         check(m.settings().music_volume == 60 && std::strcmp(v.lines[SystemMenuSession::kMusicVolumeRow], "Music Volume: 60%") == 0 &&
-                  std::strcmp(v.footer, "Left/right changes; Mic returns") == 0,
+                  std::strcmp(v.footer, "Left/right changes; Mic saves") == 0, // A4-UI4: one footer for both Settings pages
               "F6 supported patch: Music Volume is a live 0..100 % row");
         bool reasons = true;
         for (auto a : {MusicAvailability::IncompletePatch, MusicAvailability::UnknownVariant, MusicAvailability::NoAudioPack,

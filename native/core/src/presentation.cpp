@@ -71,12 +71,17 @@ void flood(int cc,int cr,int light,TileSampler sample,void *sample_context,
     for(int i=0;i<kPresentationCells;++i)out[i]=state[i]==Visible?1:0;
 }
 
-struct WorldSampler {CommandContext *context;const ActiveMap *map;Position center;};
-int sample_world(void *p,int col,int row){auto &s=*static_cast<WorldSampler*>(p);return effective_terrain(*s.context,*s.map,int(s.center.x)-kHalf+col,int(s.center.y)-kHalf+row);}
+struct WorldSampler {CommandContext *context;const ActiveMap *map;Position center;bool gates=false;};
+int sample_world(void *p,int col,int row){auto &s=*static_cast<WorldSampler*>(p);const int x=int(s.center.x)-kHalf+col,y=int(s.center.y)-kHalf+row;
+    // A4-UI4 (D-48): 0x475a writes the gate INTO the map buffer before the
+    // frame's light is worked out, and 0xdc is an emitter: a standing gate
+    // lights its own cell and its surroundings, as the original's glow at night.
+    if(s.gates&&s.context->quest_world&&moongate_stone_at(s.context->game,*s.context->quest_world,x&255,y&255))return kMoongateTile;
+    return effective_terrain(*s.context,*s.map,x,y);}
 
-void visibility(CommandContext &c,const ActiveMap &map,Position center,bool reveal_all,uint8_t (&out)[kPresentationCells]) {
+void visibility(CommandContext &c,const ActiveMap &map,Position center,bool reveal_all,uint8_t (&out)[kPresentationCells],bool gates=false) {
     if(reveal_all){std::fill(std::begin(out),std::end(out),uint8_t(1));return;}
-    WorldSampler sampler{&c,&map,center};uint8_t emit[kPresentationCells]{};
+    WorldSampler sampler{&c,&map,center,gates};uint8_t emit[kPresentationCells]{};
     constexpr int reach=3;
     for(int er=-reach;er<kPresentationWindow+reach;++er)for(int ec=-reach;ec<kPresentationWindow+reach;++ec){
         if(!contains(kEmitters,sizeof(kEmitters)/sizeof(kEmitters[0]),sample_world(&sampler,ec,er)&255))continue;
@@ -204,17 +209,23 @@ int32_t animated_tile_frame(int32_t tile,uint32_t phase,int64_t turn){
     return base+int((tile-base+step)%size);
 }
 
-PresentationSnapshot compose_world_presentation(CommandContext &c,const ActiveMap &map,Position center,int32_t avatar_tile,bool reveal_all){
+PresentationSnapshot compose_world_presentation(CommandContext &c,const ActiveMap &map,Position center,int32_t avatar_tile,bool reveal_all,int moongate_stage){
     PresentationSnapshot s;s.center=center;
     for(int row=0;row<kPresentationWindow;++row)for(int col=0;col<kPresentationWindow;++col){const int i=row*kPresentationWindow+col;s.tiles[i]=int16_t(effective_terrain(c,map,int(center.x)-kHalf+col,int(center.y)-kHalf+row));}
-    visibility(c,map,center,reveal_all,s.visible);
+    visibility(c,map,center,reveal_all,s.visible,moongate_stage>0&&!map.id.location);
     auto cell_at=[&](int x,int y)->int{int dx=x-int(center.x),dy=y-int(center.y);if(map.geometry.wraps){if(dx>128)dx-=256;if(dx< -128)dx+=256;if(dy>128)dy-=256;if(dy< -128)dy+=256;}const int col=dx+kHalf,row=dy+kHalf;if(col<0||row<0||col>=kPresentationWindow||row>=kPresentationWindow)return -1;const int at=row*kPresentationWindow+col;return s.visible[at]?at:-1;};
     auto place=[&](int x,int y,int tile,uint32_t actor_id=0,uint8_t seed=0){const int at=cell_at(x,y);if(at>=0){s.tiles[at]=int16_t(tile);s.actor_ids[at]=actor_id;s.actor_seeds[at]=seed;}};
     // Batch 53 (H-191). The night moongates, before enemies/objects/party:
     // the reference's entity order is [gates, foes, loot], and the centre
     // cell (the party) is overwritten below. Recomposed every frame from the
     // stones, so a gate vanishes with the night or with its stone.
-    if(!map.id.location&&c.quest_world&&c.quest_world->moonstones)for(size_t i=0;i<c.quest_world->moonstone_count;++i){const auto&m=c.quest_world->moonstones[i];if(moongate_visible_at(c.game,c.turn,*c.quest_world,m.x,m.y))place(m.x,m.y,kMoongateTile);}
+    // A4-UI4 (D-48): with the device's 0x475a counter (`moongate_stage` >= 0)
+    // a gate stands while the counter is above 0, rising or sinking, and its
+    // stage is the frame's partial gate; -1 keeps the plain night rule.
+    if(!map.id.location&&c.quest_world&&c.quest_world->moonstones)for(size_t i=0;i<c.quest_world->moonstone_count;++i){const auto&m=c.quest_world->moonstones[i];
+        const bool shown=moongate_stage<0?moongate_visible_at(c.game,c.turn,*c.quest_world,m.x,m.y):moongate_stage>0&&moongate_stone_at(c.game,*c.quest_world,m.x,m.y);
+        if(shown)place(m.x,m.y,kMoongateTile);}
+    if(moongate_stage>0&&moongate_stage<kMoongateStages)s.moongate_rows=uint8_t(moongate_stage);
     if(!map.id.location&&c.outdoor)for(size_t i=0;i<c.outdoor->enemies.size();++i){const auto&e=c.outdoor->enemies[i];place(e.x,e.y,e.tile,0x10000U+uint32_t(e.slot>=0?e.slot:int(i)+32),uint8_t(e.tile&0xfc));}
     if(map.id.location&&c.actors)for(size_t i=0;i<c.actors->count;++i){const auto&a=c.actors->actors[i];if(a.location==map.id.location&&a.z==map.id.floor)place(a.x,a.y,a.schedule.type+256,0x20000U+a.schedule.slot,uint8_t(a.schedule.type&0xfc));}
     // R-04 (Batch 2): two reference-faithful layers, not one unified

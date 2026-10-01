@@ -230,6 +230,14 @@ export function rescueLordBritish(
     }
   }
   state.questFlags["game-won"] = true;
+  // Alpha 4 A4-UI4 (D-73): la vía FIEL no imprime nada aquí. `absorb` arma el
+  // centinela y el teardown salta a ENDGAME.OVL (SJOG 0x2046 / DUNGEON 0x00cb), que
+  // imprime ENDMSG.DAT en SU orden desde la escena (el guión, buildEndgameScript);
+  // el conector y las copias de ENDMSG / del pergamino en consola de abajo eran
+  // narración del port. Se conservan sólo para los llamadores directos (tests/debug).
+  if (opts?.viaAbsorption) {
+    return { ok: true, ending: state.specialItems.woodenBox ? "victory" : "stranded", messages: [] };
+  }
   // Conector del rescate mecánico (narración del port; ENDGAME 0x0648 no lo enuncia).
   const messages = [
     "Bearing amulet, crown and sceptre, thou dost shatter the final seal of Doom.",

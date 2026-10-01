@@ -1,0 +1,17 @@
+A4-UI4 hardware follow-up (ALPHA4_UI.md section 8.22) -- the console height's golden change, proved console-only
+
+1. a4_ui1_chrome_runtime: unchanged (its screens hold fewer than 12 console lines); passes against a4_ui1_goldens.h as is.
+
+2. a3_04f_render_runtime panel golden (a3_04f_panel_goldens.h):
+   - pre-follow-up files (build-a4-ui4/hf1-snapshot via tools/a4_ui4_hf1_red_first.py ... a3_04f_render_runtime):
+     G1 GREEN against the previous golden, 17/17 -- the golden was recorded from exactly that tree.
+   - follow-up tree: G1 RED, "first difference at state 39, phase 1" (state count 301 vs 301, renders 2766 vs 2766).
+   - masked census (scratch, not kept): each panel state hashed with the console rectangle x 184..318, y 88..239
+     blanked, folded on the masked hash:
+       pre-follow-up masked states 297, follow-up masked states 297, masked states differing: 0
+     => every difference lies inside the console rectangle (tighter than A4-UI4's x>=182, y>=87 mask).
+   - unmasked: 255 of the 301 states differ (states 39..300): from state 39 on the transcript holds more than 12
+     lines, so rows 88..143 now carry the history that page_rows 12 left black. State count unchanged (301).
+   - re-recorded twice with --record: both files SHA-256 F59CBE3A9EDFBA16069C91629917722DA80DD7FB1A27DA1C1B3C26DCCD2A60E9
+     (byte-identical); the hashes spliced under the file's hand-written provenance header, kSource
+     "A4-UI4 console height over the console package". G1 GREEN, 17/17.

@@ -145,13 +145,20 @@ struct RefugeSceneFigure {
 RefugePhase refuge_phase_from_name(const char *);
 
 /**
- * Figures VISIBLE in a given phase -- CUMULATIVE: the Avatar always (centre);
- * from `GhostLeft` on the left figure; `GhostBoth` adds the right one; and
- * `Apparition`/`Vertigo` the cyan apparition top-centre. PURE: it reads no
- * external state. Returns how many figures were produced.
+ * Figures VISIBLE in a given phase -- CUMULATIVE: the Avatar (centre); from
+ * `GhostLeft` on the left figure; `GhostBoth` adds the right one; and
+ * `Apparition` the cyan apparition top-centre. PURE: it reads no external
+ * state. Returns how many figures were produced.
+ *
+ * Alpha 4 A4-UI4 (H-211 / D-68), from BLCKTHRN party_refuge's bytes: after the
+ * darkness line 0x098f-0x09ca clear every object, so the `Void` stage is EMPTY
+ * until "But thy slumber is disturbed!" -- 0x09f5-0x0a07 then put slot 0
+ * (tile 0x1c) at (5,5) and 0x0a0a redraws: `avatar_placed`. And `Vertigo`
+ * (0x0bc4-0x0be7) fills the window black and blits 0x11c at (5,5): the Avatar
+ * ALONE, no ghost and no apparition.
  */
 size_t refuge_scene_figures(RefugePhase, int16_t avatar_tile,
-                            RefugeSceneFigure *out, size_t capacity);
+                            RefugeSceneFigure *out, size_t capacity, bool avatar_placed = true);
 
 /**
  * Bake the refuge scene into the ordinary presentation window, so the existing
@@ -159,7 +166,7 @@ size_t refuge_scene_figures(RefugePhase, int16_t avatar_tile,
  * kPresentationHidden, which render_snapshot already leaves BLACK -- exactly
  * as the original blackens the window at 0x0962.
  */
-PresentationSnapshot compose_refuge_presentation(RefugePhase, int16_t avatar_tile);
+PresentationSnapshot compose_refuge_presentation(RefugePhase, int16_t avatar_tile, bool avatar_placed = true);
 
 /** One released beat, handed to the owner for the duration of the callback. */
 struct NarrativeSceneBeat {
@@ -193,6 +200,8 @@ struct NarrativeSceneStep {
     bool append = false, has_text = false, has_sfx = false;
     /** A3-HF9: shown, the beat waits for a key (getkey 0x266c), not a clock. */
     bool key_wait = false, shake = false;
+    /** A4-UI4: releasing this beat places the refuge's Avatar (0x09f5). */
+    bool places_avatar = false;
 };
 
 /** Caller-owned storage, so the pacer itself stays a small object. */
@@ -260,6 +269,8 @@ class NarrativeScenePacer {
     RefugePhase phase() const { return phase_; }
     /** True while the refuge scene owns the viewport. */
     bool mounted() const { return phase_ != RefugePhase::None; }
+    /** A4-UI4: the refuge's slumber beat has placed the Avatar (0x09f5). */
+    bool refuge_avatar_placed() const { return avatar_placed_; }
 
     /**
      * The scene that has just FINISHED, reported exactly ONCE. `Refuge` is the
@@ -284,6 +295,7 @@ class NarrativeScenePacer {
     size_t head_ = 0, count_ = 0, text_used_ = 0;
     uint32_t resume_at_ms_ = 0, released_ = 0, dropped_ = 0;
     bool waiting_ = false, paced_ = true, awaiting_key_ = false;
+    bool avatar_placed_ = false; // A4-UI4
 
     NarrativeSceneStep *push(NarrativeSceneStepKind);
     bool copy_text(const char *, uint32_t &offset, uint32_t &length);

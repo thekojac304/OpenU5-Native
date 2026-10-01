@@ -32,16 +32,18 @@ RefugePhase refuge_phase_from_name(const char *name) {
 }
 
 size_t refuge_scene_figures(RefugePhase phase, int16_t avatar_tile,
-                            RefugeSceneFigure *out, size_t capacity) {
+                            RefugeSceneFigure *out, size_t capacity, bool avatar_placed) {
     if (phase == RefugePhase::None) return 0;
     size_t written = 0;
     auto add = [&](int8_t col, int8_t row, int16_t tile) {
         if (out && written < capacity) out[written] = RefugeSceneFigure{col, row, tile};
         ++written;
     };
-    // The Avatar is always there, alone in the centre of the nothingness.
+    // The Avatar, in the centre of the nothingness -- once 0x09f5 has placed
+    // it (A4-UI4), and alone again on the last stage (0x0bc4-0x0be7).
+    if (phase == RefugePhase::Void && !avatar_placed) return written;
     add(int8_t(kPresentationWindow / 2), int8_t(kPresentationWindow / 2), avatar_tile);
-    if (phase == RefugePhase::Void) return written;
+    if (phase == RefugePhase::Void || phase == RefugePhase::Vertigo) return written;
     add(kRefugeGhostLeftCol, kRefugeGhostLeftRow, kRefugeGhostLeftTile);
     if (phase == RefugePhase::GhostLeft) return written;
     add(kRefugeGhostRightCol, kRefugeGhostRightRow, kRefugeGhostRightTile);
@@ -50,7 +52,7 @@ size_t refuge_scene_figures(RefugePhase phase, int16_t avatar_tile,
     return written;
 }
 
-PresentationSnapshot compose_refuge_presentation(RefugePhase phase, int16_t avatar_tile) {
+PresentationSnapshot compose_refuge_presentation(RefugePhase phase, int16_t avatar_tile, bool avatar_placed) {
     PresentationSnapshot s;
     // The scene owns its own 11x11 window; centring it on (5,5) keeps every
     // cell-offset consumer reading the same geometry the reference uses.
@@ -63,7 +65,7 @@ PresentationSnapshot compose_refuge_presentation(RefugePhase phase, int16_t avat
     }
     if (phase == RefugePhase::None) return s;
     RefugeSceneFigure figures[4]{};
-    const size_t count = refuge_scene_figures(phase, avatar_tile, figures, 4);
+    const size_t count = refuge_scene_figures(phase, avatar_tile, figures, 4, avatar_placed);
     for (size_t i = 0; i < count && i < 4; ++i) {
         const auto &f = figures[i];
         if (f.col < 0 || f.row < 0 || f.col >= kPresentationWindow || f.row >= kPresentationWindow)
@@ -119,6 +121,7 @@ void NarrativeScenePacer::begin(NarrativeScene scene) {
         state_ = NarrativeScenePacerState::Running;
         waiting_ = false;
         awaiting_key_ = false;
+        avatar_placed_ = false;
     }
     scene_ = scene;
 }
@@ -163,6 +166,9 @@ bool NarrativeScenePacer::enqueue(const GameEvent &e) {
             // neither holds: the scene drains in one pump as it always has.
             step->key_wait = paced_ && beat.key_wait;
             step->dwell_ms = paced_ ? refuge_beat_hold_ms(beat) : 0;
+            // A4-UI4: the slumber beat (its six sweeps) is where 0x09f5
+            // places the Avatar, between the print and the sweeps.
+            step->places_avatar = beat.sweep_samples == kRefugeSlumberSamples;
         }
         return true;
     }
@@ -232,6 +238,7 @@ void NarrativeScenePacer::pump(uint32_t now_ms, NarrativeSceneSink beats, EventS
         ++released_;
         if (step.kind == NarrativeSceneStepKind::Beat) {
             if (step.phase != RefugePhase::None) phase_ = step.phase;
+            if (step.places_avatar) avatar_placed_ = true;
             if (beats.beat) {
                 NarrativeSceneBeat out;
                 out.text = step.has_text ? storage_.text + step.text_offset : nullptr;
@@ -293,6 +300,7 @@ void NarrativeScenePacer::cancel() {
     state_ = NarrativeScenePacerState::Idle;
     waiting_ = false;
     awaiting_key_ = false;
+    avatar_placed_ = false;
     resume_at_ms_ = 0;
 }
 

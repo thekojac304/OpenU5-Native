@@ -22,6 +22,21 @@ constexpr DeviceTextMetrics ui_text_metrics(uint8_t size) {
          : size>=2 ? DeviceTextMetrics{7,9,8,10}
                    : DeviceTextMetrics{5,7,6,8};
 }
+// A4-UI4 hardware follow-up (ALPHA4_UI.md section 8.22): the most console rows
+// any text size lays out between the status box's rule (y 88,
+// openu5::kHudTranscriptY) and the glass (240) -- Small's 7 px rows: 21. The
+// device's UiSession shows up to this many (AlphaRuntime::session_config()).
+constexpr size_t kConsoleMaxRows=size_t((240-88)/ui_text_metrics(0).line_height);
+
+// Alpha 4 A4-UI4 (ALPHA4_UI.md section 8): the boot screens name the release
+// the image is, from its PROJECT_VER ("4.0.0-alpha4-ui4-debug" -> "Alpha 4"),
+// not a literal that went stale with Alpha 2. Static strings: no buffer.
+inline const char *firmware_release_label(const char *version) {
+    static constexpr const char *kLabels[]={"Alpha 1","Alpha 2","Alpha 3","Alpha 4","Alpha 5",
+                                             "Alpha 6","Alpha 7","Alpha 8","Alpha 9"};
+    if(!version||version[0]<'1'||version[0]>'9'||version[1]!='.')return "OpenU5";
+    return kLabels[version[0]-'1'];
+}
 
 constexpr int kContextBarTop=215,kContextBarStatusY=217,kContextBarActionsY=229;
 constexpr int kContextBarStatusH=9,kContextBarActionsH=9;

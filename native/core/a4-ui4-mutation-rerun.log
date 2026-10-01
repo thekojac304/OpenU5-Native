@@ -1,0 +1,3 @@
+S3 KILLED -- the Refuge Avatar from the darkness line -- a4_ui4_presentation_runtime exit=1 RED=S3; a3_hf9_refuge_cadence_runtime exit=1 RED=N1.3; batch7b_tests exit=1 RED=-
+R1 KILLED -- the native parity path keeps the reference's old narration -- quest_driver exit=8 RED=quest_parity; a4_end1_ending_runtime exit=1 RED=N1
+A4-UI4 mutation check: 2 killed, 0 survived, 0 invalid; restored build GREEN

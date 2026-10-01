@@ -34,6 +34,33 @@ int16_t combat_direction(Direction d) {
     }
     return 0;
 }
+// Alpha 4 A4-UI4/PRES1 (targets/tdeck/ALPHA4_UI.md section 8). getdir (kernel
+// 0x35EC) prints the direction it read on the command's own echo row: "Look-"
+// then "North" is "Look-North" (DATA.OVL DS 0xa2a6 "North\n", 0xa2ae "South\n",
+// 0xa2bc "East\n", 0xa2b6 "West\n"). Its callers: Look (LOOKOBJ 0x099c), Open
+// (SJOG 0x139f), Get (0x18ea), Search (0x097e), Jimmy (0x0d78), Push (CMDS
+// 0x1632), Klimb (0x1c46), Attack (MAINOUT 0x0732), and the arena's own Get /
+// Open / Search (COMBAT.OVL). Talk and Fire are not shown to reach it, so they
+// keep their own row.
+const char *getdir_word(Direction d) {
+    switch (d) {
+    case Direction::North: return "North";
+    case Direction::South: return "South";
+    case Direction::East: return "East";
+    case Direction::West: return "West";
+    }
+    return "";
+}
+bool getdir_prints_word(CommandKind k) {
+    switch (k) {
+    case CommandKind::Look: case CommandKind::Open: case CommandKind::Get: case CommandKind::Search:
+    case CommandKind::Jimmy: case CommandKind::Push: case CommandKind::Klimb: case CommandKind::Attack:
+    case CommandKind::CombatGet: case CommandKind::CombatOpen: case CommandKind::CombatSearch:
+        return true;
+    default:
+        return false;
+    }
+}
 bool is_selection(UiMode m) {
     return m == UiMode::PartySelection || m == UiMode::InventorySelection ||
            m == UiMode::EquipmentSelection || m == UiMode::SpellSelection;
@@ -75,12 +102,17 @@ void for_each_wrapped_line(const UiSession &session, size_t columns, Emit emit) 
     char word[kUiRenderedLineBytes]{};
     size_t line_length = 0, word_length = 0, spaces = 0;
     bool event_emitted = false;
+    // A4-UI4 (ALPHA4_UI.md section 8.20): the console layout. `bullet` holds
+    // while a command echo's first row is filled: that row alone carries
+    // UiTextCommand and is one column short, the bullet's cell.
+    const bool console = session.console_layout() && columns > 1;
+    bool bullet = false;
 
     auto set_metadata = [&](const UiTextBlock &block) {
         if (line.sequence) return;
         line.sequence = block.sequence;
         line.channel = block.channel;
-        line.flags = block.flags;
+        line.flags = uint8_t((block.flags & ~UiTextCommand) | (bullet ? UiTextCommand : 0));
     };
     auto emit_line = [&](const UiTextBlock &block) {
         set_metadata(block);
@@ -90,12 +122,13 @@ void for_each_wrapped_line(const UiSession &session, size_t columns, Emit emit) 
         line = {};
         line_length = 0;
         event_emitted = true;
+        bullet = false;
     };
     auto append_word = [&](const UiTextBlock &block) {
         if (!word_length) return;
         set_metadata(block);
         if (line_length) {
-            if (line_length + spaces + word_length > columns)
+            if (line_length + spaces + word_length > (bullet ? columns - 1 : columns))
                 emit_line(block);
             else {
                 while (spaces && line_length < columns) {
@@ -114,6 +147,15 @@ void for_each_wrapped_line(const UiSession &session, size_t columns, Emit emit) 
     for (size_t i = 0; i < session.transcript_size(); ++i) {
         const auto *block = session.transcript_at(i);
         if (!block) continue;
+        if (console && (block->flags & UiTextCommand) && !(block->flags & UiTextContinuesBefore) &&
+            block->length && !line_length) {
+            // getkey's LF: a blank row, then the echo on the bullet row.
+            UiRenderedLine blank{};
+            blank.sequence = block->sequence;
+            emit(blank);
+            line = {};
+            bullet = true;
+        }
         set_metadata(*block);
         for (size_t j = 0; j < block->length; ++j) {
             const char c = block->text[j];
@@ -128,9 +170,10 @@ void for_each_wrapped_line(const UiSession &session, size_t columns, Emit emit) 
                 if (line_length) ++spaces;
                 continue;
             }
-            if (word_length == columns) {
+            if (word_length == columns || (bullet && !line_length && word_length == columns - 1)) {
                 // Only a single token can reach this path.  Keep any preceding
-                // prose intact, then hard-break the overlong token.
+                // prose intact, then hard-break the overlong token (on a
+                // bullet row, one column sooner).
                 if (line_length) emit_line(*block);
                 set_metadata(*block);
                 for (size_t k = 0; k < word_length; ++k) line.text[line_length++] = word[k];
@@ -147,6 +190,15 @@ void for_each_wrapped_line(const UiSession &session, size_t columns, Emit emit) 
             spaces = 0;
             event_emitted = false;
         }
+    }
+    if (console && session.console_cursor() == UiConsoleCursor::NewCommand) {
+        // The live prompt row a command is awaited on, below its blank row.
+        UiRenderedLine blank{};
+        emit(blank);
+        UiRenderedLine prompt{};
+        prompt.channel = UiTextChannel::CommandEcho;
+        prompt.flags = UiTextCommand;
+        emit(prompt);
     }
 }
 } // namespace
@@ -320,11 +372,20 @@ void UiSession::append_continuation(UiTextChannel channel, const char *text) {
 }
 
 void UiSession::append_combat_event(const CombatEvent &event) {
+    // A4-UI4 (D-72). The arena's own "ended" event is never printed: it repeats
+    // the latch's "VICTORY!" (COMBAT 0x0cf6, already printed once) or stands for
+    // the defeat that finish_encounter_combat() prints itself. COMBAT 0x0cd3
+    // leaves the loop silently with the victory flag set and 0x0cda prints
+    // "BATTLE IS LOST!" once; the reference's combatOut prints only messages,
+    // hits and echoes. Doom's cell latches silently (no enemy at entry), so the
+    // absorption reaches the ending with no "VICTORY!".
+    if (event.kind == CombatEventKind::Ended) return;
     const bool blocked = event.kind == CombatEventKind::Message && event.text &&
                          std::strcmp(event.text, "Blocked!") == 0;
     if (!blocked) {
-        append(event.kind==CombatEventKind::Echo?UiTextChannel::CommandEcho:UiTextChannel::Combat,
-               event.text);
+        const bool echo = event.kind == CombatEventKind::Echo;
+        append(echo ? UiTextChannel::CommandEcho : UiTextChannel::Combat, event.text,
+               echo && event.text && *event.text ? UiTextCommand : UiTextNone);
         return;
     }
     ++blocked_events_generated_;
@@ -864,7 +925,7 @@ bool UiSession::handle_modal(const UiAction &a) {
                     a.direction == Direction::North ? 0 : a.direction == Direction::South ? 1
                     : a.direction == Direction::West ? 2 : 3;
                 cmd.hours = dir;
-                command_echo(klimb ? (dir ? "Down" : "Up")
+                answer_echo(klimb ? (dir ? "Down" : "Up")
                              : dir == 0 ? "Ahead" : dir == 1 ? "Here"
                              : dir == 2 ? "Left" : "Right");
                 mode_ = return_mode_; request_ = UiRequestId::None;
@@ -891,7 +952,8 @@ bool UiSession::handle_modal(const UiAction &a) {
                     target_render_marker_ = true;
                 }
                 auto cmd = pending_command_; cmd.direction = a.direction; cmd.has_direction = true;
-                command_echo(openu5::direction_name(a.direction));
+                if (getdir_prints_word(cmd.kind)) append_continuation(UiTextChannel::CommandEcho, getdir_word(a.direction));
+                else answer_echo(openu5::direction_name(a.direction));
                 mode_ = return_mode_; request_ = UiRequestId::None;prompt_[0]=0;pending_command_={};command(cmd);
             }
         } else if (a.kind == UiActionKind::Confirm &&
@@ -905,7 +967,7 @@ bool UiSession::handle_modal(const UiAction &a) {
                pending_command_.combat_y==combat_origin_y_)return true;
             auto cmd = pending_command_;
             cmd.has_target = cmd.kind != CommandKind::Fire;
-            if (cmd.kind == CommandKind::Fire) command_echo(openu5::direction_name(cmd.direction));
+            if (cmd.kind == CommandKind::Fire) answer_echo(openu5::direction_name(cmd.direction));
             mode_ = return_mode_; request_ = UiRequestId::None;prompt_[0]=0;pending_command_={};command(cmd);
         }
         return true;
@@ -916,7 +978,38 @@ bool UiSession::handle_modal(const UiAction &a) {
 void UiSession::command(Command c) {
     UiIntent i; i.kind = UiIntentKind::Command; i.command = c; dispatch(i);
 }
-void UiSession::command_echo(const char *s) { append(UiTextChannel::CommandEcho, s); }
+void UiSession::command_echo(const char *s) {
+    append(UiTextChannel::CommandEcho, s, s && *s ? UiTextCommand : UiTextNone);
+}
+void UiSession::answer_echo(const char *s) { append(UiTextChannel::CommandEcho, s); }
+
+void UiSession::set_console_layout(bool on) {
+    if (on == console_layout_) return;
+    console_layout_ = on;
+    scroll_lines_ = 0; // another layout: follow the newest line
+}
+
+void UiSession::set_console_ready(bool ready) {
+    if (ready == console_ready_) return;
+    const size_t before = wrapped_line_count();
+    console_ready_ = ready;
+    if (!scroll_lines_) return;
+    const size_t after = wrapped_line_count();
+    if (after > before) scroll_lines_ += after - before;
+    else scroll_lines_ -= std::min(scroll_lines_, before - after);
+}
+
+UiConsoleCursor UiSession::console_cursor() const {
+    // getkey_with_redraw 0x266c blinks the cursor wherever the text stopped:
+    // on a fresh bullet row for a command, after the echo for getdir 0x35EC.
+    // The other prompts' keys are read in the device's context bar.
+    if (!console_layout_ || !console_ready_) return UiConsoleCursor::None;
+    if (mode_ == UiMode::Exploration || mode_ == UiMode::Dungeon || mode_ == UiMode::Combat)
+        return UiConsoleCursor::NewCommand;
+    if (mode_ == UiMode::TargetSelection && request_ == UiRequestId::Direction)
+        return UiConsoleCursor::Inline;
+    return UiConsoleCursor::None;
+}
 void UiSession::direction_request(CommandKind kind, const char *echo) {
     command_echo(echo);
     Command c; c.kind = kind;
@@ -937,7 +1030,7 @@ bool UiSession::handle_exploration(const UiAction &a) {
     switch (k) {
     case 'a': direction_request(CommandKind::Attack, "Attack-"); return true;
     case 'b': command_echo("Board"); c.kind=CommandKind::Board; break;
-    case 'c': { command_echo("Cast");UiIntent i; i.kind=UiIntentKind::OpenSpellSelection; i.request=UiRequestId::Spell; dispatch(i); return true; }
+    case 'c': { command_echo("Cast...");UiIntent i; i.kind=UiIntentKind::OpenSpellSelection; i.request=UiRequestId::Spell; dispatch(i); return true; }
     case 'e': command_echo("Enter"); c.kind=CommandKind::Enter; break;
     case 'f': c.kind=CommandKind::Fire; command_echo("Fire-");
               begin_target(UiRequestId::Direction,"Fire-",c,5,5); return true;
@@ -946,16 +1039,16 @@ bool UiSession::handle_exploration(const UiAction &a) {
               begin_number(UiRequestId::RestHours,camp_eligible_?"For how many hours? (1-9) ":"Hours (1-9)?",1,9,1); return true;
     case 'i': command_echo("Ignite torch!"); c.kind=CommandKind::Ignite; break;
     case 'j': direction_request(CommandKind::Jimmy, "Jimmy-"); return true;
-    case 'k': command_echo("Klimb"); c.kind=CommandKind::Klimb; break;
+    case 'k': command_echo("Klimb-"); c.kind=CommandKind::Klimb; break;
     case 'l': direction_request(CommandKind::Look, "Look-"); return true;
-    case 'm': { command_echo("Mix");UiIntent i; i.kind=UiIntentKind::OpenSpellSelection; i.request=UiRequestId::Custom; dispatch(i); return true; }
+    case 'm': { command_echo("Mix Reagents");command_echo("");UiIntent i; i.kind=UiIntentKind::OpenSpellSelection; i.request=UiRequestId::Custom; dispatch(i); return true; }
     case 'n': { UiIntent i; i.kind=UiIntentKind::OpenPartySelection; i.request=UiRequestId::Party; dispatch(i); return true; }
     case 'o': direction_request(CommandKind::Open, "Open-"); return true;
     case 'p': direction_request(CommandKind::Push, "Push-"); return true;
-    case 'r': { command_echo("Ready");UiIntent i; i.kind=UiIntentKind::OpenEquipmentSelection; i.request=UiRequestId::Equipment; dispatch(i); return true; }
+    case 'r': { command_echo("Ready...");command_echo("");UiIntent i; i.kind=UiIntentKind::OpenEquipmentSelection; i.request=UiRequestId::Equipment; dispatch(i); return true; }
     case 's': direction_request(CommandKind::Search, "Search-"); return true;
     case 't': direction_request(CommandKind::Talk, "Talk-"); return true;
-    case 'u': { command_echo("Use item");UiIntent i; i.kind=UiIntentKind::OpenInventorySelection; i.request=UiRequestId::Inventory; dispatch(i); return true; }
+    case 'u': { command_echo("Use item");command_echo("");UiIntent i; i.kind=UiIntentKind::OpenInventorySelection; i.request=UiRequestId::Inventory; dispatch(i); return true; }
     case 'v': command_echo("View a gem!"); c.kind=CommandKind::ViewGem; break;
     case 'x': command_echo("X-it "); c.kind=CommandKind::Disembark; break;
     // (Y)ell dispatches exactly as the reference's yell() does: aboard a frigate
@@ -969,7 +1062,7 @@ bool UiSession::handle_exploration(const UiAction &a) {
         command_echo("Yell");
         if (sail_context_frigate_ && sail_context_location_ok_) { c.kind=CommandKind::YellSails; break; }
         begin_text(UiRequestId::YellText,"Yell what?",15); return true;
-    case 'z': { command_echo("Z-stats");UiIntent i;i.kind=UiIntentKind::OpenStatusSelection;i.request=UiRequestId::Status;dispatch(i);return true; }
+    case 'z': { command_echo("Z-stats...");UiIntent i;i.kind=UiIntentKind::OpenStatusSelection;i.request=UiRequestId::Status;dispatch(i);return true; }
     case ' ': command_echo("Pass"); c.kind=CommandKind::Pass; break;
     // Digits '0'-'9'.  Reference key order (main.ts): the harpsichord intercept
     // is tested FIRST and, when the party is seated at the instrument, the digit
@@ -1072,14 +1165,14 @@ bool UiSession::handle_dungeon(const UiAction &a) {
     case 'h': command_echo(camp_eligible_?"Hole up & camp!":"Hole up");
               begin_number(UiRequestId::RestHours,camp_eligible_?"For how many hours? (1-9) ":"Hours (1-9)?",1,9,1); return true;
     case '.': command_echo("Turn around"); c.item=int16_t(DungeonAction::TurnAround); break;
-    case 'c': { command_echo("Cast");UiIntent i; i.kind=UiIntentKind::OpenSpellSelection; i.request=UiRequestId::Spell; dispatch(i); return true; }
+    case 'c': { command_echo("Cast...");UiIntent i; i.kind=UiIntentKind::OpenSpellSelection; i.request=UiRequestId::Spell; dispatch(i); return true; }
     // The dungeon has its own command context, but these menus are deliberately
     // shared UI affordances.  They return to UiMode::Dungeon via return_mode_.
-    case 'm': { command_echo("Cast");UiIntent i; i.kind=UiIntentKind::OpenSpellSelection; i.request=UiRequestId::Spell; dispatch(i); return true; }
-    case 'r': { command_echo("Ready");UiIntent i; i.kind=UiIntentKind::OpenEquipmentSelection; i.request=UiRequestId::Equipment; dispatch(i); return true; }
-    case 'u': { command_echo("Use item");UiIntent i; i.kind=UiIntentKind::OpenInventorySelection; i.request=UiRequestId::Inventory; dispatch(i); return true; }
+    case 'm': { command_echo("Cast...");UiIntent i; i.kind=UiIntentKind::OpenSpellSelection; i.request=UiRequestId::Spell; dispatch(i); return true; }
+    case 'r': { command_echo("Ready...");command_echo("");UiIntent i; i.kind=UiIntentKind::OpenEquipmentSelection; i.request=UiRequestId::Equipment; dispatch(i); return true; }
+    case 'u': { command_echo("Use item");command_echo("");UiIntent i; i.kind=UiIntentKind::OpenInventorySelection; i.request=UiRequestId::Inventory; dispatch(i); return true; }
     case 'v': command_echo("View a gem!"); c.kind=CommandKind::ViewGem; break;
-    case 'z': { command_echo("Z-stats");UiIntent i;i.kind=UiIntentKind::OpenStatusSelection;i.request=UiRequestId::Status;dispatch(i);return true; }
+    case 'z': { command_echo("Z-stats...");UiIntent i;i.kind=UiIntentKind::OpenStatusSelection;i.request=UiRequestId::Status;dispatch(i);return true; }
     case ' ': command_echo("Pass"); c.item=int16_t(DungeonAction::Pass); break;
     // Digits are SET ACTIVE PLAYER in the corridor too (DUNGEON 0x07bc-0x07d6,
     // with the return forced to 0 = no turn).  There is no harpsichord in a
@@ -1106,19 +1199,22 @@ bool UiSession::handle_combat(const UiAction &a) {
     if (a.kind != UiActionKind::Character) return false;
     switch (lower_ascii(a.character)) {
     case 'a': c.kind=CommandKind::CombatAttack; command_echo("Attack"); begin_target(UiRequestId::Target,"Aim",c,combat_initial_x_,combat_initial_y_); return true;
-    case 'c': { command_echo("Cast");UiIntent i; i.kind=UiIntentKind::OpenSpellSelection; i.request=UiRequestId::Spell; dispatch(i); return true; }
-    case 'g': c.kind=CommandKind::CombatGet; command_echo("Get");
+    // A4-UI4 (section 8.20): the arena's cast echoes once -- combat_cast()'s
+    // own "Cast...\n" (combat.cpp, the combat parity pin) when the spell is
+    // chosen; an echo here printed it twice.
+    case 'c': { UiIntent i; i.kind=UiIntentKind::OpenSpellSelection; i.request=UiRequestId::Spell; dispatch(i); return true; }
+    case 'g': c.kind=CommandKind::CombatGet; command_echo("Get-");
               begin_target(UiRequestId::Direction,"Direction?",c,-1,-1); return true;
     case 'k': c.kind=CommandKind::CombatKlimb; break;
     // Combat Open is the original directional getdir operation.  Sending an
     // immediate direction-less command targets the actor's own cell and makes
     // a visible adjacent chest appear inert on the handheld.
-    case 'o': c.kind=CommandKind::CombatOpen; command_echo("Open");
+    case 'o': c.kind=CommandKind::CombatOpen; command_echo("Open-");
               begin_target(UiRequestId::Direction,"Direction?",c,-1,-1); return true;
-    case 's': c.kind=CommandKind::CombatSearch; command_echo("Search");
+    case 's': c.kind=CommandKind::CombatSearch; command_echo("Search-");
               begin_target(UiRequestId::Direction,"Direction?",c,-1,-1); return true;
-    case 'r': { command_echo("Ready");UiIntent i; i.kind=UiIntentKind::OpenEquipmentSelection; i.request=UiRequestId::Equipment; dispatch(i); return true; }
-    case 'u': { command_echo("Use item");UiIntent i; i.kind=UiIntentKind::OpenInventorySelection; i.request=UiRequestId::Inventory; dispatch(i); return true; }
+    case 'r': { command_echo("Ready...");command_echo("");UiIntent i; i.kind=UiIntentKind::OpenEquipmentSelection; i.request=UiRequestId::Equipment; dispatch(i); return true; }
+    case 'u': { command_echo("Use item");command_echo("");UiIntent i; i.kind=UiIntentKind::OpenInventorySelection; i.request=UiRequestId::Inventory; dispatch(i); return true; }
     case ' ': c.kind=CommandKind::CombatPass; break;
     // Digits are SET ACTIVE PLAYER in the arena too (Batch 21A.3).  COMBAT:0x063E
     // dispatches '0' at 0x0aa2->0x09ec and '1'-'6' at 0x0aaa-0x0ab4->0x09fe; only
@@ -1244,7 +1340,8 @@ bool UiSession::open_debug_menu() {
 void UiSession::consume(const GameEvent &e) {
     ++event_sequence_;
     if (e.kind == GameEventKind::Message || e.kind == GameEventKind::WalkEcho)
-        append(event_channel(e.kind), e.text ? e.text : "");
+        append(event_channel(e.kind), e.text ? e.text : "",
+               e.kind == GameEventKind::WalkEcho && e.text && *e.text ? UiTextCommand : UiTextNone);
     switch (e.kind) {
     case GameEventKind::CombatStarted:
         // Combat is authoritative core state, not a session UiSession owns.
@@ -1352,8 +1449,11 @@ void UiSession::consume(const GameEvent &e) {
         enter_modal(UiMode::KeyWait, UiRequestId::CampAdvance, "");
         break;
     case GameEventKind::NeedsDirection:
-        direction_request(e.text && std::strcmp(e.text,"klimb")==0?CommandKind::Klimb:CommandKind::Pass,
-                          e.text?e.text:"Direction"); break;
+        // A4-UI4: Klimb's getdir continues the "Klimb-" row the key already
+        // printed (DS 0xa1a0); it used to echo its event token "klimb" too.
+        if (e.text && std::strcmp(e.text,"klimb")==0){Command c;c.kind=CommandKind::Klimb;begin_target(UiRequestId::Direction,"Direction?",c,-1,-1);}
+        else direction_request(CommandKind::Pass,e.text?e.text:"Direction");
+        break;
     case GameEventKind::TownExitPrompt: begin_yes_no(UiRequestId::TownExit,"Leave this place?",true); break;
     case GameEventKind::ShrineVisitPrompt: enter_shrine_mode(); begin_yes_no(UiRequestId::ShrineVisit,"Visit?",false); break;
     case GameEventKind::ShrineRestorePrompt: enter_shrine_mode(); begin_text(UiRequestId::ShrineRestore,"Virtue:",15); break;

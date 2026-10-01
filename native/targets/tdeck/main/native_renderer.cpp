@@ -4,6 +4,7 @@
 #include "openu5/dungeon_view.h"
 #include "openu5/gem_view.h"
 #include "openu5/world_fx.h"
+#include "openu5/quest_world.h"
 
 #include <algorithm>
 #include <array>
@@ -353,14 +354,22 @@ esp_err_t render_snapshot(const PresentationTileCache &cache,const PresentationS
     // 0x24d6): tile slot 0x116 is the floor 0x44 with its bottom `rows` rows
     // replaced by the TOP rows of 0xdc (both from the recolored tileset), blitted
     // opaque over the cell.
-    if(snapshot.gate_rows>0&&snapshot.gate_rows<16&&snapshot.gate_x>=0&&snapshot.gate_y>=0&&
-       snapshot.gate_x<kViewportTiles&&snapshot.gate_y<kViewportTiles){
-        uint8_t gate[128]{};const int rows=snapshot.gate_rows;
-        animated_bitmap(cache,0x44,animation_tick,bitmap,lut_for(0x44));
+    // A4-UI4 (D-48): the same composite in the world, on grass (gate_ground),
+    // for the transit's closing cell and for every rising or sinking gate.
+    auto partial_gate=[&](int col,int row,int rows,int16_t ground){
+        uint8_t gate[128]{};
+        animated_bitmap(cache,uint16_t(ground),animation_tick,bitmap,lut_for(uint16_t(ground)));
         animated_bitmap(cache,0xdc,animation_tick,gate,lut_for(0xdc));
         std::copy(gate,gate+rows*8,bitmap+(16-rows)*8);
-        expand_tile(bitmap,cache.palette,rgb565,snapshot.gate_x,snapshot.gate_y);
-    }
+        expand_tile(bitmap,cache.palette,rgb565,col,row);
+    };
+    if(snapshot.moongate_rows>0&&snapshot.moongate_rows<16)
+        for(int i=0;i<kPresentationCells;++i)
+            if(frames[i]==int16_t(0xdc)&&!(i%kViewportTiles==snapshot.gate_x&&i/kViewportTiles==snapshot.gate_y))
+                partial_gate(i%kViewportTiles,i/kViewportTiles,snapshot.moongate_rows,int16_t(kMoongateGroundTile));
+    if(snapshot.gate_rows>0&&snapshot.gate_rows<16&&snapshot.gate_x>=0&&snapshot.gate_y>=0&&
+       snapshot.gate_x<kViewportTiles&&snapshot.gate_y<kViewportTiles)
+        partial_gate(snapshot.gate_x,snapshot.gate_y,snapshot.gate_rows,snapshot.gate_ground);
     if(snapshot.active_x>=0&&snapshot.active_y>=0&&snapshot.active_x<kViewportTiles&&snapshot.active_y<kViewportTiles)
         active_marker(rgb565,snapshot.active_x,snapshot.active_y,
                       cache.palette[snapshot.active_enemy?12:14]);

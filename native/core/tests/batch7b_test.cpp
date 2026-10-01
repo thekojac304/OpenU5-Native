@@ -175,9 +175,11 @@ int main() {
         ritual.pre_delay_units = 3;
         ritual.under_tile = 252;
         ritual.lead_ms = 0;
-        check(WorldFxLayer::duration_ms(ritual) ==
-                  3 * kWorldFxPauseUnitMs + 7 * kWorldFxExplosionBurstMs,
-              "B1 pause then bursts is the whole duration");
+        // A4-UI4 (H-209 / D-67): a burst is 0x3522's 174 ms noise_burst hold,
+        // then the redraw (one tick) before the next -- was 60 / 60 ms.
+        check(kWorldFxExplosionBurstMs == 174 && kWorldFxExplosionSlotMs == 174 + kWorldFxPauseUnitMs &&
+                  WorldFxLayer::duration_ms(ritual) == 3 * kWorldFxPauseUnitMs + 7 * kWorldFxExplosionSlotMs,
+              "B1 pause then seven 174 ms bursts, each with its redraw, is the whole duration");
 
         WorldFxLayer layer;
         layer.push(ritual, 0);
@@ -198,15 +200,14 @@ int main() {
         check(ops[1].tile == kWorldFxExplosionTile && ops[1].kind == WorldFxOpKind::Blit,
               "B6 the burst blits TileData's Explosion");
 
-        // The blits ALTERNATE -- the original repaints the viewport between
-        // one and the next, so the cell flickers instead of holding a tile
-        // still for 420 ms.
+        // Each call holds the burst, then the original repaints the viewport
+        // before the next, so the cell flickers seven times.
         n = layer.paint(pause_end + kWorldFxExplosionBurstMs, ops, 8);
-        check(n == 1, "B7 the second burst slot is the gap");
-        n = layer.paint(pause_end + 2 * kWorldFxExplosionBurstMs, ops, 8);
-        check(n == 2, "B8 the third burst slot paints again");
-        n = layer.paint(pause_end + 6 * kWorldFxExplosionBurstMs, ops, 8);
-        check(n == 2, "B9 the last burst slot paints");
+        check(n == 1, "B7 after the burst's 174 ms hold, the redraw shows the cell without it");
+        n = layer.paint(pause_end + kWorldFxExplosionSlotMs, ops, 8);
+        check(n == 2, "B8 the second burst paints again");
+        n = layer.paint(pause_end + 6 * kWorldFxExplosionSlotMs, ops, 8);
+        check(n == 2, "B9 the seventh burst paints");
 
         // ...and the state write is NOT deferred to make this work: the
         // overlay lands on an already-composed, already-committed window.
@@ -250,7 +251,7 @@ int main() {
         sacrifice.dx = 0;
         sacrifice.dy = 2;
         sacrifice.bursts = 1;
-        check(WorldFxLayer::duration_ms(sacrifice) == kWorldFxExplosionBurstMs,
+        check(WorldFxLayer::duration_ms(sacrifice) == kWorldFxExplosionSlotMs,
               "B16 a single-burst explosion shares the same primitive");
         WorldFxLayer sac_layer;
         sac_layer.push(sacrifice, 0);
@@ -424,8 +425,13 @@ int main() {
               "E7 0x0ae9 adds the apparition");
         check(figures[3].tile == kRefugeApparitionTile && figures[3].col == 5 && figures[3].row == 2,
               "E8 tile 0x174 at (col5,row2)");
-        check(refuge_scene_figures(RefugePhase::Vertigo, 0x11c, figures, 4) == 4,
-              "E9 the vertigo flash keeps the whole cast");
+        // A4-UI4 (H-211 / D-68): 0x0bc4-0x0be7 black the window and blit 0x11c
+        // alone; and before the slumber line (0x09f5) the void is empty.
+        check(refuge_scene_figures(RefugePhase::Void, 0x11c, figures, 4, false) == 0,
+              "RF0 before the slumber beat places it, the void holds no Avatar");
+        check(refuge_scene_figures(RefugePhase::Vertigo, 0x11c, figures, 4) == 1 && figures[0].tile == 0x11c &&
+                  figures[0].col == 5 && figures[0].row == 5,
+              "E9 the last stage is the Avatar alone at the centre (0x0bde 0x11c at (5,5))");
         check(refuge_scene_figures(RefugePhase::None, 0x11c, figures, 4) == 0,
               "E10 no scene, no figures");
 

@@ -1,0 +1,13 @@
+A4-UI4/PRES1 hf1 retest (2026-10-01): step 2 'No effect!' investigation
+Tree: reconstructed UI4/PRES1 + hf1 (byte-identical to the preserved baseline); build: native/core/build-a4-ui4-closeout
+Probe: a temporary B25_PROBE2 block in batch25_shard_ritual_test.cpp (source kept outside the repo), driven through
+AlphaRuntime::handle() with the device's keys: Developer -> Quest / World rows by trackball, Enter = apply, short Mic = cancel;
+start state Preset: Endgame (all three Shadowlords destroyed); then Hour 12, Certification, south, Yell 'astaroth' (lowercase).
+
+PROBE2 Enter on both rows (intended)                saved=1 loaded=0 after-menu falsehood_dead=1 hatred_dead=0 | at-yell hatred_dead=0 pos=(15,4) L31 -> silent summoned=1
+PROBE2 Enter on both rows, 6 members                saved=1 loaded=0 after-menu falsehood_dead=1 hatred_dead=0 | at-yell hatred_dead=0 pos=(15,4) L31 -> silent summoned=1
+PROBE2 Quest flag row left with Mic                 saved=1 loaded=0 after-menu falsehood_dead=0 hatred_dead=1 | at-yell hatred_dead=1 pos=(15,4) L31 -> No effect! summoned=-1
+PROBE2 Toggle row left with Mic                     saved=1 loaded=0 after-menu falsehood_dead=1 hatred_dead=1 | at-yell hatred_dead=1 pos=(15,4) L31 -> No effect! summoned=-1
+PROBE2 Enter on both, then Alt+L                    saved=1 loaded=1 after-menu falsehood_dead=1 hatred_dead=0 | at-yell hatred_dead=1 pos=(15,4) L31 -> No effect! summoned=-1
+
+Test file restored byte-identical to the baseline afterwards; batch25_shard_ritual re-run: PASS.

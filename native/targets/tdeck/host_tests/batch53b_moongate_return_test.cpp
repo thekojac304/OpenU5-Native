@@ -136,6 +136,10 @@ struct Harness {
     void step(Direction d) {
         ball(d == Direction::North ? RawInputKind::TrackballUp : d == Direction::South ? RawInputKind::TrackballDown
              : d == Direction::East ? RawInputKind::TrackballRight : RawInputKind::TrackballLeft);
+        // A4-UI4 (D-48): a gate's transit (kernel 0x48a8) reads no key for its
+        // ~3 s; a player waits it out, and so does this harness (which renders no
+        // frame: the transit's hold is on its own clock).
+        if (rt->moongate_transit_active()) advance(3200000);
     }
     void set_mark() { mark = rt->ui()->transcript_size(); }
     bool saw(const char *needle) const {

@@ -54,6 +54,8 @@ extern "C" void app_main(void) {
     if(!psram_ok||psram_size<7*kMiB)ESP_LOGE(kTag,"Alpha 2.0 requires working 8 MiB PSRAM");
 
     static tdeck::Board board;debug51::stage(3,"board-construction");
+    // Alpha 4 A4-UI4: the boot screens name this image's release.
+    {const auto *app=esp_app_get_description();board.set_release_label(tdeck::firmware_release_label(app?app->version:nullptr));}
     const esp_err_t display=board.initialize_display();debug51::stack_checkpoint("after-board-display-init");
     const tdeck::SdStatus sd=board.initialize_and_test_sd();debug51::stack_checkpoint("after-sd-init");board.show_diagnostics(sd.ok);
     const bool sd_log_ready=sd.ok&&sd_log_capture&&tdeck::sdlog::initialize_storage();

@@ -423,7 +423,7 @@ void test_title(Run &h, Play &p) {
     auto v = p.front();
     dump("ui3-journey-onward");
     check(h.rt->frontend_state() == FrontendState::Continue && str(v.subtitle) == "Latest: Slot 2, Iolo, Britannia" &&
-              str(v.footer) == "Enter continues Slot 2; Mic returns" && menu0 == "Select: arrows / Enter / J C T U A R",
+              str(v.footer) == "Enter continues Slot 2; Mic returns" && menu0 == "Select: arrows / Enter / J C T U A R S P", // A4-UI4: S, P named
           "C1 Journey Onward names Continue's slot and journey: " + q(str(v.subtitle)));
     h.down();
     h.key('\r');

@@ -43,6 +43,11 @@ struct PresentationSnapshot {
     bool endgame_recolor = false;
     int8_t gate_x = -1, gate_y = -1;
     uint8_t gate_rows = 0;
+    // A4-UI4 (D-48): the ground under the cell's partial gate -- the floor 0x44
+    // in the ending, grass (5) in the world -- and the world's own partial gate:
+    // every 0xdc cell (but gate_x/y's) drawn at `moongate_rows` 1..15.
+    int16_t gate_ground = 0x44;
+    uint8_t moongate_rows = 0;
 };
 
 // Stateful presentation-only interpreter for the reference actor animation
@@ -103,7 +108,8 @@ int32_t animated_tile_frame(int32_t tile, uint32_t phase, int64_t world_turn);
  */
 PresentationSnapshot compose_world_presentation(CommandContext &, const ActiveMap &,
                                                  Position center, int32_t avatar_tile,
-                                                 bool reveal_all = false);
+                                                 bool reveal_all = false,
+                                                 int moongate_stage = -1);
 
 /** Compose the live combat arena, including fields, loot, and combatants. */
 PresentationSnapshot compose_combat_presentation(const CombatState &, const GameState &);

@@ -429,6 +429,9 @@ const char *region_of(const bus::WindowWrite &w) {
     }
     if (w.y1 < kHudWorldFrameY) return "party";
     if (w.y1 < kHudTranscriptSeparatorY) return "status";
+    // A4-UI4 (ALPHA4_UI.md section 8.20): the console's wait cursor is one
+    // text cell (at most 8 x 10, Large), drawn or erased on its own.
+    if (w.width() <= 8 && w.height() <= 10) return "cursor";
     return "transcript";
 }
 template <class F> Census measure(Run &h, const char *name, F action) {
@@ -697,6 +700,9 @@ int main(int argc, char **argv) {
             }
             check(by("B2").transcript_rows == 0 && by("B8").transcript_rows == 0 && by("B17").transcript_rows == 0,
                   "T1 animation ticks and a redraw with nothing changed draw no transcript row (control)");
+            // A4-UI4 (section 8.20): on the bottom-anchored console the step's
+            // echo takes the live prompt row's line and a fresh blank + prompt
+            // row open below it; over the blank rows above, that is still one row.
             check(by("B3").transcript_rows == 1,
                   "T2 a new short line while the transcript is not yet full: one row (control, " +
                       n(by("B3").transcript_rows) + ")");

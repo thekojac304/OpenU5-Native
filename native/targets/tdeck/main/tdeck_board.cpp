@@ -59,6 +59,28 @@ constexpr uint16_t kChromeDim = 0xAD55;
 // notch (black), bar the base column, which is the band itself.
 constexpr uint8_t kBracketBlue[8] = {0x00, 0x00, 0x60, 0x78, 0x78, 0x60, 0x00, 0x00};
 constexpr uint8_t kBracketWhite[8] = {0x00, 0x60, 0x18, 0x04, 0x04, 0x18, 0x60, 0x00};
+// Alpha 4 A4-UI4 (ALPHA4_UI.md section 8.20): the console's echo bullet, the
+// web port's skin.ts BULLET_BLUE / BULLET_WHITE (calibrated to a DOS capture,
+// 8x8, bit 7 = left): a cell-filling > in the frame's blue with a white edge on
+// its two slopes and its tip. A transcript row carries it as the 0x10 cell.
+constexpr uint8_t kBulletBlue[8] = {0x00, 0x80, 0xf0, 0xfe, 0xfe, 0xf0, 0x80, 0x00};
+constexpr uint8_t kBulletWhite[8] = {0x80, 0x70, 0x0e, 0x01, 0x01, 0x0e, 0x70, 0x80};
+constexpr char kConsoleBullet = '\x10';
+// The bullet over a w x h cell, its 8x8 mask stretched end to end so the tip
+// and both corners survive a narrower cell: 0 none, 1 blue, 2 white.
+int console_bullet_pixel(int x, int y, int w, int h) {
+    if (w < 2 || h < 2 || x < 0 || y < 0 || x >= w || y >= h) return 0;
+    const int sx = (x * 7 + (w - 1) / 2) / (w - 1), sy = (y * 7 + (h - 1) / 2) / (h - 1);
+    const unsigned bit = 0x80U >> unsigned(sx);
+    return (kBulletWhite[sy] & bit) ? 2 : (kBulletBlue[sy] & bit) ? 1 : 0;
+}
+// A transcript row as drawn: a command's first row behind its bullet cell.
+const char *console_row_text(const openu5::UiRenderedLine &line, char (&out)[openu5::kUiRenderedLineBytes + 1]) {
+    if (!(line.flags & openu5::UiTextCommand)) return line.text;
+    out[0] = kConsoleBullet;
+    std::snprintf(out + 1, sizeof(out) - 1, "%s", line.text);
+    return out;
+}
 // roster.ts: the roster row is 15 IBM.CH cells; they start 4 px into the row.
 constexpr int kRosterTextX = 188;
 
@@ -168,6 +190,7 @@ std::array<uint8_t, 5> glyph(char c)
     case '[': return {0x00, 0x7f, 0x41, 0x41, 0x00};
     case '\\': return {0x02, 0x04, 0x08, 0x10, 0x20};
     case ']': return {0x00, 0x41, 0x41, 0x7f, 0x00};
+    case '^': return {0x04, 0x02, 0x01, 0x02, 0x04}; // A4-UI4 (D-52): the Z-stats ready mark
     case '_': return {0x40, 0x40, 0x40, 0x40, 0x40};
     case '|': return {0x00, 0x00, 0x7f, 0x00, 0x00};
     case 'a': return {0x20, 0x54, 0x54, 0x54, 0x78};
@@ -467,7 +490,7 @@ esp_err_t Board::initialize_display()
     // This avoids exposing controller reset pixels or a half-drawn boot screen.
     ESP_RETURN_ON_ERROR(draw_text_box(0,54,kDisplayWidth,24,"OpenU5-TDeck",kCyan,3,3),
                         kTag,"draw coherent boot title");
-    ESP_RETURN_ON_ERROR(draw_text_box(0,88,kDisplayWidth,16,"Alpha 2.0",kWhite,2,2),
+    ESP_RETURN_ON_ERROR(draw_text_box(0,88,kDisplayWidth,16,release_label_?release_label_:"OpenU5",kWhite,2,2),
                         kTag,"draw coherent boot version");
     ESP_RETURN_ON_ERROR(draw_text_box(0,124,kDisplayWidth,10,"Starting...",kGreen),
                         kTag,"draw coherent boot status");
@@ -605,6 +628,7 @@ esp_err_t Board::show_endgame_page(const uint8_t *page, const uint16_t *palette,
 {
     if (!display_initialized_ || !page || !palette) return ESP_ERR_INVALID_ARG;
     if (!force && key == endgame_page_key_) return ESP_OK;
+    console_cursor_.visible = false; // A4-UI4: the page covers the console
     ++tft_timing_.full_screen;
     ESP_RETURN_ON_ERROR(set_display_window(0, 0, kDisplayWidth, kDisplayHeight), kTag, "set ending window");
     gpio_set_level(pins::kTftDataCommand, 1);
@@ -663,6 +687,7 @@ esp_err_t Board::fizzle_endgame(openu5::EndgameFizzle &picture, openu5::EndgameF
 {
     if (!display_initialized_ || !endgame_shadow_) return ESP_ERR_INVALID_STATE;
     endgame_capturing_ = false;
+    console_cursor_.visible = false; // A4-UI4: the dissolve takes the console
     uint16_t x = 0, y = 0;
     for (uint32_t i = 0; i < pixels && picture.next(x, y); ++i)
         endgame_shadow_[(y + kEndgameTop) * kDisplayWidth + x] = kBlack;
@@ -703,7 +728,7 @@ void Board::show_diagnostics(bool sd_ok)
     }
     if (fill_rect(0, 0, kDisplayWidth, kDisplayHeight, kBlack) != ESP_OK ||
         draw_text(18, 14, "OpenU5-TDeck", kCyan, 3) != ESP_OK ||
-        draw_text(18, 50, "Alpha 2.0 Debug", kWhite, 2) != ESP_OK ||
+        draw_text(18, 50, release_label_ ? release_label_ : "OpenU5", kWhite, 2) != ESP_OK ||
         draw_text(18, 82, "ESP32-S3", kWhite, 2) != ESP_OK ||
         draw_text(18, 108, "16 MB Flash", kWhite, 2) != ESP_OK ||
         draw_text(18, 134, "8 MB PSRAM", kWhite, 2) != ESP_OK ||
@@ -718,14 +743,14 @@ void Board::show_runtime_identity(const char *firmware,const char *git_commit,
 {
     if(!display_initialized_)return;
     if(fill_rect(0,0,kDisplayWidth,kDisplayHeight,kBlack)!=ESP_OK||
-       draw_text(8,8,"OpenU5 HARDWARE-TRUTH",kCyan,2)!=ESP_OK||
+       draw_text(8,8,"OpenU5-TDeck",kCyan,2)!=ESP_OK||
        draw_text(8,34,firmware?firmware:"firmware unknown",kWhite,1)!=ESP_OK||
        draw_text(8,50,git_commit?git_commit:"git unknown",kWhite,1)!=ESP_OK||
        draw_text(8,66,build_timestamp?build_timestamp:"build unknown",kWhite,1)!=ESP_OK||
        draw_text(8,92,alpha_identity?alpha_identity:"resources missing",packs_match?kGreen:kRed,1)!=ESP_OK||
        draw_text(8,108,asset_identity?asset_identity:"assets missing",packs_match?kGreen:kRed,1)!=ESP_OK||
        draw_text(8,142,packs_match?"PACKS MATCH FIRMWARE":"RESOURCE PACK MISMATCH",packs_match?kGreen:kRed,2)!=ESP_OK||
-       draw_text(8,184,packs_match?"Starting diagnostic runtime":"Startup blocked; update SD packs",kWhite,1)!=ESP_OK)
+       draw_text(8,184,packs_match?"Starting":"Startup blocked; update SD packs",kWhite,1)!=ESP_OK)
         ESP_LOGE(kTag,"Failed to draw runtime identity screen");
 }
 
@@ -860,6 +885,7 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
     endgame_page_key_=-1;
     if(!alpha_drawn_||frontend_drawn_){++tft_timing_.full_screen;ESP_RETURN_ON_ERROR(fill_rect(0,0,kDisplayWidth,kDisplayHeight,kChromeBand),kTag,"initialize Alpha 2.0 game screen");alpha_drawn_=true;frontend_drawn_=false;alpha_ui_cache_valid_=false;alpha_ui_size_cache_=0xff;viewport_cache_valid_=false;sky_bar_cache_valid_=false;shop_cache_valid_=false;selection_cache_valid_=false;context_cache_valid_=false;animation_only=false;debug_last_full_redraw_=true;debug_last_pixels_=kDisplayWidth*kDisplayHeight;}
     if(debug){
+        console_cursor_.visible=false; // A4-UI4: the Developer screen covers the console
         const bool full=!debug_drawn_||!debug_cache_valid_;
         debug_last_full_redraw_=full;debug_last_dirty_regions_=0;debug_last_pixels_=0;
         if(full){
@@ -940,6 +966,10 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
             ESP_RETURN_ON_ERROR(draw_rgb565_strided(openu5::kHudViewportX+col*openu5::kTilePixels,openu5::kHudViewportY+row*openu5::kTilePixels+clip_top,(end-col)*openu5::kTilePixels,height,
                                 pixels+(row*openu5::kTilePixels+clip_top)*openu5::kViewportPixels+col*openu5::kTilePixels,openu5::kViewportPixels),kTag,"draw clipped animated Alpha cells");
             col=end;}
+        // A4-UI4 (ALPHA4_UI.md section 8.20): the wait cursor's wave, on the
+        // same tick.
+        if(console_cursor_.visible&&console_cursor_.phase!=console_phase_)
+            ESP_RETURN_ON_ERROR(draw_console_cursor_cell(),kTag,"animate console cursor");
         return ESP_OK;
     }
     // R-17/Y-14: the gem view is a full-square 176x176 composition, not the
@@ -1019,7 +1049,21 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
     // A3-04F: the visible transcript lines, built each frame -- a local on the
     // main task's stack (it was a Board member in internal .data).
     openu5::UiRenderedLine transcript_lines[kAlphaTranscriptLines]{};
+    // A4-UI4 (section 8.20): the strip logs read like the console -- the
+    // bullet cell before a command row, the rows anchored at the bottom.
+    char row_text[openu5::kUiRenderedLineBytes+1]{};
+    auto strip_line=[&](size_t i,size_t rows,size_t count)->const openu5::UiRenderedLine*{
+        const size_t top=ui.console_layout()&&count<rows?rows-count:0;
+        return i>=top&&i-top<count?&transcript_lines[i-top]:nullptr;
+    };
+    // A4-UI4 (section 8.20): an in-game list selects in reverse video --
+    // kernel 0x2a28's bar, as every menu since A4-UI1 -- not a green '>'; the
+    // gutter cell stays. The bar spans the row's whole 14 px pitch (the text
+    // where it always was, two rows of bar above it), so the rows tile the
+    // list and a deselected row leaves nothing behind.
+    constexpr DeviceTextMetrics kListMetrics=ui_text_metrics(1);
     if(shop&&shop->active){
+        console_cursor_.visible=false;
         const bool first=!shop_cache_valid_;
         auto account=[&](size_t pixels){++debug_last_dirty_regions_;debug_last_pixels_+=pixels;};
         if(first){
@@ -1038,20 +1082,21 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
             const bool row_changed=shop_row_needs_redraw(*shop,shop_cache_,i,first);
             if(!row_changed)continue;
             char line[24]{};if(current){
-                if(shop->rows[i].quantity>1)std::snprintf(line,sizeof(line),"%c%-12.12s %3ldg",i==shop->selected_row?'>':' ',shop->rows[i].name,long(shop->rows[i].price));
-                else std::snprintf(line,sizeof(line),"%c%-14.14s %3ldg",i==shop->selected_row?'>':' ',shop->rows[i].name,long(shop->rows[i].price));
+                if(shop->rows[i].quantity>1)std::snprintf(line,sizeof(line)," %-12.12s %3ldg",shop->rows[i].name,long(shop->rows[i].price));
+                else std::snprintf(line,sizeof(line)," %-14.14s %3ldg",shop->rows[i].name,long(shop->rows[i].price));
             }
-            ESP_RETURN_ON_ERROR(draw_text_box(184,39+int(i)*14,134,12,line,current&&i==shop->selected_row?kGreen:kWhite),kTag,"shop offer row");account(134*12);
+            ESP_RETURN_ON_ERROR(draw_text_box_metrics(184,37+int(i)*14,134,14,line,kWhite,kListMetrics,current&&i==shop->selected_row,2),kTag,"shop offer row");account(134*14);
         }
         if(first||shop->gold!=shop_cache_.gold){char line[24]{};std::snprintf(line,sizeof(line),"Gold: %ld",long(shop->gold));ESP_RETURN_ON_ERROR(draw_text_box(184,127,134,8,line,kWhite),kTag,"shop gold");account(134*8);}
         std::fill(std::begin(transcript_lines),std::end(transcript_lines),openu5::UiRenderedLine{});
         const auto count=ui.visible_lines(transcript_lines,kShopLogRows,openu5::kHudTranscriptColumns);
-        for(size_t i=0;i<kShopLogRows;++i){const char*text=i<count?transcript_lines[i].text:"";const uint32_t seq=i<count?transcript_lines[i].sequence:0;const uint16_t color=i<count&&transcript_lines[i].channel==openu5::UiTextChannel::Shop?kCyan:kWhite;auto&cached=transcript_cache_[i];if(first||cached.sequence!=seq||cached.color!=color||std::strcmp(cached.text,text)!=0){ESP_RETURN_ON_ERROR(draw_text_box(184,152+int(i)*8,134,8,text,color),kTag,"shop transcript row");account(134*8);cached.sequence=seq;cached.color=color;std::snprintf(cached.text,sizeof(cached.text),"%s",text);}}
+        for(size_t i=0;i<kShopLogRows;++i){const auto*l=strip_line(i,kShopLogRows,count);const char*text=l?console_row_text(*l,row_text):"";const uint32_t seq=l?l->sequence:0;const uint16_t color=l&&l->channel==openu5::UiTextChannel::Shop?kCyan:kWhite;auto&cached=transcript_cache_[i];if(first||cached.sequence!=seq||cached.color!=color||std::strcmp(cached.text,text)!=0){ESP_RETURN_ON_ERROR(draw_text_box(184,152+int(i)*8,134,8,text,color),kTag,"shop transcript row");account(134*8);cached.sequence=seq;cached.color=color;std::snprintf(cached.text,sizeof(cached.text),"%s",text);}}
         ESP_RETURN_ON_ERROR(draw_context_bar(shop->context,182,137,first),kTag,"shop context action bar");account(137*25);
         shop_cache_=*shop;shop_cache_valid_=true;alpha_ui_cache_valid_=true;
         return ESP_OK;
     }
     if(selection&&selection->active){
+        console_cursor_.visible=false;
         const bool first=!selection_cache_valid_;
         auto account=[&](size_t count){++debug_last_dirty_regions_;debug_last_pixels_+=count;};
         if(first){
@@ -1065,10 +1110,10 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
         if(changed(selection->detail,selection_cache_.detail)){ESP_RETURN_ON_ERROR(draw_text_box(184,26,134,8,selection->detail,kWhite),kTag,"selector detail row one");account(134*8);}
         if(changed(selection->detail2,selection_cache_.detail2)){ESP_RETURN_ON_ERROR(draw_text_box(184,35,134,8,selection->detail2,kWhite),kTag,"selector detail row two");account(134*8);}
         const size_t rows=std::max(selection->row_count,selection_cache_.row_count);
-        for(size_t i=0;i<rows&&i<kSelectionVisibleRows;++i){if(!selection_row_needs_redraw(*selection,selection_cache_,i,first))continue;char line[24]{};if(i<selection->row_count)std::snprintf(line,sizeof(line),"%c%.21s",i==selection->selected_row?'>':' ',selection->rows[i]);ESP_RETURN_ON_ERROR(draw_text_box(184,46+int(i)*14,134,12,line,i<selection->row_count&&i==selection->selected_row?kGreen:kWhite),kTag,"selector row");account(134*12);}
+        for(size_t i=0;i<rows&&i<kSelectionVisibleRows;++i){if(!selection_row_needs_redraw(*selection,selection_cache_,i,first))continue;char line[24]{};if(i<selection->row_count)std::snprintf(line,sizeof(line)," %.21s",selection->rows[i]);ESP_RETURN_ON_ERROR(draw_text_box_metrics(184,44+int(i)*14,134,14,line,kWhite,kListMetrics,i<selection->row_count&&i==selection->selected_row,2),kTag,"selector row");account(134*14);}
         std::fill(std::begin(transcript_lines),std::end(transcript_lines),openu5::UiRenderedLine{});const auto count=ui.visible_lines(transcript_lines,kSelectorLogRows,openu5::kHudTranscriptColumns);
         const bool show_transcript=selection_uses_transcript(*selection);
-        for(size_t i=0;i<kSelectorLogRows;++i){const char*text=show_transcript&&i<count?transcript_lines[i].text:"";const uint32_t seq=show_transcript&&i<count?transcript_lines[i].sequence:0;const uint16_t color=show_transcript&&i<count&&transcript_lines[i].channel==openu5::UiTextChannel::Combat?kRed:kWhite;auto&cached=transcript_cache_[i];if(first||cached.sequence!=seq||cached.color!=color||std::strcmp(cached.text,text)!=0){ESP_RETURN_ON_ERROR(draw_text_box(184,172+int(i)*8,134,8,text,color),kTag,"selector transcript");account(134*8);cached.sequence=seq;cached.color=color;std::snprintf(cached.text,sizeof(cached.text),"%s",text);}}
+        for(size_t i=0;i<kSelectorLogRows;++i){const auto*l=show_transcript?strip_line(i,kSelectorLogRows,count):nullptr;const char*text=l?console_row_text(*l,row_text):"";const uint32_t seq=l?l->sequence:0;const uint16_t color=l&&l->channel==openu5::UiTextChannel::Combat?kRed:kWhite;auto&cached=transcript_cache_[i];if(first||cached.sequence!=seq||cached.color!=color||std::strcmp(cached.text,text)!=0){ESP_RETURN_ON_ERROR(draw_text_box(184,172+int(i)*8,134,8,text,color),kTag,"selector transcript");account(134*8);cached.sequence=seq;cached.color=color;std::snprintf(cached.text,sizeof(cached.text),"%s",text);}}
         ESP_RETURN_ON_ERROR(draw_context_bar(selection->context,182,137,first),kTag,"selector context action bar");account(137*25);
         selection_cache_=*selection;selection_cache_valid_=true;alpha_ui_cache_valid_=true;return ESP_OK;
     }
@@ -1103,12 +1148,36 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
     world_transcript_geometry(ui_size,context_active,transcript_columns,transcript_rows);
     std::fill(std::begin(transcript_lines),std::end(transcript_lines),openu5::UiRenderedLine{});
     const auto count=ui.visible_lines(transcript_lines,transcript_rows,transcript_columns);
+    // A4-UI4 (ALPHA4_UI.md section 8.20): with the console layout the rows sit
+    // at the bottom, as the original's text window fills upward from its last
+    // row; the wait cursor goes after the newest row's text (the bullet's cell
+    // included) when that row is on screen and fits.
+    const size_t top=ui.console_layout()&&count<transcript_rows?transcript_rows-count:0;
+    ConsoleCursorState cursor{};
+    if(count&&ibm_font_&&ui.scroll_offset_lines()==0&&ui.console_cursor()!=openu5::UiConsoleCursor::None){
+        const size_t column=std::strlen(console_row_text(transcript_lines[count-1],row_text));
+        if(column<transcript_columns){
+            cursor.x=int16_t(openu5::kHudRightX+int(column)*text_metrics.cell_width);
+            cursor.y=int16_t(openu5::kHudTranscriptY+int(top+count-1)*text_metrics.line_height);
+            cursor.width=uint8_t(text_metrics.cell_width);cursor.height=uint8_t(text_metrics.line_height);cursor.visible=true;
+        }
+    }
+    const bool cursor_moved=console_cursor_.visible&&(!cursor.visible||cursor.x!=console_cursor_.x||
+                                                     cursor.y!=console_cursor_.y||cursor.width!=console_cursor_.width);
+    // Rows that keep their text are not redrawn: a cursor that left one is erased.
+    if(cursor_moved&&alpha_ui_cache_valid_)
+        ESP_RETURN_ON_ERROR(fill_rect(console_cursor_.x,console_cursor_.y,console_cursor_.width,console_cursor_.height,kBlack),kTag,"erase console cursor");
+    bool cursor_row_drawn=false;
     // A3-04F (ALPHA3_AUDIO.md section 26): a row is redrawn when its text or
     // colour changed. A row's pixels are a function of those two and the text
     // metrics (whose change clears the cache above); the line's sequence number
     // is not drawn, and keying on it redrew every row of each scroll even
     // where the same text landed on it again ("Pass" under "Pass").
-    for(size_t i=0;i<transcript_rows;++i){const char*text="";uint32_t seq=0;uint16_t color=kWhite;if(i<count){text=transcript_lines[i].text;seq=transcript_lines[i].sequence;color=transcript_lines[i].channel==openu5::UiTextChannel::Prompt?kCyan:transcript_lines[i].channel==openu5::UiTextChannel::Combat?kRed:kWhite;}auto&cached=transcript_cache_[i];if(!alpha_ui_cache_valid_||cached.color!=color||std::strcmp(cached.text,text)!=0){ESP_RETURN_ON_ERROR(draw_text_box_metrics(openu5::kHudRightX,openu5::kHudTranscriptY+int(i)*text_metrics.line_height,openu5::kHudRightW,text_metrics.line_height,text,color,text_metrics),kTag,"draw running log row");cached.sequence=seq;cached.color=color;std::snprintf(cached.text,sizeof(cached.text),"%s",text);}}
+    for(size_t i=0;i<transcript_rows;++i){const char*text="";uint32_t seq=0;uint16_t color=kWhite;if(i>=top&&i-top<count){const auto&line=transcript_lines[i-top];text=console_row_text(line,row_text);seq=line.sequence;color=line.channel==openu5::UiTextChannel::Prompt?kCyan:line.channel==openu5::UiTextChannel::Combat?kRed:kWhite;}auto&cached=transcript_cache_[i];if(!alpha_ui_cache_valid_||cached.color!=color||std::strcmp(cached.text,text)!=0){const int y=openu5::kHudTranscriptY+int(i)*text_metrics.line_height;ESP_RETURN_ON_ERROR(draw_text_box_metrics(openu5::kHudRightX,y,openu5::kHudRightW,text_metrics.line_height,text,color,text_metrics),kTag,"draw running log row");cursor_row_drawn=cursor_row_drawn||y==cursor.y;cached.sequence=seq;cached.color=color;std::snprintf(cached.text,sizeof(cached.text),"%s",text);}}
+    if(!cursor.visible)console_cursor_.visible=false;
+    else if(cursor_row_drawn||cursor_moved||!console_cursor_.visible||console_cursor_.phase!=console_phase_){
+        console_cursor_=cursor;ESP_RETURN_ON_ERROR(draw_console_cursor_cell(),kTag,"draw console cursor");
+    }
     if(context_active)ESP_RETURN_ON_ERROR(draw_context_bar(*context_bar,openu5::kHudPartyFrameX,openu5::kHudPartyFrameW,!context_cache_valid_),kTag,"gameplay context action bar");
     alpha_ui_cache_valid_=true;
     return ESP_OK;
@@ -1169,7 +1238,7 @@ esp_err_t Board::show_frontend(const openu5::FrontendView&in,const uint16_t*prev
         ESP_RETURN_ON_ERROR(fill_rect(0,0,kDisplayWidth,kDisplayHeight,kBlack),kTag,"initialize frontend");
         account(kDisplayWidth*kDisplayHeight);
     }
-    frontend_drawn_=true;alpha_drawn_=false;alpha_ui_cache_valid_=false;
+    frontend_drawn_=true;alpha_drawn_=false;alpha_ui_cache_valid_=false;console_cursor_.visible=false;
 
     if(creation_art){
         ESP_RETURN_ON_ERROR(draw_rgb565(0,0,320,152,creation_art),kTag,"draw original FONT.OVL creation art");
@@ -1325,7 +1394,10 @@ esp_err_t Board::draw_text_box(int x,int y,int width,int height,const char *text
             // like on a two-colour row (kernel 0x2a28).
             uint16_t pixel=invert?color:kBlack;const size_t char_index=size_t(col/cell_width);
             const int glyph_col=(col%cell_width)/scale_x;
-            if(glyph_row<7&&glyph_col<5&&char_index<text_length){
+            if(char_index<text_length&&text[char_index]==kConsoleBullet){
+                const int bullet=console_bullet_pixel(col%cell_width,row,cell_width,8*scale_y);
+                if(bullet)pixel=bullet==2?kWhite:kChromeBand;
+            }else if(glyph_row<7&&glyph_col<5&&char_index<text_length){
                 const auto bitmap=glyph(text[char_index]);
                 if(bitmap[glyph_col]&(1U<<glyph_row))pixel=invert?kBlack:color;
             }
@@ -1338,6 +1410,45 @@ esp_err_t Board::draw_text_box(int x,int y,int width,int height,const char *text
         if(openu5::tft_row_yield_due(row))tft_yield();
     }
     return ESP_OK;
+}
+
+// A4-UI4 (ALPHA4_UI.md section 8.20): the wait cursor's one cell, IBM.CH
+// 0x05 + phase (four frames of one diagonal stripe, +2 px a frame) in white on
+// black, cut to the cell's width and stretched to its height.
+esp_err_t Board::draw_console_cursor_cell()
+{
+    auto &c=console_cursor_;
+    if(!display_initialized_||!c.visible||!ibm_font_||!c.width||!c.height)return ESP_OK;
+    ++draw_calls_.metric_text_boxes;
+    ESP_RETURN_ON_ERROR(set_display_window(c.x,c.y,c.width,c.height),kTag,"set console cursor window");
+    auto &row_bytes=transfer_row_;gpio_set_level(pins::kTftDataCommand,1);
+    const uint8_t *wave=ibm_font_+size_t(0x05+console_phase_)*8;
+    const size_t row_length=size_t(c.width)*2;
+    size_t used=0;
+    RowMark mark{};
+    for(int row=0;row<c.height;++row){
+        if(used==0)mark=row_mark();
+        uint8_t *out=row_bytes.data()+used;
+        const unsigned bits=wave[row*8/c.height];
+        for(int col=0;col<c.width;++col){
+            const int source=c.width<=8?col:col*8/c.width;
+            const uint16_t pixel=(bits&(0x80U>>unsigned(source)))?kWhite:kBlack;
+            out[col*2]=uint8_t(pixel>>8);out[col*2+1]=uint8_t(pixel);
+        }
+        used+=row_length;
+        if(!row_batch_ends(used,row_length,row,c.height))continue;
+        spi_transaction_t transaction{};transaction.length=used*8;transaction.tx_buffer=row_bytes.data();used=0;
+        ESP_RETURN_ON_ERROR(tft_row(transaction,mark),kTag,"write console cursor row");
+    }
+    c.phase=console_phase_;
+    return ESP_OK;
+}
+
+esp_err_t Board::animate_console_cursor()
+{
+    if(!console_cursor_.visible||!alpha_drawn_||frontend_drawn_||debug_drawn_||console_cursor_.phase==console_phase_)
+        return ESP_OK;
+    return draw_console_cursor_cell();
 }
 
 esp_err_t Board::draw_text_box_metrics(int x,int y,int width,int height,const char *text,
@@ -1360,11 +1471,21 @@ esp_err_t Board::draw_text_box_metrics(int x,int y,int width,int height,const ch
         for(int col=0;col<width;++col){
             uint16_t pixel=invert?color:kBlack;const size_t char_index=size_t(col/metrics.cell_width);
             const int within_x=col%metrics.cell_width,glyph_y=row-top_pad;
-            if(glyph_y>=0&&glyph_y<metrics.glyph_height&&within_x<metrics.glyph_width&&char_index<text_length){
-                const int glyph_col=within_x*5/metrics.glyph_width;
-                const int glyph_row=glyph_y*7/metrics.glyph_height;
+            if(char_index<text_length&&text[char_index]==kConsoleBullet){
+                const int bullet=console_bullet_pixel(within_x,glyph_y,metrics.cell_width,metrics.line_height);
+                if(bullet)pixel=bullet==2?kWhite:kChromeBand;
+            }else if(glyph_y>=0&&glyph_y<metrics.glyph_height&&within_x<metrics.glyph_width&&char_index<text_length){
+                // A4-UI4 (ALPHA4_UI.md section 8): a smaller cell than the 5x7
+                // face merges its middle column pair (2,3) and middle row pair
+                // (3,4) instead of dropping its last column and row; a larger one
+                // scales as before.
                 const auto bitmap=glyph(text[char_index]);
-                if(bitmap[glyph_col]&(1U<<glyph_row))pixel=invert?kBlack:color;
+                const int c0=metrics.glyph_width<5?within_x+(within_x>2):within_x*5/metrics.glyph_width;
+                const int c1=metrics.glyph_width<5&&within_x==2?3:c0;
+                const int r0=metrics.glyph_height<7?glyph_y+(glyph_y>3):glyph_y*7/metrics.glyph_height;
+                const int r1=metrics.glyph_height<7&&glyph_y==3?4:r0;
+                const uint8_t bits=uint8_t(bitmap[c0]|bitmap[c1]);
+                if(bits&((1U<<r0)|(1U<<r1)))pixel=invert?kBlack:color;
             }
             out[col*2]=uint8_t(pixel>>8);out[col*2+1]=uint8_t(pixel);
         }

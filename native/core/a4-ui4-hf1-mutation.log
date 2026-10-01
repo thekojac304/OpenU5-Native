@@ -1,0 +1,38 @@
+K1 KILLED   the hardware defect: page_rows 12 again
+    RED H1 Small a full console uses all 21 rows from y 88 (12 lines drawn, 12 rows inked wrongly)
+    RED H4 Small Shift+Up pages back by exactly the 21 rows drawn (no line skipped), full, no cursor; Shift+Down returns the cursor to the last row
+    RED H5 Small with the context bar up (Look-) the console uses 18 rows, ending at y 214 above the bar (y 215), the cursor after "Look-" on its last row
+    RED H1 Medium a full console uses all 19 rows from y 88 (12 lines drawn, 12 rows inked wrongly)
+    RED H4 Medium Shift+Up pages back by exactly the 19 rows drawn (no line skipped), full, no cursor; Shift+Down returns the cursor to the last row
+    RED H5 Medium with the context bar up (Look-) the console uses 15 rows, ending at y 208 above the bar (y 215), the cursor after "Look-" on its last row
+    A4-UI4 console runtime: 26/34 checks
+K2 KILLED   page_rows 19 (the 8 px cell's rows): Small short
+    RED H1 Small a full console uses all 21 rows from y 88 (19 lines drawn, 2 rows inked wrongly)
+    RED H4 Small Shift+Up pages back by exactly the 21 rows drawn (no line skipped), full, no cursor; Shift+Down returns the cursor to the last row
+    A4-UI4 console runtime: 32/34 checks
+K3 KILLED   page_rows one short of the Board
+    RED H1 Small a full console uses all 21 rows from y 88 (20 lines drawn, 20 rows inked wrongly)
+    RED H4 Small Shift+Up pages back by exactly the 21 rows drawn (no line skipped), full, no cursor; Shift+Down returns the cursor to the last row
+    A4-UI4 console runtime: 32/34 checks
+K4 KILLED   the row cap from Medium's metrics (19)
+    RED H1 Small a full console uses all 21 rows from y 88 (19 lines drawn, 0 rows inked wrongly)
+    RED H2 Small its rows run from y 88 to y 235 (glass 240): no console window above the status box's rule or past the glass (20 windows, 0 stray)
+    RED H4 Small Shift+Up pages back by exactly the 21 rows drawn (no line skipped), full, no cursor; Shift+Down returns the cursor to the last row
+    A4-UI4 console runtime: 31/34 checks
+K5 KILLED   the Board's rows back to the 8 px cell's 19
+    RED H1 Small a full console uses all 21 rows from y 88 (19 lines drawn, 0 rows inked wrongly)
+    RED H2 Small its rows run from y 88 to y 235 (glass 240): no console window above the status box's rule or past the glass (20 windows, 0 stray)
+    RED H4 Small Shift+Up pages back by exactly the 21 rows drawn (no line skipped), full, no cursor; Shift+Down returns the cursor to the last row
+    A4-UI4 console runtime: 31/34 checks
+K6 KILLED   the shared constructor ignores session_config()
+    RED H1 Small a full console uses all 21 rows from y 88 (12 lines drawn, 12 rows inked wrongly)
+    RED H4 Small Shift+Up pages back by exactly the 21 rows drawn (no line skipped), full, no cursor; Shift+Down returns the cursor to the last row
+    RED H5 Small with the context bar up (Look-) the console uses 18 rows, ending at y 214 above the bar (y 215), the cursor after "Look-" on its last row
+    RED H1 Medium a full console uses all 19 rows from y 88 (12 lines drawn, 12 rows inked wrongly)
+    RED H4 Medium Shift+Up pages back by exactly the 19 rows drawn (no line skipped), full, no cursor; Shift+Down returns the cursor to the last row
+    RED H5 Medium with the context bar up (Look-) the console uses 15 rows, ending at y 208 above the bar (y 215), the cursor after "Look-" on its last row
+    A4-UI4 console runtime: 26/34 checks
+restored tree: GREEN
+    A4-UI4 console runtime: 34/34 checks
+
+A4-UI4 hardware follow-up mutations: 6/6 killed

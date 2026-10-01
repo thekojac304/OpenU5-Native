@@ -42,9 +42,12 @@
 
 #include "openu5/world.h"
 #include "openu5/world_commands.h"
+#include "openu5/presentation.h"
+#include "openu5/quest_state.h"
 
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
 #include <memory>
 
 using namespace openu5;
@@ -163,6 +166,66 @@ struct Harness {
         key('\b');
         key('\b');
     }
+    // A4-UI4 hardware follow-up (ALPHA4_UI.md section 8.22): the Developer
+    // menu's own rows, by the keys the device sends. Root rows: 8 Quest /
+    // World, 9 Time, 12 Presets; Backspace is the menu's Back.
+    void developer_root(int row) {
+        raw_key('d', true);
+        for (int i = 0; i < row; ++i) south();
+        key('\r');
+    }
+    void developer_close() {
+        key('\b');
+        key('\b');
+    }
+    // Presets -> "Preset: Endgame" (row 12): the state A4-END1's hardware
+    // route (route A) leaves in a save -- all three Shadowlords destroyed.
+    void preset_endgame() {
+        developer_root(12);
+        for (int i = 0; i < 12; ++i) south();
+        key('\r'); // the effect sheet (every preset row asks first)
+        key('\r'); // Run
+        developer_close();
+    }
+    // Time -> Hour (row 3): type the hour, Enter.
+    void developer_hour(int hour) {
+        developer_root(9);
+        for (int i = 0; i < 3; ++i) south();
+        key('\r');
+        char digits[4];
+        std::snprintf(digits, sizeof(digits), "%d", hour);
+        text(digits);
+        key('\r');
+        developer_close();
+    }
+    // Quest / World -> Quest flag (row 0) = 1 "shadowlord-dead:hatred", then
+    // Toggle quest flag (row 1) = 0: Astaroth alive again.
+    void developer_revive_astaroth() {
+        developer_root(8);
+        key('\r');
+        key('1');
+        key('\r');
+        south();
+        key('\r');
+        key('0');
+        key('\r');
+        developer_close();
+    }
+    // (Y)ell, the word, Enter.
+    void yell(const char *word) {
+        key('y');
+        text(word);
+        key('\r');
+    }
+    // What the party sees two cells north (the Flame, from the cell south of
+    // the ritual cell): AlphaRuntime::render()'s own compose call.
+    int16_t tile_north(int cells) {
+        auto &p = g().position;
+        const auto active = get_active_map(g_owners->world, p.map);
+        if (active.error != Error::None) return -1;
+        const auto s = compose_world_presentation(ctx(), active.value, p.xy, 0x11c);
+        return s.tiles[(5 - cells) * kPresentationWindow + 5];
+    }
     // (U)se, cursor down the real inventory list to `name`, Confirm.
     bool use(const char *name) {
         key('u');
@@ -177,12 +240,13 @@ struct Harness {
         return false;
     }
     // (L)ook with a direction: true only when the CORE answered ("Thou dost
-    // see ..."), not merely the UiSession's "Look-"/direction echoes.
+    // see ..."), not merely the UiSession's "Look-North" echo (A4-UI4: getdir
+    // 0x35EC prints the word on the command's own row).
     bool look_north() {
         set_mark();
         key('l');
         north();
-        return saw("Look-") && saw("north") && saw("Thou dost see");
+        return saw("Look-North") && saw("Thou dost see");
     }
     // 'z' opens the member picker first (a party of one included), Confirm
     // picks, Space closes (cmd_zstats 0x0a78) -- the batch14 route.
@@ -399,6 +463,116 @@ void test_developer_returns_to_every_prompt() {
     }
 }
 
+// PROBE (temporary): the A4-UI4 checklist route under hardware-like states.
+void probe_route(const char *label, int members, int hour, bool hatred_dead, bool urban) {
+    std::printf("PROBE %s\n", label);
+    Harness h;
+    auto &g = h.g();
+    if (members > 1) {
+        g.party.character_count = g.party.party_size = uint8_t(members);
+        for (int i = 1; i < members; ++i) { g.party.characters[i] = g.party.characters[0]; std::snprintf(g.party.characters[i].name, sizeof(g.party.characters[i].name), "M%d", i); }
+    }
+    g.time.hour = uint8_t(hour);
+    if (hatred_dead) set_quest_flag(g.quest, QuestFlag::HatredDead);
+    (void)urban;
+    h.flame_shard_certification();
+    h.where();
+    h.set_mark(); h.south(); h.where(); h.show();
+    h.set_mark(); h.key('y'); h.text("ASTAROTH"); h.key('\r'); h.show();
+    std::printf("         summoned=%d mode=%d\n", int(h.g().quest.summoned), int(h.mode()));
+    h.set_mark(); h.north(); h.where(); h.show();
+    h.set_mark(); h.use("Hatred"); h.show();
+    std::printf("         shard=%d summoned=%d hatred_dead=%d\n", int(h.g().quest.shards[1]), int(h.g().quest.summoned), int(quest_flag(h.g().quest, QuestFlag::HatredDead)));
+}
+
+// ---------------------------------------------------------------------------
+// A: the A4-UI4 hardware checklist's shard route (ALPHA4_UI.md section 8.22).
+// Hardware: from the tester's save, Certification -> south -> Yell ASTAROTH
+// -> north -> Use Hatred printed only "...and cast it into the Flame of
+// Love!". The route is the binary's (CMDS 0x1030 puts the Shadowlord at
+// party_y-2, on the Flame; CAST 0x16ad reads party_y-1), but it has two
+// preconditions the checklist never stated: Astaroth alive (CMDS 0x1076: a
+// destroyed Shadowlord answers "No effect!") -- A4-END1's Preset: Endgame
+// destroys all three, and the Certification deliberately leaves that state
+// alone -- and an hour at which no monk walks onto the ritual cell once the
+// party steps off it (05-06 and 19-20 o'clock).
+// ---------------------------------------------------------------------------
+void test_hardware_route() {
+    std::printf("A the A4-UI4 hardware route, through the Developer menu (section 8.22)\n");
+    constexpr int16_t kShadowlordTile = 252 + 256; // presentation.cpp: a Shadowlord object draws o.tile+256
+    {
+        // A1-A3: the hardware run's state -- the A4-END1 preset in the save.
+        Harness h;
+        h.preset_endgame();
+        expect(quest_flag(h.g().quest, QuestFlag::HatredDead) && h.mode() == UiMode::Exploration, "A1",
+               "precondition: Developer -> Presets -> Preset: Endgame (A4-END1's route) destroys Astaroth");
+        h.flame_shard_certification();
+        h.south();
+        h.set_mark();
+        h.yell("ASTAROTH");
+        expect(h.at(kEmpath, kFlameFloor, kFlameX, kFlameY + 1) && h.saw("No effect!") && h.g().quest.summoned == -1 &&
+                   h.tile_north(2) != kShadowlordTile,
+               "A2", "a destroyed Astaroth cannot be summoned: (Y)ell ASTAROTH from (15,4) prints \"No effect!\" "
+               "(CMDS 0x1076) and the Flame stays empty");
+        h.north();
+        h.set_mark();
+        h.use("Hatred");
+        expect(h.saw("...and cast it into the Flame of Love!") && !h.saw("doom") && h.g().quest.shards[1], "A3",
+               "** the hardware signature, reproduced: the header and the Flame line only, the shard kept **");
+    }
+    {
+        // A4-A8: the corrected route, every step a Developer row or a key.
+        Harness h;
+        h.preset_endgame();
+        h.developer_revive_astaroth();
+        h.developer_hour(12);
+        expect(!quest_flag(h.g().quest, QuestFlag::HatredDead) && h.g().time.hour == 12 &&
+                   h.mode() == UiMode::Exploration,
+               "A4", "Developer -> Quest / World: Quest flag 1 (shadowlord-dead:hatred), Toggle 0; Time -> Hour 12");
+        h.flame_shard_certification();
+        const bool on_cell = h.at(kEmpath, kFlameFloor, kFlameX, kFlameY);
+        h.set_mark();
+        h.south();
+        const bool south = h.at(kEmpath, kFlameFloor, kFlameX, kFlameY + 1) && h.saw("South");
+        h.set_mark();
+        h.yell("ASTAROTH");
+        const bool silent = !h.saw("No effect!");
+        if (!expect(on_cell && south && silent && h.g().quest.summoned == 1 && h.tile_north(2) == kShadowlordTile,
+                    "A5", "Certification lands ON the ritual cell (15,3); one step south (15,4); (Y)ell ASTAROTH is "
+                    "silent (CMDS 0x1030) and Astaroth appears on the Flame (15,2)"))
+            h.show();
+        h.set_mark();
+        h.north();
+        expect(h.at(kEmpath, kFlameFloor, kFlameX, kFlameY) && h.saw("North") && !h.saw("Blocked") &&
+                   h.tile_north(1) == kShadowlordTile,
+               "A6", "one step north: back on the ritual cell with Astaroth directly north");
+        h.set_mark();
+        h.use("Hatred");
+        const bool doom = h.saw("...and cast it into the Flame of Love!") &&
+                          h.saw("The doom of the Shadowlord Astaroth is wrought!");
+        if (!expect(doom && !h.g().quest.shards[1] && quest_flag(h.g().quest, QuestFlag::HatredDead) &&
+                        h.g().quest.summoned == -1 && h.tile_north(1) != kShadowlordTile,
+                    "A7", "** (U)se Shard of Hatred: the doom is wrought, the shard consumed, Astaroth gone **"))
+            h.show();
+        expect(h.mode() == UiMode::Exploration && move_answers(h, kFlameX, kFlameY), "A8",
+               "Move answers right after the ritual");
+    }
+    {
+        // A9: why the route sets the hour -- at 06:00 a monk takes the
+        // ritual cell as soon as the party leaves it.
+        Harness h;
+        h.developer_hour(6);
+        h.flame_shard_certification();
+        h.south();
+        h.yell("ASTAROTH");
+        h.set_mark();
+        h.north();
+        expect(h.g().time.hour == 6 && h.g().quest.summoned == 1 && h.saw("Blocked!") &&
+                   h.at(kEmpath, kFlameFloor, kFlameX, kFlameY + 1),
+               "A9", "control: at Hour 6 the step back north is \"Blocked!\" (an NPC stands on the ritual cell)");
+    }
+}
+
 }  // namespace
 
 int main(int argc, char **argv) {
@@ -413,10 +587,15 @@ int main(int argc, char **argv) {
     if (pack.load(owners, report) != ESP_OK) { std::fprintf(stderr, "cannot load the resource pack\n"); return 2; }
     g_owners = &owners;
 
+    if (std::getenv("B25_PROBE")) {
+        for (int hr = 0; hr < 24; ++hr) { char l[32]; std::snprintf(l, sizeof l, "hour %d", hr); probe_route(l, 6, hr, false, false); }
+        return 0;
+    }
     test_pending_question_survives_developer(false);
     test_pending_question_survives_developer(true);
     test_shard_exit_paths();
     test_developer_returns_to_every_prompt();
+    test_hardware_route();
 
     std::printf("\nbatch25_shard_ritual: %d/%d checks GREEN, %d RED\n", g_checks - g_failures, g_checks, g_failures);
     return g_failures ? 1 : 0;

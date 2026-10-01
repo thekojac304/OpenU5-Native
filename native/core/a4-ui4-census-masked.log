@@ -1,0 +1,5 @@
+A4-UI4 masked render census (scratch: a3_04f_render_runtime with the console region x>=182, y>=87 blanked before hashing)
+built against the baseline production files (e53741b2, swapped by tools/a4_ui4_red_first.py's helpers) and against the A4-UI4 tree:
+baseline masked states 297, A4-UI4 masked states 297; masked states differing: 0
+=> the 108 differing states of the unmasked census (phases 3-7) differ only in the console: the DS-cited echoes,
+   Look-North on one row, the arena's ended line no longer printed. a3_04f_panel_goldens.h re-recorded on that basis.

@@ -475,10 +475,10 @@ VictoryTimes test_victory() {
     check(lb_steps == 5, "M1 a footstep (move-step) two frames into each of Lord British's steps (" + n(long(lb_steps)) + "/5)");
     const std::string greet = squeeze(since(h, start_seq));
     std::string want = squeeze("\nIolo lives!\n\nMariah lives!\n\nDupre lives!\n" + record(0) + "Avatar" + "!\"\n\n");
-    const bool victory_prefix = greet.rfind("VICTORY!", 0) == 0;
-    check(at_getkey(h) && (greet == want || greet == "VICTORY!" + want),
-          std::string("E1 to the greeting, in order: three \" lives!\", ENDMSG 0x00, the Avatar's name, \"!\\\"\" -- nothing else") +
-              (victory_prefix ? " (the arena's own VICTORY! precedes it: ledger D-72)" : ""));
+    // A4-UI4 (D-72): nothing between the absorption and the ENDMSG text -- the
+    // arena's VICTORY! no longer precedes it (tolerated here until A4-UI4).
+    check(at_getkey(h) && greet == want,
+          std::string("E1 to the greeting, in order: three \" lives!\", ENDMSG 0x00, the Avatar's name, \"!\\\"\" -- nothing else, no VICTORY!"));
     // (The Avatar's last step in the arena sounds at the absorption's own instant.)
     const size_t footsteps = audio.sfx(SfxId::MoveStep, -1, start + 1, Run::now() + 1);
     check(footsteps == 21, "M3 21 footsteps to the greeting: his 5 and the lineup's 4 + 4 + 4 + 4 from the mirror (" +
@@ -544,7 +544,7 @@ VictoryTimes test_victory() {
     const std::string text = squeeze(since(h, start_seq));
     std::string all = want + squeeze(record(1)) + "Yes" + squeeze(record(3)) + "Hesays:";
     for (int i = 4; i <= 9; ++i) all += squeeze(record(i));
-    check(text == all || text == "VICTORY!" + all,
+    check(text == all, // A4-UI4 (D-72): no VICTORY! before it
           "E2 the whole console in the overlay's order: ... ENDMSG 0x01, \"Yes\", 0x03, \"He says:\", 0x04-0x09 -- once each");
 
     // The orb, the gate.
@@ -694,7 +694,7 @@ void test_stranded() {
     const std::string text = squeeze(since(h, start_seq));
     const std::string want = squeeze("\nIolo lives!\n\nMariah lives!\n\nDupre lives!\n" + record(0) + "Avatar" + "!\"\n\n" +
                                      record(1) + "No\n\n" + record(2) + "No\n\n" + "\"I see...\n" + record(10));
-    check(room && start >= 0 && second && (text == want || text == "VICTORY!" + want) && text.find("FOLLOW!") == std::string::npos,
+    check(room && start >= 0 && second && text == want && text.find("FOLLOW!") == std::string::npos, // A4-UI4 (D-72)
           "S1 No, then No to ENDMSG 0x02: \"No\" twice, \"I see...\", ENDMSG 0x0a -- in order, once each");
     const auto &a2 = sc(h)->actor(2), &lb = sc(h)->actor(31), &a0 = sc(h)->actor(0);
     check(sc(h)->phase() == EndgamePhase::Stranded && a2.col == 8 && a2.row == 6 && lb.col == 4 && lb.row == 1 && a0.col == 8 &&
@@ -746,7 +746,7 @@ void test_stranded() {
     const bool ended = start2 >= 0 && drive_to_end(y, "y");
     const std::string text2 = squeeze(since(y, seq2));
     const std::string want2 = squeeze(record(0) + "Avatar" + "!\"\n\n" + record(1) + "Yes\n\n" + "\"I see...\n" + record(10));
-    check(room2 && ended && sc(y)->phase() == EndgamePhase::Stranded && !sc(y)->victory() && (text2 == want2 || text2 == "VICTORY!" + want2),
+    check(room2 && ended && sc(y)->phase() == EndgamePhase::Stranded && !sc(y)->victory() && text2 == want2, // A4-UI4 (D-72)
           "S4 Yes without the wooden box: \"Yes\", then \"I see...\" (0x08b9 needs both), the stranded room");
 }
 
@@ -801,9 +801,14 @@ void test_no_pack() {
     const uint32_t mark = last_seq(h);
     walk_to_soul(h);
     const std::string text = since(h, mark, true);
+    // A4-UI4 (D-73): the parity path prints no narration any more -- ENDGAME.OVL's
+    // script carries ENDMSG, in the reference as here -- so without the scene the
+    // absorption leaves only the bare Ending and its A-15 line. (Unreachable on
+    // the device: the identity lock, A-13, refuses a pack without the ending.)
     check(room && !live(h) && quest_flag(h.rt->game().quest, QuestFlag::GameWon) && h.rt->ui()->mode() == UiMode::Ending &&
-              occurrences(text, "\"FOLLOW!\" cries Lord British") == 1 && occurrences(text, "The quest is complete.") == 1,
-          "N1 no scene: rescue_events' narration once (the quest_parity path) and the bare Ending (Batch 53A)");
+              occurrences(text, "\"FOLLOW!\" cries Lord British") == 0 && occurrences(text, "Bearing amulet") == 0 &&
+              occurrences(text, "The quest is complete.") == 1,
+          "N1 no scene: the quest_parity path prints no narration (D-73) and the bare Ending (Batch 53A) says its line once");
 }
 } // namespace
 

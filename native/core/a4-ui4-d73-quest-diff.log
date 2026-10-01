@@ -1,0 +1,7 @@
+A4-UI4 D-73: native quest_driver output over quest_parity's 5,377 inputs, before (build-a4-end1, e53741b2) and after (A4-UI4 tree).
+control: with only the TypeScript reference changed, quest_parity failed at 'Quest mismatch 4809: world-flow' (the first absorption case);
+with both changed in step, quest_parity passes (ctest quest_parity, quest_case_table_drift: 2/2).
+rows: 5377 / 5377; changed rows: 18 = [4809, 4810, 4811, 4815, 4816, 4817, 5113..5124] (the absorption cases)
+non-message or reordered differences in those rows: 0 (state, seed, coverage and every other event identical)
+removed message texts (the port's narration on the absorption path):
+  Bearing amulet, crown and sceptre ... / Lord British rises, unbroken ... / Lord British carefully opens the box... / ENDMSG 9 "FOLLOW!" ... / the scroll's lines (Be it known ..., of the Year ..., <name> the Avatar, saved the life ..., THE QUEST OF THE AVATAR IS FOREVER, Report now ...) / "Well then, pull up a chair." / "We shall be here a while." / blank lines

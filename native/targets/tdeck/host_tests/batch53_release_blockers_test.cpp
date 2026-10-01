@@ -195,6 +195,9 @@ struct Harness {
     void step(Direction d) {
         if (d == Direction::North) north(); else if (d == Direction::South) south();
         else if (d == Direction::East) east(); else west();
+        // A4-UI4 (D-48): a gate's transit (kernel 0x48a8) reads no key for its
+        // ~3 s; a player waits it out, and so does this harness.
+        if (rt->moongate_transit_active()) run_ms(3200);
     }
 
     void set_mark() { mark = rt->ui()->transcript_size(); }

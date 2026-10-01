@@ -1,0 +1,50 @@
+F1 KILLED -- the footer names J C T U A R only -- a4_ui4_presentation_runtime exit=1 RED=F1
+F2 KILLED -- the boot splash keeps its stale literal -- a4_ui4_presentation_runtime exit=1 RED=F2b
+F3 KILLED -- Small drops the last column again (col*5/4) -- a4_ui4_presentation_runtime exit=1 RED=F3
+F3b KILLED -- Small drops the bottom row again (row*7/6) -- a4_ui4_presentation_runtime exit=1 RED=F3
+F4 KILLED -- the System Menu Settings footer says "Mic returns" again -- a4_ui4_presentation_runtime exit=1 RED=F4
+F4b KILLED -- the System Menu row is "Developer / Debug" again -- a4_ui4_presentation_runtime exit=1 RED=F4b
+H1 KILLED -- a world getdir shows the aim readout -- a4_ui4_presentation_runtime exit=1 RED=H1,H1b,E1c
+H2 KILLED -- the underworld caption tests floor < 0 only -- a4_ui4_presentation_runtime exit=1 RED=H2,H2b
+H3 KILLED -- the zodiac view keeps the strips -- a4_ui4_presentation_runtime exit=1 RED=H3
+H4 KILLED -- no caret glyph -- a4_ui4_presentation_runtime exit=1 RED=H4
+E1 KILLED -- the arena's "ended" line printed again (D-72, duplicate lines) -- a4_ui4_presentation_runtime exit=1 RED=E2,E3; batch53a_ending_terminal exit=1 RED=R3; a4_end1_ending_runtime exit=0 RED=-
+E2 KILLED -- getdir's word on its own row -- a4_ui4_presentation_runtime exit=1 RED=E1,E1b,E3b; batch25_shard_ritual exit=1 RED=R9,Y7,S12
+E3 KILLED -- getdir's word in lower case -- a4_ui4_presentation_runtime exit=1 RED=E1,E3b; batch25_shard_ritual exit=1 RED=R9,Y7,S12
+E4 KILLED -- Klimb echoes its token again -- a4_ui4_presentation_runtime exit=1 RED=E1c
+E5 KILLED -- Cast echoes "Cast" (no dots) -- a4_ui4_presentation_runtime exit=1 RED=E5
+E6 KILLED -- Ready without its blank row -- a4_ui4_presentation_runtime exit=1 RED=E5
+E7 KILLED -- the arena Get echoes "Get" (no dash) -- a4_ui4_presentation_runtime exit=1 RED=E3b
+E8 KILLED -- Mix echoes "Mix" -- a4_ui4_presentation_runtime exit=1 RED=E4
+E9 KILLED -- no 10-tick hold after "Mixing..." -- a4_ui4_presentation_runtime exit=1 RED=E4b
+S1 KILLED -- the ritual bursts back to 60 ms -- a4_ui4_presentation_runtime exit=1 RED=S1,S1b; batch7b_tests exit=1 RED=-
+S1b KILLED -- the ritual bursts are silent -- a4_ui4_presentation_runtime exit=1 RED=S1b
+S2 KILLED -- a quake pulse is no frame -- a4_ui4_presentation_runtime exit=1 RED=S2; a3_hf9_refuge_cadence_runtime exit=1 RED=N1.10
+S3 KILLED -- the Refuge Avatar from the darkness line -- a4_ui4_presentation_runtime exit=1 RED=S3; a3_hf9_refuge_cadence_runtime exit=1 RED=N1.3; batch7b_tests exit=1 RED=-
+S3b KILLED -- the slumber beat never places the Avatar -- a4_ui4_presentation_runtime exit=1 RED=S3b
+S3c KILLED -- the last stage keeps the ghosts and the apparition -- a4_ui4_presentation_runtime exit=1 RED=S3c; batch7b_tests exit=1 RED=-
+M1 KILLED -- the counter jumps (no stage per tick) -- a4_ui4_moongate_runtime exit=1 RED=A1,A2
+M2 KILLED -- the partial gate over the ending's floor 0x44 in the world -- a4_ui4_moongate_runtime exit=1 RED=A1,A2
+M3 KILLED -- a standing gate does not glow -- a4_ui4_moongate_runtime exit=1 RED=A1,A2,T2,T3,T4,N1
+M4 KILLED -- no transit: the destination at once (the pre-A4-UI4 device) -- a4_ui4_moongate_runtime exit=1 RED=T2,T3,T4,T5,N1
+M5 KILLED -- the closing at one tick a stage -- a4_ui4_moongate_runtime exit=1 RED=T3,T4,N1
+M6 KILLED -- the transit lets keys through -- a4_ui4_moongate_runtime exit=1 RED=T5
+M7 KILLED -- the transit without the sweep's hold -- a4_ui4_moongate_runtime exit=1 RED=T2
+C1 KILLED -- no blank row before a command (getkey's LF) -- a4_ui4_console_runtime exit=1 RED=C1,C7,C12
+C2 KILLED -- a command row wraps at full width (no bullet cell) -- a4_ui4_console_runtime exit=1 RED=C12
+C3 KILLED -- no live prompt row -- a4_ui4_console_runtime exit=1 RED=C1,C2,C5,C8b,C10,C11,C11b,C12
+C4 KILLED -- getdir has no inline cursor -- a4_ui4_console_runtime exit=1 RED=C8
+C5 KILLED -- the console fills from the top again -- a4_ui4_console_runtime exit=1 RED=C2,C4,C5,C11,C11b
+C6 KILLED -- the bullet in one tone (no white edge) -- a4_ui4_console_runtime exit=1 RED=C2,C8,C11,C11b
+C7 KILLED -- the wave starts one glyph late (0x06) -- a4_ui4_console_runtime exit=1 RED=C5,C6,C8,C11,C11b
+C8 KILLED -- the prompt and cursor ignore a paced hold -- a4_ui4_console_runtime exit=1 RED=C10
+C9 KILLED -- an answer echoes as a command (bullet, blank row) -- a4_ui4_console_runtime exit=1 RED=C9
+C10 SURVIVED -- the wave never moves on a still frame -- a4_ui4_console_runtime exit=0 RED=-
+C11 KILLED -- a scrolled-back view keeps the cursor -- a4_ui4_console_runtime exit=1 RED=C7
+C12 KILLED -- the device never turns the console layout on -- a4_ui4_console_runtime exit=1 RED=C1,C2,C4,C5,C6,C7,C8,C8b,C9,C10,C11,C11b
+C13 KILLED -- the arena's Cast key echoes again (Cast... twice) -- a4_ui4_console_runtime exit=1 RED=C13
+P1 KILLED -- the picker selects in plain video -- a4_ui4_console_runtime exit=1 RED=P1,P2
+P2 KILLED -- the picker bar is 12 px (stale rows behind it) -- a4_ui4_console_runtime exit=1 RED=P1,P2
+P3 KILLED -- a shop selects in plain video -- a4_ui4_console_runtime exit=1 RED=P3
+R1 KILLED -- the native parity path keeps the reference's old narration -- quest_driver exit=8 RED=quest_parity; a4_end1_ending_runtime exit=1 RED=N1
+A4-UI4 mutation check: 48 killed, 1 survived, 0 invalid; restored build GREEN

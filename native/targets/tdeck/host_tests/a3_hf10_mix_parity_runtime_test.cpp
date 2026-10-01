@@ -216,14 +216,23 @@ struct Run {
     }
 
     // --- the real Board's GRAM ----------------------------------------------
-    /** A 5x7 glyph cell of the selector list: row `row`, text column `col`. */
+    /** A 5x7 glyph cell of the selector list: row `row`, text column `col`.
+     *  A4-UI4 (section 8.20): "lit" is ink against the row's own background --
+     *  black, or the reverse-video bar's white two rows above the text. */
     static bool selector_cell_lit(int row, int col) {
         const uint16_t *p = bus::gram();
         const int x0 = 184 + col * 6, y0 = 46 + row * 14;
+        const uint16_t background = p[(y0 - 2) * kW + x0];
         for (int y = y0; y < y0 + 7; ++y)
             for (int x = x0; x < x0 + 5; ++x)
-                if (p[y * kW + x] != 0) return true;
+                if (p[y * kW + x] != background) return true;
         return false;
+    }
+    /** A4-UI4: the list's cursor is the reverse-video bar (kernel 0x2a28). */
+    static bool selector_row_selected(int row) {
+        const uint16_t *p = bus::gram();
+        const int y0 = 46 + row * 14;
+        return p[(y0 - 2) * kW + 184] == 0xffff && p[(y0 + 8) * kW + 317] == 0xffff;
     }
     static uint64_t cell_hash(int row, int col) {
         const uint16_t *p = bus::gram();
@@ -287,11 +296,11 @@ void test_picker() {
           "the rows are the four OWNED reagents, cursor on the first (0x18ca-0x18dd)");
     bool none_marked = true;
     for (int row = 0; row < 4; ++row) none_marked = none_marked && !Run::selector_cell_lit(row, 4);
-    check(h.in_picker() && Run::region_lit(184, 5, 134, 14) && none_marked && Run::selector_cell_lit(0, 0), "N1.4",
-          "real Board: the title and list are drawn, the cursor '>' is on row 0, NO row carries a mark");
+    check(h.in_picker() && Run::region_lit(184, 5, 134, 14) && none_marked && Run::selector_row_selected(0), "N1.4",
+          "real Board: the title and list are drawn, the cursor (the reverse-video bar) is on row 0, NO row carries a mark");
     h.toggle(Silk);
     check(h.in_picker() && Run::selector_cell_lit(h.row_of(Silk), 4) && !Run::selector_cell_lit(h.row_of(Ash), 4) &&
-              Run::selector_cell_lit(h.row_of(Silk), 0),
+              Run::selector_row_selected(h.row_of(Silk)),
           "N1.5", "real Board: RETURN marks the row under the cursor, and only that row");
     h.toggle(Silk, true);
     check(h.in_picker() && !Run::selector_cell_lit(h.row_of(Silk), 4), "N1.6",

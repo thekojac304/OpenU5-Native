@@ -1,0 +1,49 @@
+# A4-UI4 RED-first: snapshot C:/dev/ui4-scratch/pre-console; production files swapped: native/core/include/openu5/ui_session.h, native/core/src/ui_session.cpp, native/targets/tdeck/main/alpha_runtime.cpp, native/targets/tdeck/main/alpha_runtime.h, native/targets/tdeck/main/device_ui_views.h, native/targets/tdeck/main/tdeck_board.cpp, native/targets/tdeck/main/tdeck_board.h
+## a4_ui4_console_runtime
+C  the console (section 8.20)
+RED C1 the device's console: "Pass" on a bullet row after a blank row (getkey's LF), then a blank row and the live prompt row the next command lands on
+RED C2 on the panel: the two-tone bullet (band blue, white edge) starts the Pass row and the prompt row; the rows between are blank (top-left not white)
+GREEN C3 the blue lives in the bullet cell alone: no other cell of the console carries it
+RED C4 the rows are anchored at the bottom: 1 lines on 19 rows, the top 18 empty
+RED C5 a command is awaited: the flame-wave cursor (IBM.CH 0x05 + phase, from the pack) sits right after the prompt row's bullet
+RED C6 the wave animates (4 phase changes in 440 ms, each the right glyph) and an idle frame draws the cursor's one cell, no row (0 console windows, 0 wider)
+RED C7 a scrolled-back view shows no cursor; paging back down brings it back
+RED C6b on a still screen (grass, nothing animated within 6 cells) the wave still moves: the idle frames draw the cursor's cell and nothing else (0 windows, 0 elsewhere)
+RED C8 getdir 0x35EC: "Look-" is the last row and the cursor blinks right after it (no prompt row below)
+RED C8b the direction completes the same bullet row ("Look-North") and the prompt row returns
+RED C9 Talk's direction word (an answer, D-75's open row) follows "Talk-" with no bullet and no blank row
+RED C10 while Mix holds its 10 ticks the console shows no prompt row and no cursor; after "Done!" both return
+RED C11 Small text: the bullet fills its 5x7 cell and the wave cursor follows it on the last row (top-left not white)
+RED C11b Large text: the bullet fills its 8x10 cell and the wave cursor follows it on the last row (top-left not white)
+RED C12 the console layout (new API: UiSession::set_console_layout)
+RED C13 the arena's (C)ast key echoes nothing itself: combat_cast's own "Cast..." is printed once
+P  the lists in reverse video (section 8.20)
+RED P1 the party picker selects in reverse video: row 0 is a white 14 px bar with black ink, the others white on black, no green anywhere in the panel
+RED P2 moving down moves the bar; the row it left is black on its whole pitch (nothing stale)
+RED P3 a shop's offers select in reverse video too: the chosen offer is the bar, no green '>'
+A4-UI4 console runtime: 1/19 checks
+
+# A4-UI4 RED-first: baseline e53741b2; production files swapped: native/core/include/openu5/narrative_scene.h, native/core/include/openu5/presentation.h, native/core/include/openu5/quest_world.h, native/core/include/openu5/ui_session.h, native/core/include/openu5/world_fx.h, native/core/src/frontend.cpp, native/core/src/narrative_scene.cpp, native/core/src/presentation.cpp, native/core/src/quest_world.cpp, native/core/src/system_menu.cpp, native/core/src/ui_session.cpp, native/core/src/world_fx.cpp, native/targets/tdeck/main/alpha_runtime.cpp, native/targets/tdeck/main/alpha_runtime.h, native/targets/tdeck/main/device_ui_views.h, native/targets/tdeck/main/location_names.h, native/targets/tdeck/main/main.cpp, native/targets/tdeck/main/native_renderer.cpp, native/targets/tdeck/main/tdeck_board.cpp, native/targets/tdeck/main/tdeck_board.h
+## a4_ui4_console_runtime
+C  the console (section 8.20)
+RED C1 the device's console: "Pass" on a bullet row after a blank row (getkey's LF), then a blank row and the live prompt row the next command lands on
+RED C2 on the panel: the two-tone bullet (band blue, white edge) starts the Pass row and the prompt row; the rows between are blank (top-left not white)
+GREEN C3 the blue lives in the bullet cell alone: no other cell of the console carries it
+RED C4 the rows are anchored at the bottom: 1 lines on 19 rows, the top 18 empty
+RED C5 a command is awaited: the flame-wave cursor (IBM.CH 0x05 + phase, from the pack) sits right after the prompt row's bullet
+RED C6 the wave animates (4 phase changes in 440 ms, each the right glyph) and an idle frame draws the cursor's one cell, no row (0 console windows, 0 wider)
+RED C7 a scrolled-back view shows no cursor; paging back down brings it back
+RED C6b on a still screen (grass, nothing animated within 6 cells) the wave still moves: the idle frames draw the cursor's cell and nothing else (0 windows, 0 elsewhere)
+RED C8 getdir 0x35EC: "Look-" is the last row and the cursor blinks right after it (no prompt row below)
+RED C8b the direction completes the same bullet row ("Look-North") and the prompt row returns
+RED C9 Talk's direction word (an answer, D-75's open row) follows "Talk-" with no bullet and no blank row
+RED C10 while Mix holds its 10 ticks the console shows no prompt row and no cursor; after "Done!" both return
+RED C11 Small text: the bullet fills its 5x7 cell and the wave cursor follows it on the last row (top-left not white)
+RED C11b Large text: the bullet fills its 8x10 cell and the wave cursor follows it on the last row (top-left not white)
+RED C12 the console layout (new API: UiSession::set_console_layout)
+RED C13 the arena's (C)ast key echoes nothing itself: combat_cast's own "Cast..." is printed once
+P  the lists in reverse video (section 8.20)
+RED P1 the party picker selects in reverse video: row 0 is a white 14 px bar with black ink, the others white on black, no green anywhere in the panel
+RED P2 moving down moves the bar; the row it left is black on its whole pitch (nothing stale)
+RED P3 a shop's offers select in reverse video too: the chosen offer is the bar, no green '>'
+A4-UI4 console runtime: 1/19 checks

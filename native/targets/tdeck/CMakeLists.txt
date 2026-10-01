@@ -14,7 +14,11 @@ endif()
 # not a final Alpha 3 release. A3-01 .. A3-HF10 were development builds.
 # Alpha 4 UI Batch 1 sets 4.0.0-alpha4-ui1-debug (ALPHA4_UI.md); A4-UI3 (the
 # save/load UX, ALPHA4_UI.md section 6) set 4.0.0-alpha4-ui3-debug; A4-END1
-# (the full ending, ALPHA4_UI.md section 7) sets 4.0.0-alpha4-end1-debug.
-set(PROJECT_VER "4.0.0-alpha4-end1-debug")
+# (the full ending, ALPHA4_UI.md section 7) set 4.0.0-alpha4-end1-debug;
+# A4-UI4/PRES1 (frontend and presentation, ALPHA4_UI.md section 8) sets
+# 4.0.0-alpha4-ui4-debug; its hardware follow-up (section 8.22: the console
+# height) sets 4.0.0-alpha4-ui4-hf1-debug, so the retest image never shares
+# a name or an FW line with the first A4-UI4 image.
+set(PROJECT_VER "4.0.0-alpha4-ui4-hf1-debug")
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(openu5_tdeck)

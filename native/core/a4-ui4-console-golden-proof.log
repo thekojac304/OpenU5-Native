@@ -1,0 +1,17 @@
+A4-UI4 section 8.20 -- the console package's golden changes, proved console-only
+
+1. a4_ui1_chrome_runtime: each scripted screen dumped from the pre-console tree (tools/a4_ui4_red_first.py --snapshot <the batch's files before the console package> --dump) and from the console tree; golden_diff (scratch) per screen:
+dungeon-bands.png            42 px differ, box x 184..195 y 232..239; all inside the console
+gameplay.png                 42 px differ, box x 184..195 y 232..239; all inside the console
+main-menu.png            identical
+move-blackthorn.png          42 px differ, box x 184..195 y 232..239; all inside the console
+move-lord-british.png        42 px differ, box x 184..195 y 232..239; all inside the console
+settings-large.png       identical
+settings.png             identical
+system-menu.png          identical
+=> only the live prompt row's bullet and wave cursor (x 184..195, y 232..239) differ; a4_ui1_goldens.h: the four gameplay hashes re-recorded.
+
+2. a3_04f_render_runtime panel golden: the masked census (console region x>=182, y>=87 blanked before hashing), built against the pre-console files (swapped from the snapshot) and against the console tree:
+baseline masked states 297 new masked states 297
+masked states differing: 0 []
+=> the unmasked 301 states (297 before) differ only inside the console; a3_04f_panel_goldens.h re-recorded (deterministic: two recordings byte-identical).

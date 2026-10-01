@@ -296,6 +296,11 @@ void test_ordained() {
     check(r.count("Return again") == 1 && r.count("'Tis now") == 1 && r.count("ordained") == 1, "N2.4",
           "each section shown exactly once");
     r.set_mark();
+    // A4-UI4: a second roll the same way within the trackball's 12 ms debounce
+    // (InputController) is the same detent. This roll used to land after the
+    // previous frame's ~22 ms of modelled bus time; the console frame is
+    // shorter, so a player's pause is spelled out.
+    r.run_ms(50);
     r.ball(RawInputKind::TrackballLeft);
     check(r.rt->routed_command_count() == routed + 1, "N2.5",
           "after the last wait the next input is an ordinary command again (a step west is routed)");

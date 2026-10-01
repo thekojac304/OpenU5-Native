@@ -357,8 +357,11 @@ void test_cadence() {
           "0x0946 delay(10) BEFORE the first line: the darkness line " + n(dark - key) + " ms after the key (want 550)");
     check(tl.preroll_black >= 0 && tl.preroll_black < 20, "N1.2",
           "during that delay the viewport still shows the world (" + n(tl.preroll_black) + " of 99 cells black)");
-    check(blank == dark && tl.void_black >= 98, "N1.3",
-          "with the line, 0x0962: the viewport goes black but for the Avatar (" + n(tl.void_black) + " of 99 black)");
+    // A4-UI4 (H-211 / D-68): 0x098f-0x09ca clear every object; the Avatar is
+    // placed only at "But thy slumber is disturbed!" (0x09f5). Until A4-UI4 the
+    // device kept it on the black stage (>= 98 of 99).
+    check(blank == dark && tl.void_black == 99, "N1.3",
+          "with the line, 0x0962: the viewport goes all black, the Avatar not yet placed (" + n(tl.void_black) + " of 99 black)");
     check(at(refuge - dark, kFloorMs), "N1.4",
           "\"Thou hast found refuge.\" after the dissolve's one-tick floor (+" + n(refuge - dark) + ", want 55)");
     check(at(evil - refuge, 14 * kTick), "N1.5", "\"No evil lives here\" after delay(14) (+" + n(evil - refuge) + ", want 770)");
@@ -372,20 +375,22 @@ void test_cadence() {
                       ", +" + n(thunder - both) + "; want 330, 275, 275)");
     check(at(app - thunder, 2 * kShakeMs), "N1.9",
           "the apparition after two 936 ms shakes (+" + n(app - thunder) + ", want 1872)");
-    // The device's shake (the Quake's own primitive, unchanged here) drops the
-    // viewport 2 px on its first frame and restores it on its last full frame;
-    // over the Refuge's static stage nothing redraws in between (H-212).
-    int dropped = 0, restored = 0, other = 0;
-    for (auto t : tl.viewport_changes) {
-        if (t == thunder) ++dropped;
-        else if (at(t - thunder, 2 * kShakeMs)) ++restored;
-        else if (t > thunder && t < thunder + 2 * kShakeMs) ++other;
-    }
+    // The device's shake (the Quake's own primitive). A4-UI4 (H-212 / D-69):
+    // every pulse is a frame now -- down and back for each of the two shakes'
+    // eight pulses, 32 viewport changes, the first with the line. Until A4-UI4
+    // the static stage showed one drop and one restore.
+    int inside = 0;
+    int64_t first = -1;
+    for (auto t : tl.viewport_changes)
+        if (t >= thunder && t < thunder + 2 * kShakeMs) {
+            ++inside;
+            if (first < 0) first = t;
+        }
     const int64_t shaking = tl.quake_frames.empty() ? -1 : tl.quake_frames.back() - tl.quake_frames.front() + kFrameMs;
-    check(dropped == 1 && restored == 1 && other == 0 && !tl.quake_frames.empty() &&
-              tl.quake_frames.front() == thunder && at(shaking, 2 * kShakeMs),
-          "N1.10", "the peal shakes the viewport: dropped with the line, the device shake running " + n(shaking) +
-                       " ms, restored with the apparition (screen_shake_fx x 2)");
+    check(inside == 32 && first == thunder && !tl.quake_frames.empty() && tl.quake_frames.front() == thunder &&
+              at(shaking, 2 * kShakeMs),
+          "N1.10", "the peal shakes the viewport: 16 pulses, " + n(inside) + " viewport changes from the line on, the device shake running " +
+                       n(shaking) + " ms (screen_shake_fx x 2)");
     check(at(said - app, kFloorMs) && waited && tl.getkey == said, "N1.11",
           "the karma speech after the apparition's fizzle floor (+" + n(said - app) + "), and there it waits");
     check(r.audio.first(SfxId::RefugeSlumber) == slumber, "N1.12", "the slumber melody starts with its line");

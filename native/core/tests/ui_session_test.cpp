@@ -133,7 +133,8 @@ int main(){
      const auto before_ready=shortcut_spy.intents.size(),ready_log=shortcuts.transcript_size();
      check(shortcuts.handle_input(ch('r')));
      check(shortcut_spy.intents.size()==before_ready+1&&shortcut_spy.intents.back().kind==UiIntentKind::OpenEquipmentSelection);
-     check(shortcuts.transcript_size()==ready_log+1&&std::strcmp(shortcuts.transcript_at(shortcuts.transcript_size()-1)->text,"Ready")==0);
+     check(shortcuts.transcript_size()==ready_log+2&&std::strcmp(shortcuts.transcript_at(shortcuts.transcript_size()-2)->text,"Ready...")==0&&
+           std::strcmp(shortcuts.transcript_at(shortcuts.transcript_size()-1)->text,"")==0); // A4-UI4: DS 0xa1f0 "Ready...\n\n"
  };
  expect_exploration_shortcuts();
  GameEvent shortcut_event{};shortcut_event.kind=GameEventKind::CombatStarted;

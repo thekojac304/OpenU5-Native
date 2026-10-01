@@ -1,0 +1,7 @@
+A4-UI4/PRES1 image identity (read back from the image, 2026-10-01)
+file: native/targets/tdeck/build-a4-ui4/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-ui4-Debug-Launcher.bin (byte-identical to build-a4-ui4/openu5_tdeck.bin)
+size: 1029136 B (0xfb410); app partition 0x100000; free 0x4bf0 = 19440 B (2%)
+SHA-256: 0f7155863c5794066aa43059154b13d74796c9c01b442644beea9bc5a5764ed2
+app descriptor version: 4.0.0-alpha4-ui4-debug; embedded Git: e53741b23fbc-dirty (HEAD e53741b2 + the uncommitted A4-UI4/PRES1 tree); ESP-IDF v6.1
+boot label strings: 'Alpha 4' and 'OpenU5-TDeck' present; 'HARDWARE-TRUTH' absent; 'Alpha 2.0' remains only in a serial log line (main.cpp PSRAM check) and an error tag, never drawn
+size vs build-a4-end1-final (0xfaa80): .text +2392, .rodata +48, internal .bss +80, IRAM/.data unchanged; image +2440 (bin +2448)

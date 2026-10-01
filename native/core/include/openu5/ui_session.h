@@ -80,8 +80,19 @@ enum UiTextFlags : uint8_t {
     UiTextNone = 0,
     UiTextContinuesBefore = 1,
     UiTextContinuesAfter = 2,
-    UiTextRune = 4
+    UiTextRune = 4,
+    // Alpha 4 A4-UI4 (ALPHA4_UI.md section 8.20): the echo that starts a
+    // command (the row the original's getkey opened with its LF and bullet),
+    // as opposed to a later answer to it ("North" after "Talk-", "Up" after
+    // "Klimb-U/D-") or a blank row. Read only by the console layout.
+    UiTextCommand = 8
 };
+
+// A4-UI4 (section 8.20): where the console layout puts the wait cursor.
+// NewCommand: on a fresh bullet row below a blank one (the original's getkey
+// when a command is awaited); Inline: after the last row's text (getdir 0x35EC
+// waits on the command's own echo row). Only with the console layout on.
+enum class UiConsoleCursor : uint8_t { None, NewCommand, Inline };
 
 constexpr size_t kUiTranscriptBlockBytes = 160;
 constexpr size_t kUiPromptBytes = 96;
@@ -342,6 +353,21 @@ class UiSession {
         transcript_columns_ = columns;
         transcript_rows_ = rows;
     }
+    // Alpha 4 A4-UI4 (ALPHA4_UI.md section 8.20): the original console's
+    // layout, for the device. With it on, the wrapped lines put a blank row
+    // before every command echo (getkey's LF) and flag the echo's first row
+    // UiTextCommand (the presenter draws the bullet in a cell of its own, so
+    // that row wraps one column short), and, while a command is awaited, end
+    // with a blank row and an empty bullet row: the live prompt row the next
+    // echo lands on. Off (the default) the lines are exactly what they were.
+    // `ready` is the owner's word that nothing busy (a paced scene, a
+    // transit, an enemy's turn) is holding the keyboard; the prompt row and
+    // the cursor exist only then. A scrolled-away view keeps its lines when
+    // the prompt row comes and goes.
+    void set_console_layout(bool on);
+    bool console_layout() const { return console_layout_; }
+    void set_console_ready(bool ready);
+    UiConsoleCursor console_cursor() const;
 
     void set_base_mode(UiMode);
     void consume(const GameEvent &);
@@ -430,6 +456,7 @@ class UiSession {
     size_t selection_cursor_ = 0;
     size_t transcript_head_ = 0, transcript_count_ = 0;
     size_t scroll_lines_ = 0;
+    bool console_layout_ = false, console_ready_ = false; // A4-UI4 (section 8.20)
     uint32_t event_sequence_ = 0, block_sequence_ = 0;
     uint32_t blocked_events_generated_ = 0, blocked_events_presented_ = 0;
     uint32_t blocked_block_sequence_ = 0;
@@ -483,6 +510,9 @@ class UiSession {
     bool handle_shop(const UiAction &);
     void command(Command);
     void command_echo(const char *);
+    // A4-UI4: an answer echoed on its own row ("North" after "Talk-"): no
+    // command flag, so no bullet and no blank row before it.
+    void answer_echo(const char *);
     void direction_request(CommandKind, const char *);
     void push_block(UiTextChannel, const char *, size_t, uint8_t);
     // A scrolled-away view (scroll_lines_ > 0) must hold the same lines on

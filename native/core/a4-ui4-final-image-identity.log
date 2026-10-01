@@ -1,0 +1,5 @@
+A4-UI4/PRES1 final image identity (console package + reverse-video lists; read back from the image, 2026-10-01)
+file: native/targets/tdeck/build-a4-ui4-final/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-ui4-Debug-Launcher.bin (byte-identical to build-a4-ui4-final/openu5_tdeck.bin: True)
+size: 1032384 B (0xfc0c0); app partition 0x100000; free 0x3f40 = 16192 B
+SHA-256: 09f97efe46421dd20846f7ea72f8c1b04541eb919bb0b7b774273442de2f08d3
+app descriptor version: 4.0.0-alpha4-ui4-debug; ESP-IDF v6.1; embedded Git strings: e53741b23fbc-dirty

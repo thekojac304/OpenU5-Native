@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "presentation.h"
+#include "scene_timing.h"
 
 // Y-04 -- the WORLD FX channel: an ephemeral paint over a single world cell,
 // outside combat. Native mirror of game/src/skin/world-fx.ts, which is the
@@ -21,8 +22,14 @@
 //   (ULTIMA.EXE 0x3522): `bursts` times over the cell, blit of tile 0 (named
 //   `Explosion` in TileData) + noise_burst + viewport_redraw. The repeat count
 //   (7 in the shard ritual, 1 in the Blackthorn sacrifice) and the cell are
-//   DERIVED; the cadence between blits is Class C -- it is not a readable
-//   constant in the binary, it is whatever `viewport_redraw` costs per frame.
+//   DERIVED. Alpha 4 A4-UI4 (H-209 / D-67): so is each burst's hold --
+//   `noise_burst(0x7d0, 0xbb8, 0xa)` (0x355a -> 0x223c) blocks for 174 ms, the
+//   same burst A3-HF8 derived for the sacrifice -- and the burst SOUNDS (the
+//   owner plays the CombatHit program, the same three arguments, as each one
+//   lands: take_burst_starts()). Only the redraw between two bursts has no
+//   timer; the device shows it for one tick, the floor every render-bound beat
+//   gets (Batch 51). Until A4-UI4 the bursts were 60 ms on / 60 ms off, silent,
+//   so seven bursts showed as four.
 //   `under_tile` (#243) is the slot byte the cell KEEPS SHOWING for the whole
 //   choreography: the binary writes its state changes AFTER the seven
 //   explosions (CAST 0x1708 follows 0x16e1-0x16fa), while native's
@@ -56,8 +63,12 @@ constexpr int16_t kWorldFxExplosionTile = 0;
  */
 constexpr uint32_t kWorldFxPauseUnitMs = 55;
 
-/** Duration of one burst blit (declared Class C: `viewport_redraw`'s rhythm). */
-constexpr uint32_t kWorldFxExplosionBurstMs = 60;
+/** One burst's hold: 0x3522's noise_burst, 4,500 samples (A3-HF8). [B] */
+constexpr uint32_t kWorldFxExplosionBurstMs = tone_sweep_ms(kBlackthornBurstSamples);
+/** The viewport_redraw after it: no timer, one tick on the device. [C] */
+constexpr uint32_t kWorldFxExplosionRedrawMs = kSceneTickMs;
+/** One `explosion_fx_at_cell` call: the burst, then the redraw. */
+constexpr uint32_t kWorldFxExplosionSlotMs = kWorldFxExplosionBurstMs + kWorldFxExplosionRedrawMs;
 
 /**
  * CANNON FLIGHT CADENCE -- Class C TAKEN ON LOAN, NOT DERIVED (#313). These
@@ -165,13 +176,18 @@ class WorldFxLayer {
      */
     size_t paint(uint32_t now_ms, WorldFxOp *out, size_t capacity);
 
+    /** A4-UI4: the explosion bursts that began since the last call (each sounds once). */
+    uint32_t take_burst_starts() { const uint32_t n = burst_starts_; burst_starts_ = 0; return n; }
+
   private:
     struct Live {
         WorldFx fx{};
         uint32_t t0 = 0;
+        int16_t started = 0; // bursts already begun (and sounded)
     };
     Live live_[kWorldFxSlots]{};
     size_t count_ = 0;
+    uint32_t burst_starts_ = 0;
 };
 
 /**

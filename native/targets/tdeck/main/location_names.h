@@ -41,7 +41,9 @@ inline const char *hud_location_caption(uint8_t surface_location, int16_t surfac
                                         bool dungeon_active, uint8_t dungeon_id) {
     const char *name = dungeon_active ? location_display_name(dungeon_id)
                        : surface_location == 0
-                           ? (surface_floor < 0 ? "Underworld" : "Britannia")
+                           // A4-UI4: Native keeps the outdoor underworld as floor 255
+                           // (look.cpp, quest_world.cpp); -1 is the reference's.
+                           ? (surface_floor < 0 || surface_floor == 255 ? "Underworld" : "Britannia")
                            : location_display_name(surface_location);
     return name ? name : "Unknown place";
 }

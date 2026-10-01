@@ -150,6 +150,7 @@ esp_err_t Board::show_camp_viewport(const uint16_t *pixels,uint32_t) {
         screen[size_t(y+4)*320+size_t(x+4)]=pixels[size_t(y)*176+size_t(x)];
     return ESP_OK;
 }
+esp_err_t Board::animate_console_cursor() { return ESP_OK; } // A4-UI4 (section 8.20)
 esp_err_t Board::fill_bed_viewport() {
     ++fills;
     const auto r=bed_viewport_rect();

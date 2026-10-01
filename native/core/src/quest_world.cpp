@@ -147,6 +147,11 @@ CommandStatus rescue_events(CommandContext &c,bool absorption,EventSink sink) {
     const char *record=nullptr;
     if(c.game.wooden_box){auto *s=c.quest_world;if(!s || !s->end_record || !(record=s->end_record(s->context,9)))return CommandStatus::InvalidContext;}
     auto ending=rescue_lord_british(c.game,absorption);
+    // Alpha 4 A4-UI4 (D-73): the absorption prints nothing here -- ENDGAME.OVL
+    // prints ENDMSG.DAT in its own order (the endgame script); the connector and
+    // the console copies of ENDMSG and the scroll below were the reference's own
+    // narration. The reference (lordbritish.ts) changed in step; quest_parity.
+    if(absorption)return CommandStatus::Success;
     message("Bearing amulet, crown and sceptre, thou dost shatter the final seal of Doom.");
     message("Lord British rises, unbroken, and takes again the throne of Britannia.");
     if(ending==RescueEnding::Victory){
@@ -330,6 +335,9 @@ bool buried_stone_at(const GameState &g,const QuestWorldServices &s,int32_t x,in
 bool moongate_at(const GameState &g,const TurnState &t,const QuestWorldServices &s){
     if(active_gate_phase(g,t,s)<0)return false;
     return buried_stone_at(g,s,g.position.xy.x,g.position.xy.y);
+}
+bool moongate_stone_at(const GameState &g,const QuestWorldServices &s,int32_t x,int32_t y){
+    return !g.position.map.location && buried_stone_at(g,s,x,y);
 }
 bool moongate_visible_at(const GameState &g,const TurnState &t,const QuestWorldServices &s,int32_t x,int32_t y){
     return !g.position.map.location && s.moon_phases && active_gate_phase(g,t,s)>=0 && buried_stone_at(g,s,x,y);

@@ -340,7 +340,7 @@ void test_title() {
     h.down();
     const auto create = h.rt->frontend_view();
     dump("main-menu-create");
-    check(menu0 == "Select: arrows / Enter / J C T U A R" && footer(create) == "New journey: saved in empty Slot 2",
+    check(menu0 == "Select: arrows / Enter / J C T U A R S P" && footer(create) == "New journey: saved in empty Slot 2", // A4-UI4: S, P named
           "F1 \"Create New Character\" names the empty slot it will use: \"" + footer(create) + "\"");
     h.up();
     h.key('\r'); // Journey Onward

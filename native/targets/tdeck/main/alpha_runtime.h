@@ -555,6 +555,18 @@ class AlphaRuntime {
     // clock, reconstructing the same total duration.
     int64_t quake_start_us_ = 0;
     int quake_pulses_ = 0;
+    int quake_drawn_px_=0; // A4-UI4: the quake offset the last frame decided
+    // A4-UI4 (section 8.20): the console cursor the last drawn frame showed.
+    openu5::UiConsoleCursor console_cursor_shown_=openu5::UiConsoleCursor::None;
+    // A4-UI4 (D-48). [0x5887]: 0..16; settled (16 at night, 0 by day) when a
+    // game is loaded or begun, since the save does not carry it.
+    uint8_t moongate_stage_=0;
+    bool moongate_settle_=true;
+    uint32_t moongate_stage_tick_=0;
+    bool moongate_transit_=false;
+    int64_t moongate_transit_us_=0;
+    openu5::WorldPosition moongate_origin_{};
+    int moongate_transit_shown_=-1;
     bool quake_was_active_ = false;
     bool world_fx_was_active_ = false;
     bool poison_was_active_ = false;
@@ -632,6 +644,39 @@ class AlphaRuntime {
     int64_t quake_remaining_ms(int64_t now_us) const;
     /** screen_shake_fx: start (or extend) the viewport shake. A3-HF9. */
     void begin_quake();
+    // Alpha 4 A4-UI4 (D-48): the moongate transit (kernel 0x48a8) and the
+    // gates' rise and fall (0x475a's counter, presentation only, never saved).
+    void begin_moongate_transit();
+    uint32_t moongate_transit_elapsed_ms() const;
+  public:
+    /** A4-UI4 (D-48): a moongate transit is on screen (it reads no key until its clock has run). */
+    bool moongate_transit_active() const;
+    /**
+     * A4-UI4 (ALPHA4_UI.md section 8.20): the game would be in getkey now --
+     * no paced scene, transit, busy effect or enemy turn holds the keyboard.
+     * The console's prompt row and wait cursor exist only then.
+     */
+    bool console_ready();
+  private:
+    /**
+     * A4-UI4 (section 8.20): the settings every device UiSession gets once it
+     * is built -- the console layout. One binder for initialize() and the host
+     * fixture, so a host test runs the device's console, not a copy of it.
+     */
+    void configure_session();
+    /**
+     * A4-UI4 hardware follow-up (section 8.22): the device UiSession's
+     * construction -- one binder for initialize() and the host fixture, so a
+     * host test runs the device's session config, not a copy of it.
+     * page_rows caps UiSession::visible_lines(); at 12 it left the top rows of
+     * the Board's 15-21-row console black and paged by more rows than it
+     * showed. It is now the Board's largest row count, so the Board's own
+     * geometry (world_transcript_geometry) decides.
+     */
+    static constexpr openu5::UiSessionConfig session_config() {
+        return {11, uint16_t(kConsoleMaxRows), 63};
+    }
+    void construct_session(void *memory, openu5::UiTextBlock *blocks, size_t block_count);
     /** Release whatever of the deferred Refuge/TrollSneak/Camp scene is due. */
     bool service_narrative_scene();
     // A4-END1 (ALPHA4_UI.md section 7). game-won mounts ENDGAME.OVL; the scene

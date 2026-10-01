@@ -1,0 +1,52 @@
+# A4-UI4 RED-first: baseline e53741b2; production files swapped: native/core/include/openu5/narrative_scene.h, native/core/include/openu5/presentation.h, native/core/include/openu5/quest_world.h, native/core/include/openu5/world_fx.h, native/core/src/frontend.cpp, native/core/src/narrative_scene.cpp, native/core/src/presentation.cpp, native/core/src/quest_world.cpp, native/core/src/system_menu.cpp, native/core/src/ui_session.cpp, native/core/src/world_fx.cpp, native/targets/tdeck/main/alpha_runtime.cpp, native/targets/tdeck/main/alpha_runtime.h, native/targets/tdeck/main/device_ui_views.h, native/targets/tdeck/main/location_names.h, native/targets/tdeck/main/main.cpp, native/targets/tdeck/main/native_renderer.cpp, native/targets/tdeck/main/tdeck_board.cpp, native/targets/tdeck/main/tdeck_board.h
+## a4_ui4_presentation_runtime
+F  frontend
+RED F1 the main menu's footer names every hotkey it takes ("Select: arrows / Enter / J C T U A R")
+GREEN F1b S opens Settings and P opens PC Save Transfer: both letters the footer now names work
+RED F4 both Settings pages say "Left/right changes; Mic saves" (title "Left/right changes; Mic saves", menu "Left/right changes; Mic returns")
+RED F4b the System Menu calls the developer row "Developer", as the title menu does ("Developer / Debug")
+RED F2 the release label (new API: firmware_release_label / Board::set_release_label)
+RED F2b the boot splash draws the label it is given (new API)
+RED F3 Small text: "domo" drawn with every stroke kept (5x7 -> 4x6, the middle column/row merged); 27 pixels off
+GREEN F3b control: Medium is the 5x7 face 1:1, unchanged (0 pixels off)
+H  the gameplay screen
+RED H1 Look- waits for a direction and the status line says "Direction?" (was the aim readout; it reads "Aim: empty (-1,-1)")
+RED H1b Attack- in the world: the same
+RED H2 the caption of the outdoor underworld (floor 255, as Native keeps it) is "Underworld"
+RED H2b a save made in the underworld lists its place as Underworld ("        Britannia"; teleport 0, floor 255)
+RED H3 the zodiac view fills the whole 176x176 square: the strip rows are its own pixels (1741 off, 552 band)
+RED H4 '^' is drawn as a caret, not the '?' of an unknown byte (10 pixels off)
+E  console feedback
+RED E1 (L)ook then north: one row "Look-North" (getdir 0x35EC, DS 0xa2a6)
+RED E1b (O)pen then west: "Open-West"
+RED E1c Klimb's direction question adds no "klimb" row (the key's "Klimb-", DS 0xa1a0, is the row)
+RED E5 the dispatcher's echoes as DATA.OVL has them: Cast... / Ready... and a blank row / Use item and a blank row / Z-stats...
+RED E2 a lost battle prints "BATTLE IS LOST!" once (was 3)
+RED E3b the arena's (G)et echoes "Get-" and the direction on one row: "Get-North"
+RED E3 a won battle prints "VICTORY!" once, at the latch, not again as the party walks out (was 2)
+RED E4 (M)ix echoes "Mix Reagents" (DS 0xa1b4)
+RED E4b "Done!" follows "Mixing..." after the 10-tick wait (5 ms)
+S  scene beats
+RED S1 seven bursts reach the cell, one every 174 + 55 ms (4 seen)
+RED S1b each burst sounds its noise burst (the CombatHit program, 0x3522's 0x223c) as it lands (0 heard)
+RED S2 a quake over a still view: every pulse reaches the panel (2 panel changes; 8 pulses = 16)
+RED S3 after the darkness line the stage is empty: no Avatar (0x098f-0x09ca clear every object)
+GREEN S3b "But thy slumber is disturbed!" places the Avatar at the centre (0x09f5-0x0a0a)
+RED S3c the last stage is the Avatar alone on black (0x0bc4-0x0be7): no ghosts, no apparition
+A4-UI4 presentation runtime: 3/29 checks
+## a4_ui4_moongate_runtime
+A  the gates rise at night and sink by day (0x475a)
+GREEN A0 precondition: stone 1's cell is grass (tile 5) by day and the gate by night
+RED A1 by day the gate sinks 16 -> 0, one stage a tick, and the cell is grass again (2 stages, grass after 10 ms)
+RED A2 at dusk the gate rises 1 -> 16, one stage a tick, lighting its own cell (1 stages, full after 55 ms)
+RED A3 every stage reaches the panel (the GRAM holds the composed cell each time it changes)
+T  the transit (0x48a8)
+GREEN T1 control: the step fires the gate once and the party is moved
+RED T2 the party stays on the origin's gate through run_n_frames(1) and the sweep, then the gate stands over it (-1 ms; 55 + 1162)
+RED T3 two ticks later the gate closes over the cell 15 -> 1, grass beneath (0 stages from -1 ms)
+RED T4 one stage every delay(2) = 110 ms: 1,648 ms of closing, then the destination (0 ms, end -1 ms)
+RED T5 a step during the transit does nothing (0x48a8 reads no key)
+GREEN T6 after the transit the destination is drawn with the party at its centre
+N  midnight
+RED N1 at 00:05 the gate closes over the party all the same, and the party stays on it (0x494d-0x495b)
+A4-UI4 moongate runtime: 3/11 checks
