@@ -1,0 +1,32 @@
+A4-ENH1 preservation goldens, recorded on the UNMODIFIED production tree
+HEAD: aae348ac32d3d31c3026499d58fbfa0d467afaf4
+warning: in the working copy of 'native/core/CMakeLists.txt', LF will be replaced by CRLF the next time Git touches it
+tracked changes at recording: native/core/CMakeLists.txt  (test registration only)
+untracked new: ?? tests/a4_enh1_preservation_test.cpp ?? ../targets/tdeck/host_tests/a4_enh1_preservation_runtime_test.cpp 
+production sources: identical to HEAD (git diff HEAD -- native/core/src native/core/include native/targets/tdeck/main is empty: [0 lines])
+build dir: build-a4-enh1-baseline (configured on HEAD; full suite 181/181 in a4-enh1-baseline-ctest.log)
+
+--- a4_enh1_preservation (first run had 0 placeholders; recorded values below) ---
+golden housekeeping=0xb2556b13961ce5d6 poison_hp=2400 meals=45
+golden spawn=0xea46657ab3b6be1c spawns=200
+golden combat=0x28bf13fcc51cab0d party_hp_lost=126 xp=22 kills=2
+golden save=0xbf9b4e479f50410f round_trip=1
+GREEN A1 the scenario exercises poison ticks and meals
+GREEN A3 the fight exercises enemy damage, kills and XP
+GREEN A4 the default save loads back and saves again
+GREEN A1 Original: housekeeping (poison, food, starvation, ring) == pre-A4-ENH1
+GREEN A2 Original: spawn gate == pre-A4-ENH1
+GREEN A3 Original: combat damage, kills and XP == pre-A4-ENH1
+GREEN A4 Original: the saved document == pre-A4-ENH1 (no new key)
+PASS a4_enh1_preservation failures=0
+exit=0
+
+--- a4_enh1_preservation_runtime ---
+golden walk=0x95f112a8ec6bde80 fights=3 combat_steps=207 poisoned_hp=378 turns=26
+golden save_load=0x896002146cbe321e food=60
+GREEN P1 the night walk meets at least one encounter (the live spawn path ran)
+GREEN P2 the poisoned ally lost HP on the walk (the poison tick ran)
+GREEN P3 Original: the night walk == pre-A4-ENH1 bit for bit
+GREEN P4 Original: Alt+S / Alt+L / the next step == pre-A4-ENH1
+A4-ENH1 preservation runtime: 4 checks, 0 failures
+exit=0
