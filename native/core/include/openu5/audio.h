@@ -226,6 +226,8 @@ class AudioBackend {
     virtual void stop_music() = 0;
     /** Live gain of one channel (0 = silent). Never touches the other channel. */
     virtual void set_gain(AudioChannel, uint16_t gain_q15) = 0;
+    /** A4-END1: a song's length in ms when the backend parsed it, else 0. Reads only. */
+    virtual uint32_t music_length_ms(MusicSong) const { return 0; }
 };
 
 /** The silent backend: takes everything, renders nothing. */
@@ -286,6 +288,8 @@ class AudioService {
     void flush_for_load();
 
     MusicContext current_music_context() const { return context_; }
+    /** A4-END1: the backend's length of `song` (0 = unknown or no backend). */
+    uint32_t music_length_ms(MusicSong song) const { return backend_ ? backend_->music_length_ms(song) : 0; }
     /** The song the backend was told to play; None while silent. */
     MusicSong current_song() const { return song_; }
     const Stats &stats() const { return stats_; }

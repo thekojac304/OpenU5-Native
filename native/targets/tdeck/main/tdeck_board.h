@@ -7,6 +7,7 @@
 
 #include "esp_err.h"
 #include "openu5/state.h"
+#include "openu5/endgame_scene.h"
 #include "openu5/frontend.h"
 #include "openu5/hud.h"
 #include "openu5/perf_report.h"
@@ -110,6 +111,28 @@ public:
                             const uint16_t *creation_art = nullptr,
                             uint8_t ui_size = 1);
     esp_err_t set_brightness(uint8_t percent);
+    // Alpha 4 A4-END1 (ALPHA4_UI.md section 7). ENDGAME.OVL's full-screen
+    // frames. Its screen is 320 x 200; the T-Deck shows it at y 20, with the
+    // 20 rows above and below black.
+    //  - show_endgame_page: one of the pack's 4bpp screens (a story page or
+    //    the scroll) through `palette`, with endgame_datestamp's 40 x 25 cells
+    //    (`cells`, may be null) over it, opaque, as put_char 0x16ba draws them
+    //    (IBM.CH or RUNES.CH; reverse video = black ink on white). Redrawn
+    //    only when `key` changes, or when `force`d.
+    //  - the fizzle dissolves what is on the panel, which the Board does not
+    //    keep: begin_endgame_capture() mirrors every pixel it sends into a
+    //    PSRAM copy of the screen (and makes the next show_alpha a full
+    //    repaint); fizzle_endgame() blacks out the next `pixels` of fn34's order
+    //    over the 320 x 200 picture -- and, in step, the device's two bands as
+    //    their own 320 x 40 rect -- and sends the screen.
+    esp_err_t show_endgame_page(const uint8_t *page4bpp, const uint16_t *palette,
+                                const openu5::EndgameScrollCell *cells, const uint8_t *normal_font,
+                                const uint8_t *rune_font, int key, bool force);
+    bool begin_endgame_capture();
+    void end_endgame_capture() { endgame_capturing_ = false; }
+    esp_err_t fizzle_endgame(openu5::EndgameFizzle &picture, openu5::EndgameFizzle &bands, uint32_t pixels);
+    void release_endgame_capture();
+    const uint16_t *endgame_capture_for_test() const { return endgame_shadow_; }
     // Alpha 4 UI Batch 1 (ALPHA4_UI.md): IBM.CH, the game's 8x8 font, for the
     // fixed chrome only -- band captions, the roster, the food/gold/date box.
     // The runtime hands it over before every draw; the transcript never uses it.
@@ -162,6 +185,8 @@ private:
     RowMark row_mark() const;
     /** One pixel row (or fill chunk) that started building at `start`. */
     esp_err_t tft_row(spi_transaction_t &transaction, RowMark start);
+    /** A4-END1: copy a pixel transaction into the capture at the window's cursor. */
+    void mirror_pixels(const uint8_t *bytes, size_t count);
     /** A command / window-setup transaction (no row to build). */
     esp_err_t tft_command(spi_transaction_t &transaction);
     esp_err_t tft_transmit(spi_transaction_t &transaction, const RowMark *start);
@@ -245,6 +270,12 @@ private:
     BoardDrawCalls draw_calls_{};
     // Sole app task; synchronous spi_device_transmit completes before reuse.
     alignas(4) std::array<uint8_t, 320 * 2> transfer_row_{};
+    // A4-END1: the fizzle's copy of the panel (PSRAM, only while it runs), the
+    // window the next pixels land in, and the ending page last drawn.
+    uint16_t *endgame_shadow_ = nullptr;
+    bool endgame_capturing_ = false;
+    int16_t window_x_ = 0, window_y_ = 0, window_w_ = 0, window_h_ = 0, cursor_x_ = 0, cursor_y_ = 0;
+    int endgame_page_key_ = -1;
     bool shared_spi_initialized_ = false;
     bool display_initialized_ = false;
     bool backlight_pwm_initialized_ = false;
@@ -312,6 +343,7 @@ private:
         bool creation_art = false;
         bool shell = false; // Alpha 4 UI Batch 1: the band shell was drawn
         uint8_t ui_size = 0xff;
+        uint8_t selected_span = 1; // A4-UI3: a slot page selects two rows
     } frontend_cache_{};
     bool frontend_cache_valid_ = false;
 };

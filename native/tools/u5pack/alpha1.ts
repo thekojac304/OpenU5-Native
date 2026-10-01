@@ -6,6 +6,7 @@ import { PNG } from "pngjs";
 import { alphaEnemyName } from "./alpha1-enemy.js";
 import { ALPHA_SIGN_RECORD_BYTES, buildAlphaSignData } from "./alpha1-signs.js";
 import { buildDungeonArt } from "./alpha1-dungeon-art.js";
+import { buildEndgamePages } from "./alpha1-endgame.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const OUT = resolve(ROOT, "native/assets/openu5-alpha1-resources.bin");
@@ -470,6 +471,11 @@ const demoScene = (() => {
   return out;
 })();
 const dungeonArt = buildDungeonArt(resolve(ROOT, "original/u5/ultima5"));
+// Alpha 4 A4-END1 -- the ending's static screens (the six story pages and the
+// scroll's background) composed from the user's own END1/END2/TEXT/ENDSC.16,
+// PROPORT.PCS and END.DAT exactly as ENDGAME.OVL story_screens composes them,
+// plus the throne room MISCMAPS.DAT[0x210] (alpha1-endgame.ts).
+const endgame = buildEndgamePages(resolve(ROOT, "original/u5/ultima5"));
 const entries: Entry[] = [
   file("init.gam", "game/assets/init.gam"),
   file("init.ool", "game/assets/init.ool"),
@@ -496,6 +502,8 @@ const entries: Entry[] = [
   { name: "karma-records.bin", data: karmaRecords(), records: 6 },
   { name: "words-of-power.bin", data: wordsOfPower(), records: 8 },
   { name: "blackthorn-scene.bin", data: blackthornScene(), records: 11 * 11, stride: 2 },
+  { name: "endgame-room.bin", data: endgame.room, records: 11 * 11, stride: 1 },
+  { name: "endgame-pages.bin", data: endgame.pages, records: 7, stride: 320 * 200 / 2 },
   { name: "signs.bin", data: packedSigns, records: packedSigns.readUInt32LE(0), stride: ALPHA_SIGN_RECORD_BYTES },
   // Batch 9C / R-05 -- the AUTHORED dungeon art (alpha1-dungeon-art.ts). Five
   // ordinary TOC entries, not a second asset system. The three wall variants stay

@@ -8502,7 +8502,7 @@ A UI/presentation batch. The full write-up is [`ALPHA4_UI.md`](ALPHA4_UI.md) §2
 | 4 | Save menus listed physical slots ("Generation 1/2", which one newer flipped per save), leader only, no overwrite hint; a refused Generation row did nothing silently | **native presentation** | Latest / Backup by age, place, date, party, per-row help, notices (C) |
 | 5 | The shell body clear (y=20) cut the last glyph rows of a subtitle (y=15..22) | **native defect, latent since UI1** (no shell page used a subtitle) | fixed (C) |
 | 6 | The save target is chosen by commit sequence regardless of validity: after a refused newest generation the next save overwrites the only valid one | **native defect, latent (storage)** | not changed; queued (ALPHA4_UI.md §2.3, the prerequisite of §2.4) |
-| 7 | Multiple manual save slots | **feature, deferred**: invasive for a UI batch | design in ALPHA4_UI.md §2.4 |
+| 7 | Multiple manual save slots | **feature, deferred**: invasive for a UI batch | design in ALPHA4_UI.md §2.4. *Implemented later by A4-SAVE2 (ALPHA4_UI.md §4): three slots, each an A4-SAVE1 pair; hardware pending.* |
 | 8 | The end of the Blackthorn capture scene also ends in `render()` | **not examined** (silence is the pacer's own rule; nothing reported) | none |
 
 ### 2. Evidence
@@ -8515,3 +8515,95 @@ A UI/presentation batch. The full write-up is [`ALPHA4_UI.md`](ALPHA4_UI.md) §2
 ### 3. Rows
 
 - Hardware checks: ALPHA4_UI.md §2.7 (steps 1–5), PENDING.
+
+## Alpha 4 A4-SAVE3 — original PC/DOS save import and export
+
+A save-compatibility batch. The full write-up is [`ALPHA4_UI.md`](ALPHA4_UI.md) §5; this section records the classification on its own axis. No gameplay rule, Native save format, resource pack or audio pack changed; Native's `.gam` codec (`persistence.cpp`, pinned by `persistence_parity`) is unchanged. The bridge lives in `native/core/src/pc_save.cpp`.
+
+### 1. Items and classification
+
+| # | Item | Class | Change |
+|---|---|---|---|
+| 1 | No way to bring an original PC/DOS save into a Native slot, or a slot back to DOS | **feature** | the bridge (B1–B10) and the title's PC Save Transfer page (ALPHA4_UI.md §5.6–§5.7) |
+| 2 | Every Native save rebuilds its `.gam` from INIT.GAM: the window's unmodelled bytes are INIT's (750 of 4192 for the DOS fixture, almost all the town NPC tables `0x6BC-0x1017`) | **native design** (the template), latent for PC interop | not changed; documented as L1/L5 |
+| 3 | State Native keeps only in its sidecar though the 1988 window has a cell for it: the search found-once bitmap `0x2B6`, wind `0x2EC`, drift `0x2DD`, light-spell minutes `0x300`, sail direction `0x3AF`, skull-tree day `0x20C`, reagent days `0x2B2`, time spell `0x2D4`/`0x2E8` | **reference layer split** (the TS reference keeps the same keys in its sidecar, `state.ts` SAVE_OPTIONAL_DEFAULTS) | carried across the PC boundary only (B1–B8) |
+| 4 | A sidecar-less outdoor save with a vehicle is refused by `validate_world_objects` (the codec emits a reference-shaped `{"kind":"ship"}` entry) | **native defect, latent** (reachable only with a PC save) | handled at the bridge (B10) |
+| 5 | Native's own vehicles never reach its `.gam` object table (`object_table()` matches `kind`; the pool is captured with a `ship` flag) | **native defect, latent** (Native loads vehicles from its sidecar) | handled at the bridge (B10); codec unchanged |
+| 6 | A sidecar-less import takes `empty_sidecar()`'s transport "foot" whatever the vehicle tile | **reference default** | derived from the tile at the bridge (B9) |
+| 7 | The place caption reads "Britannia" in the underworld: `hud_location_caption()` tests `floor < 0`, Native keeps the outdoor underworld as floor 255 | **native presentation defect, suspected** (not seen on hardware) | not changed; queued |
+| 8 | `wornCrown` and `drunkTurns` are captured but persisted nowhere | **native, latent** | not changed; noted (ALPHA4_UI.md §5.10) |
+| 9 | Native journeys lack the new-game underworld skiff INIT.OOL parks at (14,242) | **native divergence** (Native never reads `.ool`) | not changed; an imported DOS journey keeps it |
+| 10 | Town NPC tables and dungeon saves across the PC boundary | **not bridged**: no codec proven against the binary / no DOS dungeon save to prove one | refused (dungeons) or re-derived at a fresh map entry and named (towns), L1–L2 |
+
+### 2. Evidence
+
+- **Investigation** (before any production change): `native/core/a4-save3-investigation.log`, from `native/core/tools/a4_save3_probe_{codec,vehicles}.cpp` — the codec exact over itself (0 / 4192), 750 bytes lost to the INIT.GAM template, the vehicle gaps of items 4–5.
+- **Tests:** `a4_save3_pc_bridge_runtime` (real `alpha_save.cpp`, real runtime, the genuine DOS save) and `a4_save3_pc_reference` (the TypeScript reference as the independent reader). ALPHA4_UI.md §5.11–§5.12.
+- **Mutations:** `native/core/tools/a4_save3_mutation_check.py`, ALPHA4_UI.md §5.13 (`a4-save3-mutation*.log`).
+- **Suite / firmware:** ALPHA4_UI.md §5.12, §5.14.
+
+### 3. Rows
+
+- Hardware and real-DOS round trip: ALPHA4_UI.md §5.15, PENDING.
+
+## Alpha 4 A4-UI3 — save / load UX
+
+A presentation batch over the A4-SAVE1/SAVE2/SAVE3 save system. The full write-up is [`ALPHA4_UI.md`](ALPHA4_UI.md) §6; this section records the classification on its own axis. No gameplay rule, save format, slot layout, generation rule, Continue order, resource pack or audio pack changed; the PC bridge (`pc_save.cpp`) is untouched.
+
+### 1. Items and classification
+
+| # | Item | Class | Change |
+|---|---|---|---|
+| 1 | Slot rows were one 36-cell line (`Slot 1: Avery, Iolo's Hut`), cutting long places; `empty`/`damaged` in the name's position | **native presentation** | two rows a slot, shared formatter, `EMPTY` / `DAMAGED` (§6.3) |
+| 2 | No marker for the running journey's slot or (on the title) Continue's slot | **native presentation** | `CURRENT` = `last_slot()`, `LATEST` = `continue_slot()` (§6.4) |
+| 3 | A recovered slot looked healthy in the list | **native presentation** | `RECOVERED` tag; the row shows the save that loads |
+| 4 | A recovered load (in a slot, or Continue passing over its newest) said nothing | **native presentation** | `Recovered previous save (Slot N)` from the commits the load read |
+| 5 | After an in-game save the System Menu stayed open | **native UX** (the brief: return to the game) | a successful save closes the menu; a failure stays with a truthful notice |
+| 6 | A Load that failed in game reported only in the covered transcript and left the page stale | **native presentation defect** | the page re-lists the card and says nothing changed |
+| 7 | The place caption reads "Britannia" in the underworld | **native presentation defect, suspected** (= A4-SAVE3 item 7; the HUD shares the caption) | not changed; still queued |
+| 8 | A torn file under an unchanged commit record is listed healthy until a load | **native design** (the save list trusts a verified commit, SAVE2/A3-04G) | not changed; the load now announces its fallback |
+
+### 2. Evidence
+
+- **Tests:** `a4_ui3_slot_rows` (core, 40) and `a4_ui3_save_ux_runtime` (real runtime, real Board over the fake panel, real `alpha_save.cpp` over the fake card, 31). ALPHA4_UI.md §6.10, §6.12.
+- **RED:** new API — validated by mutation; five existing tests went RED on the production change and were updated (§6.9).
+- **Mutations:** `native/core/tools/a4_ui3_mutation_check.py`, 25 / 25 killed (`native/core/a4-ui3-mutation.log`); SAVE2's S12–S16, S23, S25 re-run against the UI3 tree, all killed.
+- **Suite / firmware:** 172 / 172; ALPHA4_UI.md §6.12–§6.13.
+
+### 3. Rows
+
+- Hardware checks: ALPHA4_UI.md §6.14 A, PENDING. A4-SAVE3's real DOS round trip (§6.14 B / §5.15): PENDING.
+
+## Alpha 4 A4-END1 — the full ending
+
+The original ending restored on the device: ENDGAME.OVL's throne room, revivals, box questions, speech, orb and moongate, the dissolve, the six story pages, the scroll, the stranded room and the frozen last screen. The full write-up is [`ALPHA4_UI.md`](ALPHA4_UI.md) §7; the reconstruction with every address is `re/notes/a4-end1-ending-reconstruction.md`. This section records the classification on its own axis. No save format, slot rule, generation rule or gameplay rule outside the ending changed; the SD resource pack gained two entries (the firmware's identity lock now requires the new pack); the audio pack is unchanged.
+
+### 1. Items and classification
+
+| # | Item | Class | Change |
+|---|---|---|---|
+| 1 | Y-07 / **D-54**: the device ending was transcript text only — no green scene, orb, gate, dissolve, story pages, scroll or freeze | **missing presentation** (Alpha 3 deferral) | `openu5::EndgameScene` (the overlay as a pure sequencer) + the device presenter + the pack's pre-composed pages: **software complete** |
+| 2 | H-193 / **D-56**: the box questions were answered from the inventory | **native and reference divergence** | real Y/N getkeys on the device (only Y/N, case-folded; N asks again; victory = Y **and** the box): **software complete** on the device; the reference keeps its auto-answer (quest_parity pins it) |
+| 3 | H-194 / **D-57**: two literal `victory` lines (the events' internal token) in the transcript | **fabricated device text** | the token is no longer printed: **software complete** |
+| 4 | A-15: the terminal Ending showed "the whole ending as one transcript" | **deliberate adaptation, revised** | the last screen is now the scroll (victory) or the wandering room (stranded); the A-15 line comes only with the stranded wander; Load / Return to Title still leave |
+| 5 | A Developer un-win (Preset: Endgame) left the new scene running and eating input | **native defect found in the batch** (Batch 53A TI3) | `synchronize_ending` stops the scene when game-won clears |
+| 6 | A dissolve with no frame to capture (a failed frame, a fixture without pixels) waited for ever | **native defect found in the batch** | skipped and logged, like a capture without memory |
+| 7 | After a long wait at a getkey the next walk collapsed (the next wait timed from the getkey's start) | **native defect found in the batch** (runtime W4) | waits after an untimed wait start at the key |
+| 8 | Closing the System Menu let the scene catch up 250 ms | **native defect found in the batch** (runtime W5) | the clock stands under the System Menu / Developer screen and resumes exactly |
+| 9 | **H-214 / D-72** *(new)*: the native arena prints `VICTORY!` before the ending's text; the original goes from `absorb` straight to the overlay | **native divergence** (pinned by Batch 53A R3) | queued — a combat change, not the ending's |
+| 10 | **H-215 / D-73** *(new)*: the TypeScript reference's rescue narration (`rescue_events`) is not ENDMSG's text or order | **reference divergence** (pinned by quest_parity) | queued — fix the reference at the pinned layer; the device no longer uses it |
+
+### 2. Evidence
+
+- **Tests:** `a4_end1_endgame_scene` (core, 50, over the user's ENDMSG.DAT / MISCMAPS.DAT), `a4_end1_ending_runtime` (the real runtime and Board over the fake panel, from the 7E-A route, 56), `a4_end1_endgame_pages` (the TypeScript composer and the shipped pack, 11). ALPHA4_UI.md §7.11.
+- **RED:** new API — mutant E0 (the presenter off = the pre-END1 device) turns the runtime test and the updated Batch 53 / 53A checks RED; five existing tests went RED on the production change and were updated (§7.10).
+- **Mutations:** `native/core/tools/a4_end1_mutation_check.py`, 55 / 55 killed on the final test set (first pass 50 / 55; the five survivors each got a guard and were re-run killed) (`native/core/a4-end1-mutation.log`).
+- **No runtime oracle:** no DOSBox was available; the parity claims are static (the bytes). The manual DOS comparison checklist is ALPHA4_UI.md §7.16.
+- **Suite / firmware:** 175 / 175 (151.10 s, serial); final image `OpenU5-TDeck-Alpha4.0.0-alpha4-end1-Debug-Launcher.bin`, `0xfaa80` (1,026,688 B, +12,144 B; 21,888 B free), `FW 4.0.0-alpha4-end1-debug`, `Git 09cc460052ee-dirty`, SHA-256 `4a167f960cf17f762e0209c35513976955e8693e6308f19628ca921707cfa1e1`; ALPHA4_UI.md §7.13–§7.14.
+
+### 3. Rows
+
+- D-54, D-56, D-57: software PASS; **hardware PASS** (2026-10-01, ALPHA4_UI.md §7.19), except one case.
+- **The dead-companion revival was not physically exercised** on the T-Deck (no dead companion at hand): untested on hardware, not failed. Its evidence stays automated (core E7–E9; runtime W2, V4, M2, E1; mutants W2, M5, V4 killed).
+- A-15 revised; A-16 added (the ending's device adaptations). D-72 / H-214 and D-73 / H-215 remain queued, out of scope.
+- Optional DOS comparison (§7.16): not run. Closed with tag `alpha4-end1-hardware-validated`.

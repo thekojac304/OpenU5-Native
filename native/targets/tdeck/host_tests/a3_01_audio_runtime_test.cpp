@@ -36,6 +36,7 @@ using namespace openu5;
 using tdeck::RawInputKind;
 
 namespace tdeck {
+void host_memory_save_forget_for_test();   // alpha_save_memory_host_stub.cpp
 std::string &a3_host_settings_text();
 bool &a3_host_settings_enabled();
 } // namespace tdeck
@@ -536,7 +537,11 @@ int main(int argc, char **argv) {
         Run with(13, false), without(13, false);
         with.rt->configure_audio(g_real, &rec);
         for (Run *r : {&with, &without}) {
-            r->key('m', true); r->down(); r->key('\r'); r->key('m', true); // menu Save
+            // menu Save (A4-SAVE2: Save Game -> the empty Slot 1 saves at once;
+            // A4-UI3: and the save returns to the game, naming the slot). Each
+            // run starts from a blank card, so both save into Slot 1.
+            tdeck::host_memory_save_forget_for_test();
+            r->key('m', true); r->down(); r->key('\r'); r->key('\r');
             r->up(); r->left();                                               // walk away
             r->key('l', true);                                                // Alt+L: load
         }

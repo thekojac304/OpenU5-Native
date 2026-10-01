@@ -281,6 +281,8 @@ bool sfx_supported(SfxId id) {
     case SfxId::AmbientFountain: case SfxId::AmbientWaterfall: case SfxId::AmbientClockTick:
     case SfxId::AmbientClockTock: case SfxId::AmbientClockChime:
     case SfxId::IntroThunder: case SfxId::IntroChime: case SfxId::IntroSummon:
+    // A4-END1
+    case SfxId::EndgameOrb:
         return true;
     default:
         return false;
@@ -470,6 +472,12 @@ bool compile_sfx(SfxId id, int32_t param, SpeakerProgram &program) {
     case SfxId::RefugeSlumber: // 0x0a0d-0x0a49 after "But thy slumber is disturbed!"
         for (int i = 0; i < 6; ++i)
             b.add(speaker_sweep(kSlumberInc[i], 1, kSlumberCount[i], kSlumberStart[i], int16_t(kSlumberStep[i])));
+        break;
+    // -- the ending (ENDGAME.OVL, A4-END1): param 1 the revive's " lives!"
+    // sweep (0x078f), otherwise the orb's (0x0987).
+    case SfxId::EndgameOrb:
+        if (param == 1) b.add(speaker_sweep(0x2260, 1, 0x9c40, 0x1388, 1));
+        else b.add(speaker_sweep(0x1450, 1, 0xc350, 0x2710, 1));
         break;
     case SfxId::RefugeRevival: { // 0x0b5d-0x0bb0: per member, inc = 0x8e30 / (i + 7) (ldiv kernel 0x03a0)
         const int32_t members = param < 1 ? 1 : clamp_index(param, 6); // [0x585b] >= 1 at the Refuge

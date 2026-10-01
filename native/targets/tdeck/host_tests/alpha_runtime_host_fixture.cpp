@@ -183,6 +183,11 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     dialogue_pacer_steps_ = new openu5::DialoguePacerStep[kDialoguePacerSteps]();
     dialogue_pacer_text_ = new char[kDialoguePacerTextBytes]();
     bind_scene_pacers(fixture.paced_scenes);
+    // A4-END1: the ending's sequencer and the pack's room and screens, BEFORE
+    // bind_quest_services() decides from them whether the device plays it.
+    endgame_ = new openu5::EndgameScene();
+    resources_.endgame_room = fixture.pack ? fixture.pack->endgame_room : nullptr;
+    resources_.endgame_pages = fixture.pack ? fixture.pack->endgame_pages : nullptr;
 
     look_services_.context = this;
     look_services_.describe = [](void *p, int32_t tile) {

@@ -1,0 +1,6 @@
+107: a3_04g_storage_runtime: 44/44 checks GREEN, 0 RED
+1/2 Test #107: a3_04g_storage_runtime ...........   Passed    0.20 sec
+108: a4_save1_recovery_runtime: 45/45 checks GREEN, 0 RED
+2/2 Test #108: a4_save1_recovery_runtime ........   Passed    0.65 sec
+The following tests passed:
+100% tests passed out of 2

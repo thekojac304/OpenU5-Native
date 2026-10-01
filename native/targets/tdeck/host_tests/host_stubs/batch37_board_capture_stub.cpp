@@ -159,4 +159,15 @@ esp_err_t Board::fill_bed_viewport() {
     return ESP_OK;
 }
 esp_err_t Board::set_brightness(uint8_t) { return ESP_OK; }
+// A4-END1: the ending's full-screen frames; the capture stub records nothing of them.
+esp_err_t Board::show_endgame_page(const uint8_t *, const uint16_t *, const openu5::EndgameScrollCell *,
+                                   const uint8_t *, const uint8_t *, int, bool) { return ESP_OK; }
+bool Board::begin_endgame_capture() { return true; }
+esp_err_t Board::fizzle_endgame(openu5::EndgameFizzle &picture, openu5::EndgameFizzle &bands, uint32_t pixels) {
+    uint16_t x = 0, y = 0;
+    for (uint32_t i = 0; i < pixels && picture.next(x, y); ++i) {}
+    while (bands.produced() < uint64_t(picture.produced()) * bands.total() / picture.total() && bands.next(x, y)) {}
+    return ESP_OK;
+}
+void Board::release_endgame_capture() {}
 }

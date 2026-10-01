@@ -1,0 +1,1266 @@
+
+[R] the slot rows
+  GREEN R1    three occupied slots: "Slot N  <leader>" over the place, indented under the name
+  GREEN R2    an empty slot: EMPTY and no metadata at all ("Slot 3  EMPTY|")
+  GREEN R2b   an empty slot shows no leftover name or place
+  GREEN R3    an 8-letter name with both tags and the longest place each fit 36 cells: "Slot 1  Shamino1  CURRENT, RECOVERED|        Lord British's Castle"
+  GREEN R4    an over-long name keeps 8 letters; a place holds 23 characters, so its row is at most 31 cells: "Slot 1  Shamino1  CURRENT|        Palace of Blackthorn an"
+  GREEN R5    the tag marks the marked slot only, and no slot when none is marked
+  GREEN R6    a recovered slot is tagged RECOVERED and still shows what loads: "Slot 2  Avery     RECOVERED|        Britannia"
+  GREEN R7    a slot with nothing loadable is DAMAGED (neither EMPTY nor a journey), with no metadata
+  GREEN R8    the confirm pages' identity: leader and place of what a load restores
+
+[S] System Menu -> Save Game
+  GREEN S1    Save Game: Slots 1-3, the live journey's slot CURRENT and selected: Slot 1  Kojac|        Lord British's Castle ; Slot 2  Avery     CURRENT|        Britannia ; Slot 3  EMPTY|
+  GREEN S1b   CURRENT stays on the journey's slot when the cursor moves (it is not the selection)
+  GREEN S2    an empty slot saves at once (no question)
+  GREEN S3    an occupied slot asks, naming THAT slot and its own save ("Overwrite Slot 1?" / "Kojac, Lord British's Castle"), No selected
+  GREEN S4    Enter on the default answer keeps the slot, back on the Save page on that slot
+  GREEN S5    Back with Yes highlighted cancels: Back never confirms
+  GREEN S6    the Mic (Cancel) with Yes highlighted cancels too
+  GREEN S7    Yes saves into the slot the question named (Slot 1)
+  GREEN S8    with no live journey's slot nothing is CURRENT and the page starts on the first empty slot
+  GREEN S9    replacing a damaged slot asks too (No first), naming it a damaged save
+
+[L] System Menu -> Load Game
+  GREEN L1    Load Game: the Save page's rows and tags, on the journey's slot: Slot 1  Kojac     RECOVERED|        Lord British's Castle ; Slot 2  Avery     CURRENT|        Britannia ; Slot 3  EMPTY|
+  GREEN L2    an empty slot refuses, politely, and the page stays
+  GREEN L3    Down from Slot 3 wraps to Slot 1
+  GREEN L4    the recovered slot's footer says what Enter does
+  GREEN L5    a recovered slot loads -- that slot (its fallback is the service's)
+  GREEN L6    a damaged slot is listed DAMAGED and refuses; nothing else is loaded in its place
+  GREEN L7    Load's intent is always the selected slot (no cross-slot fallback is asked for)
+  GREEN L8    the Mic on the Load page returns to the root (nothing loads)
+
+[T] the title
+  GREEN T1    Journey Onward names what Continue resumes: "Latest: Slot 2, Avery, Britannia" / "Enter continues Slot 2; Mic returns"
+  GREEN T2    Continue is still one Enter (ContinueLatest, no question)
+  GREEN T3    Continue on a recovered slot says the one before loads: "Latest save damaged; Enter loads the one before"
+  GREEN T4    the title's Load Game marks Continue's slot LATEST and starts on it: Slot 1  Kojac|        Lord British's Castle ; Slot 2  Avery     LATEST, RECOVERED|        Britannia ; Slot 3  Iolo|        Iolo's Hut
+  GREEN T5    Up from Slot 1 wraps to Slot 3
+  GREEN T6    the Mic leaves Load Game for Journey Onward, on Load Game
+  GREEN T7    a blank card: Journey Onward says so
+
+[P] PC Save Transfer
+  GREEN P1    P reaches PC Save Transfer; Import lists the slots as the other pages do, on the first empty: Slot 1  EMPTY| ; Slot 2  Avery     LATEST|        Britannia ; Slot 3  Iolo|        Iolo's Hut
+  GREEN P2    importing over an occupied slot asks, naming its save; No first
+  GREEN P3    the Mic cancels the import question
+  GREEN P4    re-importing the same PC files asks first, No selected
+  GREEN P5    Export lists the same rows, on Continue's slot
+  GREEN P6    exporting an empty slot refuses
+
+a4_ui3_slot_rows: 40/40 checks GREEN, 0 RED
+exit 0
+[I][AlphaResources] Alpha resource pack v2.0 valid: 2042554 bytes, 43 entries, payload CRC=9c10874f, expected SHA-256=11d72c7784d4, firmware_match=1
+[I][AlphaResources] Loaded owners: 64 small floors, 8 dungeons, 1024 NPC records; PSRAM=1188214
+[I][AlphaSave] SD_HEAP operation=dma-reserve-created state=startup free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=settings-load free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=settings-load free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=settings-load free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=5 crc=882c78a7
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=5 crc=882c78a7
+
+P/S  Save Game on the panel and on the card
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=5 crc=882c78a7
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_SCRATCH psram_bytes=11888
+[I][AlphaSave] SAVE_CATALOG slot1=empty slot2=empty slot3=empty staged=0 bytes=0 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+GREEN S1 a blank card: three EMPTY slots, nothing CURRENT, on Slot 1: Slot 1  EMPTY ; Slot 2  EMPTY ; Slot 3  EMPTY
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=create-root-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5 stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=create-save-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=free-space-before state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-enter state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-exit state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-after state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_SPACE path=/sd api=esp_vfs_fat_info/f_getfree return=ESP_OK(0x0) errno=0 total_bytes=34359738368 free_bytes=8589934592 total_sectors=67108864 free_sectors=16777216 sector_bytes=512
+[I][AlphaSave] NEWGAME_SAVE stage=free-space-query result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=free-space result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] SAVE_TARGET save_slot=0 newest=-1 accepted=0 slot=1 keep=-1 sequence=1
+[I][AlphaSave] NEWGAME_SAVE stage=gam-encode result=ok esp_err=ESP_OK errno=0 path=INIT.GAM stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=ool-encode result=ok esp_err=ESP_OK errno=0 path=INIT.OOL stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=json-encode result=ok esp_err=ESP_OK errno=0 path=sidecar stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-gam-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-gam-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.gam.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-ool-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-ool-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.ool.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-json-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-json-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.json.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=crc-readback state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=crc-readback result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-gam result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.gam stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-ool result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.ool stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-json result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.json stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=write-commit-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.commit.tmp stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-commit result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.commit stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=semantic-validation result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.commit stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=generation-final result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.commit stack_margin=32768
+[I][AlphaSave] save generation=1 save_slot=0 slot=1 time=0 ms json=370
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=5 crc=882c78a7
+GREEN S2 an empty slot saves at once and returns to the game: "Save complete: Slot 1" (Slot 1's four files, nothing else)
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=120 crc=e8466959
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=empty slot3=empty staged=0 bytes=32 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=5 pixels=14896 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=create-root-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5 stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=create-save-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=free-space-before state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-enter state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-exit state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-after state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_SPACE path=/sd api=esp_vfs_fat_info/f_getfree return=ESP_OK(0x0) errno=0 total_bytes=34359738368 free_bytes=8589934592 total_sectors=67108864 free_sectors=16777216 sector_bytes=512
+[I][AlphaSave] NEWGAME_SAVE stage=free-space-query result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=free-space result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] SAVE_TARGET save_slot=1 newest=-1 accepted=0 slot=1 keep=-1 sequence=2
+[I][AlphaSave] NEWGAME_SAVE stage=gam-encode result=ok esp_err=ESP_OK errno=0 path=INIT.GAM stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=ool-encode result=ok esp_err=ESP_OK errno=0 path=INIT.OOL stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=json-encode result=ok esp_err=ESP_OK errno=0 path=sidecar stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-gam-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-gam-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.gam.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-ool-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-ool-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.ool.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-json-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-json-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.json.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=crc-readback state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=crc-readback result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-gam result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.gam stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-ool result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.ool stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-json result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.json stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=write-commit-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.commit.tmp stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-commit result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.commit stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=semantic-validation result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.commit stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=generation-final result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.commit stack_margin=32768
+[I][AlphaSave] save generation=2 save_slot=1 slot=1 time=0 ms json=369
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+GREEN S3 a second slot saves the same way
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=cached slot3=empty staged=0 bytes=64 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+GREEN S4 the Save page: leader and place per slot, the journey's slot CURRENT and selected: Slot 1  Kojac / Iolo's Hut ; Slot 2  Avery     CURRENT / Britannia ; Slot 3  EMPTY
+GREEN P1 the selected slot's two rows are both in reverse video, the others plain (..II...)
+GREEN P2 an unselected slot's place row is grey (101 px) under its white line
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=5 pixels=14896 us=0
+GREEN P3 the selection moves both rows and leaves the old ones as they were (....II.)
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=5 pixels=14896 us=0
+GREEN P4 Down from Slot 3 wraps to Slot 1 (II.....)
+GREEN P5 Large text: two rows a slot, the selection on both, ink within x<=311 and above y=101 (right 311, bottom 84)
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=full-redraw full_redraw=0 dirty_regions=8 pixels=85296 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+GREEN S5 an occupied slot asks "Overwrite Slot 1?", naming its save "Kojac, Iolo's Hut", No selected
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=cancel accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=08 base=08 symbol=00 ui=inventory emitted=back action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=back accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+GREEN S6 No, the Mic and Back (with Yes highlighted) each keep the slot: no file opened, every byte as it was
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=create-root-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5 stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=create-save-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=free-space-before state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-enter state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-exit state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-after state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_SPACE path=/sd api=esp_vfs_fat_info/f_getfree return=ESP_OK(0x0) errno=0 total_bytes=34359738368 free_bytes=8589934592 total_sectors=67108864 free_sectors=16777216 sector_bytes=512
+[I][AlphaSave] NEWGAME_SAVE stage=free-space-query result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=free-space result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] SAVE_TARGET save_slot=0 newest=1 accepted=1 slot=0 keep=1 sequence=3
+[I][AlphaSave] NEWGAME_SAVE stage=gam-encode result=ok esp_err=ESP_OK errno=0 path=INIT.GAM stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=ool-encode result=ok esp_err=ESP_OK errno=0 path=INIT.OOL stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=json-encode result=ok esp_err=ESP_OK errno=0 path=sidecar stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-gam-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-gam-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.gam.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-ool-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-ool-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.ool.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-json-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-json-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.json.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=crc-readback state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=crc-readback result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-gam result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.gam stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-ool result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.ool stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-json result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.json stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=write-commit-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.commit.tmp stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-commit result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.commit stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=semantic-validation result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.commit stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=generation-final result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.commit stack_margin=32768
+[I][AlphaSave] save generation=3 save_slot=0 slot=0 time=0 ms json=369
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_SCRATCH psram_bytes=11888
+[I][AlphaSave] SAVE_CATALOG slot1=verified slot2=verified slot3=empty staged=2 bytes=10242 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+GREEN S7 Yes saves into Slot 1 (now Avery), returns to the game; Slot 2 byte for byte
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=cached slot3=empty staged=0 bytes=96 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+GREEN S8 CURRENT follows the save to Slot 1 (the journey's slot is where it last saved)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=cached slot3=empty staged=0 bytes=96 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=4 pixels=12160 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=5 pixels=14896 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=create-root-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5 stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=create-save-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=free-space-before state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-enter state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-exit state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-after state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_SPACE path=/sd api=esp_vfs_fat_info/f_getfree return=ESP_OK(0x0) errno=0 total_bytes=34359738368 free_bytes=8589934592 total_sectors=67108864 free_sectors=16777216 sector_bytes=512
+[I][AlphaSave] NEWGAME_SAVE stage=free-space-query result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=free-space result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] SAVE_TARGET save_slot=2 newest=-1 accepted=0 slot=1 keep=-1 sequence=4
+[I][AlphaSave] NEWGAME_SAVE stage=gam-encode result=ok esp_err=ESP_OK errno=0 path=INIT.GAM stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=ool-encode result=ok esp_err=ESP_OK errno=0 path=INIT.OOL stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=json-encode result=ok esp_err=ESP_OK errno=0 path=sidecar stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-gam-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-gam-temp result=fail esp_err=ESP_FAIL errno=5 path=/sd/ultima5/saves/alpha1-s3-g1.gam.tmp stack_margin=32768
+[E][AlphaSave] slot 2 generation 1 save failed (errno=5); previous generation retained
+[I][AlphaSave] save generation=4 save_slot=2 slot=1 time=0 ms json=369
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=cached slot3=empty staged=0 bytes=96 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=9 pixels=25968 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=cached slot3=empty staged=0 bytes=96 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=create-root-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5 stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=create-save-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=free-space-before state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-enter state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-exit state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-after state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_SPACE path=/sd api=esp_vfs_fat_info/f_getfree return=ESP_OK(0x0) errno=0 total_bytes=34359738368 free_bytes=8589934592 total_sectors=67108864 free_sectors=16777216 sector_bytes=512
+[I][AlphaSave] NEWGAME_SAVE stage=free-space-query result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=free-space result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] SAVE_TARGET save_slot=0 newest=0 accepted=1 slot=1 keep=0 sequence=4
+[I][AlphaSave] NEWGAME_SAVE stage=gam-encode result=ok esp_err=ESP_OK errno=0 path=INIT.GAM stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=ool-encode result=ok esp_err=ESP_OK errno=0 path=INIT.OOL stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=json-encode result=ok esp_err=ESP_OK errno=0 path=sidecar stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-gam-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-gam-temp result=fail esp_err=ESP_FAIL errno=5 path=/sd/ultima5/saves/alpha1-g1.gam.tmp stack_margin=32768
+[E][AlphaSave] slot 0 generation 1 save failed (errno=5); previous generation retained
+[I][AlphaSave] save generation=4 save_slot=0 slot=1 time=0 ms json=369
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=cached slot3=empty staged=0 bytes=96 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+GREEN S9 a failed save stays in the menu and says so: "Save failed. Nothing was saved in Slot 3" / "Save failed. Slot 1 keeps its last save"
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=cached slot3=empty staged=0 bytes=96 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=4 pixels=12160 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=create-root-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5 stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=create-save-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=free-space-before state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-enter state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-exit state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-after state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_SPACE path=/sd api=esp_vfs_fat_info/f_getfree return=ESP_OK(0x0) errno=0 total_bytes=34359738368 free_bytes=8589934592 total_sectors=67108864 free_sectors=16777216 sector_bytes=512
+[I][AlphaSave] NEWGAME_SAVE stage=free-space-query result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=free-space result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] SAVE_TARGET save_slot=1 newest=1 accepted=1 slot=0 keep=1 sequence=4
+[I][AlphaSave] NEWGAME_SAVE stage=gam-encode result=ok esp_err=ESP_OK errno=0 path=INIT.GAM stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=ool-encode result=ok esp_err=ESP_OK errno=0 path=INIT.OOL stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=json-encode result=ok esp_err=ESP_OK errno=0 path=sidecar stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-gam-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-gam-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.gam.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-ool-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-ool-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.ool.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-json-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-json-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.json.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=crc-readback state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=crc-readback result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-gam result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.gam stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-ool result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.ool stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-json result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.json stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=write-commit-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.commit.tmp stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-commit result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.commit stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=semantic-validation result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.commit stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=generation-final result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.commit stack_margin=32768
+[I][AlphaSave] save generation=4 save_slot=1 slot=0 time=0 ms json=369
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-inspect free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-inspect free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_SCRATCH psram_bytes=11888
+[I][AlphaSave] SAVE_INSPECT save_slot=1 slot0=verified slot1=verified bytes=10210 commit_us=0 read_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-inspect free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=recovered slot3=empty staged=1 bytes=5201 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=recovered slot3=empty staged=1 bytes=5201 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=create-root-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5 stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=create-save-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=free-space-before state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-enter state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-exit state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-after state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_SPACE path=/sd api=esp_vfs_fat_info/f_getfree return=ESP_OK(0x0) errno=0 total_bytes=34359738368 free_bytes=8589934592 total_sectors=67108864 free_sectors=16777216 sector_bytes=512
+[I][AlphaSave] NEWGAME_SAVE stage=free-space-query result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=free-space result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] SAVE_TARGET save_slot=1 newest=0 accepted=0 slot=0 keep=1 sequence=5
+[I][AlphaSave] NEWGAME_SAVE stage=gam-encode result=ok esp_err=ESP_OK errno=0 path=INIT.GAM stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=ool-encode result=ok esp_err=ESP_OK errno=0 path=INIT.OOL stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=json-encode result=ok esp_err=ESP_OK errno=0 path=sidecar stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-gam-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-gam-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.gam.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-ool-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-ool-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.ool.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-json-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-json-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.json.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=crc-readback state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=crc-readback result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-gam result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.gam stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-ool result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.ool stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-json result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.json stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=write-commit-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.commit.tmp stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-commit result=fail esp_err=ESP_FAIL errno=5 path=/sd/ultima5/saves/alpha1-s2-g0.commit stack_margin=32768
+[E][AlphaSave] slot 1 generation 0 save failed (errno=5); previous generation retained
+[I][AlphaSave] save generation=5 save_slot=1 slot=0 time=0 ms json=369
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=cached slot3=empty staged=0 bytes=96 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+GREEN S10 after a failed save the open menu lists the card as it now is: "Slot 2  Avery     CURRENT, RECOVERED" -> "Slot 2  Avery     CURRENT"
+
+L  Load Game
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=empty slot2=empty slot3=empty staged=0 bytes=0 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=4 pixels=12160 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=4 pixels=12160 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=create-root-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5 stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=create-save-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=free-space-before state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-enter state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-exit state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-after state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_SPACE path=/sd api=esp_vfs_fat_info/f_getfree return=ESP_OK(0x0) errno=0 total_bytes=34359738368 free_bytes=8589934592 total_sectors=67108864 free_sectors=16777216 sector_bytes=512
+[I][AlphaSave] NEWGAME_SAVE stage=free-space-query result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=free-space result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] SAVE_TARGET save_slot=0 newest=-1 accepted=0 slot=1 keep=-1 sequence=1
+[I][AlphaSave] NEWGAME_SAVE stage=gam-encode result=ok esp_err=ESP_OK errno=0 path=INIT.GAM stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=ool-encode result=ok esp_err=ESP_OK errno=0 path=INIT.OOL stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=json-encode result=ok esp_err=ESP_OK errno=0 path=sidecar stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-gam-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-gam-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.gam.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-ool-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-ool-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.ool.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-json-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-json-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.json.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=crc-readback state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=crc-readback result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-gam result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.gam stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-ool result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.ool stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-json result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.json stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=write-commit-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.commit.tmp stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-commit result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.commit stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=semantic-validation result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.commit stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=generation-final result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g1.commit stack_margin=32768
+[I][AlphaSave] save generation=1 save_slot=0 slot=1 time=0 ms json=369
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=empty slot3=empty staged=0 bytes=32 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=7 pixels=19888 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=create-root-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5 stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=create-save-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=free-space-before state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-enter state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-exit state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-after state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_SPACE path=/sd api=esp_vfs_fat_info/f_getfree return=ESP_OK(0x0) errno=0 total_bytes=34359738368 free_bytes=8589934592 total_sectors=67108864 free_sectors=16777216 sector_bytes=512
+[I][AlphaSave] NEWGAME_SAVE stage=free-space-query result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=free-space result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] SAVE_TARGET save_slot=0 newest=1 accepted=1 slot=0 keep=1 sequence=2
+[I][AlphaSave] NEWGAME_SAVE stage=gam-encode result=ok esp_err=ESP_OK errno=0 path=INIT.GAM stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=ool-encode result=ok esp_err=ESP_OK errno=0 path=INIT.OOL stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=json-encode result=ok esp_err=ESP_OK errno=0 path=sidecar stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-gam-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-gam-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.gam.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-ool-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-ool-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.ool.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-json-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-json-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.json.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=crc-readback state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=crc-readback result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-gam result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.gam stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-ool result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.ool stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-json result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.json stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=write-commit-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.commit.tmp stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-commit result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.commit stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=semantic-validation result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.commit stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=generation-final result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-g0.commit stack_margin=32768
+[I][AlphaSave] save generation=2 save_slot=0 slot=0 time=0 ms json=369
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=empty slot3=empty staged=0 bytes=64 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=5 pixels=14896 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=create-root-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5 stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=create-save-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=free-space-before state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-enter state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-exit state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-after state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_SPACE path=/sd api=esp_vfs_fat_info/f_getfree return=ESP_OK(0x0) errno=0 total_bytes=34359738368 free_bytes=8589934592 total_sectors=67108864 free_sectors=16777216 sector_bytes=512
+[I][AlphaSave] NEWGAME_SAVE stage=free-space-query result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=free-space result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] SAVE_TARGET save_slot=1 newest=-1 accepted=0 slot=1 keep=-1 sequence=3
+[I][AlphaSave] NEWGAME_SAVE stage=gam-encode result=ok esp_err=ESP_OK errno=0 path=INIT.GAM stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=ool-encode result=ok esp_err=ESP_OK errno=0 path=INIT.OOL stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=json-encode result=ok esp_err=ESP_OK errno=0 path=sidecar stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-gam-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-gam-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.gam.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-ool-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-ool-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.ool.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-json-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-json-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.json.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=crc-readback state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=crc-readback result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-gam result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.gam stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-ool result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.ool stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-json result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.json stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=write-commit-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.commit.tmp stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-commit result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.commit stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=semantic-validation result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.commit stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=generation-final result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g1.commit stack_margin=32768
+[I][AlphaSave] save generation=3 save_slot=1 slot=1 time=0 ms json=369
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=cached slot3=empty staged=0 bytes=96 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=create-root-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5 stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=create-save-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=free-space-before state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-enter state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-exit state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-after state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_SPACE path=/sd api=esp_vfs_fat_info/f_getfree return=ESP_OK(0x0) errno=0 total_bytes=34359738368 free_bytes=8589934592 total_sectors=67108864 free_sectors=16777216 sector_bytes=512
+[I][AlphaSave] NEWGAME_SAVE stage=free-space-query result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=free-space result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] SAVE_TARGET save_slot=1 newest=1 accepted=1 slot=0 keep=1 sequence=4
+[I][AlphaSave] NEWGAME_SAVE stage=gam-encode result=ok esp_err=ESP_OK errno=0 path=INIT.GAM stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=ool-encode result=ok esp_err=ESP_OK errno=0 path=INIT.OOL stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=json-encode result=ok esp_err=ESP_OK errno=0 path=sidecar stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-gam-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-gam-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.gam.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-ool-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-ool-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.ool.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-json-temp state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-json-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.json.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=crc-readback state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=crc-readback result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-gam result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.gam stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-ool result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.ool stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-json result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.json stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=write-commit-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.commit.tmp stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-commit result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.commit stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=semantic-validation result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.commit stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=generation-final result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s2-g0.commit stack_margin=32768
+[I][AlphaSave] save generation=4 save_slot=1 slot=0 time=0 ms json=369
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=gameplay-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=cached slot3=empty staged=0 bytes=128 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=load-slot free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=load-slot free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] load save_slot=1 slot=0 time=0 ms status=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=load-slot free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] U5OBJ CLEAR site=load-restore pool_before=0
+[I][AlphaRuntime] WORLD_OBJECTS_RESTORE count=0
+[I][AlphaRuntime] DUNGEON_RESTORE active=0 dungeon=33 depth=0
+[I][AlphaRuntime] LOAD_TRANSIENT_RESET ui=explore->explore request=0 views=0 questions=0
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+GREEN L1 a healthy slot loads directly (Slot 2: gold 222), no extra page, no recovery line
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=cached slot3=empty staged=0 bytes=128 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+GREEN L2 after Load Slot 2, Slot 2 alone is CURRENT: Slot 1  Avery / Britannia ; Slot 2  Iolo      CURRENT / Britannia ; Slot 3  EMPTY
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=5 pixels=14896 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+GREEN L3 an empty slot refuses politely, stays on Load Game and opens no file
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-inspect free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-inspect free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_SCRATCH psram_bytes=11888
+[I][AlphaSave] SAVE_INSPECT save_slot=0 slot0=verified slot1=verified bytes=10210 commit_us=0 read_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-inspect free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=recovered slot2=cached slot3=empty staged=1 bytes=5201 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=5 pixels=14896 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=5 pixels=14896 us=0
+GREEN L4 the newest damaged: the slot is RECOVERED and shows the save that will load (Kojac, not Avery): Slot 1  Kojac     RECOVERED / Britannia ; Slot 2  Iolo      CURRENT / Britannia ; Slot 3  EMPTY
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=load-slot free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=load-slot free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] load save_slot=0 slot=1 time=0 ms status=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=load-slot free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] U5OBJ CLEAR site=load-restore pool_before=0
+[I][AlphaRuntime] WORLD_OBJECTS_RESTORE count=0
+[I][AlphaRuntime] DUNGEON_RESTORE active=0 dungeon=33 depth=0
+[I][AlphaRuntime] LOAD_TRANSIENT_RESET ui=explore->explore request=0 views=0 questions=0
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+GREEN L5 Enter loads the save before (gold 101) and says so once: "Recovered previous save (Slot 1)"
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-inspect free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-inspect free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_SCRATCH psram_bytes=11888
+[I][AlphaSave] SAVE_INSPECT save_slot=0 slot0=refused slot1=verified bytes=10210 commit_us=0 read_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-inspect free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=damaged slot2=cached slot3=empty staged=2 bytes=10274 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+GREEN L6 nothing loadable: DAMAGED (the journey's slot still marked), and Enter loads nothing: Slot 1  DAMAGED   CURRENT / Cannot be loaded ; Slot 2  Iolo / Britannia ; Slot 3  EMPTY
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=verified slot2=cached slot3=empty staged=1 bytes=5201 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=load-slot free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=load-slot free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[W][AlphaSave] no restorable save generation
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=load-slot free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=damaged slot2=cached slot3=empty staged=2 bytes=10274 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+GREEN L7 a slot torn after the page opened: the load fails, no other slot is loaded (gold still 999), the page lists it DAMAGED and says nothing changed
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+
+C  the title
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=verified slot2=cached slot3=empty staged=1 bytes=5201 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=cached slot3=empty staged=0 bytes=128 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] FRONTEND_STATE count=1 from=enter-game to=title reason=tick-or-intent reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=title reason=state-transition full_redraw=0 screen_clear=0 dirty_regions=7 pixels=153712 animation_tick=308 render_us=0 reconstructed=1 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=20 symbol=00 ui=inventory emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=32 accepted=1 state=title->menu phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=2 from=title to=menu reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=menu reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=11 pixels=76368 animation_tick=310 render_us=0 reconstructed=2 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6a base=6a symbol=00 ui=inventory emitted=character action_char=106 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=106 accepted=1 state=menu->continue phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=3 from=menu to=continue reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=continue reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=7 pixels=159016 animation_tick=311 render_us=0 reconstructed=3 internal=67108864 psram=67108864 stack_margin=32768
+GREEN C1 Journey Onward names Continue's slot and journey: "Latest: Slot 2, Iolo, Britannia"
+[I][AlphaRuntime] FRONTEND_INPUT raw=trackball-down action=direction char=0 accepted=1 state=continue->continue phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_RENDER state=continue reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=3 pixels=8816 animation_tick=313 render_us=0 reconstructed=4 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=confirm char=0 accepted=1 state=continue->load phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=4 from=continue to=load reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=load reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=10 pixels=90288 animation_tick=315 render_us=0 reconstructed=5 internal=67108864 psram=67108864 stack_margin=32768
+GREEN C2 the title's Load Game marks Continue's slot LATEST and starts on it: Slot 1  Avery / Britannia ; Slot 2  Iolo      LATEST / Britannia ; Slot 3  EMPTY
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=cancel char=0 accepted=1 state=load->continue phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=5 from=load to=continue reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=continue reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=6 pixels=78128 animation_tick=318 render_us=0 reconstructed=6 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] FRONTEND_INPUT raw=trackball-up action=direction char=0 accepted=1 state=continue->continue phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_RENDER state=continue reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=3 pixels=8816 animation_tick=320 render_us=0 reconstructed=7 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] FRONTEND_RENDER state=continue reason=full-redraw full_redraw=0 screen_clear=0 dirty_regions=1 pixels=3040 animation_tick=320 render_us=0 reconstructed=8 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=confirm char=0 accepted=1 state=continue->continue phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_INTENT intent=continue storage_begin=1 phase=name name="" gender=0x0b stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=load-latest free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=load-latest free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] load generation=4 save_slot=1 slot=0 time=0 ms status=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=load-latest free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] U5OBJ CLEAR site=load-restore pool_before=0
+[I][AlphaRuntime] WORLD_OBJECTS_RESTORE count=0
+[I][AlphaRuntime] DUNGEON_RESTORE active=0 dungeon=33 depth=0
+[I][AlphaRuntime] LOAD_TRANSIENT_RESET ui=explore->explore request=0 views=0 questions=0
+[I][AlphaRuntime] FRONTEND_INTENT intent=continue storage_end=1 ok=1 ms=0 stack_margin=32768
+[I][AlphaRuntime] render 0 us reason=frontend-input animated=120 crc=e8466959
+GREEN C3 Continue is one key and resumes Slot 2 (gold 222)
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-inspect free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-inspect free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_SCRATCH psram_bytes=11888
+[I][AlphaSave] SAVE_INSPECT save_slot=1 slot0=verified slot1=verified bytes=10210 commit_us=0 read_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-inspect free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=recovered slot3=empty staged=1 bytes=5201 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=recovered slot3=empty staged=1 bytes=5201 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] FRONTEND_STATE count=6 from=continue to=title reason=tick-or-intent reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=title reason=state-transition full_redraw=0 screen_clear=0 dirty_regions=7 pixels=153712 animation_tick=327 render_us=0 reconstructed=9 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=20 symbol=00 ui=inventory emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=32 accepted=1 state=title->menu phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=7 from=title to=menu reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=menu reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=10 pixels=62256 animation_tick=329 render_us=0 reconstructed=10 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6a base=6a symbol=00 ui=inventory emitted=character action_char=106 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=106 accepted=1 state=menu->continue phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=8 from=menu to=continue reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=continue reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=7 pixels=159016 animation_tick=330 render_us=0 reconstructed=11 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=confirm char=0 accepted=1 state=continue->continue phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_INTENT intent=continue storage_begin=1 phase=name name="" gender=0x0b stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=load-latest free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=load-latest free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] load generation=3 save_slot=1 slot=1 time=0 ms status=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=load-latest free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] U5OBJ CLEAR site=load-restore pool_before=0
+[I][AlphaRuntime] WORLD_OBJECTS_RESTORE count=0
+[I][AlphaRuntime] DUNGEON_RESTORE active=0 dungeon=33 depth=0
+[I][AlphaRuntime] LOAD_TRANSIENT_RESET ui=explore->explore request=0 views=0 questions=0
+[I][AlphaRuntime] FRONTEND_INTENT intent=continue storage_end=1 ok=1 ms=0 stack_margin=32768
+[I][AlphaRuntime] render 0 us reason=frontend-input animated=120 crc=e8466959
+GREEN C4 Continue on a recovered slot: named by the save that loads, then "Recovered previous save (Slot 2)"
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=recovered slot3=empty staged=1 bytes=5201 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=recovered slot3=empty staged=1 bytes=5201 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] FRONTEND_STATE count=9 from=continue to=title reason=tick-or-intent reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=title reason=state-transition full_redraw=0 screen_clear=0 dirty_regions=7 pixels=153712 animation_tick=338 render_us=0 reconstructed=12 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=20 symbol=00 ui=inventory emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=32 accepted=1 state=title->menu phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=10 from=title to=menu reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=menu reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=11 pixels=76368 animation_tick=340 render_us=0 reconstructed=13 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=63 base=63 symbol=00 ui=inventory emitted=character action_char=99 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=99 accepted=1 state=menu->character-creation phase=name->name name=""->""
+[I][AlphaRuntime] CHAR_CREATE action=character accepted=1 phase=name->name length=0->0 answers=0 stack_margin=32768
+[I][AlphaRuntime] CHAR_NAME action=character buffer="" length=0
+[I][AlphaRuntime] FRONTEND_STATE count=11 from=menu to=character-creation reason=input reconstructed=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=4e base=4e symbol=00 ui=text emitted=character action_char=78 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=78 accepted=1 state=character-creation->character-creation phase=name->name name=""->"N"
+[I][AlphaRuntime] CHAR_CREATE action=character accepted=1 phase=name->name length=0->1 answers=0 stack_margin=32768
+[I][AlphaRuntime] CHAR_NAME action=character buffer="N" length=1
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6f base=6f symbol=00 ui=text emitted=character action_char=111 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=111 accepted=1 state=character-creation->character-creation phase=name->name name="N"->"No"
+[I][AlphaRuntime] CHAR_CREATE action=character accepted=1 phase=name->name length=1->2 answers=0 stack_margin=32768
+[I][AlphaRuntime] CHAR_NAME action=character buffer="No" length=2
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=76 base=76 symbol=00 ui=text emitted=character action_char=118 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=118 accepted=1 state=character-creation->character-creation phase=name->name name="No"->"Nov"
+[I][AlphaRuntime] CHAR_CREATE action=character accepted=1 phase=name->name length=2->3 answers=0 stack_margin=32768
+[I][AlphaRuntime] CHAR_NAME action=character buffer="Nov" length=3
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=61 symbol=00 ui=text emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=97 accepted=1 state=character-creation->character-creation phase=name->name name="Nov"->"Nova"
+[I][AlphaRuntime] CHAR_CREATE action=character accepted=1 phase=name->name length=3->4 answers=0 stack_margin=32768
+[I][AlphaRuntime] CHAR_NAME action=character buffer="Nova" length=4
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=text emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=confirm char=0 accepted=1 state=character-creation->character-creation phase=name->gender name="Nova"->"Nova"
+[I][AlphaRuntime] CHAR_CREATE action=confirm accepted=1 phase=name->gender length=4->4 answers=0 stack_margin=32768
+[I][AlphaRuntime] CHAR_NAME action=confirm buffer="Nova" length=4
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=66 base=66 symbol=00 ui=inventory emitted=character action_char=102 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=102 accepted=1 state=character-creation->character-creation phase=gender->questionnaire name="Nova"->"Nova"
+[I][AlphaRuntime] CHAR_CREATE action=character accepted=1 phase=gender->questionnaire length=4->4 answers=0 stack_margin=32768
+[I][AlphaRuntime] CHAR_GENDER action=character value=0x0c advanced=1
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=61 symbol=00 ui=inventory emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=97 accepted=1 state=character-creation->character-creation phase=questionnaire->questionnaire name="Nova"->"Nova"
+[I][AlphaRuntime] CHAR_CREATE action=character accepted=1 phase=questionnaire->questionnaire length=4->4 answers=1 stack_margin=32768
+[I][AlphaRuntime] CHAR_GENDER action=character value=0x0c advanced=1
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=62 base=62 symbol=00 ui=inventory emitted=character action_char=98 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=98 accepted=1 state=character-creation->character-creation phase=questionnaire->questionnaire name="Nova"->"Nova"
+[I][AlphaRuntime] CHAR_CREATE action=character accepted=1 phase=questionnaire->questionnaire length=4->4 answers=2 stack_margin=32768
+[I][AlphaRuntime] CHAR_GENDER action=character value=0x0c advanced=1
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=61 symbol=00 ui=inventory emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=97 accepted=1 state=character-creation->character-creation phase=questionnaire->questionnaire name="Nova"->"Nova"
+[I][AlphaRuntime] CHAR_CREATE action=character accepted=1 phase=questionnaire->questionnaire length=4->4 answers=3 stack_margin=32768
+[I][AlphaRuntime] CHAR_GENDER action=character value=0x0c advanced=1
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=62 base=62 symbol=00 ui=inventory emitted=character action_char=98 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=98 accepted=1 state=character-creation->character-creation phase=questionnaire->questionnaire name="Nova"->"Nova"
+[I][AlphaRuntime] CHAR_CREATE action=character accepted=1 phase=questionnaire->questionnaire length=4->4 answers=4 stack_margin=32768
+[I][AlphaRuntime] CHAR_GENDER action=character value=0x0c advanced=1
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=61 symbol=00 ui=inventory emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=97 accepted=1 state=character-creation->character-creation phase=questionnaire->questionnaire name="Nova"->"Nova"
+[I][AlphaRuntime] CHAR_CREATE action=character accepted=1 phase=questionnaire->questionnaire length=4->4 answers=5 stack_margin=32768
+[I][AlphaRuntime] CHAR_GENDER action=character value=0x0c advanced=1
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=62 base=62 symbol=00 ui=inventory emitted=character action_char=98 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=98 accepted=1 state=character-creation->character-creation phase=questionnaire->questionnaire name="Nova"->"Nova"
+[I][AlphaRuntime] CHAR_CREATE action=character accepted=1 phase=questionnaire->questionnaire length=4->4 answers=6 stack_margin=32768
+[I][AlphaRuntime] CHAR_GENDER action=character value=0x0c advanced=1
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=61 base=61 symbol=00 ui=inventory emitted=character action_char=97 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=97 accepted=1 state=character-creation->new-journey phase=questionnaire->questionnaire name="Nova"->"Nova"
+[I][AlphaRuntime] CHAR_CREATE action=character accepted=1 phase=questionnaire->questionnaire length=4->4 answers=7 stack_margin=32768
+[I][AlphaRuntime] CHAR_GENDER action=character value=0x0c advanced=1
+[I][AlphaRuntime] FRONTEND_STATE count=12 from=character-creation to=new-journey reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_INTENT intent=create-initial-save storage_begin=1 phase=questionnaire name="Nova" gender=0x0c stack_margin=32768
+[I][AlphaRuntime] U5OBJ CLEAR site=new-journey pool_before=0
+[I][AlphaRuntime] U5OBJ CLEAR site=load-restore pool_before=0
+[I][AlphaRuntime] WORLD_OBJECTS_RESTORE count=0
+[I][AlphaRuntime] DUNGEON_RESTORE active=0 dungeon=33 depth=0
+[I][AlphaRuntime] LOAD_TRANSIENT_RESET ui=explore->explore request=0 views=0 questions=0
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=frontend-new-journey free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=frontend-new-journey free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=create-root-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5 stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=create-save-directory result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=free-space-before state=frontend-new-journey free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-enter state=frontend-new-journey free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-call-exit state=frontend-new-journey free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=free-space-after state=frontend-new-journey free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_SPACE path=/sd api=esp_vfs_fat_info/f_getfree return=ESP_OK(0x0) errno=0 total_bytes=34359738368 free_bytes=8589934592 total_sectors=67108864 free_sectors=16777216 sector_bytes=512
+[I][AlphaSave] NEWGAME_SAVE stage=free-space-query result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=free-space result=ok esp_err=ESP_OK errno=0 path=/sd stack_margin=32768
+[I][AlphaSave] SAVE_TARGET save_slot=2 newest=-1 accepted=0 slot=1 keep=-1 sequence=5
+[I][AlphaSave] NEWGAME_SAVE stage=gam-encode result=ok esp_err=ESP_OK errno=0 path=INIT.GAM stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=ool-encode result=ok esp_err=ESP_OK errno=0 path=INIT.OOL stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=json-encode result=ok esp_err=ESP_OK errno=0 path=sidecar stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-gam-temp state=frontend-new-journey free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-gam-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s3-g1.gam.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-ool-temp state=frontend-new-journey free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-ool-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s3-g1.ool.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=write-json-temp state=frontend-new-journey free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=write-json-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s3-g1.json.tmp stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=crc-readback state=frontend-new-journey free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] NEWGAME_SAVE stage=crc-readback result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-gam result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s3-g1.gam stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-ool result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s3-g1.ool stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-json result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s3-g1.json stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=write-commit-temp result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s3-g1.commit.tmp stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=rename-commit result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s3-g1.commit stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=semantic-validation result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s3-g1.commit stack_margin=32768
+[I][AlphaSave] NEWGAME_SAVE stage=generation-final result=ok esp_err=ESP_OK errno=0 path=/sd/ultima5/saves/alpha1-s3-g1.commit stack_margin=32768
+[I][AlphaSave] save generation=5 save_slot=2 slot=1 time=0 ms json=370
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=frontend-new-journey free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] FRONTEND_INTENT intent=create-initial-save storage_end=1 ok=1 ms=0 stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=recovered slot3=cached staged=1 bytes=5233 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=5 crc=882c78a7
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=recovered slot3=cached staged=1 bytes=5233 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=9 pixels=25968 us=0
+GREEN C5 a New Journey is saved in the empty Slot 3, which is then the CURRENT slot: Slot 1  Avery / Britannia ; Slot 2  Iolo      RECOVERED / Britannia ; Slot 3  Nova      CURRENT / Iolo's Hut
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=5 crc=882c78a7
+
+X  PC Save Transfer
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=recovered slot3=cached staged=1 bytes=5233 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=recovered slot3=cached staged=1 bytes=5233 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] FRONTEND_STATE count=13 from=new-journey to=title reason=tick-or-intent reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=title reason=state-transition full_redraw=0 screen_clear=0 dirty_regions=7 pixels=153712 animation_tick=378 render_us=0 reconstructed=14 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=20 symbol=00 ui=inventory emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=32 accepted=1 state=title->menu phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=14 from=title to=menu reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=menu reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=11 pixels=76368 animation_tick=380 render_us=0 reconstructed=15 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=70 base=70 symbol=00 ui=inventory emitted=character action_char=112 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=112 accepted=1 state=menu->error phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=15 from=menu to=error reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_INTENT intent=inspect-pc-saves storage_begin=1 phase=name name="" gender=0x0b stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=recovered slot3=cached staged=1 bytes=5233 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=pc-import-read free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=pc-import-read free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] PC_IMPORT_READ gam=4192 ool=512
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=pc-import-read free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=pc-import-marker free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=pc-import-marker free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=pc-import-marker free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] FRONTEND_RENDER state=error reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=7 pixels=159016 animation_tick=381 render_us=0 reconstructed=16 internal=67108864 psram=67108864 stack_margin=32768
+GREEN X1 P reaches PC Save Transfer from the title (Import / Export): "PC save: Kojac, Lord British's Castle"
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=confirm char=0 accepted=1 state=error->error phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=16 from=error to=error reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=error reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=10 pixels=90288 animation_tick=383 render_us=0 reconstructed=17 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=confirm char=0 accepted=1 state=error->error phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_RENDER state=error reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=9 pixels=25968 animation_tick=385 render_us=0 reconstructed=18 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=cancel char=0 accepted=1 state=error->error phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_RENDER state=error reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=9 pixels=25968 animation_tick=388 render_us=0 reconstructed=19 internal=67108864 psram=67108864 stack_margin=32768
+GREEN X2 Import lists the slot rows; an occupied slot asks "Replace Slot 1?" on No; the Mic cancels, every byte kept
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=cancel char=0 accepted=1 state=error->error phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=17 from=error to=error reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=error reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=6 pixels=78128 animation_tick=390 render_us=0 reconstructed=20 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] FRONTEND_INPUT raw=trackball-down action=direction char=0 accepted=1 state=error->error phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_RENDER state=error reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=3 pixels=8816 animation_tick=392 render_us=0 reconstructed=21 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=confirm char=0 accepted=1 state=error->error phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=18 from=error to=error reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=error reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=10 pixels=90288 animation_tick=394 render_us=0 reconstructed=22 internal=67108864 psram=67108864 stack_margin=32768
+GREEN X3 Export lists the same rows, on Continue's slot: Slot 1  Avery / Britannia ; Slot 2  Iolo      RECOVERED / Britannia ; Slot 3  Nova      LATEST / Iolo's Hut
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=cancel char=0 accepted=1 state=error->error phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=19 from=error to=error reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=error reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=6 pixels=78128 animation_tick=397 render_us=0 reconstructed=23 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=cancel char=0 accepted=1 state=error->menu phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=20 from=error to=menu reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=menu reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=12 pixels=174256 animation_tick=400 render_us=0 reconstructed=24 internal=67108864 psram=67108864 stack_margin=32768
+
+W  page opens
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=6a base=6a symbol=00 ui=inventory emitted=character action_char=106 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=106 accepted=1 state=menu->continue phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=21 from=menu to=continue reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=continue reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=7 pixels=159016 animation_tick=401 render_us=0 reconstructed=25 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=confirm char=0 accepted=1 state=continue->continue phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_INTENT intent=continue storage_begin=1 phase=name name="" gender=0x0b stack_margin=32768
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=load-latest free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=load-latest free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] load generation=5 save_slot=2 slot=1 time=0 ms status=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=load-latest free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] U5OBJ CLEAR site=load-restore pool_before=0
+[I][AlphaRuntime] WORLD_OBJECTS_RESTORE count=0
+[I][AlphaRuntime] DUNGEON_RESTORE active=0 dungeon=33 depth=0
+[I][AlphaRuntime] LOAD_TRANSIENT_RESET ui=explore->explore request=0 views=0 questions=0
+[I][AlphaRuntime] FRONTEND_INTENT intent=continue storage_end=1 ok=1 ms=0 stack_margin=32768
+[I][AlphaRuntime] render 0 us reason=frontend-input animated=5 crc=882c78a7
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=verified slot3=empty staged=1 bytes=5201 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=9 pixels=25968 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=5 crc=882c78a7
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SAVE_CATALOG slot1=cached slot2=cached slot3=empty staged=0 bytes=128 commit_us=0 verify_us=0 total_us=0
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=save-catalog free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=9 pixels=25968 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaSave] SD_HEAP operation=release-reserved-dma state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaSave] SD_HEAP operation=sd-window-open state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=512
+[I][AlphaSave] SD_HEAP operation=dma-reserve-restored state=settings-save free_internal=67108864 free_dma=67108864 largest_dma=67108864 largest_internal=67108864 requested_dma=8192
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=5 crc=882c78a7
+GREEN W1 a warm Save page open reads the six commit records alone (4 opens, 128 B)
+A4-UI3 save UX runtime: 31/31 checks
+exit 0

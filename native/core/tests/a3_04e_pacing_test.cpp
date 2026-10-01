@@ -482,11 +482,12 @@ int main(int argc, char **argv) {
                   board_h.find("TftPacing tft_pacing_ = openu5::kPacingDefault.tft") != std::string::npos,
               "S1 Board::tft_yield sleeps only when the policy says TickSleep (legacy) and otherwise yields; the Board "
               "starts at A3-04E's pacing");
-        check(count_of(board, "if(openu5::tft_row_yield_due(row))tft_yield();") == 3 &&
+        // A4-END1 adds the fifth loop: the ending's full-screen page (show_endgame_page).
+        check(count_of(board, "if(openu5::tft_row_yield_due(row))tft_yield();") == 4 &&
                   count_of(board, "if(openu5::tft_chunk_yield_due(++chunks))tft_yield();") == 1 &&
                   board.find("(row&15)") == std::string::npos && board.find("&31)") == std::string::npos &&
-                  count_of(board, "tft_yield();") == 4,
-              "S2 all four draw loops pause through the policy's cadence and nowhere else");
+                  count_of(board, "tft_yield();") == 5,
+              "S2 all five draw loops pause through the policy's cadence and nowhere else");
         const std::string show = function_body(board, "esp_err_t Board::show_alpha(");
         check(std::regex_search(show, std::regex(R"(\+\+tft_timing_\.full_screen;ESP_RETURN_ON_ERROR\(fill_rect\(0,0,kDisplayWidth,kDisplayHeight,kChromeBand\),kTag,"initialize Alpha 2\.0 game screen"\))")) &&
                   std::regex_search(show, std::regex(R"(\+\+tft_timing_\.full_screen;ESP_RETURN_ON_ERROR\(fill_rect\(0,0,kDisplayWidth,kDisplayHeight,kChromeBand\),kTag,"leave developer screen"\))")) &&

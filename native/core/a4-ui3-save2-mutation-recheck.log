@@ -1,0 +1,10 @@
+S12 KILLED -- overwrite question starts on Yes -- a4_save2_slots_runtime exit=1 RED=O2,O3,O4,R3; a4_ui2_save_menu_runtime exit=1 RED=M5,M6,M7,M8,M9,L6,L7,L8,L9,L10
+S13 KILLED -- overwrite No saves anyway -- a4_save2_slots_runtime exit=1 RED=O2,O3,O5; a4_ui2_save_menu_runtime exit=1 RED=M6,M7,M8,M9
+S14 KILLED -- an occupied slot is saved over without asking -- a4_save2_slots_runtime exit=1 RED=O2,O3,O4,O5; a4_ui2_save_menu_runtime exit=1 RED=M5,M6,M7,M8,M9
+S15 KILLED -- an empty slot is offered for loading -- a4_ui2_save_menu_runtime exit=1 RED=L5,L9,L11
+S16 KILLED -- the title Load page offers an empty slot -- a4_ui2_save_menu_runtime exit=1 RED=F3b,F4,F5; frontend_tests exit=79 RED=-
+S23 KILLED -- the System Menu save drops the chosen slot -- a4_save2_slots_runtime exit=1 RED=O1,O2,O3,O4,O5,R3; a4_ui2_save_menu_runtime exit=1 RED=L1,L2,L3,L4,L6,L7,L8,L9,L10,F2,F3,F5,F6,F7
+S25 SURVIVED -- the menu is not given the card a failed save left -- a4_ui2_save_menu_runtime exit=0 RED=-; a3_04g_storage_runtime exit=0 RED=-
+A4-SAVE2 mutation check: 6 killed, 1 survived, 0 invalid; restored build GREEN
+S25 KILLED -- the menu is not given the card a failed save left -- a4_ui2_save_menu_runtime exit=0 RED=-; a3_04g_storage_runtime exit=0 RED=-; a4_ui3_save_ux_runtime exit=1 RED=S10
+A4-SAVE2 mutation check: 1 killed, 0 survived, 0 invalid; restored build GREEN

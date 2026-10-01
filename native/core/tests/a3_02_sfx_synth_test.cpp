@@ -365,9 +365,10 @@ int main(int argc, char **argv) {
         }
         SfxPlayer pl;
         // A3-03 widened the table (23 -> 62) and wired moongate; bard-song is
-        // still declined (sfx_inventory.h: DeferredPresentation).
+        // still declined (sfx_inventory.h: DeferredPresentation). A4-END1 wired
+        // the ending's two sweeps (endgame-orb, params 0 and 1): 63.
         std::printf("  supported cues: %zu\n", supported);
-        check(consistent && supported == 62 && !compile_sfx(SfxId::None, 0, p) && !compile_sfx(SfxId::Count, 0, p) &&
+        check(consistent && supported == 63 && !compile_sfx(SfxId::None, 0, p) && !compile_sfx(SfxId::Count, 0, p) &&
                   pl.submit(req(SfxId::BardSong)) == SfxAdmit::Unsupported && pl.submit(req(SfxId(250))) == SfxAdmit::Unsupported &&
                   pl.idle(),
               "E12 unknown / undeclared ids (None, Count, 250, bard-song) compile to nothing and leave the player idle");

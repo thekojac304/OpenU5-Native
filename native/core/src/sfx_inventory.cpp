@@ -29,7 +29,7 @@ SfxStatus sfx_status(SfxId id) {
         return SfxStatus::IntentionallySilent;
     case SfxId::LineSpray: case SfxId::CombatReject: case SfxId::InvalidMagic:
         return SfxStatus::EvidenceUnknown;
-    case SfxId::TitleFizzle: case SfxId::TitleCrackle: case SfxId::BardSong: case SfxId::EndgameOrb:
+    case SfxId::TitleFizzle: case SfxId::TitleCrackle: case SfxId::BardSong:
         return SfxStatus::DeferredPresentation;
     case SfxId::None: case SfxId::Count:
         return SfxStatus::IntentionallySilent;
@@ -55,7 +55,7 @@ const char *sfx_status_note(SfxId id) {
     case SfxId::BardSong:
         return "kernel 0x42d2 class 4: Camp keeps the sound-off lute branch (Batch 51); a bard sprite gate needs the 0xac64 layer";
     case SfxId::EndgameOrb:
-        return "ENDGAME 0x078f / 0x0987: the endgame cinematic is deferred (D-54)";
+        return "ENDGAME 0x078f / 0x0987: a cue of the ending's sequencer (endgame_scene.h, A4-END1)";
     case SfxId::MoveStep: return "emitted by the core (world steps); derived from the arena's Moved event (SJOG 0x1d32)";
     case SfxId::MoveBlocked: return "emitted by the core; derived from the arena's Blocked! / All must use the same exit!";
     case SfxId::CombatHit: case SfxId::CombatHitHeavy:
@@ -174,8 +174,8 @@ constexpr SfxSite kSites[] = {
     {"DUNGEON.OVL", 0x1483, "GLIDE", I::None, S::EvidenceUnknown, C, "cell reveal 0x145c: context not identified"},
     {"DUNGEON.OVL", 0x1cfb, "GLIDE", I::DungeonFail, S::Implemented, C, "Uus/Des Por 'Failed!'"},
     // -- ENDGAME.OVL
-    {"ENDGAME.OVL", 0x078f, "TONE_SWEEP", I::EndgameOrb, S::DeferredPresentation, C, "' lives!' (endgame cinematic, D-54)"},
-    {"ENDGAME.OVL", 0x0987, "TONE_SWEEP", I::EndgameOrb, S::DeferredPresentation, C, "orb launch (endgame cinematic, D-54)"},
+    {"ENDGAME.OVL", 0x078f, "TONE_SWEEP", I::EndgameOrb, S::Implemented, C, "' lives!' (A4-END1, param 1)"},
+    {"ENDGAME.OVL", 0x0987, "TONE_SWEEP", I::EndgameOrb, S::Implemented, C, "orb launch (A4-END1)"},
     // -- FONT.OVL (the intro's scene engine)
     {"FONT.OVL", 0x03ca, "NOISE_BURST", I::IntroThunder, S::Implemented, C, "moongate rise / fall"},
     {"FONT.OVL", 0x0403, "BEEP", I::IntroChime, S::Implemented, C, "moongate chime, frame 0 / 4"},

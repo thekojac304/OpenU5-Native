@@ -1,0 +1,31 @@
+P1 KILLED -- an incomplete set accepted: a missing SAVED.OOL becomes an empty block -- pc exit=1 RED=J2
+P2 KILLED -- wrong default: wind not read from 0x2EC (B2) -- pc exit=1 RED=P5,P7,P13,J7,T3; ref exit=1 RED=P5,P7,P13,J7,T3
+P3 KILLED -- wrong default: transport left at the empty sidecar's "foot" (B9) -- pc exit=1 RED=P8
+P4 KILLED -- wrong reconstruction: the found-once bitmap read one bit off (B1) -- pc exit=1 RED=P6,T3
+P5 KILLED -- wrong destination: the import saves to the slot saved last, not the one chosen -- pc exit=1 RED=J10,J11,J15,J17,T3,R1,R2
+P6 KILLED -- the source modified: the import marker is written over import/SAVED.GAM -- pc exit=1 RED=J6,J10,J11,J12,J13,J14,J15,J17,J16
+P7 KILLED -- the destination destroyed first: the save writes over the generation it keeps -- pc exit=1 RED=J13,F2,F3,X4,X5,R1,R2
+P8 KILLED -- Native-only metadata exported: the sidecar goes into the export folder -- pc exit=1 RED=X1
+P9 KILLED -- Native-only metadata exported: SAVED.GAM carries a U5PARTIDA envelope -- pc exit=1 RED=X1,X3,X4,X7,T1,T2,T3,T6
+P10 KILLED -- the exporter prefers the older generation -- pc exit=1 RED=T1,T2,T3
+P11 KILLED -- the exporter exports a generation the gate refused -- pc exit=1 RED=X4,X5
+P12 KILLED -- an incompatible source accepted: a dungeon save passes the check -- pc exit=1 RED=P3,J4
+P13 KILLED -- an incompatible source accepted: any party size passes -- pc exit=1 RED=P3,J4
+P14 KILLED -- a wrong-size SAVED.GAM accepted (longer than 4192) -- pc exit=1 RED=P3
+P15 KILLED -- B10 import off: vehicle records are not converted -- pc exit=1 RED=P10,P11,T3,T5,T6; ref exit=1 RED=P10,P11,T3,T5,T6
+P16 KILLED -- B10 export off: pool ships are not written -- pc exit=1 RED=P15,P16,T1,T3,T6; ref exit=1 RED=P15,P16,T1,T3,T6
+P17 KILLED -- B10 export keeps the template's own vehicle records (the new-game skiff twice) -- pc exit=1 RED=T6; ref exit=1 RED=T6
+P18 KILLED -- B1 export writes the gated entries 13/14/15 -- pc exit=1 RED=P14
+P19 KILLED -- B8 export drops the time spell -- pc exit=1 RED=P14
+P20 KILLED -- the overwrite question starts on Yes -- pc exit=1 RED=J12,J14,J15,J17,F2,F3,F4
+P21 KILLED -- an occupied slot is imported over without asking -- pc exit=1 RED=J12,J14,J17,F2,F3
+P22 KILLED -- files imported before are imported again without asking -- pc exit=1 RED=J14,J15,J17
+P23 KILLED -- the marker matches any files -- pc exit=1 RED=T3
+P24 KILLED -- no fresh map entry: an imported town has nobody in it -- pc exit=1 RED=J7,J9
+P25 KILLED -- no outdoor restore before the sync: horses, skiffs and monsters lost (RED-first of the T5 fix) -- pc exit=1 RED=T5,T6; ref exit=1 RED=T5,T6
+P26 KILLED -- the export changes the slot it exports -- pc exit=1 RED=X1,X4,X5,X7
+P27 KILLED -- a dungeon document exported -- pc exit=1 RED=P17,X8
+P28 KILLED -- the export goes to the wrong slot folder -- pc exit=1 RED=X1,X2,X3,X4,X7,T1,T2,T3,T6
+P29 KILLED -- the page is not told the import went through (stale "imported before") -- pc exit=1 RED=J17
+P30 KILLED -- a failed read is imported anyway (a short read is not refused) -- pc exit=1 RED=F1
+A4-SAVE3 mutation check: 30 killed, 0 survived, 0 invalid; restored build GREEN

@@ -1443,7 +1443,9 @@ void UiSession::consume(const GameEvent &e) {
         break;
     case GameEventKind::GameWon:
     case GameEventKind::Endgame:
-        if(e.text)append(UiTextChannel::Quest,e.text);
+        // A4-END1 (D-57). Both events carry the core's internal ending token
+        // ("victory" / "stranded"); it is no line the original prints, so it
+        // never reaches the transcript.
         // Batch 53A. game-won is the entry to ENDGAME.OVL (overlay-13 stub
         // 0x7c4a), which never returns to the dungeon loop.
         if(e.kind==GameEventKind::GameWon)enter_ending();

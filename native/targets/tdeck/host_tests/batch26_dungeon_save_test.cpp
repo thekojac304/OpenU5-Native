@@ -144,7 +144,13 @@ struct Harness {
     void turn_right() { ball(RawInputKind::TrackballRight); }
 
     // The device's System Menu (Alt+M): Resume, Save, Load / Save Management, ...
-    void menu_save() { raw_key('m', true); ball(RawInputKind::TrackballDown); key('\r'); raw_key('m', true); }
+    // Alpha 4 A4-SAVE2: Save Game opens Slots 1-3 on the journey's slot; Enter
+    // saves there, and an occupied slot asks "Overwrite Slot N?" (No first).
+    void menu_save() {
+        raw_key('m', true); ball(RawInputKind::TrackballDown); key('\r'); key('\r');
+        if (std::strncmp(rt->system_menu_view().title, "Overwrite", 9) == 0) { ball(RawInputKind::TrackballDown); key('\r'); }
+        if (rt->system_menu_open()) raw_key('m', true);   // A4-UI3: a successful save returns to the game; only a failed one leaves the menu open.
+    }
     void menu_load() {                                                    // Load / Save Management -> Continue Latest
         raw_key('m', true); ball(RawInputKind::TrackballDown); ball(RawInputKind::TrackballDown);
         key('\r'); key('\r');

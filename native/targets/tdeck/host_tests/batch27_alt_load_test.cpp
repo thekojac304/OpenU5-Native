@@ -140,7 +140,13 @@ struct Harness {
     // The two load frontends under comparison, and the two saves.
     void alt_save() { raw_key('s', true); }
     void alt_load() { raw_key('l', true); }                                // DeviceShortcut::Load
-    void menu_save() { raw_key('m', true); ball(RawInputKind::TrackballDown); key('\r'); raw_key('m', true); }
+    // Alpha 4 A4-SAVE2: Save Game opens Slots 1-3 on the journey's slot; Enter
+    // saves there, and an occupied slot asks "Overwrite Slot N?" (No first).
+    void menu_save() {
+        raw_key('m', true); ball(RawInputKind::TrackballDown); key('\r'); key('\r');
+        if (std::strncmp(rt->system_menu_view().title, "Overwrite", 9) == 0) { ball(RawInputKind::TrackballDown); key('\r'); }
+        if (rt->system_menu_open()) raw_key('m', true);   // A4-UI3: a successful save returns to the game; only a failed one leaves the menu open.
+    }
     void menu_load() {                                                    // Load / Save Management -> Continue Latest
         raw_key('m', true); ball(RawInputKind::TrackballDown); ball(RawInputKind::TrackballDown);
         key('\r'); key('\r');
@@ -278,8 +284,10 @@ void test_failed_loads() {
     expect(equivalent(snap(h), live, "missing/Alt+L"), "X1b", "missing save: Alt+L changed nothing (session, pool, mode, clock)");
     h.set_mark();
     h.menu_load();
-    expect(h.saw("No valid save") && equivalent(snap(h), live, "missing/menu"), "X1c",
-           "missing save: Continue Latest reports it and changes nothing either");
+    // Alpha 4 A4-SAVE2: the Load page lists Slot 1 empty and refuses it
+    // itself (no load is attempted); the live world is untouched all the same.
+    expect(std::strcmp(h.rt->system_menu_view().footer, "Slot 1 is empty") == 0 && equivalent(snap(h), live, "missing/menu"), "X1c",
+           "missing save: the Load page reports the empty slot and changes nothing either");
     h.raw_key('m', true);                                                 // close the menu the failed load left open
 
     // A fresh runtime: a real save, the play after it, then the stored copy is damaged.
@@ -299,7 +307,8 @@ void test_failed_loads() {
            "** damaged save: Alt+L rejected it and synchronized nothing (gold 999 kept, session and pool untouched) **");
     f.set_mark();
     f.menu_load();
-    expect(f.saw("No valid save") && equivalent(snap(f), before, "damaged/menu"), "X2c",
+    // A4-SAVE2: the damaged slot is listed damaged and the page refuses it.
+    expect(std::strcmp(f.rt->system_menu_view().footer, "Slot 1 is damaged and cannot load") == 0 && equivalent(snap(f), before, "damaged/menu"), "X2c",
            "damaged save: Continue Latest rejects it the same way");
     f.raw_key('m', true);
     tdeck::host_memory_save_forget_for_test();

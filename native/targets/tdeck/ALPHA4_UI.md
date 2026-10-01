@@ -156,6 +156,8 @@ D, the multi-slot implementation, was **not** done; §2.4 explains why and gives
 
 ### 2.4 D — Multiple manual save slots: deferred
 
+*(Implemented by A4-SAVE2, §4, to this design: slot 1 is the existing pair, one sequence across the card. Hardware validation pending.)*
+
 **Judgement: materially invasive for a UI batch.** The two-generation pair is the recovery mechanism of one journey, and repurposing it would remove recovery. Real slots need a pair each, which touches:
 - **The storage service:** path naming, the target rule (including the latent defect in §2.3), the InspectCache (sized `[2]`), `load_slot`, and `restore_newest` over N pairs.
 - **The `FrontendSaveSlot[2]` shape**, threaded through 12 call sites: the frontend, the System Menu, the runtime, both host stubs, and five tests.
@@ -442,3 +444,1093 @@ To protect the real save, the test works on a copy of the card's saves and resto
    - Boot and Continue: your own journey loads.
 
 **PASS** requires steps 1–6 as written, with no crash, lock or watchdog. **Report back:** the `FW`/`Git` lines and PASS/FAIL per step. If a serial log is attached, each save prints `SAVE_TARGET newest=<slot> accepted=<0|1> slot=<written> keep=<kept>`. At step 4 expect `accepted=0 slot=N`.
+
+## 4. A4-SAVE2 — manual save slots
+
+**Status: software complete. Hardware validation PENDING (§4.11). Not closed.** No commit or tag has been made. That waits for the hardware review, as in every Alpha 4 batch so far.
+
+This batch implements the design of §2.4. The storage and recovery rules of A4-SAVE1 (§3) are unchanged; they now run once per slot.
+
+**Baseline.** HEAD `09cc4600` on `main`, clean tree. Serial host suite 167/167 (139.2 s, `native/core/a4-save2-baseline-ctest.log`). The docs matched the code. The roadmap has no separate "manual load" task (§2.4 is one design, and §3 kept it deferred), so the load half is in scope.
+
+### 4.1 What the card held before, and what Continue did
+
+- **One journey, two generations:** `/ultima5/saves/alpha1-g{0,1}.{gam,ool,json,commit}`, each with a 32-byte v1 commit record (magic `0x31533555`, version 1, a 64-bit sequence, three CRC-32s).
+- **Save (A4-SAVE1):**
+  1. Read both commits.
+  2. Ask the gate about the newest (`generation_accepted`: file CRCs every time, plus the full gate unless the InspectCache knows that commit).
+  3. `choose_save_target()` picks the target. The write order is temps+fsync, CRC readback, three renames, the commit last, then the post-write gate.
+- **Continue / Alt+L / the "Latest" row** = `load()`: the newest generation the gate accepts, else the other. **"Backup"** = `load_slot(physical generation)`.
+- **The New Journey save** went into the same pair, so the journey it replaced became the Backup.
+
+### 4.2 The architecture: three logical slots, one A/B pair each
+
+| Player sees | Physical files (in `/ultima5/saves/`) |
+|---|---|
+| Slot 1 | `alpha1-g0.*`, `alpha1-g1.*` — **the pre-SAVE2 pair, unchanged** |
+| Slot 2 | `alpha1-s2-g0.*`, `alpha1-s2-g1.*` |
+| Slot 3 | `alpha1-s3-g0.*`, `alpha1-s3-g1.*` |
+
+Each generation has `gam`, `ool`, `json` and `commit`, plus `.tmp` names during a save. No name is a prefix of another slot's. The longest path, `/sd/ultima5/saves/alpha1-s3-g1.commit.tmp`, is 41 characters. Format details:
+- The commit record (v1), the GAM/OOL/sidecar encodings and the save directory are byte-identical in layout.
+- The slot is named by the file name only.
+
+**One sequence across the card.**
+- A save's sequence is above every commit on the card and above its own pair's newest: `choose_save_target(..., card_newest)`. Its default of 0 is exactly A4-SAVE1's rule.
+- So "the slot saved last" is the slot whose newest commit has the highest sequence.
+
+**The same save transaction for every slot.**
+- `AlphaSaveService::save(..., slot)` runs the A4-SAVE1 transaction unchanged, on the chosen slot's pair: the same stages, order and `SAVE_TARGET` rule (the newest accepted generation is kept; a refused newest is the one replaced).
+- It reads the other slots' commit records (32 B each) and nothing else of them. It writes only the chosen slot's files.
+- `slot = -1` means "the slot holding the card's newest commit; on a blank card, Slot 1". That is where every pre-SAVE2 save went.
+
+**Loading.**
+- `load_slot(slot)` restores that slot's newest accepted generation, else the one before it. This is `restore_newest()` over its pair, the same A4-SAVE1 selection and gate.
+- Continue is `load()` (§4.4).
+
+**The player never sees A/B.**
+- The menus list slots.
+- A slot whose newest generation is refused is listed as "Last save damaged; Enter loads the one before". That is the only time the recovery generation shows.
+- The UI2 Backup row is gone (§4.7).
+
+API changes:
+- `alpha_save.h`: `kSlots`, `save(..., int slot = -1)`, `load_slot(logical slot)`, `inspect_catalog(FrontendSaveCatalog&)`, `inspect_generations(slot, [2])` (`inspect()` = Slot 1's, kept for the storage tests), `last_slot()`.
+- `frontend.h`: `FrontendSaveCatalog` / `SaveSlotStatus {Empty, Saved, Recovered, Damaged}`, `continue_slot()`, `first_empty_slot()`, `slot_loadable()`, `format_slot_row()`, `format_slot_detail()`. These replace `FrontendSaveSlot[2]` in the menus.
+
+### 4.3 Migration and compatibility
+
+**There is no migration step, by construction.**
+- The pre-SAVE2 pair **is** Slot 1. Nothing is copied, renamed, converted or rewritten on boot, listing or load.
+- A card from Alpha 3, UI1, UI2 or SAVE1 is therefore Slot 1 byte for byte.
+- Repeated boots cannot remigrate or duplicate anything (test M3 counts zero writes, renames and unlinks over three boots).
+- There is no "old versus new structure" to reconcile: the old structure is one of the new slots.
+
+**Downgrade.**
+- An older firmware reads only `alpha1-g{0,1}`, i.e. Slot 1, and ignores `alpha1-s2-*` and `alpha1-s3-*`.
+- A SAVE2 save into Slot 1 is exactly what an older firmware reads as its newest (test M6, through an independent legacy reader).
+
+**Downgrade, save, upgrade.**
+- The older firmware numbers its Slot 1 save from Slot 1's own newest, so it can equal or trail a Slot 2/3 sequence.
+- The tie goes deterministically to the lower slot (M7).
+- If it trails, Continue names the other slot. Nothing is lost: every slot still loads.
+
+**Unchanged:** `settings.json`, the resource pack (UI1's, 2,042,554 B, CRC `0x9c10874f`) and the audio pack. **No SD-card change is needed.**
+
+### 4.4 Continue, Alt+S / Alt+L, New Journey
+
+**Continue** (title Continue):
+1. Order the slots by their newest commit's sequence, newest first; a tie goes to the lower slot.
+2. Restore each in turn as `load_slot` does (its newest accepted generation, else the one before), until one restores.
+
+What this means in practice:
+- It is **not** "Slot 1". It resumes the journey saved most recently, whichever slot holds it (tests S1–S3, R5).
+- A slot whose latest save is damaged restores the save before it, not another slot's (S4).
+- Continue moves on to the next most recent slot only when a slot has nothing loadable (S5).
+- On a pre-SAVE2 card this is the pre-SAVE2 load exactly.
+- The title shows the slot: "Latest save: *leader*, *place*" and "Enter continues Slot N; Mic returns".
+
+**The journey's slot.** `last_slot()` is the slot of the last successful save or load. It is RAM only, never on the card.
+- **Alt+S** saves the live journey into its own slot, without a question. This is the quick save, as before, and the save it replaces becomes that slot's hidden recovery copy.
+- **Alt+L** reloads the journey's slot, not Continue's (R2).
+- With no journey slot yet (e.g. a Developer entry), Alt+S uses the slot holding the card's newest save (a blank card: Slot 1), as every pre-SAVE2 save did, and Alt+L is Continue.
+
+**Create New Character** takes the lowest empty slot, without a question. The main-menu footer names it ("New journey: saved in empty Slot 2").
+- With every slot in use it lists the slots ("Every slot is in use. Choose one to replace").
+- Then it asks **"Replace Slot N?"**, with **No, keep it** first. No and Mic return, and nothing is written until the character is complete.
+- Until A4-SAVE2 a new journey always demoted the current save to the Backup.
+
+### 4.5 The menus
+
+| Screen | A4-UI2 | A4-SAVE2 |
+|---|---|---|
+| System Menu rows | Resume · Save Game · Load Game · Settings · (Developer) · Return to Title | unchanged |
+| Save Game / Load Game footers | "Saves now; the previous save becomes the backup" / "The latest save and its backup" | "Choose a slot to save this journey in" / "Choose a saved journey to load" |
+| Save Game | saved at once | **Save Game** page: "Slot 1: *leader*, *place*" / "Slot 2: empty" / "Slot 3: damaged". The cursor starts on the journey's slot (none: the first empty). An empty slot saves at once. |
+| Occupied slot | — | **"Overwrite Slot N?"**, subtitle the slot's row, rows **No, keep it** (selected) / Yes, overwrite. No: back on the Save page, "Slot N kept". Back: the Save page. Yes: saves. |
+| After a save | "Saved." / "Saved. The previous save is now the backup." | "Saved in Slot N." / "Save failed. Your previous save is kept." |
+| Load Game | Latest / Backup | Slots 1–3, the cursor on the journey's slot (none: Continue's). Footer: "4-5-139 13:05, party of 2. Enter loads" · "Last save damaged; Enter loads the one before" · "Damaged: this slot cannot be loaded" · "Empty slot". Enter on an empty or damaged slot: "Slot N is empty" / "Slot N is damaged and cannot load", and nothing loads. |
+| Journey Onward | subtitle names the latest save | the same, and the footer names Continue's slot |
+| Title Load Game | Latest / Backup | the same slot list; Back returns to Journey Onward |
+| Create New Character footer | "New game: your current save becomes the backup" | "New journey: saved in empty Slot N" / "Slots full: you choose one to replace" |
+
+- Rows are still cut to 36 cells; every footer fits 50 (Z1, Z2).
+- The renderer is unchanged: the pages are ordinary menu views. No golden changed. `a4_ui1_chrome_runtime` G1's System Menu root is identical.
+- The Save page's footer uses the save wording ("Enter replaces it").
+
+### 4.6 Building the slot list: what it reads
+
+`inspect_catalog()`, per slot:
+1. Read its two commit records (32 B each; an empty slot costs two failed opens).
+2. The **newest** generation: its summary from the save list when the list holds an accepted summary for that exact commit; otherwise read and gate it.
+3. The one before it **only when the newest is refused**.
+
+Each staged document is released before the next generation is read, so a list never holds two documents. The status is exactly what `load_slot` would do. A save already records its own generation in the list, so the menu after a save costs the commit reads alone. Measured on the host over the real `alpha_save.cpp` (tests H1–H4):
+
+| Card | Opens (failed) | Bytes read | Generations staged |
+|---|---|---|---|
+| Pre-SAVE2 shape (Slot 1 pair only), cold, A4-SAVE2 list | 5 (4) | 5,138 | 1 |
+| The same card, the pre-SAVE2 list (both generations) | 8 | 10,212 | 2 |
+| Three slots × two generations, cold | 15 (0) | 15,414 | 3 (the newest of each) |
+| The same, warm (unchanged card) | 6 | 192 | 0 |
+
+- **Small-heap peak.** The cold three-slot list peaks at one staged document's worth (378,751 host bytes, equal to a single pair's verify) and keeps 32 B.
+- **What to expect on the device (estimate, not measured).**
+  - Cold: H-202 measured about 390 ms per staged generation, so an existing one-journey card lists in about half the pre-SAVE2 cold time. A full three-slot card costs about 3 × 390 ms, once per boot.
+  - Warm: six commit reads (the pre-SAVE2 warm list was two, about 83 ms).
+  - Each open logs one `SAVE_CATALOG slot1=… slot2=… slot3=… staged= bytes= commit_us= verify_us= total_us=` line on serial (§4.11 asks for it).
+- **Validation is not weakened for speed.** Every load re-verifies; a stale list can never make a damaged generation load (a3_04g V3).
+
+### 4.7 Tests
+
+**New ctest `a4_save2_slots_runtime`: 65 checks.** It runs the real `alpha_save.cpp` over the fake SD card (sd_shims, as `a4_save1_recovery_runtime`) and the real `AlphaRuntime`. The layout names are written out in the test, never taken from production. A fresh service is a reboot.
+
+| Group | What it proves |
+|---|---|
+| E1–E3 | A card with no directory or an empty one lists three empty slots (six failed commit opens, no writes); Continue and every slot load refuse and change nothing. |
+| I1–I7 | Distinct states (gold, karma, position, clock) saved to Slots 1, 2, 3: each save creates only its own four files, the other slots stay byte for byte, and each slot restores its own state after a reboot. A second Slot 2 save rotates only Slot 2's pair (sequence 4 = the card's newest + 1) and keeps its previous generation valid. |
+| S1–S6 | Continue restores the slot saved last (not Slot 1). A torn latest in that slot restores its previous save, not a newer-numbered other slot. A wholly damaged slot passes Continue to the next most recent. A tie goes to the lower slot, in the list and in the load. |
+| O1–O5 | Through the real System Menu: an empty slot saves without a question. "Overwrite Slot 2?" starts on No. No and Back perform zero writes, renames or unlinks, and the whole card is byte for byte (closing the menu on the question leaves every save byte for byte). Yes replaces the slot. The replaced save is that slot's fallback. |
+| D1–D7 (+D1r–D6r) | Slot 2's newest torn (the A4-SAVE1 case), then each fault stage of the save: temp write, CRC readback, gam rename, json rename, commit rename, and a post-write check that fails after the commit. The save fails. Slot 2's previous save is byte for byte and restores. The bad candidate is not listed. Slots 1 and 3 are byte for byte and restore their own. The retry succeeds. D7: a failed first save into an empty slot leaves it listed empty. |
+| G1–G13 | Inside one slot: both valid; newer torn; older torn; GAM truncated; commit missing, bad magic, unknown version, truncated; semantically refused; sequence order against file order; equal sequences; both refused (nothing restores, live game untouched); saving into a wholly damaged slot. Each also checks the list's status and Slot 1. |
+| M1–M7 | A pre-SAVE2 card written by an **independent legacy writer**, not `AlphaSaveService`. It lists as Slot 1, and Continue and Slot 1 restore it with zero writes, renames and unlinks, over three more boots. Its own fallback works. A Slot 2 save leaves the old pair byte for byte and still the newest for an independent older-firmware reader. A save naming no slot rotates the old pair only. After a downgrade, the tie goes to Slot 1. |
+| R1–R7 | The runtime: Slot 2 loaded, then Alt+S saves Slot 2 (not the newest Slot 3). Alt+L reloads Slot 2 when Continue would pick Slot 3. Save Game to Slot 1 moves the journey. Create New Character through the title fills the empty Slot 3 alone; Continue after a reboot restores it (leader Nova). With every slot in use, "Replace Slot 1?" starts on No and No writes nothing; Yes replaces Slot 1 alone. |
+| H1–H4 | The list's opens, bytes and small-heap peak (§4.6). |
+
+**SAVE1 regression.**
+- `a4_save1_recovery_runtime` is **unchanged**: not one line of the test was edited. It passes **45/45** over Slot 1, so every A4-SAVE1 guarantee holds for the pre-SAVE2 pair.
+- `a3_04g_storage_runtime`, `batch28_save_validation`, `batch24`–`batch27`, `a3_hf4_load_transient_runtime` and `batch53*` are green; the changes to them are listed below.
+
+**No RED-first run.** The tested API (`inspect_catalog`, `save(slot)`, the slot menus) does not exist at HEAD, so the new tests cannot build against it. The proof is the mutation driver instead:
+- `native/core/tools/a4_save2_mutation_check.py <build> [ids]` runs **25 mutants** against `a4_save2_slots_runtime`, plus `a4_save1_recovery_runtime`, `a4_ui2_save_menu_runtime`, `a3_04g_storage_runtime` and `frontend_tests` where each is the natural witness.
+- **Result: 25 / 25 killed, 0 survived, 0 invalid; restored build GREEN** (`native/core/a4-save2-mutation.log`). It covers every class the brief names:
+
+| Class | Mutants |
+|---|---|
+| Wrong-slot selection | S1 (all slots write Slot 1's names), S2 (Slots 2/3 misnumbered), S3 (the requested slot ignored), S19 (Alt+S ignores the journey slot), S20 (Alt+L reloads Continue), S23 (the menu's slot dropped), S24 (the save list keyed by Slot 1) |
+| Destroyed fallback | S5 (a refused newest overwrites the older), S7 (no in-slot fallback on load) |
+| Migration choosing the wrong source | S17 (the old pair not Slot 1), S18 (a no-slot save on a blank card goes to Slot 3) |
+| Overwrite-No modifying the slot | S12 (the question starts on Yes), S13 (No saves), S14 (an occupied slot saved without asking) |
+| Invalid generation accepted | S8 (the list skips the gate), S11 (a semantically refused generation passes verify) |
+| Other | S4 (no card-wide sequence), S6 (Continue oldest first), S9 (the list never looks behind a refused newest), S10 (the list stages the backups: the slow-SD cost), S15/S16 (an empty slot offered for loading, System Menu / title), S21/S22 (New Journey ignores the empty slot / asks with Yes first), S25 (the menu is not given its own save) |
+
+- The first run had two survivors, S16 and S25. Neither was a production defect: no runtime check pressed Enter on the title's empty slot, and none re-read the Load page after an in-menu save. `a4_ui2_save_menu_runtime` gained F3b and M11, and the driver gained the `frontend_tests` and `a3_04g` witnesses. On that run S1–S3 had also killed the test through an exception; a missing file is now a RED, not a crash.
+
+**Intentional expectation updates.** The tests changed only where the menus changed:
+- **`a4_ui2_save_menu_runtime`:** rewritten for the slot presentation; it keeps UI2's M/L/F/Z purposes. 23 → 33 checks: M1–M11, L1–L11, F1–F7 with F2b and F3b, Z1–Z2. It includes the SAVE1 case inside a slot (L6–L8).
+- **The menu-save helpers:** a3_01, a3_02 and a3_03 runtime, and batch24, 26, 27, 28, 53 and 53a. Save Game now opens the Save page: Enter picks the journey's slot, and an occupied slot asks, answered Yes. What each helper saves is unchanged.
+- **The Load page refuses an empty or damaged slot itself** (footer notice), where it used to attempt the load and print "No valid save". The "nothing changed" half of each check is kept:
+  - `batch27` X1c/X2c;
+  - `a3_hf4` L7.1m;
+  - `batch28` G1/G4.
+  
+  Alt+L and the title still attempt the load and print it.
+- **`batch28`:** the OLD oracle is now a card holding OLD alone (the Backup row that loaded it is gone). The physical-generation constants are renamed (`kOldGen`/`kNewGen`). F3 is Slot 1 with its newest refused: listed so, and the load falls back, OLD whole. F3b: a refused older generation stays hidden, and Slot 1 loads NEW.
+- **`a3_04g_storage_runtime`:**
+  - `load_page()` reads Slot 1's row and footer.
+  - K3a, K5a, K6, K7, K8 and K10 compare with a cold `inspect_catalog()`, through the runtime's service (`save_service_for_test()`).
+  - K5a: a deleted newest shows the older generation.
+  - K6: "Last save damaged; Enter loads the one before".
+  - K10: the clock is changed before the in-menu save, and the question is answered.
+  - V3: both generations are corrupted, since a slot load falls back.
+  - K1 (two 32-byte reads per open on a one-slot card) is unchanged.
+- **`frontend_test`:** the Load flow by slot; Recovered and Damaged; the New Journey slot choice.
+- **Signature only:** `a3_01_audio_contract`, `a3_05_audio_mute`, `a4_ui1_chrome_runtime` (`SystemMenuSession::open(settings, catalog)`).
+- **The memory stub** (`alpha_save_memory_host_stub.cpp`) holds three pairs and calls the same production target, gate and restore functions. Its seams act on the journey slot (the one with the card's newest commit), so a one-journey test sees what it saw.
+
+### 4.8 Host results
+
+**Serial suite: 168/168** (137.1 s, `native/core/a4-save2-ctest.log`). That is 167 plus the new `a4_save2_slots_runtime`. Zero project warnings; the one GCC `stl_uninitialized.h` false positive predates Batch 19.
+
+| Test | Result |
+|---|---|
+| `a4_save2_slots_runtime` (focused) | 65 / 65 |
+| `a4_save1_recovery_runtime` (A4-SAVE1, unchanged) | 45 / 45 |
+| `a4_ui2_save_menu_runtime` | 33 / 33 |
+| `a3_04g_storage_runtime`, `batch28_save_validation`, `batch24`–`27`, `a3_hf4_load_transient_runtime`, `batch53*`, `frontend` | green |
+
+### 4.9 Firmware
+
+- **Build:** `idf.py -B build-a4-save2 reconfigure`, then `ninja -j 4`. It built the first time, with zero project warnings. `PROJECT_VER` is `4.0.0-alpha4-save2-debug` (`native/core/a4-save2-fw-{configure,build}.log`).
+- **Size:**
+  - binary `0xf3980` (997,760 B), **+3,728 B** against A4-SAVE1 (`0xf2af0`);
+  - 50,816 B (5 %) of the 1 MiB slot is free. ESP-IDF's "nearly full" notice has shown since UI2.
+- **By section:** `.text` +2,864, `.rodata` +864, internal `.bss` **+272** (the menus' three-slot lists replacing two generation summaries). IRAM and `.data` are unchanged (`a4-save2-fw-size-diff.log`, against `build-a4-save1`).
+- **PSRAM:** the save workspace grows by about 0.6 KB for the per-slot save list and commit records (host 64-bit build: 11,888 B).
+- **Card:** a full card holds 6 generations × about 5–7 KB. The 32 KiB free-space rule is unchanged.
+- **Built after the batch commit:** as always, the hardware image must be rebuilt after the commit so it embeds its Git hash (`idf.py reconfigure`).
+
+### 4.10 Limitations and notes
+
+1. **Device timing is estimated, not measured.** Host counts prove the list reads one generation per slot. The device's cold and warm list times need the `SAVE_CATALOG` serial line from §4.11.
+2. **A replaced slot's hidden copy.** After Create New Character replaces a slot, that slot's recovery generation is the replaced journey until the next save into the slot.
+3. **Downgrade, save, upgrade** can make Continue name another slot first (§4.3). Nothing is lost.
+4. **Continue's last resort.** When the most recent slot has nothing loadable, Continue restores the next most recent slot, which may be another journey. The title footer names the slot.
+5. **Loading keeps its old behaviour.** A menu load still does not ask about unsaved progress, as before.
+6. **Out of scope:** named saves, timestamps beyond the game date shown, more slots, and backup selection.
+
+### 4.11 Hardware checklist (A4-SAVE2 image)
+
+Do the steps in order. Each needs only the T-Deck, except steps 0, 2, 8 and 11, which need the SD card in a PC. The places A–D can be anywhere you will recognise. Z-stats (the party's gold and food) is a second check of each state.
+
+0. **Protect your real save.** With the T-Deck off, copy the SD card's whole `ultima5/saves/` folder to the PC (for example `saves-before-a4-save2/`). Flash the image. The boot screen must show `FW 4.0.0-alpha4-save2-debug` and the Git line of the image you were given (built after the A4-SAVE2 commit). **Stop if it does not.**
+1. **Your existing save is Slot 1 (migration).**
+   - Journey Onward: the subtitle names your journey, and the footer reads "Enter continues Slot 1".
+   - Load Game: **Slot 1** shows your leader and place; Slots 2 and 3 read "empty".
+   - Continue: your journey loads where you left it.
+2. **No migration writes (PC).**
+   - Power off and put the card in the PC. `ultima5/saves/` still holds only `alpha1-g0.*` and `alpha1-g1.*`, eight files, with the same dates as the backup from step 0.
+   - Put the card back.
+3. **Empty behaviour.**
+   - Power off. On the PC, rename `ultima5/saves` to `ultima5/saves-hold`, then put the card back and boot.
+   - Journey Onward reads "No saved journey on this card".
+   - Load Game shows Slot 1, 2 and 3 all "empty". Enter on one says "Slot 1 is empty" and nothing loads.
+   - Main menu: highlight Create New Character. The footer reads "New journey: saved in empty Slot 1".
+   - Create a character (any name). In the game, Alt+M → Save Game: Slot 1 shows the new leader, and Slots 2 and 3 read "empty".
+4. **Three distinct saves.**
+   - Walk to place **A** and note Z-stats. Save Game, Slot 1, Enter: the question **"Overwrite Slot 1?"** appears with **No, keep it** highlighted. Press Down, then Enter on Yes. The footer reads "Saved in Slot 1."
+   - Walk to place **B**, note Z-stats, then Save Game, move to Slot 2, Enter. It saves at once, with no question: "Saved in Slot 2."
+   - Walk to place **C**, note Z-stats, then Save Game, Slot 3, Enter: "Saved in Slot 3."
+5. **Restore.**
+   - Load Game shows three rows with their places; each row's footer gives its date and time.
+   - Load Slot 1: you are at A with A's Z-stats. Load Slot 2: B. Load Slot 3: C.
+6. **Overwrite NO.**
+   - Load Slot 2 (you are at B). Walk to a new place **D**.
+   - Save Game: the cursor is on Slot 2. Press Enter. At "Overwrite Slot 2?" press Enter on **No, keep it**. The footer reads "Slot 2 kept".
+   - Press Enter again, then Mic at the question: you are back on the Save page. Close the menu.
+   - Load Game → Slot 2: you are back at **B**, not D.
+7. **Overwrite YES.**
+   - Walk to D again. Save Game → Slot 2 → Enter → Down → **Yes, overwrite** → Enter: "Saved in Slot 2."
+   - Load Slot 1: A. Then Slot 2: **D**.
+8. **Continue.**
+   - Alt+M → Return to Title → Journey Onward. The subtitle names D, and the footer reads "Enter continues Slot 2". Continue: you are at D.
+   - Load Slot 3 (C), walk a few steps, press **Alt+S** ("Save complete"), and remember where you stand (**C'**).
+   - Return to Title. The footer reads "Enter continues Slot 3". Continue: you are at C'.
+   - Load Slot 1 (A), walk a few steps, then **Alt+L**: you are back at A (Slot 1), not at the newest save (Slot 3).
+9. **Power cycle.**
+   - Power off and on. Journey Onward: the footer names Slot 3. Continue: C'.
+   - Load Game: the three rows are as before, and each slot loads its own state (A, D, C').
+10. **Every slot in use.**
+    - Main menu: highlight Create New Character. The footer reads "Slots full: you choose one to replace". Press Enter: the list "Every slot is in use. Choose one to replace".
+    - Pick Slot 1. The question **"Replace Slot 1?"** has **No, keep it** highlighted. Press Enter (No): back on the list. Press Mic: the main menu.
+    - Journey Onward → Load Game → Slot 1: still A.
+11. **Optional: recovery inside a slot (PC).**
+    - Power off. In `ultima5/saves/`, find the newest `alpha1-s2-g0.*` / `alpha1-s2-g1.*` pair by modified time (that is D). Delete only its `.json`.
+    - Boot. Load Game: Slot 2's footer reads "Last save damaged; Enter loads the one before". Enter: you are at **B**.
+    - Slots 1 and 3 still load A and C'.
+12. **Restore your real save.**
+    - Power off. On the PC, delete `ultima5/saves` (the test saves) and rename `ultima5/saves-hold` back to `ultima5/saves`. The copy from step 0 is the spare.
+    - Boot and Continue: your own journey loads as Slot 1.
+
+**PASS** requires steps 0–10, plus 11 if you do it, with no crash, lock or watchdog.
+
+**Report back:**
+- the `FW`/`Git` lines;
+- PASS/FAIL per step;
+- if you have a serial log, the `SAVE_CATALOG … total_us=` line of the first System Menu open after boot at step 9, and of a second open. Those are the cold and warm list times on a full card.
+
+### 4.12 Status
+
+| Axis | State |
+|---|---|
+| Software (host suite, focused, SAVE1, mutations, firmware build) | **complete** |
+| Hardware validation (§4.11) | **pending** |
+| Closed (commit, post-commit image, hardware PASS, closeout) | **no** |
+
+## 5. A4-SAVE3 — original PC save import / export
+
+The preservation goal: a save written by the original PC/DOS Ultima V can be brought into a Native slot, and a Native slot can be written back out as files the DOS game loads. This section is the compatibility contract. §5.1–§5.5 are the investigation, done before any production code changed; §5.6 onward is what was built on it.
+
+**Baseline.** The working tree is A4-SAVE2 (§4, uncommitted). A fresh serial suite on it: **168/168**, 135.69 s (`native/core/a4-save3-baseline-ctest.log`).
+
+### 5.1 The original PC save set (evidence, not the file extension)
+
+The 1988 game writes a save in exactly one place, the Quit & Save handler `CAST2.OVL:0x10FE` (`re/notes/save-window-writer.md` §1, `re/notes/gfloor-146-acta.md` §2):
+
+- `0x1185-0x1194`: **`SAVED.GAM`**, one `write` of `0x1060` = **4192 bytes** starting at `DS:0x55A6`. The file is a verbatim dump of the kernel's live-state window `[0x55A6, 0x6606)`; nothing is normalised between the "Y" and the dump.
+- `0x1197`: **`SAVED.OOL`**, **512 bytes** from `0xB21E`: the BRIT block (256 B) followed by the UNDER block (256 B). Just before, `0x113E-0x1157` read the on-disk `UNDER.OOL` and `BRIT.OOL` into those buffers. The `.OOL` files are where the world the party is **not** in parks its 32×8-byte object table; the live table of the current world is inside the window (`DS:0x5C5A` = `SAVED.GAM` +0x6B4).
+- Journey Onward (`INTRO.OVL:0x0f26-0x0f89`) reads `SAVED.OOL` back and splits it into `BRIT.OOL`/`UNDER.OOL`; it loads `SAVED.GAM` verbatim into the window.
+
+**Accepted source files:** `SAVED.GAM` (exactly 4192 B) and `SAVED.OOL` (exactly 512 B), from the directory the DOS game runs in. Both are required: the DOS game always writes both, and Journey Onward reads both. `BRIT.OOL`/`UNDER.OOL` are scratch files the game regenerates from `SAVED.OOL`; they are not part of a save. `INIT.GAM`/`INIT.OOL` are the new-game templates, not saves.
+
+**Fixture.** `original/u5/ultima5/SAVED.GAM` + `SAVED.OOL` (dated 2021-09-25, git-ignored like every original file) is a genuine DOS save that the Native writer never touched: the Avatar "Kojac", Shamino and Iolo in Lord British's Castle (location 17, floor 0, (15,20)), 9,200 gold, year 139 month 4 day 14 03:39, wind West, and 31 NPC slots live in the window's NPC tables.
+
+### 5.2 What a Native save generation holds
+
+A slot generation is four files (`alpha1-…g<N>.{gam,ool,json,commit}`, §4.2).
+
+**`.gam` — the original format, rebuilt from INIT.GAM.**
+- *Format:* the same 4192-byte `SAVED.GAM` layout (`docs/formats/tlk-npc-dataovl-gam.md` §4). No envelope, no Native bytes in unused space.
+- *How it is written:* `export_native_state()` (`native/core/src/save_core.cpp` → `persistence.cpp export_native`) copies a **template** and patches the fields the codec models: the 16 character records, the scalars (food … torchTurns), clock, position, inventory arrays, moonstones, LB artifacts, shards, special items, quest bytes (`0x322-0x332`, word seals `0x32A`, doom bits `0x624`), the NPC dead/met bitmaps (`0x5B4`/`0x634`), the party/vehicle record `0x6B4-0x6BB`, and — outdoors — the monster slots of the object table. The template is **always INIT.GAM** (`alpha_runtime.cpp`: every `save_.save(…, resources_.initial_gam, …)`).
+- *Measured* (scratch probe, recorded in `native/core/a4-save3-investigation.log`): the real DOS `SAVED.GAM`, imported with no sidecar and exported again:
+  - with the DOS file itself as the template: **0 of 4192 bytes differ.** Every field the codec reads, it writes back exactly;
+  - with INIT.GAM as the template (what Native does): **750 bytes differ.** They are the unmodelled bytes. In this town save almost all are the town's NPC tables `0x6BC-0x1017` (object slots, the live schedule `0x7B8`, NPC records `0x9B8`, path buffers `0xBB8`, type bytes `0xFF8`; layouts in `re/notes/npc.md` §0.2/§0.4), plus `0x2D2` (combat scratch), `0x2E1` (moongate animation), `0x2E9-0x2EC` (combat flags, **wind**), `0x2FF` (light radius) and `0x3A9-0x3B2` (the open-door tracker, **sail direction**, drunk timer, shadowlord-here).
+- *Conclusion:* byte-compatible **format**, not byte-identical **content**. Everything Native needs to resume is in `.gam` + `.json` together; the `.gam` alone lacks the sidecar-only state of §5.3.
+
+**`.ool` — the original format, the active world only.**
+- *Original role:* the parked object tables of both worlds (§5.1).
+- *Native role:* `build_ool()` copies the pack's `init.ool` (= an empty BRIT block ++ `INIT.OOL`, byte-identical to the `SAVED.OOL` the 1988 new game seeds, `FONT.OVL:0x0de7`) and, only when the party is outdoors, writes the current world's block: slot 0 (vehicle tile, x, y, floor, hull, skiffs) and the monsters. **No Native load ever reads it** (only its size and CRC are checked).
+- *Measured:* with the DOS `SAVED.OOL` as template the rebuild is **0 of 512** bytes off; with `init.ool` it is 25 off for this save. (The fixture's `SAVED.OOL` happens to be the new-game one.)
+- *Conclusion:* byte-compatible format; enough, with `.gam`, for DOS to load. It never carries a parked vehicle (§5.3, `worldObjects`).
+
+**`.commit` — Native save management only.** 32 bytes, written raw (`AlphaSaveCommit`): magic `0x31533555`, version 1, a 64-bit card-wide sequence, and the CRC-32 of each of the three files (plus 4 uninitialised padding bytes). It is written after the three files are renamed into place and is never needed from, or given to, the PC.
+
+**`.json` — the Native sidecar.** `{"version":1, "qol":{…}, "gameState":{…}}`, the keys of `persistence.cpp`'s whitelist. A sidecar-less import (`load_native_state(gam, nullptr, …)`, exactly how every New Journey loads INIT.GAM) starts from `empty_sidecar()`. §5.3 classifies every key.
+
+### 5.3 The sidecar, field by field
+
+Classes: **1** canonical (needed to resume, not recoverable from the original files) · **2** derived (reconstructable from the `.gam`/`.ool`, the game's own data files, or by a rule the runtime already runs) · **3** Native-only (no DOS equivalent) · **4** cache · **5** save-system metadata. "Codec" = Native's `.gam` codec already carries it. "B*n*" = carried by the SAVE3 bridge (§5.5).
+
+| Key | Class | 1988 home | Import from a PC save | Export to a PC save |
+|---|---|---|---|---|
+| `version` | 5 | — | written as 1 | not written |
+| `qol.journal` | 3 | — (retired reference feature, no reader) | `[]` (`empty_sidecar`) | omitted |
+| `qol.explored`, `qol.treasuryLoot` | 3 | — (legacy; never written by Native) | absent | omitted |
+| `gameState.transport` | 2 | derived from `g_transport_tile` `0x2D6` | **B9** `transport_mode(tile)` (the empty sidecar's `"foot"` was wrong aboard a vehicle) | `0x2D6` (codec) |
+| `questFlags["search:N"]` | 2 | "found once" bitmap `0x2B6` (15 B; `SJOG:0x0514`, bit `1<<(N&7)` at `+N>>3`) | **B1**, N = 0…112 except 13/14/15 (gated separately) | **B1** |
+| `questFlags["word-spoken:33…40"]` | 2 | bit 7 of `0x32A+i` | codec | codec |
+| `questFlags["shadowlord-dead:…"]` | 2 | `0x322-0x324` ≥ 0x80 | codec | codec |
+| `questFlags["in-doom"]` | 3 | none identified (set on entering Doom) | absent | omitted |
+| `questFlags["game-won"]` | 3 | none (1988 never saves after the win; Native refuses to) | absent | omitted |
+| `openDoors` | 2 | `0x3A9-0x3AC`, but every 1988 load zeroes it (`TOWN:0x0408`→`0x041d`), as Native's load does | `[]` | omitted (DOS clears it on load) |
+| `mapOverrides` (location 0, horse/skiff tiles) | 2 | object-table records | **B10** from the tables | **B10** into the tables |
+| `mapOverrides` (everything else) | 3 | none: 1988 re-reads every map from disk (`DS:0x6608` is outside the window) | absent | omitted |
+| `skullTreeFoundDay` | 2 | `0x20C` (`[0x57b2]`) | **B6** | **B6** |
+| `reagentPatchFoundDay` | 2 | `0x2B2-0x2B4` | **B7** | **B7** |
+| `overworldEnemies` | 2 | object-table slots 1–23 of the live world | codec (outdoors); `[]` in a town (Native clears them on entry) | codec |
+| `worldObjects`: frigates at location 0 | 2 | object-table records (live table or parked `.OOL` block) | **B10** | **B10** |
+| `worldObjects`: interior chests/props/plot items | 2 | the town's NPC slots; re-seeded from the `.NPC` file on every map entry (`TOWN:0x1694`) | derived: fresh map entry (§5.6) | omitted (DOS re-seeds on entry) |
+| `worldObjects`: underworld plot items | 2 | re-created on arrival | derived: `hydrate_underworld_plot` | omitted |
+| `worldObjects`: search loot, summoned shadowlord | 3 | would be object records; not bridged | none | omitted |
+| `lightSpellMins` | 2 | `0x300` | **B3** | **B3** |
+| `timeSpell`, `timeSpellTurns` | 2 | `0x2D4`, `0x2E8` (0 = none) | **B8** | **B8** |
+| `wind` | 2 | `0x2EC` (0 calm … 4 west) | **B2** | **B2** |
+| `windDriftCtr` | 2 | `0x2DD` | **B4** | **B4** |
+| `sailDir` | 2 | `0x3AF` | **B5** | **B5** |
+| `shipHull`, `shipSkiffs` | 2 | party record `0x6B9`/`0x6BB` | codec outdoors; in a town the runtime default (hull 99) — the value is replaced from the ship's own record when boarding | codec |
+| `hmsCapeToggle` | 3 | `DS:0xA524`, outside the window: 1988 never saves it | 0 | omitted |
+| `shadowlordLocs`, `shadowlordSummoned`, `shadowlordDoomBits` | 2 | `0x322`, `0x325`, `0x624` | codec | codec |
+| `dungeon` | 1 (as Native stores it) | `g_dng_map 0x3B4`, facing `0x105D`, the wanderer's object record | **not bridged: a save inside a dungeon is refused** | **refused** |
+| `npcWalk` | 2 | the window's NPC tables `0x7B8-0x105B` | derived: fresh map entry at the saved hour (§5.6) | omitted: not bridged (§5.5 L1) |
+
+Captured into the live document but persisted **nowhere** by Native, before and after SAVE3: `wornCrown`, `drunkTurns` (`0x3B1`), `chunkOrigin` (render-only). Neither direction carries them.
+
+**Is the JSON fundamentally required?** No. For a PC save it is reconstructable: every class-2 key comes from the `.gam`/`.ool`/data files or a runtime rule, and every class-3/5 key has a documented default. Only `dungeon` (class 1 as stored) has no bridge, and it only exists inside a dungeon.
+
+### 5.4 Two latent Native codec gaps found on the way
+
+Both were measured with a synthetic outdoor variant of the fixture (party at (0x50,0x60), a frigate record in object slot 30):
+1. **Sidecar-less vehicles are refused.** `import_native` turns a vehicle record into a reference-shaped entry `{"kind":"ship",…}` with no `plotZ`/`plot`/`ship` fields; `validate_world_objects` rejects it (`NativeDomain`), so the gate would refuse the whole generation and the runtime restore would empty the pool.
+2. **Native's own vehicles never reach its `.gam`.** `object_table()` (ported from the reference) writes only entries whose `kind` is `ship`/`horse`; the pool is captured with a `ship` flag and no `kind`. A Native save outdoors next to its frigate has no frigate record in its `.gam`.
+
+Neither matters to Native→Native saves (the sidecar carries the pool). Both matter across the PC boundary; the bridge (B10) handles them at the bridge, and the Native codec is not changed (its bytes are pinned by `persistence_parity`).
+
+### 5.5 Compatibility determination: **Case C**
+
+The `.gam`/`.ool` formats are original and the codec is exact for what it models (Case A would hold for those fields alone). But some representable state lives only in the sidecar, and some Native state has no DOS equivalent — **Case C**: import with documented defaults; export everything representable that the bridge can prove; name what is lost.
+
+**The bridge** (`openu5::save::pc`, `native/core/src/pc_save.cpp`), on top of the unchanged codec:
+- **B1** search-found bitmap ↔ `search:N`
+- **B2** wind · **B3** light-spell minutes · **B4** wind-drift counter · **B5** sail direction · **B6** skull-tree day · **B7** reagent-patch days · **B8** time spell + turns — each a single byte whose cell the reference itself documents (`game/src/core/state.ts`, `SAVE_OPTIONAL_DEFAULTS`: "+0x2EC … verificado", "+0x300 … verificado", `[0x57b2]` ⇒ +0x20C, `[0x5858-0x585A]` ⇒ +0x2B2..0x2B4) and whose raw value the runtime already uses unchanged.
+- **B9** transport mode from the vehicle tile (import).
+- **B10** vehicles: frigates (`0x20-0x27`) ↔ the pool (`ship=true`, tile = 256 + byte, hull `+5`, skiffs `+7`); horses (`0x10/0x11`) and skiffs (`0x28-0x2B`) ↔ location-0 `mapOverrides` (how Native leaves them when the party dismounts). The live table (`.gam` +0x6B4) when the party is in that world outdoors, else the parked `.OOL` block (BRIT = surface, UNDER = underworld).
+
+**Not bridged (the boundary; each is refused or named, never guessed):**
+- **L1 Town NPC and object tables.** Native's `NpcActor` mirrors the 1988 record fields, but no codec between them has been proven against the binary, and the tables cross-link (`+0x0C objIdx` into the object table). *Import:* the imported journey resumes as DOS would after leaving and re-entering the map — NPCs at their posts for the saved hour, chests/props re-seeded (the same derivation `TOWN.OVL:0x11F0` runs with `fresh=1`, whose content the D1 act measured as faithful, `re/notes/npc-carga-partida-fresh-gate.md`). *Export:* the tables are INIT.GAM's (all zero); DOS loads the town with nobody in it until the party re-enters it (`fresh=0`), exactly the D1 observation of a port-written save in DOSBox.
+- **L2 Dungeon saves.** Refused both ways with a clear message: Native keeps the session only in the sidecar and no DOS dungeon save has been available to prove a bridge.
+- **L3 Parked monsters.** The `.OOL` blocks' monsters are not imported (Native clears monsters on entering a map); an export in a town leaves the new-game blocks.
+- **L4 Carpets left standing, search-loot piles, a summoned Shadowlord** are not bridged (unverified encodings); the export manifest names them when present.
+- **L5 Unmodelled bytes** (combat scratch, moongate animation, light radius, the door tracker, camp-heal cooldown `0x2E6`, drunk timer `0x3B1`, shadowlord-here `0x3B2`, and `0x3B0` = DS:0x5956, which the RE ledger has not named): export writes INIT.GAM's values; the 1988 game recomputes or resets most of them on load.
+
+### 5.6 Import: what the player does and what runs
+
+**Where.** Title → main menu → **PC Save Transfer** (the row before Developer; hotkey **P**) → **Import the PC save into a slot**. The files go in the SD card's `ultima5/import/` folder, named as DOS names them: `SAVED.GAM` and `SAVED.OOL`. The folder is the player's: nothing ever writes to it or moves anything out of it. The managed `ultima5/saves/` directory never holds raw PC files.
+
+**What runs** (`AlphaRuntime::import_pc_save`, `alpha_runtime.cpp`; storage in `alpha_save.cpp`; conversion in `native/core/src/pc_save.cpp`):
+1. **The page looks at the folder** (`read_pc_import`, `stat` of both names). A file of the wrong size is reported by its size and never read into memory. The page's subtitle says what it found: `PC save: Kojac, Lord British's Castle`, or why not.
+2. **The check** (`pc::check_original`): exactly 4192 + 512 bytes; party size 1–6; each party record a character (printable name, gender `0x0B/0x0C`, class A/B/F/M, status G/P/S/D/C); a calendar date and time; location ≤ 40 with a floor and position the map can hold; wind and sail direction 0–4. A dungeon (33–40) is refused here (L2). INIT.GAM itself fails (its Avatar has no name).
+3. **The slot.** An empty slot imports at once. An occupied or damaged slot asks **"Replace Slot N?"**; files imported before ask **"Import it again?"** — either way **No, keep it** is selected first, and No or Back writes nothing ("Import cancelled. Slot N is unchanged").
+4. **The conversion** (`pc::import_original`): the codec reads `SAVED.GAM` with no sidecar, the NPC fidelity gate on — exactly how every New Journey reads INIT.GAM — then the bridge completes the document (B1–B10), then `restore_core` projects it into the game and turn state. Game, turn and document are assigned only if all of that succeeds.
+5. **The live owners** (the title owns no live game, so this is what New Journey does): the runtime-only owners are cleared, then **`restore_gameplay` and `restore_terrain`** run over the document — what the generation gate restores for every load; an outdoor PC save has monsters, and the bridge's horses and skiffs are terrain cells — then `synchronize_loaded_world()`, the load's own sync.
+6. **Native-only state for runtime operation (L1):** in a town, the fresh map entry — `hydrate_interior_objects` and `enter_npc_map` at the saved hour, the derivation `TOWN.OVL:0x11F0` runs with `fresh=1`. In the underworld outdoors, `hydrate_underworld_plot` (as the falls do).
+7. **The write: `AlphaSaveService::save(..., slot)`**, the unchanged A4-SAVE1/SAVE2 transaction: target choice (the slot's accepted generation is kept), temps + fsync, CRC readback, three renames, the **commit record last**, then the post-write gate re-reads the generation from the card. The sequence is card-wide. The sidecar written is the capture of the live owners, so it is deterministic from the PC files and the game data.
+8. **Loadable on its own:** the slot list is re-read from the card and must show the slot **Saved**. Only then is success reported ("Imported into Slot N. The PC files are kept"), and the marker `ultima5/pc-import.txt` (`gam=<crc32> ool=<crc32> slot=<n>`, outside both the import folder and `saves/`) records which files went where.
+
+**Idempotency.** The source is never changed, and the page says it is kept. Importing again is always a deliberate choice: the page names the slot the same files went to ("PC save: Kojac, Lord British's Castle (in Slot 2)"), and even an empty slot then asks "Import it again?" first. Different files (other CRCs) are not affected by the marker.
+
+**The imported slot is an ordinary slot.** Its generation, commit, CRCs, sequence and the save list's memory are the ones any save makes; Continue, Alt+S / Alt+L, the A/B rotation and the fallback treat it like every other slot (tests R1–R2). Its `.gam` is Native's own (rebuilt from INIT.GAM, §5.2), so the PC file's unmodelled bytes are not carried even before the first Native save.
+
+**Errors** (each leaves the source files and the destination slot as they were): `No PC save in /ultima5/import` · `PC save incomplete: SAVED.GAM is missing` / `…SAVED.OOL is missing` · `SAVED.GAM is not 4192 bytes` / `SAVED.OOL is not 512 bytes` · `SAVED.GAM: party size is not 1-6` / `…party records are not valid` / `…game clock is not valid` / `…position is not valid` / `…wind/sail bytes not valid` · `Dungeon saves cannot be transferred` · `SAVED.GAM could not be read` (the codec) · `The PC save could not be read from SD` · `Import cancelled. Slot N is unchanged` · `Import failed. Slot N is unchanged` (an SD write failure or the post-write check; the slot's previous generation still loads) · `Imported save failed its check`.
+
+### 5.7 Export: what the player does and what runs
+
+**Where.** PC Save Transfer → **Export a slot as a PC save** → a slot → Enter. The files appear in `ultima5/export/slot<N>/`: `SAVED.GAM`, `SAVED.OOL` and `EXPORT.TXT`. Nothing else is written there (no `.json`, `.commit`, slot or sequence data).
+
+**What runs** (`AlphaSaveService::export_pc_save`):
+1. **The generation `load_slot()` restores**: the slot's newest generation the gate accepts, else the one before it, each read and verified by `verify_candidate` (one staged document at a time). A refused generation is never exported, even when the menu still offered the slot (the list's memory is keyed on commit records, A4-SAVE2 §4.6).
+2. **Not in a dungeon** (`pc::exportable`, L2).
+3. **The files:** `SAVED.GAM` = the generation's own `.gam` with B1–B8 written and B10's vehicles placed; `SAVED.OOL` = the generation's own `.ool` with B10's parked vehicles. The two tables written hold exactly the vehicles Native holds (the template's own vehicle records are removed first).
+4. **Written safely:** each file beside its final name, read back, then renamed over it; a failure removes the temp and leaves any earlier export as it was.
+5. **Checked:** both files read back from the card byte for byte, `check_original` accepts them, and Native's own codec reads them (`import_original`).
+6. **The slot is only read.** Its files, commit and the save list's memory are unchanged.
+
+**`EXPORT.TXT`** says which slot and save it came from and how to use it, how many vehicles were written, and what was **not** carried: the people and chests of the current town (L1), unplaced vehicles, carpets, items on the ground, a summoned Shadowlord (L4), and the Native-only state.
+
+**Errors:** `Slot N is empty` · `Slot N cannot be loaded; nothing to export` (the menu) · `Slot N has no loadable save` (the export's own gate) · `Dungeon saves cannot be transferred` · `Export failed: SD card write error` · `Export failed its check. Nothing was replaced`.
+
+### 5.8 Native-only state: the policy
+
+| State | On import | On export |
+|---|---|---|
+| Slot, A/B generations, commit record, sequence | made by the ordinary save transaction | never written |
+| Settings (`settings.json`) | untouched | never written |
+| `hmsCapeToggle` (runtime only in 1988) | 0 | omitted |
+| `openDoors` | none | omitted (every 1988 load clears the tracker) |
+| `qol.journal` / `explored` / `treasuryLoot` | `[]` / absent | omitted |
+| `in-doom`, `game-won` | absent | omitted |
+| Town NPC walk state, interior objects | derived by the fresh map entry (L1) | omitted (L1) |
+| Dungeon session | refused (L2) | refused (L2) |
+| Search-loot piles, summoned Shadowlord, standing carpets | none | counted in `EXPORT.TXT` (L4) |
+| `wornCrown`, `drunkTurns`, `chunkOrigin` | not persisted by Native at all, in any direction | — |
+
+Nothing is encoded into unused original bytes: the bridge writes only the ten 1988 cells of B1–B8 and whole object records (B10), each with the meaning the DOS game gives it.
+
+**Enhanced Mode.** SAVE3 depends on no enhanced UI feature. Any future enhanced-only persistent state belongs in the sidecar under its own key: the bridge never reads or writes sidecar keys other than the ones in §5.3, so such state cannot reach an exported file, and it takes its documented default when a PC save is imported (or re-imported after a DOS round trip). Nothing in gameplay changed in this batch.
+
+### 5.9 Round-trip limitations (what a DOS round trip loses, on purpose)
+
+- **Town NPCs and objects (L1).** An imported town save resumes as DOS would after leaving and re-entering the map: NPCs at their posts for the hour (mid-walk positions snap), chests re-seeded, a guard alarm's rewritten schedules forgotten. An exported town save loads in DOS with nobody in the town until the party leaves and re-enters.
+- **Dungeons (L2).** Leave the dungeon before saving on either side.
+- **Parked monsters (L3)** are not carried either way; vehicles are.
+- **Carpets left standing, items on the ground, a summoned Shadowlord (L4).**
+- **Unmodelled bytes (L5):** combat scratch, moongate animation, light radius, the door tracker, the camp-heal cooldown `0x2E6`, the drunk timer `0x3B1`, shadowlord-here `0x3B2`, the unnamed `0x3B0` (DS:0x5956), each record's `+0x18`. Export writes INIT.GAM's value; the DOS game recomputes or resets most of them on load.
+- **A frigate's hull while the party is in a town** is imported as the runtime default (99); the value is replaced from the ship's own record when boarding.
+- **Vehicles may move to another object record** (slot); tile, position, hull and skiffs are kept.
+- **The new-game underworld skiff.** The 1988 new game parks a skiff at (14,242) in UNDER.OOL. An imported DOS journey keeps it (as a Native terrain cell) and exports it back once. A journey started on Native never had it, because Native does not read `.ool` (§5.10, item 4).
+
+### 5.10 Findings outside the bridge (not changed here)
+
+1. The codec's vehicle gap (§5.4): handled at the bridge; the codec is pinned by `persistence_parity` and was not changed.
+2. **The place caption says "Britannia" in the underworld.** `hud_location_caption()` treats `floor < 0` as the underworld, but Native keeps the outdoor underworld as floor 255 (the falls, the codec, `build_ool`). The HUD strip and the save list pass it unchanged; `dungeon_input_test` D-LOC-1e tests only -1. The PC page converts `0xFF` to -1 itself. Not examined on hardware; queued separately.
+3. **`wornCrown` and `drunkTurns` are captured into the document but persisted nowhere** (neither a `.gam` field nor the sidecar whitelist). The reference documents the drunk timer as reset by the town loader, but that write (`TOWN:0x1218`) is inside the `fresh=1` block the 1988 load skips (`npc-carga-partida-fresh-gate.md` §1). Not examined further.
+4. **Native journeys lack the new-game underworld skiff** (Native never reads INIT.OOL). Not examined further.
+
+### 5.11 Tests
+
+New ctest targets (the suite goes from 168 to **170**):
+
+| Target | What |
+|---|---|
+| `a4_save3_pc_bridge_runtime` | the REAL `alpha_save.cpp` over the fake SD card, the real `AlphaRuntime` and title screen, and the genuine DOS save; its variants (outdoors, vehicles, search bits, time spell, dungeon, damage) made by patching documented offsets, never by the Native writer. The byte offsets it reads are written out from the format document and the RE notes, not taken from the code under test. **57 checks** in groups P (checks and codec), J (import through the title), F (failures at every stage), X (export), T (the round trip, outdoors too), R (recovery afterwards), H (card I/O and heap). |
+| `a4_save3_pc_reference` | the **independent reader**: `native/core/tools/check-pc-save.ts` runs the test above with `--emit`, then reads the emitted DOS fixture, the exported round trip and the vehicle layouts with the TypeScript reference's own `SAVED.GAM` parser (`importNativeSave`), and SAVED.OOL records and the sidecar-only cells by their documented offsets. **10 checks.** |
+
+The brief's list, and where each is:
+
+| Required | Checks |
+|---|---|
+| JSON reconstruction (no JSON in; generated fields correct; the load valid) | P4–P8, J7, J8 |
+| Missing original files: rejected, no destination changes | J1, J2 |
+| Corrupt / incompatible original rejected | P2, P3, J3, J4 |
+| Slot independence (import into Slot 2; 1 and 3 unchanged) | J10, J11 |
+| Occupied slot, No: destination unchanged | J12 |
+| Interrupted import: old destination recoverable | F1–F4 (every stage of the slot transaction, and the post-write check) |
+| Successful import becomes active | J5, J8, J9, J13, R1 |
+| Original → Native state parity | P4, J8, TS1, TS2 |
+| Native → original export matches the format | X1–X3, TS3–TS5 |
+| Round trip, representable state survives | T1–T6, TS4–TS10 |
+| Native-only state: defaults on import, omitted on export | J7, T4, X3, P14 |
+| Recovery afterwards follows A/B rules | R1, R2 |
+| Idempotency (the same files again) | J14, J15, J17 |
+| Source files never modified | J6, J16 |
+| Exporter never exports a damaged / refused generation | X4, X5, X5b |
+
+**RED evidence.** The bridge is new API, so its tests cannot run against the pre-SAVE3 tree; the house rule's other route applies — every guard validated by mutating production code (§5.13). The pre-existing behaviours the bridge corrects are pinned RED in the suite itself: P9 (the codec alone refuses a DOS vehicle) and the investigation probes (`native/core/a4-save3-investigation.log`: 750 bytes lost to the INIT.GAM template, no frigate in Native's `.gam`). One defect was found by the independent reader during the work, not by the C++ checks: the outdoor import at first skipped `restore_gameplay`/`restore_terrain` (horses, skiffs and monsters were dropped); T5/T6 were added and mutant P25 re-creates that defect.
+
+### 5.12 Host results
+
+All runs serial, `native/core/build-a4-save3` (host toolchain as every batch).
+
+| Run | Result | Log |
+|---|---|---|
+| Baseline (A4-SAVE2 tree, before any change) | **168 / 168**, 135.69 s | `native/core/a4-save3-baseline-ctest.log` |
+| After the production changes, before the test updates | 166 / 168: `frontend` (Up from the top now wraps to row 8, Developer) and `a4_ui1_chrome_runtime` G1 (the main-menu golden has the new row) — the two expected, by design | `a4-save3-wip-ctest.log` |
+| SAVE3 focused | `a4_save3_pc_bridge_runtime` **57 / 57**; `check-pc-save.ts` **10 / 10** | `a4-save3-focused.log` |
+| SAVE2 regression | `a4_save2_slots_runtime` **65 / 65**; `a4_ui2_save_menu_runtime` **33 / 33** | `a4-save3-save2-regression.log` |
+| SAVE1 recovery regression | `a4_save1_recovery_runtime` **45 / 45**; `a3_04g_storage_runtime` **44 / 44** | `a4-save3-save1-regression.log` |
+| Full suite | **170 / 170**, 140.47 s | `a4-save3-ctest.log` |
+| **Final re-run** (2026-09-30 evening, the final tree after the mutation pass restored every file; host build from that tree, 0 warnings) | full suite **170 / 170**, 177.90 s; focused `a4_save3_pc_bridge_runtime` **57 / 57** + `check-pc-save.ts` **10 / 10**; SAVE2 `a4_save2_slots_runtime` **65 / 65** + `a4_ui2_save_menu_runtime` **33 / 33**; SAVE1 `a4_save1_recovery_runtime` **45 / 45** + `a3_04g_storage_runtime` **44 / 44** | `a4-save3-final-{build,ctest,focused,save2-regression,save1-regression}.log` |
+
+The two test updates: `frontend_test.cpp` line 42 (row 7 → 8, commented) and the A4-UI1 main-menu golden, re-recorded with `--record` (only that hash changed; its provenance comment says why). The other seven goldens are byte for byte.
+
+Measured on host (H1–H2): an import reads the two PC files with at most 2 files open; an export's small-block heap peak is a load's (562,528 B vs 562,560 B: one staged document at a time) and keeps 0 B afterwards. Menu inspection cost is unchanged: the PC page reads the import folder (two `stat`s and 4.7 KB) only when opened, and its slot list is the warm catalog (commit reads alone).
+
+### 5.13 Mutations
+
+`native/core/tools/a4_save3_mutation_check.py <build> [ids]`: 30 mutants, each one or more edits of production code, built and run against `a4_save3_pc_bridge_runtime` (and, for the ones marked, the TypeScript reader too). **Final pass: 30 killed, 0 survived, 0 invalid; restored build GREEN** (`native/core/a4-save3-mutation.log`).
+
+| Brief's class | Mutant(s) | Killed by |
+|---|---|---|
+| incomplete original set accepted | P1 (a missing SAVED.OOL read as an empty block) | J2 |
+| incorrect JSON / default reconstruction | P2 (wind), P3 (transport), P4 (search bitmap one bit off) | P5/P7/J7/T3, P8, P6/T3 |
+| wrong destination slot | P5 | J10, J11, J15, J17, T3, R1, R2 |
+| source files modified | P6 (the marker written over `import/SAVED.GAM`) | J6, J16 and the J group |
+| destination destroyed before the new generation validates | P7 (the save writes over the generation it keeps) | J13, F2, F3, X4, X5, R1, R2 |
+| Native-only metadata in the original payload | P8 (the sidecar in the export folder), P9 (a U5PARTIDA envelope on SAVED.GAM) | X1; X1, X3, T1, T6 |
+| exporter choosing the wrong / failing generation | P10 (older first), P11 (a refused generation exported) | T1-T3; X4, X5 |
+| incompatible source accepted | P12 (dungeon), P13 (any party size), P14 (a longer SAVED.GAM) | P3, J4 |
+
+The others: B10 import off (P15), export off (P16), the template's vehicles kept (P17, the new-game skiff twice), B1 export writing the gated entries (P18), B8 export dropping the time spell (P19), the overwrite question starting on Yes (P20), an occupied slot imported over without asking (P21), files imported before imported again without asking (P22), the marker matching any files (P23), no fresh map entry (P24), **no outdoor restore before the sync (P25, the RED-first of the defect the independent reader found)**, export changing the slot (P26), a dungeon document exported (P27), the wrong export folder (P28), the page not told where the files went (P29), a short read imported anyway (P30).
+
+The first pass (`a4-save3-mutation-pass1.log`) had 27 killed, 1 survived and 2 invalid. P15 and P27 did not build (a mutant that removes a function's or variable's only use is refused by `-Werror`; they now empty the loop and keep a `(void)` use). **P29 survived**: every test left the page before importing again, so the stale-status case was untested. J17 (Import again at once, on the same page) was added, and P29 is killed by it (`a4-save3-mutation-pass1-rerun.log`, then the final pass).
+
+### 5.14 Firmware
+
+ESP-IDF 6.1, `native/targets/tdeck/build-a4-save3` (`idf.py reconfigure`, then `ninja -j 4 all`), first attempt clean, no project warnings (`native/core/a4-save3-fw-{configure,build}.log`).
+
+- **Image `0xf72f0` (1,012,464 B)**: +14,704 B against A4-SAVE2's `0xf3980`; **36,112 B (3 %) of the 1 MiB app partition free** (was 50,816 B). `native/core/a4-save3-fw-size-diff.log`.
+- Flash `.text` +11,552 (`pc_save.cpp` +4,169, `alpha_save.cpp` +3,134, `alpha_runtime.cpp` +2,375, `frontend.cpp` +1,764), `.rodata` +3,152 (the messages and `EXPORT.TXT` text). Internal `.bss` +48 B; IRAM and `.data` unchanged; no new static buffers (the PC files are read into two heap vectors, 4.7 KB, released at once).
+- The headroom is now 3 %; later batches should expect to budget flash.
+- **Identity:** `PROJECT_VER` is `4.0.0-alpha4-save3-debug` (was `…-save2-debug`). Nothing is committed, so the embedded Git line still names `09cc4600` (as the A4-SAVE2 build does): the version string is what tells the two images apart. The image built here is `native/targets/tdeck/build-a4-save3/openu5_tdeck.bin`, SHA-256 `a4f58e3fe3cf40c1f8881fa74dce2ef920d277162f295e951d1fbb2e73a4ca0c`. After a commit, rebuild (`idf.py reconfigure`, then the build) so the image names its commit. *(Superseded by the final image below.)*
+
+**The final image (the one to flash).** Built after every code, test and doc change, from scratch in a new directory: `idf.py --no-ccache -B build-a4-save3-final reconfigure`, then `ninja -C build-a4-save3-final -j 4 all` (1179/1179, first attempt clean, no project warnings), then `python package_launcher.py --build-dir build-a4-save3-final` (`native/core/a4-save3-final-{fw-configure,fw-build,package,fw-size-diff}.log`).
+- **Identity change** (`main/CMakeLists.txt`): an image configured from uncommitted tracked changes now embeds `<hash>-dirty`, so it cannot pass for a build of HEAD. Untracked files (evidence logs) do not count; a clean committed tree embeds the bare hash as before. `tools/a3_04g_hw_closeout.py`'s `git=(\S+)` parser accepts the suffix.
+- **Launcher file:** `native/targets/tdeck/build-a4-save3-final/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-save3-Debug-Launcher.bin`, byte-identical to `build-a4-save3-final/openu5_tdeck.bin`. That one file is all the Launcher needs (an application image with no bootloader or partition table merged in, as for every earlier batch).
+- `FW 4.0.0-alpha4-save3-debug`, **`Git 09cc460052ee-dirty`** (HEAD `09cc4600` plus the uncommitted A4-SAVE2 + A4-SAVE3 tree).
+- **1,012,480 B (`0xf7300`)**, SHA-256 `45d2863ac96cad54f6123e9cbb966d08c91bde2c911bb3ecc4f000e0ea6c80d8`. **36,096 B (3 %) of the 1 MiB app partition free.** Launcher allocation 1,048,576 B.
+- The delta against A4-SAVE2 is +14,720 B: the earlier SAVE3 build's +14,704, plus 16 B of `.rodata` for the `-dirty` suffix. `.text` is +11,552 and internal `.bss` +48, both the same as the earlier build.
+
+### 5.15 Manual PC/DOS validation (after the software checks)
+
+Do not mark real PC compatibility PASS until part B's round trip succeeds in a real DOS Ultima V. No emulated-DOS run was possible in this batch (the DOSBox-X oracle `re/tools/oracle.py` is not in the tree and DOSBox-X is not installed on the build machine), so nothing here has yet been loaded by the original executable.
+
+**Optional desktop pre-check (no T-Deck).** With a folder holding a DOS `SAVED.GAM` + `SAVED.OOL` (your own, or `original/u5/ultima5/`):
+
+```
+native/core/build-a4-save3/a4_save3_pc_bridge_runtime.exe native/assets/openu5-alpha1-resources.bin <that folder> --emit <out folder>
+```
+
+`<out folder>/roundtrip-SAVED.GAM` and `roundtrip-SAVED.OOL` are that save imported, changed (1234 gold, one step east, wind South, search item 20 found, a frigate docked at (58,107)), saved and exported through the same code as the device. Renamed to `SAVED.GAM`/`SAVED.OOL`, they can be tried in DOSBox or DOS before the hardware run. (The run also executes the whole test group; its checks assume the Lord British's Castle fixture, so with another save some checks may report RED while the files are still written.)
+
+**0. Before anything**
+- Power off the T-Deck. On a PC, copy the SD card's whole `ultima5/` folder somewhere safe (it holds `saves/`, `settings.json` and the resource packs). Restore it at the end if anything looks wrong.
+- Back up the DOS Ultima V installation directory the same way (every `SAVED.*`, `BRIT.OOL`, `UNDER.OOL`).
+- Flash the A4-SAVE3 image (§5.14, `OpenU5-TDeck-Alpha4.0.0-alpha4-save3-Debug-Launcher.bin`, SHA-256 `45d2863a…`). The boot screen must show `FW 4.0.0-alpha4-save3-debug` and `Git 09cc460052ee-dirty` (or, if the tree was committed and the image rebuilt, that commit's hash). **Stop if it does not.**
+
+**A. Import a real PC save**
+1. In DOS Ultima V, load (Journey Onward) a save you know, **outside any dungeon** — ideally one standing next to a docked ship, or one in a town. Before quitting, write down: location and coordinates (e.g. with a sextant), each party member's name, level, HP, and STR/DEX/INT, gold, food, keys, gems, a few inventory counts, the date and time, the wind direction, and any ship you own and where it is.
+2. Quit & Save in DOS (`Q`, then `Y`). Copy `SAVED.GAM` and `SAVED.OOL` from the Ultima V directory to the SD card as `ultima5/import/SAVED.GAM` and `ultima5/import/SAVED.OOL` (create the `import` folder).
+3. Boot the T-Deck. Main menu → **PC Save Transfer** (or press **P**). The subtitle must read **"PC save: <your Avatar>, <place>"**.
+4. **Import the PC save into a slot** → pick an **empty** slot → Enter. Footer: "Imported into Slot N. The PC files are kept".
+5. Check the SD card later: `ultima5/import/` still holds your two files, unchanged.
+6. Main menu → Journey Onward → Load Game → the slot. Check everything you wrote down in step 1. In a town, the townsfolk are at their posts for the hour (they will not be exactly where DOS showed them); chests are back. A docked ship is where you left it; board it and check its hull.
+7. Save normally (Alt+S, or System Menu → Save Game → the same slot).
+8. Power-cycle. Load the slot again and check the same things.
+9. PC Save Transfer again: the subtitle now ends **"(in Slot N)"**; Import → an empty slot asks **"Import it again?"** with **No, keep it** selected. Press Enter (No): nothing changes.
+
+**B. Export to DOS**
+1. Load the slot. Change something easy to recognise: spend or earn gold to an odd amount (e.g. buy one ration), walk to a remembered spot outdoors, and note the new values.
+2. Save normally.
+3. Main menu → PC Save Transfer → **Export a slot as a PC save** → the slot → Enter. Footer: "Slot N written to /ultima5/export/slotN".
+4. On the PC: `ultima5/export/slotN/` holds `SAVED.GAM` (4192 bytes), `SAVED.OOL` (512 bytes) and `EXPORT.TXT`. Read `EXPORT.TXT`.
+5. In the (backed-up) DOS Ultima V directory, replace `SAVED.GAM` and `SAVED.OOL` with the exported ones. Delete `BRIT.OOL` and `UNDER.OOL` if present (Journey Onward rewrites them from `SAVED.OOL`).
+6. Launch DOS Ultima V → Journey Onward. Check the values from step 1, the party, the inventory, the date and the wind. If you exported in a town, the town is empty until you leave and re-enter it (L1): do that and check the townsfolk return.
+7. Walk a few steps, then Quit & Save (`Q`, `Y`). The game must save and exit normally; start it again and Journey Onward once more.
+
+**C. Re-import (optional, the gold standard)**
+1. Copy the DOS-resaved `SAVED.GAM`/`SAVED.OOL` into `ultima5/import/` (replacing the earlier ones).
+2. PC Save Transfer: the subtitle shows the new state (no "(in Slot N)": these are different files). Import into **another** slot.
+3. Load it and check the same values as B.6.
+
+**PASS** needs A, B and (if done) C with no crash, lock, watchdog reset or DOS error. **Report back:** the `FW`/`Git` lines, PASS/FAIL per step, anything in the DOS game that looked different from the Native state (with the `EXPORT.TXT` text), and, if you have a serial log, the `PC_IMPORT` and `PC_EXPORT` lines.
+
+### 5.16 Status
+
+| Axis | State |
+|---|---|
+| Investigation (§5.1–§5.5) | done |
+| Software (focused, SAVE2/SAVE1 regressions, full suite, mutations, firmware build) | **complete** — 170/170, focused 57/57 + 10/10, SAVE2 65/65, SAVE1 45/45, mutations 30/30, firmware `0xf72f0`; final re-run 170/170, final image `0xf7300` (`Git 09cc460052ee-dirty`, SHA-256 `45d2863a…`) |
+| Hardware / real DOS validation (§5.15) | **pending** |
+| Closed (commit, image, PASS, closeout) | **no** — nothing committed or tagged, as for A4-SAVE2 |
+
+*2026-09-30 (A4-UI3):* the real DOS round trip may be run on the A4-UI3 image (§6.13, checklist §6.14 B). UI3 does not touch the bridge, the import/export paths or serialization; only the PC pickers' rows changed.
+
+## 6. A4-UI3 — save / load UX
+
+A compact presentation pass over the A4-SAVE1/SAVE2/SAVE3 save system. **The save architecture is unchanged:** three player-visible logical slots, each backed by two hidden recovery generations; Continue's order and fallback (§4.4); manual Load never crosses to another slot; the PC Save Transfer bridge and its flow (§5); no new files, metadata, serialization or dirty-state tracking. The audit's own axis is `GAMEPLAY_INTEGRATION_AUDIT.md`, "Alpha 4 A4-UI3".
+
+### 6.1 Baseline
+
+`main` at `09cc4600` with A4-SAVE2 + A4-SAVE3 present and uncommitted. Host suite **170 / 170** (149.47 s, `native/core/build-a4-ui3`, `native/core/a4-ui3-baseline-{configure,build,ctest}.log`). Firmware: the A4-SAVE3 final image, `0xf7300` (1,012,480 B), 36,096 B (3 %) free. `PROJECT_VER` `4.0.0-alpha4-save3-debug`. The before screens are `native/core/a4-ui3-shots/before/*.png` (the A4-UI2 harness's `--dump`).
+
+### 6.2 What was wrong (before)
+
+1. A slot was one cramped line, `Slot 1: Avery, Iolo's Hut`, cut at 36 cells: a long name and place lost the place's end (`Slot 1: Shamino12, Lord British's Ca`).
+2. Nothing marked the slot of the journey being played; only the cursor's start hinted at it.
+3. A recovered slot (newest generation refused, the one before loads) looked exactly like a healthy one; only the selected row's footer said so.
+4. `empty` / `damaged` sat in the name's position in lower case, like a name.
+5. The confirm pages repeated the whole row (`Slot 1: Avery, …`) under a title that already named the slot.
+6. After an in-game save the System Menu stayed open on "Saved in Slot N." — the brief wants the save to return to the game.
+7. A load that fell back to the save before the newest said nothing.
+8. A Load that failed in game (the slot damaged after the menu listed it) wrote "No valid save" to the transcript the open menu covers, and left the page listing the slot as loadable.
+
+### 6.3 The slot rows (one formatter for every page)
+
+`format_slot_rows()` / `list_slots()` (`native/core/src/frontend.cpp`) build every slot list: title Load Game, System Menu Save Game and Load Game, New Journey's replace list, and PC Save Transfer's import and export pickers. A slot is **two rows**, each at most 36 cells (what Large text fits in the menu's 304 px):
+
+```
+  Slot 1  Kojac                         <- leader (8 letters, the game's limit)
+          Lord British's Castle         <- the place a load restores (grey)
+  Slot 2  Avery     CURRENT, RECOVERED  <- the tag column
+          Britannia
+  Slot 3  EMPTY                         <- no metadata
+```
+
+- **Status words** in capitals so they never read as a name: `EMPTY`; `DAMAGED` (nothing in the slot loads, neither generation) with the detail row `Cannot be loaded`.
+- **Tags** in one column after the 8-letter name field: `CURRENT` (in game) or `LATEST` (title), and `RECOVERED`; both → `CURRENT, RECOVERED` (36 cells with an 8-letter name).
+- The name and place shown are those of **what a load restores** (for a recovered slot, the save before the newest), from the save list's existing summary (`summarize_candidate`, cached per commit). Date, time and party stay in the selected row's footer (A4-UI2 wording, unchanged).
+- The core view keeps **one line per slot** (`lines[i]`, `selected_line` = the slot) and adds `FrontendView::details[i]`; only the device renderer (`tdeck_board.cpp` `show_frontend`) expands a slot page into two rows, draws the detail row in the footers' grey, and puts **both rows** of the selected slot in reverse video (the retained redraw restores both rows of the old selection). Every other page is drawn exactly as before.
+- Not shown: level (not in the summary; it would need a new field); no timestamp beyond the in-game date the footer already shows.
+
+### 6.4 Current journey and Continue
+
+- **`CURRENT`** (System Menu Save and Load pages) marks `AlphaSaveService::last_slot()`: the slot the running journey was last loaded from or saved to — the slot Alt+S / Alt+L use and the pages start on. It means "this journey's slot", **not** "the card matches the running game"; Return to Title still says "Unsaved progress will be lost". Load Slot 2 → Slot 2 is CURRENT; save into Slot 1 → Slot 1 is CURRENT; a New Journey's slot is CURRENT. With no journey slot nothing is marked.
+- **`LATEST`** (title Load Game, New Journey's replace list, PC import and export pickers) marks `continue_slot()`: the slot Continue restores. The title has no running journey, so it marks Continue's target instead.
+- **Journey Onward** names slot and journey: subtitle `Latest: Slot 2, Iolo, Britannia` (was `Latest save: Iolo, Britannia`); footer unchanged, `Enter continues Slot 2; Mic returns`, or, when that slot is recovered, `Latest save damaged; Enter loads the one before` (the subtitle then names the save that loads). Continue is still one key with no question and no extra storage work. The main menu is unchanged.
+
+### 6.5 Save, Load, feedback
+
+| Flow | Behaviour |
+|---|---|
+| Save → empty slot | saves at once; **the menu closes**, transcript `Save complete: Slot N` |
+| Save → occupied (or damaged) slot | `Overwrite Slot N?`, subtitle **that slot's save** (`Kojac, Lord British's Castle` / `Damaged save`), rows `No, keep it` (**selected**) / `Yes, overwrite`. No → back on the Save page on that slot, `Slot N kept`. Back or the Mic → back on the Save page, even with Yes highlighted. Yes → saves and closes. |
+| Save fails | the menu stays open, re-lists the card and says what is true: `Save failed. Slot N keeps its last save` or `Save failed. Nothing was saved in Slot N` (transcript `Save failed; prior kept`, as before) |
+| Load → healthy slot | loads, closes, `Load complete` (no question) |
+| Load → recovered slot | loads the save before the newest: `Load complete`, then **`Recovered previous save (Slot N)`** (also after Continue and Alt+L when they fall back) |
+| Load → empty slot | `Slot N is empty`, stays on the page, opens no file |
+| Load → damaged slot | `Slot N is damaged and cannot load`, nothing loads |
+| Load → slot that fails as it loads | nothing else is loaded in its place; the page re-lists the card (`DAMAGED`) and says `Slot N could not be loaded. Nothing changed` |
+
+The recovery flag comes from the commit records the load already read (`restore_slot`'s `older`; for Continue also "it passed over the newest slot") — no extra I/O. Recovery stays one step. Unsaved-progress warnings are unchanged: the runtime has no dirty tracking and none was added.
+
+### 6.6 PC Save Transfer
+
+Unchanged in place (the title menu's eighth row, `P`), flow and semantics: Import / Export, `Replace Slot N?` and `Import it again?` with No first, the Mic cancelling, the import and export paths, the bridge. Only the import and export pickers use the shared rows (with `LATEST`), and the import question's subtitle names the slot's save instead of repeating its row.
+
+### 6.7 Title menu
+
+Not changed: the eight rows (nine with Developer) fit under the art; PC Save Transfer and Developer stay last. The main-menu golden (`a4_ui1_chrome_runtime` G1) is byte for byte.
+
+### 6.8 Files
+
+- Core: `native/core/include/openu5/frontend.h` (`format_slot_rows`, `format_slot_identity`, `list_slots`, the tags, `FrontendView::details`; `format_slot_row` removed), `native/core/src/frontend.cpp`, `native/core/src/system_menu.cpp`.
+- Device: `main/tdeck_board.{h,cpp}` (two rows a slot, the selection span, the grey detail row), `main/alpha_runtime.{h,cpp}` (a save returns to the game, the failure notices, `announce_recovered_load`), `main/alpha_save.{h,cpp}` (`last_load_recovered()`), `CMakeLists.txt` (`PROJECT_VER`).
+- Host stub: `host_tests/host_stubs/alpha_save_memory_host_stub.cpp` mirrors `last_load_recovered()`.
+- Tests and tools: new `native/core/tests/a4_ui3_slot_rows_test.cpp`, `host_tests/a4_ui3_save_ux_runtime_test.cpp`, `native/core/tools/a4_ui3_mutation_check.py`; `native/core/CMakeLists.txt` registers both tests.
+
+### 6.9 Existing tests changed on purpose
+
+| Test | Why |
+|---|---|
+| `frontend_test.cpp` (load / damaged flows) | the rows' new text and `details`, the LATEST / RECOVERED tags, the Journey Onward subtitle and footer |
+| `a4_ui2_save_menu_runtime` M3–M11, L1, L6, L7, L9, L11, F2, F3, Z1 | two-row text and tags; a save returns to the game (M4/M9 read the transcript, M10 checks the next open); L7 also checks the recovery line; Z1: a 9-letter test name keeps 8 letters and the place is no longer cut |
+| `a4_save2_slots_runtime` O1, O4 | `Save complete: Slot N` with the menu closed, instead of the old footer |
+| `a3_04g_storage_runtime` K10 and its `slot1_page` / `load_page` helpers | the row is two rows (CURRENT on Slot 1); the in-menu save closes the menu, so K10 reads the next open's Load page |
+| `batch28_save_validation` F3b | the row prefix `Slot 1  ` with no DAMAGED / RECOVERED tag (stronger than before) |
+| `a3_01_audio_runtime` H1 | its inline menu save no longer presses Alt+M afterwards, and each of its two runs starts from a blank card (the transcript now names the slot, which differed only because both runs shared one host card) |
+| `menu_save()` helpers in `a3_02`, `a3_03`, `batch24`, `batch26`, `batch27`, `batch28`, `batch53`, `batch53a` | close the menu only if it is still open (Alt+M would re-open it); batch24's `menu_load` re-opens the menu |
+| `tools/a4_save2_mutation_check.py` S23, S25 | re-anchored on the same code; S25 (a failed save's re-listing) is now killed by `a4_ui3_save_ux_runtime` S10 |
+
+No golden hash changed.
+
+### 6.10 New tests
+
+**`a4_ui3_slot_rows`** (core, 40 checks): R the rows (three occupied, occupied + empty, an empty slot with a leftover summary, the longest name with both tags and the longest place, an over-long name, marker on one slot only, RECOVERED, DAMAGED, the confirm identity); S Save (CURRENT on the journey's slot and staying there when the cursor moves, an empty slot saves at once, the question names that slot and its save with No selected, No / Back / the Mic with Yes highlighted cancel, Yes saves that slot, a damaged slot asks too); L Load (rows and tags, empty refused, wraparound, the recovered footer, a recovered slot loads that slot, damaged refused, every Load intent is exactly the selected slot, the Mic returns); T the title (Journey Onward names Continue's slot and journey, Continue is one ContinueLatest, the recovered case, LATEST on the title Load page, wraparound, the Mic, a blank card); P PC Save Transfer (P reaches it, import list on the first empty slot, the occupied question on No, the Mic cancels, `Import it again?` on No, export on Continue's slot, an empty export refused).
+
+**`a4_ui3_save_ux_runtime`** (device, 31 checks): the REAL `AlphaRuntime` on the REAL `tdeck_board.cpp` over the fake ST7789 (the A4-UI2 harness) with the REAL `alpha_save.cpp` over the fake SD card. P the panel (both rows of the selected slot in reverse video, the others plain; the place row grey; moving the selection restores both old rows; wraparound; Large text fits, ink right edge x = 311, rows end above y = 101). S saving (S1 three EMPTY on a blank card; S2 an empty slot saves and returns to the game, its four files alone; S4 leader and place per slot with CURRENT on the journey's slot; S5 `Overwrite Slot 1?` naming `Kojac, Iolo's Hut`, No selected; S6 No, the Mic and Back with Yes highlighted open no file and change no byte; S7 Yes saves Slot 1 and leaves Slot 2 byte for byte; S8 CURRENT follows the save; S9 a failed save's two notices; S10 the menu a failed save leaves open lists the card as it now is). L loading (L1 a healthy slot loads directly; L2 Load Slot 2 → Slot 2 alone CURRENT; L3 an empty slot refuses and opens no file; L4 the newest damaged → RECOVERED, showing the older save's leader; L5 Enter loads it and says `Recovered previous save (Slot 1)`; L6 both damaged → `DAMAGED`, nothing loads; L7 a slot damaged after the page opened loads nothing else, the page re-lists it). C the title (Journey Onward names Continue's slot; LATEST on the title Load page; Continue in one key; Continue over a recovered slot says so; New Journey's slot becomes CURRENT). X PC Save Transfer with the genuine DOS save (reachable by P; the import picker's rows; `Replace Slot 1?` on No, the Mic cancels, every byte kept; the export picker). W a warm Save page open reads the commit records alone (4 opens, 128 B).
+
+Harness note: the host fixture has no creation canvas (`initialize()` allocates it on the device), so the creation quiz cannot be drawn on the host Board; C5 types its keys without drawing frames between them.
+
+**RED evidence.** The rows, tags and `details` are new API, so the new tests cannot compile against the pre-UI3 tree; the house rule's other route applies — every guard validated by mutating production code (§6.11). The production change turned five existing tests RED before they were updated (`frontend`, `batch28_save_validation`, `a3_01_audio_runtime`, `a4_ui2_save_menu_runtime` 20/33, `a4_save2_slots_runtime` 63/65: the old text and the old stay-open save), each updated as listed in §6.9.
+
+### 6.11 Mutations
+
+`native/core/tools/a4_ui3_mutation_check.py <build> [ids]`: 25 mutants of production code, built and run against `a4_ui3_slot_rows`, `a4_ui3_save_ux_runtime` and (where marked) `a4_ui2_save_menu_runtime` (`native/core/a4-ui3-mutation.log`).
+
+| Brief's class | Mutant | Killed by |
+|---|---|---|
+| wrong current-slot marker | U1 (CURRENT follows the cursor), U2 (LATEST always Slot 1) | S1b, L6; S1, L4 · T4; C2 |
+| destructive prompt defaulting Yes | U3 | S3–S9 (core), S5–S9 (device) |
+| empty Load accepted | U4 | L2; L3 |
+| manual Load cross-falling | U5 (a failed slot load falls back to Continue) | L7 |
+| recovered slot shown as healthy | U6 | R3, R6, L1, T4; L4 |
+| wrong slot named in the overwrite prompt | U7 (title), U8 (subtitle) | S3, S9; S5 |
+| Back / Mic confirming the destructive action | U9 (Back), U10 (the Mic with Yes highlighted) | S5–S7; S6, S7 |
+| metadata from the wrong slot | U11 | R1–R7, S1, L1, T4, P1; S4, L2, L4, C2, X2, … |
+
+The others: a damaged slot shown EMPTY (U12), an empty row with leftover metadata (U13), Journey Onward naming the wrong slot (U14), a save not returning to the game (U15), a recovered load not announced (U16), every load claiming recovery (U17), Continue never reporting a fallback (U18), the panel selecting one row (U19), the retained redraw forgetting the second row (U20), the place row drawn white (U21), an untruthful failure notice (U22), a failed load leaving the page stale (U23), the PC picker without LATEST (U24), a failed save leaving the open menu stale (U25).
+
+The first pass had 24 mutants, all killed. Re-anchoring SAVE2's S25 showed its case (a failed save's re-listing) was no longer exercised by any test once a successful save closes the menu: S10 was added, U25 mirrors S25, and both are killed by it (`a4-ui3-mutation-u25.log`, `a4-ui3-save2-mutation-recheck.log`, which also re-runs SAVE2's S12–S16 and S23 against the UI3 tree: all killed).
+
+**Final pass (the final test set): 25 killed, 0 survived, 0 invalid; restored build GREEN** (`native/core/a4-ui3-mutation.log`).
+
+### 6.12 Host results
+
+All runs serial, `native/core/build-a4-ui3` (the usual host toolchain), 0 project warnings.
+
+| Run | Result | Log |
+|---|---|---|
+| Baseline (A4-SAVE3 tree) | **170 / 170**, 149.47 s | `a4-ui3-baseline-ctest.log` |
+| After the production change, before the test updates | 165 / 170: the five tests of §6.10's RED evidence | (console; recorded here) |
+| UI3 focused | `a4_ui3_slot_rows` **40 / 40**; `a4_ui3_save_ux_runtime` **31 / 31** | `a4-ui3-focused.log` |
+| SAVE3 regression | `a4_save3_pc_bridge_runtime` **57 / 57**; `check-pc-save.ts` **10 / 10** | `a4-ui3-save3-regression.log` |
+| SAVE2 regression | `a4_save2_slots_runtime` **65 / 65** | `a4-ui3-save2-regression.log` |
+| SAVE1 regression | `a4_save1_recovery_runtime` **45 / 45**; `a3_04g_storage_runtime` **44 / 44** | `a4-ui3-save1-regression.log` |
+| UI1 / UI2 regression | `a4_ui1_chrome_runtime` **30 / 30** (all eight goldens byte for byte); `a4_ui2_save_menu_runtime` **33 / 33**; `a4_ui2_title_runtime` **10 / 10**; `a4_ui2_death_music_runtime` **13 / 13** | `a4-ui3-ui1-ui2-regression.log` |
+| Full suite | **172 / 172** (170 + `a4_ui3_slot_rows` + `a4_ui3_save_ux_runtime`), 153.64 s | `a4-ui3-ctest.log` |
+
+**Performance.** No storage path changed: the menus still read the SAVE2 save list (`inspect_catalog`, cached per commit record). A warm Save page open reads the commit records alone (W1: 4 opens, 128 B on the test card); an empty-slot Load opens no file (L3); No / Back / the Mic on the question open no file (S6). Cold opens are SAVE2's (§4.6), unchanged. Two places now read the list where they did not before, both after a failure only: a failed save (as before UI3, but no longer after a success — one warm read fewer per save) and a failed Load.
+
+### 6.13 Firmware
+
+An interim build (`native/targets/tdeck/build-a4-ui3`, `native/core/a4-ui3-fw-{configure,build,size-diff}.log`) caught one firmware-only `-Werror=format-truncation` (the Journey Onward subtitle copied one 96-byte buffer into another; the identity is at most 34 characters, so it is now `%.40s`), then built clean.
+
+**The final image (the one to flash).** Built after every code, test and doc change, from scratch in a new directory: `idf.py --no-ccache -B build-a4-ui3-final reconfigure`, then `ninja -C build-a4-ui3-final -j 4 all` (1179/1179, first attempt clean; no project warnings — the only warning line is ESP-IDF's "smallest app partition is nearly full (3 % free)" notice), then `python package_launcher.py --build-dir build-a4-ui3-final` (`native/core/a4-ui3-final-{idf-export,fw-configure,fw-build,package,fw-size-diff}.log`).
+
+- **Launcher file:** `native/targets/tdeck/build-a4-ui3-final/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-ui3-Debug-Launcher.bin`, byte-identical to `build-a4-ui3-final/openu5_tdeck.bin`. That one file is all the Launcher needs (an application image; no bootloader or partition table merged in).
+- **SHA-256** `33a7eb5974af30413d89a4c13e32fbf0cc5a571aeaffb323a85feb261e36642b`.
+- Embedded (read back from the image's app descriptor and strings): **`FW 4.0.0-alpha4-ui3-debug`**, **`Git 09cc460052ee-dirty`** (HEAD `09cc4600` plus the uncommitted A4-SAVE2 + A4-SAVE3 + A4-UI3 tree; a clean committed tree would embed the bare hash).
+- **1,014,544 B (`0xf7b10`)**: **+2,064 B** against A4-SAVE3's final `0xf7300` (1,012,480 B). **34,032 B (3.25 %) of the 1 MiB app partition free** (was 36,096 B).
+- Flash `.text` +1,868, `.rodata` +192, internal `.bss` +16 (the Board cache's selection span, padded); IRAM, `.data` and PSRAM unchanged. Per symbol: the renderer's two-row expansion in `show_frontend` ~+0.9 KB, `format_slot_rows` / `format_slot_identity` / `list_slots` +586 B (the old `format_slot_row` −182 B), `service_system_menu_intent` +181 B, `restore_slot` +105 B net, `announce_recovered_load` +52 B; no new assets, strings tables or pages.
+
+### 6.14 Hardware validation checklist (A4-UI3 image; also finishes A4-SAVE3's DOS round trip)
+
+**0. Before anything**
+- Power off. On a PC copy the SD card's whole `ultima5/` folder somewhere safe (`saves/`, `settings.json`, packs). Back up the DOS Ultima V directory the same way (every `SAVED.*`, `BRIT.OOL`, `UNDER.OOL`).
+- Flash `OpenU5-TDeck-Alpha4.0.0-alpha4-ui3-Debug-Launcher.bin` (§6.13). The boot screen must show `FW 4.0.0-alpha4-ui3-debug` and the Git line of §6.13. **Stop if it does not.**
+
+**A. UI3 save / load UX**
+1. **Boot.** Title, then the main menu: eight rows (nine with Developer), PC Save Transfer below Settings; no clipping.
+2. **Continue target.** Journey Onward: the subtitle reads `Latest: Slot N, <leader>, <place>` and the footer `Enter continues Slot N; Mic returns`. Note N.
+3. **Title Load Game.** Down → Load Game: every slot is two rows (`Slot N  <leader>` over the place in grey); slot N carries `LATEST`; the cursor starts on it; empty slots read `EMPTY` with no second-row text. Up/Down wrap. Enter on an EMPTY slot: footer `Slot N is empty`, nothing happens. Mic → back to Journey Onward on Load Game.
+4. **Load each slot** from the title (Load Game → slot → Enter): the game opens at that slot's place with that leader; no question.
+5. **Current-slot marker.** In game, Alt+M → Load Game: the slot just loaded carries `CURRENT` (and only it). Mic.
+6. **Save Game, empty slot.** Alt+M → Save Game → an EMPTY slot → Enter: the menu closes at once and the log says `Save complete: Slot N`. Alt+M → Save Game: that slot now shows your leader and place and is `CURRENT`.
+7. **Overwrite, No default.** Save Game → an occupied slot → Enter: `Overwrite Slot N?`, the subtitle names **that** slot's leader and place, `No, keep it` highlighted. Enter → back on Save Game, footer `Slot N kept`.
+8. **Back / Mic cancel.** Enter again, Down to `Yes, overwrite`, then press the **Mic**: back on Save Game, nothing saved. Again with **Backspace/Back**: the same. Alt+M on the question closes the menu without saving.
+9. **Overwrite Yes.** Enter, Down, Enter: the menu closes, `Save complete: Slot N`.
+10. **Load each slot in game** (Alt+M → Load Game → slot → Enter): `Load complete`; CURRENT moves to that slot.
+11. **Recovered slot (if practical).** With a PC and a backup: in `ultima5/saves/`, damage the newest generation of a slot that has two (e.g. truncate its newest `.gam` — the generation whose `.commit` is newest; Slot 1 is `alpha1-g0/g1`, Slot 2 `alpha1-s2-g0/g1`, Slot 3 `alpha1-s3-g0/g1`). Boot: Load Game shows that slot tagged `RECOVERED` with the leader/place of the save before; footer `Last save damaged; Enter loads the one before`. Enter: `Load complete`, then `Recovered previous save (Slot N)`. Restore the backup afterwards.
+12. **Unusable slot (if practical).** Damage both generations of one slot: it reads `DAMAGED` / `Cannot be loaded` (never EMPTY); Enter: `Slot N is damaged and cannot load`, nothing loads, no other slot loads. Restore the backup.
+13. **Text size.** Settings → Text / UI: Large. Save Game and Load Game: both rows of every slot fit, nothing clipped at the right edge, the selection covers both rows. Back to Medium.
+14. **PC Save Transfer layout.** Title → PC Save Transfer (P): Import and Export pickers show the same two-row slots with `LATEST`; Import → occupied slot → `Replace Slot N?` with No highlighted; Mic → `Import cancelled. Slot N is unchanged`.
+15. **Feel.** Scrolling the slot pages: no flicker beyond the rows that change, no lag, no stale highlight on the row you left.
+
+**B. SAVE3 real DOS round trip** (§5.15 in full; summary)
+1. In DOS Ultima V load a known save **outside any dungeon**; write down location, party (names, levels, HP, STR/DEX/INT), gold, food, keys, gems, some inventory, date/time, wind, ships. Quit & Save (`Q`, `Y`).
+2. Copy `SAVED.GAM` + `SAVED.OOL` to the SD card as `ultima5/import/`.
+3. T-Deck: PC Save Transfer → subtitle `PC save: <Avatar>, <place>` → Import → an **EMPTY** slot → `Imported into Slot N. The PC files are kept`.
+4. Journey Onward → Load Game → that slot: verify everything from step 1 (townsfolk at their posts for the hour, not exactly where DOS showed them).
+5. Save in Native (Alt+S, or Save Game → that slot → Yes). Power-cycle. Load it again and verify again.
+6. Change something recognisable (odd gold amount, a remembered spot outdoors); save.
+7. PC Save Transfer → Export → the slot → `Slot N written to /ultima5/export/slotN`.
+8. Copy `export/slotN/SAVED.GAM` + `SAVED.OOL` into the DOS directory (delete `BRIT.OOL`/`UNDER.OOL` if present).
+9. DOS Ultima V → Journey Onward: verify the changed state from step 6.
+10. Walk a few steps, Quit & Save in DOS; start DOS again and Journey Onward: it loads.
+11. Optional: copy the DOS-resaved files back to `ultima5/import/` and import into another slot; verify.
+
+**Do not mark SAVE3 real PC compatibility PASS until step B.9–B.10 succeed in real DOS.** Report: the `FW`/`Git` lines, PASS/FAIL per step, photos of any clipped or odd screen, and (if you have serial) the `SAVE_CATALOG`, `PC_IMPORT`, `PC_EXPORT` lines.
+
+### 6.15 Known issues left out of scope
+
+- Underworld place caption: a Native save in the underworld is listed `Britannia` (`hud_location_caption()` tests `floor < 0`; Native keeps the underworld as floor 255). The same function captions the in-game HUD, so the fix is not isolated to the save UI; already queued as A4-SAVE3 audit item 7. Not changed.
+- Town NPC round trips, dungeon PC transfer refusal, parked-vehicle codec gaps, worn crown / drunk timer persistence, the missing Native underworld skiff, broader serialization gaps (A4-SAVE3 §5.9–§5.10): not touched.
+- A torn file under an **unchanged** commit record keeps the runtime's save-list memory (SAVE2 / A3-04G design: the list trusts a commit it verified); the slot is then listed healthy until a load falls back, which now says `Recovered previous save`. Unchanged.
+
+### 6.16 Status
+
+| Axis | State |
+|---|---|
+| Software (focused, SAVE3/SAVE2/SAVE1/UI1/UI2 regressions, full suite, mutations, firmware build) | **complete** — 172/172, UI3 40/40 + 31/31, SAVE3 57/57 + 10/10, SAVE2 65/65, SAVE1 45/45 + 44/44, UI1 30/30, UI2 33/33 + 10/10 + 13/13, mutations 25/25; final image `0xf7b10` (`Git 09cc460052ee-dirty`, SHA-256 `33a7eb59…`) |
+| Hardware (§6.14 A) | **pending** |
+| A4-SAVE3 real DOS round trip (§6.14 B, §5.15) | **pending** |
+| Closed (commit, tag, PASS) | **no** — nothing committed or tagged, as for A4-SAVE2 / A4-SAVE3 |
+
+## 7. A4-END1 — the full ending
+
+The original PC/DOS ending, played on the device: the throne room, Lord British's walk, the revivals, the box questions, the speech, the orb and the moongate, the dissolve, the six story pages, the scroll — or the stranded room — and the frozen last screen. Built on the hardware-validated, uncommitted A4-SAVE1/SAVE2/SAVE3/UI3 tree; nothing of the save system changed. The reconstruction with every address is `re/notes/a4-end1-ending-reconstruction.md`; the audit's own axis is `GAMEPLAY_INTEGRATION_AUDIT.md`, "Alpha 4 A4-END1".
+
+### 7.1 Baseline
+
+`main` at `09cc4600` with A4-SAVE2 + A4-SAVE3 + A4-UI3 present and uncommitted. Host suite **172 / 172** (146.01 s, `native/core/build-a4-end1`, `native/core/a4-end1-baseline-{configure,build,ctest}.log`). Firmware: the A4-UI3 final image `0xf7b10` (1,014,544 B), 34,032 B free. `PROJECT_VER` `4.0.0-alpha4-ui3-debug`. Before A4-END1 the device ending was Batch 53's one-shot transcript (the TypeScript reference's rescue narration) followed by Batch 53A's terminal Ending — ledger D-54 (no presenter), D-56 (the box questions answered from the inventory), D-57 (two `victory` lines).
+
+### 7.2 Investigation first
+
+The investigation report (trigger, control flow, pages, text sources, visuals, input, timing, audio, final behaviour, native gaps, the plan) was delivered before any production code; it found **no reverse-engineering blocker**. Evidence: the shipped binaries read directly (`re/tools/a4_end1_endgame_listing.py` prints all of ENDGAME.OVL with calls resolved — its output quotes EA code and text, so it stays local), cross-checked with the earlier notes (`endgame.md`, `endgame-derivation.md`, `batch53a-endgame-terminal.md`) and the two video witnesses. **No DOSBox or runtime oracle was available**, so no direct runtime parity is claimed: the evidence is static, and §7.16 is the manual DOS comparison checklist.
+
+### 7.3 The original ending, in brief
+
+- **Trigger.** SJOG `absorb` (0x1ea4) arms `[0x58a0] = 0x4d`; the combat teardown (SJOG 0x2046 / DUNGEON 0x00cb) calls the overlay-13 stub ULTIMA.EXE 0x7c4a → ENDGAME.OVL `endgame_main` 0x0648, which never returns.
+- **Throne room.** MISCMAPS.DAT[0x210], recoloured green in the tileset itself (EGA.DRV fn36 ax=4, 22 tiles); Lord British (slot 31) at (5,8) for 40 frames, then five steps to (5,3); each roster member in turn — revived first if dead (`<name> lives!`, the viewport XOR, the 1,550 ms sweep, then `G` at full HP) — appears in the mirror (5,9) and walks to the lineup {5,4,6,3,5,7} × {5,6,6,7,7,7}.
+- **Text.** ENDMSG.DAT's 11 records in record order through `print_string`, with the DATA.OVL strings (`" lives!"`, `"!\""`, `"Yes"`, `"No"`, `"He says:"`, `"\"I see..."`) between them.
+- **Input.** Ten `getkey_with_redraw` sites, any key each; two real Y/N loops (0x0852, 0x088b) that read again on anything but Y/N; victory needs **Y and the box** (0x08b9).
+- **Victory.** The Avatar steps forward and back, the box at (5,4), ENDMSG 0x03, `He says:`, five speech records (a key each), `FOLLOW!` (0x09) with the orb, the orb's sweep, the red moongate rising in 16 stages, Lord British then each member into it, the gate closing, the floor blitted back; `story_screens` fizzles the screen to black (EGA.DRV fn34) and shows **six story pages** (a key each); then ENDSC.16 with `endgame_datestamp`'s proclamation, runes and report — and the 1988 loop 0x04f9 for ever (the Exodus patch: any key exits to DOS).
+- **Stranded.** `"I see..."`, 40 frames, ENDMSG 0x0a, member 2 to the table, Lord British to his bed, the Avatar to the other chair, then the wander loop 0x0ac9 for ever.
+- **Timing.** `run_n_frames(n)` = n × 55 ms; a step 296 ms (2 frames, the 21 ms footstep, 3 frames); sweeps 1,550 / 1,937 ms; the fizzle has no timer (≈ 2.5 s on the witness).
+- **Audio.** Stock 1988: speaker only — the footsteps and the two sweeps; **no music**. The Exodus patch's `mid.drv`: 0x15 Joyous Reunion (then Rule Britannia by itself), 0x18 per story page (Stones for 1–3, Dream of Lady Nan for 4–6), 0x1b Rule Britannia (waits for a Reunion still playing).
+
+### 7.4 Native implementation
+
+| Layer | What | Where |
+|---|---|---|
+| Core sequencer | `openu5::EndgameScene`: `endgame_main` as explicit states (`Pc`), each ending in a wait the device satisfies — Frames, Hold (a sweep, a footstep), Key, YesNo, Dissolve, Forever; a sink for console text, sound cues and music selectors; `compose()` builds the throne room as a `PresentationSnapshot` (slots 31..0 through the pose selector, the reflection, the partial gate, `endgame_recolor`); the 40 × 25 scroll grid (`endgame_datestamp`, number words, playtime); `EndgameFizzle` (fn34's LFSR). No device code, no allocation; the revive writes the live roster as 0x075a does | `native/core/{include/openu5,src}/endgame_scene.{h,cpp}` |
+| Trigger | `QuestWorldServices::endgame_presenter`: on the device the absorption sets game-won (`rescue_lord_british`) without the reference's narration; parity drivers leave it off (quest_parity unchanged) | `quest_world.{h,cpp}` |
+| D-57 | the GameWon / Endgame events' internal token is no longer printed | `ui_session.cpp` |
+| Device presenter | `start_endgame` on GameWon; `service_endgame` every frame: the scene clock (≤ 250 ms a frame; it stands under the System Menu and the Developer screen and resumes where it stopped), timed waits from exact due times, the fizzle's pace, the A-15 line once the stranded wander begins; the throne room is a presentation source that outranks the others (`endgame-scene`); the story pages and the scroll replace the game screen; keys go to the scene's getkeys only; music selectors and sound cues; `stop_endgame` on Load, Return to Title and a Developer un-win | `main/alpha_runtime.{h,cpp}` |
+| Board | `show_endgame_page` (a 4bpp 320 × 200 page at y 20 on black, with the scroll's opaque 8 × 8 cells — IBM.CH / RUNES.CH, reverse video — over it; drawn once per page); the dissolve's capture (every pixel of one full repaint mirrored into a PSRAM copy as it is sent), `fizzle_endgame` (the next pixels of fn34's order blacked out, the bands with them), the copy released after | `main/tdeck_board.{h,cpp}` |
+| Renderer | fn36's LUT applied to the listed tiles before any animation pass; the partial gate cell | `main/native_renderer.cpp` |
+| Pack | `endgame-room.bin` (121 B) and `endgame-pages.bin` (the six story pages and the scroll's backdrop, 7 × 32,000 B 4bpp + 16 B header), composed at pack time from the user's own END.DAT / ENDTEXT.16 / END1–3.16 / ENDSC.16 / FONT.OVL tables by a port of FONT.OVL's justified renderer; checked by `check-endgame-pages.ts` | `native/tools/u5pack/alpha1-endgame.ts`, `alpha1.ts`; `main/alpha_resources.{h,cpp}` |
+| Audio | `EndgameOrb` (param 1 the revive sweep, 0 the orb's); music through the existing contexts (Reunion, EndgameStones, EndgameLadyNan, Finale); the 0x15 chain timed from the song's parsed length (`AudioBackend::music_length_ms`, the device's from the XMI's last tick) | `sfx_synth.cpp`, `sfx_inventory.cpp`, `audio.h`, `main/tdeck_audio.h` |
+
+**SD resource pack:** 2,042,554 → **2,266,819 B** (+224,265 B: the two entries and their table rows), CRC `0x5c0d175d`, SHA-256 `85b38994eea674e48338d744091c6b895b9507a286bb38bcc84231131feed01e`. **The firmware's identity lock requires this pack** (A-13): it must be copied to the SD card with the image. The audio pack is unchanged.
+
+Found and fixed on the way (each pinned by a test): a Developer un-win (Preset: Endgame) left the scene running and eating input (Batch 53A TI3); a dissolve with no frame to capture waited for ever (now skipped, logged, like a capture without memory); after a long pause at a getkey the following walk collapsed to nothing, because the next wait was timed from when the getkey began (W4); closing the System Menu let the scene catch up 250 ms (W5).
+
+### 7.5 Adaptations (documented; no invented art)
+
+1. The 320 × 200 pages sit at y 20 of the 240-row panel on black bands; the fizzle covers the picture (fn34 over 320 × 200, exactly the original's order) and the bands as their own 320 × 40 rectangle in step with it.
+2. The seven full-screen pages are composed once at pack time (flash is the hard constraint); the scroll's text is drawn live (date, name, playtime).
+3. The fizzle's start frame is the Board's own full repaint mirrored into PSRAM (153,600 B, only during the dissolve). Without the memory, or without a frame, the fizzle is skipped and logged.
+4. The fizzle's rate is 25,600 px/s (the witness's ≈ 2.5 s): the original has no timer there.
+5. The getkeys wear the device cue (`Enter: continue`, `Y / N`) on the status line, as every paced scene does since Batch 51 / A3-HF5.
+6. The scene clock stands under the System Menu and the Developer screen; one frame moves it at most 250 ms.
+7. The last screen stays (1988's freeze); the Exodus patch's "any key → DOS" has no device meaning (A-15): the System Menu's Load and Return to Title leave.
+
+### 7.6 Input
+
+| Where | Key | Effect |
+|---|---|---|
+| a getkey (the status line says `Enter: continue` in the throne room; each story page, which shows no cue, as in 1988) | any key: letter, digit, Space, Enter, **Mic** (ESC), **Backspace** | ends that getkey only — the ending goes on; Mic and Backspace never abort it |
+| a box question (`Y / N`) | Y / N, either case | the answer; every other key is read again (0x0852 / 0x088b) |
+| no getkey open (walks, sweeps, the gate, the dissolve) | any key | nothing — dropped, never kept for the next getkey (no BIOS type-ahead) |
+| anywhere in the ending | the trackball's roll | nothing (not a key on the T-Deck); Shift+roll pages the console in the throne room, as in every paced scene |
+| anywhere | a held key | one key: the matrix sends one press; the release is no key |
+| the scroll / the stranded room | any key | nothing |
+| anywhere | Alt+S | `Save unavailable` (Batch 53A) |
+| anywhere | Alt+M | the System Menu (the scene's clock stands): Load leaves, Return to Title leaves, Settings |
+| anywhere | Alt+D | the Developer screen (the clock stands); a Developer un-win stops the scene |
+
+### 7.7 Timing (the scene clock; exact due times, observed within one 5 ms frame)
+
+| Beat | Duration |
+|---|---|
+| before Lord British walks; before the greeting; after the box; after `I see...` | 40 frames = 2,200 ms each |
+| one step (anyone) | 110 + 21 + 165 = 296 ms; the footstep at 110 ms |
+| a revival (XOR held) | 1,550 ms, then the healed roster |
+| the orb's sweep | 1,937 ms |
+| the gate | 1 frame per stage 1–15, the whole gate 4 frames, 1 frame per stage closing |
+| the fizzle | 64,000 px at 25,600 px/s = 2,500 ms |
+| a getkey, a page, the scroll | for ever |
+
+The ending's timing is the same with music, muted, and with no audio pack at all (M12, M13).
+
+### 7.8 Audio
+
+- **Stock assets (no music patch): no music is played**, none is invented. The sounds are the original's speaker cues: a footstep per step, the revive sweep per revival, the orb's sweep.
+- **With the supported Exodus patch's songs in the audio pack:** Joyous Reunion from the absorption; Rule Britannia follows by itself when it ends (even while a getkey waits); Stones for story pages 1–3, Dream of Lady Nan for 4–6; Rule Britannia on the scroll — and on the stranded wander, after a Reunion still playing has ended.
+- The existing controls hold: Alt+Shift+M / Alt+Shift+S silence the music / the sounds for the session (unmuting on the scroll starts its song), Music Volume / SFX Volume as set.
+
+### 7.9 Files
+
+- Core: new `include/openu5/endgame_scene.h`, `src/endgame_scene.cpp` (`sources.cmake`); `presentation.h` (`endgame_recolor`, the gate fields); `quest_world.{h,cpp}` (`endgame_presenter`); `ui_session.cpp` (D-57); `audio.h` (`music_length_ms`); `sfx_synth.cpp`, `sfx_inventory.cpp` (`EndgameOrb`).
+- Device: `main/alpha_runtime.{h,cpp}`, `main/tdeck_board.{h,cpp}`, `main/native_renderer.cpp`, `main/alpha_resources.{h,cpp}`, `main/tdeck_audio.h`, `main/CMakeLists.txt` (`endgame_scene.cpp` built `-Os`, §7.14), `CMakeLists.txt` (`PROJECT_VER`).
+- Pack tools: new `native/tools/u5pack/alpha1-endgame.ts`, `check-endgame-pages.ts`; `alpha1.ts` (the two entries).
+- Host fixture and stubs: `host_tests/alpha_runtime_host_fixture.cpp` (the scene and the pack's two entries before `bind_quest_services`), `host_stubs/tdeck_board_host_stub.cpp`, `host_stubs/batch37_board_capture_stub.cpp` (the Board's four new calls), `host_tests/a4_ui2_harness.h` (opt-in dungeon arenas, null by default).
+- Tests and tools: new `native/core/tests/a4_end1_endgame_scene_test.cpp`, `host_tests/a4_end1_ending_runtime_test.cpp`, `native/core/tools/a4_end1_mutation_check.py`, `re/tools/a4_end1_endgame_listing.py`; `native/core/CMakeLists.txt` registers the three tests.
+- Notes: new `re/notes/a4-end1-ending-reconstruction.md`.
+
+### 7.10 Existing tests changed on purpose
+
+| Test | Why |
+|---|---|
+| `batch53_release_blockers` EV5, EV6, ES3, V0b | they read the one-shot transcript; they now play the ending through its getkeys (`drive_ending`) — EV6 reads the report off the scroll, and the console must not repeat it. EV8 (no input wedge, paging) is unchanged and passes again once the ending has been played (the console then holds enough to page) |
+| `batch53a_ending_terminal` R5, TV0/TS0 (and the TV/TS checks after them) | the same: R5 reads the report off the scroll; the terminal checks run on the ending's last screen |
+| `a3_02_sfx_synth` E12 | 63 supported cues, not 62: `EndgameOrb` has its program |
+| `a3_03_sfx_inventory` I1 | `EndgameOrb` left the silent set (ten ids, not eleven) and is Implemented |
+| `a3_04e_pacing` S2 | five draw loops pause through the policy's cadence, not four (`show_endgame_page`) |
+
+No golden hash changed (the eight A4-UI1 goldens are byte for byte).
+
+### 7.11 New tests
+
+**`a4_end1_endgame_scene`** (core, 50 checks, over the user's ENDMSG.DAT / MISCMAPS.DAT): S0 the room; E the entry, Lord British's 40 frames and walk, a step's frames / footstep / frames, the mirror, the revive (print, sweep, hold, roster), the lineup and the tie rule of `move_sprite_toward`, the greeting; Q the box questions (Y, N then Y/N, other keys read again, case folding); V the victory branch (box, speech order, orb, the 16 gate stages, into the gate, the floor blitted back, the dissolve, six pages with selector page + 1, the scroll); S the datestamp (rows, centring, reverse, runes, ordinals / cardinals, the 13 × 28 playtime and its borrows); N the stranded branch (`I see...`, the walks, the bed pose, the wander, Yes without the box); C the composition (pose selector, reflection, partial gate, recolor flag and LUT); F the fizzle (fn34's order, (0,0) last, every pixel once).
+
+**`a4_end1_ending_runtime`** (device, 56 checks): the REAL `AlphaRuntime` on the REAL `tdeck_board.cpp` over the fake ST7789, from the Phase 7E-A route (Developer Preset: Endgame, Doom L6 (4,7), the pit, four steps north) with a party of four, three of them fallen. T the trigger (the scene mounts; no ENDMSG at the absorption; no internal token); V the room on the viewport (MISCMAPS from the pack, the recolor on exactly the listed tiles — LUT and list held independently by the test —, the viewport on the panel, the XOR during a revival, the gate at stage 5); W the waits (40 frames, 296 ms steps with keys pressed between them, the 1,550 ms holds, two minutes at a getkey, the step cadence after a 30 s pause at the box question, the System Menu stopping the clock); K the keys (no type-ahead, the cue, a held key, Y/N only, Mic and Backspace as keys, Alt+S refused); E the console's whole text in order, from the pack, once each; D the dissolve (capture == panel, 25,601 pixels after 1 s exactly in fn34's order with the bands, the last at 2,500 ms, the copy released); P the six pages and the scroll pixel for pixel, each drawn once; M the music (Reunion → Rule Britannia by itself, Stones / Lady Nan, Rule Britannia on the scroll, waiting for the Reunion in the stranded room) and the sounds (21 footsteps, the revive sweeps with param 1, the orb's with param 0), the mutes, the same clock muted and with no audio pack; F the scroll for ten minutes, keys doing nothing, the System Menu over it, Load leaving; S the stranded room (No, No; the walks; the A-15 line once; the wander; Return to Title) and Yes without the box; N a pack without the ending keeps the parity path.
+
+**`a4_end1_endgame_pages`** (TypeScript, 11 checks): L1 the six pages' layout from DATA.OVL; J1–J2 the justification; C1–C3 the clip and the coverage (every printable byte drawn once, in order; C3 lays a text three pages long on page 0's layout, whose leading puts a line at exactly y 0xc0, and no glyph of it is drawn); O1–O2 the order of drawing; G1 the seven screens' goldens; G2 the entries' sizes; G3 the shipped pack holds exactly this build.
+
+**RED evidence.** The scene and the presenter are new API, so the new tests cannot run against the pre-END1 tree. Mutant **E0** is the pre-END1 device in one edit (the presenter off): it turns the new runtime test RED (T1, T3, S1, S2, S4, M8–M13, F5, F6) and the updated Batch 53 / 53A checks RED (EV6, R5). The production change turned five existing tests RED before they were updated (§7.10).
+
+### 7.12 Mutations
+
+`native/core/tools/a4_end1_mutation_check.py <build> [ids | --anchors]`: **55 mutants** of production code — the scene, the runtime presenter, the Board, the renderer, `ui_session.cpp`, `quest_world.cpp` and the TypeScript composer — each built and run against `a4_end1_endgame_scene` (scene), `a4_end1_ending_runtime` (runtime), `batch53_release_blockers` (b53), `batch53a_ending_terminal` (b53a) and `check-endgame-pages.ts` (pages).
+
+| Brief's class | Mutants | Killed by |
+|---|---|---|
+| the pre-END1 device / the trigger | E0 presenter off (Batch 53's dump); E1 presenter **and** narration | runtime T1, T3, S1, S2, S4, M8–M13, F5, F6; b53 EV6; b53a R5 · runtime T3; b53 EV5, EV6 |
+| text: order, once, nothing invented | E2 the D-57 token back; E3 the speech from ENDMSG 0x05; E4 the A-15 line over the overlay | runtime T3, F0, S3 · scene V3–V9, runtime E2 · runtime F0, S3 |
+| the throne room | V1 no recolor; V2 a wrong LUT entry; V3 the renderer ignores it; V4 no XOR; V5 the gate from the bottom of 0xdc; V6 Lord British a row up; V7 the lineup; V8 the tie rule; V9 the bed pose; V10 14 gate stages | runtime V1, V4, V7, D1 (V1–V3; V2 also scene C4) · runtime V4 · runtime V7 · scene E2–E5, runtime V3, W1, … · scene E10, E13 · scene E13 · scene N3 · scene V6–V14 |
+| timing | W1 32 frames; W2 the roster healed at the print; W3 waits timed from the getkey's start; W4 the clock runs under the System Menu | scene E2, E3, runtime W1 · runtime W2 · runtime W4 · runtime W5 |
+| one held key never skips several screens; no type-ahead | K1 the trackball ends a getkey; K2 a key hurries a timed wait | runtime W3 · runtime W1, W2, M1, M2, M12, M13 |
+| the box questions | K3 any key answers; K4 no case folding; K7 Yes without the box wins | scene Q2, Q3, runtime K3, … · scene Q3, Q4, S2, runtime …, b53 EV5, EV6, ES3, V0b · scene N5, N6, runtime S4 |
+| Mic / Back must not abort; no saving mid-ending | K5 the Mic aborts; K6 Alt+S saves | runtime K3, K4, … · runtime K5, F6; b53a TV6–TV8, TV12, TS6–TS8, TS12 |
+| the dissolve | D1 always skipped; D2 the capture not a full repaint; D3 32,000 px/s; D4 a wrong tap; D5 the bands never fizzle; D6 the copy never released | runtime D1–D3 · D1, D2 · D2, D3 · scene F1, runtime D2, D3, P1, … · runtime D2 · runtime D3 |
+| the pages and the scroll | P1 the picture at y 0; P2 transparent cells; P3 redrawn every frame; P4 the centring; P5 "Twentyieth"; P6 a 30-day borrow | runtime D2, P1, P3, F2, F3 · P3, F2, F3 · P2, F1 · scene S1, S2 · scene S2 · scene S2, S3 |
+| music: only the patch's, at its selectors | M1 no Reunion → Rule Britannia chain; M2 0x1b cuts the Reunion; M3 the story music by page, not page + 1 | runtime M4, M9 · runtime M8, M9 · scene V12, runtime M6 |
+| sounds | M4 no footsteps; M5 the revive plays the orb's sweep; M6 no orb sweep | scene E4, runtime M1, M3 · runtime M2 · scene V5, runtime M5 |
+| no silent return to play; ways out | F1 a key on the scroll ends it; F2 Load leaves the overlay running; F3 Return to Title leaves it running; F4 a Developer un-win keeps it; F5 no wander | scene V14, runtime F2, F3 · runtime F4 · runtime F7 · b53a TI3 · scene N6, runtime F5 |
+| the TypeScript composer | T1 rounding instead of idiv; T2 an 8-row leading; T3 the art before the headlines; T4 the clip at y 200; T5 no soft hyphen; T6 the scroll at (0,0) | pages G1, G3 · C3, G1, G3 · O1, G1, G3 · C3 · C2, G1, G3 · O2, G1, G3 |
+
+**The first pass** (`a4-end1-mutation-pass1.log`, on the test set before the last guards): 50 killed, 5 survived — E2 (the D-57 check read the Message channel only), E4 (the A-15 count started after the absorption's own input), V8 (no test walked a tie), F2 (Load's own stop was masked by the un-win stop unless the loaded save is won), T4 (the real pages never reach y 0xc0). Each got a guard: T3 / F0 / S3 read every channel for the token and count from before the absorption; core E13 walks members 1 and 3 through their ties; runtime F4 loads a won save on the scroll; pages C3 lays an over-long text on page 0's layout, whose leading puts a line at exactly y 0xc0. The five re-run killed (`a4-end1-mutation-survivors-recheck.log`; T4 needed page 0's layout — page 1's leading skips the window). A second guard was also made independent: the runtime test held the production recolor LUT as its oracle, so V2 was killed by the core test alone; it now holds its own copy.
+
+**Final pass (the final test set): 55 killed, 0 survived, 0 invalid; restored build GREEN** (`native/core/a4-end1-mutation.log`).
+
+### 7.13 Host results
+
+All runs serial, `native/core/build-a4-end1` (the usual host toolchain), 0 project warnings (`a4-end1-build.log`).
+
+| Run | Result | Log |
+|---|---|---|
+| Baseline (A4-UI3 tree) | **172 / 172**, 146.01 s | `a4-end1-baseline-ctest.log` |
+| After the production change, before the test updates | 168 / 173: the five tests of §7.10 (`batch53_release_blockers` EV5, EV6, EV8, ES3, V0b; `batch53a_ending_terminal` R5, TV0, TV5, TS0, TS5 and TI3 — TI3 was the un-win defect of §7.4; `a3_02_sfx_synth` E12; `a3_03_sfx_inventory` I1; `a3_04e_pacing` S2) | (console; recorded here) |
+| END1 focused | `a4_end1_endgame_scene` **50 / 50**; `a4_end1_ending_runtime` **56 / 56**; `check-endgame-pages.ts` **11 / 11** | `a4-end1-focused.log` |
+| SAVE3 regression | `a4_save3_pc_bridge_runtime` **57 / 57**; `check-pc-save.ts` **10 / 10** | `a4-end1-save3-regression.log` |
+| SAVE2 regression | `a4_save2_slots_runtime` **65 / 65** | `a4-end1-save2-regression.log` |
+| SAVE1 regression | `a4_save1_recovery_runtime` **45 / 45**; `a3_04g_storage_runtime` **44 / 44** | `a4-end1-save1-regression.log` |
+| UI1 / UI2 / UI3 regression | `a4_ui1_chrome_runtime` **30 / 30** (all eight goldens byte for byte); `a4_ui2_title_runtime` **10 / 10**; `a4_ui2_death_music_runtime` **13 / 13**; `a4_ui2_save_menu_runtime` **33 / 33**; `a4_ui3_slot_rows` **40 / 40**; `a4_ui3_save_ux_runtime` **31 / 31** | `a4-end1-ui-regression.log` |
+| Full suite | **175 / 175** (172 + `a4_end1_endgame_scene` + `a4_end1_ending_runtime` + `a4_end1_endgame_pages`), 151.10 s | `a4-end1-ctest.log` |
+
+**Rendered screens.** No golden changed. The new pixel checks compare the panel with what the pack and the fonts say it must be (P1, P3, D1, D2, V1, V2, V4, V7), not with recorded hashes; the seven screens' own goldens (G1) were recorded after the screens were looked at (`check-endgame-pages.ts --png`), and the runtime test's `--dump <dir>` writes the throne room, the revive's XOR, the gate, the captured frame, the fizzle half way, each page, the scroll and the stranded room for a human look.
+
+### 7.14 Firmware
+
+**The investigation (flash is the hard constraint).** An interim build (`native/targets/tdeck/build-a4-end1`, `native/core/a4-end1-fw-{configure,build}.log`) built clean on the first attempt at **`0xfade0` (1,027,552 B), +13,008 B** over A4-UI3 — 21,024 B free, more than "a few KB", so it was taken apart by object and symbol (`esp_idf_size --files` / `--archive-details libmain.a`, against `build-a4-ui3-final`):
+
+| Where | Growth | What |
+|---|---|---|
+| `endgame_scene.cpp` (new) | +5,992 B | the state machine `advance` (1.6 KB), `compose` (0.7 KB), the scroll (0.5 KB), the original's number words and scroll lines (1.1 KB of strings), put_char / wander / step / fizzle |
+| `alpha_runtime.cpp` | +3,344 B | `service_endgame` (0.9 KB), the page / capture / presentation-source paths in `render` (0.85 KB), the getkey routing, start / stop, the music selectors, the sound cues |
+| `tdeck_board.cpp` | +1,131 B | `show_endgame_page`, `fizzle_endgame`, the capture mirror |
+| merged strings (`stdio_vfs.c.obj`) | +1,152 B | the `ENDGAME_*` serial lines the hardware checklist reads, the A-15 line |
+| `alpha_resources.cpp`, `native_renderer.cpp`, `sfx_synth.cpp`, `main.cpp` | +372, +320, +241, +278 B | the two pack entries' load and checks; the recolor and the partial gate; the orb's sweep program; the runtime object's new members |
+
+No accidental bloat (no new library, no table, no duplicated asset); the 224 KB of screens were already moved to the SD pack, which is what lets the feature fit at all. One reduction was applied: the sequencer is cold code (once a playthrough; per frame only a 121-cell compose and, during the dissolve, the fizzle's LFSR), so `endgame_scene.cpp` alone is built `-Os` (`main/CMakeLists.txt`; code generation only, the host tests run the same source): **−856 B**. The rest is the feature.
+
+**The final image (the one to flash).** Built after every code, test and doc change, from scratch in a new directory: `idf.py --no-ccache -B build-a4-end1-final reconfigure`, then `ninja -C build-a4-end1-final -j 4 all` (1180/1180, first attempt clean; no project warnings — the only warning lines are ESP-IDF's "smallest app partition is nearly full (2 % free)" notice and its five `component_validation.cmake` notices), then `python package_launcher.py --build-dir build-a4-end1-final` (`native/core/a4-end1-final-{idf-export,fw-configure,fw-build,package,identity,fw-size-diff}.log`).
+
+- **Launcher file:** `native/targets/tdeck/build-a4-end1-final/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-end1-Debug-Launcher.bin`, byte-identical to `build-a4-end1-final/openu5_tdeck.bin` — an application image, no bootloader or partition table merged in.
+- **SHA-256** `4a167f960cf17f762e0209c35513976955e8693e6308f19628ca921707cfa1e1`.
+- Embedded (read back from the image's app descriptor and strings, `a4-end1-final-identity.log`): **`FW 4.0.0-alpha4-end1-debug`**, **`Git 09cc460052ee-dirty`** (HEAD `09cc4600` plus the uncommitted A4-SAVE2 + A4-SAVE3 + A4-UI3 + A4-END1 tree), ESP-IDF v6.1.
+- **1,026,688 B (`0xfaa80`)**: **+12,144 B** against A4-UI3's final `0xf7b10` (1,014,544 B). **21,888 B (2.09 %) of the 1 MiB app partition free** (was 34,032 B).
+- Flash `.text` +10,372, `.rodata` +1,752; internal `.bss` +160 (the runtime object's ending state: the scene pointer, ENDMSG pointers, two fizzles, the scene clock), `.data` +32; IRAM unchanged. PSRAM: +224,137 B resident (the pack's two entries, loaded at boot with the pack), the scene object (~2.3 KB), and **153,600 B only during the dissolve** (the panel copy, freed after; without it the fizzle is skipped).
+
+### 7.15 Hardware validation checklist (A4-END1 image) — run 2026-10-01: PASS (§7.19); B.2 revival not physically tested
+
+**0. Before anything**
+- Power off. On a PC back up the SD card's whole `ultima5/` folder (`saves/`, `settings.json`, both packs). Keep the old `openu5-alpha1-resources.bin`: the A4-UI3 firmware needs it if you go back.
+- Copy the **new resource pack** `native/assets/openu5-alpha1-resources.bin` (2,266,819 B, SHA-256 `85b38994eea674e48338d744091c6b895b9507a286bb38bcc84231131feed01e`) to `/ultima5/openu5-alpha1-resources.bin`. The audio pack stays as it is.
+- Flash `OpenU5-TDeck-Alpha4.0.0-alpha4-end1-Debug-Launcher.bin` (§7.14; SHA-256 `4a167f96…a1e1`). The boot screen must show **`FW 4.0.0-alpha4-end1-debug`** and **`Git 09cc460052ee-dirty`**. **Stop if it does not.** A pack refusal at boot means the pack copy is not the new one.
+
+**A. Reaching the ending (the Phase 7E-A route)**
+1. Continue (or New Journey). Alt+D → Developer → Shortcuts → **Preset: Endgame**, then Party → **Party size 1** for the quickest run (as in 7E-A). For a second run, Party size 4: the throne room then shows the lineup of four (in the arena every member makes the walk). A revival needs a companion already dead in the party (e.g. a save where one fell): the Developer has no kill shortcut.
+2. Alt+S once **before** the pit, so a pre-ending save exists (Load later returns to it).
+3. Developer → Teleport → Doom, Floor Level 6, X 4, Y 7, default entrance Off. Face East, step forward: the final room. Walk forward four times: `Avatar is absorbed!` (then the arena's `VICTORY!`, ledger D-72).
+
+**B. Victory, page by page** (answer **Y**)
+1. The viewport becomes the **green throne room** (the floor, the chairs and bed, the torches recoloured; the torches still flicker). Lord British stands at the bottom centre ~2 s, then walks up five cells, a footstep each. With the patch's music: **Joyous Reunion** starts at once.
+2. Each companion appears in the mirror at the bottom and walks to the lineup in front of Lord British; a **dead** one first: `<name> lives!`, the viewport flashes inverted for ~1.5 s with a rising sweep, the roster shows the member healed.
+3. ~2 s later: the greeting with the Avatar's name; status line `Enter: continue`. Wait a minute: nothing moves on; then any key.
+4. The box question; status line `Y / N`. Press Space, Enter, other letters, Mic, Backspace: nothing. (Optional: N → the second question; Y there.) **Y**: `Yes`; the Avatar steps forward and back; the box appears; the box text.
+5. `He says:` then five pages of Lord British's speech, one key each (try the **Mic** on one: it turns the page, it does not leave the ending), then `"FOLLOW!" cries Lord British`, the orb appears. Key: the orb's sweep, the **red moongate** rises cell-high, Lord British and then each member walk into it and vanish, it sinks, the floor returns.
+6. The whole screen **dissolves to black** in ~2.5 s, random pixels, including the bands above and below where the pages will sit.
+7. **Six story pages**, each waiting for a key: The Homecoming (the stones), the house, the night, The Dream, the choice, the gate. Music: Stones for the first three, Dream of Lady Nan for the last three. The text is justified in its columns, nothing clipped at the bottom, the art over the headline's start on page 1.
+8. The **scroll**: `Be it known that on` … the date in words, `<Avatar> the Avatar`, `saved the life …`, the two rune lines, then the report rows below the parchment with the playtime. Music: Rule Britannia.
+9. Wait several minutes: nothing changes. Keys and the trackball: nothing. Alt+S: `Save unavailable` (the log is under the scroll; check after leaving).
+10. Alt+M: the System Menu over the scroll; Alt+M again: the scroll comes back intact.
+11. Alt+L (or System Menu → Load Game): the pre-ending save loads; the game plays again.
+
+**C. Input feel**
+1. At any getkey, hold a key a few seconds: only one page turns.
+2. While Lord British or a member walks, press keys: nothing hurries; the next getkey still waits for a fresh key.
+3. Roll the trackball at a getkey: nothing.
+4. During the gate rising, Alt+M: the scene pauses; close the menu: it continues from the same point, no jump.
+
+**D. Stranded** (from the pre-ending save)
+1. Same route; at the box question answer **N**, then **N** again: `No` twice, `"I see...`, then `Well then, pull up a chair…` (ENDMSG 0x0a).
+2. A companion walks to the table, Lord British to his bed (the sleeping pose), the Avatar to the other chair; the others wander about the floor for ever, never onto anyone.
+3. The status line / log shows `The quest is complete. Alt+M: System Menu` once.
+4. Keys do nothing; Alt+M → **Return to Title**: the title screen; Continue loads the last save (pre-ending).
+5. Optional: Y **without** the box (drop it with the Developer first): `Yes`, then `"I see...` — the stranded room.
+
+**E. Audio**
+1. With the patch's songs (Music Volume above 0 %): Reunion → Rule Britannia by itself if you wait long enough at a getkey; the page music and the scroll's as in B.7–B.8.
+2. Alt+Shift+M during the ending: the music stops and stays off through pages and scroll; Alt+Shift+M on the scroll: Rule Britannia starts. Alt+Shift+S: footsteps and sweeps silent.
+3. SFX Volume and Music Volume settings are obeyed.
+4. Without the music patch (or with music unavailable): **no music anywhere in the ending**; the footsteps and the two sweeps still sound.
+
+**F. Final state and power**
+1. Power-cycle on the scroll: Continue loads the last save, never the ending (the ending is never saved).
+2. Report: the `FW` / `Git` lines, PASS/FAIL per step, photos of any odd screen (especially the pages and the scroll), and (with serial) the `ENDGAME_*` lines.
+
+### 7.16 Manual DOS comparison checklist (optional; no runtime oracle was available)
+
+In DOSBox (or real DOS) with the same install (`original/u5/ultima5`, the Exodus patch applied) and a save in or near the final room with the wooden box (a DOS save of your own; the PC Save Transfer bridge refuses dungeon saves, A4-SAVE3):
+1. **Order and text.** Compare the console text line by line with the T-Deck's: the revivals, the greeting, the two questions, the box text, `He says:`, the five speech pages, FOLLOW!; and on the stranded route `I see...` and the chair text.
+2. **Prompts.** At the box question DOS ignores every key but Y / N (either case); the T-Deck must match.
+3. **Timing.** Lord British's ~2.2 s wait and ~0.3 s steps (at DOSBox's default cycles the 18.2 Hz tick holds; the speaker sweeps depend on the machine); the dissolve's length depends on DOSBox's speed (the T-Deck uses ~2.5 s).
+4. **The room.** The green recolour of floor, chairs, bed and torches; the mirror reflection; the gate rising from the bottom of its cell.
+5. **Pages.** The six pages' art, headlines and justified text line breaks; the scroll's rows, centring and runes.
+6. **Music** (patched install only): Reunion, Rule Britannia after it, Stones / Lady Nan per page, Rule Britannia at the scroll.
+7. **End.** The patched DOS build exits to DOS on a key at the scroll (the T-Deck stays; A-15); the stranded room wanders for ever in both.
+
+### 7.17 Known issues left out of scope
+
+- `VICTORY!` (the native arena's line when the absorption ends combat) precedes the ending; the original goes from `absorb` straight to the overlay. Pinned by Batch 53A R3; a combat change — ledger **D-72**, queued.
+- The TypeScript reference's rescue narration (`rescue_events`, pinned by quest_parity) is not ENDMSG's text or order; the device no longer uses it — ledger **D-73**, queued as a reference fix (fix the reference at the pinned layer, then regenerate).
+- Developer has no per-member "kill" shortcut, so the hardware route shows a revival only with an already-fallen companion.
+- The real Joyous Reunion length comes from the parsed XMI on the device; the host checks the chain with a declared length.
+
+### 7.18 Status
+
+| Axis | State |
+|---|---|
+| Investigation (before code) | **delivered; no RE blocker**; static evidence only (no DOSBox) — `re/notes/a4-end1-ending-reconstruction.md` |
+| Software (focused, SAVE3/SAVE2/SAVE1/UI1/UI2/UI3 regressions, full suite, mutations, firmware build) | **PASS** — 175/175; END1 50/50 + 56/56 + 11/11; SAVE3 57/57 + 10/10, SAVE2 65/65, SAVE1 45/45 + 44/44, UI1 30/30 (goldens unchanged), UI2 10/10 + 13/13 + 33/33, UI3 40/40 + 31/31; mutations 55/55; final image `0xfaa80` (`FW 4.0.0-alpha4-end1-debug`, `Git 09cc460052ee-dirty`, SHA-256 `4a167f96…a1e1`), 21,888 B free |
+| SD resource pack | recopied for the hardware run (2,266,819 B, SHA-256 `85b38994…d01e`); audio pack unchanged |
+| Hardware (§7.15) | **PASS** (§7.19), with one case **not physically exercised**: the dead-member revival |
+| Revival of a dead companion | **automated PASS** (core E7–E9, runtime W2 / V4 / M2 / E1, mutants W2 / M5 / V4 killed); **NOT PHYSICALLY TESTED** on the T-Deck — untested, not failed |
+| DOS comparison (§7.16) | optional; not run |
+| Queued from END1 | D-72 (`VICTORY!` before the ending), D-73 (the reference's rescue narration) — out of scope, still queued |
+| Closed | **yes** — commit and annotated tag `alpha4-end1-hardware-validated` (§7.19) |
+
+### 7.19 Hardware result and closeout (2026-10-01)
+
+The user ran §7.15 on the T-Deck with the final image of §7.14 — `OpenU5-TDeck-Alpha4.0.0-alpha4-end1-Debug-Launcher.bin`, `FW 4.0.0-alpha4-end1-debug`, `Git 09cc460052ee-dirty`, SHA-256 `4a167f960cf17f762e0209c35513976955e8693e6308f19628ca921707cfa1e1`, 1,026,688 B — over the new resource pack (2,266,819 B, SHA-256 `85b38994eea674e48338d744091c6b895b9507a286bb38bcc84231131feed01e`).
+
+**Result: PASS.**
+
+| Checklist area | Hardware |
+|---|---|
+| The victory route (A, B): trigger, throne-room choreography (Lord British's walk, the lineup), the box / orb / moongate sequence | **PASS** |
+| The box questions: Y / N interaction | **PASS** |
+| The dissolve | **PASS** |
+| All six story pages | **PASS** |
+| The final scroll | **PASS** |
+| Music and SFX behaviour (E) | **PASS** |
+| The stranded branch (D) | **PASS** |
+| System Menu behaviour; Save refused during and after the ending | **PASS** |
+| Load and Return to Title tear the ending down | **PASS** |
+| Input and pacing (C) | **PASS** (correct on hardware) |
+| **A dead companion's revival** (B.2: `<name> lives!`, the XOR, the sweep, the healed roster) | **NOT PHYSICALLY TESTED** — no dead companion was at hand (the Developer menu has no kill shortcut, §7.17). Untested on hardware, **not failed**. Its evidence is automated only: core E7–E9 (the print, the 1,550 ms hold, `G` at full HP), runtime W2 (three revivals, roster healed after the hold), V4 (the XOR on the composed viewport), M2 (the revive sweep, param 1), E1 (the `lives!` lines in order); mutants W2, M5 and V4 killed. |
+
+**Closeout runs** on the committed tree (no production or test logic changed since §7.13, so no mutation pass was repeated): END1 focused 50/50, 56/56, 11/11 and the serial full suite (`native/core/a4-end1-closeout-{focused,ctest}.log`). The post-commit build (`native/core/a4-end1-postcommit-{configure,build,package}.log`, directory `build-a4-end1-postcommit`) checks that the committed tree builds to the same image apart from its embedded Git line; **the tested image remains the §7.14 one** (`Git 09cc460052ee-dirty`), and that is the one the tag records.
+
+D-72 and D-73 stay queued, out of A4-END1's scope.

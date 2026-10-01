@@ -496,8 +496,10 @@ void test_failed(Route r) {
             h.south();
             h.key('\r');
             h.key('\r');
-            check(h.saw("No valid save") && h.rt->system_menu_open(), menu ? "L7.1m" : "L7.1a",
-                  "precondition: the menu's Continue Latest finds no save and stays open");
+            // Alpha 4 A4-SAVE2: the Load page lists Slot 1 empty and refuses
+            // it itself; the menu stays open over the picker all the same.
+            check(std::strcmp(h.rt->system_menu_view().footer, "Slot 1 is empty") == 0 && h.rt->system_menu_open(),
+                  menu ? "L7.1m" : "L7.1a", "precondition: the menu's Load Game finds no save and stays open");
             h.key('\b'); // Load page -> root
             h.key('\b'); // root -> Resume
         } else {

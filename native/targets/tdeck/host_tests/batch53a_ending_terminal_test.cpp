@@ -35,6 +35,7 @@
 #include "esp_timer.h"
 #include "openu5/combat.h"
 #include "openu5/debug_developer.h"
+#include "openu5/endgame_scene.h"
 #include "openu5/dungeon.h"
 #include "openu5/quest_state.h"
 #include "openu5/quest_world.h"
@@ -158,7 +159,13 @@ struct Harness {
     void alt_save() { raw_key('s', true); }
     void alt_load() { raw_key('l', true); }
     // System Menu -> Save (second root item), then close the menu.
-    void menu_save() { raw_key('m', true); ball(RawInputKind::TrackballDown); key('\r'); raw_key('m', true); }
+    // Alpha 4 A4-SAVE2: Save Game opens Slots 1-3 on the journey's slot; Enter
+    // saves there, and an occupied slot asks "Overwrite Slot N?" (No first).
+    void menu_save() {
+        raw_key('m', true); ball(RawInputKind::TrackballDown); key('\r'); key('\r');
+        if (std::strncmp(rt->system_menu_view().title, "Overwrite", 9) == 0) { ball(RawInputKind::TrackballDown); key('\r'); }
+        if (rt->system_menu_open()) raw_key('m', true);   // A4-UI3: a successful save returns to the game; only a failed one leaves the menu open.
+    }
     // System Menu -> Load / Save Management -> Continue Latest.
     void menu_load() { raw_key('m', true); ball(RawInputKind::TrackballDown); ball(RawInputKind::TrackballDown); key('\r'); key('\r'); }
 };
@@ -187,6 +194,20 @@ bool reach_final_room(Harness &h, bool box) {
 void walk_to_soul(Harness &h) {
     for (int i = 0; i < 4 && h.rt->command_context().combat; ++i) { Harness::advance(600000); h.north(); }
     for (int i = 0; i < 6; ++i) { Harness::advance(600000); h.rt->handle(tdeck::RawInputEvent{}); }
+}
+// A4-END1: ENDGAME.OVL is played now, paced on the scene clock. Answer its box
+// questions with `answer`, press a key at every other getkey and let the clock
+// run, until it reaches its last screen: the scroll (victory) or the stranded
+// room's endless wander.
+void drive_ending(Harness &h, char answer) {
+    tdeck::Board board;
+    for (int i = 0; i < 400; ++i) {
+        const auto *s = h.rt->endgame_scene();
+        if (!s || !s->active() || s->phase() == EndgamePhase::Scroll || s->phase() == EndgamePhase::Stranded) return;
+        if (s->wait() == EndgameWait::YesNo) h.key(uint8_t(answer));
+        else if (s->wait() == EndgameWait::Key) h.key(' ');
+        for (int t = 0; t < 100; ++t) { Harness::advance(5000); h.rt->render(board); }
+    }
 }
 
 // Is the final cell enclosed? Pure core, on COPIES: step Forward facing each
@@ -257,9 +278,17 @@ void test_reproduction() {
     expect(h.saw("is absorbed!"), "R2", "absorption: \"Avatar is absorbed!\"");
     expect(h.saw("VICTORY!"), "R3", "\"VICTORY!\" is printed as the arena closes");
     expect(quest_flag(h.g().quest, QuestFlag::GameWon), "R4", "game-won is set");
+    // A4-END1: the ending is played, not dumped; the report is the scroll's.
+    drive_ending(h, 'y');
+    const auto *scene = h.rt->endgame_scene();
+    std::string report;
+    for (int c = 0; scene && c < kEndgameScrollCols; ++c) {
+        const auto &cell = scene->scroll()[21 * kEndgameScrollCols + c];
+        report += (cell.flags & kEndgameCellPrinted) ? char(cell.ch) : ' ';
+    }
     expect(h.count("Lord British carefully opens the box...") == 1 && h.count("\"FOLLOW!\" cries Lord British") == 1 &&
-               h.count("Report now, thy Quest compleat") == 1, "R5",
-           "the ENDMSG ending (record 9, proclamation, report) is printed once");
+               h.count("Report now, thy Quest compleat") == 0 && report.find("Report now, thy Quest compleat in") != std::string::npos,
+           "R5", "the ENDMSG ending (record 9, proclamation, report) is shown once; the report is on the scroll (A4-END1)");
     expect(!h.rt->command_context().combat && !h.rt->combat_state().initialized, "R6", "the arena is torn down");
     const auto &p = h.d().pos;
     std::printf("         final position: dungeon=%u floor=%u (%u,%u) facing=%d active=%d\n", unsigned(p.dungeon),
@@ -297,6 +326,7 @@ void test_terminal(bool box) {
     const int pre_won = newest_save_won();
     h.set_mark();
     walk_to_soul(h);
+    drive_ending(h, box ? 'y' : 'n'); // A4-END1: to the ending's last screen
     char id[8];
     auto I = [&](int n) { std::snprintf(id, sizeof(id), "T%s%d", tag, n); return id; };
     expect(pre_won == 0 && quest_flag(h.g().quest, QuestFlag::GameWon) &&

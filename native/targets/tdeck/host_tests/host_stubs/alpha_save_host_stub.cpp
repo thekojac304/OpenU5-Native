@@ -22,7 +22,7 @@ bool AlphaSaveService::reserve_dma_headroom() { return true; }
 
 bool AlphaSaveService::save(openu5::CommandContext &, openu5::OutdoorServices &, openu5::WorldTerrain &,
                              openu5::NpcActors &, openu5::save::Json &, const uint8_t *, size_t,
-                             const uint8_t *, size_t, uint32_t &elapsed_ms, bool) {
+                             const uint8_t *, size_t, uint32_t &elapsed_ms, bool, int) {
     elapsed_ms = 0;
     std::snprintf(last_failure_, sizeof(last_failure_), "%s", "host test build: no storage backend");
     return false;
@@ -43,9 +43,23 @@ bool AlphaSaveService::load_slot(int, openu5::CommandContext &, openu5::OutdoorS
     return false;
 }
 
-void AlphaSaveService::inspect(openu5::FrontendSaveSlot (&slots)[2]) {
+void AlphaSaveService::inspect_generations(int, openu5::FrontendSaveSlot (&slots)[2]) {
     slots[0] = openu5::FrontendSaveSlot{};
     slots[1] = openu5::FrontendSaveSlot{};
+}
+
+void AlphaSaveService::inspect_catalog(openu5::FrontendSaveCatalog &catalog) { catalog = openu5::FrontendSaveCatalog{}; }
+
+// Alpha 4 A4-SAVE3: no card here, so no PC save to import and nothing to export.
+AlphaSaveService::PcRead AlphaSaveService::read_pc_import(PcSource &source) {
+    source = PcSource{};
+    return PcRead::NoFiles;
+}
+int AlphaSaveService::pc_import_marker(uint32_t, uint32_t) { return -1; }
+bool AlphaSaveService::record_pc_import(uint32_t, uint32_t, int) { return false; }
+AlphaSaveService::PcExport AlphaSaveService::export_pc_save(int, PcExportResult &result) {
+    result = PcExportResult{};
+    return PcExport::NoLoadable;
 }
 
 bool AlphaSettingsService::load(openu5::FrontendSettings &) const { return false; }

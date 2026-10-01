@@ -1,0 +1,14 @@
+101: A4-UI1 chrome runtime: 30/30 checks
+1/6 Test #101: a4_ui1_chrome_runtime ............   Passed    0.13 sec
+102: A4-UI2 title runtime: 10/10 checks
+2/6 Test #102: a4_ui2_title_runtime .............   Passed    0.05 sec
+103: A4-UI2 death music runtime: 13/13 checks
+3/6 Test #103: a4_ui2_death_music_runtime .......   Passed    0.10 sec
+104: A4-UI2 save menu runtime: 33/33 checks
+4/6 Test #104: a4_ui2_save_menu_runtime .........   Passed    0.12 sec
+111: a4_ui3_slot_rows: 40/40 checks GREEN, 0 RED
+5/6 Test #111: a4_ui3_slot_rows .................   Passed    0.01 sec
+112: A4-UI3 save UX runtime: 31/31 checks
+6/6 Test #112: a4_ui3_save_ux_runtime ...........   Passed    0.23 sec
+The following tests passed:
+100% tests passed out of 6

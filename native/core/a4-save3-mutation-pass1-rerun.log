@@ -1,0 +1,21 @@
+P15 INVALID (does not build) -- B10 import off: vehicle records are not converted
+ive/native/core/src/pc_save.cpp: In function 'void openu5::save::pc::{anonymous}::complete_import(const uint8_t*, const uint8_t*, J&, openu5::save::pc::ImportReport&)':
+C:/Dev/OpenU5-Native/native/core/src/pc_save.cpp:109:57: error: unused parameter 'ool' [-Werror=unused-parameter]
+  109 | void complete_import(const uint8_t *gam, const uint8_t *ool, J &s, ImportReport &r) {
+      |                                          ~~~~~~~~~~~~~~~^~~
+C:/Dev/OpenU5-Native/native/core/src/pc_save.cpp: At global scope:
+C:/Dev/OpenU5-Native/native/core/src/pc_save.cpp:103:16: error: 'const uint8_t* openu5::save::pc::{anonymous}::table_for(int, int, int, const uint8_t*, const uint8_t*)' defined but not used [-Werror=unused-function]
+  103 | const uint8_t *table_for(int floor, int location, int party_floor, const uint8_t *gam, const uint8_t *ool) {
+      |                ^~~~~~~~~
+C:/Dev/OpenU5-Native/native/core/src/pc_save.cpp:64:6: error: 'void openu5::save::pc::{anonymous}::read_vehicles(const uint8_t*, int, VectorPool&, J&, openu5::save::pc::ImportReport&)' defined but not used [-Werror=unused-function]
+   64 | void read_vehicles(const uint8_t *table, int floor, VectorPool &pool, J &overrides, ImportReport &r) {
+      |      ^~~~~~~~~~~~~
+cc1plus.exe: all warnings being treated as errors
+[2/4] Building CXX object CMakeFiles/a4_save3_pc_bridge_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/a4_save3_pc_bridge_runtime_test.cpp.obj
+ninja: build stopped: subcommand failed.
+
+P27 KILLED -- a dungeon document exported -- pc exit=1 RED=P17,X8
+P29 KILLED -- the page is not told the import went through (stale "imported before") -- pc exit=1 RED=J17
+A4-SAVE3 mutation check: 2 killed, 0 survived, 1 invalid; restored build GREEN
+P15 KILLED -- B10 import off: vehicle records are not converted -- pc exit=1 RED=P10,P11,T3,T5,T6; ref exit=1 RED=P10,P11,T3,T5,T6
+A4-SAVE3 mutation check: 1 killed, 0 survived, 0 invalid; restored build GREEN

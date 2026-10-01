@@ -65,6 +65,11 @@ struct QuestWorldServices {
     const int32_t *moon_phases=nullptr;size_t moon_phase_count=0;
     bool endgame_script=false;
     const char *(*end_narration)(void *,int32_t)=nullptr;
+    // A4-END1: the device plays ENDGAME.OVL itself (endgame_scene.h), so the
+    // absorption prints none of the reference's rescue narration -- the
+    // original prints nothing between the last "is absorbed!" and the
+    // overlay's own text. The parity drivers leave it false.
+    bool endgame_presenter=false;
     bool refuge_pending=false;
     const char *(*karma_record)(void *,int32_t)=nullptr; // Quoted KARMA.DAT, shared with rest.
     void (*write)(void *,size_t,const QuestObject &)=nullptr;

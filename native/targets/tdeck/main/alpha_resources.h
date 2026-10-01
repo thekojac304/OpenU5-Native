@@ -22,13 +22,18 @@ namespace tdeck {
 constexpr char kAlphaResourcePath[] = "/sd/ultima5/openu5-alpha1-resources.bin";
 constexpr uint16_t kAlphaResourceVersionMajor = 2;
 constexpr uint16_t kAlphaResourceVersionMinor = 0;
-// Alpha 4 UI Batch 1: + ibm.ch, the game's IBM.CH chrome font (43 entries).
-// (Batch 53..Alpha 3: 2,041,466 B, CRC 0x26f75ae6, SHA-256 a48abdbf..379b;
+// Alpha 4 A4-END1: + endgame-room.bin and endgame-pages.bin, the ending's
+// throne room and its seven pre-composed screens (45 entries).
+// (Alpha 4 UI Batch 1..A4-UI3: 2,042,554 B, CRC 0x9c10874f, SHA-256 11d72c77..325a;
+//  Batch 53..Alpha 3: 2,041,466 B, CRC 0x26f75ae6, SHA-256 a48abdbf..379b;
 //  Batch 9C..52: 2,039,545 B, CRC 0x2065ad91, SHA-256 434cd664..b4ea.)
-constexpr uint32_t kExpectedAlphaResourceSize = 2042554;
-constexpr uint32_t kExpectedAlphaResourceCrc32 = 0x9c10874fU;
+constexpr uint32_t kExpectedAlphaResourceSize = 2266819;
+constexpr uint32_t kExpectedAlphaResourceCrc32 = 0x5c0d175dU;
 constexpr char kExpectedAlphaResourceSha256[] =
-    "11d72c7784d45aacb13e0c79d21e8e64d24bcc9263d279e79d337814d05d325a";
+    "85b38994eea674e48338d744091c6b895b9507a286bb38bcc84231131feed01e";
+// A4-END1: endgame-pages.bin's screens (alpha1-endgame.ts): 320 x 200, 4bpp.
+constexpr int kEndgamePageWidth = 320, kEndgamePageHeight = 200, kEndgamePageCount = 7;
+constexpr size_t kEndgamePageBytes = size_t(kEndgamePageWidth) * kEndgamePageHeight / 2;
 
 struct CreationSprite {
     uint16_t width = 0, height = 0;
@@ -135,6 +140,12 @@ struct AlphaResourceOwners {
     // BlackthornSceneServices::capture_tiles; never mutated (the scene pacer
     // patches its own working copy).
     int16_t *blackthorn_scene_tiles = nullptr;
+    // Alpha 4 A4-END1: the ending. MISCMAPS.DAT[0x210], the throne room as 11
+    // rows of 11 tile bytes (EndgameScene mounts a copy), and the seven 320 x 200
+    // screens story_screens composes -- pages 0-5, then the scroll's background
+    // -- each kEndgamePageBytes of 4bpp, nibble HIGH = the left pixel.
+    uint8_t *endgame_room = nullptr;
+    uint8_t *endgame_pages = nullptr;
     openu5::IntroViewData intro_view{};
     size_t psram_bytes = 0;
 

@@ -38,6 +38,10 @@ inline std::string n(long long v) { return std::to_string(v); }
 inline const tdeck::AlphaResourceOwners *pack = nullptr;
 inline size_t g_dungeon_count = 0;
 inline const char *g_dump = nullptr;
+// A4-END1: the dungeon rooms' arenas (combat map + sprites), for a test that
+// fights in a dungeon room. Null keeps the fixture without them, as before.
+inline const DungeonArena *g_arenas = nullptr;
+inline size_t g_arena_count = 0;
 constexpr int64_t kClockStartUs = 5'000'000;
 constexpr uint16_t kBlack = 0x0000, kWhite = 0xffff;
 constexpr uint16_t kDim = 0xad55; // EGA 7, the frontend's footers
@@ -203,6 +207,8 @@ struct Run {
         f.dungeon_count = g_dungeon_count;
         f.enemy_defs = pack->combat_enemy_views;
         f.enemy_def_count = pack->combat_enemy_count;
+        f.arenas = g_arenas;
+        f.arena_count = g_arena_count;
         f.render_pixels = true;
         f.patterned_test_tiles = patterned;
         f.paced_scenes = paced;

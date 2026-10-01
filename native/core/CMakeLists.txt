@@ -2020,6 +2020,157 @@ if(BUILD_TESTING)
   endif()
   add_test(NAME a4_save1_recovery_runtime COMMAND a4_save1_recovery_runtime
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+  # Alpha 4 A4-SAVE2 (targets/tdeck/ALPHA4_UI.md section 4) -- three manual
+  # save slots, each an A4-SAVE1 two-generation pair: independence, Continue,
+  # overwrite through the menus, faults inside one slot, generation choice, a
+  # pre-SAVE2 card, New Journey, and the list's I/O and heap. The REAL
+  # alpha_save.cpp over the fake SD card, as a4_save1_recovery_runtime.
+  add_executable(a4_save2_slots_runtime
+    ../targets/tdeck/host_tests/a4_save2_slots_runtime_test.cpp
+    ../targets/tdeck/host_tests/sd_shims/host_sd_vfs.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_board_host_stub.cpp
+    ../targets/tdeck/main/alpha_save.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(a4_save2_slots_runtime PRIVATE openu5_core)
+  target_include_directories(a4_save2_slots_runtime PRIVATE
+    ../targets/tdeck/host_tests/sd_shims
+    ../targets/tdeck/host_tests/board_shims
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/host_tests
+    ../targets/tdeck/main)
+  target_compile_features(a4_save2_slots_runtime PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(a4_save2_slots_runtime PRIVATE /Gy)
+    target_link_options(a4_save2_slots_runtime PRIVATE /OPT:REF)
+  else()
+    target_compile_options(a4_save2_slots_runtime PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(a4_save2_slots_runtime PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME a4_save2_slots_runtime COMMAND a4_save2_slots_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+  # Alpha 4 A4-SAVE3 (targets/tdeck/ALPHA4_UI.md section 5) -- original PC/DOS
+  # save import and export: the bridge's checks and codec, import through the
+  # title's PC Save Transfer page, failures at every stage, export, the round
+  # trip, recovery afterwards, card I/O and heap. The REAL alpha_save.cpp over
+  # the fake SD card, as a4_save2_slots_runtime; the fixture is the genuine DOS
+  # save original/u5/ultima5/SAVED.GAM + SAVED.OOL (git-ignored, as IBM.CH).
+  add_executable(a4_save3_pc_bridge_runtime
+    ../targets/tdeck/host_tests/a4_save3_pc_bridge_runtime_test.cpp
+    ../targets/tdeck/host_tests/sd_shims/host_sd_vfs.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_board_host_stub.cpp
+    ../targets/tdeck/main/alpha_save.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(a4_save3_pc_bridge_runtime PRIVATE openu5_core)
+  target_include_directories(a4_save3_pc_bridge_runtime PRIVATE
+    ../targets/tdeck/host_tests/sd_shims
+    ../targets/tdeck/host_tests/board_shims
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/host_tests
+    ../targets/tdeck/main)
+  target_compile_features(a4_save3_pc_bridge_runtime PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(a4_save3_pc_bridge_runtime PRIVATE /Gy)
+    target_link_options(a4_save3_pc_bridge_runtime PRIVATE /OPT:REF)
+  else()
+    target_compile_options(a4_save3_pc_bridge_runtime PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(a4_save3_pc_bridge_runtime PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME a4_save3_pc_bridge_runtime COMMAND a4_save3_pc_bridge_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../original/u5/ultima5")
+  # Alpha 4 A4-UI3 (targets/tdeck/ALPHA4_UI.md section 6) -- the save/load UX.
+  # The core half: the shared two-row slot rows and their tags, and the Save,
+  # Load, Overwrite, title and PC Save Transfer flows over built catalogs.
+  add_executable(a4_ui3_slot_rows tests/a4_ui3_slot_rows_test.cpp)
+  target_link_libraries(a4_ui3_slot_rows PRIVATE openu5_core)
+  target_compile_features(a4_ui3_slot_rows PRIVATE cxx_std_17)
+  add_test(NAME a4_ui3_slot_rows COMMAND a4_ui3_slot_rows)
+  # The device half: the REAL AlphaRuntime on the REAL tdeck_board.cpp over the
+  # fake ST7789 (the A4-UI2 harness), with the REAL alpha_save.cpp over the fake
+  # SD card (same force-include as a4_save2_slots_runtime): two rows a slot on
+  # the panel, saving, loading, recovery and the title from real save files.
+  add_executable(a4_ui3_save_ux_runtime
+    ../targets/tdeck/host_tests/a4_ui3_save_ux_runtime_test.cpp
+    ../targets/tdeck/host_tests/sd_shims/host_sd_vfs.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/board_shims/fake_tdeck_bus.cpp
+    ../targets/tdeck/main/tdeck_board.cpp
+    ../targets/tdeck/main/idle_service.cpp
+    ../targets/tdeck/main/alpha_save.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_audio.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(a4_ui3_save_ux_runtime PRIVATE openu5_core)
+  target_include_directories(a4_ui3_save_ux_runtime PRIVATE
+    ../targets/tdeck/host_tests/sd_shims
+    ../targets/tdeck/host_tests/board_shims
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/host_tests
+    ../targets/tdeck/main)
+  target_compile_features(a4_ui3_save_ux_runtime PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(a4_ui3_save_ux_runtime PRIVATE /Gy)
+    target_link_options(a4_ui3_save_ux_runtime PRIVATE /OPT:REF)
+  else()
+    target_compile_options(a4_ui3_save_ux_runtime PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(a4_ui3_save_ux_runtime PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME a4_ui3_save_ux_runtime COMMAND a4_ui3_save_ux_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../original/u5/ultima5")
+  # Alpha 4 A4-END1 (targets/tdeck/ALPHA4_UI.md section 7) -- the ending. The
+  # core half: openu5::EndgameScene against ENDGAME.OVL, over the user's own
+  # ENDMSG.DAT and MISCMAPS.DAT (the order, the waits, the box questions, the
+  # walks and poses, the gate, the story pages, the proclamation, the fizzle).
+  add_executable(a4_end1_endgame_scene tests/a4_end1_endgame_scene_test.cpp)
+  target_link_libraries(a4_end1_endgame_scene PRIVATE openu5_core)
+  target_compile_features(a4_end1_endgame_scene PRIVATE cxx_std_17)
+  add_test(NAME a4_end1_endgame_scene COMMAND a4_end1_endgame_scene
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../original/u5/ultima5")
+  # The device half: the REAL AlphaRuntime on the REAL tdeck_board.cpp over the
+  # fake ST7789 (the A4-UI2 harness), from the Developer route into the final
+  # room to the scroll and the stranded room: the trigger, the console text in
+  # order, the waits and the keys, the throne room on the viewport, the fizzle,
+  # the six pages and the scroll on the panel, the music and the sounds, the
+  # terminal screens and the System Menu ways out.
+  openu5_a4_ui2_runtime(a4_end1_ending_runtime)
+  add_test(NAME a4_end1_ending_runtime COMMAND a4_end1_ending_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
   # Alpha 3 A3-05 -- the audio finalization controls through the REAL
   # AlphaRuntime: Alt+Shift+M / Alt+Shift+S mutes by raw keys, the Settings
   # rows while muted, stock vs patched assets, and a kill's single hit burst.
@@ -2585,6 +2736,24 @@ if(BUILD_TESTING)
     set_tests_properties(real_arena_advanced_parity PROPERTIES FIXTURES_REQUIRED "real_arenas;advanced_arenas")
   endif()
   if(NODE_EXECUTABLE)
+    # Alpha 4 A4-SAVE3 (targets/tdeck/ALPHA4_UI.md section 5): the independent
+    # reader. The runtime test emits its import/export files; the TypeScript
+    # reference's SAVED.GAM parser (and raw cells from the RE notes) judges them.
+    if(TARGET a4_save3_pc_bridge_runtime)
+      add_test(NAME a4_save3_pc_reference COMMAND "${NODE_EXECUTABLE}" --import tsx
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/check-pc-save.ts" "$<TARGET_FILE:a4_save3_pc_bridge_runtime>"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../original/u5/ultima5")
+      set_tests_properties(a4_save3_pc_reference PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+    endif()
+    # Alpha 4 A4-END1 (targets/tdeck/ALPHA4_UI.md section 7): the ending's seven
+    # pre-composed screens -- FONT.OVL's justification, story_screens' order of
+    # drawing, their goldens -- and the shipped pack holding exactly that build.
+    add_test(NAME a4_end1_endgame_pages COMMAND "${NODE_EXECUTABLE}" --import tsx
+      "${CMAKE_CURRENT_SOURCE_DIR}/../tools/u5pack/check-endgame-pages.ts"
+      --real "${CMAKE_CURRENT_SOURCE_DIR}/../../original/u5/ultima5"
+      --pack "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+    set_tests_properties(a4_end1_endgame_pages PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
     add_test(NAME gameplay_parity COMMAND "${NODE_EXECUTABLE}" --import tsx "${CMAKE_CURRENT_SOURCE_DIR}/tools/check-gameplay.ts" "$<TARGET_FILE:gameplay_driver>")
     add_test(NAME outdoor_table_drift COMMAND "${NODE_EXECUTABLE}" --import tsx "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate-outdoor-tables.ts" --check)
     set_tests_properties(gameplay_parity outdoor_table_drift PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")

@@ -1,0 +1,8 @@
+E2 KILLED -- the GameWon token is printed again (D-57) -- a4_end1_ending_runtime exit=1 RED=T3,F0,S3
+E4 KILLED -- the device line comes over the overlay at once (A-15) -- a4_end1_ending_runtime exit=1 RED=F0,S3
+V8 KILLED -- the longer-axis rule flips on a tie -- a4_end1_endgame_scene exit=1 RED=E13
+F2 KILLED -- Load leaves the overlay running -- a4_end1_ending_runtime exit=1 RED=F4; batch53a_ending_terminal exit=0 RED=-
+T4 SURVIVED -- the clip at y 200, not 0xc0 -- check-endgame-pages exit=0 RED=-
+A4-END1 mutation check: 4 killed, 1 survived, 0 invalid; restored build GREEN
+T4 KILLED -- the clip at y 200, not 0xc0 -- check-endgame-pages exit=1 RED=C3
+A4-END1 mutation check: 1 killed, 0 survived, 0 invalid; restored build GREEN

@@ -15,6 +15,7 @@
 #include "driver/spi_master.h"
 #include "esp_check.h"
 #include "esp_cpu.h"
+#include "esp_heap_caps.h"
 #include "esp_log.h"
 #include "esp_vfs_fat.h"
 #include "freertos/FreeRTOS.h"
@@ -303,7 +304,23 @@ Board::RowMark Board::row_mark() const
 
 esp_err_t Board::tft_row(spi_transaction_t &transaction, RowMark start)
 {
+    if (endgame_capturing_ && transaction.tx_buffer)
+        mirror_pixels(static_cast<const uint8_t *>(transaction.tx_buffer), transaction.length / 16);
     return tft_transmit(transaction, &start);
+}
+
+// A4-END1. Every pixel transaction follows a window (set_display_window) and
+// fills it row by row; the copy follows the same cursor, so after a full
+// repaint it holds exactly what the panel shows.
+void Board::mirror_pixels(const uint8_t *bytes, size_t count)
+{
+    if (!endgame_shadow_ || window_w_ <= 0) return;
+    for (size_t i = 0; i < count; ++i) {
+        if (cursor_y_ >= window_y_ + window_h_) return;
+        if (cursor_x_ >= 0 && cursor_x_ < kDisplayWidth && cursor_y_ >= 0 && cursor_y_ < kDisplayHeight)
+            endgame_shadow_[cursor_y_ * kDisplayWidth + cursor_x_] = uint16_t(bytes[i * 2] << 8 | bytes[i * 2 + 1]);
+        if (++cursor_x_ >= window_x_ + window_w_) { cursor_x_ = window_x_; ++cursor_y_; }
+    }
 }
 
 esp_err_t Board::tft_command(spi_transaction_t &transaction)
@@ -463,6 +480,8 @@ esp_err_t Board::initialize_display()
 
 esp_err_t Board::set_display_window(int x, int y, int width, int height)
 {
+    window_x_ = int16_t(x); window_y_ = int16_t(y); window_w_ = int16_t(width); window_h_ = int16_t(height);
+    cursor_x_ = int16_t(x); cursor_y_ = int16_t(y);
     const uint16_t x_end = static_cast<uint16_t>(x + width - 1);
     const uint16_t y_end = static_cast<uint16_t>(y + height - 1);
     const uint8_t columns[] = {static_cast<uint8_t>(x >> 8), static_cast<uint8_t>(x),
@@ -571,6 +590,91 @@ esp_err_t Board::draw_rgb565_strided(int x,int y,int width,int height,
         if(openu5::tft_row_yield_due(row))tft_yield();
     }
     return ESP_OK;
+}
+
+// ---------------------------------------------------------------------------
+// A4-END1 (ALPHA4_UI.md section 7): ENDGAME.OVL's full-screen frames.
+// ---------------------------------------------------------------------------
+namespace {
+constexpr int kEndgameTop = 20; // the 320 x 200 picture's first row on the 240-row panel
+}
+
+esp_err_t Board::show_endgame_page(const uint8_t *page, const uint16_t *palette,
+                                   const openu5::EndgameScrollCell *cells, const uint8_t *normal_font,
+                                   const uint8_t *rune_font, int key, bool force)
+{
+    if (!display_initialized_ || !page || !palette) return ESP_ERR_INVALID_ARG;
+    if (!force && key == endgame_page_key_) return ESP_OK;
+    ++tft_timing_.full_screen;
+    ESP_RETURN_ON_ERROR(set_display_window(0, 0, kDisplayWidth, kDisplayHeight), kTag, "set ending window");
+    gpio_set_level(pins::kTftDataCommand, 1);
+    auto &row_bytes = transfer_row_;
+    for (int row = 0; row < kDisplayHeight; ++row) {
+        const RowMark mark = row_mark();
+        const int py = row - kEndgameTop;
+        for (int x = 0; x < kDisplayWidth; ++x) {
+            uint16_t pixel = kBlack;
+            if (py >= 0 && py < 200) {
+                const uint8_t pair = page[py * (kDisplayWidth / 2) + (x >> 1)];
+                pixel = palette[(x & 1) ? (pair & 0x0f) : (pair >> 4)];
+                const auto *cell = cells ? &cells[(py >> 3) * openu5::kEndgameScrollCols + (x >> 3)] : nullptr;
+                if (cell && (cell->flags & openu5::kEndgameCellPrinted)) {
+                    // put_char: an opaque 8x8 cell, glyph bits in the white
+                    // foreground, the rest black; reverse video swaps them.
+                    const uint8_t *font = (cell->flags & openu5::kEndgameCellRunes) ? rune_font : normal_font;
+                    const bool ink = font && ((font[cell->ch * 8 + (py & 7)] >> (7 - (x & 7))) & 1);
+                    pixel = ink != ((cell->flags & openu5::kEndgameCellInverse) != 0) ? palette[15] : palette[0];
+                }
+            }
+            row_bytes[x * 2] = static_cast<uint8_t>(pixel >> 8);
+            row_bytes[x * 2 + 1] = static_cast<uint8_t>(pixel);
+        }
+        spi_transaction_t transaction{};
+        transaction.length = kDisplayWidth * 16;
+        transaction.tx_buffer = row_bytes.data();
+        ESP_RETURN_ON_ERROR(tft_row(transaction, mark), kTag, "write ending row");
+        if(openu5::tft_row_yield_due(row))tft_yield();
+    }
+    // The whole panel was painted over: every other screen redraws from scratch.
+    endgame_page_key_ = key;
+    alpha_drawn_ = false; frontend_cache_valid_ = false; debug_cache_valid_ = false;
+    return ESP_OK;
+}
+
+bool Board::begin_endgame_capture()
+{
+    if (!endgame_shadow_)
+        endgame_shadow_ = static_cast<uint16_t *>(heap_caps_malloc(size_t(kDisplayWidth) * kDisplayHeight * 2, MALLOC_CAP_SPIRAM));
+    if (!endgame_shadow_) return false;
+    std::fill(endgame_shadow_, endgame_shadow_ + kDisplayWidth * kDisplayHeight, kBlack);
+    endgame_capturing_ = true;
+    alpha_drawn_ = false; // the next show_alpha sends every pixel
+    return true;
+}
+
+void Board::release_endgame_capture()
+{
+    endgame_capturing_ = false;
+    if (endgame_shadow_) heap_caps_free(endgame_shadow_);
+    endgame_shadow_ = nullptr;
+}
+
+esp_err_t Board::fizzle_endgame(openu5::EndgameFizzle &picture, openu5::EndgameFizzle &bands, uint32_t pixels)
+{
+    if (!display_initialized_ || !endgame_shadow_) return ESP_ERR_INVALID_STATE;
+    endgame_capturing_ = false;
+    uint16_t x = 0, y = 0;
+    for (uint32_t i = 0; i < pixels && picture.next(x, y); ++i)
+        endgame_shadow_[(y + kEndgameTop) * kDisplayWidth + x] = kBlack;
+    // The bands above and below the picture are the device's own: fn34 over
+    // their 320 x 40 rect, kept in step with the picture's progress.
+    const uint64_t band_target = uint64_t(picture.produced()) * bands.total() / picture.total();
+    while (bands.produced() < band_target && bands.next(x, y))
+        endgame_shadow_[(y < kEndgameTop ? y : y + 200) * kDisplayWidth + x] = kBlack;
+    endgame_page_key_ = -1;
+    alpha_drawn_ = false; frontend_cache_valid_ = false; debug_cache_valid_ = false;
+    ++tft_timing_.full_screen;
+    return draw_rgb565(0, 0, kDisplayWidth, kDisplayHeight, endgame_shadow_);
 }
 
 esp_err_t Board::draw_text(int x, int y, const char *text, uint16_t color, int scale)
@@ -753,6 +857,7 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
     if(!display_initialized_||!pixels)return ESP_ERR_INVALID_STATE;
     (void)turn;(void)overlay;
     debug_last_full_redraw_=false;debug_last_dirty_regions_=0;debug_last_pixels_=0;
+    endgame_page_key_=-1;
     if(!alpha_drawn_||frontend_drawn_){++tft_timing_.full_screen;ESP_RETURN_ON_ERROR(fill_rect(0,0,kDisplayWidth,kDisplayHeight,kChromeBand),kTag,"initialize Alpha 2.0 game screen");alpha_drawn_=true;frontend_drawn_=false;alpha_ui_cache_valid_=false;alpha_ui_size_cache_=0xff;viewport_cache_valid_=false;sky_bar_cache_valid_=false;shop_cache_valid_=false;selection_cache_valid_=false;context_cache_valid_=false;animation_only=false;debug_last_full_redraw_=true;debug_last_pixels_=kDisplayWidth*kDisplayHeight;}
     if(debug){
         const bool full=!debug_drawn_||!debug_cache_valid_;
@@ -1035,8 +1140,19 @@ esp_err_t Board::draw_rgb565_scaled(int x,int y,int width,int height,
     return ESP_OK;
 }
 
-esp_err_t Board::show_frontend(const openu5::FrontendView&v,const uint16_t*preview,const uint16_t*title_art,const uint16_t*panel_art,const uint16_t*creation_art,uint8_t ui_size){
+esp_err_t Board::show_frontend(const openu5::FrontendView&in,const uint16_t*preview,const uint16_t*title_art,const uint16_t*panel_art,const uint16_t*creation_art,uint8_t ui_size){
+    endgame_page_key_=-1;
     if(!display_initialized_)return ESP_ERR_INVALID_STATE;
+    // Alpha 4 A4-UI3 (ALPHA4_UI.md section 6): a slot page is two rows a slot,
+    // its line then its dimmer detail row, and the selection covers both.
+    const bool paired=in.details[0]&&in.line_count<=size_t(openu5::kSaveSlotCount);
+    openu5::FrontendView expanded{};
+    if(paired){expanded=in;expanded.line_count=0;
+        for(size_t i=0;i<in.line_count;++i){expanded.lines[expanded.line_count++]=in.lines[i];expanded.lines[expanded.line_count++]=in.details[i]?in.details[i]:"";}
+        expanded.selected_line=in.selected_line<0?-1:in.selected_line*2;}
+    const auto&v=paired?expanded:in;const int span=paired?2:1;
+    auto selected_row=[&](int i){return v.selected_line>=0&&i>=v.selected_line&&i<v.selected_line+span;};
+    auto row_color=[&](int i){return paired&&(i&1)&&!selected_row(i)?kChromeDim:kWhite;};
     const bool first=!frontend_drawn_||!frontend_cache_valid_;
     // Alpha 4 UI Batch 1 (ALPHA4_UI.md): every screen with a text title is
     // drawn in the band shell (>Title< in the top band, a white-ruled window).
@@ -1086,14 +1202,14 @@ esp_err_t Board::show_frontend(const openu5::FrontendView&v,const uint16_t*previ
     auto draw_generic_body=[&]()->esp_err_t{
         int y=title_art?116:24;
         for(size_t i=0;i<v.line_count&&y<218;++i){
-            const char*source=v.lines[i]?v.lines[i]:"";const bool selected=int(i)==v.selected_line;size_t at=0;
+            const char*source=v.lines[i]?v.lines[i]:"";const bool selected=selected_row(int(i));size_t at=0;
             do{
                 char line[51]{};size_t n=std::min<size_t>(selected&&at==0?48:50,std::strlen(source+at));
                 if(source[at+n]&&n==(selected&&at==0?48U:50U)){size_t cut=n;while(cut>20&&source[at+cut]!=' ')--cut;if(cut>20)n=cut;}
                 // Alpha 4 UI Batch 1: the selection is reverse video (kernel
                 // 0x2a28's look), not a green '>'; the gutter cell stays.
                 if(v.selected_line>=0&&at==0){line[0]=sized_menu?' ':selected?'>':' ';line[1]=' ';std::memcpy(line+2,source+at,n);line[n+2]=0;}else{std::memcpy(line,source+at,n);line[n]=0;}
-                if(sized_menu)ESP_RETURN_ON_ERROR(draw_text_box_metrics(8,y-1,304,menu_metrics.line_height+2,line,kWhite,menu_metrics,selected,1),kTag,"frontend sized line");
+                if(sized_menu)ESP_RETURN_ON_ERROR(draw_text_box_metrics(8,y-1,304,menu_metrics.line_height+2,line,row_color(int(i)),menu_metrics,selected,1),kTag,"frontend sized line");
                 else ESP_RETURN_ON_ERROR(draw_text_box(20,y,280,9,line,selected?kGreen:kWhite),kTag,"frontend line");
                 account((sized_menu?304:280)*(sized_menu?menu_metrics.line_height+2:9));
                 at+=n;while(source[at]==' ')++at;y+=sized_menu?menu_metrics.line_height+3:11;
@@ -1145,10 +1261,11 @@ esp_err_t Board::show_frontend(const openu5::FrontendView&v,const uint16_t*previ
         for(size_t i=0;i<count&&i<12;++i){
             const char*current=i<v.line_count&&v.lines[i]?v.lines[i]:"";
             const char*cached=i<frontend_cache_.line_count?frontend_cache_.lines[i]:"";
-            if(std::strcmp(current,cached)==0&&int(i)!=v.selected_line&&int(i)!=frontend_cache_.selected_line)continue;
+            const int was=frontend_cache_.selected_line;const bool was_selected=was>=0&&int(i)>=was&&int(i)<was+frontend_cache_.selected_span;
+            if(std::strcmp(current,cached)==0&&!selected_row(int(i))&&!was_selected)continue;
             char line[64]{};if(i<v.line_count)std::snprintf(line,sizeof(line),"  %.48s",current);
-            ESP_RETURN_ON_ERROR(draw_text_box_metrics(8,row_y+int(i)*row_step-1,304,row_height+2,line,kWhite,menu_metrics,
-                                i<v.line_count&&int(i)==v.selected_line,1),kTag,"update retained frontend row");account(304*(row_height+2));
+            ESP_RETURN_ON_ERROR(draw_text_box_metrics(8,row_y+int(i)*row_step-1,304,row_height+2,line,row_color(int(i)),menu_metrics,
+                                i<v.line_count&&selected_row(int(i)),1),kTag,"update retained frontend row");account(304*(row_height+2));
         }
     }else if(!layout_changed&&v.kind==openu5::FrontendViewKind::CharacterName){
         for(size_t i=0;i<2;++i){const char*current=i<v.line_count&&v.lines[i]?v.lines[i]:"";const char*cached=i<frontend_cache_.line_count?frontend_cache_.lines[i]:"";if(std::strcmp(current,cached)==0)continue;
@@ -1177,7 +1294,7 @@ esp_err_t Board::show_frontend(const openu5::FrontendView&v,const uint16_t*previ
     frontend_cache_={};frontend_cache_.state=v.state;frontend_cache_.kind=v.kind;
     std::snprintf(frontend_cache_.title,sizeof(frontend_cache_.title),"%s",v.title?v.title:"");
     std::snprintf(frontend_cache_.subtitle,sizeof(frontend_cache_.subtitle),"%s",v.subtitle?v.subtitle:"");
-    frontend_cache_.line_count=std::min<size_t>(v.line_count,12);frontend_cache_.selected_line=v.selected_line;
+    frontend_cache_.line_count=std::min<size_t>(v.line_count,12);frontend_cache_.selected_line=v.selected_line;frontend_cache_.selected_span=uint8_t(span);
     for(size_t i=0;i<frontend_cache_.line_count;++i)std::snprintf(frontend_cache_.lines[i],sizeof(frontend_cache_.lines[i]),"%s",v.lines[i]?v.lines[i]:"");
     std::snprintf(frontend_cache_.footer,sizeof(frontend_cache_.footer),"%s",footer);
     frontend_cache_.title_art=title_art;frontend_cache_.preview=preview!=nullptr;frontend_cache_.panel=panel_art!=nullptr;frontend_cache_.creation_art=creation_art!=nullptr;frontend_cache_.shell=shell;frontend_cache_.ui_size=ui_size;frontend_cache_valid_=true;

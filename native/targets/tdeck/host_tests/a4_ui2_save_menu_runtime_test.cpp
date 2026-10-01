@@ -1,24 +1,36 @@
 // Alpha 4 UI Batch 2 (targets/tdeck/ALPHA4_UI.md section 2.3) -- the save and
 // load menus, through the REAL AlphaRuntime on the REAL tdeck_board.cpp over
-// the two-slot memory card (the production generation gate).
+// the memory card (the production generation gate).
 //
-// The card holds two generations of one journey; every save replaces the
-// older. Until A4-UI2 the menus listed them by physical slot ("Generation 1:
-// Avery", "Generation 2: corrupt") -- which one is newer depended on the save
-// count -- and said nothing of where, when, or what a save overwrites.
+// A4-UI2 listed one journey's two generations as "Latest" and "Backup".
+// Since Alpha 4 A4-SAVE2 (section 4) the card holds three manual slots, each
+// a journey with its own two generations; the menus list the slots and the
+// generations are the hidden recovery inside each. This test keeps UI2's
+// purposes on the new presentation (every expectation it changed is listed in
+// ALPHA4_UI.md section 4.7):
 //
-//   M  System Menu: Save Game / Load Game; the selected row says what it does
-//      (a save turns the previous save into the backup; Return to Title loses
-//      unsaved progress); after a save the footer says what it did
-//   L  Load Game: "Latest" and "Backup", ordered by age whichever physical
-//      slot holds them, with the leader, the place, and (for the selected row)
-//      the date, time and party size; Latest is Continue (it falls back past a
-//      damaged latest), Backup loads that generation alone; a damaged or
-//      missing backup says so instead of doing nothing silently
-//   F  the title: "Create New Character" warns that the current save becomes
-//      the backup; Journey Onward names the save Continue will load; its Load
-//      Game page lists the same rows and returns to Journey Onward
+//   M  System Menu: Save Game / Load Game; the selected row says what it does;
+//      Save Game lists Slots 1-3, an empty slot saves at once, an occupied one
+//      asks "Overwrite Slot N?" with No first, and No / Back save nothing;
+//      after a save the footer says where it went
+//   L  Load Game: Slots 1-3 with the leader and place, and (for the selected
+//      row) the date, time and party size; each slot restores its own journey;
+//      an empty or damaged slot says so instead of loading; a slot whose last
+//      save is damaged says so and loads the save before it (the A4-SAVE1
+//      recovery, hidden otherwise); saving into it keeps that one
+//   F  the title: "Create New Character" names the empty slot it will use, and
+//      with none empty asks which to replace (No first); Journey Onward names
+//      the save Continue loads and its slot; its Load Game page lists the same
+//      rows and returns to Journey Onward
 //   Z  every row fits the Large text size (36 cells), every footer 50
+//
+// Alpha 4 A4-UI3 (ALPHA4_UI.md section 6) changed these expectations, on
+// purpose: a slot is two rows ("Slot N  <leader>" + tags, then its place);
+// the journey's slot is CURRENT in game and Continue's LATEST on the title;
+// a recovered slot is tagged RECOVERED and its load says so; a save from the
+// menu returns to the game with "Save complete: Slot N" (M4, M9, M10); the
+// confirm pages name the slot's save ("Avery, <place>"); Journey Onward reads
+// "Latest: Slot N, <leader>, <place>"; a name keeps 8 letters (Z1).
 //
 //   a4_ui2_save_menu_runtime <openu5-alpha1-resources.bin> [--dump <dir>]
 #include "a4_ui2_harness.h"
@@ -28,22 +40,42 @@ namespace tdeck {
 void host_memory_save_forget_for_test();
 void host_memory_save_damage_for_test();
 void host_memory_save_damage_older_for_test();
+int host_memory_save_generations_for_test();
 } // namespace tdeck
 
 using namespace a4_ui2;
 using tdeck::host_memory_save_damage_for_test;
 using tdeck::host_memory_save_damage_older_for_test;
 using tdeck::host_memory_save_forget_for_test;
+using tdeck::host_memory_save_generations_for_test;
 
 namespace {
 const std::vector<Member> kParty = {{"Avery", 'G', 100}, {"Iolo", 'G', 100}};
 
 std::string line(const FrontendView &v, size_t i) { return i < v.line_count && v.lines[i] ? v.lines[i] : ""; }
 std::string footer(const FrontendView &v) { return v.footer ? v.footer : ""; }
+std::string title(const FrontendView &v) { return v.title ? v.title : ""; }
+// Alpha 4 A4-UI3: a slot page's line i has a detail row (the place); shown
+// here after " / ", its indent dropped.
+std::string detail(const FrontendView &v, size_t i) {
+    const char *d = i < kSaveSlotCount ? v.details[i] : nullptr;
+    if (!d) return "";
+    while (*d == ' ') ++d;
+    return d;
+}
 std::string lines(const FrontendView &v) {
     std::string out;
-    for (size_t i = 0; i < v.line_count; ++i) out += (i ? " | " : "") + line(v, i);
+    for (size_t i = 0; i < v.line_count; ++i) {
+        out += (i ? " | " : "") + line(v, i);
+        if (!detail(v, i).empty()) out += " / " + detail(v, i);
+    }
     return out;
+}
+std::string last_line(Run &h) {
+    std::string t = h.transcript();
+    if (!t.empty()) t.pop_back();
+    const size_t at = t.rfind('\n');
+    return at == std::string::npos ? t : t.substr(at + 1);
 }
 FrontendView menu(Run &h) { return h.rt->system_menu_view(); }
 /** A real game's roster: all 16 records, those past the party marked out of it. */
@@ -56,19 +88,42 @@ void full_roster(Run &h) {
 
 struct Card {
     Run &h;
-    /** Alt+M, Save Game, and leave the menu open on the result. */
-    std::string save() {
+    /** Move a slot page's cursor to `slot` (0-2). */
+    void select(int slot, bool frontend = false) {
+        for (int i = 0; i < 3; ++i) {
+            const auto v = frontend ? h.rt->frontend_view() : menu(h);
+            if (v.selected_line == slot) return;
+            h.down();
+        }
+    }
+    /** Alt+M, Save Game, the slot; an occupied slot's question answered Yes
+     *  (or No). A4-UI3: a save returns to the game (its transcript line is
+     *  the result); otherwise the menu stays open on its footer. */
+    std::string save(int slot, bool yes = true) {
         h.key('m', true);
         h.down();
         h.key('\r');
-        return footer(menu(h));
+        select(slot);
+        h.key('\r');
+        if (title(menu(h)).rfind("Overwrite", 0) == 0) {
+            if (yes) h.down();
+            h.key('\r');
+        }
+        return h.rt->system_menu_open() ? footer(menu(h)) : last_line(h);
     }
-    void close() { h.key('m', true); }
+    void close() {
+        if (h.rt->system_menu_open()) h.key('m', true);
+    }
     /** Alt+M, Load Game (the menu stays open on the Load page). */
     void open_load() {
         h.key('m', true);
         h.down();
         h.down();
+        h.key('\r');
+    }
+    void load(int slot) {
+        open_load();
+        select(slot);
         h.key('\r');
     }
     void at(int x, int y, int hour, int minute) {
@@ -81,6 +136,8 @@ struct Card {
         h.rt->game().time.minute = minute;
         h.render(true);
     }
+    int hour() const { return h.rt->game().time.hour; }
+    int minute() const { return h.rt->game().time.minute; }
 };
 
 void test_system_menu() {
@@ -99,23 +156,67 @@ void test_system_menu() {
         f[i] = footer(menu(h));
         h.down();
     }
-    check(f[0] == "Alt+M or Mic: resume" && f[1] == "Saves now; the previous save becomes the backup" &&
-              f[2] == "The latest save and its backup" && f[3] == "Alt+M or Mic: resume" &&
+    check(f[0] == "Alt+M or Mic: resume" && f[1] == "Choose a slot to save this journey in" &&
+              f[2] == "Choose a saved journey to load" && f[3] == "Alt+M or Mic: resume" &&
               f[4] == "Unsaved progress will be lost",
-          "M2 the selected row says what it will do (Save: \"" + f[1] + "\"; Return to Title: \"" + f[4] + "\")");
+          "M2 the selected row says what it will do (Save Game: \"" + f[1] + "\"; Return to Title: \"" + f[4] + "\")");
     c.close();
 
-    const std::string first = c.save();
-    const bool transcript1 = h.transcript().find("Save complete") != std::string::npos;
-    c.close();
-    c.at(120, 110, 13, 5);
-    const std::string second = c.save();
-    dump("system-menu-saved");
-    check(first == "Saved." && transcript1, "M3 the first save: the footer says \"" + first + "\" (the transcript line is kept)");
-    check(second == "Saved. The previous save is now the backup.",
-          "M4 a save over a save says what it overwrote: \"" + second + "\"");
+    // The Save page on a blank card: three empty slots, the cursor on Slot 1.
+    h.key('m', true);
     h.down();
-    check(footer(menu(h)) == "The latest save and its backup", "M5 the notice lasts until the next key");
+    h.key('\r');
+    auto v = menu(h);
+    dump("save-game");
+    check(title(v) == "Save Game" && lines(v) == "Slot 1  EMPTY | Slot 2  EMPTY | Slot 3  EMPTY" && v.selected_line == 0 &&
+              footer(v) == "Empty. Enter saves here",
+          "M3 Save Game lists Slots 1-3 (blank card: all empty, on Slot 1): " + lines(v));
+    h.key('\r');
+    const std::string first = last_line(h);
+    check(first == "Save complete: Slot 1" && !h.rt->system_menu_open() && host_memory_save_generations_for_test() == 1,
+          "M4 an empty slot saves at once and returns to the game: \"" + first + "\" (A4-UI3)");
+    c.close();
+
+    // An occupied slot asks first, and No is the answer Enter gives by default.
+    c.at(120, 110, 13, 5);
+    h.key('m', true);
+    h.down();
+    h.key('\r');
+    v = menu(h);
+    const bool on_journey = v.selected_line == 0 && footer(v) == "4-5-139 12:00, party of 2. Enter replaces it";
+    h.key('\r');
+    v = menu(h);
+    dump("overwrite-confirm");
+    check(on_journey && title(v) == "Overwrite Slot 1?" && lines(v) == "No, keep it | Yes, overwrite" &&
+              v.selected_line == 0 && std::string(v.subtitle).rfind("Avery, ", 0) == 0 &&
+              footer(v) == "Keeps the saved journey",
+          "M5 an occupied slot (the journey's own, where the page starts) asks \"" + title(v) + "\", No selected");
+    const std::string before_no = h.transcript();
+    h.key('\r'); // No
+    v = menu(h);
+    check(title(v) == "Save Game" && v.selected_line == 0 && footer(v) == "Slot 1 kept" && h.transcript() == before_no &&
+              host_memory_save_generations_for_test() == 1,
+          "M6 No: back on the Save page, \"" + footer(v) + "\", nothing written (still one generation)");
+    h.key('\r');
+    h.key('\b'); // Back from the question
+    v = menu(h);
+    check(title(v) == "Save Game" && h.transcript() == before_no && host_memory_save_generations_for_test() == 1,
+          "M7 Back from the question returns to the Save page and writes nothing");
+    h.key('\r');
+    h.down();
+    check(footer(menu(h)) == "The saved journey in this slot is replaced", "M8 Yes says what it does");
+    h.key('\r');
+    const std::string second = last_line(h);
+    check(second == "Save complete: Slot 1" && !h.rt->system_menu_open() && host_memory_save_generations_for_test() == 2,
+          "M9 Yes saves and returns to the game: \"" + second + "\" (the slot now keeps two generations, the older one hidden)");
+    h.key('m', true);
+    check(menu(h).selected_line == 0 && footer(menu(h)) == "Alt+M or Mic: resume",
+          "M10 the next open starts on Resume with no stale notice (A4-UI3)");
+    h.down();
+    h.down();
+    h.key('\r'); // Load Game
+    check(footer(menu(h)) == "4-5-139 13:05, party of 2. Enter loads",
+          "M11 the Load page lists the save just made (13:05): \"" + footer(menu(h)) + "\"");
     c.close();
 }
 
@@ -126,101 +227,88 @@ void test_load_page() {
     full_roster(h);
     Card c{h};
     const uint8_t home = uint8_t(h.rt->game().position.map.location);
-    c.save();
+    const std::string home_name = home == 13 ? "Iolo's Hut" : "?";
+    c.save(0);          // Slot 1: home, 12:00
     c.close();
     c.at(120, 110, 13, 5);
-    c.save();
+    c.save(1);          // Slot 2: Britannia, 13:05
     c.close();
-    // seq 1 went to slot 1, seq 2 to slot 0: the newer save is the LOWER slot here.
     c.open_load();
     auto v = menu(h);
     dump("load-game");
-    const std::string latest = line(v, 0), backup = line(v, 1);
-    const std::string home_name = home == 13 ? "Iolo's Hut" : "?";
-    check(std::string(v.title) == "Load Game" && v.line_count == 2 && latest == "Latest: Avery, Britannia" &&
-              backup == "Backup: Avery, " + home_name,
-          "L1 two rows by age, leader and place: \"" + latest + "\" / \"" + backup + "\" (was \"Generation 1/2\" by slot)");
-    const std::string d0 = footer(v);
-    h.down();
+    check(title(v) == "Load Game" && lines(v) == "Slot 1  Avery / " + home_name + " | Slot 2  Avery     CURRENT / Britannia | Slot 3  EMPTY" &&
+              v.selected_line == 1,
+          "L1 three slot rows with leader and place, on the journey's slot (Slot 2): " + lines(v));
+    const std::string d2 = footer(v);
+    h.up();
     const std::string d1 = footer(menu(h));
-    check(d0 == "4-5-139 13:05, party of 2. Enter loads" && d1 == "4-5-139 12:00, party of 2. Enter loads",
-          "L2 the selected row's date, time and party: \"" + d0 + "\" / \"" + d1 + "\"");
-    h.key('\r'); // Backup
-    const bool backup_loaded = !h.rt->system_menu_open() && h.rt->game().position.map.location == home &&
-                               h.rt->game().time.hour == 12 && h.transcript().find("Load complete") != std::string::npos;
-    check(backup_loaded, "L3 Enter on Backup loads that older save (back at " + home_name + ", 12:00)");
+    check(d2 == "4-5-139 13:05, party of 2. Enter loads" && d1 == "4-5-139 12:00, party of 2. Enter loads",
+          "L2 the selected slot's date, time and party: \"" + d2 + "\" / \"" + d1 + "\"");
+    h.key('\r'); // Slot 1
+    check(!h.rt->system_menu_open() && h.rt->game().position.map.location == home && c.hour() == 12 &&
+              h.transcript().find("Load complete") != std::string::npos,
+          "L3 Enter on Slot 1 restores Slot 1's journey (back at " + home_name + ", 12:00)");
     c.open_load();
-    h.key('\r'); // Latest
-    check(!h.rt->system_menu_open() && h.rt->game().position.map.location == 0 && h.rt->game().time.hour == 13,
-          "L4 Enter on Latest is Continue: the newer save (Britannia, 13:05)");
+    const int start = menu(h).selected_line;
+    c.select(1);
+    h.key('\r');
+    check(start == 0 && !h.rt->system_menu_open() && h.rt->game().position.map.location == 0 && c.hour() == 13,
+          "L4 the page now starts on Slot 1 (the loaded journey); Slot 2 restores its own (Britannia, 13:05)");
+    c.open_load();
+    c.select(2);
+    const std::string empty_detail = footer(menu(h));
+    h.key('\r');
+    check(empty_detail == "Empty slot" && footer(menu(h)) == "Slot 3 is empty" && h.rt->system_menu_open() && c.hour() == 13,
+          "L5 an empty slot says so and cannot be loaded (the menu stays, nothing changes)");
+    c.close();
 
-    // A third save lands in the other physical slot; the rows still read by age.
+    // Slot 2 saved again: two generations. Its latest damaged behind the service.
     c.at(121, 110, 14, 10);
-    c.save();
+    c.save(1);
     c.close();
-    c.open_load();
-    v = menu(h);
-    check(line(v, 0) == "Latest: Avery, Britannia" && line(v, 1) == "Backup: Avery, Britannia" &&
-              footer(v) == "4-5-139 14:10, party of 2. Enter loads",
-          "L5 after a third save (the newer save now in the HIGHER slot) Latest is still the newest: \"" + footer(v) + "\"");
-    c.close();
-
-    // The latest generation damaged behind the service's back.
     host_memory_save_damage_for_test();
     c.open_load();
+    c.select(1);
     v = menu(h);
-    const std::string dmg = footer(v);
-    dump("load-game-damaged");
-    check(line(v, 0) == "Latest: damaged" && line(v, 1) == "Backup: Avery, Britannia" &&
-              dmg == "Damaged: Enter loads the backup instead",
-          "L6 a damaged latest save says so, and what Enter does: \"" + dmg + "\"");
+    dump("load-game-recovered");
+    const std::string rec = footer(v);
+    check(line(v, 1) == "Slot 2  Avery     CURRENT, RECOVERED" && detail(v, 1) == "Britannia" &&
+              rec == "Last save damaged; Enter loads the one before",
+          "L6 a slot whose last save is damaged says so, and what Enter does: \"" + rec + "\"");
     h.key('\r');
-    check(!h.rt->system_menu_open() && h.rt->game().time.hour == 13 && h.transcript().find("Load complete") != std::string::npos,
-          "L7 ... and Enter on it loads the backup (Continue's fallback, unchanged)");
-    // Saving now replaces the damaged generation, and the backup is the save
-    // Continue just fell back to. A4-SAVE1: until then it replaced the OLDER,
-    // only valid one, and this row read "Backup: damaged".
+    check(!h.rt->system_menu_open() && c.hour() == 13 && c.minute() == 5 && h.transcript().find("Load complete") != std::string::npos &&
+              last_line(h) == "Recovered previous save (Slot 2)",
+          "L7 ... and Enter restores the save before it (13:05), the A4-SAVE1 fallback inside the slot, and says so");
+    // A save now replaces the damaged generation and keeps the 13:05 one.
     c.at(122, 110, 15, 20);
-    c.save();
+    c.save(1);
     c.close();
     c.open_load();
-    v = menu(h);
-    h.down();
-    const std::string kept = footer(menu(h));
-    check(line(v, 0) == "Latest: Avery, Britannia" && line(v, 1) == "Backup: Avery, Britannia" &&
-              kept == "4-5-139 13:05, party of 2. Enter loads",
-          "L8a A4-SAVE1: a save after the fallback replaces the damaged latest; the backup is the 13:05 save: \"" + kept + "\"");
+    c.select(1);
+    const std::string replaced = footer(menu(h));
     c.close();
-    // A damaged backup, then (the older generation damaged behind the service).
+    host_memory_save_damage_for_test();   // the 15:20 save torn in its turn
+    c.load(1);
+    check(replaced == "4-5-139 15:20, party of 2. Enter loads" && c.hour() == 13 && c.minute() == 5,
+          "L8 A4-SAVE1 in a slot: the save after the fallback is the slot's latest (\"" + replaced +
+              "\") and the 13:05 save it fell back to is still its hidden recovery");
+    // Both generations damaged.
     host_memory_save_damage_older_for_test();
     c.open_load();
+    c.select(1);
     v = menu(h);
-    h.down();
-    const std::string bd = footer(menu(h));
+    const std::string dd = footer(v);
     h.key('\r');
     const std::string refused = footer(menu(h));
-    check(line(v, 0) == "Latest: Avery, Britannia" && line(v, 1) == "Backup: damaged" &&
-              bd == "Damaged: this backup cannot be loaded" && h.rt->system_menu_open() &&
-              refused == "That backup is damaged and cannot load" && h.rt->game().time.hour == 15,
-          "L8 a damaged backup: listed damaged, and Enter says it cannot load (was a silent no-op): \"" + refused + "\"");
-    c.close();
+    check(line(v, 1) == "Slot 2  DAMAGED   CURRENT" && detail(v, 1) == "Cannot be loaded" &&
+              dd == "Damaged: this slot cannot be loaded" && h.rt->system_menu_open() &&
+              refused == "Slot 2 is damaged and cannot load" && c.hour() == 13,
+          "L9 nothing loadable: listed damaged, and Enter says it cannot load: \"" + refused + "\"");
+    c.select(0);
+    h.key('\r');
+    check(!h.rt->system_menu_open() && h.rt->game().position.map.location == home && c.hour() == 12,
+          "L10 Slot 1 is untouched by everything done to Slot 2 (" + home_name + ", 12:00)");
 
-    // A card with one save: no backup yet.
-    host_memory_save_forget_for_test();
-    Run one(kParty);
-    full_roster(one);
-    Card k{one};
-    k.save();
-    k.close();
-    k.open_load();
-    v = menu(one);
-    one.down();
-    const std::string none = footer(menu(one));
-    one.key('\r');
-    check(line(v, 1) == "Backup: none yet" && none == "Each save keeps the one before as backup" &&
-              footer(menu(one)) == "No backup save yet" && one.rt->system_menu_open(),
-          "L9 one save: \"Backup: none yet\", its footer explains backups, Enter says there is none");
-    one.key('m', true);
     host_memory_save_forget_for_test();
     Run empty(kParty);
     full_roster(empty);
@@ -228,9 +316,9 @@ void test_load_page() {
     e.open_load();
     v = menu(empty);
     empty.key('\r');
-    check(line(v, 0) == "Latest: no save yet" && footer(v) == "No save on this card yet" &&
-              empty.transcript().find("No valid save") != std::string::npos,
-          "L10 an empty card: \"Latest: no save yet\"; Enter still reports \"No valid save\" (unchanged)");
+    check(lines(v) == "Slot 1  EMPTY | Slot 2  EMPTY | Slot 3  EMPTY" && footer(v) == "Empty slot" &&
+              footer(menu(empty)) == "Slot 1 is empty" && empty.transcript().find("Load complete") == std::string::npos,
+          "L11 an empty card: three empty slots, none loads");
 }
 
 void test_title() {
@@ -240,10 +328,11 @@ void test_title() {
     full_roster(h);
     Card c{h};
     const uint8_t home = uint8_t(h.rt->game().position.map.location);
-    c.save();
+    const std::string home_name = home == 13 ? "Iolo's Hut" : "?";
+    c.save(0);          // Slot 1: home, 12:00
     c.close();
     c.at(120, 110, 13, 5);
-    c.save();
+    c.save(2);          // Slot 3: Britannia, 13:05 (the newest)
     c.close();
     h.return_to_title();
     h.key(' '); // Title -> main menu
@@ -251,16 +340,15 @@ void test_title() {
     h.down();
     const auto create = h.rt->frontend_view();
     dump("main-menu-create");
-    check(menu0 == "Select: arrows / Enter / J C T U A R" &&
-              footer(create) == "New game: your current save becomes the backup",
-          "F1 \"Create New Character\" warns that the current save becomes the backup: \"" + footer(create) + "\"");
+    check(menu0 == "Select: arrows / Enter / J C T U A R" && footer(create) == "New journey: saved in empty Slot 2",
+          "F1 \"Create New Character\" names the empty slot it will use: \"" + footer(create) + "\"");
     h.up();
     h.key('\r'); // Journey Onward
     auto v = h.rt->frontend_view();
     dump("journey-onward");
     check(h.rt->frontend_state() == FrontendState::Continue && lines(v) == "Continue | Load Game" &&
-              std::string(v.subtitle) == "Latest save: Avery, Britannia" && footer(v) == "Enter continues; Mic returns",
-          "F2 Journey Onward: \"" + lines(v) + "\", naming the save Continue loads: \"" + v.subtitle + "\"");
+              std::string(v.subtitle) == "Latest: Slot 3, Avery, Britannia" && footer(v) == "Enter continues Slot 3; Mic returns",
+          "F2 Journey Onward: \"" + lines(v) + "\", naming the save Continue loads: \"" + v.subtitle + "\" / \"" + footer(v) + "\"");
     // The shell's subtitle (y=15..22) keeps its last glyph rows: the body clear
     // used to start at y=20 and cut them (no shell page had a subtitle before).
     const int tail = lit(8, 20, 304, 2);
@@ -270,19 +358,48 @@ void test_title() {
     h.key('\r'); // Load Game
     v = h.rt->frontend_view();
     dump("title-load-game");
-    check(h.rt->frontend_state() == FrontendState::Load && std::string(v.title) == "Load Game" &&
-              line(v, 0) == "Latest: Avery, Britannia" && line(v, 1) == std::string("Backup: Avery, ") +
-              (home == 13 ? "Iolo's Hut" : "?") && footer(v) == "4-5-139 13:05, party of 2. Enter loads",
-          "F3 the title's Load Game lists the same rows: \"" + lines(v) + "\"");
+    check(h.rt->frontend_state() == FrontendState::Load && title(v) == "Load Game" &&
+              lines(v) == "Slot 1  Avery / " + home_name + " | Slot 2  EMPTY | Slot 3  Avery     LATEST / Britannia" && v.selected_line == 2 &&
+              footer(v) == "4-5-139 13:05, party of 2. Enter loads",
+          "F3 the title's Load Game lists the same slots, on Continue's: \"" + lines(v) + "\"");
+    c.select(1, true);
+    h.key('\r'); // Slot 2: empty
+    v = h.rt->frontend_view();
+    check(h.rt->frontend_state() == FrontendState::Load && footer(v) == "Slot 2 is empty" && h.rt->frontend_open(),
+          "F3b the title's empty slot says so and does not load (still on Load Game)");
     h.mic();
     v = h.rt->frontend_view();
     check(h.rt->frontend_state() == FrontendState::Continue && v.selected_line == 1,
-          "F4 Back from Load Game returns to Journey Onward, on Load Game (it went to the main menu)");
+          "F4 Back from Load Game returns to Journey Onward, on Load Game");
     h.key('\r');
+    c.select(0, true);
+    h.key('\r'); // Slot 1
+    check(!h.rt->frontend_open() && h.rt->game().position.map.location == home && c.hour() == 12,
+          "F5 Slot 1 loads its own journey and enters the game");
+    // Every slot in use: Create New Character asks which to replace.
+    c.save(1);
+    c.close();
+    h.return_to_title();
+    h.key(' ');
     h.down();
-    h.key('\r'); // Backup
-    check(!h.rt->frontend_open() && h.rt->game().position.map.location == home && h.rt->game().time.hour == 12,
-          "F5 Backup loads the older save and enters the game");
+    const std::string full = footer(h.rt->frontend_view());
+    const int generations = host_memory_save_generations_for_test();
+    h.key('\r');
+    v = h.rt->frontend_view();
+    dump("new-journey-slot");
+    check(full == "Slots full: you choose one to replace" && h.rt->frontend_state() == FrontendState::NewJourneySlot &&
+              title(v) == "New Journey" && v.line_count == 3,
+          "F6 with every slot in use Create New Character lists them to choose one: \"" + full + "\"");
+    h.key('\r');
+    v = h.rt->frontend_view();
+    const bool asked = title(v).rfind("Replace Slot ", 0) == 0 && v.selected_line == 0 && line(v, 0) == "No, keep it";
+    h.key('\r'); // No
+    v = h.rt->frontend_view();
+    const bool back_to_list = h.rt->frontend_state() == FrontendState::NewJourneySlot && title(v) == "New Journey";
+    h.mic();
+    check(asked && back_to_list && h.rt->frontend_state() == FrontendState::MainMenu &&
+              host_memory_save_generations_for_test() == generations,
+          "F7 \"Replace Slot N?\" starts on No; No and Back leave every slot as it was");
 }
 
 void test_fit() {
@@ -298,24 +415,55 @@ void test_fit() {
     const bool moved = apply_debug_teleport(h.rt->command_context_for_test(), r).status == DebugTeleportStatus::Applied;
     h.rt->game().time = {139, 12, 28, 23, 59};
     h.render(true);
-    c.save();
+    c.save(0);
     c.close();
-    c.save();
+    c.save(0);
     c.close();
-    c.open_load();
     size_t widest = 0, widest_footer = 0;
     std::string row0;
-    for (int i = 0; i < 2; ++i) {
-        const auto v = menu(h);
-        if (!i) row0 = line(v, 0);
-        for (size_t k = 0; k < v.line_count; ++k) widest = std::max(widest, line(v, k).size());
-        widest_footer = std::max(widest_footer, footer(v).size());
+    auto measure = [&](bool saving) {
+        h.key('m', true);
         h.down();
-    }
+        if (!saving) h.down();
+        h.key('\r');
+        for (int i = 0; i < 3; ++i) {
+            const auto v = menu(h);
+            if (!i && !saving) row0 = line(v, 0) + "|" + (v.details[0] ? v.details[0] : "");
+            for (size_t k = 0; k < v.line_count; ++k)
+                widest = std::max({widest, line(v, k).size(), k < kSaveSlotCount && v.details[k] ? std::strlen(v.details[k]) : size_t(0)});
+            widest_footer = std::max(widest_footer, footer(v).size());
+            h.down();
+        }
+        c.close();
+    };
+    measure(false);
+    measure(true);
     dump("load-game-long");
-    check(moved && row0 == "Latest: Shamino12, Lord British's Ca" && widest <= 36 && widest_footer <= 50,
-          "Z1 the longest row is cut to the 36 cells Large text shows (\"" + row0 + "\"); footers fit 50 (" +
+    // A4-UI3: the place has its own row, so neither is cut; a name keeps 8 letters (the game's limit).
+    check(moved && row0 == "Slot 1  Shamino1  CURRENT|        Lord British's Castle" && widest <= 36 && widest_footer <= 50,
+          "Z1 the longest rows fit the 36 cells Large text shows (\"" + row0 + "\"); footers fit 50 (" +
               n(long(widest_footer)) + ")");
+    // Every footer the slot pages can show.
+    FrontendSaveCatalog k{};
+    k.slots[0].status = SaveSlotStatus::Saved;
+    k.slots[0].shown.month = 12; k.slots[0].shown.day = 28; k.slots[0].shown.year = 139;
+    k.slots[0].shown.hour = 23; k.slots[0].shown.minute = 59; k.slots[0].shown.party = 6;
+    k.slots[1].status = SaveSlotStatus::Recovered;
+    k.slots[2].status = SaveSlotStatus::Damaged;
+    size_t longest = 0;
+    for (int s = 0; s < 3; ++s)
+        for (bool saving : {false, true}) {
+            char d[96];
+            format_slot_detail(d, sizeof(d), k, s, saving);
+            longest = std::max(longest, std::strlen(d));
+        }
+    k.slots[0].status = SaveSlotStatus::Empty;
+    for (bool saving : {false, true}) {
+        char d[96];
+        format_slot_detail(d, sizeof(d), k, 0, saving);
+        longest = std::max(longest, std::strlen(d));
+    }
+    check(longest <= 50, "Z2 every slot footer (saved, recovered, damaged, empty; load and save) fits 50 (" + n(long(longest)) + ")");
 }
 } // namespace
 

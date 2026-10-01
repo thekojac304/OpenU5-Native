@@ -36,6 +36,13 @@ struct PresentationSnapshot {
     bool active_enemy = false;
     bool target_valid = true;
     bool any_animated = false;
+    // A4-END1: ENDGAME.OVL 0x0658's recolored tileset (EGA.DRV fn36 ax=4,
+    // endgame_recolored_tile()), and the arena present's partial moongate
+    // (0x56e6 -> 0x1112): the cell's bottom `gate_rows` rows are the top rows
+    // of tile 0xdc over the floor tile 0x44.
+    bool endgame_recolor = false;
+    int8_t gate_x = -1, gate_y = -1;
+    uint8_t gate_rows = 0;
 };
 
 // Stateful presentation-only interpreter for the reference actor animation

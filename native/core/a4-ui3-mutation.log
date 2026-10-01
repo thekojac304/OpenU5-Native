@@ -1,0 +1,26 @@
+U1 KILLED -- wrong current-slot marker: CURRENT follows the cursor, not the journey -- a4_ui3_slot_rows exit=1 RED=S1b,L6; a4_ui3_save_ux_runtime exit=1 RED=S1,L4
+U2 KILLED -- wrong title marker: LATEST always on Slot 1, not Continue's slot -- a4_ui3_slot_rows exit=1 RED=T4; a4_ui3_save_ux_runtime exit=1 RED=C2
+U3 KILLED -- the overwrite question defaults to Yes -- a4_ui3_slot_rows exit=1 RED=S3,S4,S5,S6,S7,S9; a4_ui3_save_ux_runtime exit=1 RED=S5,S6,S7,S9,S10,L2,L4,L5,L6,L7,C2,C4
+U4 KILLED -- an empty slot is accepted for Load -- a4_ui3_slot_rows exit=1 RED=L2; a4_ui3_save_ux_runtime exit=1 RED=L3
+U5 KILLED -- manual Load cross-falls to Continue when its slot fails -- a4_ui3_save_ux_runtime exit=1 RED=L7
+U6 KILLED -- a recovered slot is shown as healthy (no RECOVERED tag) -- a4_ui3_slot_rows exit=1 RED=R3,R6,L1,T4; a4_ui3_save_ux_runtime exit=1 RED=S10,L4
+U7 KILLED -- the overwrite title names the journey's slot, not the one chosen -- a4_ui3_slot_rows exit=1 RED=S3,S9; a4_ui3_save_ux_runtime exit=1 RED=S5
+U8 KILLED -- the overwrite question shows another slot's save -- a4_ui3_slot_rows exit=1 RED=S3,S9; a4_ui3_save_ux_runtime exit=1 RED=S5
+U9 KILLED -- Back on the overwrite question saves -- a4_ui3_slot_rows exit=1 RED=S5,S6,S7; a4_ui3_save_ux_runtime exit=1 RED=S6,S7
+U10 KILLED -- the Mic (Cancel) on the question with Yes highlighted saves -- a4_ui3_slot_rows exit=1 RED=S6,S7; a4_ui3_save_ux_runtime exit=1 RED=S6,S7
+U11 KILLED -- metadata from the wrong slot: each row shows another slot's save -- a4_ui3_slot_rows exit=1 RED=R1,R2,R2b,R3,R4,R5,R7,S1,S1b,S8,L1,L6,T4,P1; a4_ui3_save_ux_runtime exit=1 RED=S4,P2,S8,L2,L4,L6,L7,C2,C5,X2,X3
+U12 KILLED -- a damaged slot is shown as EMPTY -- a4_ui3_slot_rows exit=1 RED=R7,S8,L6; a4_ui3_save_ux_runtime exit=1 RED=L6,L7
+U13 KILLED -- an empty row shows leftover metadata -- a4_ui3_slot_rows exit=1 RED=R2,R2b,S1,L1,P1; a4_ui3_save_ux_runtime exit=1 RED=S1,S4,L2,C2
+U14 KILLED -- Journey Onward names the wrong slot number -- a4_ui3_slot_rows exit=1 RED=T1,T3; a4_ui3_save_ux_runtime exit=1 RED=C1,C4
+U15 KILLED -- a successful save leaves the menu open (no return to the game) -- a4_ui3_save_ux_runtime exit=1 RED=S2,S3,S4,P1,P2,P3,P4,P5,S5,S6,S7,S8,S9,S10,L1,L2,L3,L4,L5,L6,L7,C2,C3,C4; a4_ui2_save_menu_runtime exit=1 RED=M4,M9,M10,M11
+U16 KILLED -- a recovered load is not announced -- a4_ui3_save_ux_runtime exit=1 RED=L5,C4; a4_ui2_save_menu_runtime exit=1 RED=L7
+U17 KILLED -- every slot load claims a recovery -- a4_ui3_save_ux_runtime exit=1 RED=L1
+U18 KILLED -- Continue never reports passing over its newest slot or generation -- a4_ui3_save_ux_runtime exit=1 RED=C4
+U19 KILLED -- the panel selects one row of the two -- a4_ui3_save_ux_runtime exit=1 RED=P1,P3,P4,P5
+U20 KILLED -- the retained redraw forgets the old selection's second row -- a4_ui3_save_ux_runtime exit=1 RED=P3,P4
+U21 KILLED -- the place row is drawn white (no grey detail) -- a4_ui3_save_ux_runtime exit=1 RED=P2,P3
+U22 KILLED -- a failed save claims the slot kept its save when nothing was there -- a4_ui3_save_ux_runtime exit=1 RED=S9
+U23 KILLED -- a failed load leaves the page listing the slot as it was -- a4_ui3_save_ux_runtime exit=1 RED=L7
+U24 KILLED -- the PC import picker does not mark Continue's slot -- a4_ui3_slot_rows exit=1 RED=P1; a4_ui3_save_ux_runtime exit=1 RED=X2
+U25 KILLED -- a failed save leaves the open menu listing the card as it was -- a4_ui3_save_ux_runtime exit=1 RED=S10
+A4-UI3 mutation check: 25 killed, 0 survived, 0 invalid; restored build GREEN

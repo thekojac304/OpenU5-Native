@@ -56,6 +56,11 @@ class TdeckAudioBackend final : public openu5::AudioBackend, public openu5::Audi
     bool start_music(openu5::MusicSong, uint16_t gain_q15) override;
     void stop_music() override;
     void set_gain(openu5::AudioChannel, uint16_t gain_q15) override;
+    // A4-END1: the parsed song's length (its last event, at 120 ticks a second).
+    uint32_t music_length_ms(openu5::MusicSong song) const override {
+        const auto *t = library_.track(song);
+        return t ? uint32_t(uint64_t(t->end_tick) * 1000u / openu5::kXmiTicksPerSecond) : 0;
+    }
     /** Empty until a bring-up step fails; then the ESP-IDF error of that step. */
     const char *last_error() const { return error_; }
 

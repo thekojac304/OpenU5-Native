@@ -33,6 +33,12 @@ set_source_files_properties("${CMAKE_CURRENT_LIST_DIR}/../../../core/src/music_s
 set_source_files_properties("${CMAKE_CURRENT_LIST_DIR}/../../../core/src/sfx_synth.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../../core/src/audio_stream.cpp"
     PROPERTIES COMPILE_OPTIONS "-fno-jump-tables")
+# A4-END1 (ALPHA4_UI.md section 7.14): ENDGAME.OVL's sequencer runs once a
+# playthrough and has no per-sample path (a 121-cell compose a frame, the
+# fizzle's LFSR during the dissolve), so it is built for size: the 1 MiB app
+# partition is the constraint. Code generation only: same results.
+set_source_files_properties("${CMAKE_CURRENT_LIST_DIR}/../../../core/src/endgame_scene.cpp"
+    PROPERTIES COMPILE_OPTIONS "-Os")
 find_program(OPENU5_GIT_EXECUTABLE NAMES git.exe git
     PATHS "C:/Program Files/Git/cmd" NO_DEFAULT_PATH)
 if(OPENU5_GIT_EXECUTABLE)
@@ -42,6 +48,18 @@ if(OPENU5_GIT_EXECUTABLE)
         OUTPUT_VARIABLE OPENU5_GIT_COMMIT
         OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_QUIET)
+    # A4-SAVE3: an image configured from uncommitted tracked changes says so
+    # ("<hash>-dirty"), so it can never pass for a build of HEAD itself.
+    # Untracked files (evidence logs) do not count.
+    execute_process(
+        COMMAND "${OPENU5_GIT_EXECUTABLE}" status --porcelain --untracked-files=no
+        WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/../../../.."
+        OUTPUT_VARIABLE OPENU5_GIT_CHANGES
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET)
+    if(OPENU5_GIT_COMMIT AND OPENU5_GIT_CHANGES)
+        string(APPEND OPENU5_GIT_COMMIT "-dirty")
+    endif()
 endif()
 if(NOT OPENU5_GIT_COMMIT)
     set(OPENU5_GIT_COMMIT "unknown")

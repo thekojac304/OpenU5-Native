@@ -198,3 +198,5 @@ native/targets/tdeck/build-*/
 /native/core/loc17_slots.inc
 # A stray CMake stdlib-detect dump that a tool wrote to a file literally named "-".
 /-
+# A4-UI3 --dump screenshots of the panel: they show the pack's title art (EA data); local review only.
+/native/core/a4-ui3-shots/

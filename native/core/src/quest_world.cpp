@@ -163,7 +163,8 @@ CommandStatus rescue_events(CommandContext &c,bool absorption,EventSink sink) {
 CommandStatus absorption_endgame(CommandContext &c,EventSink sink){
     if(quest_flag(c.game.quest,QuestFlag::GameWon))return CommandStatus::NoOp;
     if(c.game.wooden_box && (!c.quest_world || !c.quest_world->end_record || !c.quest_world->end_record(c.quest_world->context,9)))return CommandStatus::InvalidContext;
-    set_quest_flag(c.game.quest,QuestFlag::InDoom);auto status=rescue_events(c,true,sink);
+    set_quest_flag(c.game.quest,QuestFlag::InDoom);
+    auto status=c.quest_world&&c.quest_world->endgame_presenter?(rescue_lord_british(c.game,true),CommandStatus::Success):rescue_events(c,true,sink);
     if(status==CommandStatus::Success){auto ending=c.game.wooden_box?"victory":"stranded";event(sink,GameEventKind::GameWon,ending);
         auto *s=c.quest_world;EndgameScript script;
         if(s && s->endgame_script){script.victory=c.game.wooden_box;auto add=[&](const char *phase,const char *text=nullptr,const char *reply=nullptr,int delay=-1,int page=-1){script.beats[script.count++]={phase,text,reply,int16_t(delay),int16_t(page)};};add("greenScene",nullptr,nullptr,40);constexpr int victory[]={0,1,3,4,5,6,7,8,9},stranded[]={0,1,2,10};auto indices=script.victory?victory:stranded;int count=script.victory?9:4;

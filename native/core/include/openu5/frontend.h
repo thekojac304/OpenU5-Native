@@ -21,7 +21,15 @@ enum class FrontendState : uint8_t {
     Settings,
     Credits,
     EnterGame,
-    Error
+    Error,
+    // Alpha 4 A4-SAVE2: Create New Character with no empty save slot -- the
+    // player picks the slot the new journey replaces (and confirms it).
+    NewJourneySlot,
+    // Alpha 4 A4-SAVE3 (targets/tdeck/ALPHA4_UI.md section 5): original PC
+    // saves. The page (Import / Export), then the slot each one uses.
+    PcTransfer,
+    PcImportSlot,
+    PcExportSlot
 };
 
 enum class FrontendIntentKind : uint8_t {
@@ -30,7 +38,12 @@ enum class FrontendIntentKind : uint8_t {
     LoadSlot,
     CreateInitialSave,
     PersistSettings,
-    OpenDeveloperTools
+    OpenDeveloperTools,
+    // Alpha 4 A4-SAVE3: look at the import folder (set_pc_import_status),
+    // import it into `slot`, export `slot`.
+    InspectPcSaves,
+    ImportPcSave,
+    ExportPcSave
 };
 
 struct FrontendSettings {
@@ -79,22 +92,64 @@ struct FrontendSaveSlot {
     uint8_t party = 0;                // members in the party
 };
 
-// Alpha 4 UI Batch 2 (ALPHA4_UI.md section 2.3). The card holds two
-// generations of ONE journey: every save replaces the older one, so the
-// newer is the player's "Latest" save and the other its "Backup". The list
-// is ordered by age (commit sequence), never by physical slot. Latest means
-// Continue: its load falls back to the backup if the latest is refused.
+// Alpha 4 UI Batch 2 (ALPHA4_UI.md section 2.3). One journey is kept as two
+// generations: every save replaces the older one, so the newer is its latest
+// save and the other the recovery copy. Ordered by age (commit sequence),
+// never by physical slot.
 struct SaveList {
-    int8_t latest = -1, backup = -1; // physical slot, or -1
+    int8_t latest = -1, backup = -1; // physical generation, or -1
 };
-SaveList order_saves(const FrontendSaveSlot (&slots)[2]);
-/** Row text, at most kSaveRowChars: "Latest: Avery, Iolo's Hut", "Backup: damaged", ... */
+SaveList order_saves(const FrontendSaveSlot (&generations)[2]);
+
+// Alpha 4 A4-SAVE2 (ALPHA4_UI.md section 4): three manual save slots. Each
+// slot is one journey kept as its own two-generation pair (the A4-SAVE1
+// recovery model); the player sees the slot, never its generations. A slot's
+// load restores its newest generation the gate accepts, falling back to the
+// one before it when the newest is refused.
+constexpr int kSaveSlotCount = 3;
+enum class SaveSlotStatus : uint8_t {
+    Empty,      // neither generation has a commit record
+    Saved,      // the newest generation is accepted: a load restores it
+    Recovered,  // the newest is refused and the one before it accepted: a load restores that one
+    Damaged,    // nothing in the slot can be loaded
+};
+struct FrontendSaveCatalog {
+    struct Entry {
+        SaveSlotStatus status = SaveSlotStatus::Empty;
+        uint64_t sequence = 0;     // the slot's newest commit record: Continue orders the slots by it
+        FrontendSaveSlot shown{};  // Saved / Recovered: the generation a load restores
+    };
+    Entry slots[kSaveSlotCount]{};
+};
+bool slot_loadable(const FrontendSaveCatalog &, int slot);
+/** The slot Continue restores: the loadable slot with the newest save, or -1. */
+int continue_slot(const FrontendSaveCatalog &);
+/** The lowest empty slot, or -1. */
+int first_empty_slot(const FrontendSaveCatalog &);
+// Alpha 4 A4-UI3 (ALPHA4_UI.md section 6): a slot is shown as two rows of at
+// most kSaveRowChars (36 cells: what Large text fits in the menu's 304 px).
+//   row:    "Slot 2  Kojac     CURRENT"  (status word or name, then the tags)
+//   detail: "        Lord British's Castle" (the place a load restores)
+// EMPTY and DAMAGED carry no metadata. The tag column holds `tag` on slot
+// `marked` (CURRENT in game: the live journey's slot; LATEST on the title:
+// Continue's slot) and RECOVERED when a load restores the one before the newest.
 constexpr size_t kSaveRowChars = 36;
-void format_save_row(char *out, size_t cap, const FrontendSaveSlot (&slots)[2], bool latest);
+constexpr const char *kCurrentSlotTag = "CURRENT", *kLatestSlotTag = "LATEST";
+void format_slot_rows(char *row, char *detail, size_t cap, const FrontendSaveCatalog &, int slot,
+                      int marked = -1, const char *tag = nullptr);
+/** What a load of the slot restores, for the confirm pages: "Kojac, Britannia", "Damaged save", "Empty slot". */
+void format_slot_identity(char *out, size_t cap, const FrontendSaveCatalog &, int slot);
 /** The selected row's footer, at most 50 characters: date, time, party, or what Enter will do. */
-void format_save_detail(char *out, size_t cap, const FrontendSaveSlot (&slots)[2], bool latest);
-/** Whether any generation on the card is valid. */
-bool any_valid_save(const FrontendSaveSlot (&slots)[2]);
+void format_slot_detail(char *out, size_t cap, const FrontendSaveCatalog &, int slot, bool saving);
+
+// Alpha 4 A4-SAVE3: what the import folder holds, as the PC Save Transfer page
+// shows it. The runtime reads the folder when the page opens.
+enum class PcImportState : uint8_t { Unknown, Missing, Problem, Ready };
+struct PcImportStatus {
+    PcImportState state = PcImportState::Unknown;
+    char text[48]{};          // Ready: "Kojac, Lord British's Castle"; else why not
+    int8_t imported_slot = -1; // these same files were imported before, into this slot
+};
 
 enum class FrontendViewKind : uint8_t {
     Generic,
@@ -122,7 +177,13 @@ struct FrontendView {
     size_t line_count = 0;
     int selected_line = -1;
     const char *footer = "";
+    // Alpha 4 A4-UI3: a slot page sets one detail row per slot line; the
+    // device draws it under that line and selects the two rows together.
+    const char *details[kSaveSlotCount]{};
 };
+/** A4-UI3: the three slot rows of a slot page into `v`, from `rows` (6 rows of 96). */
+void list_slots(FrontendView &v, char (*rows)[96], const FrontendSaveCatalog &, int selected,
+                int marked, const char *tag);
 
 // Exact FONT.OVL creation tournament: 8 virtues, elimination rounds 4+2+1.
 class GypsyTournament {
@@ -160,7 +221,8 @@ class FrontendSession {
     FrontendIntent take_intent();
     void complete_intent(bool success, const char *message = nullptr);
     void enter_game() { state_ = FrontendState::EnterGame; }
-    void set_save_slots(const FrontendSaveSlot (&slots)[2]);
+    void set_save_catalog(const FrontendSaveCatalog &catalog) { catalog_ = catalog; }
+    void set_pc_import_status(const PcImportStatus &status) { pc_status_ = status; }
     void set_question_texts(const char *const *questions, size_t count) {
         questions_ = questions; question_count_ = count;
     }
@@ -197,7 +259,13 @@ class FrontendSession {
     MusicAvailability music_availability_ = MusicAvailability::NoAudioPack;
     bool sfx_muted_ = false, music_muted_ = false;
     uint8_t volume_edits_ = 0;
-    FrontendSaveSlot saves_[2]{};
+    FrontendSaveCatalog catalog_{};
+    int8_t new_journey_slot_ = -1;   // A4-SAVE2: where CreateInitialSave writes
+    bool slot_confirm_ = false;      // NewJourneySlot: the Replace? question is up
+    PcImportStatus pc_status_{};     // A4-SAVE3
+    int8_t pc_slot_ = -1;            // PcImportSlot: the slot the question is about
+    bool pc_confirm_ = false;        // PcImportSlot: the Replace? / Import again? question is up
+    bool pc_error_ = false;          // the Error page came from PC Save Transfer (returns there)
     GypsyTournament tournament_{};
     uint32_t entered_ms_ = 0;
     uint8_t cursor_ = 0, intro_page_ = 0, settings_cursor_ = 0;

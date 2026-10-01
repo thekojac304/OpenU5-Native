@@ -1,0 +1,56 @@
+E0 KILLED -- the presenter off: Batch 53's one-shot narration (the pre-END1 device) -- a4_end1_ending_runtime exit=1 RED=T1,T3,S1,S2,S3,M8,M9,F5,F6,S4,M10,M12,M13; batch53_release_blockers exit=1 RED=EV6; batch53a_ending_terminal exit=1 RED=R5
+E1 KILLED -- the presenter AND the narration: the ending's text twice -- a4_end1_ending_runtime exit=1 RED=T3; batch53_release_blockers exit=1 RED=EV5,EV6
+E2 SURVIVED -- the GameWon token is printed again (D-57) -- a4_end1_ending_runtime exit=0 RED=-
+E3 KILLED -- Lord British's speech starts at ENDMSG 0x05 (0x04 lost) -- a4_end1_endgame_scene exit=1 RED=V3,V4,V5,V6,V8,V9; a4_end1_ending_runtime exit=1 RED=E2
+E4 SURVIVED -- the device line comes over the overlay at once (A-15) -- a4_end1_ending_runtime exit=0 RED=-
+V1 KILLED -- no recolor (fn36 never ran) -- a4_end1_endgame_scene exit=1 RED=V8,C3; a4_end1_ending_runtime exit=1 RED=V1,V4,V7,D1
+V2 KILLED -- a wrong recolor LUT entry (1 -> 1, not 5) -- a4_end1_endgame_scene exit=1 RED=C4; a4_end1_ending_runtime exit=0 RED=-
+V3 KILLED -- the renderer ignores the recolor -- a4_end1_ending_runtime exit=1 RED=V1,V4,V7,D1
+V4 KILLED -- the revive's XOR is not drawn -- a4_end1_ending_runtime exit=1 RED=V4
+V5 KILLED -- the rising gate shows the bottom of 0xdc, not its top -- a4_end1_ending_runtime exit=1 RED=V7
+V6 KILLED -- Lord British starts one row up -- a4_end1_endgame_scene exit=1 RED=E2,E4,E5; a4_end1_ending_runtime exit=1 RED=V3,W1,W2,M2,M1,M3,M12,M13
+V7 KILLED -- a wrong lineup (members 1 and 2 swap sides) -- a4_end1_endgame_scene exit=1 RED=E10
+V8 SURVIVED -- the longer-axis rule flips on a tie -- a4_end1_endgame_scene exit=0 RED=-
+V9 KILLED -- the bed pose is 0x1b -- a4_end1_endgame_scene exit=1 RED=N3
+V10 KILLED -- the gate rises 14 stages -- a4_end1_endgame_scene exit=1 RED=V6,V7,V9,V10,V12,V13,V14,S1
+W1 KILLED -- 32 frames before Lord British walks, not 40 -- a4_end1_endgame_scene exit=1 RED=E2,E3; a4_end1_ending_runtime exit=1 RED=W1
+W2 KILLED -- the revive shows the healed roster at the print, not after the sweep -- a4_end1_endgame_scene exit=0 RED=-; a4_end1_ending_runtime exit=1 RED=W2
+W3 KILLED -- after a getkey the next wait is timed from when the getkey began -- a4_end1_ending_runtime exit=1 RED=W4
+W4 KILLED -- the clock runs on under the System Menu (catch-up when it closes) -- a4_end1_ending_runtime exit=1 RED=W5
+K1 KILLED -- the trackball ends a getkey -- a4_end1_ending_runtime exit=1 RED=W3
+K2 KILLED -- a key hurries a timed wait (keys outside a getkey are not nothing) -- a4_end1_endgame_scene exit=0 RED=-; a4_end1_ending_runtime exit=1 RED=W1,W2,M2,M1,M12,M13
+K3 KILLED -- any key answers the box question (No) -- a4_end1_endgame_scene exit=1 RED=Q2,Q3; a4_end1_ending_runtime exit=1 RED=K3,W4,V5,K4,V6,E2,M5,V7,W5,D1,D2,D3,P1,P2,M6,P3,F1,F2,F3
+K4 KILLED -- no case folding: a lower-case y is read again -- a4_end1_endgame_scene exit=1 RED=Q3,Q4,S2; a4_end1_ending_runtime exit=1 RED=W4,V5,K4,V6,E2,M5,V7,W5,D1,D2,D3,P1,P2,M6,P3,F1,F2,F3,S1,S2,S3,M8,F5,F6,S4,M10,M11,M13; batch53_release_blockers exit=1 RED=EV5,EV6,ES3,V0b
+K5 KILLED -- the Mic aborts the ending -- a4_end1_ending_runtime exit=1 RED=K3,W4,V5,K4,V6,E2,M5,V7,W5,D1,D2,D3,P1,M6,P3,F1,F2,F3,F6
+K6 KILLED -- Alt+S saves the ended game -- a4_end1_ending_runtime exit=1 RED=K5,F4,F6; batch53a_ending_terminal exit=1 RED=TV6,TV7,TV8,TV12,TS6,TS7,TS8,TS12
+K7 KILLED -- Yes without the box wins (0x08b9 ignores the box) -- a4_end1_endgame_scene exit=1 RED=N5,N6; a4_end1_ending_runtime exit=1 RED=S4
+D1 KILLED -- the fizzle is always skipped -- a4_end1_ending_runtime exit=1 RED=D1,D2,D3
+D2 KILLED -- the capture frame is not a full repaint -- a4_end1_ending_runtime exit=1 RED=D1,D2
+D3 KILLED -- the fizzle runs at 32,000 px/s -- a4_end1_ending_runtime exit=1 RED=D2,D3
+D4 KILLED -- a wrong 16-bit tap (0xb000) -- a4_end1_endgame_scene exit=1 RED=F1; a4_end1_ending_runtime exit=1 RED=D2,D3,P1,P2,M6,P3,F1,F2,F3,M10,M11,M13
+D5 KILLED -- the bands above and below the picture never fizzle -- a4_end1_ending_runtime exit=1 RED=D2
+D6 KILLED -- the copy of the panel is never released -- a4_end1_ending_runtime exit=1 RED=D3
+P1 KILLED -- the picture at y 0, not centred at y 20 -- a4_end1_ending_runtime exit=1 RED=D2,P1,P3,F2,F3
+P2 KILLED -- the scroll's cells are transparent (only ink drawn) -- a4_end1_ending_runtime exit=1 RED=P3,F2,F3
+P3 KILLED -- a page is redrawn every frame -- a4_end1_ending_runtime exit=1 RED=P2,F1
+P4 KILLED -- the datestamp centres one column right -- a4_end1_endgame_scene exit=1 RED=S1,S2; a4_end1_ending_runtime exit=0 RED=-
+P5 KILLED -- "Twenty" for the ordinal stem (Twentyieth) -- a4_end1_endgame_scene exit=1 RED=S2
+P6 KILLED -- the playtime borrows 30 days, not 28 -- a4_end1_endgame_scene exit=1 RED=S2,S3
+M1 KILLED -- no Reunion -> Rule Britannia chain -- a4_end1_ending_runtime exit=1 RED=M4,M9
+M2 KILLED -- 0x1b cuts a Reunion still playing -- a4_end1_ending_runtime exit=1 RED=M8,M9
+M3 KILLED -- the story music by page, not page + 1 (0x0aee passes BL = page + 1) -- a4_end1_endgame_scene exit=1 RED=V12; a4_end1_ending_runtime exit=1 RED=M6
+M4 KILLED -- no footsteps -- a4_end1_endgame_scene exit=1 RED=E4; a4_end1_ending_runtime exit=1 RED=M1,M3
+M5 KILLED -- the revive plays the orb's sweep -- a4_end1_ending_runtime exit=1 RED=M2
+M6 KILLED -- no orb sweep -- a4_end1_endgame_scene exit=1 RED=V5; a4_end1_ending_runtime exit=1 RED=M5
+F1 KILLED -- a key on the scroll ends the ending -- a4_end1_endgame_scene exit=1 RED=V14; a4_end1_ending_runtime exit=1 RED=F2,F3
+F2 SURVIVED -- Load leaves the overlay running -- a4_end1_ending_runtime exit=0 RED=-; batch53a_ending_terminal exit=0 RED=-
+F3 KILLED -- Return to Title leaves the overlay running -- a4_end1_ending_runtime exit=1 RED=F7
+F4 KILLED -- an un-won game keeps the overlay (Developer Preset: Endgame) -- batch53a_ending_terminal exit=1 RED=TI3
+F5 KILLED -- no wander in the stranded room -- a4_end1_endgame_scene exit=1 RED=N6; a4_end1_ending_runtime exit=1 RED=F5
+T1 KILLED -- the justification rounds instead of truncating (idiv) -- check-endgame-pages exit=1 RED=G1,G3
+T2 KILLED -- an 8-pixel leading -- check-endgame-pages exit=1 RED=G1,G3
+T3 KILLED -- the art drawn before the headlines -- check-endgame-pages exit=1 RED=O1,G1,G3
+T4 SURVIVED -- the clip at y 200, not 0xc0 -- check-endgame-pages exit=0 RED=-
+T5 KILLED -- no hyphen at a soft-hyphen break -- check-endgame-pages exit=1 RED=C2,G1,G3
+T6 KILLED -- the scroll at (0,0) -- check-endgame-pages exit=1 RED=O2,G1,G3
+A4-END1 mutation check: 50 killed, 5 survived, 0 invalid; restored build GREEN

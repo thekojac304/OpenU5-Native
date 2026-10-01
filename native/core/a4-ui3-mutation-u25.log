@@ -1,0 +1,2 @@
+U25 KILLED -- a failed save leaves the open menu listing the card as it was -- a4_ui3_save_ux_runtime exit=1 RED=S10
+A4-UI3 mutation check: 1 killed, 0 survived, 0 invalid; restored build GREEN

@@ -1,0 +1,26 @@
+S1 KILLED -- wrong slot: every slot writes the Slot 1 (legacy) names -- a4_save2_slots_runtime exit=1 RED=I2,I3,I4,I5,I6,I7,S1,S3,S4,S5,S6,O1,O3,O4,O5,D1,D1r,D2,D2r,D3,D3r,D4,D4r,D5,D5r,D6,D6r,D7,G1,G2,G3,G4,G5,G6,G7,G8,G9,G10,G11,G12,G13,M1,M3,M5,M7,R1,R2,R3,R4,R5,R6,R7,H4
+S2 KILLED -- wrong slot: Slots 2/3 named one off (s3/s4) -- a4_save2_slots_runtime exit=1 RED=I2,I3,I6,S4,S5,S6,O5,D1,D1r,D2,D2r,D3,D3r,D4,D4r,D5,D5r,D6,D6r,D7,G2,G4,G5,G6,G7,G8,G9,G10,G12,M5,R1
+S3 KILLED -- wrong slot: save ignores the slot asked for (the newest slot instead) -- a4_save2_slots_runtime exit=1 RED=I2,I3,I4,I5,I6,I7,S1,S3,S4,S5,S6,O1,O2,O3,O4,O5,D1,D1r,D2,D2r,D3,D3r,D4,D4r,D5,D5r,D6,D6r,D7,G1,G2,G3,G4,G5,G6,G7,G8,G9,G10,G11,G12,G13,M5,M7,R1,R2,R3,R4,R5,R6,R7,H1,H2
+S4 KILLED -- no card-wide sequence (a pair counts from its own newest) -- a4_save2_slots_runtime exit=1 RED=I2,I3,I5,I6,I7,S3,S4,D1,D2,D3,D4,D5,D7,G1,G2,G3,G4,G5,G6,G7,G8,G9,G11,M5,R2,R5
+S5 KILLED -- destroyed fallback: a refused newest keeps itself and overwrites the older -- a4_save2_slots_runtime exit=1 RED=D1,D2,D3,D4,D5,D6; a4_save1_recovery_runtime exit=1 RED=Ca2,Ca3,Ca5,Cb2,Cb3,Cb5,E1,E2,E3,D1r,D2r,D3,D3r,D4,D4r,D5,D5r,D6,D6r,G4,R2,R3,R4
+S6 KILLED -- Continue takes the OLDEST slot first -- a4_save2_slots_runtime exit=1 RED=S1,S2,S3,S4,S5,S6,D7,M5,R1,R2,R5
+S7 KILLED -- destroyed fallback: a slot load never falls back to its older generation -- a4_save2_slots_runtime exit=1 RED=G9
+S8 KILLED -- invalid generation accepted: the list never runs the gate -- a4_save2_slots_runtime exit=1 RED=S4,S5,D1,D2,G2,G4,G9,G12,M4
+S9 KILLED -- the list never looks at the generation before a refused newest -- a4_save2_slots_runtime exit=1 RED=S4,D1,D2,D3,D4,G2,G4,G9,M4; a4_ui2_save_menu_runtime exit=0 RED=-
+S10 KILLED -- the list stages the older generation too (the slow-SD cost) -- a4_save2_slots_runtime exit=1 RED=H1,H4
+S11 KILLED -- invalid generation accepted: a semantically refused generation passes verify -- a4_save2_slots_runtime exit=1 RED=G9,G12
+S12 KILLED -- overwrite question starts on Yes -- a4_save2_slots_runtime exit=1 RED=O2,O3,O4,R3; a4_ui2_save_menu_runtime exit=1 RED=M5,M6,M7,M8,M9,M10,M11,L6,L7,L8,L9,L10
+S13 KILLED -- overwrite No saves anyway -- a4_save2_slots_runtime exit=1 RED=O2,O3,O5; a4_ui2_save_menu_runtime exit=1 RED=M6,M7,M8,M9,M10,M11
+S14 KILLED -- an occupied slot is saved over without asking -- a4_save2_slots_runtime exit=1 RED=O2,O3,O4,O5; a4_ui2_save_menu_runtime exit=1 RED=M5,M6,M7,M8,M9,M10,M11
+S15 KILLED -- an empty slot is offered for loading -- a4_ui2_save_menu_runtime exit=1 RED=L5,L9,L11
+S16 KILLED -- the title Load page offers an empty slot -- a4_ui2_save_menu_runtime exit=1 RED=F3b,F4,F5; frontend_tests exit=77 RED=-
+S17 KILLED -- migration: the pre-SAVE2 pair is not Slot 1 (alpha1-s1-g*) -- a4_save2_slots_runtime exit=1 RED=I1,I2,M1,M2,M3,M4,M5,M6,M7,H1; a4_save1_recovery_runtime exit=1 RED=A1,B0,B1,B2,Ca1,Ca3,Ca5,Cb1,Cb3,Cb5,E1,E2,E3,D1,D2,D3,D4,D5,D6,F1,G1,G2,G3,G4,R1,R4
+S18 KILLED -- migration: a save naming no slot on a blank card goes to Slot 3 -- a4_save2_slots_runtime exit=0 RED=-; a4_save1_recovery_runtime exit=1 RED=A1,A4,B0,B1,B2,Ca1,Ca3,Ca5,Cb1,Cb3,Cb5,E1,E2,E3,D1,D2,D3,D4,D5,D6,F1,F3,G1,G2,G3,G4,R1,R3,R4
+S19 KILLED -- Alt+S ignores the journey slot -- a4_save2_slots_runtime exit=1 RED=R1,R2,R3
+S20 KILLED -- Alt+L reloads Continue, not the journey slot -- a4_save2_slots_runtime exit=1 RED=R2
+S21 KILLED -- New Journey ignores the empty slot (always Slot 1) -- a4_save2_slots_runtime exit=1 RED=R4,R5,R6,R7; a4_ui2_save_menu_runtime exit=0 RED=-
+S22 KILLED -- New Journey "Replace Slot N?" starts on Yes -- a4_save2_slots_runtime exit=1 RED=R6,R7; a4_ui2_save_menu_runtime exit=1 RED=F7
+S23 KILLED -- the System Menu save drops the chosen slot -- a4_save2_slots_runtime exit=1 RED=O1,O2,O3,O4,O5,R3; a4_ui2_save_menu_runtime exit=1 RED=L1,L2,L3,L4,L6,L7,L8,L9,L10,F2,F3,F5,F6,F7
+S24 KILLED -- the save list keys every slot by Slot 1's entry -- a4_save2_slots_runtime exit=1 RED=H2
+S25 KILLED -- the menu is not given the save made from it -- a4_ui2_save_menu_runtime exit=1 RED=M11; a3_04g_storage_runtime exit=1 RED=K10
+A4-SAVE2 mutation check: 25 killed, 0 survived, 0 invalid; restored build GREEN

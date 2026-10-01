@@ -619,7 +619,7 @@ int main(int argc, char **argv) {
     next.kind = UiActionKind::Next;
     confirm.kind = UiActionKind::Confirm;
     back.kind = UiActionKind::Back;
-    FrontendSaveSlot slots[2]{};
+    FrontendSaveCatalog slots{};
     auto open_settings = [&](SystemMenuSession &m, const FrontendSettings &s, MusicAvailability a) {
         m.set_music_availability(a);
         m.open(s, slots);

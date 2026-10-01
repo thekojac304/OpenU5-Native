@@ -556,7 +556,7 @@ void test_frontend() {
               "F" + std::string(size == 1 ? "7" : "8") + " changing a value redraws that one row, still inverted" + tag +
                   ": " + n(cw) + " window, " + n(cp) + " px");
     }
-    FrontendSaveSlot slots[2]{};
+    FrontendSaveCatalog slots{};
     SystemMenuSession menu;
     menu.open(settings, slots);
     const auto sv = menu.view();

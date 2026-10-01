@@ -214,7 +214,13 @@ struct Harness {
     // The device's own shortcuts / menus.
     void alt_save() { raw_key('s', true); }
     void alt_load() { raw_key('l', true); }
-    void menu_save() { raw_key('m', true); ball(RawInputKind::TrackballDown); key('\r'); raw_key('m', true); }
+    // Alpha 4 A4-SAVE2: Save Game opens Slots 1-3 on the journey's slot; Enter
+    // saves there, and an occupied slot asks "Overwrite Slot N?" (No first).
+    void menu_save() {
+        raw_key('m', true); ball(RawInputKind::TrackballDown); key('\r'); key('\r');
+        if (std::strncmp(rt->system_menu_view().title, "Overwrite", 9) == 0) { ball(RawInputKind::TrackballDown); key('\r'); }
+        if (rt->system_menu_open()) raw_key('m', true);   // A4-UI3: a successful save returns to the game; only a failed one leaves the menu open.
+    }
     void menu_load() { raw_key('m', true); ball(RawInputKind::TrackballDown); ball(RawInputKind::TrackballDown); key('\r'); key('\r'); }
 
     // Yell <word> the way a player types it.
@@ -702,6 +708,18 @@ bool reach_final_room(Harness &h) {
 // One combat input per enemy beat, on the virtual clock.
 void combat_step(Harness &h, RawInputKind k) { Harness::advance(600000); h.ball(k); }
 void pump(Harness &h, int n) { for (int i = 0; i < n; ++i) { Harness::advance(600000); h.ball(RawInputKind::TrackballUp); } }
+// A4-END1: the ending is ENDGAME.OVL now, played and paced. Answer its box
+// questions with `answer`, press a key at every other getkey, and let its clock
+// run, until it reaches the scroll (victory) or the stranded room's wander.
+void drive_ending(Harness &h, char answer) {
+    for (int i = 0; i < 400; ++i) {
+        const auto *s = h.rt->endgame_scene();
+        if (!s || !s->active() || s->phase() == EndgamePhase::Scroll || s->phase() == EndgamePhase::Stranded) return;
+        if (s->wait() == EndgameWait::YesNo) h.key(uint8_t(answer));
+        else if (s->wait() == EndgameWait::Key) h.key(' ');
+        h.run_ms(500);
+    }
+}
 
 void test_endgame(bool box) {
     std::printf("E%s the final room with%s the wooden box\n", box ? "V" : "S", box ? "" : "out");
@@ -722,10 +740,21 @@ void test_endgame(bool box) {
                     "** the final arena tears down (no COMBAT_TEARDOWN deferred) **"))
             h.dump("EV3");
         expect(won, "EV4", "** game-won is set **");
+        // A4-END1: the ending is played now (endgame_scene.h): its text arrives
+        // page by page, the box question is the player's, and the proclamation
+        // is printed on the scroll, not in the console.
+        drive_ending(h, 'y');
         expect(h.count("\"FOLLOW!\" cries Lord British") == 1 && h.count("Lord British carefully opens the box...") == 1, "EV5",
                "** ENDMSG record 9 is read from the pack and shown exactly once **");
-        expect(h.count("THE QUEST OF THE AVATAR IS FOREVER") == 1 && h.count("Report now, thy Quest compleat") == 1, "EV6",
-               "the proclamation and the report appear once (no duplicated ending)");
+        const auto *scene = h.rt->endgame_scene();
+        std::string report;
+        for (int c = 0; scene && c < kEndgameScrollCols; ++c) {
+            const auto &cell = scene->scroll()[23 * kEndgameScrollCols + c];
+            report += (cell.flags & kEndgameCellPrinted) ? char(cell.ch) : ' ';
+        }
+        expect(scene && scene->phase() == EndgamePhase::Scroll && h.count("THE QUEST OF THE AVATAR IS FOREVER") == 0 &&
+                   report.find("to Lord British at Origin Systems!") != std::string::npos, "EV6",
+               "the proclamation and the report appear once, on the scroll (A4-END1); the console repeats neither");
         // Batch 53A: these four checks (EV7, EV8, EV10, EV11) used to assert
         // that play resumes in the dungeon after the ending. The original
         // never returns from ENDGAME.OVL (re/notes/batch53a-endgame-
@@ -752,6 +781,7 @@ void test_endgame(bool box) {
         expect(menu && !h.rt->system_menu_open() && h.mode() == UiMode::Ending, "EV11",
                "Alt+M opens and closes the System Menu over the ended game, which stays ended");
     } else {
+        drive_ending(h, 'n'); // A4-END1: played and paced
         expect(!h.rt->command_context().combat && won && h.saw("pull up a chair") && !h.saw("FOLLOW!"), "ES3",
                "control: without the box the stranded ending runs (it never needed ENDMSG)");
     }
@@ -819,6 +849,7 @@ void test_routes() {
         h.set_mark();
         for (int i = 0; i < 4 && h.rt->command_context().combat; ++i) combat_step(h, RawInputKind::TrackballUp);
         pump(h, 6);
+        drive_ending(h, 'y'); // A4-END1: played and paced
         expect(quest_flag(h.g().quest, QuestFlag::GameWon) && h.saw("FOLLOW!") && !h.rt->command_context().combat, "V0b",
                "7E-A: four steps north, the Avatar is absorbed and the victory ending runs");
     }

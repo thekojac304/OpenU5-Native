@@ -53,7 +53,8 @@ void AlphaResourceOwners::release() {
                     static_cast<void *>(credits_panel), static_cast<void *>(creation_sprite_blob),
                     static_cast<void *>(demo_scene), static_cast<void *>(runes_font),
                     static_cast<void *>(ibm_font),
-                    static_cast<void *>(blackthorn_scene_tiles)})
+                    static_cast<void *>(blackthorn_scene_tiles),
+                    static_cast<void *>(endgame_room), static_cast<void *>(endgame_pages)})
         if (p) heap_caps_free(p);
     if (small_maps) heap_caps_free(small_maps);
     if (combat_map_views) heap_caps_free(combat_map_views);
@@ -136,7 +137,9 @@ esp_err_t AlphaResourcePack::open(const char *path, AlphaResourceReport &report)
                                   // Batch 9C / R-05: the authored dungeon art. Named here so a pack
                                   // built before it existed is rejected by NAME, not only by the
                                   // size/CRC identity lock -- the log then says which half is stale.
-                                  "dungeon-dng1.art","dungeon-dng2.art","dungeon-dng3.art","dungeon-items.art","dungeon-mon.art"};
+                                  "dungeon-dng1.art","dungeon-dng2.art","dungeon-dng3.art","dungeon-items.art","dungeon-mon.art",
+                                  // A4-END1: the ending's room and screens.
+                                  "endgame-room.bin","endgame-pages.bin"};
     for (const char *name:required) if(!find(name)){ESP_LOGE(kTag,"Required entry missing: %s",name);close();return ESP_ERR_NOT_FOUND;}
     report.firmware_match = report.file_size == kExpectedAlphaResourceSize &&
                             report.payload_crc32 == kExpectedAlphaResourceCrc32;
@@ -318,6 +321,17 @@ esp_err_t AlphaResourcePack::load(AlphaResourceOwners &o, AlphaResourceReport &r
         o.word_count=word_count;
         batch53_bytes=size_t(12+7)*4+end_bytes+karma_bytes+word_bytes*sizeof(char16_t);
     }
+    // A4-END1: the throne room (121 bytes) and the seven screens behind a
+    // 16-byte header ("OU5END01", 320, 200, 7). Read once, here, while the
+    // pack is open: the ending then touches no card at all.
+    const auto *eg_room=find("endgame-room.bin");const auto *eg_pages=find("endgame-pages.bin");uint8_t eg_head[16]{};
+    if(!eg_room||eg_room->length!=121||!eg_pages||eg_pages->length!=16+kEndgamePageCount*kEndgamePageBytes||
+       read(*eg_pages,0,eg_head,16)!=ESP_OK||std::memcmp(eg_head,"OU5END01",8)!=0||u16(eg_head+8)!=kEndgamePageWidth||
+       u16(eg_head+10)!=kEndgamePageHeight||u16(eg_head+12)!=kEndgamePageCount){o.release();return ESP_ERR_INVALID_SIZE;}
+    o.endgame_room=static_cast<uint8_t*>(psram_alloc(121));
+    o.endgame_pages=static_cast<uint8_t*>(psram_alloc(kEndgamePageCount*kEndgamePageBytes));
+    if(!o.endgame_room||!o.endgame_pages){o.release();return ESP_ERR_NO_MEM;}
+    if(read(*eg_room,0,o.endgame_room,121)!=ESP_OK||read(*eg_pages,16,o.endgame_pages,kEndgamePageCount*kEndgamePageBytes)!=ESP_OK){o.release();return ESP_FAIL;}
     // Blackthorn's throne room (#324 / R-32): cols, rows, then cols*rows
     // int16 tiles. Rejected outright when it is not the expected 11x11, so a
     // stale pack can never half-stage the capture scene.
@@ -351,7 +365,7 @@ esp_err_t AlphaResourcePack::load(AlphaResourceOwners &o, AlphaResourceReport &r
     if(read(*signs,sign_text_at,o.sign_text,sign_text_bytes)!=ESP_OK||(sign_raw_bytes&&read(*signs,sign_raw_at,o.sign_raw,sign_raw_bytes)!=ESP_OK)){o.release();return ESP_FAIL;}
     for(uint32_t i=0;i<sign_count;++i){uint8_t b[sign_record]{};if(read(*signs,sign_header+size_t(i)*sign_record,b,sizeof(b))!=ESP_OK){o.release();return ESP_FAIL;}const uint32_t to=u32(b+8),tl=u32(b+12),ro=u32(b+16),rl=u32(b+20);if(to>=sign_text_bytes||tl>=sign_text_bytes-to||o.sign_text[to+tl]!=0||ro>sign_raw_bytes||rl>sign_raw_bytes-ro){o.release();return ESP_ERR_INVALID_SIZE;}auto &record=o.signs[i];record.map={b[0],i16(b+2)};record.x=b[4];record.y=b[5];record.value={o.sign_text+to,rl?o.sign_raw+ro:nullptr,rl};}
     o.sign_count=sign_count;
-    o.psram_bytes=batch53_bytes+over->length+under->length+init->length+init_ool->length+size_t(sc)*1024+dc*sizeof(openu5::DungeonData)+nc*sizeof(openu5::NpcSlot)+size_t(pc)*4+size_t(qc)*sizeof(openu5::SearchObject)+size_t(shc)*sizeof(openu5::ShardSpawn)+size_t(cmc)*(sizeof(openu5::CombatMap)+16)+size_t(cec)*(sizeof(openu5::CombatEnemy)+42)+size_t(ctc)*16+size_t(src)*(sizeof(openu5::ShopRecord)+64)+sn*4+talk->length+8*24*sizeof(char16_t)+question_bytes+intro_bytes+title_bytes+credits_bytes+creation->length+demo_bytes+1024+1024+size_t(shop_text_count+1)*4+shop_text_records->length-shop_text_dir+size_t(misc_text_count+1)*4+misc_text_records->length-misc_text_dir+size_t(look_count+1)*4+look->length-look_dir+size_t(sign_count)*sizeof(openu5::LookSignRecord)+sign_text_bytes+sign_raw_bytes;
+    o.psram_bytes=batch53_bytes+over->length+under->length+init->length+init_ool->length+size_t(sc)*1024+dc*sizeof(openu5::DungeonData)+nc*sizeof(openu5::NpcSlot)+size_t(pc)*4+size_t(qc)*sizeof(openu5::SearchObject)+size_t(shc)*sizeof(openu5::ShardSpawn)+size_t(cmc)*(sizeof(openu5::CombatMap)+16)+size_t(cec)*(sizeof(openu5::CombatEnemy)+42)+size_t(ctc)*16+size_t(src)*(sizeof(openu5::ShopRecord)+64)+sn*4+talk->length+8*24*sizeof(char16_t)+question_bytes+intro_bytes+title_bytes+credits_bytes+creation->length+demo_bytes+1024+1024+size_t(shop_text_count+1)*4+shop_text_records->length-shop_text_dir+size_t(misc_text_count+1)*4+misc_text_records->length-misc_text_dir+size_t(look_count+1)*4+look->length-look_dir+size_t(sign_count)*sizeof(openu5::LookSignRecord)+sign_text_bytes+sign_raw_bytes+121+kEndgamePageCount*kEndgamePageBytes;
     ESP_LOGI(kTag,"Loaded owners: %lu small floors, %lu dungeons, %lu NPC records; PSRAM=%zu",(unsigned long)sc,(unsigned long)dc,(unsigned long)nc,o.psram_bytes);
     return ESP_OK;
 }

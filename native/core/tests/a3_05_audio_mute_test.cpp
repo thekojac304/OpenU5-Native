@@ -148,7 +148,7 @@ int main() {
         FrontendSettings s{};
         s.sound_volume = 40;
         s.music_volume = 70;
-        FrontendSaveSlot slots[2]{};
+        FrontendSaveCatalog slots{};
         m.open(s, slots);
         for (int i = 0; i < 3; ++i) m.handle(act(UiActionKind::Next));
         m.handle(act(UiActionKind::Confirm));

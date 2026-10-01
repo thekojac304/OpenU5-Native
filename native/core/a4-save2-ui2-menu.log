@@ -1,0 +1,582 @@
+[I][AlphaResources] Alpha resource pack v2.0 valid: 2042554 bytes, 43 entries, payload CRC=9c10874f, expected SHA-256=11d72c7784d4, firmware_match=1
+[I][AlphaResources] Loaded owners: 64 small floors, 8 dungeons, 1024 NPC records; PSRAM=1188214
+M  the System Menu
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=5 crc=882c78a7
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=5 crc=882c78a7
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+GREEN M1 the rows name the actions: Resume | Save Game | Load Game | Settings | Return to Title
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+GREEN M2 the selected row says what it will do (Save Game: "Choose a slot to save this journey in"; Return to Title: "Unsaved progress will be lost")
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=5 crc=882c78a7
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+GREEN M3 Save Game lists Slots 1-3 (blank card: all empty, on Slot 1): Slot 1: empty | Slot 2: empty | Slot 3: empty
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+GREEN M4 an empty slot saves at once: "Saved in Slot 1." (the transcript line is kept)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=5 crc=882c78a7
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=6 pixels=16848 us=0
+GREEN M5 an occupied slot (the journey's own, where the page starts) asks "Overwrite Slot 1?", No selected
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=6 pixels=16848 us=0
+GREEN M6 No: back on the Save page, "Slot 1 kept", nothing written (still one generation)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=6 pixels=16848 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=08 base=08 symbol=00 ui=inventory emitted=back action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=back accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=6 pixels=16848 us=0
+GREEN M7 Back from the question returns to the Save page and writes nothing
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=6 pixels=16848 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+GREEN M8 Yes says what it does
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+GREEN M9 Yes saves: "Saved in Slot 1." (the slot now keeps two generations, the older one hidden)
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+GREEN M10 the notice lasts until the next key
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+GREEN M11 the Load page lists the save just made from the same menu (13:05): "4-5-139 13:05, party of 2. Enter loads"
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+L  Load Game
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=5 crc=882c78a7
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=5 crc=882c78a7
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=5 crc=882c78a7
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+GREEN L1 three slot rows with leader and place, on the journey's slot (Slot 2): Slot 1: Avery, Iolo's Hut | Slot 2: Avery, Britannia | Slot 3: empty
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+GREEN L2 the selected slot's date, time and party: "4-5-139 13:05, party of 2. Enter loads" / "4-5-139 12:00, party of 2. Enter loads"
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] U5OBJ CLEAR site=load-restore pool_before=0
+[I][AlphaRuntime] WORLD_OBJECTS_RESTORE count=0
+[I][AlphaRuntime] DUNGEON_RESTORE active=0 dungeon=33 depth=0
+[I][AlphaRuntime] LOAD_TRANSIENT_RESET ui=explore->explore request=0 views=0 questions=0
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=5 crc=882c78a7
+GREEN L3 Enter on Slot 1 restores Slot 1's journey (back at Iolo's Hut, 12:00)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] U5OBJ CLEAR site=load-restore pool_before=0
+[I][AlphaRuntime] WORLD_OBJECTS_RESTORE count=0
+[I][AlphaRuntime] DUNGEON_RESTORE active=0 dungeon=33 depth=0
+[I][AlphaRuntime] LOAD_TRANSIENT_RESET ui=explore->explore request=0 views=0 questions=0
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+GREEN L4 the page now starts on Slot 1 (the loaded journey); Slot 2 restores its own (Britannia, 13:05)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=2 pixels=5776 us=0
+GREEN L5 an empty slot says so and cannot be loaded (the menu stays, nothing changes)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=6 pixels=16848 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+GREEN L6 a slot whose last save is damaged says so, and what Enter does: "Last save damaged; Enter loads the one before"
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] U5OBJ CLEAR site=load-restore pool_before=0
+[I][AlphaRuntime] WORLD_OBJECTS_RESTORE count=0
+[I][AlphaRuntime] DUNGEON_RESTORE active=0 dungeon=33 depth=0
+[I][AlphaRuntime] LOAD_TRANSIENT_RESET ui=explore->explore request=0 views=0 questions=0
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+GREEN L7 ... and Enter restores the save before it (13:05), the A4-SAVE1 fallback inside the slot
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=6 pixels=16848 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] U5OBJ CLEAR site=load-restore pool_before=0
+[I][AlphaRuntime] WORLD_OBJECTS_RESTORE count=0
+[I][AlphaRuntime] DUNGEON_RESTORE active=0 dungeon=33 depth=0
+[I][AlphaRuntime] LOAD_TRANSIENT_RESET ui=explore->explore request=0 views=0 questions=0
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+GREEN L8 A4-SAVE1 in a slot: the save after the fallback is the slot's latest ("4-5-139 15:20, party of 2. Enter loads") and the 13:05 save it fell back to is still its hidden recovery
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=2 pixels=5776 us=0
+GREEN L9 nothing loadable: listed damaged, and Enter says it cannot load: "Slot 2 is damaged and cannot load"
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] U5OBJ CLEAR site=load-restore pool_before=0
+[I][AlphaRuntime] WORLD_OBJECTS_RESTORE count=0
+[I][AlphaRuntime] DUNGEON_RESTORE active=0 dungeon=33 depth=0
+[I][AlphaRuntime] LOAD_TRANSIENT_RESET ui=explore->explore request=0 views=0 questions=0
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=5 crc=882c78a7
+GREEN L10 Slot 1 is untouched by everything done to Slot 2 (Iolo's Hut, 12:00)
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=5 crc=882c78a7
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=5 crc=882c78a7
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=2 pixels=5776 us=0
+GREEN L11 an empty card: three empty slots, none loads
+F  the title
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=5 crc=882c78a7
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=5 crc=882c78a7
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=5 crc=882c78a7
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=2 pixels=6080 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=120 crc=e8466959
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] FRONTEND_STATE count=1 from=enter-game to=title reason=tick-or-intent reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=title reason=state-transition full_redraw=0 screen_clear=0 dirty_regions=7 pixels=153712 animation_tick=118 render_us=0 reconstructed=1 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=20 symbol=00 ui=inventory emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=32 accepted=1 state=title->menu phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=2 from=title to=menu reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=menu reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=10 pixels=73328 animation_tick=120 render_us=0 reconstructed=2 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] FRONTEND_INPUT raw=trackball-down action=direction char=0 accepted=1 state=menu->menu phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_RENDER state=menu reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=3 pixels=8816 animation_tick=121 render_us=0 reconstructed=3 internal=67108864 psram=67108864 stack_margin=32768
+GREEN F1 "Create New Character" names the empty slot it will use: "New journey: saved in empty Slot 2"
+[I][AlphaRuntime] FRONTEND_INPUT raw=trackball-up action=direction char=0 accepted=1 state=menu->menu phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_RENDER state=menu reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=3 pixels=8816 animation_tick=123 render_us=0 reconstructed=4 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=confirm char=0 accepted=1 state=menu->continue phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=3 from=menu to=continue reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=continue reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=7 pixels=159016 animation_tick=125 render_us=0 reconstructed=5 internal=67108864 psram=67108864 stack_margin=32768
+GREEN F2 Journey Onward: "Continue | Load Game", naming the save Continue loads: "Latest save: Avery, Britannia" / "Enter continues Slot 3; Mic returns"
+GREEN F2b the subtitle is drawn whole: its bottom glyph rows (y=20..21) survive the body (108 px lit)
+[I][AlphaRuntime] FRONTEND_INPUT raw=trackball-down action=direction char=0 accepted=1 state=continue->continue phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_RENDER state=continue reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=3 pixels=8816 animation_tick=127 render_us=0 reconstructed=6 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=confirm char=0 accepted=1 state=continue->load phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=4 from=continue to=load reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=load reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=7 pixels=81168 animation_tick=129 render_us=0 reconstructed=7 internal=67108864 psram=67108864 stack_margin=32768
+GREEN F3 the title's Load Game lists the same slots, on Continue's: "Slot 1: Avery, Iolo's Hut | Slot 2: empty | Slot 3: Avery, Britannia"
+[I][AlphaRuntime] FRONTEND_INPUT raw=trackball-down action=direction char=0 accepted=1 state=load->load phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_RENDER state=load reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=3 pixels=8816 animation_tick=130 render_us=0 reconstructed=8 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] FRONTEND_INPUT raw=trackball-down action=direction char=0 accepted=1 state=load->load phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_RENDER state=load reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=3 pixels=8816 animation_tick=132 render_us=0 reconstructed=9 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=confirm char=0 accepted=1 state=load->load phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_RENDER state=load reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=2 pixels=5776 animation_tick=134 render_us=0 reconstructed=10 internal=67108864 psram=67108864 stack_margin=32768
+GREEN F3b the title's empty slot says so and does not load (still on Load Game)
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=cancel char=0 accepted=1 state=load->continue phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=5 from=load to=continue reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=continue reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=6 pixels=78128 animation_tick=137 render_us=0 reconstructed=11 internal=67108864 psram=67108864 stack_margin=32768
+GREEN F4 Back from Load Game returns to Journey Onward, on Load Game
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=confirm char=0 accepted=1 state=continue->load phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=6 from=continue to=load reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=load reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=7 pixels=81168 animation_tick=139 render_us=0 reconstructed=12 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] FRONTEND_INPUT raw=trackball-down action=direction char=0 accepted=1 state=load->load phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_RENDER state=load reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=3 pixels=8816 animation_tick=140 render_us=0 reconstructed=13 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=confirm char=0 accepted=1 state=load->load phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_INTENT intent=load-slot storage_begin=1 phase=name name="" gender=0x0b stack_margin=32768
+[I][AlphaRuntime] U5OBJ CLEAR site=load-restore pool_before=0
+[I][AlphaRuntime] WORLD_OBJECTS_RESTORE count=0
+[I][AlphaRuntime] DUNGEON_RESTORE active=0 dungeon=33 depth=0
+[I][AlphaRuntime] LOAD_TRANSIENT_RESET ui=explore->explore request=0 views=0 questions=0
+[I][AlphaRuntime] FRONTEND_INTENT intent=load-slot storage_end=1 ok=1 ms=0 stack_margin=32768
+[I][AlphaRuntime] render 0 us reason=frontend-input animated=5 crc=882c78a7
+GREEN F5 Slot 1 loads its own journey and enters the game
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=5 crc=882c78a7
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=0 gameplay_command=none
+[I][AlphaRuntime] FRONTEND_STATE count=7 from=load to=title reason=tick-or-intent reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=title reason=state-transition full_redraw=0 screen_clear=0 dirty_regions=7 pixels=153712 animation_tick=159 render_us=0 reconstructed=14 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=20 base=20 symbol=00 ui=inventory emitted=character action_char=32 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=character char=32 accepted=1 state=title->menu phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=8 from=title to=menu reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=menu reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=10 pixels=73328 animation_tick=160 render_us=0 reconstructed=15 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] FRONTEND_INPUT raw=trackball-down action=direction char=0 accepted=1 state=menu->menu phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_RENDER state=menu reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=3 pixels=8816 animation_tick=162 render_us=0 reconstructed=16 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=confirm char=0 accepted=1 state=menu->error phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=9 from=menu to=error reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=error reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=8 pixels=162056 animation_tick=164 render_us=0 reconstructed=17 internal=67108864 psram=67108864 stack_margin=32768
+GREEN F6 with every slot in use Create New Character lists them to choose one: "Slots full: you choose one to replace"
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=confirm char=0 accepted=1 state=error->error phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_RENDER state=error reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=6 pixels=16848 animation_tick=166 render_us=0 reconstructed=18 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=confirm char=0 accepted=1 state=error->error phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_RENDER state=error reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=6 pixels=16848 animation_tick=168 render_us=0 reconstructed=19 internal=67108864 psram=67108864 stack_margin=32768
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=press mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=none action_char=0 shortcut=none
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,6 physical=mic-0,6 edge=release mods=S0,A0,H0 printable=00 base=00 symbol=00 ui=inventory emitted=cancel action_char=0 shortcut=none
+[I][AlphaRuntime] FRONTEND_INPUT raw=keyboard action=cancel char=0 accepted=1 state=error->menu phase=name->name name=""->""
+[I][AlphaRuntime] FRONTEND_STATE count=10 from=error to=menu reason=input reconstructed=0
+[I][AlphaRuntime] FRONTEND_RENDER state=menu reason=frontend-input full_redraw=0 screen_clear=0 dirty_regions=11 pixels=171216 animation_tick=170 render_us=0 reconstructed=20 internal=67108864 psram=67108864 stack_margin=32768
+GREEN F7 "Replace Slot N?" starts on No; No and Back leave every slot as it was
+Z  fit
+[I][M51] STAGE t=5000000 id=4 name=display-initialize-entry boot=0 stack_free_min_bytes=8192
+[I][M51] INIT shared-spi t=5000000 already=0
+[I][TDeckBoard] Shared SPI2 initialized: SCK=40 MOSI=41 MISO=38
+[I][TDeckBoard] ST7789 initialized at 320x240 landscape, RGB order, MADCTL=0x60, SPI clock 40000000 Hz
+[I][AlphaRuntime] SETTINGS_LOAD loaded=0 sfx_volume=80 music_volume=80
+[I][AlphaRuntime] PRESENTATION_DISPATCH ui=explore combat=0 dungeon=0 source=world
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=5 crc=882c78a7
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=5 crc=882c78a7
+[I][AlphaRuntime] U5OBJ RELOAD effect=EnterNpcs loc=17 hydrate_calls=0 pool_size=0 player=L17/F0
+[I][AlphaRuntime] U5OBJ SOURCE loc=17 floor=0 hour=12 table=found table_loc=17 count=32 slots=present tables=32 npc_dead=0x00000000 pool_before=0
+[I][AlphaRuntime] U5OBJ SRC slot=23 index=23 type=1(0x01) tile=257 dialog=0 x=16,16,16 y=21,21,21 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=24 index=24 type=1(0x01) tile=257 dialog=0 x=17,17,17 y=22,22,22 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=25 index=25 type=1(0x01) tile=257 dialog=0 x=13,13,13 y=23,23,23 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ SRC slot=28 index=28 type=30(0x1e) tile=286 dialog=0 x=9,9,9 y=9,9,9 z=255,255,255 schedule=0,0,0,0 ai=0,0,0
+[I][AlphaRuntime] U5OBJ RESERVE request=32 current_size=0 current_capacity=0 object_bytes=68 need_bytes=2176 target_bytes=2176 free_internal=67108864 largest_internal=67108864 free_psram=67108864 largest_psram=67108864 free_default=67108864 guard=free_psram>=need+32768 result=1
+[I][AlphaRuntime] U5OBJ RESERVE_DONE size=0 capacity=32 storage_heap=internal
+[I][AlphaRuntime] U5OBJ HYDRATE slot=23 index=23 ACCEPT schedule=0 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=1
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=16 world_y=21 object_id=1 type=chest flags=none trap=0 contents=30 collection_count_before=1 after=2
+[I][AlphaRuntime] U5OBJ HYDRATE slot=24 index=24 ACCEPT schedule=0 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=2
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=17 world_y=22 object_id=2 type=chest flags=none trap=0 contents=30 collection_count_before=2 after=3
+[I][AlphaRuntime] U5OBJ HYDRATE slot=25 index=25 ACCEPT schedule=0 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 contents=30 pool_index=3
+[I][AlphaRuntime] CHEST_INSERT source=authored/hydrated loc=17 floor=-1 world_x=13 world_y=23 object_id=3 type=chest flags=none trap=0 contents=30 collection_count_before=3 after=4
+[I][AlphaRuntime] U5OBJ HYDRATE slot=28 index=28 ACCEPT schedule=0 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 contents=30 pool_index=4
+[I][AlphaRuntime] U5OBJ POST_HYDRATE result=1 reason=ok pool_size=6 accepted=6 dropped=26 hydrate_calls=1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=1 loc=17 floor=-1 x=16 y=21 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=2 loc=17 floor=-1 x=17 y=22 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=3 loc=17 floor=-1 x=13 y=23 tile=257 chest=1 prop=0 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ POST_HYDRATE_OBJ index=4 loc=17 floor=-1 x=9 y=9 tile=286 chest=0 prop=1 plot=0 item=8 loot=0 search=0 shadowlord=0 trapped=0 contents=30 slot=-1
+[I][AlphaRuntime] U5OBJ RELOAD effect=HydrateInterior loc=17 hydrate_calls=1 pool_size=6 player=L17/F0
+[I][AlphaRuntime] render 0 us reason=full-redraw animated=4 crc=d3a00004
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=4 crc=d3a00004
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=6 pixels=16848 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=4 crc=d3a00004
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=2 pixels=6080 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=4 crc=d3a00004
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=explore emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=1 dirty_regions=10 pixels=168136 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A0,H0 printable=0d base=0d symbol=00 ui=inventory emitted=confirm action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=confirm accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=8 pixels=22928 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=2 pixels=6080 us=0
+[I][AlphaRuntime] SYSTEM_MENU action=direction accepted=1 open=1 gameplay_command=none
+[I][AlphaRuntime] SYSTEM_MENU_RENDER reason=system-menu full_redraw=0 dirty_regions=3 pixels=8816 us=0
+[I][AlphaRuntime] INPUT_EDGE raw=00,00,00,00,00 prev=00,00,00,00,00 matrix=0,0 physical=matrix-key edge=press mods=S0,A1,H0 printable=6d base=6d symbol=00 ui=inventory emitted=system-menu action_char=0 shortcut=none
+[I][AlphaRuntime] SYSTEM_MENU action=toggle open=0 gameplay_command=none
+[I][AlphaRuntime] render 0 us reason=system-menu animated=4 crc=d3a00004
+GREEN Z1 the longest row is cut to the 36 cells Large text shows ("Slot 1: Shamino12, Lord British's Ca"); footers fit 50 (46)
+GREEN Z2 every slot footer (saved, recovered, damaged, empty; load and save) fits 50 (46)
+A4-UI2 save menu runtime: 33/33 checks

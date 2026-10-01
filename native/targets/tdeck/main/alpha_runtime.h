@@ -24,6 +24,7 @@
 #include "openu5/blackthorn.h"
 #include "openu5/blackthorn_scene.h"
 #include "openu5/dialogue_pacer.h"
+#include "openu5/endgame_scene.h"
 #include "openu5/ritual_fx.h"
 #include "openu5/narrative_scene.h"
 #include "openu5/poison_tick.h"
@@ -184,6 +185,11 @@ class AlphaRuntime {
     // A3-HF5: the TLK Pause/KeyWait queue, for timing assertions.
     const openu5::DialoguePacer &dialogue_pacer() const { return dialogue_pacer_; }
     const openu5::RitualFx &ritual_fx() const { return ritual_fx_; }
+    // A4-END1: ENDGAME.OVL as the device plays it (null without the pack's
+    // ending), its music, and the fizzle's progress, for the host tests.
+    const openu5::EndgameScene *endgame_scene() const { return endgame_; }
+    openu5::MusicContext endgame_music() const { return endgame_music_; }
+    uint32_t endgame_fizzled() const { return endgame_fizzle_.produced(); }
     bool camp_scene_inverted() const { return camp_scene_inverted_; }
     // A3-04E: the last composed 176x176 viewport -- what the Board was handed.
     const uint16_t *composed_viewport() const { return viewport_; }
@@ -232,6 +238,10 @@ class AlphaRuntime {
     // pool QuestWorldServices writes.
     openu5::CommandContext &command_context_for_test() { return context_; }
     const std::vector<openu5::QuestObject> &objects_for_test() const { return objects_; }
+    // Alpha 4 A4-SAVE2: the runtime's one save service (its save list and the
+    // live journey's slot), so a host test can compare what the menus were
+    // given with a cold look at the card.
+    AlphaSaveService &save_service_for_test() { return save_; }
 
     // Batch 14 / R-22 host-test seam --------------------------------------
     // The (Z)-stats modal, observable without a Board. `zstats_view()` is the
@@ -447,6 +457,22 @@ class AlphaRuntime {
     bool dungeon_presentation_pending_ = false;
     // Batch 53A: the one System line that says why input stops answering.
     bool ending_announced_ = false;
+    // A4-END1. The sequencer lives in PSRAM (its 40 x 25 proclamation is 2 KB
+    // of the internal heap's low-water otherwise); ENDMSG.DAT's 11 records are
+    // pointers into the pack. The scene clock advances only while render()
+    // services the scene, by at most kEndgameClockStepUs a call, so the System
+    // Menu or the Developer screen stops it as DOS stood still. `mark` is when
+    // the current wait began (a timed wait chains from the last one's end).
+    openu5::EndgameScene *endgame_ = nullptr;
+    const char *endgame_records_[11]{};
+    openu5::OriginalRng endgame_pose_rng_{};
+    openu5::EndgameFizzle endgame_fizzle_{}, endgame_band_fizzle_{320, 40};
+    int64_t endgame_clock_us_ = 0, endgame_last_us_ = 0, endgame_mark_us_ = 0, endgame_due_us_ = 0;
+    int64_t endgame_dissolve_us_ = 0, endgame_reunion_end_us_ = 0;
+    uint32_t endgame_reunion_ms_ = 0;
+    openu5::MusicContext endgame_music_ = openu5::MusicContext::Silence;
+    uint8_t endgame_dissolve_ = 0; // 0 none, 1 the frame to dissolve is owed, 2 fizzling
+    bool endgame_announced_terminal_ = false;
     bool gem_view_active_ = false;
     bool gem_view_charges_turn_ = false;
     // R-13: Use Spyglass. Closes on any key like gem view, but charges no
@@ -582,7 +608,13 @@ class AlphaRuntime {
     // Batch 53A: keep UiMode::Ending in step with the live game's game-won.
     void synchronize_ending(const char *site);
     void service_frontend_intent();
+    // Alpha 4 A4-SAVE3 (ALPHA4_UI.md section 5): the title's PC Save Transfer
+    // page. `message` is the line the page shows afterwards.
+    openu5::PcImportStatus inspect_pc_import();
+    bool import_pc_save(int slot, char (&message)[64]);
+    bool export_pc_save(int slot, char (&message)[64]);
     void service_system_menu_intent();
+    void announce_recovered_load();
     DeviceDebugScreen debug_screen() const;
     const DeviceShopView *compose_shop_view();
     const DeviceSelectionView *compose_selection_view();
@@ -602,6 +634,18 @@ class AlphaRuntime {
     void begin_quake();
     /** Release whatever of the deferred Refuge/TrollSneak/Camp scene is due. */
     bool service_narrative_scene();
+    // A4-END1 (ALPHA4_UI.md section 7). game-won mounts ENDGAME.OVL; the scene
+    // runs on its own clock (render() advances it, a menu stops it) and owns
+    // the screen and the keys to the end -- there is no way back to play.
+    void bind_endgame();
+    void start_endgame();
+    void stop_endgame();
+    /** Pace the overlay: satisfy its timed waits, run it to the next one; true = redraw. */
+    bool service_endgame();
+    openu5::EndgameSink endgame_sink();
+    static void endgame_text(void *, const char *, bool first);
+    static void endgame_cue(void *, openu5::EndgameCue);
+    static void endgame_music_select(void *, openu5::EndgameMusic, uint8_t scene);
     /**
      * Batch 51. The one place the scene pacers are attached to their storage
      * and given their cadence -- initialize() and the host fixture both call

@@ -201,15 +201,27 @@ struct Harness {
     // Device save/load routes.
     void alt_save() { raw_key('s', true); }
     void alt_load() { raw_key('l', true); }
+    // Alpha 4 A4-SAVE2: Save Game opens Slots 1-3 on the journey's slot; Enter
+    // saves there, and an occupied slot asks "Overwrite Slot N?" (No first).
     void menu_save() {
         raw_key('m', true);
-        ball(tdeck::RawInputKind::TrackballDown);    // Resume -> Save
+        ball(tdeck::RawInputKind::TrackballDown);    // Resume -> Save Game
         key('\r');
+        key('\r');                                   // the journey's slot
+        if (std::strncmp(rt->system_menu_view().title, "Overwrite", 9) == 0) {
+            ball(tdeck::RawInputKind::TrackballDown);  // Yes
+            key('\r');
+        }
     }
     void menu_load() {
-        ball(tdeck::RawInputKind::TrackballDown);    // Save -> Load / Save Management
+        // A4-UI3: the save returned to the game, so the menu is opened again.
+        if (!rt->system_menu_open()) {
+            raw_key('m', true);
+            ball(tdeck::RawInputKind::TrackballDown);  // Resume -> Save Game
+        }
+        ball(tdeck::RawInputKind::TrackballDown);    // Save -> Load Game
         key('\r');
-        key('\r');                                   // Continue Latest
+        key('\r');                                   // the journey's slot
     }
 
     // The town-fight path the player takes: (A)ttack an adjacent NPC.

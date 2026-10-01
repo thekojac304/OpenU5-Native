@@ -176,7 +176,13 @@ struct Run {
     }
     void up() { ball(RawInputKind::TrackballUp); }
     void down() { ball(RawInputKind::TrackballDown); }
-    void menu_save() { key('m', true); down(); key('\r'); key('m', true); }
+    // Alpha 4 A4-SAVE2: Save Game opens Slots 1-3 on the journey's slot; Enter
+    // saves there, and an occupied slot asks "Overwrite Slot N?" (No first).
+    void menu_save() {
+        key('m', true); down(); key('\r'); key('\r');
+        if (std::strncmp(rt->system_menu_view().title, "Overwrite", 9) == 0) { down(); key('\r'); }
+        if (rt->system_menu_open()) key('m', true);   // A4-UI3: a successful save returns to the game; only a failed one leaves the menu open.
+    }
     void menu_load() { key('m', true); down(); down(); key('\r'); key('\r'); }
     void return_to_title() { key('m', true); up(); key('\r'); }
     void title_continue() { return_to_title(); key('x'); key('j'); key('\r'); }

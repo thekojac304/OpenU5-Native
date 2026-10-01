@@ -1,0 +1,7 @@
+110: [P] the bridge: checks and codec (pure)
+110: a4_save3_pc_bridge_runtime: 57/57 checks GREEN, 0 RED
+1/2 Test #110: a4_save3_pc_bridge_runtime .......   Passed    0.70 sec
+147: check-pc-save: 10/10 checks GREEN, 0 RED
+2/2 Test #147: a4_save3_pc_reference ............   Passed    0.79 sec
+The following tests passed:
+100% tests passed out of 2

@@ -1,4 +1,5 @@
 #include "native_renderer.h"
+#include "openu5/endgame_scene.h"
 
 #include "openu5/dungeon_view.h"
 #include "openu5/gem_view.h"
@@ -51,10 +52,15 @@ bool composite_mask(uint16_t tile,uint16_t &mask)
     return false;
 }
 
+// A4-END1: `lut` is EGA.DRV fn36's recolor (ENDGAME 0x0658). It rewrites the
+// tile in the tileset itself, before any animation pass, so the torches'
+// flicker runs over the recolored pixels (fn32 animates the mutated tileset).
 void animated_bitmap(const PresentationTileCache &cache,uint16_t tile,uint32_t tick,
-                     uint8_t (&out)[128])
+                     uint8_t (&out)[128],const uint8_t *lut=nullptr)
 {
-    const uint8_t *base=cache.tiles+size_t(tile)*128;std::copy(base,base+128,out);
+    const uint8_t *base=cache.tiles+size_t(tile)*128;uint8_t recolored[128];
+    if(lut){for(int i=0;i<128;++i)recolored[i]=uint8_t(lut[base[i]>>4]<<4|lut[base[i]&15]);base=recolored;}
+    std::copy(base,base+128,out);
     if(tile==1||tile==2||tile==3||tile==0x8f){const int shift=int(tick&15);for(int row=0;row<16;++row){const int src=(row-shift+16)&15;std::copy(base+src*8,base+src*8+8,out+row*8);}return;}
     uint16_t mask_tile=0;
     if(composite_mask(tile,mask_tile)){
@@ -341,7 +347,20 @@ esp_err_t render_snapshot(const PresentationTileCache &cache,const PresentationS
     int16_t frames[kPresentationCells]{};
     for(int i=0;i<kPresentationCells;++i){const int raw=snapshot.tiles[i];if(raw<0){frames[i]=int16_t(raw);continue;}const int frame=animated_tile_frame(raw,animation_tick,world_turn);frames[i]=int16_t(frame);add(uint16_t(frame));report.animated_cells[i]=snapshot.animated[i];report.animated_cell_count=uint16_t(report.animated_cell_count+(snapshot.animated[i]?1U:0U));}
     uint8_t bitmap[128]{};
-    for(size_t n=0;n<count;++n){animated_bitmap(cache,required[n],animation_tick,bitmap);for(int row=0;row<kViewportTiles;++row)for(int col=0;col<kViewportTiles;++col)if(frames[row*kViewportTiles+col]==int16_t(required[n]))expand_tile(bitmap,cache.palette,rgb565,col,row);}
+    auto lut_for=[&](uint16_t tile)->const uint8_t*{return snapshot.endgame_recolor&&endgame_recolored_tile(tile)?kEndgameRecolorLut:nullptr;};
+    for(size_t n=0;n<count;++n){animated_bitmap(cache,required[n],animation_tick,bitmap,lut_for(required[n]));for(int row=0;row<kViewportTiles;++row)for(int col=0;col<kViewportTiles;++col)if(frames[row*kViewportTiles+col]==int16_t(required[n]))expand_tile(bitmap,cache.palette,rgb565,col,row);}
+    // A4-END1: the arena present's partial moongate (0x56e6 -> 0x1112 -> EGA.DRV
+    // 0x24d6): tile slot 0x116 is the floor 0x44 with its bottom `rows` rows
+    // replaced by the TOP rows of 0xdc (both from the recolored tileset), blitted
+    // opaque over the cell.
+    if(snapshot.gate_rows>0&&snapshot.gate_rows<16&&snapshot.gate_x>=0&&snapshot.gate_y>=0&&
+       snapshot.gate_x<kViewportTiles&&snapshot.gate_y<kViewportTiles){
+        uint8_t gate[128]{};const int rows=snapshot.gate_rows;
+        animated_bitmap(cache,0x44,animation_tick,bitmap,lut_for(0x44));
+        animated_bitmap(cache,0xdc,animation_tick,gate,lut_for(0xdc));
+        std::copy(gate,gate+rows*8,bitmap+(16-rows)*8);
+        expand_tile(bitmap,cache.palette,rgb565,snapshot.gate_x,snapshot.gate_y);
+    }
     if(snapshot.active_x>=0&&snapshot.active_y>=0&&snapshot.active_x<kViewportTiles&&snapshot.active_y<kViewportTiles)
         active_marker(rgb565,snapshot.active_x,snapshot.active_y,
                       cache.palette[snapshot.active_enemy?12:14]);

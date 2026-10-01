@@ -143,26 +143,29 @@ struct Harness {
     void turn_right() { ball(RawInputKind::TrackballRight); }
 
     // The load routes. Every one ends in AlphaSaveService::load/load_slot.
-    void menu_save() { raw_key('m', true); ball(RawInputKind::TrackballDown); key('\r'); raw_key('m', true); }
+    // Alpha 4 A4-SAVE2: Save Game opens Slots 1-3 on the journey's slot; Enter
+    // saves there, and an occupied slot asks "Overwrite Slot N?" (No first).
+    void menu_save() {
+        raw_key('m', true); ball(RawInputKind::TrackballDown); key('\r'); key('\r');
+        if (std::strncmp(rt->system_menu_view().title, "Overwrite", 9) == 0) { ball(RawInputKind::TrackballDown); key('\r'); }
+        if (rt->system_menu_open()) raw_key('m', true);   // A4-UI3: a successful save returns to the game; only a failed one leaves the menu open.
+    }
     void menu_load() {                                                    // Load / Save Management -> Continue Latest
         raw_key('m', true); ball(RawInputKind::TrackballDown); ball(RawInputKind::TrackballDown);
         key('\r'); key('\r');
     }
-    // Alpha 4 UI Batch 2: Load Game lists the two generations by AGE -- row 0
-    // "Latest" (Continue Latest, with its fallback), row 1 "Backup" (load_slot
-    // of the older generation). It was "Continue Latest" then one row per
-    // physical slot; here NEW (sequence 2) is slot 0 and OLD slot 1, so the
-    // row numbers below (kNewRow 0, kOldRow 1) name the same generations.
-    void menu_load_row(int row) {                                         // Load Game -> Latest (0) / Backup (1)
+    // Alpha 4 A4-SAVE2: Load Game lists Slots 1-3; both generations here are
+    // Slot 1's pair (its newest, and the one before it that a load falls back
+    // to). The page opens on Slot 1; nothing is loaded until Enter.
+    void menu_load_page() {
         raw_key('m', true); ball(RawInputKind::TrackballDown); ball(RawInputKind::TrackballDown);
-        key('\r');
-        for (int i = 0; i < row; ++i) ball(RawInputKind::TrackballDown);
         key('\r');
     }
     std::string menu_row(int row) const {
         const auto v = rt->system_menu_view();
         return size_t(row) < v.line_count && v.lines[row] ? v.lines[row] : "";
     }
+    std::string menu_footer() const { const auto v = rt->system_menu_view(); return v.footer ? v.footer : ""; }
     void alt_load() { raw_key('l', true); }                                // DeviceShortcut::Load
     void title_continue() {                                               // Return to Title -> Journey Onward -> Continue
         raw_key('m', true); ball(RawInputKind::TrackballUp); key('\r');   // Up wraps to the last root item
@@ -265,16 +268,28 @@ bool build_two(Harness &h) {
     h.turn_right(); h.g().gold = 999; h.stage(3);
     return tdeck::host_memory_save_generations_for_test() == 2;
 }
-// What each generation restores ON ITS OWN, taken through the production
-// Load Game row in a runtime of its own: OLD through Backup (load_slot), NEW
-// through Latest (Continue Latest; NEW is valid in every oracle run). Until
-// A4-UI2 both went through a per-slot Generation row (slot = sequence & 1).
-constexpr int kOldRow = 1, kNewRow = 0;
-Snapshot oracle(int row) {
+// OLD alone: the same first save on a card of its own (sequence 1, the same
+// physical generation), so its oracle is a load of that generation ON ITS OWN.
+bool build_old_only(Harness &h) {
+    tdeck::host_memory_save_forget_for_test();
+    if (!h.enter_deceit()) return false;
+    h.stage(1); h.g().gold = 111;
+    h.set_mark(); h.menu_save();
+    return h.saw("Save complete") && tdeck::host_memory_save_generations_for_test() == 1;
+}
+// What a generation restores ON ITS OWN, taken through the production Load
+// Game route in a runtime of its own. Until A4-UI2 each generation had a
+// per-slot Generation row, in A4-UI2 a Latest / Backup row; since A4-SAVE2 the
+// player loads the slot, so OLD's oracle is a card holding OLD alone and NEW's
+// is the two-generation card (NEW is valid in every oracle run).
+Snapshot oracle() {
     Harness o;
-    o.menu_load_row(row);
+    o.menu_load();
     return snap(o);
 }
+// inspect()'s rows are the physical generations: NEW (sequence 2) is in 0 and
+// OLD (sequence 1) in 1, as every blank card is laid out.
+constexpr int kOldGen = 1, kNewGen = 0;
 bool looks_old(const Snapshot &s) {
     return s.gold == 111 && s.dungeon.active && s.dungeon.pos.floor == 0 && has_marker(s.pool, 1) &&
            !has_marker(s.pool, 2) && !has_marker(s.pool, 3);
@@ -333,7 +348,7 @@ void test_controls(const Snapshot &old_s, const Snapshot &new_s) {
         tdeck::host_memory_save_damage_for_test();
         openu5::FrontendSaveSlot rows[2]{};
         tdeck::AlphaSaveService().inspect(rows);
-        expect(rows[kNewRow].present && !rows[kNewRow].valid && rows[kOldRow].valid, "B1",
+        expect(rows[kNewGen].present && !rows[kNewGen].valid && rows[kOldGen].valid, "B1",
                "inspect: the torn generation is listed corrupt, the older one valid");
         h.set_mark(); h.menu_load();
         const auto s = snap(h);
@@ -365,7 +380,7 @@ void run_rejection(const Case &c, const Snapshot &old_s, bool dungeon_case) {
     expect(ok, c.id, what);
     char id[16];
     std::snprintf(id, sizeof(id), "%si", c.id);
-    expect(rows[kNewRow].present && !rows[kNewRow].valid && rows[kOldRow].valid, id,
+    expect(rows[kNewGen].present && !rows[kNewGen].valid && rows[kOldGen].valid, id,
            "inspect (the Generation rows): NEW listed corrupt, OLD valid");
     std::snprintf(id, sizeof(id), "%sm", c.id);
     // E: the owner that WAS valid in NEW must not have been adopted either.
@@ -467,29 +482,36 @@ void test_routes(const Snapshot &old_s) {
             expect((!r.transcript || h.saw("Load complete")) && looks_old(s) && equivalent(s, old_s, id), id, what);
         }
     {
-        // Alpha 4 UI Batch 2: the refused generation is the Latest row, listed
-        // damaged; Enter there is Continue Latest, whose fallback restores OLD.
+        // Alpha 4 A4-SAVE2: Slot 1's newest generation refused -- the page says
+        // the slot's last save is damaged, and Enter's load falls back: OLD whole.
         Harness h;
         build_two(h);
         tdeck::host_memory_save_edit_for_test(true, dungeon_level_8);
         h.set_mark();
-        h.menu_load_row(kNewRow);
+        h.menu_load_page();
+        const std::string footer = h.menu_footer();
+        h.key('\r');
         const auto s = snap(h);
-        expect(h.saw("Load complete") && looks_old(s) && equivalent(s, old_s, "F3"), "F3",
-               "System Menu Latest row of the refused generation (listed damaged): Continue falls back, OLD whole");
+        expect(footer == "Last save damaged; Enter loads the one before" && h.saw("Load complete") && looks_old(s) &&
+                   equivalent(s, old_s, "F3"),
+               "F3", "System Menu Load Game, Slot 1 with its newest refused (listed so): the load falls back, OLD whole");
     }
     {
-        // A refused Backup: listed damaged, so Enter loads nothing and changes nothing.
+        // The generation before the newest refused: recovery is not needed,
+        // so the player never sees it -- Slot 1 is listed saved and loads NEW.
         Harness h;
         build_two(h);
         tdeck::host_memory_save_edit_for_test(false, dungeon_level_8);
-        const auto before = snap(h);
         h.set_mark();
-        h.menu_load_row(kOldRow);
-        const std::string row = h.menu_row(1);
-        expect(!h.saw("Load complete") && row == "Backup: damaged" && equivalent(snap(h), before, "F3b"), "F3b",
-               "System Menu Backup row of a refused generation: listed damaged, nothing loads, nothing changes");
-        h.close_menu(); h.close_menu();
+        h.menu_load_page();
+        const std::string row = h.menu_row(0), footer = h.menu_footer();
+        h.key('\r');
+        const auto s = snap(h);
+        // A4-UI3: the row is "Slot 1  <name>", with no DAMAGED or RECOVERED tag.
+        expect(row.rfind("Slot 1  ", 0) == 0 && row.find("DAMAGED") == std::string::npos &&
+                   row.find("RECOVERED") == std::string::npos && footer.find("Enter loads") != std::string::npos &&
+                   h.saw("Load complete") && looks_new(s),
+               "F3b", "a refused older generation stays hidden: Slot 1 is listed saved and restores NEW");
     }
 }
 
@@ -512,8 +534,12 @@ void test_no_valid() {
         char what[160];
         std::snprintf(what, sizeof(what),
                       "%s: %sin Deceit (session, pool {1,2,3}, gold 999, East) nothing changed",
-                      r.id, r.transcript ? "\"No valid save\"; " : "");
-        expect((!r.transcript || h.saw("No valid save")) && equivalent(snap(h), before, r.id) && h.g().gold == 999 &&
+                      r.id, r.load == &Harness::menu_load ? "Slot 1 listed damaged; " : r.transcript ? "\"No valid save\"; " : "");
+        // Alpha 4 A4-SAVE2: the System Menu lists Slot 1 damaged and refuses it
+        // on the page; Alt+L and the title attempt the load and refuse it.
+        const bool reported = r.load == &Harness::menu_load ? h.menu_footer() == "Slot 1 is damaged and cannot load"
+                                                            : (!r.transcript || h.saw("No valid save"));
+        expect(reported && equivalent(snap(h), before, r.id) && h.g().gold == 999 &&
                    has_marker(h.pool(), 3),
                r.id, what);
     }
@@ -529,7 +555,8 @@ void test_no_valid() {
         live.turn_right();
         const auto before = snap(live);
         live.set_mark(); live.menu_load();
-        expect(castle && before.actors.size() > 0 && live.saw("No valid save") && equivalent(snap(live), before, "G4"),
+        expect(castle && before.actors.size() > 0 && live.menu_footer() == "Slot 1 is damaged and cannot load" &&
+                   equivalent(snap(live), before, "G4"),
                "G4", "live in Lord British's castle with its NPCs, gold 777: nothing changed (actors, position, pool)");
     }
 }
@@ -571,15 +598,17 @@ int main(int argc, char **argv) {
     g_owners = &owners;
     g_dungeon_count = report.dungeon_count;
 
-    // The oracles: each generation loaded on its own through its Generation row.
+    // The oracles: each generation loaded on its own through Load Game.
     Snapshot old_s, new_s;
     {
         Harness h;
         expect(build_two(h), "O0", "precondition: two generations (OLD seq 1, NEW seq 2)");
-        old_s = oracle(kOldRow);
-        new_s = oracle(kNewRow);
-        expect(looks_old(old_s) && looks_new(new_s), "O1",
-               "oracles: OLD's row gives gold 111 / floor 0 / {1}; NEW's row gives gold 222 / floor 2 / {1,2}");
+        new_s = oracle();
+        Harness a;
+        const bool alone = build_old_only(a);
+        old_s = oracle();
+        expect(alone && looks_old(old_s) && looks_new(new_s), "O1",
+               "oracles: OLD alone gives gold 111 / floor 0 / {1}; NEW gives gold 222 / floor 2 / {1,2}");
     }
     test_controls(old_s, new_s);
     test_rejections(old_s);

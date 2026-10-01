@@ -1,0 +1,11 @@
+app image        : build-a4-end1-final\openu5_tdeck.bin
+launcher image   : build-a4-end1-final\launcher\OpenU5-TDeck-Alpha4.0.0-alpha4-end1-Debug-Launcher.bin byte-identical
+size             : 1026688 B 0xfaa80
+app partition    : 1048576 B; free 21888 B (2.09 %)
+SHA-256          : 4a167f960cf17f762e0209c35513976955e8693e6308f19628ca921707cfa1e1
+descriptor ver   : 4.0.0-alpha4-end1-debug
+descriptor proj  : openu5_tdeck
+descriptor time  : 23:38:59 Sep 30 2026
+descriptor IDF   : v6.1
+embedded Git     : 09cc460052ee-dirty
+version strings  : ['4.0.0-alpha4-end1-debug']

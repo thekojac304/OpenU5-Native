@@ -144,15 +144,16 @@ int main(int argc, char **argv) {
         for (const auto &kv : by_status) std::printf("  %s: %d\n", sfx_status_name(kv.first), kv.second);
         check(statuses, "I1 every SfxId is Implemented exactly when compile_sfx has its program (none silently accepted)");
         check(notes, "I1 every id that does not sound says why (a reason, never 'no program')");
+        // A4-END1: endgame-orb left the set -- the ending's sequencer plays it.
         const std::set<SfxId> declined = {SfxId::CastSpell, SfxId::SpellCast, SfxId::PotionUsed, SfxId::ScrollUsed,
                                           SfxId::LineSpray, SfxId::CombatReject, SfxId::InvalidMagic,
-                                          SfxId::TitleFizzle, SfxId::TitleCrackle, SfxId::BardSong, SfxId::EndgameOrb};
+                                          SfxId::TitleFizzle, SfxId::TitleCrackle, SfxId::BardSong};
         bool exact = true;
         for (size_t i = 1; i < kSfxIdCount; ++i)
             exact = exact && ((sfx_status(SfxId(i)) != SfxStatus::Implemented) == (declined.count(SfxId(i)) == 1));
-        check(exact, "I1 the silent set is exactly the eleven classified ids (A3-03 remaining list)");
+        check(exact, "I1 the silent set is exactly the ten classified ids (A3-03 remaining list, less A4-END1's endgame-orb)");
         check(sfx_status(SfxId::BardSong) == SfxStatus::DeferredPresentation &&
-                  sfx_status(SfxId::EndgameOrb) == SfxStatus::DeferredPresentation &&
+                  sfx_status(SfxId::EndgameOrb) == SfxStatus::Implemented &&
                   sfx_status(SfxId::TitleFizzle) == SfxStatus::DeferredPresentation &&
                   sfx_status(SfxId::LineSpray) == SfxStatus::EvidenceUnknown &&
                   sfx_status(SfxId::CastSpell) == SfxStatus::IntentionallySilent,

@@ -82,11 +82,12 @@ int newest_committed_slot(const bool(&present)[2],const AlphaSaveCommit(&commits
     return best;
 }
 
-AlphaSaveTarget choose_save_target(const bool(&present)[2],const AlphaSaveCommit(&commits)[2],bool newest_accepted){
+AlphaSaveTarget choose_save_target(const bool(&present)[2],const AlphaSaveCommit(&commits)[2],bool newest_accepted,uint64_t card_newest){
     AlphaSaveTarget t{};
     const int newest=newest_committed_slot(present,commits);
+    t.sequence=card_newest+1;
     if(newest<0)return t;
-    t.sequence=commits[newest].sequence+1;
+    if(commits[newest].sequence>=card_newest)t.sequence=commits[newest].sequence+1;
     if(newest_accepted){t.slot=1-newest;t.keep=newest;}
     else{t.slot=newest;t.keep=present[1-newest]?1-newest:-1;}
     return t;

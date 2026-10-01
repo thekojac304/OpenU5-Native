@@ -125,7 +125,7 @@ const char *mode_name(openu5::UiMode m){static const char*n[]={"explore","dungeo
 const char *action_name(openu5::UiActionKind k){static const char*n[]={"direction","character","confirm","cancel","back","next","previous","page-up","page-down","select-index","text","delete","system-menu"};return n[std::min<size_t>(size_t(k),12)];}
 const char *frontend_state_name(openu5::FrontendState s){static const char*n[]={"title","intro","attract","menu","new-journey","character-creation","continue","load","settings","credits","enter-game","error"};return n[std::min<size_t>(size_t(s),11)];}
 const char *creation_phase_name(openu5::FrontendCreationPhase p){static const char*n[]={"name","gender","questionnaire"};return n[std::min<size_t>(size_t(p),2)];}
-const char *frontend_intent_name(openu5::FrontendIntentKind k){static const char*n[]={"none","continue","load-slot","create-initial-save","persist-settings","developer"};return n[std::min<size_t>(size_t(k),5)];}
+const char *frontend_intent_name(openu5::FrontendIntentKind k){static const char*n[]={"none","continue","load-slot","create-initial-save","persist-settings","developer","inspect-pc-saves","import-pc-save","export-pc-save"};return n[std::min<size_t>(size_t(k),8)];}
 const char *intent_name(openu5::UiIntentKind k){static const char*n[]={"command","shop","modal","open-party","open-inventory","open-equipment","open-spell","open-target","open-status","open-debug"};return n[std::min<size_t>(size_t(k),9)];}
 const char *shortcut_name(DeviceShortcut s){static const char*n[]={"none","developer","save","load","movement-toggle","music-mute","sfx-mute"};return n[std::min<size_t>(size_t(s),6)];}
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
@@ -187,11 +187,13 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
         // A3-HF5: the TLK pause queue (kDialoguePacerSteps x DialoguePacerStep + a 4 KiB arena).
         dialogue_pacer_steps_=static_cast<openu5::DialoguePacerStep*>(heap_caps_calloc(kDialoguePacerSteps,sizeof(openu5::DialoguePacerStep),kPsram));
         dialogue_pacer_text_=static_cast<char*>(heap_caps_calloc(kDialoguePacerTextBytes,1,kPsram));
+        // A4-END1: ENDGAME.OVL's sequencer (its 40 x 25 proclamation is 2 KB).
+        if(void *mem=heap_caps_calloc(1,sizeof(openu5::EndgameScene),kPsram))endgame_=new(mem)openu5::EndgameScene();
     }
     if(!astar_scratch_||!transcript_||!viewport_||!creation_canvas_||!tile_cache_storage_||!debug_view_||!ui_mem)return ESP_ERR_NO_MEM;
     if(!blackthorn_script_||!blackthorn_steps_||!blackthorn_scene_text_||!blackthorn_scene_grid_)return ESP_ERR_NO_MEM;
     if(!narrative_steps_||!narrative_text_)return ESP_ERR_NO_MEM;
-    if(!dialogue_pacer_steps_||!dialogue_pacer_text_)return ESP_ERR_NO_MEM;
+    if(!dialogue_pacer_steps_||!dialogue_pacer_text_||!endgame_)return ESP_ERR_NO_MEM;
     {
         debug51::Step trace("presentation-tile-cache-load");
         ESP_RETURN_ON_ERROR(openu5::initialize_tile_cache(tiles,tile_report,tile_cache_storage_,openu5::kCachedTileBytes,tile_cache_),kTag,"cache presentation tiles");
@@ -264,10 +266,10 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
         debug51::Step trace("settings-load");
         load_device_settings();
     }
-    openu5::FrontendSaveSlot slots[2]{};
+    openu5::FrontendSaveCatalog catalog{};
     {
         debug51::Step trace("save-slots-inspect");
-        save_.inspect(slots);
+        save_.inspect_catalog(catalog);
     }
     {
         debug51::Step trace("frontend-title-entry");
@@ -277,7 +279,7 @@ esp_err_t AlphaRuntime::initialize(AlphaResourcePack &pack,AlphaResourceReport &
 #else
         false,
 #endif
-        settings_);frontend_.set_save_slots(slots);frontend_.set_question_texts(resources_.questions,resources_.question_count);frontend_.set_intro_texts(resources_.intro_scenes,resources_.intro_scene_count);
+        settings_);frontend_.set_save_catalog(catalog);frontend_.set_question_texts(resources_.questions,resources_.question_count);frontend_.set_intro_texts(resources_.intro_scenes,resources_.intro_scene_count);
     }
     ESP_LOGI(kTag,"PSRAM allocations: A*=%zu transcript=%zu viewport=%zu creation_canvas=%zu tile_cache=%zu render_scratch=%zu resources=%zu combat=%zu",kAstarBytes,kTranscriptBlocks*sizeof(openu5::UiTextBlock),openu5::kViewportPixelCount*sizeof(uint16_t),kCreationPixels*sizeof(uint16_t),openu5::kCachedTileBytes,sizeof(DeviceDebugScreen),resources_.psram_bytes,32*sizeof(openu5::CombatActor)+32*sizeof(openu5::CombatLootPile)+32*sizeof(openu5::CombatField));
     log_metrics("initialized");return ESP_OK;
@@ -523,6 +525,9 @@ void AlphaRuntime::route_event(const openu5::GameEvent&e){
     }
     present_audio(e);
     ui_->consume(e);
+    // A4-END1. game-won is the overlay-13 stub (ULTIMA.EXE 0x7c4a): from here
+    // ENDGAME.OVL owns the screen and the keyboard, and never gives them back.
+    if(e.kind==openu5::GameEventKind::GameWon)start_endgame();
     if(e.kind==openu5::GameEventKind::PoisonTick){
         // #213. The roster row inversion is the SHARED 0x2a28 primitive, one
         // 93 ms blip per poisoned member in SLOT order. Not modal: the tick
@@ -743,6 +748,138 @@ bool AlphaRuntime::service_narrative_scene(){
         dirty_=true;dirty_reason_="refuge-resolve";
     }
     return released!=released_before||phase!=phase_before||finished!=openu5::NarrativeScene::None;
+}
+
+// ---------------------------------------------------------------------------
+// A4-END1 (ALPHA4_UI.md section 7). ENDGAME.OVL, played. openu5::EndgameScene
+// runs the overlay (endgame_scene.h); this side paces its waits on the scene
+// clock, draws what it shows and feeds back the keys its getkey loops read.
+// ---------------------------------------------------------------------------
+namespace {
+// The most one render() call may move the scene clock: a menu, the Developer
+// screen or a stalled frame stops the scene instead of skipping it.
+constexpr int64_t kEndgameClockStepUs = 250000;
+// The fizzle (EGA.DRV fn34, carry clear) has no timer: in the endgame its
+// sound/delay gate cs:[0x253d] is already 0, so it runs at the hardware's
+// speed. The only measure is the witness video (~2.5 s for the 64,000
+// pixels, re/notes/endgame-derivation.md F.4): class C.
+constexpr uint32_t kEndgameFizzlePixelsPerSecond = 25600;
+}
+
+void AlphaRuntime::start_endgame(){
+    if(!endgame_||!quest_.endgame_presenter||endgame_->active())return;
+    if(!endgame_->start(game_,resources_.endgame_room,endgame_records_,11)){ESP_LOGE(kTag,"ENDGAME_START refused");return;}
+    endgame_clock_us_=endgame_mark_us_=endgame_due_us_=0;endgame_last_us_=esp_timer_get_time();
+    endgame_fizzle_=openu5::EndgameFizzle{};endgame_band_fizzle_=openu5::EndgameFizzle{320,40};
+    endgame_dissolve_=0;endgame_reunion_end_us_=0;endgame_announced_terminal_=false;
+    ESP_LOGI(kTag,"ENDGAME_START box=%d party=%ld",game_.wooden_box,long(game_.party.party_size));
+    service_endgame();
+    dirty_=true;dirty_reason_="endgame";
+}
+
+void AlphaRuntime::stop_endgame(){
+    if(!endgame_||!endgame_->active())return;
+    endgame_->cancel();endgame_dissolve_=0;endgame_music_=openu5::MusicContext::Silence;
+    if(board_)board_->release_endgame_capture();
+    ESP_LOGI(kTag,"ENDGAME_STOP");
+}
+
+openu5::EndgameSink AlphaRuntime::endgame_sink(){return {this,endgame_text,endgame_cue,endgame_music_select};}
+
+void AlphaRuntime::endgame_text(void *p,const char *text,bool first){
+    // print_string 0x1850 into the console: the overlay's prints are one
+    // stream, so every print but the first continues the line it left open.
+    auto &self=*static_cast<AlphaRuntime*>(p);
+    if(!self.ui_||!text)return;
+    if(first)self.ui_->append(openu5::UiTextChannel::Message,text);
+    else self.ui_->append_continuation(openu5::UiTextChannel::Message,text);
+}
+
+void AlphaRuntime::endgame_cue(void *p,openu5::EndgameCue cue){
+    auto &self=*static_cast<AlphaRuntime*>(p);
+    if(cue==openu5::EndgameCue::Footstep)self.audio_.play_sfx(openu5::SfxId::MoveStep);
+    else self.audio_.play_sfx(openu5::SfxId::EndgameOrb,cue==openu5::EndgameCue::ReviveSweep?1:0);
+}
+
+void AlphaRuntime::endgame_music_select(void *p,openu5::EndgameMusic music,uint8_t scene){
+    // The patch's mid.drv selectors. 0x15 starts Joyous Reunion but records
+    // Rule Britannia as the current song, so the next poll after Reunion ends
+    // starts Rule Britannia (0x0307-0x0314, 0x027c); 0x18 maps the story page
+    // through the table at 0x24a; 0x1b asks for Rule Britannia, which waits for
+    // a Reunion still playing and otherwise starts at once (0x032a -> 0x0267).
+    auto &self=*static_cast<AlphaRuntime*>(p);
+    const int64_t now=esp_timer_get_time();
+    if(music==openu5::EndgameMusic::Reunion){
+        self.endgame_music_=openu5::MusicContext::Reunion;
+        const uint32_t ms=self.audio_.music_length_ms(openu5::MusicSong::Reunion);
+        self.endgame_reunion_end_us_=ms?now+int64_t(ms)*1000:0;
+    }else if(music==openu5::EndgameMusic::StoryScene){
+        self.endgame_music_=openu5::endgame_scene_music_context(scene);self.endgame_reunion_end_us_=0;
+    }else if(self.endgame_music_!=openu5::MusicContext::Reunion||!self.endgame_reunion_end_us_||now>=self.endgame_reunion_end_us_){
+        self.endgame_music_=openu5::MusicContext::Finale;self.endgame_reunion_end_us_=0;
+    }
+    ESP_LOGI(kTag,"ENDGAME_MUSIC selector=%d scene=%u context=%d",int(music),unsigned(scene),int(self.endgame_music_));
+    self.sync_music();
+}
+
+bool AlphaRuntime::service_endgame(){
+    if(!endgame_||!endgame_->active())return false;
+    const int64_t now=esp_timer_get_time();
+    int64_t step=now-endgame_last_us_;
+    if(step<0)step=0;
+    if(step>kEndgameClockStepUs)step=kEndgameClockStepUs;
+    endgame_last_us_=now;endgame_clock_us_+=step;
+    // The Reunion -> Rule Britannia chain (mid.drv 0x027c), off the wall clock:
+    // DOS kept playing while the game stood still.
+    if(endgame_music_==openu5::MusicContext::Reunion&&endgame_reunion_end_us_&&now>=endgame_reunion_end_us_){
+        endgame_music_=openu5::MusicContext::Finale;endgame_reunion_end_us_=0;sync_music();
+    }
+    bool changed=false;
+    const auto wait=endgame_->wait();
+    if((wait==openu5::EndgameWait::Frames||wait==openu5::EndgameWait::Hold)&&!endgame_->ready()&&endgame_clock_us_>=endgame_due_us_){
+        endgame_mark_us_=endgame_due_us_; // the next wait starts where this one ended
+        endgame_->elapsed();
+    }
+    if(endgame_->wait()==openu5::EndgameWait::Dissolve&&endgame_dissolve_==2){
+        // fn34's pixels at the measured pace; the last one ends the wait.
+        const uint64_t want=std::min<uint64_t>(endgame_fizzle_.total(),
+            uint64_t(now-endgame_dissolve_us_)*kEndgameFizzlePixelsPerSecond/1000000ULL+1);
+        if(want>endgame_fizzle_.produced()&&board_){
+            const auto e=board_->fizzle_endgame(endgame_fizzle_,endgame_band_fizzle_,uint32_t(want-endgame_fizzle_.produced()));
+            if(e!=ESP_OK)ESP_LOGE(kTag,"ENDGAME_FIZZLE failed: %s",esp_err_to_name(e));
+        }
+        if(endgame_fizzle_.produced()>=endgame_fizzle_.total()){
+            if(board_)board_->release_endgame_capture();
+            endgame_dissolve_=0;
+            endgame_->dissolve_done();endgame_mark_us_=endgame_clock_us_;
+            ESP_LOGI(kTag,"ENDGAME_DISSOLVE done pixels=%lu",(unsigned long)endgame_fizzle_.produced());
+        }
+    }
+    while(endgame_->ready()){
+        const auto phase_before=endgame_->phase();
+        // A key (or the fizzle's last pixel) ended an untimed wait: what follows
+        // is timed from now, not from when that wait began.
+        if(endgame_->wait()!=openu5::EndgameWait::Frames&&endgame_->wait()!=openu5::EndgameWait::Hold)
+            endgame_mark_us_=endgame_clock_us_;
+        const auto w=endgame_->advance(endgame_sink());
+        changed=true;
+        if(w==openu5::EndgameWait::Frames)endgame_due_us_=endgame_mark_us_+int64_t(openu5::run_n_frames_ms(endgame_->wait_amount()))*1000;
+        else if(w==openu5::EndgameWait::Hold)endgame_due_us_=endgame_mark_us_+int64_t(endgame_->wait_amount())*1000;
+        else endgame_mark_us_=endgame_clock_us_;
+        if(w==openu5::EndgameWait::Dissolve&&!endgame_dissolve_){endgame_dissolve_=1;ESP_LOGI(kTag,"ENDGAME_DISSOLVE begin");}
+        if(endgame_->phase()!=phase_before)ESP_LOGI(kTag,"ENDGAME_PHASE %d->%d page=%u",int(phase_before),int(endgame_->phase()),unsigned(endgame_->story_page()));
+        if((w==openu5::EndgameWait::Frames||w==openu5::EndgameWait::Hold)&&endgame_clock_us_>=endgame_due_us_){
+            endgame_mark_us_=endgame_due_us_;endgame_->elapsed(); // a wait the scene clock already passed
+        }
+    }
+    // A-15: the stranded room keeps the console on screen; once its endless
+    // wander begins, the one device line says which key still answers.
+    if(endgame_->phase()==openu5::EndgamePhase::Stranded&&!endgame_announced_terminal_){
+        endgame_announced_terminal_=true;
+        ui_->append(openu5::UiTextChannel::System,"The quest is complete. Alt+M: System Menu");
+        changed=true;
+    }
+    return changed;
 }
 
 // #213. Advances the roster flash. Not modal and not turn-gated: it runs off
@@ -1715,7 +1852,7 @@ bool AlphaRuntime::handle_input_event(const RawInputEvent&raw){service_combat();
         dirty_=true;dirty_reason_="camp-key-wait";return true;
     }
     if(action.kind==openu5::UiActionKind::SystemMenu){
-        if(system_menu_.active()){settings_=system_menu_.settings();apply_device_settings();settings_store_.save(settings_);system_menu_.close();}else{openu5::FrontendSaveSlot slots[2]{};save_.inspect(slots);system_menu_.open(settings_,slots);}
+        if(system_menu_.active()){settings_=system_menu_.settings();apply_device_settings();settings_store_.save(settings_);system_menu_.close();}else{openu5::FrontendSaveCatalog catalog{};save_.inspect_catalog(catalog);system_menu_.open(settings_,catalog,save_.last_slot());}
         ESP_LOGI(kTag,"SYSTEM_MENU action=toggle open=%d gameplay_command=none",system_menu_.active());dirty_=true;dirty_reason_="system-menu";return true;
     }
     if(system_menu_.active()){
@@ -1727,6 +1864,31 @@ bool AlphaRuntime::handle_input_event(const RawInputEvent&raw){service_combat();
     // it takes every key but the Alt shortcuts (section 19.3).
     if(perf_report_open_&&shortcut==DeviceShortcut::None&&ui_->mode()==openu5::UiMode::DebugMenu)
         return handle_perf_report_input(action);
+    // A4-END1. ENDGAME.OVL reads the keyboard only at its getkey_with_redraw
+    // waits (any key), its two Y/N loops (0x0852 / 0x088b: Y or N, every other
+    // key read again) and story_screens' poll (any key). Nothing else reaches
+    // the game. Transcript paging stays, as for every paced scene; the device
+    // shortcuts keep their meaning (Save is Ending mode's refusal). The
+    // trackball's roll is no key on the T-Deck and never ends a wait; a key
+    // pressed while no wait is open is swallowed, not kept for the next one.
+    if(endgame_&&endgame_->active()&&shortcut==DeviceShortcut::None&&ui_->mode()!=openu5::UiMode::DebugMenu){
+        if(action.kind==openu5::UiActionKind::PageUp||action.kind==openu5::UiActionKind::PageDown){
+            refresh_session_context();
+            ui_->handle_input(action);
+            dirty_=true;dirty_reason_="transcript-page";
+            return true;
+        }
+        char16_t key=0;
+        if(action.kind==openu5::UiActionKind::Character)key=action.character;
+        else if(action.kind==openu5::UiActionKind::Confirm)key=u'\r';
+        else if(action.kind==openu5::UiActionKind::Cancel)key=0x1b;
+        else if(action.kind==openu5::UiActionKind::Back)key=u'\b';
+        const bool taken=key&&endgame_->key(key,endgame_sink());
+        if(taken){service_endgame();dirty_=true;dirty_reason_="endgame-key";}
+        ESP_LOGI(kTag,"ENDGAME_INPUT action=%s wait=%d effect=%s gameplay_command=none",action_name(action.kind),
+                 int(endgame_->wait()),taken?"wait-ended":"swallowed");
+        return true;
+    }
     // #324 / R-32. While a scene segment is running the reference pacer
     // swallows input (the same rule the shrine rite uses) and the binary is
     // simply inside its own synchronous routine. Two deliberate exceptions:
@@ -1854,12 +2016,16 @@ bool AlphaRuntime::handle_input_event(const RawInputEvent&raw){service_combat();
         // back into the enclosed final Doom cell.
         ui_->append(openu5::UiTextChannel::System,"Save unavailable: the quest is complete");
         ESP_LOGI(kTag,"SAVE_REFUSED source=alt-s reason=ending");
-    }else if(shortcut==DeviceShortcut::Save){uint32_t ms=0;bool ok=save_.save(context_,outdoor_,terrain_,actors_,retained_,resources_.initial_gam,resources_.initial_gam_size,resources_.initial_ool,resources_.initial_ool_size,ms);if(ok)trace_direct_troll_save("SAVE_WORLD_OVERRIDE");ui_->append(openu5::UiTextChannel::System,ok?"Save complete":"Save failed; prior kept");}
-    else if(shortcut==DeviceShortcut::Load){uint32_t ms=0;bool ok=save_.load(context_,outdoor_,terrain_,actors_,retained_,ms);if(ok){
+    }else if(shortcut==DeviceShortcut::Save){uint32_t ms=0;
+        // Alpha 4 A4-SAVE2: Alt+S saves the live journey in its own slot (the
+        // one it was loaded from or last saved in; none yet: the slot saved
+        // last on the card), as every pre-SAVE2 save did. Alt+L reloads it.
+        bool ok=save_.save(context_,outdoor_,terrain_,actors_,retained_,resources_.initial_gam,resources_.initial_gam_size,resources_.initial_ool,resources_.initial_ool_size,ms,false,save_.last_slot());if(ok)trace_direct_troll_save("SAVE_WORLD_OVERRIDE");ui_->append(openu5::UiTextChannel::System,ok?"Save complete":"Save failed; prior kept");}
+    else if(shortcut==DeviceShortcut::Load){uint32_t ms=0;const int journey=save_.last_slot();bool ok=journey>=0?save_.load_slot(journey,context_,outdoor_,terrain_,actors_,retained_,ms):save_.load(context_,outdoor_,terrain_,actors_,retained_,ms);if(ok){
         // Batch 27 (H-164). The same load as System Menu -> Continue Latest,
         // so the same finalization: a hand-copied subset here never restored
         // the dungeon session or the object pool. Only a successful read gets it.
-        synchronize_loaded_world();trace_direct_troll_save("LOAD_WORLD_OVERRIDE");}ui_->append(openu5::UiTextChannel::System,ok?"Load complete":"No valid save");}
+        synchronize_loaded_world();trace_direct_troll_save("LOAD_WORLD_OVERRIDE");}ui_->append(openu5::UiTextChannel::System,ok?"Load complete":"No valid save");if(ok)announce_recovered_load();}
     else if(context_.combat&&combat_ai_turn()){
         if(combat_input_count_<sizeof(combat_input_queue_)/sizeof(combat_input_queue_[0]))combat_input_queue_[combat_input_count_++]=action;
         ESP_LOGD(kTag,"combat queued action=%s count=%u",action_name(action.kind),unsigned(combat_input_count_));
@@ -1942,6 +2108,10 @@ const char *AlphaRuntime::overlay() const {static char text[64]{};text[0]=0;
     if(dialogue_pacer_.awaiting_key()){std::snprintf(text,sizeof(text),"Enter: continue");return text;}
     // A3-HF9: the Refuge's karma getkey (0x0b3e) is the same 0x266c.
     if(narrative_pacer_.awaiting_key()){std::snprintf(text,sizeof(text),"Enter: continue");return text;}
+    // A4-END1: ENDGAME.OVL's getkeys are the same 0x266c; its box questions
+    // read only Y or N, which the cue says.
+    if(endgame_&&endgame_->active()&&endgame_->wait()==openu5::EndgameWait::Key){std::snprintf(text,sizeof(text),"Enter: continue");return text;}
+    if(endgame_&&endgame_->active()&&endgame_->wait()==openu5::EndgameWait::YesNo){std::snprintf(text,sizeof(text),"Y / N");return text;}
     if(ui_&&ui_->mode()==openu5::UiMode::Shop)return text;
     // Batch 53 (D-53 / H-12). Vas Rel Por's phase getkey (CAST.OVL 0x0cff
     // "To phase:", then a bare key) is not an aim: without this the generic
@@ -2382,6 +2552,10 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
         }
         dirty_=true;force=true;
     }
+    // A4-END1: under the System Menu or the Developer screen the ending's clock
+    // stands, and picks up where it stopped when they close (no catch-up).
+    if(endgame_&&endgame_->active()&&(system_menu_.active()||ui_->mode()==openu5::UiMode::DebugMenu))
+        endgame_last_us_=esp_timer_get_time();
     if(system_menu_.active()){
         assert(!frontend_.active() && "system menu cannot overlap frontend state");
         if(!dirty_&&!force)return ESP_OK;
@@ -2403,6 +2577,25 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     if(service_dialogue_pacer()){dirty_=true;dirty_reason_="dialogue-pause";}
     if(service_poison_flash()){dirty_=true;dirty_reason_="poison-tick";}
     if(service_hit_cue()){dirty_=true;dirty_reason_="combat-hit-cue";}
+    // A4-END1. ENDGAME.OVL owns the screen from game-won on: its throne room is
+    // a presentation source below; its full-screen pages (the story, the
+    // scroll) are drawn here instead of the game screen, and its fizzle is
+    // pushed by service_endgame(). With the Developer screen up the scene's
+    // clock stands, as it does under the System Menu.
+    if(endgame_&&endgame_->active()&&ui_->mode()!=openu5::UiMode::DebugMenu){
+        if(service_endgame()){dirty_=true;dirty_reason_="endgame";}
+        const auto phase=endgame_->phase();
+        if(phase==openu5::EndgamePhase::Story||phase==openu5::EndgamePhase::Scroll){
+            const bool scroll=phase==openu5::EndgamePhase::Scroll;
+            const int page=scroll?openu5::kEndgameStoryPages:endgame_->story_page();
+            const auto e=board.show_endgame_page(resources_.endgame_pages+size_t(page)*kEndgamePageBytes,tile_cache_.palette,
+                                                 scroll?endgame_->scroll():nullptr,resources_.ibm_font,resources_.runes_font,
+                                                 page,dirty_||force);
+            dirty_=e!=ESP_OK;
+            return e;
+        }
+        if(phase==openu5::EndgamePhase::Dissolve&&endgame_dissolve_==2){dirty_=false;return ESP_OK;}
+    }
     service_ambient(esp_timer_get_time());
     assert(!frontend_.active() && !system_menu_.active() && "gameplay renderer lacks display ownership");
     if(smoke_.pump()){dirty_=true;dirty_reason_="smoke-test-progress";}
@@ -2466,19 +2659,28 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     // ordinary Palace-lobby world must not be what the viewport shows, which
     // was the whole visible defect. It draws from the pacer's own room and
     // cast; no gameplay position is consulted or rewritten to produce it.
-    const bool blackthorn_source=blackthorn_pacer_.mounted();
+    // A4-END1 -- the fifth, and it outranks everything: from game-won on the
+    // viewport is ENDGAME.OVL's throne room (MISCMAPS.DAT[0x210]) with the
+    // overlay's own cast, and the arena it replaced is never drawn again. It is
+    // also the frame the fizzle dissolves (the capture below).
+    const bool endgame_source=endgame_&&endgame_->active()&&(endgame_->phase()==openu5::EndgamePhase::Throne||
+        endgame_->phase()==openu5::EndgamePhase::Stranded||endgame_->phase()==openu5::EndgamePhase::Dissolve);
+    const bool blackthorn_source=!endgame_source&&blackthorn_pacer_.mounted();
     // Y-04 -- the refuge's own staged window (BLCKTHRN 0x0962). Like the
     // capture scene it outranks the world: while the party sleeps in the
     // nothingness the ordinary map must NOT be what the viewport shows.
-    const bool refuge_source=!blackthorn_source&&narrative_pacer_.mounted();
-    const bool camp_source=!blackthorn_source&&!refuge_source&&camp_scene_active_&&
+    const bool refuge_source=!endgame_source&&!blackthorn_source&&narrative_pacer_.mounted();
+    const bool camp_source=!endgame_source&&!blackthorn_source&&!refuge_source&&camp_scene_active_&&
         resources_.combat_map_count>0&&resources_.combat_map_views&&resources_.combat_map_views[0];
-    const bool combat_source=!blackthorn_source&&!refuge_source&&!camp_source&&context_.combat&&combat_.initialized;
-    const bool dungeon_source=!blackthorn_source&&!refuge_source&&!camp_source&&!combat_source&&context_.dungeon&&dungeon_.active;
+    const bool combat_source=!endgame_source&&!blackthorn_source&&!refuge_source&&!camp_source&&context_.combat&&combat_.initialized;
+    const bool dungeon_source=!endgame_source&&!blackthorn_source&&!refuge_source&&!camp_source&&!combat_source&&context_.dungeon&&dungeon_.active;
     // One source decision owns gameplay presentation.  In particular, the
     // surface return coordinate is deliberately absent from the dungeon arm.
-    const char *presentation_source=blackthorn_source?"blackthorn-scene":refuge_source?"refuge-scene":camp_source?"camp-scene":combat_source?"combat":dungeon_source?"dungeon3d":"world";
-    if(blackthorn_source)snapshot=openu5::compose_blackthorn_presentation(blackthorn_pacer_.view());
+    const char *presentation_source=endgame_source?"endgame-scene":blackthorn_source?"blackthorn-scene":refuge_source?"refuge-scene":camp_source?"camp-scene":combat_source?"combat":dungeon_source?"dungeon3d":"world";
+    // 0x51a0's rand(0,3) (the eating and mirror poses) is redrawn once a 55 ms
+    // frame, as the arena present runs: one draw per tick, from the tick.
+    if(endgame_source){endgame_pose_rng_.seed(int32_t(tick));endgame_->compose(snapshot,endgame_pose_rng_);}
+    else if(blackthorn_source)snapshot=openu5::compose_blackthorn_presentation(blackthorn_pacer_.view());
     else if(refuge_source)snapshot=openu5::compose_refuge_presentation(narrative_pacer_.phase(),
         turn_.transport_tile>=0?int16_t(turn_.transport_tile+0x100):int16_t(tile_report_.avatar_tile));
     else if(camp_source){
@@ -2624,7 +2826,8 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     }
     // A3-HF7 (H-184): the rite's negative and the Codex's pulses are the same
     // palette-index XOR of the viewport rect, with their own mask.
-    const uint8_t viewport_xor=uint8_t(((magic_inverted||camp_scene_inverted_)?15U:0U)^ritual_fx_.mask());
+    // A4-END1: the revive's XOR (ENDGAME 0x0767-0x0778, [0x13b0] = 15) is the same primitive.
+    const uint8_t viewport_xor=uint8_t(((magic_inverted||camp_scene_inverted_||(endgame_source&&endgame_->inverted()))?15U:0U)^ritual_fx_.mask());
     if(e==ESP_OK&&viewport_xor&&!debug_mode){
         for(size_t p=0;p<openu5::kViewportPixelCount;++p)
             viewport_[p]=magic_xor_palette_pixel(viewport_[p],tile_cache_.palette,viewport_xor);
@@ -2648,6 +2851,16 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     // A3-04C: what the Board measured inside THIS frame's TFT write only.
     openu5::TftTiming tft_timing{};board.take_tft_timing(tft_timing);
     const int64_t tft_t0=esp_timer_get_time();
+    // A4-END1: the frame the fizzle dissolves -- the room as it stands after
+    // the gate closed (0x0a45) -- is drawn whole once more, every pixel
+    // mirrored into the Board's copy of the panel. Without the memory for it,
+    // or without a frame to capture, the fizzle is skipped (logged) and the
+    // story follows at once: the dissolve never holds the ending.
+    const bool endgame_capture=endgame_source&&endgame_dissolve_==1&&!debug_mode;
+    if(endgame_capture&&(e!=ESP_OK||!board.begin_endgame_capture())){
+        ESP_LOGE(kTag,"ENDGAME_DISSOLVE %s; fizzle skipped",e!=ESP_OK?"no frame to capture":"no capture memory");
+        endgame_dissolve_=0;endgame_->dissolve_done();endgame_mark_us_=endgame_clock_us_;
+    }
     if(e==ESP_OK){
         if(camp_viewport_only_&&camp_source)
             e=board.show_camp_viewport(viewport_,report.viewport_crc32);
@@ -2658,6 +2871,12 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
                                settings_.ui_size,compose_shop_view(),compose_selection_view(),compose_context_bar(),
                                compose_party_highlight(),report.viewport_crc32,&dungeon_bands,
                                gem_view_active_||camp_source,camp_source);
+    }
+    if(endgame_capture&&endgame_dissolve_==1){
+        board.end_endgame_capture();
+        if(e==ESP_OK){endgame_dissolve_=2;endgame_dissolve_us_=esp_timer_get_time();ESP_LOGI(kTag,"ENDGAME_DISSOLVE captured");}
+        else{board.release_endgame_capture();endgame_dissolve_=0;endgame_->dissolve_done();endgame_mark_us_=endgame_clock_us_;
+             ESP_LOGE(kTag,"ENDGAME_DISSOLVE capture frame failed; fizzle skipped");}
     }
     // A3-04B (ALPHA3_AUDIO.md section 19.5): a drawn gameplay frame's cost --
     // composition (presentation + rasterizer + post-processing), the TFT
@@ -2711,6 +2930,11 @@ void AlphaRuntime::synchronize_loaded_world(){
     // a load arriving mid-scene must take the stage down rather than leave a
     // throne room drawn over a completely different world.
     blackthorn_pacer_.cancel();blackthorn_scene_state_={};
+    // A4-END1. ENDGAME.OVL is never saved (Save is refused from game-won on),
+    // so a load is the only way out of it short of the title: the overlay
+    // stops wherever it was, and the loaded game decides the mode (below,
+    // synchronize_ending: a won game reloads into the bare Ending).
+    stop_endgame();
     // Y-04. Same rule for the narrative scenes and the live fx: all three are
     // pure presentation, none is saved, and a load arriving mid-scene must
     // take them down rather than leave a refuge stage, a half-played burst or
@@ -2819,13 +3043,18 @@ void AlphaRuntime::synchronize_ending(const char *site){
     // game enters it rather than resuming play in the enclosed final cell.
     const bool won=openu5::quest_flag(game_.quest,openu5::QuestFlag::GameWon);
     const bool was=ui_->ending_active();
+    // A4-END1: the overlay follows the flag too; an un-won game plays again.
+    if(!won)stop_endgame();
     if(won&&!was)ui_->enter_ending();
     else if(!won&&was)ui_->leave_ending(resolve_synchronized_base_mode(openu5::UiMode::Exploration,context_.combat,dungeon_.active));
     if(won!=was)ESP_LOGI(kTag,"ENDING_MODE %s site=%s dungeon=%d loc=%u floor=%d",won?"enter":"leave",site,dungeon_.active,
                          unsigned(game_.position.map.location),int(game_.position.map.floor));
     // Device text, not the game's: the original ends on a frozen screen, the
     // T-Deck says once which key still answers.
-    if(ui_->ending_active()&&!ending_announced_){ending_announced_=true;ui_->append(openu5::UiTextChannel::System,"The quest is complete. Alt+M: System Menu");
+    // A4-END1: while the overlay plays, the console's last lines are its own; the
+    // device line waits for the stranded room's wander (service_endgame()) and
+    // never comes over the scroll.
+    if(ui_->ending_active()&&!ending_announced_){ending_announced_=true;if(!(endgame_&&endgame_->active()))ui_->append(openu5::UiTextChannel::System,"The quest is complete. Alt+M: System Menu");
         ESP_LOGI(kTag,"ENDING_MODE active site=%s gameplay_input=swallowed save=refused",site);}
     else if(!ui_->ending_active())ending_announced_=false;
 }
@@ -2843,6 +3072,20 @@ void AlphaRuntime::service_frontend_intent(){
         ESP_LOGI(kTag,"DEVELOPER_ENTRY storage_touched=0 new_journey_touched=0 ok=%d stack_margin=%u",ok,unsigned(uxTaskGetStackHighWaterMark(nullptr)*sizeof(StackType_t)));
         dirty_=true;dirty_reason_="developer-entry";return;
     }
+    // Alpha 4 A4-SAVE3: PC Save Transfer. Every outcome returns to that page,
+    // with the slot list and the import folder as they now are.
+    if(intent.kind==openu5::FrontendIntentKind::InspectPcSaves){
+        // The page lists the slots too: as the card is now (a warm list is the commit reads alone).
+        openu5::FrontendSaveCatalog catalog{};save_.inspect_catalog(catalog);frontend_.set_save_catalog(catalog);
+        frontend_.set_pc_import_status(inspect_pc_import());dirty_=true;return;}
+    if(intent.kind==openu5::FrontendIntentKind::ImportPcSave||intent.kind==openu5::FrontendIntentKind::ExportPcSave){
+        char message[64]{};
+        ok=intent.kind==openu5::FrontendIntentKind::ImportPcSave?import_pc_save(intent.slot,message):export_pc_save(intent.slot,message);
+        openu5::FrontendSaveCatalog catalog{};save_.inspect_catalog(catalog);frontend_.set_save_catalog(catalog);
+        frontend_.set_pc_import_status(inspect_pc_import());
+        ESP_LOGI(kTag,"FRONTEND_INTENT intent=%s slot=%d ok=%d message=\"%s\"",frontend_intent_name(intent.kind),int(intent.slot),ok,message);
+        frontend_.complete_intent(ok,message);dirty_=true;return;
+    }
     if(intent.kind==openu5::FrontendIntentKind::ContinueLatest)ok=save_.load(context_,outdoor_,terrain_,actors_,retained_,ms);
     else if(intent.kind==openu5::FrontendIntentKind::LoadSlot)ok=save_.load_slot(intent.slot,context_,outdoor_,terrain_,actors_,retained_,ms);
     else if(intent.kind==openu5::FrontendIntentKind::CreateInitialSave){openu5::save::SidecarSource source;const auto err=openu5::save::load_native_state(resources_.initial_gam,resources_.initial_gam_size,nullptr,game_,turn_,retained_,source,true);ok=err==openu5::save::Error::None;if(ok){
@@ -2854,13 +3097,119 @@ void AlphaRuntime::service_frontend_intent(){
         ESP_LOGI(kTag,"U5OBJ CLEAR site=new-journey pool_before=%u",unsigned(objects_.size()));
         objects_.clear();actors_={};dungeon_={};combat_.initialized=false;actor_animation_.reset();
         openu5::apply_new_journey_identity(game_,intent.identity);synchronize_loaded_world();
-        ok=save_.save(context_,outdoor_,terrain_,actors_,retained_,resources_.initial_gam,resources_.initial_gam_size,resources_.initial_ool,resources_.initial_ool_size,ms,true);
+        // Alpha 4 A4-SAVE2: into the slot the title chose (an empty one, or
+        // the one the player confirmed replacing).
+        ok=save_.save(context_,outdoor_,terrain_,actors_,retained_,resources_.initial_gam,resources_.initial_gam_size,resources_.initial_ool,resources_.initial_ool_size,ms,true,intent.slot);
     }}
     else if(intent.kind==openu5::FrontendIntentKind::PersistSettings){settings_=intent.settings;input_.set_movement_mode_enabled(settings_.movement_mode);input_.set_trackball_responsiveness(settings_.trackball_responsiveness);ok=settings_store_.save(settings_);ESP_LOGI(kTag,"FRONTEND_INTENT intent=%s storage_end=1 ok=%d ms=%lu stack_margin=%u",frontend_intent_name(intent.kind),ok,(unsigned long)ms,unsigned(uxTaskGetStackHighWaterMark(nullptr)*sizeof(StackType_t)));return;}
     if(ok&&(intent.kind==openu5::FrontendIntentKind::ContinueLatest||intent.kind==openu5::FrontendIntentKind::LoadSlot))synchronize_loaded_world();
     ESP_LOGI(kTag,"FRONTEND_INTENT intent=%s storage_end=1 ok=%d ms=%lu stack_margin=%u",frontend_intent_name(intent.kind),ok,(unsigned long)ms,unsigned(uxTaskGetStackHighWaterMark(nullptr)*sizeof(StackType_t)));
+    if(ok&&(intent.kind==openu5::FrontendIntentKind::ContinueLatest||intent.kind==openu5::FrontendIntentKind::LoadSlot))announce_recovered_load();
     frontend_.complete_intent(ok, intent.kind==openu5::FrontendIntentKind::ContinueLatest?"No active game. Please create a character or transfer one from Ultima IV.":intent.kind==openu5::FrontendIntentKind::LoadSlot?"Save is missing or corrupt":save_.last_failure()[0]?save_.last_failure():"Initial save could not be created");
-    if(intent.kind==openu5::FrontendIntentKind::CreateInitialSave){openu5::FrontendSaveSlot slots[2]{};save_.inspect(slots);frontend_.set_save_slots(slots);}dirty_=true;
+    if(intent.kind==openu5::FrontendIntentKind::CreateInitialSave){openu5::FrontendSaveCatalog catalog{};save_.inspect_catalog(catalog);frontend_.set_save_catalog(catalog);}dirty_=true;
+}
+
+// Alpha 4 A4-SAVE3 (ALPHA4_UI.md section 5). What the import folder holds, for
+// the PC Save Transfer page: read and checked, never written.
+openu5::PcImportStatus AlphaRuntime::inspect_pc_import(){
+    openu5::PcImportStatus st{};
+    auto say=[&](openu5::PcImportState state,const char*text){st.state=state;std::snprintf(st.text,sizeof(st.text),"%s",text);return st;};
+    AlphaSaveService::PcSource src;
+    switch(save_.read_pc_import(src)){
+    case AlphaSaveService::PcRead::NoFiles:return say(openu5::PcImportState::Missing,"No PC save in /ultima5/import");
+    case AlphaSaveService::PcRead::NoGam:return say(openu5::PcImportState::Problem,"PC save incomplete: SAVED.GAM is missing");
+    case AlphaSaveService::PcRead::NoOol:return say(openu5::PcImportState::Problem,"PC save incomplete: SAVED.OOL is missing");
+    case AlphaSaveService::PcRead::ReadFailed:return say(openu5::PcImportState::Problem,"The PC save could not be read from SD");
+    case AlphaSaveService::PcRead::Ok:break;
+    }
+    const auto check=openu5::save::pc::check_original(src.gam.data(),src.gam_size,src.ool.data(),src.ool_size);
+    if(check!=openu5::save::pc::Check::Ok)return say(openu5::PcImportState::Problem,openu5::save::pc::check_text(check));
+    const auto o=openu5::save::pc::summarize_original(src.gam.data());
+    std::snprintf(st.text,sizeof(st.text),"%.9s, %.32s",o.name,hud_location_caption(o.location,o.floor,false,0));
+    st.state=openu5::PcImportState::Ready;st.imported_slot=int8_t(save_.pc_import_marker(src.gam_crc,src.ool_crc));
+    return st;
+}
+
+// Import: the PC files become an ordinary slot generation, written by save()
+// -- the A4-SAVE1 transaction, its post-write gate, the card-wide sequence --
+// so the slot is indistinguishable from one a Native game saved. The title
+// owns no live game, so, as a New Journey does with INIT.GAM, the files are
+// read into the live owners and saved from there. The source is only read,
+// and every failure before save() leaves the card untouched.
+bool AlphaRuntime::import_pc_save(int slot,char(&message)[64]){
+    auto say=[&](const char*text){std::snprintf(message,sizeof(message),"%s",text);return false;};
+    if(slot<0||slot>=AlphaSaveService::kSlots)return say("No such save slot");
+    AlphaSaveService::PcSource src;
+    switch(save_.read_pc_import(src)){
+    case AlphaSaveService::PcRead::NoFiles:return say("No PC save in /ultima5/import");
+    case AlphaSaveService::PcRead::NoGam:return say("PC save incomplete: SAVED.GAM is missing");
+    case AlphaSaveService::PcRead::NoOol:return say("PC save incomplete: SAVED.OOL is missing");
+    case AlphaSaveService::PcRead::ReadFailed:return say("The PC save could not be read from SD");
+    case AlphaSaveService::PcRead::Ok:break;
+    }
+    const auto check=openu5::save::pc::check_original(src.gam.data(),src.gam_size,src.ool.data(),src.ool_size);
+    if(check!=openu5::save::pc::Check::Ok)return say(openu5::save::pc::check_text(check));
+    openu5::save::pc::ImportReport report;
+    if(openu5::save::pc::import_original(src.gam.data(),src.ool.data(),game_,turn_,retained_,&report)!=openu5::save::Error::None)
+        return say(openu5::save::pc::check_text(openu5::save::pc::Check::Codec));
+    // The runtime-only owners of whatever game was live, as New Journey clears them.
+    commands_={};travel_={};dialogue_={};shop_={};shrine_={};blackthorn_={};
+    outdoor_.enemies.clear();outdoor_.enemy_view.clear();outdoor_.object_view.clear();
+    outdoor_.has_chunk_origin=false;terrain_.persistent.clear();terrain_.clear_residence();
+    objects_.clear();actors_={};dungeon_={};combat_.initialized=false;actor_animation_.reset();
+    // Then what a load restores before synchronize_loaded_world() (the gate's
+    // restore_gameplay / restore_terrain, stage_generation): unlike INIT.GAM a
+    // PC save outdoors has monsters, and the bridge's dropped horses and skiffs
+    // are terrain cells.
+    if(openu5::save::restore_gameplay(retained_,commands_,outdoor_)!=openu5::save::Error::None||
+       openu5::save::restore_terrain(retained_,terrain_)!=openu5::save::Error::None)
+        return say(openu5::save::pc::check_text(openu5::save::pc::Check::Codec));
+    synchronize_loaded_world();
+    // L1 (section 5.5): the 1988 NPC and object tables are not bridged, so the
+    // journey resumes as DOS resumes it after leaving and re-entering the map
+    // (TOWN.OVL:0x11F0 with fresh=1): the interior objects re-seeded and every
+    // NPC at its post for the saved hour. In the underworld its plot items are
+    // placed as on arrival (hydrate_underworld_plot, as the falls do).
+    const auto loc=game_.position.map.location;
+    if(loc>=1&&loc<=32){
+        openu5::hydrate_interior_objects(context_,loc);
+        auto &n=resources_.npc_locations[loc-1];
+        openu5::enter_npc_map(actors_,n.slots,n.count,uint8_t(loc),uint8_t(game_.time.hour),game_.npc_dead[loc-1]);
+    }else if(loc==0&&game_.position.map.floor==255)openu5::hydrate_underworld_plot(game_,quest_);
+    uint32_t ms=0;
+    if(!save_.save(context_,outdoor_,terrain_,actors_,retained_,resources_.initial_gam,resources_.initial_gam_size,resources_.initial_ool,resources_.initial_ool_size,ms,false,slot)){
+        std::snprintf(message,sizeof(message),"Import failed. Slot %d is unchanged",slot+1);
+        ESP_LOGW(kTag,"PC_IMPORT slot=%d failed: %s",slot,save_.last_failure());return false;}
+    // Loadable on its own: the slot as the save list reads it from the card.
+    openu5::FrontendSaveCatalog catalog{};save_.inspect_catalog(catalog);
+    if(catalog.slots[slot].status!=openu5::SaveSlotStatus::Saved)return say("Imported save failed its check");
+    if(!save_.record_pc_import(src.gam_crc,src.ool_crc,slot))ESP_LOGW(kTag,"PC_IMPORT marker not written");
+    ESP_LOGI(kTag,"PC_IMPORT slot=%d location=%u frigates=%u horses=%u skiffs=%u search=%u ms=%lu",slot,unsigned(loc),
+             unsigned(report.frigates),unsigned(report.horses),unsigned(report.skiffs),unsigned(report.search_found),(unsigned long)ms);
+    std::snprintf(message,sizeof(message),"Imported into Slot %d. The PC files are kept",slot+1);
+    return true;
+}
+
+bool AlphaRuntime::export_pc_save(int slot,char(&message)[64]){
+    AlphaSaveService::PcExportResult result;
+    switch(save_.export_pc_save(slot,result)){
+    case AlphaSaveService::PcExport::Ok:std::snprintf(message,sizeof(message),"Slot %d written to /ultima5/export/slot%d",slot+1,slot+1);return true;
+    case AlphaSaveService::PcExport::NoSlot:std::snprintf(message,sizeof(message),"%s","No such save slot");break;
+    case AlphaSaveService::PcExport::NoLoadable:std::snprintf(message,sizeof(message),"Slot %d has no loadable save",slot+1);break;
+    case AlphaSaveService::PcExport::Dungeon:std::snprintf(message,sizeof(message),"%s",openu5::save::pc::check_text(openu5::save::pc::Check::Dungeon));break;
+    case AlphaSaveService::PcExport::WriteFailed:std::snprintf(message,sizeof(message),"%s","Export failed: SD card write error");break;
+    case AlphaSaveService::PcExport::VerifyFailed:std::snprintf(message,sizeof(message),"%s","Export failed its check. Nothing was replaced");break;
+    case AlphaSaveService::PcExport::NoWorkspace:std::snprintf(message,sizeof(message),"%s","Export failed: out of memory");break;
+    }
+    return false;
+}
+
+// Alpha 4 A4-UI3: a load that restored the save before the newest (or passed
+// over Continue's newest slot) says so once, in the transcript.
+void AlphaRuntime::announce_recovered_load(){
+    if(!save_.last_load_recovered())return;
+    char text[48];std::snprintf(text,sizeof(text),"Recovered previous save (Slot %d)",save_.last_slot()+1);
+    ui_->append(openu5::UiTextChannel::System,text);
 }
 
 void AlphaRuntime::service_system_menu_intent(){
@@ -2871,16 +3220,20 @@ void AlphaRuntime::service_system_menu_intent(){
         ui_->append(openu5::UiTextChannel::System,"Save unavailable: the quest is complete");
         system_menu_.set_notice("Save unavailable: the quest is complete"); // Alpha 4 UI Batch 2
         ESP_LOGI(kTag,"SAVE_REFUSED source=system-menu reason=ending");}
-    else if(intent.kind==openu5::SystemMenuIntentKind::Save){ok=save_.save(context_,outdoor_,terrain_,actors_,retained_,resources_.initial_gam,resources_.initial_gam_size,resources_.initial_ool,resources_.initial_ool_size,ms);if(ok)trace_direct_troll_save("SAVE_WORLD_OVERRIDE");ui_->append(openu5::UiTextChannel::System,ok?"Save complete":"Save failed; prior kept");
-        // A3-04G: the menu stays open, so its Load page must list the card as it
-        // now is, after a success or a failure alike. The save already told the
-        // save list what it wrote: normally two commit reads.
-        openu5::FrontendSaveSlot slots[2]{};save_.inspect(slots);system_menu_.set_save_slots(slots);
-        // Alpha 4 UI Batch 2 (ALPHA4_UI.md section 2.3): the menu covers the
-        // transcript line, so its footer says what the save did to the card.
-        const auto list=openu5::order_saves(slots);
-        system_menu_.set_notice(!ok?"Save failed. Your previous save is kept.":
-                                list.backup>=0&&slots[list.backup].valid?"Saved. The previous save is now the backup.":"Saved.");}
+    else if(intent.kind==openu5::SystemMenuIntentKind::Save){
+        // Alpha 4 A4-SAVE2: the slot the Save page chose (an overwrite was
+        // confirmed there); its A/B pair follows the A4-SAVE1 target rule.
+        ok=save_.save(context_,outdoor_,terrain_,actors_,retained_,resources_.initial_gam,resources_.initial_gam_size,resources_.initial_ool,resources_.initial_ool_size,ms,false,intent.slot);
+        // Alpha 4 A4-UI3 (ALPHA4_UI.md section 6): a save returns to the game,
+        // the transcript naming the slot. The next open lists the card anew.
+        char notice[64];std::snprintf(notice,sizeof(notice),"Save complete: Slot %d",intent.slot+1);
+        if(ok){trace_direct_troll_save("SAVE_WORLD_OVERRIDE");ui_->append(openu5::UiTextChannel::System,notice);system_menu_.close();}
+        else{ui_->append(openu5::UiTextChannel::System,"Save failed; prior kept");
+            // A3-04G: a failure keeps the menu open, so its pages must list the
+            // card as it now is; the footer says what the slot still holds.
+            openu5::FrontendSaveCatalog catalog{};save_.inspect_catalog(catalog);system_menu_.set_save_catalog(catalog,save_.last_slot());
+            std::snprintf(notice,sizeof(notice),openu5::slot_loadable(catalog,intent.slot)?"Save failed. Slot %d keeps its last save":"Save failed. Nothing was saved in Slot %d",intent.slot+1);
+            system_menu_.set_notice(notice);}}
     else if(intent.kind==openu5::SystemMenuIntentKind::LoadLatest)ok=save_.load(context_,outdoor_,terrain_,actors_,retained_,ms);
     else if(intent.kind==openu5::SystemMenuIntentKind::LoadSlot)ok=save_.load_slot(intent.slot,context_,outdoor_,terrain_,actors_,retained_,ms);
     else if(intent.kind==openu5::SystemMenuIntentKind::PersistSettings){settings_=intent.settings;input_.set_movement_mode_enabled(settings_.movement_mode);input_.set_trackball_responsiveness(settings_.trackball_responsiveness);ok=settings_store_.save(settings_);}
@@ -2893,6 +3246,8 @@ void AlphaRuntime::service_system_menu_intent(){
         ESP_LOGI(kTag,"DEBUG_OPEN source=system-menu opened=%d gameplay_command=none",ok);
     }
     else if(intent.kind==openu5::SystemMenuIntentKind::ReturnToTitle){system_menu_.close();
+        // A4-END1: the device's way out of ENDGAME.OVL (DOS needed a reset).
+        stop_endgame();
         // A3-02. The title replaces the world like a load does: no effect of
         // the abandoned game may sound over it. Music is untouched (A3-04).
         audio_.stop_sfx();
@@ -2903,9 +3258,13 @@ void AlphaRuntime::service_system_menu_intent(){
 #else
         false,
 #endif
-        settings_);frontend_.set_question_texts(resources_.questions,resources_.question_count);frontend_.set_intro_texts(resources_.intro_scenes,resources_.intro_scene_count);openu5::FrontendSaveSlot slots[2]{};save_.inspect(slots);frontend_.set_save_slots(slots);return;}
-    if((intent.kind==openu5::SystemMenuIntentKind::LoadLatest||intent.kind==openu5::SystemMenuIntentKind::LoadSlot)&&ok){synchronize_loaded_world();trace_direct_troll_save("LOAD_WORLD_OVERRIDE");system_menu_.close();ui_->append(openu5::UiTextChannel::System,"Load complete");}
-    else if((intent.kind==openu5::SystemMenuIntentKind::LoadLatest||intent.kind==openu5::SystemMenuIntentKind::LoadSlot)&&!ok)ui_->append(openu5::UiTextChannel::System,"No valid save");
+        settings_);frontend_.set_question_texts(resources_.questions,resources_.question_count);frontend_.set_intro_texts(resources_.intro_scenes,resources_.intro_scene_count);openu5::FrontendSaveCatalog catalog{};save_.inspect_catalog(catalog);frontend_.set_save_catalog(catalog);return;}
+    if((intent.kind==openu5::SystemMenuIntentKind::LoadLatest||intent.kind==openu5::SystemMenuIntentKind::LoadSlot)&&ok){synchronize_loaded_world();trace_direct_troll_save("LOAD_WORLD_OVERRIDE");system_menu_.close();ui_->append(openu5::UiTextChannel::System,"Load complete");announce_recovered_load();}
+    else if((intent.kind==openu5::SystemMenuIntentKind::LoadLatest||intent.kind==openu5::SystemMenuIntentKind::LoadSlot)&&!ok){ui_->append(openu5::UiTextChannel::System,"No valid save");
+        // A4-UI3: the open menu covers that line. The Load page lists the card
+        // as it now is and says the slot did not load (nothing else was tried).
+        openu5::FrontendSaveCatalog catalog{};save_.inspect_catalog(catalog);system_menu_.set_save_catalog(catalog,save_.last_slot());
+        char notice[64];std::snprintf(notice,sizeof(notice),"Slot %d could not be loaded. Nothing changed",intent.slot+1);system_menu_.set_notice(intent.slot>=0?notice:"No valid save");}
 }
 
 void AlphaRuntime::log_metrics(const char*where)const{const auto stack=uxTaskGetStackHighWaterMark(nullptr)*sizeof(StackType_t);const auto internal=heap_caps_get_free_size(kInternal),psram=heap_caps_get_free_size(kPsram);ESP_LOGI(kTag,"METRICS %s internal=%zu psram=%zu stack_margin=%u render_high_us=%lu frontend_render_high_us=%lu command_high_us=%lu transcript=%lu/%zu",where,internal,psram,unsigned(stack),(unsigned long)render_high_us_,(unsigned long)frontend_render_high_us_,(unsigned long)command_high_us_,(unsigned long)transcript_high_water_,kTranscriptBlocks);const auto&m=input_.direction_metrics();ESP_LOGI(kTag,"TRACKBALL_INPUT raw_edges=%lu accepted=%lu suppressed=%lu",(unsigned long)m.trackball_raw_edges(),(unsigned long)m.trackball_accepted(),(unsigned long)m.trackball_suppressed());ESP_LOGI(kTag,"TRACKBALL_SETTINGS percent=%u min_interval_us=%lld debounce_us=%lld accel=1.00",unsigned(settings_.trackball_responsiveness),(long long)m.trackball_debounce_us(),(long long)m.trackball_debounce_us());if(audio_perf_){openu5::AudioPerfSnapshot a{};if(audio_perf_->perf_snapshot(a))ESP_LOGI(kTag,"AUDIO_PERF song=%s window_ms=%lu blocks=%lu missed=%lu underruns=%lu hw_underruns=%lu render_avg_us=%lu p99_us=%lu max_us=%lu music_max_us=%lu cpu_permille=%lu sched_max_us=%lu fill_min=%lu/%lu channels_avg_x100=%lu channels_max=%lu voices_max=%lu sfx=%lu sfx_with_music=%lu stack_free_min=%lu runaway=%lu failures=%lu",a.music_active?openu5::music_song_title(a.song):"none",(unsigned long)(a.window_us/1000),(unsigned long)a.blocks,(unsigned long)a.missed_deadlines,(unsigned long)a.underruns,(unsigned long)a.hw_underruns,(unsigned long)a.render_avg_us,(unsigned long)a.render_p99_us,(unsigned long)a.render_max_us,(unsigned long)a.music_max_us,(unsigned long)a.cpu_permille,(unsigned long)a.period_max_us,(unsigned long)a.fill_min,(unsigned long)a.ring_blocks,(unsigned long)a.channels_avg_x100,(unsigned long)a.channels_max,(unsigned long)a.voices_max,(unsigned long)a.sfx_submitted,(unsigned long)a.sfx_during_music,(unsigned long)a.stack_free_min,(unsigned long)a.runaway_yields,(unsigned long)(a.write_failures+a.enable_failures));}
@@ -3100,6 +3459,11 @@ void AlphaRuntime::bind_quest_services(){
     quest_.karma_record=karma_speech;
     // RB-2: DATA.OVL 0x44AD, FALLAX .. VERAMOCOR.
     quest_.words={resources_.words,resources_.word_count};
+    // A4-END1: with the pack's room, screens and the 11 ENDMSG.DAT records the
+    // device plays ENDGAME.OVL itself (start_endgame), so the absorption
+    // prints none of the reference's rescue narration.
+    for(size_t i=0;i<11;++i)endgame_records_[i]=tdeck::misc_text_record({resources_.end_text_offsets,resources_.end_text_records,resources_.end_text_record_count},int32_t(i));
+    quest_.endgame_presenter=endgame_&&resources_.endgame_room&&resources_.endgame_pages&&endgame_records_[10];
     // RB-3: the runtime's own stones, hydrated from the current document.
     quest_.moonstones=moonstones_;quest_.moonstone_count=8;
     if(openu5::save::restore_moonstones(retained_,quest_)!=openu5::save::Error::None)ESP_LOGW(kTag,"MOONSTONES_RESTORE_FAILED no valid moonstones in the current document");
@@ -3261,12 +3625,11 @@ void AlphaRuntime::sync_music(){
     //      "Blackthorn capture, death"; the pacer's ONLY scene is that one,
     //      general palace visits never mount it);
     //   2. the Refuge dream -- silence; Camp / TrollSneak (hole-up) -- Stones;
-    //   3. the terminal ending screen -- Rule Britannia (Finale). The
-    //      original's own Stones -> Lady Nan -> Reunion -> Rule Britannia
-    //      chain steps through ENDGAME.OVL's scene table, which this port
-    //      does not animate yet (D-54): Finale is the correct STATIC choice
-    //      for "the quest is complete", not a guess at scenes this build
-    //      cannot step through;
+    //   3. the ending -- A4-END1: the overlay's own selector calls, as the
+    //      patch makes them (endgame_music_select: Reunion then Rule
+    //      Britannia in the throne room, Stones / Lady Nan by story page,
+    //      Rule Britannia in both terminal loops); Finale for an Ending the
+    //      overlay is not playing (a loaded won game);
     //   4. the shrine meditation screen -- Stones;
     //   5. the frontend (title/menus/creation/intro) -- by FrontendState;
     //   6. gameplay -- the driver's own location/combat switch.
@@ -3281,6 +3644,7 @@ void AlphaRuntime::sync_music(){
     if(camp_scene_active_||(narrative_pacer_.mounted()&&
        (narrative_pacer_.scene()==openu5::NarrativeScene::Camp||narrative_pacer_.scene()==openu5::NarrativeScene::TrollSneak))){
         audio_.play_music(openu5::MusicContext::Camp);return;}
+    if(endgame_&&endgame_->active()){audio_.play_music(endgame_music_);return;}
     if(ui_&&ui_->ending_active()){audio_.play_music(openu5::MusicContext::Finale);return;}
     if(ui_&&ui_->base_mode()==openu5::UiMode::ShrineSpecial){audio_.play_music(openu5::MusicContext::Shrine);return;}
     if(frontend_.active()){

@@ -1,0 +1,69 @@
+A4-SAVE3 investigation probes (2026-09-30), linked against build-a4-save2/libopenu5_core.a (the A4-SAVE2 working tree).
+Sources: native/core/tools/a4_save3_probe_codec.cpp, native/core/tools/a4_save3_probe_vehicles.cpp
+
+=== probe 1: DOS SAVED.GAM/SAVED.OOL through Native's codec ===
+SAVED.GAM 4192  INIT.GAM 4192  SAVED.OOL 512  INIT.OOL 256
+SAVED: location=17 floor=0 x=15 y=20 party=3 gold=9200 turns=255
+load_native_state(no sidecar, gate) = 0 source=0
+export_native_state(base=INIT.GAM) = 0
+SAVED.GAM vs export(base INIT.GAM):
+  0x2d2-0x2d2 (1 B, 1 differ)  want 05  got 00
+  0x2e1-0x2e1 (1 B, 1 differ)  want 10  got 00
+  0x2e9-0x2ec (4 B, 3 differ)  want 01 01 01 04  got 00 00 01 00
+  0x2ff-0x2ff (1 B, 1 differ)  want 02  got 05
+  0x3a9-0x3b2 (10 B, 6 differ)
+  0x6bc-0x707 (76 B, 49 differ)
+  0x70c-0x70f (4 B, 4 differ)  want 11 11 13 19  got 00 00 00 00
+  0x714-0x717 (4 B, 4 differ)  want 11 11 13 1b  got 00 00 00 00
+  0x71c-0x72a (15 B, 10 differ)
+  0x73a-0x73a (1 B, 1 differ)  want 10  got 00
+  0x742-0x742 (1 B, 1 differ)  want 33  got 00
+  0x7cb-0x8b0 (230 B, 173 differ)
+  0x8bb-0x8c0 (6 B, 6 differ)  want 13 13 13 19 19 19  got 00 00 00 00 00 00
+  0x8cb-0x8d0 (6 B, 6 differ)  want 13 13 13 1b 1b 1b  got 00 00 00 00 00 00
+  0x8d9-0x913 (59 B, 51 differ)
+  0x91b-0x923 (9 B, 9 differ)
+  0x92b-0x933 (9 B, 9 differ)
+  0x93b-0x943 (9 B, 9 differ)
+  0x94b-0x953 (9 B, 9 differ)
+  0x959-0x983 (43 B, 37 differ)
+  0x989-0x9b3 (43 B, 35 differ)
+  0x9c8-0xa10 (73 B, 27 differ)
+  0xa18-0xa20 (9 B, 5 differ)
+  0xa28-0xa30 (9 B, 5 differ)
+  0xa38-0xa40 (9 B, 5 differ)
+  0xa48-0xa80 (57 B, 23 differ)
+  0xa86-0xaf2 (109 B, 40 differ)
+  0xaf8-0xb02 (11 B, 6 differ)
+  0xb08-0xb12 (11 B, 6 differ)
+  0xb18-0xb20 (9 B, 5 differ)
+  0xb28-0xb30 (9 B, 5 differ)
+  0xb38-0xb40 (9 B, 5 differ)
+  0xb48-0xb50 (9 B, 5 differ)
+  0xb58-0xb62 (11 B, 6 differ)
+  0xb68-0xb80 (25 B, 12 differ)
+  0xb88-0xba2 (27 B, 12 differ)
+  0xba8-0xbb0 (9 B, 5 differ)
+  0xbf8-0xc09 (18 B, 18 differ)
+  0xc1c-0xc1d (2 B, 2 differ)  want 02 01  got 00 00
+  0xc22-0xc29 (8 B, 8 differ)  want 01 04 03 01 03 04 02 01  got 00 00 00 00 00 00 00 00
+  0xe08-0xe0d (6 B, 6 differ)  want 05 04 05 03 02 04  got 00 00 00 00 00 00
+  0xf14-0xf27 (20 B, 18 differ)
+  0xf62-0xf65 (4 B, 4 differ)  want 05 01 03 04  got 00 00 00 00
+  0xf7e-0xf81 (4 B, 4 differ)  want 05 02 01 03  got 00 00 00 00
+  0xfba-0x1017 (94 B, 93 differ)
+  total differing bytes: 750 of 4192
+SAVED.GAM vs export(base SAVED.GAM):
+  total differing bytes: 0 of 4192
+SAVED.OOL vs build_ool(base INIT.OOL):
+  0x1b8-0x1dc (37 B, 25 differ)
+  total differing bytes: 25 of 512
+SAVED.OOL vs build_ool(base SAVED.OOL):
+  total differing bytes: 0 of 512
+sidecar generated (280 B): {"version":1,"qol":{"journal":[]},"gameState":{"transport":"foot","questFlags":{},"skullTreeFoundDay":0,"reagentPatchFoundDay":[0,0,0],"lightSpellMins":0,"wind":0,"sailDir":0,"windDriftCtr":0,"shipHull":99,"shipSkiffs":0,"hmsCapeToggle":0,"shadowlordLocs":[7,8,4],"npcWalk":null}}
+doc keys: version characters food gold keys gems torches magicCarpets skullKeys partySize activeCharacter karma turnsSinceStart torchTurns time position grapple lbArtifacts shards specialItems equipmentQuantities spellQuantities scrollQuantities potionQuantities reagentQuantities moonstones npcDead npcMet transportTile prevHour shrineQuestBitmap shrineVisitedBitmap feluccaPhase trammelPhase shrineDestroyed dungeonRoomsCleared shadowlordLocs transport questFlags npcWalk journal
+
+=== probe 2: vehicles ===
+import=0 worldObjects=[{"location":0,"floor":0,"x":81,"y":96,"slot":30,"tile":292,"kind":"ship","hull":77,"skiffs":1}]
+validate_world_objects on the sidecar-less import = 8 (0 = accepted)
+export=0 frigate record in exported object table: NONE

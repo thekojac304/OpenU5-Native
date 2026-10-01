@@ -109,7 +109,14 @@ struct AlphaSaveTarget {
 // refused, it is the expendable one and the older generation -- Continue's
 // fallback -- is kept. Physical slot and sequence parity are never assumed to
 // agree (an earlier recovery save breaks the parity).
-AlphaSaveTarget choose_save_target(const bool (&present)[2], const AlphaSaveCommit (&commits)[2], bool newest_accepted);
+//
+// Alpha 4 A4-SAVE2 (ALPHA4_UI.md section 4): a card holds three slots, each a
+// pair of its own, and one sequence runs across all of them, so Continue can
+// name the slot saved last. `card_newest` is the highest sequence of any
+// commit record on the card (0: none); the new sequence is above it and above
+// this pair's newest. The pair's target rule is unchanged.
+AlphaSaveTarget choose_save_target(const bool (&present)[2], const AlphaSaveCommit (&commits)[2], bool newest_accepted,
+                                   uint64_t card_newest = 0);
 // Whether the three files' CRC-32s are the ones the commit record names:
 // the bytes are the ones that record was written for.
 bool files_match_commit(const AlphaSaveCandidate &);

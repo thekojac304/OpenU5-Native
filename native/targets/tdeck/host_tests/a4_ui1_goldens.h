@@ -17,6 +17,8 @@ constexpr uint64_t kScreen[8] = {
     // Alpha 4 UI Batch 2 (ALPHA4_UI.md section 2.3): re-recorded from the A4-UI2 Board for the new
     // System Menu labels ("Save Game", "Load Game"); the other seven states are unchanged.
     0x9b4da31f3546ca4full, // system-menu
-    0x089fde73b423dfffull, // main-menu
+    // Alpha 4 A4-SAVE3 (ALPHA4_UI.md section 5): re-recorded for the new "PC Save Transfer" row
+    // (the eighth row of a non-developer menu); the other seven states are unchanged.
+    0xf09c5f8770550dd7ull, // main-menu
 };
 } // namespace a4_ui1_goldens

@@ -172,6 +172,27 @@ void cold_inspect(FrontendSaveSlot (&out)[2]) {
     tdeck::AlphaSaveService fresh;
     fresh.inspect(out);
 }
+// Alpha 4 A4-SAVE2: the menus' save list, cold, and Slot 1's row and footer
+// on the Load page as a cold list would show them.
+void cold_catalog(FrontendSaveCatalog &out) {
+    tdeck::AlphaSaveService fresh;
+    fresh.inspect_catalog(out);
+}
+// A4-UI3: the row is its two lines ("row|detail"), Slot 1 marked CURRENT (the
+// journey's slot in every case that uses it).
+void slot1_page(const FrontendSaveCatalog &c, std::string &row, std::string &detail) {
+    char r[96], r2[96], d[96];
+    format_slot_rows(r, r2, sizeof(r), c, 0, 0, kCurrentSlotTag);
+    format_slot_detail(d, sizeof(d), c, 0, false);
+    row = std::string(r) + "|" + r2; detail = d;
+}
+bool same_catalog(const FrontendSaveCatalog &a, const FrontendSaveCatalog &b) {
+    for (int i = 0; i < kSaveSlotCount; ++i)
+        if (a.slots[i].status != b.slots[i].status || a.slots[i].sequence != b.slots[i].sequence ||
+            !same_slot(a.slots[i].shown, b.slots[i].shown))
+            return false;
+    return true;
+}
 
 std::string card_path(int slot, const char *ext) {
     char p[96];
@@ -224,14 +245,15 @@ struct Harness {
     bool alt_load() { set_mark(); raw_key('l', true); return saw("Load complete"); }
     bool open_menu() { raw_key('m', true); return rt->system_menu_open(); }
     bool close_menu() { key('\b'); return !rt->system_menu_open(); }   // Back at the root = Resume
-    // The Load page's two generation rows, as the player reads them. Since
-    // Alpha 4 UI Batch 2 they are "Latest" and "Backup", by age.
+    // The Load page as the player reads it. Since Alpha 4 A4-SAVE2 it lists
+    // Slots 1-3 and starts on the journey's slot (Slot 1 here): g1 is Slot 1's
+    // row, g2 the footer describing it (the date and time, or its state).
     bool load_page(std::string &g1, std::string &g2) {
         if (!rt->system_menu_open()) return false;
         ball(RawInputKind::TrackballDown); ball(RawInputKind::TrackballDown); key('\r');
         const auto v = rt->system_menu_view();
-        if (v.line_count < 2) return false;
-        g1 = v.lines[0]; g2 = v.lines[1];
+        if (v.line_count < 3 || v.selected_line != 0) return false;
+        g1 = std::string(v.lines[0]) + "|" + (v.details[0] ? v.details[0] : ""); g2 = v.footer;   // A4-UI3: both rows
         return true;
     }
 };
@@ -511,10 +533,13 @@ void test_cache(Harness &h) {
     describe(cold, "cold after save");
     std::printf("         open after save: opens=%u; list '%s' / '%s'\n", after_save.opens, g1.c_str(), g2.c_str());
     {
-        char want1[96], want2[96];
-        format_save_row(want1, sizeof(want1), cold, true);   // A4-UI2: Latest / Backup, by age
-        format_save_row(want2, sizeof(want2), cold, false);
-        expect(saved && cold[0].valid && cold[1].valid && g1 == want1 && g2 == want2, "K3a",
+        // A4-SAVE2: the Load page shows Slot 1 (row and footer), from the save list.
+        FrontendSaveCatalog cc, warm;
+        cold_catalog(cc);
+        h.rt->save_service_for_test().inspect_catalog(warm);
+        std::string want1, want2;
+        slot1_page(cc, want1, want2);
+        expect(saved && cold[0].valid && cold[1].valid && g1 == want1 && g2 == want2 && same_catalog(warm, cc), "K3a",
                "after a save the menu lists what a cold inspection lists");
     }
     expect(after_save.opens == 2, "K3b", "the save's own post-write check supplies the new slot: two commit reads");
@@ -546,10 +571,18 @@ void test_cache(Harness &h) {
     h.open_menu();
     h.load_page(g1, g2);
     h.close_menu(); h.close_menu();
-    // A4-UI2: rows by age. With the newest commit gone the older generation is
-    // the Latest, and there is no Backup.
-    const std::string gone = g2;
-    expect(gone == "Backup: none yet", "K5a", "a deleted generation is listed empty at once (no backup)");
+    // A4-SAVE2: with the newest commit gone Slot 1 shows the older generation
+    // (its sequence, from the list's own entry for it), never the deleted one.
+    {
+        FrontendSaveCatalog cc, warm;
+        cold_catalog(cc);
+        h.rt->save_service_for_test().inspect_catalog(warm);
+        std::string want1, want2;
+        slot1_page(cc, want1, want2);
+        expect(g1 == want1 && g2 == want2 && same_catalog(warm, cc) && cc.slots[0].status == SaveSlotStatus::Saved &&
+                   cc.slots[0].sequence == cold[1 - newest].sequence,
+               "K5a", "a deleted generation is dropped from the list at once (Slot 1 shows the one before it)");
+    }
     card.put();
     h.open_menu();
     h.load_page(g1, g2);
@@ -570,9 +603,11 @@ void test_cache(Harness &h) {
             h.load_page(g1, g2);
             h.close_menu(); h.close_menu();
         }
-        const std::string bad = g1; // still the newest sequence: the Latest row
-        expect(bad == "Latest: damaged" && opens[0] == 5 && opens[1] == 5, "K6",
-               "a refused generation is listed corrupt and re-read on every open (never cached)");
+        // A4-SAVE2: the slot is listed as recovered (its load restores the
+        // generation before); the refused one is re-read on every open.
+        const std::string bad = g2;
+        expect(bad == "Last save damaged; Enter loads the one before" && opens[0] == 5 && opens[1] == 5, "K6",
+               "a refused generation is listed damaged and re-read on every open (never cached)");
         card.put();
         h.open_menu();
         h.load_page(g1, g2);
@@ -589,25 +624,32 @@ void test_cache(Harness &h) {
         cold_inspect(before);
         const int newest_now = before[0].sequence > before[1].sequence ? 0 : 1;
         host_sd::remove_card_file(card_path(newest_now, "commit").c_str());
+        // A4-SAVE2: a new game time, so Slot 1's footer changes with the save.
+        h.g().time.hour = 15; h.g().time.minute = 42;
         h.open_menu();
         h.ball(RawInputKind::TrackballDown);
         h.set_mark();
-        h.key('\r');                                   // Save
-        const bool saved_in_menu = h.saw("Save complete");
-        h.ball(RawInputKind::TrackballDown);
-        h.key('\r');                                   // Load Game
-        const auto v = h.rt->system_menu_view();
-        const std::string r1 = v.line_count > 1 ? v.lines[0] : "", r2 = v.line_count > 1 ? v.lines[1] : "";
+        h.key('\r');                                   // Save Game: Slots 1-3, on Slot 1
+        h.key('\r');                                   // occupied: "Overwrite Slot 1?"
+        h.ball(RawInputKind::TrackballDown);            // Yes
+        h.key('\r');
+        // A4-UI3: a save from the menu returns to the game; the next open's
+        // Load page must show it (the menu re-reads the list on every open).
+        const bool saved_in_menu = h.saw("Save complete") && !h.rt->system_menu_open();
+        h.open_menu();
+        std::string r1, r2;
+        h.load_page(r1, r2);
         h.close_menu(); h.close_menu();
         FrontendSaveSlot c[2];
         cold_inspect(c);
-        char want1[96], want2[96];
-        format_save_row(want1, sizeof(want1), c, true);    // A4-UI2: Latest / Backup, by age
-        format_save_row(want2, sizeof(want2), c, false);
+        FrontendSaveCatalog cc;
+        cold_catalog(cc);
+        std::string want1, want2;
+        slot1_page(cc, want1, want2);
         describe(c, "cold after in-menu save");
         std::printf("         Load page after an in-menu save: '%s' / '%s'\n", r1.c_str(), r2.c_str());
-        expect(saved_in_menu && r1 == want1 && r2 == want2, "K10",
-               "a Save made inside the menu is on its Load page at once (the card as it now is)");
+        expect(saved_in_menu && r1 == want1 && r2 == want2 && r2.find("15:42") != std::string::npos, "K10",
+               "a Save made from the menu is on the Load page of the next open (the card as it now is)");
     }
 }
 
@@ -629,9 +671,10 @@ void test_save_invalidation(Harness &h) {
     h.open_menu();
     h.load_page(g1, g2);
     h.close_menu(); h.close_menu();
-    char want1[96], want2[96];
-    format_save_row(want1, sizeof(want1), cold, true);    // A4-UI2: Latest / Backup, by age
-    format_save_row(want2, sizeof(want2), cold, false);
+    FrontendSaveCatalog cc;
+    cold_catalog(cc);
+    std::string want1, want2;
+    slot1_page(cc, want1, want2);   // A4-SAVE2: Slot 1's row and footer
     std::printf("         menu after failed save: '%s' / '%s'\n", g1.c_str(), g2.c_str());
     expect(failed && g1 == want1 && g2 == want2 && (!cold[0].valid || !cold[1].valid), "K7",
            "after a save that failed mid-rename the menu lists the card as it is (the torn slot corrupt)");
@@ -645,8 +688,8 @@ void test_save_invalidation(Harness &h) {
     h.open_menu();
     h.load_page(g1, g2);
     h.close_menu(); h.close_menu();
-    format_save_row(want1, sizeof(want1), cold, true);
-    format_save_row(want2, sizeof(want2), cold, false);
+    cold_catalog(cc);
+    slot1_page(cc, want1, want2);
     expect(failed2 && g1 == want1 && g2 == want2, "K8", "after a failed temp write the menu lists the card as it is");
     // Recover: two good saves.
     expect(h.alt_save() && h.alt_save(), "K9", "the next saves succeed and replace the torn slot");
@@ -737,27 +780,27 @@ void test_correctness(Harness &h) {
     const bool fell_back = h.alt_load();
     host_sd::write_card_file(card_path(newest, "json").c_str(), json);
     expect(fell_back && h.g().gold != 2, "V2", "a damaged newest generation: Continue Latest restores the older one");
-    // A cached-valid slot corrupted behind the service's back (commit untouched):
+    // A cached-valid slot corrupted behind the service's back (commits untouched):
     // the list may still name it, but Load re-verifies and refuses, and the live
-    // game is untouched. Since Alpha 4 UI Batch 2 the one Load Slot row is the
-    // Backup (the older generation; Latest is Continue Latest), so the older
-    // generation is the one corrupted.
+    // game is untouched. Since Alpha 4 A4-SAVE2 the Load page loads a slot
+    // (its newest generation, else the one before), so both generations of
+    // Slot 1 are corrupted.
     h.open_menu(); h.close_menu();
-    cold_inspect(c);
-    const int slot = c[0].sequence > c[1].sequence ? 1 : 0;
-    host_sd::read_card_file(card_path(slot, "json").c_str(), json);
-    host_sd::write_card_file(card_path(slot, "json").c_str(), json.substr(0, json.size() / 2));
+    std::string both[2];
+    for (int g = 0; g < 2; ++g) {
+        host_sd::read_card_file(card_path(g, "json").c_str(), both[g]);
+        host_sd::write_card_file(card_path(g, "json").c_str(), both[g].substr(0, both[g].size() / 2));
+    }
     h.g().gold = 42;
     h.set_mark();
     h.open_menu();
-    h.ball(RawInputKind::TrackballDown); h.ball(RawInputKind::TrackballDown); h.key('\r'); // Load Game
-    h.ball(RawInputKind::TrackballDown);                                                   // Backup
+    h.ball(RawInputKind::TrackballDown); h.ball(RawInputKind::TrackballDown); h.key('\r'); // Load Game (on Slot 1)
     h.key('\r');
     const bool refused = h.saw("No valid save") || !h.saw("Load complete");
     if (h.rt->system_menu_open()) { h.close_menu(); h.close_menu(); }
-    host_sd::write_card_file(card_path(slot, "json").c_str(), json);
+    for (int g = 0; g < 2; ++g) host_sd::write_card_file(card_path(g, "json").c_str(), both[g]);
     expect(refused && h.g().gold == 42, "V3",
-           "Load Slot on a generation damaged out of band refuses and leaves the live game untouched");
+           "Load on a slot damaged out of band refuses and leaves the live game untouched");
 }
 
 } // namespace
