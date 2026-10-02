@@ -78,7 +78,9 @@ struct TownTurnContext {
 bool refresh_moon_phase_latch(GameState &, TurnState &, const SkyRefresh &, bool hour_changed);
 void advance_clock(GameState &, TurnState &, int32_t minutes, const Rand *rand = nullptr, const SkyRefresh *sky = nullptr);
 void apply_damage(GameState &, int32_t index, int32_t amount);
-void party_random_damage(GameState &, Rand);
+// A4-ENH2: `starvation` -- the hunger site only -- scales each HP loss by the
+// difficulty's starvation share (rules_starvation_damage); the draws are the same.
+void party_random_damage(GameState &, Rand, bool starvation = false);
 TurnResult turn_housekeeping(GameState &, TurnState &, Rand);
 TurnResult advance_turn(GameState &, TurnState &, int32_t minutes, Rand, const SkyRefresh *sky = nullptr);
 bool maybe_change_wind(TurnState &, Rand);

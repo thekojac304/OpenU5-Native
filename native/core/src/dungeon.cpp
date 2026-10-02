@@ -231,6 +231,14 @@ void dungeon_mark_room(GameState &g, DungeonState &d, int f, int x, int y) {
         g.dungeon_rooms_cleared[bit >> 3] |= uint8_t(1 << (bit & 7));
     d.cells[offset(f, x, y)] = uint8_t(0xa0 | (c & 15));
 }
+// A4-ENH2: the dormant record eight failed placement tries leave (type 255,
+// bank 0, nowhere, not hidden) -- also what a re-arm the difficulty refuses leaves.
+static void make_dormant(DungeonWanderer &w) {
+    w.type = 255;
+    w.bank = 0;
+    w.x = w.y = w.prev_x = w.prev_y = 255;
+    w.hidden = false;
+}
 void dungeon_respawn(GameState &g, DungeonState &d) {
     static const uint8_t types[] = {0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1c, 0x1b},
                          attrs[] = {0x60, 0xa0, 0, 0x90, 0x80, 0x60, 0, 0};
@@ -249,6 +257,9 @@ void dungeon_respawn(GameState &g, DungeonState &d) {
         w.y = w.prev_y = uint8_t(y);
         if ((w.type == 0x16 || w.type == 0x18) && g.rng.next(0, 99).value > 0x30)
             w.hidden = true;
+        // A4-ENH2: the difficulty's share of the re-arms that place it, asked
+        // after every 1988 draw above (all of them on Original).
+        if (!rules_wanderer_allowed(g, d.pos.floor)) make_dormant(w);
         return;
     }
     w.type = 255;

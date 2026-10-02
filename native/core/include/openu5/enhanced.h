@@ -38,9 +38,12 @@ struct GameplayRules {
     uint16_t encounter_pct;       // share of passed overworld spawn rolls that spawn a monster
     uint16_t poison_interval;     // a poisoned member loses its 1 HP on every Nth turn (1: every turn; 0: never)
     uint16_t hunger_pct;          // share of the 06 / 12 / 18 meals that eat food
+    // A4-ENH2 (appended):
+    uint16_t dungeon_encounter_pct; // share of the dungeon wanderer's re-arms that place it
+    uint16_t starvation_pct;        // share of starvation's rand(1,8) a starving member loses (0: none)
 };
 // The 1988 rules: at these values every hook returns its input unchanged.
-inline constexpr GameplayRules kOriginalRules{100, 100, 100, 100, 1, 100};
+inline constexpr GameplayRules kOriginalRules{100, 100, 100, 100, 1, 100, 100, 100};
 bool same_rules(const GameplayRules &, const GameplayRules &);
 
 struct EnhancedState {
@@ -73,7 +76,7 @@ GameplayRules effective_rules(const EnhancedState &);
 // Custom page's rows and the save's "custom" array. APPEND only: a value's
 // place in that array is its field. Each field offers a few discrete values,
 // the Original one among them (the default).
-enum class RuleField : uint8_t { EnemyDamage, PlayerDamage, Xp, Encounters, Poison, Hunger, Count };
+enum class RuleField : uint8_t { EnemyDamage, PlayerDamage, Xp, Encounters, Poison, Hunger, DungeonEncounters, Starvation, Count };
 struct RuleChoice {
     const char *label;
     uint16_t GameplayRules::*field;
@@ -100,6 +103,16 @@ int32_t rules_xp_award(const GameState &, int32_t xp);
 bool rules_poison_due(const GameState &);
 bool rules_meal_due(const GameState &);
 bool rules_encounter_allowed(const GameState &);
+// A4-ENH2: whether a dungeon re-arm (dungeon_respawn: entry, floor change,
+// pit fall, after a corridor fight) places the wanderer it rolled -- asked
+// after all of the 1988 placement draws, by a fixed hash of the turn and the
+// floor (no draw); a refused one is the dormant record eight failed tries
+// leave. Fixed rooms and every scripted fight never come here.
+bool rules_wanderer_allowed(const GameState &, int floor);
+// A4-ENH2: what a starving member loses of its 1988 rand(1,8) (the draw is
+// always made); 0 when starvation is off. Only the starvation site asks:
+// fire, quakes and the cactus share party_random_damage() but not this.
+int32_t rules_starvation_damage(const GameState &, int32_t damage);
 
 constexpr int32_t kGoldCap = 9999; // every gold writer in the port caps here (loot, shops, TLK)
 constexpr int32_t kAddGoldAmounts[] = {10, 100, 1000};

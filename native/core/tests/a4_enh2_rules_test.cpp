@@ -6,10 +6,16 @@
 //   K  the Custom difficulty: its choices, every preset a point of them,
 //      precedence (effective_rules), every Custom value through its hook,
 //      the left/right steps and the row text
+//   T  the tuned presets, outgoing damage through the real combat engine,
+//      rounding, XP and the encounter share
+//   W  dungeon wanderers: the re-arm share, the dormant record, rooms
+//      untouched, deterministic across a save
+//   S  starvation severity through the real housekeeping, the same draws
 //   P  persistence: the "custom" array, written only when changed, read back
 //      field by field; malformed entries take that field's Original value;
 //      the .GAM never carries any of it
 #include "openu5/combat.h"
+#include "openu5/dungeon.h"
 #include "openu5/enhanced.h"
 #include "openu5/persistence.h"
 #include "openu5/save_json.h"
@@ -166,6 +172,23 @@ void test_custom() {
                 seen += " food" + std::to_string(v) + "=" + std::to_string(eats);
                 break;
             }
+            case RuleField::DungeonEncounters: {
+                int placed = 0;
+                for (int64_t t = 0; t < 20000; ++t) {
+                    h.turns_since_start = t;
+                    placed += rules_wanderer_allowed(h, int(t % 8));
+                }
+                all = all && placed > (v - 2) * 200 && placed < (v + 2) * 200;
+                seen += " dng" + std::to_string(v) + "=" + std::to_string(placed / 200);
+                break;
+            }
+            case RuleField::Starvation: {
+                bool s = true;
+                for (int d = 1; d <= 8; ++d) s = s && rules_starvation_damage(h, d) == (v ? scaled(d, v) : 0);
+                all = all && s;
+                seen += " starve" + std::to_string(v) + "=" + std::to_string(rules_starvation_damage(h, 8));
+                break;
+            }
             case RuleField::Count: break;
             }
         }
@@ -179,7 +202,8 @@ void test_custom() {
                        rule_step(RuleField::Poison, 1, -1) == 4 && rule_step(RuleField::Poison, 4, -1) == 10 &&
                        rule_step(RuleField::Poison, 10, -1) == 0 && rule_step(RuleField::Poison, 0, -1) == 0 &&
                        rule_step(RuleField::Hunger, 100, -1) == 75 && rule_step(RuleField::Hunger, 0, 1) == 25 &&
-                       rule_step(RuleField::EnemyDamage, 66, 1) == 66;
+                       rule_step(RuleField::EnemyDamage, 66, 1) == 66 && rule_step(RuleField::Starvation, 100, -1) == 50 &&
+                       rule_step(RuleField::Starvation, 25, -1) == 0 && rule_step(RuleField::DungeonEncounters, 25, -1) == 25;
     check(steps, "K6", "left / right steps through each field's choices and holds at the ends; a foreign value stays");
     // K7. The rows say the actual values.
     GameplayRules r = kOriginalRules;
@@ -192,10 +216,14 @@ void test_custom() {
                       row(RuleField::Xp, r) == "XP rate: 2.5x" && row(RuleField::Xp, kOriginalRules) == "XP rate: 1.0x" &&
                       row(RuleField::Encounters, r) == "Overworld encounters: 100%" && row(RuleField::Poison, r) == "Poison: Light" &&
                       row(RuleField::Poison, kOriginalRules) == "Poison: Original" && row(RuleField::Hunger, r) == "Hunger: 50%" &&
-                      row(RuleField::Hunger, kOriginalRules) == "Hunger: Original";
+                      row(RuleField::Hunger, kOriginalRules) == "Hunger: Original" &&
+                      row(RuleField::DungeonEncounters, kOriginalRules) == "Dungeon encounters: 100%" &&
+                      row(RuleField::Starvation, kOriginalRules) == "Starvation: Original";
     r.hunger_pct = 0;
     r.poison_interval = 0;
-    check(text && row(RuleField::Hunger, r) == "Hunger: Off" && row(RuleField::Poison, r) == "Poison: Off", "K7",
+    r.starvation_pct = 25;
+    check(text && row(RuleField::Hunger, r) == "Hunger: Off" && row(RuleField::Poison, r) == "Poison: Off" &&
+              row(RuleField::Starvation, r) == "Starvation: Minimal", "K7",
           "row text: \"Enemy damage: 65%\", \"Player damage: 120%\", \"XP rate: 2.5x\", \"Poison: Light\", \"Hunger: 50%\" / Off / Original");
     // K8. Poison Off and Hunger Off really take nothing: 3,000 housekeeping
     // turns with a poisoned member and food, every hour crossed.
@@ -290,9 +318,10 @@ void test_presets() {
     // T1. The tuned presets (PROVISIONAL): Easy hits harder (120 %) and meets
     // fewer monsters (65 %); Relaxed stays close to the 1988 game.
     const auto &rx = gameplay_rules(Difficulty::Relaxed), &ez = gameplay_rules(Difficulty::Easy);
-    const GameplayRules want_rx{85, 100, 150, 90, 4, 75}, want_ez{65, 120, 200, 65, 10, 50};
+    const GameplayRules want_rx{85, 100, 150, 90, 4, 75, 90, 50}, want_ez{65, 120, 200, 65, 10, 50, 65, 25};
     check(rules_equal(rx, want_rx) && rules_equal(ez, want_ez) && rules_equal(gameplay_rules(Difficulty::Original), kOriginalRules),
-          "T1", "Original 100/100/100/100/1/100, Relaxed 85/100/150/90/4/75, Easy 65/120/200/65/10/50 (in/out/XP/encounters/poison/food)");
+          "T1", "Original 100/100/100/100/1/100/100/100, Relaxed 85/100/150/90/4/75/90/50, Easy 65/120/200/65/10/50/65/25 "
+          "(in/out/XP/encounters/poison/food/dungeon/starvation)");
     // T2. Outgoing damage through the real combat damage(): the same fight
     // and draws; every Easy blow is the Original blow at 120 %, every Custom
     // 150 % blow at 150 %; the enemy's blows are unchanged by it.
@@ -360,6 +389,155 @@ void test_presets() {
               ", Easy " + std::to_string(allowed[2]));
 }
 
+// A synthetic open dungeon floor set (every cell a corridor) at Deceit.
+void open_dungeon(DungeonState &d) {
+    d = DungeonState{};
+    d.active = true;
+    d.pos = {33, 0, 1, 1, DungeonFacing::South};
+}
+
+void test_dungeon_and_starvation() {
+    // W1. The wanderer's re-arms: the share placed follows the difficulty,
+    // and every one makes the same 1988 draws whatever is decided after them.
+    struct Count { int placed = 0; uint32_t seeds = 0; };
+    auto arm = [](Difficulty d, uint16_t custom) {
+        Count c;
+        GameState g = party_of(2);
+        g.enhanced.difficulty = d;
+        g.enhanced.custom.dungeon_encounter_pct = custom;
+        g.rng.seed(0x0d1);
+        DungeonState s;
+        open_dungeon(s);
+        for (int i = 0; i < 4000; ++i) {
+            g.turns_since_start = i / 3;
+            s.pos.floor = uint8_t(i % 8);
+            s.pos.x = uint8_t(i % 7);
+            s.pos.y = uint8_t((i / 7) % 7);
+            dungeon_respawn(g, s);
+            c.placed += s.wanderer.type != 255;
+            c.seeds = c.seeds * 31u + g.rng.get_seed();
+        }
+        return c;
+    };
+    const Count o = arm(Difficulty::Original, 100), rx = arm(Difficulty::Relaxed, 100), ez = arm(Difficulty::Easy, 100),
+                lo = arm(Difficulty::Custom, 25);
+    // (Original itself leaves a few dormant: the 1988 eight failed tries.)
+    const auto share = [&](const Count &c) { return c.placed * 1000 / o.placed; }; // per mille of Original's
+    check(o.placed > 3900 && share(rx) > 880 && share(rx) < 920 && share(ez) > 630 && share(ez) < 670 && share(lo) > 230 &&
+              share(lo) < 270 && rx.seeds == o.seeds && ez.seeds == o.seeds && lo.seeds == o.seeds,
+          "W1", "4,000 re-arms place " + std::to_string(o.placed) + " / " + std::to_string(rx.placed) + " / " +
+                    std::to_string(ez.placed) + " / " + std::to_string(lo.placed) +
+                    " wanderers (Original / Relaxed 90 % / Easy 65 % / Custom 25 %), every one after the same 1988 draws");
+    // W2. A refused re-arm is exactly the dormant record eight failed tries
+    // leave, and it neither walks nor ambushes: 2,000 ticks, no draw but the
+    // sleepers', no Corridor.
+    GameState g = party_of(2);
+    g.enhanced.difficulty = Difficulty::Custom;
+    g.enhanced.custom.dungeon_encounter_pct = 25;
+    DungeonState s;
+    open_dungeon(s);
+    int64_t refused_turn = -1;
+    for (int64_t t = 0; t < 200 && refused_turn < 0; ++t) {
+        g.turns_since_start = t;
+        if (!rules_wanderer_allowed(g, 0)) refused_turn = t;
+    }
+    g.turns_since_start = refused_turn;
+    g.rng.seed(0x77);
+    dungeon_respawn(g, s);
+    const auto w = s.wanderer;
+    const bool dormant = w.type == 255 && w.bank == 0 && w.x == 255 && w.y == 255 && w.prev_x == 255 && w.prev_y == 255 &&
+                         !w.hidden && w.floor == 0;
+    struct Seen { int corridors = 0; } seen;
+    const DungeonSink sink{&seen, [](void *p, const DungeonEvent &e) {
+                               if (e.kind == DungeonEventKind::Corridor) ++static_cast<Seen *>(p)->corridors;
+                           }};
+    TurnState t{};
+    const uint32_t before = g.rng.get_seed();
+    for (int i = 0; i < 2000; ++i) dungeon_action(g, t, s, DungeonAction::Tick, sink);
+    check(refused_turn >= 0 && dormant && seen.corridors == 0 && g.rng.get_seed() == before, "W2",
+          "a refused re-arm leaves the dormant record (type 255, bank 0, nowhere); 2,000 ticks: no walk, no draw, no ambush");
+    // W3. Rooms and every scripted fight never ask: a fixed room is entered
+    // (its Room event) even with the fewest dungeon encounters.
+    GameState rg = party_of(2);
+    rg.enhanced.difficulty = Difficulty::Custom;
+    rg.enhanced.custom.dungeon_encounter_pct = 25;
+    DungeonState rs;
+    open_dungeon(rs);
+    rs.cells[0 * 64 + 2 * 8 + 1] = 0xf1; // a room cell, just south of (1,1)
+    struct Rooms { int rooms = 0; } rooms;
+    const DungeonSink room_sink{&rooms, [](void *p, const DungeonEvent &e) {
+                                    if (e.kind == DungeonEventKind::Room) ++static_cast<Rooms *>(p)->rooms;
+                                }};
+    TurnState rt{};
+    dungeon_action(rg, rt, rs, DungeonAction::Forward, room_sink);
+    check(rooms.rooms == 1, "W3", "Custom dungeon encounters 25 %: a fixed room cell still opens its fight (Room event)");
+    // W4. Deterministic: the same turn and floor give the same answer after a
+    // save and load (the turn count is saved).
+    GameState sv = party_of(1);
+    sv.enhanced.difficulty = Difficulty::Easy;
+    bool same = true;
+    for (int64_t turn = 0; turn < 300; ++turn) {
+        sv.turns_since_start = turn;
+        save::Json doc = save::Json::object();
+        save::capture_core(sv, TurnState{}, doc);
+        GameState back{};
+        TurnState bt{};
+        save::restore_core(doc, back, bt);
+        for (int f = 0; f < 8; ++f) same = same && rules_wanderer_allowed(back, f) == rules_wanderer_allowed(sv, f);
+    }
+    check(same, "W4", "Easy's wanderer decisions for 300 turns x 8 floors are the same after a save and load");
+
+    // S1. Starvation through the real housekeeping: food 0, an hour a turn.
+    // Every severity makes the same draws; each member loses the scaled draw.
+    struct Starve { int lost = 0, messages = 0; uint32_t seed = 0; };
+    auto starve = [](Difficulty d, uint16_t custom) {
+        Starve r;
+        GameState g = party_of(3);
+        for (int m = 0; m < 3; ++m) g.party.characters[m].current_hp = g.party.characters[m].max_hp = 5000;
+        g.enhanced.difficulty = d;
+        g.enhanced.custom.starvation_pct = custom;
+        g.food = 0;
+        g.time.year = 139; g.time.month = 1; g.time.day = 1; g.time.hour = 1;
+        TurnState t{};
+        t.prev_hour = g.time.hour;
+        OriginalRng rng(0x5747);
+        for (int i = 0; i < 300; ++i) {
+            const auto tr = advance_turn(g, t, 60, rng_source(rng), nullptr);
+            for (uint8_t k = 0; k < tr.message_count; ++k) r.messages += tr.messages[k] == TurnMessage::Starving;
+        }
+        for (int m = 0; m < 3; ++m) r.lost += 5000 - g.party.characters[m].current_hp;
+        r.seed = rng.get_seed();
+        return r;
+    };
+    const Starve full = starve(Difficulty::Original, 100), relaxed = starve(Difficulty::Relaxed, 100),
+                 easy = starve(Difficulty::Easy, 100), half = starve(Difficulty::Custom, 50), off = starve(Difficulty::Custom, 0);
+    check(full.messages == 300 && full.lost > 300 * 3 * 3 && relaxed.lost == half.lost && relaxed.lost < full.lost * 6 / 10 &&
+              easy.lost < relaxed.lost && easy.lost >= 300 * 3 && off.lost == 0 && off.messages == 0 &&
+              relaxed.messages == 300 && full.seed == relaxed.seed && full.seed == easy.seed && full.seed == off.seed,
+          "S1", "300 starving hours, 3 members: HP lost Original " + std::to_string(full.lost) + ", Relaxed (Reduced) " +
+                    std::to_string(relaxed.lost) + ", Easy (Minimal) " + std::to_string(easy.lost) +
+                    ", Off 0 and no \"Starving!\"; the same draws at every severity");
+    // S2. Per draw: Reduced is half (rounded up), Minimal a quarter, never 0
+    // unless off; fire, quakes and the cactus (party_random_damage without
+    // the starvation flag) are never scaled.
+    GameState e = party_of(2), o2 = party_of(2);
+    e.enhanced.difficulty = Difficulty::Easy;
+    for (auto *s2 : {&e, &o2})
+        for (int m = 0; m < 2; ++m) s2->party.characters[m].current_hp = s2->party.characters[m].max_hp = 5000;
+    OriginalRng r1(9), r2(9);
+    for (int i = 0; i < 200; ++i) {
+        party_random_damage(e, rng_source(r1));
+        party_random_damage(o2, rng_source(r2));
+    }
+    GameState rx2 = party_of(1);
+    rx2.enhanced.difficulty = Difficulty::Relaxed;
+    check(e.party.characters[0].current_hp == o2.party.characters[0].current_hp &&
+              e.party.characters[1].current_hp == o2.party.characters[1].current_hp && rules_starvation_damage(rx2, 1) == 1 &&
+              rules_starvation_damage(rx2, 5) == 3 && rules_starvation_damage(rx2, 8) == 4 &&
+              rules_starvation_damage(e, 1) == 1 && rules_starvation_damage(e, 6) == 2 && rules_starvation_damage(e, 8) == 2,
+          "S2", "Reduced: 1/5/8 -> 1/3/4, Minimal: 1/6/8 -> 1/2/2; fire, quake and cactus damage at full strength on Easy");
+}
+
 std::string state_doc(const GameState &g) {
     save::Json doc = save::Json::object();
     save::capture_core(g, TurnState{}, doc);
@@ -381,13 +559,13 @@ void test_persistence(const char *init_gam) {
     // P1. A Custom journey keeps its difficulty and every value.
     GameState g = party_of(2);
     g.enhanced.difficulty = Difficulty::Custom;
-    g.enhanced.custom = {65, 120, 250, 50, 4, 25};
+    g.enhanced.custom = {65, 120, 250, 50, 4, 25, 75, 0};
     GameState back = reload(g);
     const std::string doc = state_doc(g);
     check(back.enhanced.difficulty == Difficulty::Custom && rules_equal(back.enhanced.custom, g.enhanced.custom) &&
               doc.find("\"difficulty\":\"custom\"") != std::string::npos &&
-              doc.find("\"custom\":[65,120,250,50,4,25]") != std::string::npos,
-          "P1", "Custom and its values round-trip: \"difficulty\":\"custom\", \"custom\":[65,120,250,50,4,25]");
+              doc.find("\"custom\":[65,120,250,50,4,25,75,0]") != std::string::npos,
+          "P1", "Custom and its values round-trip: \"difficulty\":\"custom\", \"custom\":[65,120,250,50,4,25,75,0]");
     // P2. Custom values are kept while a preset is chosen (and saved with it);
     // values at Original's are not written at all.
     g.enhanced.difficulty = Difficulty::Easy;
@@ -401,10 +579,10 @@ void test_persistence(const char *init_gam) {
     // P3. Malformed entries: each field keeps Original's value on its own.
     struct Case { const char *what; const char *json; GameplayRules want; };
     const Case cases[] = {
-        {"short", "[65,120]", {65, 120, 100, 100, 1, 100}},
-        {"long", "[50,150,300,25,0,0,77,88,99]", {50, 150, 300, 25, 0, 0}},
-        {"foreign values", "[66,121,201,64,3,51]", kOriginalRules},
-        {"mixed", "[85,\"120\",2.5,-1,10,null]", {85, 100, 100, 100, 10, 100}},
+        {"short", "[65,120]", {65, 120, 100, 100, 1, 100, 100, 100}},
+        {"long", "[50,150,300,25,0,0,25,0,77,88]", {50, 150, 300, 25, 0, 0, 25, 0}},
+        {"foreign values", "[66,121,201,64,3,51,0,75]", kOriginalRules},
+        {"mixed", "[85,\"120\",2.5,-1,10,null,[65],50]", {85, 100, 100, 100, 10, 100, 100, 50}},
         {"not an array", "{\"0\":65}", kOriginalRules},
         {"a number", "7", kOriginalRules},
     };
@@ -444,7 +622,7 @@ void test_persistence(const char *init_gam) {
     };
     GameState custom = base;
     custom.enhanced.difficulty = Difficulty::Custom;
-    custom.enhanced.custom = {50, 150, 300, 25, 0, 0};
+    custom.enhanced.custom = {50, 150, 300, 25, 0, 0, 25, 0};
     save::Gam gam_custom{}, gam_plain{};
     std::string side_custom, side_plain;
     const bool exported = loaded && export_one(custom, gam_custom, side_custom) && export_one(base, gam_plain, side_plain);
@@ -464,6 +642,7 @@ int main(int argc, char **argv) {
     const char *init_gam = argc > 1 ? argv[1] : "game/assets/init.gam";
     test_custom();
     test_presets();
+    test_dungeon_and_starvation();
     test_persistence(init_gam);
     std::printf("\nA4-ENH2 rules: %d checks, %d failures\n", checks, failures);
     return failures ? 1 : 0;

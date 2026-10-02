@@ -7,10 +7,13 @@
 //   U  the Difficulty page (four rows, the selected row's actual values) and
 //      the Custom page: Enter on Custom, left/right edits applied at once,
 //      Back, switching presets and back to Custom, the values in the save,
-//      Alt+L, and a "power cycle" (a fresh runtime over the same card)
+//      Alt+L, and a "power cycle" (a fresh runtime over the same card); in
+//      play: Custom Starvation Off on a starving walk, the dungeon wanderer's
+//      share over real entries into Deceit
 #include "../main/alpha_runtime.h"
 #include "../main/tdeck_board.h"
 #include "esp_timer.h"
+#include "openu5/quest.h"
 #include "openu5/save_json.h"
 
 #include <cstdio>
@@ -36,6 +39,7 @@ bool check(bool good, const char *id, const std::string &label) {
     return good;
 }
 const tdeck::AlphaResourceOwners *pack = nullptr;
+size_t dungeon_count = 0;
 constexpr uint8_t kCastle = 17;
 
 struct Run {
@@ -55,6 +59,8 @@ struct Run {
         f.location_x = pack->location_x;
         f.location_y = pack->location_y;
         f.location_count = pack->location_count;
+        f.dungeons = pack->dungeons;
+        f.dungeon_count = dungeon_count;
         f.render_pixels = true;
         f.indexed_test_tiles = true;
         rt->attach_host_test_fixture(f);
@@ -149,12 +155,14 @@ void test_difficulty_page() {
     const bool original = h.line(4) == "  Enemy damage: 100%" && h.line(5) == "  Player damage: 100%" &&
                           h.line(6) == "  XP rate: 1.0x" && h.line(7) == "  Overworld encounters: 100%" &&
                           h.line(8) == "  Poison: Original" && h.line(9) == "  Hunger: Original" &&
+                          h.line(10) == "  Dungeon encounters: 100%" && h.line(11) == "  Starvation: Original" &&
                           h.footer() == "The 1988 rules, unchanged";
     h.ball(RawInputKind::TrackballDown, 2);
     std::string easy;
     for (int i = 4; i < int(h.menu().line_count); ++i) easy += h.line(i) + "\n";
-    check(rows && original && h.menu().selected_line == 2 && h.line(4) == "  Enemy damage: 65%" &&
-              h.line(6) == "  XP rate: 2.0x" && h.line(8) == "  Poison: Light" && h.line(9) == "  Hunger: 50%" &&
+    check(rows && original && h.menu().selected_line == 2 && h.line(4) == "  Enemy damage: 65%" && h.line(5) == "  Player damage: 120%" &&
+              h.line(6) == "  XP rate: 2.0x" && h.line(7) == "  Overworld encounters: 65%" && h.line(8) == "  Poison: Light" &&
+              h.line(9) == "  Hunger: 50%" && h.line(10) == "  Dungeon encounters: 65%" && h.line(11) == "  Starvation: Minimal" &&
               h.footer() == "Enter: use these rules",
           "U1", "Difficulty: Original / Relaxed / Easy / Custom, and under them the selected row's values; Easy shows:\n" + easy);
     // U2. Enter on Custom: the journey is Custom (said once), its page opens
@@ -182,10 +190,15 @@ void test_difficulty_page() {
     h.ball(RawInputKind::TrackballLeft, 2);                                    // poison Original -> Reduced -> Light
     h.ball(RawInputKind::TrackballDown);
     h.ball(RawInputKind::TrackballLeft, 9);                                    // hunger held at Off
-    const GameplayRules want{75, 120, 300, 65, 10, 0};
+    h.ball(RawInputKind::TrackballDown);
+    h.ball(RawInputKind::TrackballLeft, 9);                                    // dungeon encounters held at 25 %
+    h.ball(RawInputKind::TrackballDown);
+    h.ball(RawInputKind::TrackballLeft);                                       // starvation Original -> Reduced
+    const GameplayRules want{75, 120, 300, 65, 10, 0, 25, 50};
     check(rules_equal(h.g().enhanced.custom, want) && h.line(0) == "Enemy damage: 75%" && h.line(1) == "Player damage: 120%" &&
               h.line(2) == "XP rate: 3.0x" && h.line(3) == "Overworld encounters: 65%" && h.line(4) == "Poison: Light" &&
-              h.line(5) == "Hunger: Off" && h.count_since("Difficulty") == 0 && h.g().enhanced.cheats_used == 0,
+              h.line(5) == "Hunger: Off" && h.line(6) == "Dungeon encounters: 25%" && h.line(7) == "Starvation: Reduced" &&
+              h.count_since("Difficulty") == 0 && h.g().enhanced.cheats_used == 0,
           "U3", "left / right change each value at once (held at the ends), shown on its row; no transcript line, no cheat mark");
     // U4. In play at once: Hunger Off eats nothing across a meal.
     h.key('m', true);
@@ -222,18 +235,80 @@ void test_difficulty_page() {
     const bool side = newest_sidecar();
     const auto &e = g_side["enhanced"];
     const bool keys = e["difficulty"].string == save::Json("custom").string && e["custom"].values.size() == size_t(RuleField::Count) &&
-                      e["custom"].at(0).integer() == 75 && e["custom"].at(5).integer() == 0 && !e.has("toggles");
+                      e["custom"].at(0).integer() == 75 && e["custom"].at(5).integer() == 0 &&
+                      e["custom"].at(6).integer() == 25 && e["custom"].at(7).integer() == 50 && !e.has("toggles");
     h.g().enhanced.difficulty = Difficulty::Original;
     h.g().enhanced.custom = kOriginalRules;
     h.key('l', true);
     check(side && keys && h.g().enhanced.difficulty == Difficulty::Custom && rules_equal(h.g().enhanced.custom, want), "U6",
-          "Alt+S writes \"difficulty\":\"custom\" and the six values; Alt+L brings them back");
+          "Alt+S writes \"difficulty\":\"custom\" and the eight values; Alt+L brings them back");
     // U7. Power cycle: a fresh runtime over the same card, then the load.
     Run cold(false);
     const bool fresh = cold.g().enhanced.difficulty == Difficulty::Original;
     cold.key('l', true);
     check(fresh && cold.g().enhanced.difficulty == Difficulty::Custom && rules_equal(cold.g().enhanced.custom, want), "U7",
           "after a power cycle (a fresh runtime, the same card) the load restores Custom and its values");
+}
+// The device's own dungeon entry: stand on Deceit's entrance (its Word of
+// Passage granted) and (E)nter; (K)limb at the entry ladder leaves again.
+bool enter_deceit(Run &h) {
+    h.g().position.map = {0, 0};
+    h.g().position.xy = {pack->location_x[33 - 1], pack->location_y[33 - 1]};
+    set_quest_flag(h.g().quest, QuestFlag::Word33);
+    h.key('e');
+    h.frames(20);
+    return h.rt->dungeon_state().active;
+}
+
+void test_dungeon_and_starvation() {
+    // U8. Starvation in play: food 0, two hours of walking on the overworld.
+    // Original says "Starving!" and takes HP; Custom Starvation Off neither.
+    struct Walk { int lost = 0, lines = 0; };
+    auto walk = [](bool off) {
+        Walk w;
+        Run h;
+        h.g().food = 0;
+        h.g().time.hour = 9;
+        h.g().time.minute = 50;
+        if (off) {
+            h.g().enhanced.difficulty = Difficulty::Custom;
+            h.g().enhanced.custom.starvation_pct = 0;
+        }
+        const int hp = h.g().party.characters[0].current_hp;
+        h.set_mark();
+        for (int i = 0; i < 70; ++i) h.ball(i % 2 ? RawInputKind::TrackballLeft : RawInputKind::TrackballRight);
+        w.lost = hp - h.g().party.characters[0].current_hp;
+        w.lines = h.count_since("Starving");
+        return w;
+    };
+    const Walk orig = walk(false), off = walk(true);
+    check(orig.lost > 0 && orig.lines >= 2 && off.lost == 0 && off.lines == 0, "U8",
+          "starving across two hours on the device: Original " + std::to_string(orig.lines) + " \"Starving!\", " +
+              std::to_string(orig.lost) + " HP; Custom Starvation Off: none, 0 HP");
+    // U9. Dungeon wanderers in play: 24 real entries into Deceit (each a
+    // re-arm), a few turns between them. Original places one whenever its
+    // eight tries find a free cell on Deceit's first floor (most visits);
+    // Custom 25 % keeps about a quarter of those.
+    auto entries = [](uint16_t pct) {
+        Run h;
+        h.g().enhanced.difficulty = pct == 100 ? Difficulty::Original : Difficulty::Custom;
+        h.g().enhanced.custom.dungeon_encounter_pct = pct;
+        int placed = 0, entered = 0;
+        for (int i = 0; i < 24; ++i) {
+            h.g().turns_since_start += 7; // a few overworld turns between visits
+            if (!enter_deceit(h)) continue;
+            ++entered;
+            placed += h.rt->dungeon_state().wanderer.type != 255;
+            h.key('k'); // the entry ladder leads back up
+            h.frames(20);
+        }
+        return std::make_pair(entered, placed);
+    };
+    const auto o = entries(100), c = entries(25);
+    check(o.first == 24 && c.first == 24 && o.second >= 10 && c.second < o.second / 2, "U9",
+          "24 entries into Deceit (" + std::to_string(o.first) + " / " + std::to_string(c.first) +
+              " entered): Original places the wanderer " + std::to_string(o.second) + " times, Custom 25 % " +
+              std::to_string(c.second));
 }
 } // namespace
 
@@ -245,8 +320,10 @@ int main(int argc, char **argv) {
     static tdeck::AlphaResourceOwners owners{};
     if (source.load(owners, report_out) != ESP_OK) return 2;
     pack = &owners;
+    dungeon_count = report_out.dungeon_count;
 
     test_difficulty_page();
+    test_dungeon_and_starvation();
 
     std::printf("\nA4-ENH2 runtime: %d checks, %d failures\n", checks, failures);
     return failures ? 1 : 0;

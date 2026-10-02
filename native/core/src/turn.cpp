@@ -68,10 +68,12 @@ void apply_damage(GameState &g, int32_t i, int32_t amount) {
     ch.current_hp = uint16_t(std::max<int64_t>(0, hp));
     if (hp <= 0) { ch.status = 'D'; if (g.party.active_character == i) g.party.active_character = 255; }
 }
-void party_random_damage(GameState &g, Rand rand) {
+void party_random_damage(GameState &g, Rand rand, bool starvation) {
     for (int32_t i = 0; i < g.party.party_size && i < 6; ++i) {
         if (i < g.party.character_count && g.party.characters[i].status == 'D') continue;
-        apply_damage(g, i, rand(1,8)); // Missing short-roster entries still consume a draw in TS.
+        const int32_t d = rand(1,8); // Missing short-roster entries still consume a draw in TS.
+        // A4-ENH2: starvation's share of the draw (all of it on Original); the draw is always made.
+        if (const int32_t v = starvation ? rules_starvation_damage(g,d) : d) apply_damage(g, i, v);
     }
 }
 static void housekeeping_into(GameState &g, TurnState &s, Rand rand, TurnResult &out) {
@@ -85,7 +87,8 @@ static void housekeeping_into(GameState &g, TurnState &s, Rand rand, TurnResult 
         ++eaters;
     }
     if (g.time.hour != s.prev_hour) {
-        if (g.food == 0) { message(out,TurnMessage::Starving); party_random_damage(g,rand); }
+        // A4-ENH2: starvation's severity (in full on Original); off, it says nothing either.
+        if (g.food == 0) { if (rules_starvation_damage(g,1)) message(out,TurnMessage::Starving); party_random_damage(g,rand,true); }
         else if ((g.time.hour == 6 || g.time.hour == 12 || g.time.hour == 18) && rules_meal_due(g)) // A4-ENH1 hunger
             g.food = uint16_t(std::max<int32_t>(0,int32_t(g.food)-eaters));
         s.prev_hour = g.time.hour;

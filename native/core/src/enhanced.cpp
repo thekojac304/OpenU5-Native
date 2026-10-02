@@ -18,6 +18,7 @@ bool enhanced_is_default(const EnhancedState &e) {
 namespace {
 constexpr const char *kPoisonNames[] = {"Off", "Light", "Reduced", "Original"};
 constexpr const char *kHungerNames[] = {"Off", "25%", "50%", "75%", "Original"};
+constexpr const char *kStarvationNames[] = {"Off", "Minimal", "Reduced", "Original"};
 } // namespace
 const RuleChoice kRuleChoices[] = {
     {"Enemy damage", &GameplayRules::incoming_damage_pct, nullptr, false, 5, {50, 65, 75, 85, 100}},
@@ -26,6 +27,8 @@ const RuleChoice kRuleChoices[] = {
     {"Overworld encounters", &GameplayRules::encounter_pct, nullptr, false, 6, {25, 50, 65, 75, 90, 100}},
     {"Poison", &GameplayRules::poison_interval, kPoisonNames, false, 4, {0, 10, 4, 1}},
     {"Hunger", &GameplayRules::hunger_pct, kHungerNames, false, 5, {0, 25, 50, 75, 100}},
+    {"Dungeon encounters", &GameplayRules::dungeon_encounter_pct, nullptr, false, 6, {25, 50, 65, 75, 90, 100}},
+    {"Starvation", &GameplayRules::starvation_pct, kStarvationNames, false, 4, {0, 25, 50, 100}},
 };
 static_assert(sizeof(kRuleChoices) / sizeof(kRuleChoices[0]) == size_t(RuleField::Count), "one choice per field");
 
@@ -71,10 +74,11 @@ namespace {
 // kOriginalRules, the identity (a4_enh1_rules R1, the a4_enh1/a4_enh2
 // preservation goldens).
 constexpr GameplayRules kGameplayRules[] = {
-    // incoming, outgoing, xp, overworld encounters, poison every N turns, meals
-    kOriginalRules,               // Original: the recreated 1988 rules
-    {85, 100, 150, 90, 4, 75},    // Relaxed
-    {65, 120, 200, 65, 10, 50},   // Easy (A4-ENH2: hits 120 %, encounters 65 %)
+    // incoming, outgoing, xp, overworld encounters, poison every N turns, meals,
+    // dungeon wanderers, starvation
+    kOriginalRules,                       // Original: the recreated 1988 rules
+    {85, 100, 150, 90, 4, 75, 90, 50},    // Relaxed
+    {65, 120, 200, 65, 10, 50, 65, 25},   // Easy (A4-ENH2: hits 120 %, encounters 65 %)
 };
 static_assert(sizeof(kGameplayRules) / sizeof(kGameplayRules[0]) == size_t(Difficulty::Custom), "one row per preset");
 
@@ -145,18 +149,35 @@ bool rules_meal_due(const GameState &g) {
     return (meal + 1) * p / 100 > meal * p / 100;
 }
 
-bool rules_encounter_allowed(const GameState &g) {
-    // A fixed hash of the turn number: no draw from the game's RNG, the same
-    // answer for the same turn after a load.
-    const uint16_t p = rule(g, &GameplayRules::encounter_pct);
-    if (p >= 100) return true;
-    uint32_t x = uint32_t(uint64_t(g.turns_since_start));
+namespace {
+// A fixed hash of a saved counter: no draw from the game's RNG, the same
+// answer for the same turn after a load. True for `pct` % of the keys.
+bool share_allows(uint32_t x, uint16_t pct) {
+    if (pct >= 100) return true;
     x ^= x >> 16;
     x *= 0x7feb352dU;
     x ^= x >> 15;
     x *= 0x846ca68bU;
     x ^= x >> 16;
-    return x % 100U < p;
+    return x % 100U < pct;
+}
+} // namespace
+
+bool rules_encounter_allowed(const GameState &g) {
+    return share_allows(uint32_t(uint64_t(g.turns_since_start)), rule(g, &GameplayRules::encounter_pct));
+}
+
+bool rules_wanderer_allowed(const GameState &g, int floor) {
+    // Its own key: a combat or a dungeon entry does not advance the turn, so
+    // the re-arm after a fight shares the turn of the ambush that started it,
+    // and the entry the turn of the last overworld step (hence the salt).
+    const uint32_t key = (uint32_t(uint64_t(g.turns_since_start)) * 8U + uint32_t(floor & 7)) ^ 0x9e3779b9U;
+    return share_allows(key, rule(g, &GameplayRules::dungeon_encounter_pct));
+}
+
+int32_t rules_starvation_damage(const GameState &g, int32_t d) {
+    const uint16_t p = rule(g, &GameplayRules::starvation_pct);
+    return p ? scale(d, p) : 0; // scale() keeps a positive value at least 1: Off needs its own 0
 }
 
 bool party_damage_blocked(const GameState &g) { return g.enhanced.god_mode; }

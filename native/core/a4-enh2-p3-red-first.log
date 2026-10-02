@@ -1,0 +1,15 @@
+A4-ENH2 commit 3 RED-first: the two call sites neutralised (production otherwise as committed)
+  native/core/src/dungeon.cpp: if (!rules_wanderer_allowed(g, d.pos.floor)) make_dormant(w);  ->  if (false) make_dormant(w);
+  native/core/src/turn.cpp: party_random_damage(g,rand,true); }  ->  party_random_damage(g,rand,false); }
+  native/core/src/turn.cpp: if (rules_starvation_damage(g,1)) message(out,TurnMessage::Starving);  ->  message(out,TurnMessage::Starving);
+build exit=0
+  RED W1 4,000 re-arms place 3998 / 3998 / 3998 / 3998 wanderers (Original / Relaxed 90 % / Easy 65 % / Custom 25 %), every one after the same 1988 draws
+  RED W2 a refused re-arm leaves the dormant record (type 255, bank 0, nowhere); 2,000 ticks: no walk, no draw, no ambush
+  RED S1 300 starving hours, 3 members: HP lost Original 4001, Relaxed (Reduced) 4001, Easy (Minimal) 4001, Off 0 and no "Starving!"; the same draws at every severity
+  A4-ENH2 rules: 25 checks, 3 failures
+  a4_enh2_rules exit=1
+  RED U8 starving across two hours on the device: Original 3 "Starving!", 12 HP; Custom Starvation Off: none, 0 HP
+  RED U9 24 entries into Deceit (24 / 24 entered): Original places the wanderer 15 times, Custom 25 % 15
+  A4-ENH2 runtime: 9 checks, 2 failures
+  a4_enh2_runtime exit=1
+restored and touched
