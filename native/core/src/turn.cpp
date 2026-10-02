@@ -62,6 +62,7 @@ void advance_clock(GameState &g, TurnState &s, int32_t minutes, const Rand *rand
 }
 void apply_damage(GameState &g, int32_t i, int32_t amount) {
     if (i < 0 || i >= g.party.character_count) return;
+    if (party_damage_blocked(g)) return; // A4-ENH1 God Mode (the draws that sized it already happened)
     auto &ch = g.party.characters[i];
     const int64_t hp = int64_t(ch.current_hp) - amount;
     ch.current_hp = uint16_t(std::max<int64_t>(0, hp));

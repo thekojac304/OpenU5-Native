@@ -50,7 +50,11 @@ constexpr const char *extras[] = {
     "openDoors",      "mapOverrides",       "skullTreeFoundDay", "reagentPatchFoundDay", "overworldEnemies",
     "worldObjects",   "lightSpellMins",     "timeSpell",         "timeSpellTurns",       "wind",
     "sailDir",        "windDriftCtr",       "shipHull",          "shipSkiffs",           "hmsCapeToggle",
-    "shadowlordLocs", "shadowlordSummoned", "shadowlordDoomBits", "dungeon"};
+    "shadowlordLocs", "shadowlordSummoned", "shadowlordDoomBits", "dungeon",
+    // Alpha 4 A4-ENH1 (targets/tdeck/ALPHA4_UI.md section 10): native-only
+    // Enhanced state (difficulty, God Mode, cheats used). Present only when
+    // not at its defaults; the reference port never writes it.
+    "enhanced"};
 int n(const J &j) { return int(j.integer()); }
 bool eq(const J &j, const char *s) { return j.kind == J::String && j.string == J(s).string; }
 J arr(const uint8_t *b, size_t count) {

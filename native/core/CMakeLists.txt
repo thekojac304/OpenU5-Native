@@ -2117,6 +2117,13 @@ if(BUILD_TESTING)
   target_link_libraries(a4_enh1_preservation PRIVATE openu5_core)
   target_compile_features(a4_enh1_preservation PRIVATE cxx_std_17)
   add_test(NAME a4_enh1_preservation COMMAND a4_enh1_preservation)
+  # The framework itself: cheats, God Mode, difficulty presets and hooks, and
+  # their persistence through the real codec and the sidecar whitelist.
+  add_executable(a4_enh1_rules tests/a4_enh1_rules_test.cpp)
+  target_link_libraries(a4_enh1_rules PRIVATE openu5_core)
+  target_compile_features(a4_enh1_rules PRIVATE cxx_std_17)
+  add_test(NAME a4_enh1_rules COMMAND a4_enh1_rules
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../game/assets/init.gam")
   # The device half of the golden: the REAL AlphaRuntime (A3-HF4's source set)
   # walking the night overworld, its fights, Alt+S / Alt+L over the memory card.
   add_executable(a4_enh1_preservation_runtime

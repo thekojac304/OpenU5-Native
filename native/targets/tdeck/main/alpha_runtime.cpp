@@ -1906,7 +1906,7 @@ bool AlphaRuntime::handle_input_event(const RawInputEvent&raw){service_combat();
         dirty_=true;dirty_reason_="camp-key-wait";return true;
     }
     if(action.kind==openu5::UiActionKind::SystemMenu){
-        if(system_menu_.active()){settings_=system_menu_.settings();apply_device_settings();settings_store_.save(settings_);system_menu_.close();}else{openu5::FrontendSaveCatalog catalog{};save_.inspect_catalog(catalog);system_menu_.open(settings_,catalog,save_.last_slot());}
+        if(system_menu_.active()){settings_=system_menu_.settings();apply_device_settings();settings_store_.save(settings_);system_menu_.close();}else{openu5::FrontendSaveCatalog catalog{};save_.inspect_catalog(catalog);system_menu_.open(settings_,catalog,save_.last_slot());system_menu_.set_enhanced(game_.enhanced);}
         ESP_LOGI(kTag,"SYSTEM_MENU action=toggle open=%d gameplay_command=none",system_menu_.active());dirty_=true;dirty_reason_="system-menu";return true;
     }
     if(system_menu_.active()){
@@ -3383,6 +3383,16 @@ void AlphaRuntime::service_system_menu_intent(){
 #endif
         ESP_LOGI(kTag,"DEBUG_OPEN source=system-menu opened=%d gameplay_command=none",ok);
     }
+    else if(intent.kind==openu5::SystemMenuIntentKind::Cheat){
+        // Alpha 4 A4-ENH1 (ALPHA4_UI.md section 10): every player cheat goes
+        // through apply_cheat(); the menu stays open on its row with the
+        // result in the footer, and an applied one says so in the transcript.
+        const auto r=openu5::apply_cheat(game_,intent.cheat,intent.amount,context_.combat);
+        system_menu_.set_enhanced(game_.enhanced);system_menu_.set_notice(r.text);
+        if(r.applied)ui_->append(openu5::UiTextChannel::System,r.text);
+        ESP_LOGI(kTag,"CHEAT kind=%s amount=%ld applied=%d god_mode=%d cheats_used=0x%lx combat=%d text=\"%s\"",openu5::cheat_name(intent.cheat),
+                 (long)intent.amount,r.applied,game_.enhanced.god_mode,(unsigned long)game_.enhanced.cheats_used,context_.combat,r.text);
+        dirty_=true;dirty_reason_="cheat";}
     else if(intent.kind==openu5::SystemMenuIntentKind::ReturnToTitle){system_menu_.close();
         // A4-END1: the device's way out of ENDGAME.OVL (DOS needed a reset).
         stop_endgame();

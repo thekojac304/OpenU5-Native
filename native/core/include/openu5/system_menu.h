@@ -1,10 +1,13 @@
 #pragma once
+#include "enhanced.h"
 #include "frontend.h"
 namespace openu5 {
 // A4-ENH1: OpenDeveloper is kept (no value renumbers) but nothing produces it:
 // the menu has no Developer row; Alt+D opens the tools on every screen.
-enum class SystemMenuIntentKind:uint8_t{None,Resume,Save,LoadLatest,LoadSlot,PersistSettings,OpenDeveloper,ReturnToTitle};
-struct SystemMenuIntent{SystemMenuIntentKind kind=SystemMenuIntentKind::None;int8_t slot=-1;FrontendSettings settings{};};
+// A4-ENH1 appends Cheat: `cheat` (and for Add Gold `amount`) is what the
+// runtime hands to apply_cheat() (enhanced.h).
+enum class SystemMenuIntentKind:uint8_t{None,Resume,Save,LoadLatest,LoadSlot,PersistSettings,OpenDeveloper,ReturnToTitle,Cheat};
+struct SystemMenuIntent{SystemMenuIntentKind kind=SystemMenuIntentKind::None;int8_t slot=-1;FrontendSettings settings{};CheatKind cheat=CheatKind::Count;int32_t amount=0;};
 class SystemMenuSession{
 public:
  // A4-SAVE2: `journey_slot` is the slot the live game was loaded from or
@@ -23,11 +26,16 @@ public:
  // Alpha 4 UI Batch 2: a one-line result in the footer (after Save Game),
  // until the next key the menu handles.
  void set_notice(const char*text);
+ // A4-ENH1: the live journey's Enhanced state, which the Cheats page shows
+ // (the runtime sets it when the menu opens and after each cheat).
+ void set_enhanced(const EnhancedState&e){enhanced_=e;}
+ // The root's rows: Cheats sits after Settings, Return to Title stays last.
+ enum RootRow:uint8_t{kResumeRow,kSaveRow,kLoadRow,kSettingsPageRow,kCheatsRow,kReturnToTitleRow,kRootRowCount};
  // A3-01: the Settings page's rows, in order. A4-ENH1 removed the last one,
  // "Developer: Visible/Hidden".
  enum SettingsRow:uint8_t{kBrightnessRow,kMovementRow,kTrackballRow,kTextSizeRow,kSfxVolumeRow,kMusicVolumeRow,kSettingsRowCount};
 private:
  // A4-SAVE2: Save (Slots 1-3) and Confirm ("Overwrite Slot N?", No first).
- enum class Page:uint8_t{Root,Load,Settings,Save,Confirm};bool active_=false;Page page_=Page::Root;uint8_t cursor_=0,settings_cursor_=0;FrontendSettings settings_{};MusicAvailability music_availability_=MusicAvailability::NoAudioPack;FrontendSaveCatalog catalog_{};int8_t journey_slot_=-1,confirm_slot_=-1;uint8_t slot_cursor(bool saving)const;char notice_[64]{};SystemMenuIntent pending_{};bool sfx_muted_=false,music_muted_=false;uint8_t volume_edits_=0;
+ enum class Page:uint8_t{Root,Load,Settings,Save,Confirm,Cheats};EnhancedState enhanced_{};uint8_t gold_step_=1;bool active_=false;Page page_=Page::Root;uint8_t cursor_=0,settings_cursor_=0;FrontendSettings settings_{};MusicAvailability music_availability_=MusicAvailability::NoAudioPack;FrontendSaveCatalog catalog_{};int8_t journey_slot_=-1,confirm_slot_=-1;uint8_t slot_cursor(bool saving)const;char notice_[64]{};SystemMenuIntent pending_{};bool sfx_muted_=false,music_muted_=false;uint8_t volume_edits_=0;
 };
 }

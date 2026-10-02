@@ -2,6 +2,7 @@
 #include "time.h"
 #include "rng.h"
 #include "quest_state.h"
+#include "enhanced.h"
 namespace openu5 {
 constexpr uint8_t kMaxParty = 6, kRosterCapacity = 16;
 struct CharacterState {
@@ -51,6 +52,9 @@ struct GameState : InitialState {
     uint8_t version = 1;
     TransportMode transport = TransportMode::Foot;
     OriginalRng rng{}; // Game.liveRng lives beside state in TS; explicit here for replay.
+    // Alpha 4 A4-ENH1: per-journey Enhanced state (enhanced.h). Not in the
+    // .GAM; in the save under its own key, only when not at its defaults.
+    EnhancedState enhanced{};
 };
 inline void extend_equipment(GameState &g, int32_t index) {
     if (index >= 0 && index < 256 && index >= g.equipment_count)

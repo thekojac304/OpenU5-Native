@@ -9,10 +9,14 @@
 //   T  Developer > Diagnostics > "Trackball stats (live)"
 //   S  the trackball speed levels through the device's own Settings row
 //   D  the Developer menu: no ordinary menu row, Alt+D everywhere
+//   C  the Cheats page: each cheat through the device's menu, God Mode in
+//      play, the save's sidecar, Alt+L, and the refusal in combat
 #include "../main/alpha_runtime.h"
 #include "../main/tdeck_board.h"
 #include "esp_timer.h"
 #include "openu5/frontend_settings.h"
+#include "openu5/outdoor.h"
+#include "openu5/save_json.h"
 
 #include <cstdio>
 #include <cstring>
@@ -24,6 +28,7 @@ using tdeck::RawInputKind;
 
 namespace tdeck {
 void host_memory_save_forget_for_test();
+bool host_memory_save_edit_for_test(bool newest, void (*edit)(openu5::save::Json &game_state));
 std::string &a3_host_settings_text();
 bool &a3_host_settings_enabled();
 } // namespace tdeck
@@ -360,6 +365,124 @@ void test_speed() {
     tdeck::a3_host_settings_enabled() = false;
     tdeck::a3_host_settings_text().clear();
 }
+// The newest save's sidecar gameState, as written to the (memory) card.
+openu5::save::Json g_side;
+bool newest_sidecar() {
+    g_side = openu5::save::Json{};
+    return tdeck::host_memory_save_edit_for_test(true, [](openu5::save::Json &gs) { g_side = gs; });
+}
+
+/** System Menu > Cheats (row 4), then `row` Downs. */
+void open_cheats(Run &h, int row = 0) {
+    h.key('m', true);
+    for (int i = 0; i < 4; ++i) h.ball(RawInputKind::TrackballDown);
+    h.key('\r');
+    for (int i = 0; i < row; ++i) h.ball(RawInputKind::TrackballDown);
+}
+
+void test_cheats() {
+    Run h;
+    auto &m = h.g().party.characters[0];
+    h.key('m', true);
+    const auto root = h.rt->system_menu_view();
+    check(root.line_count == 7 - 1 && std::string(root.lines[4]) == "Cheats" &&
+              std::string(root.lines[root.line_count - 1]) == "Return to Title",
+          "C1", "the System Menu root: Cheats after Settings, Return to Title still last");
+    h.key('m', true);
+    open_cheats(h);
+    auto v = h.rt->system_menu_view();
+    check(std::string(v.title) == "Cheats" && v.line_count == 5 && std::string(v.lines[0]) == "God Mode: Off" &&
+              std::string(v.lines[1]) == "Heal Party" && std::string(v.lines[2]) == "Cure Party" &&
+              std::string(v.lines[3]) == "Add Gold: +100" && std::string(v.lines[4]) == "Max Gold" &&
+              std::string(v.subtitle) == "Using one marks this journey's save" &&
+              std::string(v.footer) == "Party members take no damage",
+          "C2", "the Cheats page: five rows, the help line, and a fresh journey not yet marked");
+    h.set_mark();
+    h.key('\r');
+    v = h.rt->system_menu_view();
+    check(h.g().enhanced.god_mode && std::string(v.lines[0]) == "God Mode: On" && std::string(v.footer) == "God Mode: ON" &&
+              std::string(v.subtitle) == "This journey has used cheats" && h.count_since("God Mode: ON") == 1 &&
+              h.rt->system_menu_open(),
+          "C3", "Enter: God Mode on, said in the footer and the transcript; the page stays open and is now marked");
+    // Add Gold: right picks +1000, Enter adds it; Max Gold.
+    h.ball(RawInputKind::TrackballDown);
+    h.ball(RawInputKind::TrackballDown);
+    h.ball(RawInputKind::TrackballDown);
+    h.ball(RawInputKind::TrackballRight);
+    const std::string amount = h.rt->system_menu_view().lines[3];
+    h.key('\r');
+    const int after_add = h.g().gold;
+    h.ball(RawInputKind::TrackballDown);
+    h.key('\r');
+    check(amount == "Add Gold: +1000" && after_add == 1100 && h.g().gold == 9999, "C4",
+          "Add Gold +1000 from 100 = 1100; Max Gold = 9999");
+    // Heal and Cure through the menu.
+    m.current_hp = 50;
+    h.g().party.characters[0].status = 'P';
+    h.ball(RawInputKind::TrackballUp);
+    h.ball(RawInputKind::TrackballUp);
+    h.ball(RawInputKind::TrackballUp);
+    h.key('\r'); // Heal Party
+    const int healed = m.current_hp;
+    h.ball(RawInputKind::TrackballDown);
+    h.key('\r'); // Cure Party
+    check(healed == 300 && m.status == 'G', "C5", "Heal Party and Cure Party: HP 50 -> 300, poison cured");
+    h.key('\b'); // back to the root, on Cheats
+    check(h.rt->system_menu_view().selected_line == 4, "C6", "Back returns to the root with Cheats selected");
+    h.key('m', true);
+    // God Mode in play: a poisoned walk costs nothing.
+    m.status = 'P';
+    const int hp = m.current_hp;
+    for (int i = 0; i < 6; ++i) h.ball(i % 2 ? RawInputKind::TrackballLeft : RawInputKind::TrackballRight);
+    check(m.current_hp == hp && m.status == 'P', "C7", "God Mode: six poisoned steps, no HP lost");
+    // Save: the sidecar carries it; turn God Mode off; the load brings it back.
+    const uint32_t used = h.g().enhanced.cheats_used;
+    h.key('s', true);
+    const bool side = newest_sidecar();
+    const auto &e = g_side["enhanced"];
+    check(side && e["godMode"].truth() && e["cheatsUsed"].integer() == int64_t(used) &&
+              used == (openu5::cheat_bit(openu5::CheatKind::GodMode) | openu5::cheat_bit(openu5::CheatKind::HealParty) |
+                       openu5::cheat_bit(openu5::CheatKind::CureParty) | openu5::cheat_bit(openu5::CheatKind::AddGold) |
+                       openu5::cheat_bit(openu5::CheatKind::MaxGold)),
+          "C8", "Alt+S: the save's sidecar holds \"enhanced\" {godMode: true, cheatsUsed: all five}");
+    open_cheats(h);
+    h.key('\r');
+    const bool off = !h.g().enhanced.god_mode;
+    h.key('m', true);
+    h.key('l', true);
+    check(off && h.g().enhanced.god_mode && h.g().enhanced.cheats_used == used, "C9",
+          "God Mode off, then Alt+L: the saved journey's God Mode and cheats-used bits come back");
+    // A journey that never cheated saves no trace of any of it.
+    Run plain;
+    plain.key('s', true);
+    check(newest_sidecar() && !g_side.has("enhanced"), "C10", "a journey with no cheat: no \"enhanced\" key in its save");
+    // In combat Heal and Cure are refused (the arena holds its own HP copies).
+    {
+        auto &ctx = plain.rt->command_context_for_test();
+        int tile = -1;
+        for (size_t i = 0; i < ctx.outdoor->resources->enemy_count; ++i)
+            if (const auto *d = ctx.outdoor->resources->enemies[i]; d && d->index == 41) tile = d->tile;
+        ctx.outdoor->enemies.clear();
+        openu5::OutdoorEnemy troll{};
+        troll.definition = 41;
+        troll.tile = tile;
+        troll.x = plain.g().position.xy.x + 1;
+        troll.y = plain.g().position.xy.y;
+        ctx.outdoor->enemies.push_back(troll);
+        plain.key(' ');
+        plain.frames(300);
+        const bool fighting = ctx.combat && plain.rt->combat_state().initialized;
+        plain.g().party.characters[0].current_hp = 40;
+        open_cheats(plain, 1);
+        plain.key('\r');
+        const std::string footer = plain.rt->system_menu_view().footer;
+        check(fighting && footer == "Not during combat" && plain.g().party.characters[0].current_hp == 40 &&
+                  plain.g().enhanced.cheats_used == 0,
+              "C11", "in combat Heal Party is refused (\"" + footer + "\"), nothing changes, nothing is marked");
+        plain.key('m', true);
+    }
+}
+
 bool lists(const openu5::FrontendView &v, const char *needle) {
     for (size_t i = 0; i < v.line_count; ++i)
         if (v.lines[i] && std::strstr(v.lines[i], needle)) return true;
@@ -421,6 +544,7 @@ int main(int argc, char **argv) {
     test_report();
     test_speed();
     test_developer();
+    test_cheats();
 
     std::printf("\nA4-ENH1 runtime: %d checks, %d failures\n", checks, failures);
     return failures ? 1 : 0;

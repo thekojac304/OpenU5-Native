@@ -1,0 +1,13 @@
+A4-ENH1 phase 4: A4-UI1 golden re-record proof
+before: phase 3 tree (commit cf669d36) --dump; after: phase 4 tree --dump
+python tools/a4_enh1_png_diff.py <before> <after>:
+dungeon-bands        identical
+gameplay             identical
+main-menu            identical
+move-blackthorn      identical
+move-lord-british    identical
+settings-large       identical
+settings             identical
+system-menu            314 px differ, x 20..108 y 68..85
+cause: the System Menu root gains the row 'Cheats' after 'Settings'; 'Return to Title' moves one row down (y 68..85 = those two rows)
+new golden: system-menu 0x5effadab687f8e23

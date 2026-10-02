@@ -10,6 +10,7 @@ ChestTrap chest_trap(GameState &g, int loc, int opener, Rand rand) {
     ChestTrap r{names[type], 0};
     int count = std::min<int>(6, std::min<int>(g.party.party_size, g.party.character_count));
     auto damage = [&](int i, int v) {
+        if (party_damage_blocked(g)) return; // A4-ENH1 God Mode
         auto &c = g.party.characters[i];
         c.current_hp = uint16_t(std::max<int>(0, c.current_hp - v));
         if (!c.current_hp)

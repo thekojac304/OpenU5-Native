@@ -190,6 +190,17 @@ void capture_core(const GameState &g, const TurnState &t, Json &s) {
         s.erase("timeSpell");
     array("reagentPatchFoundDay", t.reagent_days, 3);
     array("shadowlordLocs", t.shadowlord_locations, t.has_shadowlords ? 3 : 0);
+    // Alpha 4 A4-ENH1: the Enhanced state under its own key, written only when
+    // it is not the default, so an Original journey with no cheat saves the
+    // very document it saved before A4-ENH1 (a4_enh1_preservation A4).
+    if (enhanced_is_default(g.enhanced))
+        s.erase("enhanced");
+    else {
+        J e = J::object();
+        e["godMode"] = J(g.enhanced.god_mode);
+        e["cheatsUsed"] = J(double(g.enhanced.cheats_used));
+        s["enhanced"] = std::move(e);
+    }
     // Negative phase values represent the reference's absence-significant latch.
     if (t.felucca_phase < 0)
         s.erase("feluccaPhase");
@@ -244,6 +255,14 @@ Error restore_core(const Json &s, GameState &game, TurnState &turn) {
     }
     GameState g{};
     TurnState t{};
+    // Alpha 4 A4-ENH1: absent -- every save before A4-ENH1, every PC import,
+    // every journey on Original with no cheat -- is the defaults. A malformed
+    // value takes its default rather than refusing the save.
+    if (s.has("enhanced")) {
+        const auto &e = s["enhanced"];
+        g.enhanced.god_mode = e["godMode"].kind == J::Bool && e["godMode"].truth();
+        if (fits(e["cheatsUsed"], 0, UINT32_MAX)) g.enhanced.cheats_used = uint32_t(e["cheatsUsed"].integer());
+    }
     g.hms_cape=s["specialItems"]["hmsCape"].truth();
     for(unsigned i=0;i<113;++i){char key[16];std::snprintf(key,sizeof(key),"search:%u",i);if(s["questFlags"].has(key)){if(s["questFlags"][key].kind!=J::Bool)return Error::NativeDomain;g.quest.search_present[i/8]|=uint8_t(1u<<(i%8));if(s["questFlags"][key].truth())g.quest.search_found[i/8]|=uint8_t(1u<<(i%8));}}
     for (unsigned i=0;i<unsigned(QuestFlag::Count);++i) {

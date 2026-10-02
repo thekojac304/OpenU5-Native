@@ -58,6 +58,7 @@ set(OPENU5_CORE_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/world.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/movement.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/turn.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/enhanced.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/actors.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/npc_path.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/pathfind.cpp"

@@ -516,7 +516,8 @@ struct Engine {
                 d /= 2;
             if (b.enemy->abilities & 0x800)
                 d = 0;
-        }
+        } else if (party_damage_blocked(g))
+            d = 0; // A4-ENH1 God Mode: the blow lands, the member loses nothing
         if (d == 99 || b.hp <= d) {
             attacked(a, b, d);
             kill(b, a);

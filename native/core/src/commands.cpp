@@ -75,6 +75,7 @@ struct Runner {
             const auto rolled = rand(0, 60) >> 1;
             const auto threshold = rolled > 0 ? rolled : 1;
             if (ch.dexterity > threshold) continue;
+            if (party_damage_blocked(g)) continue; // A4-ENH1 God Mode
             if (ch.current_hp) --ch.current_hp;
             if (!ch.current_hp) {
                 ch.status = 'D';
@@ -590,7 +591,7 @@ struct Runner {
             const auto d=direction_delta(cmd.direction);int x=wrap_coord(c.game.position.xy.x+d.dx),y=wrap_coord(c.game.position.xy.y+d.dy);
             const auto tile=map().tile_at(x,y);
             if(tile!=12){message(tile==13?"Impassable!":"Not climbable!");result.status=CommandStatus::Rejected;return;}
-            for(int32_t i=0;i<c.game.party.party_size&&i<c.game.party.character_count;++i){auto &ch=c.game.party.characters[i];if(ch.status=='D')continue;if(ch.dexterity>=rand(1,30))continue;int damage=rand(1,5);ch.current_hp=uint16_t(ch.current_hp>damage?ch.current_hp-damage:0);if(!ch.current_hp)ch.status='D';message("Fell!");}
+            for(int32_t i=0;i<c.game.party.party_size&&i<c.game.party.character_count;++i){auto &ch=c.game.party.characters[i];if(ch.status=='D')continue;if(ch.dexterity>=rand(1,30))continue;int damage=rand(1,5);if(party_damage_blocked(c.game))continue;ch.current_hp=uint16_t(ch.current_hp>damage?ch.current_hp-damage:0);if(!ch.current_hp)ch.status='D';message("Fell!");}
             c.game.position.xy={uint8_t(x),uint8_t(y)};turn();event(GameEventKind::Moved);return;
         }
         if (c.game.transport == TransportMode::Horse) {
