@@ -1,0 +1,8 @@
+Launcher image: C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-flash1\launcher\OpenU5-TDeck-Alpha4.0.0-alpha4-enh2-Debug-Launcher.bin
+Firmware version: 4.0.0-alpha4-enh2-debug
+Size: 1044864 bytes
+App partition minimum: 1048576 bytes (64 KiB alignment)
+OpenU5 app budget: image 1044864 B (0xff180), app partition 1310720 B (0x140000), free 265856 B (20.3 %)
+OpenU5 Launcher allocation: 1048576 B (1024 KiB, the image rounded up to 64 KiB); the next 64 KiB step is 3713 B away
+SHA-256: 344d8a447ed6fd1984acc34e6e6bd0d90ab206348de694f8fc48b5d731b51718
+Existing build ESP-IDF: v6.1
