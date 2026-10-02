@@ -488,7 +488,10 @@ void test_cheats() {
 void test_difficulty() {
     Run h;
     auto &ally = h.g().party.characters[0];
-    // R1. System Menu > Difficulty: the three presets, the journey's own first.
+    // R1. System Menu > Difficulty: the presets, the journey's own first.
+    // A4-ENH2 (changed on purpose): a fourth row, Custom, and under the rows
+    // the selected one's actual values (a4_enh2_runtime U1 checks them); the
+    // footer no longer abbreviates them.
     h.key('m', true);
     for (int i = 0; i < 4; ++i) h.ball(RawInputKind::TrackballDown);
     const std::string root_footer = h.rt->system_menu_view().footer;
@@ -499,13 +502,13 @@ void test_difficulty() {
     const std::string f1 = h.rt->system_menu_view().footer;
     h.ball(RawInputKind::TrackballDown);
     const std::string f2 = h.rt->system_menu_view().footer;
-    check(root_footer == "Original, or a gentler journey" && std::string(v.title) == "Difficulty" && v.line_count == 3 &&
-              std::string(v.lines[0]) == "Original" && std::string(v.lines[1]) == "Relaxed" &&
-              std::string(v.lines[2]) == "Easy" && v.selected_line == 0 &&
+    check(root_footer == "Original, or a gentler journey" && std::string(v.title) == "Difficulty" &&
+              v.line_count == 4 + size_t(openu5::RuleField::Count) && std::string(v.lines[0]) == "Original" &&
+              std::string(v.lines[1]) == "Relaxed" && std::string(v.lines[2]) == "Easy" &&
+              std::string(v.lines[3]) == "Custom" && v.selected_line == 0 &&
               std::string(v.subtitle) == "Now: Original (kept with this journey)" &&
-              f0 == "The 1988 rules, unchanged" && f1 == "Hits 85% XP 150% Food 75% Poison 1/4 Fights 90%" &&
-              f2 == "Hits 65% XP 200% Food 50% Poison 1/10 Fights 75%",
-          "R1", "the Difficulty page: Original first and current; each row's footer says what it changes:\n  " + f1 +
+              f0 == "The 1988 rules, unchanged" && f1 == "Enter: use these rules" && f2 == "Enter: use these rules",
+          "R1", "the Difficulty page: Original first and current, Custom last; footers:\n  " + f1 +
                     "\n  " + f2);
     // R2. Enter on Easy: the journey's preset, said in the footer and the transcript.
     h.set_mark();

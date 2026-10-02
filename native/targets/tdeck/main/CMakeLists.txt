@@ -39,6 +39,14 @@ set_source_files_properties("${CMAKE_CURRENT_LIST_DIR}/../../../core/src/sfx_syn
 # partition is the constraint. Code generation only: same results.
 set_source_files_properties("${CMAKE_CURRENT_LIST_DIR}/../../../core/src/endgame_scene.cpp"
     PROPERTIES COMPILE_OPTIONS "-Os")
+# A4-ENH2 (ALPHA4_UI.md section 11): the enhancement layer's rules table and
+# cheats (enhanced.cpp: a few small hooks a turn or a hit, the cheats on a
+# menu key) and the System Menu (only while it is open) are cold code too, and
+# the partition is the constraint again: built for size. Code generation
+# only: same results (the host tests run the same source).
+set_source_files_properties("${CMAKE_CURRENT_LIST_DIR}/../../../core/src/enhanced.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../../core/src/system_menu.cpp"
+    PROPERTIES COMPILE_OPTIONS "-Os")
 find_program(OPENU5_GIT_EXECUTABLE NAMES git.exe git
     PATHS "C:/Program Files/Git/cmd" NO_DEFAULT_PATH)
 if(OPENU5_GIT_EXECUTABLE)

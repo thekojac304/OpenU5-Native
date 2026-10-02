@@ -6,9 +6,11 @@ namespace openu5 {
 // the menu has no Developer row; Alt+D opens the tools on every screen.
 // A4-ENH1 appends Cheat: `cheat` (and for Add Gold `amount`) is what the
 // runtime hands to apply_cheat() (enhanced.h).
-// SetDifficulty (appended too) carries the chosen preset in `difficulty`.
+// SetDifficulty (appended too) carries the chosen difficulty in `difficulty`
+// and, since A4-ENH2, the journey's Custom values in `custom` (a Custom page
+// edit sends one at once; a preset sends them back unchanged).
 enum class SystemMenuIntentKind:uint8_t{None,Resume,Save,LoadLatest,LoadSlot,PersistSettings,OpenDeveloper,ReturnToTitle,Cheat,SetDifficulty};
-struct SystemMenuIntent{SystemMenuIntentKind kind=SystemMenuIntentKind::None;int8_t slot=-1;FrontendSettings settings{};CheatKind cheat=CheatKind::Count;int32_t amount=0;Difficulty difficulty=Difficulty::Original;};
+struct SystemMenuIntent{SystemMenuIntentKind kind=SystemMenuIntentKind::None;int8_t slot=-1;FrontendSettings settings{};CheatKind cheat=CheatKind::Count;int32_t amount=0;Difficulty difficulty=Difficulty::Original;GameplayRules custom=kOriginalRules;};
 class SystemMenuSession{
 public:
  // A4-SAVE2: `journey_slot` is the slot the live game was loaded from or
@@ -37,6 +39,7 @@ public:
  enum SettingsRow:uint8_t{kBrightnessRow,kMovementRow,kTrackballRow,kTextSizeRow,kSfxVolumeRow,kMusicVolumeRow,kSettingsRowCount};
 private:
  // A4-SAVE2: Save (Slots 1-3) and Confirm ("Overwrite Slot N?", No first).
- enum class Page:uint8_t{Root,Load,Settings,Save,Confirm,Cheats,Difficulty};EnhancedState enhanced_{};uint8_t gold_step_=1;bool active_=false;Page page_=Page::Root;uint8_t cursor_=0,settings_cursor_=0;FrontendSettings settings_{};MusicAvailability music_availability_=MusicAvailability::NoAudioPack;FrontendSaveCatalog catalog_{};int8_t journey_slot_=-1,confirm_slot_=-1;uint8_t slot_cursor(bool saving)const;char notice_[64]{};SystemMenuIntent pending_{};bool sfx_muted_=false,music_muted_=false;uint8_t volume_edits_=0;
+ // A4-ENH2: Custom, the Custom difficulty's values (left/right edits them).
+ enum class Page:uint8_t{Root,Load,Settings,Save,Confirm,Cheats,Difficulty,Custom};EnhancedState enhanced_{};uint8_t gold_step_=1;bool active_=false;Page page_=Page::Root;uint8_t cursor_=0,settings_cursor_=0;FrontendSettings settings_{};MusicAvailability music_availability_=MusicAvailability::NoAudioPack;FrontendSaveCatalog catalog_{};int8_t journey_slot_=-1,confirm_slot_=-1;uint8_t slot_cursor(bool saving)const;char notice_[64]{};SystemMenuIntent pending_{};bool sfx_muted_=false,music_muted_=false;uint8_t volume_edits_=0;
 };
 }

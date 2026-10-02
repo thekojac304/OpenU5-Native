@@ -2201,6 +2201,13 @@ if(BUILD_TESTING)
   target_link_libraries(a4_enh2_preservation PRIVATE openu5_core)
   target_compile_features(a4_enh2_preservation PRIVATE cxx_std_17)
   add_test(NAME a4_enh2_preservation COMMAND a4_enh2_preservation)
+  # The A4-ENH2 framework itself: Custom difficulty, presets, precedence,
+  # hooks, cheats and their persistence through the real codec and sidecar.
+  add_executable(a4_enh2_rules tests/a4_enh2_rules_test.cpp)
+  target_link_libraries(a4_enh2_rules PRIVATE openu5_core)
+  target_compile_features(a4_enh2_rules PRIVATE cxx_std_17)
+  add_test(NAME a4_enh2_rules COMMAND a4_enh2_rules
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../game/assets/init.gam")
   # Its device half: the REAL AlphaRuntime starving on the overworld, then in
   # Deceit through the live dungeon turn (wanderers, corridor fights), Alt+S/L.
   add_executable(a4_enh2_preservation_runtime
@@ -2234,6 +2241,41 @@ if(BUILD_TESTING)
     target_link_options(a4_enh2_preservation_runtime PRIVATE -Wl,--gc-sections)
   endif()
   add_test(NAME a4_enh2_preservation_runtime COMMAND a4_enh2_preservation_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
+  # The A4-ENH2 pass on the REAL AlphaRuntime (same source set): the
+  # Difficulty and Custom pages, the cheat groups and toggles through the
+  # device's own menus, in play, in the save, after a power cycle.
+  add_executable(a4_enh2_runtime
+    ../targets/tdeck/host_tests/a4_enh2_runtime_test.cpp
+    ../targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
+    ../targets/tdeck/host_tests/host_stubs/batch37_board_capture_stub.cpp
+    ../targets/tdeck/host_tests/host_stubs/alpha_save_memory_host_stub.cpp
+    ../targets/tdeck/main/alpha_save_generation.cpp
+    ../targets/tdeck/host_tests/host_stubs/tdeck_input_host_stub.cpp
+    ../targets/tdeck/main/alpha_audio.cpp
+    ../targets/tdeck/main/alpha_runtime.cpp
+    ../targets/tdeck/main/ui_input_adapter.cpp
+    ../targets/tdeck/main/input_controller.cpp
+    ../targets/tdeck/main/keyboard_matrix.cpp
+    ../targets/tdeck/main/alpha_resources.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/dungeon_art_cache.cpp
+    ../targets/tdeck/main/alpha_dialogue.cpp
+    ../targets/tdeck/main/native_renderer.cpp
+    ../targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp)
+  target_link_libraries(a4_enh2_runtime PRIVATE openu5_core)
+  target_include_directories(a4_enh2_runtime PRIVATE
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/main)
+  target_compile_features(a4_enh2_runtime PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(a4_enh2_runtime PRIVATE /Gy)
+    target_link_options(a4_enh2_runtime PRIVATE /OPT:REF)
+  else()
+    target_compile_options(a4_enh2_runtime PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(a4_enh2_runtime PRIVATE -Wl,--gc-sections)
+  endif()
+  add_test(NAME a4_enh2_runtime COMMAND a4_enh2_runtime
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
   # The device half: the REAL AlphaRuntime on the REAL tdeck_board.cpp over the
   # fake ST7789 (the A4-UI2 harness), with the REAL alpha_save.cpp over the fake

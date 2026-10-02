@@ -7,7 +7,8 @@ namespace openu5::save {
 namespace {
 using J = Json;
 // A4-ENH1: the "enhanced" key's difficulty names, in Difficulty order.
-constexpr const char *kDifficultyKeys[] = {"original", "relaxed", "easy"};
+constexpr const char *kDifficultyKeys[] = {"original", "relaxed", "easy", "custom"};
+static_assert(sizeof(kDifficultyKeys) / sizeof(kDifficultyKeys[0]) == size_t(Difficulty::Count), "a name per difficulty");
 bool fits(const J &v, int64_t lo, int64_t hi) {
     return v.kind == J::Number && std::isfinite(v.number) && std::floor(v.number) == v.number &&
            v.number >= double(lo) && v.number <= double(hi);
@@ -203,6 +204,13 @@ void capture_core(const GameState &g, const TurnState &t, Json &s) {
                                                 ? unsigned(g.enhanced.difficulty) : 0U]);
         e["godMode"] = J(g.enhanced.god_mode);
         e["cheatsUsed"] = J(double(g.enhanced.cheats_used));
+        // A4-ENH2: the Custom values, in RuleField order, only when changed.
+        if (!same_rules(g.enhanced.custom, kOriginalRules)) {
+            J c = J::array();
+            for (const auto &rc : kRuleChoices)
+                c.values.emplace_back(int(g.enhanced.custom.*rc.field));
+            e["custom"] = std::move(c);
+        }
         s["enhanced"] = std::move(e);
     }
     // Negative phase values represent the reference's absence-significant latch.
@@ -269,6 +277,14 @@ Error restore_core(const Json &s, GameState &game, TurnState &turn) {
                 g.enhanced.difficulty = Difficulty(i);
         g.enhanced.god_mode = e["godMode"].kind == J::Bool && e["godMode"].truth();
         if (fits(e["cheatsUsed"], 0, UINT32_MAX)) g.enhanced.cheats_used = uint32_t(e["cheatsUsed"].integer());
+        // A4-ENH2: each Custom value that is one of its field's choices; a
+        // missing, extra or foreign entry keeps that field's Original value
+        // (and only an array is read: at() would index an object's members).
+        for (unsigned i = 0; e["custom"].kind == J::Array && i < unsigned(RuleField::Count); ++i) {
+            const auto &v = e["custom"].at(i);
+            if (fits(v, 0, UINT16_MAX) && rule_choice(RuleField(i), uint16_t(v.integer())) >= 0)
+                g.enhanced.custom.*kRuleChoices[i].field = uint16_t(v.integer());
+        }
     }
     g.hms_cape=s["specialItems"]["hmsCape"].truth();
     for(unsigned i=0;i<113;++i){char key[16];std::snprintf(key,sizeof(key),"search:%u",i);if(s["questFlags"].has(key)){if(s["questFlags"][key].kind!=J::Bool)return Error::NativeDomain;g.quest.search_present[i/8]|=uint8_t(1u<<(i%8));if(s["questFlags"][key].truth())g.quest.search_found[i/8]|=uint8_t(1u<<(i%8));}}
