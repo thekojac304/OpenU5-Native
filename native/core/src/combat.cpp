@@ -519,7 +519,7 @@ struct Engine {
             if (b.enemy->abilities & 0x800)
                 d = 0;
             if (party_side(a))
-                d = rules_outgoing_damage(g, d); // A4-ENH1 difficulty (100 % in every preset)
+                d = rules_outgoing_damage(g, d); // A4-ENH1 difficulty (A4-ENH2: Easy 120 %, Custom up to 150 %)
         } else if (party_damage_blocked(g))
             d = 0; // A4-ENH1 God Mode: the blow lands, the member loses nothing
         else if (!party_side(a))

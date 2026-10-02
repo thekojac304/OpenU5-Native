@@ -1,0 +1,16 @@
+A4-ENH2 commit 2 RED-first: a4_enh2_rules T1-T5 against A4-ENH1's Easy row {65, 100, 200, 75, 10, 50}
+RED T1 Original 100/100/100/100/1/100, Relaxed 85/100/150/90/4/75, Easy 65/120/200/65/10/50 (in/out/XP/encounters/poison/food)
+RED T2 the party's blows at Original -> Easy 120 % / Custom 150 %: 18->18/27; the same draws, the enemy's blows unchanged
+RED T3 out 120 %: 1->1, 3->4, 30->36, 99 kept; 150 %: 1->2, 30->45, 66->98 (never a made 99); in 50 %: 1->1, 3->2
+GREEN T4 XP 1.0x-3.0x: 1 XP -> 1/2/2/3/3, 25 -> 25..75; a real kill 63 -> 158 at 2.5x (once); 9900 + 189 caps at 9999
+RED T5 spawns allowed per 100,000 turns: Original 100000, Relaxed 90108, Easy 75264
+A4-ENH2 rules: 19 checks, 4 failures
+(a4_enh2_rules exits 1 when any check is RED: 4 RED here)
+
+restored (A4-ENH2 Easy row):
+GREEN T1 Original 100/100/100/100/1/100, Relaxed 85/100/150/90/4/75, Easy 65/120/200/65/10/50 (in/out/XP/encounters/poison/food)
+GREEN T2 the party's blows at Original -> Easy 120 % / Custom 150 %: 18->22/27 16->19/24 13->16/20; the same draws, the enemy's blows unchanged
+GREEN T3 out 120 %: 1->1, 3->4, 30->36, 99 kept; 150 %: 1->2, 30->45, 66->98 (never a made 99); in 50 %: 1->1, 3->2
+GREEN T4 XP 1.0x-3.0x: 1 XP -> 1/2/2/3/3, 25 -> 25..75; a real kill 63 -> 158 at 2.5x (once); 9900 + 189 caps at 9999
+GREEN T5 spawns allowed per 100,000 turns: Original 100000, Relaxed 90108, Easy 65102
+A4-ENH2 rules: 19 checks, 0 failures

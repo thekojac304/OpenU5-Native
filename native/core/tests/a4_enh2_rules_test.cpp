@@ -235,6 +235,131 @@ void test_custom() {
           "a journey that never touched Custom is the default; changed Custom values (even on Original) are not");
 }
 
+// One fighter against one sturdy enemy. The fighter's weapon is not the
+// kill-outright 99, so its hits vary and scale; the enemy keeps more than half
+// its HP for the few blows compared (no wound draw, no flight), so the
+// Original and scaled fights make exactly the same draws.
+struct Duel {
+    GameState g = party_of(1);
+    TurnState t{};
+    CombatState s{};
+    CombatEnemy troll{};
+    const CombatEnemy *enemies[1]{&troll};
+    int32_t attack[256]{}, range[256]{}, defense[256]{};
+    int party_actor = -1;
+    std::vector<int> out, in; // the party's hits on the enemy, the enemy's on the party
+    explicit Duel(Difficulty d, int seed = 0x5a1) {
+        g.enhanced.difficulty = d;
+        g.rng.seed(seed);
+        g.party.characters[0].current_hp = g.party.characters[0].max_hp = 5000;
+        troll.index = 41; troll.name = "troll"; troll.group_name = "trolls"; troll.hp = 250; troll.strength = 20;
+        troll.dexterity = 10; troll.damage = 12; troll.range = 1; troll.max_per_map = 1; troll.tile = 0x74;
+        attack[1] = 20; range[1] = 1; // a weapon of attack 20: rand(1, 20) a blow
+    }
+    CombatContext ctx() {
+        CombatContext c{g, t, s};
+        c.tables.attack = attack; c.tables.range = range; c.tables.defense = defense; c.tables.count = 256;
+        c.events = {this, [](void *p, const CombatEvent &e) {
+                        auto &self = *static_cast<Duel *>(p);
+                        if (e.kind != CombatEventKind::Attacked || e.damage <= 0) return;
+                        (e.actor == self.party_actor ? self.out : self.in).push_back(e.damage);
+                    }};
+        return c;
+    }
+    void fight(int party_blows) {
+        CombatMap map{};
+        for (auto &tile : map.tiles) tile = 5;
+        map.start_count[2] = 1; map.starts[2][0] = {5, 6};
+        map.unit_count = 1; map.units[0] = {5, 5};
+        auto c = ctx();
+        initialize_combat(c, map, CombatDirection::South, enemies, 1);
+        for (int i = 0, blows = 0; i < 200 && blows < party_blows && !combat_over(s) && !s.victory; ++i) {
+            CombatActor *cur = current_combat_actor(c);
+            if (!cur) break;
+            if (cur->member == 255) combat_action(c, CombatAction::EnemyStep);
+            else {
+                party_actor = cur->id;
+                combat_action(c, CombatAction::Attack, 5, 5);
+                ++blows;
+            }
+        }
+    }
+};
+
+void test_presets() {
+    // T1. The tuned presets (PROVISIONAL): Easy hits harder (120 %) and meets
+    // fewer monsters (65 %); Relaxed stays close to the 1988 game.
+    const auto &rx = gameplay_rules(Difficulty::Relaxed), &ez = gameplay_rules(Difficulty::Easy);
+    const GameplayRules want_rx{85, 100, 150, 90, 4, 75}, want_ez{65, 120, 200, 65, 10, 50};
+    check(rules_equal(rx, want_rx) && rules_equal(ez, want_ez) && rules_equal(gameplay_rules(Difficulty::Original), kOriginalRules),
+          "T1", "Original 100/100/100/100/1/100, Relaxed 85/100/150/90/4/75, Easy 65/120/200/65/10/50 (in/out/XP/encounters/poison/food)");
+    // T2. Outgoing damage through the real combat damage(): the same fight
+    // and draws; every Easy blow is the Original blow at 120 %, every Custom
+    // 150 % blow at 150 %; the enemy's blows are unchanged by it.
+    Duel o(Difficulty::Original), e(Difficulty::Easy), c(Difficulty::Custom);
+    c.g.enhanced.custom.outgoing_damage_pct = 150;
+    o.fight(4);
+    e.fight(4);
+    c.fight(4);
+    bool scaled_ok = o.out.size() >= 2 && o.out.size() == e.out.size() && o.out.size() == c.out.size();
+    std::string blows;
+    for (size_t i = 0; scaled_ok && i < o.out.size(); ++i) {
+        scaled_ok = e.out[i] == scaled(o.out[i], 120) && c.out[i] == scaled(o.out[i], 150);
+        blows += " " + std::to_string(o.out[i]) + "->" + std::to_string(e.out[i]) + "/" + std::to_string(c.out[i]);
+    }
+    const bool enemy_same = o.in == c.in && o.s.rng.get_seed() == c.s.rng.get_seed() && o.s.rng.get_seed() == e.s.rng.get_seed();
+    check(scaled_ok && enemy_same, "T2",
+          "the party's blows at Original -> Easy 120 % / Custom 150 %:" + blows + "; the same draws, the enemy's blows unchanged");
+    // T3. Rounding and the edges of outgoing scaling: half up, a hit never 0,
+    // 99 (the kill-outright) kept and never made, no cap reached.
+    GameState easy = party_of(1), big = party_of(1);
+    easy.enhanced.difficulty = Difficulty::Easy;
+    big.enhanced.difficulty = Difficulty::Custom;
+    big.enhanced.custom.outgoing_damage_pct = 150;
+    big.enhanced.custom.incoming_damage_pct = 50;
+    check(rules_outgoing_damage(easy, 1) == 1 && rules_outgoing_damage(easy, 3) == 4 && rules_outgoing_damage(easy, 30) == 36 &&
+              rules_outgoing_damage(easy, 99) == 99 && rules_outgoing_damage(easy, 0) == 0 &&
+              rules_outgoing_damage(big, 1) == 2 && rules_outgoing_damage(big, 66) == 98 && rules_outgoing_damage(big, 30) == 45 &&
+              rules_incoming_damage(big, 1) == 1 && rules_incoming_damage(big, 3) == 2 && rules_incoming_damage(big, 99) == 99,
+          "T3", "out 120 %: 1->1, 3->4, 30->36, 99 kept; 150 %: 1->2, 30->45, 66->98 (never a made 99); in 50 %: 1->1, 3->2");
+    // T4. XP: every Custom multiplier, the minimum award, the 9999 cap, once.
+    bool xp = true;
+    for (int pct : {100, 150, 200, 250, 300}) {
+        GameState h = party_of(1);
+        h.enhanced.difficulty = Difficulty::Custom;
+        h.enhanced.custom.xp_pct = uint16_t(pct);
+        xp = xp && rules_xp_award(h, 1) == scaled(1, pct) && rules_xp_award(h, 25) == scaled(25, pct) && rules_xp_award(h, 0) == 0;
+    }
+    int got[2]{};
+    for (int i = 0; i < 2; ++i) {
+        Duel k(i ? Difficulty::Custom : Difficulty::Original);
+        k.g.enhanced.custom.xp_pct = 250;
+        k.attack[1] = 99; // one blow: (250 >> 2) + 1 = 63 XP at 1.0x
+        k.fight(1);
+        got[i] = k.g.party.characters[0].exp;
+    }
+    Duel cap(Difficulty::Custom);
+    cap.g.enhanced.custom.xp_pct = 300;
+    cap.attack[1] = 99;
+    cap.g.party.characters[0].exp = 9900;
+    cap.fight(1);
+    check(xp && got[0] == 63 && got[1] == 158 && cap.g.party.characters[0].exp == 9999, "T4",
+          "XP 1.0x-3.0x: 1 XP -> 1/2/2/3/3, 25 -> 25..75; a real kill 63 -> 158 at 2.5x (once); 9900 + 189 caps at 9999");
+    // T5. Encounters: Original passes every roll, Relaxed about 90 %, Easy about 65 %, by the turn hash.
+    int allowed[3]{};
+    GameState g = party_of(1);
+    for (int d = 0; d < 3; ++d) {
+        g.enhanced.difficulty = Difficulty(d);
+        for (int64_t turn = 0; turn < 100000; ++turn) {
+            g.turns_since_start = turn;
+            allowed[d] += rules_encounter_allowed(g);
+        }
+    }
+    check(allowed[0] == 100000 && allowed[1] > 89000 && allowed[1] < 91000 && allowed[2] > 64000 && allowed[2] < 66000, "T5",
+          "spawns allowed per 100,000 turns: Original " + std::to_string(allowed[0]) + ", Relaxed " + std::to_string(allowed[1]) +
+              ", Easy " + std::to_string(allowed[2]));
+}
+
 std::string state_doc(const GameState &g) {
     save::Json doc = save::Json::object();
     save::capture_core(g, TurnState{}, doc);
@@ -338,6 +463,7 @@ void test_persistence(const char *init_gam) {
 int main(int argc, char **argv) {
     const char *init_gam = argc > 1 ? argv[1] : "game/assets/init.gam";
     test_custom();
+    test_presets();
     test_persistence(init_gam);
     std::printf("\nA4-ENH2 rules: %d checks, %d failures\n", checks, failures);
     return failures ? 1 : 0;

@@ -300,12 +300,13 @@ void test_rules(const char *init_gam) {
               o.poison_interval == 1 && o.hunger_pct == 100 && o.encounter_pct == 100,
           "R1", "Original returns every input unchanged: damage -5..300, XP, 20,050 turns of poison, meals, spawns");
     // R2. The provisional presets (section 10's table), and an out-of-range one falls back to Original.
+    // A4-ENH2 (changed on purpose): Easy hits 120 % and meets 65 % of the spawns.
     const auto &rx = gameplay_rules(Difficulty::Relaxed), &ez = gameplay_rules(Difficulty::Easy);
     check(rx.incoming_damage_pct == 85 && rx.outgoing_damage_pct == 100 && rx.xp_pct == 150 && rx.poison_interval == 4 &&
               rx.hunger_pct == 75 && rx.encounter_pct == 90 && ez.incoming_damage_pct == 65 &&
-              ez.outgoing_damage_pct == 100 && ez.xp_pct == 200 && ez.poison_interval == 10 && ez.hunger_pct == 50 &&
-              ez.encounter_pct == 75 && &gameplay_rules(Difficulty(7)) == &o,
-          "R2", "Relaxed 85/100/150/4/75/90, Easy 65/100/200/10/50/75; an unknown preset is Original");
+              ez.outgoing_damage_pct == 120 && ez.xp_pct == 200 && ez.poison_interval == 10 && ez.hunger_pct == 50 &&
+              ez.encounter_pct == 65 && &gameplay_rules(Difficulty(7)) == &o,
+          "R2", "Relaxed 85/100/150/4/75/90, Easy 65/120/200/10/50/65; an unknown preset is Original");
     // R3. XP: x1.5 and x2, rounded half up, never below 1.
     GameState relaxed = original, easy = original;
     relaxed.enhanced.difficulty = Difficulty::Relaxed;
@@ -422,7 +423,8 @@ void test_rules(const char *init_gam) {
             allowed[d] += rules_encounter_allowed(e);
         }
     }
-    check(allowed[0] == 100000 && allowed[1] > 89000 && allowed[1] < 91000 && allowed[2] > 74000 && allowed[2] < 76000,
+    // A4-ENH2 (changed on purpose): Easy 65 %.
+    check(allowed[0] == 100000 && allowed[1] > 89000 && allowed[1] < 91000 && allowed[2] > 64000 && allowed[2] < 66000,
           "R9", "spawns allowed per 100,000 turns: Original " + std::to_string(allowed[0]) + ", Relaxed " +
                     std::to_string(allowed[1]) + ", Easy " + std::to_string(allowed[2]));
     // R10. God Mode wins over any preset.

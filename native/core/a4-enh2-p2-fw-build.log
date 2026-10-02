@@ -1,0 +1,22 @@
+ninja: Entering directory `build-a4-enh2'
+[1/10] Performing build step for 'bootloader'
+[1/1] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-enh2\bootloader && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-enh2/bootloader/bootloader.bin"
+Bootloader binary size 0x5850 bytes. 0x27b0 bytes (31%) free.
+[2/10] No install step for 'bootloader'
+[3/10] Completed 'bootloader'
+[4/10] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/combat.cpp.obj
+[5/10] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/enhanced.cpp.obj
+[6/10] Linking C static library esp-idf\main\libmain.a
+[7/10] Generating esp-idf/esp_system/ld/sections.ld
+Skipping linker script generation, section names unchanged
+[8/10] Linking CXX executable openu5_tdeck.elf
+[9/10] Generating binary image from built executable
+esptool v5.4.0
+Creating ESP32-S3 image...
+Merged 3 ELF sections.
+Successfully created ESP32-S3 image.
+Generated C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-enh2/openu5_tdeck.bin
+[10/10] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-enh2 && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-enh2/partition_table/partition-table.bin C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-enh2/openu5_tdeck.bin"
+openu5_tdeck.bin binary size 0xfe820 bytes. Smallest app partition is 0x100000 bytes. 0x17e0 bytes (1%) free.
+Warning: The smallest app partition is nearly full (1% free space left)!
+build exit=0

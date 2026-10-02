@@ -74,7 +74,7 @@ constexpr GameplayRules kGameplayRules[] = {
     // incoming, outgoing, xp, overworld encounters, poison every N turns, meals
     kOriginalRules,               // Original: the recreated 1988 rules
     {85, 100, 150, 90, 4, 75},    // Relaxed
-    {65, 100, 200, 75, 10, 50},   // Easy
+    {65, 120, 200, 65, 10, 50},   // Easy (A4-ENH2: hits 120 %, encounters 65 %)
 };
 static_assert(sizeof(kGameplayRules) / sizeof(kGameplayRules[0]) == size_t(Difficulty::Custom), "one row per preset");
 
