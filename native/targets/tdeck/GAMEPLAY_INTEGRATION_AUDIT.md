@@ -8701,3 +8701,30 @@ An audit of everything still open before an Alpha 4 release candidate, then the 
 - D-50, D-78, D-79, D-80, D-81: software fixed, **hardware pending** (the consolidated RC checklist, ALPHA4_UI.md §9.18).
 - D-4 answered and closed by D-81; D-60 → A-19; D-7 → A-20; A-7 revised.
 - D-82 new and queued. The UI4/PRES1 rows keep their own status: hardware PASS at UI4's closeout (`ALPHA4_UI.md` §8.22.8), except D-74.
+
+## Alpha 4 A4-ENH1 — trackball, Developer entry, cheats and difficulty
+
+The enhancement pass on top of the Alpha 4 RC1 commit (`aae348ac`). The full write-up is [`ALPHA4_UI.md`](ALPHA4_UI.md) §10; this section records the classification on its own axis. No reference behaviour changed: every item is an intentional enhancement (ledger E-8 – E-11) or a native presentation change, and Original with no cheat is proven identical to the unmodified tree.
+
+### 1. Items and classification
+
+| # | Item | Class | Change |
+|---|---|---|---|
+| 1 | The trackball's press switch (GPIO 0) was never read | **native input; enhancement E-8** | one press toggles Movement (WASD) Mode on its edge; a device control, never a key; 60 ms of roll after it dropped |
+| 2 | "Trackball %" only capped the pulse rate: every pulse was a step at every setting, and a flick's pulses played out after the ball stopped | **native input defect (design); enhancement E-9** | a per-axis accumulator with a step gap, an idle and a reversal reset; ten speed levels, 10 = the old 100 % |
+| 3 | The Developer menu was an ordinary menu row (title, System Menu, Settings switch) | **native presentation** | rows removed; Alt+D everywhere, the tools unchanged (E-2) |
+| 4 | Player cheats | **enhancement E-10** | `apply_cheat()`, God Mode via one predicate at the five party HP-loss sites, guards, the save mark |
+| 5 | Difficulty presets | **enhancement E-11** | `GameplayRules` at five hooks: combat `damage()` (incoming, outgoing), `kill()` (XP), turn housekeeping (poison, meals), `world()` (spawns) |
+| 6 | A mid-line `//` in `frontend_test` silenced the System Menu checks after it since A3-01 | **test defect (pre-existing)** | revived with today's rows |
+| 7 | Alt+S / Alt+L on the title act as Enter on the selected row (a default `UiAction` is Confirm) | **native routing quirk (pre-existing), observed** | not changed; recorded (`ALPHA4_UI.md` §10.14) |
+
+### 2. Evidence
+
+- **Original preserved:** goldens recorded on the unmodified tree before any production edit (`native/core/a4-enh1-golden-head.log`: housekeeping, spawn gate, a real fight with XP, the saved document; the real runtime's night walk and Alt+S / Alt+L), bit-identical after every commit; `a4_enh1_rules` R1 (identity over the whole domain tried); the parity corpus unchanged.
+- **Mutations:** `tools/a4_enh1_mutation_check.py`, 39 / 39 killed (`a4-enh1-mutation.log`, `a4-enh1-mutation-rerun.log`), including five non-identity Original rows and the sidecar whitelist.
+- **Suite, firmware:** ALPHA4_UI.md §10.12.
+
+### 3. Rows
+
+- E-8 – E-11 new (ledger §3); E-4 superseded for the trackball by E-9; E-2 keeps every function, loses its menu rows.
+- All **hardware pending** (ALPHA4_UI.md §10.13); every tuning value provisional.

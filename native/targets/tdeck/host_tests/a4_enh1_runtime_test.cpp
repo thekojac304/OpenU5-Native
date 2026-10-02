@@ -545,6 +545,68 @@ void test_difficulty() {
           "Alt+S keeps \"difficulty\": \"easy\" in the sidecar; Original, then Alt+L: Easy again");
 }
 
+// R6's circuit: the first 15 x 15 square whose edge is open ground (as the
+// preservation golden's walk), entered at midnight.
+openu5::Position open_square(const openu5::WorldData &w) {
+    auto ground = [&](int x, int y) {
+        const int t = w.overworld[size_t(y) * 256 + size_t(x)];
+        return t == 5 || t == 6 || (t >= 9 && t <= 15);
+    };
+    for (int y = 40; y < 220; ++y)
+        for (int x = 40; x < 220; ++x) {
+            bool ok = true;
+            for (int i = 0; ok && i < 14; ++i)
+                ok = ground(x + i, y) && ground(x + 14, y + i) && ground(x + 14 - i, y + 14) && ground(x, y + 14 - i);
+            if (ok) return {uint8_t(x), uint8_t(y)};
+        }
+    return {94, 108};
+}
+
+void test_encounters() {
+    // R6. The same night walk, Original and Easy side by side. They match
+    // step for step until the first turn whose passed spawn roll Easy turns
+    // down: there Original gains a monster and Easy does not -- the live
+    // world() turn consults the encounter rule (no RNG draw of its own).
+    Run o, e;
+    for (Run *r : {&o, &e}) {
+        auto &g = r->g();
+        g.position.xy = open_square(pack->world);
+        g.time.hour = 0;
+        g.time.minute = 0;
+        g.rng.seed(0x5eed);
+        g.enhanced.difficulty = r == &e ? openu5::Difficulty::Easy : openu5::Difficulty::Original;
+        g.party.characters[0].current_hp = g.party.characters[0].max_hp = 999;
+    }
+    static constexpr RawInputKind legs[] = {RawInputKind::TrackballRight, RawInputKind::TrackballDown,
+                                            RawInputKind::TrackballLeft, RawInputKind::TrackballUp};
+    int split = -1, spawns_o = 0, spawns_e = 0;
+    bool refused_at_split = false, same_before = true;
+    for (int step = 0; step < 200; ++step) {
+        const size_t before_o = o.rt->command_context_for_test().outdoor->enemies.size();
+        const size_t before_e = e.rt->command_context_for_test().outdoor->enemies.size();
+        o.ball(legs[(step / 14) % 4]);
+        e.ball(legs[(step / 14) % 4]);
+        const size_t after_o = o.rt->command_context_for_test().outdoor->enemies.size();
+        const size_t after_e = e.rt->command_context_for_test().outdoor->enemies.size();
+        spawns_o += after_o > before_o;
+        spawns_e += after_e > before_e;
+        if (split < 0 && (o.g().rng.get_seed() != e.g().rng.get_seed() || after_o != after_e)) {
+            split = step;
+            // world() runs after the turn's housekeeping counted it.
+            openu5::GameState probe = e.g();
+            refused_at_split = !openu5::rules_encounter_allowed(probe);
+        }
+        if (split < 0)
+            same_before = same_before && o.g().position.xy.x == e.g().position.xy.x &&
+                          o.g().position.xy.y == e.g().position.xy.y && o.g().turns_since_start == e.g().turns_since_start;
+        if (o.mode() == UiMode::Combat || e.mode() == UiMode::Combat) break; // a fight ends the comparison
+    }
+    check(split >= 0 && same_before && refused_at_split, "R6",
+          "Original and Easy walk the same night circuit identically until step " + std::to_string(split) +
+              ", the first turn Easy's encounter rule refuses: there Original's spawner draws and Easy's does "
+              "not (monsters added so far " + std::to_string(spawns_o) + " vs " + std::to_string(spawns_e) + ")");
+}
+
 bool lists(const openu5::FrontendView &v, const char *needle) {
     for (size_t i = 0; i < v.line_count; ++i)
         if (v.lines[i] && std::strstr(v.lines[i], needle)) return true;
@@ -608,6 +670,7 @@ int main(int argc, char **argv) {
     test_developer();
     test_cheats();
     test_difficulty();
+    test_encounters();
 
     std::printf("\nA4-ENH1 runtime: %d checks, %d failures\n", checks, failures);
     return failures ? 1 : 0;

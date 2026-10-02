@@ -2502,3 +2502,219 @@ PARITY1 was developed on the uncommitted UI4/PRES1 + hf1 tree. UI4/PRES1 had to 
   - packs unchanged (`85b38994…`, `6eb001ed…`, `28c1533b…`);
   - the hf1 and the first PARITY1 images re-hashed unchanged.
 - **NEW-4 / D-82:** still deferred and queued (§9.8).
+
+## 10. A4-ENH1 — trackball, Developer entry, cheats and difficulty (2026-10-01)
+
+One integrated enhancement pass on top of the Alpha 4 RC1 commit (`aae348ac`), in seven commits. **Status: implemented and host-verified; firmware-build verified; hardware validation PENDING; every tuning value PROVISIONAL.** Nothing here is declared closed until the device run of §10.13.
+
+| Commit | Part |
+|---|---|
+| `fef1f9fe` | 0. The Original-mode preservation goldens, recorded on the unmodified tree |
+| `07a26014` | 1. Trackball click = instant WASD toggle; trackball instrumentation |
+| `7ee18683` | 2. Trackball speed levels (a pulse accumulator) |
+| `cf669d36` | 3. The Developer menu leaves the ordinary menus; Alt+D everywhere |
+| `ae9c3eb9` | 4. Player cheats |
+| `abe4f14d` | 5. Difficulty presets and scaled XP |
+| (this commit) | 6. Preservation and mutation evidence, documentation, version `4.0.0-alpha4-enh1-debug` |
+
+### 10.1 Baseline
+
+- `main` at `aae348ac` (Alpha 4 RC1, hardware session §9.18 pending). The tree was clean except the eight untracked `native/core/a4-rc1-*.log` files, which belong to the RC hardware session; they were left untouched and are still untracked.
+- Fresh host build `build-a4-enh1-baseline`: **181 / 181** serial, 157.25 s (`a4-enh1-baseline-ctest.log`).
+- The RC1 image (`build-a4-rc1`, SHA-256 `67100a51…145a`) was not rebuilt or touched.
+
+### 10.2 The trackball pipeline, traced before any change
+
+| Question | Answer (pre-A4-ENH1 code) |
+|---|---|
+| Where do X/Y deltas come from? | There are none. The ball has four direction pins (up GPIO 3, down 15, left 1, right 2); each pulses once per few degrees of roll. The press switch (GPIO 0) was never read. |
+| How often sampled / reported? | `tdeck_input.cpp`: a falling-edge GPIO interrupt wakes the input task (priority 4, core 0, 1-tick = 10 ms fallback poll), which samples the pins and queues **one `RawInputEvent` per falling edge**, timestamped (µs), into a 64-deep queue. The game thread drains it every loop. |
+| Accumulated? | No. |
+| Does each raw event move? | Yes: every pulse that passed the filter was one `Direction` action — one move, one turn, one cursor row. |
+| Where was "sensitivity"? | `InputController::normalize` (device semantic layer): a **same-direction minimum gap** of 1,200,000 / percent µs — 48 ms at 25 %, 12 ms at 100 %, 4 ms at 300 %. |
+| Threshold / deadzone | None beyond that gap. |
+| Acceleration | None. |
+| Repeat timing | None; the pulses themselves drive everything. |
+| Per report or per distance? | Per report (per pulse). |
+| Diagonals | Each axis's pulses step independently: a staircase at the full pulse rate. |
+| WASD | Keyboard W/A/S/D become the same `Direction` actions in movement contexts (exploration, dungeon, combat, targeting, direction-accepting pickers); untouched by the trackball filter. Toggled only by a 1.1 s Mic hold. |
+
+**Why every setting felt fast.** The percentage only capped the rate. Any roll slower than about 21 pulses a second stepped on *every* pulse at *every* setting, 25 % included. A flick also queued its pulses: every one was a move, so the party kept moving after the ball stopped. The fix had to change the model, not the numbers.
+
+### 10.3 The click (commit 1)
+
+- `tdeck_input.cpp` reads GPIO 0 (`kTrackballClick`: LilyGO's `BOARD_BOOT_PIN`, Meshtastic's `TB_PRESS`) on **both** edges and queues `RawInputKind::TrackballClick` (appended) with Pressed / Released.
+- `TrackballClickFilter` (`input_controller.cpp`): a press is accepted **on its edge** — no hold, no delay, no double-click. A press within 30 ms of a release is contact bounce; a second toggle needs 150 ms since the last; a held press never repeats.
+- `UiInputAdapter::translate` toggles Movement (WASD) Mode and returns `DeviceShortcut::MovementModeToggled`, leaving the caller's action untouched (a default `UiAction` is Confirm, so even "clearing" it would read as Enter).
+- `AlphaRuntime::handle_input_event` handles the toggle beside the A3-05 mutes, before any screen routes input: never a Confirm, a menu action, a scene key or a command. Feedback: **"WASD Mode: ON" / "WASD Mode: OFF"** in the transcript (the Mic hold now says the same); the HUD's `MOVE` marker as before.
+- Roll pulses within **60 ms** of either click edge are dropped (the ball rocking under the finger), and a partial step is forgotten.
+- The live toggle is never written to `settings.json`; "Movement default" stays the Settings row's boot value. (The title used to save the toggle and then reload the frontend's old copy, so the live mode reverted at once — removed.)
+
+### 10.4 The speed model (commit 2)
+
+`InputController::normalize` now: click guard → same-direction bounce window → **step gap** (pulses inside it are *dropped*, not banked: when the ball stops, the party stops) → a **per-axis accumulator**: N pulses on one axis make one step, the remainder is kept; a pulse the other way clears the count (no unwinding); **400 ms** without a pulse on that axis clears it too (a tiny roll moves nothing). Axes count separately, so a diagonal alternates its two directions. No acceleration.
+
+The Settings row (title and System Menu) is **"Trackball speed: N/10"**; its footer says "Left/right: 1 slow - 10 fast; Mic saves". The table, `kTrackballLevels` — **PROVISIONAL, to be tuned on hardware**:
+
+| Speed | Pulses / step | Step gap | Bounce window | Note |
+|---|---|---|---|---|
+| 1 | 8 | 250 ms | 4 ms | slowest |
+| 2 | 6 | 200 ms | 4 ms | |
+| 3 | 5 | 160 ms | 4 ms | |
+| 4 | 4 | 130 ms | 4 ms | |
+| **5** | **3** | **100 ms** | 4 ms | **default** |
+| 6 | 2 | 80 ms | 4 ms | |
+| 7 | 1 | 50 ms | 12 ms | close to the old 25 % minimum |
+| 8 | 1 | 30 ms | 12 ms | |
+| 9 | 1 | 20 ms | 12 ms | |
+| 10 | 1 | none | 12 ms | exactly the old 100 % path |
+
+Host measurement of the model (`input_regression` S7, one second of pulses every 10 ms): steps 3 / 4 / 5 / 7 / 9 / 11 / 17 / 25 / 50 / 50 for speeds 1–10 — monotone, and low / medium / high clearly apart. A slow roll (24 pulses, one every 120 ms): 2 / 3 / 4 / 5 / 8 / 12 / 24 / 24 / 24 / 24 steps — speed 1 steps once per ten pulses (eight, plus the two its 250 ms gap drops), speeds 7–10 on every pulse. On the device the pulses per roll are what the Developer report shows (§10.13 B).
+
+**Settings.** `settings.json` gains the optional key `trackballSpeed` (1..10). A file without it — every file written before A4-ENH1 — takes the default **whatever its old percentage said** (the model changed; an old 25 % would otherwise map to the same too-fast feel). `trackballResponsiveness` is still written, unchanged, so an older firmware still reads the file. The version stays 1.
+
+**Host fixture.** Every older host test drives one raw pulse per intended step — the old contract, which is speed 10 now. The fixture sets speed 10 before `load_device_settings()`; tests that want the device default set it through the device's own Settings row (`a4_enh1_runtime` S1–S7). Tests that boot from a literal `settings.json` say speed 10 explicitly. That is the one place the host differs from a fresh device, and it is pinned by its own tests.
+
+**Diagnostics** (commit 1, extended in 2): Developer > Diagnostics > **"Trackball stats (live)"** (inserted directly above "Probe: SD diag logging"; every older row keeps its place counted from the end) shows the speed's row, pulses and steps per direction, drops by reason (bounce, step gap, after-click), cleared partial steps (idle, reversal) and the count held now on each axis, a same-direction gap histogram (<4 … ≥128 ms), clicks (pressed / toggled / bounce) and the last six rolls ("R9>3 180 ms, min gap 8 ms, speed 5" = nine pulses right, three steps). Reading it starts a new window. One `TRACKBALL_GESTURE` serial line per finished roll; no per-pulse logging (the existing `INPUT_TRACE` lines are unchanged).
+
+### 10.5 The Developer entry (commit 3)
+
+- Gone from ordinary navigation: the title's "Developer" row, the System Menu's "Developer" row, and both Settings pages' "Developer: Visible/Hidden" switch — whatever an old `developerToolsVisible` says (still read and written for compatibility; nothing shows it).
+- **Alt+D** opens the Developer menu in the game, as before, and now also on the title, the startup intro, the attract loop and the main menu (`FrontendSession::request_developer_tools()`: the same `OpenDeveloperTools` intent the hidden row raised, so its no-storage entry is kept). The main menu loses its 'D' hotkey. Every Developer function, diagnostic and preset is unchanged; no player cheat is in it.
+
+### 10.6 The cheats (commit 4)
+
+System Menu > **Cheats** (after Settings and Difficulty; Return to Title stays last): **God Mode** (toggle), **Heal Party**, **Cure Party**, **Add Gold** (left/right: +10 / +100 / +1000), **Max Gold**. The footer says what a row does, then the result; an applied cheat is also printed in the transcript; the page stays open. The subtitle says whether this journey has used one.
+
+Architecture (`openu5/enhanced.h`, `enhanced.cpp`):
+- `EnhancedState` on `GameState`: `god_mode`, `cheats_used` (a bit per cheat ever applied — **support metadata only**, nothing reads it in play) and `difficulty` (§10.7).
+- `apply_cheat()` is the **one entry point**: each cheat changes the game there, through the fields the game's own writers use. `CheatKind` is append-only (its value is its bit), so restore MP, revive, food, keys, torches, gems, reagents, equipment, teleport, no encounters / hunger / poison and quest items are each a case.
+- Guards: Heal / Cure **refused in combat** (the arena holds its own HP copies and writes them back at the end); gold never passes **9999** (every gold writer's cap) and is never lowered (a Developer preset can leave more); a negative or absurd amount clamps; the dead stay dead (revive is not a cheat yet); Cure cures poison and sleep.
+- **God Mode** is one predicate, `party_damage_blocked()`, asked by the five party HP-loss sites: combat `damage()`, `apply_damage()` (poison, starvation, fire and lava, quakes, traps, the Look sun), the chest trap, the ladder fall and the waterfall. The RNG draws still happen; only the HP write is skipped. **Unchanged under God Mode:** status deaths (an inn's poisoned sleeper), scripted deaths (the location-29 trapdoor), the poison tick's flash and sound (it ticks, it takes nothing).
+
+### 10.7 The difficulty (commit 5)
+
+A rules layer on top of the recreated game: plain numbers per preset (`GameplayRules`, `kGameplayRules` in `enhanced.cpp` — **one table to retune**), applied at five central hooks. No enemy, item or original table is edited.
+
+| Hook (site) | Original | Relaxed | Easy |
+|---|---|---|---|
+| incoming damage — an enemy's hit on the party (combat `damage()`) | 100 % | **85 %** | **65 %** |
+| outgoing damage — the party's hit on an enemy (combat `damage()`) | 100 % | 100 % | 100 % |
+| XP per kill (combat `kill()`, the one award site) | 100 % | **150 %** | **200 %** |
+| poison: 1 HP on every Nth turn (turn housekeeping) | every turn | **every 4th** | **every 10th** |
+| meals that eat at 06 / 12 / 18 (turn housekeeping) | all | **75 %** | **50 %** |
+| passed overworld spawn rolls that spawn (`world()`) | all | **90 %** | **75 %** |
+
+All values are **PROVISIONAL** starting points from the brief's ranges; XP is not above 2× by default.
+
+- **Rounding:** half up; a positive value never scales to 0 (a hit stays a hit, a kill is worth at least 1 XP) — with today's table that clamp is never reached (no preset is under 50 %), so it is defensive. COMBAT's kill-outright value 99 is kept, and scaling never manufactures it (a scaled 99 becomes 98).
+- **XP:** the 1988 award `(hp >> 2) + 1` → the preset's share → the 9999 cap and the arena tally. Applied once.
+- **Poison, meals, encounters use no new state.** Poison is thinned by the saved turn count (`turns_since_start % N`), meals by the calendar's meal number (Bresenham: exactly p of the meals, evenly spread, the same ones after any load), encounters by a fixed hash of the turn number (no RNG draw). Nothing can drift across save / load, rest, map changes or combat; a dialogue that resets the turn counter (the 100-turn effect) only moves the phase.
+- **Scope, by design:** incoming scaling is enemy hits in the arena only — arena fields, starvation, traps, hazards and the ship's hull are unchanged. Dungeon wanderers and fixed rooms are unchanged (the encounter share is the overworld spawn gate). Death and resurrection penalties are unchanged.
+- **UI:** System Menu > **Difficulty** (after Settings): Original / Relaxed / Easy, the cursor on the journey's own; each row's footer states what it changes ("Hits 85% XP 150% Food 75% Poison 1/4 Fights 90%"); Enter switches from the next turn on (footer + transcript "Difficulty: Easy"). A difficulty is not a cheat (no bit).
+
+### 10.8 Save and settings
+
+- **Per journey, in the save:** the state document gains `"enhanced": {"difficulty": "relaxed", "godMode": true, "cheatsUsed": 9}` **only when it differs from the defaults** (`save_core.cpp`), carried in the sidecar via `persistence.cpp` `extras[]` (the sidecar is a whitelist: a key missing from it is dropped at every save). Absent = Original, God Mode off, no cheats — every older save, every PC import (§5's rule: the bridge never reads or writes sidecar keys outside §5.3) and every journey that never touched them. A malformed value takes its default rather than refusing the save. Not in the `.GAM`.
+- **Device-wide, in `settings.json`:** only the trackball speed (§10.4).
+
+### 10.9 Preservation (Original + no cheats)
+
+- **Goldens recorded on the unmodified tree before any change** (commit 0, `a4-enh1-golden-head.log`), using only pre-A4-ENH1 interfaces:
+  - `a4_enh1_preservation`: 3,000 housekeeping turns (2,400 poison ticks, 45 meals, starvation, the regeneration ring), 4,000 spawn-gate rolls, a whole fight on the real combat engine (126 HP of enemy hits, 2 kills, 22 XP), and a default journey's saved document byte for byte plus its load-and-save-again;
+  - `a4_enh1_preservation_runtime`: a 260-step night walk on the real overworld through the real `AlphaRuntime` (the live `world()` turn: 3 fights, poison) and Alt+S / Alt+L.
+  
+  After every later commit — every hook in place — both reproduce the recorded hashes **bit for bit**.
+- `a4_enh1_rules` R1: every hook is the identity at Original over damage −5..300, XP, and 20,050 turns of poison, meals and spawns.
+- The whole existing parity corpus (`gameplay_parity`, `quest_parity`, `combat_parity`, `advanced_combat_parity`, `magic_parity`, `turn_parity`, `travel_parity`, `persistence_parity`, the TypeScript drift tests) passes unchanged in every commit's suite.
+- Mutations R1–R5 (a non-identity Original row) turn the goldens RED (§10.11).
+
+### 10.10 Tests
+
+- New: `a4_enh1_preservation`, `a4_enh1_preservation_runtime` (commit 0), `a4_enh1_runtime` (W1–W11 click, T1–T2 report, S1–S7 speed, D1–D5 Developer entry, C1–C11 cheats, R1–R6 difficulty incl. the live encounter thinning in lockstep with Original), `a4_enh1_rules` (C1–C15, P1–P6, R1–R11); `input_regression` gains the click (C1–C7), instrumentation and speed (S1–S7) blocks.
+- **Changed on purpose:** the Diagnostics row count (`ui_debug_menu`, `a3_04e_pacing` U1/U2, `a3_04e_pacing_runtime` navigation); the trackball row and settings document (`frontend`, `a3_01_audio_contract` F5/F7/F10); the tests that drive one pulse per step now say speed 10 (`dungeon_input`, `dungeon_combat`, `a3_01/a3_03/a3_05/a4_ui2_death_music` settings documents, the host fixture); the Developer rows (`frontend`, `a4_ui4_presentation` F4b); the System Menu root (`a4_ui2_save_menu` M1/M2); the A4-UI1 goldens — settings ×2 (twice) and system-menu (twice), each with a pixel proof that only the intended rows changed (`a4-enh1-p{2,3,4,5}-golden-proof.log`, `tools/a4_enh1_png_diff.py`).
+- **Found and fixed (pre-existing):** since A3-01 (`2f218808`) a `//` comment in the middle of a `frontend_test` line had silenced every System Menu check after it on that line; they run again (proven: a wrong expectation now fails at line 141).
+
+### 10.11 Mutations
+
+`tools/a4_enh1_mutation_check.py <build> [ids]` — 39 mutants, **39 killed**, 0 survived, 0 invalid (`a4-enh1-mutation.log`: 37 killed and 2 INVALID through the driver's own anchors -- one left a stray comment, one deleted a parameter's only use under `-Werror=unused-parameter`; `a4-enh1-mutation-rerun.log`: those two, fixed, killed). They cover the click (not handled, bounce re-toggling, routed as a key, no feedback, no jiggle guard), the speed (no accumulation, no step gap, no idle or reversal reset, the key not read back, the default row changed), the Developer entry (the row back, Alt+D dead on the title), the cheats (God Mode missing at apply_damage / combat / the chest trap, Heal in combat, the gold cap and floor, no cheats-used bit, the key off the sidecar whitelist or written for an Original journey, a load dropping God Mode, the page's Enter dead) and the difficulty (five non-identity Original rows, each hook removed, XP scaled twice, the meal thinning never skipping, the difficulty outside "is default", a load ignoring it, the page's Enter dead). Two notes: a 1 % change to Original's XP or hit share rounds away inside the golden fight (R1 and R3 were killed by `a4_enh1_rules` R1's identity sweep, not by the golden); and a "never scale a hit to 0" mutant is equivalent with today's table (no preset is under 50 %), so the clamp is defensive and was left out.
+
+### 10.12 Host and firmware
+
+- Serial suite per commit: 184 / 184 (commits 1–3), 185 / 185 (4–5), 185 / 185 on the final tree (161.31 s, `a4-enh1-final-ctest.log`; 0 project warnings).
+- Firmware (1 MiB app partition):
+
+| Image | Size | Free |
+|---|---|---|
+| RC1 (`aae348ac`) | `0xfc410` (1,033,232 B) | 15,344 B |
+| commit 1 | `0xfd0c0` (1,036,480 B) | 12,096 B |
+| commit 2 | `0xfd450` (1,037,392 B) | 11,184 B |
+| commit 3 | `0xfd3a0` (1,037,216 B) | 11,360 B |
+| commit 4 | `0xfdc60` (1,039,456 B) | 9,120 B |
+| commit 5 | `0xfe4a0` (1,041,568 B) | 7,008 B |
+| | commit 6, pre-commit (`4.0.0-alpha4-enh1-debug`) | `0xfe4a0` (1,041,568 B) | 7,008 B | |
+
+  The pass costs about 8.3 KB; **7 KB of the partition remain**, worth knowing before the next feature. Packs unchanged (no SD recopy). Section diff against RC1 (`a4-enh1-p6-fw-size-diff.log`): flash `.text` +6,004 B, `.rodata` +2,336 B, internal `.bss` +464 B (the trackball counters and the six-roll ring inside the input adapter -- an RC heap capture should account for it), `.data` and IRAM unchanged. The three ELF guards are GREEN on it (`a4-enh1-p6-elf-checks.log`). The image to flash is built **after** this commit from a fresh `--no-ccache` directory, so its `Git` line names the commit; its path and SHA-256 go in `native/core/a4-enh1-image-*.log`, left untracked like RC1's until the hardware result is recorded.
+
+### 10.13 Hardware checklist (A4-ENH1 image) — PENDING
+
+On the ENH1 image (`native/targets/tdeck/build-a4-enh1-final/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-enh1-Debug-Launcher.bin`, identity screen `FW 4.0.0-alpha4-enh1-debug` and `Git <this commit>`; packs as for RC1, nothing to recopy). Back up the card's `ultima5/` first. Developer values apply on Enter. Report PASS / FAIL per line and anything odd; the tuning lines want an opinion, not a PASS.
+
+**A. Trackball click**
+1. In the world, click once: "WASD Mode: ON" at once, `MOVE` on the HUD, the party does not move, nothing opens.
+2. Click again: "WASD Mode: OFF" at once.
+3. Ten quick clicks (about 3 a second): exactly ten lines alternating ON / OFF — never two for one press.
+4. Press and hold 3 s: one toggle, at the press, none at the release.
+5. Click in the System Menu, a shop, a Look "Direction?" prompt, Z-stats and the title: no row selected, no prompt answered or cancelled, no command; the mode still toggles.
+6. Click firmly while resting a finger on the ball: no step.
+
+**B. Trackball speed** (Settings > "Trackball speed: N/10"; default 5). For each of speeds **1, 3, 5, 7, 10**: a tiny roll (a nudge), a normal roll, a fast flick, horizontal, vertical, diagonal, in the world and in a menu. Then Developer > Diagnostics > "Trackball stats (live)" once per speed and note the pulses-per-roll and the gap histogram.
+7. Tiny roll: no move at speeds 1–6.
+8. Normal roll: steady, not jumpy; the speeds feel clearly different.
+9. Fast flick: a short burst, and nothing more once the ball stops (no "catch-up" moves).
+10. Diagonal: alternating steps, no runaway in one axis.
+11. Menus: the cursor follows a deliberate roll at every speed (say which speed you would choose).
+12. Speed 10 feels like the RC1 image at 100 %; speed 7 like its 25 %.
+13. Reboot: the chosen speed is kept. A card from before this image boots at speed 5.
+14. WASD ON at speed 1: W/A/S/D still move at once, one step per key.
+
+**C. Developer entry**
+15. No "Developer" in the title menu, the System Menu or either Settings page.
+16. Alt+D in the game opens the Developer menu; Alt+D on the title opens it too.
+
+**D. Cheats** (System Menu > Cheats)
+17. God Mode On; let monsters and a poison field hit the party: no HP lost; Off again: damage returns.
+18. Heal Party with a hurt party: full HP. Cure Party with a poisoned member: cured.
+19. Add Gold: +100, then right to +1000, Enter. Max Gold: 9999. At 9999 Add Gold says it is full.
+20. During a fight: Heal Party says "Not during combat".
+21. God Mode On, Alt+S, power-cycle, Continue: still On; the Cheats page says the journey has used cheats.
+
+**E. Difficulty** (System Menu > Difficulty)
+22. Original on an old save: everything as RC1 (a fight, a poisoned walk, a day's meals).
+23. Relaxed / Easy: enemy hits visibly smaller; a kill's XP ×1.5 / ×2 (Z-stats before and after one kill).
+24. Easy: a poisoned member loses 1 HP per 10 steps (Relaxed: per 4).
+25. Easy: food drops at about half the rate over a game day (Relaxed: three quarters).
+26. Easy at night in open country: noticeably fewer monsters appear (opinion).
+27. Alt+S, power-cycle, Continue: the difficulty is kept; a save from RC1 loads as Original.
+
+**PASS** needs A, C, D and the mechanical lines of B and E with no crash, lock, reset or input-mode corruption; the tuning opinions (B 8–12, E 23–26) decide the numbers of a follow-up, they do not fail this run.
+
+### 10.14 Deferred and open
+
+- **Tuning** of the speed table and the difficulty presets: hardware and play.
+- More cheats (the list in §10.6) and per-hook toggles: the framework is ready, none is implemented.
+- Difficulty for the dungeon wanderer, arena fields, traps, starvation and death penalties: deliberately out of scope (§10.7).
+- God Mode does not stop status or scripted deaths (§10.6).
+- Alt+S / Alt+L on the title still act as Enter on the selected row (a default `UiAction` is Confirm). Observed while tracing the click, pre-existing, not changed here.
+- The RC1 hardware session (§9.18) is still owed; this image supersedes RC1 for testing only if the user decides so.
+
+### 10.15 Status
+
+| Axis | State |
+|---|---|
+| Click, speed, Developer entry, cheats, difficulty | **implemented, host-verified** |
+| Original-mode preservation | **host-verified**: pre-change goldens bit-identical; parity corpus unchanged |
+| Firmware | **build-verified** (pre-commit `0xfe4a0`, 7,008 B free, ELF guards GREEN; the flashable image is built after this commit) |
+| Tuning values | **PROVISIONAL** |
+| Hardware | **PENDING** (§10.13) |
+| Commit / tag / push | committed; not tagged, not pushed, not flashed |

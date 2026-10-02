@@ -1,0 +1,3 @@
+C1 KILLED -- God Mode does not cover apply_damage (poison, starvation, hazards, traps) -- a4_enh1_rules exit=1 RED=C2; a4_enh1_runtime exit=1 RED=C7
+C4 KILLED -- Heal is applied in combat (the arena then overwrites it) -- a4_enh1_rules exit=1 RED=C5,C6; a4_enh1_runtime exit=1 RED=C11
+A4-ENH1 mutation check: 2 killed, 0 survived, 0 invalid; restored build GREEN
