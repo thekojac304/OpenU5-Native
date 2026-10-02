@@ -1,0 +1,13 @@
+A4-ENH1 phase 3: A4-UI1 golden re-record proof
+before: phase 2 tree (commit 7ee18683) --dump; after: phase 3 tree --dump
+python tools/a4_enh1_png_diff.py <before> <after>:
+dungeon-bands        identical
+gameplay             identical
+main-menu            identical
+move-blackthorn      identical
+move-lord-british    identical
+settings-large         364 px differ, x 24..158 y 102..110
+settings               202 px differ, x 20..120 y 90..96
+system-menu          identical
+cause: the title Settings' 'Developer: Hidden' row (developer builds only) is gone; the differing pixels are exactly that one text row
+new goldens: settings 0xb6d25af65af28a6b, settings-large 0x76be3c0f7b4f9683

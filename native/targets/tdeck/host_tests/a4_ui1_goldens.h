@@ -17,9 +17,10 @@ constexpr uint64_t kScreen[8] = {
     0x21ea0f6bf5e14e1cull, // dungeon-bands
     // Alpha 4 A4-ENH1 (ALPHA4_UI.md section 10): the two Settings states re-recorded for the
     // trackball row's new text ("Trackball speed: 10/10"); only that row's pixels changed
-    // (a4-enh1-p2-golden-proof.log).
-    0xa4fff874a5b10777ull, // settings
-    0xb5625eadf59c689bull, // settings-large
+    // (a4-enh1-p2-golden-proof.log). Then again for the removed "Developer: Hidden" row, the
+    // only pixels that changed (a4-enh1-p3-golden-proof.log).
+    0xb6d25af65af28a6bull, // settings
+    0x76be3c0f7b4f9683ull, // settings-large
     // Alpha 4 UI Batch 2 (ALPHA4_UI.md section 2.3): re-recorded from the A4-UI2 Board for the new
     // System Menu labels ("Save Game", "Load Game"); the other seven states are unchanged.
     0x9b4da31f3546ca4full, // system-menu

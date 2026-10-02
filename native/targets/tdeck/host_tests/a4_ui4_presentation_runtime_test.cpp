@@ -247,17 +247,19 @@ void test_frontend() {
             if (std::string(mv.lines[i]).rfind("Developer", 0) == 0) dev_row = mv.lines[i];
         check(title_footer == "Left/right changes; Mic saves" && menu_footer == title_footer,
               "F4 both Settings pages say \"Left/right changes; Mic saves\" (title \"" + title_footer + "\", menu \"" + menu_footer + "\")");
-        // Settings row 6 is Developer: Hidden/Visible; make it visible, then back to the root.
-        for (int i = 0; i < 6; ++i) g.down();
-        g.ball(RawInputKind::TrackballRight);
+        // Changed on purpose by Alpha 4 A4-ENH1 (ALPHA4_UI.md section 10): there is no
+        // Developer row to name any more -- not "Developer: Hidden/Visible" in Settings,
+        // not "Developer" on the root (Alt+D opens the tools). F4b used to check that the
+        // two menus used the same word for it.
         g.mic();
         g.run(50);
         const auto root = g.rt->system_menu_view();
         std::string root_dev;
         for (size_t i = 0; i < root.line_count; ++i)
             if (std::string(root.lines[i]).rfind("Developer", 0) == 0) root_dev = root.lines[i];
-        check(root_dev == "Developer" && dev_row.rfind("Developer: ", 0) == 0,
-              "F4b the System Menu calls the developer row \"Developer\", as the title menu does (\"" + root_dev + "\")");
+        check(root_dev.empty() && dev_row.empty() && mv.line_count == 6,
+              "F4b no Developer row in the System Menu: none on the root, none in its six Settings rows (\"" +
+                  root_dev + "\", \"" + dev_row + "\")");
         g.mic();
     }
 #ifndef A4_UI4_HEAD_API

@@ -68,6 +68,8 @@ struct FrontendSettings {
     // without the key, written before A4-ENH1, takes the default).
     uint8_t trackball_speed = kTrackballSpeedDefault;
     uint8_t ui_size = 1;                  // Reserved: 0=compact, 1=normal, 2=large.
+    // Read and written for settings.json compatibility only: since A4-ENH1 no
+    // menu shows a Developer row whatever it says (Alt+D opens the tools).
     bool developer_tools_visible = false;
     // A3-01: the Settings rows "SFX Volume" and "Music Volume", 0..100 % in
     // steps of 10 (0 = mute). Stored since Alpha 2 (settings.json keys
@@ -233,6 +235,8 @@ class FrontendSession {
     FrontendState state() const { return state_; }
     FrontendView view() const;
     FrontendIntent take_intent();
+    /** A4-ENH1: Alt+D on the title screens. True = OpenDeveloperTools is pending. */
+    bool request_developer_tools();
     void complete_intent(bool success, const char *message = nullptr);
     void enter_game() { state_ = FrontendState::EnterGame; }
     void set_save_catalog(const FrontendSaveCatalog &catalog) { catalog_ = catalog; }

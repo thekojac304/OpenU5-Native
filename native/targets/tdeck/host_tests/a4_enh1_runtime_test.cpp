@@ -7,9 +7,12 @@
 //   W  the trackball click: an immediate one-press WASD toggle on every
 //      screen, with its transcript line, and never a key for what is open
 //   T  Developer > Diagnostics > "Trackball stats (live)"
+//   S  the trackball speed levels through the device's own Settings row
+//   D  the Developer menu: no ordinary menu row, Alt+D everywhere
 #include "../main/alpha_runtime.h"
 #include "../main/tdeck_board.h"
 #include "esp_timer.h"
+#include "openu5/frontend_settings.h"
 
 #include <cstdio>
 #include <cstring>
@@ -357,6 +360,52 @@ void test_speed() {
     tdeck::a3_host_settings_enabled() = false;
     tdeck::a3_host_settings_text().clear();
 }
+bool lists(const openu5::FrontendView &v, const char *needle) {
+    for (size_t i = 0; i < v.line_count; ++i)
+        if (v.lines[i] && std::strstr(v.lines[i], needle)) return true;
+    return false;
+}
+
+void test_developer() {
+    // A card whose settings.json still says developerToolsVisible: true (the
+    // old Settings row's switch): nothing shows a Developer row any more.
+    tdeck::a3_host_settings_enabled() = true;
+    openu5::FrontendSettings visible{};
+    visible.developer_tools_visible = true;
+    visible.trackball_speed = openu5::kTrackballSpeedLegacy;
+    encode_settings(visible, tdeck::a3_host_settings_text());
+    Run h;
+    h.key('m', true);
+    const auto root = h.rt->system_menu_view();
+    for (int i = 0; i < 3; ++i) h.ball(RawInputKind::TrackballDown);
+    h.key('\r');
+    const auto settings = h.rt->system_menu_view();
+    check(h.rt->device_settings().developer_tools_visible && !lists(root, "Developer") && !lists(settings, "Developer") &&
+              settings.line_count == 6,
+          "D1", "System Menu: no Developer row on the root or in Settings, even with developerToolsVisible on");
+    h.key('m', true);
+    h.key('d', true);
+    check(h.mode() == UiMode::DebugMenu, "D2", "Alt+D in the game still opens the Developer menu");
+    h.key('\b');
+    check(h.mode() != UiMode::DebugMenu, "D3", "and Back closes it");
+    // The title: no Developer row, no 'D' hotkey; Alt+D opens the tools.
+    h.key('m', true);
+    for (int i = 0; i < 12 && h.rt->system_menu_view().selected_line + 1 != int(h.rt->system_menu_view().line_count); ++i)
+        h.ball(RawInputKind::TrackballDown);
+    h.key('\r');
+    h.key(' ');
+    const auto menu = h.rt->frontend_view();
+    h.key('d');
+    const bool d_inert = h.rt->frontend_open() && h.rt->frontend_state() == openu5::FrontendState::MainMenu;
+    check(menu.line_count == 8 && !lists(menu, "Developer") && std::string(menu.footer).find(" D") == std::string::npos &&
+              d_inert,
+          "D4", "the title's main menu: eight rows, no Developer, no D hotkey (D does nothing)");
+    h.key('d', true);
+    check(!h.rt->frontend_open() && h.mode() == UiMode::DebugMenu, "D5",
+          "Alt+D on the title opens the Developer menu, as the hidden row did");
+    tdeck::a3_host_settings_enabled() = false;
+    tdeck::a3_host_settings_text().clear();
+}
 } // namespace
 
 int main(int argc, char **argv) {
@@ -371,6 +420,7 @@ int main(int argc, char **argv) {
     test_click();
     test_report();
     test_speed();
+    test_developer();
 
     std::printf("\nA4-ENH1 runtime: %d checks, %d failures\n", checks, failures);
     return failures ? 1 : 0;

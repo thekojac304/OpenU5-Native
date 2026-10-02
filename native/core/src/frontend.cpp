@@ -14,7 +14,9 @@ constexpr uint8_t kRound[]={4,2,1};
 constexpr const char *kMenu[]={
     "Journey Onward", "Create New Character", "Transfer from Ultima IV",
     "Ultima V Introduction", "Acknowledgements", "Return to the View",
-    "Settings", "PC Save Transfer", "Developer"
+    // Alpha 4 A4-ENH1: no "Developer" row any more -- Alt+D on the title
+    // opens the developer tools (request_developer_tools()).
+    "Settings", "PC Save Transfer"
 };
 bool is_up(const UiAction&a){return a.kind==UiActionKind::Previous||(a.kind==UiActionKind::Direction&&a.direction==Direction::North);}
 bool is_down(const UiAction&a){return a.kind==UiActionKind::Next||(a.kind==UiActionKind::Direction&&a.direction==Direction::South);}
@@ -72,7 +74,16 @@ void FrontendSession::enter(FrontendState s,uint32_t now){
         }
     }
 }
-size_t FrontendSession::menu_count()const{return developer_build_&&settings_.developer_tools_visible?9:8;}
+size_t FrontendSession::menu_count()const{return sizeof(kMenu)/sizeof(kMenu[0]);}
+// Alpha 4 A4-ENH1 (targets/tdeck/ALPHA4_UI.md section 10): the developer tools
+// are no longer a menu row anyone meets. Alt+D asks for them -- in a developer
+// build, from the title, the startup intro, the attract loop or the main menu
+// (never mid-creation, mid-load or from a question) -- and the runtime runs the
+// same OpenDeveloperTools intent the hidden "Developer" row used to.
+bool FrontendSession::request_developer_tools(){
+    if(!developer_build_)return false;
+    if(state_!=FrontendState::Title&&state_!=FrontendState::IntroAnimation&&state_!=FrontendState::AttractDemo&&state_!=FrontendState::MainMenu)return false;
+    pending_.kind=FrontendIntentKind::OpenDeveloperTools;return true;}
 // Alpha 4 UI Batch 2: a journey's two generations by age.
 SaveList order_saves(const FrontendSaveSlot(&s)[2]){
     SaveList l;
@@ -159,7 +170,6 @@ void FrontendSession::activate_menu(uint32_t now){
     case 6: enter(FrontendState::Settings,now);settings_cursor_=0;break;
     // Alpha 4 A4-SAVE3: the page asks the runtime to look at the import folder.
     case 7: enter(FrontendState::PcTransfer,now);cursor_=0;pc_status_=PcImportStatus{};pending_.kind=FrontendIntentKind::InspectPcSaves;break;
-    case 8: pending_.kind=FrontendIntentKind::OpenDeveloperTools;break;
     }
 }
 bool FrontendSession::handle(const UiAction&a,uint32_t now){
@@ -177,7 +187,7 @@ bool FrontendSession::handle(const UiAction&a,uint32_t now){
     if(state_==FrontendState::Error){if(pc_error_){pc_error_=false;enter(FrontendState::PcTransfer,now);cursor_=0;}else enter(FrontendState::MainMenu,now);return true;}
     if(state_==FrontendState::MainMenu){
         entered_ms_=now;const auto count=menu_count();
-        const char hotkeys[]="JCTUARSPD";if(k){const char*p=std::strchr(hotkeys,k);if(p&&size_t(p-hotkeys)<count){cursor_=uint8_t(p-hotkeys);activate_menu(now);return true;}}
+        const char hotkeys[]="JCTUARSP";if(k){const char*p=std::strchr(hotkeys,k);if(p&&size_t(p-hotkeys)<count){cursor_=uint8_t(p-hotkeys);activate_menu(now);return true;}}
         if(is_up(a)||k=='1'||k=='3')cursor_=uint8_t((cursor_+count-1)%count);else if(is_down(a)||k=='2'||k=='4')cursor_=uint8_t((cursor_+1)%count);
         else if(a.kind==UiActionKind::Confirm||k==' ')activate_menu(now);
         else return false;
@@ -261,11 +271,11 @@ bool FrontendSession::handle(const UiAction&a,uint32_t now){
     }
     if(state_==FrontendState::Settings){
         if(a.kind==UiActionKind::Cancel||a.kind==UiActionKind::Back){pending_.kind=FrontendIntentKind::PersistSettings;pending_.settings=settings_;enter(FrontendState::MainMenu,now);return true;}
-        // A3-01: rows 4/5 are SFX and Music Volume (the System Menu's order);
-        // Developer stays last and exists only in developer builds.
-        const uint8_t setting_count=developer_build_?7U:6U;
+        // A3-01: rows 4/5 are SFX and Music Volume (the System Menu's order).
+        // A4-ENH1: the "Developer: Visible/Hidden" row is gone (Alt+D instead).
+        const uint8_t setting_count=6U;
         if(is_up(a))settings_cursor_=uint8_t((settings_cursor_+setting_count-1U)%setting_count);else if(is_down(a))settings_cursor_=uint8_t((settings_cursor_+1U)%setting_count);
-        else if(is_left(a)||is_right(a)||a.kind==UiActionKind::Confirm){const int delta=is_left(a)?-1:1;switch(settings_cursor_){case 0:settings_.brightness=uint8_t(std::clamp(int(settings_.brightness)+delta*10,10,100));break;case 1:settings_.movement_mode=!settings_.movement_mode;break;case 2:settings_.trackball_speed=uint8_t(std::clamp(int(settings_.trackball_speed)+delta,int(kTrackballSpeedMin),int(kTrackballSpeedMax)));break;case 3:settings_.ui_size=uint8_t((int(settings_.ui_size)+delta+3)%3);break;case 4:settings_.sound_volume=step_volume(settings_.sound_volume,delta);volume_edits_|=kSfxVolumeEdited;break;case 5:if(music_availability_==MusicAvailability::Available){settings_.music_volume=step_volume(settings_.music_volume,delta);volume_edits_|=kMusicVolumeEdited;}break;case 6:if(developer_build_)settings_.developer_tools_visible=!settings_.developer_tools_visible;break;}}
+        else if(is_left(a)||is_right(a)||a.kind==UiActionKind::Confirm){const int delta=is_left(a)?-1:1;switch(settings_cursor_){case 0:settings_.brightness=uint8_t(std::clamp(int(settings_.brightness)+delta*10,10,100));break;case 1:settings_.movement_mode=!settings_.movement_mode;break;case 2:settings_.trackball_speed=uint8_t(std::clamp(int(settings_.trackball_speed)+delta,int(kTrackballSpeedMin),int(kTrackballSpeedMax)));break;case 3:settings_.ui_size=uint8_t((int(settings_.ui_size)+delta+3)%3);break;case 4:settings_.sound_volume=step_volume(settings_.sound_volume,delta);volume_edits_|=kSfxVolumeEdited;break;case 5:if(music_availability_==MusicAvailability::Available){settings_.music_volume=step_volume(settings_.music_volume,delta);volume_edits_|=kMusicVolumeEdited;}break;}}
         else return false;
         return true;
     }
@@ -289,7 +299,7 @@ FrontendView FrontendSession::view()const{
     FrontendView v{};v.state=state_;static char dynamic[12][96]{};for(auto &line:dynamic)line[0]=0;
     if(state_==FrontendState::Title||state_==FrontendState::IntroAnimation){if(!intro_page_)v.kind=FrontendViewKind::TitleCredits;v.title="ULTIMA V";v.subtitle="WARRIORS OF DESTINY";v.lines[v.line_count++]="Lord British presents";v.lines[v.line_count++]="Copyright 1988 Lord British";v.footer=intro_page_?"Enter advances; Mic returns":"Press a key";if(intro_page_){std::snprintf(dynamic[0],96,"The Summoning - scene %u of 21",unsigned(intro_page_));v.lines[0]=dynamic[0];v.line_count=1;if(intro_texts_&&intro_page_<=intro_text_count_)v.lines[v.line_count++]=intro_texts_[intro_page_-1];}return v;}
     if(state_==FrontendState::AttractDemo){v.kind=FrontendViewKind::Attract;v.title="ULTIMA V";v.subtitle="The Summoning";v.lines[v.line_count++]="A moongate opens in the View";v.lines[v.line_count++]="The Avatar approaches Britannia";v.footer="Any key returns to the menu";return v;}
-    if(state_==FrontendState::MainMenu){v.kind=FrontendViewKind::Menu;v.title="ULTIMA V";v.subtitle="WARRIORS OF DESTINY";for(size_t i=0;i<menu_count();++i)v.lines[v.line_count++]=kMenu[i];v.selected_line=cursor_;v.footer=notice_[0]?notice_:menu_count()>8?"Select: arrows / Enter / J C T U A R S P D":"Select: arrows / Enter / J C T U A R S P";
+    if(state_==FrontendState::MainMenu){v.kind=FrontendViewKind::Menu;v.title="ULTIMA V";v.subtitle="WARRIORS OF DESTINY";for(size_t i=0;i<menu_count();++i)v.lines[v.line_count++]=kMenu[i];v.selected_line=cursor_;v.footer=notice_[0]?notice_:"Select: arrows / Enter / J C T U A R S P";
         // Alpha 4 A4-SAVE2: where Create New Character will save.
         if(!notice_[0]&&cursor_==1){const int e=first_empty_slot(catalog_);if(e>=0)std::snprintf(dynamic[0],96,"New journey: saved in empty Slot %d",e+1);else std::snprintf(dynamic[0],96,"%s","Slots full: you choose one to replace");v.footer=dynamic[0];}
         if(!notice_[0]&&cursor_==7)v.footer="Import or export original PC/DOS saves";
@@ -335,7 +345,7 @@ FrontendView FrontendSession::view()const{
         if(st==SaveSlotStatus::Saved)std::snprintf(dynamic[6],96,"Enter writes /ultima5/export/slot%d",cursor_+1);
         else std::snprintf(dynamic[6],96,"%s",st==SaveSlotStatus::Empty?"Empty slot":st==SaveSlotStatus::Damaged?"Damaged: nothing to export":"Last save damaged; exports the one before");
         v.footer=notice_[0]?notice_:dynamic[6];return v;}
-    if(state_==FrontendState::Settings){v.kind=FrontendViewKind::Settings;v.title="Settings";static const char*ui_sizes[]={"Small","Medium","Large"};std::snprintf(dynamic[0],96,"Brightness: %u%%",settings_.brightness);std::snprintf(dynamic[1],96,"Movement default: %s",settings_.movement_mode?"On":"Off");std::snprintf(dynamic[2],96,"Trackball speed: %u/10",unsigned(settings_.trackball_speed));std::snprintf(dynamic[3],96,"Text / UI: %s",ui_sizes[std::min<unsigned>(settings_.ui_size,2)]);format_sfx_volume_row(dynamic[4],96,settings_.sound_volume,sfx_muted_);format_music_volume_row(dynamic[5],96,settings_.music_volume,music_availability_,music_muted_);for(int i=0;i<6;++i)v.lines[v.line_count++]=dynamic[i];if(developer_build_){std::snprintf(dynamic[6],96,"Developer: %s",settings_.developer_tools_visible?"Visible":"Hidden");v.lines[v.line_count++]=dynamic[6];}v.selected_line=settings_cursor_;const char*why=settings_cursor_==5?music_unavailable_reason(music_availability_):nullptr;v.footer=why?why:settings_cursor_==2?kTrackballSpeedFooter:"Left/right changes; Mic saves";return v;}
+    if(state_==FrontendState::Settings){v.kind=FrontendViewKind::Settings;v.title="Settings";static const char*ui_sizes[]={"Small","Medium","Large"};std::snprintf(dynamic[0],96,"Brightness: %u%%",settings_.brightness);std::snprintf(dynamic[1],96,"Movement default: %s",settings_.movement_mode?"On":"Off");std::snprintf(dynamic[2],96,"Trackball speed: %u/10",unsigned(settings_.trackball_speed));std::snprintf(dynamic[3],96,"Text / UI: %s",ui_sizes[std::min<unsigned>(settings_.ui_size,2)]);format_sfx_volume_row(dynamic[4],96,settings_.sound_volume,sfx_muted_);format_music_volume_row(dynamic[5],96,settings_.music_volume,music_availability_,music_muted_);for(int i=0;i<6;++i)v.lines[v.line_count++]=dynamic[i];v.selected_line=settings_cursor_;const char*why=settings_cursor_==5?music_unavailable_reason(music_availability_):nullptr;v.footer=why?why:settings_cursor_==2?kTrackballSpeedFooter:"Left/right changes; Mic saves";return v;}
     if(state_==FrontendState::CharacterCreation){v.title="The Summoning";if(creation_==FrontendCreationPhase::Name){v.kind=FrontendViewKind::CharacterName;v.lines[v.line_count++]="By what name shalt thou be known?";std::snprintf(dynamic[0],96,": %s_",name_);v.lines[v.line_count++]=dynamic[0];v.footer="Enter accepts; Mic returns";}else if(creation_==FrontendCreationPhase::Sex){v.kind=FrontendViewKind::CharacterGender;v.lines[v.line_count++]="Art thou Male or Female?";v.lines[v.line_count++]="(M)ale     (F)emale";v.footer="Choose M or F; Mic returns";}else{v.kind=FrontendViewKind::CharacterQuiz;std::snprintf(dynamic[0],96,"Question %u of 7",unsigned(tournament_.answered()+1));v.lines[v.line_count++]=dynamic[0];const auto qi=tournament_.question_index();if(questions_&&qi<question_count_)v.lines[v.line_count++]=questions_[qi];else{std::snprintf(dynamic[1],96,"A) %s",virtue_name(tournament_.virtue_a()));std::snprintf(dynamic[2],96,"B) %s",virtue_name(tournament_.virtue_b()));v.lines[v.line_count++]=dynamic[1];v.lines[v.line_count++]=dynamic[2];}v.footer="Choose A or B; Mic returns";}return v;}
     if(state_==FrontendState::Error){v.title=pc_error_?"PC Save Transfer":"Journey interrupted";v.lines[v.line_count++]=notice_;v.footer="Press a key to return";return v;}
     v.title="Preparing Britannia";v.footer="Please wait";return v;

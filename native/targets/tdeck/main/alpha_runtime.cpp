@@ -1844,6 +1844,14 @@ bool AlphaRuntime::handle_input_event(const RawInputEvent&raw){service_combat();
     if(in_frontend){
         const auto state_before=frontend_.state();const auto phase_before=frontend_.creation_phase();
         char name_before[9]{};std::snprintf(name_before,sizeof(name_before),"%s",frontend_.creation_name());
+        // A4-ENH1: Alt+D on the title opens the developer tools (the menu row
+        // that did is gone); elsewhere on these screens it does nothing.
+        if(shortcut==DeviceShortcut::DeveloperMenu){
+            const bool asked=frontend_.request_developer_tools();
+            ESP_LOGI(kTag,"DEVELOPER_SHORTCUT source=alt-d frontend_state=%s opened=%d",frontend_state_name(frontend_.state()),asked);
+            if(asked)service_frontend_intent();
+            return asked;
+        }
         const bool accepted=frontend_.handle(action,uint32_t(raw.timestamp_us/1000));
         if(accepted){settings_=frontend_.settings();apply_device_settings();apply_volume_edits(frontend_.take_volume_edits());}
         const auto state_after=frontend_.state();const auto phase_after=frontend_.creation_phase();

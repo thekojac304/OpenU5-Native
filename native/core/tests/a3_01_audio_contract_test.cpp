@@ -633,8 +633,8 @@ int main(int argc, char **argv) {
         check(v.kind == FrontendViewKind::Settings && v.line_count == SystemMenuSession::kSettingsRowCount &&
                   std::strcmp(v.lines[SystemMenuSession::kSfxVolumeRow], "SFX Volume: 80%") == 0 &&
                   std::strcmp(v.lines[SystemMenuSession::kMusicVolumeRow], "Music Volume: Unavailable") == 0 &&
-                  std::strncmp(v.lines[SystemMenuSession::kDeveloperRow], "Developer:", 10) == 0,
-              "F5 System Menu Settings: seven rows, SFX Volume and Music Volume before Developer");
+                  SystemMenuSession::kSettingsRowCount == 6 && SystemMenuSession::kMusicVolumeRow == 5,
+              "F5 System Menu Settings: six rows, SFX Volume and Music Volume last (A4-ENH1 removed the Developer row)");
         for (int i = 0; i < 4; ++i) m.handle(next);
         m.handle(east);
         const bool up = m.settings().sound_volume == 90;
@@ -704,9 +704,11 @@ int main(int argc, char **argv) {
         dev.handle(s, 2);
         for (int i = 0; i < 5; ++i) dev.handle(next, 3);
         dev.handle(east, 3);
-        check(dev.view().line_count == 7 && dev.settings().music_volume == 80 &&
+        // A4-ENH1 removed the developer build's seventh row ("Developer: Visible/
+        // Hidden"); both builds now show the same six.
+        check(dev.view().line_count == 6 && dev.settings().music_volume == 80 &&
                   std::strcmp(dev.view().footer, "Stock DOS game files have no music") == 0,
-              "F7 title Settings (developer build): seven rows; Music Volume unavailable and unchanged");
+              "F7 title Settings (developer build): six rows, as a release build; Music Volume unavailable and unchanged");
         dev.start(0, true, {});
         dev.handle(confirm, 1);
         dev.handle(s, 2);
