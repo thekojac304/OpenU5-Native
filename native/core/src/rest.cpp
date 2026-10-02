@@ -218,10 +218,14 @@ static RestResult camp_sleep_step(RestContext &c, int32_t &previous_hour, CampCe
     if (c.game.time.hour != previous_hour) {
         if (c.rand(0, 63) == 0) {
             constexpr int32_t enemies[] = {41, 20, 21, 24, 22, 25, 36, 20};
-            r.ambush = true;
-            r.enemy = enemies[c.rand(0, 7)];
-            msg(c, "Ambushed!\n\n");
-            return r;
+            const int32_t enemy = enemies[c.rand(0, 7)];
+            // A4-ENH2: Disable Random Encounters sleeps on (both draws made).
+            if (!random_encounters_disabled(c.game)) {
+                r.ambush = true;
+                r.enemy = enemy;
+                msg(c, "Ambushed!\n\n");
+                return r;
+            }
         }
         previous_hour = c.game.time.hour;
     }

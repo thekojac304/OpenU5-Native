@@ -1,0 +1,25 @@
+A4-ENH2 commit 5 RED-first: the World-cheat override block, the three random-encounter sites, the inn and the toggles key neutralised (production otherwise as in this commit)
+  native/core/src/enhanced.cpp:     if (!e.toggles) return v;  ->      return v;
+  native/core/src/outdoor.cpp: return random_encounters_disabled(g)||std::max(  ->  return std::max(
+  native/core/src/dungeon.cpp: if (d.wanderer.type != 255 && random_encounters_disabled(g)) make_dormant(d.wanderer);  ->  
+  native/core/src/rest.cpp: if (!random_encounters_disabled(c.game)) {  ->  if (true) {
+  native/core/src/shops.cpp: if (!poison_harmless(g)) { // A4-ENH2  ->  if (true) { // A4-ENH2
+  native/core/src/save_core.cpp: if (g.enhanced.toggles) e["toggles"]  ->  if (false) e["toggles"]
+build exit=0
+  RED Z2 every difficulty with the three World cheats: hunger, starvation, poison, overworld and dungeon encounters 0; damage and XP still the difficulty's
+  RED Z3 Easy (65 %) + Disable Random Encounters: 0 spawns and 0 wanderers in 100,000 turns
+  RED Z4 400 poisoned turns: Easy alone 40 HP; Easy + No Poison Damage 0, still poisoned
+  RED Z5 No Hunger: 100 hours at food 0 -- no "Starving!", no HP (Original: 100 / 300 HP); with food 50, none eaten
+  RED Z6 Custom Hunger Off: no meals, starvation as chosen; No Hunger over Relaxed: no meals and no starvation
+  RED Z8 the inn's poisoned sleeper: Original D0, No Poison Damage D0, Custom Poison Off D0, God Mode D0, Poison Light D0 (only a poison that takes nothing spares it)
+  RED Z9 "toggles" saved only when one is on, loaded back; stray bits dropped; a malformed value is none
+  RED Z10 Disable Random Encounters in a dungeon: the placed wanderer goes dormant at the next tick, 500 re-arms place none, no ambush; a fixed room still opens
+  RED Z11 a camp Original ambushes (seed 6) sleeps through to 05:00 under Disable Random Encounters
+  A4-ENH2 rules: 42 checks, 9 failures
+  a4_enh2_rules exit=1
+  RED V3 No Hunger + No Poison Damage in play: an hour of a poisoned, starving walk costs no HP and says nothing
+  RED V4 Alt+S writes "toggles"; Alt+L and a power cycle bring all three back
+  RED V5 a night circuit on Easy: 8 fights; with Disable Random Encounters the roaming troll is gone after the first step and no fight happens
+  A4-ENH2 runtime: 19 checks, 3 failures
+  a4_enh2_runtime exit=1
+restored and touched

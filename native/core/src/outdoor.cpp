@@ -102,7 +102,8 @@ CommandStatus outdoor_tick(CommandContext &c,const ActiveMap &m,bool spawn,Rand 
     if(!o.combat)return CommandStatus::InvalidContext;
     if(o.resources->enemy_count && !o.resources->enemies)return CommandStatus::InvalidContext;
     if(c.quest_world&&c.quest_world->count&&c.quest_world->count(c.quest_world->context)&&!c.quest_world->write)return CommandStatus::InvalidContext;
-    o.enemies.erase(std::remove_if(o.enemies.begin(),o.enemies.end(),[&](const auto &e){return std::max(std::abs(delta(e.x,px,m.geometry.width)),std::abs(delta(e.y,py,m.geometry.height)))>22;}),o.enemies.end());
+    // A4-ENH2: Disable Random Encounters clears the roaming monsters (all of them random spawns) with the far ones.
+    o.enemies.erase(std::remove_if(o.enemies.begin(),o.enemies.end(),[&](const auto &e){return random_encounters_disabled(g)||std::max(std::abs(delta(e.x,px,m.geometry.width)),std::abs(delta(e.y,py,m.geometry.height)))>22;}),o.enemies.end());
     if(o.enemies.size()<8&&spawn){
         auto origin=[](int p){int v=p&240;return ((p&15)<8?v-16:v)&255;};
         const bool fresh=o.has_chunk_origin&&((px-o.chunk_x)&255)<32&&((py-o.chunk_y)&255)<32;

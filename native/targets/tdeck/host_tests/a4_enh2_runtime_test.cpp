@@ -12,6 +12,8 @@
 //      share over real entries into Deceit
 //   Y  the cheat groups: Cheats > Party / Inventory through the device's
 //      menu, each new cheat, the save's mark, the refusal in a fight
+//   V  Cheats > World: the toggles in play (hunger, poison, a night circuit
+//      on Easy with Disable Random Encounters), the save and a power cycle
 #include "../main/alpha_runtime.h"
 #include "../main/tdeck_board.h"
 #include "esp_timer.h"
@@ -418,6 +420,109 @@ void test_cheat_groups() {
           "Y5", "Revive Party during a fight: \"Not during combat\", the dead stay dead, nothing marked");
     f.key('m', true);
 }
+// The first 15 x 15 square of open ground on the real overworld (as
+// a4_enh1_runtime R6's circuit).
+openu5::Position open_square(const openu5::WorldData &w) {
+    auto ground = [&](int x, int y) {
+        const int t = w.overworld[size_t(y) * 256 + size_t(x)];
+        return t == 5 || t == 6 || (t >= 9 && t <= 15);
+    };
+    for (int y = 40; y < 220; ++y)
+        for (int x = 40; x < 220; ++x) {
+            bool ok = true;
+            for (int i = 0; ok && i < 14; ++i)
+                ok = ground(x + i, y) && ground(x + 14, y + i) && ground(x + 14 - i, y + 14) && ground(x, y + 14 - i);
+            if (ok) return {uint8_t(x), uint8_t(y)};
+        }
+    return {94, 108};
+}
+
+void test_world_cheats() {
+    // V1. Cheats > World: the three toggles, each showing its state.
+    Run h;
+    open_cheat(h, 2, 0);
+    auto v = h.menu();
+    const bool rows = std::string(v.title) == "World" && v.line_count == 3 && h.line(0) == "No Hunger: Off" &&
+                      h.line(1) == "No Poison Damage: Off" && h.line(2) == "Disable Random Encounters: Off" &&
+                      h.footer() == "No food is eaten and no one starves";
+    h.set_mark();
+    h.key('\r');
+    const bool on = h.line(0) == "No Hunger: On" && h.footer() == "No Hunger: ON" && h.count_since("No Hunger: ON") == 1;
+    h.ball(RawInputKind::TrackballDown);
+    h.key('\r');
+    h.ball(RawInputKind::TrackballDown);
+    h.key('\r');
+    const uint32_t all = kToggleCheats;
+    check(rows && on && h.g().enhanced.toggles == all && h.g().enhanced.cheats_used == all, "V1",
+          "Cheats > World: No Hunger / No Poison Damage / Disable Random Encounters, Off; Enter turns each on (footer, transcript)");
+    // V2. The Difficulty page says the World cheats win.
+    h.key('\b');
+    h.key('\b');
+    h.ball(RawInputKind::TrackballUp);
+    h.key('\r');
+    check(std::string(h.menu().subtitle) == "Now: Original (World cheats take precedence)", "V2",
+          "with a World cheat on, the Difficulty page's subtitle says the cheats take precedence");
+    h.key('m', true);
+    // V3. In play: noon passes with food 0 and a poisoned Avatar -- no meal,
+    // no "Starving!", no HP; the status kept.
+    auto &m = h.g().party.characters[0];
+    m.status = 'P';
+    h.g().food = 0;
+    h.g().time.hour = 11;
+    h.g().time.minute = 40;
+    const int hp = m.current_hp;
+    h.set_mark();
+    for (int i = 0; i < 40; ++i) h.ball(i % 2 ? RawInputKind::TrackballLeft : RawInputKind::TrackballRight);
+    check(h.g().time.hour >= 12 && m.current_hp == hp && m.status == 'P' && h.count_since("Starving") == 0 && h.g().food == 0,
+          "V3", "No Hunger + No Poison Damage in play: an hour of a poisoned, starving walk costs no HP and says nothing");
+    // V4. Saved, loaded, power-cycled.
+    h.key('s', true);
+    const bool side = newest_sidecar() && g_side["enhanced"]["toggles"].integer() == int64_t(all);
+    h.g().enhanced.toggles = 0;
+    h.key('l', true);
+    const bool loaded = h.g().enhanced.toggles == all;
+    Run cold(false);
+    cold.key('l', true);
+    check(side && loaded && cold.g().enhanced.toggles == all, "V4",
+          "Alt+S writes \"toggles\"; Alt+L and a power cycle bring all three back");
+    // V5. Easy + Disable Random Encounters on a night circuit: monsters
+    // already roaming are cleared at the next world turn and none spawns, so
+    // no fight in 140 steps; Easy alone fights on the same circuit.
+    auto night = [](bool cheat, int &monsters_after_first) {
+        Run n;
+        n.g().position.xy = open_square(pack->world);
+        n.g().time.hour = 0;
+        n.g().enhanced.difficulty = Difficulty::Easy;
+        n.g().rng.seed(0x5eed);
+        if (cheat) n.g().enhanced.toggles = cheat_bit(CheatKind::NoRandomEncounters);
+        auto &ctx = n.rt->command_context_for_test();
+        OutdoorEnemy roamer{};
+        roamer.definition = 41;
+        for (size_t i = 0; i < ctx.outdoor->resources->enemy_count; ++i)
+            if (const auto *d = ctx.outdoor->resources->enemies[i]; d && d->index == 41) roamer.tile = d->tile;
+        roamer.x = n.g().position.xy.x + 5;
+        roamer.y = n.g().position.xy.y + 5;
+        ctx.outdoor->enemies.push_back(roamer);
+        int fights = 0;
+        bool was = false;
+        static constexpr RawInputKind legs[] = {RawInputKind::TrackballRight, RawInputKind::TrackballDown,
+                                                RawInputKind::TrackballLeft, RawInputKind::TrackballUp};
+        for (int step = 0; step < 140; ++step) {
+            n.ball(legs[(step / 14) % 4]);
+            n.frames(30);
+            if (step == 0) monsters_after_first = int(ctx.outdoor->enemies.size());
+            const bool combat = ctx.combat || n.rt->combat_state().initialized;
+            fights += combat && !was;
+            was = combat;
+        }
+        return fights;
+    };
+    int left_easy = -1, left_cheat = -1;
+    const int easy_fights = night(false, left_easy), cheat_fights = night(true, left_cheat);
+    check(easy_fights > 0 && cheat_fights == 0 && left_cheat == 0 && left_easy > 0, "V5",
+          "a night circuit on Easy: " + std::to_string(easy_fights) + " fights; with Disable Random Encounters the roaming "
+          "troll is gone after the first step and no fight happens");
+}
 } // namespace
 
 int main(int argc, char **argv) {
@@ -433,6 +538,7 @@ int main(int argc, char **argv) {
     test_difficulty_page();
     test_dungeon_and_starvation();
     test_cheat_groups();
+    test_world_cheats();
 
     std::printf("\nA4-ENH2 runtime: %d checks, %d failures\n", checks, failures);
     return failures ? 1 : 0;

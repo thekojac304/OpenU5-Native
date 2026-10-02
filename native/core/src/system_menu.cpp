@@ -7,14 +7,16 @@ namespace openu5 {namespace {bool up(const UiAction&a){return a.kind==UiActionKi
 // CheatKind is append-only (its value is its save bit), so a group is a run
 // of this order table, not a range of the enum.
 constexpr CheatKind kCheatOrder[]={CheatKind::GodMode,CheatKind::HealParty,CheatKind::CureParty,CheatKind::RestoreMp,CheatKind::ReviveParty,
- CheatKind::AddGold,CheatKind::MaxGold,CheatKind::MaxFood,CheatKind::MaxKeys,CheatKind::MaxTorches,CheatKind::MaxGems,CheatKind::GiveReagents};
+ CheatKind::AddGold,CheatKind::MaxGold,CheatKind::MaxFood,CheatKind::MaxKeys,CheatKind::MaxTorches,CheatKind::MaxGems,CheatKind::GiveReagents,
+ CheatKind::NoHunger,CheatKind::NoPoisonDamage,CheatKind::NoRandomEncounters};
 static_assert(sizeof(kCheatOrder)/sizeof(kCheatOrder[0])==size_t(CheatKind::Count),"every cheat in a group");
-constexpr uint8_t kGroupFirst[]={0,5,12};
-constexpr const char*kGroupNames[]={"Party","Inventory"};
+constexpr uint8_t kGroupFirst[]={0,5,12,15};
+constexpr const char*kGroupNames[]={"Party","Inventory","World"};
 constexpr uint8_t kGroupCount=uint8_t(sizeof(kGroupNames)/sizeof(kGroupNames[0]));
-constexpr const char*kGroupHelp[]={"God Mode, heal, cure, magic, revive","Gold, food, keys, torches, gems, reagents"};
+constexpr const char*kGroupHelp[]={"God Mode, heal, cure, magic, revive","Gold, food, keys, torches, gems, reagents","Hunger, poison and random encounters"};
 constexpr const char*kCheatHelp[]={"Party members take no damage","Restore every living member's HP","Cure poison and sleep","Left/right: amount. Enter adds it (max 9999)","Set gold to 9999",
- "Refill the spellcasters' magic points","Raise the dead with full HP","Set food to 9999","Set keys to 99","Set torches to 99","Set gems to 99","99 of each of the eight reagents"};
+ "Refill the spellcasters' magic points","Raise the dead with full HP","Set food to 9999","Set keys to 99","Set torches to 99","Set gems to 99","99 of each of the eight reagents",
+ "No food is eaten and no one starves","Poison takes no HP; the status stays","No random monsters, overworld or dungeon"};
 static_assert(sizeof(kCheatHelp)/sizeof(kCheatHelp[0])==size_t(CheatKind::Count),"a help line per cheat");
 CheatKind group_cheat(uint8_t group,uint8_t row){return kCheatOrder[kGroupFirst[group]+row];}
 uint8_t group_size(uint8_t group){return uint8_t(kGroupFirst[group+1]-kGroupFirst[group]);}}
@@ -86,7 +88,7 @@ FrontendView SystemMenuSession::view()const{FrontendView v{};v.kind=page_==Page:
  // Custom page is those values alone, each its own row.
  const bool custom=page_==Page::Custom;const Difficulty sel=custom?Difficulty::Custom:Difficulty(cursor_);
  const GameplayRules r=sel==Difficulty::Custom?enhanced_.custom:gameplay_rules(sel);
- v.title=custom?"Custom Difficulty":"Difficulty";std::snprintf(d[8],96,"Now: %s (kept with this journey)",difficulty_name(enhanced_.difficulty));v.subtitle=d[8];
+ v.title=custom?"Custom Difficulty":"Difficulty";std::snprintf(d[8],96,enhanced_.toggles?"Now: %s (World cheats take precedence)":"Now: %s (kept with this journey)",difficulty_name(enhanced_.difficulty));v.subtitle=d[8];
  if(!custom)for(uint8_t i=0;i<uint8_t(Difficulty::Count);++i){v.lines[v.line_count++]=difficulty_name(Difficulty(i));}
  for(uint8_t i=0;i<uint8_t(RuleField::Count);++i){char*row=d[i];if(!custom){*row++=' ';*row++=' ';}format_rule(row,94,RuleField(i),r);v.lines[v.line_count++]=d[i];}
  v.selected_line=cursor_;
@@ -96,7 +98,7 @@ FrontendView SystemMenuSession::view()const{FrontendView v{};v.kind=page_==Page:
  else{v.title=kGroupNames[cheat_group_];
   // A4-ENH2: a toggle shows its state, Add Gold its amount, the rest their names.
   for(uint8_t i=0;i<group_size(cheat_group_);++i){const CheatKind k=group_cheat(cheat_group_,i);const char*s=cheat_name(k);
-   if(k==CheatKind::GodMode){std::snprintf(d[i],96,"%s: %s",s,enhanced_.god_mode?"On":"Off");s=d[i];}
+   if(cheat_is_toggle(k)){std::snprintf(d[i],96,"%s: %s",s,cheat_on(enhanced_,k)?"On":"Off");s=d[i];}
    else if(k==CheatKind::AddGold){std::snprintf(d[i],96,"%s: +%d",s,int(kAddGoldAmounts[gold_step_]));s=d[i];}
    v.lines[v.line_count++]=s;}
   v.selected_line=cursor_;v.footer=notice_[0]?notice_:kCheatHelp[unsigned(group_cheat(cheat_group_,cursor_))];}}

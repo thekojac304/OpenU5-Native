@@ -22,9 +22,14 @@ enum class CheatKind : uint8_t {
     GodMode, HealParty, CureParty, AddGold, MaxGold,
     // A4-ENH2 (appended):
     RestoreMp, ReviveParty, MaxFood, MaxKeys, MaxTorches, MaxGems, GiveReagents,
+    NoHunger, NoPoisonDamage, NoRandomEncounters,
     Count
 };
 constexpr uint32_t cheat_bit(CheatKind k) { return uint32_t(1) << unsigned(k); }
+// A4-ENH2: the World cheats -- persistent toggles, like God Mode, but kept as
+// their cheat_bit() in EnhancedState::toggles.
+constexpr uint32_t kToggleCheats =
+    cheat_bit(CheatKind::NoHunger) | cheat_bit(CheatKind::NoPoisonDamage) | cheat_bit(CheatKind::NoRandomEncounters);
 
 // The difficulties, in Difficulty-page order. Original is the default and the
 // identity: every rules hook returns the 1988 value unchanged. Relaxed and Easy
@@ -57,6 +62,8 @@ struct EnhancedState {
     // Support metadata only: every cheat ever applied to this journey, one
     // cheat_bit() each. It changes nothing in play.
     uint32_t cheats_used = 0;
+    // A4-ENH2: the World toggles that are on (kToggleCheats bits).
+    uint32_t toggles = 0;
     // A4-ENH2: the Custom difficulty's own values -- each one of its
     // kRuleChoices -- used while `difficulty` is Custom and kept, untouched,
     // while another difficulty is chosen, so Custom comes back as it was left.
@@ -70,9 +77,12 @@ bool enhanced_is_default(const EnhancedState &);
 const GameplayRules &gameplay_rules(Difficulty);
 const char *difficulty_name(Difficulty);
 // The rules in force for a journey -- THE one place their precedence lives:
-// the 1988 rule, then the difficulty (a preset's row, or the Custom values).
-// Every hook below reads its one field through effective_rule();
-// effective_rules() is the same answer for every field at once.
+// the 1988 rule, then the difficulty (a preset's row, or the Custom values),
+// then the World cheats, which win over any difficulty (No Hunger: no meal,
+// no starvation; No Poison Damage: no tick; Disable Random Encounters: no
+// spawn, no wanderer). God Mode stays last of all, at every HP write
+// (party_damage_blocked). Every hook below reads its one field through
+// effective_rule(); effective_rules() is the same answer for every field.
 uint16_t effective_rule(const EnhancedState &, uint16_t GameplayRules::*field);
 GameplayRules effective_rules(const EnhancedState &);
 
@@ -136,6 +146,16 @@ struct CheatResult {
 // already above its cap, or touches a quest item.
 CheatResult apply_cheat(GameState &, CheatKind, int32_t amount = 0, bool in_combat = false);
 const char *cheat_name(CheatKind);
+// A4-ENH2: God Mode and the World cheats are toggles; cheat_on() is a toggle's state.
+bool cheat_is_toggle(CheatKind);
+bool cheat_on(const EnhancedState &, CheatKind);
+// A4-ENH2: Disable Random Encounters, for the sites that act on what a random
+// encounter already put in the world -- a roaming overworld monster, a placed
+// dungeon wanderer, the camp's ambush. Scripted fights never ask.
+bool random_encounters_disabled(const GameState &);
+// A4-ENH2: poison takes no HP -- God Mode, or a poison rule of none (Custom
+// Poison Off, No Poison Damage): asked by the inn's poisoned sleeper.
+bool poison_harmless(const GameState &);
 // God Mode's one question, asked by every party HP-loss site: combat damage(),
 // apply_damage() (poison, starvation, fire and lava, quakes, traps, the Look
 // sun), the chest trap, the ladder fall and the waterfall. RNG draws still

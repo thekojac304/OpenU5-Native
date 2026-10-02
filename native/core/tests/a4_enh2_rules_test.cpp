@@ -13,6 +13,8 @@
 //   S  starvation severity through the real housekeeping, the same draws
 //   X  the new party and inventory cheats through apply_cheat(), and God
 //      Mode at the naval OUCH
+//   Z  precedence: 1988 rule -> difficulty -> World cheats -> God Mode, at
+//      every hook and site (overworld, dungeon, camp, poison, hunger, inn)
 //   P  persistence: the "custom" array, written only when changed, read back
 //      field by field; malformed entries take that field's Original value;
 //      the .GAM never carries any of it
@@ -21,6 +23,8 @@
 #include "openu5/dungeon.h"
 #include "openu5/enhanced.h"
 #include "openu5/persistence.h"
+#include "openu5/rest.h"
+#include "openu5/shops.h"
 #include "openu5/save_json.h"
 #include "openu5/turn.h"
 
@@ -776,6 +780,207 @@ void test_persistence(const char *init_gam) {
               imported.enhanced.difficulty == Difficulty::Custom && rules_equal(imported.enhanced.custom, custom.enhanced.custom),
           "P4", "export -> sidecar text -> load keeps Custom; the .GAM is byte-identical to the same journey on Original");
 }
+// Z. Precedence: the 1988 rule -> the difficulty -> the World cheats -> God
+// Mode at the HP write. Each World cheat wins over every difficulty.
+void test_precedence() {
+    const uint32_t hunger = cheat_bit(CheatKind::NoHunger), poison = cheat_bit(CheatKind::NoPoisonDamage),
+                   enc = cheat_bit(CheatKind::NoRandomEncounters);
+    // Z1. The toggles: appended (bits 12-14), each a persistent switch with
+    // its own state line, marked as used.
+    GameState g = party_of(1);
+    const auto on = apply_cheat(g, CheatKind::NoRandomEncounters);
+    const bool flip = on.applied && std::string(on.text) == "Disable Random Encounters: ON" && g.enhanced.toggles == enc &&
+                      cheat_on(g.enhanced, CheatKind::NoRandomEncounters) && !cheat_on(g.enhanced, CheatKind::GodMode);
+    const auto off = apply_cheat(g, CheatKind::NoRandomEncounters);
+    check(unsigned(CheatKind::NoHunger) == 12 && unsigned(CheatKind::NoPoisonDamage) == 13 &&
+              unsigned(CheatKind::NoRandomEncounters) == 14 && flip && std::string(off.text) == "Disable Random Encounters: OFF" &&
+              g.enhanced.toggles == 0 && g.enhanced.cheats_used == enc && !enhanced_is_default(g.enhanced) &&
+              cheat_is_toggle(CheatKind::GodMode) && cheat_is_toggle(CheatKind::NoHunger) && !cheat_is_toggle(CheatKind::MaxFood),
+          "Z1", "the World cheats are toggles (bits 12-14): ON, then OFF, the journey still marked as having used one");
+    // Z2. effective_rules: each World cheat zeroes its fields over every
+    // difficulty and leaves the rest of that difficulty in force.
+    bool table = true;
+    for (unsigned d = 0; d < unsigned(Difficulty::Count); ++d) {
+        EnhancedState e;
+        e.difficulty = Difficulty(d);
+        e.custom = {75, 135, 250, 50, 4, 25, 50, 50};
+        const GameplayRules base = effective_rules(e);
+        e.toggles = hunger | poison | enc;
+        GameplayRules want = base;
+        want.hunger_pct = want.starvation_pct = want.poison_interval = want.encounter_pct = want.dungeon_encounter_pct = 0;
+        table = table && rules_equal(effective_rules(e), want);
+    }
+    check(table, "Z2", "every difficulty with the three World cheats: hunger, starvation, poison, overworld and dungeon "
+                       "encounters 0; damage and XP still the difficulty's");
+    // Z3. Easy + Disable Random Encounters: no overworld spawn, no wanderer.
+    GameState easy = party_of(1);
+    easy.enhanced.difficulty = Difficulty::Easy;
+    easy.enhanced.toggles = enc;
+    int spawns = 0, wanderers = 0;
+    for (int64_t t = 0; t < 100000; ++t) {
+        easy.turns_since_start = t;
+        spawns += rules_encounter_allowed(easy);
+        wanderers += rules_wanderer_allowed(easy, int(t % 8));
+    }
+    check(spawns == 0 && wanderers == 0, "Z3", "Easy (65 %) + Disable Random Encounters: 0 spawns and 0 wanderers in 100,000 turns");
+    // Z4. Easy + No Poison Damage: a poisoned member keeps the status and
+    // every HP over 400 turns (Easy alone: one HP every 10th turn).
+    auto poisoned = [](uint32_t toggles) {
+        GameState p = party_of(2);
+        p.party.characters[1].status = 'P';
+        p.enhanced.difficulty = Difficulty::Easy;
+        p.enhanced.toggles = toggles;
+        p.food = 900;
+        TurnState t{};
+        OriginalRng rng(4);
+        for (int i = 0; i < 400; ++i) advance_turn(p, t, 1, rng_source(rng), nullptr);
+        return 100 - int(p.party.characters[1].current_hp) + (p.party.characters[1].status == 'P' ? 0 : 1000);
+    };
+    const int easy_loss = poisoned(0), cheat_loss = poisoned(poison);
+    check(easy_loss == 40 && cheat_loss == 0, "Z4",
+          "400 poisoned turns: Easy alone " + std::to_string(easy_loss) + " HP; Easy + No Poison Damage 0, still poisoned");
+    // Z5. No Hunger over Original: no meal eats, and a party already at food
+    // 0 does not starve (no "Starving!", no HP); the draws are still made.
+    auto hungry = [](uint32_t toggles, uint16_t food, int &lost, int &said) {
+        GameState h = party_of(3);
+        h.enhanced.toggles = toggles;
+        h.food = food;
+        h.time.year = 139; h.time.month = 1; h.time.day = 1; h.time.hour = 1;
+        TurnState t{};
+        t.prev_hour = h.time.hour;
+        OriginalRng rng(6);
+        said = 0;
+        for (int i = 0; i < 100; ++i) {
+            const auto r = advance_turn(h, t, 60, rng_source(rng), nullptr);
+            for (uint8_t k = 0; k < r.message_count; ++k) said += r.messages[k] == TurnMessage::Starving;
+        }
+        lost = 300 - (h.party.characters[0].current_hp + h.party.characters[1].current_hp + h.party.characters[2].current_hp);
+        return int(h.food);
+    };
+    int lost_off = 0, said_off = 0, lost_on = 0, said_on = 0, lost_fed = 0, said_fed = 0;
+    hungry(0, 0, lost_off, said_off);
+    hungry(hunger, 0, lost_on, said_on);
+    const int fed = hungry(hunger, 50, lost_fed, said_fed);
+    check(lost_off > 0 && said_off > 0 && lost_on == 0 && said_on == 0 && fed == 50 && lost_fed == 0, "Z5",
+          "No Hunger: 100 hours at food 0 -- no \"Starving!\", no HP (Original: " + std::to_string(said_off) + " / " +
+              std::to_string(lost_off) + " HP); with food 50, none eaten");
+    // Z6. Custom Hunger Off needs no cheat, and the No Hunger cheat needs no
+    // Custom: both stop meals, the cheat also stops starvation.
+    GameState c1 = party_of(1);
+    c1.enhanced.difficulty = Difficulty::Custom;
+    c1.enhanced.custom.hunger_pct = 0;
+    GameState c2 = party_of(1);
+    c2.enhanced.toggles = hunger;
+    c2.enhanced.difficulty = Difficulty::Relaxed;
+    check(effective_rule(c1.enhanced, &GameplayRules::hunger_pct) == 0 &&
+              effective_rule(c1.enhanced, &GameplayRules::starvation_pct) == 100 &&
+              effective_rule(c2.enhanced, &GameplayRules::hunger_pct) == 0 && effective_rule(c2.enhanced, &GameplayRules::starvation_pct) == 0,
+          "Z6", "Custom Hunger Off: no meals, starvation as chosen; No Hunger over Relaxed: no meals and no starvation");
+    // Z7. God Mode over Easy in a real fight: no blow takes HP.
+    Duel control(Difficulty::Easy), god(Difficulty::Easy);
+    god.g.enhanced.god_mode = true;
+    control.fight(6);
+    god.fight(6);
+    check(!control.in.empty() && control.g.party.characters[0].current_hp < 5000 && god.in.empty() &&
+              god.g.party.characters[0].current_hp == 5000 && god.out == control.out,
+          "Z7", "God Mode + Easy combat: Easy alone loses HP to " + std::to_string(control.in.size()) +
+                    " blows; under God Mode none, the party's own blows the same (still 120 %)");
+    // Z8. The inn's poisoned sleeper: dies on Original; lives under No
+    // Poison Damage, Custom Poison Off and God Mode (status kept, full HP).
+    auto inn = [](uint32_t toggles, bool god, uint16_t poison_rule) {
+        GameState s = party_of(2);
+        s.gold = 3000;
+        s.party.characters[1].status = 'P';
+        s.party.characters[1].current_hp = 30;
+        s.enhanced.toggles = toggles;
+        s.enhanced.god_mode = god;
+        if (poison_rule != 1) {
+            s.enhanced.difficulty = Difficulty::Custom;
+            s.enhanced.custom.poison_interval = poison_rule;
+        }
+        for (int loc = 1; loc <= 32; ++loc)
+            if (inn_at(loc).present) {
+                inn_rest(s, 0, loc);
+                break;
+            }
+        return std::string(1, s.party.characters[1].status) + std::to_string(s.party.characters[1].current_hp);
+    };
+    const std::string o = inn(0, false, 1), np = inn(poison, false, 1), po = inn(0, false, 0), gm = inn(0, true, 1), light = inn(0, false, 10);
+    check(o == "D0" && np == "P100" && po == "P100" && gm == "P100" && light == "D0", "Z8",
+          "the inn's poisoned sleeper: Original " + o + ", No Poison Damage " + np + ", Custom Poison Off " + po + ", God Mode " + gm +
+              ", Poison Light " + light + " (only a poison that takes nothing spares it)");
+    // Z9. The toggles in the save: "toggles" only when one is on; a stray
+    // bit is dropped; a load restores them.
+    GameState s = party_of(1);
+    s.enhanced.toggles = hunger | enc;
+    const std::string doc = state_doc(s);
+    const GameState back = reload(s);
+    save::Json bad = save::Json::object();
+    save::capture_core(s, TurnState{}, bad);
+    bad["enhanced"]["toggles"] = save::Json(double(0xffffffffu));
+    GameState b{};
+    TurnState bt{};
+    save::restore_core(bad, b, bt);
+    bad["enhanced"]["toggles"] = save::Json("on");
+    GameState b2{};
+    save::restore_core(bad, b2, bt);
+    check(doc.find("\"toggles\":" + std::to_string(hunger | enc)) != std::string::npos && back.enhanced.toggles == (hunger | enc) &&
+              b.enhanced.toggles == kToggleCheats && b2.enhanced.toggles == 0 &&
+              state_doc(party_of(1)).find("toggles") == std::string::npos,
+          "Z9", "\"toggles\" saved only when one is on, loaded back; stray bits dropped; a malformed value is none");
+    // Z10. Disable Random Encounters in the dungeon: a placed wanderer goes
+    // dormant at the next tick and never ambushes; rooms still open.
+    GameState dg = party_of(2);
+    dg.rng.seed(0x51);
+    DungeonState ds;
+    open_dungeon(ds);
+    dungeon_respawn(dg, ds);
+    const bool placed = ds.wanderer.type != 255;
+    dg.enhanced.toggles = enc;
+    struct Seen { int corridors = 0, rooms = 0; } seen;
+    const DungeonSink sink{&seen, [](void *p, const DungeonEvent &e) {
+                               auto &sn = *static_cast<Seen *>(p);
+                               sn.corridors += e.kind == DungeonEventKind::Corridor;
+                               sn.rooms += e.kind == DungeonEventKind::Room;
+                           }};
+    TurnState dt{};
+    dungeon_action(dg, dt, ds, DungeonAction::Tick, sink);
+    const bool dormant = ds.wanderer.type == 255 && ds.wanderer.x == 255;
+    for (int i = 0; i < 500; ++i) {
+        dungeon_respawn(dg, ds);
+        dungeon_action(dg, dt, ds, DungeonAction::Tick, sink);
+    }
+    ds.cells[0 * 64 + 2 * 8 + 1] = 0xf1;
+    ds.pos = {33, 0, 1, 1, DungeonFacing::South};
+    dungeon_action(dg, dt, ds, DungeonAction::Forward, sink);
+    check(placed && dormant && seen.corridors == 0 && seen.rooms == 1, "Z10",
+          "Disable Random Encounters in a dungeon: the placed wanderer goes dormant at the next tick, 500 re-arms place "
+          "none, no ambush; a fixed room still opens");
+    // Z11. The camp: a sleep the 1/64 draw ambushes on Original sleeps on
+    // under Disable Random Encounters, to the hour asked, with both draws made.
+    int seed = -1;
+    for (int s2 = 0; s2 < 200 && seed < 0; ++s2) {
+        GameState cg = party_of(2);
+        cg.time.year = 139; cg.time.month = 2; cg.time.day = 3; cg.time.hour = 21;
+        TurnState ct{};
+        OriginalRng rng(uint32_t(0x0ca0 + s2 * 977));
+        RestServices sv{};
+        sv.karma_record = [](void *, int32_t) { return "Thou dreamest."; };
+        RestContext rest{cg, ct, rng_source(rng), EventSink{}, sv};
+        if (camp(rest, 8).ambush) seed = s2;
+    }
+    GameState cg = party_of(2);
+    cg.enhanced.toggles = enc;
+    cg.time.year = 139; cg.time.month = 2; cg.time.day = 3; cg.time.hour = 21;
+    TurnState ct{};
+    OriginalRng rng(uint32_t(0x0ca0 + seed * 977));
+    RestServices sv{};
+    sv.karma_record = [](void *, int32_t) { return "Thou dreamest."; };
+    RestContext rest{cg, ct, rng_source(rng), EventSink{}, sv};
+    const auto slept = camp(rest, 8);
+    check(seed >= 0 && !slept.ambush && cg.time.hour == 5, "Z11",
+          "a camp Original ambushes (seed " + std::to_string(seed) + ") sleeps through to 05:00 under Disable Random Encounters");
+}
 } // namespace
 
 int main(int argc, char **argv) {
@@ -785,6 +990,7 @@ int main(int argc, char **argv) {
     test_dungeon_and_starvation();
     test_cheats();
     test_persistence(init_gam);
+    test_precedence();
     std::printf("\nA4-ENH2 rules: %d checks, %d failures\n", checks, failures);
     return failures ? 1 : 0;
 }

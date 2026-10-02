@@ -9,7 +9,7 @@
 namespace openu5 {
 
 bool enhanced_is_default(const EnhancedState &e) {
-    return e.difficulty == Difficulty::Original && !e.god_mode && !e.cheats_used &&
+    return e.difficulty == Difficulty::Original && !e.god_mode && !e.cheats_used && !e.toggles &&
            same_rules(e.custom, kOriginalRules);
 }
 
@@ -95,7 +95,16 @@ const GameplayRules &gameplay_rules(Difficulty d) {
 }
 
 uint16_t effective_rule(const EnhancedState &e, uint16_t GameplayRules::*field) {
-    return (e.difficulty == Difficulty::Custom ? e.custom : gameplay_rules(e.difficulty)).*field;
+    // 1988 rule -> difficulty (a preset's row or the Custom values) -> World cheats.
+    const uint16_t v = (e.difficulty == Difficulty::Custom ? e.custom : gameplay_rules(e.difficulty)).*field;
+    if (!e.toggles) return v;
+    using R = GameplayRules;
+    if ((e.toggles & cheat_bit(CheatKind::NoHunger)) && (field == &R::hunger_pct || field == &R::starvation_pct)) return 0;
+    if ((e.toggles & cheat_bit(CheatKind::NoPoisonDamage)) && field == &R::poison_interval) return 0;
+    if ((e.toggles & cheat_bit(CheatKind::NoRandomEncounters)) &&
+        (field == &R::encounter_pct || field == &R::dungeon_encounter_pct))
+        return 0;
+    return v;
 }
 
 GameplayRules effective_rules(const EnhancedState &e) {
@@ -182,10 +191,23 @@ int32_t rules_starvation_damage(const GameState &g, int32_t d) {
 
 bool party_damage_blocked(const GameState &g) { return g.enhanced.god_mode; }
 
+bool cheat_is_toggle(CheatKind k) { return k == CheatKind::GodMode || (unsigned(k) < 32 && (cheat_bit(k) & kToggleCheats)); }
+
+bool cheat_on(const EnhancedState &e, CheatKind k) {
+    return k == CheatKind::GodMode ? e.god_mode : cheat_is_toggle(k) && (e.toggles & cheat_bit(k));
+}
+
+bool random_encounters_disabled(const GameState &g) { return g.enhanced.toggles & cheat_bit(CheatKind::NoRandomEncounters); }
+
+bool poison_harmless(const GameState &g) {
+    return party_damage_blocked(g) || !effective_rule(g.enhanced, &GameplayRules::poison_interval);
+}
+
 namespace {
 constexpr const char *kCheatNames[] = {"God Mode",   "Heal Party", "Cure Party",    "Add Gold",
                                        "Max Gold",   "Restore MP", "Revive Party",  "Max Food",
-                                       "Max Keys",   "Max Torches", "Max Gems",     "Give Reagents"};
+                                       "Max Keys",   "Max Torches", "Max Gems",     "Give Reagents",
+                                       "No Hunger",  "No Poison Damage", "Disable Random Encounters"};
 static_assert(sizeof(kCheatNames) / sizeof(kCheatNames[0]) == size_t(CheatKind::Count), "a name per cheat");
 // The game's own rule for a member's full magic points, as every MP writer
 // has it (the inn, camping, resurrect_apply at CAST2 0x0632): the Avatar and
@@ -204,10 +226,17 @@ CheatResult apply_cheat(GameState &g, CheatKind kind, int32_t amount, bool in_co
     const int32_t members = std::min<int32_t>({g.party.party_size, int32_t(g.party.character_count), int32_t(kMaxParty)});
     switch (kind) {
     case CheatKind::GodMode:
-        g.enhanced.god_mode = !g.enhanced.god_mode;
-        std::snprintf(r.text, sizeof(r.text), "God Mode: %s", g.enhanced.god_mode ? "ON" : "OFF");
+    case CheatKind::NoHunger:
+    case CheatKind::NoPoisonDamage:
+    case CheatKind::NoRandomEncounters: { // the toggles (A4-ENH2: the World three)
+        if (kind == CheatKind::GodMode)
+            g.enhanced.god_mode = !g.enhanced.god_mode;
+        else
+            g.enhanced.toggles ^= cheat_bit(kind);
+        std::snprintf(r.text, sizeof(r.text), "%s: %s", cheat_name(kind), cheat_on(g.enhanced, kind) ? "ON" : "OFF");
         r.applied = true;
         break;
+    }
     case CheatKind::HealParty:
     case CheatKind::CureParty: {
         const bool heal = kind == CheatKind::HealParty;

@@ -251,8 +251,10 @@ ShopResult inn_rest(GameState &g, int32_t buyer, int32_t loc) {
         c.current_hp = c.max_hp;
         mp(c);
         if (c.status == 'P') {
-            c.status = 'D';
-            c.current_hp = 0;
+            if (!poison_harmless(g)) { // A4-ENH2: not under God Mode, Poison Off or No Poison Damage
+                c.status = 'D';
+                c.current_hp = 0;
+            }
         } else if (c.status == 'S')
             c.status = 'G';
     }
@@ -311,7 +313,7 @@ ShopResult inn_pickup(GameState &g, int32_t buyer, int32_t i, int32_t loc) {
     for (int j = p.character_count - 1; j > dest; --j)
         p.characters[j] = p.characters[j - 1];
     rec.party_status = 0;
-    bool died = rec.status == 'P';
+    bool died = rec.status == 'P' && !poison_harmless(g); // A4-ENH2: as at inn_rest
     if (died) {
         rec.status = 'D';
         rec.current_hp = 0;

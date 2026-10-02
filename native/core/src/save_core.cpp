@@ -204,7 +204,9 @@ void capture_core(const GameState &g, const TurnState &t, Json &s) {
                                                 ? unsigned(g.enhanced.difficulty) : 0U]);
         e["godMode"] = J(g.enhanced.god_mode);
         e["cheatsUsed"] = J(double(g.enhanced.cheats_used));
-        // A4-ENH2: the Custom values, in RuleField order, only when changed.
+        // A4-ENH2: the World toggles that are on, then the Custom values in
+        // RuleField order -- each only when not at its default.
+        if (g.enhanced.toggles) e["toggles"] = J(double(g.enhanced.toggles));
         if (!same_rules(g.enhanced.custom, kOriginalRules)) {
             J c = J::array();
             for (const auto &rc : kRuleChoices)
@@ -277,7 +279,9 @@ Error restore_core(const Json &s, GameState &game, TurnState &turn) {
                 g.enhanced.difficulty = Difficulty(i);
         g.enhanced.god_mode = e["godMode"].kind == J::Bool && e["godMode"].truth();
         if (fits(e["cheatsUsed"], 0, UINT32_MAX)) g.enhanced.cheats_used = uint32_t(e["cheatsUsed"].integer());
-        // A4-ENH2: each Custom value that is one of its field's choices; a
+        if (fits(e["toggles"], 0, UINT32_MAX)) g.enhanced.toggles = uint32_t(e["toggles"].integer()) & kToggleCheats;
+        // A4-ENH2: the World toggles (a stray bit is dropped), and each
+        // Custom value that is one of its field's choices; a
         // missing, extra or foreign entry keeps that field's Original value
         // (and only an array is read: at() would index an object's members).
         for (unsigned i = 0; e["custom"].kind == J::Array && i < unsigned(RuleField::Count); ++i) {
