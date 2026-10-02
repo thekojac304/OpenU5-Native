@@ -1,0 +1,17 @@
+# OpenU5-TDeck partition table (A4-FLASH1, ALPHA4_UI.md section 12).
+#
+# Until A4-FLASH1 the build used ESP-IDF's stock CONFIG_PARTITION_TABLE_SINGLE_APP
+# table (partitions_singleapp.csv: nvs 0x6000, phy_init 0x1000, factory 1M). This
+# file keeps nvs and phy_init byte for byte at the same offsets and only grows the
+# factory app partition from 1 MiB to 1.25 MiB.
+#
+# A Launcher install never reads this table: the Launcher file is the bare app
+# image, and Launcher creates its own app partition of the image size rounded up
+# to 64 KiB. Here the factory size is the build's hard ceiling (check_sizes.py)
+# and the layout of a standalone `idf.py flash`. The size budget lives in
+# check_app_budget.py.
+#
+# Name,   Type, SubType, Offset,  Size,     Flags
+nvs,      data, nvs,     0x9000,  0x6000,
+phy_init, data, phy,     0xf000,  0x1000,
+factory,  app,  factory, 0x10000, 0x140000,

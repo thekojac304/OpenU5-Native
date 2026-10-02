@@ -12,6 +12,12 @@
 > - An Alpha 3 image needs the whole 1 MiB app allocation: the packager reports its minimum as 1,048,576 B; Alpha 2 needed 896 KiB.
 > - Release notes and install instructions: [`../../../ALPHA3.md`](../../../ALPHA3.md). Heap verdict: RC1 heap gate PASSED, A3-04H deferred (`ALPHA3_AUDIO.md` §37).
 
+## App partition and Launcher allocation (A4-FLASH1, 2026-10-02)
+
+- The Launcher file is the bare app image. bmorcelli Launcher (SD installer, source read at upstream `cd392f28`) never reads this project's partition table: it measures the image and creates its own OTA app partition of the image size **rounded up to 64 KiB**. That rounded size is the packager's `App partition minimum` / `Launcher allocation` line, and it is what an install costs in device flash. On the SD card a firmware costs exactly its file size.
+- The ESP-IDF factory partition (`partitions.csv`) is only the build's hard ceiling and the layout of a standalone `idf.py flash`. Until A4-ENH2 it was ESP-IDF's stock 1 MiB single-app table, so the "1 MiB slot" in the records below is the build's partition, not a Launcher limit. A4-FLASH1 made it 1.25 MiB (`0x140000`), and that changes nothing Launcher stores or installs.
+- Size budget: `check_app_budget.py` runs after every build and in the packager. It warns below 128 KiB free and fails below 64 KiB. Details, layout and policy: [`ALPHA4_UI.md`](ALPHA4_UI.md) section 12.
+
 From an activated ESP-IDF v6.1 shell, on a clean, committed tree (the firmware
 embeds `git rev-parse --short=12 HEAD` at CMake configure time):
 

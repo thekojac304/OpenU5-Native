@@ -1,0 +1,23 @@
+== check_app_budget.py against the A4-ENH2 build (stock 1 MiB single-app table): expect RED
+OpenU5 app budget: image 1044864 B (0xff180), app partition 1048576 B (0x100000), free 3712 B (0.4 %)
+OpenU5 Launcher allocation: 1048576 B (1024 KiB, the image rounded up to 64 KiB); the next 64 KiB step is 3713 B away
+ERROR: fewer than 65536 B free in the app partition. Free space first, or raise the partition deliberately (ALPHA4_UI.md section 12 policy).
+exit 1
+
+== check_app_budget.py against build-a4-flash1 (partitions.csv, 0x140000): expect GREEN
+OpenU5 app budget: image 1044864 B (0xff180), app partition 1310720 B (0x140000), free 265856 B (20.3 %)
+OpenU5 Launcher allocation: 1048576 B (1024 KiB, the image rounded up to 64 KiB); the next 64 KiB step is 3713 B away
+exit 0
+
+== threshold boundaries (image, partition -> status)
+1044864 0x100000 fail
+1044864 0x140000 ok
+1179648 0x140000 ok
+1179649 0x140000 warn
+1245184 0x140000 warn
+1245185 0x140000 fail
+1310720 0x140000 fail
+
+== package_launcher.py refuses the A4-ENH2 build (over budget on the old table): expect exit 1
+ValueError: App image is over the A4-FLASH1 size budget: OpenU5 app budget: image 1044864 B (0xff180), app partition 1048576 B (0x100000), free 3712 B (0.4 %) OpenU5 Launcher allocation: 1048576 B (1024 KiB, the image rounded up to 64 KiB); the next 64 KiB step is 3713 B away ERROR: fewer than 65536 B free in the app partition. Free space first, or raise the partition deliberately (ALPHA4_UI.md section 12 policy).
+exit 1

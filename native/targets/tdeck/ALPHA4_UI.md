@@ -2950,7 +2950,7 @@ The investigation found these on its way; each is recorded where it belongs, non
 
 - **Death / resurrection softening** (§11.7): needs the D-83 / D-84 fidelity fix first.
 - **Tuning** of every preset and choice: hardware and play.
-- **Flash:** 3,712 B left; the next feature needs a size batch first (§11.13).
+- **Flash:** 3,712 B left; the next feature needs a size batch first (§11.13). *(A4-FLASH1, §12: the app partition is now 1.25 MiB, 265,856 B free; Launcher installs are unaffected.)*
 - Advanced Cheats (teleport, equipment, quest items): not in this batch, by the brief.
 - The bridge troll is not a "random encounter" here (a fixed map feature with a random trigger); a separate toggle could cover it if wanted.
 - The A4-ENH1 hardware checklist (§10.13) was reported passed as a whole; its tuning opinions were not itemised.
@@ -2966,3 +2966,121 @@ The investigation found these on its way; each is recorded where it belongs, non
 | Tuning values | **PROVISIONAL**; balance not final |
 | Hardware | **PENDING** (§11.14) |
 | Commit / tag / push | committed; not tagged, not pushed, not flashed |
+
+## 12. A4-FLASH1 — flash budget and the app partition (2026-10-02)
+
+A4-ENH2 left 3,712 B of the 1 MiB app partition. Before the next feature (keyboard backlight), this batch traced where the ceiling comes from, how Launcher uses it, and made the smallest change the evidence supports. No gameplay, save, pack or runtime code changed; the image's memory sections are byte-for-byte A4-ENH2's.
+
+### 12.1 Baseline
+
+- HEAD `dc61bc64` (A4-ENH2 (7)); the untracked A4-ENH1 / A4-ENH2 / RC1 image logs in `native/core/` were left alone.
+- Image `0xff180` (1,044,864 B), SHA-256 `d310fa64…8e09` (§11.13). ESP-IDF's `check_sizes.py`: "Smallest app partition is 0x100000 bytes. 0xe80 bytes (0%) free." (`a4-enh2-image-build.log`).
+- Build: `idf.py --no-ccache -B <dir> reconfigure` then `ninja -C <dir> -j 4 all`, packaged by `python package_launcher.py --build-dir <dir>`.
+- Partition source: `sdkconfig.defaults` had `CONFIG_PARTITION_TABLE_SINGLE_APP=y`, and the git-ignored local `sdkconfig` agreed. No partition CSV in the repo.
+
+### 12.2 Where the old limit came from
+
+There was one cause: **ESP-IDF's default partition table.** `CONFIG_PARTITION_TABLE_SINGLE_APP` selects `components/partition_table/partitions_singleapp.csv` from ESP-IDF (`nvs 0x6000`, `phy_init 0x1000`, `factory 1M`). ESP-IDF's Kconfig describes it as "the default partition table, designed to fit into a 2MB or larger flash with a single 1MB app partition". It has been in `sdkconfig.defaults` since the Milestone 2 bring-up (`11e32392`, a 298 KB image) and was never revisited.
+
+None of these set it: no OTA (no `otadata`, no `ota_*`), no filesystem partition, no Launcher rule, no packaging rule. The searches covered partition CSVs, `sdkconfig*`, CMake, packaging, and hard-coded `0x100000` / `1048576` in `*.py`, `*.cmake`, `CMakeLists.txt` and `*.ts`. `package_launcher.py` only *printed* "App partition minimum" (the image rounded up to 64 KiB). It never compared that figure with anything. The "1 MiB slot / allocation" wording in `ALPHA3.md`, `LAUNCHER.md` and the checklists described the build's partition. It was never a Launcher limit.
+
+### 12.3 Flash layout from the repository
+
+Standalone layout (what `idf.py flash` writes), from the built `partition-table.bin`:
+
+| Region | Offset | Size | Size (B / KiB) | Notes |
+|---|---|---|---|---|
+| Bootloader | `0x0` | `0x8000` region | 32,768 / 32 | `bootloader.bin` `0x5850` (22,608 B), `0x27b0` free |
+| Partition table | `0x8000` | `0x1000` | 4,096 / 4 | 3,072 B binary + MD5 |
+| `nvs` | `0x9000` | `0x6000` | 24,576 / 24 | unused by OpenU5 (no `nvs_flash` component, no NVS calls) |
+| `phy_init` | `0xf000` | `0x1000` | 4,096 / 4 | unused (no radio) |
+| `factory` (before) | `0x10000` | `0x100000` | 1,048,576 / 1,024 (1 MiB) | ends `0x110000` |
+| **`factory` (A4-FLASH1)** | `0x10000` | **`0x140000`** | **1,310,720 / 1,280 (1.25 MiB)** | ends `0x150000` |
+| Unallocated (before / after) | `0x110000` / `0x150000` | to 16 MB | 15,663,104 B (14.94 MiB) / 15,400,960 B (14.69 MiB) | no data partition |
+
+- **Configured flash:** `CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y`. The comment's basis is LilyGO's part number (ESP32-S3FN16R8).
+- **Not proven by the repository:** the chip on the tester's T-Deck. `main.cpp` logs `flash=%luMiB` from `esp_flash_get_physical_size()` at boot. No committed serial capture contains that line (the hardware captures start after boot). The new layout ends at 1.3 MiB, so it fits any part of 2 MB or more. The result does not depend on the 16 MB assumption.
+- **The device's real table is Launcher's, not this one.** It is not in the repository (§12.4).
+
+### 12.4 How Launcher installs OpenU5
+
+Launcher (bmorcelli/Launcher) is not vendored. The project's packaging was validated against its SD installer (`LAUNCHER.md` at `11e32392` cites `src/sd_functions.cpp` and `src/partition_install_layout.cpp`). Those files were read at upstream `cd392f28` (main, 2026-10-01):
+
+- **The SD file is the bare app image, stored as-is.** On the SD card each firmware costs exactly its file size (1,044,864 B), unpadded. `package_launcher.py` copies `openu5_tdeck.bin` byte for byte, merges no bootloader or partition table, and refuses an image that looks merged.
+- **Launcher never reads this project's partition table.** `updateFromSD()` reads 16 bytes at file offset `0x8000`. Without the `AA 50 01` partition-table magic, the file is a plain app image. `effectiveSdAppSize()` measures it by walking its segments to the checksum and appended SHA-256, and `installFromSdDynamic()` installs it.
+- **Launcher creates the app partition from the image size.** `launcherSelectInstallLayout()` needs `alignUp(image, LAUNCHER_APP_PARTITION_ALIGNMENT)` with `LAUNCHER_APP_PARTITION_ALIGNMENT = 0x10000` (`partition_table_model.h`). `launcherPartitionCreateOtaApp()` adds an OTA app entry of exactly that size in free space. Launcher then writes its generated table (`launcherPartitionWriteGeneratedTable`), sets the OTA boot entry, and streams the image from SD in 4 KiB chunks.
+- **Space is dynamic, not fixed slots.** Each installed firmware is its own OTA partition, sized to its image. When free space runs out, Launcher offers to reuse an existing non-running OTA app at least as large ("Use X partition"), or to repartition one plus adjacent free space. It never touches the running partition (`launcherPartitionIsReplaceableApp`).
+- **Consequences:**
+  1. The ESP-IDF factory size changes nothing Launcher stores, sizes or flashes.
+  2. What OpenU5 costs a Launcher device is the image rounded up to 64 KiB: today 1,048,576 B in flash and 1,044,864 B on the SD card.
+  3. Growing the image by 3,713 B moves the Launcher partition to 1,114,112 B (1,088 KiB) whatever the partition table says. That is the real compactness line.
+- **Unresolved:** the Launcher *version* on the tester's device is not recorded. The dynamic installer is upstream at least since May 2026 (the oldest commit returned for `partition_install_layout.cpp`, `a1f2f9e412`, 2026-05-20). The project cited it from Milestone 2. An older fixed-scheme Launcher would install into its own preset app partition. That still would not read this table, but its preset size would then be a hard limit. Every image so far (up to 1,044,864 B) installed on the device, so its partition holds at least 1,048,576 B.
+
+### 12.5 Is the limit artificial?
+
+Yes. It is the configured size of ESP-IDF's stock table, nothing more. On a Launcher device it is not even the install limit. It is only the build's hard stop (`check_sizes.py` / `app_check_size`) and the layout of a standalone `idf.py flash`. Valid sizes: an app partition's offset must be `0x10000`-aligned and its size `0x1000`-aligned without secure boot (`gen_esp32part.py`). Launcher rounds to `0x10000`, so the candidates below are 64 KiB multiples.
+
+### 12.6 Options compared
+
+Current image 1,044,864 B. "Launcher cost" means per installed copy in flash / per file on the SD card.
+
+| Option | App capacity | Free now | Launcher cost | Migration | Risk | Saves / settings |
+|---|---|---|---|---|---|---|
+| Keep 1 MiB, optimise only | 1,048,576 (`0x100000`) | 3,712 B (0.35 %) | 1 MiB / 1,044,864 B | none | every feature starts with a size batch; one slip fails the build | unaffected |
+| 1.125 MiB | 1,179,648 (`0x120000`) | 134,784 B (11.4 %) | same | Launcher: none; standalone: new table | the 128 KiB review line trips after 3.7 KB | unaffected |
+| **1.25 MiB (chosen)** | **1,310,720 (`0x140000`)** | **265,856 B (20.3 %)** | **same** | Launcher: none; standalone: new table | low | unaffected |
+| 1.5 MiB | 1,572,864 (`0x180000`) | 528,000 B (33.6 %) | same | same | weakens the ceiling's role as a brake | unaffected |
+| 2 MiB | 2,097,152 (`0x200000`) | 1,052,288 B (50.2 %) | same | same | no brake for many releases | unaffected |
+
+The Launcher cost is the same in every row: it follows the image, not the partition. The choice therefore trades only the build's brake against the risk of a forced size batch.
+
+### 12.7 Headroom policy (since A4-FLASH1)
+
+- **Warn below 128 KiB free** in the app partition (image > 1,179,648 B): the next feature gets a size review first.
+- **Fail below 64 KiB free** (image > 1,245,184 B): the build and the packager stop. To go further, free space or raise the partition deliberately, recorded here.
+- **Watch the Launcher step.** Each 64 KiB boundary costs 64 KiB of device flash per installed copy. The packager and the build print the distance to the next step, and a release names its Launcher allocation.
+- **Never raise the partition to fit one feature.** Use the measured candidates in §12.8 first.
+- Recent growth: A3 RC1 → A4-ENH2 was +56,544 B over ten Alpha 4 batches (≈ 5.7 KB each; the largest, A4-SAVE3, +14.7 KB). That leaves ≈ 20 such batches before the warning line and ≈ 35 before the stop. The keyboard-backlight feature (a GPIO/PWM control and a settings row) is expected to cost a few KB.
+- Why 1.25 MiB and not less: 1.125 MiB satisfies the 128 KiB review line by only 3.7 KB, so the next batch would trip it. 1.1875 MiB (`0x130000`) would also work, but it buys nothing on a Launcher device, and 1.25 MiB is the round value, 20 % free now.
+
+### 12.8 Size audit (A4-ENH2 map; findings only, nothing applied)
+
+- **Totals:** flash `.text` 714,522 B, `.rodata` 230,956 B; `libmain.a` is 514 KB of the code.
+- **Strings: 146,232 B.** The linker's merged string pool (4,752 strings). The map charges it to `stdio_vfs.c.obj` (`.rodata.esp_stdio_register.str1.4`, "size before relaxing 0x51"); it is not ESP-IDF's console. Of it, 65,154 B is 1,030 `ESP_LOG` format strings. That includes 12,360 B of the `"X (%lu) %s: "` prefix that Log V1 compiles into every format, and 25,850 B of the project's own `KEY=value` serial traces (310 strings, the longest `AUDIO_PERF`, `DEBUG_TELEPORT`, `RENDER_PERF`, `U5OBJ …`). These are diagnostics and stay. `CONFIG_LOG_VERSION_2` would drop the per-format prefix (≈ 12 KB, **unmeasured**, changes log plumbing; its own batch).
+- **Build-wide optimisation is `-Og`** (`CONFIG_COMPILER_OPTIMIZATION_DEBUG`, ESP-IDF's default). `-Os` is the largest lever, but it changes code generation everywhere, including timing on the render and audio paths. It is an architectural change with a hardware retest, not a quick win. The per-file `-Os` on cold objects (`endgame_scene`, `enhanced`, `system_menu`) remains the pattern.
+- **Largest symbols:** `upper()::mappings` 31,600 B (`.rodata`; about 17 KB smaller with a compact encoding, §11.13); `openu5::execute` 13.1 KB; `AlphaRuntime::render` 10.4 KB; `AlphaResourcePack::load` 10.2 KB; `Board::show_alpha` 8.5 KB; `DeviceSmokeTests::run` 6.9 KB (diagnostic, kept).
+- **Library weight:** `stdio`/fatfs/sdmmc/SPI/I2C/I2S drivers are each needed; libc 28 KB; `libstdc++` 3.9 KB (no exceptions, no RTTI); `esp_err_msg_table` 1.8 KB.
+- **No duplicate tables found** beyond what §11.13 already fixed (`kOriginalRules` `inline constexpr`). No `__FILE__` paths in the pool; assertion expressions from FreeRTOS headers are present (`CONFIG_COMPILER_OPTIMIZATION_ASSERTIONS_ENABLE`), a few hundred bytes.
+- **Measured, behaviour-preserving candidates still open (§11.13):** `-Os` on the cold save / persistence / frontend objects (≈ 10–14 % of their ~50 KB `.text`); the `upper()` table encoding; `Board` / input `.data` initialisers to `.bss` (≈ 7.2 KB of internal RAM, not flash).
+
+### 12.9 Changes
+
+- `native/targets/tdeck/partitions.csv` (new): `nvs` `0x9000`/`0x6000` and `phy_init` `0xf000`/`0x1000` unchanged, `factory` `0x10000`/`0x140000`.
+- `sdkconfig.defaults`: `CONFIG_PARTITION_TABLE_CUSTOM=y`, `CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"`, replacing `CONFIG_PARTITION_TABLE_SINGLE_APP=y`. **The local `sdkconfig` is git-ignored and set the choice explicitly, so it was edited by hand** (the same three lines; a pre-edit copy was kept outside the tree). A fresh checkout gets the new table from the defaults.
+- `check_app_budget.py` (new): reads the built image and `partition-table.bin`, prints free space and the Launcher allocation, warns below 128 KiB free, exits 1 below 64 KiB. `CMakeLists.txt` runs it after every build (`openu5_app_budget`, `ALL`).
+- `package_launcher.py`: prints the same budget lines and refuses an image that fails the budget. The packaged file is still the byte-identical app image.
+
+### 12.10 Verification
+
+- Fresh `build-a4-flash1` (`--no-ccache` reconfigure + `ninja -j 4`), first attempt clean. `check_sizes.py`: "binary size 0xff180 bytes. Smallest app partition is 0x140000 bytes. 0x40e80 bytes (20%) free." The budget line reads 265,856 B free (20.3 %) and Launcher allocation 1,048,576 B. `esp_idf_size --diff` against `build-a4-enh2-final`: every section equal. The pre-commit image differs from A4-ENH2's only through its `Git dc61bc64d5b1-dirty` string, whose shift moves the merged string pool.
+- `partition-table.bin` decoded: `nvs 0x9000 0x6000`, `phy_init 0xf000 0x1000`, `factory 0x10000 0x140000`, end marker.
+- Guard RED first (`a4-flash1-budget-red-first.log`): against the A4-ENH2 build's 1 MiB table, `check_app_budget.py` exits 1 and `package_launcher.py` refuses the image. Against the new table both pass. The boundaries (1,179,648 ok / 1,179,649 warn / 1,245,184 warn / 1,245,185 fail at `0x140000`) are recorded.
+- ELF guards GREEN (`a4-flash1-fw-elf-checks.log`). Packaging OK (`a4-flash1-fw-package.log`). Host suite 189 / 189, serial, 144.10 s (`a4-flash1-host-ctest.log`; `a3_04b_perf` reads `sdkconfig.defaults` and still passes).
+- No script assumed the old size: no hard-coded `0x100000` / `1048576` in any build or packaging script.
+
+### 12.11 Migration and data
+
+- **Launcher installs (the supported path): nothing changes.** The Launcher file is the same kind of bare image of the same size, and Launcher sizes its own partition. No Launcher update, no erase. The partition table this batch changed is never sent to the device.
+- **Standalone `idf.py flash`** (already discouraged in `LAUNCHER.md`: it replaces Launcher's table): it writes the new table. `nvs` and `phy_init` keep their offsets and sizes, and `factory` grows into flash that was unallocated, so nothing previously allocated is moved. It does replace whatever table the device had, as before. On a Launcher device that means Launcher's table: Launcher and every installed firmware would have to be reinstalled. This is unchanged by A4-FLASH1.
+- **NVS / settings:** OpenU5 uses no NVS. Settings (`settings.json`) and saves live on the SD card (`/ultima5/…`). No partition change reaches them. No OTA metadata exists to change.
+- **Image to flash:** none new. The firmware the device runs is A4-ENH2's: the A4-ENH2 image stays the hardware candidate (§11.14), and `PROJECT_VER` is unchanged. A post-commit build of this batch would differ only in its `Git` line.
+
+### 12.12 Status
+
+| Axis | State |
+|---|---|
+| Source of the 1 MiB limit | **proven**: ESP-IDF stock single-app table via `sdkconfig.defaults` |
+| Launcher behaviour | **source-verified** at upstream `cd392f28`; installed Launcher version **unknown** |
+| Physical flash size | **assumed** 16 MB (part number); not in any committed capture; the layout does not depend on it |
+| Partition | 1.25 MiB factory, build-verified; budget guard RED-first and GREEN |
+| Hardware | nothing to run for this batch on the Launcher path. Optional: read the boot log's `flash=` line once |

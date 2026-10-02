@@ -6,6 +6,8 @@ from pathlib import Path
 import re
 import struct
 
+import check_app_budget
+
 
 def validate(data: bytes) -> None:
     if len(data) <= 0x8010:
@@ -64,6 +66,9 @@ def main() -> None:
         raise ValueError("App image must be inside the build directory")
     data = source.read_bytes()
     validate(data)
+    budget, budget_lines = check_app_budget.check_build(build)
+    if budget == "fail":
+        raise ValueError("App image is over the A4-FLASH1 size budget: " + " ".join(budget_lines))
     destination = build / "launcher" / launcher_name(metadata["project_version"])
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_bytes(data)
@@ -73,6 +78,8 @@ def main() -> None:
     print(f"Firmware version: {metadata['project_version']}")
     print(f"Size: {len(data)} bytes")
     print(f"App partition minimum: {(len(data) + 0xFFFF) & ~0xFFFF} bytes (64 KiB alignment)")
+    for line in budget_lines:
+        print(line)
     print(f"SHA-256: {hashlib.sha256(data).hexdigest()}")
     print(f"Existing build ESP-IDF: {metadata.get('git_revision', 'unknown')}")
 

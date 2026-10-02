@@ -29,3 +29,13 @@ endif()
 set(PROJECT_VER "4.0.0-alpha4-enh2-debug")
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(openu5_tdeck)
+
+# A4-FLASH1 (ALPHA4_UI.md section 12): the app-size budget, checked after every
+# build. It warns below 128 KiB free in the app partition and fails below 64 KiB,
+# reading the built image and partition table (partitions.csv).
+idf_build_get_property(openu5_build_dir BUILD_DIR)
+idf_build_get_property(openu5_python PYTHON)
+add_custom_target(openu5_app_budget ALL
+    COMMAND ${openu5_python} ${CMAKE_CURRENT_LIST_DIR}/check_app_budget.py --build-dir ${openu5_build_dir}
+    DEPENDS gen_project_binary partition_table_bin
+    VERBATIM)

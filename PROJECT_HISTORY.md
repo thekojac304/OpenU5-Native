@@ -795,7 +795,7 @@ The reference's own tests were touched only when a fix reached the reference. At
 
 ## 17. Firmware and resource growth
 
-The app partition is 1 MiB (1,048,576 B). All sizes are the Launcher image as the tag or document records it; "free" is 1,048,576 minus the size. Where the record does not state a figure, it is left blank. Deltas are against the row above.
+Through A4-ENH2 the app partition was 1 MiB (1,048,576 B), ESP-IDF's stock single-app table; A4-FLASH1 (2026-10-02, `native/targets/tdeck/ALPHA4_UI.md` section 12) made it 1.25 MiB with a project `partitions.csv`, and that changes no Launcher install (Launcher sizes its own app partition from the image). The rows below keep the 1 MiB arithmetic of their time. All sizes are the Launcher image as the tag or document records it; "free" is 1,048,576 minus the size. Where the record does not state a figure, it is left blank. Deltas are against the row above.
 
 ### 17.1 The main line
 
