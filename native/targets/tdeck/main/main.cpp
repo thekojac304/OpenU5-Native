@@ -197,6 +197,9 @@ extern "C" void app_main(void) {
         if(ready)runtime.attach_idle_service(&idle_service);
     }
     else ESP_LOGE(kTag,"IDLE_SERVICE core-0 idle hook not registered; the loop's idle wait remains");
+    // A4-POLISH3: the saved keyboard backlight, sent once now and on each change.
+    if(ready)runtime.attach_keyboard_light({&input,[](void *c,uint8_t level){static_cast<tdeck::InputHardware *>(c)->set_keyboard_backlight(level);},
+                                            input.keyboard_online()});
     ESP_LOGI(kTag,"Alpha input loop active; no physical-device success is asserted");debug51::stage(12,"alpha-input-loop");
     int64_t heartbeat=esp_timer_get_time()+5000000;
     for(;;){const int64_t loop_t0=esp_timer_get_time(); // A3-04C: one pass, input to yield

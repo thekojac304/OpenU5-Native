@@ -1,0 +1,19 @@
+M1 KILLED by J1,J2,B1,K4,K5: the level is never written to settings.json
+M2 KILLED by J2,B1,K5: a stored level is ignored on load
+M3 KILLED by J4: a bad level rejects the whole document
+M4 KILLED by J3,B2: an older file (no key) migrates to Medium, not Off
+M5 KILLED by P1,P2,P4,P5: an unchanged level is written again
+M6 KILLED by P3: a failing write is retried forever
+M7 KILLED by P5: a recovered keyboard is not re-lit
+M8 KILLED by L2: Medium is not the sketch's 127
+M9 KILLED by L3: the frame uses the Alt+B command
+M10 KILLED by M2,M3,M4,M5,K1,K2,K3,K4,K5,W1,W2: the System Menu row does not edit
+M11 KILLED by M6,M7: the title cursor cannot reach the row
+M12 KILLED by M7: Return to Title forgets that no keyboard answered
+M13 KILLED by M3,M4,W1: the row clamps instead of cycling
+M14 KILLED by K1,K2,K3,K4,W1: a Settings change is not sent
+M15 KILLED by K1,K2,K3,K4,W1: every Settings key is sent again (no dedupe)
+M16 KILLED by B1,B2,B3,K1,K2,K3,K4,K5,W1,W2: the saved level is not applied at boot
+M17 KILLED by W2: the menu never hears that no keyboard answered
+
+A4-POLISH3 mutations: 17 killed, 0 survived, 0 invalid; restored tree GREEN: True

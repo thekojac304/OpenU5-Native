@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <atomic>
 #include <cstdint>
 
 #include "esp_err.h"
@@ -8,6 +9,7 @@
 #include "freertos/queue.h"
 #include "freertos/task.h"
 #include "input_events.h"
+#include "keyboard_backlight.h"
 #include "keyboard_recovery.h"
 
 namespace tdeck {
@@ -22,6 +24,10 @@ public:
     // left for poll()). The idle wait of main.cpp's loop: input ends it at once.
     bool wait_for_event(TickType_t ticks);
     bool keyboard_online() const { return keyboard_device_ != nullptr; }
+    // A4-POLISH3 (keyboard_backlight.h): the Settings level, from the game
+    // thread. Only stored here; the capture task -- the only I2C user -- sends
+    // it between matrix reads, once, and again after a keyboard recovery.
+    void set_keyboard_backlight(uint8_t level) { keyboard_light_level_.store(level, std::memory_order_relaxed); }
     void log_metrics() const;
 
 private:
@@ -49,6 +55,8 @@ private:
     bool keyboard_interrupt_level_ = true;
     bool keyboard_recovering_ = false;
     KeyboardRecoveryPolicy keyboard_recovery_{};
+    std::atomic<uint8_t> keyboard_light_level_{KeyboardBacklightPolicy::kNone};
+    KeyboardBacklightPolicy keyboard_light_{};
     int64_t next_keyboard_poll_us_ = 0;
     int64_t next_keyboard_error_log_us_ = 0;
     uint32_t keyboard_read_count_ = 0;

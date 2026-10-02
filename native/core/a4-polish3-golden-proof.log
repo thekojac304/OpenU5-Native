@@ -1,0 +1,13 @@
+A4-POLISH3: A4-UI1 golden re-record proof
+before: HEAD 1b59e9a8 tree (a4_ui1_chrome_runtime 30/30 against the old goldens) --dump; after: A4-POLISH3 tree --dump
+python tools/a4_enh1_png_diff.py <before> <after>:
+dungeon-bands        identical
+gameplay             identical
+main-menu            identical
+move-blackthorn      identical
+move-lord-british    identical
+settings-large         486 px differ, x 24..206 y 102..110
+settings               269 px differ, x 20..156 y 90..96
+system-menu          identical
+cause: the title Settings' appended seventh row 'Keyboard Backlight: Off'; the differing pixels are exactly that one text row (Medium and Large text)
+new goldens: settings 0x914e832c2718da41, settings-large 0x2e0ea57d2967bfd7 (only these two hashes edited; the file's history comments kept)

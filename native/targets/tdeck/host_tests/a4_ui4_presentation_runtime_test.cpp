@@ -257,8 +257,8 @@ void test_frontend() {
         std::string root_dev;
         for (size_t i = 0; i < root.line_count; ++i)
             if (std::string(root.lines[i]).rfind("Developer", 0) == 0) root_dev = root.lines[i];
-        check(root_dev.empty() && dev_row.empty() && mv.line_count == 6,
-              "F4b no Developer row in the System Menu: none on the root, none in its six Settings rows (\"" +
+        check(root_dev.empty() && dev_row.empty() && mv.line_count == 7, // A4-POLISH3: + Keyboard Backlight
+              "F4b no Developer row in the System Menu: none on the root, none in its seven Settings rows (\"" +
                   root_dev + "\", \"" + dev_row + "\")");
         g.mic();
     }

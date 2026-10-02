@@ -456,6 +456,8 @@ bool InputHardware::service_once(RawInputEvent &event)
         const esp_err_t mode=i2c_master_transmit(device_handle(keyboard_device_),
                                                 &kKeyboardRawModeCommand,1,kI2cTimeoutMs);
         keyboard_recovery_.raw_mode_finished(esp_timer_get_time(),mode==ESP_OK);
+        // A4-POLISH3: a C3 that reset is dark again; send the level once more.
+        if(mode==ESP_OK)keyboard_light_.keyboard_reinitialized();
         next_keyboard_poll_us_=keyboard_recovery_.due_us;
         INPUT_TRACE("MODE t=%lld attempt=%lu cmd=03 result=%s recovery=staged-once",
                     (long long)esp_timer_get_time(),(unsigned long)trace_mode_attempt_,
@@ -464,6 +466,18 @@ bool InputHardware::service_once(RawInputEvent &event)
                  esp_err_to_name(mode),(unsigned long)trace_mode_attempt_,
                  (long long)((keyboard_recovery_.due_us-esp_timer_get_time())/1000));
         return false;
+    }
+    // A4-POLISH3: a changed (or boot's) backlight level, one two-byte write
+    // between reads and never while the bus is recovering. A failure is retried
+    // on the next passes a bounded number of times (keyboard_backlight.h).
+    const uint8_t light=keyboard_light_level_.load(std::memory_order_relaxed);
+    if(keyboard_device_!=nullptr&&!keyboard_recovering_&&keyboard_light_.write_due(light)){
+        uint8_t frame[2]{};
+        keyboard_backlight_frame(light,frame);
+        const esp_err_t lit=i2c_master_transmit(device_handle(keyboard_device_),frame,sizeof(frame),kI2cTimeoutMs);
+        keyboard_light_.write_finished(light,lit==ESP_OK);
+        ESP_LOGI(kTag,"KEYBOARD_LIGHT level=%u duty=%u result=%s attempt=%u",unsigned(light),unsigned(frame[1]),
+                 esp_err_to_name(lit),unsigned(lit==ESP_OK?1:keyboard_light_.attempts));
     }
     const bool read_due=!keyboard_recovering_
         ?(keyboard_interrupt||now>=next_keyboard_poll_us_)

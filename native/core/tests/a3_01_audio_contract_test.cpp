@@ -633,8 +633,9 @@ int main(int argc, char **argv) {
         check(v.kind == FrontendViewKind::Settings && v.line_count == SystemMenuSession::kSettingsRowCount &&
                   std::strcmp(v.lines[SystemMenuSession::kSfxVolumeRow], "SFX Volume: 80%") == 0 &&
                   std::strcmp(v.lines[SystemMenuSession::kMusicVolumeRow], "Music Volume: Unavailable") == 0 &&
-                  SystemMenuSession::kSettingsRowCount == 6 && SystemMenuSession::kMusicVolumeRow == 5,
-              "F5 System Menu Settings: six rows, SFX Volume and Music Volume last (A4-ENH1 removed the Developer row)");
+                  SystemMenuSession::kSettingsRowCount == 7 && SystemMenuSession::kMusicVolumeRow == 5,
+              "F5 System Menu Settings: seven rows, SFX Volume and Music Volume at 4 and 5 (A4-ENH1 removed the "
+              "Developer row; A4-POLISH3 appended Keyboard Backlight after them)");
         for (int i = 0; i < 4; ++i) m.handle(next);
         m.handle(east);
         const bool up = m.settings().sound_volume == 90;
@@ -694,9 +695,9 @@ int main(int argc, char **argv) {
         title.handle(confirm, 1);
         title.handle(s, 2);
         const auto v = title.view();
-        check(title.state() == FrontendState::Settings && v.line_count == 6 &&
+        check(title.state() == FrontendState::Settings && v.line_count == 7 &&
                   std::strcmp(v.lines[4], "SFX Volume: 80%") == 0 && std::strcmp(v.lines[5], "Music Volume: 80%") == 0,
-              "F5 title Settings (release build): six rows, the same two audio rows at 4 and 5");
+              "F5 title Settings (release build): seven rows (A4-POLISH3), the same two audio rows at 4 and 5");
         FrontendSession dev;
         dev.set_music_availability(MusicAvailability::StockNoMusic);
         dev.start(0, true, {});
@@ -706,9 +707,9 @@ int main(int argc, char **argv) {
         dev.handle(east, 3);
         // A4-ENH1 removed the developer build's seventh row ("Developer: Visible/
         // Hidden"); both builds now show the same six.
-        check(dev.view().line_count == 6 && dev.settings().music_volume == 80 &&
+        check(dev.view().line_count == 7 && dev.settings().music_volume == 80 &&
                   std::strcmp(dev.view().footer, "Stock DOS game files have no music") == 0,
-              "F7 title Settings (developer build): six rows, as a release build; Music Volume unavailable and unchanged");
+              "F7 title Settings (developer build): seven rows, as a release build; Music Volume unavailable and unchanged");
         dev.start(0, true, {});
         dev.handle(confirm, 1);
         dev.handle(s, 2);
@@ -747,13 +748,15 @@ int main(int argc, char **argv) {
         // A4-ENH1 (ALPHA4_UI.md section 10) appended one optional key, the
         // trackball speed level; every older key is written as before, so an
         // older firmware still reads the file, and a file without the key
-        // loads with the default level.
-        const std::string alpha4_enh1 = alpha2.substr(0, alpha2.size() - 1) + ",\"trackballSpeed\":5}";
+        // loads with the default level. A4-POLISH3 appended a second one the
+        // same way, the keyboard backlight level (default Off).
+        const std::string alpha4_enh1 =
+            alpha2.substr(0, alpha2.size() - 1) + ",\"trackballSpeed\":5,\"keyboardBacklight\":0}";
         check(decode_settings(alpha2, from_alpha2) && from_alpha2.sound_volume == 80 && from_alpha2.music_volume == 80 &&
-                  from_alpha2.trackball_speed == kTrackballSpeedDefault &&
+                  from_alpha2.trackball_speed == kTrackballSpeedDefault && from_alpha2.keyboard_backlight == 0 &&
                   encode_settings(FrontendSettings{}, default_text) && default_text == alpha4_enh1,
               "F10 an Alpha 2 settings.json loads unchanged (80 % / 80 %, default trackball speed); the default "
-              "document is the Alpha 2 one plus \"trackballSpeed\"");
+              "document is the Alpha 2 one plus \"trackballSpeed\" and \"keyboardBacklight\"");
         FrontendSettings odd{};
         const bool hand = decode_settings(std::regex_replace(alpha2, std::regex("\"soundVolume\":80"), "\"soundVolume\":85"), odd);
         check(hand && odd.sound_volume == 85 && step_volume(odd.sound_volume, 1) == 95 && step_volume(95, 1) == 100,

@@ -3084,3 +3084,100 @@ The Launcher cost is the same in every row: it follows the image, not the partit
 | Physical flash size | **assumed** 16 MB (part number); not in any committed capture; the layout does not depend on it |
 | Partition | 1.25 MiB factory, build-verified; budget guard RED-first and GREEN |
 | Hardware | nothing to run for this batch on the Launcher path. Optional: read the boot log's `flash=` line once |
+
+## 13. A4-POLISH3 — keyboard backlight setting (2026-10-02)
+
+A device preference: a Settings row that sets the T-Deck keyboard's backlight. Nothing in gameplay, saves, difficulty, cheats or preservation changes.
+
+### 13.1 Baseline
+
+HEAD `1b59e9a8` (A4-FLASH1 logs on `a07cae3e`, on A4-ENH2 `dc61bc64`). Host suite 189 / 189, serial, 147.35 s (`native/core/a4-polish3-baseline-ctest.log`). The keyboard driver is `main/tdeck_input.cpp` (`InputHardware`): ESP-IDF `i2c_master`, I2C0, SDA 18 / SCL 8 / INT 46, keyboard at `0x55`. Its capture task is the only I2C user. It sends one command, raw mode `0x03`, at init and after a bus recovery, and reads five matrix bytes. No backlight command was sent anywhere. `kTftBacklight` (GPIO 42) is the display's light, a different part.
+
+### 13.2 The control path (verified)
+
+Source: LilyGO `T-Deck/examples/Keyboard_ESP32C3/Keyboard_ESP32C3.ino` at master `12f12f8c` (2025-06-20), and its parent revision before `9d15775e` (2024-12-25).
+
+- The light belongs to the keyboard's **ESP32-C3**, not to the S3. Pin 9, LEDC channel 0, 1 kHz, **8-bit** duty.
+- Commands, written to `0x55`:
+  - `0x01 <duty>`: set the duty now, **0..255**, 0 = off. It also sets the sketch's on/off state.
+  - `0x02 <duty>`: Alt+B's duty while the set duty is 0. Kept only if above 30. Default 127.
+  - `0x03` / `0x04`: raw / key mode (raw is what OpenU5 uses).
+- `case 0x01` has no `break`. It falls into `case 0x02`, which calls `Wire.read()` again. A two-byte frame reads −1 there and changes nothing. A third byte would become Alt+B's duty. **The frame is exactly two bytes.**
+- **No persistence, no read-back.** The sketch boots dark (`KB_BRIGHTNESS_BOOT_DUTY 0`) and keeps no copy across a reset. A raw-mode read returns the matrix only. The S3 can set the light but never query it.
+- **Alt+B** is handled by the C3 itself, in raw mode too (its `loop()` runs whatever the mode). It toggles between 0 and the set duty (or the `0x02` duty if the set duty is 0).
+- **Firmware generations.** Before 2024-12-25 the sketch had no I2C commands at all: Alt+B toggled the pin on/off, and the S3 could not control the light. Raw mode (2025-06-12) is newer than `0x01`/`0x02` in the same file. So **every keyboard OpenU5 can read in raw mode supports arbitrary 0..255 duty**. A binary-only firmware cannot run OpenU5's keyboard at all. The installed sketch revision is still not observable (`DEBUG51.md`: an ACK is not a capability), so §13.9 checks it on hardware.
+
+### 13.3 Levels and mapping
+
+| Level | Duty | Note |
+|---|---|---|
+| Off | 0 | the C3's own boot state; the default |
+| Low | 32 | just above the sketch's 30 floor for Alt+B |
+| Medium | 127 | the sketch's own Alt+B default |
+| High | 191 | 75 % |
+| Max | 255 | 100 % |
+
+Discrete levels, not a numeric slider, to match the other named rows (Text / UI). The duties are **provisional**: LED brightness is not linear in duty, so Low may need tuning on the device. They live only in `main/keyboard_backlight.h` (`kKeyboardBacklightDuty`). The core knows level names, never duties.
+
+### 13.4 Settings UI
+
+Both Settings pages (title and System Menu) get a seventh row, appended after Music Volume: **`Keyboard Backlight: Off|Low|Medium|High|Max`**. Left/right (and Enter) step it and cycle like Text / UI: Right from Max is Off, Left from Off is Max. Footer: `Left/right: Off to Max; Mic saves`. If no keyboard answered at boot, the row still edits and saves, and the footer reads `No keyboard found; saved for next boot`. That state survives Return to Title, as music availability does.
+
+### 13.5 Application
+
+- Each edit applies **at once**: every accepted Settings key already runs `AlphaRuntime::apply_device_settings()`, which now calls `sync_keyboard_light()`. That hands the level to the bound sink **only if it differs from the last one sent**. The cursor, other rows and the save send nothing.
+- `main.cpp` binds the sink after `initialize()` (`attach_keyboard_light`): `InputHardware::set_keyboard_backlight(level)` only stores the level in an atomic. The **capture task** sends it between matrix reads: `0x01 <duty>`, one 10 ms-timeout transmit, never while the bus is recovering. The game thread never touches I2C, so input and the light never race.
+- Policy (`KeyboardBacklightPolicy`, pure and host-tested): a level is written once. A failed write is retried on the next passes, **3 attempts at most**, then left alone until the level changes. After a recovery re-enters raw mode, the level is written again (a C3 that reset is dark). No write floods the bus, and a failure never blocks input or boot.
+- Display brightness (`board.set_brightness`, GPIO 42) is untouched.
+
+### 13.6 Persistence
+
+`settings.json` key `"keyboardBacklight"`: an integer 0..4, always written, optional on read (like `"trackballSpeed"`). An older file without the key loads every other value and takes **Off**, which is exactly what those cards had (OpenU5 never lit the keyboard, and the C3 boots dark). A non-integer or out-of-range value reads Off and the rest of the document still loads. An older firmware ignores the key. Never in save data.
+
+Boot: settings load in `initialize()`, then `attach_keyboard_light` sends the saved level once, Off included. Off also turns off a light left on by Alt+B across an S3-only restart.
+
+### 13.7 Alt+B policy
+
+OpenU5 already drops Alt+B (`ui_input_adapter.cpp`: Alt chords other than M / D / S / L produce nothing), so the chord reaches only the C3. **The chosen policy is to leave the firmware shortcut alone**:
+
+- Alt+B stays a quick toggle: off, and back on at the Settings level (or at the sketch's 127 if the Settings level is Off).
+- OpenU5 does not intercept it and does not try to mirror it. The C3 has no read-back, and matching its edge detection from our sampled matrix could drift.
+- The Settings row is the saved preference. It is re-applied at boot, on every change and after a keyboard recovery. So an Alt+B toggle lasts until one of those, and the row can show a level the light is not at.
+- OpenU5 sends no `0x02`. Alt+B from Off keeps the sketch's 127 (= Medium).
+
+### 13.8 Files, tests, size
+
+- `main/keyboard_backlight.h` (new: protocol constants, duties, frame, policy). `tdeck_input.{h,cpp}`: the atomic, the write in `service_once()`, re-arm after raw mode. `alpha_runtime.{h,cpp}`: `KeyboardLightSink`, `attach_keyboard_light()`, `sync_keyboard_light()`. `main.cpp`: the bind. Core: `FrontendSettings::keyboard_backlight`, the names and step in `frontend.h`, the codec, both menus (`SettingsRow::kKeyboardLightRow`). `PROJECT_VER` `4.0.0-alpha4-polish3-debug`.
+- New host targets: `a4_polish3_keyboard_light` (20 checks: levels/duties/frame, JSON round trip, old-card migration, bad values, the write policy, both menus) and `a4_polish3_keyboard_light_runtime` (10 checks on the real `AlphaRuntime` with a recorder sink: boot applies the saved level once, an older card or no card sends Off, each change is sent at once and only once, Mic saves `"keyboardBacklight"`, a reboot re-applies it, wrap, no-keyboard footer).
+- Changed on purpose (the row count and default document): `frontend_test` (7 rows), `a3_01_audio_contract` F5/F7 (7 rows) and F10 (the default document gains `"keyboardBacklight":0`), `a4_enh1_runtime` D1 and `a4_ui4_presentation_runtime` F4b (7 rows), and two A4-UI1 goldens, `settings` `0x914e832c2718da41` and `settings-large` `0x2e0ea57d2967bfd7`. Only the new row's pixels differ (`a4-polish3-golden-proof.log`); the other six states are identical.
+- The test found one defect before commit: `FrontendSession::start()` rebuilt the session and dropped "no keyboard" on Return to Title. Fixed (M7).
+- Mutations: `tools/a4_polish3_mutation_check.py <build> [ids]`, **17 / 17 killed** (`a4-polish3-mutation.log`). `tdeck_input.cpp` is device-only. Its policy is the mutated header, but the I2C call itself is covered only by the hardware run.
+- Host suite **191 / 191**, serial, 170.28 s (`a4-polish3-host-ctest.log`).
+- Firmware (`build-a4-polish3`, first attempt clean): **`0xff6f0` (1,046,256 B)**, +1,392 B against A4-FLASH1's `0xff180` (1,044,864 B). `.text` +944, `.rodata` +432, internal `.bss` +32, `.data` +16; IRAM unchanged. **264,464 B (20.2 %) free** in the 1.25 MiB partition. The Launcher allocation is still 1,024 KiB, with the next 64 KiB step 2,321 B away. ELF guards GREEN (`a4-polish3-fw-elf-checks.log`).
+
+### 13.9 Hardware checklist (PENDING — nothing here is validated on a device)
+
+Use a card with the A4-POLISH3 image. In System Menu > Settings > Keyboard Backlight:
+
+1. **Off**: keyboard dark.
+2. **Low**: dim but visible.
+3. **Medium**: brighter. It should match what Alt+B gave before this batch.
+4. **High**: brighter still.
+5. **Max**: brightest.
+6. Each step changes the light **at once**, before Mic saves.
+7. At every level, type a few keys and a command. Input is normal: no drops, no repeats.
+8. Pick a level, Mic, power-cycle. The light comes back at that level once the game is up (dark until then). Also test a reboot without a power cut.
+9. The TFT brightness does not change when the keyboard level changes.
+10. Alt+B at a non-Off level: the light goes off, and Alt+B again restores that level. Alt+B with the row at Off gives the sketch's 127. Re-opening Settings and changing the row takes over again.
+11. If no level changes the light: note `KEYBOARD_LIGHT level=… result=…` in the serial log. `ESP_OK` with no light means the installed keyboard sketch predates the `0x01` command (§13.2). Input is unaffected either way.
+
+### 13.10 Status
+
+| Axis | State |
+|---|---|
+| Protocol | **source-verified** (LilyGO sketch `12f12f8c`); installed keyboard sketch revision **unknown** |
+| Range | 0..255 PWM; five levels exposed |
+| Host | 191 / 191, mutations 17 / 17 |
+| Firmware | built, guards GREEN, 264,464 B free |
+| Hardware | **PENDING** (§13.9) |
+| Deferred | duty tuning after the device run; syncing an Alt+B toggle back into the row (no read-back exists) |

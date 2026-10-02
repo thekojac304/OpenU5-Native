@@ -19,8 +19,10 @@ constexpr uint64_t kScreen[8] = {
     // trackball row's new text ("Trackball speed: 10/10"); only that row's pixels changed
     // (a4-enh1-p2-golden-proof.log). Then again for the removed "Developer: Hidden" row, the
     // only pixels that changed (a4-enh1-p3-golden-proof.log).
-    0xb6d25af65af28a6bull, // settings
-    0x76be3c0f7b4f9683ull, // settings-large
+    // Alpha 4 A4-POLISH3 (section 13): again for the appended "Keyboard Backlight: Off" row, the
+    // only pixels that changed (a4-polish3-golden-proof.log).
+    0x914e832c2718da41ull, // settings
+    0x2e0ea57d2967bfd7ull, // settings-large
     // Alpha 4 UI Batch 2 (ALPHA4_UI.md section 2.3): re-recorded from the A4-UI2 Board for the new
     // System Menu labels ("Save Game", "Load Game"); the other seven states are unchanged.
     // Alpha 4 A4-ENH1 (section 10): re-recorded for the root's new "Cheats" row (Return to Title

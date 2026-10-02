@@ -640,7 +640,7 @@ void test_developer() {
     h.key('\r');
     const auto settings = h.rt->system_menu_view();
     check(h.rt->device_settings().developer_tools_visible && !lists(root, "Developer") && !lists(settings, "Developer") &&
-              settings.line_count == 6,
+              settings.line_count == 7, // A4-POLISH3 appended Keyboard Backlight
           "D1", "System Menu: no Developer row on the root or in Settings, even with developerToolsVisible on");
     h.key('m', true);
     h.key('d', true);

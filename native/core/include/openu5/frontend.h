@@ -56,6 +56,22 @@ constexpr uint8_t kTrackballSpeedMin = 1, kTrackballSpeedMax = 10;
 constexpr uint8_t kTrackballSpeedDefault = 5, kTrackballSpeedLegacy = 10;
 constexpr const char *kTrackballSpeedFooter = "Left/right: 1 slow - 10 fast; Mic saves";
 
+// Alpha 4 A4-POLISH3: the "Keyboard Backlight" row, a level the device maps to
+// the keyboard MCU's PWM duty (targets/tdeck/main/keyboard_backlight.h). Off is
+// the default: the LilyGO keyboard firmware boots its light dark, so a card
+// written before the row leaves the keyboard as it always was.
+constexpr uint8_t kKeyboardBacklightLevels = 5, kKeyboardBacklightDefault = 0;
+inline constexpr const char *kKeyboardBacklightNames[kKeyboardBacklightLevels] = {"Off", "Low", "Medium", "High", "Max"};
+inline const char *keyboard_backlight_name(uint8_t level) {
+    return kKeyboardBacklightNames[level < kKeyboardBacklightLevels ? level : 0];
+}
+// The row cycles, as Text / UI does: Right from Max is Off, Left from Off is Max.
+inline uint8_t step_keyboard_backlight(uint8_t level, int delta) {
+    return uint8_t((level % kKeyboardBacklightLevels + delta + kKeyboardBacklightLevels) % kKeyboardBacklightLevels);
+}
+constexpr const char *kKeyboardBacklightFooter = "Left/right: Off to Max; Mic saves";
+constexpr const char *kKeyboardBacklightMissingFooter = "No keyboard found; saved for next boot";
+
 struct FrontendSettings {
     uint8_t version = 1;
     uint8_t brightness = 80;
@@ -78,6 +94,9 @@ struct FrontendSettings {
     uint8_t sound_volume = 80;
     uint8_t music_volume = 80;
     bool touch_controls = false;           // Future touch frontend.
+    // A4-POLISH3: "keyboardBacklight", 0..kKeyboardBacklightLevels-1 (a file
+    // without the key, written before A4-POLISH3, takes the default, Off).
+    uint8_t keyboard_backlight = kKeyboardBacklightDefault;
 };
 
 struct NewJourneyIdentity {
@@ -253,6 +272,8 @@ class FrontendSession {
     /** A3-05: as SystemMenuSession's (the title Settings shares the rows). */
     void set_audio_mutes(bool sfx, bool music) { sfx_muted_ = sfx; music_muted_ = music; }
     uint8_t take_volume_edits() { const uint8_t e = volume_edits_; volume_edits_ = 0; return e; }
+    /** A4-POLISH3: false = no keyboard answered at boot (the row's footer says so). */
+    void set_keyboard_light_available(bool a) { keyboard_light_available_ = a; }
     bool active() const { return state_ != FrontendState::EnterGame; }
     FrontendCreationPhase creation_phase() const { return creation_; }
     const char *creation_name() const { return name_; }
@@ -277,6 +298,7 @@ class FrontendSession {
     MusicAvailability music_availability_ = MusicAvailability::NoAudioPack;
     bool sfx_muted_ = false, music_muted_ = false;
     uint8_t volume_edits_ = 0;
+    bool keyboard_light_available_ = true;
     FrontendSaveCatalog catalog_{};
     int8_t new_journey_slot_ = -1;   // A4-SAVE2: where CreateInitialSave writes
     bool slot_confirm_ = false;      // NewJourneySlot: the Replace? question is up

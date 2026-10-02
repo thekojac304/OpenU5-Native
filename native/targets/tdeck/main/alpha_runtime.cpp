@@ -3686,6 +3686,25 @@ void AlphaRuntime::apply_device_settings(){
     input_.set_trackball_speed(settings_.trackball_speed);
     audio_.set_sfx_volume(settings_.sound_volume);
     audio_.set_music_volume(settings_.music_volume);
+    sync_keyboard_light();
+}
+
+// A4-POLISH3. Every Settings key runs apply_device_settings(); only a level
+// that differs from the one last sent reaches the keyboard (no I2C traffic for
+// the other rows, the cursor or a save).
+void AlphaRuntime::attach_keyboard_light(const KeyboardLightSink &sink){
+    keyboard_light_=sink;keyboard_light_sent_=0xff;
+    system_menu_.set_keyboard_light_available(sink.available);
+    frontend_.set_keyboard_light_available(sink.available);
+    sync_keyboard_light();
+}
+
+void AlphaRuntime::sync_keyboard_light(){
+    if(!keyboard_light_.set||settings_.keyboard_backlight==keyboard_light_sent_)return;
+    keyboard_light_sent_=settings_.keyboard_backlight;
+    keyboard_light_.set(keyboard_light_.context,keyboard_light_sent_);
+    ESP_LOGI(kTag,"KEYBOARD_LIGHT_SETTING level=%s available=%d",openu5::keyboard_backlight_name(keyboard_light_sent_),
+             keyboard_light_.available);
 }
 
 // A3-05. A session mute: a flag on top of the volume (AudioService), never a

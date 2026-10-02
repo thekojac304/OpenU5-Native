@@ -107,6 +107,17 @@ class AlphaRuntime {
     size_t pacing_line(char *out, size_t cap, uint32_t heartbeat = 0) const; // the heartbeat's A3E_PACE line
     // A3-04E.1 (section 23): the idle-service guard's window, for the report and A3E_PACE.
     void attach_idle_service(IdleService *service) { idle_service_ = service; }
+    // A4-POLISH3 (ALPHA4_UI.md section 13): the keyboard backlight. main.cpp
+    // binds InputHardware::set_keyboard_backlight after initialize(); a host
+    // test binds a recorder. `available` false (no keyboard answered at boot)
+    // keeps the row editable and saved, and its footer says why. Binding sends
+    // the loaded level once; afterwards only a changed level is sent.
+    struct KeyboardLightSink {
+        void *context = nullptr;
+        void (*set)(void *context, uint8_t level) = nullptr;
+        bool available = false;
+    };
+    void attach_keyboard_light(const KeyboardLightSink &sink);
     // The combined AUDIO / RENDER PERF report: it replaces the Developer
     // screen's rows until dismissed (Enter / Back), and scrolls with Up/Down.
     // "Pending" = it finished while the Developer menu was closed: Alt+D shows it.
@@ -387,6 +398,8 @@ class AlphaRuntime {
     bool music_bypass_ = false;
     openu5::PacingPolicy pacing_ = openu5::kPacingDefault; // A3-04E
     IdleService *idle_service_ = nullptr; // A3-04E.1
+    KeyboardLightSink keyboard_light_{};  // A4-POLISH3
+    uint8_t keyboard_light_sent_ = 0xff;  // the level last handed to the sink (0xff: none yet)
     mutable uint32_t heartbeat_seq_ = 0;  // A3-04E.1: A3E_PACE's hb=
     openu5::PerfScenario perf_scenario() const;
     openu5::AudioPerfSnapshot bench_idle_{};
@@ -801,8 +814,9 @@ class AlphaRuntime {
     // A3-01. settings.json -> settings_ -> the input adapter and the audio
     // service; initialize() and the host fixture both run it.
     void load_device_settings();
-    /** Push settings_ to every device consumer (input adapter, audio volumes). */
+    /** Push settings_ to every device consumer (input adapter, audio volumes, keyboard light). */
     void apply_device_settings();
+    void sync_keyboard_light();
     /**
      * A presented event's sound, forwarded to the service: an Sfx cue as the
      * core named it, and (A3-02) the two sounds the original makes for events

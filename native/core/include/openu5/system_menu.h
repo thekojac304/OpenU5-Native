@@ -32,15 +32,17 @@ public:
  // A4-ENH1: the live journey's Enhanced state, which the Cheats page shows
  // (the runtime sets it when the menu opens and after each cheat).
  void set_enhanced(const EnhancedState&e){enhanced_=e;}
+ // A4-POLISH3: false = no keyboard answered at boot (the row's footer says so).
+ void set_keyboard_light_available(bool a){keyboard_light_available_=a;}
  // The root's rows: Difficulty and Cheats after Settings, Return to Title last.
  enum RootRow:uint8_t{kResumeRow,kSaveRow,kLoadRow,kSettingsPageRow,kDifficultyRow,kCheatsRow,kReturnToTitleRow,kRootRowCount};
  // A3-01: the Settings page's rows, in order. A4-ENH1 removed the last one,
- // "Developer: Visible/Hidden".
- enum SettingsRow:uint8_t{kBrightnessRow,kMovementRow,kTrackballRow,kTextSizeRow,kSfxVolumeRow,kMusicVolumeRow,kSettingsRowCount};
+ // "Developer: Visible/Hidden"; A4-POLISH3 appended "Keyboard Backlight".
+ enum SettingsRow:uint8_t{kBrightnessRow,kMovementRow,kTrackballRow,kTextSizeRow,kSfxVolumeRow,kMusicVolumeRow,kKeyboardLightRow,kSettingsRowCount};
 private:
  // A4-SAVE2: Save (Slots 1-3) and Confirm ("Overwrite Slot N?", No first).
  // A4-ENH2: Custom, the Custom difficulty's values (left/right edits them).
  // A4-ENH2: Cheats lists the cheat groups, CheatGroup one group's cheats.
- enum class Page:uint8_t{Root,Load,Settings,Save,Confirm,Cheats,Difficulty,Custom,CheatGroup};EnhancedState enhanced_{};uint8_t gold_step_=1,cheat_group_=0;bool active_=false;Page page_=Page::Root;uint8_t cursor_=0,settings_cursor_=0;FrontendSettings settings_{};MusicAvailability music_availability_=MusicAvailability::NoAudioPack;FrontendSaveCatalog catalog_{};int8_t journey_slot_=-1,confirm_slot_=-1;uint8_t slot_cursor(bool saving)const;char notice_[64]{};SystemMenuIntent pending_{};bool sfx_muted_=false,music_muted_=false;uint8_t volume_edits_=0;
+ enum class Page:uint8_t{Root,Load,Settings,Save,Confirm,Cheats,Difficulty,Custom,CheatGroup};EnhancedState enhanced_{};uint8_t gold_step_=1,cheat_group_=0;bool active_=false;Page page_=Page::Root;uint8_t cursor_=0,settings_cursor_=0;FrontendSettings settings_{};MusicAvailability music_availability_=MusicAvailability::NoAudioPack;FrontendSaveCatalog catalog_{};int8_t journey_slot_=-1,confirm_slot_=-1;uint8_t slot_cursor(bool saving)const;char notice_[64]{};SystemMenuIntent pending_{};bool sfx_muted_=false,music_muted_=false,keyboard_light_available_=true;uint8_t volume_edits_=0;
 };
 }
