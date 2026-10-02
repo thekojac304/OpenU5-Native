@@ -23,7 +23,9 @@ endif()
 # a release CANDIDATE (its hardware session, section 9.18, is pending), not a
 # final Alpha 4 release. A4-ENH1 (the trackball, Developer entry, cheats and
 # difficulty pass, section 10) sets 4.0.0-alpha4-enh1-debug, so its test image
-# never shares a name or an FW line with the RC1 image.
-set(PROJECT_VER "4.0.0-alpha4-enh1-debug")
+# never shares a name or an FW line with the RC1 image. A4-ENH2 (Custom
+# difficulty, tuned presets, dungeon and starvation rules, more cheats,
+# section 11) sets 4.0.0-alpha4-enh2-debug.
+set(PROJECT_VER "4.0.0-alpha4-enh2-debug")
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(openu5_tdeck)

@@ -1,0 +1,63 @@
+O1 KILLED -- Original enemy damage 99 % (non-identity Original row) -- a4_enh1_preservation exit=0 RED=-; a4_enh1_preservation_runtime exit=0 RED=-; a4_enh2_preservation exit=0 RED=-; a4_enh2_preservation_runtime exit=0 RED=-; a4_enh1_rules exit=1 RED=R1; a4_enh2_rules exit=1 RED=K2,K4
+O2 KILLED -- Original player damage 99 % -- a4_enh1_preservation exit=0 RED=-; a4_enh1_preservation_runtime exit=0 RED=-; a4_enh2_preservation exit=0 RED=-; a4_enh2_preservation_runtime exit=0 RED=-; a4_enh1_rules exit=1 RED=R1; a4_enh2_rules exit=1 RED=K2,K4,P3
+O3 KILLED -- Original poison every 2nd turn -- a4_enh1_preservation exit=1 RED=A1; a4_enh1_preservation_runtime exit=1 RED=P3,P4; a4_enh2_preservation exit=1 RED=B1,B2; a4_enh2_preservation_runtime exit=1 RED=W2,D3,S1; a4_enh1_rules exit=1 RED=R1,R7; a4_enh2_rules exit=1 RED=K2,K4,K7,P3
+O4 KILLED -- Original dungeon wanderers 90 % -- a4_enh1_preservation exit=0 RED=-; a4_enh1_preservation_runtime exit=0 RED=-; a4_enh2_preservation exit=1 RED=B2; a4_enh2_preservation_runtime exit=0 RED=-; a4_enh2_rules exit=1 RED=K7,W1,P3,Z10
+O5 KILLED -- Original starvation 50 % -- a4_enh1_preservation exit=0 RED=-; a4_enh1_preservation_runtime exit=0 RED=-; a4_enh2_preservation exit=1 RED=B1; a4_enh2_preservation_runtime exit=1 RED=W2,D3,S1; a4_enh2_rules exit=1 RED=K7,S1,P3,Z6
+O6 KILLED -- every preset resolves to the Custom values (precedence: difficulty ignored) -- a4_enh2_rules exit=1 RED=K3,K9,T2,T3,T4,T5,W1,S1,S2,Z4; a4_enh2_runtime exit=0 RED=-; a4_enh1_rules exit=1 RED=R3,R4,R5,R7,R8,R9
+O7 KILLED -- Custom resolves to Original's row (its values ignored) -- a4_enh2_rules exit=1 RED=K3,K5,K8,K9,T2,T3,T4,W1,W2,S1,Z6,Z8; a4_enh2_runtime exit=1 RED=U4,U8,U9
+E1 KILLED -- Easy outgoing damage back to 100 % -- a4_enh2_rules exit=1 RED=T1,T2,T3; a4_enh1_rules exit=1 RED=R2
+E2 KILLED -- Easy overworld encounters back to 75 % -- a4_enh2_rules exit=1 RED=T1,T5; a4_enh1_rules exit=1 RED=R2,R9
+E3 KILLED -- Easy dungeon wanderers 100 % -- a4_enh2_rules exit=1 RED=T1,W1; a4_enh2_runtime exit=1 RED=U1
+E4 KILLED -- Relaxed starvation at Original -- a4_enh2_rules exit=1 RED=T1,S1,S2
+E5 KILLED -- the outgoing hook removed from combat damage() -- a4_enh2_rules exit=1 RED=T2
+C1 KILLED -- the "custom" array is never written -- a4_enh2_rules exit=1 RED=P1,P2,P4; a4_enh2_runtime exit=1 RED=U6,U7
+C2 KILLED -- the "custom" array is written even at Original's values -- a4_enh2_rules exit=1 RED=P2
+C3 KILLED -- a load ignores the "custom" array -- a4_enh2_rules exit=1 RED=P1,P2,P3,P4; a4_enh2_runtime exit=1 RED=U6,U7
+C4 KILLED -- a load takes a foreign value (not one of the choices) -- a4_enh2_rules exit=1 RED=P3
+C5 KILLED -- a load reads an object as the "custom" array -- a4_enh2_rules exit=1 RED=P3
+C6 KILLED -- enhanced_is_default ignores the Custom values (changed values lost on an Original save) -- a4_enh2_rules exit=1 RED=K10
+C7 KILLED -- "custom" is not a difficulty name the save knows -- a4_enh2_rules exit=1 RED=P1,P3; a4_enh2_runtime exit=1 RED=U6
+C8 KILLED -- left / right on the Custom page changes nothing it sends -- a4_enh2_runtime exit=1 RED=U3,U4,U5,U6,U7
+C9 KILLED -- the runtime drops the Custom values of a SetDifficulty -- a4_enh2_runtime exit=1 RED=U3,U4,U5,U6,U7
+C10 KILLED -- Back from the Custom page returns to the root -- a4_enh2_runtime exit=1 RED=U5,U6,U7
+C11 KILLED -- a Custom value wraps around instead of holding at the end -- a4_enh2_rules exit=1 RED=K6; a4_enh2_runtime exit=1 RED=U3,U5,U6,U7
+D1 KILLED -- the wanderer re-arm hook removed (every rolled wanderer placed) -- a4_enh2_rules exit=1 RED=W1,W2; a4_enh2_runtime exit=1 RED=U9
+D2 KILLED -- the decision moved before the hidden roll: a refused re-arm skips a 1988 draw -- a4_enh2_rules exit=1 RED=W1
+D3 KILLED -- starvation severity not passed to the starvation site -- a4_enh2_rules exit=1 RED=S1,Z5; a4_enh2_runtime exit=1 RED=U8,V3
+D4 INVALID (does not build) -- every party_random_damage caller scaled (fire, quake, cactus)
+ninja: Entering directory `C:\Dev\OpenU5-Native\native\core\build-a4-enh2'
+[1/3] Building CXX object CMakeFiles/openu5_core.dir/src/turn.cpp.obj
+FAILED: [code=1] CMakeFiles/openu5_core.dir/src/turn.cpp.obj 
+C:\Dev\TamaPoke\.build-tools\w64devkit\bin\c++.exe -DOPENU5_ENABLE_DEVELOPER_TOOLS=1 -IC:/Dev/OpenU5-Native/native/core/include -O3 -DNDEBUG -Wall -Wextra -Wconversion -Werror -MD -MT CMakeFiles/openu5_core.dir/src/turn.cpp.obj -MF CMakeFiles\openu5_core.dir\src\turn.cpp.obj.d -o CMakeFiles/openu5_core.dir/src/turn.cpp.obj -c C:/Dev/OpenU5-Native/native/core/src/turn.cpp
+C:/Dev/OpenU5-Native/native/core/src/turn.cpp: In function 'void openu5::party_random_damage(GameState&, Rand, bool)':
+C:/Dev/OpenU5-Native/native/core/src/turn.cpp:76:9: error: this 'if' clause does not guard... [-Werror=misleading-indentation]
+   76 |         if (const int32_t v = rules_starvation_damage(g,d)) apply_damage(g, i, v); (void)starvation;
+      |         ^~
+C:/Dev/OpenU5-Native/native/core/src/turn.cpp:76:84: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the 'if'
+   76 |         if (const int32_t v = rules_starvation_damage(g,d)) apply_damage(g, i, v); (void)starvation;
+      |                                                                                    ^
+cc1plus.exe: all warnings being treated as errors
+ninja: build stopped: subcommand failed.
+
+D5 KILLED -- "Starving!" said even when starvation is off -- a4_enh2_rules exit=1 RED=S1,Z5; a4_enh2_runtime exit=1 RED=U8,V3
+D6 KILLED -- starvation Off scales to 1 (scale()'s floor) instead of 0 -- a4_enh2_rules exit=1 RED=K5,S1,Z5; a4_enh2_runtime exit=1 RED=U8,V3
+P1 KILLED -- No Hunger stops meals but not starvation -- a4_enh2_rules exit=1 RED=Z2,Z5,Z6
+P2 KILLED -- Disable Random Encounters spares the dungeon -- a4_enh2_rules exit=1 RED=Z2,Z3
+P3 KILLED -- No Poison Damage overridden by the difficulty (a tick every turn) -- a4_enh2_rules exit=1 RED=Z2,Z4,Z8; a4_enh2_runtime exit=1 RED=V3
+P4 KILLED -- roaming monsters not cleared under Disable Random Encounters -- a4_enh2_runtime exit=1 RED=V5
+P5 KILLED -- a placed wanderer kept under Disable Random Encounters -- a4_enh2_rules exit=1 RED=Z10
+P6 KILLED -- the camp still ambushed under Disable Random Encounters -- a4_enh2_rules exit=1 RED=Z11
+P7 KILLED -- the inn's poisoned sleeper still dies under No Poison Damage / God Mode -- a4_enh2_rules exit=1 RED=Z8
+P8 KILLED -- the toggles are not saved -- a4_enh2_rules exit=1 RED=Z9; a4_enh2_runtime exit=1 RED=V4
+P9 KILLED -- a load keeps a stray toggle bit -- a4_enh2_rules exit=1 RED=Z9
+P10 KILLED -- enhanced_is_default ignores the toggles -- a4_enh2_rules exit=1 RED=Z9
+X1 KILLED -- Restore MP lowers a value above the class maximum -- a4_enh2_rules exit=1 RED=X2
+X2 KILLED -- Revive Party allowed in combat -- a4_enh2_rules exit=1 RED=X3; a4_enh2_runtime exit=1 RED=Y5
+X3 KILLED -- Revive Party touches the living -- a4_enh2_rules exit=1 RED=X3
+X4 KILLED -- the Max cheats lower a value already above the cap -- a4_enh2_rules exit=1 RED=X4
+X5 KILLED -- keys, torches and gems capped at 100 -- a4_enh2_rules exit=1 RED=X4,X5; a4_enh2_runtime exit=1 RED=Y3
+X6 KILLED -- Give Reagents also fills the skull keys (a quest item) -- a4_enh2_rules exit=1 RED=X5
+X7 KILLED -- God Mode misses the naval OUCH again -- a4_enh2_rules exit=1 RED=X6
+X8 KILLED -- a group row applies the cheat of its index, not its own -- a4_enh2_runtime exit=1 RED=Y2,Y3,Y4,Y5,V1,V2,V3,V4; a4_enh1_runtime exit=1 RED=C4,C7,C8,C9
+X9 KILLED -- a World row shows God Mode's state -- a4_enh2_runtime exit=1 RED=V1
+A4-ENH2 mutation check: 47 killed, 0 survived, 1 invalid; restored build GREEN

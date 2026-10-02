@@ -8728,3 +8728,36 @@ The enhancement pass on top of the Alpha 4 RC1 commit (`aae348ac`). The full wri
 
 - E-8 – E-11 new (ledger §3); E-4 superseded for the trackball by E-9; E-2 keeps every function, loses its menu rows.
 - All **hardware pending** (ALPHA4_UI.md §10.13); every tuning value provisional.
+
+## Alpha 4 A4-ENH2 — Custom difficulty, tuned presets, dungeon and starvation rules, more cheats
+
+The follow-up to A4-ENH1 (`5e0a16eb`). The full write-up is [`ALPHA4_UI.md`](ALPHA4_UI.md) §11; this section records the classification on its own axis. No reference behaviour changed: every item is an intentional enhancement (ledger E-12, E-13), a native presentation change, or a finding recorded for later; Original with no cheat and no toggle is proven identical to the unmodified tree.
+
+### 1. Items and classification
+
+| # | Item | Class | Change |
+|---|---|---|---|
+| 1 | A Custom difficulty; one precedence function (`effective_rule`) | **enhancement E-12** | eight discrete rules kept with the journey; presets are fixed rows; Custom untouched by a preset |
+| 2 | Easy retune (outgoing 120 %, encounters 65 %) | **enhancement E-12** | two numbers in one table |
+| 3 | Dungeon wanderer share; starvation severity | **enhancement E-12** | two hooks at the single 1988 sites, after the 1988 draws |
+| 4 | Death / resurrection softening | **not implemented** | no clean hook: the port's healer and Refuge skip the one 1988 penalty (D-83, D-84) |
+| 5 | Ten more cheats, the cheat groups, the World toggles | **enhancement E-13** | `apply_cheat()`; the toggles at the precedence function and three random-encounter sites |
+| 6 | God Mode at the naval OUCH | **enhancement defect (A4-ENH1)** | guarded; A4-ENH1 called its five sites complete, this was a sixth |
+| 7 | God Mode / No Poison Damage at the inn's poisoned sleeper | **enhancement scope change** | a poison that takes nothing no longer kills there (A4-ENH1 had listed it as an exception) |
+| 8 | A save reader accepted an object as the Custom array | **enhancement defect (caught red first, before commit)** | arrays only |
+| 8b | Revive Party set a revived member's MP to the class value even when higher (after a Developer edit) | **enhancement defect (found by the review of commits 2–5)** | raises, never lowers (commit 6; X7, mutant X10) |
+| 9 | A4-ENH1's A1 golden never starves | **test documentation defect (A4-ENH1)** | B1 covers starvation; §10.9 annotated |
+| 10 | Healer / Refuge resurrection, the trapdoor's roster, the dungeon digit turn, uncapped crops, the combat clock, the naval OUCH's damage routine | **divergences found in passing** | recorded D-83 – D-89; none fixed (Original must not change here). The §S row's G grade for resurrection is superseded for the healer by D-83 |
+
+### 2. Evidence
+
+- **Original preserved:** goldens recorded on the unmodified tree before any production edit (`native/core/a4-enh2-golden-head.log`: starvation, dungeon wanderers, camp, resurrection, A4-ENH1 saves; the real runtime's starving walk, Deceit walk and Alt+S / Alt+L), bit-identical after every commit, with A4-ENH1's goldens; `a4_enh2_rules` K4 (Custom at defaults is the identity); the parity corpus unchanged.
+- **RED first:** `a4-enh2-p{2,3,4,5}-red-first.log`; commit 1's P3 caught a real reader defect before its commit.
+- **Mutations:** `tools/a4_enh2_mutation_check.py` (ALPHA4_UI.md §11.12).
+- **Review:** two adversarial review passes (commit 1; commits 2–5), each finding re-read by a skeptic (ALPHA4_UI.md §11.12).
+- **Suite, firmware:** ALPHA4_UI.md §11.13.
+
+### 3. Rows
+
+- E-12, E-13 new (ledger §3); D-83 – D-89 new (ledger §4).
+- All **hardware pending** (ALPHA4_UI.md §11.14); every tuning value provisional.

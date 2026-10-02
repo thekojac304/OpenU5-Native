@@ -2628,6 +2628,7 @@ All values are **PROVISIONAL** starting points from the brief's ranges; XP is no
 - `a4_enh1_rules` R1: every hook is the identity at Original over damage −5..300, XP, and 20,050 turns of poison, meals and spawns.
 - The whole existing parity corpus (`gameplay_parity`, `quest_parity`, `combat_parity`, `advanced_combat_parity`, `magic_parity`, `turn_parity`, `travel_parity`, `persistence_parity`, the TypeScript drift tests) passes unchanged in every commit's suite.
 - Mutations R1–R5 (a non-identity Original row) turn the goldens RED (§10.11).
+- *Correction (A4-ENH2, 2026-10-01): the A1 golden never starves — its food never reaches 0 — so starvation was not covered here; A4-ENH2's B1 golden covers it (§11.10).*
 
 ### 10.10 Tests
 
@@ -2717,4 +2718,251 @@ On the ENH1 image (`native/targets/tdeck/build-a4-enh1-final/launcher/OpenU5-TDe
 | Firmware | **build-verified** (pre-commit `0xfe4a0`, 7,008 B free, ELF guards GREEN; the flashable image is built after this commit) |
 | Tuning values | **PROVISIONAL** |
 | Hardware | **PENDING** (§10.13) |
+| Commit / tag / push | committed; not tagged, not pushed, not flashed |
+
+*Update (A4-ENH2, 2026-10-01): the user reports that the A4-ENH1 image passed real-device testing and that the trackball feels substantially better (§11.1); no per-line results for §10.13 were given.*
+
+## 11. A4-ENH2 — Custom difficulty, tuned presets, dungeon and starvation rules, more cheats (2026-10-01)
+
+The follow-up to A4-ENH1 (§10), on top of its last commit (`5e0a16eb`), in eight commits. It extends the enhancement framework without touching the Original game. **Status: implemented and host-verified; firmware-build verified; hardware validation PENDING; every tuning value PROVISIONAL; subjective balance not final.** Nothing here is declared closed until the device run of §11.14.
+
+| Commit | Part |
+|---|---|
+| `ad3d8258` | 0. Original-mode preservation goldens for the new hook sites, recorded on the unmodified tree |
+| `3a8ea537` | 1. Custom difficulty: one precedence function, a choice table, the journey's own values |
+| `d774ae54` | 2. Easy retuned: outgoing damage 120 %, overworld encounters 65 % |
+| `a4810fdb` | 3. Dungeon wanderers and starvation severity: two central hooks, after the 1988 draws |
+| `48241296` | 4. Party and inventory cheats in groups; God Mode at the naval OUCH |
+| `6361bedd` | 5. World cheats (No Hunger, No Poison Damage, Disable Random Encounters) and their precedence |
+| `c8e873d9` | 6. Review fix: Revive Party raises HP and MP but never lowers them |
+| (this commit) | 7. Mutation and review evidence, documentation, version `4.0.0-alpha4-enh2-debug` |
+
+### 11.1 Baseline
+
+- `main` at `5e0a16eb` (A4-ENH1 commit 6). The A4-ENH1 commits and their records (§10, ledger E-8 – E-11, the audit's A4-ENH1 section) were present. The tree was clean except fourteen untracked logs (`native/core/a4-rc1-*.log`, `native/core/a4-enh1-image-*.log`), which belong to the RC1 and A4-ENH1 hardware sessions; they were left untouched and are still untracked.
+- **A4-ENH1 on hardware (user report, 2026-10-01):** the A4-ENH1 image passed the full host suite and real-device testing, and the trackball now feels substantially better. No per-line results for §10.13 were given; they are recorded here as reported, not line by line.
+- Fresh host build `build-a4-enh2-baseline`: **185 / 185** serial, 193.80 s (`a4-enh2-baseline-ctest.log`; 0 project warnings).
+- Firmware at HEAD rebuilt in a fresh `build-a4-enh2`: `0xfe4a0` (1,041,568 B), **7,008 B free** in the 1 MiB app partition — the A4-ENH1 image's size exactly (`a4-enh2-p0-fw-build.log`). Flash was treated as the binding constraint throughout (§11.13).
+
+### 11.2 Investigation (before any production change)
+
+Nine read-only investigations (starvation, death and resurrection, dungeon wanderers, the cheat data model, the menu and its flash cost, the save format, the existing tests and mutation tooling, firmware sizing, the combat hooks), the four feasibility claims each re-read by an independent skeptic against the code and the 1988 binaries (`re/tools/dis16.py`). The answers that decided the design:
+
+| Question | Answer | Hook? |
+|---|---|---|
+| Where does starvation happen? | Only in turn housekeeping: `turn.cpp` (ULTIMA.EXE `0x2B5D`: food 0 at an hour change → "Starving!" and `rand(1,8)` per member through `party_random_damage`, `0x2AA8`). All four 1988 housekeeping callers (TOWN `0x10D0`, MAINOUT `0x0CD3`, DUNGEON `0x0E22`, CMDS `0x0671`) reach it; camp, inn, jail and combat never do. No consequence beyond HP (and death). | **Yes** — at that call site, after the draw; fire, quakes and the cactus share `party_random_damage` and must not change |
+| How are dungeon wanderers spawned? | No per-turn roll. One wanderer per session, re-armed by `dungeon_respawn()` (DUNGEON `0x0134`) at entry, a floor change, a pit fall and after a corridor fight (`0x0F0F`, `0x1CDB`, `0x0B73`, `0x0C64`, `0x1DE3`); eight failed placement tries already leave it dormant. Fixed rooms go through the Room event and the authored arena catalog, never through it. | **Yes** — after its last draw; a refused re-arm is the existing dormant record |
+| What is the death / resurrection penalty? | The 1988 game's only one is `resurrect_apply`'s experience cut (CAST2 `0x05e0`: karma < 98 → exp × karma / 100, then level and max HP recomputed). Its four callers are In Mani Corp (spell and scroll), the healer and the Refuge. The port applies it on In Mani Corp only: the healer sets HP 1 with no cut, the Refuge sets HP to the old maximum with no cut — both pinned by the TypeScript reference's fixtures. Death costs no gold, items or stats. | **No clean hook** — deferred (§11.7) |
+| Which encounters does the overworld rate thin? | Only new roaming monsters (`outdoor_tick`'s spawn block, the one place a monster joins the list), on the surface and the Underworld; never dungeons, towns or scripted fights. | already central |
+| Is all outgoing damage hooked? | Yes for every party → enemy blow and spell (`damage()`); not arena fields, Fear / Repel / Polymorph (direct writes) or the ship's cannon — unchanged by design. | already central |
+
+### 11.3 The rules architecture and precedence
+
+- **One precedence function**, `effective_rule()` (`enhanced.cpp`): every hook reads its one field through it, so there is no second code path.
+
+  ```
+  1988 rule  →  difficulty (a preset's fixed row, or the journey's Custom values)
+             →  World cheats (No Hunger, No Poison Damage, Disable Random Encounters)
+             →  God Mode, at every party HP write (party_damage_blocked)
+  ```
+
+  At Original with no cheat every field is the 1988 value and every hook returns its input unchanged.
+- `GameplayRules`: eight `uint16_t` fields (one member-pointer type for the Custom page): enemy damage, player damage, XP, overworld encounters, poison interval (0 = never), hunger, dungeon encounters, starvation. `kOriginalRules` is the identity row.
+- `kRuleChoices`: one row per field — label, field, discrete values (ascending: left lowers, right raises), optional names — **append-only**, because a value's place in the save's `"custom"` array is its field.
+- Hooks (unchanged sites from A4-ENH1 plus two): combat `damage()` (incoming, outgoing), combat `kill()` (XP), turn housekeeping (poison, meals, starvation), `world()` (overworld spawns), `dungeon_respawn()` (wanderers). Poison, meals and encounters use existing saved counters (turn count, calendar) and a fixed hash — no new RNG stream; the dungeon hash is salted with the floor because a fight and an entry do not advance the turn.
+
+### 11.4 The presets (PROVISIONAL)
+
+| Field | Original | Relaxed | Easy |
+|---|---|---|---|
+| Enemy damage (incoming) | 100 % | **85 %** | **65 %** |
+| Player damage (outgoing) | 100 % | 100 % | **120 %** (was 100 %) |
+| XP | 1.0x | **1.5x** | **2.0x** |
+| Overworld encounters | 100 % | **90 %** | **65 %** (was 75 %) |
+| Poison | every turn | **every 4th** | **every 10th** |
+| Food (meals that eat) | all | **75 %** | **50 %** |
+| Dungeon encounters (wanderer re-arms placed) | all | **90 %** | **65 %** |
+| Starvation | Original (`rand(1,8)`) | **Reduced** (half, rounded up) | **Minimal** (a quarter, at least 1) |
+| Death / resurrection | unchanged | unchanged | unchanged (§11.7) |
+
+Every preset value is one of the Custom choices (`a4_enh2_rules` K2), so Custom can reproduce any preset. Rounding as A4-ENH1: half up, a positive value never scaled to 0, COMBAT's kill-outright 99 kept and never manufactured. The largest non-99 blow in the game is 30: 120 % reaches 36, Custom's 150 % reaches 45 — no field or cap is near. XP is scaled once at the one award site, before the 9999 cap.
+
+### 11.5 Custom
+
+| Row (Custom page) | Choices | Default |
+|---|---|---|
+| Enemy damage | 50 / 65 / 75 / 85 / 100 % | 100 % |
+| Player damage | 100 / 110 / 120 / 135 / 150 % | 100 % |
+| XP rate | 1.0 / 1.5 / 2.0 / 2.5 / 3.0x | 1.0x |
+| Overworld encounters | 25 / 50 / 65 / 75 / 90 / 100 % | 100 % |
+| Poison | Off / Light (every 10th turn) / Reduced (every 4th) / Original (every turn) | Original |
+| Hunger | Off / 25 % / 50 % / 75 % / Original | Original |
+| Dungeon encounters | 25 / 50 / 65 / 75 / 90 / 100 % | 100 % |
+| Starvation | Off / Minimal (¼) / Reduced (½) / Original | Original |
+
+- **Preset / Custom relationship.** Original, Relaxed and Easy are fixed rows; Custom is the journey's own values (`EnhancedState::custom`, Original's by default). Choosing a preset never writes them: **Easy → Custom → Original → Custom gives the same Custom values back** (`a4_enh2_rules` K9, `a4_enh2_runtime` U5). A fresh Custom starts at Original's values (the simplest predictable choice; seeding it from the last preset was rejected as an implicit mutation).
+- **UI.** System Menu > Difficulty: Original / Relaxed / Easy / Custom and, under them, the selected row's actual values (`"  Enemy damage: 65%"`, … — twelve lines, the page's capacity). Enter on a preset uses it (from the next turn); Enter on Custom uses Custom and opens **Custom Difficulty**, a row per value, left/right applied at once (no transcript line per edit; only a change of difficulty is announced). Back returns to the Custom row. With a World cheat on, the subtitle says "World cheats take precedence".
+
+### 11.6 Dungeon encounters and starvation
+
+- **Dungeon (`rules_wanderer_allowed`).** After all of `dungeon_respawn()`'s 1988 draws (bank, up to eight cells, the hidden roll) the difficulty decides whether the rolled wanderer is placed; a refused one gets exactly the dormant record (type 255, bank 0, nowhere) that eight failed tries leave and that every part of the game already handles. Original: every re-arm placed; Original's draw sequence is untouched (`a4_enh2_preservation` B2 and the runtime's Deceit walk bit-identical). A non-Original refusal changes the later draws (a dormant wanderer does not walk) — the same trade-off A4-ENH1 accepted for overworld spawns. Fixed rooms, the Doom entrance and every scripted fight never ask.
+- **Starvation (`rules_starvation_damage`).** `party_random_damage(g, rand, starvation)` gains a flag passed only by the starvation site: the `rand(1,8)` is still drawn per member, only the HP loss is scaled (Reduced ½, Minimal ¼, at least 1; Off: none, and no "Starving!"). The same draws at every severity when no one dies (`a4_enh2_rules` S1).
+
+### 11.7 Death and resurrection — deferred
+
+There is no clean central hook in the port today. The one 1988 penalty (the experience cut in `resurrect_apply`) is applied by the port only on In Mani Corp; the healer (SHOPPES `0x16ee`–`0x1703`) and the Refuge (BLCKTHRN `0x0b90`–`0x0b9d`) skip it, and set HP differently (D-83, D-84 below). A "softer penalty" hook would therefore act on one spell and leave the two common paths — where a softer penalty matters — unchanged. What it would take: (1) a fidelity fix first — one shared `resurrect_apply(CharacterState&, karma)` called by the healer and the Refuge, fixed in the TypeScript reference at the layer its fixtures pin, `--check`, regenerate, token-diff proof — which **changes Original on purpose** and so cannot ride with this batch; (2) then one hook in that function (an effective karma, ≥ 98 meaning no cut). No random numbers are drawn on any of these paths, so the draw order is not at risk. No death-penalty field was added to `GameplayRules` or the save.
+
+### 11.8 The cheats
+
+System Menu > **Cheats** now lists groups; each group page is the A4-ENH1 Cheats page made generic (an order table — `CheatKind` stays append-only, its value is its save bit — a help line per cheat, `cheat_name` a table).
+
+| Group | Cheat | Semantics |
+|---|---|---|
+| **Party** | God Mode | (A4-ENH1) toggle; no party member loses HP. A4-ENH2 adds the naval OUCH (a skiff or ship blocked by a cactus: `rand(1,8)` on the active member), a sixth HP-loss site A4-ENH1 missed, and the inn's poisoned sleeper |
+| | Heal Party / Cure Party | (A4-ENH1) unchanged; refused in combat |
+| | **Restore MP** | the game's class rule (the inn, camping, `resurrect_apply` CAST2 `0x0632`): Avatar and mages INT, bards INT ÷ 2; other classes have no MP. Only raises; skips the dead and anyone not in the party. Allowed in combat (the arena reads MP from the roster) |
+| | **Revive Party** | the dead in the party only, back as the game's own revivals leave them: `'G'`, HP to the maximum, MP by class, **no experience cut**; a record with no maximum takes `resurrect_apply`'s 30 × level; HP and MP are raised, never lowered (a Developer edit can leave more — the review's finding, commit 6). Refused in combat (the arena seats no dead member and writes its own HP and status back); living members untouched |
+| **Inventory** | Add Gold / Max Gold | (A4-ENH1) unchanged |
+| | **Max Food** | 9999 (every food writer's cap) |
+| | **Max Keys / Max Torches / Max Gems** | 99 (the byte counters' cap) |
+| | **Give Reagents** | each of the eight below 99 to 99; no quest item, skull key, carpet, potion, scroll or equipment touched |
+| **World** | **No Hunger** | toggle; no meal eats and no one starves (also at food 0) |
+| | **No Poison Damage** | toggle; poison takes no HP (no tick); the poisoned status stays; the inn no longer kills a poisoned sleeper |
+| | **Disable Random Encounters** | toggle; overworld and dungeon: no spawn passes, no re-arm places a wanderer; roaming monsters are cleared at the next world turn (the list holds only random spawns), a placed wanderer goes dormant at the next dungeon tick, a camp sleeps through its 1/64 ambush (both draws made). Not touched: fixed rooms, the bridge troll's toll (a fixed map feature), the Doom entrance, Shadowlords, guards, scripted fights, and any fight the player starts |
+
+No cheat lowers a value already above its cap (crops can push food to 10000, a Developer preset can leave more), wraps a field, or touches quest items. No teleport, equipment or quest-item cheat (left for an Advanced Cheats feature). Every applied cheat sets its `cheats_used` bit (support metadata only). The Developer tools are unchanged and stay off the ordinary menus.
+
+**Changed on purpose from A4-ENH1:** God Mode now also covers the naval OUCH and the inn's poisoned sleeper (§10.6 had recorded the latter as an exception). Status deaths other than poison at the inn, scripted deaths (the location-29 trapdoor) and a Polymorph aimed at a party member are still outside God Mode.
+
+### 11.9 Save and persistence
+
+The per-journey `"enhanced"` sidecar object (still written only when something differs from the defaults; still carried by `persistence.cpp`'s `extras[]` whitelist; still never read or written by the PC save bridge):
+
+```json
+"enhanced": {"difficulty": "custom", "godMode": false, "cheatsUsed": 28672,
+             "toggles": 28672, "custom": [75, 120, 300, 65, 10, 0, 25, 50]}
+```
+
+- `"difficulty"` gains `"custom"` (with a `static_assert` that the name table covers every difficulty — the A4-ENH1 table would otherwise have been read past its end).
+- `"toggles"`: the World cheats that are on (their `cheat_bit`s), **only when one is on**; a load drops any other bit; a malformed value is none.
+- `"custom"`: the eight Custom values in field order, **only when they differ from Original's** — whatever the difficulty, so they survive a preset. Read field by field: a missing, extra, foreign or non-numeric entry keeps that field's Original value; only an array is read (a red-first test found that `Json::at()` would index an object's members). Append-only: a six-value array written by commit 1 still loads.
+- **Defaults and older saves:** no key — every save before A4-ENH1, every A4-ENH1 save without enhanced state, every PC import — is Original, no cheat, no toggle, Custom at Original's values. An A4-ENH1-shaped object loads and saves back to the same bytes (`a4_enh2_preservation` B5). A journey that never touched any of it saves the very document it saved before A4-ENH1 (`a4_enh1_preservation` A4).
+- **Downgrade:** an A4-ENH2 save opened by A4-ENH1 firmware loads (unknown keys ignored); Custom plays as Original and the Custom values and toggles are dropped at its next save.
+- **PC export isolation:** the `.GAM` of a Custom journey with every toggle on is byte-identical to the same journey on Original (`a4_enh2_rules` P4); the sidecar never leaves the card.
+- One shape choice, recorded by the review: Custom values left changed while playing Original are saved (so they come back with Custom); stepping them back to Original's values removes the key again.
+
+### 11.10 Preservation (Original + no cheat + no toggle)
+
+- **New goldens recorded on the unmodified tree before any change** (commit 0, `a4-enh2-golden-head.log`), using only pre-A4-ENH2 interfaces, for the four gaps A4-ENH1's goldens never reached:
+  - `a4_enh2_preservation`: B1 starvation (2,400 turns at food 0: 739 "Starving!" hours, 44 deaths; and `party_random_damage`'s other callers), B2 dungeon wanderers (2,000 re-arms and a 6,000-action walk with 9 ambushes), B3 camp (40 sleeps, 4 ambushed), B4 death and resurrection (In Mani Corp at seven karmas, the healer, the inn's poisoned sleeper at every inn), B5 A4-ENH1-shaped save documents;
+  - `a4_enh2_preservation_runtime`: a starving daytime walk on the real overworld, then Deceit by its entrance and 900 inputs through the live dungeon turn (re-arms, walks, two corridor fights, meals and starvation underground), then Alt+S / Alt+L.
+- After every later commit both, and A4-ENH1's two goldens, reproduce their recorded hashes **bit for bit**; the whole parity corpus passes unchanged.
+- **Correction to §10.9 (found by this batch's investigation):** A4-ENH1's A1 golden never starves — its food never reaches 0 — although §10.9 and its source comment say it covers starvation. B1 covers it now; §10.9's text is left as written, with this note.
+
+### 11.11 Tests
+
+- New: `a4_enh2_preservation`, `a4_enh2_preservation_runtime` (commit 0); `a4_enh2_rules` — K1–K10 (Custom: choices, presets as points, precedence, identity at defaults, every value of every field through its hook, steps, row text, Poison / Hunger Off, the preset/Custom relationship, the default), T1–T5 (presets; outgoing damage through a real fight: 18→22/27, 16→19/24, 13→16/20 at Original → Easy 120 % / Custom 150 %, same draws; rounding and edges; XP 1.0–3.0x, a real kill 63 → 158 at 2.5x, the 9999 cap; spawn share 100000 / 90108 / 65102), W1–W4 (wanderer share 3998 / 3628 / 2670 / 1027 re-arms placed at Original / Relaxed / Easy / Custom 25 %, after identical draws; the dormant record; rooms; determinism across a save), S1–S2 (starvation 4001 / 2236 / 1239 / 0 HP over 300 hours, the same draws; per-draw rounding, fire / quake / cactus unscaled), X1–X7 (each new cheat, guards, caps, quest items, the naval OUCH through a real Move; X7 Revive never lowering MP, from the review), Z1–Z11 (precedence at every hook and site), P1–P4 (persistence); `a4_enh2_runtime` — U1–U9 (the Difficulty and Custom pages through the device, in play, the save, a power cycle, a starving walk with Starvation Off, 24 real entries into Deceit: 15 wanderers at Original, 2 at Custom 25 %), Y1–Y5 (the cheat groups, each new cheat from the device, the save's mark, Revive refused in a real troll fight), V1–V5 (the World page; the subtitle; a poisoned, starving walk; Alt+S / Alt+L / power cycle; a night circuit on Easy: 8 fights, and with Disable Random Encounters the roaming troll gone after one step and no fight).
+- **RED first:** each production commit's new checks were shown RED against the code without the change (`a4-enh2-p{2,3,4,5,6}-red-first.log`; commit 1's P3 caught a real defect on its first run — the reader accepted an object as the Custom array — and commit 6's X7 was RED against commit 5's Revive).
+- **Changed on purpose:** `a4_enh1_runtime` R1 (the Difficulty page's four rows and values), C2 / C4 / C5 / C6 (the cheat groups' navigation); `a4_enh1_rules` R2 (the Easy row) and R9 (Easy 64000–66000). No golden was re-recorded: the System Menu root and the screens the A4-UI1 goldens capture did not change.
+
+### 11.12 Mutations
+
+`tools/a4_enh2_mutation_check.py <build> [ids] [--anchors]` — 49 mutants, **49 killed**, 0 survived (`a4-enh2-mutation.log`: 47 killed and 1 INVALID through the driver's own text — mutant D4 put a `(void)` on the guarded line and tripped `-Werror=misleading-indentation`; `a4-enh2-mutation-rerun.log`: D4, fixed, killed; `a4-enh2-mutation-review.log`: after commit 6, X1–X9 again and the new X10, all killed; the restored build GREEN after each). They cover:
+- **Original** (O1–O7): five non-identity Original rows — enemy and player damage 99 %, poison every 2nd turn, dungeon wanderers 90 %, starvation 50 % — and the precedence's difficulty layer read wrongly (every preset reading the Custom values; Custom reading Original's row). Poison turns every golden RED (A4-ENH1 A1 / P3 / P4, A4-ENH2 B1 / B2 and the runtime walk); dungeon 90 % turns B2 RED, starvation 50 % B1 and the runtime's starving walk; a 1 % damage change rounds away inside the golden fights (as A4-ENH1 found) and is killed by the identity sweeps (`a4_enh1_rules` R1, `a4_enh2_rules` K4).
+- **Presets** (E1–E5): Easy's 120 % and 65 % back to A4-ENH1's values, Easy's dungeon share and Relaxed's starvation at Original, the outgoing hook removed.
+- **Custom** (C1–C11): never written, written at Original's values, read ignored, a foreign value accepted, an object read as the array, `enhanced_is_default` ignoring the values, the `"custom"` name, a page edit not sent, the runtime dropping the values, Back to the root, a value wrapping instead of holding.
+- **Dungeon and starvation** (D1–D6): the re-arm hook removed; the decision moved before the hidden roll (a refused re-arm then skips a 1988 draw — W1's identical-draws check kills it); the starvation flag not passed; every `party_random_damage` caller scaled; "Starving!" said when off; Off scaled to 1.
+- **Precedence** (P1–P10): No Hunger without starvation, Disable Random Encounters sparing the dungeon, No Poison Damage overridden by the difficulty, the roaming list, the dungeon tick, the camp, the inn, the toggles not saved, a stray bit kept, `enhanced_is_default` ignoring the toggles.
+- **Cheats** (X1–X10): Restore MP lowering a value, Revive in combat or on the living, the Max cheats lowering a value, a cap of 100, Give Reagents filling the skull keys, the naval OUCH unguarded, a group row applying its index's cheat, a World row showing God Mode's state, Revive lowering MP.
+
+**Review.** Two adversarial review passes, each finding re-read by a skeptic told to refute it: commit 1 (three lenses: preservation, save, menu) and commits 2–5 (four lenses: preservation and RNG determinism, the cheats, the encounter sites, the menu and save). Commit 1's three findings were refuted as defects — they are recorded as design notes above (Custom values saved while on Original; the downgrade path; A4-ENH1's stale mutation anchors). Commits 2–5 gave one finding that stood: Revive Party set a revived member's MP to the class value even when it was higher (reachable only after a Developer edit or an edited import), against the batch's never-lower rule — fixed in commit 6 with its red-first test (X7) and mutant (X10). The preservation, encounter and menu / save lenses found nothing.
+
+A4-ENH1's driver (`tools/a4_enh1_mutation_check.py`) is historical evidence for its own tree: six of its anchors (R1–R5, R14) no longer match after commit 1 rewrote those lines; the A4-ENH2 driver re-covers those defect classes (O1–O7, C6, P10) against today's code.
+
+### 11.13 Host and firmware
+
+- Serial suite per commit: 187 / 187 (commit 0), 189 / 189 (commits 1–6: 143.62, 145.73, 147.09, 154.83, 150.45, 156.22 s); commit 6's run is the final tree's (commit 7 changes no host-built file); 0 project warnings.
+- Firmware (1 MiB app partition), each commit built in `build-a4-enh2`:
+
+| Image | Size | Free | Δ |
+|---|---|---|---|
+| A4-ENH1 (`5e0a16eb`) | `0xfe4a0` (1,041,568 B) | 7,008 B | |
+| commit 1 (Custom; first build, before the two reductions below) | `0xfed10` (1,043,728 B) | 4,848 B | +2,160 |
+| commit 1 (as committed) | `0xfe820` (1,042,464 B) | 6,112 B | +896 |
+| commit 2 | `0xfe820` | 6,112 B | 0 |
+| commit 3 | `0xfe9b0` (1,042,864 B) | 5,712 B | +400 |
+| commit 4 | `0xfee90` (1,044,112 B) | 4,464 B | +1,248 |
+| commit 5 | `0xff180` (1,044,864 B) | 3,712 B | +752 |
+| commit 6, and the pre-commit image of commit 7 (`4.0.0-alpha4-enh2-debug`) | `0xff180` (1,044,864 B) | 3,712 B | 0 |
+
+- **Size work, measured.** Commit 1's first build cost 2,160 B. Two behaviour-preserving reductions brought it to 896 B: every hook reads one field (`effective_rule`) instead of copying the whole rules struct, `kOriginalRules` is `inline constexpr` (one copy, not one per translation unit), and `enhanced.cpp` and `system_menu.cpp` — cold code, like `endgame_scene.cpp` (§7.14) — are built `-Os` on the device (`main/CMakeLists.txt`; code generation only, the host tests run the same source). A 32-bit form of the meal rule was tried and reverted: a state document may carry any int32 year, and the 64-bit form cannot overflow.
+- **A4-ENH2 costs 3,296 B; 3,712 B (0.35 %) of the partition remain.** That is low. The next feature must free space first. Measured, behaviour-preserving candidates (none applied here — each touches another subsystem and wants its own batch): `-Os` on the other cold save / persistence / frontend objects (`save_core` and `persistence` 14.5 KB `.text` each, `alpha_save` 12.5 KB, `frontend` 8.3 KB: about 10–14 % of them); the `upper()::mappings` case table (31,600 B, about 17 KB smaller with a compact encoding, generator and drift test to change); the `Board` and input objects' `.data` (about 7.2 KB of mostly zero initialisers that could live in `.bss`). Not candidates: diagnostics, preservation tests, the Developer tools, save compatibility.
+- Section diff against the A4-ENH1 image (`a4-enh2-p6-fw-size-diff.log`): flash `.text` +1,556 B, `.rodata` +1,744 B (the choice and help tables and their strings), internal `.bss` +160 B (the System Menu's ninth line buffer, 96 B, and `EnhancedState`'s growth inside the runtime's game states), `.data` and IRAM unchanged. The three ELF guards are GREEN on it (`a4-enh2-p6-elf-checks.log`: no lock / allocation / log on the per-sample audio path; that path in IRAM; the image check). The image to flash is built **after** the last commit from a fresh `--no-ccache` directory, so its `Git` line names the commit; its path and SHA-256 go in `native/core/a4-enh2-image-*.log`, left untracked like A4-ENH1's until the hardware result.
+
+### 11.14 Hardware checklist (A4-ENH2 image) — PENDING
+
+On the A4-ENH2 image (`native/targets/tdeck/build-a4-enh2-final/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-enh2-Debug-Launcher.bin`, built after this commit; identity screen `FW 4.0.0-alpha4-enh2-debug` and `Git <this commit>`; its SHA-256 in `native/core/a4-enh2-image-identity.log`). **Stop if the identity screen does not say so.** Back up the card's `ultima5/` first; packs as for A4-ENH1 (nothing to recopy). Developer values apply on Enter. Report PASS / FAIL per line; the balance lines want an opinion, not a PASS. Set the state each line needs with the Developer rows first (food, a dead companion, a poisoned member, the hour): the device runs on your own save.
+
+**A. Difficulty**
+1. Original on an older save (A4-ENH1 or RC1): everything as before — a fight, a poisoned walk, a day's meals, a starving hour, a dungeon floor.
+2. Relaxed / Easy / Custom: the Difficulty page shows each row's values under the four rows as the cursor moves; Enter changes the subtitle's "Now:".
+3. Easy, a fight: your blows visibly larger (Z-stats or the damage line), enemy blows smaller; a kill's XP ×2 (Z-stats before / after).
+4. Easy at night in open country: noticeably fewer monsters than Original (opinion).
+5. Custom XP 3.0x: one kill gives three times Original's XP. Custom Poison Off / Light / Reduced: a poisoned member loses no HP / 1 per 10 steps / 1 per 4.
+6. Custom Hunger Off: food does not drop over a game day; 50 %: about half.
+7. Dungeon: Easy or Custom 25 %: across several floor changes / entries, the wanderer appears clearly less often than on Original (opinion); a fixed room still fights.
+8. Starvation: food 0 (Developer), walk across an hour: Original "Starving!" and 1–8 HP each; Custom Minimal 1–2; Off: no line, no HP.
+
+**B. Custom**
+9. Change every row once (left and right; each holds at its ends); Back; the Difficulty page's Custom row shows the new values.
+10. Alt+S (or Save Game), power off, power on, Continue: Difficulty says Custom and the values are back.
+11. Choose Easy, then Original, then Custom again: the Custom values are the ones you left.
+
+**C. Cheats** (System Menu > Cheats: Party / Inventory / World)
+12. Restore MP (Avatar or a mage with MP spent): MP back to INT; a fighter unchanged.
+13. Revive Party (a dead companion — Developer): 'G' with full HP; during a fight it says "Not during combat".
+14. Max Food 9999, Max Keys / Torches / Gems 99 each, Give Reagents 99 of each; Z-stats shows them; a second press says "already full".
+15. No Hunger: a game day, food unchanged; with food 0 (Developer), no "Starving!".
+16. No Poison Damage: a poisoned member walks without losing HP and stays poisoned; resting at an inn while poisoned: survives.
+17. Disable Random Encounters: monsters on screen vanish after a step; none appears at night in open country; in a dungeon no wanderer; camping is never ambushed; the bridge troll and dungeon rooms still happen.
+18. Save, power-cycle, Continue: the World toggles are still on (the World page shows them); the Difficulty subtitle says "World cheats take precedence".
+
+**D. Precedence**
+19. Easy + Disable Random Encounters: no monster at night.
+20. Easy + No Poison Damage: no poison HP loss (Easy alone: 1 per 10 steps).
+21. Custom Hunger Off (no cheat): no food eaten; Custom Starvation Original still starves at food 0 — No Hunger stops that too.
+22. God Mode + Easy in a fight: no HP lost, your blows still Easy's.
+
+**PASS** needs A1, B, C and D with no crash, lock, reset or input-mode corruption; the balance opinions (A3–A8) decide a later tuning, they do not fail this run.
+
+### 11.15 Found in passing (recorded, not fixed)
+
+The investigation found these on its way; each is recorded where it belongs, none is fixed by this batch (Original must not change here):
+- **D-83** the healer's Resurrect and **D-84** the Refuge do not run `resurrect_apply` (§11.7).
+- **D-85** the location-29 trapdoor kills the whole roster (inn companions included), not the party (TOWN `0x0ff9`–`0x103a` loops over the party size).
+- **D-86** a digit key in a dungeon on an invalid member runs a stray overworld turn (`commands.cpp`; DUNGEON `0x07c8`–`0x07d1` passes no turn).
+- **D-87** picking crops outside combat adds food with no cap (SJOG `counter_add(food, 1, 9999)`; the arena twin caps).
+- **D-88** the 1988 combat advances the clock a minute every ten actions (COMBAT `0x0C64`–`0x0C76`); neither port does, so a fight that crosses an hour boundary no longer swallows it (meal and starvation timing after combat).
+- **D-89** the naval OUCH takes `rand(1,8)` from the active member directly; the notes (`re/notes/cactus-ouch-acta.md`) and the reference say the original calls `party_random_damage` — to adjudicate against the binary.
+- Also: In Mani Corp's scroll on a living target should print "Not dead!" (DS `0x953c`); `re/notes/kernel-survival.md` §293–295 says meals and hunger run during the jail / inn wait (a byte scan shows no housekeeping there); God Mode does not cover a Polymorph aimed at a party member (a player's own act).
+
+### 11.16 Deferred and open
+
+- **Death / resurrection softening** (§11.7): needs the D-83 / D-84 fidelity fix first.
+- **Tuning** of every preset and choice: hardware and play.
+- **Flash:** 3,712 B left; the next feature needs a size batch first (§11.13).
+- Advanced Cheats (teleport, equipment, quest items): not in this batch, by the brief.
+- The bridge troll is not a "random encounter" here (a fixed map feature with a random trigger); a separate toggle could cover it if wanted.
+- The A4-ENH1 hardware checklist (§10.13) was reported passed as a whole; its tuning opinions were not itemised.
+
+### 11.17 Status
+
+| Axis | State |
+|---|---|
+| Custom difficulty, presets, dungeon and starvation rules, the cheats, precedence | **implemented, host-verified** |
+| Death / resurrection softening | **deferred** (no clean hook; §11.7) |
+| Original-mode preservation | **host-verified**: A4-ENH1 and A4-ENH2 goldens bit-identical; parity corpus unchanged |
+| Firmware | **build-verified** (pre-commit `0xff180`, 1,044,864 B, 3,712 B free, ELF guards GREEN; the flashable image is built after this commit) |
+| Tuning values | **PROVISIONAL**; balance not final |
+| Hardware | **PENDING** (§11.14) |
 | Commit / tag / push | committed; not tagged, not pushed, not flashed |
