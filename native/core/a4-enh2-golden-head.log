@@ -1,0 +1,38 @@
+A4-ENH2 preservation goldens, recorded on the UNMODIFIED production tree
+HEAD: 5e0a16eba1a5862ec9e96cf79c0506d78e88cc6b
+tracked changes at recording:  M native/core/CMakeLists.txt  (test registration only)
+untracked new: ?? native/core/tests/a4_enh2_preservation_test.cpp ?? native/targets/tdeck/host_tests/a4_enh2_preservation_runtime_test.cpp 
+production sources: identical to HEAD (git diff HEAD -- native/core/src native/core/include native/targets/tdeck/main is empty: [0 lines])
+build dir: build-a4-enh2-baseline (configured on HEAD; full suite 185/185 in a4-enh2-baseline-ctest.log before these two tests were added)
+
+--- a4_enh2_preservation (first run had 0 placeholders; recorded values below) ---
+golden starvation=0x99c9087bd26f1442 starving=739 deaths=44
+golden dungeon=0x57250730265a465d placed=1998 ambushes=9
+golden camp=0xb6f1b3a77ed80150 ambushes=4
+golden resurrection=0xbe90d6bb09040045 revived=21 inn_deaths=6
+golden enh1_save=0xf126b030acad54a3 round_trip=1
+GREEN B1 the scenario starves the party (and starvation kills)
+GREEN B2 the dungeon places wanderers and one ambushes the party
+GREEN B3 some camps are ambushed, some are not
+GREEN B4 resurrection revives and the inn's poisoned sleeper dies
+GREEN B5 an A4-ENH1 "enhanced" object loads and saves back unchanged
+GREEN B1 Original: starvation and party_random_damage == pre-A4-ENH2
+GREEN B2 Original: dungeon wanderer respawn, movement and ambush == pre-A4-ENH2
+GREEN B3 Original: camp sleep and its ambush == pre-A4-ENH2
+GREEN B4 Original: In Mani Corp, the healer and the inn == pre-A4-ENH2
+GREEN B5 Original: the A4-ENH1 save documents == pre-A4-ENH2
+PASS a4_enh2_preservation failures=0
+exit=0
+
+--- a4_enh2_preservation_runtime (summary lines; the runtime's own INFO log is omitted) ---
+golden walk=0xc1145ddbc397daaf avatar_hp_lost=49 turns=210
+golden dungeon=0xbe4274230b91b8c0 entered=1 fights=2 combat_steps=759 floor=3 food=0
+golden save_load=0x272ed77a587912fb
+GREEN W1 the starving walk took HP (the live starvation path ran)
+GREEN D1 the party entered Deceit through its entrance
+GREEN D2 a wanderer ambushed the party (the live re-arm, walk and corridor fight ran)
+GREEN W2 Original: the starving overworld walk == pre-A4-ENH2 bit for bit
+GREEN D3 Original: the dungeon walk, its wanderer and fights == pre-A4-ENH2 bit for bit
+GREEN S1 Original: Alt+S / Alt+L / the next step == pre-A4-ENH2
+A4-ENH2 preservation runtime: 6 checks, 0 failures
+exit=0
