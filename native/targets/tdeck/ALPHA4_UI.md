@@ -3181,3 +3181,7 @@ Use a card with the A4-POLISH3 image. In System Menu > Settings > Keyboard Backl
 | Firmware | built, guards GREEN, 264,464 B free |
 | Hardware | **PENDING** (§13.9) |
 | Deferred | duty tuning after the device run; syncing an Alt+B toggle back into the row (no read-back exists) |
+
+### 13.11 Image for the hardware run
+
+Post-commit build of `abba9c0f` (`a4-polish3-postcommit-*.log`): `native/targets/tdeck/build-a4-polish3/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-polish3-Debug-Launcher.bin`, **1,046,240 B (`0xff6e0`)**, SHA-256 `401541093fe645de03d4ff89ebb555b004f741cd47e4ac58fe08f342b717b6ca`, `FW 4.0.0-alpha4-polish3-debug`, `Git abba9c0ff137`. It is 16 B smaller than the pre-commit build only because its Git string lost `-dirty`. 264,480 B free; Launcher allocation 1,024 KiB (next step 2,337 B away). No SD pack change: the existing A4-END1 pack is the one to use. Not tagged; hardware PENDING (§13.9).
