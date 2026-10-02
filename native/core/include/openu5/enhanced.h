@@ -21,7 +21,12 @@ struct GameState;
 enum class CheatKind : uint8_t { GodMode, HealParty, CureParty, AddGold, MaxGold, Count };
 constexpr uint32_t cheat_bit(CheatKind k) { return uint32_t(1) << unsigned(k); }
 
+// The difficulty presets, in Difficulty-page order. Original is the default
+// and the identity: every rules hook returns the 1988 value unchanged.
+enum class Difficulty : uint8_t { Original, Relaxed, Easy, Count };
+
 struct EnhancedState {
+    Difficulty difficulty = Difficulty::Original;
     // Persistent toggle: no party member loses HP, from any source.
     bool god_mode = false;
     // Support metadata only: every cheat ever applied to this journey, one
@@ -29,6 +34,34 @@ struct EnhancedState {
     uint32_t cheats_used = 0;
 };
 bool enhanced_is_default(const EnhancedState &);
+
+// The difficulty layer: what a preset changes, as plain numbers, layered on top
+// of the recreated rules at a few central hooks -- no enemy table, no item
+// table, no original constant is edited. PROVISIONAL values (section 10),
+// tuned on hardware and in play: change kGameplayRules in enhanced.cpp.
+struct GameplayRules {
+    uint16_t incoming_damage_pct; // an enemy's hit on a party member, in combat
+    uint16_t outgoing_damage_pct; // a party member's hit on an enemy, in combat
+    uint16_t xp_pct;              // experience per kill (combat kill(), the one award site)
+    uint8_t poison_interval;      // a poisoned member loses its 1 HP on every Nth turn (1: every turn)
+    uint16_t hunger_pct;          // share of the 06 / 12 / 18 meals that eat food
+    uint16_t encounter_pct;       // share of passed overworld spawn rolls that spawn a monster
+};
+const GameplayRules &gameplay_rules(Difficulty);
+const char *difficulty_name(Difficulty);
+// The hooks. Each takes the value the 1988 rule computed and returns what is
+// applied; at Original each returns its input unchanged. Percentages round
+// half up, and a positive value never scales to 0 (a hit stays a hit, a kill
+// is worth at least 1 XP).
+int32_t rules_incoming_damage(const GameState &, int32_t damage); // 99 (COMBAT's kill-outright value) is kept
+int32_t rules_outgoing_damage(const GameState &, int32_t damage);
+int32_t rules_xp_award(const GameState &, int32_t xp);
+// Poison and meals are thinned by existing, saved counters -- the turn count
+// (turns_since_start) and the calendar -- so no new state can drift across
+// save / load, rest, map changes or combat.
+bool rules_poison_due(const GameState &);
+bool rules_meal_due(const GameState &);
+bool rules_encounter_allowed(const GameState &);
 
 constexpr int32_t kGoldCap = 9999; // every gold writer in the port caps here (loot, shops, TLK)
 constexpr int32_t kAddGoldAmounts[] = {10, 100, 1000};

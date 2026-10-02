@@ -5,6 +5,10 @@
 //
 //   C  the player cheats (enhanced.h): God Mode, Heal, Cure, Add / Max Gold
 //   P  their persistence: the "enhanced" key, absent at the defaults
+//   R  the difficulty presets: Original's identity, the presets' numbers and
+//      rounding, XP and incoming damage through the real combat engine, poison
+//      and meals through the real housekeeping (across a save and load), the
+//      encounter share, God Mode over a preset, and the saved difficulty
 #include "openu5/combat.h"
 #include "openu5/enhanced.h"
 #include "openu5/loot.h"
@@ -229,11 +233,229 @@ void test_persistence(const char *init_gam) {
     check(save::restore_core(old, o, bt) == save::Error::None && enhanced_is_default(o.enhanced), "P6",
           "an older save (no key) loads with God Mode off and no cheats used");
 }
+// One enemy, one fighter: `strike` true = the fighter attacks (and with a
+// 99-attack weapon kills in one blow), false = it passes while the enemy hits.
+struct Duel {
+    GameState g = party_of(1);
+    TurnState t{};
+    CombatState s{};
+    CombatEnemy orc{};
+    const CombatEnemy *enemies[1]{&orc};
+    int32_t attack[256]{}, range[256]{}, defense[256]{};
+    std::vector<int> hits; // damage of every hit on the party, in order
+    explicit Duel(Difficulty d, int seed = 0x77) {
+        g.enhanced.difficulty = d;
+        g.rng.seed(seed);
+        g.party.characters[0].current_hp = g.party.characters[0].max_hp = 5000; // nobody dies inside the budget
+        orc.index = 12; orc.name = "orc"; orc.group_name = "orcs"; orc.hp = 40; orc.strength = 25;
+        orc.dexterity = 25; orc.damage = 40; orc.range = 1; orc.max_per_map = 1; orc.tile = 0x70;
+        attack[1] = 99; range[1] = 1;
+        defense[20] = 10; // armour: an orc's hit is 40 - rand(1, 10), so the hits vary
+        g.party.characters[0].armor = 20;
+    }
+    CombatContext ctx() {
+        CombatContext c{g, t, s};
+        c.tables.attack = attack; c.tables.range = range; c.tables.defense = defense; c.tables.count = 256;
+        c.events = {this, [](void *p, const CombatEvent &e) {
+                        auto &self = *static_cast<Duel *>(p);
+                        if (e.kind == CombatEventKind::Attacked && e.target == 1 && e.damage > 0) self.hits.push_back(e.damage);
+                    }};
+        return c;
+    }
+    void fight(bool strike, int actions) {
+        CombatMap map{};
+        for (auto &tile : map.tiles) tile = 5;
+        map.start_count[2] = 1; map.starts[2][0] = {5, 6};
+        map.unit_count = 1; map.units[0] = {5, 5};
+        auto c = ctx();
+        initialize_combat(c, map, CombatDirection::South, enemies, 1);
+        for (int i = 0; i < actions && !combat_over(s) && !s.victory; ++i) {
+            CombatActor *cur = current_combat_actor(c);
+            if (!cur) break;
+            if (cur->member == 255) combat_action(c, CombatAction::EnemyStep);
+            else if (strike) combat_action(c, CombatAction::Attack, 5, 5);
+            else combat_action(c, CombatAction::Pass);
+        }
+    }
+};
+
+void test_rules(const char *init_gam) {
+    const GameState original = party_of(1);
+    // R1. Original is the identity at every hook, over the whole domain tried.
+    bool same = true;
+    for (int d = -5; d <= 300; ++d)
+        same = same && rules_incoming_damage(original, d) == d && rules_outgoing_damage(original, d) == d &&
+               rules_xp_award(original, d) == d;
+    GameState walk = original;
+    for (int64_t turn = -50; turn < 20000 && same; ++turn) {
+        walk.turns_since_start = turn;
+        walk.time.year = 139 + int32_t(turn / 1000);
+        walk.time.month = 1 + int32_t((turn / 84) % 13);
+        walk.time.day = 1 + int32_t((turn / 3) % 28);
+        walk.time.hour = int32_t(6 * (1 + turn % 3));
+        same = rules_poison_due(walk) && rules_meal_due(walk) && rules_encounter_allowed(walk);
+    }
+    const auto &o = gameplay_rules(Difficulty::Original);
+    check(same && o.incoming_damage_pct == 100 && o.outgoing_damage_pct == 100 && o.xp_pct == 100 &&
+              o.poison_interval == 1 && o.hunger_pct == 100 && o.encounter_pct == 100,
+          "R1", "Original returns every input unchanged: damage -5..300, XP, 20,050 turns of poison, meals, spawns");
+    // R2. The provisional presets (section 10's table), and an out-of-range one falls back to Original.
+    const auto &rx = gameplay_rules(Difficulty::Relaxed), &ez = gameplay_rules(Difficulty::Easy);
+    check(rx.incoming_damage_pct == 85 && rx.outgoing_damage_pct == 100 && rx.xp_pct == 150 && rx.poison_interval == 4 &&
+              rx.hunger_pct == 75 && rx.encounter_pct == 90 && ez.incoming_damage_pct == 65 &&
+              ez.outgoing_damage_pct == 100 && ez.xp_pct == 200 && ez.poison_interval == 10 && ez.hunger_pct == 50 &&
+              ez.encounter_pct == 75 && &gameplay_rules(Difficulty(7)) == &o,
+          "R2", "Relaxed 85/100/150/4/75/90, Easy 65/100/200/10/50/75; an unknown preset is Original");
+    // R3. XP: x1.5 and x2, rounded half up, never below 1.
+    GameState relaxed = original, easy = original;
+    relaxed.enhanced.difficulty = Difficulty::Relaxed;
+    easy.enhanced.difficulty = Difficulty::Easy;
+    check(rules_xp_award(relaxed, 1) == 2 && rules_xp_award(relaxed, 11) == 17 && rules_xp_award(relaxed, 64) == 96 &&
+              rules_xp_award(easy, 1) == 2 && rules_xp_award(easy, 11) == 22 && rules_xp_award(easy, 64) == 128 &&
+              rules_xp_award(relaxed, 0) == 0,
+          "R3", "XP 1 / 11 / 64 -> Relaxed 2 / 17 / 96, Easy 2 / 22 / 128 (round half up)");
+    // R4. Incoming damage: 85 % / 65 %, a hit stays at least 1, 99 keeps its kill-outright meaning and is never made.
+    check(rules_incoming_damage(relaxed, 10) == 9 && rules_incoming_damage(relaxed, 1) == 1 &&
+              rules_incoming_damage(easy, 10) == 7 && rules_incoming_damage(easy, 2) == 1 &&
+              rules_incoming_damage(easy, 99) == 99 && rules_incoming_damage(relaxed, 116) == 98 &&
+              rules_incoming_damage(easy, 0) == 0,
+          "R4", "hits 10 -> 9 / 7, 1 -> 1, 2 -> 1 (Easy), 99 stays 99, a scaled 99 becomes 98, 0 stays 0");
+    // R5. XP through the real combat kill(): one 40-HP orc ((40 >> 2) + 1 = 11 XP), slain in one blow.
+    int xp[3]{};
+    for (int d = 0; d < 3; ++d) {
+        Duel duel{static_cast<Difficulty>(d)};
+        duel.fight(true, 40);
+        xp[d] = duel.g.party.characters[0].exp;
+    }
+    Duel capped(Difficulty::Easy);
+    capped.g.party.characters[0].exp = 9990;
+    capped.fight(true, 40);
+    check(xp[0] == 11 && xp[1] == 17 && xp[2] == 22 && capped.g.party.characters[0].exp == 9999, "R5",
+          "a real kill: Original 11 XP, Relaxed 17, Easy 22 (applied once); the 9999 cap still holds (9990 + 22)");
+    // R6. Incoming damage through the real combat damage(): the same fight, the
+    // same draws -- every Easy hit is the Original hit scaled, nothing else moves.
+    Duel o_duel(Difficulty::Original), e_duel(Difficulty::Easy), r_duel(Difficulty::Relaxed);
+    o_duel.fight(false, 120);
+    e_duel.fight(false, 120);
+    r_duel.fight(false, 120);
+    bool scaled = o_duel.hits.size() >= 5 && o_duel.hits.size() == e_duel.hits.size() &&
+                  o_duel.hits.size() == r_duel.hits.size();
+    for (size_t i = 0; scaled && i < o_duel.hits.size(); ++i)
+        scaled = e_duel.hits[i] == rules_incoming_damage(easy, o_duel.hits[i]) &&
+                 r_duel.hits[i] == rules_incoming_damage(relaxed, o_duel.hits[i]);
+    int distinct = 0;
+    for (size_t i = 1; i < o_duel.hits.size(); ++i) distinct += o_duel.hits[i] != o_duel.hits[0];
+    check(scaled && distinct > 0 && o_duel.s.rng.get_seed() == e_duel.s.rng.get_seed(), "R6",
+          "an orc's " + std::to_string(o_duel.hits.size()) +
+              " hits: each Easy / Relaxed hit is the Original hit at 65 % / 85 %, with the same RNG draws");
+    // R7. Poison through the real housekeeping: 40 turns, one poisoned member.
+    auto poison_loss = [](Difficulty d, int turns, int save_at) {
+        GameState g = party_of(2);
+        g.enhanced.difficulty = d;
+        g.party.characters[1].status = 'P';
+        g.food = 500;
+        g.time.year = 139; g.time.month = 1; g.time.day = 1; g.time.hour = 9;
+        TurnState t{};
+        t.prev_hour = g.time.hour;
+        OriginalRng rng(3);
+        for (int i = 0; i < turns; ++i) {
+            if (i == save_at) { // a save and a load in the middle
+                save::Json doc = save::Json::object();
+                save::capture_core(g, t, doc);
+                std::string text;
+                save::encode_json(doc, text);
+                GameState back{};
+                TurnState back_turn{};
+                save::Json kept;
+                save::load_state(text, back, back_turn, kept);
+                back.rng = g.rng;
+                g = back;
+                t = back_turn;
+            }
+            advance_turn(g, t, 1, rng_source(rng), nullptr);
+        }
+        return 100 - int(g.party.characters[1].current_hp);
+    };
+    const int lo = poison_loss(Difficulty::Original, 40, -1), lr = poison_loss(Difficulty::Relaxed, 40, -1),
+              le = poison_loss(Difficulty::Easy, 40, -1);
+    const int lr_saved = poison_loss(Difficulty::Relaxed, 40, 17), le_saved = poison_loss(Difficulty::Easy, 40, 23);
+    check(lo == 40 && lr == 10 && le == 4 && lr_saved == lr && le_saved == le, "R7",
+          "40 poisoned turns: Original 40 HP, Relaxed 10 (every 4th), Easy 4 (every 10th); a save and load midway "
+          "changes nothing");
+    // R8. Meals through the real housekeeping: 8 days of turns (24 meals), two eaters.
+    auto eaten = [](Difficulty d, int save_at) {
+        GameState g = party_of(2);
+        g.enhanced.difficulty = d;
+        g.food = 900;
+        g.time.year = 139; g.time.month = 2; g.time.day = 3; g.time.hour = 4; g.time.minute = 0;
+        TurnState t{};
+        t.prev_hour = g.time.hour;
+        OriginalRng rng(5);
+        for (int i = 0; i < 8 * 24 * 6; ++i) { // 10-minute turns
+            if (i == save_at) {
+                save::Json doc = save::Json::object();
+                save::capture_core(g, t, doc);
+                std::string text;
+                save::encode_json(doc, text);
+                GameState back{};
+                TurnState back_turn{};
+                save::Json kept;
+                save::load_state(text, back, back_turn, kept);
+                g = back;
+                t = back_turn;
+            }
+            advance_turn(g, t, 10, rng_source(rng), nullptr);
+        }
+        return 900 - int(g.food);
+    };
+    const int fo = eaten(Difficulty::Original, -1), fr = eaten(Difficulty::Relaxed, -1), fe = eaten(Difficulty::Easy, -1);
+    check(fo == 48 && fr == 36 && fe == 24 && eaten(Difficulty::Relaxed, 500) == fr && eaten(Difficulty::Easy, 777) == fe,
+          "R8", "8 days, 2 eaters: Original eats 48 (24 meals), Relaxed 36 (18), Easy 24 (12); a save and load midway "
+                "changes nothing");
+    // R9. Encounters: the share of passed spawn rolls that spawn, over 100,000 turns.
+    int allowed[3]{};
+    GameState e = original;
+    for (int d = 0; d < 3; ++d) {
+        e.enhanced.difficulty = Difficulty(d);
+        for (int64_t turn = 0; turn < 100000; ++turn) {
+            e.turns_since_start = turn;
+            allowed[d] += rules_encounter_allowed(e);
+        }
+    }
+    check(allowed[0] == 100000 && allowed[1] > 89000 && allowed[1] < 91000 && allowed[2] > 74000 && allowed[2] < 76000,
+          "R9", "spawns allowed per 100,000 turns: Original " + std::to_string(allowed[0]) + ", Relaxed " +
+                    std::to_string(allowed[1]) + ", Easy " + std::to_string(allowed[2]));
+    // R10. God Mode wins over any preset.
+    Duel god(Difficulty::Easy);
+    god.g.enhanced.god_mode = true;
+    god.fight(false, 60);
+    check(god.hits.empty() && god.g.party.characters[0].current_hp == 5000, "R10", "God Mode on Easy: no HP lost");
+    // R11. The difficulty is saved under "enhanced" and comes back; names are checked.
+    GameState jr = party_of(1);
+    jr.enhanced.difficulty = Difficulty::Easy;
+    save::Json doc = save::Json::object();
+    save::capture_core(jr, TurnState{}, doc);
+    GameState back{};
+    TurnState bt{};
+    const bool round = save::restore_core(doc, back, bt) == save::Error::None && back.enhanced.difficulty == Difficulty::Easy;
+    save::Json odd = doc;
+    odd["enhanced"]["difficulty"] = save::Json("brutal");
+    GameState odd_back{};
+    const bool unknown = save::restore_core(odd, odd_back, bt) == save::Error::None &&
+                         odd_back.enhanced.difficulty == Difficulty::Original;
+    jr.enhanced.difficulty = Difficulty::Original;
+    save::Json plain = save::Json::object();
+    save::capture_core(jr, TurnState{}, plain);
+    check(round && doc["enhanced"]["difficulty"].string == save::Json("easy").string && unknown && !plain.has("enhanced"),
+          "R11", "\"difficulty\": \"easy\" saved and restored; an unknown name loads as Original; Original alone saves no key");
+    (void)init_gam;
+}
 } // namespace
 
 int main(int argc, char **argv) {
     test_cheats();
     test_persistence(argc > 1 ? argv[1] : "");
+    test_rules(argc > 1 ? argv[1] : "");
     std::printf("\nA4-ENH1 rules: %d checks, %d failures\n", checks, failures);
     return failures ? 1 : 0;
 }

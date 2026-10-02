@@ -150,19 +150,20 @@ void test_system_menu() {
     const auto root = menu(h);
     dump("system-menu");
     // Changed on purpose by Alpha 4 A4-ENH1 (ALPHA4_UI.md section 10): the root
-    // gained "Cheats" after Settings; Return to Title is still last.
-    check(lines(root) == "Resume | Save Game | Load Game | Settings | Cheats | Return to Title",
+    // gained "Difficulty" and "Cheats" after Settings; Return to Title is still last.
+    check(lines(root) == "Resume | Save Game | Load Game | Settings | Difficulty | Cheats | Return to Title",
           "M1 the rows name the actions: " + lines(root));
-    std::string f[6];
-    for (int i = 0; i < 6; ++i) {
+    std::string f[7];
+    for (int i = 0; i < 7; ++i) {
         f[i] = footer(menu(h));
         h.down();
     }
     check(f[0] == "Alt+M or Mic: resume" && f[1] == "Choose a slot to save this journey in" &&
               f[2] == "Choose a saved journey to load" && f[3] == "Alt+M or Mic: resume" &&
-              f[4] == "Optional cheats; using one marks the save" && f[5] == "Unsaved progress will be lost",
-          "M2 the selected row says what it will do (Save Game: \"" + f[1] + "\"; Cheats: \"" + f[4] +
-              "\"; Return to Title: \"" + f[5] + "\")");
+              f[4] == "Original, or a gentler journey" && f[5] == "Optional cheats; using one marks the save" &&
+              f[6] == "Unsaved progress will be lost",
+          "M2 the selected row says what it will do (Save Game: \"" + f[1] + "\"; Cheats: \"" + f[5] +
+              "\"; Return to Title: \"" + f[6] + "\")");
     c.close();
 
     // The Save page on a blank card: three empty slots, the cursor on Slot 1.

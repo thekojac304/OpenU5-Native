@@ -3393,6 +3393,14 @@ void AlphaRuntime::service_system_menu_intent(){
         ESP_LOGI(kTag,"CHEAT kind=%s amount=%ld applied=%d god_mode=%d cheats_used=0x%lx combat=%d text=\"%s\"",openu5::cheat_name(intent.cheat),
                  (long)intent.amount,r.applied,game_.enhanced.god_mode,(unsigned long)game_.enhanced.cheats_used,context_.combat,r.text);
         dirty_=true;dirty_reason_="cheat";}
+    else if(intent.kind==openu5::SystemMenuIntentKind::SetDifficulty&&intent.difficulty<openu5::Difficulty::Count){
+        // A4-ENH1: the journey's preset, used by the rules hooks from the next
+        // turn on and kept by its next save; the page stays open.
+        game_.enhanced.difficulty=intent.difficulty;system_menu_.set_enhanced(game_.enhanced);
+        char line[40];std::snprintf(line,sizeof(line),"Difficulty: %s",openu5::difficulty_name(intent.difficulty));
+        system_menu_.set_notice(line);ui_->append(openu5::UiTextChannel::System,line);
+        ESP_LOGI(kTag,"DIFFICULTY set=%s",openu5::difficulty_name(intent.difficulty));
+        dirty_=true;dirty_reason_="difficulty";}
     else if(intent.kind==openu5::SystemMenuIntentKind::ReturnToTitle){system_menu_.close();
         // A4-END1: the device's way out of ENDGAME.OVL (DOS needed a reset).
         stop_endgame();

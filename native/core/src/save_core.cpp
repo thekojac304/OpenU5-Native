@@ -6,6 +6,8 @@
 namespace openu5::save {
 namespace {
 using J = Json;
+// A4-ENH1: the "enhanced" key's difficulty names, in Difficulty order.
+constexpr const char *kDifficultyKeys[] = {"original", "relaxed", "easy"};
 bool fits(const J &v, int64_t lo, int64_t hi) {
     return v.kind == J::Number && std::isfinite(v.number) && std::floor(v.number) == v.number &&
            v.number >= double(lo) && v.number <= double(hi);
@@ -197,6 +199,8 @@ void capture_core(const GameState &g, const TurnState &t, Json &s) {
         s.erase("enhanced");
     else {
         J e = J::object();
+        e["difficulty"] = J(kDifficultyKeys[unsigned(g.enhanced.difficulty) < unsigned(Difficulty::Count)
+                                                ? unsigned(g.enhanced.difficulty) : 0U]);
         e["godMode"] = J(g.enhanced.god_mode);
         e["cheatsUsed"] = J(double(g.enhanced.cheats_used));
         s["enhanced"] = std::move(e);
@@ -260,6 +264,9 @@ Error restore_core(const Json &s, GameState &game, TurnState &turn) {
     // value takes its default rather than refusing the save.
     if (s.has("enhanced")) {
         const auto &e = s["enhanced"];
+        for (unsigned i = 1; i < unsigned(Difficulty::Count); ++i)
+            if (e["difficulty"].kind == J::String && e["difficulty"].string == J(kDifficultyKeys[i]).string)
+                g.enhanced.difficulty = Difficulty(i);
         g.enhanced.god_mode = e["godMode"].kind == J::Bool && e["godMode"].truth();
         if (fits(e["cheatsUsed"], 0, UINT32_MAX)) g.enhanced.cheats_used = uint32_t(e["cheatsUsed"].integer());
     }

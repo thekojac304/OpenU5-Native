@@ -1,0 +1,4 @@
+ninja: Entering directory `build-a4-enh1'
+[1/2] Building CXX object CMakeFiles/a4_ui1_chrome_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/a4_ui1_chrome_runtime_test.cpp.obj
+[2/2] Linking CXX executable a4_ui1_chrome_runtime.exe
+build exit=0

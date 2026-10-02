@@ -1,0 +1,12 @@
+A4-ENH1 phase 5: A4-UI1 golden re-record proof
+before: phase 4 tree (commit ae9c3eb9) --dump; after: phase 5 tree --dump
+dungeon-bands        identical
+gameplay             identical
+main-menu            identical
+move-blackthorn      identical
+move-lord-british    identical
+settings-large       identical
+settings             identical
+system-menu            445 px differ, x 20..108 y 68..96
+cause: the System Menu root gains 'Difficulty' after 'Settings'; 'Cheats' and 'Return to Title' move one row down
+new golden: system-menu 0x1e17f66e36dd2a2d

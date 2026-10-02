@@ -80,12 +80,14 @@ static void housekeeping_into(GameState &g, TurnState &s, Rand rand, TurnResult 
     for (int32_t i = 0; i < n; ++i) {
         const char status = g.party.characters[i].status;
         if (status == 'D' || status == 'S') continue;
-        if (status == 'P') { apply_damage(g,i,1); member(out.poison_ticks,i); }
+        // A4-ENH1: the difficulty's poison cadence (every turn on Original).
+        if (status == 'P' && rules_poison_due(g)) { apply_damage(g,i,1); member(out.poison_ticks,i); }
         ++eaters;
     }
     if (g.time.hour != s.prev_hour) {
         if (g.food == 0) { message(out,TurnMessage::Starving); party_random_damage(g,rand); }
-        else if (g.time.hour == 6 || g.time.hour == 12 || g.time.hour == 18) g.food = uint16_t(std::max<int32_t>(0,int32_t(g.food)-eaters));
+        else if ((g.time.hour == 6 || g.time.hour == 12 || g.time.hour == 18) && rules_meal_due(g)) // A4-ENH1 hunger
+            g.food = uint16_t(std::max<int32_t>(0,int32_t(g.food)-eaters));
         s.prev_hour = g.time.hour;
     }
     ++g.turns_since_start;

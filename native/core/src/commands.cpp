@@ -156,7 +156,8 @@ struct Runner {
             return;
         ++result.world_turns;
         const auto spawn = roll_spawn_gate(rand, under, c.game.position.map.floor, c.game.time.hour);
-        const auto status = outdoor_tick(c, map(), spawn.spawn, rand, sink());
+        // A4-ENH1: the difficulty's share of the rolls that spawn (all of them on Original).
+        const auto status = outdoor_tick(c, map(), spawn.spawn && rules_encounter_allowed(c.game), rand, sink());
         if (status != CommandStatus::Success) result.status = status;
     }
     void turn_events(const TurnResult &r) {

@@ -24,8 +24,9 @@ constexpr uint64_t kScreen[8] = {
     // Alpha 4 UI Batch 2 (ALPHA4_UI.md section 2.3): re-recorded from the A4-UI2 Board for the new
     // System Menu labels ("Save Game", "Load Game"); the other seven states are unchanged.
     // Alpha 4 A4-ENH1 (section 10): re-recorded for the root's new "Cheats" row (Return to Title
-    // one row lower); only those two rows changed (a4-enh1-p4-golden-proof.log).
-    0x5effadab687f8e23ull, // system-menu
+    // one row lower); only those two rows changed (a4-enh1-p4-golden-proof.log). Then for the
+    // "Difficulty" row before it (a4-enh1-p5-golden-proof.log).
+    0x1e17f66e36dd2a2dull, // system-menu
     // Alpha 4 A4-SAVE3 (ALPHA4_UI.md section 5): re-recorded for the new "PC Save Transfer" row
     // (the eighth row of a non-developer menu); the other seven states are unchanged.
     // Alpha 4 A4-UI4 (ALPHA4_UI.md section 8): re-recorded for the footer that names every hotkey

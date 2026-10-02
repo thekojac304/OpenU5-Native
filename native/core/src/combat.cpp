@@ -483,7 +483,9 @@ struct Engine {
         if (!player(b)) {
             auto &d = *b.enemy;
             if (player(a)) {
-                int xp = (d.hp >> 2) + 1;
+                // A4-ENH1: the difficulty's XP share, applied once, here, to
+                // the award the 1988 rule computes; the 9999 cap follows.
+                int xp = rules_xp_award(g, (d.hp >> 2) + 1);
                 auto &r = g.party.characters[a.member];
                 r.exp = uint16_t(std::min<int32_t>(9999, int(r.exp) + xp));
                 s.xp[a.member] += xp;
@@ -516,8 +518,12 @@ struct Engine {
                 d /= 2;
             if (b.enemy->abilities & 0x800)
                 d = 0;
+            if (party_side(a))
+                d = rules_outgoing_damage(g, d); // A4-ENH1 difficulty (100 % in every preset)
         } else if (party_damage_blocked(g))
             d = 0; // A4-ENH1 God Mode: the blow lands, the member loses nothing
+        else if (!party_side(a))
+            d = rules_incoming_damage(g, d); // A4-ENH1 difficulty: an enemy's hit on the party
         if (d == 99 || b.hp <= d) {
             attacked(a, b, d);
             kill(b, a);

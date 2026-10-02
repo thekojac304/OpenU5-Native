@@ -11,6 +11,8 @@
 //   D  the Developer menu: no ordinary menu row, Alt+D everywhere
 //   C  the Cheats page: each cheat through the device's menu, God Mode in
 //      play, the save's sidecar, Alt+L, and the refusal in combat
+//   R  the Difficulty page: the presets, Easy's poison cadence in play, and
+//      the preset kept by a save and Alt+L
 #include "../main/alpha_runtime.h"
 #include "../main/tdeck_board.h"
 #include "esp_timer.h"
@@ -372,10 +374,10 @@ bool newest_sidecar() {
     return tdeck::host_memory_save_edit_for_test(true, [](openu5::save::Json &gs) { g_side = gs; });
 }
 
-/** System Menu > Cheats (row 4), then `row` Downs. */
+/** System Menu > Cheats (row 5, after Difficulty), then `row` Downs. */
 void open_cheats(Run &h, int row = 0) {
     h.key('m', true);
-    for (int i = 0; i < 4; ++i) h.ball(RawInputKind::TrackballDown);
+    for (int i = 0; i < 5; ++i) h.ball(RawInputKind::TrackballDown);
     h.key('\r');
     for (int i = 0; i < row; ++i) h.ball(RawInputKind::TrackballDown);
 }
@@ -385,9 +387,9 @@ void test_cheats() {
     auto &m = h.g().party.characters[0];
     h.key('m', true);
     const auto root = h.rt->system_menu_view();
-    check(root.line_count == 7 - 1 && std::string(root.lines[4]) == "Cheats" &&
+    check(root.line_count == 7 && std::string(root.lines[4]) == "Difficulty" && std::string(root.lines[5]) == "Cheats" &&
               std::string(root.lines[root.line_count - 1]) == "Return to Title",
-          "C1", "the System Menu root: Cheats after Settings, Return to Title still last");
+          "C1", "the System Menu root: Difficulty and Cheats after Settings, Return to Title still last");
     h.key('m', true);
     open_cheats(h);
     auto v = h.rt->system_menu_view();
@@ -428,7 +430,7 @@ void test_cheats() {
     h.key('\r'); // Cure Party
     check(healed == 300 && m.status == 'G', "C5", "Heal Party and Cure Party: HP 50 -> 300, poison cured");
     h.key('\b'); // back to the root, on Cheats
-    check(h.rt->system_menu_view().selected_line == 4, "C6", "Back returns to the root with Cheats selected");
+    check(h.rt->system_menu_view().selected_line == 5, "C6", "Back returns to the root with Cheats selected");
     h.key('m', true);
     // God Mode in play: a poisoned walk costs nothing.
     m.status = 'P';
@@ -481,6 +483,66 @@ void test_cheats() {
               "C11", "in combat Heal Party is refused (\"" + footer + "\"), nothing changes, nothing is marked");
         plain.key('m', true);
     }
+}
+
+void test_difficulty() {
+    Run h;
+    auto &ally = h.g().party.characters[0];
+    // R1. System Menu > Difficulty: the three presets, the journey's own first.
+    h.key('m', true);
+    for (int i = 0; i < 4; ++i) h.ball(RawInputKind::TrackballDown);
+    const std::string root_footer = h.rt->system_menu_view().footer;
+    h.key('\r');
+    auto v = h.rt->system_menu_view();
+    const std::string f0 = v.footer;
+    h.ball(RawInputKind::TrackballDown);
+    const std::string f1 = h.rt->system_menu_view().footer;
+    h.ball(RawInputKind::TrackballDown);
+    const std::string f2 = h.rt->system_menu_view().footer;
+    check(root_footer == "Original, or a gentler journey" && std::string(v.title) == "Difficulty" && v.line_count == 3 &&
+              std::string(v.lines[0]) == "Original" && std::string(v.lines[1]) == "Relaxed" &&
+              std::string(v.lines[2]) == "Easy" && v.selected_line == 0 &&
+              std::string(v.subtitle) == "Now: Original (kept with this journey)" &&
+              f0 == "The 1988 rules, unchanged" && f1 == "Hits 85% XP 150% Food 75% Poison 1/4 Fights 90%" &&
+              f2 == "Hits 65% XP 200% Food 50% Poison 1/10 Fights 75%",
+          "R1", "the Difficulty page: Original first and current; each row's footer says what it changes:\n  " + f1 +
+                    "\n  " + f2);
+    // R2. Enter on Easy: the journey's preset, said in the footer and the transcript.
+    h.set_mark();
+    h.key('\r');
+    v = h.rt->system_menu_view();
+    check(h.g().enhanced.difficulty == openu5::Difficulty::Easy && std::string(v.footer) == "Difficulty: Easy" &&
+              std::string(v.subtitle) == "Now: Easy (kept with this journey)" && h.count_since("Difficulty: Easy") == 1 &&
+              h.g().enhanced.cheats_used == 0,
+          "R2", "Enter: Easy now, in the footer and the transcript; a difficulty is not a cheat (nothing marked)");
+    h.key('\b');
+    check(h.rt->system_menu_view().selected_line == 4, "R3", "Back returns to the root with Difficulty selected");
+    h.key('m', true);
+    // R4. In play: ten poisoned steps cost one HP on Easy (every 10th turn).
+    ally.status = 'P';
+    const int hp = ally.current_hp;
+    const int64_t turns = h.g().turns_since_start;
+    for (int i = 0; i < 10; ++i) h.ball(i % 2 ? RawInputKind::TrackballLeft : RawInputKind::TrackballRight);
+    const int64_t walked = h.g().turns_since_start - turns;
+    check(walked == 10 && hp - ally.current_hp == 1, "R4",
+          "Easy: " + std::to_string(walked) + " poisoned turns cost " + std::to_string(hp - ally.current_hp) +
+              " HP (Original: one a turn)");
+    // R5. Saved with the journey; Alt+L after switching back brings Easy back.
+    h.key('s', true);
+    const bool side = newest_sidecar();
+    const bool easy_key = g_side["enhanced"]["difficulty"].string == openu5::save::Json("easy").string &&
+                          !g_side["enhanced"]["godMode"].truth();
+    h.key('m', true);
+    for (int i = 0; i < 4; ++i) h.ball(RawInputKind::TrackballDown);
+    h.key('\r');
+    h.ball(RawInputKind::TrackballUp);
+    h.ball(RawInputKind::TrackballUp);
+    h.key('\r'); // Original
+    const bool back_to_original = h.g().enhanced.difficulty == openu5::Difficulty::Original;
+    h.key('m', true);
+    h.key('l', true);
+    check(side && easy_key && back_to_original && h.g().enhanced.difficulty == openu5::Difficulty::Easy, "R5",
+          "Alt+S keeps \"difficulty\": \"easy\" in the sidecar; Original, then Alt+L: Easy again");
 }
 
 bool lists(const openu5::FrontendView &v, const char *needle) {
@@ -545,6 +607,7 @@ int main(int argc, char **argv) {
     test_speed();
     test_developer();
     test_cheats();
+    test_difficulty();
 
     std::printf("\nA4-ENH1 runtime: %d checks, %d failures\n", checks, failures);
     return failures ? 1 : 0;
