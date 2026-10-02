@@ -182,17 +182,22 @@ int32_t rules_starvation_damage(const GameState &g, int32_t d) {
 
 bool party_damage_blocked(const GameState &g) { return g.enhanced.god_mode; }
 
-const char *cheat_name(CheatKind k) {
-    switch (k) {
-    case CheatKind::GodMode: return "God Mode";
-    case CheatKind::HealParty: return "Heal Party";
-    case CheatKind::CureParty: return "Cure Party";
-    case CheatKind::AddGold: return "Add Gold";
-    case CheatKind::MaxGold: return "Max Gold";
-    case CheatKind::Count: break;
-    }
-    return "";
+namespace {
+constexpr const char *kCheatNames[] = {"God Mode",   "Heal Party", "Cure Party",    "Add Gold",
+                                       "Max Gold",   "Restore MP", "Revive Party",  "Max Food",
+                                       "Max Keys",   "Max Torches", "Max Gems",     "Give Reagents"};
+static_assert(sizeof(kCheatNames) / sizeof(kCheatNames[0]) == size_t(CheatKind::Count), "a name per cheat");
+// The game's own rule for a member's full magic points, as every MP writer
+// has it (the inn, camping, resurrect_apply at CAST2 0x0632): the Avatar and
+// mages INT, bards INT / 2; any other class has none to restore (-1).
+int class_mp(const CharacterState &c) {
+    return c.character_class == 'A' || c.character_class == 'M' ? c.intelligence
+           : c.character_class == 'B'                            ? c.intelligence >> 1
+                                                                 : -1;
 }
+} // namespace
+
+const char *cheat_name(CheatKind k) { return unsigned(k) < unsigned(CheatKind::Count) ? kCheatNames[unsigned(k)] : ""; }
 
 CheatResult apply_cheat(GameState &g, CheatKind kind, int32_t amount, bool in_combat) {
     CheatResult r;
@@ -247,6 +252,88 @@ CheatResult apply_cheat(GameState &g, CheatKind kind, int32_t amount, bool in_co
         }
         g.gold = uint16_t(after);
         std::snprintf(r.text, sizeof(r.text), "Gold: %d (+%d)", int(after), int(after - before));
+        r.applied = true;
+        break;
+    }
+    // A4-ENH2 -------------------------------------------------------------
+    case CheatKind::RestoreMp: { // allowed in combat: the arena reads MP from the roster
+        int n = 0;
+        for (int32_t i = 0; i < members; ++i) {
+            auto &c = g.party.characters[i];
+            const int mp = class_mp(c);
+            if (c.status == 'D' || mp < 0 || c.current_mp >= mp) continue;
+            c.current_mp = uint8_t(mp);
+            ++n;
+        }
+        if (!n) {
+            std::snprintf(r.text, sizeof(r.text), "%s", "No one needs MP");
+            return r;
+        }
+        std::snprintf(r.text, sizeof(r.text), "MP restored: %d", n);
+        r.applied = true;
+        break;
+    }
+    case CheatKind::ReviveParty: {
+        if (in_combat) {
+            std::snprintf(r.text, sizeof(r.text), "%s", "Not during combat");
+            return r;
+        }
+        // The dead only, back as the game's own revivals leave them -- status
+        // 'G', HP to the maximum (the healer, the Refuge, the ending), MP by
+        // class (resurrect_apply) -- with no experience cut. A maximum of 0
+        // takes resurrect_apply's 30 x level.
+        int n = 0;
+        for (int32_t i = 0; i < members; ++i) {
+            auto &c = g.party.characters[i];
+            if (c.status != 'D') continue;
+            c.status = 'G';
+            if (!c.max_hp) c.max_hp = uint16_t(30 * std::max<int>(1, c.level));
+            c.current_hp = c.max_hp;
+            if (const int mp = class_mp(c); mp >= 0) c.current_mp = uint8_t(mp);
+            ++n;
+        }
+        if (!n) {
+            std::snprintf(r.text, sizeof(r.text), "%s", "No one to revive");
+            return r;
+        }
+        std::snprintf(r.text, sizeof(r.text), "Revived: %d", n);
+        r.applied = true;
+        break;
+    }
+    case CheatKind::MaxFood:
+    case CheatKind::MaxKeys:
+    case CheatKind::MaxTorches:
+    case CheatKind::MaxGems: {
+        // Up to the cap every writer keeps; a value already above it (a
+        // Developer preset, crops picked at 9999) is left alone.
+        const char *what = kCheatNames[unsigned(kind)] + 4; // "Food", "Keys", ...
+        const bool food = kind == CheatKind::MaxFood;
+        int32_t &count = kind == CheatKind::MaxKeys ? g.keys : kind == CheatKind::MaxGems ? g.gems : g.torches;
+        const int32_t cap = food ? kFoodCap : kCounterCap, before = food ? int32_t(g.food) : count;
+        if (before >= cap) {
+            std::snprintf(r.text, sizeof(r.text), "%s already full: %d", what, int(before));
+            return r;
+        }
+        if (food)
+            g.food = uint16_t(cap);
+        else
+            count = cap;
+        std::snprintf(r.text, sizeof(r.text), "%s: %d", what, int(cap));
+        r.applied = true;
+        break;
+    }
+    case CheatKind::GiveReagents: {
+        int n = 0;
+        for (auto &q : g.reagent_quantities)
+            if (q < kCounterCap) {
+                q = kCounterCap;
+                ++n;
+            }
+        if (!n) {
+            std::snprintf(r.text, sizeof(r.text), "%s", "Reagents already full");
+            return r;
+        }
+        std::snprintf(r.text, sizeof(r.text), "Reagents: %d each", int(kCounterCap));
         r.applied = true;
         break;
     }

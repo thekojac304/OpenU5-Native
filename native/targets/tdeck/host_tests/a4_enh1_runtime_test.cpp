@@ -374,10 +374,13 @@ bool newest_sidecar() {
     return tdeck::host_memory_save_edit_for_test(true, [](openu5::save::Json &gs) { g_side = gs; });
 }
 
-/** System Menu > Cheats (row 5, after Difficulty), then `row` Downs. */
-void open_cheats(Run &h, int row = 0) {
+/** System Menu > Cheats (row 5, after Difficulty) > a group (A4-ENH2: Party
+ *  0, Inventory 1, ...), then `row` Downs. */
+void open_cheats(Run &h, int row = 0, int group = 0) {
     h.key('m', true);
     for (int i = 0; i < 5; ++i) h.ball(RawInputKind::TrackballDown);
+    h.key('\r');
+    for (int i = 0; i < group; ++i) h.ball(RawInputKind::TrackballDown);
     h.key('\r');
     for (int i = 0; i < row; ++i) h.ball(RawInputKind::TrackballDown);
 }
@@ -393,12 +396,14 @@ void test_cheats() {
     h.key('m', true);
     open_cheats(h);
     auto v = h.rt->system_menu_view();
-    check(std::string(v.title) == "Cheats" && v.line_count == 5 && std::string(v.lines[0]) == "God Mode: Off" &&
+    // A4-ENH2 (changed on purpose): the Cheats page lists groups; God Mode,
+    // Heal and Cure are on the Party page, Add Gold and Max Gold on Inventory.
+    check(std::string(v.title) == "Party" && v.line_count == 5 && std::string(v.lines[0]) == "God Mode: Off" &&
               std::string(v.lines[1]) == "Heal Party" && std::string(v.lines[2]) == "Cure Party" &&
-              std::string(v.lines[3]) == "Add Gold: +100" && std::string(v.lines[4]) == "Max Gold" &&
+              std::string(v.lines[3]) == "Restore MP" && std::string(v.lines[4]) == "Revive Party" &&
               std::string(v.subtitle) == "Using one marks this journey's save" &&
               std::string(v.footer) == "Party members take no damage",
-          "C2", "the Cheats page: five rows, the help line, and a fresh journey not yet marked");
+          "C2", "Cheats > Party: its five rows, the help line, and a fresh journey not yet marked");
     h.set_mark();
     h.key('\r');
     v = h.rt->system_menu_view();
@@ -406,31 +411,35 @@ void test_cheats() {
               std::string(v.subtitle) == "This journey has used cheats" && h.count_since("God Mode: ON") == 1 &&
               h.rt->system_menu_open(),
           "C3", "Enter: God Mode on, said in the footer and the transcript; the page stays open and is now marked");
-    // Add Gold: right picks +1000, Enter adds it; Max Gold.
+    // Add Gold (Cheats > Inventory, its first row): right picks +1000, Enter adds it; Max Gold.
+    h.key('\b');
     h.ball(RawInputKind::TrackballDown);
-    h.ball(RawInputKind::TrackballDown);
-    h.ball(RawInputKind::TrackballDown);
+    h.key('\r');
     h.ball(RawInputKind::TrackballRight);
-    const std::string amount = h.rt->system_menu_view().lines[3];
+    const std::string amount = h.rt->system_menu_view().lines[0];
     h.key('\r');
     const int after_add = h.g().gold;
     h.ball(RawInputKind::TrackballDown);
     h.key('\r');
     check(amount == "Add Gold: +1000" && after_add == 1100 && h.g().gold == 9999, "C4",
           "Add Gold +1000 from 100 = 1100; Max Gold = 9999");
-    // Heal and Cure through the menu.
+    // Heal and Cure through the menu (back to the groups, up to Party).
     m.current_hp = 50;
     h.g().party.characters[0].status = 'P';
+    h.key('\b');
     h.ball(RawInputKind::TrackballUp);
-    h.ball(RawInputKind::TrackballUp);
-    h.ball(RawInputKind::TrackballUp);
+    h.key('\r');
+    h.ball(RawInputKind::TrackballDown);
     h.key('\r'); // Heal Party
     const int healed = m.current_hp;
     h.ball(RawInputKind::TrackballDown);
     h.key('\r'); // Cure Party
     check(healed == 300 && m.status == 'G', "C5", "Heal Party and Cure Party: HP 50 -> 300, poison cured");
+    h.key('\b'); // back to the groups, on Party
+    const bool on_party = std::string(h.rt->system_menu_view().title) == "Cheats" && h.rt->system_menu_view().selected_line == 0;
     h.key('\b'); // back to the root, on Cheats
-    check(h.rt->system_menu_view().selected_line == 5, "C6", "Back returns to the root with Cheats selected");
+    check(on_party && h.rt->system_menu_view().selected_line == 5, "C6",
+          "Back returns to the groups on Party, then to the root with Cheats selected");
     h.key('m', true);
     // God Mode in play: a poisoned walk costs nothing.
     m.status = 'P';

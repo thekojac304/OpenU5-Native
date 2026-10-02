@@ -40,6 +40,7 @@ public:
 private:
  // A4-SAVE2: Save (Slots 1-3) and Confirm ("Overwrite Slot N?", No first).
  // A4-ENH2: Custom, the Custom difficulty's values (left/right edits them).
- enum class Page:uint8_t{Root,Load,Settings,Save,Confirm,Cheats,Difficulty,Custom};EnhancedState enhanced_{};uint8_t gold_step_=1;bool active_=false;Page page_=Page::Root;uint8_t cursor_=0,settings_cursor_=0;FrontendSettings settings_{};MusicAvailability music_availability_=MusicAvailability::NoAudioPack;FrontendSaveCatalog catalog_{};int8_t journey_slot_=-1,confirm_slot_=-1;uint8_t slot_cursor(bool saving)const;char notice_[64]{};SystemMenuIntent pending_{};bool sfx_muted_=false,music_muted_=false;uint8_t volume_edits_=0;
+ // A4-ENH2: Cheats lists the cheat groups, CheatGroup one group's cheats.
+ enum class Page:uint8_t{Root,Load,Settings,Save,Confirm,Cheats,Difficulty,Custom,CheatGroup};EnhancedState enhanced_{};uint8_t gold_step_=1,cheat_group_=0;bool active_=false;Page page_=Page::Root;uint8_t cursor_=0,settings_cursor_=0;FrontendSettings settings_{};MusicAvailability music_availability_=MusicAvailability::NoAudioPack;FrontendSaveCatalog catalog_{};int8_t journey_slot_=-1,confirm_slot_=-1;uint8_t slot_cursor(bool saving)const;char notice_[64]{};SystemMenuIntent pending_{};bool sfx_muted_=false,music_muted_=false;uint8_t volume_edits_=0;
 };
 }

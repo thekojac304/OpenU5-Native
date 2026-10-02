@@ -10,9 +10,12 @@
 //      Alt+L, and a "power cycle" (a fresh runtime over the same card); in
 //      play: Custom Starvation Off on a starving walk, the dungeon wanderer's
 //      share over real entries into Deceit
+//   Y  the cheat groups: Cheats > Party / Inventory through the device's
+//      menu, each new cheat, the save's mark, the refusal in a fight
 #include "../main/alpha_runtime.h"
 #include "../main/tdeck_board.h"
 #include "esp_timer.h"
+#include "openu5/outdoor.h"
 #include "openu5/quest.h"
 #include "openu5/save_json.h"
 
@@ -310,6 +313,111 @@ void test_dungeon_and_starvation() {
               " entered): Original places the wanderer " + std::to_string(o.second) + " times, Custom 25 % " +
               std::to_string(c.second));
 }
+/** System Menu > Cheats (row 5) > group `group`, then `row` Downs. */
+void open_cheat(Run &h, int group, int row) {
+    h.key('m', true);
+    h.ball(RawInputKind::TrackballDown, 5);
+    h.key('\r');
+    h.ball(RawInputKind::TrackballDown, group);
+    h.key('\r');
+    h.ball(RawInputKind::TrackballDown, row);
+}
+
+void test_cheat_groups() {
+    Run h;
+    auto &g = h.g();
+    g.party.character_count = g.party.party_size = 2;
+    auto &ally = g.party.characters[1];
+    ally = g.party.characters[0];
+    std::snprintf(ally.name, sizeof(ally.name), "Shamino");
+    ally.character_class = 'B';
+    ally.intelligence = 24;
+    ally.status = 'D';
+    ally.current_hp = 0;
+    ally.max_hp = 240;
+    ally.current_mp = 0;
+    g.party.characters[0].current_mp = 0;
+    // Y1. Cheats lists its groups; each says what it holds.
+    h.key('m', true);
+    h.ball(RawInputKind::TrackballDown, 5);
+    h.key('\r');
+    auto v = h.menu();
+    const std::string f0 = h.footer();
+    h.ball(RawInputKind::TrackballDown);
+    const std::string f1 = h.footer();
+    check(std::string(v.title) == "Cheats" && v.line_count >= 2 && h.line(0) == "Party" && h.line(1) == "Inventory" &&
+              f0 == "God Mode, heal, cure, magic, revive" && f1 == "Gold, food, keys, torches, gems, reagents" &&
+              std::string(v.subtitle) == "Using one marks this journey's save",
+          "Y1", "Cheats: the groups (Party, Inventory, ...), each footer naming its cheats");
+    h.key('m', true);
+    // Y2. Party > Restore MP and Revive Party through the device's menu.
+    open_cheat(h, 0, 3);
+    h.set_mark();
+    h.key('\r');
+    const bool mp = g.party.characters[0].current_mp == 30 && ally.current_mp == 0 && h.footer() == "MP restored: 1" &&
+                    h.count_since("MP restored: 1") == 1;
+    h.ball(RawInputKind::TrackballDown);
+    h.key('\r');
+    const bool revived = ally.status == 'G' && ally.current_hp == 240 && ally.current_mp == 12 && h.footer() == "Revived: 1";
+    check(h.line(3) == "Restore MP" && h.line(4) == "Revive Party" && mp && revived, "Y2",
+          "Party > Restore MP: the Avatar's 0 -> 30 (the dead bard has none yet); Revive Party: the bard 'G', 240 HP, 12 MP");
+    // Y3. Inventory: every Max cheat and the reagents, from the device.
+    h.key('\b');
+    const bool back_on_party = std::string(h.menu().title) == "Cheats" && h.menu().selected_line == 0;
+    h.ball(RawInputKind::TrackballDown);
+    h.key('\r');
+    g.food = 50;
+    g.keys = g.torches = g.gems = 1;
+    for (auto &q : g.reagent_quantities) q = 3;
+    std::string footers;
+    for (int row = 2; row <= 6; ++row) {
+        while (h.menu().selected_line != row) h.ball(RawInputKind::TrackballDown);
+        h.key('\r');
+        footers += h.footer() + "|";
+    }
+    bool reagents = true;
+    for (auto q : g.reagent_quantities) reagents = reagents && q == 99;
+    check(back_on_party && std::string(h.menu().title) == "Inventory" && g.food == 9999 && g.keys == 99 && g.torches == 99 &&
+              g.gems == 99 && reagents && footers == "Food: 9999|Keys: 99|Torches: 99|Gems: 99|Reagents: 99 each|",
+          "Y3", "Inventory > Max Food / Keys / Torches / Gems / Give Reagents from the device: " + footers);
+    // Y4. Every applied cheat is marked in the save, and a load keeps them.
+    h.key('m', true);
+    h.key('s', true);
+    const uint32_t want = cheat_bit(CheatKind::RestoreMp) | cheat_bit(CheatKind::ReviveParty) | cheat_bit(CheatKind::MaxFood) |
+                          cheat_bit(CheatKind::MaxKeys) | cheat_bit(CheatKind::MaxTorches) | cheat_bit(CheatKind::MaxGems) |
+                          cheat_bit(CheatKind::GiveReagents);
+    const bool side = newest_sidecar() && g_side["enhanced"]["cheatsUsed"].integer() == int64_t(want);
+    g.food = 10;
+    h.key('l', true);
+    check(side && h.g().enhanced.cheats_used == want && h.g().food == 9999, "Y4",
+          "Alt+S: \"cheatsUsed\" holds the seven new bits; Alt+L brings back the journey and its mark");
+    // Y5. Revive in a fight is refused (the arena seats no dead member).
+    Run f;
+    auto &fg = f.g();
+    fg.party.character_count = fg.party.party_size = 2;
+    fg.party.characters[1] = fg.party.characters[0];
+    fg.party.characters[1].status = 'D';
+    fg.party.characters[1].current_hp = 0;
+    auto &ctx = f.rt->command_context_for_test();
+    int tile = -1;
+    for (size_t i = 0; i < ctx.outdoor->resources->enemy_count; ++i)
+        if (const auto *d = ctx.outdoor->resources->enemies[i]; d && d->index == 41) tile = d->tile;
+    ctx.outdoor->enemies.clear();
+    OutdoorEnemy troll{};
+    troll.definition = 41;
+    troll.tile = tile;
+    troll.x = fg.position.xy.x + 1;
+    troll.y = fg.position.xy.y;
+    ctx.outdoor->enemies.push_back(troll);
+    f.key(' ');
+    f.frames(300);
+    const bool fighting = ctx.combat && f.rt->combat_state().initialized;
+    open_cheat(f, 0, 4);
+    f.key('\r');
+    check(fighting && f.footer() == "Not during combat" && fg.party.characters[1].status == 'D' && fg.enhanced.cheats_used == 0,
+          "Y5", "Revive Party during a fight: \"Not during combat\", the dead stay dead, nothing marked");
+    f.key('m', true);
+}
 } // namespace
 
 int main(int argc, char **argv) {
@@ -324,6 +432,7 @@ int main(int argc, char **argv) {
 
     test_difficulty_page();
     test_dungeon_and_starvation();
+    test_cheat_groups();
 
     std::printf("\nA4-ENH2 runtime: %d checks, %d failures\n", checks, failures);
     return failures ? 1 : 0;

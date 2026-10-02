@@ -375,7 +375,7 @@ struct Runner {
             const auto damage = rand(1, 8);
             auto i = c.game.party.active_character;
             if (i >= c.game.party.character_count) i = 0;
-            if (i < c.game.party.character_count) {
+            if (i < c.game.party.character_count && !party_damage_blocked(c.game)) { // A4-ENH2: God Mode here too
                 auto &hp = c.game.party.characters[i].current_hp;
                 hp = uint16_t(hp > damage ? hp - damage : 0);
             }

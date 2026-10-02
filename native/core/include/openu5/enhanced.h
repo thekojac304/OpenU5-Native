@@ -15,11 +15,15 @@ namespace openu5 {
 
 struct GameState;
 
-// The player cheats, in Cheats-page order. APPEND new kinds -- restore MP,
-// revive, food, keys, torches, gems, reagents, equipment, teleport, no
-// encounters / hunger / poison, quest items -- the value is also the bit in
-// EnhancedState::cheats_used, so no kind may ever be renumbered.
-enum class CheatKind : uint8_t { GodMode, HealParty, CureParty, AddGold, MaxGold, Count };
+// The player cheats. APPEND new kinds -- equipment, teleport, quest items --
+// the value is also the bit in EnhancedState::cheats_used, so no kind may ever
+// be renumbered; the Cheats page groups them by its own order table.
+enum class CheatKind : uint8_t {
+    GodMode, HealParty, CureParty, AddGold, MaxGold,
+    // A4-ENH2 (appended):
+    RestoreMp, ReviveParty, MaxFood, MaxKeys, MaxTorches, MaxGems, GiveReagents,
+    Count
+};
 constexpr uint32_t cheat_bit(CheatKind k) { return uint32_t(1) << unsigned(k); }
 
 // The difficulties, in Difficulty-page order. Original is the default and the
@@ -115,6 +119,9 @@ bool rules_wanderer_allowed(const GameState &, int floor);
 int32_t rules_starvation_damage(const GameState &, int32_t damage);
 
 constexpr int32_t kGoldCap = 9999; // every gold writer in the port caps here (loot, shops, TLK)
+// A4-ENH2: the caps every other writer keeps: food (a word, as gold), and
+// keys, torches, gems and each reagent (a byte counter in the 1988 save).
+constexpr int32_t kFoodCap = 9999, kCounterCap = 99;
 constexpr int32_t kAddGoldAmounts[] = {10, 100, 1000};
 constexpr size_t kAddGoldAmountCount = sizeof(kAddGoldAmounts) / sizeof(kAddGoldAmounts[0]);
 
@@ -123,8 +130,10 @@ struct CheatResult {
     char text[40]{};      // the menu's footer line and the transcript's
 };
 // The ONE entry point for the player cheats: each changes the game here and
-// only here, through the same fields the game's own writers use. Heal and Cure
-// are refused in combat (the arena holds its own copy of every member's HP).
+// only here, through the same fields the game's own writers use. Heal, Cure
+// and Revive are refused in combat (the arena holds its own copy of every
+// member's HP and status, and seats no dead member). No cheat lowers a value
+// already above its cap, or touches a quest item.
 CheatResult apply_cheat(GameState &, CheatKind, int32_t amount = 0, bool in_combat = false);
 const char *cheat_name(CheatKind);
 // God Mode's one question, asked by every party HP-loss site: combat damage(),

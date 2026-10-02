@@ -11,10 +11,13 @@
 //   W  dungeon wanderers: the re-arm share, the dormant record, rooms
 //      untouched, deterministic across a save
 //   S  starvation severity through the real housekeeping, the same draws
+//   X  the new party and inventory cheats through apply_cheat(), and God
+//      Mode at the naval OUCH
 //   P  persistence: the "custom" array, written only when changed, read back
 //      field by field; malformed entries take that field's Original value;
 //      the .GAM never carries any of it
 #include "openu5/combat.h"
+#include "openu5/commands.h"
 #include "openu5/dungeon.h"
 #include "openu5/enhanced.h"
 #include "openu5/persistence.h"
@@ -538,6 +541,143 @@ void test_dungeon_and_starvation() {
           "S2", "Reduced: 1/5/8 -> 1/3/4, Minimal: 1/6/8 -> 1/2/2; fire, quake and cactus damage at full strength on Easy");
 }
 
+GameState mixed_party() {
+    GameState g = party_of(6);
+    const char classes[] = {'A', 'M', 'B', 'F', 'M', 'B'};
+    const char status[] = {'G', 'D', 'P', 'D', 'S', 'G'};
+    for (int i = 0; i < 6; ++i) {
+        auto &c = g.party.characters[i];
+        c.character_class = classes[i];
+        c.status = status[i];
+        c.intelligence = uint8_t(20 + i);
+        c.current_mp = 2;
+        c.level = uint8_t(1 + i);
+        c.exp = uint16_t(250 * i);
+        if (c.status == 'D') c.current_hp = 0;
+    }
+    g.party.characters[3].max_hp = 0; // a record with no maximum: resurrect_apply's 30 x level
+    g.party.party_size = 5;           // member 5 waits at an inn: never touched
+    g.party.characters[5].party_status = 7;
+    g.party.characters[5].status = 'D';
+    g.party.characters[5].current_hp = 0;
+    return g;
+}
+
+void test_cheats() {
+    // X1. CheatKind is append-only: its value is its save bit.
+    check(unsigned(CheatKind::RestoreMp) == 5 && unsigned(CheatKind::ReviveParty) == 6 && unsigned(CheatKind::MaxFood) == 7 &&
+              unsigned(CheatKind::MaxKeys) == 8 && unsigned(CheatKind::MaxTorches) == 9 && unsigned(CheatKind::MaxGems) == 10 &&
+              unsigned(CheatKind::GiveReagents) == 11 && std::string(cheat_name(CheatKind::GiveReagents)) == "Give Reagents" &&
+              std::string(cheat_name(CheatKind::Count)).empty(),
+          "X1", "the new cheats are appended after Max Gold (bits 5-11), each with its name");
+    // X2. Restore MP: the game's own class rule (Avatar / mage INT, bard INT/2),
+    // only raising; fighters, the dead and the absent untouched; allowed in combat.
+    GameState g = mixed_party();
+    g.party.characters[4].current_mp = 60; // above its maximum (an edited save): kept
+    auto r = apply_cheat(g, CheatKind::RestoreMp, 0, true);
+    const auto &p = g.party.characters;
+    const bool mp = r.applied && std::string(r.text) == "MP restored: 2" && p[0].current_mp == 20 && p[1].current_mp == 2 &&
+                    p[2].current_mp == 11 && p[3].current_mp == 2 && p[4].current_mp == 60 && p[5].current_mp == 2 &&
+                    g.enhanced.cheats_used == cheat_bit(CheatKind::RestoreMp);
+    r = apply_cheat(g, CheatKind::RestoreMp);
+    check(mp && !r.applied && std::string(r.text) == "No one needs MP", "X2",
+          "Restore MP (even in combat): Avatar INT 20 -> 20 MP, bard INT 22 -> 11; a fighter, the dead, a member above "
+          "its maximum and one at an inn untouched; again: \"No one needs MP\"");
+    // X3. Revive Party: refused in combat; then only the dead in the party,
+    // to full HP (30 x level when the record has no maximum) and MP by class,
+    // with experience, level and every living member untouched.
+    g = mixed_party();
+    const GameState before = g;
+    r = apply_cheat(g, CheatKind::ReviveParty, 0, true);
+    const bool refused = !r.applied && std::string(r.text) == "Not during combat" && g.party.characters[1].status == 'D' &&
+                         g.enhanced.cheats_used == 0;
+    r = apply_cheat(g, CheatKind::ReviveParty);
+    bool living_same = true;
+    for (int i : {0, 2, 4})
+        living_same = living_same && std::memcmp(&p[i], &before.party.characters[i], sizeof p[i]) == 0;
+    const bool revived = r.applied && std::string(r.text) == "Revived: 2" && p[1].status == 'G' && p[1].current_hp == 100 &&
+                         p[1].current_mp == 21 && p[1].exp == 250 && p[1].level == 2 && p[3].status == 'G' && p[3].max_hp == 120 &&
+                         p[3].current_hp == 120 && p[3].current_mp == 2 && p[5].status == 'D' && p[5].current_hp == 0;
+    r = apply_cheat(g, CheatKind::ReviveParty);
+    check(refused && revived && living_same && !r.applied && std::string(r.text) == "No one to revive", "X3",
+          "Revive Party: \"Not during combat\" in a fight; otherwise the two dead members only -- 'G', full HP (a record "
+          "with none: 30 x level 4 = 120), mage MP 21, experience kept -- the living and the one at an inn untouched");
+    // X4. Max Food / Keys / Torches / Gems: to the caps every writer keeps,
+    // never lowering a value already above (crops at 9999, a Developer preset).
+    GameState f = party_of(1);
+    f.food = 120;
+    f.keys = 3;
+    f.torches = 0;
+    f.gems = 150;
+    const auto rf = apply_cheat(f, CheatKind::MaxFood), rk = apply_cheat(f, CheatKind::MaxKeys),
+               rt = apply_cheat(f, CheatKind::MaxTorches), rg = apply_cheat(f, CheatKind::MaxGems),
+               rf2 = apply_cheat(f, CheatKind::MaxFood);
+    f.food = 10000;
+    const auto rf3 = apply_cheat(f, CheatKind::MaxFood);
+    check(rf.applied && std::string(rf.text) == "Food: 9999" && rk.applied && std::string(rk.text) == "Keys: 99" && f.keys == 99 &&
+              rt.applied && std::string(rt.text) == "Torches: 99" && f.torches == 99 && !rg.applied &&
+              std::string(rg.text) == "Gems already full: 150" && f.gems == 150 && !rf2.applied &&
+              std::string(rf2.text) == "Food already full: 9999" && !rf3.applied && f.food == 10000 &&
+              f.enhanced.cheats_used == (cheat_bit(CheatKind::MaxFood) | cheat_bit(CheatKind::MaxKeys) | cheat_bit(CheatKind::MaxTorches)),
+          "X4", "Max Food 120 -> 9999, Keys 3 -> 99, Torches 0 -> 99; Gems at 150 and food at 10000 are kept, not lowered; "
+                "only applied cheats are marked");
+    // X5. Give Reagents: each of the eight below 99 to 99; no quest item,
+    // skull key, carpet, potion, scroll or equipment touched.
+    GameState q = party_of(1);
+    const int32_t start[8] = {0, 5, 99, 120, 1, 0, 98, 50};
+    for (int i = 0; i < 8; ++i) q.reagent_quantities[i] = start[i];
+    q.skull_keys = 2;
+    q.magic_carpets = 1;
+    q.potion_quantities[3] = 4;
+    q.scroll_quantities[1] = 2;
+    q.grapple = false;
+    const auto rr = apply_cheat(q, CheatKind::GiveReagents), rr2 = apply_cheat(q, CheatKind::GiveReagents);
+    bool reagents = rr.applied && std::string(rr.text) == "Reagents: 99 each" && !rr2.applied &&
+                    std::string(rr2.text) == "Reagents already full";
+    for (int i = 0; i < 8; ++i) reagents = reagents && q.reagent_quantities[i] == (start[i] > 99 ? start[i] : 99);
+    check(reagents && q.skull_keys == 2 && q.magic_carpets == 1 && q.potion_quantities[3] == 4 && q.scroll_quantities[1] == 2 &&
+              !q.grapple && q.keys == 0,
+          "X5", "Give Reagents: the eight to 99 (120 kept); then \"Reagents already full\"; nothing else in the pack moves");
+    // X6. God Mode at the naval "OUCH!" -- a skiff rowed into a cactus takes
+    // rand(1,8) from the active member: the sixth party HP-loss site, which
+    // A4-ENH1 missed. The draw still happens; only the HP write is skipped.
+    auto ouch = [](bool god, uint32_t &seed) {
+        GameState s;
+        TurnState t;
+        TravelState travel;
+        CommandState commands;
+        std::vector<uint8_t> terrain(65536, 1);
+        terrain[20 * 256 + 21] = 0x2f;
+        WorldData world;
+        world.overworld = terrain.data();
+        world.overworld_size = terrain.size();
+        CommandContext c{s, t, travel, commands, world};
+        s.position.xy = {20, 20};
+        s.party.party_size = s.party.character_count = 1;
+        auto &m = s.party.characters[0];
+        m.status = 'G';
+        m.current_hp = m.max_hp = 100;
+        m.party_status = 0;
+        m.weapon = m.shield = m.helmet = m.armor = m.ring = m.amulet = 255;
+        s.food = 100;
+        s.transport = TransportMode::Skiff;
+        t.transport_tile = 0x2a; // a skiff facing east
+        s.enhanced.god_mode = god;
+        s.rng.seed(0x0c4c);
+        Command move;
+        move.kind = CommandKind::Move;
+        move.direction = Direction::East;
+        move.has_direction = true;
+        execute_command(c, move);
+        seed = s.rng.get_seed();
+        return int(m.current_hp);
+    };
+    uint32_t seed_hurt = 0, seed_god = 0;
+    const int hurt = ouch(false, seed_hurt), god = ouch(true, seed_god);
+    check(hurt >= 92 && hurt < 100 && god == 100 && seed_hurt == seed_god, "X6",
+          "a skiff into a cactus: OUCH takes " + std::to_string(100 - hurt) + " HP; under God Mode none, with the same draws");
+}
+
 std::string state_doc(const GameState &g) {
     save::Json doc = save::Json::object();
     save::capture_core(g, TurnState{}, doc);
@@ -643,6 +783,7 @@ int main(int argc, char **argv) {
     test_custom();
     test_presets();
     test_dungeon_and_starvation();
+    test_cheats();
     test_persistence(init_gam);
     std::printf("\nA4-ENH2 rules: %d checks, %d failures\n", checks, failures);
     return failures ? 1 : 0;
