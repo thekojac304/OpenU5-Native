@@ -21,6 +21,7 @@ const char *raw_input_name(RawInputKind kind) {
     case RawInputKind::TrackballDown: return "trackball-down";
     case RawInputKind::TrackballLeft: return "trackball-left";
     case RawInputKind::TrackballRight: return "trackball-right";
+    case RawInputKind::TrackballClick: return "trackball-click";
     case RawInputKind::None: return "none";
     }
     return "unknown";

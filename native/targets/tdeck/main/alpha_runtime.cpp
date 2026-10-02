@@ -1832,12 +1832,19 @@ bool AlphaRuntime::handle_input_event(const RawInputEvent&raw){service_combat();
     // of them can swallow or route the key, and they change no game state.
     if(shortcut==DeviceShortcut::MusicMute||shortcut==DeviceShortcut::SfxMute)
         return toggle_audio_mute(shortcut==DeviceShortcut::MusicMute);
+    // Alpha 4 A4-ENH1 (ALPHA4_UI.md section 10). Movement (WASD) Mode -- a
+    // trackball click, or the Mic held 1.1 s -- is a device control of the
+    // same kind: the adapter has already switched it, on every screen, and it
+    // is never a key for whatever is open (no Confirm, no scene key, no menu
+    // action) and never a write to settings.json: "Movement default" stays
+    // the Settings row's. The title used to save it and then reload the old
+    // value from the frontend's copy, so the live mode reverted at once.
+    if(shortcut==DeviceShortcut::MovementModeToggled)
+        return announce_movement_mode(raw.kind==RawInputKind::TrackballClick?"trackball-click":"mic-hold");
     if(in_frontend){
         const auto state_before=frontend_.state();const auto phase_before=frontend_.creation_phase();
         char name_before[9]{};std::snprintf(name_before,sizeof(name_before),"%s",frontend_.creation_name());
-        bool accepted=false;
-        if(shortcut==DeviceShortcut::MovementModeToggled){settings_.movement_mode=input_.movement_mode_enabled();accepted=settings_store_.save(settings_);}
-        else accepted=frontend_.handle(action,uint32_t(raw.timestamp_us/1000));
+        const bool accepted=frontend_.handle(action,uint32_t(raw.timestamp_us/1000));
         if(accepted){settings_=frontend_.settings();apply_device_settings();apply_volume_edits(frontend_.take_volume_edits());}
         const auto state_after=frontend_.state();const auto phase_after=frontend_.creation_phase();
         ESP_LOGI(kTag,"FRONTEND_INPUT raw=%s action=%s char=%u accepted=%d state=%s->%s phase=%s->%s name=\"%s\"->\"%s\"",
@@ -2042,9 +2049,7 @@ bool AlphaRuntime::handle_input_event(const RawInputEvent&raw){service_combat();
     bool teleport_action=false;openu5::DebugTeleportRequest teleport_request{};
     openu5::DebugTeleportStatus teleport_status=openu5::DebugTeleportStatus::Applied;
 #endif
-    if(shortcut==DeviceShortcut::MovementModeToggled){
-        ESP_LOGI(kTag,"Movement Mode %s",input_.movement_mode_enabled()?"ON":"OFF");
-    }else if(shortcut==DeviceShortcut::DeveloperMenu){
+    if(shortcut==DeviceShortcut::DeveloperMenu){
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
         ++debug_open_count_;const bool opened=ui_->open_debug_menu();dirty_reason_="mode-entry";
         ESP_LOGI(kTag,"DEBUG_OPEN count=%lu called=1 opened=%d mode_before=%s mode_after=%s reconstructed=1",
@@ -2651,8 +2656,10 @@ esp_err_t AlphaRuntime::render(Board&board,bool force){
     if(smoke_.pump()){dirty_=true;dirty_reason_="smoke-test-progress";}
     const int64_t now=esp_timer_get_time();DeviceShortcut held_shortcut{};
     if(input_.update(now,ui_->mode(),held_shortcut)){
-        dirty_=true;dirty_reason_="input-dirty";ESP_LOGI(kTag,"INPUT_HOLD physical=mic-0,6 threshold_us=1100000 ui=%s emitted=movement-toggle state=%s gameplay_command=none",mode_name(ui_->mode()),input_.movement_mode_enabled()?"ON":"OFF");
+        ESP_LOGI(kTag,"INPUT_HOLD physical=mic-0,6 threshold_us=1100000 ui=%s emitted=movement-toggle state=%s gameplay_command=none",mode_name(ui_->mode()),input_.movement_mode_enabled()?"ON":"OFF");
+        announce_movement_mode("mic-hold");
     }
+    log_trackball_gestures();
     const bool magic_inverted=magic_invert_end_us_>now&&now>=magic_invert_start_us_;
     if(magic_inverted!=magic_was_inverted_){dirty_=true;dirty_reason_=magic_inverted?"magic-invert":"magic-restore";}
     // R-12: the view "re-censors itself on expiry" (the reference's own
@@ -3633,7 +3640,7 @@ void AlphaRuntime::configure_audio(const openu5::AudioPackInfo &pack,openu5::Aud
 
 void AlphaRuntime::bind_developer_diagnostics(){
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
-    if(debug_){openu5::UiDiagnosticsServices services{};services.context=this;services.start=start_smoke;services.audio_test=audio_test_tone;services.audio_perf=audio_perf_start;services.audio_stats=audio_stats_now;services.music_bypass=music_bypass_probe;services.sd_log=sd_log_probe;services.legacy_tft_pacing=legacy_tft_probe;services.legacy_loop_spin=legacy_loop_probe;debug_->attach_diagnostics(services);}
+    if(debug_){openu5::UiDiagnosticsServices services{};services.context=this;services.start=start_smoke;services.audio_test=audio_test_tone;services.audio_perf=audio_perf_start;services.audio_stats=audio_stats_now;services.music_bypass=music_bypass_probe;services.sd_log=sd_log_probe;services.legacy_tft_pacing=legacy_tft_probe;services.legacy_loop_spin=legacy_loop_probe;services.trackball_stats=trackball_stats_now;debug_->attach_diagnostics(services);}
 #endif
 }
 
@@ -3668,6 +3675,24 @@ bool AlphaRuntime::toggle_audio_mute(bool music){
              music?"music":"sfx",audio_.sfx_muted(),audio_.music_muted(),unsigned(audio_.sfx_volume()),
              unsigned(audio_.music_volume()),line);
     dirty_=true;dirty_reason_="audio-mute";return true;
+}
+
+bool AlphaRuntime::announce_movement_mode(const char *source){
+    const bool on=input_.movement_mode_enabled();
+    // The title screen has no transcript: there the HUD's MOVE shows it in game.
+    if(!frontend_.active()&&ui_)ui_->append(openu5::UiTextChannel::System,on?"WASD Mode: ON":"WASD Mode: OFF");
+    ESP_LOGI(kTag,"MOVEMENT_MODE source=%s state=%s ui=%s gameplay_command=none settings_written=0",source,on?"ON":"OFF",
+             frontend_.active()?"frontend":mode_name(ui_->mode()));
+    dirty_=true;dirty_reason_="movement-mode";return true;
+}
+
+void AlphaRuntime::log_trackball_gestures(){
+    openu5::TrackballGesture g{};
+    while(input_.take_trackball_gesture(g))
+        ESP_LOGI(kTag,"TRACKBALL_GESTURE pulses=U%u,D%u,L%u,R%u steps=U%u,D%u,L%u,R%u dur_ms=%lu min_gap_ms=%lu percent=%u",
+                 unsigned(g.edges[0]),unsigned(g.edges[1]),unsigned(g.edges[2]),unsigned(g.edges[3]),
+                 unsigned(g.steps[0]),unsigned(g.steps[1]),unsigned(g.steps[2]),unsigned(g.steps[3]),
+                 (unsigned long)g.duration_ms,(unsigned long)g.min_gap_ms,unsigned(settings_.trackball_responsiveness));
 }
 
 // A3-05. Editing a volume row unmutes that channel (after apply_device_settings,
@@ -4036,6 +4061,10 @@ void AlphaRuntime::publish_perf_report(const char *title,const openu5::AudioPerf
     if(with_guard){in.has_guard=true;in.guard_ns=bench_guard_ns_;
         in.guard_us_per_block=openu5::legacy_guard_us_per_block(bench_guard_ns_,bench_idle_channels_x100_);}
     perf_report_count_=perf_report_lines_?openu5::format_perf_report(in,perf_report_lines_,openu5::kPerfReportMaxLines):0;
+    show_report("perf-report");
+}
+
+void AlphaRuntime::show_report(const char *reason){
     perf_report_top_=0;
     // Serial / SD-log copy, supplemental to the screen.
     for(size_t i=0;i<perf_report_count_;++i)ESP_LOGI(kTag,"PERF_REPORT %s",perf_report_lines_[i]);
@@ -4044,7 +4073,15 @@ void AlphaRuntime::publish_perf_report(const char *title,const openu5::AudioPerf
     perf_report_pending_=!in_menu&&perf_report_count_>0;
     if(perf_report_pending_&&ui_)ui_->append(openu5::UiTextChannel::System,"Perf report ready: Alt+D shows it");
     ESP_LOGI(kTag,"PERF_REPORT_READY lines=%u shown=%d pending=%d",unsigned(perf_report_count_),perf_report_open_,perf_report_pending_);
-    dirty_=true;dirty_reason_="perf-report";
+    dirty_=true;dirty_reason_=reason;
+}
+
+void AlphaRuntime::trackball_stats_now(void *p){
+    auto &r=*static_cast<AlphaRuntime*>(p);
+    r.perf_report_count_=r.perf_report_lines_?openu5::format_trackball_report(r.input_.direction_metrics(),&r.perf_report_lines_[0][0],
+        openu5::kPerfReportLineBytes,openu5::kPerfReportMaxLines):0;
+    r.input_.reset_trackball_stats();
+    r.show_report("trackball-stats");
 }
 
 bool AlphaRuntime::handle_perf_report_input(const openu5::UiAction &action){

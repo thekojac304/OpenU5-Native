@@ -31,5 +31,10 @@ inline constexpr gpio_num_t kTrackballUp = GPIO_NUM_3;
 inline constexpr gpio_num_t kTrackballDown = GPIO_NUM_15;
 inline constexpr gpio_num_t kTrackballLeft = GPIO_NUM_1;
 inline constexpr gpio_num_t kTrackballRight = GPIO_NUM_2;
+// Alpha 4 A4-ENH1: the trackball's press switch. LilyGO's T-Deck utilities.h
+// names it BOARD_BOOT_PIN (GPIO 0, the BOOT strap: pulled up, low while the
+// ball is pressed); Meshtastic's t-deck variant maps TB_PRESS to it. Read only
+// as an input after boot, so the strap function is untouched.
+inline constexpr gpio_num_t kTrackballClick = GPIO_NUM_0;
 
 }  // namespace tdeck::pins

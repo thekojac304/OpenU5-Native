@@ -422,5 +422,113 @@ int main()
     if(!tdeck::ui_scale_requires_full_layout(1,2)||
        tdeck::ui_scale_requires_full_layout(2,2))return __LINE__;
 
+    // ---- Alpha 4 A4-ENH1 (ALPHA4_UI.md section 10): the trackball click ----
+    {
+        auto click=[](KeyTransition t,int64_t at){RawInputEvent e{};e.kind=RawInputKind::TrackballClick;
+            e.transition=t;e.timestamp_us=at;return e;};
+        // C1. One press toggles Movement (WASD) Mode ON at the press edge itself:
+        // no hold, no release needed first, no Confirm / character / direction.
+        tdeck::UiInputAdapter ball;
+        int64_t t=50000000;
+        // A sentinel action: the click must leave it untouched (it makes no
+        // action at all -- a default UiAction would be Confirm).
+        auto sentinel=[&]{action={};action.kind=openu5::UiActionKind::Next;action.index=12345;};
+        auto untouched=[&]{return action.kind==openu5::UiActionKind::Next&&action.index==12345;};
+        sentinel();
+        if(!ball.translate(click(KeyTransition::Pressed,t),openu5::UiMode::Exploration,action,shortcut)||
+           shortcut!=tdeck::DeviceShortcut::MovementModeToggled||!ball.movement_mode_enabled()||!untouched())
+            return __LINE__;
+        // C2. The press bouncing (release + press 1-2 ms later) and the release
+        // emit nothing: one physical press is one toggle.
+        if(ball.translate(click(KeyTransition::Released,t+1000),openu5::UiMode::Exploration,action,shortcut)||
+           ball.translate(click(KeyTransition::Pressed,t+2000),openu5::UiMode::Exploration,action,shortcut)||
+           ball.translate(click(KeyTransition::Released,t+90000),openu5::UiMode::Exploration,action,shortcut)||
+           ball.translate(click(KeyTransition::Pressed,t+92000),openu5::UiMode::Exploration,action,shortcut)||
+           ball.translate(click(KeyTransition::Released,t+94000),openu5::UiMode::Exploration,action,shortcut)||
+           !ball.movement_mode_enabled())return __LINE__;
+        // C3. The next deliberate click turns it OFF, again on the press edge.
+        t+=400000;
+        if(!ball.translate(click(KeyTransition::Pressed,t),openu5::UiMode::Exploration,action,shortcut)||
+           shortcut!=tdeck::DeviceShortcut::MovementModeToggled||ball.movement_mode_enabled())return __LINE__;
+        // C4. Held down: a repeated press with no release between never re-toggles.
+        if(ball.translate(click(KeyTransition::Pressed,t+500000),openu5::UiMode::Exploration,action,shortcut)||
+           ball.translate(click(KeyTransition::Pressed,t+2000000),openu5::UiMode::Exploration,action,shortcut)||
+           ball.movement_mode_enabled())return __LINE__;
+        if(ball.translate(click(KeyTransition::Released,t+2100000),openu5::UiMode::Exploration,action,shortcut))
+            return __LINE__;
+        t+=2400000;
+        // C5. Every UI mode: the click toggles and is never a key for what is open.
+        bool expected=false;
+        for(auto mode:{openu5::UiMode::Exploration,openu5::UiMode::Dungeon,openu5::UiMode::Combat,
+                       openu5::UiMode::TargetSelection,openu5::UiMode::TextEntry,openu5::UiMode::NumericEntry,
+                       openu5::UiMode::Dialogue,openu5::UiMode::Shop,openu5::UiMode::DebugMenu,
+                       openu5::UiMode::InventorySelection,openu5::UiMode::YesNo}){
+            expected=!expected;
+            sentinel();
+            if(!ball.translate(click(KeyTransition::Pressed,t),mode,action,shortcut,true)||
+               shortcut!=tdeck::DeviceShortcut::MovementModeToggled||ball.movement_mode_enabled()!=expected||
+               !untouched())return __LINE__;
+            if(ball.translate(click(KeyTransition::Released,t+80000),mode,action,shortcut,true))return __LINE__;
+            t+=300000;
+        }
+        // C6. A roll pulse inside the 60 ms after either click edge is the ball
+        // rocking under the finger: dropped, so the click cannot also move.
+        tdeck::UiInputAdapter rock;
+        t+=1000000;
+        rock.translate(click(KeyTransition::Pressed,t),openu5::UiMode::Exploration,action,shortcut);
+        RawInputEvent jiggle{.kind=RawInputKind::TrackballRight,.timestamp_us=t+20000};
+        if(rock.translate(jiggle,openu5::UiMode::Exploration,action,shortcut))return __LINE__;
+        rock.translate(click(KeyTransition::Released,t+100000),openu5::UiMode::Exploration,action,shortcut);
+        jiggle.timestamp_us=t+150000;
+        if(rock.translate(jiggle,openu5::UiMode::Exploration,action,shortcut))return __LINE__;
+        jiggle.timestamp_us=t+161000;
+        if(!rock.translate(jiggle,openu5::UiMode::Exploration,action,shortcut)||
+           action.kind!=openu5::UiActionKind::Direction||action.direction!=Direction::East)return __LINE__;
+        const auto &rs=rock.direction_metrics().stats();
+        if(rs.click_guarded!=2||rock.direction_metrics().click_filter().accepted()!=1)return __LINE__;
+        // C7. The Mic hold still toggles the same mode; the click toggles it back.
+        tdeck::UiInputAdapter both;
+        both.translate(mic(KeyTransition::Pressed,90000000),openu5::UiMode::Exploration,action,shortcut);
+        if(!both.update(91100000,openu5::UiMode::Exploration,shortcut)||!both.movement_mode_enabled())return __LINE__;
+        both.translate(mic(KeyTransition::Released,91200000),openu5::UiMode::Exploration,action,shortcut);
+        if(!both.translate(click(KeyTransition::Pressed,91500000),openu5::UiMode::Exploration,action,shortcut)||
+           both.movement_mode_enabled())return __LINE__;
+    }
+    // ---- A4-ENH1: the trackball instrumentation ----
+    {
+        openu5::InputController probe;probe.set_trackball_speed_percent(100);
+        Direction d{};
+        // A roll: right pulses 20 ms apart, one 2 ms bounce, then quiet.
+        int64_t t=200000000;
+        for(int i=0;i<5;++i){RawInputEvent e{.kind=RawInputKind::TrackballRight,.timestamp_us=t+i*20000};probe.normalize(e,d);}
+        RawInputEvent bounce{.kind=RawInputKind::TrackballRight,.timestamp_us=t+4*20000+2000};
+        if(probe.normalize(bounce,d))return __LINE__;
+        const auto &s=probe.stats();
+        if(s.edges[3]!=6||s.steps[3]!=5||s.bounced!=1||s.gaps[2]!=0||s.gaps[3]!=4||s.gaps[0]!=1)return __LINE__;
+        openu5::TrackballGesture g{};
+        if(probe.take_gesture(g))return __LINE__; // still rolling
+        probe.poll(t+82000+openu5::InputController::kGestureGapUs-1);
+        if(probe.take_gesture(g))return __LINE__;
+        probe.poll(t+82000+openu5::InputController::kGestureGapUs);
+        if(!probe.take_gesture(g)||g.edges[3]!=6||g.steps[3]!=5||g.duration_ms!=82||g.min_gap_ms!=2||
+           probe.take_gesture(g)||s.gestures!=1||s.longest_gesture!=6)return __LINE__;
+        // A second roll up, then the report: every row fits the Developer
+        // screen (51 characters), and it names what the tuner needs.
+        for(int i=0;i<3;++i){RawInputEvent e{.kind=RawInputKind::TrackballUp,.timestamp_us=t+1000000+i*30000};probe.normalize(e,d);}
+        probe.poll(t+2000000);
+        char lines[24][52]{};
+        const size_t n=openu5::format_trackball_report(probe,&lines[0][0],52,24);
+        std::string all;
+        for(size_t i=0;i<n;++i){if(std::strlen(lines[i])>51)return __LINE__;all+=lines[i];all+="\n";}
+        if(all.find("TRACKBALL STATS")==std::string::npos||all.find("Pulses  U 3  D 0  L 0  R 6")==std::string::npos||
+           all.find("Steps   U 3  D 0  L 0  R 5")==std::string::npos||all.find("bounce 1")==std::string::npos||
+           all.find(" U3>3 60 ms")==std::string::npos||all.find(" R6>5 82 ms, min gap 2 ms")==std::string::npos||
+           all.find("U3>3")>all.find("R6>5"))return __LINE__;
+        const size_t small=openu5::format_trackball_report(probe,&lines[0][0],52,3);
+        if(small!=3)return __LINE__;
+        probe.reset_stats();
+        if(probe.stats().edges[3]||probe.stats().gestures||probe.take_gesture(g))return __LINE__;
+    }
+
     return 0;
 }

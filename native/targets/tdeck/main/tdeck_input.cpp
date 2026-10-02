@@ -31,6 +31,9 @@ constexpr TickType_t kInputFallbackWaitTicks = 1;
 constexpr size_t kMaximumEventsPerWake = 8;
 constexpr uint32_t kKeyboardNotificationBit = 1U << 0;
 constexpr uint32_t kTrackballNotificationBitBase = 1U << 1;
+// A4-ENH1: the press switch wakes on both edges (bit 5, after the four
+// direction bits 1-4).
+constexpr uint32_t kClickNotificationBit = 1U << 5;
 static_assert(kInputFallbackWaitTicks > 0, "input capture must enter the Blocked state");
 
 bool valid_raw_snapshot(const uint8_t *snapshot)
@@ -71,7 +74,8 @@ esp_err_t InputHardware::initialize()
                         (1ULL << pins::kTrackballUp) |
                         (1ULL << pins::kTrackballDown) |
                         (1ULL << pins::kTrackballLeft) |
-                        (1ULL << pins::kTrackballRight),
+                        (1ULL << pins::kTrackballRight) |
+                        (1ULL << pins::kTrackballClick),
         .mode = GPIO_MODE_INPUT,
         .pull_up_en = GPIO_PULLUP_ENABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
@@ -84,6 +88,7 @@ esp_err_t InputHardware::initialize()
     for (size_t i = 0; i < trackball.size(); ++i) {
         trackball_levels_[i] = gpio_get_level(trackball[i]) != 0;
     }
+    click_level_ = gpio_get_level(pins::kTrackballClick) != 0;
     keyboard_interrupt_level_ = gpio_get_level(pins::kKeyboardInterrupt) != 0;
 
     const i2c_master_bus_config_t bus_config = {
@@ -164,9 +169,9 @@ esp_err_t InputHardware::initialize()
     ESP_LOGI(kTag, "Keyboard online: I2C address 0x55, SDA=%d SCL=%d INT=%d",
              pins::kI2cData, pins::kI2cClock, pins::kKeyboardInterrupt);
     ESP_LOGI(kTag, "Keyboard raw matrix mode active; press/release/modifiers tracked by snapshot");
-    ESP_LOGI(kTag, "Directional movement: trackball up=%d down=%d left=%d right=%d",
+    ESP_LOGI(kTag, "Directional movement: trackball up=%d down=%d left=%d right=%d click=%d",
              pins::kTrackballUp, pins::kTrackballDown,
-             pins::kTrackballLeft, pins::kTrackballRight);
+             pins::kTrackballLeft, pins::kTrackballRight, pins::kTrackballClick);
     return start_capture_task();
 }
 
@@ -215,13 +220,16 @@ void InputHardware::configure_gpio_wakeups()
                  esp_err_to_name(service));
         return;
     }
-    const std::array<gpio_num_t, 5> wake_pins = {
+    const std::array<gpio_num_t, kWakePins> wake_pins = {
         pins::kKeyboardInterrupt, pins::kTrackballUp, pins::kTrackballDown,
-        pins::kTrackballLeft, pins::kTrackballRight};
+        pins::kTrackballLeft, pins::kTrackballRight, pins::kTrackballClick};
     for (size_t i = 0; i < wake_pins.size(); ++i) {
+        const bool click = wake_pins[i] == pins::kTrackballClick;
         gpio_interrupts_[i] = {this, i == 0 ? kKeyboardNotificationBit
-                                            : kTrackballNotificationBitBase << (i - 1)};
-        const esp_err_t type = gpio_set_intr_type(wake_pins[i], GPIO_INTR_NEGEDGE);
+                                     : click ? kClickNotificationBit
+                                             : kTrackballNotificationBitBase << (i - 1)};
+        // A4-ENH1: the press switch reports its release too.
+        const esp_err_t type = gpio_set_intr_type(wake_pins[i], click ? GPIO_INTR_ANYEDGE : GPIO_INTR_NEGEDGE);
         const esp_err_t add = type == ESP_OK
                                   ? gpio_isr_handler_add(wake_pins[i], gpio_interrupt_entry,
                                                          &gpio_interrupts_[i])
@@ -239,9 +247,9 @@ void InputHardware::configure_gpio_wakeups()
 
 void InputHardware::remove_gpio_wakeups()
 {
-    const std::array<gpio_num_t, 5> wake_pins = {
+    const std::array<gpio_num_t, kWakePins> wake_pins = {
         pins::kKeyboardInterrupt, pins::kTrackballUp, pins::kTrackballDown,
-        pins::kTrackballLeft, pins::kTrackballRight};
+        pins::kTrackballLeft, pins::kTrackballRight, pins::kTrackballClick};
     for (size_t i = 0; i < wake_pins.size(); ++i) {
         if (!gpio_handlers_[i]) continue;
         gpio_intr_disable(wake_pins[i]);
@@ -370,6 +378,28 @@ bool InputHardware::service_once(RawInputEvent &event)
                 .kind = kinds[i],
                 .code = static_cast<uint8_t>(pins_by_direction[i]),
                 .transition = KeyTransition::Pressed,
+                .modifiers = keyboard_matrix_.modifiers(),
+                .timestamp_us = now,
+            };
+            return true;
+        }
+    }
+
+    // Alpha 4 A4-ENH1: the press switch, as its level changes (contact bounce
+    // included: the semantic layer's TrackballClickFilter takes one accepted
+    // press per physical press). An edge that came and went between two
+    // samples leaves the level unchanged and emits nothing.
+    {
+        const bool level = gpio_get_level(pins::kTrackballClick) != 0;
+        pending_gpio_edges_ &= ~kClickNotificationBit;
+        if (level != click_level_) {
+            click_level_ = level;
+            ++trackball_click_edges_;
+            INPUT_TRACE("TB t=%lld click=%s", (long long)now, level ? "release" : "press");
+            event = {
+                .kind = RawInputKind::TrackballClick,
+                .code = static_cast<uint8_t>(pins::kTrackballClick),
+                .transition = level ? KeyTransition::Released : KeyTransition::Pressed,
                 .modifiers = keyboard_matrix_.modifiers(),
                 .timestamp_us = now,
             };
@@ -537,8 +567,8 @@ void InputHardware::log_metrics() const
              (unsigned long)queue_high_water_,(unsigned long)dropped_event_count_,
              (unsigned long)queued_event_count_,(unsigned long)consumed_event_count_,
              (long long)consumer_gap_high_us_);
-    ESP_LOGI(kTag,"TRACKBALL_INPUT raw_edges=%lu accepted=semantic-layer suppressed=semantic-layer",
-             (unsigned long)trackball_raw_edges_);
+    ESP_LOGI(kTag,"TRACKBALL_INPUT raw_edges=%lu click_edges=%lu accepted=semantic-layer suppressed=semantic-layer",
+             (unsigned long)trackball_raw_edges_,(unsigned long)trackball_click_edges_);
     ESP_LOGI(kTag,
              "INPUT_TASK wakes=%lu blocks=%lu irq_wakes=%lu idle_waits=%lu recovery_steps=%lu max_work_us=%lu priority=4 core=0 fallback_ticks=%u",
              (unsigned long)input_task_wakes_, (unsigned long)input_task_blocks_,
@@ -572,6 +602,7 @@ const char *raw_input_name(RawInputKind kind)
     case RawInputKind::TrackballDown: return "trackball-down";
     case RawInputKind::TrackballLeft: return "trackball-left";
     case RawInputKind::TrackballRight: return "trackball-right";
+    case RawInputKind::TrackballClick: return "trackball-click";
     case RawInputKind::None: return "none";
     }
     return "unknown";

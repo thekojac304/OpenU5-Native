@@ -231,10 +231,12 @@ struct Run {
         key('\b');
         key('\b');
     }
-    /** Developer > Diagnostics: the legacy probes (7 and 6 rows up), then out. */
+    /** Developer > Diagnostics: the legacy probes (8 and 7 rows up), then out.
+     *  A4-ENH1 inserted "Trackball stats (live)" between the loop spin and the
+     *  SD log, so both probes moved one row further from the end (on purpose). */
     void set_legacy(bool tft, bool loop) {
         open_diagnostics();
-        ups(7);
+        ups(8);
         if (tft) key('\r');
         down();
         if (loop) key('\r');
@@ -596,24 +598,24 @@ int main(int argc, char **argv) {
                   h.board.tft_pacing() == TftPacing::Yield,
               "P1 a fresh runtime (a reboot) paces as A3-04E: yields, idle wait; the Board draws with it");
         h.open_diagnostics();
-        h.ups(7);
+        h.ups(8); // A4-ENH1: one more (the trackball row sits between the loop spin and the SD log)
         h.key('\r');
         check(h.rt->pacing().tft == TftPacing::TickSleep && h.rt->pacing().loop == LoopPacing::IdleWait &&
                   h.board.tft_pacing() == TftPacing::TickSleep,
-              "P2 seven rows up, Enter: \"Probe: legacy TFT pacing\" ON -- the Board sleeps to the tick again from "
+              "P2 eight rows up, Enter: \"Probe: legacy TFT pacing\" ON -- the Board sleeps to the tick again from "
               "the next draw on; the loop is untouched");
         h.down();
         h.key('\r');
         check(h.rt->pacing().loop == LoopPacing::Spin && h.rt->pacing().tft == TftPacing::TickSleep,
-              "P3 six rows up, Enter: \"Probe: legacy loop spin\" ON");
-        for (int i = 0; i < 4; ++i) h.down();
+              "P3 seven rows up, Enter: \"Probe: legacy loop spin\" ON");
+        for (int i = 0; i < 5; ++i) h.down();
         h.key('\r'); // "Audio/render stats (live)", two up
         const std::string text = report_text(*h.rt);
         check(text.find("-- Pacing (A3-04E) --\ntft TICK  loop SPIN\nfull-screen ") != std::string::npos &&
                   text.find("pauses/vp frm ") != std::string::npos && text.find("loop asleep ") != std::string::npos,
               "P4 the live report names the pacing in use and its cost:\n" + text);
         h.key('\r'); // dismiss
-        h.ups(4);
+        h.ups(5);
         h.key('\r');
         h.up();
         h.key('\r');
@@ -621,7 +623,7 @@ int main(int argc, char **argv) {
               "P5 Enter again on each: both back to A3-04E");
         FakeAudioPerf audio;
         h.rt->attach_audio_perf(&audio);
-        for (int i = 0; i < 3; ++i) h.down(); // four up
+        for (int i = 0; i < 4; ++i) h.down(); // four up
         h.key('\r');
         const bool bypass = h.rt->music_bypass();
         h.up(); // five up

@@ -41,6 +41,9 @@ constexpr const char *kSdLogItem = "Probe: SD diag logging";
 // the SD log for the same reason. "ON" = the legacy behaviour (default off).
 constexpr const char *kLegacyTftItem = "Probe: legacy TFT pacing";
 constexpr const char *kLegacyLoopItem = "Probe: legacy loop spin";
+// A4-ENH1: the trackball's live counters, inserted between the loop spin and
+// the SD log: the rows below it keep their places counted from the end.
+constexpr const char *kTrackballItem = "Trackball stats (live)";
 template<size_t N> constexpr size_t countof(const char *const (&)[N]){return N;}
 int64_t clamp_add(int64_t value,int delta,int64_t lo,int64_t hi){
     if(delta>0 && value>=hi)return lo;
@@ -63,7 +66,7 @@ size_t UiDebugMenu::item_count() const{
  case UiDebugCategory::QuestWorld:return countof(quest_world_items);case UiDebugCategory::Time:return countof(time_items);
  case UiDebugCategory::Transport:return countof(transport_items);case UiDebugCategory::NpcDungeonState:return countof(npc_items);
  case UiDebugCategory::ShortcutsPresets:return countof(shortcut_items);case UiDebugCategory::Count:break;
- case UiDebugCategory::Diagnostics:return 8+debug_diagnostic_group_count();
+ case UiDebugCategory::Diagnostics:return 9+debug_diagnostic_group_count();
  case UiDebugCategory::Certification:return size_t(DebugCertification::Count);
  }return 0;
 }
@@ -87,11 +90,12 @@ const char *UiDebugMenu::row_label(size_t index) const{
     std::snprintf(tft_pacing_label_buf_,sizeof(tft_pacing_label_buf_),"%s: %s",kLegacyTftItem,on?"ON":"off");return tft_pacing_label_buf_;}
    if(index==g+2){const bool on=diagnostics_.legacy_loop_spin&&diagnostics_.legacy_loop_spin(diagnostics_.context,false);
     std::snprintf(loop_spin_label_buf_,sizeof(loop_spin_label_buf_),"%s: %s",kLegacyLoopItem,on?"ON":"off");return loop_spin_label_buf_;}
-   if(index==g+3){const SdLogState st=diagnostics_.sd_log?diagnostics_.sd_log(diagnostics_.context,false):SdLogState::Unavailable;
+   if(index==g+3)return kTrackballItem;
+   if(index==g+4){const SdLogState st=diagnostics_.sd_log?diagnostics_.sd_log(diagnostics_.context,false):SdLogState::Unavailable;
     std::snprintf(sd_log_label_buf_,sizeof(sd_log_label_buf_),"%s: %s",kSdLogItem,st==SdLogState::On?"ON":st==SdLogState::Off?"off":"n/a");return sd_log_label_buf_;}
-   if(index==g+4){const bool on=diagnostics_.music_bypass&&diagnostics_.music_bypass(diagnostics_.context,false);
+   if(index==g+5){const bool on=diagnostics_.music_bypass&&diagnostics_.music_bypass(diagnostics_.context,false);
     std::snprintf(bypass_label_buf_,sizeof(bypass_label_buf_),"%s: %s",kBypassItem,on?"ON":"off");return bypass_label_buf_;}
-   return index==0?kRunAllItem:index<=g?debug_diagnostic_group_name(index-1):index==g+5?kAudioPerfItem:index==g+6?kAudioStatsItem:kAudioTestItem;}
+   return index==0?kRunAllItem:index<=g?debug_diagnostic_group_name(index-1):index==g+6?kAudioPerfItem:index==g+7?kAudioStatsItem:kAudioTestItem;}
  case UiDebugCategory::Certification:return debug_certification_info(DebugCertification(index)).display_name;
  }return "";
 }
@@ -299,13 +303,14 @@ void UiDebugMenu::apply_action(){
  case UiDebugCategory::NpcDungeonState:if(cursor_==7)set(debug_clear_overworld_enemies(context_));break;
  case UiDebugCategory::ShortcutsPresets:if(cursor_==0)set(apply_debug_shortcut(context_,DebugShortcut::MaximizeAll));else if(cursor_==1)set(apply_debug_shortcut(context_,DebugShortcut::MaxResources));else if(cursor_==2)set(apply_debug_shortcut(context_,DebugShortcut::BestEquipment));else if(cursor_==3)set(apply_debug_shortcut(context_,DebugShortcut::FullMaxParty));else if(cursor_==4)set(apply_debug_shortcut(context_,DebugShortcut::KillShadowlords));else set(apply_debug_preset(context_,DebugPreset(cursor_-5)));break;
  case UiDebugCategory::Diagnostics:{const size_t g=debug_diagnostic_group_count();
-   if(cursor_==g+7){if(diagnostics_.audio_test)diagnostics_.audio_test(diagnostics_.context);}
+   if(cursor_==g+8){if(diagnostics_.audio_test)diagnostics_.audio_test(diagnostics_.context);}
    else if(cursor_==g+1){if(diagnostics_.legacy_tft_pacing)diagnostics_.legacy_tft_pacing(diagnostics_.context,true);}
    else if(cursor_==g+2){if(diagnostics_.legacy_loop_spin)diagnostics_.legacy_loop_spin(diagnostics_.context,true);}
-   else if(cursor_==g+3){if(diagnostics_.sd_log)diagnostics_.sd_log(diagnostics_.context,true);}
-   else if(cursor_==g+4){if(diagnostics_.music_bypass)diagnostics_.music_bypass(diagnostics_.context,true);}
-   else if(cursor_==g+5){if(diagnostics_.audio_perf)diagnostics_.audio_perf(diagnostics_.context);}
-   else if(cursor_==g+6){if(diagnostics_.audio_stats)diagnostics_.audio_stats(diagnostics_.context);}
+   else if(cursor_==g+3){if(diagnostics_.trackball_stats)diagnostics_.trackball_stats(diagnostics_.context);}
+   else if(cursor_==g+4){if(diagnostics_.sd_log)diagnostics_.sd_log(diagnostics_.context,true);}
+   else if(cursor_==g+5){if(diagnostics_.music_bypass)diagnostics_.music_bypass(diagnostics_.context,true);}
+   else if(cursor_==g+6){if(diagnostics_.audio_perf)diagnostics_.audio_perf(diagnostics_.context);}
+   else if(cursor_==g+7){if(diagnostics_.audio_stats)diagnostics_.audio_stats(diagnostics_.context);}
    else if(diagnostics_.start)diagnostics_.start(diagnostics_.context,cursor_?int(cursor_-1):-1);
    break;}
  // Batch 4.5A-4: a Certification setup surfaces through the same

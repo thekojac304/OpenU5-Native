@@ -22,6 +22,10 @@ class UiInputAdapter {
     }
     bool movement_mode_active(openu5::UiMode mode, bool accepts_direction = false) const;
     const openu5::InputController &direction_metrics() const { return directions_; }
+    // A4-ENH1: the trackball instrumentation (Developer > Diagnostics >
+    // "Trackball stats (live)") and the rolls finished since the last call.
+    bool take_trackball_gesture(openu5::TrackballGesture &out) { return directions_.take_gesture(out); }
+    void reset_trackball_stats() { directions_.reset_stats(); }
   private:
     void toggle_movement_mode();
     openu5::InputController directions_{};

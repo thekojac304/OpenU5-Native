@@ -16,6 +16,10 @@ enum class RawInputKind : uint8_t {
     TrackballDown,
     TrackballLeft,
     TrackballRight,
+    // Alpha 4 A4-ENH1: the trackball's press switch (tdeck_pins.h
+    // kTrackballClick). `transition` is Pressed on the falling edge and
+    // Released on the rising one. Appended so no older kind renumbers.
+    TrackballClick,
 };
 
 struct RawInputEvent {

@@ -45,6 +45,7 @@ private:
     size_t keyboard_event_count_ = 0;
     size_t keyboard_event_index_ = 0;
     bool trackball_levels_[4] = {true, true, true, true};
+    bool click_level_ = true; // A4-ENH1: the press switch's last sampled level (high = up)
     bool keyboard_interrupt_level_ = true;
     bool keyboard_recovering_ = false;
     KeyboardRecoveryPolicy keyboard_recovery_{};
@@ -62,8 +63,10 @@ private:
     QueueHandle_t event_queue_ = nullptr;
     TaskHandle_t capture_task_ = nullptr;
     volatile bool capture_running_ = false;
-    GpioInterruptContext gpio_interrupts_[5]{};
-    bool gpio_handlers_[5]{};
+    // Keyboard INT, the four trackball directions and (A4-ENH1) its press switch.
+    static constexpr size_t kWakePins = 6;
+    GpioInterruptContext gpio_interrupts_[kWakePins]{};
+    bool gpio_handlers_[kWakePins]{};
     uint32_t pending_gpio_edges_ = 0;
     uint32_t input_task_wakes_ = 0;
     uint32_t input_task_blocks_ = 0;
@@ -76,6 +79,7 @@ private:
     uint32_t dropped_event_count_ = 0;
     uint32_t queue_high_water_ = 0;
     uint32_t trackball_raw_edges_ = 0;
+    uint32_t trackball_click_edges_ = 0;
     int64_t consumer_last_poll_us_ = 0;
     int64_t consumer_gap_high_us_ = 0;
     int64_t consumer_next_gap_log_us_ = 0;

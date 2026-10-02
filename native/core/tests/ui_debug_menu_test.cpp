@@ -192,8 +192,9 @@ int main(){
   // A3-04D inserted "Probe: SD diag logging" (16) above the bypass: the test
   // tone is row 20, still the last. A3-04E inserted "Probe: legacy TFT
   // pacing" (16) and "Probe: legacy loop spin" (17) above the SD log: the
-  // test tone is row 22, still the last.
-  static constexpr int kDiagnosticActions[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22};
+  // test tone is row 22, still the last. A4-ENH1 inserted "Trackball stats
+  // (live)" (18) between the loop spin and the SD log: the tone is row 23.
+  static constexpr int kDiagnosticActions[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23};
   static constexpr int kCertificationActions[] = {0,1,2,3,4};
   const CategoryRows tables[] = {
       {UiDebugCategory::Teleport, 6, kTeleportActions, 1},
@@ -212,7 +213,7 @@ int main(){
       {UiDebugCategory::Transport, 6, nullptr, 0},
       {UiDebugCategory::NpcDungeonState, 8, kNpcActions, 1},
       {UiDebugCategory::ShortcutsPresets, 15, kShortcutActions, 15},
-      {UiDebugCategory::Diagnostics, 23, kDiagnosticActions, 23},
+      {UiDebugCategory::Diagnostics, 24, kDiagnosticActions, 24},
       {UiDebugCategory::Certification, 5, kCertificationActions, 5},
   };
   for (const auto &table : tables) {

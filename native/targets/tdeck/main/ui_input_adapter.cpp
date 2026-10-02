@@ -26,6 +26,7 @@ bool UiInputAdapter::movement_mode_active(openu5::UiMode mode, bool accepts_dire
 bool UiInputAdapter::update(int64_t now_us, openu5::UiMode,
                             DeviceShortcut &shortcut) {
     shortcut = DeviceShortcut::None;
+    directions_.poll(now_us); // A4-ENH1: close a roll that went quiet
     if (!mic_down_ || mic_long_hold_handled_ ||
         now_us - mic_pressed_us_ < kMicHoldUs) return false;
     toggle_movement_mode();
@@ -38,6 +39,19 @@ bool UiInputAdapter::translate(const RawInputEvent &raw, openu5::UiMode mode,
                                openu5::UiAction &action, DeviceShortcut &shortcut,
                                bool accepts_direction) {
     shortcut = DeviceShortcut::None;
+    // Alpha 4 A4-ENH1 (ALPHA4_UI.md section 10). The trackball's press switch
+    // toggles Movement (WASD) Mode on the press edge itself -- no hold, no
+    // delay, one toggle per physical press -- in every UI mode. It is a device
+    // control like the Mic hold, never a key: no Confirm, no character, no
+    // direction, and the next roll pulses right after it are discarded.
+    // The action is left exactly as the caller passed it (a default UiAction
+    // is Confirm, so "clearing" it would itself read as Enter).
+    if (raw.kind == RawInputKind::TrackballClick) {
+        if (!directions_.click(raw)) return false;
+        toggle_movement_mode();
+        shortcut = DeviceShortcut::MovementModeToggled;
+        return true;
+    }
     openu5::Direction direction{};
     if (directions_.normalize(raw, direction)) {
         if (raw.modifiers.shift &&

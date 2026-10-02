@@ -79,6 +79,11 @@ struct UiDiagnosticsServices {
     // behaviour; either way it returns whether the legacy one is on.
     bool (*legacy_tft_pacing)(void *, bool toggle) = nullptr;
     bool (*legacy_loop_spin)(void *, bool toggle) = nullptr;
+    // Alpha 4 A4-ENH1 (targets/tdeck/ALPHA4_UI.md section 10): "Trackball
+    // stats (live)", directly above the SD log (every older row keeps its
+    // place counted from the end): the trackball's pulses, steps, gaps, clicks
+    // and last rolls since the last read, on the report view.
+    void (*trackball_stats)(void *) = nullptr;
 };
 
 struct UiDebugMenuView {

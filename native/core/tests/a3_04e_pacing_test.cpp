@@ -432,17 +432,19 @@ int main(int argc, char **argv) {
         menu.open();
         menu.handle_input(pick(int(UiDebugCategory::Diagnostics)));
         const size_t gcount = debug_diagnostic_group_count(), rows = menu.view().count;
-        check(rows == gcount + 8 && std::string(menu.row_label(gcount + 1)) == "Probe: legacy TFT pacing: off" &&
+        // A4-ENH1 added "Trackball stats (live)" at gcount + 3, between these two
+        // and the SD log: one more row, every older one in place from the end.
+        check(rows == gcount + 9 && std::string(menu.row_label(gcount + 1)) == "Probe: legacy TFT pacing: off" &&
                   std::string(menu.row_label(gcount + 2)) == "Probe: legacy loop spin: off",
               "U1 Diagnostics has two more rows, directly above the SD log: \"" + std::string(menu.row_label(gcount + 1)) +
                   "\", \"" + std::string(menu.row_label(gcount + 2)) + "\"");
-        check(rows - (gcount + 1) == 7 && std::string(menu.row_label(rows - 5)) == "Probe: SD diag logging: off" &&
+        check(rows - (gcount + 1) == 8 && std::string(menu.row_label(rows - 5)) == "Probe: SD diag logging: off" &&
                   std::string(menu.row_label(rows - 4)) == "Probe: synth bypass: off" &&
                   std::string(menu.row_label(rows - 3)) == "Audio/render performance" &&
                   std::string(menu.row_label(rows - 2)) == "Audio/render stats (live)" &&
                   std::string(menu.row_label(rows - 1)) == "Audio test tone (SFX)",
               "U2 counted from the end the older rows are where they were: tone 1, stats 2, benchmark 3, bypass 4, "
-              "SD log 5; the new rows are 6 (loop) and 7 (TFT) up");
+              "SD log 5; the A3-04E rows are 7 (loop) and 8 (TFT) up, the A4-ENH1 trackball row 6");
         probes.calls.clear();
         menu.handle_input(pick(int(gcount + 1)));
         const bool tft_on = probes.tft && std::string(menu.row_label(gcount + 1)) == "Probe: legacy TFT pacing: ON";

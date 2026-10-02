@@ -121,6 +121,8 @@ class AlphaRuntime {
     uint32_t ambient_ticks() const { return ambient_ticks_; }
     const openu5::AudioPackInfo &audio_pack() const { return audio_pack_; }
     const openu5::FrontendSettings &device_settings() const { return settings_; }
+    // A4-ENH1: Movement (WASD) Mode as the input adapter holds it (read-only).
+    bool movement_mode() const { return input_.movement_mode_enabled(); }
     openu5::GameState &game() { return game_; }
     const openu5::UiSession *ui() const { return ui_; }
 
@@ -780,12 +782,17 @@ class AlphaRuntime {
     // A3-04E. Developer > Diagnostics > "Probe: legacy TFT pacing" / "... loop spin".
     static bool legacy_tft_probe(void *, bool toggle);
     static bool legacy_loop_probe(void *, bool toggle);
+    // A4-ENH1. Developer > Diagnostics > "Trackball stats (live)": the window
+    // since the last read, on the report view; then a new window starts.
+    static void trackball_stats_now(void *);
     void service_audio_benchmark(int64_t now_us);
     // A3-04B. The report view (section 19.3) and the three windows it reads.
     void reset_perf_windows();
     void publish_perf_report(const char *title, const openu5::AudioPerfSnapshot *first, const char *first_heading,
                              const openu5::AudioPerfSnapshot *second, const char *second_heading, bool with_guard);
     bool handle_perf_report_input(const openu5::UiAction &);
+    /** A4-ENH1: show the perf_report_lines_ just written (open now, or pending + Alt+D). */
+    void show_report(const char *reason);
     /** handle()'s body; handle() wraps it to time each input (section 19.5). */
     bool handle_input_event(const RawInputEvent &);
     // A3-01. The one binder of the Developer diagnostics services, shared by
@@ -805,6 +812,11 @@ class AlphaRuntime {
     void present_audio(const openu5::GameEvent &);
     // A3-05: Alt+Shift+M / Alt+Shift+S, and a Settings volume edit unmuting its channel.
     bool toggle_audio_mute(bool music);
+    // A4-ENH1. Movement (WASD) Mode was just toggled -- trackball click or the
+    // Mic hold: the transcript line, the log, a redraw. Not saved to settings.
+    bool announce_movement_mode(const char *source);
+    /** A4-ENH1: one TRACKBALL_GESTURE serial line per finished roll. */
+    void log_trackball_gestures();
     void apply_volume_edits(uint8_t edits);
     void sync_audio_mutes();
     // A3-04. Re-derives the music context from EXISTING runtime state (no
