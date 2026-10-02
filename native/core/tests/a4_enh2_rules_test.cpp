@@ -606,6 +606,14 @@ void test_cheats() {
     check(refused && revived && living_same && !r.applied && std::string(r.text) == "No one to revive", "X3",
           "Revive Party: \"Not during combat\" in a fight; otherwise the two dead members only -- 'G', full HP (a record "
           "with none: 30 x level 4 = 120), mage MP 21, experience kept -- the living and the one at an inn untouched");
+    // X7 (A4-ENH2 review). Revive never lowers either: a dead mage whose MP is
+    // above its class value (a Developer edit) keeps it, as Restore MP would.
+    GameState kept = mixed_party();
+    kept.party.characters[1].current_mp = 60; // the dead mage, INT 21
+    const auto rk7 = apply_cheat(kept, CheatKind::ReviveParty);
+    check(rk7.applied && kept.party.characters[1].status == 'G' && kept.party.characters[1].current_mp == 60 &&
+              kept.party.characters[1].current_hp == 100 && kept.party.characters[3].current_mp == 2,
+          "X7", "Revive Party keeps a revived mage's MP 60 (above its class value 21) -- it raises, never lowers");
     // X4. Max Food / Keys / Torches / Gems: to the caps every writer keeps,
     // never lowering a value already above (crops at 9999, a Developer preset).
     GameState f = party_of(1);

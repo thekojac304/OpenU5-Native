@@ -1,0 +1,8 @@
+A4-ENH2 commit 6 RED-first: a4_enh2_rules X7 against commit 5's Revive (MP set to the class value unconditionally)
+RED X7 Revive Party keeps a revived mage's MP 60 (above its class value 21) -- it raises, never lowers
+A4-ENH2 rules: 43 checks, 1 failures
+
+after the fix (raise, never lower):
+GREEN X3 Revive Party: "Not during combat" in a fight; otherwise the two dead members only -- 'G', full HP (a record with none: 30 x level 4 = 120), mage MP 21, experience kept -- the living and the one at an inn untouched
+GREEN X7 Revive Party keeps a revived mage's MP 60 (above its class value 21) -- it raises, never lowers
+A4-ENH2 rules: 43 checks, 0 failures

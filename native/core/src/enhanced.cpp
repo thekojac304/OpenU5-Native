@@ -317,8 +317,9 @@ CheatResult apply_cheat(GameState &g, CheatKind kind, int32_t amount, bool in_co
             if (c.status != 'D') continue;
             c.status = 'G';
             if (!c.max_hp) c.max_hp = uint16_t(30 * std::max<int>(1, c.level));
-            c.current_hp = c.max_hp;
-            if (const int mp = class_mp(c); mp >= 0) c.current_mp = uint8_t(mp);
+            // Raised, never lowered (a Developer edit can leave more): as Restore MP.
+            if (c.current_hp < c.max_hp) c.current_hp = c.max_hp;
+            if (const int mp = class_mp(c); mp >= 0 && c.current_mp < mp) c.current_mp = uint8_t(mp);
             ++n;
         }
         if (!n) {
