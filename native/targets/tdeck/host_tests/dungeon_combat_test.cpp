@@ -205,7 +205,8 @@ struct Runtime {
 
     UiTextBlock blocks[96]{};
     UiSession ui{{blocks, 96}, {this, &Runtime::thunk}, {64, 8, 12}};
-    tdeck::UiInputAdapter input;
+    // A4-ENH1: one pulse, one step (trackball speed 10) -- the contract these routes use.
+    tdeck::UiInputAdapter input = [] { tdeck::UiInputAdapter a; a.set_trackball_speed(openu5::kTrackballSpeedLegacy); return a; }();
 
     // --- AlphaRuntime's own combat-input queue and enemy beat.
     std::vector<UiAction> combat_input_queue;

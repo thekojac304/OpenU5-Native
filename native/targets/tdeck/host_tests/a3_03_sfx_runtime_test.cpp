@@ -288,6 +288,7 @@ void muted_settings(bool on) {
     if (on) {
         FrontendSettings m{};
         m.sound_volume = 0;
+        m.trackball_speed = openu5::kTrackballSpeedLegacy; // A4-ENH1: the one-pulse-per-step speed (10) this route was written for
         encode_settings(m, tdeck::a3_host_settings_text());
     }
 }

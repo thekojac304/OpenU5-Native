@@ -3,10 +3,31 @@
 #include <cstdarg>
 #include <cstdio>
 
+#include "openu5/frontend.h"
+
 namespace openu5 {
 
 namespace {
 constexpr char kDirectionLetters[4] = {'U', 'D', 'L', 'R'};
+
+// A4-ENH1 (ALPHA4_UI.md section 10). PROVISIONAL tuning, one row per speed
+// level 1..10: pulses per step, the step gap and the bounce window. Levels 1-6
+// count pulses (a tiny roll moves nothing; the gap stops a flick queueing moves
+// that play out after the ball stops); 7-9 are one step per pulse with a
+// shorter gap each; 10 is the pre-A4-ENH1 100 % path exactly (12 ms window, no
+// gap). Level 7 is close to the old 25 % minimum (a 48 ms window).
+constexpr TrackballTuning kTrackballLevels[10] = {
+    {8, 250, 4}, {6, 200, 4}, {5, 160, 4}, {4, 130, 4}, {3, 100, 4},
+    {2, 80, 4},  {1, 50, 12}, {1, 30, 12}, {1, 20, 12}, {1, 0, 12},
+};
+
+// The Settings row's range and the device table agree (openu5/frontend.h).
+static_assert(kTrackballSpeedMin == 1 && kTrackballSpeedMax == 10, "one table row per speed level");
+static_assert(kTrackballSpeedDefault == 5, "InputController::level_ starts at the Settings default");
+static_assert(kTrackballLevels[kTrackballSpeedLegacy - 1].pulses_per_step == 1 &&
+                  kTrackballLevels[kTrackballSpeedLegacy - 1].step_gap_ms == 0 &&
+                  kTrackballLevels[kTrackballSpeedLegacy - 1].window_ms == 12,
+              "the legacy level is the pre-A4-ENH1 100 % path");
 
 uint32_t to_ms(int64_t us) { return us <= 0 ? 0U : uint32_t(us / 1000); }
 
@@ -30,6 +51,12 @@ size_t gap_bucket(int64_t gap_us) {
 }
 } // namespace
 
+const TrackballTuning &trackball_tuning(uint8_t level)
+{
+    const size_t i = level < 1 ? 0U : level > 10 ? 9U : size_t(level - 1);
+    return kTrackballLevels[i];
+}
+
 bool TrackballClickFilter::press(int64_t now_us)
 {
     ++presses_;
@@ -50,19 +77,11 @@ void TrackballClickFilter::release(int64_t now_us)
     last_release_us_ = now_us;
 }
 
-int64_t InputController::trackball_debounce_for_percent(uint16_t percent)
+void InputController::set_trackball_level(uint8_t level)
 {
-    if (percent < 25) percent = 25;
-    if (percent > 300) percent = 300;
-    // Inverse scaling is deterministic: a faster percentage accepts physical
-    // detents closer together. 100% restores the earlier 12 ms timing.
-    return 1200000 / percent;
-}
-
-void InputController::set_trackball_speed_percent(uint16_t percent)
-{
-    speed_percent_ = percent;
-    trackball_debounce_us_ = trackball_debounce_for_percent(percent);
+    level_ = level < 1 ? uint8_t(1) : level > 10 ? uint8_t(10) : level;
+    // A new speed starts every axis afresh: no partial step carries across.
+    acc_[0] = acc_[1] = 0;
 }
 
 void InputController::close_gesture()
@@ -116,6 +135,7 @@ void InputController::note_edge(size_t index, int64_t now_us)
         gesture_open_ = true;
         gesture_start_us_ = now_us;
         gesture_min_gap_us_ = 0;
+        gesture_.level = level_;
     } else {
         const int64_t gap = now_us - last_edge_us_;
         if (gesture_min_gap_us_ == 0 || gap < gesture_min_gap_us_) gesture_min_gap_us_ = gap;
@@ -131,8 +151,9 @@ void InputController::note_edge(size_t index, int64_t now_us)
 bool InputController::click(const tdeck::RawInputEvent &raw)
 {
     // Either edge of the press switch rocks the ball a little: the pulses
-    // that follow it at once are not a roll.
+    // that follow it at once are not a roll, and no partial step survives it.
     click_guard_until_us_ = raw.timestamp_us + kClickGuardUs;
+    acc_[0] = acc_[1] = 0;
     if (raw.transition == tdeck::KeyTransition::Released) {
         click_.release(raw.timestamp_us);
         decision_ = "click-release";
@@ -168,23 +189,55 @@ bool InputController::normalize(const tdeck::RawInputEvent &raw, Direction &dire
 
     const size_t index = static_cast<size_t>(raw.kind) -
                          static_cast<size_t>(tdeck::RawInputKind::TrackballUp);
+    const int64_t now = raw.timestamp_us;
+    const auto &tune = tuning();
     ++trackball_raw_edges_;
-    note_edge(index, raw.timestamp_us);
-    if (raw.timestamp_us < click_guard_until_us_) {
+    note_edge(index, now);
+    if (now < click_guard_until_us_) {
         ++trackball_suppressed_;
         ++stats_.click_guarded;
         decision_ = "trackball-inside-click-guard";
         return false;
     }
     // The GPIO layer already emits falling edges only.  This window rejects a
-    // contact's short re-close while preserving deliberate rapid detents.
-    if (raw.timestamp_us - last_trackball_us_[index] < trackball_debounce_us_) {
+    // contact's short re-close while preserving deliberate rapid pulses.
+    if (pulse_seen_[index] && now - last_trackball_us_[index] < int64_t(tune.window_ms) * 1000) {
         ++trackball_suppressed_;
         ++stats_.bounced;
         decision_ = "trackball-same-direction-under-configured-window";
         return false;
     }
-    last_trackball_us_[index] = raw.timestamp_us;
+    pulse_seen_[index] = true;
+    last_trackball_us_[index] = now;
+    // A4-ENH1. Roll inside the step gap is dropped, not banked: when the ball
+    // stops, the party stops (no queued moves playing out afterwards).
+    if (tune.step_gap_ms && step_seen_ && now - last_step_us_ < int64_t(tune.step_gap_ms) * 1000) {
+        ++trackball_suppressed_;
+        ++stats_.step_gap;
+        decision_ = "trackball-inside-step-gap";
+        return false;
+    }
+    // The per-axis accumulator: up/left count down, down/right up.
+    const size_t axis = index < 2 ? 1U : 0U;
+    const int32_t sign = index == 0 || index == 2 ? -1 : 1;
+    if (acc_[axis] && axis_seen_[axis] && now - last_axis_us_[axis] >= kIdleResetUs) {
+        acc_[axis] = 0; // a tiny roll long ago is not half of this one
+        ++stats_.idle_resets;
+    }
+    if (acc_[axis] * sign < 0) {
+        acc_[axis] = 0; // the other way: start counting at once, no unwinding
+        ++stats_.reversals;
+    }
+    axis_seen_[axis] = true;
+    last_axis_us_[axis] = now;
+    acc_[axis] += sign;
+    if (acc_[axis] * sign < int32_t(tune.pulses_per_step)) {
+        decision_ = "trackball-accumulating";
+        return false;
+    }
+    acc_[axis] -= sign * int32_t(tune.pulses_per_step);
+    step_seen_ = true;
+    last_step_us_ = now;
     ++trackball_accepted_;
     ++stats_.steps[index];
     if (gesture_.steps[index] < UINT16_MAX) ++gesture_.steps[index];
@@ -196,14 +249,18 @@ size_t format_trackball_report(const InputController &in, char *lines, size_t li
     ReportLines r{lines, line_bytes, max_lines};
     const auto &s = in.stats();
     const auto &c = in.click_filter();
+    const auto &t = in.tuning();
     put(r, "TRACKBALL STATS  since last read");
-    put(r, "Setting: Trackball %u%% (window %lu ms)", unsigned(in.trackball_speed_percent()),
-        (unsigned long)(in.trackball_debounce_us() / 1000));
+    put(r, "Speed %u/10: %u pulses/step, gap %ums, bounce %ums", unsigned(in.trackball_level()),
+        unsigned(t.pulses_per_step), unsigned(t.step_gap_ms), unsigned(t.window_ms));
     put(r, "Pulses  U %lu  D %lu  L %lu  R %lu", (unsigned long)s.edges[0], (unsigned long)s.edges[1],
         (unsigned long)s.edges[2], (unsigned long)s.edges[3]);
     put(r, "Steps   U %lu  D %lu  L %lu  R %lu", (unsigned long)s.steps[0], (unsigned long)s.steps[1],
         (unsigned long)s.steps[2], (unsigned long)s.steps[3]);
-    put(r, "Dropped bounce %lu  after-click %lu", (unsigned long)s.bounced, (unsigned long)s.click_guarded);
+    put(r, "Dropped bounce %lu  gap %lu  after-click %lu", (unsigned long)s.bounced, (unsigned long)s.step_gap,
+        (unsigned long)s.click_guarded);
+    put(r, "Cleared idle %lu  reversal %lu  held X%+ld Y%+ld", (unsigned long)s.idle_resets,
+        (unsigned long)s.reversals, long(in.held_x()), long(in.held_y()));
     put(r, "Gap ms <4:%lu <8:%lu <16:%lu <32:%lu <64:%lu", (unsigned long)s.gaps[0], (unsigned long)s.gaps[1],
         (unsigned long)s.gaps[2], (unsigned long)s.gaps[3], (unsigned long)s.gaps[4]);
     put(r, "       <128:%lu >=128:%lu (same direction)", (unsigned long)s.gaps[5], (unsigned long)s.gaps[6]);
@@ -221,7 +278,8 @@ size_t format_trackball_report(const InputController &in, char *lines, size_t li
                                             unsigned(g.edges[d]), unsigned(g.steps[d]));
                 if (w > 0) at += size_t(w);
             }
-        put(r, " %s%lu ms, min gap %lu ms", text, (unsigned long)g.duration_ms, (unsigned long)g.min_gap_ms);
+        put(r, " %s%lu ms, min gap %lu ms, speed %u", text, (unsigned long)g.duration_ms,
+            (unsigned long)g.min_gap_ms, unsigned(g.level));
     }
     put(r, "Pulse = one GPIO edge; R9>3 = 9 pulses, 3 steps.");
     put(r, "Reading this report starts a new window.");

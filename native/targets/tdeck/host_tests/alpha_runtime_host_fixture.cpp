@@ -306,6 +306,12 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
     // A3-01: settings.json through the same binder initialize() runs (the
     // host stubs' store is empty unless a test opts in), so a test sees the
     // device's load-and-apply path, not a copy of it.
+    // A4-ENH1 (ALPHA4_UI.md section 10): every older host test drives the
+    // trackball with ONE raw pulse per intended step -- the pre-A4-ENH1
+    // contract, which is trackball speed 10 now. A test that wants the
+    // device's default speed (5: three pulses a step) sets it through the
+    // Settings row, the device's own path (a4_enh1_runtime S1-S6).
+    settings_.trackball_speed = openu5::kTrackballSpeedLegacy;
     load_device_settings();
     frontend_.enter_game();
 }

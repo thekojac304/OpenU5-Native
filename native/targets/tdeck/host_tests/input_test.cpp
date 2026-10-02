@@ -217,6 +217,7 @@ int main()
     // A 1.1 s hold toggles exactly once at the threshold.  Its release never
     // emits Cancel, and a later hold can toggle the mode back off.
     tdeck::UiInputAdapter movement;
+    movement.set_trackball_speed(10); // A4-ENH1: these checks are the one-pulse-one-step (old 100 %) contract
     if(movement.translate(mic(KeyTransition::Pressed,2000000),openu5::UiMode::Exploration,
                           action,shortcut))return __LINE__;
     if(movement.update(3099999,openu5::UiMode::Exploration,shortcut))return __LINE__;
@@ -320,15 +321,23 @@ int main()
                                  openu5::UiMode::DebugMenu,action,shortcut)||
        action.kind!=openu5::UiActionKind::Cancel)return __LINE__;
 
-    // Percentage speed maps deterministically to a physical-detent debounce.
-    // 100% restores the responsive 12 ms window; low and high settings are
-    // materially different without synthesizing or randomly dropping events.
-    if(openu5::InputController::trackball_debounce_for_percent(25)!=48000||
-       openu5::InputController::trackball_debounce_for_percent(100)!=12000||
-       openu5::InputController::trackball_debounce_for_percent(200)!=6000||
-       openu5::InputController::trackball_debounce_for_percent(300)!=4000)
-        return __LINE__;
-    controller.set_trackball_speed_percent(100);
+    // A4-ENH1 (ALPHA4_UI.md section 10) replaced the percentage debounce
+    // (25..300 % = a 48..4 ms same-direction window, one step per pulse) with
+    // speed levels. Level 10 IS the old 100 % path: one step per pulse and the
+    // same 12 ms window, checked below exactly as the percentage was.
+    {
+        const auto &legacy=openu5::trackball_tuning(10);
+        if(legacy.pulses_per_step!=1||legacy.step_gap_ms!=0||legacy.window_ms!=12||
+           &openu5::trackball_tuning(0)!=&openu5::trackball_tuning(1)||
+           &openu5::trackball_tuning(99)!=&openu5::trackball_tuning(10))return __LINE__;
+        // Every faster level needs no more pulses and no longer a gap.
+        for(uint8_t level=2;level<=10;++level){
+            const auto &slow=openu5::trackball_tuning(uint8_t(level-1)),&fast=openu5::trackball_tuning(level);
+            if(fast.pulses_per_step>slow.pulses_per_step||fast.step_gap_ms>slow.step_gap_ms||
+               (fast.pulses_per_step==slow.pulses_per_step&&fast.step_gap_ms==slow.step_gap_ms))return __LINE__;
+        }
+    }
+    controller.set_trackball_level(10);
     const std::array<RawInputKind, 4> kinds = {RawInputKind::TrackballUp,
         RawInputKind::TrackballDown, RawInputKind::TrackballLeft, RawInputKind::TrackballRight};
     const std::array<Direction, 4> directions = {Direction::North, Direction::South,
@@ -341,13 +350,75 @@ int main()
         track.timestamp_us += 11000;
         if (!controller.normalize(track, direction) || direction != directions[i]) return __LINE__;
     }
-    for(uint16_t percent:{uint16_t(25),uint16_t(100),uint16_t(300)}){
-        openu5::InputController tuned;tuned.set_trackball_speed_percent(percent);
-        RawInputEvent track{.kind=RawInputKind::TrackballRight,.timestamp_us=100000};
-        if(!tuned.normalize(track,direction))return __LINE__;
-        const auto window=tuned.trackball_debounce_us();track.timestamp_us+=window-1;
-        if(tuned.normalize(track,direction))return __LINE__;
-        ++track.timestamp_us;if(!tuned.normalize(track,direction))return __LINE__;
+    // A4-ENH1: the accumulator, level by level (PROVISIONAL tuning; these
+    // check the model, not the numbers' final values).
+    auto pulse=[&](openu5::InputController &c,RawInputKind k,int64_t at){
+        RawInputEvent e{.kind=k,.timestamp_us=at};return c.normalize(e,direction);};
+    {
+        // S1. The default level 5: three pulses on an axis make one step; a
+        // tiny roll of one or two moves nothing. The remainder carries on.
+        openu5::InputController c;
+        if(c.trackball_level()!=5)return __LINE__;
+        int64_t t=300000000;
+        if(pulse(c,RawInputKind::TrackballRight,t)||pulse(c,RawInputKind::TrackballRight,t+20000)||
+           !pulse(c,RawInputKind::TrackballRight,t+40000)||direction!=Direction::East||c.held_x()!=0)return __LINE__;
+        // S2. Inside the 100 ms step gap the roll is dropped, not banked.
+        if(pulse(c,RawInputKind::TrackballRight,t+60000)||pulse(c,RawInputKind::TrackballRight,t+80000)||
+           c.held_x()!=0||c.stats().step_gap!=2)return __LINE__;
+        if(pulse(c,RawInputKind::TrackballRight,t+150000)||pulse(c,RawInputKind::TrackballRight,t+170000)||
+           !pulse(c,RawInputKind::TrackballRight,t+190000))return __LINE__;
+        // S3. A tiny roll, a pause past the idle reset, another tiny roll: no step.
+        t+=2000000;
+        if(pulse(c,RawInputKind::TrackballUp,t)||pulse(c,RawInputKind::TrackballUp,t+20000)||c.held_y()!=-2)return __LINE__;
+        if(pulse(c,RawInputKind::TrackballUp,t+20000+openu5::InputController::kIdleResetUs)||c.held_y()!=-1||
+           c.stats().idle_resets!=1)return __LINE__;
+        // S4. A reversal starts the count afresh: no unwinding of the old way
+        // (one up pulse is held from S3; the first down pulse clears it).
+        t+=20000+openu5::InputController::kIdleResetUs+30000;
+        if(pulse(c,RawInputKind::TrackballDown,t)||c.held_y()!=1||c.stats().reversals!=1)return __LINE__;
+        if(pulse(c,RawInputKind::TrackballDown,t+20000)||!pulse(c,RawInputKind::TrackballDown,t+40000)||
+           direction!=Direction::South)return __LINE__;
+        // S5. Contact bounce (a same-direction pulse inside 4 ms) is not distance.
+        t+=2000000;
+        if(pulse(c,RawInputKind::TrackballLeft,t)||pulse(c,RawInputKind::TrackballLeft,t+2000)||c.held_x()!=-1||
+           c.stats().bounced!=1)return __LINE__;
+        // S6. A diagonal roll: each axis counts on its own, so the steps alternate.
+        openu5::InputController diag;
+        t+=2000000;
+        int east=0,north=0;Direction order[8]{};int n=0;
+        for(int i=0;i<12;++i){
+            const bool x=i%2==0;
+            if(pulse(diag,x?RawInputKind::TrackballRight:RawInputKind::TrackballUp,t+i*30000)){
+                (direction==Direction::East?east:north)++;if(n<8)order[n++]=direction;}
+        }
+        if(east<1||north<1||n<2||order[0]==order[1])return __LINE__;
+    }
+    {
+        // S7. Low, medium and high are meaningfully different: one second of a
+        // fast roll (a pulse every 10 ms) steps at most 4 / 10 times at levels
+        // 1 / 5, at least 40 at level 10 (the old 100 %), and the steps a
+        // level makes never outnumber the next faster level's.
+        int steps[11]{};
+        for(uint8_t level=1;level<=10;++level){
+            openu5::InputController c;c.set_trackball_level(level);
+            for(int i=0;i<100;++i)steps[level]+=pulse(c,RawInputKind::TrackballRight,500000000+i*10000)?1:0;
+            if(level>1&&steps[level]<steps[level-1])return __LINE__;
+        }
+        if(steps[1]>4||steps[5]>10||steps[10]<40||steps[1]>=steps[5]||steps[5]>=steps[10])return __LINE__;
+        // A slow, deliberate roll (a pulse every 120 ms): level 10 steps on
+        // every pulse; level 1 needs eight.
+        openu5::InputController slow1;slow1.set_trackball_level(1);
+        openu5::InputController slow10;slow10.set_trackball_level(10);
+        // (24 pulses: eight make a step, the 250 ms gap then drops two.)
+        int s1=0,s10=0;
+        for(int i=0;i<24;++i){s1+=pulse(slow1,RawInputKind::TrackballDown,600000000+i*120000)?1:0;
+                              s10+=pulse(slow10,RawInputKind::TrackballDown,600000000+i*120000)?1:0;}
+        if(s1!=2||s10!=24)return __LINE__;
+        // A new level forgets a partial step.
+        openu5::InputController change;
+        pulse(change,RawInputKind::TrackballRight,700000000);
+        change.set_trackball_level(4);
+        if(change.held_x()!=0)return __LINE__;
     }
 
     // Switching repeatedly between trackball and WASD does not share debounce
@@ -474,6 +545,7 @@ int main()
         // C6. A roll pulse inside the 60 ms after either click edge is the ball
         // rocking under the finger: dropped, so the click cannot also move.
         tdeck::UiInputAdapter rock;
+        rock.set_trackball_speed(10);
         t+=1000000;
         rock.translate(click(KeyTransition::Pressed,t),openu5::UiMode::Exploration,action,shortcut);
         RawInputEvent jiggle{.kind=RawInputKind::TrackballRight,.timestamp_us=t+20000};
@@ -496,7 +568,7 @@ int main()
     }
     // ---- A4-ENH1: the trackball instrumentation ----
     {
-        openu5::InputController probe;probe.set_trackball_speed_percent(100);
+        openu5::InputController probe;probe.set_trackball_level(10);
         Direction d{};
         // A roll: right pulses 20 ms apart, one 2 ms bounce, then quiet.
         int64_t t=200000000;

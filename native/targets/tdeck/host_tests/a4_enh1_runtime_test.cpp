@@ -254,6 +254,109 @@ void test_report() {
     check(again.find("Rolls   0") != std::string::npos, "T2",
           "reading it started a new window (the next read counts only what came after):\n" + again);
 }
+void test_speed() {
+    tdeck::a3_host_settings_enabled() = true;
+    tdeck::a3_host_settings_text().clear();
+    {
+        Run h; // the fixture runs speed 10, one step per pulse (the older tests' contract)
+        // S1. System Menu > Settings > the trackball row, five to the left: 5.
+        h.key('m', true);
+        for (int i = 0; i < 3; ++i) h.ball(RawInputKind::TrackballDown);
+        h.key('\r');
+        for (int i = 0; i < 2; ++i) h.ball(RawInputKind::TrackballDown);
+        const std::string row10 = h.rt->system_menu_view().lines[2];
+        // Each edit applies at once, so the trackball changing its own speed
+        // feels it: 10 -> 6 one pulse a step, then 6 -> 5 takes two.
+        for (int i = 0; i < 4; ++i) h.ball(RawInputKind::TrackballLeft);
+        const std::string row6 = h.rt->system_menu_view().lines[2];
+        h.ball(RawInputKind::TrackballLeft); // 100 ms: past speed 6's 80 ms step gap
+        const std::string row6_still = h.rt->system_menu_view().lines[2];
+        h.ball(RawInputKind::TrackballLeft);
+        const std::string row5 = h.rt->system_menu_view().lines[2];
+        const std::string footer = h.rt->system_menu_view().footer;
+        // Mic leaves Settings and saves them (System Menu convention).
+        tdeck::RawInputEvent mic{};
+        mic.kind = RawInputKind::Keyboard;
+        mic.column = tdeck::kMicrophoneKeyColumn;
+        mic.row = tdeck::kMicrophoneKeyRow;
+        mic.transition = tdeck::KeyTransition::Pressed;
+        openu5_host_virtual_clock_us() += 100000;
+        h.raw(mic);
+        mic.transition = tdeck::KeyTransition::Released;
+        openu5_host_virtual_clock_us() += 100000;
+        h.raw(mic);
+        const std::string saved = tdeck::a3_host_settings_text();
+        check(row10 == "Trackball speed: 10/10" && row6 == "Trackball speed: 6/10" && row6_still == row6 &&
+                  row5 == "Trackball speed: 5/10" &&
+                  footer.find("1 slow - 10 fast") != std::string::npos && h.rt->device_settings().trackball_speed == 5 &&
+                  saved.find("\"trackballSpeed\":5") != std::string::npos &&
+                  saved.find("\"trackballResponsiveness\":100") != std::string::npos,
+              "S1", "System Menu > Settings > \"" + row10 + "\" -> \"" + row5 + "\", Mic saves: " + saved);
+        // S7. In the menu at speed 5 one pulse does not move the cursor; three do.
+        h.ball(RawInputKind::TrackballDown, 40000);
+        const int one = h.rt->system_menu_view().selected_line;
+        h.ball(RawInputKind::TrackballDown, 40000);
+        h.ball(RawInputKind::TrackballDown, 40000);
+        const int three = h.rt->system_menu_view().selected_line;
+        check(one == 0 && three == 1, "S7", "back on the root at speed 5: one pulse leaves the cursor on Resume, "
+                                            "three move it one row (" + std::to_string(one) + ", " + std::to_string(three) + ")");
+        h.key('m', true);
+        // S2. In the world: a tiny roll (one or two pulses) moves nothing; the
+        // third pulse of a normal roll is one step.
+        h.frames(100); // > 400 ms: any partial step from the menu is gone
+        const uint32_t routed = h.rt->routed_command_count();
+        h.ball(RawInputKind::TrackballRight, 40000);
+        h.ball(RawInputKind::TrackballRight, 40000);
+        const bool tiny_still = h.rt->routed_command_count() == routed;
+        h.ball(RawInputKind::TrackballRight, 40000);
+        check(tiny_still && h.rt->routed_command_count() == routed + 1, "S2",
+              "speed 5: two pulses route nothing, the third routes one move");
+        // S3. Tiny, pause, tiny: no step (the partial step is forgotten).
+        h.frames(100);
+        const uint32_t mid = h.rt->routed_command_count();
+        h.ball(RawInputKind::TrackballLeft, 40000);
+        h.ball(RawInputKind::TrackballLeft, 40000);
+        h.frames(100);
+        h.ball(RawInputKind::TrackballLeft, 40000);
+        check(h.rt->routed_command_count() == mid, "S3", "two pulses, a 0.5 s pause, one pulse: still no move");
+        // S4. A fast flick: 30 pulses 4 ms apart is a short burst of steps, and
+        // nothing more once the ball stops (no queued moves play out).
+        h.frames(100);
+        const uint32_t before_flick = h.rt->routed_command_count();
+        for (int i = 0; i < 30; ++i) {
+            openu5_host_virtual_clock_us() += 4000;
+            tdeck::RawInputEvent e{};
+            e.kind = RawInputKind::TrackballDown;
+            e.timestamp_us = openu5_host_virtual_clock_us();
+            h.rt->handle(e);
+        }
+        h.frames(1);
+        const uint32_t after_flick = h.rt->routed_command_count();
+        h.frames(300);
+        check(after_flick - before_flick >= 1 && after_flick - before_flick <= 3 &&
+                  h.rt->routed_command_count() == after_flick,
+              "S4", "a 30-pulse flick routes " + std::to_string(after_flick - before_flick) +
+                        " moves (1..3), and none after the ball stops");
+    }
+    {
+        // S5. A second boot reads the saved speed.
+        Run again;
+        check(again.rt->device_settings().trackball_speed == 5, "S5", "after a reboot settings.json gives speed 5");
+    }
+    {
+        // S6. A settings.json from before A4-ENH1 (old 25 %, no speed key):
+        // the default speed, whatever the old percentage said.
+        tdeck::a3_host_settings_text() =
+            "{\"version\":1,\"brightness\":70,\"movementMode\":false,\"trackballResponsiveness\":25,\"uiSize\":1,"
+            "\"developerToolsVisible\":false,\"soundVolume\":80,\"musicVolume\":80,\"touchControls\":false}";
+        Run old;
+        check(old.rt->device_settings().trackball_speed == openu5::kTrackballSpeedDefault &&
+                  old.rt->device_settings().trackball_responsiveness == 25 && old.rt->device_settings().brightness == 70,
+              "S6", "an Alpha 2-4 settings.json loads whole; the trackball takes the default speed (5)");
+    }
+    tdeck::a3_host_settings_enabled() = false;
+    tdeck::a3_host_settings_text().clear();
+}
 } // namespace
 
 int main(int argc, char **argv) {
@@ -267,6 +370,7 @@ int main(int argc, char **argv) {
 
     test_click();
     test_report();
+    test_speed();
 
     std::printf("\nA4-ENH1 runtime: %d checks, %d failures\n", checks, failures);
     return failures ? 1 : 0;

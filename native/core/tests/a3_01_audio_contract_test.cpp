@@ -742,9 +742,16 @@ int main(int argc, char **argv) {
         FrontendSettings from_alpha2{};
         from_alpha2.sound_volume = 1;
         std::string default_text;
+        // A4-ENH1 (ALPHA4_UI.md section 10) appended one optional key, the
+        // trackball speed level; every older key is written as before, so an
+        // older firmware still reads the file, and a file without the key
+        // loads with the default level.
+        const std::string alpha4_enh1 = alpha2.substr(0, alpha2.size() - 1) + ",\"trackballSpeed\":5}";
         check(decode_settings(alpha2, from_alpha2) && from_alpha2.sound_volume == 80 && from_alpha2.music_volume == 80 &&
-                  encode_settings(FrontendSettings{}, default_text) && default_text == alpha2,
-              "F10 an Alpha 2 settings.json loads unchanged (80 % / 80 %); the format is the same, no migration");
+                  from_alpha2.trackball_speed == kTrackballSpeedDefault &&
+                  encode_settings(FrontendSettings{}, default_text) && default_text == alpha4_enh1,
+              "F10 an Alpha 2 settings.json loads unchanged (80 % / 80 %, default trackball speed); the default "
+              "document is the Alpha 2 one plus \"trackballSpeed\"");
         FrontendSettings odd{};
         const bool hand = decode_settings(std::regex_replace(alpha2, std::regex("\"soundVolume\":80"), "\"soundVolume\":85"), odd);
         check(hand && odd.sound_volume == 85 && step_volume(odd.sound_volume, 1) == 95 && step_volume(95, 1) == 100,

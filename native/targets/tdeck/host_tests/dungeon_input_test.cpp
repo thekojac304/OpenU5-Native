@@ -100,7 +100,8 @@ struct DungeonDevice {
 
     UiTextBlock blocks[64]{};
     UiSession ui{{blocks, 64}, {this, &DungeonDevice::thunk}, {64, 8, 12}};
-    tdeck::UiInputAdapter input;
+    // A4-ENH1: one pulse, one step (trackball speed 10) -- the contract these routes use.
+    tdeck::UiInputAdapter input = [] { tdeck::UiInputAdapter a; a.set_trackball_speed(openu5::kTrackballSpeedLegacy); return a; }();
 
     std::vector<UiIntent> intents;
     std::vector<std::string> messages;

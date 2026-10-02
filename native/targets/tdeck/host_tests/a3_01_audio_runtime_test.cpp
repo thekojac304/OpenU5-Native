@@ -281,6 +281,7 @@ std::unique_ptr<CampResult> camp_run(int seed, AudioSetup setup) {
         tdeck::a3_host_settings_enabled() = true;
         FrontendSettings muted{};
         muted.sound_volume = 0;
+        muted.trackball_speed = openu5::kTrackballSpeedLegacy; // A4-ENH1: the one-pulse-per-step speed (10) this route was written for
         encode_settings(muted, tdeck::a3_host_settings_text());
     }
     Run h(seed, true);
@@ -513,6 +514,7 @@ int main(int argc, char **argv) {
         check(t.saw("Audio test: tone sent, SFX 80%"), "D1 and says so on a System line");
         FrontendSettings muted{};
         muted.sound_volume = 0;
+        muted.trackball_speed = openu5::kTrackballSpeedLegacy; // A4-ENH1: the one-pulse-per-step speed (10) this route was written for
         encode_settings(muted, tdeck::a3_host_settings_text());
         Recorder rec0;
         Run z(11, false);

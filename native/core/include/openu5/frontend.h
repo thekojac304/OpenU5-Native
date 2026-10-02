@@ -46,13 +46,27 @@ enum class FrontendIntentKind : uint8_t {
     ExportPcSave
 };
 
+// Alpha 4 A4-ENH1 (targets/tdeck/ALPHA4_UI.md section 10): the trackball's
+// speed, a level from 1 (slowest) to 10 (fastest). The device maps each level
+// to pulses per step and the shortest gap between steps (input_controller.cpp
+// kTrackballLevels). 10 is the pre-A4-ENH1 behaviour at 100 % (one step per
+// pulse); 7 is close to the old 25 % minimum. PROVISIONAL: the default and the
+// table are tuned on hardware (section 10).
+constexpr uint8_t kTrackballSpeedMin = 1, kTrackballSpeedMax = 10;
+constexpr uint8_t kTrackballSpeedDefault = 5, kTrackballSpeedLegacy = 10;
+constexpr const char *kTrackballSpeedFooter = "Left/right: 1 slow - 10 fast; Mic saves";
+
 struct FrontendSettings {
     uint8_t version = 1;
     uint8_t brightness = 80;
     bool movement_mode = false;
-    // Deterministic percentage applied to the physical-detent debounce window.
-    // 100% is the original responsive Alpha timing; settings expose 25..300%.
+    // Before A4-ENH1: the percentage applied to the physical-detent debounce
+    // window (25..300 %). Kept and written unchanged so an older firmware still
+    // reads this settings.json; nothing reads it for input any more.
     uint16_t trackball_responsiveness = 100;
+    // A4-ENH1: the speed level that replaces it ("trackballSpeed"; a file
+    // without the key, written before A4-ENH1, takes the default).
+    uint8_t trackball_speed = kTrackballSpeedDefault;
     uint8_t ui_size = 1;                  // Reserved: 0=compact, 1=normal, 2=large.
     bool developer_tools_visible = false;
     // A3-01: the Settings rows "SFX Volume" and "Music Volume", 0..100 % in

@@ -100,6 +100,7 @@ void card_settings(uint8_t sfx, uint8_t music) {
     FrontendSettings s{};
     s.sound_volume = sfx;
     s.music_volume = music;
+    s.trackball_speed = openu5::kTrackballSpeedLegacy; // A4-ENH1: the one-pulse-per-step speed (10) this route was written for
     encode_settings(s, tdeck::a3_host_settings_text());
 }
 

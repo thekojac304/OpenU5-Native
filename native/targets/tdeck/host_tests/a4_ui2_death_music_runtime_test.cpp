@@ -281,6 +281,7 @@ void test_combat_death() {
     tdeck::a3_host_settings_enabled() = true;
     FrontendSettings zero{};
     zero.music_volume = 0;
+    zero.trackball_speed = openu5::kTrackballSpeedLegacy; // A4-ENH1: the one-pulse-per-step speed (10) this route was written for
     encode_settings(zero, tdeck::a3_host_settings_text());
     Run z(kParty, true, &g_audio);
     const Death dz = combat_death(z, [](Run &) {});

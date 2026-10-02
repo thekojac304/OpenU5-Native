@@ -1,0 +1,13 @@
+A4-ENH1 phase 2: A4-UI1 golden re-record proof
+before: build-a4-enh1-baseline (HEAD aae348ac binaries) --dump; after: build-a4-enh1 (phase 2 tree) --dump
+python tools/a4_enh1_png_diff.py <before> <after>:
+dungeon-bands        identical
+gameplay             identical
+main-menu            identical
+move-blackthorn      identical
+move-lord-british    identical
+settings-large         262 px differ, x 98..190 y 50..58
+settings               142 px differ, x 75..144 y 46..52
+system-menu          identical
+cause: the Settings row 'Trackball: 100%' became 'Trackball speed: 10/10' (the host fixture runs speed 10); y 46..52 / 50..58 is that one text row
+new goldens (a4_ui1_chrome_runtime --record): settings 0xa4fff874a5b10777, settings-large 0xb5625eadf59c689b

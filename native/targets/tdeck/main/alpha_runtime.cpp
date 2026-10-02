@@ -3231,7 +3231,7 @@ void AlphaRuntime::service_frontend_intent(){
         // the one the player confirmed replacing).
         ok=save_.save(context_,outdoor_,terrain_,actors_,retained_,resources_.initial_gam,resources_.initial_gam_size,resources_.initial_ool,resources_.initial_ool_size,ms,true,intent.slot);
     }}
-    else if(intent.kind==openu5::FrontendIntentKind::PersistSettings){settings_=intent.settings;input_.set_movement_mode_enabled(settings_.movement_mode);input_.set_trackball_responsiveness(settings_.trackball_responsiveness);ok=settings_store_.save(settings_);ESP_LOGI(kTag,"FRONTEND_INTENT intent=%s storage_end=1 ok=%d ms=%lu stack_margin=%u",frontend_intent_name(intent.kind),ok,(unsigned long)ms,unsigned(uxTaskGetStackHighWaterMark(nullptr)*sizeof(StackType_t)));return;}
+    else if(intent.kind==openu5::FrontendIntentKind::PersistSettings){settings_=intent.settings;apply_device_settings();ok=settings_store_.save(settings_);ESP_LOGI(kTag,"FRONTEND_INTENT intent=%s storage_end=1 ok=%d ms=%lu stack_margin=%u",frontend_intent_name(intent.kind),ok,(unsigned long)ms,unsigned(uxTaskGetStackHighWaterMark(nullptr)*sizeof(StackType_t)));return;}
     if(ok&&(intent.kind==openu5::FrontendIntentKind::ContinueLatest||intent.kind==openu5::FrontendIntentKind::LoadSlot))synchronize_loaded_world();
     ESP_LOGI(kTag,"FRONTEND_INTENT intent=%s storage_end=1 ok=%d ms=%lu stack_margin=%u",frontend_intent_name(intent.kind),ok,(unsigned long)ms,unsigned(uxTaskGetStackHighWaterMark(nullptr)*sizeof(StackType_t)));
     if(ok&&(intent.kind==openu5::FrontendIntentKind::ContinueLatest||intent.kind==openu5::FrontendIntentKind::LoadSlot))announce_recovered_load();
@@ -3366,7 +3366,7 @@ void AlphaRuntime::service_system_menu_intent(){
             system_menu_.set_notice(notice);}}
     else if(intent.kind==openu5::SystemMenuIntentKind::LoadLatest)ok=save_.load(context_,outdoor_,terrain_,actors_,retained_,ms);
     else if(intent.kind==openu5::SystemMenuIntentKind::LoadSlot)ok=save_.load_slot(intent.slot,context_,outdoor_,terrain_,actors_,retained_,ms);
-    else if(intent.kind==openu5::SystemMenuIntentKind::PersistSettings){settings_=intent.settings;input_.set_movement_mode_enabled(settings_.movement_mode);input_.set_trackball_responsiveness(settings_.trackball_responsiveness);ok=settings_store_.save(settings_);}
+    else if(intent.kind==openu5::SystemMenuIntentKind::PersistSettings){settings_=intent.settings;apply_device_settings();ok=settings_store_.save(settings_);}
     else if(intent.kind==openu5::SystemMenuIntentKind::OpenDeveloper){
 #if defined(OPENU5_ENABLE_DEVELOPER_TOOLS)
         ++debug_open_count_;ok=ui_->open_debug_menu();dirty_reason_="mode-entry";
@@ -3397,7 +3397,7 @@ void AlphaRuntime::service_system_menu_intent(){
         char notice[64];std::snprintf(notice,sizeof(notice),"Slot %d could not be loaded. Nothing changed",intent.slot+1);system_menu_.set_notice(intent.slot>=0?notice:"No valid save");}
 }
 
-void AlphaRuntime::log_metrics(const char*where)const{const auto stack=uxTaskGetStackHighWaterMark(nullptr)*sizeof(StackType_t);const auto internal=heap_caps_get_free_size(kInternal),psram=heap_caps_get_free_size(kPsram);ESP_LOGI(kTag,"METRICS %s internal=%zu psram=%zu stack_margin=%u render_high_us=%lu frontend_render_high_us=%lu command_high_us=%lu transcript=%lu/%zu",where,internal,psram,unsigned(stack),(unsigned long)render_high_us_,(unsigned long)frontend_render_high_us_,(unsigned long)command_high_us_,(unsigned long)transcript_high_water_,kTranscriptBlocks);const auto&m=input_.direction_metrics();ESP_LOGI(kTag,"TRACKBALL_INPUT raw_edges=%lu accepted=%lu suppressed=%lu",(unsigned long)m.trackball_raw_edges(),(unsigned long)m.trackball_accepted(),(unsigned long)m.trackball_suppressed());ESP_LOGI(kTag,"TRACKBALL_SETTINGS percent=%u min_interval_us=%lld debounce_us=%lld accel=1.00",unsigned(settings_.trackball_responsiveness),(long long)m.trackball_debounce_us(),(long long)m.trackball_debounce_us());if(audio_perf_){openu5::AudioPerfSnapshot a{};if(audio_perf_->perf_snapshot(a))ESP_LOGI(kTag,"AUDIO_PERF song=%s window_ms=%lu blocks=%lu missed=%lu underruns=%lu hw_underruns=%lu render_avg_us=%lu p99_us=%lu max_us=%lu music_max_us=%lu cpu_permille=%lu sched_max_us=%lu fill_min=%lu/%lu channels_avg_x100=%lu channels_max=%lu voices_max=%lu sfx=%lu sfx_with_music=%lu stack_free_min=%lu runaway=%lu failures=%lu",a.music_active?openu5::music_song_title(a.song):"none",(unsigned long)(a.window_us/1000),(unsigned long)a.blocks,(unsigned long)a.missed_deadlines,(unsigned long)a.underruns,(unsigned long)a.hw_underruns,(unsigned long)a.render_avg_us,(unsigned long)a.render_p99_us,(unsigned long)a.render_max_us,(unsigned long)a.music_max_us,(unsigned long)a.cpu_permille,(unsigned long)a.period_max_us,(unsigned long)a.fill_min,(unsigned long)a.ring_blocks,(unsigned long)a.channels_avg_x100,(unsigned long)a.channels_max,(unsigned long)a.voices_max,(unsigned long)a.sfx_submitted,(unsigned long)a.sfx_during_music,(unsigned long)a.stack_free_min,(unsigned long)a.runaway_yields,(unsigned long)(a.write_failures+a.enable_failures));}
+void AlphaRuntime::log_metrics(const char*where)const{const auto stack=uxTaskGetStackHighWaterMark(nullptr)*sizeof(StackType_t);const auto internal=heap_caps_get_free_size(kInternal),psram=heap_caps_get_free_size(kPsram);ESP_LOGI(kTag,"METRICS %s internal=%zu psram=%zu stack_margin=%u render_high_us=%lu frontend_render_high_us=%lu command_high_us=%lu transcript=%lu/%zu",where,internal,psram,unsigned(stack),(unsigned long)render_high_us_,(unsigned long)frontend_render_high_us_,(unsigned long)command_high_us_,(unsigned long)transcript_high_water_,kTranscriptBlocks);const auto&m=input_.direction_metrics();ESP_LOGI(kTag,"TRACKBALL_INPUT raw_edges=%lu accepted=%lu suppressed=%lu",(unsigned long)m.trackball_raw_edges(),(unsigned long)m.trackball_accepted(),(unsigned long)m.trackball_suppressed());{const auto&tb=m.tuning();ESP_LOGI(kTag,"TRACKBALL_SETTINGS level=%u pulses_per_step=%u step_gap_ms=%u window_ms=%u idle_reset_ms=%lld accel=none",unsigned(m.trackball_level()),unsigned(tb.pulses_per_step),unsigned(tb.step_gap_ms),unsigned(tb.window_ms),(long long)(openu5::InputController::kGestureGapUs/1000));}if(audio_perf_){openu5::AudioPerfSnapshot a{};if(audio_perf_->perf_snapshot(a))ESP_LOGI(kTag,"AUDIO_PERF song=%s window_ms=%lu blocks=%lu missed=%lu underruns=%lu hw_underruns=%lu render_avg_us=%lu p99_us=%lu max_us=%lu music_max_us=%lu cpu_permille=%lu sched_max_us=%lu fill_min=%lu/%lu channels_avg_x100=%lu channels_max=%lu voices_max=%lu sfx=%lu sfx_with_music=%lu stack_free_min=%lu runaway=%lu failures=%lu",a.music_active?openu5::music_song_title(a.song):"none",(unsigned long)(a.window_us/1000),(unsigned long)a.blocks,(unsigned long)a.missed_deadlines,(unsigned long)a.underruns,(unsigned long)a.hw_underruns,(unsigned long)a.render_avg_us,(unsigned long)a.render_p99_us,(unsigned long)a.render_max_us,(unsigned long)a.music_max_us,(unsigned long)a.cpu_permille,(unsigned long)a.period_max_us,(unsigned long)a.fill_min,(unsigned long)a.ring_blocks,(unsigned long)a.channels_avg_x100,(unsigned long)a.channels_max,(unsigned long)a.voices_max,(unsigned long)a.sfx_submitted,(unsigned long)a.sfx_during_music,(unsigned long)a.stack_free_min,(unsigned long)a.runaway_yields,(unsigned long)(a.write_failures+a.enable_failures));}
     // A3-04B (section 19.5): the running render and machine windows, supplemental to the Developer report.
     {openu5::RenderPerfSnapshot r{};render_perf_.snapshot(uint64_t(esp_timer_get_time()),r);
      ESP_LOGI(kTag,"RENDER_PERF window_ms=%lu frames=%lu frame_avg_us=%lu p95_us=%lu p99_us=%lu max_us=%lu compose_avg_us=%lu tiles_max_us=%lu tft_avg_us=%lu tft_max_us=%lu cadence_max_us=%lu late=%lu inputs=%lu input_max_us=%lu handle_max_us=%lu busy_permille=%lu",
@@ -3654,7 +3654,7 @@ void AlphaRuntime::load_device_settings(){
 
 void AlphaRuntime::apply_device_settings(){
     input_.set_movement_mode_enabled(settings_.movement_mode);
-    input_.set_trackball_responsiveness(settings_.trackball_responsiveness);
+    input_.set_trackball_speed(settings_.trackball_speed);
     audio_.set_sfx_volume(settings_.sound_volume);
     audio_.set_music_volume(settings_.music_volume);
 }
@@ -3689,10 +3689,10 @@ bool AlphaRuntime::announce_movement_mode(const char *source){
 void AlphaRuntime::log_trackball_gestures(){
     openu5::TrackballGesture g{};
     while(input_.take_trackball_gesture(g))
-        ESP_LOGI(kTag,"TRACKBALL_GESTURE pulses=U%u,D%u,L%u,R%u steps=U%u,D%u,L%u,R%u dur_ms=%lu min_gap_ms=%lu percent=%u",
+        ESP_LOGI(kTag,"TRACKBALL_GESTURE pulses=U%u,D%u,L%u,R%u steps=U%u,D%u,L%u,R%u dur_ms=%lu min_gap_ms=%lu level=%u",
                  unsigned(g.edges[0]),unsigned(g.edges[1]),unsigned(g.edges[2]),unsigned(g.edges[3]),
                  unsigned(g.steps[0]),unsigned(g.steps[1]),unsigned(g.steps[2]),unsigned(g.steps[3]),
-                 (unsigned long)g.duration_ms,(unsigned long)g.min_gap_ms,unsigned(settings_.trackball_responsiveness));
+                 (unsigned long)g.duration_ms,(unsigned long)g.min_gap_ms,unsigned(g.level));
 }
 
 // A3-05. Editing a volume row unmutes that channel (after apply_device_settings,

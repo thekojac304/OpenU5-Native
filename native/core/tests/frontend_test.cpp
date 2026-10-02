@@ -102,7 +102,8 @@ int main(int argc,char**argv){
 
     FrontendSession settings_flow;settings_flow.start(0,false,{});settings_flow.handle(confirm(),1);CHECK(settings_flow.handle(character('s'),2)&&settings_flow.state()==FrontendState::Settings);
     const auto settings_before=settings_flow.view();
-    CHECK(std::strstr(settings_before.lines[2],"100%")!=nullptr);
+    // A4-ENH1: the trackball row is a speed level (default 5 of 10), not a percentage.
+    CHECK(std::strstr(settings_before.lines[2],"Trackball speed: 5/10")!=nullptr);
     std::array<std::string,12> settings_lines{};
     for(size_t i=0;i<settings_before.line_count;++i)settings_lines[i]=settings_before.lines[i];
     UiAction settings_east{};settings_east.kind=UiActionKind::Direction;settings_east.direction=Direction::East;
@@ -110,17 +111,24 @@ int main(int argc,char**argv){
     const auto settings_after=settings_flow.view();size_t changed_rows=0;
     for(size_t i=0;i<settings_after.line_count;++i)if(settings_lines[i]!=settings_after.lines[i])++changed_rows;
     CHECK(settings_after.kind==FrontendViewKind::Settings&&settings_after.line_count==settings_before.line_count&&changed_rows==1);
-    CHECK(settings_flow.handle(next,3)&&settings_flow.handle(next,3));CHECK(settings_flow.handle(settings_east,3));CHECK(settings_flow.settings().trackball_responsiveness==125);
+    CHECK(settings_flow.handle(next,3)&&settings_flow.handle(next,3));CHECK(settings_flow.handle(settings_east,3));CHECK(settings_flow.settings().trackball_speed==6&&settings_flow.settings().trackball_responsiveness==100);
     CHECK(settings_flow.handle(next,3)&&std::strstr(settings_flow.view().lines[3],"Medium")!=nullptr);
     CHECK(settings_flow.handle(settings_east,3)&&settings_flow.settings().ui_size==2&&std::strstr(settings_flow.view().lines[3],"Large")!=nullptr);
     UiAction back{};back.kind=UiActionKind::Back;CHECK(settings_flow.handle(back,4));CHECK(settings_flow.take_intent().kind==FrontendIntentKind::PersistSettings);
 
-    FrontendSettings changed{};changed.brightness=70;changed.movement_mode=true;changed.trackball_responsiveness=225;changed.ui_size=0;changed.developer_tools_visible=true;changed.sound_volume=35;changed.music_volume=45;changed.touch_controls=true;
-    std::string encoded;CHECK(encode_settings(changed,encoded));FrontendSettings decoded{};CHECK(decode_settings(encoded,decoded));CHECK(decoded.brightness==70&&decoded.movement_mode&&decoded.trackball_responsiveness==225&&decoded.sound_volume==35&&decoded.touch_controls);CHECK(!decode_settings("{\"version\":99}",decoded));
+    FrontendSettings changed{};changed.brightness=70;changed.movement_mode=true;changed.trackball_responsiveness=225;changed.trackball_speed=8;changed.ui_size=0;changed.developer_tools_visible=true;changed.sound_volume=35;changed.music_volume=45;changed.touch_controls=true;
+    std::string encoded;CHECK(encode_settings(changed,encoded));FrontendSettings decoded{};CHECK(decode_settings(encoded,decoded));CHECK(decoded.brightness==70&&decoded.movement_mode&&decoded.trackball_responsiveness==225&&decoded.trackball_speed==8&&decoded.sound_volume==35&&decoded.touch_controls);CHECK(!decode_settings("{\"version\":99}",decoded));
     // Existing preset documents migrate in place; malformed percentage steps
     // are rejected instead of silently producing an untestable timing.
     const std::string legacy="{\"version\":1,\"brightness\":70,\"movementMode\":true,\"trackballResponsiveness\":2,\"uiSize\":0,\"developerToolsVisible\":false,\"soundVolume\":0,\"musicVolume\":0,\"touchControls\":false}";
     CHECK(decode_settings(legacy,decoded)&&decoded.trackball_responsiveness==200);
+    // A4-ENH1: a settings.json written before the speed level (no key) takes
+    // the default level whatever its old percentage; a bad level does too;
+    // and the document still carries the old key for an older firmware.
+    CHECK(decoded.trackball_speed==kTrackballSpeedDefault);
+    {FrontendSettings slowest{};slowest.trackball_speed=1;std::string text;CHECK(encode_settings(slowest,text)&&text.find("\"trackballSpeed\":1")!=std::string::npos&&text.find("\"trackballResponsiveness\":100")!=std::string::npos);
+     FrontendSettings back{};CHECK(decode_settings(text,back)&&back.trackball_speed==1);
+     for(const char*bad:{"\"trackballSpeed\":0","\"trackballSpeed\":11","\"trackballSpeed\":2.5","\"trackballSpeed\":\"5\""}){std::string odd=text;odd.replace(odd.find("\"trackballSpeed\":1"),std::strlen("\"trackballSpeed\":1"),bad);FrontendSettings o{};CHECK(decode_settings(odd,o)&&o.trackball_speed==kTrackballSpeedDefault);}}
 
     GameState game{};game.time={139,4,5,8,0};game.position={{0,0},{10,10}};TurnState turn{};turn.felucca_phase=0x33;turn.trammel_phase=0x36;int32_t moons[56]{};
     FrontendSaveCatalog menu_slots{};SystemMenuSession system;const auto menu_game_hash=hash_bytes(&game,sizeof(game));const auto menu_turn_hash=hash_bytes(&turn,sizeof(turn));system.open(changed,menu_slots);CHECK(system.active());CHECK(system.handle(next));CHECK(system.handle(next));CHECK(system.handle(next));CHECK(system.handle(confirm()));CHECK(system.view().kind==FrontendViewKind::Settings&&system.view().line_count==7); // A3-01: + SFX / Music VolumeUiAction east{};east.kind=UiActionKind::Direction;east.direction=Direction::East;CHECK(system.handle(east));auto sys_intent=system.take_intent();CHECK(sys_intent.kind==SystemMenuIntentKind::None);CHECK(hash_bytes(&game,sizeof(game))==menu_game_hash&&hash_bytes(&turn,sizeof(turn))==menu_turn_hash);CHECK(system.handle(back));sys_intent=system.take_intent();CHECK(sys_intent.kind==SystemMenuIntentKind::PersistSettings);CHECK(system.handle(next));CHECK(system.handle(next));CHECK(system.handle(next));CHECK(system.handle(next));CHECK(system.handle(confirm()));CHECK(system.take_intent().kind==SystemMenuIntentKind::OpenDeveloper&&!system.active());

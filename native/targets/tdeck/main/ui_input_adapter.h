@@ -1,6 +1,7 @@
 #pragma once
 
 #include "input_controller.h"
+#include "openu5/frontend.h"
 #include "openu5/ui_session.h"
 
 namespace tdeck {
@@ -17,9 +18,8 @@ class UiInputAdapter {
     bool update(int64_t now_us, openu5::UiMode, DeviceShortcut &);
     bool movement_mode_enabled() const { return movement_mode_enabled_; }
     void set_movement_mode_enabled(bool value) { movement_mode_enabled_ = value; }
-    void set_trackball_responsiveness(uint16_t value) {
-        directions_.set_trackball_speed_percent(value);
-    }
+    // A4-ENH1: the Settings row's level, 1..10 (openu5/frontend.h).
+    void set_trackball_speed(uint8_t level) { directions_.set_trackball_level(level); }
     bool movement_mode_active(openu5::UiMode mode, bool accepts_direction = false) const;
     const openu5::InputController &direction_metrics() const { return directions_; }
     // A4-ENH1: the trackball instrumentation (Developer > Diagnostics >
