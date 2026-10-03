@@ -8,7 +8,7 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 4 closeout A4-CLOSE1, 2026-10-02) — ALPHA 4 IMPLEMENTATION COMPLETE; final candidate RC2 built; one RC hardware session owed; known parity divergences tracked separately; read this first
+> ### CURRENT STATE (Alpha 4 closeout A4-CLOSE1, 2026-10-02) — ALPHA 4 IMPLEMENTATION COMPLETE; candidate image RC2 built; NOT YET RC-READY (required hardware checks never run; one session owed); known parity divergences tracked separately; read this first
 >
 > **A reconciliation batch: documents, evidence and the version line only.** The full record is [`ALPHA4_UI.md`](ALPHA4_UI.md) §14; the classification is the section "Alpha 4 A4-CLOSE1" at the end of this file.
 >
@@ -18,8 +18,9 @@
 > | Hardware recorded | UI2, SAVE1, END1, UI4/PRES1 PASS (earlier); **A4-ENH1 PASS, A4-ENH2 cheats PASS / rules accepted, A4-POLISH3 PASS** (the user, 2026-10-02, §14.2) |
 > | Hardware owed | **one session on the RC2 image** (§14.7): PARITY1 (D-50, D-78 – D-81), the SAVE2 / UI3 slot pages, SAVE3 on the device, the Alpha 4 RC heap capture. RC1's §9.18 session was never run; RC1 is superseded |
 > | Known divergences | D-82 – D-89 and the older open rows: documented, non-blocking, not Alpha 4 work (§14.5) |
-> | Release blockers | **0** in software; the RC2 hardware session is the gate before a release |
-> | Release image | none yet; RC2 is the candidate (§14.9) |
+> | Release blockers | **0** in software and parity; the gate is the RC2 hardware session (`ALPHA4_UI.md` §14.11) |
+> | Candidate image | `OpenU5-TDeck-Alpha4.0.0-alpha4-RC2-Debug-Launcher.bin`: 1,046,240 B (`0xff6e0`), 264,480 B free in the 1.25 MiB partition, SHA-256 `608eb7005dcc88cab6ed8c020e3ad7050c9a711406650492407c7bb760801e95`, `Git 24c666e1ba13`; guards GREEN (§14.9). No release image yet |
+> | Host suite | **191 / 191** serial (164.44 s); preservation / goldens / parity / drift 54 / 54 |
 
 > ### PRIOR STATE (Alpha 3 release, 2026-09-28) — ALPHA 3 RELEASED; the RC1 image promoted byte for byte; RC1 heap gate PASSED, A3-04H deferred; no code changed; 0 release blockers — **superseded as the current state by the Alpha 4 closeout block above; kept as history**
 >
@@ -8777,7 +8778,7 @@ The follow-up to A4-ENH1 (`5e0a16eb`). The full write-up is [`ALPHA4_UI.md`](ALP
 - All **hardware pending** (ALPHA4_UI.md §11.14); every tuning value provisional.
 - *A4-CLOSE1 (2026-10-02): E-13 hardware **PASS** (the cheat system); E-12 **accepted as implemented**, balance adjustable later (ALPHA4_UI.md §14.2). D-83 – D-89 unchanged: carried forward as known divergences (§14.5).*
 
-## Alpha 4 A4-CLOSE1 — closeout reconciliation and the final release candidate
+## Alpha 4 A4-CLOSE1 — closeout reconciliation and the final candidate image
 
 A documentation and release-engineering batch on `b242735f`. The full write-up is [`ALPHA4_UI.md`](ALPHA4_UI.md) §14; this section records the classification on its own axis. No production code changed (`PROJECT_VER` only), no row was fixed, no completed batch reopened.
 

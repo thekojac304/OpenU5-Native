@@ -2,7 +2,7 @@
 
 Alpha 4 is a UI/presentation track on top of the released Alpha 3 (`alpha3-release`, `eb1bf5e7`). Each batch keeps its own section; a finding is recorded where it was made and not merged into an earlier batch's conclusion.
 
-> **Current state (A4-CLOSE1, 2026-10-02) — read §14 first.** Alpha 4's implementation is complete and host-verified (every track, §14.4). The final release candidate is **RC2** (`4.0.0-alpha4-rc2-debug`, A4-POLISH3's source with a new version line; image in §14.9). Known parity divergences (D-82 – D-89 and the older open rows) are tracked separately (§14.5) and are not unfinished Alpha 4 work. What remains is **one hardware session on the RC2 image** (§14.7): the PARITY1 fixes, the SAVE2 / UI3 slot pages, SAVE3 on the device and the RC heap capture have never been run on a T-Deck. Every "pending" in §2 – §13 is the status as that batch wrote it; §14.3 classifies each one.
+> **Current state (A4-CLOSE1, 2026-10-02) — read §14 first.** Alpha 4's implementation is complete and host-verified (every track, §14.4). The final candidate image is **RC2** (`4.0.0-alpha4-rc2-debug`, A4-POLISH3's source with a new version line; image in §14.9). Known parity divergences (D-82 – D-89 and the older open rows) are tracked separately (§14.5) and are not unfinished Alpha 4 work. What remains before Alpha 4 can be called RC-ready is **one hardware session on the RC2 image** (§14.7): the PARITY1 fixes, the SAVE2 / UI3 slot pages, SAVE3 on the device and the RC heap capture have never been run on a T-Deck. Every "pending" in §2 – §13 is the status as that batch wrote it; §14.3 classifies each one.
 
 ## 1. UI Batch 1 (A4-UI1) — the "More Ultima V" chrome
 
@@ -3202,7 +3202,7 @@ Use a card with the A4-POLISH3 image. In System Menu > Settings > Keyboard Backl
 
 Post-commit build of `abba9c0f` (`a4-polish3-postcommit-*.log`): `native/targets/tdeck/build-a4-polish3/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-polish3-Debug-Launcher.bin`, **1,046,240 B (`0xff6e0`)**, SHA-256 `401541093fe645de03d4ff89ebb555b004f741cd47e4ac58fe08f342b717b6ca`, `FW 4.0.0-alpha4-polish3-debug`, `Git abba9c0ff137`. It is 16 B smaller than the pre-commit build only because its Git string lost `-dirty`. 264,480 B free; Launcher allocation 1,024 KiB (next step 2,337 B away). No SD pack change: the existing A4-END1 pack is the one to use. Not tagged; hardware PENDING (§13.9).
 
-## 14. A4-CLOSE1 — Alpha 4 closeout and the final release candidate (2026-10-02)
+## 14. A4-CLOSE1 — Alpha 4 closeout and the final candidate image (2026-10-02)
 
 A reconciliation batch: it records the hardware results reported since A4-ENH1, classifies every open status line in the Alpha 4 record, separates Alpha 4's own work from the parity divergences it found, and builds one clean final candidate. **No production code changed**: the only source edit is `PROJECT_VER` (`native/targets/tdeck/CMakeLists.txt`). No parity row was fixed, no completed batch reopened.
 
@@ -3379,19 +3379,44 @@ One session on **the RC2 image** (§14.9), about 2 hours, with a serial capture 
 
 ### 14.9 The final candidate (RC2)
 
-Built **after** this record's commit, from a fresh `--no-ccache` directory `build-a4-rc2`, so that its `Git` line names the commit and carries no `-dirty`. Its size, SHA-256, `Git`, partition budget, Launcher allocation and guard results are recorded by the evidence commit that follows (`native/core/a4-rc2-*.log`).
+Built after commit `24c666e1` (this record and `PROJECT_VER`) from a fresh `--no-ccache` directory: `idf.py --no-ccache -B build-a4-rc2 reconfigure`, then `ninja -C build-a4-rc2 -j 4 all`, first attempt clean, 0 project warnings (`native/core/a4-rc2-fw-{configure,build}.log`); packaged by `python package_launcher.py --build-dir build-a4-rc2` (`a4-rc2-package.log`).
+
+| | |
+|---|---|
+| **File** | `native/targets/tdeck/build-a4-rc2/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC2-Debug-Launcher.bin` (byte-identical to `build-a4-rc2/openu5_tdeck.bin`) |
+| **Size** | **1,046,240 B (`0xff6e0`)** — A4-POLISH3's size exactly |
+| **SHA-256** | **`608eb7005dcc88cab6ed8c020e3ad7050c9a711406650492407c7bb760801e95`** |
+| **Identity** | `FW 4.0.0-alpha4-rc2-debug`, **`Git 24c666e1ba13`** (HEAD at build; no tracked change; no `-dirty` in the image) |
+| **App partition** | 1,310,720 B (`0x140000`, 1.25 MiB): **264,480 B (20.2 %) free**; `check_app_budget.py` OK (above the 128 KiB warning line) |
+| **Launcher allocation** | 1,048,576 B (1,024 KiB); the next 64 KiB step is 2,337 B away (the packager's figure) |
+| **Firmware guards** | `a3_04a_hotpath_check` **GREEN**, `a3_04b_iram_check` **GREEN**, `a3_04f_image_check` **GREEN**, `check_app_budget` OK (`a4-rc2-elf-checks.log`) |
+| **Sections vs A4-POLISH3** | every section equal (`a4-rc2-fw-size-diff.log`): only the version string and the `Git` line differ |
+| **Sections vs Alpha 3 RC1** (the release) | flash `.text` +45,696, `.rodata` +11,912; IRAM `.text` +36; internal `.bss` +1,488, `.data` +288 — **+1,776 B internal RAM across Alpha 4** (`a4-rc2-fw-size-vs-a3-rc1.log`), the figure the RC2 heap capture must account for (§14.7 part 6) |
+| **Packs** | unchanged since A4-END1 — resource 2,266,819 B `85b38994…d01e`, tiles 132,284 B `6eb001ed…e188`, audio 56,148 B `28c1533b…a6d3`: no SD recopy from any image since A4-END1 |
+| **Earlier images** | re-hashed after the build, all unchanged: RC1 `67100a51…145a`, A4-ENH1 `ea8ce9d5…fcee`, A4-ENH2 `d310fa64…8e09`, A4-POLISH3 `40154109…b6ca`, UI4-hf1 `1d57efce…3a44`, PARITY1 `72fc1aee…d306`, Alpha 3 RC1 `4b5b9d1f…53b1` (`a4-rc2-identity.log`) |
+
+Not flashed, not tagged. This is the image for the §14.7 session.
 
 ### 14.10 Evidence and commits
 
 - Commit 1 (this record, `PROJECT_VER` = `4.0.0-alpha4-rc2-debug`, the ledger / audit / Launcher / release-notes reconciliation, and the twenty earlier image logs: RC1's eight, A4-ENH1's six, A4-ENH2's six).
-- Commit 2: the RC2 build, packaging, guard and size logs (`native/core/a4-rc2-*.log`) and §14.9's numbers.
+- Commit 2: the RC2 build, packaging, guard and size logs (`native/core/a4-rc2-*.log`), §14.9 / §14.11, and the RC2 rows of `ALPHA4.md` and `LAUNCHER.md`.
 - Host logs: `native/core/a4-close1-host-{configure,build,ctest}.log`, `a4-close1-preservation-ctest.log`.
-- Earlier images untouched: RC1 `67100a51…145a`, A4-ENH1 `ea8ce9d5…ffcee`, A4-ENH2 `d310fa64…8e09`, A4-POLISH3 `40154109…b6ca` (re-hashed after the RC2 build, `a4-rc2-earlier-images.log`).
+- Earlier images untouched: RC1 `67100a51…145a`, A4-ENH1 `ea8ce9d5…ffcee`, A4-ENH2 `d310fa64…8e09`, A4-POLISH3 `40154109…b6ca` (re-hashed after the RC2 build, `a4-rc2-identity.log`).
 - Not tagged, not pushed, not flashed.
 
 ### 14.11 Release readiness
 
-Recorded by the evidence commit, after the RC2 image is built and its guards are run.
+**Is Alpha 4 ready to be treated as a release candidate, with remaining parity items tracked separately? Not yet — and parity is not the reason.** Every software, preservation and build criterion is met, and the parity divergences are rightly tracked separately. What stops it is hardware evidence: required Alpha 4 checklist items have never been run on a device. RC2 is the image built to close exactly that gap; it becomes RC-ready when the §14.7 session passes, with no further code change expected.
+
+- **Implementation:** complete. Every Alpha 4 track is built, host-verified and committed (§14.4); nothing in Alpha 4's own scope is unfinished.
+- **Host:** 191 / 191 serial in a fresh build; the preservation goldens, screen goldens, parity corpora and drift tests 54 / 54; 0 project warnings (§14.8).
+- **Preservation:** Original with no cheat and no toggle reproduces the A4-ENH1 / A4-ENH2 goldens bit for bit; the parity corpora are unchanged.
+- **Firmware:** one clean image from a fresh directory, no `-dirty`, named by its commit, all guards GREEN, 20.2 % of the partition free, identical in every section to the A4-POLISH3 image the user ran (§14.9).
+- **Divergences:** D-82 – D-89 and the older rows are documented, classified and non-blocking (§14.5). They are the next parity batch, not Alpha 4 blockers.
+- **Hardware — the one open gate.** Required Alpha 4 checklist items have **never been run on a device**: A4-SAVE2 (§4.11) and A4-UI3 (§6.14 A) — the slot pages; A4-SAVE3's import and export on the device (§6.14 B); A4-PARITY1's fixes D-50, D-78, D-79, D-81 (§9.18 part 3); and the Alpha 4 RC heap capture (§9.18 part 6). They are untested, not failed: no defect is known in any of them, and their host evidence is complete. Under this batch's rule they keep Alpha 4 from being called RC-ready, and certainly from release, until §14.7 passes. If it passes, the project's convention is to promote this exact file unchanged.
+
+**Recommended next step:** run the §14.7 session on the RC2 image (about 2 hours, serial capture on). On PASS, a docs-only batch records it and declares RC2 the Alpha 4 release candidate, then the release, unchanged (as Batch 55 and Alpha 3 did). A FAIL is fixed in its own batch. The parity batch of §14.5 follows, separately, and does not gate it.
 
 ### 14.12 Status
 
@@ -3402,6 +3427,7 @@ Recorded by the evidence commit, after the RC2 image is built and its guards are
 | Record | **reconciled** (§14.3); stale D-2 / D-53 / D-76 closed; historical wording kept |
 | Parity divergences | **tracked separately** (§14.5); none blocking; none fixed here |
 | Host | **191 / 191** serial (164.44 s); preservation / goldens / parity 54 / 54 |
-| Final candidate | RC2, built after this commit (§14.9) |
+| Final candidate | **RC2**, `0xff6e0` (1,046,240 B), SHA-256 `608eb700…1e95`, `Git 24c666e1ba13`, 264,480 B free; guards GREEN (§14.9) |
+| Release readiness | **not yet RC-ready**: software, preservation and build complete; required hardware checks never run (§14.11). RC2 is the candidate image for that session |
 | Hardware still owed | one RC2 session (§14.7): PARITY1, SAVE2 / UI3, SAVE3 on the device, the heap capture |
 | Commit / tag / push | committed; not tagged, not pushed, not flashed |

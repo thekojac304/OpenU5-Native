@@ -1,7 +1,7 @@
-# OpenU5 T-Deck Plus — Alpha 4 (release candidate 2)
+# OpenU5 T-Deck Plus — Alpha 4 (RC2 candidate image)
 
-**Status: ALPHA 4 RC2 — RELEASE CANDIDATE; ONE HARDWARE SESSION OWED (2026-10-02).** Not a release yet.
-- **Candidate image:** `OpenU5-TDeck-Alpha4.0.0-alpha4-RC2-Debug-Launcher.bin`, `FW 4.0.0-alpha4-rc2-debug` — size, SHA-256 and `Git` in §5 (recorded after the build).
+**Status: ALPHA 4 RC2 BUILT — NOT YET RC-READY: ONE REQUIRED HARDWARE SESSION OWED (2026-10-02).** Software, preservation and build are complete; known parity divergences are tracked separately and do not gate it. Not a release.
+- **Candidate image:** `OpenU5-TDeck-Alpha4.0.0-alpha4-RC2-Debug-Launcher.bin`, `FW 4.0.0-alpha4-rc2-debug` — 1,046,240 B (`0xff6e0`), SHA-256 `608eb7005dcc88cab6ed8c020e3ad7050c9a711406650492407c7bb760801e95`, embedded `Git 24c666e1ba13`; 264,480 B (20.2 %) free in the 1.25 MiB app partition; Launcher allocation 1,024 KiB.
 - **What it is:** A4-POLISH3's firmware with a new version line. Everything Alpha 4 set out to do is implemented, host-verified and committed (`native/targets/tdeck/ALPHA4_UI.md` §14.4).
 - **What is still owed:** one hardware session on this image (`ALPHA4_UI.md` §14.7): A4-PARITY1's gameplay fixes, the save-slot pages (A4-SAVE2 / A4-UI3), the PC save import / export on the device (A4-SAVE3) and the RC heap capture. Those were never run on a T-Deck. If they pass, the project convention (Alpha 2, Alpha 3) is to promote this exact image unchanged.
 - **RC1** (`aae348ac`, `FW 4.0.0-alpha4-rc1-debug`, SHA-256 `67100a51…145a`) is superseded: its session never ran, and RC2 carries everything since.
@@ -48,7 +48,7 @@ Documented, non-blocking, and not Alpha 4 work (`ALPHA4_UI.md` §14.5, ledger §
 
 | File | Size | Identity |
 |---|---:|---|
-| `native/targets/tdeck/build-a4-rc2/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC2-Debug-Launcher.bin` — **the candidate** | see `ALPHA4_UI.md` §14.9 | see `ALPHA4_UI.md` §14.9 |
+| `native/targets/tdeck/build-a4-rc2/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC2-Debug-Launcher.bin` — **the candidate** | 1,046,240 B (`0xff6e0`) | SHA-256 `608eb7005dcc88cab6ed8c020e3ad7050c9a711406650492407c7bb760801e95`; `FW 4.0.0-alpha4-rc2-debug`, `Git 24c666e1ba13` (the commit `24c666e1ba13d455b367878c0b594438f809071f`) |
 | `/ultima5/openu5-alpha1-resources.bin` | 2,266,819 B | CRC32 `5c0d175d`, SHA-256 `85b38994…d01e` |
 | `/ultima5/openu5-assets.bin` | 132,284 B | CRC32 `933c9b82`, SHA-256 `6eb001ed…e188` |
 | `/ultima5/openu5-audio.bin` (optional) | 56,148 B patched | unchanged since Alpha 3 |
@@ -76,5 +76,5 @@ The image is a Debug build with the Developer menu (Alt+D), by decision (`ALPHA4
 ## 8. Validation
 
 - **Host:** **191 / 191**, serial, 164.44 s, in a fresh build (`native/core/a4-close1-host-ctest.log`); the preservation goldens, screen goldens, parity corpora and drift tests 54 / 54 on their own. Every Alpha 4 batch was proven RED-first and by mutation (`ALPHA4_UI.md`, each batch's mutation section).
-- **Firmware guards:** recorded with the image (`ALPHA4_UI.md` §14.9).
+- **Firmware guards:** `a3_04a_hotpath_check`, `a3_04b_iram_check`, `a3_04f_image_check` GREEN; `check_app_budget` OK; every memory section equal to the A4-POLISH3 image the user ran (`ALPHA4_UI.md` §14.9).
 - **Hardware:** §2 above; the remaining session is `ALPHA4_UI.md` §14.7.

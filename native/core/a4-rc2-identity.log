@@ -1,0 +1,19 @@
+Alpha 4 RC2 image identity (read back), A4-CLOSE1
+608eb7005dcc88cab6ed8c020e3ad7050c9a711406650492407c7bb760801e95 *build-a4-rc2/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC2-Debug-Launcher.bin
+1046240 bytes 0xff6e0 ; free in the 1.25 MiB (0x140000) app partition: 264480 (20.2 %)
+Launcher allocation (image rounded up to 64 KiB): 1048576 B (1024 KiB); next 64 KiB step 2336 B away
+['4.0.0-alpha4-rc2-debug']
+commit hash 24c666e1ba13 present: True ; "24c666e1ba13-dirty" present: False
+launcher byte-identical to build-a4-rc2/openu5_tdeck.bin: True
+HEAD at build: 24c666e1ba13d455b367878c0b594438f809071f
+tracked changes at build: ''
+historical, re-hashed: 67100a519f833def372227ec7274305ecb7c4976de2ea75b9d76e3d0dbf8145a build-a4-rc1/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC1-Debug-Launcher.bin
+historical, re-hashed: ea8ce9d513c68fc4b31ab3ba01c490a4faa1ac29aa0926bb11d986f717affcee build-a4-enh1-final/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-enh1-Debug-Launcher.bin
+historical, re-hashed: d310fa647fd6976c62ce573c4498df154a2e9a92009f469f06033a99d5ff8e09 build-a4-enh2-final/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-enh2-Debug-Launcher.bin
+historical, re-hashed: 401541093fe645de03d4ff89ebb555b004f741cd47e4ac58fe08f342b717b6ca build-a4-polish3/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-polish3-Debug-Launcher.bin
+historical, re-hashed: 1d57efcefec3eec385a36b753f1e57a4d4825d3b03ab3726f30ab14737be3a44 build-a4-ui4-hf1/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-ui4-hf1-Debug-Launcher.bin
+historical, re-hashed: 72fc1aeebf37db8ca5761cb24fc62ae5689683db8bc462ccc3bf40bd4a1dd306 build-a4-parity1/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-parity1-Debug-Launcher.bin
+historical, re-hashed: 4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1 build-a3-rc1-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin
+pack openu5-alpha1-resources.bin 2266819 85b38994eea674e48338d744091c6b895b9507a286bb38bcc84231131feed01e
+pack openu5-assets.bin 132284 6eb001ed2a7729e683896998f693d02aeaf1327f3cddd661d1c726ef7414e188
+pack openu5-audio.bin 56148 28c1533b7b061da183c866b9735500483be69a9a1de22e280e0b7471f41aa6d3
