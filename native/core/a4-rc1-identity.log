@@ -1,0 +1,15 @@
+Alpha 4 RC1 image identity (read back)
+67100a519f833def372227ec7274305ecb7c4976de2ea75b9d76e3d0dbf8145a *build-a4-rc1/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC1-Debug-Launcher.bin
+1033232 bytes 0xfc410 ; free in the 1 MiB app partition: 15344
+['4.0.0-alpha4-rc1-debug']
+['aae348ac32d3']
+Git line: 'Git aae348ac32d3' -- no '-dirty' suffix (the only '-dirty' bytes in the image are the log strings 'value-dirty' / 'input-dirty', alpha_runtime.cpp:2094/2654; the pre-commit image carried 'Git 48bd39effb0b-dirty')
+launcher byte-identical to build-a4-rc1/openu5_tdeck.bin: True
+bytes differing from the PARITY1 pre-commit image (same size 1,033,232 B): 124,264 -- the version string is 4 bytes shorter ('rc1' vs 'parity1'), so .rodata from 0x30 on shifts by 4 (e.g. 'value-dirty' at 61825 -> 61821) and every later reference moves; the section diff (a4-rc1-fw-size-diff.log) is empty
+HEAD at build: aae348ac32d3d31c3026499d58fbfa0d467afaf4
+tracked changes at build: ''
+historical, unchanged: 1d57efcefec3eec385a36b753f1e57a4d4825d3b03ab3726f30ab14737be3a44 build-a4-ui4-hf1/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-ui4-hf1-Debug-Launcher.bin
+historical, unchanged: 72fc1aeebf37db8ca5761cb24fc62ae5689683db8bc462ccc3bf40bd4a1dd306 build-a4-parity1/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-parity1-Debug-Launcher.bin
+pack openu5-alpha1-resources.bin 2266819 85b38994eea674e48338d744091c6b895b9507a286bb38bcc84231131feed01e
+pack openu5-assets.bin 132284 6eb001ed2a7729e683896998f693d02aeaf1327f3cddd661d1c726ef7414e188
+pack openu5-audio.bin 56148 28c1533b7b061da183c866b9735500483be69a9a1de22e280e0b7471f41aa6d3

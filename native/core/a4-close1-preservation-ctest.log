@@ -1,0 +1,113 @@
+Test project C:/Dev/OpenU5-Native/native/core/build-a4-close1
+      Start  12: movement_flow_parity
+ 1/54 Test  #12: movement_flow_parity .......................   Passed    0.14 sec
+      Start  15: shop_parity
+ 2/54 Test  #15: shop_parity ................................   Passed    0.30 sec
+      Start  17: dialogue_parity
+ 3/54 Test  #17: dialogue_parity ............................   Passed    0.43 sec
+      Start  18: transport_flow_parity
+ 4/54 Test  #18: transport_flow_parity ......................   Passed    0.02 sec
+      Start  20: dungeon_flow_parity
+ 5/54 Test  #20: dungeon_flow_parity ........................   Passed    0.02 sec
+      Start  21: world_flow_parity
+ 6/54 Test  #21: world_flow_parity ..........................   Passed    0.19 sec
+      Start  22: dungeon_parity
+ 7/54 Test  #22: dungeon_parity .............................   Passed    0.53 sec
+      Start  23: advanced_combat_parity
+ 8/54 Test  #23: advanced_combat_parity .....................   Passed    1.11 sec
+      Start  24: magic_parity
+ 9/54 Test  #24: magic_parity ...............................   Passed    0.07 sec
+      Start  25: combat_parity
+10/54 Test  #25: combat_parity ..............................   Passed    0.35 sec
+      Start  26: combat_negate_parity
+11/54 Test  #26: combat_negate_parity .......................   Passed    0.21 sec
+      Start  27: item_parity
+12/54 Test  #27: item_parity ................................   Passed    0.48 sec
+      Start  28: command_parity
+13/54 Test  #28: command_parity .............................   Passed    0.18 sec
+      Start  29: core_parity
+14/54 Test  #29: core_parity ................................   Passed    0.02 sec
+      Start  30: travel_parity
+15/54 Test  #30: travel_parity ..............................   Passed    0.21 sec
+      Start  31: turn_parity
+16/54 Test  #31: turn_parity ................................   Passed    0.04 sec
+      Start  50: batch23_vault_parity
+17/54 Test  #50: batch23_vault_parity .......................   Passed    0.05 sec
+      Start  51: batch24_reload_parity
+18/54 Test  #51: batch24_reload_parity ......................   Passed    0.11 sec
+      Start  59: batch30_sleep_parity
+19/54 Test  #59: batch30_sleep_parity .......................   Passed    0.05 sec
+      Start  99: a3_hf2_ambient_parity
+20/54 Test  #99: a3_hf2_ambient_parity ......................   Passed    0.19 sec
+      Start 101: a3_04f_render_runtime
+21/54 Test #101: a3_04f_render_runtime ......................   Passed    0.29 sec
+      Start 102: a4_ui1_chrome_runtime
+22/54 Test #102: a4_ui1_chrome_runtime ......................   Passed    0.13 sec
+      Start 113: a4_enh1_preservation
+23/54 Test #113: a4_enh1_preservation .......................   Passed    0.01 sec
+      Start 115: a4_enh1_preservation_runtime
+24/54 Test #115: a4_enh1_preservation_runtime ...............   Passed    0.25 sec
+      Start 117: a4_enh2_preservation
+25/54 Test #117: a4_enh2_preservation .......................   Passed    0.02 sec
+      Start 119: a4_enh2_preservation_runtime
+26/54 Test #119: a4_enh2_preservation_runtime ...............   Passed    0.74 sec
+      Start 129: a4_parity1_runtime
+27/54 Test #129: a4_parity1_runtime .........................   Passed    0.11 sec
+      Start 140: a3_hf10_mix_parity_runtime
+28/54 Test #140: a3_hf10_mix_parity_runtime .................   Passed    0.14 sec
+      Start 164: gameplay_parity
+29/54 Test #164: gameplay_parity ............................   Passed    9.98 sec
+      Start 165: outdoor_table_drift
+30/54 Test #165: outdoor_table_drift ........................   Passed    0.13 sec
+      Start 166: gem_category_table_drift
+31/54 Test #166: gem_category_table_drift ...................   Passed    0.11 sec
+      Start 167: movement_flow_drift
+32/54 Test #167: movement_flow_drift ........................   Passed    7.19 sec
+      Start 168: quest_parity
+33/54 Test #168: quest_parity ...............................   Passed    7.26 sec
+      Start 169: quest_case_table_drift
+34/54 Test #169: quest_case_table_drift .....................   Passed    0.18 sec
+      Start 170: typescript_shop_fixture_drift
+35/54 Test #170: typescript_shop_fixture_drift ..............   Passed    1.61 sec
+      Start 171: typescript_shop_flow_drift
+36/54 Test #171: typescript_shop_flow_drift .................   Passed    5.45 sec
+      Start 172: typescript_shop_tables_drift
+37/54 Test #172: typescript_shop_tables_drift ...............   Passed    0.10 sec
+      Start 173: typescript_shop_greetings_drift
+38/54 Test #173: typescript_shop_greetings_drift ............   Passed    0.10 sec
+      Start 174: persistence_parity
+39/54 Test #174: persistence_parity .........................   Passed    0.88 sec
+      Start 175: typescript_dialogue_fixture_drift
+40/54 Test #175: typescript_dialogue_fixture_drift ..........   Passed   10.56 sec
+      Start 176: typescript_transport_flow_fixture_drift
+41/54 Test #176: typescript_transport_flow_fixture_drift ....   Passed    0.29 sec
+      Start 177: typescript_dungeon_flow_fixture_drift
+42/54 Test #177: typescript_dungeon_flow_fixture_drift ......   Passed    4.02 sec
+      Start 179: typescript_world_flow_fixture_drift
+43/54 Test #179: typescript_world_flow_fixture_drift ........   Passed    1.15 sec
+      Start 180: typescript_dungeon_fixture_drift
+44/54 Test #180: typescript_dungeon_fixture_drift ...........   Passed   33.29 sec
+      Start 181: typescript_advanced_combat_fixture_drift
+45/54 Test #181: typescript_advanced_combat_fixture_drift ...   Passed    4.42 sec
+      Start 182: typescript_magic_fixture_drift
+46/54 Test #182: typescript_magic_fixture_drift .............   Passed    0.26 sec
+      Start 183: typescript_combat_fixture_drift
+47/54 Test #183: typescript_combat_fixture_drift ............   Passed    2.74 sec
+      Start 184: typescript_combat_negate_fixture_drift
+48/54 Test #184: typescript_combat_negate_fixture_drift .....   Passed    1.80 sec
+      Start 185: typescript_item_fixture_drift
+49/54 Test #185: typescript_item_fixture_drift ..............   Passed    1.93 sec
+      Start 186: typescript_command_fixture_drift
+50/54 Test #186: typescript_command_fixture_drift ...........   Passed    1.41 sec
+      Start 187: typescript_travel_fixture_drift
+51/54 Test #187: typescript_travel_fixture_drift ............   Passed    2.22 sec
+      Start 188: typescript_fixture_drift
+52/54 Test #188: typescript_fixture_drift ...................   Passed    0.21 sec
+      Start 189: typescript_turn_fixture_drift
+53/54 Test #189: typescript_turn_fixture_drift ..............   Passed    0.94 sec
+      Start 191: a3_02_sfx_reference_drift
+54/54 Test #191: a3_02_sfx_reference_drift ..................   Passed    0.11 sec
+
+100% tests passed out of 54
+
+Total Test time (real) = 104.81 sec

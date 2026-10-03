@@ -26,8 +26,11 @@ endif()
 # never shares a name or an FW line with the RC1 image. A4-ENH2 (Custom
 # difficulty, tuned presets, dungeon and starvation rules, more cheats,
 # section 11) sets 4.0.0-alpha4-enh2-debug. A4-POLISH3 (the keyboard
-# backlight setting, section 13) sets 4.0.0-alpha4-polish3-debug.
-set(PROJECT_VER "4.0.0-alpha4-polish3-debug")
+# backlight setting, section 13) set 4.0.0-alpha4-polish3-debug. The Alpha 4
+# closeout (A4-CLOSE1, section 14) sets 4.0.0-alpha4-rc2-debug: the final
+# Alpha 4 release CANDIDATE (A4-POLISH3's source, version line only), so it
+# never shares a name or an FW line with the superseded RC1 image.
+set(PROJECT_VER "4.0.0-alpha4-rc2-debug")
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(openu5_tdeck)
 

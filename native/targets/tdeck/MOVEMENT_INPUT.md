@@ -86,6 +86,10 @@ acceleration. The Settings row "Trackball speed: N/10" picks the row of
 | 9 | 1 | 20 ms | 12 ms |
 | 10 | 1 | none | 12 ms (exactly the old 100 %) |
 
+*A4-CLOSE1 (2026-10-02): hardware PASS -- the click toggles at once and the
+speed model feels substantially better; the table is accepted for Alpha 4 as it
+stands, still adjustable later (`ALPHA4_UI.md` section 14.2).*
+
 `settings.json` gains `trackballSpeed` (1..10); a file without it takes the
 default whatever its old percentage said (the model changed), and
 `trackballResponsiveness` is still written, unchanged, for older firmware.

@@ -1,0 +1,11 @@
+Alpha 4 A4-ENH2 test image identity (read back)
+d310fa647fd6976c62ce573c4498df154a2e9a92009f469f06033a99d5ff8e09 *build-a4-enh2-final/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-enh2-Debug-Launcher.bin
+1044864 bytes 0xff180 ; free in the 1 MiB app partition: 3712
+[b'4.0.0-alpha4-enh2-debug']
+['dc61bc64d5b1']
+dirty marker next to the hash: False
+launcher byte-identical to build-a4-enh2-final/openu5_tdeck.bin: True
+HEAD at build: dc61bc64d5b1a326cc79e17e4fef80925c5e40a8
+tracked changes at build: ''
+historical, unchanged: ea8ce9d513c68fc4b31ab3ba01c490a4faa1ac29aa0926bb11d986f717affcee build-a4-enh1-final/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-enh1-Debug-Launcher.bin
+historical, unchanged: 67100a519f833def372227ec7274305ecb7c4976de2ea75b9d76e3d0dbf8145a build-a4-rc1/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC1-Debug-Launcher.bin

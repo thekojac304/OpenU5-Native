@@ -1,0 +1,80 @@
+# OpenU5 T-Deck Plus — Alpha 4 (release candidate 2)
+
+**Status: ALPHA 4 RC2 — RELEASE CANDIDATE; ONE HARDWARE SESSION OWED (2026-10-02).** Not a release yet.
+- **Candidate image:** `OpenU5-TDeck-Alpha4.0.0-alpha4-RC2-Debug-Launcher.bin`, `FW 4.0.0-alpha4-rc2-debug` — size, SHA-256 and `Git` in §5 (recorded after the build).
+- **What it is:** A4-POLISH3's firmware with a new version line. Everything Alpha 4 set out to do is implemented, host-verified and committed (`native/targets/tdeck/ALPHA4_UI.md` §14.4).
+- **What is still owed:** one hardware session on this image (`ALPHA4_UI.md` §14.7): A4-PARITY1's gameplay fixes, the save-slot pages (A4-SAVE2 / A4-UI3), the PC save import / export on the device (A4-SAVE3) and the RC heap capture. Those were never run on a T-Deck. If they pass, the project convention (Alpha 2, Alpha 3) is to promote this exact image unchanged.
+- **RC1** (`aae348ac`, `FW 4.0.0-alpha4-rc1-debug`, SHA-256 `67100a51…145a`) is superseded: its session never ran, and RC2 carries everything since.
+- Alpha 3 (tag `alpha3-release`, [`ALPHA3.md`](ALPHA3.md)) is the current release.
+
+## 1. What Alpha 4 is
+
+Alpha 3's complete game with a finished front end, real save management, the original ending, a parity sweep, and optional conveniences that leave the 1988 rules alone unless chosen:
+- **Presentation (A4-UI1, UI2, UI4/PRES1):** the "More Ultima V" chrome in the original's EGA palette and IBM.CH font; the title's credits; the console with bullets, turn rows and the wave cursor; reverse-video lists; the moongate transit; the original's console echoes.
+- **Saves (A4-SAVE1, SAVE2, UI3):** three manual slots, each a two-generation pair that never overwrites the generation Continue restored; two-row slot pages with CURRENT / LATEST / RECOVERED.
+- **PC save transfer (A4-SAVE3):** import a DOS `SAVED.GAM` + `SAVED.OOL` into a slot, export a slot back (title → **P**).
+- **The ending (A4-END1):** ENDGAME.OVL played in full: the throne room, the box questions, the dissolve, the six story pages, the final scroll.
+- **Parity (A4-PARITY1):** the palace crown gate, the worn crown as time spell 0x1c, Negate against enemy magic, the dungeon's command keys, the well's wish.
+- **Enhancements (A4-ENH1, ENH2, POLISH3):** the trackball click toggles WASD Mode; trackball speed levels; System Menu **Difficulty** (Original / Relaxed / Easy / Custom) and **Cheats** (Party / Inventory / World); Alt+D opens the Developer menu (no longer a menu row); a Keyboard Backlight setting.
+
+**Original stays original.** With Difficulty **Original**, no cheat and no World toggle — the default for every new journey and every older save — the game is the recreated 1988 game: goldens recorded before each enhancement reproduce bit for bit, and the parity corpus is unchanged (`ALPHA4_UI.md` §10.9, §11.10).
+
+## 2. Hardware validation so far
+
+| Track | Device result |
+|---|---|
+| A4-UI2, A4-SAVE1, A4-END1, A4-UI4/PRES1 | **PASS** (`ALPHA4_UI.md` §2.8, §3.6, §7.19, §8.22.8) |
+| A4-ENH1 (trackball), A4-POLISH3 (keyboard light) | **PASS** (the user, 2026-10-02, §14.2) |
+| A4-ENH2 | cheats **PASS**; difficulty rules **accepted as implemented**, balance adjustable later (§14.2) |
+| A4-PARITY1, A4-SAVE2, A4-UI3, A4-SAVE3, the heap capture | **not yet run** — the RC2 session (§14.7) |
+| A4-SAVE3's real-DOS round trip | optional; without it the PC bridge is **host-validated only** |
+
+## 3. Known differences carried forward
+
+Documented, non-blocking, and not Alpha 4 work (`ALPHA4_UI.md` §14.5, ledger §4): the healer and the Refuge skip the 1988 resurrection penalty (D-83, D-84); the location-29 trapdoor takes the whole roster (D-85); a dungeon digit key on an invalid member passes a turn (D-86); crops can push food past 9,999 (D-87); combat does not advance the clock (D-88); the naval OUCH's damage routine is to be adjudicated (D-89); a new game lacks INIT.OOL's underworld skiff and bodies (D-82); and the older minor rows. Deferred by decision: a softer death penalty (waits on D-83 / D-84), Advanced Cheats, the credits curtain, story plates and title figures, WASD in the frontend menus (D-1).
+
+## 4. Installing or updating
+
+- **Firmware:** copy the Launcher image to the card and install it from Launcher (**SD** → the file). Launcher sizes its own partition from the image (rounded up to 64 KiB, §5); the ESP-IDF partition table is not used (`native/targets/tdeck/LAUNCHER.md`).
+- **Game packs — changed since Alpha 3.** Alpha 4 needs the A4-END1 resource pack: `/ultima5/openu5-alpha1-resources.bin`, **2,266,819 B**, CRC32 `5c0d175d`, SHA-256 `85b38994eea674e48338d744091c6b895b9507a286bb38bcc84231131feed01e` (`npm run pack:alpha1`). The tiles pack (`openu5-assets.bin`, 132,284 B, CRC32 `933c9b82`) and the optional audio pack are unchanged. The firmware refuses any other resource pack.
+- **Back up `ultima5/`** (saves and settings) before the first boot of a new image.
+
+| Coming from | What to do |
+|---|---|
+| Any Alpha 4 image from A4-END1 on | Flash only; no pack recopy. |
+| Alpha 3, or an Alpha 4 image before A4-END1 | Flash, and copy the 2,266,819 B resource pack. |
+
+## 5. Files
+
+| File | Size | Identity |
+|---|---:|---|
+| `native/targets/tdeck/build-a4-rc2/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC2-Debug-Launcher.bin` — **the candidate** | see `ALPHA4_UI.md` §14.9 | see `ALPHA4_UI.md` §14.9 |
+| `/ultima5/openu5-alpha1-resources.bin` | 2,266,819 B | CRC32 `5c0d175d`, SHA-256 `85b38994…d01e` |
+| `/ultima5/openu5-assets.bin` | 132,284 B | CRC32 `933c9b82`, SHA-256 `6eb001ed…e188` |
+| `/ultima5/openu5-audio.bin` (optional) | 56,148 B patched | unchanged since Alpha 3 |
+
+The image is a Debug build with the Developer menu (Alt+D), by decision (`ALPHA4_UI.md` §9.2).
+
+## 6. Saves and settings
+
+- **Slots:** Slot 1 is the pre-Alpha-4 pair `alpha1-g{0,1}.*` (no migration; Alpha 3 saves load as Slot 1); Slots 2 and 3 are `alpha1-s{2,3}-g{0,1}.*`. Continue loads the slot saved last; Alt+S / Alt+L use the current slot.
+- **Enhanced state** (difficulty, Custom values, God Mode, World toggles, the cheats-used mark) is kept in the save's sidecar only when it differs from the defaults; an older save is Original with no cheat. A PC export never carries it.
+- **`settings.json`** stays version 1 and gains two optional keys: `trackballSpeed` (1..10, default 5) and `keyboardBacklight` (0..4, default Off). An older file loads.
+- **PC transfer:** import reads `/ultima5/import/SAVED.{GAM,OOL}` (never written); export writes `/ultima5/export/slotN/`. Town NPC tables and dungeon saves are not bridged (`ALPHA4_UI.md` §5.9).
+
+## 7. Controls added in Alpha 4
+
+| Input | Action |
+|---|---|
+| Trackball click | toggle Movement (WASD) Mode at once |
+| Settings → Trackball speed 1–10 / Keyboard Backlight Off–Max | device preferences, saved in `settings.json` |
+| `Alt+M` → Difficulty / Cheats | the optional rules and conveniences |
+| `Alt+D` | Developer menu (in the game and on the title screens; no longer a menu row) |
+| Title → **P** | PC Save Transfer |
+| Keyboard `Alt+B` | the keyboard's own light toggle (handled by the keyboard; the Settings level is re-applied at boot and on change) |
+
+## 8. Validation
+
+- **Host:** **191 / 191**, serial, 164.44 s, in a fresh build (`native/core/a4-close1-host-ctest.log`); the preservation goldens, screen goldens, parity corpora and drift tests 54 / 54 on their own. Every Alpha 4 batch was proven RED-first and by mutation (`ALPHA4_UI.md`, each batch's mutation section).
+- **Firmware guards:** recorded with the image (`ALPHA4_UI.md` §14.9).
+- **Hardware:** §2 above; the remaining session is `ALPHA4_UI.md` §14.7.

@@ -8,7 +8,20 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
-> ### CURRENT STATE (Alpha 3 release, 2026-09-28) — ALPHA 3 RELEASED; the RC1 image promoted byte for byte; RC1 heap gate PASSED, A3-04H deferred; no code changed; 0 release blockers; read this first
+> ### CURRENT STATE (Alpha 4 closeout A4-CLOSE1, 2026-10-02) — ALPHA 4 IMPLEMENTATION COMPLETE; final candidate RC2 built; one RC hardware session owed; known parity divergences tracked separately; read this first
+>
+> **A reconciliation batch: documents, evidence and the version line only.** The full record is [`ALPHA4_UI.md`](ALPHA4_UI.md) §14; the classification is the section "Alpha 4 A4-CLOSE1" at the end of this file.
+>
+> | | |
+> |---|---|
+> | Implementation | **complete**: A4-UI1 – UI4/PRES1, SAVE1 – SAVE3, END1, PARITY1, ENH1, ENH2, FLASH1, POLISH3 — every track built, host-verified and committed (`ALPHA4_UI.md` §14.4) |
+> | Hardware recorded | UI2, SAVE1, END1, UI4/PRES1 PASS (earlier); **A4-ENH1 PASS, A4-ENH2 cheats PASS / rules accepted, A4-POLISH3 PASS** (the user, 2026-10-02, §14.2) |
+> | Hardware owed | **one session on the RC2 image** (§14.7): PARITY1 (D-50, D-78 – D-81), the SAVE2 / UI3 slot pages, SAVE3 on the device, the Alpha 4 RC heap capture. RC1's §9.18 session was never run; RC1 is superseded |
+> | Known divergences | D-82 – D-89 and the older open rows: documented, non-blocking, not Alpha 4 work (§14.5) |
+> | Release blockers | **0** in software; the RC2 hardware session is the gate before a release |
+> | Release image | none yet; RC2 is the candidate (§14.9) |
+
+> ### PRIOR STATE (Alpha 3 release, 2026-09-28) — ALPHA 3 RELEASED; the RC1 image promoted byte for byte; RC1 heap gate PASSED, A3-04H deferred; no code changed; 0 release blockers — **superseded as the current state by the Alpha 4 closeout block above; kept as history**
 >
 > **The closeout batch: documents and evidence only.** Phase A3-RC1 passed on the device and the RC heap capture was adjudicated, so the RC1 image is the Alpha 3 release (tag **`alpha3-release`**; `alpha3-rc1` stays on the source commit `f85575b96f05`). Release notes: [`../../../ALPHA3.md`](../../../ALPHA3.md). No deferred parity row was reopened.
 >
@@ -8728,6 +8741,7 @@ The enhancement pass on top of the Alpha 4 RC1 commit (`aae348ac`). The full wri
 
 - E-8 – E-11 new (ledger §3); E-4 superseded for the trackball by E-9; E-2 keeps every function, loses its menu rows.
 - All **hardware pending** (ALPHA4_UI.md §10.13); every tuning value provisional.
+- *A4-CLOSE1 (2026-10-02): E-8, E-9 hardware **PASS**, the trackball table accepted; E-10 **PASS** (the cheat system); E-11 accepted as implemented (ALPHA4_UI.md §14.2). Recorded beside the batch's own line, not in place of it.*
 
 ## Alpha 4 A4-ENH2 — Custom difficulty, tuned presets, dungeon and starvation rules, more cheats
 
@@ -8761,3 +8775,35 @@ The follow-up to A4-ENH1 (`5e0a16eb`). The full write-up is [`ALPHA4_UI.md`](ALP
 
 - E-12, E-13 new (ledger §3); D-83 – D-89 new (ledger §4).
 - All **hardware pending** (ALPHA4_UI.md §11.14); every tuning value provisional.
+- *A4-CLOSE1 (2026-10-02): E-13 hardware **PASS** (the cheat system); E-12 **accepted as implemented**, balance adjustable later (ALPHA4_UI.md §14.2). D-83 – D-89 unchanged: carried forward as known divergences (§14.5).*
+
+## Alpha 4 A4-CLOSE1 — closeout reconciliation and the final release candidate
+
+A documentation and release-engineering batch on `b242735f`. The full write-up is [`ALPHA4_UI.md`](ALPHA4_UI.md) §14; this section records the classification on its own axis. No production code changed (`PROJECT_VER` only), no row was fixed, no completed batch reopened.
+
+### 1. Items and classification
+
+| # | Item | Class | Outcome |
+|---|---|---|---|
+| 1 | A4-ENH1 hardware (the click, the speed model, the trackball overall) | **hardware result** (the user, 2026-10-02) | PASS; `kTrackballLevels` accepted for Alpha 4 |
+| 2 | A4-ENH2 hardware (the cheats; the difficulty rules) | **hardware result / decision** | cheats PASS; rules accepted as implemented, balance adjustable later |
+| 3 | A4-POLISH3 hardware (every level, at once, persistence, input, TFT, Alt+B) | **hardware result** | PASS; duties accepted |
+| 4 | Ledger D-53's last column still read `Direction?` "HARDWARE PENDING" | **stale record** | PASS at A4-UI4's closeout (ALPHA4_UI.md §8.22.8); annotated, struck |
+| 5 | Ledger D-76 still read "retest pending" | **stale record** | PASS §8.22.8; annotated |
+| 6 | Ledger D-2 ("the click is unbound — should it be Confirm?") | **stale record**: answered by A4-ENH1's design | the click is the Movement Mode toggle (E-8), PASS; struck |
+| 7 | A4-SAVE2, A4-UI3, A4-SAVE3 on the device; PARITY1's D-50, D-78 – D-81; the RC heap capture | **genuinely untested on hardware** (committed, host-verified) | the RC2 session (ALPHA4_UI.md §14.7) |
+| 8 | D-74, the arena's single `Cast...`, the END1 revival, the real-DOS round trip, the boot log's `flash=` line | **untested, optional** | optional steps of the RC2 session |
+| 9 | D-82 – D-89 and the older open rows | **known parity divergences**, non-blocking | carried forward; next parity batch ALPHA4_UI.md §14.5 |
+| 10 | Death-penalty softening, Advanced Cheats, the frontend trio, D-1, a Release build | **intentionally deferred** | unchanged |
+| 11 | The RC1 image (`aae348ac`) | **superseded** | its §9.18 session never ran; RC2 = A4-POLISH3's source + `PROJECT_VER 4.0.0-alpha4-rc2-debug` |
+
+### 2. Evidence
+
+- Host suite, preservation goldens, firmware guards and the RC2 image: ALPHA4_UI.md §14.8, §14.9 (`native/core/a4-close1-*.log`, `a4-rc2-*.log`).
+- The twenty image logs left untracked for their hardware results (RC1, A4-ENH1, A4-ENH2) are committed with this record.
+
+### 3. Rows
+
+- E-8 – E-13: hardware PASS / accepted (ledger §3). D-2, D-53 struck; D-76 annotated.
+- D-50, D-78 – D-81 (and D-4): software fixed, hardware pending (the RC2 session).
+- D-82 – D-89: open, non-blocking, unchanged.

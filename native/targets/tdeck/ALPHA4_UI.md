@@ -2,6 +2,8 @@
 
 Alpha 4 is a UI/presentation track on top of the released Alpha 3 (`alpha3-release`, `eb1bf5e7`). Each batch keeps its own section; a finding is recorded where it was made and not merged into an earlier batch's conclusion.
 
+> **Current state (A4-CLOSE1, 2026-10-02) — read §14 first.** Alpha 4's implementation is complete and host-verified (every track, §14.4). The final release candidate is **RC2** (`4.0.0-alpha4-rc2-debug`, A4-POLISH3's source with a new version line; image in §14.9). Known parity divergences (D-82 – D-89 and the older open rows) are tracked separately (§14.5) and are not unfinished Alpha 4 work. What remains is **one hardware session on the RC2 image** (§14.7): the PARITY1 fixes, the SAVE2 / UI3 slot pages, SAVE3 on the device and the RC heap capture have never been run on a T-Deck. Every "pending" in §2 – §13 is the status as that batch wrote it; §14.3 classifies each one.
+
 ## 1. UI Batch 1 (A4-UI1) — the "More Ultima V" chrome
 
 Three commits: `4c8f8a17` (A, IBM.CH in the resource pack), `aebd9af0` (B, the chrome), `9ab2564e` (C, goldens). The code comments of UI1 already point at this file, but UI1 did not write its section. Its record is those three commit messages and the `native/core/a4-ui1-*.log` evidence logs.
@@ -736,6 +738,8 @@ Do the steps in order. Each needs only the T-Deck, except steps 0, 2, 8 and 11, 
 | Hardware validation (§4.11) | **pending** |
 | Closed (commit, post-commit image, hardware PASS, closeout) | **no** |
 
+*A4-CLOSE1 (2026-10-02): committed in `d6457ab1` (with A4-END1); still no hardware result of its own. Its checks are part 4 of the RC2 session (§14.7).*
+
 ## 5. A4-SAVE3 — original PC save import / export
 
 The preservation goal: a save written by the original PC/DOS Ultima V can be brought into a Native slot, and a Native slot can be written back out as files the DOS game loads. This section is the compatibility contract. §5.1–§5.5 are the investigation, done before any production code changed; §5.6 onward is what was built on it.
@@ -1053,6 +1057,8 @@ native/core/build-a4-save3/a4_save3_pc_bridge_runtime.exe native/assets/openu5-a
 
 *2026-09-30 (A4-UI3):* the real DOS round trip may be run on the A4-UI3 image (§6.13, checklist §6.14 B). UI3 does not touch the bridge, the import/export paths or serialization; only the PC pickers' rows changed.
 
+*A4-CLOSE1 (2026-10-02): committed in `d6457ab1`; never run on a device. The device import / export is part 5 of the RC2 session (§14.7); the real-DOS round trip stays optional, and without it the release notes say "PC bridge host-validated only".*
+
 ## 6. A4-UI3 — save / load UX
 
 A compact presentation pass over the A4-SAVE1/SAVE2/SAVE3 save system. **The save architecture is unchanged:** three player-visible logical slots, each backed by two hidden recovery generations; Continue's order and fallback (§4.4); manual Load never crosses to another slot; the PC Save Transfer bridge and its flow (§5); no new files, metadata, serialization or dirty-state tracking. The audit's own axis is `GAMEPLAY_INTEGRATION_AUDIT.md`, "Alpha 4 A4-UI3".
@@ -1253,6 +1259,8 @@ An interim build (`native/targets/tdeck/build-a4-ui3`, `native/core/a4-ui3-fw-{c
 | Hardware (§6.14 A) | **pending** |
 | A4-SAVE3 real DOS round trip (§6.14 B, §5.15) | **pending** |
 | Closed (commit, tag, PASS) | **no** — nothing committed or tagged, as for A4-SAVE2 / A4-SAVE3 |
+
+*A4-CLOSE1 (2026-10-02): committed in `d6457ab1`; still no hardware result of its own (the slot rows were seen during the END1 and UI4 sessions, but never recorded, §8.21). Part 4 of the RC2 session (§14.7).*
 
 ## 7. A4-END1 — the full ending
 
@@ -2464,6 +2472,8 @@ One session, about 2 hours (plus an optional DOS round trip), on **the RC image*
 | A4-UI4/PRES1 | **closed**: hf1 retest PASS (§8.22.8); committed alone as `48bd39ef`; its hf1 image untouched |
 | Closed (commit, tag, push, flash) | **committed** on top of `48bd39ef` after the revalidation of §9.20; not tagged, pushed or flashed |
 
+*A4-CLOSE1 (2026-10-02): the §9.18 session was never run on the RC1 image (`aae348ac`, SHA-256 `67100a51…145a`). RC1 is superseded as the hardware candidate by RC2 (§14.9), which carries everything since (A4-ENH1, A4-ENH2, A4-FLASH1, A4-POLISH3). §14.7 is §9.18 retargeted to RC2, with the parts already settled struck. D-50 and D-78 – D-81 stay hardware pending until that session.*
+
 ### 9.20 Separation from A4-UI4/PRES1 and revalidation (2026-10-01)
 
 PARITY1 was developed on the uncommitted UI4/PRES1 + hf1 tree. UI4/PRES1 had to be committed on its own first, after its hardware retest. This is how the two were split and joined again.
@@ -2722,6 +2732,8 @@ On the ENH1 image (`native/targets/tdeck/build-a4-enh1-final/launcher/OpenU5-TDe
 
 *Update (A4-ENH2, 2026-10-01): the user reports that the A4-ENH1 image passed real-device testing and that the trackball feels substantially better (§11.1); no per-line results for §10.13 were given.*
 
+*Update (A4-CLOSE1, 2026-10-02): hardware **PASS**, recorded in §14.2. The click toggles WASD Mode at once; the speed model feels substantially better and the trackball's behaviour is acceptable, so `kTrackballLevels` is accepted for Alpha 4 as it stands (still adjustable later). The cheats work on hardware; the difficulty presets are accepted as implemented (superseded by A4-ENH2's rows). The PENDING in the §10.13 heading and the table above is the status as this batch wrote it.*
+
 ## 11. A4-ENH2 — Custom difficulty, tuned presets, dungeon and starvation rules, more cheats (2026-10-01)
 
 The follow-up to A4-ENH1 (§10), on top of its last commit (`5e0a16eb`), in eight commits. It extends the enhancement framework without touching the Original game. **Status: implemented and host-verified; firmware-build verified; hardware validation PENDING; every tuning value PROVISIONAL; subjective balance not final.** Nothing here is declared closed until the device run of §11.14.
@@ -2967,6 +2979,8 @@ The investigation found these on its way; each is recorded where it belongs, non
 | Hardware | **PENDING** (§11.14) |
 | Commit / tag / push | committed; not tagged, not pushed, not flashed |
 
+*Update (A4-CLOSE1, 2026-10-02): hardware **accepted**, recorded in §14.2. The cheat system works on hardware. The user is comfortable proceeding with the difficulty implementation as it is, so the presets and the Custom choices are **accepted for Alpha 4**; exhaustive subjective balance testing is not an Alpha 4 gate, and every value stays adjustable in a later version (`kGameplayRules`, `kRuleChoices`). No per-line results for §11.14 were given. The PENDING and PROVISIONAL above are the status as this batch wrote it.*
+
 ## 12. A4-FLASH1 — flash budget and the app partition (2026-10-02)
 
 A4-ENH2 left 3,712 B of the 1 MiB app partition. Before the next feature (keyboard backlight), this batch traced where the ceiling comes from, how Launcher uses it, and made the smallest change the evidence supports. No gameplay, save, pack or runtime code changed; the image's memory sections are byte-for-byte A4-ENH2's.
@@ -3182,6 +3196,212 @@ Use a card with the A4-POLISH3 image. In System Menu > Settings > Keyboard Backl
 | Hardware | **PENDING** (§13.9) |
 | Deferred | duty tuning after the device run; syncing an Alt+B toggle back into the row (no read-back exists) |
 
+*Update (A4-CLOSE1, 2026-10-02): hardware **PASS**, recorded in §14.2 — §13.9 steps 1–10 as reported (step 11 is a fallback diagnostic, not needed: the light responded). The duties are accepted as they stand; no tuning was asked for. The PENDING above is the status as this batch wrote it.*
+
 ### 13.11 Image for the hardware run
 
 Post-commit build of `abba9c0f` (`a4-polish3-postcommit-*.log`): `native/targets/tdeck/build-a4-polish3/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-polish3-Debug-Launcher.bin`, **1,046,240 B (`0xff6e0`)**, SHA-256 `401541093fe645de03d4ff89ebb555b004f741cd47e4ac58fe08f342b717b6ca`, `FW 4.0.0-alpha4-polish3-debug`, `Git abba9c0ff137`. It is 16 B smaller than the pre-commit build only because its Git string lost `-dirty`. 264,480 B free; Launcher allocation 1,024 KiB (next step 2,337 B away). No SD pack change: the existing A4-END1 pack is the one to use. Not tagged; hardware PENDING (§13.9).
+
+## 14. A4-CLOSE1 — Alpha 4 closeout and the final release candidate (2026-10-02)
+
+A reconciliation batch: it records the hardware results reported since A4-ENH1, classifies every open status line in the Alpha 4 record, separates Alpha 4's own work from the parity divergences it found, and builds one clean final candidate. **No production code changed**: the only source edit is `PROJECT_VER` (`native/targets/tdeck/CMakeLists.txt`). No parity row was fixed, no completed batch reopened.
+
+### 14.1 Baseline
+
+- `main` at **`b242735f`** (A4-POLISH3's post-commit logs, on `abba9c0f`). Present, in order: A4-ENH1 (`fef1f9fe`..`5e0a16eb`), A4-ENH2 (`ad3d8258`..`dc61bc64`), A4-FLASH1 (`a07cae3e`, `1b59e9a8`), A4-POLISH3 (`abba9c0f`, `b242735f`). Tags: `alpha4-ui2-hardware-validated`, `alpha4-end1-hardware-validated`; nothing pushed.
+- Untracked: twenty image logs left for their hardware results — `native/core/a4-rc1-*.log` (8), `a4-enh1-image-*.log` (6), `a4-enh2-image-*.log` (6). No other untracked file. They are committed by this batch (§14.10): the A4-ENH1 / A4-ENH2 results are now recorded, and RC1 is superseded.
+- Latest flashable image before this batch: A4-POLISH3's, `build-a4-polish3/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-polish3-Debug-Launcher.bin`, 1,046,240 B (`0xff6e0`), SHA-256 `40154109…b6ca`, `FW 4.0.0-alpha4-polish3-debug`, `Git abba9c0ff137` (§13.11).
+
+### 14.2 Hardware results recorded (the user's report, 2026-10-02)
+
+Recorded as reported. Nothing beyond the report is claimed; where a checklist line was not itemised, the table says so. The images' `FW` / `Git` lines were not reported.
+
+**A4-ENH1 (§10.13), the trackball: PASS.**
+
+| Item | Result |
+|---|---|
+| A. The click toggles WASD Mode at once | **PASS** |
+| B. Movement with the new speed model | **PASS** — substantially better; `kTrackballLevels` accepted as it stands |
+| Trackball behaviour overall | **PASS** — acceptable on hardware |
+| A.3–A.6, B.7–B.14 line by line | not itemised; covered by the two statements above and the whole-image PASS of 2026-10-01 (§11.1) |
+| C (Developer entry), D (cheats), E (presets) | the whole-image PASS of 2026-10-01, not itemised; D is also covered by A4-ENH2's cheat PASS below; E is superseded by A4-ENH2's accepted rules |
+
+**A4-ENH2 (§11.14): accepted.**
+
+| Item | Result |
+|---|---|
+| C. The cheat system | **PASS** — works on hardware (not itemised per cheat) |
+| A, B, D. Difficulty, Custom, precedence | **ACCEPTED as implemented** — the user is comfortable proceeding with the current difficulty implementation; exhaustive subjective balance testing is not an Alpha 4 gate |
+| Tuning values (`kGameplayRules`, `kRuleChoices`) | **accepted for Alpha 4**; balance stays adjustable in a later version |
+
+**A4-POLISH3 (§13.9), the keyboard backlight: PASS.**
+
+| Step | Result |
+|---|---|
+| 1–5. Off / Low / Medium / High / Max | **PASS** — every level works |
+| 6. Applied at once | **PASS** |
+| 7. Keyboard input normal at every level | **PASS** |
+| 8. Persistence | **PASS** (reported as "persistence works"; the power-cut and plain-reboot variants were not itemised) |
+| 9. TFT brightness unaffected | **PASS** |
+| 10. Alt+B | **PASS** — acceptable |
+| 11. Serial fallback | not needed (the light responded) |
+
+The duties (0 / 32 / 127 / 191 / 255) are accepted; no tuning was asked for.
+
+### 14.3 Reconciliation: every open status line, classified
+
+Searched across this file, `ALPHA2_PRESERVATION_LEDGER.md`, `GAMEPLAY_INTEGRATION_AUDIT.md`, `ALPHA2_HARDWARE_CHECKLIST.md`, `LAUNCHER.md`, `MOVEMENT_INPUT.md`, `ALPHA3_AUDIO.md` and `PROJECT_HISTORY.md` for: pending, unrun, untested, not tested, hardware pending, retest pending, TODO, FIXME, open, deferred, unresolved, not validated, owed, provisional, RC1 hardware. Classes: **(1)** now PASS / closed; **(2)** intentionally deferred; **(3)** known parity divergence; **(4)** still genuinely untested; **(5)** historical wording, kept as written. A historical line is never rewritten; where its status moved, a dated note was added beside it.
+
+| Hit | Where | Class | Now |
+|---|---|---|---|
+| A4-ENH1 "hardware PENDING", "PROVISIONAL" | §10 opening, §10.4, §10.13, §10.15; ledger A4-ENH1 paragraph; audit A4-ENH1 rows; `MOVEMENT_INPUT.md` | **1** | PASS (§14.2); table accepted; notes added |
+| A4-ENH2 "hardware PENDING", "PROVISIONAL", "balance not final" | §11 opening, §11.4, §11.14, §11.17; ledger A4-ENH2 paragraph; audit A4-ENH2 rows | **1** | cheats PASS, rules accepted (§14.2); notes added |
+| A4-POLISH3 "PENDING", provisional duties | §13.3, §13.9, §13.10, §13.11 | **1** | PASS (§14.2); note added |
+| §10.14 "more cheats … none is implemented"; dungeon / starvation difficulty out of scope | §10.14 | **1** | done by A4-ENH2 (E-12, E-13) |
+| §11.16 "Flash: 3,712 B left" | §11.13, §11.16 | **1** | closed by A4-FLASH1 (already annotated) |
+| §11.16 "A4-ENH1's checklist was reported passed as a whole" | §11.16 | **1** | recorded, §14.2 |
+| §9.17 items 1–3 (UI4 retest, PARITY1's commit, the RC image) | §9.17 | **1** | done: `48bd39ef`, `544d7dd3`, RC1 `aae348ac`; RC1 now superseded by RC2 |
+| "UI4/PRES1 stays hardware-retest pending" | §9 baseline, §9.2 row 13; audit A4-PARITY1 intro | **1** (wording **5**) | PASS §8.22.8; kept as written |
+| D-53 "the `Direction?` half stays … HARDWARE PENDING" | ledger D-53, last column | **1** — stale | PASS §8.22.8; note added, row struck |
+| D-76 "retest pending" | ledger D-76 | **1** — stale | PASS §8.22.8; note added |
+| D-2 "Trackball centre click (GPIO 0) is unbound — should it be Confirm?" | ledger D-2; §8.11; §9.2 row 8 | **1** — stale | answered by A4-ENH1: the click is the Movement Mode toggle (E-8), hardware PASS; note added, row struck. D-1 stays a deferred decision |
+| `speaker_segment_frames` in flash (`a3_04b_iram_check` RED) | §8.11, §8.17 | **1** | fixed by A4-PARITY1 (NEW-3); GREEN on every image since |
+| D-4 (Mix underground) | ledger D-4 | **1** in software | answered by D-81; its hardware check rides with D-81 (class 4) |
+| D-50, D-78, D-79, D-80, D-81 "SOFTWARE FIXED — HARDWARE PENDING" | §9.19; ledger; audit A4-PARITY1 rows | **4** | RC2 session part 3 (§14.7) |
+| A4-SAVE2 "hardware validation pending" | §2.4 note, §4 opening, §4.12, §8.11, §8.21, §9.9 | **4** | RC2 session part 4; note added at §4.12 |
+| A4-UI3 "pending" | §6.14 A, §6.16; audit A4-UI3 | **4** | RC2 session part 4; note added at §6.16 |
+| A4-SAVE3 on the device "never tested" | §5.16, §6.14 B, §9.17; audit A4-SAVE3 | **4** | RC2 session part 5; note added at §5.16 |
+| A4-SAVE3 real-DOS round trip | §5.15, §6.14 B, §9.18 5.3 | **4**, optional | optional; without it the notes say "PC bridge host-validated only" |
+| The Alpha 4 RC heap capture "owed" | §9.17 | **4** | RC2 session part 6 (required) |
+| `SAVE_CATALOG` cold / warm times "never measured" | §9.17 | **4** | RC2 session part 4.9 (serial) |
+| D-74 and the arena's single `Cast...` | §8.22.8; ledger D-74; audit A4-UI4 rows | **4**, optional | optional step of the RC2 session; non-blocking (console text only) |
+| A4-END1's dead-companion revival "NOT PHYSICALLY TESTED" | §7.15, §7.18, §7.19; ledger D-54 / D-57 | **4**, optional | optional; its automated evidence stands |
+| Launcher version on the device; the boot log's `flash=` line | §12.4, §12.12 | **4**, optional | read once from the RC2 session's serial capture |
+| Death / resurrection softening | §11.7, §11.16; audit A4-ENH2 item 4 | **2** | waits on D-83 / D-84 |
+| Advanced Cheats (teleport, equipment, quest items); a bridge-troll toggle | §11.16 | **2** | not Alpha 4 |
+| Difficulty for arena fields, traps, hazards, the ship's hull; God Mode and scripted / status deaths and a Polymorph aimed at the party | §10.7, §10.14, §11.8 | **2** | deliberate scope |
+| Syncing Alt+B back into the Settings row | §13.10 | **2** | no read-back exists |
+| The credits curtain, the intro's story plates, the title's walking figures | §8.11, §9.2 row 6 | **2** | deferred past Alpha 4 by the user |
+| D-1 (WASD in the frontend menus) | ledger D-1, §9.2 row 8 | **2** | the user's deferred decision |
+| A Release (non-Debug) build | §9.2 row 10 | **2** | the RC stays Debug with the Developer menu, by the user's decision |
+| `-Os` / `CONFIG_LOG_VERSION_2` / table-encoding size candidates | §11.13, §12.8 | **2** | not needed (the free space of §14.9) |
+| D-82 – D-89, and the older open rows | ledger §4; §11.15; §9.8 | **3** | §14.5 |
+| Alt+S / Alt+L on the title act as Enter on the selected row | §10.14; audit A4-ENH1 item 7 | **3** (native routing quirk, pre-existing) | §14.5 |
+| §2.4 "deferred"; §3 "§2.4 stays deferred" | §2.4, §3 | **5** | implemented by A4-SAVE2 (§4) |
+| "Nothing committed or tagged" for SAVE2 / SAVE3 / UI3 | §4, §5.16, §6.16 | **5** | committed in `d6457ab1` (with A4-END1); notes added |
+| "pending the user's choice (§8.10)" | §8 opening | **5** | decided and implemented, §8.20 |
+| The hf1 image's pre-retest wording | §8.19, §8.22 | **5** | retest PASS §8.22.8 |
+| "RC1 … hardware session §9.18 pending" | §10.1, §10.14, §11.1; `CMakeLists.txt` comment | **5** | never run; superseded by RC2 (§14.7) |
+| §9.18 "proposed" | §9.18 | **5** | retargeted to RC2 as §14.7 |
+| Ledger batch paragraphs and totals for Alpha 2 / 3 (Phases 6Y – 7E "pending", H-197 / H-198 "pending", "Alpha 3 RC1 … smoke pending"); ledger "Totals after A4-END1 / A4-UI4 / A4-PARITY1" | ledger | **5** | each later PASS is recorded in its own phase (`ALPHA3.md` §9, `ALPHA2_HARDWARE_CHECKLIST.md`); new "Totals after A4-CLOSE1" added |
+| D-66 (not struck; its own text records hardware PASS H-205) | ledger | **5** | Alpha 3 row; content already closed |
+| Audit A4-UI2 "Hardware checks … PENDING" | audit | **5** | already annotated PASS |
+| TODO / FIXME | the three Alpha 4 documents | — | no Alpha 4 hit; the audit's hits are the Batch 18 / Batch 52 sweeps reporting none |
+
+`ALPHA2_HARDWARE_CHECKLIST.md` holds no Alpha 4 phase: Alpha 4's checklists live in this file (§2.7, §3.7, §4.11, §5.15, §6.14, §7.15, §8.18, §9.18, §10.13, §11.14, §13.9 and §14.7). `PROJECT_HISTORY.md` ends at the Alpha 3 release; an Alpha 4 chapter belongs with the Alpha 4 release, as §20 did for Alpha 3.
+
+### 14.4 Alpha 4 implementation status, by track
+
+Implementation and parity are separate axes here: a track is complete when its own scope is built, tested and committed; the divergences it found are listed in §14.5, not counted against it.
+
+| Track | Implementation | Host | Hardware | Record |
+|---|---|---|---|---|
+| A4-UI1 chrome | complete (`4c8f8a17`..`9ab2564e`) | goldens, 163 | no separate record; on every later device run (A4-UI2's general UI PASS, §2.8) | §1 |
+| A4-UI2 title, death music, save menus | complete | 166 | **PASS** (§2.8; tag `alpha4-ui2-hardware-validated`) | §2 |
+| A4-SAVE1 recovery hardening | complete | 167 | **PASS** (§3.6) | §3 |
+| A4-SAVE2 manual slots | complete (`d6457ab1`) | 168, mutations 25 / 25 | **untested** (RC2 part 4) | §4 |
+| A4-SAVE3 PC save bridge | complete (`d6457ab1`) | 170, mutations 30 / 30 | **untested** on the device (RC2 part 5); DOS round trip optional | §5 |
+| A4-UI3 save / load UX | complete (`d6457ab1`) | 172, mutations 25 / 25 | **untested** (RC2 part 4) | §6 |
+| A4-END1 ending | complete | 175, mutations 55 / 55 | **PASS** (§7.19; tag `alpha4-end1-hardware-validated`); the revival optional | §7 |
+| A4-UI4/PRES1 + hf1 | complete (`48bd39ef`) | 178, mutations 49 / 49 + 6 / 6 | **PASS** (§8.22.8); D-74 optional | §8 |
+| A4-PARITY1 | complete (`544d7dd3`) | 181, mutations 31 / 31 | **untested** (RC2 part 3) | §9 |
+| RC1 identity | built (`aae348ac`, SHA-256 `67100a51…145a`) | 181 | never run; **superseded** by RC2 | §9.17 – §9.19 |
+| A4-ENH1 | complete | 185, mutations 39 / 39 | **PASS** (§14.2) | §10 |
+| A4-ENH2 | complete | 189, mutations 49 / 49 | cheats **PASS**, rules **accepted** (§14.2) | §11 |
+| A4-FLASH1 | complete | 189 | nothing to run on the Launcher path | §12 |
+| A4-POLISH3 | complete | 191, mutations 17 / 17 | **PASS** (§14.2) | §13 |
+
+**No Alpha 4 implementation item is open.** What is open is hardware evidence for four committed tracks (SAVE2, SAVE3, UI3, PARITY1) and the RC heap capture, all in one session (§14.7).
+
+### 14.5 Known parity divergences carried forward (not Alpha 4 work)
+
+Each is documented in the ledger with its evidence, is classified a divergence (not a completed item), and is **not** release-critical: none locks the game, loses or corrupts state, or hides a control, and no project record marks any of them a blocker. None was fixed here.
+
+| Row | What | Class | Note |
+|---|---|---|---|
+| D-83 | The healer's Resurrect sets HP 1 and skips `resurrect_apply` (SHOPPES `0x16ee`–`0x1703`) | native **and** reference | fix the reference first (`shops.ts`, `shop_parity`'s 4,320 healer rows); changes Original |
+| D-84 | The Refuge revives with HP = max, status 'G' only (BLCKTHRN `0x0b90`–`0x0b9d` runs `resurrect_apply`) | native **and** reference | with D-83; unblocks the deferred death-penalty option |
+| D-85 | The location-29 trapdoor kills the whole roster, not the party (TOWN `0x0ff9`–`0x103a`) | native **and** reference | recoverable (an inn companion can be raised) |
+| D-86 | A dungeon digit key naming an invalid member runs an overworld turn (DUNGEON `0x07c8`–`0x07d1` passes none) | native | found by code read; not yet run |
+| D-87 | Crops outside combat add food uncapped (SJOG `0x1A44` / `0x1AB2`: `counter_add(food, 1, 9999)`) | native **and** reference | visible after Max Food |
+| D-88 | 1988 combat advances the clock a minute per ten actions (COMBAT `0x0C64`–`0x0C76`); neither port does | native **and** reference | meal / starvation timing after a fight |
+| D-89 | The naval OUCH takes `rand(1,8)` from the active member; the notes and the reference say `party_random_damage` | **to adjudicate** against the binary | the notes or the ports are wrong |
+| D-82 | A new game lacks INIT.OOL's underworld skiff and four bodies | native **and** reference | the `.OOL` read site is not derived |
+| also §11.15 | In Mani Corp's scroll on a living target should print "Not dead!" (DS `0x953c`); `re/notes/kernel-survival.md` §293–295 claims housekeeping during the jail / inn wait (a byte scan shows none) | text; notes | small |
+| older | D-8, D-9, D-10 / D-39 residuals, D-13 / D-75's rest of the echo family, D-14, D-15, D-16, D-18, D-38's NPC pose, D-51, D-56's reference half, D-58, D-59; the title's Alt+S / Alt+L acting as Enter | as in the ledger | non-blocking since Alpha 2 / 3 / A4-UI4 |
+
+**Recommended next parity batch (A4-PARITY2 or Alpha 5's first), in order:**
+1. **D-89** — adjudicate the OUCH routine against the binary first (cheap, and it decides whether the notes or both ports move).
+2. **D-83 + D-84** — one shared `resurrect_apply` for the healer and the Refuge, reference first at the layer `shop_parity` / `quest_parity` pin; then the deferred death-penalty difficulty hook becomes possible.
+3. **D-85** — the trapdoor over the party size, not the roster.
+4. **D-86** — run the digit key in a dungeon, then drop the stray turn.
+5. **D-87** — cap outdoor crops at 9999.
+6. **D-88** — the combat clock (touches housekeeping timing after every fight; widest corpus impact, so last).
+7. D-82 when the `.OOL` read site is derived; the §11.15 text items alongside.
+
+### 14.6 Intentionally deferred (not divergences, not open work)
+
+Death / resurrection softening (waits on D-83 / D-84); Advanced Cheats; a bridge-troll toggle; difficulty for arena fields, traps and hazards; syncing Alt+B into the row; the credits curtain, story plates and title figures (post-Alpha 4, the user's decision); D-1 (the user's decision); a Release build (the RC stays Debug); the size candidates of §12.8; A3-04H (Alpha 3's deferred heap item).
+
+### 14.7 The remaining hardware session (§9.18, retargeted to RC2)
+
+One session on **the RC2 image** (§14.9), about 2 hours, with a serial capture from power-on through part 6 (`python -m esp_idf_monitor -p COMx -b 115200 --no-reset 2>&1 | Tee-Object -FilePath a4-rc2-capture.log`; afterwards `python native/core/tools/a3_04g_hw_closeout.py a4-rc2-capture.log`). Every Developer value applies only on **Enter**; Mic while a value is open cancels it. The device runs on your own save, so set each step's state with the Developer rows first.
+
+- **0. Before anything.** Back up the card's whole `ultima5/` folder. Packs unchanged since A4-END1 (resource `85b38994…`, tiles `6eb001ed…`, audio `28c1533b…`): nothing to recopy. The identity screen must show `FW 4.0.0-alpha4-rc2-debug`, the `Git` of §14.9, `RES … 2266819B`, `ASSET … 132284B`. **Stop if not.**
+- **1. Boot and title** — as §9.18 part 1.
+- **2. A4-UI4/PRES1** — nothing owed. Optional: D-74 and the arena's single `Cast...` (§9.18 part 2).
+- **3. A4-PARITY1 — required:** §9.18 3.1, 3.2, 3.3 (D-78, D-79), 3.5 (D-81, with D-4), 3.6 (D-50). 3.4 (D-80) optional.
+- **4. A4-SAVE2 + A4-UI3 — required:** §9.18 4.1–4.7 and 4.9; 4.8 optional.
+- **5. A4-SAVE3 — required:** §9.18 5.1–5.2 (import and export on the device). 5.3 (real DOS) optional.
+- **6. Smoke and heap — required:** §9.18 part 6, plus the boot log's `flash=` line (§12.12). The capture is the Alpha 4 RC heap capture (A3 §28.16 trigger 7).
+- **7. Power-cycle Continue** — as §9.18 part 7.
+- **8. Optional:** the END1 revival (§9.18 part 8).
+- **Not owed:** A4-ENH1, A4-ENH2 and A4-POLISH3 (§14.2); RC2 carries exactly their code.
+
+**PASS** needs parts 1 and 3–7 with no crash, reset, watchdog, lock, stale-resource refusal or input-mode corruption; Save, Load and Continue restore the saved state; the heap capture explained (a placement-only trigger does not block). **Report:** the `FW` / `Git` lines, PASS / FAIL per step, the capture.
+
+### 14.8 Final host test baseline
+
+- Fresh host tree `native/core/build-a4-close1` (`a4-close1-host-{configure,build}.log`): 1,576 build steps; the one known w64devkit `stl_uninitialized.h` false positive, 0 project warnings.
+- **Full suite: 191 / 191, serial, 164.44 s** (`a4-close1-host-ctest.log`), run after this record's documentation edits. The code is A4-POLISH3's: no production or test file changed since `abba9c0f`, and the one source edit (`PROJECT_VER`) is firmware-only.
+- **Preservation, goldens and parity, run again on their own: 54 / 54, serial, 104.81 s** (`a4-close1-preservation-ctest.log`): the Original-mode goldens (`a4_enh1_preservation`, `a4_enh1_preservation_runtime`, `a4_enh2_preservation`, `a4_enh2_preservation_runtime`), the screen goldens (`a4_ui1_chrome_runtime`, `a3_04f_render_runtime`), every `*_parity` corpus (`gameplay_parity`, `quest_parity`, `combat_parity`, `combat_negate_parity`, `advanced_combat_parity`, `magic_parity`, `persistence_parity`, `turn_parity`, `travel_parity`, …) and every TypeScript drift test.
+- Not re-run, on purpose: the mutation campaigns (no production or test file changed since each batch's own pass; A4-POLISH3's 17 / 17 is the latest) and the `game/` vitest run (`game/` is unchanged since A4-PARITY1, whose FAIL set was identical to its baseline's 97).
+
+### 14.9 The final candidate (RC2)
+
+Built **after** this record's commit, from a fresh `--no-ccache` directory `build-a4-rc2`, so that its `Git` line names the commit and carries no `-dirty`. Its size, SHA-256, `Git`, partition budget, Launcher allocation and guard results are recorded by the evidence commit that follows (`native/core/a4-rc2-*.log`).
+
+### 14.10 Evidence and commits
+
+- Commit 1 (this record, `PROJECT_VER` = `4.0.0-alpha4-rc2-debug`, the ledger / audit / Launcher / release-notes reconciliation, and the twenty earlier image logs: RC1's eight, A4-ENH1's six, A4-ENH2's six).
+- Commit 2: the RC2 build, packaging, guard and size logs (`native/core/a4-rc2-*.log`) and §14.9's numbers.
+- Host logs: `native/core/a4-close1-host-{configure,build,ctest}.log`, `a4-close1-preservation-ctest.log`.
+- Earlier images untouched: RC1 `67100a51…145a`, A4-ENH1 `ea8ce9d5…ffcee`, A4-ENH2 `d310fa64…8e09`, A4-POLISH3 `40154109…b6ca` (re-hashed after the RC2 build, `a4-rc2-earlier-images.log`).
+- Not tagged, not pushed, not flashed.
+
+### 14.11 Release readiness
+
+Recorded by the evidence commit, after the RC2 image is built and its guards are run.
+
+### 14.12 Status
+
+| Axis | State |
+|---|---|
+| Alpha 4 implementation | **complete**: every track built, host-verified and committed (§14.4) |
+| Hardware results since A4-ENH1 | **recorded** (§14.2): A4-ENH1 PASS, A4-ENH2 cheats PASS / rules accepted, A4-POLISH3 PASS |
+| Record | **reconciled** (§14.3); stale D-2 / D-53 / D-76 closed; historical wording kept |
+| Parity divergences | **tracked separately** (§14.5); none blocking; none fixed here |
+| Host | **191 / 191** serial (164.44 s); preservation / goldens / parity 54 / 54 |
+| Final candidate | RC2, built after this commit (§14.9) |
+| Hardware still owed | one RC2 session (§14.7): PARITY1, SAVE2 / UI3, SAVE3 on the device, the heap capture |
+| Commit / tag / push | committed; not tagged, not pushed, not flashed |
