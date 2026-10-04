@@ -1,0 +1,28 @@
+GREEN U0 (U)se opens the item picker, the scroll opens "Use on whom?" (the device's two modals)
+GREEN U1 a LIVING target: Resurrection! < Not dead! < Failed! in the transcript [Use item||Scroll|Resurrection!|Not dead!|Failed!|]
+GREEN U1b each line exactly once
+GREEN U1c the scroll is spent (CAST.OVL 0x11ec consumes it before the verdict): 0
+GREEN U1d the living target is byte-for-byte unchanged
+GREEN U2 CONTROL: a dead target is revived (G, HP 1) and neither "Not dead!" nor "Failed!" prints [Use item||Scroll|Resurrection!|]
+GREEN U2b the scroll is spent
+GREEN U4p paced scenes: [Use item||Scroll|Resurrection!|Not dead!|Failed!|] later [Use item||Scroll|Resurrection!|Not dead!|Failed!|]
+GREEN U4a with the audio pack mounted and scenes paced: [Use item||Scroll|Resurrection!|Not dead!|Failed!|]
+GREEN U7 DISCRIMINATOR: the SPELL on a living member reads [Cast...|Failed!|] (Failed! only, as the binary does)
+GREEN U6 use, then cancel: live [Use item||Scroll|Resurrection!|Not dead!|Failed!|] cancel [Use item||]
+GREEN U6 cancel, then use: live [Use item||Scroll|Resurrection!|Not dead!|Failed!|] cancel [Use item||]
+GREEN U5 in a dungeon (active=1): [Use item||Scroll|Resurrection!|Not dead!|Failed!|]
+GREEN U4 in town 21 (location 21): Resurrection! < Not dead! < Failed! [Use item||Scroll|Resurrection!|Not dead!|Failed!|]
+GREEN U4 in town 1 (location 1): Resurrection! < Not dead! < Failed! [Use item||Scroll|Resurrection!|Not dead!|Failed!|]
+GREEN U3 CONTROL: cancelling "Use on whom?" prints neither line and changes nobody [Use item||]
+GREEN H0 East Britanny's healer opens and reaches the Heal/Cure/Resurrect prompt (phase 9)
+GREEN H2a CONTROL: H lists the party, heals the Avatar to full and charges (gold 5000 -> 4950)
+GREEN H2b CONTROL: C lists the party, cures Shamino's poison and charges (gold 4950 -> 4915)
+RED H1/50 R opens the member list like H and C do (phase 9)
+RED H1/99 R opens the member list like H and C do (phase 9)
+GREEN H5 R then a LIVING member: no deal, nothing charged, nothing changed []
+RED H6 Mic from the member list and from the deal charges nothing and raises nobody; the shop still answers (back1=0 deal=0 back2=0 phase 0)
+RED H6b and H still opens its list afterwards
+GREEN H8a CONTROL: R at an innkeeper still asks to Rest (2/2 inns)
+GREEN H8b CONTROL: R at a barkeeper that sells rations still asks how many (3/3 taverns)
+GREEN H7 R with 1 gp raises nobody and charges nothing
+A4 RC5 hotfix runtime: 23/27 checks

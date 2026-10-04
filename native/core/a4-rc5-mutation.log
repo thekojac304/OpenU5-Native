@@ -1,0 +1,44 @@
+H1   KILLED   R is Rest again (RC4)
+     7/9 Test #130: a4_rc5_hotfix_runtime ..................***Failed    0.25 sec | 130 - a4_rc5_hotfix_runtime (Failed)
+H2   KILLED   the healer R is Cure
+     7/9 Test #130: a4_rc5_hotfix_runtime ..................***Failed    0.23 sec | 130 - a4_rc5_hotfix_runtime (Failed)
+H3   KILLED   the healer R is Heal
+     7/9 Test #130: a4_rc5_hotfix_runtime ..................***Failed    0.26 sec | 130 - a4_rc5_hotfix_runtime (Failed)
+H4   SURVIVED R is Resurrect in EVERY shop (the innkeeper loses Rest)
+     
+H5   SURVIVED the Barkeeper loses Rations
+     
+H6   KILLED   the service maps Resurrect to Cure
+     2/9 Test  #14: shop_flow ..............................***Failed    0.90 sec | 7/9 Test #130: a4_rc5_hotfix_runtime ..................***Failed    0.24 sec | 14 - shop_flow (Failed) | 130 - a4_rc5_hotfix_runtime (Failed)
+H7   KILLED   the healer deal skips resurrect_apply (the XP cut, level and max HP)
+     2/9 Test  #14: shop_flow ..............................***Failed    0.88 sec | 3/9 Test  #15: shop_parity ............................***Failed    0.11 sec | 6/9 Test #120: a4_parity2_d83_d84_resurrect ...........***Failed    0.09 sec | 7/9 Test #130: a4_rc5_hotfix_runtime ..................***Failed    0.25 sec | 14 - shop_flow (Failed) | 15 - shop_parity (Failed) | 120 - a4_parity2_d83_d84_resurrect (Failed) | 130 - a4_rc5_hotfix_runtime (Failed)
+H8   KILLED   the healer raises with a fixed karma 99 (no XP cut)
+     2/9 Test  #14: shop_flow ..............................***Failed    0.89 sec | 3/9 Test  #15: shop_parity ............................***Failed    0.11 sec | 6/9 Test #120: a4_parity2_d83_d84_resurrect ...........***Failed    0.09 sec | 7/9 Test #130: a4_rc5_hotfix_runtime ..................***Failed    0.25 sec | 14 - shop_flow (Failed) | 15 - shop_parity (Failed) | 120 - a4_parity2_d83_d84_resurrect (Failed) | 130 - a4_rc5_hotfix_runtime (Failed)
+H9   KILLED   the healer leaves HP at 1
+     2/9 Test  #14: shop_flow ..............................***Failed    0.91 sec | 3/9 Test  #15: shop_parity ............................***Failed    0.11 sec | 6/9 Test #120: a4_parity2_d83_d84_resurrect ...........***Failed    0.10 sec | 7/9 Test #130: a4_rc5_hotfix_runtime ..................***Failed    0.26 sec | 14 - shop_flow (Failed) | 15 - shop_parity (Failed) | 120 - a4_parity2_d83_d84_resurrect (Failed) | 130 - a4_rc5_hotfix_runtime (Failed)
+H10  KILLED   the healer raises a LIVING member too
+     2/9 Test  #14: shop_flow ..............................***Failed    0.93 sec | 7/9 Test #130: a4_rc5_hotfix_runtime ..................***Failed    0.24 sec | 14 - shop_flow (Failed) | 130 - a4_rc5_hotfix_runtime (Failed)
+H11  KILLED   the raise is free
+     2/9 Test  #14: shop_flow ..............................***Failed    0.88 sec | 14 - shop_flow (Failed)
+M1   KILLED   only "Failed!" (RC3)
+     7/9 Test #130: a4_rc5_hotfix_runtime ..................***Failed    0.24 sec | 9/9 Test #164: a4_parity2_mani_not_dead ...............***Failed    0.13 sec | 130 - a4_rc5_hotfix_runtime (Failed) | 164 - a4_parity2_mani_not_dead (Failed)
+M2   KILLED   only "Not dead!"
+     7/9 Test #130: a4_rc5_hotfix_runtime ..................***Failed    0.27 sec | 9/9 Test #164: a4_parity2_mani_not_dead ...............***Failed    0.13 sec | 130 - a4_rc5_hotfix_runtime (Failed) | 164 - a4_parity2_mani_not_dead (Failed)
+M3   KILLED   the lines swapped
+     7/9 Test #130: a4_rc5_hotfix_runtime ..................***Failed    0.25 sec | 9/9 Test #164: a4_parity2_mani_not_dead ...............***Failed    0.12 sec | 130 - a4_rc5_hotfix_runtime (Failed) | 164 - a4_parity2_mani_not_dead (Failed)
+M4   KILLED   the lines print on a DEAD target
+     7/9 Test #130: a4_rc5_hotfix_runtime ..................***Failed    0.24 sec | 9/9 Test #164: a4_parity2_mani_not_dead ...............***Failed    0.10 sec | 130 - a4_rc5_hotfix_runtime (Failed) | 164 - a4_parity2_mani_not_dead (Failed)
+M5   KILLED   the scroll is not consumed
+     7/9 Test #130: a4_rc5_hotfix_runtime ..................***Failed    0.25 sec | 9/9 Test #164: a4_parity2_mani_not_dead ...............***Failed    0.13 sec | 130 - a4_rc5_hotfix_runtime (Failed) | 164 - a4_parity2_mani_not_dead (Failed)
+M6   KILLED   the device skips the "Use on whom?" pick for the scroll (dispatches with no member)
+     7/9 Test #130: a4_rc5_hotfix_runtime ..................***Failed    0.25 sec | 130 - a4_rc5_hotfix_runtime (Failed)
+M7   KILLED   the device sends the pick to member 0 always
+     7/9 Test #130: a4_rc5_hotfix_runtime ..................***Failed    0.24 sec | 130 - a4_rc5_hotfix_runtime (Failed)
+M8   SURVIVED a cancelled "Use on whom?" still uses the scroll
+     
+restored tree: GREEN 
+
+A4-RC5 mutations: 16/19 killed
+  H4: SURVIVED
+  H5: SURVIVED
+  M8: SURVIVED

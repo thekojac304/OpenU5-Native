@@ -1,0 +1,9 @@
+H4   KILLED   R is Resurrect in EVERY shop (the innkeeper loses Rest)
+     7/9 Test #130: a4_rc5_hotfix_runtime ..................***Failed    0.25 sec | 130 - a4_rc5_hotfix_runtime (Failed)
+H5   KILLED   the Barkeeper loses Rations
+     7/9 Test #130: a4_rc5_hotfix_runtime ..................***Failed    0.26 sec | 130 - a4_rc5_hotfix_runtime (Failed)
+M8   KILLED   the SPELL form also prints "Not dead!" (spell and scroll must stay distinct)
+     7/9 Test #130: a4_rc5_hotfix_runtime ..................***Failed    0.25 sec | 130 - a4_rc5_hotfix_runtime (Failed)
+restored tree: GREEN 
+
+A4-RC5 mutations: 3/3 killed

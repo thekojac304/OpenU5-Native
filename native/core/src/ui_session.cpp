@@ -1301,7 +1301,7 @@ bool UiSession::handle_shop(const UiAction &a) {
         else switch (key) {
         case 'b': s.action=ShopAction::Buy; break; case 's': s.action=ShopAction::Sell; break;
         case 'h': s.action=ShopAction::Heal; break; case 'c': s.action=ShopAction::Cure; break;
-        case 'r': s.action=shop_type_==ShopType::Barkeeper?ShopAction::Rations:ShopAction::Rest; break;
+        case 'r': s.action=shop_type_==ShopType::Barkeeper?ShopAction::Rations:shop_type_==ShopType::Healer?ShopAction::Resurrect:ShopAction::Rest; break; // RC5 R4-5: SHOPPES 0x16b5's R is Resurrect, not Rest
         case 'd': s.action=ShopAction::Drink; break; case 't': s.action=ShopAction::Rumor; break;
         case 'a': s.action=ShopAction::Round; break; case 'l': s.action=ShopAction::LeaveMember; break;
         case 'p': s.action=ShopAction::Pickup; break; case 'y': s.action=ShopAction::Confirm; break;
