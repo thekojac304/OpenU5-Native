@@ -1,0 +1,21 @@
+N12  KILLED   [D83] the Refuge copies HP BEFORE the routine (the old maximum)
+     5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.06 sec | 6/8 Test #155: batch7b ..........................***Failed    0.09 sec | 8/8 Test #171: quest_parity .....................***Failed    4.61 sec | 120 - a4_parity2_d83_d84_resurrect (Failed) | 155 - batch7b (Failed) | 171 - quest_parity (Failed)
+N13  KILLED   [D83] the Refuge floors the karma BEFORE the routine
+     5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.06 sec | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N20  KILLED   [D83] the Refuge forces status 'G' on a member who was not dead
+     5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.06 sec | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N21  KILLED   [D83] the Refuge sets HP := max only for the members it revived
+     5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.06 sec | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N22  KILLED   [D83] the Refuge loops over the roster, not the party
+     5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.07 sec | 120 - a4_parity2_d83_d84_resurrect (Failed)
+T12  KILLED   [D83] reference: the Refuge skips resurrect_apply
+     vitest | 171 - quest_parity (Failed)
+T13  KILLED   [D83] reference: the Refuge floors the karma before the routine
+     vitest
+T14  KILLED   [D83] reference: the Refuge forces status 'G' on a member who was not dead
+     vitest
+T15  KILLED   [D83] reference: the Refuge loops over the roster
+     vitest
+restored tree [D83]: native GREEN ; reference GREEN 
+
+A4-PARITY2 mutations: 9/9 killed

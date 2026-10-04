@@ -1,4 +1,5 @@
 #include "openu5/shops.h"
+#include "openu5/magic.h"
 #include <algorithm>
 #include <iterator>
 namespace openu5 {
@@ -223,10 +224,12 @@ ShopResult healer_heal(GameState &g, int32_t i, HealerService service, int32_t p
     pay(g, price);
     if (service == HealerService::Heal)
         c.current_hp = c.max_hp;
-    else {
+    else if (service == HealerService::Cure)
         c.status = 'G';
-        if (service == HealerService::Resurrect)
-            c.current_hp = 1;
+    else {
+        // A4-PARITY2 D-83: SHOPPES 0x16f5 -> CAST2 0x05e0 (mode 0xff), then 0x16f8-0x1703 HP := the NEW max.
+        resurrect_apply(c, g.karma);
+        c.current_hp = c.max_hp;
     }
     return {true, "It is done."};
 }

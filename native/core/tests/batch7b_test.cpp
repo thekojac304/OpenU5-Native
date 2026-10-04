@@ -558,8 +558,12 @@ int main() {
 
         // The owner's half of the contract, in the reference's order.
         check(resolve_refuge(context, tail.sink()) == CommandStatus::Success, "E37 resolve_refuge runs");
-        check(game.party.characters[0].status == 'G' && game.party.characters[0].current_hp == 40,
-              "E38 the party is revived");
+        // A4-PARITY2 D-84: BLCKTHRN 0x0b95 runs resurrect_apply first, so a member with no experience
+        // comes back at level 1 / max HP 30 (30 x level), and 0x0b98 copies THAT maximum to HP -- not the
+        // stored 40 this test used to expect.
+        check(game.party.characters[0].status == 'G' && game.party.characters[0].max_hp == 30 &&
+                  game.party.characters[0].current_hp == 30,
+              "E38 the party is revived (level 1 / max HP 30 for XP 0, HP = that maximum)");
         check(game.karma == 75, "E39 karma floors at 75");
         check(game.position.map.location == 17 && game.position.xy.x == 10 &&
                   game.position.xy.y == 10,

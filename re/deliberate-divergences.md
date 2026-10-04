@@ -1332,3 +1332,5 @@ the seal THROWs). Applying the faithful gate requires re-deriving the harness cl
 (exit via interior structure/Klimb) and RE-SEALING the room chapters → the lead's re-seal window,
 not a fix lane. Closing it = implementing `roomCombat → "Escape-Not here!"
 without withdrawal` in `Combat.playerEscapeQuick` (combat.ts) and re-validating the room chain.
+
+- **D-83 / D-84 (A4-PARITY2, 2026-10-03): CLOSED.** The healer's Resurrect (SHOPPES `0x16f5`) and the Refuge (BLCKTHRN `0x0b95`) run the shared resurrection routine (CAST2 `0x05e0`) and then copy the recomputed max HP over HP; both ports had skipped the routine. Fixed reference-first; not a deliberate divergence. `native/core/a4-parity2-findings/D83D84-FINAL.md`.

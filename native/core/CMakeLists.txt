@@ -2214,6 +2214,12 @@ if(BUILD_TESTING)
   target_link_libraries(a4_parity2_d89_naval_ouch PRIVATE openu5_core)
   target_compile_features(a4_parity2_d89_naval_ouch PRIVATE cxx_std_17)
   add_test(NAME a4_parity2_d89_naval_ouch COMMAND a4_parity2_d89_naval_ouch)
+  # A4-PARITY2 D-83 / D-84: the healer's Resurrect and the Refuge run resurrect_apply (CAST2 0x05e0)
+  # and then copy the recomputed maximum over HP.
+  add_executable(a4_parity2_d83_d84_resurrect tests/a4_parity2_d83_d84_resurrect_test.cpp)
+  target_link_libraries(a4_parity2_d83_d84_resurrect PRIVATE openu5_core)
+  target_compile_features(a4_parity2_d83_d84_resurrect PRIVATE cxx_std_17)
+  add_test(NAME a4_parity2_d83_d84_resurrect COMMAND a4_parity2_d83_d84_resurrect)
   # Its device half: the REAL AlphaRuntime starving on the overworld, then in
   # Deceit through the live dungeon turn (wanderers, corridor fights), Alt+S/L.
   add_executable(a4_enh2_preservation_runtime

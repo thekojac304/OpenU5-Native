@@ -533,7 +533,7 @@ describe("transacciones", () => {
     expect(s.gold).toBe(65);
   });
 
-  it("healerHeal: cure quita el veneno; resurrect revive con 1 HP", () => {
+  it("healerHeal: cure quita el veneno; resurrect corre resurrect_apply y deja HP = el máximo NUEVO (A4-PARITY2 D-83)", () => {
     const s = freshState();
     s.gold = 500;
     const c = s.characters[0]!;
@@ -545,8 +545,16 @@ describe("transacciones", () => {
     c.currentHp = 0;
     const r = healerHeal(s, 0, "resurrect", 200);
     expect(r.ok).toBe(true);
+    // SHOPPES 0x16f5 -> CAST2.OVL 0x05e0 (mode 0xff), then 0x16f8-0x1703 HP := max HP. The INIT.GAM
+    // Avatar (class A, INT 15, XP 150, level 2 / max 60, karma 75): XP 150*75/100 = 112 (truncated),
+    // level 1 + bitlength(112/100 = 1) = 2, max 60, MP = INT = 15, HP = 60 (was: status G, HP 1).
     expect(c.status).toBe("G");
-    expect(c.currentHp).toBe(1);
+    expect(c.exp).toBe(112);
+    expect(c.level).toBe(2);
+    expect(c.maxHp).toBe(60);
+    expect(c.currentHp).toBe(60);
+    expect(c.currentMp).toBe(15);
+    expect(s.gold).toBe(280); // 500 - 20 (cure) - 200 (resurrect)
   });
 
   it("healerHeal falla sin oro suficiente", () => {

@@ -157,4 +157,11 @@ bool mix_spell(GameState &, SpellId, int32_t quantity);
 // are never read.
 bool mix_quantity_short(const GameState &, uint8_t reagent_mask, int32_t quantity);
 bool apply_target_spell(CharacterState &, MagicEffect, uint8_t karma, Rand);
+// A4-PARITY2 D-83 / D-84. CAST2.OVL 0x05e0, the part all FOUR callers share (In Mani Corp spell and scroll,
+// SHOPPES 0x16f5 healer, BLCKTHRN 0x0b95 Refuge). 'D' -> 'G', HP 1, MP by class (A / M = INT, B = INT >> 1,
+// others untouched), experience cut to exp * karma / 100 (truncated, 16-bit store) when karma < 98, then
+// level = 1 + bitlength(exp / 100) and max HP = 30 * level for EVERY karma. Returns false and touches
+// nothing for any other status. No RNG. The spell and the scroll stop here (HP 1); the healer
+// (SHOPPES 0x16f8) and the Refuge (BLCKTHRN 0x0b98) then set HP = the new max HP.
+bool resurrect_apply(CharacterState &, uint8_t karma);
 } // namespace openu5

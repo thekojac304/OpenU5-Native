@@ -1,0 +1,29 @@
+N10  KILLED   [D83] the healer skips resurrect_apply (today's pre-fix code)
+     1/8 Test  #14: shop_flow ........................***Failed    0.87 sec | 2/8 Test  #15: shop_parity ......................***Failed    0.08 sec | 4/8 Test #117: a4_enh2_preservation .............***Failed    0.19 sec | 5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.06 sec | 14 - shop_flow (Failed) | 15 - shop_parity (Failed) | 117 - a4_enh2_preservation (Failed) | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N11  KILLED   [D83] the healer leaves HP at 1 after the routine
+     1/8 Test  #14: shop_flow ........................***Failed    0.86 sec | 2/8 Test  #15: shop_parity ......................***Failed    0.08 sec | 4/8 Test #117: a4_enh2_preservation .............***Failed    0.23 sec | 5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.06 sec | 14 - shop_flow (Failed) | 15 - shop_parity (Failed) | 117 - a4_enh2_preservation (Failed) | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N14  KILLED   [D83] the threshold is karma < 99
+     4/8 Test #117: a4_enh2_preservation .............***Failed    0.18 sec | 5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.06 sec | 117 - a4_enh2_preservation (Failed) | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N15  KILLED   [D83] the threshold is karma < 97
+     4/8 Test #117: a4_enh2_preservation .............***Failed    0.16 sec | 5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.06 sec | 117 - a4_enh2_preservation (Failed) | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N16  KILLED   [D83] level and max HP only recomputed when the cut ran
+     4/8 Test #117: a4_enh2_preservation .............***Failed    0.16 sec | 5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.06 sec | 117 - a4_enh2_preservation (Failed) | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N17  KILLED   [D83] max HP is not recomputed
+     1/8 Test  #14: shop_flow ........................***Failed    0.84 sec | 2/8 Test  #15: shop_parity ......................***Failed    0.07 sec | 4/8 Test #117: a4_enh2_preservation .............***Failed    0.18 sec | 5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.08 sec | 6/8 Test #155: batch7b ..........................***Failed    0.12 sec | 7/8 Test #167: gameplay_parity ..................***Failed    9.14 sec | 14 - shop_flow (Failed) | 15 - shop_parity (Failed)
+N18  KILLED   [D83] the cut rounds instead of truncating
+     1/8 Test  #14: shop_flow ........................***Failed    0.88 sec | 2/8 Test  #15: shop_parity ......................***Failed    0.14 sec | 4/8 Test #117: a4_enh2_preservation .............***Failed    0.19 sec | 5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.05 sec | 14 - shop_flow (Failed) | 15 - shop_parity (Failed) | 117 - a4_enh2_preservation (Failed) | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N19  KILLED   [D83] a bard's MP is INT, not INT >> 1
+     1/8 Test  #14: shop_flow ........................***Failed    0.86 sec | 2/8 Test  #15: shop_parity ......................***Failed    0.11 sec | 4/8 Test #117: a4_enh2_preservation .............***Failed    0.20 sec | 5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.06 sec | 14 - shop_flow (Failed) | 15 - shop_parity (Failed) | 117 - a4_enh2_preservation (Failed) | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N23  KILLED   [D83] the level loop is off by one
+     4/8 Test #117: a4_enh2_preservation .............***Failed    0.18 sec | 5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.06 sec | 117 - a4_enh2_preservation (Failed) | 120 - a4_parity2_d83_d84_resurrect (Failed)
+T10  KILLED   [D83] reference: the healer skips resurrect_apply
+     vitest | generate-shop-fixtures.ts --check | generate-shop-flow-fixtures.ts --check
+T11  KILLED   [D83] reference: the healer leaves HP at 1
+     vitest | generate-shop-fixtures.ts --check | generate-shop-flow-fixtures.ts --check
+T16  KILLED   [D83] reference: the threshold is karma < 99
+     vitest
+T17  KILLED   [D83] reference: the cut rounds
+     vitest | generate-shop-fixtures.ts --check | generate-shop-flow-fixtures.ts --check
+restored tree [D83]: native GREEN ; reference GREEN 
+
+A4-PARITY2 mutations: 13/13 killed

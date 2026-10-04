@@ -204,6 +204,23 @@ CastResult cast_spell(GameState &g, TurnState &t, CharacterState &caster, SpellI
     }
     return {true, true, "", fx};
 }
+bool resurrect_apply(CharacterState &p, uint8_t karma) {
+    if (p.status != 'D')
+        return false;
+    p.status = 'G';
+    p.current_hp = 1;
+    if (p.character_class == 'A' || p.character_class == 'M')
+        p.current_mp = p.intelligence;
+    else if (p.character_class == 'B')
+        p.current_mp = uint8_t(p.intelligence >> 1);
+    if (karma < 98)
+        p.exp = uint16_t(int(p.exp) * karma / 100);
+    p.level = 1;
+    for (int n = p.exp / 100; n > 0; n >>= 1)
+        ++p.level;
+    p.max_hp = uint16_t(30 * p.level);
+    return true;
+}
 bool apply_target_spell(CharacterState &p, MagicEffect kind, uint8_t karma, Rand r) {
     switch (kind) {
     case MagicEffect::Mani: {
@@ -228,23 +245,8 @@ bool apply_target_spell(CharacterState &p, MagicEffect kind, uint8_t karma, Rand
             return false;
         p.status = 'G';
         return true;
-    case MagicEffect::Resurrect: {
-        if (p.status != 'D')
-            return false;
-        p.status = 'G';
-        p.current_hp = 1;
-        if (p.character_class == 'A' || p.character_class == 'M')
-            p.current_mp = p.intelligence;
-        else if (p.character_class == 'B')
-            p.current_mp = uint8_t(p.intelligence >> 1);
-        if (karma < 98)
-            p.exp = uint16_t(int(p.exp) * karma / 100);
-        p.level = 1;
-        for (int n = p.exp / 100; n > 0; n >>= 1)
-            ++p.level;
-        p.max_hp = uint16_t(30 * p.level);
-        return true;
-    }
+    case MagicEffect::Resurrect:
+        return resurrect_apply(p, karma);
     default:
         return false;
     }

@@ -307,10 +307,11 @@ CheatResult apply_cheat(GameState &g, CheatKind kind, int32_t amount, bool in_co
             std::snprintf(r.text, sizeof(r.text), "%s", "Not during combat");
             return r;
         }
-        // The dead only, back as the game's own revivals leave them -- status
-        // 'G', HP to the maximum (the healer, the Refuge, the ending), MP by
-        // class (resurrect_apply) -- with no experience cut. A maximum of 0
-        // takes resurrect_apply's 30 x level.
+        // The dead only, back as the ending's revival leaves them (ENDGAME 0x075a) -- status
+        // 'G', HP to the maximum, MP by class -- with NO experience cut. (Since A4-PARITY2 the
+        // healer and the Refuge run resurrect_apply, which DOES cut experience below karma 98 and
+        // recomputes level and maximum; this cheat deliberately does not: it is an enhancement, not
+        // a revival of the game.) A maximum of 0 takes resurrect_apply's 30 x level.
         int n = 0;
         for (int32_t i = 0; i < members; ++i) {
             auto &c = g.party.characters[i];

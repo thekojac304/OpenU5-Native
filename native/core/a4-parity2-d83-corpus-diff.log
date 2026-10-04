@@ -1,0 +1,17 @@
+== control: --check on the PATCHED reference must DRIFT
+const path='native/core/build-shops/helpers.txt',text=rows.join('\n')+'\n';if(process.argv.includes('--check')){if(readFileSync(path,'utf8')!==text)throw Error('shop fixture drift');}else writeFileSync(path,text);
+function output(path:string,text:string){if(process.argv.includes('--check')){if(readFileSync(path,'utf8')!==text)throw Error('Shop flow fixture drift: '+path);}else writeFileSync(path,text);}
+== regenerate
+202712 shop helper snapshots
+584406 shop flow snapshots, 46 real shops, 600 offering/service paths
+14ad4555a89a21d473368e1cd1a71de111f3f566bdce4da0701d474309d42d8b *native/core/build-shops/helpers.txt
+b450fc72b9639a4b4a4deb6ed7144f7c6a74810c24dda1e73c742196f724a02a *native/core/build-shops/flow.txt
+== token diffs
+native/core/build-shops/helpers.txt: lines 70473 -> 70473
+rows differing: 130; tokens differing: 390 of 550720; rows with a changed width: 0
+changed token columns (column: count): {5: 130, 6: 130, 7: 130}
+first rows: [5120, 7012, 7013, 7024, 7025, 7958, 7959, 7960] ... last rows: [61607, 61608, 61609]
+native/core/build-shops/flow.txt: lines 584407 -> 584407
+rows differing: 658; tokens differing: 658 of 1830825; rows with a changed width: 0
+changed token columns (column: count): {2: 658}
+first rows: [468735, 468736, 468737, 468738, 468739, 468740, 468826, 468827] ... last rows: [530641, 530642, 530643]

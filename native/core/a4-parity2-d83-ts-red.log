@@ -1,0 +1,34 @@
+ ❯ tests/a4-parity2-d83-d84-resurrect.test.ts (16 tests | 14 failed) 13ms
+   × D-83 healer Resurrect = resurrect_apply, then HP := the recomputed max (SHOPPES 0x16f5-0x1703) > INIT.GAM's Avatar (class A, INT 15, XP 150, L2/60) at karma 75: XP 112, L2, max 60, HP 60, MP 15, gold 500 
+   × D-83 healer Resurrect = resurrect_apply, then HP := the recomputed max (SHOPPES 0x16f5-0x1703) > every karma x XP boundary cell equals the binary's arithmetic (XP', level, max HP, HP = max, status G) 1ms
+   × D-83 healer Resurrect = resurrect_apply, then HP := the recomputed max (SHOPPES 0x16f5-0x1703) > the threshold is karma 98: 97 cuts, 98 does not (XP 100: 97 -> L1; 98 -> L2/60) 0ms
+   × D-83 healer Resurrect = resurrect_apply, then HP := the recomputed max (SHOPPES 0x16f5-0x1703) > truncation, not rounding: XP 1 at karma 97 -> 0; XP 150 at karma 75 -> 112 0ms
+   × D-83 healer Resurrect = resurrect_apply, then HP := the recomputed max (SHOPPES 0x16f5-0x1703) > level and max HP are recomputed at karma >= 98 too: XP 450 with a stored level 2 becomes L4 / 120 0ms
+   × D-83 healer Resurrect = resurrect_apply, then HP := the recomputed max (SHOPPES 0x16f5-0x1703) > XP 0 stays 0 at every karma; level 1, max 30 whatever the old level (a L5/150 member drops to 30) 0ms
+   × D-83 healer Resurrect = resurrect_apply, then HP := the recomputed max (SHOPPES 0x16f5-0x1703) > MP by class: A and M = INT, B = INT >> 1, any other class untouched (never zeroed) 0ms
+   ✓ D-83 healer Resurrect = resurrect_apply, then HP := the recomputed max (SHOPPES 0x16f5-0x1703) > the gate and the payment are unchanged: a living member is refused unpaid; too little gold refuses 0ms
+   × D-83 healer Resurrect = resurrect_apply, then HP := the recomputed max (SHOPPES 0x16f5-0x1703) > the spell and the healer agree on everything except HP (1 versus the new max) 1ms
+   × D-84 the Refuge runs resurrect_apply for each party member, with the karma the party died with (BLCKTHRN 0x0b95-0x0b9d) > party of three at karma 50: the binary's worked rows, karma afterwards 75 0ms
+   × D-84 the Refuge runs resurrect_apply for each party member, with the karma the party died with (BLCKTHRN 0x0b95-0x0b9d) > every karma x XP boundary cell equals the binary's arithmetic for a revived member
+   × D-84 the Refuge runs resurrect_apply for each party member, with the karma the party died with (BLCKTHRN 0x0b95-0x0b9d) > the cut uses the karma the party DIED with: 74 cuts XP 100 to 74 (the floor of 75 
+   × D-84 the Refuge runs resurrect_apply for each party member, with the karma the party died with (BLCKTHRN 0x0b95-0x0b9d) > karma 99, XP 450 with a stored level 2/60 -> L4 / 120 / HP 120 (level recomputed w
+   × D-84 the Refuge runs resurrect_apply for each party member, with the karma the party died with (BLCKTHRN 0x0b95-0x0b9d) > only the party is revived: a roster of 6 with party size 3 leaves members 3..5 unt
+   × D-84 the Refuge runs resurrect_apply for each party member, with the karma the party died with (BLCKTHRN 0x0b95-0x0b9d) > a mixed party (synthetic; unreachable in play): the 'D' member is resurrected and 
+   ✓ D-84 the Refuge runs resurrect_apply for each party member, with the karma the party died with (BLCKTHRN 0x0b95-0x0b9d) > the rest of the Refuge is unchanged: Lord British's castle, 06:00, food 0 -> 63, 
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/a4-parity2-d83-d84-resurrect.test.ts > D-83 healer Resurrect = resurrect_apply, then HP := the recomputed max (SHOPPES 0x16f5-0x1703) > INIT.GAM's Avatar (class A, INT 15, XP 150, L2/60) at karma 7
+ FAIL  tests/a4-parity2-d83-d84-resurrect.test.ts > D-83 healer Resurrect = resurrect_apply, then HP := the recomputed max (SHOPPES 0x16f5-0x1703) > every karma x XP boundary cell equals the binary's arithmetic
+ FAIL  tests/a4-parity2-d83-d84-resurrect.test.ts > D-83 healer Resurrect = resurrect_apply, then HP := the recomputed max (SHOPPES 0x16f5-0x1703) > the threshold is karma 98: 97 cuts, 98 does not (XP 100: 97 -
+ FAIL  tests/a4-parity2-d83-d84-resurrect.test.ts > D-83 healer Resurrect = resurrect_apply, then HP := the recomputed max (SHOPPES 0x16f5-0x1703) > truncation, not rounding: XP 1 at karma 97 -> 0; XP 150 at ka
+ FAIL  tests/a4-parity2-d83-d84-resurrect.test.ts > D-83 healer Resurrect = resurrect_apply, then HP := the recomputed max (SHOPPES 0x16f5-0x1703) > level and max HP are recomputed at karma >= 98 too: XP 450 wi
+ FAIL  tests/a4-parity2-d83-d84-resurrect.test.ts > D-83 healer Resurrect = resurrect_apply, then HP := the recomputed max (SHOPPES 0x16f5-0x1703) > XP 0 stays 0 at every karma; level 1, max 30 whatever the old
+ FAIL  tests/a4-parity2-d83-d84-resurrect.test.ts > D-83 healer Resurrect = resurrect_apply, then HP := the recomputed max (SHOPPES 0x16f5-0x1703) > MP by class: A and M = INT, B = INT >> 1, any other class unt
+ FAIL  tests/a4-parity2-d83-d84-resurrect.test.ts > D-83 healer Resurrect = resurrect_apply, then HP := the recomputed max (SHOPPES 0x16f5-0x1703) > the spell and the healer agree on everything except HP (1 ver
+ FAIL  tests/a4-parity2-d83-d84-resurrect.test.ts > D-84 the Refuge runs resurrect_apply for each party member, with the karma the party died with (BLCKTHRN 0x0b95-0x0b9d) > party of three at karma 50: the bina
+ FAIL  tests/a4-parity2-d83-d84-resurrect.test.ts > D-84 the Refuge runs resurrect_apply for each party member, with the karma the party died with (BLCKTHRN 0x0b95-0x0b9d) > every karma x XP boundary cell equal
+ FAIL  tests/a4-parity2-d83-d84-resurrect.test.ts > D-84 the Refuge runs resurrect_apply for each party member, with the karma the party died with (BLCKTHRN 0x0b95-0x0b9d) > the cut uses the karma the party DIE
+ FAIL  tests/a4-parity2-d83-d84-resurrect.test.ts > D-84 the Refuge runs resurrect_apply for each party member, with the karma the party died with (BLCKTHRN 0x0b95-0x0b9d) > karma 99, XP 450 with a stored level
+ FAIL  tests/a4-parity2-d83-d84-resurrect.test.ts > D-84 the Refuge runs resurrect_apply for each party member, with the karma the party died with (BLCKTHRN 0x0b95-0x0b9d) > only the party is revived: a roster 
+ FAIL  tests/a4-parity2-d83-d84-resurrect.test.ts > D-84 the Refuge runs resurrect_apply for each party member, with the karma the party died with (BLCKTHRN 0x0b95-0x0b9d) > a mixed party (synthetic; unreachabl
+ Test Files  1 failed (1)
+      Tests  14 failed | 2 passed (16)

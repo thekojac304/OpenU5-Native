@@ -1,0 +1,5 @@
+cases: 5377 vs 5377
+cases that differ: 15; first: [5149, 5150, 5151, 5152, 5153, 5154, 5155, 5156, 5157, 5158]
+changed JSON paths (indices collapsed):
+    15  .state.characters[].currentMp
+    39  .steps[].state.characters[].currentMp

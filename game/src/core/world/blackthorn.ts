@@ -22,6 +22,7 @@
  * en re/notes/blackthorn.md; globals en re/notes/globals.md.
  */
 import type { CharacterState, GameState } from "../state.js";
+import { applyResurrect } from "../magic/cast.js";
 
 /** location del Palacio de Blackthorn (SingleMapReference 18). */
 export const LOC_BLACKTHORN = 0x12;
@@ -522,8 +523,12 @@ export interface RefugeResult {
  * (`cmp si,ax` @0x0baf / `jb 0xb68`). Sin `cmp si,6` — a diferencia de los bucles de la
  * trampa de cofre (0x2aa8/0x3054), que sí lo llevan; la cota de CADA rutina se deriva de
  * su propio asm (ficha #41-bis, re/notes/blackthorn-cota-party-size.md). El
- * byte de STATUS lo fija kernel 0xdc66 [= CS 0x7ef6 → CAST2.OVL:0x05e0](i,0xff) — su valor exacto queda ⚠️ (el clon usa
- * 'G'); ver re/verified/blackthorn.md.
+ * byte de STATUS lo fija kernel 0xdc66 [= CS 0x7ef6 → CAST2.OVL:0x05e0](i,0xff).
+ * A4-PARITY2 D-84 (2026-10-03): ese byte YA NO está abierto, y la rutina hace mucho más que
+ * fijarlo: para un miembro 'D' pone 'G', MP por clase, recorta la experiencia con karma < 98
+ * (`exp·karma/100`, truncado), recalcula nivel y HP máximo (30·nivel) y deja HP en 1; luego
+ * 0x0b98 copia el máximo NUEVO a HP. Corre con el karma CON EL QUE MURIÓ el grupo (el suelo
+ * de 75 se aplica DESPUÉS del bucle, 0x0bfd). Ver native/core/a4-parity2-findings/D83D84-FINAL.md.
  */
 export function partyRefuge(state: GameState): RefugeResult {
   // Revive: por miembro DEL GRUPO (i < g_party_size, 0x0b54/0x0baa — los del roster que
@@ -537,9 +542,11 @@ export function partyRefuge(state: GameState): RefugeResult {
   for (let i = 0; i < n; i++) {
     const c = state.characters[i];
     if (!c) continue;
-    if (c.status === "D") revived++;
-    c.currentHp = c.maxHp;
-    c.status = "G";
+    if (c.status === "D") {
+      revived++;
+      applyResurrect(c, state.karma); // BLCKTHRN 0x0b95 -> CAST2.OVL 0x05e0, mode 0xff (writes status only for 'D')
+    }
+    c.currentHp = c.maxHp; // 0x0b98-0x0b9d: UNCONDITIONAL, reads the max HP AFTER the routine
   }
   if (state.karma < REFUGE_KARMA_FLOOR) state.karma = REFUGE_KARMA_FLOOR;
   state.position.location = LOC_LORD_BRITISH;

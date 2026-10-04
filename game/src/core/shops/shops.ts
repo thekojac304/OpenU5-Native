@@ -27,6 +27,7 @@ import {
   type SkyRefreshCtx,
 } from "../world/survival.js";
 import { rosterLeaveCompact, rosterPickupInsert } from "../party.js";
+import { applyResurrect } from "../magic/cast.js";
 import {
   DRUNK_CUP_GATE,
   DRUNK_TIMER_TURNS,
@@ -1198,7 +1199,10 @@ export function buyShip(
  * Aplica un servicio del healer al personaje `charIdx` cobrando `price`.
  * - `heal`: sólo si HP < HP máximo → restaura HP al máximo.
  * - `cure`: sólo si status 'P' (envenenado) → 'G'.
- * - `resurrect`: sólo si status 'D' (muerto) → 'G' con 1 HP.
+ * - `resurrect`: sólo si status 'D' (muerto) → la rutina COMPARTIDA `resurrect_apply`
+ *   (SHOPPES 0x16f5 → CAST2.OVL 0x05e0, modo 0xff: status 'G', MP por clase, recorte de
+ *   experiencia con karma < 98, nivel y HP máximo recalculados) y DESPUÉS HP := el máximo
+ *   NUEVO (0x16f8-0x1703). A4-PARITY2 D-83: antes ponía 'G' con 1 HP sin la rutina.
  * Falla (sin cobrar) si el personaje no necesita el remedio o falta oro.
  * Portado de Healer.DoesPlayerNeedRemedy + PlayerCharacterRecord.Cure/HealAll.
  */
@@ -1236,8 +1240,11 @@ export function healerHeal(
   } else if (service === "cure") {
     rec.status = "G";
   } else {
-    rec.status = "G";
-    rec.currentHp = 1;
+    // SHOPPES 0x16f5 `call 0xdc66` (= CS 0x7ef6 -> CAST2.OVL 0x05e0), mode 0xff: la misma
+    // rutina que In Mani Corp (que se queda en HP 1). Sin RNG. Orden del binario: 'D' (0x16b5),
+    // pago, deriva de la Falsedad, rutina, HP := max recalculado.
+    applyResurrect(rec, state.karma);
+    rec.currentHp = rec.maxHp; // 0x16f8-0x1703: `word [rec+0x10] := word [rec+0x12]`
   }
   return { ok: true, message: "It is done." };
 }

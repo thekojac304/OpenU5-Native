@@ -1,4 +1,5 @@
 #include "openu5/quest_world.h"
+#include "openu5/magic.h"
 #include "openu5/world_terrain.h"
 #include <string>
 #include "openu5/combat.h"
@@ -186,7 +187,7 @@ CommandStatus resolve_refuge(CommandContext &c,EventSink sink){
     if(!c.quest_world)return CommandStatus::InvalidContext;
     c.quest_world->refuge_pending=false;
     auto &g=c.game;
-    for(int i=0;i<g.party.party_size && i<g.party.character_count;++i){auto &ch=g.party.characters[i];ch.current_hp=ch.max_hp;ch.status='G';}
+    for(int i=0;i<g.party.party_size && i<g.party.character_count;++i){auto &ch=g.party.characters[i];resurrect_apply(ch,g.karma);ch.current_hp=ch.max_hp;} // A4-PARITY2 D-84: BLCKTHRN 0x0b95 -> CAST2 0x05e0 (writes status only for 'D'), then 0x0b98 HP := max, unconditional; the karma is the one the party DIED with (the floor of 75 follows, 0x0bfd)
     if(g.karma<75)g.karma=75;
     g.position={{10,10},{17,1}};g.transport=TransportMode::Foot;c.turn.transport_tile=28;
     c.turn.time_spell=0;c.turn.spell_turns=0;g.time.hour=6;g.time.minute=0;c.turn.light_spell_minutes=0;g.torch_turns=0;if(!g.food)g.food=63;

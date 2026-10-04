@@ -1,0 +1,9 @@
+GREEN R1 INIT.GAM's Avatar (A, INT 15, XP 150, L2/60) at karma 75: XP 112 (want 112), L2, max 60, HP 60 (want 60), MP 15 (want 15), gold 300
+GREEN R2 198 karma x XP cells through the healer and the Refuge: 0 + 0 differ from the binary's arithmetic
+GREEN R3 threshold 98 (97 cuts, 98 does not); truncation (XP 1 at 97 -> 0, 150 at 75 -> 112); level recomputed at karma 99 (XP 450, stored L2 -> L4/120); XP 0 -> L1/30 at every karma
+GREEN R4 MP: A/M = INT, B = INT >> 1 (17 -> 8, 255 -> 127); F and T are never zeroed
+GREEN R5 Refuge worked rows (A XP 0 -> L1/30/HP 30/MP 20; B XP 250 -> 125 L2/60 MP 8; M XP 800 -> 400 L4/120 MP 22), karma afterwards 75; death karma 74 cuts XP 100 to 74 (the floor comes after the loop), karma 75 to 75
+GREEN R6 roster 6 / party 3: members 3..5 untouched; mixed party: the 'D' member is resurrected (XP 150, L2, HP 60), the 'P' member keeps status 'P' and gets HP := max (90)
+GREEN R7 the spell, the healer and the Refuge leave identical status / XP / level / max HP / MP and differ only in HP (1 vs the new max)
+GREEN R8 no RNG on either path; a living member is refused unpaid with nothing changed; too little gold refuses with the member still dead
+8 checks, 0 failures

@@ -291,7 +291,13 @@ uint64_t camp_golden(int &ambushes) {
 // B4. Death and resurrection as the port has them today: In Mani Corp's
 // resurrect_apply copy (karma below 98 cuts exp), the healer's Resurrect and
 // the inn's poisoned sleeper.
-uint64_t resurrection_golden(int &revived, int &inn_deaths) {
+//
+// A4-PARITY2 D-83 (2026-10-03): the healer's Resurrect now runs resurrect_apply and then sets HP to the
+// recomputed maximum (SHOPPES 0x16f5-0x1703), which changes THIS golden on purpose. `legacy_healer`
+// re-creates the pre-D-83 healer result (status G, HP 1, experience / level / maximum / MP as they were)
+// around the same call, so the old golden value can still be reproduced: it proves the In Mani Corp block
+// and the inn block are bit-identical to pre-A4-ENH2, and that the healer block is the ONLY change.
+uint64_t resurrection_golden(int &revived, int &inn_deaths, bool legacy_healer = false) {
     Fnv f;
     revived = inn_deaths = 0;
     OriginalRng rng(0x0dea);
@@ -318,7 +324,16 @@ uint64_t resurrection_golden(int &revived, int &inn_deaths) {
         g.gold = 2000;
         g.party.characters[1].status = 'D';
         g.party.characters[1].current_hp = 0;
+        const auto before = g.party.characters[1];
         const auto r = healer_heal(g, 1, HealerService::Resurrect, 400);
+        if (legacy_healer && r.ok) {
+            auto &c = g.party.characters[1];
+            c.exp = before.exp;
+            c.level = before.level;
+            c.max_hp = before.max_hp;
+            c.current_mp = before.current_mp;
+            c.current_hp = 1;
+        }
         const auto again = healer_heal(g, 1, HealerService::Resurrect, 400);
         f.add(r.ok);
         f.add(again.ok);
@@ -384,6 +399,8 @@ int main() {
     const uint64_t dungeon = dungeon_golden(placed, ambushes);
     const uint64_t campg = camp_golden(camp_ambushes);
     const uint64_t res = resurrection_golden(revived, inn_deaths);
+    int revived_legacy = 0, inn_legacy = 0;
+    const uint64_t res_legacy = resurrection_golden(revived_legacy, inn_legacy, true);
     const uint64_t save = enh1_save_golden(round_trip);
     std::printf("golden starvation=0x%016llx starving=%d deaths=%d\n", (unsigned long long)starve, starving, deaths);
     std::printf("golden dungeon=0x%016llx placed=%d ambushes=%d\n", (unsigned long long)dungeon, placed, ambushes);
@@ -394,8 +411,10 @@ int main() {
 
     // Recorded on the unmodified tree (5e0a16eb), see the header comment.
     constexpr uint64_t kStarvation = 0x99c9087bd26f1442ULL, kDungeon = 0x57250730265a465dULL,
-                       kCamp = 0xb6f1b3a77ed80150ULL, kResurrection = 0xbe90d6bb09040045ULL,
+                       kCamp = 0xb6f1b3a77ed80150ULL, kResurrectionPreParity2 = 0xbe90d6bb09040045ULL,
                        kEnh1Save = 0xf126b030acad54a3ULL;
+    // Re-recorded by A4-PARITY2 D-83 (the healer block only; see resurrection_golden).
+    constexpr uint64_t kResurrection = 0x6d09cbe2f90a0714ULL;
 
     check(starving > 300 && deaths > 0, "B1 the scenario starves the party (and starvation kills)");
     check(placed > 500 && ambushes > 0, "B2 the dungeon places wanderers and one ambushes the party");
@@ -405,7 +424,10 @@ int main() {
     check(starve == kStarvation, "B1 Original: starvation and party_random_damage == pre-A4-ENH2");
     check(dungeon == kDungeon, "B2 Original: dungeon wanderer respawn, movement and ambush == pre-A4-ENH2");
     check(campg == kCamp, "B3 Original: camp sleep and its ambush == pre-A4-ENH2");
-    check(res == kResurrection, "B4 Original: In Mani Corp, the healer and the inn == pre-A4-ENH2");
+    check(res_legacy == kResurrectionPreParity2 && revived_legacy == revived && inn_legacy == inn_deaths,
+          "B4 Original: In Mani Corp and the inn == pre-A4-ENH2 (the old golden is reproduced around a pre-D-83 healer)");
+    check(res == kResurrection && res != kResurrectionPreParity2,
+          "B4 Original: the healer's Resurrect runs resurrect_apply since A4-PARITY2 D-83 (the ONLY block of this golden that moved)");
     check(save == kEnh1Save, "B5 Original: the A4-ENH1 save documents == pre-A4-ENH2");
     std::printf("%s a4_enh2_preservation failures=%d\n", failures ? "FAIL" : "PASS", failures);
     return failures ? 1 : 0;

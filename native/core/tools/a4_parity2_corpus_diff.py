@@ -1,6 +1,9 @@
 """A4-PARITY2: token-level account of a regenerated fixture against its committed (HEAD) version.
 
-Usage: python a4_parity2_corpus_diff.py <fixture path relative to the repo root> [--base <rev>]
+Usage: python a4_parity2_corpus_diff.py <fixture path relative to the repo root> [--base <rev> | --old <saved copy>]
+
+--old compares against a saved copy of the previous file (for generated corpora that are git-ignored, e.g.
+native/core/build-shops/helpers.txt, where there is no committed version to `git show`).
 
 Splits both versions into lines and each line into whitespace-separated tokens; reports the number of
 lines and tokens that differ, the row indices, and (for rows of equal width) which token columns changed,
@@ -14,7 +17,10 @@ rel = sys.argv[1]
 base = 'HEAD'
 if '--base' in sys.argv:
     base = sys.argv[sys.argv.index('--base') + 1]
-old = subprocess.run(['git', 'show', f'{base}:{rel}'], capture_output=True, check=True).stdout.decode('utf-8')
+if '--old' in sys.argv:
+    old = open(sys.argv[sys.argv.index('--old') + 1], 'rb').read().decode('utf-8')
+else:
+    old = subprocess.run(['git', 'show', f'{base}:{rel}'], capture_output=True, check=True).stdout.decode('utf-8')
 new = open(rel, 'rb').read().decode('utf-8')
 a = old.replace('\r\n', '\n').split('\n')
 b = new.replace('\r\n', '\n').split('\n')
