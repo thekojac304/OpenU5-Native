@@ -3509,7 +3509,7 @@ Normal dungeon exit, combat music selection, death / Refuge music, the ending, s
 **The pre-fix observation is recorded in §15.2. The fix is NOT hardware-tested; do not mark it PASS until the RC3 image is.** User-reported acceptance (not itemised; no serial timing or heap values were captured): A4-SAVE2 / A4-UI3 slot behaviour, A4-SAVE3 device import / export, power-cycle Continue and general smoke. The real-DOS SAVE3 round trip stays optional.
 
 - **Alpha 4 RC heap capture: none exists** in the tree (only Alpha 3's `a3-rc1-hw-capture.log`). It remains the one open evidence item. After flashing RC3: `python -m esp_idf_monitor -p COMx -b 115200 --no-reset 2>&1 | Tee-Object -FilePath a4-rc3-capture.log`, run §14.7 part 6 (walk / bump with music, volumes and mutes, one fight, Mix, Alt+S / Alt+L, System Menu x10, New Journey and Continue, Developer > Diagnostics > Audio/render stats `und=0 hw=0 miss=0`), stop, then `python native/core/tools/a3_04g_hw_closeout.py a4-rc3-capture.log`.
-- A4-PARITY1's crown (D-78, D-79) and well (D-50) fixes were not among the items reported exercised: still unrecorded on hardware. D-81 (dungeon command keys) PASSED.
+- **A4-PARITY1 hardware, user-reported (2026-10-03; on the RC2 image, before the music fix; not itemised, nothing captured):** **PASS** for D-81 (dungeon command keys), D-79 (the worn crown), D-50 (the well's case-folding) and D-78 (the palace crown gate), with one nuance on D-78: the Mani cast **executed and was not absorbed** (the defect was `Absorbed!` for a party carrying the crown), but the literal `Success!` text of §9.18 3.1 was **not observed on a full-health target**. The fix under test is the possession gate, and an executed, unabsorbed cast is what it changes; the exact result text was not captured, so it is not claimed. Recorded as PASS with that caveat. This is a user report, distinct from per-line serial evidence.
 
 ### 15.10 Targeted hardware retest
 
@@ -3528,6 +3528,8 @@ Also worth one try: (E)nter Deceit from its mouth in Britannia — the same defe
 ### 15.11 Candidate
 
 RC2 (§14.9) is **superseded by RC3** (`4.0.0-alpha4-rc3-debug`): RC2 plus this one fix. RC2's records are unchanged. The RC3 image identity is in §15.12.
+
+**Release readiness, as of this amendment.** §14.11 named four open hardware items. By the user's reports they now stand as: A4-SAVE2 / A4-UI3 slots, A4-SAVE3 device import / export, power-cycle Continue and smoke — **user-reported acceptable**; A4-PARITY1 D-81, D-79, D-50 — **user-reported PASS**; D-78 — **user-reported PASS with the `Success!`-text nuance of §15.9**. What is left before Alpha 4 can be called RC-ready: **(1)** the §15.10 retest of the music fix on the RC3 image (the fix is not hardware-tested), and **(2)** the Alpha 4 RC heap capture, which does not exist and which no report replaces. The PARITY1 and SAVE results were obtained on RC2; RC3 differs from RC2 by one selector block (flash `.text` +44 B), so they are not repeated unless the retest shows a regression. The distinction between per-line captured evidence and user-reported acceptance is kept: no serial timing or heap value is claimed for any of them. Still not RC-ready until (1) and (2).
 
 ### 15.12 The RC3 candidate image
 
