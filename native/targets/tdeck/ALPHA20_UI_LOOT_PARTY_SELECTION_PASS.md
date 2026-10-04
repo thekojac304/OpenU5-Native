@@ -45,6 +45,6 @@ Selector rows retain row-level dirty redraw. Moving a selector redraws the old/n
 - ESP-IDF 6.1 ESP32-S3 warnings-as-errors build: passed; app size 779,680 bytes with 268,896 bytes free in the 1 MiB app partition.
 - Static stack report: `AlphaRuntime::render` 2,144 bytes, `AlphaRuntime::command` 480 bytes, `Board::show_alpha` 352 bytes, `finish_encounter_combat` 112 bytes.
 - `git diff --check`: passed (repository-wide line-ending notices only).
-- Launcher: `C:\Dev\OpenU5-Native\native\targets\tdeck\build-alpha20-final\launcher\OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`, 779,680 bytes, SHA-256 `895f7099a7d5eee72d295390a1149af75f4f4ee06307fb3ab8a964e701330cbe`.
-- Resource pack: `C:\Dev\OpenU5-Native\native\assets\openu5-alpha1-resources.bin`, 1,840,139 bytes, SHA-256 `4e1fc6cd2733806232dbbd0af3bd6767b1d2ca58db8b3d2ce2d13a1531e50050`; SD destination `/ultima5/openu5-alpha1-resources.bin`.
-- Tile pack unchanged: `C:\Dev\OpenU5-Native\native\assets\openu5-assets.bin`, 132,284 bytes, SHA-256 `6eb001ed2a7729e683896998f693d02aeaf1327f3cddd661d1c726ef7414e188`; SD destination `/ultima5/openu5-assets.bin`.
+- Launcher: `native\targets\tdeck\build-alpha20-final\launcher\OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`, 779,680 bytes, SHA-256 `895f7099a7d5eee72d295390a1149af75f4f4ee06307fb3ab8a964e701330cbe`.
+- Resource pack: `native\assets\openu5-alpha1-resources.bin`, 1,840,139 bytes, SHA-256 `4e1fc6cd2733806232dbbd0af3bd6767b1d2ca58db8b3d2ce2d13a1531e50050`; SD destination `/ultima5/openu5-alpha1-resources.bin`.
+- Tile pack unchanged: `native\assets\openu5-assets.bin`, 132,284 bytes, SHA-256 `6eb001ed2a7729e683896998f693d02aeaf1327f3cddd661d1c726ef7414e188`; SD destination `/ultima5/openu5-assets.bin`.

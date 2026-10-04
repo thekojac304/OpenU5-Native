@@ -193,14 +193,14 @@ RNG isolation.
 
 Launcher binary:
 
-`C:\Dev\OpenU5-Native\native\targets\tdeck\build-alpha12-fw2\launcher\OpenU5-TDeck-Alpha1.3-Launcher.bin`
+`native\targets\tdeck\build-alpha12-fw2\launcher\OpenU5-TDeck-Alpha1.3-Launcher.bin`
 
 - Size: 658,384 bytes
 - SHA-256: `876c835aa01995b224b0c31e17f2c638eda9ba613dcb53e69f262fe0839a702b`
 
 Corrected Alpha resource pack for the SD card:
 
-`C:\Dev\OpenU5-Native\native\assets\openu5-alpha1-resources.bin`
+`native\assets\openu5-alpha1-resources.bin`
 
 - Size: 1,167,073 bytes
 - SHA-256: `2cb86d7d8fc4e8e04f864e3183d72cad3ca2cf3b0bd10deaa42851b4d0b11bcb`

@@ -1,7 +1,7 @@
 ninja: Entering directory `build-a4-enh1'
 [1/12] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/ui_input_adapter.cpp.obj
 [2/12] Performing build step for 'bootloader'
-[1/1] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-enh1\bootloader && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-enh1/bootloader/bootloader.bin"
+[1/1] C:\WINDOWS\system32\cmd.exe /C "cd /D <repo>\native\targets\tdeck\build-a4-enh1\bootloader && <home>\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 <repo>/native/targets/tdeck/build-a4-enh1/bootloader/bootloader.bin"
 Bootloader binary size 0x5850 bytes. 0x27b0 bytes (31%) free.
 [3/12] No install step for 'bootloader'
 [4/12] Completed 'bootloader'
@@ -17,7 +17,7 @@ esptool v5.4.0
 Creating ESP32-S3 image...
 Merged 3 ELF sections.
 Successfully created ESP32-S3 image.
-Generated C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-enh1/openu5_tdeck.bin
-[12/12] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-enh1 && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-enh1/partition_table/partition-table.bin C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-enh1/openu5_tdeck.bin"
+Generated <repo>/native/targets/tdeck/build-a4-enh1/openu5_tdeck.bin
+[12/12] C:\WINDOWS\system32\cmd.exe /C "cd /D <repo>\native\targets\tdeck\build-a4-enh1 && <home>\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app <repo>/native/targets/tdeck/build-a4-enh1/partition_table/partition-table.bin <repo>/native/targets/tdeck/build-a4-enh1/openu5_tdeck.bin"
 openu5_tdeck.bin binary size 0xfd450 bytes. Smallest app partition is 0x100000 bytes. 0x2bb0 bytes (1%) free.
 Warning: The smallest app partition is nearly full (1% free space left)!

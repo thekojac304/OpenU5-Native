@@ -1,5 +1,5 @@
 
- RUN  v3.2.7 C:/Dev/OpenU5-Native/game
+ RUN  v3.2.7 <repo>/game
 
  ❯ tests/acumulador-ventana.test.ts (7 tests | 3 failed) 10ms
    × #26 — acumulador de validación-ventana > CONTROL DE POBLACIÓN: el barrido ve ficheros y el registro tiene entradas 7ms
@@ -9,9 +9,9 @@
    ✓ #26 — acumulador de validación-ventana > todo fichero con marca viva está REGISTRADO en el acumulador 0ms
    ✓ #26 — acumulador de validación-ventana > CONTROL DE SUJETO: la marca cuyo sujeto es OTRO fichero se distingue 0ms
    × #26 — acumulador de validación-ventana > una exención por SUJETO AJENO no puede silenciar algo que SÍ espera 1ms
-     → ENOENT: no such file or directory, open 'C:\C:\Dev\OpenU5-Native\docs\qa\acumulador-ventana.md'
+     → ENOENT: no such file or directory, open 'C:\<repo>\docs\qa\acumulador-ventana.md'
    × #26 — acumulador de validación-ventana > toda entrada del acumulador sigue teniendo marca (sin entradas muertas) 0ms
-     → ENOENT: no such file or directory, open 'C:\C:\Dev\OpenU5-Native\docs\qa\acumulador-ventana.md'
+     → ENOENT: no such file or directory, open 'C:\<repo>\docs\qa\acumulador-ventana.md'
  ❯ tests/replay-sin-red.test.ts (4 tests | 1 failed) 12ms
    × registro de teclas — NADA sale del dispositivo en esta entrega > el directorio existe y tiene ficheros (la guarda no se absuelve por vacío) 8ms
      → expected [ …(6) ] to include 'store.ts'
@@ -25,7 +25,7 @@
    ✓ #261 — lint: expect.poll(...).not no prueba ausencias > CONTROL: un comentario que CITA el patrón malo no es una infracción 0ms
    ✓ #261 — lint: expect.poll(...).not no prueba ausencias > CONTROL: el lint no se despista con opciones ni saltos de línea 0ms
    × #261 — lint: expect.poll(...).not no prueba ausencias > ningún spec e2e afirma una ausencia con un poll negado 4ms
-     → ENOENT: no such file or directory, scandir 'C:\C:\Dev\OpenU5-Native\game\e2e'
+     → ENOENT: no such file or directory, scandir 'C:\<repo>\game\e2e'
  ❯ tests/pure-exclusiones-runner.test.ts (7 tests | 1 failed) 51ms
    ✓ CI público — la cadena de imports del runner NO puede leer assets/ en carga de módulo > ★★ ningún módulo del cierre del runner lee assets/ al importarse (si no, 13 tests salen del CI público) 36ms
    × CI público — la cadena de imports del runner NO puede leer assets/ en carga de módulo > CONTROL DE POBLACIÓN: el cierre tiene módulos de verdad (si no, el verde no valdría nada) 5ms
@@ -47,17 +47,17 @@
    ✓ disponibilidad: se pregunta por lo que PUEDE pasar > play NO se abre solo ni con los DOS permisos disponibles 0ms
    ✓ disponibilidad: se pregunta por lo que PUEDE pasar > cablear la subida basta para que portada pregunte, aun sin clave 0ms
    × guarda: la constante no puede quedarse rancia > si aparece un consumidor de `.partida`, la constante DEBE estar en true 3ms
-     → ENOENT: no such file or directory, scandir 'C:\C:\Dev\OpenU5-Native\game\src'
+     → ENOENT: no such file or directory, scandir 'C:\<repo>\game\src'
    ✓ guarda: la constante no puede quedarse rancia > el guarda TIENE DIENTES: detecta el acceso cuando existe 0ms
    ✓ guarda: la constante no puede quedarse rancia > el ESTRECHAMIENTO no ciega: sólo calla la etiqueta de analítica 0ms
  ❯ tests/vite-cache-dir.test.ts (4 tests | 3 failed) 27ms
    × cacheDirAislado > en un WORKTREE (node_modules symlink) NO cae dentro del enlace 8ms
-     → EPERM: operation not permitted, symlink 'C:\Users\lawma\AppData\Local\Temp\u5-cache-bHSmuZ\principal\node_modules' -> 'C:\Users\lawma\AppData\Local\Temp\u5-cache-bHSmuZ\arbol\node_modules'
+     → EPERM: operation not permitted, symlink '<home>\AppData\Local\Temp\u5-cache-bHSmuZ\principal\node_modules' -> '<home>\AppData\Local\Temp\u5-cache-bHSmuZ\arbol\node_modules'
    × cacheDirAislado > basta con que escape UNO de los dos node_modules (sólo el de game/) 4ms
-     → EPERM: operation not permitted, symlink 'C:\Users\lawma\AppData\Local\Temp\u5-cache-2mhNqQ\principal\game\node_modules' -> 'C:\Users\lawma\AppData\Local\Temp\u5-cache-2mhNqQ\arbol\game\node_modules'
+     → EPERM: operation not permitted, symlink '<home>\AppData\Local\Temp\u5-cache-2mhNqQ\principal\game\node_modules' -> '<home>\AppData\Local\Temp\u5-cache-2mhNqQ\arbol\game\node_modules'
    ✓ cacheDirAislado > en un checkout NORMAL conserva el default de vite 9ms
    × cacheDirAislado > y la variable, cuando está, sigue mandando sobre todo lo demás 4ms
-     → EPERM: operation not permitted, symlink 'C:\Users\lawma\AppData\Local\Temp\u5-cache-t3YVuu\principal\node_modules' -> 'C:\Users\lawma\AppData\Local\Temp\u5-cache-t3YVuu\arbol\node_modules'
+     → EPERM: operation not permitted, symlink '<home>\AppData\Local\Temp\u5-cache-t3YVuu\principal\node_modules' -> '<home>\AppData\Local\Temp\u5-cache-t3YVuu\arbol\node_modules'
  ❯ tests/mix-flow-presentation.test.ts (8 tests | 1 failed) 15ms
    ✓ (M)ix — cadena de presentación calcada de cmd_mix (CMDS.OVL 0x1AD8) > las cadenas de MIX_UI son verbatim de DATA.OVL (fileoff = DS + 0x10) 2ms
    ✓ (M)ix — cadena de presentación calcada de cmd_mix (CMDS.OVL 0x1AD8) > los 4 glifos de flecha son CÓDIGOS CP437, en el orden en que los pone putchar 1ms
@@ -108,78 +108,78 @@ Python was not found; run without arguments to install from the Microsoft Store,
 : expected -1 to be greater than or equal to 0
  ❯ tests/espejo-ledger-poblado.test.ts (38 tests | 35 failed) 46ms
    × F3b — el poblado del ledger vivo está en las rutas, con su cita > los 11 segmentos poblados declaran EXACTAMENTE los deltas pre-registrados (pin por identidad) 7ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad01.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad01.route.json'
    × F3b — el poblado del ledger vivo está en las rutas, con su cita > cada delta poblado lleva su `ledgerCite` con la ocrLn que lo justifica 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad01.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad01.route.json'
    × F3b — el poblado del ledger vivo está en las rutas, con su cita > NINGÚN delta del proyecto queda sin cita (salvo los dos verdes heredados de LP1) 1ms
-     → ENOENT: no such file or directory, scandir 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad'
+     → ENOENT: no such file or directory, scandir '<repo>\game\e2e\espejo-tour\routes-ad'
    × F3b — los CEROS están justificados por el OCR: el LP rechazó > ad01/ad01-g04: el OCR 2308..2316 contiene la NEGATIVA (/Dost thou pay\?\s*N/i) 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad01.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad01.route.json'
    × F3b — los CEROS están justificados por el OCR: el LP rechazó > ad04/ad04-g10: el OCR 1490..1500 contiene la NEGATIVA (/Dost thou pay\?\s*N/i) 0ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad04.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad04.route.json'
    × F3b — los CEROS están justificados por el OCR: el LP rechazó > ad04/ad04-g17: el OCR 2746..2756 contiene la NEGATIVA (/Dost thou pay\?\s*N/i) 0ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad04.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad04.route.json'
    × F3b — los CEROS están justificados por el OCR: el LP rechazó > ad05/ad05-g03: el OCR 245..255 contiene la NEGATIVA (/Dost thou pay\?\s*N/i) 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad05.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad05.route.json'
    × F3b — los CEROS están justificados por el OCR: el LP rechazó > ad01/ad01-g07: el OCR 3146..3195 contiene la NEGATIVA (/take it\?"?\s*No/i) 0ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad01.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad01.route.json'
    × F3b — los CEROS están justificados por el OCR: el LP rechazó > ad08/ad08-g19: el OCR 2647..2695 contiene la NEGATIVA (/Interested\?"?\s*No/i) 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad08.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad08.route.json'
    × F3b — los CEROS están justificados por el OCR: el LP rechazó > ad08-g19: los TRES ítems del gremio se rechazan, y el mercader lo confirma al despedir 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad08.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad08.route.json'
    × F3b — los CEROS están justificados por el OCR: el LP rechazó > ad01-g07: son TRES rechazos, no dos — la resurrección de 237 también 0ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad01.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad01.route.json'
    × F3b — ad21-g26: el PRIMER delta CON SIGNO del corpus AD, derivado del OCR y careado con el binario > el OCR trae CUATRO cierres de compra a 256 gold 0ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad21.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad21.route.json'
    ✓ F3b — ad21-g26: el PRIMER delta CON SIGNO del corpus AD, derivado del OCR y careado con el binario > el precio 256 lo REPRODUCE la fórmula del PORT con la base del binario e INT 24 1ms
    × F3b — ad21-g26: el PRIMER delta CON SIGNO del corpus AD, derivado del OCR y careado con el binario > −1024 y +16 son 4 × (precio, concesión) — ninguna de las dos cifras es libre 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad21.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad21.route.json'
    ✓ F3b — ad21-g26: el PRIMER delta CON SIGNO del corpus AD, derivado del OCR y careado con el binario > CONTROL NEGATIVO: la base de OTRO gremio no explica el 256 4ms
    × F3b — ad21-g26: el PRIMER delta CON SIGNO del corpus AD, derivado del OCR y careado con el binario > la posada de 4918 NO entra en el delta: el OCR dice `due at check-out` 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad21.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad21.route.json'
    × F3b — ad09-g04: −274 (Regen Ring del herrero de Bordermarch), derivado del BINARIO > el OCR trae UN solo cierre en todo el segmento, en ocrLn 370 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad09.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad09.route.json'
    × F3b — ad09-g04: −274 (Regen Ring del herrero de Bordermarch), derivado del BINARIO > ★★ la letra `f` la fija el BINARIO, no el OCR: el Regen Ring es el 6º de la fila de stock 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad09.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad09.route.json'
    × F3b — ad09-g04: −274 (Regen Ring del herrero de Bordermarch), derivado del BINARIO > el precio 274 lo REPRODUCE la fórmula del PORT con la base del binario e INT 21 0ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad09.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad09.route.json'
    × F3b — ad09-g04: −274 (Regen Ring del herrero de Bordermarch), derivado del BINARIO > ★ la fila ENTERA a INT 21 reproduce los CINCO precios que el OCR canta — el 274 no viaja solo 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad09.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad09.route.json'
    × F3b — ad09-g04: −274 (Regen Ring del herrero de Bordermarch), derivado del BINARIO > ★★ los OTROS ítems se RECHAZAN: por eso el agregado del segmento es −274 y no más 0ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad09.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad09.route.json'
    ✓ F3b — ad09-g04: −274 (Regen Ring del herrero de Bordermarch), derivado del BINARIO > CONTROL NEGATIVO: ninguna OTRA base de la fila explica el 274 a ningún INT entero 6ms
    × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ad03/ad03-g11: conducir las teclas COMMITEADAS por el flujo del port vende exactamente lo previsto y suma 3 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad03.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad03.route.json'
    × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ad04/ad04-g08: conducir las teclas COMMITEADAS por el flujo del port vende exactamente lo previsto y suma 58 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad04.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad04.route.json'
    × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ad06/ad06-g34: conducir las teclas COMMITEADAS por el flujo del port vende exactamente lo previsto y suma 220 0ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad06.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad06.route.json'
    × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ★ el rechazo de ad06 es del Throwing Axe (22): se OFERTA y no se vende — el `n` está cableado 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad06.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad06.route.json'
    × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ★ en los TRES queda lista no vacía al final: el `Escape` del guion es lo que cierra, no `afterDeal` 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad03.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad03.route.json'
    × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ad04/ad04-g08: la fórmula del PORT reproduce los importes que el OCR CANTA 3ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad04.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad04.route.json'
    × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ad06/ad06-g34: la fórmula del PORT reproduce los importes que el OCR CANTA 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad06.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad06.route.json'
    × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ★★ ad03-g11: el importe es ILEGIBLE pero el +3 es INSENSIBLE al INT en toda la banda medida 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad04.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad04.route.json'
    × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ★★ ad03-g11: el Halberd de 357 el LP lo RECHAZA — no entra en el agregado 0ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad03.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad03.route.json'
    × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ★★ ad06-g34: el par CONTROLADO interno ata el Short Sword ilegible — mismo ítem, misma visita 0ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad06.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad06.route.json'
    × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ★★ el ALCANCE se declara: qué parte del agregado confirma el OCR y qué parte sólo la fórmula 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad03.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad03.route.json'
    × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > 🔴 CENSO: el criterio SELLADO de cierre es un DETECTOR, no un censo — ve 1/1/5 y las ventas son 1/4/7 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad03.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad03.route.json'
    × poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > 🔴 …y se EXHIBE el mecanismo: hay bloques con `"Done!"` cuyo `says` vive en el bloque siguiente 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad04.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad04.route.json'
    × F3b — GUARDA: todo delta ≠ 0 tiene teclas de transacción en SU segmento > los 6 deltas con signo del proyecto conducen teclas; ninguno es un cero vacío por guion 1ms
-     → ENOENT: no such file or directory, scandir 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad'
+     → ENOENT: no such file or directory, scandir '<repo>\game\e2e\espejo-tour\routes-ad'
    × F3b — CENSO: «~397 compras» cuenta menciones, no transacciones > en los DOS corpus juntos hay 9 segmentos con al menos una transacción CERRADA 0ms
-     → ENOENT: no such file or directory, scandir 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad'
+     → ENOENT: no such file or directory, scandir '<repo>\game\e2e\espejo-tour\routes-ad'
    × F3b — CENSO: «~397 compras» cuenta menciones, no transacciones > el bucket ANCHO (`Done!` sin atribución) mete el menú de mezcla: ad18-g05 NO es una venta 0ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad18.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad18.route.json'
  ❯ tests/i18n-corpus-inventory.test.ts (6 tests | 2 failed) 290ms
    × G8 — inventario de mundo-cerrado de assets (corpus i18n) > todo .json de assets/ está CUBIERTO o EXCLUIDO-con-razón; sin entradas stale 18ms
      → entradas del inventario que ya no existen en disco: expected [ 'dungeon-feat.json', …(4) ] to deeply equal []
@@ -188,7 +188,7 @@ Python was not found; run without arguments to install from the Microsoft Store,
    ✓ G8 — inventario de mundo-cerrado de assets (corpus i18n) > los títulos del attract-demo (demo-scene.json) ya están en el corpus 32ms
    ✓ G8 — inventario de mundo-cerrado de assets (corpus i18n) > DEMO sintética: un asset nuevo sin clasificar pone rojo el inventario 92ms
    × G8 — inventario de mundo-cerrado de assets (corpus i18n) > #235: un subdirectorio SYMLINKEADO no produce stale en falso (worktrees enlazan por entradas) 63ms
-     → EPERM: operation not permitted, symlink 'C:\Users\lawma\AppData\Local\Temp\u5-assets-aside-giPN0X\maps' -> 'C:\Users\lawma\AppData\Local\Temp\u5-assets-symlink-MuH2mI\maps'
+     → EPERM: operation not permitted, symlink '<home>\AppData\Local\Temp\u5-assets-aside-giPN0X\maps' -> '<home>\AppData\Local\Temp\u5-assets-symlink-MuH2mI\maps'
  ❯ tests/sidecar-qol-normalizado.test.ts (2 tests | 2 failed) 14ms
    × sidecars sellados — qol normalizado (#28) > NINGUNO arrastra ya diario ni minimapa legados 10ms
      → hay sidecars sellados que auditar: expected 0 to be greater than 0
@@ -196,7 +196,7 @@ Python was not found; run without arguments to install from the Microsoft Store,
      → se probó al menos un checkpoint real: expected 0 to be greater than 0
  ❯ tests/blackthorn-trono-nombre.test.ts (10 tests | 2 failed) 66ms
    × vía (a) — el parser del save nativo NO lee vacío donde el save trae nombre > ad01.gam: registro 0 = Barnabas, compañeros exactos 7ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\saves\ad01.gam'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\saves\ad01.gam'
    ✓ vía (d) — el estado sin bautizar existe en el port y el panel muestra el fallback > initial-state: campo crudo VACÍO, nombre efectivo «Avatar» en las dos caras 4ms
    ✓ el trono (castle.json label 4) — conversación completa > apertura de DESCONOCIDO: Dark Lord + «Who dares…» + AskName suspendido 6ms
    ✓ el trono (castle.json label 4) — conversación completa > FIX del bucle: con avatar sin bautizar, teclear «Avatar» CASA y entra al label 0 4ms
@@ -206,7 +206,7 @@ Python was not found; run without arguments to install from the Microsoft Store,
    ✓ el trono (castle.json label 4) — conversación completa > flujo 1988 completo: nombre → y → y → password IMPERA → invitado del castillo 5ms
    ✓ el trono (castle.json label 4) — conversación completa > las tres salidas en falso llaman a la GUARDIA (CallGuards) 17ms
    × el trono (castle.json label 4) — conversación completa > con nombre REAL (save nativo Barnabas), el trono reconoce «Barnabas» 2ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\saves\ad01.gam'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\saves\ad01.gam'
  ❯ tests/espejo-anchors-cinturon.test.ts (21 tests | 10 failed) 1500ms
    ✓ ★★ anclasPerdidas — el canal que `camposPerdidos` no puede cubrir > ★★ el cinturón de curate da 0 sobre una pérdida REAL del guion; anclasPerdidas la ve 2ms
    ✓ ★★ anclasPerdidas — el canal que `camposPerdidos` no puede cubrir > ★ CAMPO: el ancla sobrevive pero pierde `expectDelta` (el ledger entero cuelga de ahí) 0ms
@@ -219,18 +219,18 @@ Python was not found; run without arguments to install from the Microsoft Store,
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\anchors-cinturon-NUMQTT\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\anchors-cinturon-NUMQTT\px.route.json'
     at readFileSync (node:fs:441:20)
-    at enrichPart (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
-    at main (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
+    at enrichPart (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
+    at main (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
+    at file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\anchors-cinturon-NUMQTT\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\anchors-cinturon-NUMQTT\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -240,18 +240,18 @@ Node.js v24.18.0
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\anchors-cinturon-9CjFw7\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\anchors-cinturon-9CjFw7\px.route.json'
     at readFileSync (node:fs:441:20)
-    at enrichPart (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
-    at main (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
+    at enrichPart (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
+    at main (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
+    at file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\anchors-cinturon-9CjFw7\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\anchors-cinturon-9CjFw7\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -261,18 +261,18 @@ Node.js v24.18.0
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\anchors-cinturon-20ea1n\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\anchors-cinturon-20ea1n\px.route.json'
     at readFileSync (node:fs:441:20)
-    at enrichPart (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
-    at main (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
+    at enrichPart (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
+    at main (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
+    at file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\anchors-cinturon-20ea1n\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\anchors-cinturon-20ea1n\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -282,18 +282,18 @@ Node.js v24.18.0
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\anchors-cinturon-1dgmmI\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\anchors-cinturon-1dgmmI\px.route.json'
     at readFileSync (node:fs:441:20)
-    at enrichPart (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
-    at main (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
+    at enrichPart (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
+    at main (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
+    at file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\anchors-cinturon-1dgmmI\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\anchors-cinturon-1dgmmI\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -303,18 +303,18 @@ Node.js v24.18.0
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\anchors-cinturon-sZqyQO\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\anchors-cinturon-sZqyQO\px.route.json'
     at readFileSync (node:fs:441:20)
-    at enrichPart (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
-    at main (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
+    at enrichPart (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
+    at main (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
+    at file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\anchors-cinturon-sZqyQO\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\anchors-cinturon-sZqyQO\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -324,18 +324,18 @@ Node.js v24.18.0
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\anchors-cinturon-7FLLVj\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\anchors-cinturon-7FLLVj\px.route.json'
     at readFileSync (node:fs:441:20)
-    at enrichPart (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
-    at main (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
+    at enrichPart (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
+    at main (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
+    at file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\anchors-cinturon-7FLLVj\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\anchors-cinturon-7FLLVj\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -351,27 +351,27 @@ Node.js v24.18.0
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\anchors-cinturon-z1EQHI\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\anchors-cinturon-z1EQHI\px.route.json'
     at readFileSync (node:fs:441:20)
-    at enrichPart (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
-    at main (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
+    at enrichPart (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
+    at main (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
+    at file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\anchors-cinturon-z1EQHI\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\anchors-cinturon-z1EQHI\\px.route.json'
 }
 
 Node.js v24.18.0
 : expected 1 to be +0 // Object.is equality
    ✓ ★★ flags desconocidas: la que se tragaba era la que APAGA la escritura > ★ `--routes` sin valor sale por la puerta de USO, no por un TypeError a media pasada 154ms
    × ★★ el corpus REAL: alcance medido y 0 falsos positivos > ★★ `--dry` sobre las 49 rutas: 0 pérdidas, y el corpus versionado no se toca 1ms
-     → ENOENT: no such file or directory, scandir 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes'
+     → ENOENT: no such file or directory, scandir '<repo>\game\e2e\espejo-tour\routes'
    × ★★ el corpus REAL: alcance medido y 0 falsos positivos > ★★ `camposPerdidos` es 0 por CONSTRUCCIÓN: las claves vigiladas no incluyen el guion 1ms
-     → ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes\part04.route.json'
+     → ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes\part04.route.json'
  ❯ tests/shell-files-censo.test.ts (5 tests | 3 failed) 22ms
    × ficha relpaths — censo por-fichero de emisores del shell (default-DENY) > todo fichero emisor está clasificado: en SHELL_FILE_RELPATHS o excluido con razón 7ms
      → 
@@ -435,17 +435,17 @@ Clasifícalo en tools/extract-user-strings.mjs: si emite texto user-facing, añ�
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\curate-cablear-QTay7R\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\curate-cablear-QTay7R\px.route.json'
     at readFileSync (node:fs:441:20)
-    at curate (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:125:19)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:345:13
+    at curate (file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:125:19)
+    at file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:345:13
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\curate-cablear-QTay7R\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\curate-cablear-QTay7R\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -455,17 +455,17 @@ Node.js v24.18.0
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\curate-cablear-g3dHUc\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\curate-cablear-g3dHUc\px.route.json'
     at readFileSync (node:fs:441:20)
-    at curate (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:125:19)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:345:13
+    at curate (file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:125:19)
+    at file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:345:13
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\curate-cablear-g3dHUc\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\curate-cablear-g3dHUc\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -475,17 +475,17 @@ Node.js v24.18.0
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\curate-cablear-JyKMh5\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\curate-cablear-JyKMh5\px.route.json'
     at readFileSync (node:fs:441:20)
-    at curate (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:125:19)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:345:13
+    at curate (file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:125:19)
+    at file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:345:13
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\curate-cablear-JyKMh5\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\curate-cablear-JyKMh5\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -495,17 +495,17 @@ Node.js v24.18.0
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\curate-cablear-m2WHwX\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\curate-cablear-m2WHwX\px.route.json'
     at readFileSync (node:fs:441:20)
-    at curate (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:125:19)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:345:13
+    at curate (file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:125:19)
+    at file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:345:13
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\curate-cablear-m2WHwX\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\curate-cablear-m2WHwX\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -517,17 +517,17 @@ Node.js v24.18.0
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\curate-cablear-5DD92a\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\curate-cablear-5DD92a\px.route.json'
     at readFileSync (node:fs:441:20)
-    at curate (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:125:19)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:345:13
+    at curate (file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:125:19)
+    at file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:345:13
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\curate-cablear-5DD92a\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\curate-cablear-5DD92a\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -538,17 +538,17 @@ Node.js v24.18.0
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\curate-cablear-AXILrW\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\curate-cablear-AXILrW\px.route.json'
     at readFileSync (node:fs:441:20)
-    at curate (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:125:19)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:345:13
+    at curate (file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:125:19)
+    at file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:345:13
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\curate-cablear-AXILrW\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\curate-cablear-AXILrW\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -558,17 +558,17 @@ Node.js v24.18.0
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-sint\sint01.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<repo>\game\e2e\espejo-tour\routes-sint\sint01.route.json'
     at readFileSync (node:fs:441:20)
-    at curate (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:125:19)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:345:13
+    at curate (file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:125:19)
+    at file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:345:13
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\routes-sint\\sint01.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<repo>\\game\\e2e\\espejo-tour\\routes-sint\\sint01.route.json'
 }
 
 Node.js v24.18.0
@@ -599,18 +599,18 @@ Node.js v24.18.0
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\espejo-verify-pov5Tz\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\espejo-verify-pov5Tz\px.route.json'
     at readFileSync (node:fs:441:20)
-    at cargar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
-    at reconciliar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:127:30)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:156:15
+    at cargar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
+    at reconciliar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:127:30)
+    at file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:156:15
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\espejo-verify-pov5Tz\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\espejo-verify-pov5Tz\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -620,18 +620,18 @@ Node.js v24.18.0
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-sint\sint01.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<repo>\game\e2e\espejo-tour\routes-sint\sint01.route.json'
     at readFileSync (node:fs:441:20)
-    at cargar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
-    at reconciliar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:127:30)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:156:15
+    at cargar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
+    at reconciliar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:127:30)
+    at file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:156:15
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\routes-sint\\sint01.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<repo>\\game\\e2e\\espejo-tour\\routes-sint\\sint01.route.json'
 }
 
 Node.js v24.18.0
@@ -642,17 +642,17 @@ Node.js v24.18.0
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\espejo-verify-JqJOA4\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\espejo-verify-JqJOA4\px.route.json'
     at readFileSync (node:fs:441:20)
-    at cargar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
+    at cargar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
+    at file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\espejo-verify-JqJOA4\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\espejo-verify-JqJOA4\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -664,17 +664,17 @@ Node.js v24.18.0
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\espejo-verify-eVM79t\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\espejo-verify-eVM79t\px.route.json'
     at readFileSync (node:fs:441:20)
-    at cargar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
+    at cargar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
+    at file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\espejo-verify-eVM79t\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\espejo-verify-eVM79t\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -684,17 +684,17 @@ Node.js v24.18.0
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\espejo-verify-lYaOgS\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\espejo-verify-lYaOgS\px.route.json'
     at readFileSync (node:fs:441:20)
-    at cargar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
+    at cargar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
+    at file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\espejo-verify-lYaOgS\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\espejo-verify-lYaOgS\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -704,17 +704,17 @@ Node.js v24.18.0
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\espejo-verify-teZCsB\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\espejo-verify-teZCsB\px.route.json'
     at readFileSync (node:fs:441:20)
-    at cargar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
+    at cargar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
+    at file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\espejo-verify-teZCsB\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\espejo-verify-teZCsB\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -728,17 +728,17 @@ Node.js v24.18.0
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\espejo-verify-sgtAeU\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\espejo-verify-sgtAeU\px.route.json'
     at readFileSync (node:fs:441:20)
-    at cargar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
+    at cargar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
+    at file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\espejo-verify-sgtAeU\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\espejo-verify-sgtAeU\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -1525,7 +1525,7 @@ SyntaxError: Invalid or unexpected token
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/115]⎯
 
  FAIL  tests/espejo-costura-interna-banner.test.ts [ tests/espejo-costura-interna-banner.test.ts ]
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad09.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad09.route.json'
  ❯ tests/espejo-costura-interna-banner.test.ts:23:25
      21| const HERE = dirname(fileURLToPath(import.meta.url));
      22| const ESPEJO = join(HERE, "..", "e2e", "espejo-tour");
@@ -1585,7 +1585,7 @@ SyntaxError: Invalid or unexpected token
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/115]⎯
 
  FAIL  tests/espejo-int-loc2.test.ts [ tests/espejo-int-loc2.test.ts ]
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad21.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad21.route.json'
  ❯ readJson tests/espejo-int-loc2.test.ts:41:55
      39| const GAME = join(dirname(fileURLToPath(import.meta.url)), "..");
      40| const TOUR = join(GAME, "e2e", "espejo-tour");
@@ -1599,7 +1599,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/115]⎯
 
  FAIL  tests/espejo-int-resto.test.ts [ tests/espejo-int-resto.test.ts ]
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad03.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad03.route.json'
  ❯ readJson tests/espejo-int-resto.test.ts:38:55
      36| const GAME = join(dirname(fileURLToPath(import.meta.url)), "..");
      37| const TOUR = join(GAME, "e2e", "espejo-tour");
@@ -1661,7 +1661,7 @@ SyntaxError: Invalid or unexpected token
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/115]⎯
 
  FAIL  tests/intro-sonidos-220.test.ts [ tests/intro-sonidos-220.test.ts ]
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\re\disasm\EGA.DRV.asm'
+Error: ENOENT: no such file or directory, open '<repo>\re\disasm\EGA.DRV.asm'
  ❯ tests/intro-sonidos-220.test.ts:45:13
      43| } from "../src/skin/fiel/introAnim.js";
      44| 
@@ -1673,7 +1673,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\re\disasm\E
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/115]⎯
 
  FAIL  tests/lighthouse-beam.test.ts [ tests/lighthouse-beam.test.ts ]
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\original\u5\play\DATA.OVL'
+Error: ENOENT: no such file or directory, open '<repo>\original\u5\play\DATA.OVL'
  ❯ tests/lighthouse-beam.test.ts:35:19
      33| 
      34| describe("tabla de rayos 0x1f7e — careo byte a byte contra DATA.OVL", …
@@ -1685,7 +1685,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\original\u5
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/115]⎯
 
  FAIL  tests/overworld-ai-replay.test.ts [ tests/overworld-ai-replay.test.ts ]
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\re\notes\captures\overworld_ai_capture2_run5.json'
+Error: ENOENT: no such file or directory, open '<repo>\re\notes\captures\overworld_ai_capture2_run5.json'
  ❯ tests/overworld-ai-replay.test.ts:38:3
      36| 
      37| const CAP: Capture = JSON.parse(
@@ -1697,7 +1697,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\re\notes\ca
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/115]⎯
 
  FAIL  tests/ranged-room-drive-r15.test.ts [ tests/ranged-room-drive-r15.test.ts ]
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\grandtour\saves\ch15.gam'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\grandtour\saves\ch15.gam'
  ❯ loadBin tests/ranged-room-drive-r15.test.ts:37:25
      35| function loadBin(rel: string): Uint8Array {
      36|   const path = fileURLToPath(new URL(rel, import.meta.url));
@@ -1725,7 +1725,7 @@ AssertionError: el barrido tiene que encontrar marcas: expected 0 to be greater 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/115]⎯
 
  FAIL  tests/acumulador-ventana.test.ts > #26 — acumulador de validación-ventana > una exención por SUJETO AJENO no puede silenciar algo que SÍ espera
-Error: ENOENT: no such file or directory, open 'C:\C:\Dev\OpenU5-Native\docs\qa\acumulador-ventana.md'
+Error: ENOENT: no such file or directory, open 'C:\<repo>\docs\qa\acumulador-ventana.md'
  ❯ tests/acumulador-ventana.test.ts:180:16
     178|      * exención es falsa y esto se pone rojo nombrando el fichero.
     179|      */
@@ -1737,7 +1737,7 @@ Error: ENOENT: no such file or directory, open 'C:\C:\Dev\OpenU5-Native\docs\qa\
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/115]⎯
 
  FAIL  tests/acumulador-ventana.test.ts > #26 — acumulador de validación-ventana > toda entrada del acumulador sigue teniendo marca (sin entradas muertas)
-Error: ENOENT: no such file or directory, open 'C:\C:\Dev\OpenU5-Native\docs\qa\acumulador-ventana.md'
+Error: ENOENT: no such file or directory, open 'C:\<repo>\docs\qa\acumulador-ventana.md'
  ❯ registradas tests/acumulador-ventana.test.ts:122:14
     120| /** Rutas citadas en el registro (en `backticks`), tal cual las escrib…
     121| function registradas(): string[] {
@@ -1750,7 +1750,7 @@ Error: ENOENT: no such file or directory, open 'C:\C:\Dev\OpenU5-Native\docs\qa\
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/115]⎯
 
  FAIL  tests/blackthorn-trono-nombre.test.ts > vía (a) — el parser del save nativo NO lee vacío donde el save trae nombre > ad01.gam: registro 0 = Barnabas, compañeros exactos
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\saves\ad01.gam'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\saves\ad01.gam'
  ❯ tests/blackthorn-trono-nombre.test.ts:91:7
      89|   it("ad01.gam: registro 0 = Barnabas, compañeros exactos", () => {
      90|     const gam = new Uint8Array(
@@ -1762,7 +1762,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/115]⎯
 
  FAIL  tests/blackthorn-trono-nombre.test.ts > el trono (castle.json label 4) — conversación completa > con nombre REAL (save nativo Barnabas), el trono reconoce «Barnabas»
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\saves\ad01.gam'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\saves\ad01.gam'
  ❯ tests/blackthorn-trono-nombre.test.ts:205:7
     203|   it("con nombre REAL (save nativo Barnabas), el trono reconoce «Barna…
     204|     const gam = new Uint8Array(
@@ -1854,7 +1854,7 @@ AssertionError: no se encontró el cierre de handleDungeonKey: expected -1 to be
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/115]⎯
 
  FAIL  tests/e2e-poll-negado-lint.test.ts > #261 — lint: expect.poll(...).not no prueba ausencias > ningún spec e2e afirma una ausencia con un poll negado
-Error: ENOENT: no such file or directory, scandir 'C:\C:\Dev\OpenU5-Native\game\e2e'
+Error: ENOENT: no such file or directory, scandir 'C:\<repo>\game\e2e'
  ❯ specsE2E tests/e2e-poll-negado-lint.test.ts:108:19
     106| 
     107| function specsE2E(dir: string, acc: string[] = []): string[] {
@@ -1871,18 +1871,18 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\anchors-cinturon-NUMQTT\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\anchors-cinturon-NUMQTT\px.route.json'
     at readFileSync (node:fs:441:20)
-    at enrichPart (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
-    at main (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
+    at enrichPart (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
+    at main (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
+    at file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\anchors-cinturon-NUMQTT\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\anchors-cinturon-NUMQTT\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -1912,18 +1912,18 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\anchors-cinturon-9CjFw7\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\anchors-cinturon-9CjFw7\px.route.json'
     at readFileSync (node:fs:441:20)
-    at enrichPart (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
-    at main (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
+    at enrichPart (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
+    at main (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
+    at file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\anchors-cinturon-9CjFw7\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\anchors-cinturon-9CjFw7\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -1953,18 +1953,18 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\anchors-cinturon-20ea1n\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\anchors-cinturon-20ea1n\px.route.json'
     at readFileSync (node:fs:441:20)
-    at enrichPart (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
-    at main (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
+    at enrichPart (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
+    at main (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
+    at file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\anchors-cinturon-20ea1n\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\anchors-cinturon-20ea1n\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -1994,18 +1994,18 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\anchors-cinturon-1dgmmI\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\anchors-cinturon-1dgmmI\px.route.json'
     at readFileSync (node:fs:441:20)
-    at enrichPart (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
-    at main (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
+    at enrichPart (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
+    at main (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
+    at file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\anchors-cinturon-1dgmmI\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\anchors-cinturon-1dgmmI\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -2035,18 +2035,18 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\anchors-cinturon-sZqyQO\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\anchors-cinturon-sZqyQO\px.route.json'
     at readFileSync (node:fs:441:20)
-    at enrichPart (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
-    at main (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
+    at enrichPart (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
+    at main (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
+    at file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\anchors-cinturon-sZqyQO\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\anchors-cinturon-sZqyQO\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -2076,18 +2076,18 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\anchors-cinturon-7FLLVj\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\anchors-cinturon-7FLLVj\px.route.json'
     at readFileSync (node:fs:441:20)
-    at enrichPart (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
-    at main (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
+    at enrichPart (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
+    at main (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
+    at file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\anchors-cinturon-7FLLVj\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\anchors-cinturon-7FLLVj\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -2136,18 +2136,18 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\anchors-cinturon-z1EQHI\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\anchors-cinturon-z1EQHI\px.route.json'
     at readFileSync (node:fs:441:20)
-    at enrichPart (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
-    at main (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
+    at enrichPart (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:445:19)
+    at main (file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:536:55)
+    at file:///<repo>/game/e2e/espejo-tour/tools/derive-anchors.mjs:556:76
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\anchors-cinturon-z1EQHI\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\anchors-cinturon-z1EQHI\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -2173,7 +2173,7 @@ Node.js v24.18.0
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/115]⎯
 
  FAIL  tests/espejo-anchors-cinturon.test.ts > ★★ el corpus REAL: alcance medido y 0 falsos positivos > ★★ `--dry` sobre las 49 rutas: 0 pérdidas, y el corpus versionado no se toca
-Error: ENOENT: no such file or directory, scandir 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes'
+Error: ENOENT: no such file or directory, scandir '<repo>\game\e2e\espejo-tour\routes'
  ❯ partesDe tests/espejo-anchors-cinturon.test.ts:122:3
     120| 
     121| const partesDe = (dir: string) =>
@@ -2186,7 +2186,7 @@ Error: ENOENT: no such file or directory, scandir 'C:\Dev\OpenU5-Native\game\e2e
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/115]⎯
 
  FAIL  tests/espejo-anchors-cinturon.test.ts > ★★ el corpus REAL: alcance medido y 0 falsos positivos > ★★ `camposPerdidos` es 0 por CONSTRUCCIÓN: las claves vigiladas no incluyen el guion
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes\part04.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes\part04.route.json'
  ❯ tests/espejo-anchors-cinturon.test.ts:337:29
     335|    */
     336|   it("★★ `camposPerdidos` es 0 por CONSTRUCCIÓN: las claves vigiladas …
@@ -2202,17 +2202,17 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\curate-cablear-QTay7R\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\curate-cablear-QTay7R\px.route.json'
     at readFileSync (node:fs:441:20)
-    at curate (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:125:19)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:345:13
+    at curate (file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:125:19)
+    at file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:345:13
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\curate-cablear-QTay7R\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\curate-cablear-QTay7R\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -2241,17 +2241,17 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\curate-cablear-g3dHUc\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\curate-cablear-g3dHUc\px.route.json'
     at readFileSync (node:fs:441:20)
-    at curate (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:125:19)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:345:13
+    at curate (file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:125:19)
+    at file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:345:13
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\curate-cablear-g3dHUc\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\curate-cablear-g3dHUc\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -2280,17 +2280,17 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\curate-cablear-JyKMh5\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\curate-cablear-JyKMh5\px.route.json'
     at readFileSync (node:fs:441:20)
-    at curate (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:125:19)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:345:13
+    at curate (file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:125:19)
+    at file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:345:13
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\curate-cablear-JyKMh5\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\curate-cablear-JyKMh5\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -2319,17 +2319,17 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\curate-cablear-m2WHwX\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\curate-cablear-m2WHwX\px.route.json'
     at readFileSync (node:fs:441:20)
-    at curate (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:125:19)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:345:13
+    at curate (file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:125:19)
+    at file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:345:13
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\curate-cablear-m2WHwX\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\curate-cablear-m2WHwX\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -2377,17 +2377,17 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\curate-cablear-5DD92a\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\curate-cablear-5DD92a\px.route.json'
     at readFileSync (node:fs:441:20)
-    at curate (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:125:19)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:345:13
+    at curate (file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:125:19)
+    at file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:345:13
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\curate-cablear-5DD92a\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\curate-cablear-5DD92a\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -2416,17 +2416,17 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\curate-cablear-AXILrW\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\curate-cablear-AXILrW\px.route.json'
     at readFileSync (node:fs:441:20)
-    at curate (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:125:19)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:345:13
+    at curate (file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:125:19)
+    at file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:345:13
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\curate-cablear-AXILrW\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\curate-cablear-AXILrW\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -2455,17 +2455,17 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-sint\sint01.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<repo>\game\e2e\espejo-tour\routes-sint\sint01.route.json'
     at readFileSync (node:fs:441:20)
-    at curate (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:125:19)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/curate.mjs:345:13
+    at curate (file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:125:19)
+    at file:///<repo>/game/e2e/espejo-tour/tools/curate.mjs:345:13
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\routes-sint\\sint01.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<repo>\\game\\e2e\\espejo-tour\\routes-sint\\sint01.route.json'
 }
 
 Node.js v24.18.0
@@ -2500,18 +2500,18 @@ AssertionError: expected 'node:fs:441\r\n    return binding.rea…' to contain '
 +     return binding.readFileUtf8(path, stringToFlags(options.flag));
 +                    ^
 + 
-+ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\espejo-verify-gSB0ef\px.route.json'
++ Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\espejo-verify-gSB0ef\px.route.json'
 +     at readFileSync (node:fs:441:20)
-+     at cargar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
-+     at reconciliar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:127:30)
-+     at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:156:15
++     at cargar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
++     at reconciliar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:127:30)
++     at file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:156:15
 +     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
 +     at async node:internal/modules/esm/loader:643:26
 +     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
 +   errno: -4058,
 +   code: 'ENOENT',
 +   syscall: 'open',
-+   path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\espejo-verify-gSB0ef\\px.route.json'
++   path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\espejo-verify-gSB0ef\\px.route.json'
 + }
 + 
 + Node.js v24.18.0
@@ -2532,18 +2532,18 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\espejo-verify-pov5Tz\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\espejo-verify-pov5Tz\px.route.json'
     at readFileSync (node:fs:441:20)
-    at cargar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
-    at reconciliar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:127:30)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:156:15
+    at cargar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
+    at reconciliar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:127:30)
+    at file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:156:15
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\espejo-verify-pov5Tz\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\espejo-verify-pov5Tz\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -2573,18 +2573,18 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-sint\sint01.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<repo>\game\e2e\espejo-tour\routes-sint\sint01.route.json'
     at readFileSync (node:fs:441:20)
-    at cargar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
-    at reconciliar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:127:30)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:156:15
+    at cargar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
+    at reconciliar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:127:30)
+    at file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:156:15
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\routes-sint\\sint01.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<repo>\\game\\e2e\\espejo-tour\\routes-sint\\sint01.route.json'
 }
 
 Node.js v24.18.0
@@ -2614,17 +2614,17 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\espejo-verify-JqJOA4\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\espejo-verify-JqJOA4\px.route.json'
     at readFileSync (node:fs:441:20)
-    at cargar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
+    at cargar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
+    at file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\espejo-verify-JqJOA4\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\espejo-verify-JqJOA4\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -2659,17 +2659,17 @@ AssertionError: expected 'node:fs:441\r\n    return binding.rea…' to contain '
 +     return binding.readFileUtf8(path, stringToFlags(options.flag));
 +                    ^
 + 
-+ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\espejo-verify-3IONt0\px.route.json'
++ Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\espejo-verify-3IONt0\px.route.json'
 +     at readFileSync (node:fs:441:20)
-+     at cargar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
-+     at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
++     at cargar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
++     at file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
 +     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
 +     at async node:internal/modules/esm/loader:643:26
 +     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
 +   errno: -4058,
 +   code: 'ENOENT',
 +   syscall: 'open',
-+   path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\espejo-verify-3IONt0\\px.route.json'
++   path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\espejo-verify-3IONt0\\px.route.json'
 + }
 + 
 + Node.js v24.18.0
@@ -2690,17 +2690,17 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\espejo-verify-eVM79t\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\espejo-verify-eVM79t\px.route.json'
     at readFileSync (node:fs:441:20)
-    at cargar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
+    at cargar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
+    at file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\espejo-verify-eVM79t\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\espejo-verify-eVM79t\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -2729,17 +2729,17 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\espejo-verify-lYaOgS\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\espejo-verify-lYaOgS\px.route.json'
     at readFileSync (node:fs:441:20)
-    at cargar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
+    at cargar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
+    at file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\espejo-verify-lYaOgS\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\espejo-verify-lYaOgS\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -2768,17 +2768,17 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\espejo-verify-teZCsB\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\espejo-verify-teZCsB\px.route.json'
     at readFileSync (node:fs:441:20)
-    at cargar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
+    at cargar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
+    at file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\espejo-verify-teZCsB\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\espejo-verify-teZCsB\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -2807,17 +2807,17 @@ AssertionError: node:fs:441
     return binding.readFileUtf8(path, stringToFlags(options.flag));
                    ^
 
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\C:\Users\lawma\AppData\Local\Temp\espejo-verify-sgtAeU\px.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\<home>\AppData\Local\Temp\espejo-verify-sgtAeU\px.route.json'
     at readFileSync (node:fs:441:20)
-    at cargar (file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
-    at file:///C:/Dev/OpenU5-Native/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
+    at cargar (file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:104:23)
+    at file:///<repo>/game/e2e/espejo-tour/tools/apply-ledger-overlay.mjs:181:39
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
   errno: -4058,
   code: 'ENOENT',
   syscall: 'open',
-  path: 'C:\\Dev\\OpenU5-Native\\game\\e2e\\espejo-tour\\C:\\Users\\lawma\\AppData\\Local\\Temp\\espejo-verify-sgtAeU\\px.route.json'
+  path: '<repo>\\game\\e2e\\espejo-tour\\<home>\\AppData\\Local\\Temp\\espejo-verify-sgtAeU\\px.route.json'
 }
 
 Node.js v24.18.0
@@ -2842,7 +2842,7 @@ Node.js v24.18.0
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[57/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — el poblado del ledger vivo está en las rutas, con su cita > los 11 segmentos poblados declaran EXACTAMENTE los deltas pre-registrados (pin por identidad)
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad01.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad01.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -2856,7 +2856,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[58/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — el poblado del ledger vivo está en las rutas, con su cita > cada delta poblado lleva su `ledgerCite` con la ocrLn que lo justifica
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad01.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad01.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -2870,7 +2870,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[59/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — el poblado del ledger vivo está en las rutas, con su cita > NINGÚN delta del proyecto queda sin cita (salvo los dos verdes heredados de LP1)
-Error: ENOENT: no such file or directory, scandir 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad'
+Error: ENOENT: no such file or directory, scandir '<repo>\game\e2e\espejo-tour\routes-ad'
  ❯ routeFiles tests/espejo-ledger-poblado.test.ts:43:37
      41| interface Route { segments: Seg[] }
      42| 
@@ -2885,7 +2885,7 @@ Error: ENOENT: no such file or directory, scandir 'C:\Dev\OpenU5-Native\game\e2e
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — los CEROS están justificados por el OCR: el LP rechazó > ad01/ad01-g04: el OCR 2308..2316 contiene la NEGATIVA (/Dost thou pay\?\s*N/i)
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — los CEROS están justificados por el OCR: el LP rechazó > ad01/ad01-g07: el OCR 3146..3195 contiene la NEGATIVA (/take it\?"?\s*No/i)
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad01.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad01.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -2900,7 +2900,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — los CEROS están justificados por el OCR: el LP rechazó > ad04/ad04-g10: el OCR 1490..1500 contiene la NEGATIVA (/Dost thou pay\?\s*N/i)
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — los CEROS están justificados por el OCR: el LP rechazó > ad04/ad04-g17: el OCR 2746..2756 contiene la NEGATIVA (/Dost thou pay\?\s*N/i)
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad04.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad04.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -2914,7 +2914,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[62/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — los CEROS están justificados por el OCR: el LP rechazó > ad05/ad05-g03: el OCR 245..255 contiene la NEGATIVA (/Dost thou pay\?\s*N/i)
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad05.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad05.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -2928,7 +2928,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[63/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — los CEROS están justificados por el OCR: el LP rechazó > ad08/ad08-g19: el OCR 2647..2695 contiene la NEGATIVA (/Interested\?"?\s*No/i)
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad08.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad08.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -2942,7 +2942,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[64/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — los CEROS están justificados por el OCR: el LP rechazó > ad08-g19: los TRES ítems del gremio se rechazan, y el mercader lo confirma al despedir
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad08.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad08.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -2956,7 +2956,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[65/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — los CEROS están justificados por el OCR: el LP rechazó > ad01-g07: son TRES rechazos, no dos — la resurrección de 237 también
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad01.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad01.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -2970,7 +2970,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[66/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — ad21-g26: el PRIMER delta CON SIGNO del corpus AD, derivado del OCR y careado con el binario > el OCR trae CUATRO cierres de compra a 256 gold
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad21.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad21.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -2985,7 +2985,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[67/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — ad21-g26: el PRIMER delta CON SIGNO del corpus AD, derivado del OCR y careado con el binario > −1024 y +16 son 4 × (precio, concesión) — ninguna de las dos cifras es libre
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad21.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad21.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3000,7 +3000,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[68/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — ad21-g26: el PRIMER delta CON SIGNO del corpus AD, derivado del OCR y careado con el binario > la posada de 4918 NO entra en el delta: el OCR dice `due at check-out`
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad21.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad21.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3015,7 +3015,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[69/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — ad09-g04: −274 (Regen Ring del herrero de Bordermarch), derivado del BINARIO > el OCR trae UN solo cierre en todo el segmento, en ocrLn 370
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad09.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad09.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3030,7 +3030,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[70/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — ad09-g04: −274 (Regen Ring del herrero de Bordermarch), derivado del BINARIO > ★★ la letra `f` la fija el BINARIO, no el OCR: el Regen Ring es el 6º de la fila de stock
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad09.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad09.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3045,7 +3045,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[71/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — ad09-g04: −274 (Regen Ring del herrero de Bordermarch), derivado del BINARIO > el precio 274 lo REPRODUCE la fórmula del PORT con la base del binario e INT 21
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad09.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad09.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3060,7 +3060,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[72/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — ad09-g04: −274 (Regen Ring del herrero de Bordermarch), derivado del BINARIO > ★ la fila ENTERA a INT 21 reproduce los CINCO precios que el OCR canta — el 274 no viaja solo
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad09.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad09.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3075,7 +3075,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[73/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — ad09-g04: −274 (Regen Ring del herrero de Bordermarch), derivado del BINARIO > ★★ los OTROS ítems se RECHAZAN: por eso el agregado del segmento es −274 y no más
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad09.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad09.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3090,7 +3090,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[74/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ad03/ad03-g11: conducir las teclas COMMITEADAS por el flujo del port vende exactamente lo previsto y suma 3
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad03.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad03.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3105,7 +3105,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[75/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ad04/ad04-g08: conducir las teclas COMMITEADAS por el flujo del port vende exactamente lo previsto y suma 58
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad04.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad04.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3120,7 +3120,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[76/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ad06/ad06-g34: conducir las teclas COMMITEADAS por el flujo del port vende exactamente lo previsto y suma 220
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad06.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad06.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3135,7 +3135,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[77/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ★ el rechazo de ad06 es del Throwing Axe (22): se OFERTA y no se vende — el `n` está cableado
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad06.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad06.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3150,7 +3150,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[78/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ★ en los TRES queda lista no vacía al final: el `Escape` del guion es lo que cierra, no `afterDeal`
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad03.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad03.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3165,7 +3165,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[79/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ad04/ad04-g08: la fórmula del PORT reproduce los importes que el OCR CANTA
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad04.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad04.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3179,7 +3179,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[80/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ad06/ad06-g34: la fórmula del PORT reproduce los importes que el OCR CANTA
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad06.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad06.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3193,7 +3193,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[81/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ★★ ad03-g11: el importe es ILEGIBLE pero el +3 es INSENSIBLE al INT en toda la banda medida
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad04.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad04.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3207,7 +3207,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[82/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ★★ ad03-g11: el Halberd de 357 el LP lo RECHAZA — no entra en el agregado
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad03.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad03.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3221,7 +3221,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[83/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ★★ ad06-g34: el par CONTROLADO interno ata el Short Sword ilegible — mismo ítem, misma visita
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad06.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad06.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3235,7 +3235,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[84/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > ★★ el ALCANCE se declara: qué parte del agregado confirma el OCR y qué parte sólo la fórmula
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad03.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad03.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3249,7 +3249,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[85/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > 🔴 CENSO: el criterio SELLADO de cierre es un DETECTOR, no un censo — ve 1/1/5 y las ventas son 1/4/7
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad03.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad03.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3264,7 +3264,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[86/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > poblar-deltas — las TRES ventas smallmap: +3 (Trinsic) · +58 y +220 (Minoc) > 🔴 …y se EXHIBE el mecanismo: hay bloques con `"Done!"` cuyo `says` vive en el bloque siguiente
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad04.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad04.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3280,7 +3280,7 @@ Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\es
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[87/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — GUARDA: todo delta ≠ 0 tiene teclas de transacción en SU segmento > los 6 deltas con signo del proyecto conducen teclas; ninguno es un cero vacío por guion
-Error: ENOENT: no such file or directory, scandir 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad'
+Error: ENOENT: no such file or directory, scandir '<repo>\game\e2e\espejo-tour\routes-ad'
  ❯ routeFiles tests/espejo-ledger-poblado.test.ts:43:37
      41| interface Route { segments: Seg[] }
      42| 
@@ -3294,7 +3294,7 @@ Error: ENOENT: no such file or directory, scandir 'C:\Dev\OpenU5-Native\game\e2e
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[88/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — CENSO: «~397 compras» cuenta menciones, no transacciones > en los DOS corpus juntos hay 9 segmentos con al menos una transacción CERRADA
-Error: ENOENT: no such file or directory, scandir 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad'
+Error: ENOENT: no such file or directory, scandir '<repo>\game\e2e\espejo-tour\routes-ad'
  ❯ routeFiles tests/espejo-ledger-poblado.test.ts:43:37
      41| interface Route { segments: Seg[] }
      42| 
@@ -3309,7 +3309,7 @@ Error: ENOENT: no such file or directory, scandir 'C:\Dev\OpenU5-Native\game\e2e
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[89/115]⎯
 
  FAIL  tests/espejo-ledger-poblado.test.ts > F3b — CENSO: «~397 compras» cuenta menciones, no transacciones > el bucket ANCHO (`Done!` sin atribución) mete el menú de mezcla: ad18-g05 NO es una venta
-Error: ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Native\game\e2e\espejo-tour\routes-ad\ad18.route.json'
+Error: ENOENT: no such file or directory, open '<repo>\game\e2e\espejo-tour\routes-ad\ad18.route.json'
  ❯ load tests/espejo-ledger-poblado.test.ts:45:47
      43| const routeFiles = (dir: string) => readdirSync(dir).filter((f) => f.e…
      44| const readJson = <T>(...p: string[]): T => JSON.parse(readFileSync(joi…
@@ -3364,7 +3364,7 @@ AssertionError: entradas del inventario que ya no existen en disco: expected [ '
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[92/115]⎯
 
  FAIL  tests/i18n-corpus-inventory.test.ts > G8 — inventario de mundo-cerrado de assets (corpus i18n) > #235: un subdirectorio SYMLINKEADO no produce stale en falso (worktrees enlazan por entradas)
-Error: EPERM: operation not permitted, symlink 'C:\Users\lawma\AppData\Local\Temp\u5-assets-aside-giPN0X\maps' -> 'C:\Users\lawma\AppData\Local\Temp\u5-assets-symlink-MuH2mI\maps'
+Error: EPERM: operation not permitted, symlink '<home>\AppData\Local\Temp\u5-assets-aside-giPN0X\maps' -> '<home>\AppData\Local\Temp\u5-assets-symlink-MuH2mI\maps'
  ❯ tests/i18n-corpus-inventory.test.ts:122:7
     120|       expect(sub, "el árbol sintético necesita al menos un subdirector…
     121|       renameSync(join(tmp, sub!.name), join(aside, sub!.name));
@@ -3686,7 +3686,7 @@ AssertionError: se probó al menos un checkpoint real: expected 0 to be greater 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[109/115]⎯
 
  FAIL  tests/vite-cache-dir.test.ts > cacheDirAislado > en un WORKTREE (node_modules symlink) NO cae dentro del enlace
-Error: EPERM: operation not permitted, symlink 'C:\Users\lawma\AppData\Local\Temp\u5-cache-bHSmuZ\principal\node_modules' -> 'C:\Users\lawma\AppData\Local\Temp\u5-cache-bHSmuZ\arbol\node_modules'
+Error: EPERM: operation not permitted, symlink '<home>\AppData\Local\Temp\u5-cache-bHSmuZ\principal\node_modules' -> '<home>\AppData\Local\Temp\u5-cache-bHSmuZ\arbol\node_modules'
  ❯ arbolSimulado tests/vite-cache-dir.test.ts:30:20
      28|   mkdirSync(join(principal, "game", "node_modules"), { recursive: true…
      29|   mkdirSync(join(arbol, "game"), { recursive: true });
@@ -3699,7 +3699,7 @@ Error: EPERM: operation not permitted, symlink 'C:\Users\lawma\AppData\Local\Tem
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[110/115]⎯
 
  FAIL  tests/vite-cache-dir.test.ts > cacheDirAislado > basta con que escape UNO de los dos node_modules (sólo el de game/)
-Error: EPERM: operation not permitted, symlink 'C:\Users\lawma\AppData\Local\Temp\u5-cache-2mhNqQ\principal\game\node_modules' -> 'C:\Users\lawma\AppData\Local\Temp\u5-cache-2mhNqQ\arbol\game\node_modules'
+Error: EPERM: operation not permitted, symlink '<home>\AppData\Local\Temp\u5-cache-2mhNqQ\principal\game\node_modules' -> '<home>\AppData\Local\Temp\u5-cache-2mhNqQ\arbol\game\node_modules'
  ❯ arbolSimulado tests/vite-cache-dir.test.ts:32:20
      30|   if (enlaza.raiz) symlinkSync(join(principal, "node_modules"), join(a…
      31|   else mkdirSync(join(arbol, "node_modules"), { recursive: true });
@@ -3712,7 +3712,7 @@ Error: EPERM: operation not permitted, symlink 'C:\Users\lawma\AppData\Local\Tem
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[111/115]⎯
 
  FAIL  tests/vite-cache-dir.test.ts > cacheDirAislado > y la variable, cuando está, sigue mandando sobre todo lo demás
-Error: EPERM: operation not permitted, symlink 'C:\Users\lawma\AppData\Local\Temp\u5-cache-t3YVuu\principal\node_modules' -> 'C:\Users\lawma\AppData\Local\Temp\u5-cache-t3YVuu\arbol\node_modules'
+Error: EPERM: operation not permitted, symlink '<home>\AppData\Local\Temp\u5-cache-t3YVuu\principal\node_modules' -> '<home>\AppData\Local\Temp\u5-cache-t3YVuu\arbol\node_modules'
  ❯ arbolSimulado tests/vite-cache-dir.test.ts:30:20
      28|   mkdirSync(join(principal, "game", "node_modules"), { recursive: true…
      29|   mkdirSync(join(arbol, "game"), { recursive: true });
@@ -3725,7 +3725,7 @@ Error: EPERM: operation not permitted, symlink 'C:\Users\lawma\AppData\Local\Tem
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[112/115]⎯
 
  FAIL  tests/web-disponibilidad.test.ts > guarda: la constante no puede quedarse rancia > si aparece un consumidor de `.partida`, la constante DEBE estar en true
-Error: ENOENT: no such file or directory, scandir 'C:\C:\Dev\OpenU5-Native\game\src'
+Error: ENOENT: no such file or directory, scandir 'C:\<repo>\game\src'
  ❯ ficherosTs tests/web-disponibilidad.test.ts:105:25
     103| function ficherosTs(dir: string): string[] {
     104|   const salida: string[] = [];

@@ -31,7 +31,7 @@
 [31/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/gem_view.cpp.obj
 [32/60] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/dungeon_art.cpp.obj
 [33/60] Performing build step for 'bootloader'
-[1/1] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch34\bootloader && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch34/bootloader/bootloader.bin"
+[1/1] C:\WINDOWS\system32\cmd.exe /C "cd /D <repo>\native\targets\tdeck\build-batch34\bootloader && <home>\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 <repo>/native/targets/tdeck/build-batch34/bootloader/bootloader.bin"
 
 Bootloader binary size 0x5850 bytes. 0x27b0 bytes (31%) free.
 
@@ -76,12 +76,12 @@ Merged 3 ELF sections.
 
 Successfully created ESP32-S3 image.
 
-Generated C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch34/openu5_tdeck.bin
-[60/60] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch34 && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch34/partition_table/partition-table.bin C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch34/openu5_tdeck.bin"
+Generated <repo>/native/targets/tdeck/build-batch34/openu5_tdeck.bin
+[60/60] C:\WINDOWS\system32\cmd.exe /C "cd /D <repo>\native\targets\tdeck\build-batch34 && <home>\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app <repo>/native/targets/tdeck/build-batch34/partition_table/partition-table.bin <repo>/native/targets/tdeck/build-batch34/openu5_tdeck.bin"
 openu5_tdeck.bin binary size 0xd43f0 bytes. Smallest app partition is 0x100000 bytes. 0x2bc10 bytes (17%) free.
 
 Executing action: all (aliases: build)
-Running ninja in directory C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch34
+Running ninja in directory <repo>\native\targets\tdeck\build-batch34
 Executing "ninja all"...
 
 
@@ -91,5 +91,5 @@ or
  idf.py -p PORT flash
 or
  python -m esptool --chip esp32s3 -b 460800 --before default-reset --after hard-reset write-flash --flash-mode dio --flash-size 16MB --flash-freq 80m 0x0 build-batch34\bootloader\bootloader.bin 0x8000 build-batch34\partition_table\partition-table.bin 0x10000 build-batch34\openu5_tdeck.bin
-or from the "C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch34" directory
+or from the "<repo>\native\targets\tdeck\build-batch34" directory
  python -m esptool --chip esp32s3 -b 460800 --before default-reset --after hard-reset write-flash "@flash_args"

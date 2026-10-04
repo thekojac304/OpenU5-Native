@@ -1,4 +1,4 @@
-Test project C:/Dev/OpenU5-Native/native/core/build-batch51
+Test project <repo>/native/core/build-batch51
         Start   1: frontend
   1/118 Test   #1: frontend ...................................   Passed    0.17 sec
         Start   2: ui_session

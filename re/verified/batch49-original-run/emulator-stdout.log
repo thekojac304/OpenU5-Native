@@ -1,5 +1,5 @@
 LOG: Early LOG Init complete
-LOG: DOSBox-X's working directory: C:\Users\lawma\AppData\Local\Temp\openu5-batch49-original-run
+LOG: DOSBox-X's working directory: <home>\AppData\Local\Temp\openu5-batch49-original-run
 LOG: Logging init: beginning logging proper. This is the end of the early init logging
 LOG: Logging: No logfile was given. All further logging will be discarded.
 LOG: DOSBox-X version 2024.03.01 Commit 199aa35 (MinGW Low-end 9x SDL1 32-bit)

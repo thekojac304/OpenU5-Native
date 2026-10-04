@@ -2,7 +2,7 @@ ninja: Entering directory `build-a4-polish3'
 [0/1] Re-running CMake...
 -- Configuring done (0.1s)
 -- Generating done (0.3s)
--- Build files have been written to: C:/Dev/OpenU5-Native/native/core/build-a4-polish3
+-- Build files have been written to: <repo>/native/core/build-a4-polish3
 [1/753] Building CXX object CMakeFiles/openu5_core.dir/src/system_menu.cpp.obj
 [2/753] Building CXX object CMakeFiles/batch21a3_combat_active_player.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/ui_input_adapter.cpp.obj
 [3/753] Building CXX object CMakeFiles/openu5_core.dir/src/frontend.cpp.obj

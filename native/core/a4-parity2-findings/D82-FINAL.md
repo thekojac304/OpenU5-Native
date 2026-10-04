@@ -1,7 +1,7 @@
 # D-82 FINAL (reconciler): the missing INIT.OOL underworld objects
 
 Reconciler of D82-A (binary-first), D82-B (ports-first) and D82-C (cross-check). READ-ONLY: nothing under
-`C:/Dev/OpenU5-Native` was edited, built or run (no cmake/ninja/ctest/idf; `python re/tools/callers_banda.py` was run once as a
+`<repo>` was edited, built or run (no cmake/ninja/ctest/idf; `python re/tools/callers_banda.py` was run once as a
 negative control, it only reads). Own scratch under `findings/d82f/`: `dz.py` (annotating 16-bit disassembler), `basefit.py`
 (brute-force overlay base fit), `census.py` (by-band caller census), `oolstr.py` (every `.OOL`/`.GAM` string reference),
 `scratchrefs.py`/`ptrrefs.py` (operand scans), `k3a74.py` (write-site windows).

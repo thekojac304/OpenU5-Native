@@ -69,11 +69,11 @@ lengthened, and the build contains the existing stack/input/render diagnostics.
 
 ## Packaged image
 
-- Launcher: `C:\Dev\OpenU5-Native\native\targets\tdeck\build-alpha20-final\launcher\OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`
+- Launcher: `native\targets\tdeck\build-alpha20-final\launcher\OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`
 - Size: 772,000 bytes
 - SHA-256: `12b986b81b234075605bc57a5548f8e068f395dc099c3220ac5625c023e8df36`
 - SD resource pack: `/sd/ultima5/openu5-alpha1-resources.bin`
-- Source file: `C:\Dev\OpenU5-Native\native\assets\openu5-alpha1-resources.bin`
+- Source file: `native\assets\openu5-alpha1-resources.bin`
 - Resource SHA-256: `4e1fc6cd2733806232dbbd0af3bd6767b1d2ca58db8b3d2ce2d13a1531e50050`
 - SD tile pack: `/sd/ultima5/openu5-assets.bin`
 - Tile-pack SHA-256: `6eb001ed2a7729e683896998f693d02aeaf1327f3cddd661d1c726ef7414e188`

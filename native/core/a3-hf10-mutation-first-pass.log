@@ -7,7 +7,7 @@ M3 KILLED by 3 -- accept a wrong recipe: any overlap with the recipe counts as e
     N3.4 N3.5 N4.2
 M4 INVALID (does not build) -- reject the correct recipe: every set is "wrong"
           |                                                                                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-    C:/Dev/OpenU5-Native/native/core/include/openu5/state.h:36:13: note: while referencing 'openu5::InitialState::spell_quantities'
+    <repo>/native/core/include/openu5/state.h:36:13: note: while referencing 'openu5::InitialState::spell_quantities'
        36 |     int32_t spell_quantities[48]{};
           |             ^~~~~~~~~~~~~~~~
     cc1plus.exe: all warnings being treated as errors

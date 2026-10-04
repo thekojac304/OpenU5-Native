@@ -137,14 +137,14 @@ Host tests cover state ownership/routing, settings, shop semantics, and input po
 
 ## 22. Exact launcher path
 
-`C:\Dev\OpenU5-Native\native\targets\tdeck\build-alpha20-correction\launcher\OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`
+`native\targets\tdeck\build-alpha20-correction\launcher\OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`
 
 - Size: 757,152 bytes.
 - SHA-256: `03A61CFECE9C3C3B93E8C4E47C007E46376911540C741DE1A0AD5EE33F10299B`.
 
 Required resource pack:
 
-`C:\Dev\OpenU5-Native\native\assets\openu5-alpha1-resources.bin`
+`native\assets\openu5-alpha1-resources.bin`
 
 - Size: 1,824,829 bytes.
 - SHA-256: `530286B2BF2A82A20E6279F3B6261B546B800AD2A749CBF3B97B263F85051AA4`.

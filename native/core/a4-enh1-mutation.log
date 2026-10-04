@@ -15,16 +15,16 @@ C1 INVALID (does not build) -- God Mode does not cover apply_damage (poison, sta
 ninja: Entering directory `C:\dev\openu5-native\native\core\build-a4-enh1'
 [1/5] Building CXX object CMakeFiles/openu5_core.dir/src/turn.cpp.obj
 FAILED: [code=1] CMakeFiles/openu5_core.dir/src/turn.cpp.obj 
-C:\Dev\TamaPoke\.build-tools\w64devkit\bin\c++.exe -DOPENU5_ENABLE_DEVELOPER_TOOLS=1 -IC:/Dev/OpenU5-Native/native/core/include -O3 -DNDEBUG -Wall -Wextra -Wconversion -Werror -MD -MT CMakeFiles/openu5_core.dir/src/turn.cpp.obj -MF CMakeFiles\openu5_core.dir\src\turn.cpp.obj.d -o CMakeFiles/openu5_core.dir/src/turn.cpp.obj -c C:/Dev/OpenU5-Native/native/core/src/turn.cpp
-C:/Dev/OpenU5-Native/native/core/src/turn.cpp: In function 'void openu5::apply_damage(GameState&, int32_t, int32_t)':
-C:/Dev/OpenU5-Native/native/core/src/turn.cpp:65:3: error: 'the' was not declared in this scope
+C:\Dev\TamaPoke\.build-tools\w64devkit\bin\c++.exe -DOPENU5_ENABLE_DEVELOPER_TOOLS=1 -I<repo>/native/core/include -O3 -DNDEBUG -Wall -Wextra -Wconversion -Werror -MD -MT CMakeFiles/openu5_core.dir/src/turn.cpp.obj -MF CMakeFiles\openu5_core.dir\src\turn.cpp.obj.d -o CMakeFiles/openu5_core.dir/src/turn.cpp.obj -c <repo>/native/core/src/turn.cpp
+<repo>/native/core/src/turn.cpp: In function 'void openu5::apply_damage(GameState&, int32_t, int32_t)':
+<repo>/native/core/src/turn.cpp:65:3: error: 'the' was not declared in this scope
    65 |  (the draws that sized it already happened)
       |   ^~~
-C:/Dev/OpenU5-Native/native/core/src/turn.cpp:65:6: error: expected ')' before 'draws'
+<repo>/native/core/src/turn.cpp:65:6: error: expected ')' before 'draws'
    65 |  (the draws that sized it already happened)
       |  ~   ^~~~~~
       |      )
-C:/Dev/OpenU5-Native/native/core/src/turn.cpp:67:32: error: 'ch' was not declared in this scope
+<repo>/native/core/src/turn.cpp:67:32: error: 'ch' was not declared in this scope
    67 |     const int64_t hp = int64_t(ch.current_hp) - amount;
       |                                ^~
 [2/5] Building CXX object CMakeFiles/openu5_core.dir/src/frontend.cpp.obj
@@ -36,9 +36,9 @@ C4 INVALID (does not build) -- Heal is applied in combat (the arena then overwri
 ninja: Entering directory `C:\dev\openu5-native\native\core\build-a4-enh1'
 [1/5] Building CXX object CMakeFiles/openu5_core.dir/src/enhanced.cpp.obj
 FAILED: [code=1] CMakeFiles/openu5_core.dir/src/enhanced.cpp.obj 
-C:\Dev\TamaPoke\.build-tools\w64devkit\bin\c++.exe -DOPENU5_ENABLE_DEVELOPER_TOOLS=1 -IC:/Dev/OpenU5-Native/native/core/include -O3 -DNDEBUG -Wall -Wextra -Wconversion -Werror -MD -MT CMakeFiles/openu5_core.dir/src/enhanced.cpp.obj -MF CMakeFiles\openu5_core.dir\src\enhanced.cpp.obj.d -o CMakeFiles/openu5_core.dir/src/enhanced.cpp.obj -c C:/Dev/OpenU5-Native/native/core/src/enhanced.cpp
-C:/Dev/OpenU5-Native/native/core/src/enhanced.cpp: In function 'openu5::CheatResult openu5::apply_cheat(GameState&, CheatKind, int32_t, bool)':
-C:/Dev/OpenU5-Native/native/core/src/enhanced.cpp:107:76: error: unused parameter 'in_combat' [-Werror=unused-parameter]
+C:\Dev\TamaPoke\.build-tools\w64devkit\bin\c++.exe -DOPENU5_ENABLE_DEVELOPER_TOOLS=1 -I<repo>/native/core/include -O3 -DNDEBUG -Wall -Wextra -Wconversion -Werror -MD -MT CMakeFiles/openu5_core.dir/src/enhanced.cpp.obj -MF CMakeFiles\openu5_core.dir\src\enhanced.cpp.obj.d -o CMakeFiles/openu5_core.dir/src/enhanced.cpp.obj -c <repo>/native/core/src/enhanced.cpp
+<repo>/native/core/src/enhanced.cpp: In function 'openu5::CheatResult openu5::apply_cheat(GameState&, CheatKind, int32_t, bool)':
+<repo>/native/core/src/enhanced.cpp:107:76: error: unused parameter 'in_combat' [-Werror=unused-parameter]
   107 | CheatResult apply_cheat(GameState &g, CheatKind kind, int32_t amount, bool in_combat) {
       |                                                                       ~~~~~^~~~~~~~~
 cc1plus.exe: all warnings being treated as errors

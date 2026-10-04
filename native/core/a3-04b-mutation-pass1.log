@@ -5,8 +5,8 @@ S1 the envelope cache is not refreshed after an attack/decay rate write (0x60): 
         RED G5 the OPL2 chip under 6,000 rounds of random register writes (every cached input changed mid-note): 0a45d6f77520516b
         RED G6 the OPL3 chip under the same, both arrays and all eight waveforms: e34d65ac11c6ab0d
 S2 the envelope cache is not refreshed when the envelope changes state: INVALID (does not build)
-    C:\Dev\TamaPoke\.build-tools\w64devkit\bin\c++.exe -DOPENU5_ENABLE_DEVELOPER_TOOLS=1 -IC:/Dev/OpenU5-Native/native/core/include -O3 -DNDEBUG -Wall -Wextra -Wconversion -Werror -MD -MT CMakeFiles/openu5_core.dir/src/music_synth.cpp.obj -MF CMakeFiles\openu5_core.dir\src\music_synth.cpp.obj.d -o CMakeFiles/openu5_core.dir/src/music_synth.cpp.obj -c C:/Dev/OpenU5-Native/native/core/src/music_synth.cpp
-    C:/Dev/OpenU5-Native/native/core/src/music_synth.cpp:305:72: error: unused parameter 'key_code' [-Werror=unused-parameter]
+    C:\Dev\TamaPoke\.build-tools\w64devkit\bin\c++.exe -DOPENU5_ENABLE_DEVELOPER_TOOLS=1 -I<repo>/native/core/include -O3 -DNDEBUG -Wall -Wextra -Wconversion -Werror -MD -MT CMakeFiles/openu5_core.dir/src/music_synth.cpp.obj -MF CMakeFiles\openu5_core.dir\src\music_synth.cpp.obj.d -o CMakeFiles/openu5_core.dir/src/music_synth.cpp.obj -c <repo>/native/core/src/music_synth.cpp
+    <repo>/native/core/src/music_synth.cpp:305:72: error: unused parameter 'key_code' [-Werror=unused-parameter]
     cc1plus.exe: all warnings being treated as errors
 S3 a vibrato step does not refresh the vibrato operators' phase step: INVALID (does not build)
     collect2.exe: error: ld returned 1 exit status

@@ -13,7 +13,8 @@ import sys
 report, baseline, out = sys.argv[1:4]
 r = json.load(open(report, encoding='utf-8'))
 print({k: r[k] for k in ('numTotalTests', 'numPassedTests', 'numFailedTests', 'numPendingTests', 'numTodoTests')})
-root = 'C:/Dev/OpenU5-Native/game'
+import os
+root = os.path.abspath('game').replace(os.sep, '/')  # run from the repository root
 fails, load_fails = [], []
 for f in r['testResults']:
     n = f['name'].replace('\\', '/')

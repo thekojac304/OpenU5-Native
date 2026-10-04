@@ -1,4 +1,4 @@
-Test project C:/Dev/OpenU5-Native/native/core/build-batch32-final
+Test project <repo>/native/core/build-batch32-final
     Start  2: ui_session
 1/9 Test  #2: ui_session .......................   Passed    0.09 sec
     Start 10: gameplay_integration

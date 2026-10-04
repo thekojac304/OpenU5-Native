@@ -6,8 +6,8 @@ At line:3 char:1
     + FullyQualifiedErrorId : NativeCommandError
  
 [1/1153] Generating project_elf_src_esp32s3.c
-[2/1153] Preprocessing linker script C:/esp/v6.1/esp-idf/components/esp_system/ld/esp32s3/sections.ld.in -> C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch8b-in-ex-por/esp-idf/esp_system/ld/sections.ld.in
-[3/1153] Preprocessing linker script C:/esp/v6.1/esp-idf/components/esp_system/ld/esp32s3/memory.ld.in -> C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch8b-in-ex-por/esp-idf/esp_system/ld/memory.ld
+[2/1153] Preprocessing linker script C:/esp/v6.1/esp-idf/components/esp_system/ld/esp32s3/sections.ld.in -> <repo>/native/targets/tdeck/build-batch8b-in-ex-por/esp-idf/esp_system/ld/sections.ld.in
+[3/1153] Preprocessing linker script C:/esp/v6.1/esp-idf/components/esp_system/ld/esp32s3/memory.ld.in -> <repo>/native/targets/tdeck/build-batch8b-in-ex-por/esp-idf/esp_system/ld/memory.ld
 [4/1153] Building C object esp-idf/esp_https_ota/CMakeFiles/__idf_esp_https_ota.dir/src/esp_https_ota.c.obj
 [5/1153] Building C object esp-idf/esp_http_server/CMakeFiles/__idf_esp_http_server.dir/src/httpd_main.c.obj
 [6/1153] Building C object esp-idf/esp_http_server/CMakeFiles/__idf_esp_http_server.dir/src/httpd_parse.c.obj
@@ -1166,7 +1166,7 @@ factory,app,factory,0x10000,1M,
 -- Minimal build - OFF
 -- Building ESP-IDF components for target esp32s3
 -- KCONFIG_REPORT_VERBOSITY not set, using default
--- Project sdkconfig file C:/Dev/OpenU5-Native/native/targets/tdeck/sdkconfig
+-- Project sdkconfig file <repo>/native/targets/tdeck/sdkconfig
 Default value for ESP_INT_WDT_TIMEOUT_MS in sdkconfig is 800 but it is 300 according to Kconfig.
 Using default value from sdkconfig (800).
 NOTE: Kconfig parser version: 1
@@ -1200,9 +1200,9 @@ NOTE: C:/esp/v6.1/esp-idf/components/esp_system/Kconfig:281: ESP_INT_WDT_TIMEOUT
 --   -> Preprocessing .in script: C:/esp/v6.1/esp-idf/components/bootloader/subproject/main/ld/esp32s3/bootloader.sections.ld.in
 -- Configuring done (12.4s)
 -- Generating done (0.3s)
--- Build files have been written to: C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch8b-in-ex-por/bootloader
+-- Build files have been written to: <repo>/native/targets/tdeck/build-batch8b-in-ex-por/bootloader
 [1146/1153] Performing build step for 'bootloader'
-[1/1] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch8b-in-ex-por\bootloader && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch8b-in-ex-por/bootloader/bootloader.bin"
+[1/1] C:\WINDOWS\system32\cmd.exe /C "cd /D <repo>\native\targets\tdeck\build-batch8b-in-ex-por\bootloader && <home>\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 <repo>/native/targets/tdeck/build-batch8b-in-ex-por/bootloader/bootloader.bin"
 
 Bootloader binary size 0x5850 bytes. 0x27b0 bytes (31%) free.
 
@@ -1223,12 +1223,12 @@ Merged 3 ELF sections.
 
 Successfully created ESP32-S3 image.
 
-Generated C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch8b-in-ex-por/openu5_tdeck.bin
-[1153/1153] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch8b-in-ex-por && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch8b-in-ex-por/partition_table/partition-table.bin C:/Dev/OpenU5-Native/native/targets/tdeck/build-batch8b-in-ex-por/openu5_tdeck.bin"
+Generated <repo>/native/targets/tdeck/build-batch8b-in-ex-por/openu5_tdeck.bin
+[1153/1153] C:\WINDOWS\system32\cmd.exe /C "cd /D <repo>\native\targets\tdeck\build-batch8b-in-ex-por && <home>\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app <repo>/native/targets/tdeck/build-batch8b-in-ex-por/partition_table/partition-table.bin <repo>/native/targets/tdeck/build-batch8b-in-ex-por/openu5_tdeck.bin"
 openu5_tdeck.bin binary size 0xce310 bytes. Smallest app partition is 0x100000 bytes. 0x31cf0 bytes (19%) free.
 
 Executing action: all (aliases: build)
-Running ninja in directory C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch8b-in-ex-por
+Running ninja in directory <repo>\native\targets\tdeck\build-batch8b-in-ex-por
 Executing "ninja all"...
 
 
@@ -1238,5 +1238,5 @@ or
  idf.py -p PORT flash
 or
  python -m esptool --chip esp32s3 -b 460800 --before default-reset --after hard-reset write-flash --flash-mode dio --flash-size 16MB --flash-freq 80m 0x0 build-batch8b-in-ex-por\bootloader\bootloader.bin 0x8000 build-batch8b-in-ex-por\partition_table\partition-table.bin 0x10000 build-batch8b-in-ex-por\openu5_tdeck.bin
-or from the "C:\Dev\OpenU5-Native\native\targets\tdeck\build-batch8b-in-ex-por" directory
+or from the "<repo>\native\targets\tdeck\build-batch8b-in-ex-por" directory
  python -m esptool --chip esp32s3 -b 460800 --before default-reset --after hard-reset write-flash "@flash_args"

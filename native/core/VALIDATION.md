@@ -781,7 +781,7 @@ npm run test -w extractor -- native-input.test.ts native-movement.test.ts native
 
 # Exact available game-test selection is retained in build-items/game-tests.log.
 # Activated installed ESP-IDF 6.1 environment:
-idf.py -C native/targets/tdeck -B C:/Dev/OpenU5-TDeck/native/targets/tdeck/build-core build size
+idf.py -C native/targets/tdeck -B native/targets/tdeck/build-core build size
 python native/targets/tdeck/package_launcher.py --build-dir native/targets/tdeck/build-core
 ```
 
@@ -870,7 +870,7 @@ npm run test -w game -- rng-original.test.ts time.test.ts survival.test.ts loops
 npm run test -w extractor -- native-input.test.ts native-movement.test.ts native-pack.test.ts
 
 # Installed ESP-IDF v6.1 environment:
-idf.py -C native/targets/tdeck -B C:/Dev/OpenU5-TDeck/native/targets/tdeck/build-core build size
+idf.py -C native/targets/tdeck -B native/targets/tdeck/build-core build size
 python native/targets/tdeck/package_launcher.py --build-dir native/targets/tdeck/build-core
 ```
 
@@ -973,7 +973,7 @@ npm run test -w game -- rng-original.test.ts time.test.ts survival.test.ts loops
 npm run test -w extractor -- native-input.test.ts native-movement.test.ts
 
 # In the installed ESP-IDF environment, from the repository root:
-idf.py -C native/targets/tdeck -B C:/Dev/OpenU5-TDeck/native/targets/tdeck/build-core build size
+idf.py -C native/targets/tdeck -B native/targets/tdeck/build-core build size
 python native/targets/tdeck/package_launcher.py --build-dir native/targets/tdeck/build-core
 ```
 

@@ -18,7 +18,7 @@ K7 KILLED production spins (the A3-04D loop) :: pacing: P1, F1, F5 | runtime: M5
 C1 KILLED the full-screen repaint is counted as a walking frame :: pacing: C1 | runtime: M1, M3, M5
 C2 KILLED pauses per viewport frame are averaged over every frame :: pacing: C2
 C3 INVALID input wakes of the loop are not counted :: ers::on_loop_wait(uint32_t, bool)':
-C:/Dev/OpenU5-Native/native/core/src/perf_report.cpp:172:62: error: unused parameter 'input' [-Werror=unused-parameter]
+<repo>/native/core/src/perf_report.cpp:172:62: error: unused parameter 'input' [-Werror=unused-parameter]
   172 | void ContentionCounters::on_loop_wait(uint32_t wait_us, bool input) {
       |                                                         ~~~~~^~~~~
 cc1plus.exe: all warnings being treated as errors

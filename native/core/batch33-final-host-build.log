@@ -94,13 +94,13 @@
 [94/493] Building CXX object CMakeFiles/core_parity_tests.dir/tests/parity_test.cpp.obj
 [95/493] Building CXX object CMakeFiles/command_parity_tests.dir/tests/command_parity_test.cpp.obj
 In file included from C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/vector:67,
-                 from C:/Dev/OpenU5-Native/native/core/tests/command_parity_test.cpp:6:
+                 from <repo>/native/core/tests/command_parity_test.cpp:6:
 In function '_ForwardIterator std::uninitialized_copy(_InputIterator, _InputIterator, _ForwardIterator) [with _InputIterator = __gnu_cxx::__normal_iterator<const long long int*, vector<long long int> >; _ForwardIterator = long long int*]',
     inlined from 'constexpr _ForwardIterator std::__uninitialized_copy_a(_InputIterator, _Sentinel, _ForwardIterator, allocator<_Tp>&) [with _InputIterator = __gnu_cxx::__normal_iterator<const long long int*, vector<long long int> >; _Sentinel = __gnu_cxx::__normal_iterator<const long long int*, vector<long long int> >; _ForwardIterator = long long int*; _Tp = long long int]' at C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/stl_uninitialized.h:659:32,
     inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_range_insert(iterator, _ForwardIterator, _ForwardIterator, std::forward_iterator_tag) [with _ForwardIterator = __gnu_cxx::__normal_iterator<const long long int*, std::vector<long long int> >; _Tp = long long int; _Alloc = std::allocator<long long int>]' at C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/vector.tcc:984:34,
     inlined from 'constexpr std::vector<_Tp, _Alloc>::iterator std::vector<_Tp, _Alloc>::insert(const_iterator, _InputIterator, _InputIterator) [with _InputIterator = __gnu_cxx::__normal_iterator<const long long int*, std::vector<long long int> >; <template-parameter-2-2> = void; _Tp = long long int; _Alloc = std::allocator<long long int>]' at C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/stl_vector.h:1611:19,
-    inlined from 'V Harness::run(openu5::Command, bool)' at C:/Dev/OpenU5-Native/native/core/tests/command_parity_test.cpp:240:17,
-    inlined from 'int main(int, char**)' at C:/Dev/OpenU5-Native/native/core/tests/command_parity_test.cpp:270:20:
+    inlined from 'V Harness::run(openu5::Command, bool)' at <repo>/native/core/tests/command_parity_test.cpp:240:17,
+    inlined from 'int main(int, char**)' at <repo>/native/core/tests/command_parity_test.cpp:270:20:
 C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/stl_uninitialized.h:294:31: warning: 'void* __builtin_memcpy(void*, const void*, long long unsigned int)' writing between 1 and 9223372036854775807 bytes into a region of size 0 overflows the destination [-Wstringop-overflow=]
   294 |               __builtin_memcpy(std::__niter_base(__result),
       |               ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -116,15 +116,15 @@ In file included from C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-
                  from C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/ios:46,
                  from C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/istream:42,
                  from C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/fstream:42,
-                 from C:/Dev/OpenU5-Native/native/core/tests/command_parity_test.cpp:4:
+                 from <repo>/native/core/tests/command_parity_test.cpp:4:
 In member function 'constexpr _Tp* std::__new_allocator<_Tp>::allocate(size_type, const void*) [with _Tp = long long int]',
     inlined from 'constexpr _Tp* std::allocator< <template-parameter-1-1> >::allocate(std::size_t) [with _Tp = long long int]' at C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/allocator.h:206:40,
     inlined from 'static constexpr _Tp* std::allocator_traits<std::allocator<_CharT> >::allocate(allocator_type&, size_type) [with _Tp = long long int]' at C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/alloc_traits.h:638:28,
     inlined from 'constexpr std::_Vector_base<_Tp, _Alloc>::pointer std::_Vector_base<_Tp, _Alloc>::_M_allocate(std::size_t) [with _Tp = long long int; _Alloc = std::allocator<long long int>]' at C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/stl_vector.h:389:33,
     inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_range_initialize_n(_Iterator, _Sentinel, size_type) [with _Iterator = const long long int*; _Sentinel = const long long int*; _Tp = long long int; _Alloc = std::allocator<long long int>]' at C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/stl_vector.h:1975:23,
     inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(std::initializer_list<_Tp>, const allocator_type&) [with _Tp = long long int; _Alloc = std::allocator<long long int>]' at C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/stl_vector.h:702:23,
-    inlined from 'V Harness::run(openu5::Command, bool)' at C:/Dev/OpenU5-Native/native/core/tests/command_parity_test.cpp:239:84,
-    inlined from 'int main(int, char**)' at C:/Dev/OpenU5-Native/native/core/tests/command_parity_test.cpp:270:20:
+    inlined from 'V Harness::run(openu5::Command, bool)' at <repo>/native/core/tests/command_parity_test.cpp:239:84,
+    inlined from 'int main(int, char**)' at <repo>/native/core/tests/command_parity_test.cpp:270:20:
 C:/Dev/TamaPoke/.build-tools/w64devkit/lib/gcc/x86_64-w64-mingw32/16.2.0/include/c++/bits/new_allocator.h:162:75: note: at offset 40 into destination object of size 40 allocated by 'operator new'
   162 |           return static_cast<_Tp*>(_GLIBCXX_OPERATOR_NEW(__n * sizeof(_Tp)));
       |                                                                           ^

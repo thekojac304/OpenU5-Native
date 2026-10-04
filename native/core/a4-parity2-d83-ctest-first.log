@@ -1,4 +1,4 @@
-Test project C:/Dev/OpenU5-Native/native/core/build-a4-parity2
+Test project <repo>/native/core/build-a4-parity2
         Start   1: frontend
   1/194 Test   #1: frontend ...................................   Passed    0.15 sec
         Start   2: ui_session
@@ -396,6 +396,6 @@ The following tests FAILED:
 	117 - a4_enh2_preservation (Failed)
 	155 - batch7b (Failed)
 Errors while running CTest
-Output from these tests are in: C:/Dev/OpenU5-Native/native/core/build-a4-parity2/Testing/Temporary/LastTest.log
+Output from these tests are in: <repo>/native/core/build-a4-parity2/Testing/Temporary/LastTest.log
 Use "--rerun-failed --output-on-failure" to re-run the failed cases verbosely.
 CTEST DONE rc=8

@@ -1,4 +1,4 @@
-Test project C:/Dev/OpenU5-Native/native/core/build-a4-enh2-baseline
+Test project <repo>/native/core/build-a4-enh2-baseline
         Start   1: frontend
   1/185 Test   #1: frontend ...................................   Passed    0.18 sec
         Start   2: ui_session

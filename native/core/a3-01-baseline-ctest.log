@@ -1,4 +1,4 @@
-Test project C:/Dev/OpenU5-Native/native/core/build-a3-01-baseline
+Test project <repo>/native/core/build-a3-01-baseline
         Start   1: frontend
   1/123 Test   #1: frontend ...................................   Passed    0.13 sec
         Start   2: ui_session

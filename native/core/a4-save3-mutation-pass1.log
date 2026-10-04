@@ -15,17 +15,17 @@ P14 KILLED -- a wrong-size SAVED.GAM accepted (longer than 4192) -- pc exit=1 RE
 P15 INVALID (does not build) -- B10 import off: vehicle records are not converted
 am[kLocation], party_floor = gam[kFloor];
       |               ^~~~~~~~
-C:/Dev/OpenU5-Native/native/core/src/pc_save.cpp:141:42: error: unused variable 'party_floor' [-Werror=unused-variable]
+<repo>/native/core/src/pc_save.cpp:141:42: error: unused variable 'party_floor' [-Werror=unused-variable]
   141 |     const int location = gam[kLocation], party_floor = gam[kFloor];
       |                                          ^~~~~~~~~~~
-C:/Dev/OpenU5-Native/native/core/src/pc_save.cpp:109:57: error: unused parameter 'ool' [-Werror=unused-parameter]
+<repo>/native/core/src/pc_save.cpp:109:57: error: unused parameter 'ool' [-Werror=unused-parameter]
   109 | void complete_import(const uint8_t *gam, const uint8_t *ool, J &s, ImportReport &r) {
       |                                          ~~~~~~~~~~~~~~~^~~
-C:/Dev/OpenU5-Native/native/core/src/pc_save.cpp: At global scope:
-C:/Dev/OpenU5-Native/native/core/src/pc_save.cpp:103:16: error: 'const uint8_t* openu5::save::pc::{anonymous}::table_for(int, int, int, const uint8_t*, const uint8_t*)' defined but not used [-Werror=unused-function]
+<repo>/native/core/src/pc_save.cpp: At global scope:
+<repo>/native/core/src/pc_save.cpp:103:16: error: 'const uint8_t* openu5::save::pc::{anonymous}::table_for(int, int, int, const uint8_t*, const uint8_t*)' defined but not used [-Werror=unused-function]
   103 | const uint8_t *table_for(int floor, int location, int party_floor, const uint8_t *gam, const uint8_t *ool) {
       |                ^~~~~~~~~
-C:/Dev/OpenU5-Native/native/core/src/pc_save.cpp:64:6: error: 'void openu5::save::pc::{anonymous}::read_vehicles(const uint8_t*, int, VectorPool&, J&, openu5::save::pc::ImportReport&)' defined but not used [-Werror=unused-function]
+<repo>/native/core/src/pc_save.cpp:64:6: error: 'void openu5::save::pc::{anonymous}::read_vehicles(const uint8_t*, int, VectorPool&, J&, openu5::save::pc::ImportReport&)' defined but not used [-Werror=unused-function]
    64 | void read_vehicles(const uint8_t *table, int floor, VectorPool &pool, J &overrides, ImportReport &r) {
       |      ^~~~~~~~~~~~~
 cc1plus.exe: all warnings being treated as errors
@@ -43,12 +43,12 @@ P24 KILLED -- no fresh map entry: an imported town has nobody in it -- pc exit=1
 P25 KILLED -- no outdoor restore before the sync: horses, skiffs and monsters lost (RED-first of the T5 fix) -- pc exit=1 RED=T5,T6; ref exit=1 RED=-
 P26 KILLED -- the export changes the slot it exports -- pc exit=1 RED=X1,X4,X5,X7
 P27 INVALID (does not build) -- a dungeon document exported
-ninja: Entering directory `C:\Dev\OpenU5-Native\native\core\build-a4-save3'
+ninja: Entering directory `<repo>\native\core\build-a4-save3'
 [1/4] Building CXX object CMakeFiles/openu5_core.dir/src/pc_save.cpp.obj
 FAILED: [code=1] CMakeFiles/openu5_core.dir/src/pc_save.cpp.obj 
-C:\Dev\TamaPoke\.build-tools\w64devkit\bin\c++.exe -DOPENU5_ENABLE_DEVELOPER_TOOLS=1 -IC:/Dev/OpenU5-Native/native/core/include -O3 -DNDEBUG -Wall -Wextra -Wconversion -Werror -MD -MT CMakeFiles/openu5_core.dir/src/pc_save.cpp.obj -MF CMakeFiles\openu5_core.dir\src\pc_save.cpp.obj.d -o CMakeFiles/openu5_core.dir/src/pc_save.cpp.obj -c C:/Dev/OpenU5-Native/native/core/src/pc_save.cpp
-C:/Dev/OpenU5-Native/native/core/src/pc_save.cpp: In function 'openu5::save::pc::Check openu5::save::pc::exportable(const openu5::save::Json&)':
-C:/Dev/OpenU5-Native/native/core/src/pc_save.cpp:224:16: error: unused variable 'location' [-Werror=unused-variable]
+C:\Dev\TamaPoke\.build-tools\w64devkit\bin\c++.exe -DOPENU5_ENABLE_DEVELOPER_TOOLS=1 -I<repo>/native/core/include -O3 -DNDEBUG -Wall -Wextra -Wconversion -Werror -MD -MT CMakeFiles/openu5_core.dir/src/pc_save.cpp.obj -MF CMakeFiles\openu5_core.dir\src\pc_save.cpp.obj.d -o CMakeFiles/openu5_core.dir/src/pc_save.cpp.obj -c <repo>/native/core/src/pc_save.cpp
+<repo>/native/core/src/pc_save.cpp: In function 'openu5::save::pc::Check openu5::save::pc::exportable(const openu5::save::Json&)':
+<repo>/native/core/src/pc_save.cpp:224:16: error: unused variable 'location' [-Werror=unused-variable]
   224 |     const auto location = s["position"]["location"].integer();
       |                ^~~~~~~~
 cc1plus.exe: all warnings being treated as errors

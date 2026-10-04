@@ -1,5 +1,5 @@
 # A3-HF8 baseline: build-a3-hf8-base built from the untouched tree at c73c001d (focused HF5/HF6/HF7 + Blackthorn)
-Test project C:/Dev/OpenU5-Native/native/core/build-a3-hf8-base
+Test project <repo>/native/core/build-a3-hf8-base
     Start  75: batch51_scene_pacing
 1/8 Test  #75: batch51_scene_pacing .............   Passed    0.01 sec
     Start 107: a3_hf5_dialogue_pacing_runtime

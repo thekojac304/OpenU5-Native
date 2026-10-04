@@ -99,7 +99,7 @@ ninja: Entering directory `build-a4-flash1'
 [98/108] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/debug_labels.cpp.obj
 [99/108] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/C_/Dev/OpenU5-Native/native/core/src/debug_developer.cpp.obj
 [100/108] Performing build step for 'bootloader'
-[1/1] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-flash1\bootloader && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-flash1/bootloader/bootloader.bin"
+[1/1] C:\WINDOWS\system32\cmd.exe /C "cd /D <repo>\native\targets\tdeck\build-a4-flash1\bootloader && <home>\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 <repo>/native/targets/tdeck/build-a4-flash1/bootloader/bootloader.bin"
 Bootloader binary size 0x5850 bytes. 0x27b0 bytes (31%) free.
 [101/108] No install step for 'bootloader'
 [102/108] Completed 'bootloader'
@@ -112,9 +112,9 @@ esptool v5.4.0
 Creating ESP32-S3 image...
 Merged 3 ELF sections.
 Successfully created ESP32-S3 image.
-Generated C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-flash1/openu5_tdeck.bin
-[107/108] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-flash1 && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/Dev/OpenU5-Native/native/targets/tdeck/check_app_budget.py --build-dir C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-flash1"
+Generated <repo>/native/targets/tdeck/build-a4-flash1/openu5_tdeck.bin
+[107/108] C:\WINDOWS\system32\cmd.exe /C "cd /D <repo>\native\targets\tdeck\build-a4-flash1 && <home>\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe <repo>/native/targets/tdeck/check_app_budget.py --build-dir <repo>/native/targets/tdeck/build-a4-flash1"
 OpenU5 app budget: image 1044864 B (0xff180), app partition 1310720 B (0x140000), free 265856 B (20.3 %)
 OpenU5 Launcher allocation: 1048576 B (1024 KiB, the image rounded up to 64 KiB); the next 64 KiB step is 3713 B away
-[108/108] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-flash1 && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-flash1/partition_table/partition-table.bin C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-flash1/openu5_tdeck.bin"
+[108/108] C:\WINDOWS\system32\cmd.exe /C "cd /D <repo>\native\targets\tdeck\build-a4-flash1 && <home>\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app <repo>/native/targets/tdeck/build-a4-flash1/partition_table/partition-table.bin <repo>/native/targets/tdeck/build-a4-flash1/openu5_tdeck.bin"
 openu5_tdeck.bin binary size 0xff180 bytes. Smallest app partition is 0x140000 bytes. 0x40e80 bytes (20%) free.

@@ -1,4 +1,4 @@
-Test project C:/Dev/OpenU5-Native/native/core/build-batch21a2
+Test project <repo>/native/core/build-batch21a2
       Start  1: frontend
  1/89 Test  #1: frontend ...................................   Passed    0.08 sec
       Start  2: ui_session
@@ -185,5 +185,5 @@ Total Test time (real) = 101.36 sec
 The following tests FAILED:
 	 32 - dungeon_view_regression (Failed)
 Errors while running CTest
-Output from these tests are in: C:/Dev/OpenU5-Native/native/core/build-batch21a2/Testing/Temporary/LastTest.log
+Output from these tests are in: <repo>/native/core/build-batch21a2/Testing/Temporary/LastTest.log
 Use "--rerun-failed --output-on-failure" to re-run the failed cases verbosely.

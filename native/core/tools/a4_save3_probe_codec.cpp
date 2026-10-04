@@ -36,7 +36,7 @@ static void ranges(const char *label, const uint8_t *a, const uint8_t *b, size_t
     std::printf("  total differing bytes: %zu of %zu\n", total, n);
 }
 int main(int argc, char **argv) {
-    const std::string root = argc > 1 ? argv[1] : "C:/Dev/OpenU5-Native/original/u5/ultima5/";
+    const std::string root = argc > 1 ? argv[1] : "original/u5/ultima5/";
     auto saved = rd((root + "SAVED.GAM").c_str()), init = rd((root + "INIT.GAM").c_str());
     auto sool = rd((root + "SAVED.OOL").c_str()), iool = rd((root + "INIT.OOL").c_str());
     std::printf("SAVED.GAM %zu  INIT.GAM %zu  SAVED.OOL %zu  INIT.OOL %zu\n", saved.size(), init.size(), sool.size(), iool.size());

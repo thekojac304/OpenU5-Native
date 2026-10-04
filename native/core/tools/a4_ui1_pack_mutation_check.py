@@ -1,6 +1,6 @@
 """Commit A mutation proof: each mutant must turn at least one P check RED."""
 import os, shutil, subprocess, sys, time
-ROOT = r'C:\Dev\OpenU5-Native'
+ROOT = r'.'
 CORE = ROOT + r'\native\core'
 NINJA = r'C:\Dev\TamaPoke\.build-tools\w64devkit\bin\ninja.exe'
 F = ROOT + r'\native\targets\tdeck\main\alpha_resources.cpp'

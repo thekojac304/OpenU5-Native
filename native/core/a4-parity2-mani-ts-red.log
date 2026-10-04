@@ -1,5 +1,5 @@
 
-[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Dev/OpenU5-Native/game[39m
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90m<repo>/game[39m
 
  [31m❯[39m tests/a4-parity2-mani-not-dead.test.ts [2m([22m[2m5 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 8[2mms[22m[39m
 [31m   [31m×[31m In Mani Corp scroll on a living target (CAST2.OVL 0x060a + CAST.OVL 0x1b90)[2m > [22mmain.ts: a non-dead target prints «Not dead!» then «Failed!», in that order, from the boolean[39m[32m 4[2mms[22m[39m

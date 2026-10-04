@@ -56,6 +56,11 @@ Or skip the local setup: the browser "bring your own files" demo at
 [openu5.org](https://openu5.org) asks for your game folder and extracts it
 client-side — nothing is uploaded.
 
+Some parity tests (`native/core`) read local fixtures derived from your own game
+files. They are generated on your machine, gitignored and never distributed; when
+they are absent those tests are skipped. See "Local map fixtures" in
+[native/core/README.md](native/core/README.md).
+
 ## Status
 
 | Area | State |

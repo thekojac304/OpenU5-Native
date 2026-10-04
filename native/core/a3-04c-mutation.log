@@ -9,7 +9,7 @@ C3 KILLED the fill share forgets the yields :: contention: C3, F1, L1 | runtime:
 C4 KILLED an untimed frame is treated as timed (no cpu_mhz guard) :: contention: exit 3221225620 | runtime: exit 3221225620
 C5 KILLED late yields are not accumulated :: contention: C4, F1, L1
 F1 INVALID the report loses its contention section :: pp
-C:/Dev/OpenU5-Native/native/core/src/perf_report.cpp:289:6: error: 'void openu5::{anonymous}::contention_section(Lines&, const openu5::PerfReportInput&)' defined but not used [-Werror=unused-function]
+<repo>/native/core/src/perf_report.cpp:289:6: error: 'void openu5::{anonymous}::contention_section(Lines&, const openu5::PerfReportInput&)' defined but not used [-Werror=unused-function]
   289 | void contention_section(Lines &out, const PerfReportInput &in) {
       |      ^~~~~~~~~~~~~~~~~~
 cc1plus.exe: all warnings being treated as errors

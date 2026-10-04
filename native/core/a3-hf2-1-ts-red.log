@@ -1,5 +1,5 @@
 
- RUN  v3.2.7 C:/Dev/OpenU5-Native/game
+ RUN  v3.2.7 <repo>/game
 
  ❯ tests/sfx-bus.test.ts (38 tests | 6 failed | 29 skipped) 20ms
    ↓ core/sfx — constructores y mapeadores puros > sfxEvent produce un GameEvent de kind 'sfx' con el cue

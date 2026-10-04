@@ -1,4 +1,4 @@
-Test project C:/Dev/OpenU5-Native/native/core/build-b29-base
+Test project <repo>/native/core/build-b29-base
       Start  1: frontend
  1/98 Test  #1: frontend ...................................   Passed    0.14 sec
       Start  2: ui_session

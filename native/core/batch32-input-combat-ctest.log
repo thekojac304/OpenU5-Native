@@ -1,4 +1,4 @@
-Test project C:/Dev/OpenU5-Native/native/core/build-batch32-final
+Test project <repo>/native/core/build-batch32-final
     Start 36: combat_escape_regression
 1/7 Test #36: combat_escape_regression ...............   Passed    0.08 sec
     Start 38: combat_loot_open_regression

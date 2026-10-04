@@ -109,11 +109,11 @@ The exact View resource adds 975 bytes in PSRAM (16-byte header, 304 map bytes, 
 
 ## 19. Launcher package
 
-`C:\Dev\OpenU5-Native\native\targets\tdeck\build-alpha20-correction\launcher\OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`
+`native\targets\tdeck\build-alpha20-correction\launcher\OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`
 
 Final packaged size: 736,768 bytes. SHA-256: `096f52fc413798ef5f0b39ce53752905d044c1e5667b0c7bec49e2206d287758`.
 
-The matching SD resource pack is `C:\Dev\OpenU5-Native\native\assets\openu5-alpha1-resources.bin` (1,607,019 bytes; SHA-256 `6519dca0347ad56843893272f1e9a50033011ba952fbdd5a17a1201301feb6a5`).
+The matching SD resource pack is `native\assets\openu5-alpha1-resources.bin` (1,607,019 bytes; SHA-256 `6519dca0347ad56843893272f1e9a50033011ba952fbdd5a17a1201301feb6a5`).
 
 ## 20. Short physical retest checklist
 

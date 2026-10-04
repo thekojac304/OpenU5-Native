@@ -1,4 +1,4 @@
-Test project C:/Dev/OpenU5-Native/native/core/build-batch23-dev
+Test project <repo>/native/core/build-batch23-dev
       Start  1: frontend
  1/93 Test  #1: frontend ...................................   Passed    0.11 sec
       Start  2: ui_session
@@ -147,12 +147,12 @@ after row 4224 field 222 actual 60 expected 42 sizes 290/272
 72/93 Test #72: movement_flow_drift ........................   Passed    5.02 sec
       Start 73: quest_parity
 73/93 Test #73: quest_parity ...............................***Failed    4.70 sec
-C:\Dev\OpenU5-Native\native\core\tools\check-quests.ts:253
+<repo>\native\core\tools\check-quests.ts:253
  if(!isDeepStrictEqual(actual[i],expected[i])) {writeFileSync(dir+'/mismatch.json',JSON.stringify({input:inputs[i],expected:expected[i],actual:actual[i]},null,2));throw new Error(`Quest mismatch ${i}: ${inputs[i].op}`);}
                                                                                                                                                                          ^
 
 Error: Quest mismatch 4941: world-flow
-    at <anonymous> (C:\Dev\OpenU5-Native\native\core\tools\check-quests.ts:253:170)
+    at <anonymous> (<repo>\native\core\tools\check-quests.ts:253:170)
     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
     at async node:internal/modules/esm/loader:643:26
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)

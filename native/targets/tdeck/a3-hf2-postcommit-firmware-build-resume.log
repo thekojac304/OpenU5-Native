@@ -248,8 +248,8 @@
 [117/158] Building C object esp-idf/soc/CMakeFiles/__idf_soc.dir/dport_access_common.c.obj
 [118/158] Building C object esp-idf/soc/CMakeFiles/__idf_soc.dir/lldesc.c.obj
 [119/158] Building C object esp-idf/hal/CMakeFiles/__idf_hal.dir/esp32s3/efuse_hal.c.obj
-[120/158] Preprocessing linker script C:/esp/v6.1/esp-idf/components/bootloader/subproject/main/ld/esp32s3/bootloader.memory.ld.in -> C:/Dev/OpenU5-Native/native/targets/tdeck/build-a3-hf2-post/bootloader/ld/bootloader.memory.ld
-[121/158] Preprocessing linker script C:/esp/v6.1/esp-idf/components/bootloader/subproject/main/ld/esp32s3/bootloader.sections.ld.in -> C:/Dev/OpenU5-Native/native/targets/tdeck/build-a3-hf2-post/bootloader/ld/bootloader.sections.ld
+[120/158] Preprocessing linker script C:/esp/v6.1/esp-idf/components/bootloader/subproject/main/ld/esp32s3/bootloader.memory.ld.in -> <repo>/native/targets/tdeck/build-a3-hf2-post/bootloader/ld/bootloader.memory.ld
+[121/158] Preprocessing linker script C:/esp/v6.1/esp-idf/components/bootloader/subproject/main/ld/esp32s3/bootloader.sections.ld.in -> <repo>/native/targets/tdeck/build-a3-hf2-post/bootloader/ld/bootloader.sections.ld
 [122/158] Building C object esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/gpio_periph.c.obj
 [123/158] Building C object esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/power_supply_periph.c.obj
 [124/158] Building C object esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/mpi_periph.c.obj
@@ -294,8 +294,8 @@ Merged 2 ELF sections.
 
 Successfully created ESP32-S3 image.
 
-Generated C:/Dev/OpenU5-Native/native/targets/tdeck/build-a3-hf2-post/bootloader/bootloader.bin
-[158/158] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-a3-hf2-post\bootloader && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 C:/Dev/OpenU5-Native/native/targets/tdeck/build-a3-hf2-post/bootloader/bootloader.bin"
+Generated <repo>/native/targets/tdeck/build-a3-hf2-post/bootloader/bootloader.bin
+[158/158] C:\WINDOWS\system32\cmd.exe /C "cd /D <repo>\native\targets\tdeck\build-a3-hf2-post\bootloader && <home>\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 <repo>/native/targets/tdeck/build-a3-hf2-post/bootloader/bootloader.bin"
 
 Bootloader binary size 0x5850 bytes. 0x27b0 bytes (31%) free.
 
@@ -318,7 +318,7 @@ Merged 3 ELF sections.
 
 Successfully created ESP32-S3 image.
 
-Generated C:/Dev/OpenU5-Native/native/targets/tdeck/build-a3-hf2-post/openu5_tdeck.bin
-[137/137] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-a3-hf2-post && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app C:/Dev/OpenU5-Native/native/targets/tdeck/build-a3-hf2-post/partition_table/partition-table.bin C:/Dev/OpenU5-Native/native/targets/tdeck/build-a3-hf2-post/openu5_tdeck.bin"
+Generated <repo>/native/targets/tdeck/build-a3-hf2-post/openu5_tdeck.bin
+[137/137] C:\WINDOWS\system32\cmd.exe /C "cd /D <repo>\native\targets\tdeck\build-a3-hf2-post && <home>\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app <repo>/native/targets/tdeck/build-a3-hf2-post/partition_table/partition-table.bin <repo>/native/targets/tdeck/build-a3-hf2-post/openu5_tdeck.bin"
 openu5_tdeck.bin binary size 0xee9d0 bytes. Smallest app partition is 0x100000 bytes. 0x11630 bytes (7%) free.
 

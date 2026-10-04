@@ -1,5 +1,5 @@
 == a3_04a_hotpath_check (build-a4-ui4-hf1)
-# A3-04A firmware hot-path check: C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-ui4-hf1\openu5_tdeck.elf
+# A3-04A firmware hot-path check: <repo>\native\targets\tdeck\build-a4-ui4-hf1\openu5_tdeck.elf
 
 generate(): 483 instructions, 3 call sites: openu5::OplEmulator::Operator::envelope_step(unsigned long, unsigned char), openu5::OplEmulator::refresh_vibrato()
 functions reachable from generate(): 3
@@ -10,7 +10,7 @@ functions reachable from generate(): 3
 GREEN no guard, lock, allocation, log or delay is reachable from the per-sample path
 
 == a3_04b_iram_check (build-a4-ui4-hf1)
-# A3-04B firmware IRAM check: C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-ui4-hf1\openu5_tdeck.elf
+# A3-04B firmware IRAM check: <repo>\native\targets\tdeck\build-a4-ui4-hf1\openu5_tdeck.elf
 
 functions reached from render_block(): 25
     403832a8 IRAM    20 insns  openu5::apply_gain_q15(short, unsigned short)

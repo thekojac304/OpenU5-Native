@@ -117,12 +117,12 @@ The save workspace is allocated on first persistence inspection/use and logs its
 
 ## 14. Exact Launcher path
 
-`C:\Dev\OpenU5-Native\native\targets\tdeck\build-alpha20-correction\launcher\OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`
+`native\targets\tdeck\build-alpha20-correction\launcher\OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`
 
 - size: 743,648 bytes
 - SHA-256: `68b1aba27a772feb00b2339a6ba74d2b3f59331cc8dc957a6a76be3fc1c919e5`
 - ESP-IDF: 6.1.0
-- matching resource source: `C:\Dev\OpenU5-Native\native\assets\openu5-alpha1-resources.bin`
+- matching resource source: `native\assets\openu5-alpha1-resources.bin`
 - resource SD destination: `/ultima5/openu5-alpha1-resources.bin`
 
 ## 15. Physical retest checklist

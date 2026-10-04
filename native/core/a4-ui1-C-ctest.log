@@ -1,4 +1,4 @@
-Test project C:/Dev/OpenU5-Native/native/core/build-a4-ui1
+Test project <repo>/native/core/build-a4-ui1
         Start   1: frontend
   1/163 Test   #1: frontend ...................................   Passed    0.02 sec
         Start   2: ui_session

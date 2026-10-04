@@ -1,5 +1,5 @@
 
-[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Dev/OpenU5-Native/extractor[39m
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90m<repo>/extractor[39m
 
  [32m✓[39m tests/native-input.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 7[2mms[22m[39m
  [32m✓[39m tests/alpha1-signs.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 22[2mms[22m[39m

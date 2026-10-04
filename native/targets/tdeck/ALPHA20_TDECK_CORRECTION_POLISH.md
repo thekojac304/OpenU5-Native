@@ -164,7 +164,7 @@ from the device; no physical result is claimed here.
 - Resource pack: 1,824,829 bytes, unchanged; SHA-256
   `530286B2BF2A82A20E6279F3B6261B546B800AD2A749CBF3B97B263F85051AA4`.
 - Launcher path:
-  `C:\Dev\OpenU5-Native\native\targets\tdeck\build-alpha20-correction\launcher\OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`
+  `native\targets\tdeck\build-alpha20-correction\launcher\OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`
 
 ## 9. Physical retest checklist
 

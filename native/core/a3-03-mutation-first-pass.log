@@ -31,8 +31,8 @@ M4 the troll (arena) victory cue is omitted [native/core/src/sfx_inventory.cpp]:
         RED V5 (synth: one fanfare; muted: nothing submitted)
         RED M6 Alt+L during the victory fanfare: faded within 2 ms, nothing queued survives
 M5 the victory cue fires twice (the Ended line sounds too) [native/core/src/sfx_inventory.cpp]: BUILD FAILED (counts as killed)
-    C:\Dev\TamaPoke\.build-tools\w64devkit\bin\c++.exe -DOPENU5_ENABLE_DEVELOPER_TOOLS=1 -IC:/Dev/OpenU5-Native/native/core/include -O3 -DNDEBUG -Wall -Wextra -Wconversion -Werror -MD -MT CMakeFiles/openu5_core.dir/src/sfx_inventory.cpp.obj -MF CMakeFiles\openu5_core.dir\src\sfx_inventory.cpp.obj.d -o CMakeFiles/openu5_core.dir/src/sfx_inventory.cpp.obj -c C:/Dev/OpenU5-Native/native/core/src/sfx_inventory.cpp
-    C:/Dev/OpenU5-Native/native/core/src/sfx_inventory.cpp:248:50: error: unused parameter 'ended' [-Werror=unused-parameter]
+    C:\Dev\TamaPoke\.build-tools\w64devkit\bin\c++.exe -DOPENU5_ENABLE_DEVELOPER_TOOLS=1 -I<repo>/native/core/include -O3 -DNDEBUG -Wall -Wextra -Wconversion -Werror -MD -MT CMakeFiles/openu5_core.dir/src/sfx_inventory.cpp.obj -MF CMakeFiles\openu5_core.dir\src\sfx_inventory.cpp.obj.d -o CMakeFiles/openu5_core.dir/src/sfx_inventory.cpp.obj -c <repo>/native/core/src/sfx_inventory.cpp
+    <repo>/native/core/src/sfx_inventory.cpp:248:50: error: unused parameter 'ended' [-Werror=unused-parameter]
     cc1plus.exe: all warnings being treated as errors
 M6 the quake sound drives its presentation (the shake stretches with submitted audio) [native/targets/tdeck/main/alpha_runtime.cpp]: KILLED
     a3-03 runtime   exit=1  2 RED

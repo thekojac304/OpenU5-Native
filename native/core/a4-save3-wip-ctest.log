@@ -1,4 +1,4 @@
-Test project C:/Dev/OpenU5-Native/native/core/build-a4-save3
+Test project <repo>/native/core/build-a4-save3
         Start   1: frontend
   1/168 Test   #1: frontend ...................................***Failed    0.06 sec
         Start   2: ui_session
@@ -344,5 +344,5 @@ The following tests FAILED:
 	  1 - frontend (Failed)
 	101 - a4_ui1_chrome_runtime (Failed)
 Errors while running CTest
-Output from these tests are in: C:/Dev/OpenU5-Native/native/core/build-a4-save3/Testing/Temporary/LastTest.log
+Output from these tests are in: <repo>/native/core/build-a4-save3/Testing/Temporary/LastTest.log
 Use "--rerun-failed --output-on-failure" to re-run the failed cases verbosely.

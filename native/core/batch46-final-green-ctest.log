@@ -1,6 +1,6 @@
-UpdateCTestConfiguration  from :C:/Dev/OpenU5-Native/native/core/build-batch46/DartConfiguration.tcl
-Parse Config file:C:/Dev/OpenU5-Native/native/core/build-batch46/DartConfiguration.tcl
-Test project C:/Dev/OpenU5-Native/native/core/build-batch46
+UpdateCTestConfiguration  from :<repo>/native/core/build-batch46/DartConfiguration.tcl
+Parse Config file:<repo>/native/core/build-batch46/DartConfiguration.tcl
+Test project <repo>/native/core/build-batch46
 Constructing a list of tests
 Done constructing a list of tests
 Updating test list for fixtures
@@ -10,8 +10,8 @@ Checking test dependency graph end
 test 69
     Start 69: batch46_camp_invisibility
 
-69: Test command: C:\Dev\OpenU5-Native\native\core\build-batch46\batch46_camp_invisibility.exe "C:/Dev/OpenU5-Native/native/core/../assets/openu5-alpha1-resources.bin"
-69: Working Directory: C:/Dev/OpenU5-Native/native/core/build-batch46
+69: Test command: <repo>\native\core\build-batch46\batch46_camp_invisibility.exe "<repo>/native/core/../assets/openu5-alpha1-resources.bin"
+69: Working Directory: <repo>/native/core/build-batch46
 69: Test timeout computed to be: 1500
 69: [I][AlphaResources] Alpha resource pack v2.0 valid: 2039545 bytes, 39 entries, payload CRC=2065ad91, expected SHA-256=434cd664b4b9, firmware_match=1
 69: [I][AlphaResources] Loaded owners: 64 small floors, 8 dungeons, 1024 NPC records; PSRAM=1185451

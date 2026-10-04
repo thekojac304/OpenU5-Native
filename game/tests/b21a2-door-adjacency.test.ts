@@ -6,7 +6,7 @@
 // neighbouring door was visible. This drives game/src/skin/fiel/dungeon.ts
 // planDungeonView() -- the accepted reference -- on the exact authored cells,
 // so the native plan can be compared op for op rather than by description.
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { planDungeonView } from "../src/skin/fiel/dungeon.js";
@@ -25,7 +25,10 @@ function authoredDungeon(location: number): Uint8Array {
 
 const DECEIT = 33;
 const FLOOR = 7;
-const cells = authoredDungeon(DECEIT);
+// dungeon-maps.txt is generated locally from the user's own DUNGEON.DAT and is not
+// distributed; without it this suite is skipped rather than failing.
+const HAVE_MAPS = existsSync(MAPS);
+const cells = HAVE_MAPS ? authoredDungeon(DECEIT) : new Uint8Array(512);
 const w8 = (v: number): number => ((v % 8) + 8) % 8;
 const byteAt = (x: number, y: number): number => cells[FLOOR * 64 + w8(y) * 8 + w8(x)]!;
 
@@ -87,7 +90,7 @@ function summarise(dv: DungeonViewInfo): string[] {
   });
 }
 
-describe("Batch 21A.2 - adjacent dungeon-door visibility, authored Deceit floor 7", () => {
+describe.skipIf(!HAVE_MAPS)("Batch 21A.2 - adjacent dungeon-door visibility, authored Deceit floor 7", () => {
   it("the authored cluster is six room cells, four of them a 2x2 across the x-wrap", () => {
     const rooms: string[] = [];
     for (let y = 0; y < 8; y++) {

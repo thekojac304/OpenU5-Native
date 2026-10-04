@@ -64,6 +64,7 @@ Coming from Alpha 3: flash the image and copy the new 2,266,819-byte resource pa
 - Real heap/memory figures for Alpha 4 were not captured; no memory problem was observed.
 - The PC save bridge was tested against the host and the device, not against a real DOS install.
 - The naval cactus check was not run.
+- Some host parity tests need numeric fixtures generated from your own Ultima V files (the repository ships none); without them those tests are skipped. See `native/core/README.md`, "Local map fixtures".
 - Music requires music-patched game files and the optional audio pack.
 
 ## Reporting bugs

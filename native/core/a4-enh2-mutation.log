@@ -25,15 +25,15 @@ D1 KILLED -- the wanderer re-arm hook removed (every rolled wanderer placed) -- 
 D2 KILLED -- the decision moved before the hidden roll: a refused re-arm skips a 1988 draw -- a4_enh2_rules exit=1 RED=W1
 D3 KILLED -- starvation severity not passed to the starvation site -- a4_enh2_rules exit=1 RED=S1,Z5; a4_enh2_runtime exit=1 RED=U8,V3
 D4 INVALID (does not build) -- every party_random_damage caller scaled (fire, quake, cactus)
-ninja: Entering directory `C:\Dev\OpenU5-Native\native\core\build-a4-enh2'
+ninja: Entering directory `<repo>\native\core\build-a4-enh2'
 [1/3] Building CXX object CMakeFiles/openu5_core.dir/src/turn.cpp.obj
 FAILED: [code=1] CMakeFiles/openu5_core.dir/src/turn.cpp.obj 
-C:\Dev\TamaPoke\.build-tools\w64devkit\bin\c++.exe -DOPENU5_ENABLE_DEVELOPER_TOOLS=1 -IC:/Dev/OpenU5-Native/native/core/include -O3 -DNDEBUG -Wall -Wextra -Wconversion -Werror -MD -MT CMakeFiles/openu5_core.dir/src/turn.cpp.obj -MF CMakeFiles\openu5_core.dir\src\turn.cpp.obj.d -o CMakeFiles/openu5_core.dir/src/turn.cpp.obj -c C:/Dev/OpenU5-Native/native/core/src/turn.cpp
-C:/Dev/OpenU5-Native/native/core/src/turn.cpp: In function 'void openu5::party_random_damage(GameState&, Rand, bool)':
-C:/Dev/OpenU5-Native/native/core/src/turn.cpp:76:9: error: this 'if' clause does not guard... [-Werror=misleading-indentation]
+C:\Dev\TamaPoke\.build-tools\w64devkit\bin\c++.exe -DOPENU5_ENABLE_DEVELOPER_TOOLS=1 -I<repo>/native/core/include -O3 -DNDEBUG -Wall -Wextra -Wconversion -Werror -MD -MT CMakeFiles/openu5_core.dir/src/turn.cpp.obj -MF CMakeFiles\openu5_core.dir\src\turn.cpp.obj.d -o CMakeFiles/openu5_core.dir/src/turn.cpp.obj -c <repo>/native/core/src/turn.cpp
+<repo>/native/core/src/turn.cpp: In function 'void openu5::party_random_damage(GameState&, Rand, bool)':
+<repo>/native/core/src/turn.cpp:76:9: error: this 'if' clause does not guard... [-Werror=misleading-indentation]
    76 |         if (const int32_t v = rules_starvation_damage(g,d)) apply_damage(g, i, v); (void)starvation;
       |         ^~
-C:/Dev/OpenU5-Native/native/core/src/turn.cpp:76:84: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the 'if'
+<repo>/native/core/src/turn.cpp:76:84: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the 'if'
    76 |         if (const int32_t v = rules_starvation_damage(g,d)) apply_damage(g, i, v); (void)starvation;
       |                                                                                    ^
 cc1plus.exe: all warnings being treated as errors

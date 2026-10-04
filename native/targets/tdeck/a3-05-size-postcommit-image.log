@@ -1,5 +1,5 @@
-CURRENT   project file: "C:\Dev\OpenU5-Native\native\targets\tdeck\build-a3-05-post\openu5_tdeck.map"
-REFERENCE project file: "C:\Dev\OpenU5-Native\native\targets\tdeck\build-a3-05\openu5_tdeck.map"
+CURRENT   project file: "<repo>\native\targets\tdeck\build-a3-05-post\openu5_tdeck.map"
+REFERENCE project file: "<repo>\native\targets\tdeck\build-a3-05\openu5_tdeck.map"
 Difference is counted as CURRENT - REFERENCE, i.e. a positive number means that CURRENT is larger.
 Memory Type Usage Summary
 +--------------------------------------------------------------------------------+

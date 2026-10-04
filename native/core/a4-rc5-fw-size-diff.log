@@ -50,8 +50,8 @@ Memory Type Usage Summary
 +--------------------------------------------------------------------------------+
 Total image size: 1047284 bytes (.bin may be padded larger)
 == diff
-CURRENT   project file: "C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-rc5\openu5_tdeck.map"
-REFERENCE project file: "C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-rc4\openu5_tdeck.map"
+CURRENT   project file: "<repo>\native\targets\tdeck\build-a4-rc5\openu5_tdeck.map"
+REFERENCE project file: "<repo>\native\targets\tdeck\build-a4-rc4\openu5_tdeck.map"
 Difference is counted as CURRENT - REFERENCE, i.e. a positive number means that CURRENT is larger.
 Memory Type Usage Summary
 +---------------------------------------------------------------------------------+

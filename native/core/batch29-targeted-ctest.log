@@ -1,4 +1,4 @@
-Test project C:/Dev/OpenU5-Native/native/core/build-b29
+Test project <repo>/native/core/build-b29
       Start  5: batch21b_chest_reset
  1/17 Test  #5: batch21b_chest_reset ...................   Passed    0.11 sec
       Start 10: gameplay_integration

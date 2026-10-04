@@ -1,4 +1,4 @@
-# A3-04A firmware hot-path check: C:\Dev\OpenU5-Native\native\targets\tdeck\build-a3-04-post\openu5_tdeck.elf
+# A3-04A firmware hot-path check: <repo>\native\targets\tdeck\build-a3-04-post\openu5_tdeck.elf
 
 generate(): 177 instructions, 8 call sites: openu5::OplEmulator::Operator::advance_envelope(unsigned long, unsigned char), openu5::OplEmulator::Operator::sample(unsigned long, long, long), openu5::OplEmulator::advance_clocks(), openu5::OplEmulator::phase_inc(openu5::OplEmulator::Channel const&, openu5::OplEmulator::Operator const&) const, openu5::OplEmulator::tremolo_atten() const
 functions reachable from generate(): 33

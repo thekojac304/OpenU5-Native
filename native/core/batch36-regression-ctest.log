@@ -1,4 +1,4 @@
-Test project C:/Dev/OpenU5-Native/native/core/build-batch36-final
+Test project <repo>/native/core/build-batch36-final
       Start 10: gameplay_integration
  1/18 Test #10: gameplay_integration ...................   Passed    0.11 sec
       Start 19: world_flow_adapters

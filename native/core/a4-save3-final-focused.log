@@ -1,6 +1,6 @@
-UpdateCTestConfiguration  from :C:/Dev/OpenU5-Native/native/core/build-a4-save3/DartConfiguration.tcl
-Parse Config file:C:/Dev/OpenU5-Native/native/core/build-a4-save3/DartConfiguration.tcl
-Test project C:/Dev/OpenU5-Native/native/core/build-a4-save3
+UpdateCTestConfiguration  from :<repo>/native/core/build-a4-save3/DartConfiguration.tcl
+Parse Config file:<repo>/native/core/build-a4-save3/DartConfiguration.tcl
+Test project <repo>/native/core/build-a4-save3
 Constructing a list of tests
 Done constructing a list of tests
 Updating test list for fixtures
@@ -10,8 +10,8 @@ Checking test dependency graph end
 test 110
     Start 110: a4_save3_pc_bridge_runtime
 
-110: Test command: C:\Dev\OpenU5-Native\native\core\build-a4-save3\a4_save3_pc_bridge_runtime.exe "C:/Dev/OpenU5-Native/native/core/../assets/openu5-alpha1-resources.bin" "C:/Dev/OpenU5-Native/native/core/../../original/u5/ultima5"
-110: Working Directory: C:/Dev/OpenU5-Native/native/core/build-a4-save3
+110: Test command: <repo>\native\core\build-a4-save3\a4_save3_pc_bridge_runtime.exe "<repo>/native/core/../assets/openu5-alpha1-resources.bin" "<repo>/native/core/../../original/u5/ultima5"
+110: Working Directory: <repo>/native/core/build-a4-save3
 110: Test timeout computed to be: 1500
 110: [I][AlphaResources] Alpha resource pack v2.0 valid: 2042554 bytes, 43 entries, payload CRC=9c10874f, expected SHA-256=11d72c7784d4, firmware_match=1
 110: [I][AlphaResources] Loaded owners: 64 small floors, 8 dungeons, 1024 NPC records; PSRAM=1188214
@@ -3122,8 +3122,8 @@ test 110
 test 143
     Start 143: a4_save3_pc_reference
 
-143: Test command: "C:\Program Files\nodejs\node.exe" "--import" "tsx" "C:/Dev/OpenU5-Native/native/core/tools/check-pc-save.ts" "C:/Dev/OpenU5-Native/native/core/build-a4-save3/a4_save3_pc_bridge_runtime.exe" "C:/Dev/OpenU5-Native/native/core/../assets/openu5-alpha1-resources.bin" "C:/Dev/OpenU5-Native/native/core/../../original/u5/ultima5"
-143: Working Directory: C:/Dev/OpenU5-Native/native/core/../..
+143: Test command: "C:\Program Files\nodejs\node.exe" "--import" "tsx" "<repo>/native/core/tools/check-pc-save.ts" "<repo>/native/core/build-a4-save3/a4_save3_pc_bridge_runtime.exe" "<repo>/native/core/../assets/openu5-alpha1-resources.bin" "<repo>/native/core/../../original/u5/ultima5"
+143: Working Directory: <repo>/native/core/../..
 143: Test timeout computed to be: 1500
 143: [TS] the DOS fixture, as the reference reads it, against Native's import
 143:   GREEN TS1   Native's import of the fixture equals the reference's reading: Kojac, Shamino, Iolo; 9200 gold; location 17 (15,20)

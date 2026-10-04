@@ -152,8 +152,8 @@ M12 the shakes not drawn [alpha_runtime.cpp]: KILLED
         RED N1.10 the peal shakes the viewport: dropped with the line, the device shake running -1 ms, restored with the apparition (screen_shake_fx x 2)
 M13 bypass the 0x0946 site (delay(10) after the darkness line, as before): ANCHOR NOT UNIQUE (0) in native/core/src/quest_world.cpp: '        {nullptr,nullptr,nullptr,10},\n'
 M14 karma floored BEFORE the wait (at check_refuge) [quest_world.cpp]: BUILD FAILED (INVALID, not killed)
-    C:\Dev\TamaPoke\.build-tools\w64devkit\bin\c++.exe -DOPENU5_ENABLE_DEVELOPER_TOOLS=1 -IC:/Dev/OpenU5-Native/native/core/include -O3 -DNDEBUG -Wall -Wextra -Wconversion -Werror -MD -MT CMakeFiles/openu5_core.dir/src/quest_world.cpp.obj -MF CMakeFiles\openu5_core.dir\src\quest_world.cpp.obj.d -o CMakeFiles/openu5_core.dir/src/quest_world.cpp.obj -c C:/Dev/OpenU5-Native/native/core/src/quest_world.cpp
-    C:/Dev/OpenU5-Native/native/core/src/quest_world.cpp:216:5: error: this 'if' clause does not guard... [-Werror=misleading-indentation]
+    C:\Dev\TamaPoke\.build-tools\w64devkit\bin\c++.exe -DOPENU5_ENABLE_DEVELOPER_TOOLS=1 -I<repo>/native/core/include -O3 -DNDEBUG -Wall -Wextra -Wconversion -Werror -MD -MT CMakeFiles/openu5_core.dir/src/quest_world.cpp.obj -MF CMakeFiles\openu5_core.dir\src\quest_world.cpp.obj.d -o CMakeFiles/openu5_core.dir/src/quest_world.cpp.obj -c <repo>/native/core/src/quest_world.cpp
+    <repo>/native/core/src/quest_world.cpp:216:5: error: this 'if' clause does not guard... [-Werror=misleading-indentation]
     cc1plus.exe: all warnings being treated as errors
 M15 the resurrection applied AT the key (not at the scene's end) [alpha_runtime.cpp]: KILLED
     a3_hf9_refuge_cadence_runtime exit=1  6 RED

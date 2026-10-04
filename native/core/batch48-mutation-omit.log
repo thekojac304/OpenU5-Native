@@ -1,7 +1,7 @@
 [1/3] Building CXX object CMakeFiles/openu5_core.dir/src/presentation.cpp.obj
 [2/3] Linking CXX static library libopenu5_core.a
 [3/3] Linking CXX executable batch29_rest_wiring.exe
-Test project C:/Dev/OpenU5-Native/native/core/build-batch48
+Test project <repo>/native/core/build-batch48
     Start 57: batch48_bed_pose
 1/1 Test #57: batch48_bed_pose .................***Failed    0.13 sec
 [I][AlphaResources] Alpha resource pack v2.0 valid: 2039545 bytes, 39 entries, payload CRC=2065ad91, expected SHA-256=434cd664b4b9, firmware_match=1

@@ -116,6 +116,14 @@ An SD error is logged with its ESP-IDF error name and does not reboot or stop
 the application. A passing interleave test is runtime evidence produced on the
 device; the local build alone cannot establish electrical or card reliability.
 
+## Original game data
+
+No Ultima V data, art, music, text or maps are distributed with this repository.
+The SD resource packs are built on your machine from your own files in
+`original/u5/ultima5/`. A few host parity tests also read numeric fixtures derived
+from those files; they are generated locally, gitignored, and skipped when absent
+(see "Local map fixtures" in [../../core/README.md](../../core/README.md)).
+
 ## Current local validation
 
 - ESP-IDF v6.1 compile: passed.

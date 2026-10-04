@@ -259,9 +259,9 @@ ninja: Entering directory `build-a4-rc3-pre'
 [123/158] Building C object esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/power_supply_periph.c.obj
 [124/158] Building C object esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/gpio_periph.c.obj
 [125/158] Building C object esp-idf/xtensa/CMakeFiles/__idf_xtensa.dir/eri.c.obj
-[126/158] Preprocessing linker script C:/esp/v6.1/esp-idf/components/bootloader/subproject/main/ld/esp32s3/bootloader.memory.ld.in -> C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-rc3-pre/bootloader/ld/bootloader.memory.ld
+[126/158] Preprocessing linker script C:/esp/v6.1/esp-idf/components/bootloader/subproject/main/ld/esp32s3/bootloader.memory.ld.in -> <repo>/native/targets/tdeck/build-a4-rc3-pre/bootloader/ld/bootloader.memory.ld
 [127/158] Linking C static library esp-idf\esp_hw_support\libesp_hw_support.a
-[128/158] Preprocessing linker script C:/esp/v6.1/esp-idf/components/bootloader/subproject/main/ld/esp32s3/bootloader.sections.ld.in -> C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-rc3-pre/bootloader/ld/bootloader.sections.ld
+[128/158] Preprocessing linker script C:/esp/v6.1/esp-idf/components/bootloader/subproject/main/ld/esp32s3/bootloader.sections.ld.in -> <repo>/native/targets/tdeck/build-a4-rc3-pre/bootloader/ld/bootloader.sections.ld
 [129/158] Building C object esp-idf/xtensa/CMakeFiles/__idf_xtensa.dir/xt_trax.c.obj
 [130/158] Linking C static library esp-idf\esp_system\libesp_system.a
 [131/158] Linking C static library esp-idf\esp_hal_systimer\libesp_hal_systimer.a
@@ -295,8 +295,8 @@ esptool v5.4.0
 Creating ESP32-S3 image...
 Merged 2 ELF sections.
 Successfully created ESP32-S3 image.
-Generated C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-rc3-pre/bootloader/bootloader.bin
-[158/158] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-rc3-pre\bootloader && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-rc3-pre/bootloader/bootloader.bin"
+Generated <repo>/native/targets/tdeck/build-a4-rc3-pre/bootloader/bootloader.bin
+[158/158] C:\WINDOWS\system32\cmd.exe /C "cd /D <repo>\native\targets\tdeck\build-a4-rc3-pre\bootloader && <home>\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 <repo>/native/targets/tdeck/build-a4-rc3-pre/bootloader/bootloader.bin"
 Bootloader binary size 0x5850 bytes. 0x27b0 bytes (31%) free.
 [136/143] No install step for 'bootloader'
 [137/143] Completed 'bootloader'
@@ -311,9 +311,9 @@ esptool v5.4.0
 Creating ESP32-S3 image...
 Merged 3 ELF sections.
 Successfully created ESP32-S3 image.
-Generated C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-rc3-pre/openu5_tdeck.bin
-[142/143] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-rc3-pre && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-rc3-pre/partition_table/partition-table.bin C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-rc3-pre/openu5_tdeck.bin"
+Generated <repo>/native/targets/tdeck/build-a4-rc3-pre/openu5_tdeck.bin
+[142/143] C:\WINDOWS\system32\cmd.exe /C "cd /D <repo>\native\targets\tdeck\build-a4-rc3-pre && <home>\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app <repo>/native/targets/tdeck/build-a4-rc3-pre/partition_table/partition-table.bin <repo>/native/targets/tdeck/build-a4-rc3-pre/openu5_tdeck.bin"
 openu5_tdeck.bin binary size 0xff720 bytes. Smallest app partition is 0x140000 bytes. 0x408e0 bytes (20%) free.
-[143/143] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-rc3-pre && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/Dev/OpenU5-Native/native/targets/tdeck/check_app_budget.py --build-dir C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-rc3-pre"
+[143/143] C:\WINDOWS\system32\cmd.exe /C "cd /D <repo>\native\targets\tdeck\build-a4-rc3-pre && <home>\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe <repo>/native/targets/tdeck/check_app_budget.py --build-dir <repo>/native/targets/tdeck/build-a4-rc3-pre"
 OpenU5 app budget: image 1046304 B (0xff720), app partition 1310720 B (0x140000), free 264416 B (20.2 %)
 OpenU5 Launcher allocation: 1048576 B (1024 KiB, the image rounded up to 64 KiB); the next 64 KiB step is 2273 B away

@@ -1,6 +1,6 @@
-UpdateCTestConfiguration  from :C:/Dev/OpenU5-Native/native/core/build-batch46/DartConfiguration.tcl
-Parse Config file:C:/Dev/OpenU5-Native/native/core/build-batch46/DartConfiguration.tcl
-Test project C:/Dev/OpenU5-Native/native/core/build-batch46
+UpdateCTestConfiguration  from :<repo>/native/core/build-batch46/DartConfiguration.tcl
+Parse Config file:<repo>/native/core/build-batch46/DartConfiguration.tcl
+Test project <repo>/native/core/build-batch46
 Constructing a list of tests
 Done constructing a list of tests
 Updating test list for fixtures
@@ -10,8 +10,8 @@ Checking test dependency graph end
 test 68
     Start 68: batch46_camp_invisibility
 
-68: Test command: C:\Dev\OpenU5-Native\native\core\build-batch46\batch46_camp_invisibility.exe "C:/Dev/OpenU5-Native/native/core/../assets/openu5-alpha1-resources.bin"
-68: Working Directory: C:/Dev/OpenU5-Native/native/core/build-batch46
+68: Test command: <repo>\native\core\build-batch46\batch46_camp_invisibility.exe "<repo>/native/core/../assets/openu5-alpha1-resources.bin"
+68: Working Directory: <repo>/native/core/build-batch46
 68: Test timeout computed to be: 1500
 68: [I][AlphaResources] Alpha resource pack v2.0 valid: 2039545 bytes, 39 entries, payload CRC=2065ad91, expected SHA-256=434cd664b4b9, firmware_match=1
 68: [I][AlphaResources] Loaded owners: 64 small floors, 8 dungeons, 1024 NPC records; PSRAM=1185451
@@ -240,5 +240,5 @@ Total Test time (real) =   0.24 sec
 The following tests FAILED:
 	 68 - batch46_camp_invisibility (Failed)
 Errors while running CTest
-Output from these tests are in: C:/Dev/OpenU5-Native/native/core/build-batch46/Testing/Temporary/LastTest.log
+Output from these tests are in: <repo>/native/core/build-batch46/Testing/Temporary/LastTest.log
 Use "--rerun-failed --output-on-failure" to re-run the failed cases verbosely.

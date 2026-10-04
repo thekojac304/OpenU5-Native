@@ -3,7 +3,7 @@ swapped native/targets/tdeck/main/alpha_runtime.cpp
 swapped native/targets/tdeck/main/tdeck_board.h
 swapped native/targets/tdeck/main/device_ui_views.h
 swapped native/targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp
-ninja: Entering directory `C:\Dev\OpenU5-Native\native\core\build-a4-ui4'
+ninja: Entering directory `<repo>\native\core\build-a4-ui4'
 [1/5] Building CXX object CMakeFiles/a4_ui4_console_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp.obj
 [2/5] Building CXX object CMakeFiles/a4_ui4_console_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/a4_ui4_console_runtime_test.cpp.obj
 [3/5] Building CXX object CMakeFiles/a4_ui4_console_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/main/tdeck_board.cpp.obj

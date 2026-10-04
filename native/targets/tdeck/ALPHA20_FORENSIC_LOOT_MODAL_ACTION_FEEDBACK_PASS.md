@@ -89,13 +89,13 @@ Static ESP-IDF stack reports remain bounded: `AlphaRuntime::render` 2,144 bytes,
 
 ## Packaging
 
-- Launcher: `C:\Dev\OpenU5-Native\native\targets\tdeck\build-core\launcher\OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`
+- Launcher: `native\targets\tdeck\build-core\launcher\OpenU5-TDeck-Alpha2.0.0-alpha2-Debug-Launcher.bin`
 - Size: 784,720 bytes
 - SHA-256: `2eff4222b32cdb68f9b871a42847d5a4837c4d1dcb30a10b915d64da45fc9345`
-- Required Alpha resource pack: `C:\Dev\OpenU5-Native\native\assets\openu5-alpha1-resources.bin`
+- Required Alpha resource pack: `native\assets\openu5-alpha1-resources.bin`
 - Resource SHA-256 (unchanged): `4e1fc6cd2733806232dbbd0af3bd6767b1d2ca58db8b3d2ce2d13a1531e50050`
 - Resource SD destination: `/ultima5/openu5-alpha1-resources.bin`
-- Tile pack (unchanged): `C:\Dev\OpenU5-Native\native\assets\openu5-assets.bin`
+- Tile pack (unchanged): `native\assets\openu5-assets.bin`
 - Tile SHA-256: `6eb001ed2a7729e683896998f693d02aeaf1327f3cddd661d1c726ef7414e188`
 - Tile SD destination: `/ultima5/openu5-assets.bin`
 

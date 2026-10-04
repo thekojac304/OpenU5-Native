@@ -1,7 +1,7 @@
 ninja: Entering directory `build-a4-rc3'
 [1/1182] Generating project_elf_src_esp32s3.c
-[2/1182] Preprocessing linker script C:/esp/v6.1/esp-idf/components/esp_system/ld/esp32s3/memory.ld.in -> C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-rc3/esp-idf/esp_system/ld/memory.ld
-[3/1182] Preprocessing linker script C:/esp/v6.1/esp-idf/components/esp_system/ld/esp32s3/sections.ld.in -> C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-rc3/esp-idf/esp_system/ld/sections.ld.in
+[2/1182] Preprocessing linker script C:/esp/v6.1/esp-idf/components/esp_system/ld/esp32s3/memory.ld.in -> <repo>/native/targets/tdeck/build-a4-rc3/esp-idf/esp_system/ld/memory.ld
+[3/1182] Preprocessing linker script C:/esp/v6.1/esp-idf/components/esp_system/ld/esp32s3/sections.ld.in -> <repo>/native/targets/tdeck/build-a4-rc3/esp-idf/esp_system/ld/sections.ld.in
 [4/1182] Generating ../../partition_table/partition-table.bin
 Partition table binary generated. Contents:
 *******************************************************************************
@@ -916,20 +916,20 @@ factory,app,factory,0x10000,1280K,
 -- The C compiler identification is GNU 15.2.0
 -- The CXX compiler identification is GNU 15.2.0
 -- The ASM compiler identification is GNU
--- Found assembler: C:/Users/lawma/.espressif/tools/xtensa-esp-elf/esp-15.2.0_20251204/xtensa-esp-elf/bin/xtensa-esp32s3-elf-gcc.exe
+-- Found assembler: <home>/.espressif/tools/xtensa-esp-elf/esp-15.2.0_20251204/xtensa-esp-elf/bin/xtensa-esp32s3-elf-gcc.exe
 -- Detecting C compiler ABI info
 -- Detecting C compiler ABI info - done
--- Check for working C compiler: C:/Users/lawma/.espressif/tools/xtensa-esp-elf/esp-15.2.0_20251204/xtensa-esp-elf/bin/xtensa-esp32s3-elf-gcc.exe - skipped
+-- Check for working C compiler: <home>/.espressif/tools/xtensa-esp-elf/esp-15.2.0_20251204/xtensa-esp-elf/bin/xtensa-esp32s3-elf-gcc.exe - skipped
 -- Detecting C compile features
 -- Detecting C compile features - done
 -- Detecting CXX compiler ABI info
 -- Detecting CXX compiler ABI info - done
--- Check for working CXX compiler: C:/Users/lawma/.espressif/tools/xtensa-esp-elf/esp-15.2.0_20251204/xtensa-esp-elf/bin/xtensa-esp32s3-elf-g++.exe - skipped
+-- Check for working CXX compiler: <home>/.espressif/tools/xtensa-esp-elf/esp-15.2.0_20251204/xtensa-esp-elf/bin/xtensa-esp32s3-elf-g++.exe - skipped
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
 -- Building ESP-IDF components for target esp32s3
 -- KCONFIG_REPORT_VERBOSITY not set, using default
--- Project sdkconfig file C:/Dev/OpenU5-Native/native/targets/tdeck/sdkconfig
+-- Project sdkconfig file <repo>/native/targets/tdeck/sdkconfig
 Default value for ESP_INT_WDT_TIMEOUT_MS in sdkconfig is 800 but it is 300 according to Kconfig.
 Using default value from sdkconfig (800).
 NOTE: Kconfig parser version: 1
@@ -963,7 +963,7 @@ NOTE: C:/esp/v6.1/esp-idf/components/esp_system/Kconfig:281: ESP_INT_WDT_TIMEOUT
 --   -> Preprocessing .in script: C:/esp/v6.1/esp-idf/components/bootloader/subproject/main/ld/esp32s3/bootloader.sections.ld.in
 -- Configuring done (17.9s)
 -- Generating done (0.4s)
--- Build files have been written to: C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-rc3/bootloader
+-- Build files have been written to: <repo>/native/targets/tdeck/build-a4-rc3/bootloader
 [905/1182] Building C object esp-idf/esp_driver_sdmmc/CMakeFiles/__idf_esp_driver_sdmmc.dir/legacy/src/sdmmc_transaction.c.obj
 [906/1182] Building C object esp-idf/esp_driver_sdmmc/CMakeFiles/__idf_esp_driver_sdmmc.dir/legacy/src/sdmmc_host.c.obj
 [907/1182] Building C object esp-idf/esp_driver_sdmmc/CMakeFiles/__idf_esp_driver_sdmmc.dir/src/sd_host_sdmmc.c.obj
@@ -1359,8 +1359,8 @@ NOTE: C:/esp/v6.1/esp-idf/components/esp_system/Kconfig:281: ESP_INT_WDT_TIMEOUT
 [123/158] Building C object esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/gpio_periph.c.obj
 [124/158] Building C object esp-idf/soc/CMakeFiles/__idf_soc.dir/dport_access_common.c.obj
 [125/158] Linking C static library esp-idf\esp_hw_support\libesp_hw_support.a
-[126/158] Preprocessing linker script C:/esp/v6.1/esp-idf/components/bootloader/subproject/main/ld/esp32s3/bootloader.sections.ld.in -> C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-rc3/bootloader/ld/bootloader.sections.ld
-[127/158] Preprocessing linker script C:/esp/v6.1/esp-idf/components/bootloader/subproject/main/ld/esp32s3/bootloader.memory.ld.in -> C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-rc3/bootloader/ld/bootloader.memory.ld
+[126/158] Preprocessing linker script C:/esp/v6.1/esp-idf/components/bootloader/subproject/main/ld/esp32s3/bootloader.sections.ld.in -> <repo>/native/targets/tdeck/build-a4-rc3/bootloader/ld/bootloader.sections.ld
+[127/158] Preprocessing linker script C:/esp/v6.1/esp-idf/components/bootloader/subproject/main/ld/esp32s3/bootloader.memory.ld.in -> <repo>/native/targets/tdeck/build-a4-rc3/bootloader/ld/bootloader.memory.ld
 [128/158] Building C object esp-idf/xtensa/CMakeFiles/__idf_xtensa.dir/eri.c.obj
 [129/158] Building C object esp-idf/xtensa/CMakeFiles/__idf_xtensa.dir/xt_trax.c.obj
 [130/158] Linking C static library esp-idf\esp_system\libesp_system.a
@@ -1395,8 +1395,8 @@ esptool v5.4.0
 Creating ESP32-S3 image...
 Merged 2 ELF sections.
 Successfully created ESP32-S3 image.
-Generated C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-rc3/bootloader/bootloader.bin
-[158/158] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-rc3\bootloader && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-rc3/bootloader/bootloader.bin"
+Generated <repo>/native/targets/tdeck/build-a4-rc3/bootloader/bootloader.bin
+[158/158] C:\WINDOWS\system32\cmd.exe /C "cd /D <repo>\native\targets\tdeck\build-a4-rc3\bootloader && <home>\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 <repo>/native/targets/tdeck/build-a4-rc3/bootloader/bootloader.bin"
 Bootloader binary size 0x5850 bytes. 0x27b0 bytes (31%) free.
 [1175/1182] No install step for 'bootloader'
 [1176/1182] Completed 'bootloader'
@@ -1411,9 +1411,9 @@ esptool v5.4.0
 Creating ESP32-S3 image...
 Merged 3 ELF sections.
 Successfully created ESP32-S3 image.
-Generated C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-rc3/openu5_tdeck.bin
-[1181/1182] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-rc3 && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-rc3/partition_table/partition-table.bin C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-rc3/openu5_tdeck.bin"
+Generated <repo>/native/targets/tdeck/build-a4-rc3/openu5_tdeck.bin
+[1181/1182] C:\WINDOWS\system32\cmd.exe /C "cd /D <repo>\native\targets\tdeck\build-a4-rc3 && <home>\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/esp/v6.1/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app <repo>/native/targets/tdeck/build-a4-rc3/partition_table/partition-table.bin <repo>/native/targets/tdeck/build-a4-rc3/openu5_tdeck.bin"
 openu5_tdeck.bin binary size 0xff710 bytes. Smallest app partition is 0x140000 bytes. 0x408f0 bytes (20%) free.
-[1182/1182] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-rc3 && C:\Users\lawma\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe C:/Dev/OpenU5-Native/native/targets/tdeck/check_app_budget.py --build-dir C:/Dev/OpenU5-Native/native/targets/tdeck/build-a4-rc3"
+[1182/1182] C:\WINDOWS\system32\cmd.exe /C "cd /D <repo>\native\targets\tdeck\build-a4-rc3 && <home>\.espressif\python_env\idf6.1_py3.14_env\Scripts\python.exe <repo>/native/targets/tdeck/check_app_budget.py --build-dir <repo>/native/targets/tdeck/build-a4-rc3"
 OpenU5 app budget: image 1046288 B (0xff710), app partition 1310720 B (0x140000), free 264432 B (20.2 %)
 OpenU5 Launcher allocation: 1048576 B (1024 KiB, the image rounded up to 64 KiB); the next 64 KiB step is 2289 B away

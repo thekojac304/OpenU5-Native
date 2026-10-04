@@ -117,7 +117,7 @@ persistent heap-owned report was added.
 
 ## 17. Launcher binary
 
-`C:\Dev\OpenU5-Native\native\targets\tdeck\build-alpha14-alpha2\launcher\OpenU5-TDeck-Alpha1.4.0-alpha2-Debug-Launcher.bin`
+`native\targets\tdeck\build-alpha14-alpha2\launcher\OpenU5-TDeck-Alpha1.4.0-alpha2-Debug-Launcher.bin`
 
 ## 18. Smoke-test SD log
 

@@ -1,5 +1,5 @@
 
- RUN  v3.2.7 C:/Dev/OpenU5-Native
+ RUN  v3.2.7 <repo>
 
  ✓ game/tests/cannon.test.ts (17 tests) 33ms
 

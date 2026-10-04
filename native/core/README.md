@@ -41,6 +41,29 @@ node --import tsx native/core/tools/generate-transport-flow-fixtures.ts
 node --import tsx native/core/tools/generate-dialogue-fixtures.ts
 ```
 
+### Local map fixtures (derived from your own Ultima V files)
+
+This repository distributes **no** Ultima V data or maps. Four fixtures are numeric
+dumps of the original game's dungeon cells (`DUNGEON.DAT`), combat boards
+(`BRIT.CBT`/`DUNGEON.CBT`) and enemy/location tables, so they are not committed:
+`fixtures/dungeon-maps.txt`, `fixed-maps.txt`, `dungeon-locations.txt` and
+`fixed-enemies.txt` (gitignored). To create them, from the repository root, with
+your files in `original/u5/ultima5/`:
+
+```sh
+npm install
+npm run extract -- --skip-tiles
+node --import tsx native/core/tools/generate-dungeon-fixtures.ts
+node --import tsx native/core/tools/generate-dungeon-flow-fixtures.ts
+node --import tsx native/core/tools/generate-world-flow-fixtures.ts
+```
+
+Then re-run CMake configure. Without the fixtures, configure prints a status line
+and does not register `dungeon_parity`, `dungeon_flow_parity`, `world_flow_parity`,
+`dungeon_view_regression`, `dungeon_combat_regression` and the three matching
+`typescript_*_fixture_drift` checks; `game/tests/b21a2-door-adjacency.test.ts` skips
+itself. Everything else runs without any original game files.
+
 The preceding combat magic and advanced generic combat batch reached **609,373 total parity
 snapshots**, including all 128 real arenas in four directions. See
 [MAGIC.md](MAGIC.md) for APIs, source mapping, memory ownership and remaining
@@ -158,7 +181,9 @@ Host CTest runs compiled parity tests, the pre-existing movement and input
 regression harnesses, and live TypeScript fixture drift detection when Node is
 available. The input harness uses C++20; the core itself requires C++17.
 Pure C++ tests use committed synthetic fixtures and need no Node, SD pack, or
-original game files. Install repository npm dependencies to run the live TS
+original game files, except the map-fixture tests listed under "Local map fixtures"
+above, which are skipped when those local files are absent. Install repository npm
+dependencies to run the live TS
 drift check. Missing dependencies cause a failure, not a silent regeneration.
 
 ```sh

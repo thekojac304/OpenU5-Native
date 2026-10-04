@@ -1,4 +1,4 @@
-Test project C:/Dev/OpenU5-Native/native/core/build-a4-parity2-final
+Test project <repo>/native/core/build-a4-parity2-final
         Start   1: frontend
   1/200 Test   #1: frontend ...................................   Passed    0.16 sec
         Start   2: ui_session

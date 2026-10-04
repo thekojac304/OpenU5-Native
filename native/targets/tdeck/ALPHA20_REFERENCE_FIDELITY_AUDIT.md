@@ -175,9 +175,9 @@ The deterministic native golden begins from the exact 4,192-byte INIT.GAM and 51
 
 ## Exact artifacts
 
-- Launcher binary: `C:\Dev\OpenU5-Native\native\targets\tdeck\build-alpha20-final\launcher\OpenU5-TDeck-Alpha2.0.0-alpha1-Debug-Launcher.bin`
-- Resource pack: `C:\Dev\OpenU5-Native\native\assets\openu5-alpha1-resources.bin`
-- This audit: `C:\Dev\OpenU5-Native\native\targets\tdeck\ALPHA20_REFERENCE_FIDELITY_AUDIT.md`
+- Launcher binary: `native\targets\tdeck\build-alpha20-final\launcher\OpenU5-TDeck-Alpha2.0.0-alpha1-Debug-Launcher.bin`
+- Resource pack: `native\assets\openu5-alpha1-resources.bin`
+- This audit: `native\targets\tdeck\ALPHA20_REFERENCE_FIDELITY_AUDIT.md`
 
 ## Physical Alpha 2.0 checklist
 

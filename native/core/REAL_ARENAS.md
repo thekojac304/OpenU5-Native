@@ -18,7 +18,7 @@ refreshes its other generated assets and manifest; `--skip-tiles` skips tile
 art generation.
 
 Canonical result: **`game/assets/maps/combatmaps.json`**. On this checkout:
-`C:\Dev\OpenU5-TDeck\game\assets\maps\combatmaps.json`.
+`game\assets\maps\combatmaps.json`.
 It contains 16 Britannia maps followed by 112 dungeon maps. Each map has an
 11×11 row-major grid, six party starts per direction, nonzero-sprite unit slots,
 and nonzero-sprite triggers. The parser intentionally preserves units at (0,0).
@@ -76,7 +76,7 @@ failure. Real expectations live in ignored `native/core/build-real-arenas/`.
 In the existing ESP-IDF environment, firmware verification remains:
 
 ```sh
-idf.py -C native/targets/tdeck -B C:/Dev/OpenU5-TDeck/native/targets/tdeck/build-core build size
+idf.py -C native/targets/tdeck -B native/targets/tdeck/build-core build size
 python native/targets/tdeck/package_launcher.py --build-dir native/targets/tdeck/build-core
 ```
 

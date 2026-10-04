@@ -12,7 +12,7 @@ static std::vector<uint8_t> rd(const char *p) {
     return {std::istreambuf_iterator<char>(f), {}};
 }
 int main() {
-    const std::string root = "C:/Dev/OpenU5-Native/original/u5/ultima5/";
+    const std::string root = "original/u5/ultima5/";
     auto gam = rd((root + "SAVED.GAM").c_str()), init = rd((root + "INIT.GAM").c_str());
     // Outdoors on the surface at (0x50,0x60), on foot, a frigate parked in slot 30.
     gam[0x2ed] = 0; gam[0x2ef] = 0; gam[0x2f0] = 0x50; gam[0x2f1] = 0x60;

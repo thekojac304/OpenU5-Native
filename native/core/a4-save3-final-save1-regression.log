@@ -1,6 +1,6 @@
-UpdateCTestConfiguration  from :C:/Dev/OpenU5-Native/native/core/build-a4-save3/DartConfiguration.tcl
-Parse Config file:C:/Dev/OpenU5-Native/native/core/build-a4-save3/DartConfiguration.tcl
-Test project C:/Dev/OpenU5-Native/native/core/build-a4-save3
+UpdateCTestConfiguration  from :<repo>/native/core/build-a4-save3/DartConfiguration.tcl
+Parse Config file:<repo>/native/core/build-a4-save3/DartConfiguration.tcl
+Test project <repo>/native/core/build-a4-save3
 Constructing a list of tests
 Done constructing a list of tests
 Updating test list for fixtures
@@ -10,8 +10,8 @@ Checking test dependency graph end
 test 107
     Start 107: a3_04g_storage_runtime
 
-107: Test command: C:\Dev\OpenU5-Native\native\core\build-a4-save3\a3_04g_storage_runtime.exe "C:/Dev/OpenU5-Native/native/core/../assets/openu5-alpha1-resources.bin"
-107: Working Directory: C:/Dev/OpenU5-Native/native/core/build-a4-save3
+107: Test command: <repo>\native\core\build-a4-save3\a3_04g_storage_runtime.exe "<repo>/native/core/../assets/openu5-alpha1-resources.bin"
+107: Working Directory: <repo>/native/core/build-a4-save3
 107: Test timeout computed to be: 1500
 107: [I][AlphaResources] Alpha resource pack v2.0 valid: 2042554 bytes, 43 entries, payload CRC=9c10874f, expected SHA-256=11d72c7784d4, firmware_match=1
 107: [I][AlphaResources] Loaded owners: 64 small floors, 8 dungeons, 1024 NPC records; PSRAM=1188214
@@ -1719,8 +1719,8 @@ test 107
 test 108
     Start 108: a4_save1_recovery_runtime
 
-108: Test command: C:\Dev\OpenU5-Native\native\core\build-a4-save3\a4_save1_recovery_runtime.exe "C:/Dev/OpenU5-Native/native/core/../assets/openu5-alpha1-resources.bin"
-108: Working Directory: C:/Dev/OpenU5-Native/native/core/build-a4-save3
+108: Test command: <repo>\native\core\build-a4-save3\a4_save1_recovery_runtime.exe "<repo>/native/core/../assets/openu5-alpha1-resources.bin"
+108: Working Directory: <repo>/native/core/build-a4-save3
 108: Test timeout computed to be: 1500
 108: [I][AlphaResources] Alpha resource pack v2.0 valid: 2042554 bytes, 43 entries, payload CRC=9c10874f, expected SHA-256=11d72c7784d4, firmware_match=1
 108: [I][AlphaResources] Loaded owners: 64 small floors, 8 dungeons, 1024 NPC records; PSRAM=1188214

@@ -16,6 +16,22 @@ endif()
 include(CTest)
 option(OPENU5_REAL_ARENAS "Validate extracted original combat arenas (requires user assets and Node)" OFF)
 if(BUILD_TESTING)
+  # The Ultima V map fixtures are NOT distributed. dungeon-maps.txt, fixed-maps.txt,
+  # dungeon-locations.txt and fixed-enemies.txt are derived from the user's own game
+  # files (original/u5/ultima5) and are gitignored. When they are absent the tests
+  # that read them are not registered, with a message; to create them run, from the
+  # repository root, `npm run extract -- --skip-tiles` and then the two generators
+  # `node --import tsx native/core/tools/generate-dungeon-fixtures.ts`,
+  # `generate-dungeon-flow-fixtures.ts` and `generate-world-flow-fixtures.ts`.
+  set(OPENU5_MAP_FIXTURES ON)
+  foreach(f dungeon-maps.txt dungeon-locations.txt fixed-maps.txt fixed-enemies.txt)
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/${f}")
+      set(OPENU5_MAP_FIXTURES OFF)
+    endif()
+  endforeach()
+  if(NOT OPENU5_MAP_FIXTURES)
+    message(STATUS "Local Ultima V map fixtures not found: skipping dungeon_parity, dungeon_flow_parity, world_flow_parity, dungeon_view_regression, dungeon_combat_regression and the three map-fixture drift checks (see native/core/README.md)")
+  endif()
   add_executable(frontend_tests tests/frontend_test.cpp)
   target_link_libraries(frontend_tests PRIVATE openu5_core)
   add_test(NAME frontend COMMAND frontend_tests
@@ -103,13 +119,19 @@ if(BUILD_TESTING)
   add_test(NAME world_flow_adapters COMMAND world_flow_adapter_tests)
   add_executable(dungeon_flow_parity_tests tests/dungeon_flow_parity_test.cpp)
   target_link_libraries(dungeon_flow_parity_tests PRIVATE openu5_core)
-  add_test(NAME dungeon_flow_parity COMMAND dungeon_flow_parity_tests "${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
+  if(OPENU5_MAP_FIXTURES)
+    add_test(NAME dungeon_flow_parity COMMAND dungeon_flow_parity_tests "${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
+  endif()
   add_executable(world_flow_parity_tests tests/world_flow_parity_test.cpp)
   target_link_libraries(world_flow_parity_tests PRIVATE openu5_core)
-  add_test(NAME world_flow_parity COMMAND world_flow_parity_tests "${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
+  if(OPENU5_MAP_FIXTURES)
+    add_test(NAME world_flow_parity COMMAND world_flow_parity_tests "${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
+  endif()
   add_executable(dungeon_parity_tests tests/dungeon_parity_test.cpp)
   target_link_libraries(dungeon_parity_tests PRIVATE openu5_core)
-  add_test(NAME dungeon_parity COMMAND dungeon_parity_tests "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dungeon.txt" "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dungeon-maps.txt")
+  if(OPENU5_MAP_FIXTURES)
+    add_test(NAME dungeon_parity COMMAND dungeon_parity_tests "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dungeon.txt" "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dungeon-maps.txt")
+  endif()
   add_executable(advanced_combat_parity_tests tests/advanced_combat_parity_test.cpp)
   target_link_libraries(advanced_combat_parity_tests PRIVATE openu5_core)
   add_test(NAME advanced_combat_parity COMMAND advanced_combat_parity_tests "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/advanced-combat.txt")
@@ -147,8 +169,10 @@ if(BUILD_TESTING)
   # Batch 21A.2 -- D14 adjudicates the adjacent-door report on the SHIPPED
   # DUNGEON.DAT cells (Deceit floor 7), so it reads the same fixture the parity
   # suites do. D1-D13 are unchanged and still need no argument.
-  add_test(NAME dungeon_view_regression COMMAND dungeon_view_regression
-    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dungeon-maps.txt")
+  if(OPENU5_MAP_FIXTURES)
+    add_test(NAME dungeon_view_regression COMMAND dungeon_view_regression
+      "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dungeon-maps.txt")
+  endif()
   # Batch 9C -- the AUTHORED-ART half of R-05.  dungeon_view_regression proves
   # the semantic plan; this proves the next step only: which authored image of
   # DNG*/ITEMS/MON*.16 each plan op blits, into which box, with which flips, in
@@ -220,9 +244,11 @@ if(BUILD_TESTING)
   target_compile_features(dungeon_combat_regression PRIVATE cxx_std_20)
   # Batch 9E drives the AUTHORED Deceit/Destard rooms, so it reads the same two
   # shipped fixtures the parity suites do -- DUNGEON.DAT cells and DUNGEON.CBT boards.
-  add_test(NAME dungeon_combat_regression COMMAND dungeon_combat_regression
-    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dungeon-maps.txt"
-    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/fixed-maps.txt")
+  if(OPENU5_MAP_FIXTURES)
+    add_test(NAME dungeon_combat_regression COMMAND dungeon_combat_regression
+      "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dungeon-maps.txt"
+      "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/fixed-maps.txt")
+  endif()
   # Batch 12B -- the two hardware discrepancies Batch 12's combat verdict did
   # not cover: the dungeon field that casts but never appears, and the enemy
   # standing in the black void.  Unlike every suite above it reads the REAL
@@ -3149,8 +3175,10 @@ if(BUILD_TESTING)
     set_tests_properties(typescript_dialogue_fixture_drift PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
     add_test(NAME typescript_transport_flow_fixture_drift COMMAND "${NODE_EXECUTABLE}" --import tsx "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate-transport-flow-fixtures.ts" --check)
     set_tests_properties(typescript_transport_flow_fixture_drift PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
-    add_test(NAME typescript_dungeon_flow_fixture_drift COMMAND "${NODE_EXECUTABLE}" --import tsx "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate-dungeon-flow-fixtures.ts" --check)
-    set_tests_properties(typescript_dungeon_flow_fixture_drift PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+    if(OPENU5_MAP_FIXTURES)
+      add_test(NAME typescript_dungeon_flow_fixture_drift COMMAND "${NODE_EXECUTABLE}" --import tsx "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate-dungeon-flow-fixtures.ts" --check)
+      set_tests_properties(typescript_dungeon_flow_fixture_drift PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+    endif()
     # Batch 9C / R-05 -- GOLDEN EXTRACTION identity for the authored dungeon art:
     # dimensions plus indexed-pixel and mask CRC32 for one image of every semantic
     # class, agreed by three independent readings (extractor parser, packer, and
@@ -3159,10 +3187,14 @@ if(BUILD_TESTING)
     # same convention the extractor catalog's optional stages use.
     add_test(NAME typescript_dungeon_art_identity COMMAND "${NODE_EXECUTABLE}" --import tsx "${CMAKE_CURRENT_SOURCE_DIR}/tools/check-dungeon-art-identity.ts")
     set_tests_properties(typescript_dungeon_art_identity PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
-    add_test(NAME typescript_world_flow_fixture_drift COMMAND "${NODE_EXECUTABLE}" --import tsx "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate-world-flow-fixtures.ts" --check)
-    set_tests_properties(typescript_world_flow_fixture_drift PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
-    add_test(NAME typescript_dungeon_fixture_drift COMMAND "${NODE_EXECUTABLE}" --import tsx "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate-dungeon-fixtures.ts" --check)
-    set_tests_properties(typescript_dungeon_fixture_drift PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+    if(OPENU5_MAP_FIXTURES)
+      add_test(NAME typescript_world_flow_fixture_drift COMMAND "${NODE_EXECUTABLE}" --import tsx "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate-world-flow-fixtures.ts" --check)
+      set_tests_properties(typescript_world_flow_fixture_drift PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+    endif()
+    if(OPENU5_MAP_FIXTURES)
+      add_test(NAME typescript_dungeon_fixture_drift COMMAND "${NODE_EXECUTABLE}" --import tsx "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate-dungeon-fixtures.ts" --check)
+      set_tests_properties(typescript_dungeon_fixture_drift PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+    endif()
     add_test(NAME typescript_advanced_combat_fixture_drift COMMAND "${NODE_EXECUTABLE}" --import tsx
       "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate-advanced-combat-fixtures.ts" --check)
     set_tests_properties(typescript_advanced_combat_fixture_drift PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../..")

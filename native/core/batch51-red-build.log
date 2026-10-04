@@ -1,7 +1,7 @@
 [0/1] Re-running CMake...
 -- Configuring done (0.2s)
 -- Generating done (0.2s)
--- Build files have been written to: C:/Dev/OpenU5-Native/native/core/build-batch51
+-- Build files have been written to: <repo>/native/core/build-batch51
 [1/308] Building CXX object CMakeFiles/openu5_core.dir/src/scene_timing.cpp.obj
 [2/308] Building CXX object CMakeFiles/openu5_core.dir/src/narrative_scene.cpp.obj
 [3/308] Building CXX object CMakeFiles/alpha_runtime_integration_regression.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp.obj

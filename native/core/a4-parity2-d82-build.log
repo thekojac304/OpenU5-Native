@@ -476,8 +476,8 @@ ninja: Entering directory `build-a4-parity2'
 [475/859] Building CXX object CMakeFiles/a4_parity2_d87_crop_food_cap.dir/tests/a4_parity2_d87_crop_food_cap_test.cpp.obj
 [476/859] Building CXX object CMakeFiles/a4_enh2_preservation_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/host_stubs/device_smoke_tests_host_stub.cpp.obj
 [477/859] Building CXX object CMakeFiles/a4_parity2_d85_trapdoor_party.dir/tests/a4_parity2_d85_trapdoor_party_test.cpp.obj
-C:/Dev/OpenU5-Native/native/core/tests/a4_parity2_d85_trapdoor_party_test.cpp: In function 'void {anonymous}::fill(Result&, const std::vector<Member>&, int, int)':
-C:/Dev/OpenU5-Native/native/core/tests/a4_parity2_d85_trapdoor_party_test.cpp:94:23: warning: narrowing conversion of 'location' from 'int' to 'openu5::LocationId' {aka 'unsigned char'} [-Wnarrowing]
+<repo>/native/core/tests/a4_parity2_d85_trapdoor_party_test.cpp: In function 'void {anonymous}::fill(Result&, const std::vector<Member>&, int, int)':
+<repo>/native/core/tests/a4_parity2_d85_trapdoor_party_test.cpp:94:23: warning: narrowing conversion of 'location' from 'int' to 'openu5::LocationId' {aka 'unsigned char'} [-Wnarrowing]
    94 |     g.position.map = {location, 0};
       |                       ^~~~~~~~
 [478/859] Building CXX object CMakeFiles/a4_enh2_preservation_runtime.dir/C_/Dev/OpenU5-Native/native/targets/tdeck/host_tests/alpha_runtime_host_fixture.cpp.obj

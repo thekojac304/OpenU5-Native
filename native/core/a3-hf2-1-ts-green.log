@@ -1,5 +1,5 @@
 
- RUN  v3.2.7 C:/Dev/OpenU5-Native/game
+ RUN  v3.2.7 <repo>/game
 
  ✓ tests/sfx-bus.test.ts (38 tests) 22ms
 stderr | tests/skin-coreview.test.ts > SkinManager swap > toggle es no-op con una sola piel (E1-S1: sólo dev)

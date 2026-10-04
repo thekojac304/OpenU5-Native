@@ -1,4 +1,4 @@
-# A3-04B firmware IRAM check: C:\Dev\OpenU5-Native\native\targets\tdeck\build-a3-hf9-post\openu5_tdeck.elf
+# A3-04B firmware IRAM check: <repo>\native\targets\tdeck\build-a3-hf9-post\openu5_tdeck.elf
 
 functions reached from render_block(): 24
     403832a8 IRAM    20 insns  openu5::apply_gain_q15(short, unsigned short)

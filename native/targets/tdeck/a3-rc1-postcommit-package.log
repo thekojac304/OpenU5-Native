@@ -1,4 +1,4 @@
-Launcher image: C:\Dev\OpenU5-Native\native\targets\tdeck\build-a3-rc1-post\launcher\OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin
+Launcher image: <repo>\native\targets\tdeck\build-a3-rc1-post\launcher\OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin
 Firmware version: 3.0.0-alpha3-rc1-debug
 Size: 988320 bytes
 App partition minimum: 1048576 bytes (64 KiB alignment)

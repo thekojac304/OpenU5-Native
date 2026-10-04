@@ -6,5 +6,5 @@
 -- Detecting CXX compile features - done
 -- Configuring done (3.7s)
 -- Generating done (0.8s)
--- Build files have been written to: C:/Dev/OpenU5-Native/native/core/build-a4-parity2-final
+-- Build files have been written to: <repo>/native/core/build-a4-parity2-final
 CONFIGURE rc=0

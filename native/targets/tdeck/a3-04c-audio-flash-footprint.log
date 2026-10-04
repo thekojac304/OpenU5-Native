@@ -1,4 +1,4 @@
-# A3-04C audio per-block flash footprint: C:\Dev\OpenU5-Native\native\targets\tdeck\build-a3-04c\openu5_tdeck.elf
+# A3-04C audio per-block flash footprint: <repo>\native\targets\tdeck\build-a3-04c\openu5_tdeck.elf
 
 reached (depth <= 3, error/log paths not followed): 54 functions -- FLASH 36, IRAM 18
 

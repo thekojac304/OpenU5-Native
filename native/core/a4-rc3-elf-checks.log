@@ -1,6 +1,6 @@
 # A4-RC3 firmware ELF guards (build-a4-rc3, post-commit)
 == a3_04a_hotpath_check.py (build-a4-rc3)
-# A3-04A firmware hot-path check: C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-rc3\openu5_tdeck.elf
+# A3-04A firmware hot-path check: <repo>\native\targets\tdeck\build-a4-rc3\openu5_tdeck.elf
 
 generate(): 483 instructions, 3 call sites: openu5::OplEmulator::Operator::envelope_step(unsigned long, unsigned char), openu5::OplEmulator::refresh_vibrato()
 functions reachable from generate(): 3
@@ -12,7 +12,7 @@ GREEN no guard, lock, allocation, log or delay is reachable from the per-sample 
 
 exit 0
 == a3_04b_iram_check.py (build-a4-rc3)
-# A3-04B firmware IRAM check: C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-rc3\openu5_tdeck.elf
+# A3-04B firmware IRAM check: <repo>\native\targets\tdeck\build-a4-rc3\openu5_tdeck.elf
 
 functions reached from render_block(): 25
     403832a4 IRAM    20 insns  openu5::apply_gain_q15(short, unsigned short)

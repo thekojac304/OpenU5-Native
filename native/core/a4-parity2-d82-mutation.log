@@ -12,11 +12,11 @@ N85  KILLED   [D82] the floor-vs-block check is gone
      3/5 Test #129: a4_parity2_d82_runtime ...........***Failed    0.24 sec | 129 - a4_parity2_d82_runtime (Failed)
 N86  INVALID  [D82] a refused reservation is ignored
      .cpp
-C:/Dev/OpenU5-Native/native/core/src/quest_world.cpp: In function 'bool openu5::seed_new_journey_underworld(const uint8_t*, size_t, QuestWorldServices&, WorldTerrain&)':
-C:/Dev/OpenU5-Native/native/core/src/quest_world.cpp:49:5: error: this 'if' clause does not guard... [-Werror=misleading-indentation]
+<repo>/native/core/src/quest_world.cpp: In function 'bool openu5::seed_new_journey_underworld(const uint8_t*, size_t, QuestWorldServices&, WorldTerrain&)':
+<repo>/native/core/src/quest_world.cpp:49:5: error: this 'if' clause does not guard... [-Werror=misleading-indentation]
    49 |     if(objects&&!pool(&s))return false;if(objects)s.reserve(s.context,objects);
       |     ^~
-C:/Dev/OpenU5-Native/native/core/src/quest_world.cpp:49:40: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the 'if'
+<repo>/native/core/src/quest_world.cpp:49:40: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the 'if'
    49 |     if(objects&&!pool(&s))return false;if(objects)s.reserve(s.context,objects);
       |                                        ^~
 cc1plus.exe: all warnings being treated as errors
@@ -29,12 +29,12 @@ N88  KILLED   [D82] the skiff tile is off by one
 N89  KILLED   [D82] a frigate loses its hull
      3/5 Test #129: a4_parity2_d82_runtime ...........***Failed    0.22 sec | 129 - a4_parity2_d82_runtime (Failed)
 N90  INVALID  [D82] an unknown class byte is placed as a prop
-     ld.cpp.obj -c C:/Dev/OpenU5-Native/native/core/src/quest_world.cpp
-C:/Dev/OpenU5-Native/native/core/src/quest_world.cpp: In function 'bool openu5::seed_new_journey_underworld(const uint8_t*, size_t, QuestWorldServices&, WorldTerrain&)':
-C:/Dev/OpenU5-Native/native/core/src/quest_world.cpp:43:24: error: unused variable 'ship' [-Werror=unused-variable]
+     ld.cpp.obj -c <repo>/native/core/src/quest_world.cpp
+<repo>/native/core/src/quest_world.cpp: In function 'bool openu5::seed_new_journey_underworld(const uint8_t*, size_t, QuestWorldServices&, WorldTerrain&)':
+<repo>/native/core/src/quest_world.cpp:43:24: error: unused variable 'ship' [-Werror=unused-variable]
    43 |             const bool ship=(b&0xf8)==0x20,body=b==0x1e||b==0x1f;
       |                        ^~~~
-C:/Dev/OpenU5-Native/native/core/src/quest_world.cpp:43:44: error: unused variable 'body' [-Werror=unused-variable]
+<repo>/native/core/src/quest_world.cpp:43:44: error: unused variable 'body' [-Werror=unused-variable]
    43 |             const bool ship=(b&0xf8)==0x20,body=b==0x1e||b==0x1f;
       |                                            ^~~~
 cc1plus.exe: all warnings being treated as errors
