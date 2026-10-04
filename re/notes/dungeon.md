@@ -510,3 +510,6 @@ dungeonMarkRoomCleared` + `DungeonState.applyClearedRooms` (0x093a) y
 `saveNative.ts` (write+read, round-trip). `onEnterCell`/`pitFall` suprimen `combat-room`
 para salas despejadas. La gema 8×8 y la vista ya pintan 0xA como sala (glyph puerta 0x73,
 `dnglook-raster-spec.md §4`) — reflejo heredado, sin cambio de píxel.
+
+
+> **A4-PARITY2 D-86 (2026-10-03) — corrections.** (1) `[bp-0xe]` in the dungeon loop (`0x0fab`) is the kernel party-state `K:0x39fc` result, written BEFORE the key is read; it is not the dispatcher's result, so the table row "`0x0FD0` sólo se cobra si el despachador devolvió 0" is wrong, and so is the same docblock in `game/src/core/world/survival.ts`. (2) The dispatcher result `si` gates exactly one thing: the call to the per-turn block `0x0c76` (`0x0f7b or si,si / je 0x0f87`). The 1-minute clock call `advance_clock(1)` at `0x0f2f` is NOT gated on it: it runs once per loop iteration before the key read, for every key and every return value (`T`: none, `Q`: every second iteration) — recorded as D-91. (3) Every digit key `0x30..0x39` goes to `0x06c4` arm `0x07bc` which calls `K:0x4080` and forces the result to 0 (`0x07ce` / `0x07d1`): an invalid digit underground passes no world turn (fixed by D-86); the overworld (MAINOUT `0x0c39`) and the town (TOWN `0x15d4`) do charge one. `native/core/a4-parity2-findings/D86-FINAL.md`.

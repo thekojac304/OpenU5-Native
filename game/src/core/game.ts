@@ -2167,10 +2167,12 @@ export class Game {
    *  - `digit == 0` → `g_active_char = 0xFF` (ninguno) + "None!" (DS 0xa3a8).
    *    Return 0 → NO consume turno.
    *  - `index = digit-1`; si `index >= partySize` o el miembro está muerto ('D',
-   *    0x44) o 'S' (0x53) → "Invalid!" (DS 0xa3b0). El asm devuelve 1 → CONSUME UN
-   *    TURNO (el bucle corre el world_turn, 0xc30: `[bp-8]!=0`). Modelado sólo en
-   *    overworld (la rama derivada); en pueblo/mazmorra se imprime sin turno
-   *    (no derivado — divergencia acotada).
+   *    0x44) o 'S' (0x53) → "Invalid!" (DS 0xa3b0). El asm devuelve 1 → en el OVERWORLD
+   *    CONSUME UN TURNO (el bucle corre el world_turn, 0xc30: `[bp-8]!=0`).
+   *    A4-PARITY2 D-86 (2026-10-03): en la MAZMORRA no — DUNGEON 0x07ce `mov [bp-2],ax` y
+   *    0x07d1 `mov word ptr [bp-2],0` sobrescriben el 1 del kernel con 0, y el bucle salta el
+   *    bloque por turno 0x0c76 (sin tirada, sin housekeeping). En el PUEBLO el original SÍ
+   *    cobra un turno de 1 minuto (TOWN 0x15b6-0x15d4) y este puerto no (D-94, sin tocar).
    *  - válido → `g_active_char = index` + el NOMBRE del miembro (roster rec+0).
    *    Return 0 → NO consume turno (0 rands).
    */
@@ -2186,8 +2188,10 @@ export class Game {
     const dead = ch?.status === "D" || ch?.status === "S"; // 0x44 / 0x53 (kernel 0x40c9/0x40d0)
     if (index >= this.state.partySize || !ch || dead) {
       events.push({ kind: "message", text: "Invalid!" }); // DS 0xa3b0 ("Invalid!\n")
-      // El asm devuelve 1 → el bucle overworld corre un world_turn (0xc30/0xc39).
-      if (this.state.position.location === 0) {
+      // El asm devuelve 1 → el bucle overworld corre un world_turn (0xc30/0xc39). En una mazmorra
+      // `state.position` sigue siendo la superficie (location 0), así que el discriminador es
+      // `dungeonState` (DUNGEON 0x07d1 fuerza el retorno a 0: sin turno).
+      if (this.state.position.location === 0 && !this.dungeonState) {
         events.push(...this.runContextTurn({ consumed: true }));
       }
       return events;

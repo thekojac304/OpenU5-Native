@@ -776,7 +776,7 @@ static ActionResult execute(CommandContext &c, Command cmd, bool dispatch) {
             else if(!cmd.member||!cmd.item){std::string text=party.characters[0].name;if(text.empty())text="The Avatar";text+=" must lead!";r.message(text.c_str());}
             else{std::swap(party.characters[cmd.member],party.characters[cmd.item]);r.event(GameEventKind::PartyChanged);}
         }else if(!cmd.member){party.active_character=255;r.message("None!");}
-        else{int i=cmd.member-1;if(i<0||i>=party.party_size||i>=party.character_count||party.characters[i].status=='D'||party.characters[i].status=='S'){r.message("Invalid!");if(!g.position.map.location)r.turn();}
+        else{int i=cmd.member-1;if(i<0||i>=party.party_size||i>=party.character_count||party.characters[i].status=='D'||party.characters[i].status=='S'){r.message("Invalid!");if(!c.dungeon&&!g.position.map.location)r.turn();} // A4-PARITY2 D-86: DUNGEON 0x07d1 forces the dungeon's return to 0 (no world turn); a dungeon session leaves position.map on the surface (location 0), so the discriminator is c.dungeon
             else{party.active_character=uint8_t(i);std::string name=party.characters[i].name;auto first=name.find_first_not_of(" \t\r\n\f\v"),last=name.find_last_not_of(" \t\r\n\f\v");name=first==std::string::npos?"Avatar":name.substr(first,last-first+1);r.message(name.c_str());}}
         return r.result;
     }

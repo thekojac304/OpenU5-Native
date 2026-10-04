@@ -1,0 +1,10 @@
+GREEN V0 control: (E)nter at Deceit's mouth opens the real dungeon session
+GREEN V1 a valid digit in a dungeon selects the member and moves nothing else: (none)
+RED V2 an invalid digit, beyond the party ('5' of a party of 3), changes nothing (no clock, no turn, no RNG, no food, no HP): turns 0->1 seed 4948->371 clock 12:0->12:2
+RED V2 an invalid digit, another beyond-the-party digit ('9'), changes nothing (no clock, no turn, no RNG, no food, no HP): turns 1->2 seed 371->39980 clock 12:2->12:4
+RED V2 an invalid digit, a dead member ('3': Shamino 'D'), changes nothing (no clock, no turn, no RNG, no food, no HP): turns 2->3 seed 39980->26500 clock 12:4->12:6
+RED V2 an invalid digit, a sleeping member ('2' with Iolo 'S'), changes nothing (no clock, no turn, no RNG, no food, no HP): turns 3->4 seed 26500->49602 clock 12:6->12:8
+GREEN V3 '0' clears the active member and costs no turn: (none)
+GREEN V5 control: a valid digit on the surface costs no turn: (none)
+GREEN V4 control: the overworld's invalid digit still costs a turn (MAINOUT 0x0c39: advance_clock(2) + the world turn): turns 0->1 seed 2->55316 clock 12:0->12:2
+A4-PARITY2 D-86 dungeon digit runtime: 5/9 checks

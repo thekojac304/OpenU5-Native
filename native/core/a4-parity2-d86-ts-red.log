@@ -1,0 +1,9 @@
+ ❯ tests/a4-parity2-d86-dungeon-digit.test.ts (6 tests | 2 failed) 15ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/a4-parity2-d86-dungeon-digit.test.ts > D-86 an invalid digit underground passes no world turn (DUNGEON 0x07c8-0x07d1) > beyond the party: 'Invalid!' and NO turn (RED before the fix: the s
+AssertionError: expected "runContextTurn" to not be called at all, but actually been called 1 times
+ FAIL  tests/a4-parity2-d86-dungeon-digit.test.ts > D-86 an invalid digit underground passes no world turn (DUNGEON 0x07c8-0x07d1) > a dead member, a sleeping member and a party of zero are invalid to
+Error: /assets/ds-strings.json no está cargado y el juego necesita KARMA.DAT rec0 (texto del juego original). Ejecuta `npm run extract` sobre tu copia de Ultima V, o re-haz la extracción en /byo si 
+     79|     throw new Error(
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)

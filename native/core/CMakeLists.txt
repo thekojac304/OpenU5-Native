@@ -2437,6 +2437,11 @@ if(BUILD_TESTING)
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin"
     "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/a3-01-audio-stock.bin")
+  # A4-PARITY2 D-86 (ALPHA4_UI.md section 16): a dungeon digit naming an invalid member passes no world turn
+  # (DUNGEON 0x07c8-0x07d1), through the REAL AlphaRuntime and raw keys.
+  openu5_a4_ui2_runtime(a4_parity2_d86_dungeon_digit_runtime)
+  add_test(NAME a4_parity2_d86_dungeon_digit_runtime COMMAND a4_parity2_d86_dungeon_digit_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin")
   # Alpha 3 A3-05 -- the audio finalization controls through the REAL
   # AlphaRuntime: Alt+Shift+M / Alt+Shift+S mutes by raw keys, the Settings
   # rows while muted, stock vs patched assets, and a kill's single hit burst.

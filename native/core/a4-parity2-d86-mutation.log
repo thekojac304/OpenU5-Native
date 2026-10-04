@@ -1,0 +1,18 @@
+N40  KILLED   [D86] the dungeon runs the stray outdoor turn again
+     1/2 Test #134: a4_parity2_d86_dungeon_digit_runtime ...***Failed    0.14 sec | 2/2 Test #169: gameplay_parity ........................***Failed   10.02 sec | 134 - a4_parity2_d86_dungeon_digit_runtime (Failed) | 169 - gameplay_parity (Failed)
+N41  KILLED   [D86] no invalid digit passes a turn anywhere (the overworld loses its turn)
+     1/2 Test #134: a4_parity2_d86_dungeon_digit_runtime ...***Failed    0.13 sec | 2/2 Test #169: gameplay_parity ........................***Failed   10.09 sec | 134 - a4_parity2_d86_dungeon_digit_runtime (Failed) | 169 - gameplay_parity (Failed)
+N42  KILLED   [D86] the town gains a turn for an invalid digit
+     2/2 Test #169: gameplay_parity ........................***Failed    9.80 sec | 169 - gameplay_parity (Failed)
+N43  KILLED   [D86] a sleeping member is accepted as active
+     2/2 Test #169: gameplay_parity ........................***Failed    9.78 sec | 169 - gameplay_parity (Failed)
+T40  KILLED   [D86] reference: the dungeon runs the stray turn again
+     vitest | 169 - gameplay_parity (Failed)
+T41  KILLED   [D86] reference: no invalid digit passes a turn anywhere
+     vitest | 169 - gameplay_parity (Failed)
+T42  KILLED   [D86] reference: the town gains a turn for an invalid digit
+     vitest | 169 - gameplay_parity (Failed)
+restored tree [D86]: native GREEN ; reference GREEN 
+
+A4-PARITY2 mutations: 7/7 killed
+ALL DONE

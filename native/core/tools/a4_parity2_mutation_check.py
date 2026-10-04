@@ -51,6 +51,12 @@ GROUPS = {
         vitest=['tests/a4-parity2-d85-trapdoor-party.test.ts', 'tests/trapdoor-fall.test.ts'],
         generators=[('generate-turn-fixtures.ts', ['--check'])],
     ),
+    'D86': dict(
+        native_targets=['a4_parity2_d86_dungeon_digit_runtime', 'gameplay_driver', 'batch15_sacrifice_tests'],
+        native_tests=['a4_parity2_d86_dungeon_digit_runtime', 'gameplay_parity', 'batch15_sacrifice'],
+        vitest=['tests/a4-parity2-d86-dungeon-digit.test.ts', 'tests/game.test.ts'],
+        generators=[],
+    ),
 }
 
 MUTANTS = {
@@ -167,6 +173,23 @@ MUTANTS = {
             'this.state.characters.slice(0, this.state.partySize)) {\n      ch.currentHp = 0;', 'this.state.characters.slice(0, this.state.partySize)) {\n      if (ch.status === "D") continue;\n      ch.currentHp = 0;')]),
     'T33': ('D85', 'reference: the wipe is capped at six', [(TS + 'game.ts',
             'this.state.characters.slice(0, this.state.partySize)) {\n      ch.currentHp = 0;', 'this.state.characters.slice(0, Math.min(6, this.state.partySize))) {\n      ch.currentHp = 0;')]),
+    # ---------------------------------------------------------------- D-86 native
+    'N40': ('D86', 'the dungeon runs the stray outdoor turn again', [(SRC + 'commands.cpp',
+            'if(!c.dungeon&&!g.position.map.location)r.turn();}', 'if(!g.position.map.location)r.turn();}')]),
+    'N41': ('D86', 'no invalid digit passes a turn anywhere (the overworld loses its turn)', [(SRC + 'commands.cpp',
+            'if(!c.dungeon&&!g.position.map.location)r.turn();}', ';}')]),
+    'N42': ('D86', 'the town gains a turn for an invalid digit', [(SRC + 'commands.cpp',
+            'if(!c.dungeon&&!g.position.map.location)r.turn();}', 'if(!c.dungeon)r.turn();}')]),
+    'N43': ('D86', "a sleeping member is accepted as active", [(SRC + 'commands.cpp',
+            "||party.characters[i].status=='D'||party.characters[i].status=='S'){r.message(\"Invalid!\")",
+            "||party.characters[i].status=='D'){r.message(\"Invalid!\")")]),
+    # ---------------------------------------------------------------- D-86 reference
+    'T40': ('D86', 'reference: the dungeon runs the stray turn again', [(TS + 'game.ts',
+            'if (this.state.position.location === 0 && !this.dungeonState) {', 'if (this.state.position.location === 0) {')]),
+    'T41': ('D86', 'reference: no invalid digit passes a turn anywhere', [(TS + 'game.ts',
+            'if (this.state.position.location === 0 && !this.dungeonState) {', 'if (false) {')]),
+    'T42': ('D86', 'reference: the town gains a turn for an invalid digit', [(TS + 'game.ts',
+            'if (this.state.position.location === 0 && !this.dungeonState) {', 'if (!this.dungeonState) {')]),
 }
 
 ENV = dict(os.environ, PATH=BIN + os.pathsep + os.environ['PATH'])
