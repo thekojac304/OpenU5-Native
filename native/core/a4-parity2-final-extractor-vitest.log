@@ -1,0 +1,45 @@
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Dev/OpenU5-Native/extractor[39m
+
+ [32m✓[39m tests/native-input.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/alpha1-signs.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32m✓[39m tests/font.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+ [32m✓[39m tests/signs.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m tests/largemap.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+ [32m✓[39m tests/lzw.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 69[2mms[22m[39m
+ [32m✓[39m tests/pth.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 86[2mms[22m[39m
+ [32m✓[39m tests/xmi.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 83[2mms[22m[39m
+ [32m✓[39m tests/questions.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/savegame.test.ts [2m([22m[2m18 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m tests/font-ext.test.ts [2m([22m[2m10 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 29[2mms[22m[39m
+ [32m✓[39m tests/npc.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 173[2mms[22m[39m
+ [32m✓[39m tests/smallmap.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 74[2mms[22m[39m
+ [32m✓[39m tests/dataovl-coverage.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m tests/dataovl.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/tlk.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 151[2mms[22m[39m
+ [32m✓[39m tests/dungeon.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 246[2mms[22m[39m
+ [32m✓[39m tests/combatmap.test.ts [2m([22m[2m12 tests[22m[2m)[22m[33m 397[2mms[22m[39m
+   [33m[2m✓[22m[39m parseCombatMaps (BRIT.CBT + DUNGEON.CBT — 11×11)[2m > [22mcada mapa es una rejilla 11×11 con tiles en rango byte [33m 362[2mms[22m[39m
+ [32m✓[39m tests/proport.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/bit.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 306[2mms[22m[39m
+ [32m✓[39m tests/native-movement.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m tests/native-pack.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 626[2mms[22m[39m
+   [33m[2m✓[22m[39m native Ultima V asset pack[2m > [22mis deterministic and validates all sections [33m 408[2mms[22m[39m
+ [32m✓[39m tests/pic16.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 282[2mms[22m[39m
+ [32m✓[39m tests/shoppe.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/endgame.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/story.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/intro-scenes.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m tests/alpha1-enemy.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m tests/look2.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m tests/init-ool.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m tests/dngtiles.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 1853[2mms[22m[39m
+   [33m[2m✓[22m[39m parseDngView (contenedor de perspectiva)[2m > [22mtodos los píxeles son colores EGA con alpha 255 [33m 1725[2mms[22m[39m
+ [32m✓[39m tests/tiles.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 2128[2mms[22m[39m
+   [33m[2m✓[22m[39m parseTiles (4bpp chunky, nibble alto = píxel izquierdo)[2m > [22mtodos los píxeles usan colores de la paleta EGA con alpha 255 [33m 2062[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m32 passed[39m[22m[90m (32)[39m
+[2m      Tests [22m [1m[32m235 passed[39m[22m[2m | [22m[33m2 skipped[39m[90m (237)[39m
+[2m   Start at [22m 13:34:40
+[2m   Duration [22m 4.51s[2m (transform 6.56s, setup 0ms, collect 13.89s, tests 6.73s, environment 7ms, prepare 9.07s)[22m
+

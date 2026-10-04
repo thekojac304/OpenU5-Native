@@ -1,0 +1,231 @@
+N80  KILLED   [D82] the New Journey never calls the seed
+     3/5 Test #129: a4_parity2_d82_runtime ...........***Failed    0.25 sec | 129 - a4_parity2_d82_runtime (Failed)
+N81  KILLED   [D82] a load seeds too (not only the New Journey seam)
+     2/5 Test #111: a4_save3_pc_bridge_runtime .......***Failed    1.10 sec | 3/5 Test #129: a4_parity2_d82_runtime ...........***Failed    0.22 sec | 111 - a4_save3_pc_bridge_runtime (Failed) | 129 - a4_parity2_d82_runtime (Failed)
+N82  KILLED   [D82] a body lands on floor 0, not the underworld
+     3/5 Test #129: a4_parity2_d82_runtime ...........***Failed    0.24 sec | 129 - a4_parity2_d82_runtime (Failed)
+N83  KILLED   [D82] a body is a plain object, not a prop
+     3/5 Test #129: a4_parity2_d82_runtime ...........***Failed    0.24 sec | 129 - a4_parity2_d82_runtime (Failed)
+N84  KILLED   [D82] the skiff override is transient (a save would drop it)
+     3/5 Test #129: a4_parity2_d82_runtime ...........***Failed    0.26 sec | 129 - a4_parity2_d82_runtime (Failed)
+N85  KILLED   [D82] the floor-vs-block check is gone
+     3/5 Test #129: a4_parity2_d82_runtime ...........***Failed    0.24 sec | 129 - a4_parity2_d82_runtime (Failed)
+N86  KILLED   [D82] a refused reservation is ignored
+     3/5 Test #129: a4_parity2_d82_runtime ...........***Failed    0.24 sec | 129 - a4_parity2_d82_runtime (Failed)
+N87  KILLED   [D82] slot 0 (the party's own vehicle) is seeded
+     3/5 Test #129: a4_parity2_d82_runtime ...........***Failed    0.24 sec | 129 - a4_parity2_d82_runtime (Failed)
+N88  KILLED   [D82] the skiff tile is off by one
+     3/5 Test #129: a4_parity2_d82_runtime ...........***Failed    0.24 sec | 129 - a4_parity2_d82_runtime (Failed)
+N89  KILLED   [D82] a frigate loses its hull
+     3/5 Test #129: a4_parity2_d82_runtime ...........***Failed    0.24 sec | 129 - a4_parity2_d82_runtime (Failed)
+N90  KILLED   [D82] an unknown class byte is placed as a prop
+     3/5 Test #129: a4_parity2_d82_runtime ...........***Failed    0.24 sec | 129 - a4_parity2_d82_runtime (Failed)
+T80  KILLED   [D82] reference: the floor-vs-block check is gone
+     vitest
+T81  KILLED   [D82] reference: the skiff goes on floor 0
+     vitest
+T82  KILLED   [D82] reference: slot 0 is seeded
+     vitest
+T83  KILLED   [D82] reference: an unknown class byte is placed as a prop
+     vitest
+T84  KILLED   [D82] reference: a frigate loses its hull
+     vitest
+N100 KILLED   [MANI] only "Failed!" is printed
+     4/5 Test #163: a4_parity2_mani_not_dead .........***Failed    0.16 sec | 5/5 Test #173: gameplay_parity ..................***Failed   14.19 sec | 163 - a4_parity2_mani_not_dead (Failed) | 173 - gameplay_parity (Failed)
+N101 KILLED   [MANI] only "Not dead!" is printed
+     4/5 Test #163: a4_parity2_mani_not_dead .........***Failed    0.14 sec | 5/5 Test #173: gameplay_parity ..................***Failed   14.70 sec | 163 - a4_parity2_mani_not_dead (Failed) | 173 - gameplay_parity (Failed)
+N102 KILLED   [MANI] the two lines are swapped
+     4/5 Test #163: a4_parity2_mani_not_dead .........***Failed    0.16 sec | 5/5 Test #173: gameplay_parity ..................***Failed   15.56 sec | 163 - a4_parity2_mani_not_dead (Failed) | 173 - gameplay_parity (Failed)
+N103 KILLED   [MANI] the lines print on a DEAD target instead
+     4/5 Test #163: a4_parity2_mani_not_dead .........***Failed    0.15 sec | 5/5 Test #173: gameplay_parity ..................***Failed   15.96 sec | 163 - a4_parity2_mani_not_dead (Failed) | 173 - gameplay_parity (Failed)
+N104 KILLED   [MANI] only a Good target is "not dead" (poisoned / asleep must print too)
+     4/5 Test #163: a4_parity2_mani_not_dead .........***Failed    0.15 sec | 5/5 Test #173: gameplay_parity ..................***Failed   15.96 sec | 163 - a4_parity2_mani_not_dead (Failed) | 173 - gameplay_parity (Failed)
+N105 KILLED   [MANI] the lines print with no target too
+     4/5 Test #163: a4_parity2_mani_not_dead .........***Failed    0.14 sec | 5/5 Test #173: gameplay_parity ..................***Failed   15.91 sec | 163 - a4_parity2_mani_not_dead (Failed) | 173 - gameplay_parity (Failed)
+N106 KILLED   [MANI] the failure path draws from the RNG
+     4/5 Test #163: a4_parity2_mani_not_dead .........***Failed    0.14 sec | 5/5 Test #173: gameplay_parity ..................***Failed   13.40 sec | 163 - a4_parity2_mani_not_dead (Failed) | 173 - gameplay_parity (Failed)
+T100 KILLED   [MANI] reference: only "Failed!" is printed
+     vitest | 173 - gameplay_parity (Failed)
+T101 KILLED   [MANI] reference: the two lines are swapped
+     vitest | 173 - gameplay_parity (Failed)
+T102 KILLED   [MANI] reference: the lines print on a DEAD target
+     vitest | 173 - gameplay_parity (Failed)
+T103 KILLED   [MANI] the replica (gameplay_parity oracle) prints nothing
+     vitest | 173 - gameplay_parity (Failed)
+N1   KILLED   [D89] naval OUCH rolls once on the active member again
+     4/7 Test #118: a4_enh2_rules ....................***Failed    0.32 sec | 5/7 Test #119: a4_parity2_d89_naval_ouch ........***Failed    0.11 sec | 118 - a4_enh2_rules (Failed) | 119 - a4_parity2_d89_naval_ouch (Failed)
+N2   KILLED   [D89] naval OUCH does not tell the party panel
+     1/7 Test  #12: movement_flow_parity .............***Failed    0.19 sec | 5/7 Test #119: a4_parity2_d89_naval_ouch ........***Failed    0.14 sec | 12 - movement_flow_parity (Failed) | 119 - a4_parity2_d89_naval_ouch (Failed)
+N3   KILLED   [D89] the helper draws BEFORE it skips a dead member
+     2/7 Test  #31: turn_parity ......................***Failed    0.07 sec | 5/7 Test #119: a4_parity2_d89_naval_ouch ........***Failed    0.11 sec | 31 - turn_parity (Failed) | 119 - a4_parity2_d89_naval_ouch (Failed)
+N4   KILLED   [D89] the helper stops at five members
+     2/7 Test  #31: turn_parity ......................***Failed    0.10 sec | 5/7 Test #119: a4_parity2_d89_naval_ouch ........***Failed    0.12 sec | 31 - turn_parity (Failed) | 119 - a4_parity2_d89_naval_ouch (Failed)
+N5   KILLED   [D89] God Mode gates the naval OUCH before the draws
+     4/7 Test #118: a4_enh2_rules ....................***Failed    0.31 sec | 5/7 Test #119: a4_parity2_d89_naval_ouch ........***Failed    0.12 sec | 118 - a4_enh2_rules (Failed) | 119 - a4_parity2_d89_naval_ouch (Failed)
+N6   KILLED   [D89] the cactus also beeps (the beep is the else branch)
+     1/7 Test  #12: movement_flow_parity .............***Failed    0.19 sec | 5/7 Test #119: a4_parity2_d89_naval_ouch ........***Failed    0.13 sec | 12 - movement_flow_parity (Failed) | 119 - a4_parity2_d89_naval_ouch (Failed)
+N7   KILLED   [D89] HP == damage no longer kills
+     2/7 Test  #31: turn_parity ......................***Failed    0.09 sec | 5/7 Test #119: a4_parity2_d89_naval_ouch ........***Failed    0.10 sec | 6/7 Test #173: gameplay_parity ..................***Failed   11.24 sec | 31 - turn_parity (Failed) | 119 - a4_parity2_d89_naval_ouch (Failed) | 173 - gameplay_parity (Failed)
+N8   KILLED   [D89] a dying active member stays selected
+     2/7 Test  #31: turn_parity ......................***Failed    0.05 sec | 5/7 Test #119: a4_parity2_d89_naval_ouch ........***Failed    0.12 sec | 6/7 Test #173: gameplay_parity ..................***Failed   10.96 sec | 31 - turn_parity (Failed) | 119 - a4_parity2_d89_naval_ouch (Failed) | 173 - gameplay_parity (Failed)
+N9   KILLED   [D89] the helper loops over the roster, not the party
+     2/7 Test  #31: turn_parity ......................***Failed    0.05 sec | 5/7 Test #119: a4_parity2_d89_naval_ouch ........***Failed    0.12 sec | 31 - turn_parity (Failed) | 119 - a4_parity2_d89_naval_ouch (Failed)
+T1   KILLED   [D89] reference: the naval OUCH rolls once on the active member again
+     vitest
+T2   KILLED   [D89] reference: the naval OUCH does not tell the party panel
+     vitest | generate-movement-flow-fixtures.ts --check
+T3   KILLED   [D89] reference: the helper draws before it skips the dead
+     vitest | generate-turn-fixtures.ts --check
+T4   KILLED   [D89] reference: the helper stops at five members
+     vitest | generate-turn-fixtures.ts --check
+T5   KILLED   [D89] reference: HP == damage no longer kills
+     vitest | generate-turn-fixtures.ts --check | 173 - gameplay_parity (Failed)
+N10  KILLED   [D83] the healer skips resurrect_apply (today's pre-fix code)
+     1/8 Test  #14: shop_flow ........................***Failed    1.41 sec | 2/8 Test  #15: shop_parity ......................***Failed    0.18 sec | 4/8 Test #117: a4_enh2_preservation .............***Failed    0.39 sec | 5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.16 sec | 14 - shop_flow (Failed) | 15 - shop_parity (Failed) | 117 - a4_enh2_preservation (Failed) | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N11  KILLED   [D83] the healer leaves HP at 1 after the routine
+     1/8 Test  #14: shop_flow ........................***Failed    1.42 sec | 2/8 Test  #15: shop_parity ......................***Failed    0.19 sec | 4/8 Test #117: a4_enh2_preservation .............***Failed    0.40 sec | 5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.17 sec | 14 - shop_flow (Failed) | 15 - shop_parity (Failed) | 117 - a4_enh2_preservation (Failed) | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N12  KILLED   [D83] the Refuge copies HP BEFORE the routine (the old maximum)
+     5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.35 sec | 6/8 Test #160: batch7b ..........................***Failed    0.26 sec | 8/8 Test #177: quest_parity .....................***Failed   11.71 sec | 120 - a4_parity2_d83_d84_resurrect (Failed) | 160 - batch7b (Failed) | 177 - quest_parity (Failed)
+N13  KILLED   [D83] the Refuge floors the karma BEFORE the routine
+     5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.10 sec | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N14  KILLED   [D83] the threshold is karma < 99
+     4/8 Test #117: a4_enh2_preservation .............***Failed    0.26 sec | 5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.09 sec | 117 - a4_enh2_preservation (Failed) | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N15  KILLED   [D83] the threshold is karma < 97
+     4/8 Test #117: a4_enh2_preservation .............***Failed    0.47 sec | 5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.22 sec | 117 - a4_enh2_preservation (Failed) | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N16  KILLED   [D83] level and max HP only recomputed when the cut ran
+     4/8 Test #117: a4_enh2_preservation .............***Failed    0.40 sec | 5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.17 sec | 117 - a4_enh2_preservation (Failed) | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N17  KILLED   [D83] max HP is not recomputed
+     1/8 Test  #14: shop_flow ........................***Failed    1.47 sec | 2/8 Test  #15: shop_parity ......................***Failed    0.40 sec | 4/8 Test #117: a4_enh2_preservation .............***Failed    0.54 sec | 5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.24 sec | 6/8 Test #160: batch7b ..........................***Failed    0.33 sec | 7/8 Test #173: gameplay_parity ..................***Failed   17.81 sec | 14 - shop_flow (Failed) | 15 - shop_parity (Failed)
+N18  KILLED   [D83] the cut rounds instead of truncating
+     1/8 Test  #14: shop_flow ........................***Failed    0.92 sec | 2/8 Test  #15: shop_parity ......................***Failed    0.09 sec | 4/8 Test #117: a4_enh2_preservation .............***Failed    0.25 sec | 5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.11 sec | 14 - shop_flow (Failed) | 15 - shop_parity (Failed) | 117 - a4_enh2_preservation (Failed) | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N19  KILLED   [D83] a bard's MP is INT, not INT >> 1
+     1/8 Test  #14: shop_flow ........................***Failed    0.92 sec | 2/8 Test  #15: shop_parity ......................***Failed    0.12 sec | 4/8 Test #117: a4_enh2_preservation .............***Failed    0.29 sec | 5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.10 sec | 14 - shop_flow (Failed) | 15 - shop_parity (Failed) | 117 - a4_enh2_preservation (Failed) | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N20  KILLED   [D83] the Refuge forces status 'G' on a member who was not dead
+     5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.08 sec | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N21  KILLED   [D83] the Refuge sets HP := max only for the members it revived
+     5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.09 sec | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N22  KILLED   [D83] the Refuge loops over the roster, not the party
+     5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.08 sec | 120 - a4_parity2_d83_d84_resurrect (Failed)
+N23  KILLED   [D83] the level loop is off by one
+     4/8 Test #117: a4_enh2_preservation .............***Failed    0.32 sec | 5/8 Test #120: a4_parity2_d83_d84_resurrect .....***Failed    0.08 sec | 117 - a4_enh2_preservation (Failed) | 120 - a4_parity2_d83_d84_resurrect (Failed)
+T10  KILLED   [D83] reference: the healer skips resurrect_apply
+     vitest | generate-shop-fixtures.ts --check | generate-shop-flow-fixtures.ts --check
+T11  KILLED   [D83] reference: the healer leaves HP at 1
+     vitest | generate-shop-fixtures.ts --check | generate-shop-flow-fixtures.ts --check
+T12  KILLED   [D83] reference: the Refuge skips resurrect_apply
+     vitest | 177 - quest_parity (Failed)
+T13  KILLED   [D83] reference: the Refuge floors the karma before the routine
+     vitest
+T14  KILLED   [D83] reference: the Refuge forces status 'G' on a member who was not dead
+     vitest
+T15  KILLED   [D83] reference: the Refuge loops over the roster
+     vitest
+T16  KILLED   [D83] reference: the threshold is karma < 99
+     vitest
+T17  KILLED   [D83] reference: the cut rounds
+     vitest | generate-shop-fixtures.ts --check | generate-shop-flow-fixtures.ts --check
+N30  KILLED   [D85] the kill loop runs over the roster again
+     4/4 Test #121: a4_parity2_d85_trapdoor_party ....***Failed    0.09 sec | 121 - a4_parity2_d85_trapdoor_party (Failed)
+N31  KILLED   [D85] the kill loop overshoots the party by one
+     4/4 Test #121: a4_parity2_d85_trapdoor_party ....***Failed    0.08 sec | 121 - a4_parity2_d85_trapdoor_party (Failed)
+N32  KILLED   [D85] the kill loop stops one member short
+     4/4 Test #121: a4_parity2_d85_trapdoor_party ....***Failed    0.07 sec | 121 - a4_parity2_d85_trapdoor_party (Failed)
+N33  KILLED   [D85] an already dead member is skipped (the original rewrites it)
+     4/4 Test #121: a4_parity2_d85_trapdoor_party ....***Failed    0.07 sec | 121 - a4_parity2_d85_trapdoor_party (Failed)
+N34  KILLED   [D85] the kill loop is capped at six
+     4/4 Test #121: a4_parity2_d85_trapdoor_party ....***Failed    0.07 sec | 121 - a4_parity2_d85_trapdoor_party (Failed)
+N35  KILLED   [D85] the device counts the roster's bursts again
+     3/4 Test  #89: a3_03_sfx_runtime ................***Failed    0.70 sec | 89 - a3_03_sfx_runtime (Failed)
+T30  KILLED   [D85] reference: the wipe runs over the roster again
+     vitest
+T31  KILLED   [D85] reference: the wipe overshoots the party by one
+     vitest
+T32  KILLED   [D85] reference: an already dead member is skipped
+     vitest
+T33  KILLED   [D85] reference: the wipe is capped at six
+     vitest
+N40  KILLED   [D86] the dungeon runs the stray outdoor turn again
+     1/2 Test #137: a4_parity2_d86_dungeon_digit_runtime ...***Failed    0.14 sec | 2/2 Test #173: gameplay_parity ........................***Failed   10.80 sec | 137 - a4_parity2_d86_dungeon_digit_runtime (Failed) | 173 - gameplay_parity (Failed)
+N41  KILLED   [D86] no invalid digit passes a turn anywhere (the overworld loses its turn)
+     1/2 Test #137: a4_parity2_d86_dungeon_digit_runtime ...***Failed    0.13 sec | 2/2 Test #173: gameplay_parity ........................***Failed   10.85 sec | 137 - a4_parity2_d86_dungeon_digit_runtime (Failed) | 173 - gameplay_parity (Failed)
+N42  KILLED   [D86] the town gains a turn for an invalid digit
+     2/2 Test #173: gameplay_parity ........................***Failed   11.06 sec | 173 - gameplay_parity (Failed)
+N43  KILLED   [D86] a sleeping member is accepted as active
+     2/2 Test #173: gameplay_parity ........................***Failed   10.91 sec | 173 - gameplay_parity (Failed)
+T40  KILLED   [D86] reference: the dungeon runs the stray turn again
+     vitest | 173 - gameplay_parity (Failed)
+T41  KILLED   [D86] reference: no invalid digit passes a turn anywhere
+     vitest | 173 - gameplay_parity (Failed)
+T42  KILLED   [D86] reference: the town gains a turn for an invalid digit
+     vitest | 173 - gameplay_parity (Failed)
+N50  KILLED   [D87] a crop / plate adds food with no cap again
+     2/4 Test #122: a4_parity2_d87_crop_food_cap .....***Failed    0.15 sec | 3/4 Test #173: gameplay_parity ..................***Failed   11.40 sec | 122 - a4_parity2_d87_crop_food_cap (Failed) | 173 - gameplay_parity (Failed)
+N51  KILLED   [D87] a value above the cap is left alone instead of clamped down
+     2/4 Test #122: a4_parity2_d87_crop_food_cap .....***Failed    0.13 sec | 3/4 Test #173: gameplay_parity ..................***Failed   10.97 sec | 122 - a4_parity2_d87_crop_food_cap (Failed) | 173 - gameplay_parity (Failed)
+N52  KILLED   [D87] the cap is 10000
+     2/4 Test #122: a4_parity2_d87_crop_food_cap .....***Failed    0.14 sec | 3/4 Test #173: gameplay_parity ..................***Failed   10.75 sec | 122 - a4_parity2_d87_crop_food_cap (Failed) | 173 - gameplay_parity (Failed)
+N53  KILLED   [D87] the cap only applies at 9999 (not above)
+     2/4 Test #122: a4_parity2_d87_crop_food_cap .....***Failed    0.13 sec | 3/4 Test #173: gameplay_parity ..................***Failed   10.31 sec | 122 - a4_parity2_d87_crop_food_cap (Failed) | 173 - gameplay_parity (Failed)
+N54  KILLED   [D87] the crop is refused at the cap (no tile change)
+     2/4 Test #122: a4_parity2_d87_crop_food_cap .....***Failed    0.17 sec | 3/4 Test #173: gameplay_parity ..................***Failed   11.21 sec | 122 - a4_parity2_d87_crop_food_cap (Failed) | 173 - gameplay_parity (Failed)
+N55  KILLED   [D87] the karma is skipped when the food reaches the cap
+     2/4 Test #122: a4_parity2_d87_crop_food_cap .....***Failed    0.13 sec | 3/4 Test #173: gameplay_parity ..................***Failed   12.41 sec | 122 - a4_parity2_d87_crop_food_cap (Failed) | 173 - gameplay_parity (Failed)
+T50  KILLED   [D87] reference: the wheat branch adds food with no cap again
+     vitest | 173 - gameplay_parity (Failed)
+T51  KILLED   [D87] reference: the wheat branch leaves a value above the cap alone
+     vitest | 173 - gameplay_parity (Failed)
+T52  KILLED   [D87] reference: the plates add food with no cap again
+     vitest | 173 - gameplay_parity (Failed)
+T53  KILLED   [D87] reference: the plates cap at 10000
+     vitest | 173 - gameplay_parity (Failed)
+N60  KILLED   [D88] the clock ticks at the 9th activation
+     3/9 Test #115: a4_enh1_preservation_runtime .....***Failed    0.33 sec | 5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.13 sec | 6/9 Test #124: a4_enh2_preservation_runtime .....***Failed    0.63 sec | 7/9 Test #173: gameplay_parity ..................***Failed   10.72 sec | 8/9 Test #177: quest_parity .....................***Failed    5.44 sec | 115 - a4_enh1_preservation_runtime (Failed) | 123 - a4_parity2_d88_combat_clock (Failed) | 124 - a4_enh2_preservation_runtime (Failed)
+N61  KILLED   [D88] the clock ticks at the 11th activation
+     3/9 Test #115: a4_enh1_preservation_runtime .....***Failed    0.33 sec | 5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.09 sec | 6/9 Test #124: a4_enh2_preservation_runtime .....***Failed    0.63 sec | 7/9 Test #173: gameplay_parity ..................***Failed   10.94 sec | 8/9 Test #177: quest_parity .....................***Failed    5.39 sec | 115 - a4_enh1_preservation_runtime (Failed) | 123 - a4_parity2_d88_combat_clock (Failed) | 124 - a4_enh2_preservation_runtime (Failed)
+N62  KILLED   [D88] a modulo test instead of equality with a reset (a loaded 12 ticks at the 8th activation, not the 254th)
+     5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.09 sec | 123 - a4_parity2_d88_combat_clock (Failed)
+N63  KILLED   [D88] two minutes per tick
+     3/9 Test #115: a4_enh1_preservation_runtime .....***Failed    0.34 sec | 5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.10 sec | 6/9 Test #124: a4_enh2_preservation_runtime .....***Failed    0.63 sec | 7/9 Test #173: gameplay_parity ..................***Failed   10.57 sec | 8/9 Test #177: quest_parity .....................***Failed    5.44 sec | 115 - a4_enh1_preservation_runtime (Failed) | 123 - a4_parity2_d88_combat_clock (Failed) | 124 - a4_enh2_preservation_runtime (Failed)
+N64  KILLED   [D88] the tick runs the housekeeping too (meals, starvation, poison in a fight)
+     3/9 Test #115: a4_enh1_preservation_runtime .....***Failed    0.32 sec | 5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.14 sec | 6/9 Test #124: a4_enh2_preservation_runtime .....***Failed    0.62 sec | 7/9 Test #173: gameplay_parity ..................***Failed   10.51 sec | 8/9 Test #177: quest_parity .....................***Failed    5.43 sec | 115 - a4_enh1_preservation_runtime (Failed) | 123 - a4_parity2_d88_combat_clock (Failed) | 124 - a4_enh2_preservation_runtime (Failed)
+N65  KILLED   [D88] the re-roll excludes the live location (g_location is not 0xFF in the arena)
+     5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.11 sec | 123 - a4_parity2_d88_combat_clock (Failed)
+N66  KILLED   [D88] the re-roll draws from the live stream, not the fight's
+     5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.12 sec | 123 - a4_parity2_d88_combat_clock (Failed)
+N67  KILLED   [D88] only the player's activations are counted
+     3/9 Test #115: a4_enh1_preservation_runtime .....***Failed    0.31 sec | 5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.11 sec | 6/9 Test #124: a4_enh2_preservation_runtime .....***Failed    0.62 sec | 7/9 Test #173: gameplay_parity ..................***Failed   10.71 sec | 8/9 Test #177: quest_parity .....................***Failed    5.45 sec | 115 - a4_enh1_preservation_runtime (Failed) | 123 - a4_parity2_d88_combat_clock (Failed) | 124 - a4_enh2_preservation_runtime (Failed)
+N68  KILLED   [D88] combat entry resets the counter (it is not combat-local)
+     3/9 Test #115: a4_enh1_preservation_runtime .....***Failed    0.31 sec | 5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.10 sec | 6/9 Test #124: a4_enh2_preservation_runtime .....***Failed    0.62 sec | 115 - a4_enh1_preservation_runtime (Failed) | 123 - a4_parity2_d88_combat_clock (Failed) | 124 - a4_enh2_preservation_runtime (Failed)
+N69  KILLED   [D88] the .GAM byte +0x2DC is never written
+     5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.12 sec | 123 - a4_parity2_d88_combat_clock (Failed)
+N70  KILLED   [D88] an absent key leaves the template byte (it must write 0)
+     5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.11 sec | 123 - a4_parity2_d88_combat_clock (Failed)
+N71  KILLED   [D88] a load does not read the counter back
+     5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.12 sec | 9/9 Test #183: persistence_parity ...............***Failed    0.93 sec | 123 - a4_parity2_d88_combat_clock (Failed) | 183 - persistence_parity (Failed)
+N72  KILLED   [D88] the document never carries the counter (restore ignores it)
+     5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.12 sec | 7/9 Test #173: gameplay_parity ..................***Failed    2.97 sec | 9/9 Test #183: persistence_parity ...............***Failed    1.12 sec | 123 - a4_parity2_d88_combat_clock (Failed) | 173 - gameplay_parity (Failed) | 183 - persistence_parity (Failed)
+T60  KILLED   [D88] reference: the clock ticks at the 9th activation
+     vitest | 173 - gameplay_parity (Failed) | 177 - quest_parity (Failed)
+T61  KILLED   [D88] reference: the counter has no 8-bit wrap
+     vitest | 173 - gameplay_parity (Failed)
+T62  KILLED   [D88] reference: two minutes per tick
+     vitest | 173 - gameplay_parity (Failed) | 177 - quest_parity (Failed)
+T63  KILLED   [D88] reference: the re-roll excludes the live location
+     vitest | 173 - gameplay_parity (Failed)
+T64  KILLED   [D88] reference: the counter is never written to SAVED.GAM
+     vitest | 173 - gameplay_parity (Failed)
+T65  KILLED   [D88] reference: a load does not read the counter
+     vitest | 173 - gameplay_parity (Failed)
+T66  KILLED   [D88] reference: the clock hook counts nothing without time-state guard (runs the tick before the count)
+     vitest | 173 - gameplay_parity (Failed) | 177 - quest_parity (Failed)
+restored tree [D82]: native GREEN ; reference GREEN 
+restored tree [D83]: native GREEN ; reference GREEN 
+restored tree [D85]: native GREEN ; reference GREEN 
+restored tree [D86]: native GREEN ; reference GREEN 
+restored tree [D87]: native GREEN ; reference GREEN 
+restored tree [D88]: native GREEN ; reference GREEN 
+restored tree [D89]: native GREEN ; reference GREEN 
+restored tree [MANI]: native GREEN ; reference GREEN 
+
+A4-PARITY2 mutations: 110/110 killed
+ALL DONE

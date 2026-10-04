@@ -32,8 +32,10 @@ endif()
 # never shares a name or an FW line with the superseded RC1 image. The RC3
 # hotfix (a dungeon played the surface's music, section 15) sets
 # 4.0.0-alpha4-rc3-debug: RC2 plus that one fix, so it never shares a name or an
-# FW line with the superseded RC2 image.
-set(PROJECT_VER "4.0.0-alpha4-rc3-debug")
+# FW line with the superseded RC2 image. The A4-PARITY2 cleanup (section 16: D-82..D-89 and the In Mani
+# Corp text) sets 4.0.0-alpha4-rc4-debug: RC3 plus those parity fixes, so it never shares a name or an
+# FW line with the superseded RC3 image.
+set(PROJECT_VER "4.0.0-alpha4-rc4-debug")
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(openu5_tdeck)
 

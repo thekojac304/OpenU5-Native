@@ -91,7 +91,7 @@ void fill(Result &r, const std::vector<Member> &members, int party_size, int loc
         c.level = 4;
         c.party_status = members[i].party_status;
     }
-    g.position.map = {location, 0};
+    g.position.map = {LocationId(location), 0};
     g.position.xy = {15, 15};
     // one object on this floor (erased by the wipe), one elsewhere (kept)
     r.pool.objects.push_back(QuestObject{});
