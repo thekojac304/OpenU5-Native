@@ -1,0 +1,14 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/a4-parity2-d82-underworld-seed.test.ts > D-82 the seed (derived from the table records) > INIT.OOL's five records: ONE terrain-cell skiff at (14,242) on floor 255 and FOUR prop bodies in 
+AssertionError: expected undefined to deeply equal { '0:255:14:242': 297 }
+ FAIL  tests/a4-parity2-d82-underworld-seed.test.ts > D-82 the seed (derived from the table records) > the classifier's boundaries: unknown bytes are reported, not placed; a wrong floor is skipped; sl
+AssertionError: expected [] to deeply equal [ 119 ]
+ FAIL  tests/a4-parity2-d82-underworld-seed.test.ts > D-82 the seed (derived from the table records) > the BRIT block (floor 0) is parsed by the same rules: empty in a new game, a record there lands o
+AssertionError: expected [] to deeply equal [ [ +0, 20, 21 ] ]
+ FAIL  tests/a4-parity2-d82-underworld-seed.test.ts > D-82 the layer: only the new-journey seam seeds > a seeded journey survives serialize / deserialize: 4 props and the cell, not re-seeded and not d
+AssertionError: expected {} to deeply equal { '0:255:14:242': 297 }
+ FAIL  tests/a4-parity2-d82-underworld-seed.test.ts > D-82 behaviour of the seeded records (MAINOUT 0x01FE / CMDS 0x07F6) > a foot party steps onto the skiff cell (composited terrain 0), then Board ta
+AssertionError: expected [ 'What?' ] to include 'skiff'
+ FAIL  tests/a4-parity2-d82-underworld-seed.test.ts > D-82 behaviour of the seeded records (MAINOUT 0x01FE / CMDS 0x07F6) > a body blocks a foot party, a skiff and a frigate: 'Blocked!', the party doe
+AssertionError: foot: expected [] to include 'Blocked!'
+      Tests  6 failed | 2 passed (8)

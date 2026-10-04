@@ -519,6 +519,66 @@ export function applyGypsyCreation(state: GameState, creation: GypsyCreation): v
   avatar.currentMp = creation.currentMp;
 }
 
+/** Informe de `seedNewJourneyUnderworld` (A4-PARITY2 D-82). */
+export interface SeedReport {
+  overrides: number;
+  props: number;
+  ships: number;
+  unknown: number[];
+  skipped: Array<{ slot: number; byte: number; reason: string }>;
+}
+
+/**
+ * A4-PARITY2 D-82: las siembras de INIT.OOL de una PARTIDA NUEVA. `ool` es el SAVED.OOL de 0x200 bytes que deja
+ * una partida nueva (FONT.OVL 0x0e1f / INTRO 0x1dea) = 256 bytes a cero (bloque BRIT) ++ INIT.OOL (bloque UNDER):
+ * la imagen cruda de la tabla de objetos viva (DS:0x5C5A, 32 registros de 8 bytes; +0 byte de tile, sprite =
+ * +0 + 0x100, +2 x, +3 y, +4 piso (0 Britannia, 0xFF subsuelo), +5 casco, +7 esquifes). Sin transformación entre el
+ * fichero y la tabla. Las cinco siembras son el esquife 0x29 de (14,242) (slot 23) y los cuatro cadáveres 0x1e junto
+ * a la celda del Amuleto (slots 24-27).
+ *
+ * REPRESENTACIÓN del port (la suya, no una inventada): esquife / caballo / alfombra = override de terreno de la
+ * Clase C (`location:floor:x:y` = 0x100 + byte; abordarlo lo borra, sin tocar g_hull) y los cadáveres = objetos
+ * `prop` del pool (la misma representación del cadáver interior de un .NPC); una fragata sería un objeto `ship`
+ * con su casco y sus esquifes. Un byte de clase desconocido se INFORMA y no se coloca; un registro cuyo +4
+ * discrepa de su bloque (el original lo deja invisible: `K:0x368e` y el compositor comparan +4 con g_floor) se
+ * SALTA. El slot 0 (el vehículo propio del party) se ignora. No toca RNG ni imprime nada.
+ *
+ * Se llama SÓLO en la costura de la partida nueva (`main.ts`, tras `applyGypsyCreation`): nunca desde
+ * `createNewGame` (los arneses de paridad construyen sus estados con él), ni al importar, cargar o continuar.
+ */
+export function seedNewJourneyUnderworld(state: GameState, ool: Uint8Array): SeedReport {
+  const report: SeedReport = { overrides: 0, props: 0, ships: 0, unknown: [], skipped: [] };
+  for (const block of [0, 1]) {
+    const floor = block ? 0xff : 0;
+    for (let slot = 1; slot < 32; slot++) {
+      const o = block * 0x100 + slot * 8;
+      const b = ool[o] ?? 0;
+      if (b === 0) continue;
+      const x = ool[o + 2]!;
+      const y = ool[o + 3]!;
+      if ((ool[o + 4] ?? 0) !== floor) {
+        report.skipped.push({ slot, byte: b, reason: "floor byte disagrees with its block" });
+        continue;
+      }
+      const tile = 0x100 + b;
+      if ((b & 0xfc) === 0x28 || (b & 0xfe) === 0x10 || b === 0x1b) {
+        // skiff 0x28-0x2B, horse 0x10/0x11, carpet 0x1B: the Class C terrain-override channel
+        (state.mapOverrides ??= {})[`0:${floor}:${x}:${y}`] = tile;
+        report.overrides++;
+      } else if ((b & 0xf8) === 0x20) {
+        (state.worldObjects ??= []).push({ location: 0, floor, x, y, tile, kind: "ship", hull: ool[o + 5]!, skiffs: ool[o + 7]!, slot });
+        report.ships++;
+      } else if (b === 0x1e || b === 0x1f) {
+        (state.worldObjects ??= []).push({ location: 0, floor, x, y, tile, kind: "prop", slot });
+        report.props++;
+      } else {
+        report.unknown.push(b);
+      }
+    }
+  }
+  return report;
+}
+
 /**
  * Crea una partida nueva desde el estado extraído de INIT.GAM. Si se pasa
  * `creation` (salida del cuestionario de la gitana), parchea el Avatar con

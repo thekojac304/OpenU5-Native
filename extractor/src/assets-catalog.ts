@@ -91,7 +91,7 @@ export const ASSETS_DE_EXTRACCION: readonly AssetDeExtraccion[] = [
   { ruta: "shoppe.json", de: "SHOPPE.DAT" },
   { ruta: "initial-state.json", de: "INIT.GAM" },
   { ruta: "init.gam", de: "INIT.GAM (plantilla del guardado nativo)" },
-  { ruta: "init.ool", de: "BRIT.OOL + UNDER.OOL", opcional: true },
+  { ruta: "init.ool", de: "INIT.OOL (bloque BRIT = ceros)", opcional: true },
   { ruta: "signs.json", de: "SIGNS.DAT + DATA.OVL" },
   { ruta: "questions.json", de: "QUESTION.DAT" },
   { ruta: "look2.json", de: "LOOK2.DAT" },

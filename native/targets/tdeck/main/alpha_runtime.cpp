@@ -3235,6 +3235,10 @@ void AlphaRuntime::service_frontend_intent(){
         ESP_LOGI(kTag,"U5OBJ CLEAR site=new-journey pool_before=%u",unsigned(objects_.size()));
         objects_.clear();actors_={};dungeon_={};combat_.initialized=false;actor_animation_.reset();
         openu5::apply_new_journey_identity(game_,intent.identity);synchronize_loaded_world();
+        // A4-PARITY2 D-82: the new journey's SAVED.OOL (zeros ++ INIT.OOL) seeds the underworld skiff and four bodies. Only here, after the clean
+        // reconstruction and before the first save: never on load, import or continue. A refused reservation fails the whole journey, nothing half placed.
+        ok=openu5::seed_new_journey_underworld(resources_.initial_ool,resources_.initial_ool_size,quest_,terrain_);
+        if(ok)
         // Alpha 4 A4-SAVE2: into the slot the title chose (an empty one, or
         // the one the player confirmed replacing).
         ok=save_.save(context_,outdoor_,terrain_,actors_,retained_,resources_.initial_gam,resources_.initial_gam_size,resources_.initial_ool,resources_.initial_ool_size,ms,true,intent.slot);

@@ -32,7 +32,7 @@ import {
 // copia, y el día que cambiara daría cero fotos en silencio.
 import { writeSaveShot } from "./core/save-keys.js";
 import { importNativeSave, type SaveSidecar } from "./core/saveNative.js";
-import { applyGypsyCreation, type ExtractedInitialState, type GameState, type WorldObject } from "./core/state.js";
+import { applyGypsyCreation, seedNewJourneyUnderworld, type ExtractedInitialState, type GameState, type WorldObject } from "./core/state.js";
 import { DoorManager } from "./core/world/doors.js";
 import { SHOP_CLOSED_MESSAGE, shopIsOpen } from "./core/world/shop-hours.js";
 import type { SmallMapLocation, WorldData } from "./core/world/map.js";
@@ -905,6 +905,18 @@ async function boot(): Promise<void> {
       }
       if (result.action === "create") {
         applyGypsyCreation(game.state, result.creation);
+        // A4-PARITY2 D-82: the new journey's SAVED.OOL is `zeros(256) ++ INIT.OOL` (FONT.OVL 0x0e1f), whose UNDER block seeds
+        // the underworld skiff and four bodies. Seeded HERE, at the creation seam only (never in createNewGame, on import or
+        // on load). An absent asset means no seed, as before.
+        try {
+          const res = await fetch("/assets/init.ool");
+          if (res.ok) {
+            const ool = new Uint8Array(await res.arrayBuffer());
+            if (ool.length >= 0x200) seedNewJourneyUnderworld(game.state, ool);
+          }
+        } catch {
+          /* no init.ool asset: no seed */
+        }
         consentimiento.analitica.evento(EV.PERSONAJE_CREADO);
       }
       // "Journey Onward" (J): recarga el save más reciente = cargar SAVED.GAM. La

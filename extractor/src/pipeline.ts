@@ -233,6 +233,26 @@ function registraEmisiones(io: PipelineIO, emitidos: Set<string>): PipelineIO {
  * de Node cuando dejó de renderizarse a audio: ahora son datos (MIDI + banco de timbres)
  * y los sintetiza el juego, así que corre igual aquí que en el navegador de /byo.
  */
+/**
+ * A4-PARITY2 D-82: the new-journey SAVED.OOL template (`init.ool`, 0x200 bytes). The original's new-game writers
+ * (FONT.OVL 0x0e1f, INTRO 0x1dea) leave `256 zero bytes ++ INIT.OOL`: INIT.OOL is the raw image of the UNDER block's object
+ * table and the BRIT block is zero-filled. BRIT.OOL / UNDER.OOL on disk are run-time scratch files ("Journey Onward"
+ * rewrites them from SAVED.OOL), so they are only a FALLBACK source when INIT.OOL is absent. null = no source at all.
+ */
+export function buildInitOol(initOol: Uint8Array | null, brit: Uint8Array | null, under: Uint8Array | null): Uint8Array | null {
+  const ool = new Uint8Array(0x200);
+  if (initOol) {
+    ool.set(initOol.subarray(0, 0x100), 0x100);
+    return ool;
+  }
+  if (brit && under) {
+    ool.set(brit.subarray(0, 0x100), 0);
+    ool.set(under.subarray(0, 0x100), 0x100);
+    return ool;
+  }
+  return null;
+}
+
 export async function runPipeline(ioReal: PipelineIO, opts: PipelineOptions = {}): Promise<void> {
   const emitidos = new Set<string>();
   const io = registraEmisiones(ioReal, emitidos);
@@ -416,13 +436,16 @@ export async function runPipeline(ioReal: PipelineIO, opts: PipelineOptions = {}
   // re/notes/oracle-pending-sweep.md Objetivo B: un SAVED.OOL recién iniciado es
   // byte-idéntico a esta concatenación). La consume buildNativeOol (saveNative.ts)
   // como siembra del export nativo; guardado por existencia (no son REQUIRED).
-  if (io.exists("BRIT.OOL") && io.exists("UNDER.OOL")) {
-    const brit = read("BRIT.OOL");
-    const under = read("UNDER.OOL");
-    const ool = new Uint8Array(0x200);
-    ool.set(brit.subarray(0, 0x100), 0);
-    ool.set(under.subarray(0, 0x100), 0x100);
-    await io.putBin("init.ool", ool);
+  // A4-PARITY2 D-82 (provenance): a new journey's SAVED.OOL is `zeros(256) ++ INIT.OOL` (FONT.OVL 0x0e1f / INTRO 0x1dea) --
+  // BRIT.OOL / UNDER.OOL on disk are run-time scratch files (INTRO "Journey Onward" rewrites them from SAVED.OOL), not
+  // distribution data. The bytes are identical for the shipped install; the SOURCE is what was wrong.
+  const initOol = buildInitOol(
+    io.exists("INIT.OOL") ? read("INIT.OOL") : null,
+    io.exists("BRIT.OOL") ? read("BRIT.OOL") : null,
+    io.exists("UNDER.OOL") ? read("UNDER.OOL") : null,
+  );
+  if (initOol) {
+    await io.putBin("init.ool", initOol);
   } else {
     io.log("• init.ool… (BRIT.OOL/UNDER.OOL ausentes, omitido)");
   }

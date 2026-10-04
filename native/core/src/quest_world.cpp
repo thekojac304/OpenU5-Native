@@ -28,6 +28,34 @@ static bool hydrate_underworld_plot_impl(GameState &g,QuestWorldServices &s,bool
     return true;
 }
 bool hydrate_underworld_plot(GameState &g,QuestWorldServices &s){return hydrate_underworld_plot_impl(g,s,false);}
+
+bool seed_new_journey_underworld(const uint8_t *ool,size_t length,QuestWorldServices &s,WorldTerrain &terrain){
+    if(!ool||length<0x200)return true;
+    struct Rec{uint8_t b,x,y,floor,hull,skiffs;int slot;};
+    Rec recs[62];size_t n=0,objects=0;
+    for(int block=0;block<2;++block){
+        const uint8_t floor=block?0xff:0;
+        for(int slot=1;slot<32;++slot){
+            const uint8_t *r=ool+block*0x100+slot*8;
+            if(!r[0]||r[4]!=floor)continue; // the original leaves a record whose +4 disagrees with its block invisible
+            const uint8_t b=r[0];
+            const bool terrain_class=(b&0xfc)==0x28||(b&0xfe)==0x10||b==0x1b;
+            const bool ship=(b&0xf8)==0x20,body=b==0x1e||b==0x1f;
+            if(!terrain_class&&!ship&&!body)continue; // an unknown class byte is not placed
+            recs[n++]={b,r[2],r[3],floor,r[5],r[7],slot};
+            if(!terrain_class)++objects;
+        }
+    }
+    if(objects&&(!pool(&s)||!s.reserve(s.context,objects)))return false;
+    for(size_t i=0;i<n;++i){
+        const auto &r=recs[i];const int32_t tile=0x100+r.b;
+        if((r.b&0xfc)==0x28||(r.b&0xfe)==0x10||r.b==0x1b){terrain.set({0,r.floor},r.x,r.y,tile,true,"seed.new-journey");continue;}
+        QuestObject o;o.location=0;o.floor=r.floor;o.x=r.x;o.y=r.y;o.tile=tile;o.slot=r.slot;
+        if((r.b&0xf8)==0x20){o.ship=true;o.hull=r.hull;o.skiffs=r.skiffs;}else o.prop=true;
+        s.append(s.context,o);
+    }
+    return true;
+}
 void discard_interior_objects(GameState &g,QuestWorldServices &s,int32_t loc){
     if(!pool(&s))return;
     for(size_t i=s.count(s.context);i>0;--i){auto o=s.read(s.context,i-1);if(o.location==loc && (o.chest||o.prop||o.loot||o.plot||o.shadowlord||o.search))s.erase(s.context,i-1);}

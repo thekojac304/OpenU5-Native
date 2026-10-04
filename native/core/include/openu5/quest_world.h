@@ -77,6 +77,11 @@ struct QuestWorldServices {
     const InteriorHydrationTrace *hydration_trace=nullptr; // Diagnostics only.
 };
 bool hydrate_underworld_plot(GameState &,QuestWorldServices &);
+// A4-PARITY2 D-82: a New Journey's SAVED.OOL is `zeros(256) ++ INIT.OOL` (FONT.OVL 0x0e1f); its UNDER block seeds the underworld skiff and four
+// bodies. `ool` is that 0x200-byte image. Skiff/horse/carpet -> persistent Class C terrain override; frigate/body -> pool object. All-or-nothing:
+// the pool reservation is taken first and a refusal returns false with nothing placed. A short/absent image seeds nothing (true).
+struct WorldTerrain;
+bool seed_new_journey_underworld(const uint8_t *ool,size_t length,QuestWorldServices &,WorldTerrain &);
 // Batch 23. The +5 byte TOWN.OVL:0x1726 gives a placed .NPC type-1 chest
 // (0x1795 `mov word [bp-6],0x1e`). SJOG.OVL:0x112C rolls the loot from it at
 // (O)pen time, so it is the only per-chest input to the loot tables.

@@ -71,9 +71,39 @@ GROUPS = {
         vitest=['tests/a4-parity2-d88-combat-clock.test.ts'],
         generators=[('generate-combat-fixtures.ts', ['--check']), ('generate-advanced-combat-fixtures.ts', ['--check'])],
     ),
+    'D82': dict(
+        native_targets=['a4_parity2_d82_runtime', 'a4_save3_pc_bridge_runtime', 'a4_save2_slots_runtime', 'gameplay_driver', 'quest_driver'],
+        native_tests=['a4_parity2_d82_runtime', 'a4_save3_pc_bridge_runtime', 'a4_save2_slots_runtime', 'gameplay_parity', 'quest_parity'],
+        vitest=['tests/a4-parity2-d82-underworld-seed.test.ts'],
+        generators=[],
+    ),
 }
 
 MUTANTS = {
+    # ---------------------------------------------------------------- D-82 native
+    'N80': ('D82', 'the New Journey never calls the seed', [('native/targets/tdeck/main/alpha_runtime.cpp',
+            'ok=openu5::seed_new_journey_underworld(resources_.initial_ool,resources_.initial_ool_size,quest_,terrain_);', 'ok=true;')]),
+    'N81': ('D82', 'a load seeds too (not only the New Journey seam)', [('native/targets/tdeck/main/alpha_runtime.cpp',
+            'if(openu5::save::restore_world_objects(retained_,quest_)!=openu5::save::Error::None)ESP_LOGW(kTag,"WORLD_OBJECTS_RESTORE_FAILED',
+            'openu5::seed_new_journey_underworld(resources_.initial_ool,resources_.initial_ool_size,quest_,terrain_);if(openu5::save::restore_world_objects(retained_,quest_)!=openu5::save::Error::None)ESP_LOGW(kTag,"WORLD_OBJECTS_RESTORE_FAILED')]),
+    'N82': ('D82', 'a body lands on floor 0, not the underworld', [(SRC + 'quest_world.cpp', 'o.location=0;o.floor=r.floor;', 'o.location=0;o.floor=0;')]),
+    'N83': ('D82', 'a body is a plain object, not a prop', [(SRC + 'quest_world.cpp', 'else o.prop=true;', 'else o.prop=false;')]),
+    'N84': ('D82', 'the skiff override is transient (a save would drop it)', [(SRC + 'quest_world.cpp', 'tile,true,"seed.new-journey"', 'tile,false,"seed.new-journey"')]),
+    'N85': ('D82', 'the floor-vs-block check is gone', [(SRC + 'quest_world.cpp', 'if(!r[0]||r[4]!=floor)continue;', 'if(!r[0])continue;')]),
+    'N86': ('D82', 'a refused reservation is ignored', [(SRC + 'quest_world.cpp',
+            'if(objects&&(!pool(&s)||!s.reserve(s.context,objects)))return false;', 'if(objects&&!pool(&s))return false;\n    if(objects){s.reserve(s.context,objects);}')]),
+    'N87': ('D82', 'slot 0 (the party\'s own vehicle) is seeded', [(SRC + 'quest_world.cpp', 'for(int slot=1;slot<32;++slot){', 'for(int slot=0;slot<32;++slot){')]),
+    'N88': ('D82', 'the skiff tile is off by one', [(SRC + 'quest_world.cpp', 'const int32_t tile=0x100+r.b;', 'const int32_t tile=0x101+r.b;')]),
+    'N89': ('D82', 'a frigate loses its hull', [(SRC + 'quest_world.cpp', 'o.ship=true;o.hull=r.hull;', 'o.ship=true;o.hull=0;')]),
+    'N90': ('D82', 'an unknown class byte is placed as a prop', [(SRC + 'quest_world.cpp',
+            'if(!terrain_class&&!ship&&!body)continue;', 'if(!terrain_class&&!ship&&!body&&!b)continue;')]),
+    # ---------------------------------------------------------------- D-82 reference
+    'T80': ('D82', 'reference: the floor-vs-block check is gone', [(TS + 'state.ts', 'if ((ool[o + 4] ?? 0) !== floor) {', 'if (false) {')]),
+    'T81': ('D82', 'reference: the skiff goes on floor 0', [(TS + 'state.ts', '[`0:${floor}:${x}:${y}`] = tile;', '[`0:0:${x}:${y}`] = tile;')]),
+    'T82': ('D82', 'reference: slot 0 is seeded', [(TS + 'state.ts', 'for (let slot = 1; slot < 32; slot++) {', 'for (let slot = 0; slot < 32; slot++) {')]),
+    'T83': ('D82', 'reference: an unknown class byte is placed as a prop', [(TS + 'state.ts', 'report.unknown.push(b);',
+            '(state.worldObjects ??= []).push({ location: 0, floor, x, y, tile, kind: "prop", slot }); report.unknown.push(b);')]),
+    'T84': ('D82', 'reference: a frigate loses its hull', [(TS + 'state.ts', 'hull: ool[o + 5]!, ', 'hull: 0, ')]),
     # ---------------------------------------------------------------- D-89 native
     'N1': ('D89', 'naval OUCH rolls once on the active member again', [(SRC + 'commands.cpp',
            '            party_random_damage(c.game, rand);\n            event(GameEventKind::PartyChanged); // K:2A52',
