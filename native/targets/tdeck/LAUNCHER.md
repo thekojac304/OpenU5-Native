@@ -6,6 +6,10 @@
 > commit, and its embedded `Git`, is `211c676a1dca` (`alpha2-batch54-rc1`).
 > SHA-256 `ff3dfe193973547db2648c5f486aa381086505eb80b5f2dadec7432194fb5828`.
 >
+> **Alpha 4 final is the RC5 image, byte for byte — ALPHA 4 RELEASED** (2026-10-04). It passed the RC5 retest on the device (identity, the In Mani Corp scroll, the healer's `R`) after the RC3 / RC4 sessions. No final-version image is built: a rebuild would be a new, untested image. The release tag is `alpha4-release` (on the documents-only closeout commit); the firmware's source commit, and its embedded `Git`, is `59c14b907399` (`59c14b907399be8e8796dcd84946a60c942731c1`).
+> - The final tested Alpha 4 artifact: `OpenU5-TDeck-Alpha4.0.0-alpha4-RC5-Debug-Launcher.bin` (`4.0.0-alpha4-rc5-debug`), at `native/targets/tdeck/build-a4-rc5/launcher/`: 1,047,408 B (`0xffb70`), 263,312 B (20.1 %) free in the 1.25 MiB app partition, SHA-256 `363a8fdae6eb714058a4545bad880e05c4d52919e9afd41de8d61e45cfa67210`.
+> - Launcher allocation 1,024 KiB (the packager rounds the image up to 64 KiB); the next 64 KiB boundary is close — informational only. Record: `ALPHA4_UI.md` §18.
+>
 > **Alpha 3 final is the RC1 image below, byte for byte — ALPHA 3 RELEASED** (2026-09-28). It passed Phase A3-RC1 on the device and the RC heap gate. No final-version image is built: a rebuild would be a new, untested image. The release tag is `alpha3-release`; the firmware's source commit, and its embedded `Git`, is `f85575b96f05` (`alpha3-rc1`).
 > - The final tested Alpha 3 artifact: `OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin` (`3.0.0-alpha3-rc1-debug`), at `native/targets/tdeck/build-a3-rc1-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`: 988,320 B (`0xf14a0`), 60,256 B (5.7 %) free, SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`, embedded `Git f85575b96f05` (`f85575b96f05bd7250ef41347f858bfc954e276b`, annotated tag `alpha3-rc1`).
 > - It is A3-HF10's firmware with a new version string: every memory section equal, all three image guards GREEN. The `rc1` in `FW 3.0.0-alpha3-rc1-debug` is kept on purpose.

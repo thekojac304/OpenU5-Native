@@ -8,6 +8,9 @@
 [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
 [`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
+
+> **Alpha 4 release closeout (2026-10-04).** Alpha 4 is released with RC5 (`FW 4.0.0-alpha4-rc5-debug`, `Git 59c14b907399`, SHA-256 `363a8fda…7210`) as the hardware-validated image; host suite 201 / 201. Statements further down that call RC3's music retest, the RC heap capture, PARITY1's checks or RC5's hardware retest "owed" or "pending" are superseded by `ALPHA4_UI.md` §18 (the heap capture was waived by the user). No gameplay row changed in the closeout; D-90 – D-103 remain future work.
+
 > ### CURRENT STATE (Alpha 4 closeout A4-CLOSE1, 2026-10-02) — ALPHA 4 IMPLEMENTATION COMPLETE; candidate image RC2 built; NOT YET RC-READY (required hardware checks never run; one session owed); known parity divergences tracked separately; read this first
 >
 > **A reconciliation batch: documents, evidence and the version line only.** The full record is [`ALPHA4_UI.md`](ALPHA4_UI.md) §14; the classification is the section "Alpha 4 A4-CLOSE1" at the end of this file.

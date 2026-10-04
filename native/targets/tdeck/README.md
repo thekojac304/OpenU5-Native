@@ -1,5 +1,8 @@
 # OpenU5-TDeck: Milestone 5 native movement
 
+> **Current release (2026-10-04): Alpha 4, tag `alpha4-release`.** It is the hardware-validated RC5 image, promoted byte for byte; its identity screen reads `FW 4.0.0-alpha4-rc5-debug`, `Git 59c14b907399` (`OpenU5-TDeck-Alpha4.0.0-alpha4-RC5-Debug-Launcher.bin`, 1,047,408 B, SHA-256 `363a8fdae6eb714058a4545bad880e05c4d52919e9afd41de8d61e45cfa67210`). Release notes: [`../../../ALPHA4_RELEASE_NOTES.md`](../../../ALPHA4_RELEASE_NOTES.md); engineering record: [`../../../ALPHA4.md`](../../../ALPHA4.md) and [ALPHA4_UI.md](ALPHA4_UI.md) §18.
+> The Alpha 3 block below is the previous release, kept as written.
+>
 > **Current release: Alpha 3 (released 2026-09-28, tag `alpha3-release`).**
 > It is the hardware-validated RC1 image, promoted byte for byte; its identity screen reads
 > `FW 3.0.0-alpha3-rc1-debug`, `Git f85575b96f05` (`OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`, 988,320 B, SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`).

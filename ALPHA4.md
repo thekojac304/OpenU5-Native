@@ -1,5 +1,20 @@
-# OpenU5 T-Deck Plus — Alpha 4 (RC5 candidate image; RC4, RC3 and RC2 superseded)
+# OpenU5 T-Deck Plus — Alpha 4 (released; RC5 is the release image)
 
+**Status: ALPHA 4 RELEASED (2026-10-04).** Alpha 4 is release-ready, with **RC5 as the hardware-validated firmware image**. No release blockers. Nothing is pushed; no GitHub Release has been created.
+
+| | |
+|---|---|
+| **Firmware** | `OpenU5-TDeck-Alpha4.0.0-alpha4-RC5-Debug-Launcher.bin` — `FW 4.0.0-alpha4-rc5-debug`, `Git 59c14b907399` (`59c14b907399be8e8796dcd84946a60c942731c1`, no `-dirty`) |
+| **Size / free** | 1,047,408 B (`0xffb70`) / 263,312 B (20.1 %) free in the 1.25 MiB app partition; Launcher allocation 1,024 KiB (the next 64 KiB step is close — informational only) |
+| **SHA-256** | `363a8fdae6eb714058a4545bad880e05c4d52919e9afd41de8d61e45cfa67210` (re-hashed at closeout, unchanged) |
+| **Release tag** | `alpha4-release` (annotated) on the **final release-record commit** — a documentation-only commit after `e664c2d3` |
+| **Firmware provenance** | the image was built from `59c14b907399`, **not** from the release-tag commit. The release commit changes only documents and logs, so it is code-identical to `59c14b90`; the image was **not** rebuilt (a rebuild would be a new, untested file). Flash the `.bin` above; its identity screen reads `4.0.0-alpha4-rc5-debug` / `59c14b907399`, by design |
+| **Host suite** | 201 / 201, serial (148.2 s) on the release tree; the 39-test parity / preservation / golden / release-blocker subset 39 / 39 |
+| **Hardware** | RC5 identity, the In Mani Corp scroll on a living target and the healer's `R` resurrection — **PASS** (user-reported, 2026-10-04); everything earlier in §2 below |
+
+Readable release notes for GitHub: [`ALPHA4_RELEASE_NOTES.md`](ALPHA4_RELEASE_NOTES.md). The engineering record is `native/targets/tdeck/ALPHA4_UI.md` (§18 is the release record). The sections after this block were written as the candidates progressed; where they say "owed", "pending" or "candidate", **§2 below and `ALPHA4_UI.md` §18 supersede them (2026-10-04)**.
+
+## Release history before the release (superseded 2026-10-04 — kept as written)
 **RC5 hotfix (2026-10-04):** the user's RC4 hardware pass — R4-1, R4-2 (New Journey skiff + four bodies, D-82), R4-3 (save / power-cycle / Continue) and R4-6 (combat clock, D-88) **PASS**; R4-7 (naval cactus) not tested — found two failures (a written report, no serial evidence). **R4-5, the healer's `R` did nothing:** fixed — `UiSession`'s shop key map sent `Rest` for `r` everywhere but a tavern, so `ShopAction::Resurrect` could never come from a key; one line, pinned by a real-runtime test (`ALPHA4_UI.md` §17.2). **R4-4, the In Mani Corp scroll on a living target showed only `Failed!`:** investigated and **not reproduced** — every device route (overworld, towns, dungeon, paced, audio mounted, the use-then-cancel order) reads `Scroll` / `Resurrection!` / `Not dead!` / `Failed!`, and the RC4 ELF contains the code; the *spell* form reads exactly `Failed!`; no production change, route pinned (§17.3).
 - **Candidate image (supersedes RC4):** `OpenU5-TDeck-Alpha4.0.0-alpha4-RC5-Debug-Launcher.bin`, `FW 4.0.0-alpha4-rc5-debug` — 1,047,408 B (`0xffb70`), SHA-256 `363a8fdae6eb714058a4545bad880e05c4d52919e9afd41de8d61e45cfa67210`, embedded `Git 59c14b907399` (no `-dirty`); 263,312 B (20.1 %) free in the 1.25 MiB app partition; flash `.text` −4 B vs RC4; host suite 201 / 201; guards GREEN; 19 / 19 mutants killed. RC4's artifact (`49e3962f…4414`) and record are preserved.
 - **Owed:** the three-check retest only (`ALPHA4_UI.md` §17.7): identity, the In Mani Corp scroll on a living member, the healer's Resurrect. Not tagged or pushed.
@@ -19,7 +34,7 @@
 - **What it is:** A4-POLISH3's firmware with a new version line. Everything Alpha 4 set out to do is implemented, host-verified and committed (`native/targets/tdeck/ALPHA4_UI.md` §14.4).
 - **What is still owed:** one hardware session on this image (`ALPHA4_UI.md` §14.7): A4-PARITY1's gameplay fixes, the save-slot pages (A4-SAVE2 / A4-UI3), the PC save import / export on the device (A4-SAVE3) and the RC heap capture. Those were never run on a T-Deck. If they pass, the project convention (Alpha 2, Alpha 3) is to promote this exact image unchanged.
 - **RC1** (`aae348ac`, `FW 4.0.0-alpha4-rc1-debug`, SHA-256 `67100a51…145a`) is superseded: its session never ran, and RC2 carries everything since.
-- Alpha 3 (tag `alpha3-release`, [`ALPHA3.md`](ALPHA3.md)) is the current release.
+- Alpha 3 (tag `alpha3-release`, [`ALPHA3.md`](ALPHA3.md)) was the current release *(superseded 2026-10-04: Alpha 4 is now the current release)*.
 
 ## 1. What Alpha 4 is
 
@@ -43,9 +58,12 @@ Alpha 3's complete game with a finished front end, real save management, the ori
 | A4-PARITY1, A4-SAVE2, A4-UI3, A4-SAVE3, the heap capture | **not yet run** — the RC2 session (§14.7) |
 | A4-SAVE3's real-DOS round trip | optional; without it the PC bridge is **host-validated only** |
 
+**Superseding note (2026-10-04, the release closeout).** The "not yet run" row above is closed by the user's reports, recorded in full in `ALPHA4_UI.md` §18: **SAVE2, UI3, SAVE3 (device import / export), power-cycle Continue and ordinary smoke — user-reported PASS; PARITY1 — PASS** (D-78: the cast was not `Absorbed!`; the literal `Success!` was not seen on a full-health target; D-79, D-81, D-50 PASS); **RC3 dungeon-music retest — PASS** (no serial capture); **RC4** — R4-1, R4-2, R4-3, R4-6 PASS, R4-4 and R4-5 FAIL as originally reported, R4-7 not tested; **RC5** — identity, the In Mani Corp scroll on a living target and the healer's `R` **PASS**. **The RC heap capture was not run; the user waived it for the Alpha 4 release; no heap defect was observed; no heap numbers exist and none are claimed.** It is not a release blocker. A4-SAVE3's real-DOS round trip stays optional and unrun: the PC bridge is validated on the host and on the device's import / export, not against a DOS install.
+
 ## 3. Known differences carried forward
 
 Documented, non-blocking, and not Alpha 4 work (`ALPHA4_UI.md` §14.5, ledger §4): the healer and the Refuge skip the 1988 resurrection penalty (D-83, D-84); the location-29 trapdoor takes the whole roster (D-85); a dungeon digit key on an invalid member passes a turn (D-86); crops can push food past 9,999 (D-87); combat does not advance the clock (D-88); the naval OUCH's damage routine is to be adjudicated (D-89); a new game lacks INIT.OOL's underworld skiff and bodies (D-82); and the older minor rows. Deferred by decision: a softer death penalty (waits on D-83 / D-84), Advanced Cheats, the credits curtain, story plates and title figures, WASD in the frontend menus (D-1).
+**Superseding note (2026-10-04).** D-82 – D-89 above were **fixed in A4-PARITY2** (and shipped in RC4 / RC5), so the list is historical. The healer and the Refuge now run the shared resurrection routine (D-83, D-84), the trapdoor loop is bounded (D-85), an invalid dungeon digit passes no turn (D-86), food caps at 9,999 (D-87), combat advances the clock (D-88), the naval OUCH hurts the whole party (D-89) and a New Journey seeds the underworld skiff and bodies (D-82). Open and **not** Alpha 4 work: D-90 – D-103 (recorded in the ledger, none fixed; none is marked release-critical) and the older minor rows.
 
 ## 4. Installing or updating
 
@@ -63,6 +81,7 @@ Documented, non-blocking, and not Alpha 4 work (`ALPHA4_UI.md` §14.5, ledger §
 | File | Size | Identity |
 |---|---:|---|
 | `native/targets/tdeck/build-a4-rc2/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC2-Debug-Launcher.bin` — **the candidate** | 1,046,240 B (`0xff6e0`) | SHA-256 `608eb7005dcc88cab6ed8c020e3ad7050c9a711406650492407c7bb760801e95`; `FW 4.0.0-alpha4-rc2-debug`, `Git 24c666e1ba13` (the commit `24c666e1ba13d455b367878c0b594438f809071f`) |
+| `native/targets/tdeck/build-a4-rc5/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC5-Debug-Launcher.bin` — **the Alpha 4 release image (2026-10-04; supersedes the RC2 row above)** | 1,047,408 B (`0xffb70`) | SHA-256 `363a8fdae6eb714058a4545bad880e05c4d52919e9afd41de8d61e45cfa67210`; `FW 4.0.0-alpha4-rc5-debug`, `Git 59c14b907399` (the commit `59c14b907399be8e8796dcd84946a60c942731c1`); 263,312 B free |
 | `/ultima5/openu5-alpha1-resources.bin` | 2,266,819 B | CRC32 `5c0d175d`, SHA-256 `85b38994…d01e` |
 | `/ultima5/openu5-assets.bin` | 132,284 B | CRC32 `933c9b82`, SHA-256 `6eb001ed…e188` |
 | `/ultima5/openu5-audio.bin` (optional) | 56,148 B patched | unchanged since Alpha 3 |
@@ -92,3 +111,5 @@ The image is a Debug build with the Developer menu (Alt+D), by decision (`ALPHA4
 - **Host:** **191 / 191**, serial, 164.44 s, in a fresh build (`native/core/a4-close1-host-ctest.log`); the preservation goldens, screen goldens, parity corpora and drift tests 54 / 54 on their own. Every Alpha 4 batch was proven RED-first and by mutation (`ALPHA4_UI.md`, each batch's mutation section).
 - **Firmware guards:** `a3_04a_hotpath_check`, `a3_04b_iram_check`, `a3_04f_image_check` GREEN; `check_app_budget` OK; every memory section equal to the A4-POLISH3 image the user ran (`ALPHA4_UI.md` §14.9).
 - **Hardware:** §2 above; the remaining session is `ALPHA4_UI.md` §14.7.
+
+- **Release verification (2026-10-04):** host suite **201 / 201**, serial, 148.2 s, on the release tree (`native/core/build-a4-parity2-final`, no rebuild needed: `ninja: no work to do`); the parity / preservation / golden / release-blocker subset (`ctest -R "parity|preserv|golden|release_blockers|rc5"`) **39 / 39**; the RC5 image re-hashed to `363a8fda…7210` and its strings `4.0.0-alpha4-rc5-debug` and `59c14b907399` present once each, no `-dirty`. Hardware: §2 above and `ALPHA4_UI.md` §18. Not run, by decision: the RC heap capture (waived).

@@ -963,6 +963,23 @@ The RC checklist is 19 steps, "a mechanical batch: no code, test or behaviour ch
 
 The Batch 23 self-misidentification, the Batch 50 stale image, the Batch 54 file-name rule (§8.3) and the Alpha 2 promotion's reasons (§10.5) point to one principle: hardware validation is a statement about a *file*. A rebuild changes the version string, the Git, the timestamps and the SHA, and adds nothing a tester can use. So the released Alpha 3 keeps `rc1` in its version string, "on purpose: the physical validation applies to this exact file"; `alpha3-rc1` stays on the source commit, and the release tag sits on the documents-and-logs closeout "the way `alpha2-batch55-release` sits on Batch 55's". A user who flashes the release sees `FW 3.0.0-alpha3-rc1-debug` and `Git f85575b96f05`, and every claim in the record about that image is checkable against those two strings.
 
+## 20A. The Alpha 4 release
+
+*(Added 2026-10-04; numbered 20A so the Alpha 3 chapters keep their numbers. The engineering record is `native/targets/tdeck/ALPHA4_UI.md` §18.)*
+
+| Field | Value |
+|---|---|
+| Release tag | `alpha4-release` (annotated), on the final documents-only closeout commit after `e664c2d3` |
+| Firmware provenance | `59c14b907399be8e8796dcd84946a60c942731c1` (`alpha4` RC5; the fix is `e7d4162f`) — **not** the tag's commit |
+| Artifact | `OpenU5-TDeck-Alpha4.0.0-alpha4-RC5-Debug-Launcher.bin`, 1,047,408 B, SHA-256 `363a8fdae6eb714058a4545bad880e05c4d52919e9afd41de8d61e45cfa67210` |
+| Embedded identity | `FW 4.0.0-alpha4-rc5-debug` / `Git 59c14b907399` |
+| Free / allocation | 263,312 B in the 1.25 MiB app partition / Launcher 1,024 KiB |
+| Host suite | 201 / 201, serial (148.2 s); parity / preservation / golden subset 39 / 39 |
+| Hardware | RC5 retest PASS; RC3 music PASS; PARITY1 PASS; SAVE2 / UI3 / SAVE3 / Continue / smoke user-reported PASS; heap capture **waived** |
+| Promotion | RC5 promoted unchanged, as Alpha 2's Batch 55 and Alpha 3 |
+
+**How Alpha 4 got here.** Alpha 4 ran between Alpha 3's release (2026-09-28) and 2026-10-04: a UI track (chrome, title, saves, console, PC save bridge, the ending), a parity sweep, three enhancement batches (trackball, cheats, difficulty, keyboard light), then RC1 – RC5. The release candidates repeated the Alpha 3 lesson: hardware validation is a statement about a *file*. RC2's session exposed the dungeon-music defect (RC3); RC4's session, after PARITY2's eight fixes, exposed the healer's missing `R` key and an unreproduced In Mani Corp scroll report (RC5); the RC5 image passed its three-check retest and was promoted unchanged. The RC heap capture was never run; the user waived it, and the record states plainly that no Alpha 4 heap figures exist. The publication audit's one open question — whether two map fixtures should stay in the public tree — is recorded in `ALPHA4_UI.md` §18.6 and left to the owner.
+
 ## 21. Method and lessons
 
 **The working method**, as the record documents it (each item points to where it is shown in action):

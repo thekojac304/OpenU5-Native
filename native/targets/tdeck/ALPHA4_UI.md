@@ -2,6 +2,8 @@
 
 Alpha 4 is a UI/presentation track on top of the released Alpha 3 (`alpha3-release`, `eb1bf5e7`). Each batch keeps its own section; a finding is recorded where it was made and not merged into an earlier batch's conclusion.
 
+> **ALPHA 4 RELEASED (2026-10-04) — read §18 first; it supersedes every "owed", "pending" and "candidate" below.** RC5 (`FW 4.0.0-alpha4-rc5-debug`, `Git 59c14b907399`, SHA-256 `363a8fda…7210`) is the hardware-validated firmware image: the RC5 retest (identity, the In Mani Corp scroll on a living target, the healer's `R`) **PASSED**. RC3's music retest PASSED; the RC heap capture was waived by the user; PARITY1's checks PASSED; the RC4 failures (R4-4, R4-5) are fixed and retested. The paragraphs below are kept as written, as the history of how the release was reached.
+>
 > **RC5 hotfix (2026-10-04) — read §17 first.** The user's RC4 hardware pass (R4-1/2/3/6 PASS, R4-7 not tested) failed two items: the healer's `R` did nothing (fixed: the shop key map never produced `Resurrect`; §17.2) and a living target of the In Mani Corp scroll showed only `Failed!` (investigated, **not reproduced**, route now pinned by real-runtime tests; §17.3). The candidate image is now **RC5** (`4.0.0-alpha4-rc5-debug`, §17.6; `Git 59c14b907399`, SHA-256 `363a8fda…7210`): host suite 201 / 201, guards GREEN, **three-check retest owed** (§17.7). RC4's record below is unchanged.
 >
 > **A4-PARITY2 (2026-10-04) — read §16 first.** The post-Alpha-4 parity cleanup fixed D-82, D-83, D-84, D-85, D-86, D-87, D-88 and D-89 (reference first, native second, RED-first, 110 / 110 mutants killed), the In Mani Corp living-target text, and corrected the jail / inn note; fourteen newly found divergences (D-90 … D-103) are recorded, not fixed (§16.13). The candidate image is now **RC4** (`4.0.0-alpha4-rc4-debug`, §16.15; `Git 859f1605b974`): host suite 200 / 200, guards GREEN, **not yet hardware-tested** (minimal checklist §16.16). RC3's record (§15) is unchanged.
@@ -3895,3 +3897,89 @@ Flash RC5, keep the SD pack. Do **not** repeat the underworld objects, save / Co
 ### 17.8 Does anything besides the retest remain before publication?
 
 No **new** blocker comes out of this investigation: the healer defect is fixed and pinned, and the In Mani Corp route is verified correct on every path the host can drive. **If RC5-1 … RC5-3 pass, nothing in this follow-up blocks Alpha 4 publication**, and the known divergences D-90 … D-103 do not gate it. Two caveats stay honest: (1) **R4-4 is unexplained** — it passes the retest or it becomes a real, device-only defect (§17.3); (2) the items the project's own records already list as owed from earlier candidates — the RC3 dungeon-music retest (§15.10) and the Alpha 4 RC heap capture (§14.7) — are not part of this hotfix and were not re-asked of the user; they are prior bookkeeping, not defects found here. Nothing is tagged or pushed.
+
+## 18. The Alpha 4 release (2026-10-04)
+
+Documentation-only closeout. No production code, test, golden or fixture changed; the only commit after `e664c2d3` (the RC5 records) is the release-record commit, which carries the annotated tag `alpha4-release`.
+
+### 18.1 The record
+
+| Field | Value |
+|---|---|
+| Baseline at closeout | `main` at `e664c2d3`, tree clean apart from one untracked `native/core/a4-release-ctest.log` (an earlier 192 / 192 run of the RC2 tree; not part of this record), 47 commits ahead of `origin/main`, nothing pushed |
+| Release tag | `alpha4-release` — annotated, on the final release-record commit (the commit that carries this section). It follows the convention of `alpha3-release`; the earlier `alpha4-ui2-hardware-validated` / `alpha4-end1-hardware-validated` tags are per-batch hardware tags and stay |
+| **Firmware provenance** | **`59c14b907399be8e8796dcd84946a60c942731c1`** (`59c14b90`, "candidate identity 4.0.0-alpha4-rc5-debug"; the production fix is `e7d4162f`). The release-tag commit is a documents-only descendant and **did not produce the binary** |
+| Artifact | `native/targets/tdeck/build-a4-rc5/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC5-Debug-Launcher.bin` |
+| SHA-256 | `363a8fdae6eb714058a4545bad880e05c4d52919e9afd41de8d61e45cfa67210` (re-hashed 2026-10-04) |
+| Identity | `FW 4.0.0-alpha4-rc5-debug`, `Git 59c14b907399` (each string appears once in the file; no `-dirty`) |
+| Size / free | 1,047,408 B (`0xffb70`) / 263,312 B (20.1 %) free in the 1.25 MiB app partition |
+| Launcher allocation | 1,024 KiB (the next 64 KiB boundary is close — informational only; `check_app_budget` OK at RC5) |
+| Host suite | **201 / 201**, serial, 148.2 s, fresh `ctest` on the release tree (`ninja: no work to do`: the build dir was current) |
+| Release subset | `ctest -R "parity\|preserv\|golden\|release_blockers\|rc5"` **39 / 39** (23.8 s) |
+| Mutation / guards | unchanged from RC5: 19 / 19 RC5 mutants killed, PARITY2's 110 / 110; firmware guards GREEN at the RC5 build (§17.6) |
+
+**The two identities are different on purpose.** The tag names the repository's final release state; the firmware's `Git` names the commit it was compiled from. `git diff 59c14b90 alpha4-release` touches only `*.md` and `*.log` files (the RC5 records in `e664c2d3` and this closeout). A user who flashes the release `.bin` sees `59c14b907399`, and every claim about that image is checkable against it — the same principle as Alpha 2's Batch 55 and Alpha 3's `alpha3-release` (`PROJECT_HISTORY.md` §20.3).
+
+### 18.2 Hardware validation — what the user reported
+
+| Track | Result |
+|---|---|
+| A4-UI2, A4-SAVE1, A4-END1, A4-UI4/PRES1 | PASS (§2.8, §3.6, §7.19, §8.22.8) |
+| A4-ENH1 (trackball, Developer entry, cheats and difficulty) | PASS |
+| A4-ENH2 cheats | PASS |
+| A4-ENH2 rules / tuning | accepted as implemented (balance adjustable later) |
+| A4-POLISH3 keyboard backlight | PASS |
+| A4-SAVE2 manual slot flow | PASS — user-reported |
+| A4-UI3 save / load flow | PASS — user-reported |
+| A4-SAVE3 import / export on the device | PASS — user-reported |
+| Power-cycle Continue | PASS — user-reported |
+| Ordinary smoke | PASS — user-reported |
+| A4-PARITY1 D-78 crown possession gate | PASS — the literal `Success!` was not observed on a full-health target, but the gate behaviour passed: the spell was not `Absorbed!` |
+| A4-PARITY1 D-79 worn-crown persistence | PASS |
+| A4-PARITY1 D-81 dungeon commands | PASS |
+| A4-PARITY1 D-50 wishing well | PASS |
+| **RC3 dungeon-music retest (§15.10)** | **PASS** — normal dungeon entry, Developer dungeon teleport, ordinary dungeon actions, combat round trip, normal exit restores the surface music, teleport back restores the dungeon music, mute, Music Volume 0. No serial capture was obtained |
+| **RC4 pass** | R4-1 identity PASS · R4-2 New Journey underworld skiff + bodies PASS (D-82) · R4-3 save / power-cycle / Continue PASS · **R4-4 In Mani Corp living-target scroll FAIL as originally reported** · **R4-5 healer `R` FAIL** · R4-6 combat clock PASS (D-88) · R4-7 naval cactus NOT TESTED (optional) |
+| **RC5 retest** | RC5 identity **PASS** · In Mani Corp scroll on a living target **PASS** (the expected console behaviour on the device) · healer `R` resurrection **PASS** (after the key-routing fix) |
+| **RC heap capture (§14.7)** | **NOT RUN — waived by the user for the Alpha 4 release.** No heap defect was observed. No heap figure exists for Alpha 4 and none may be quoted; this is not a release blocker |
+| A4-SAVE3 real-DOS round trip | optional, never run — the PC bridge is validated on the host and on the device's import / export only |
+
+All device results are the user's reports; none carries a serial capture or an itemised per-line table beyond what is written here. RC5 is hardware-validated and **no further broad regression is required**. The naval cactus (R4-7) stays optional and unrun and does not block publication.
+
+### 18.3 What was stale, and what supersedes it
+
+| Stale statement (kept where it was written) | Now |
+|---|---|
+| "RC3's music retest is still owed" (§15.10, `ALPHA4.md`) | PASS (§18.2) |
+| "the RC heap capture is still required / none exists" (§14.7, §14.9, §17.8) | waived by the user; not run; not a blocker |
+| "PARITY1's checks are unrun" (§9, §14.3, §14.7) | D-50, D-78, D-79, D-81 PASS |
+| "the RC4 failures still block publication" (§17.3, §17.8) | R4-5 fixed and retested PASS; R4-4 retested PASS on RC5 (the reported failure was **not reproduced on the host**, so its original cause remains unexplained; §17.3's caveat is closed by the device result) |
+| "RC5 hardware is pending / three-check retest owed" (§17.6, §17.7) | the retest was run: PASS |
+| "SAVE2 / UI3 / SAVE3 hardware pending" (§4.12, §5.16, §6.16, §14.7) | user-reported PASS |
+
+### 18.4 PARITY2 final status and the RC4 → RC5 history
+
+PARITY2 closed its scoped debt: **D-82, D-83, D-84, D-85, D-86, D-87, D-88, D-89**, plus the In Mani Corp living-target text and the corrected jail / inn housekeeping note (§16). Hardware evidence: D-82 (R4-2) and D-88 (R4-6) PASS on RC4; D-83 / D-84's healer path PASS on RC5. RC4's two failures: **R4-5** — the healer's `R` did nothing because `UiSession`'s shop key map sent `Rest` for `r` everywhere but a tavern (a one-line fix, `e7d4162f`, pinned by 37 real-runtime checks, RED against RC4); **R4-4** — the scroll on a living target showed only `Failed!` on the device, not reproduced on any host route, pinned by 16 checks and then PASSED on the RC5 image. RC1 – RC4 stay as history (`aae348ac`, `24c666e1`, `6b6ab8a4`, `859f1605`; SHAs `67100a51…145a`, `608eb700…1e95`, `9fd7fc8b…d542`, `49e3962f…4414`); RC5 supersedes them.
+
+### 18.5 Known, non-blocking, future work
+
+- **D-90 – D-103** (fourteen post-PARITY2 divergences, ledger rows; none fixed and none marked release-critical).
+- The older open ledger rows and the deferred items: a softer death penalty, Advanced Cheats, the credits curtain, the intro's story plates and title figures, WASD in the frontend menus (D-1).
+- Optional, unrun checks: the naval cactus (R4-7), the A4-SAVE3 real-DOS round trip, D-74 and the arena's single `Cast...`.
+- An RC heap capture, if the project later wants Alpha 4 heap numbers.
+- Packaging: the Launcher allocation is 1,024 KiB with 263,312 B free in the app partition; the next 64 KiB boundary is close, so the next feature batch should run `check_app_budget` early.
+- Hygiene found by the publication audit (§18.6).
+
+### 18.6 Publication-readiness audit (read-only)
+
+Nothing was deleted or changed. Verdict: **safe and sensible to make public once the owner has decided the first item below.**
+
+- **Clean:** `original/`, `game/assets`, `reference/`, `logs/`, the espejo-tour saves and routes and `node_modules` are git-ignored and **zero files under `original/` are tracked**; no `.gam` / `.ool` / `.ovl` / `.dat` / `.tlk` / `.exe` / `.wav` / `.mid` / `.mp3` / `.ogg` is tracked; no SD pack, audio pack or Launcher image is tracked (the one tracked `.bin` is the 112-byte `a3-01-audio-stock.bin` capability fixture); no secret-shaped assignment (`api_key`, `password`, `token` set to a long literal) turns up in tracked text; `NOTICE` and `README` state that no Ultima V data is distributed.
+- **Decide first — `native/core/fixtures/fixed-maps.txt` (≈80 KB) and `dungeon-maps.txt` (≈14 KB):** these are numeric tile-index dumps that look like Ultima V's fixed-location and dungeon maps, extracted from the owner's game files. They are the one place original map content may be redistributed, which contradicts the README's "no maps" statement. They are inputs to the host parity tests. Options: keep (if the owner judges transformed tile indices acceptable), or git-ignore them and regenerate on the host from the user's own files. Not changed here because that alters test inputs.
+- **Hygiene — `native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md`:** one historical paragraph cites a developer-machine path (`C:\Users\<user>\.platformio\…`). About 220 tracked build / test logs (`native/core/*.log`, `native/targets/tdeck/*.log`) also carry the same user name in absolute paths. Harmless but identifying; committing the logs is repository convention and they were left alone. The one untracked file, `native/core/a4-release-ctest.log`, is a stale scratch log and is not committed.
+- **Size:** the tracked fixtures are large (`items.txt` 42 MB, `advanced-combat.txt` 31 MB, …; 4,874 tracked files in total) — a heavy clone, not a hazard. No `build-*` directory is tracked.
+- **Public-facing docs:** the root `README.md` describes the TypeScript browser port and said nothing about the T-Deck; it now links to `ALPHA4.md` and `ALPHA4_RELEASE_NOTES.md`.
+
+### 18.7 Verdict
+
+**Alpha 4 is release-ready, with RC5 as the hardware-validated firmware image.** Nothing was pushed; no GitHub Release was created. After the owner's inspection: `git push origin main alpha4-release`, then a GitHub Release carrying the `.bin`, its SHA-256 and `ALPHA4_RELEASE_NOTES.md`.

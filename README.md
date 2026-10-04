@@ -6,6 +6,10 @@ TypeScript + PixiJS. Requires your own copy of the original game
 
 *(hero GIF: walking through Britannia, tactical combat, 3D dungeon)*
 
+## OpenU5 Native — LilyGO T-Deck Plus (Alpha 4 released)
+
+Besides the browser port below, the repository holds a native port for the LilyGO T-Deck Plus. **Alpha 4 was released on 2026-10-04** (tag `alpha4-release`): a complete game with save slots, the ending, PC save import / export, cheats and difficulty options. It needs your own Ultima V files; none are distributed, and music needs the community music-patched game files. Start with [`ALPHA4_RELEASE_NOTES.md`](ALPHA4_RELEASE_NOTES.md) (what is in it, how to install, known limitations, how to report bugs); the engineering record is [`ALPHA4.md`](ALPHA4.md).
+
 ## What makes this port different
 
 Every other recreation of Ultima V reinterprets the game. This project **ports the
