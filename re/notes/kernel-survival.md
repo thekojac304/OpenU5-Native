@@ -294,6 +294,22 @@ propio coste (Task 3.4).
   objetivo (así el reloj salta 20 en 20 minutos, con comidas/hambre
   aplicándose en cada cambio de hora).
 
+> **Corrección (2026-10-04, A4-PARITY2, `JAIL-FINAL.md`): la viñeta anterior es falsa en tres puntos.**
+> 1. El bucle de la **cárcel** (TOWN.OVL 0x1324-0x1330) llama por vuelta a UNA sola rutina, `advance_clock(0x14)` (K:4F7C), y no
+>    a la limpieza por turno: **no hay comidas, ni «Starving!», ni veneno, ni contador de turnos** durante la espera. El bucle de
+>    la **posada** no está en TOWN 0x1324 sino en SHOPPES3.OVL 0x01B5-0x01F4 (12 x `advance_clock(5)`, `beep_ticks(1)`, barrido del
+>    anillo, redibujo, `advance_clock(9)`, hasta `g_hour == 6`) y tampoco llama a la limpieza.
+> 2. La limpieza por turno (comida a las horas 6/12/18, «Starving!», veneno, contador de turnos, cuenta atrás del hechizo de tiempo,
+>    anillo) es K:2AE8 y tiene exactamente CUATRO llamadores en toda la instalación (TOWN 0x10D0, MAINOUT 0x0CD3, DUNGEON 0x0E22,
+>    CMDS 0x0671); ni la cárcel ni la posada la alcanzan, ni directa ni indirectamente. Lo que sí la ejecuta cada paso de 10 minutos es
+>    el **(H)ole up sobre una cama** (CMDS 0x0552 -> 0x0671): probablemente de ahí vino la frase.
+> 3. Ambos puertos ya coinciden con el binario en la limpieza (no la llaman en la cárcel ni en la posada), así que lo erróneo era
+>    esta nota. Lo que SÍ diverge en la cárcel es **el reloj**, no la limpieza: el original corre `while (g_hour != 8)
+>    advance_clock(20)` (comprobación primero) y los puertos asignan `hour = 8; minute = 0` (TS `guardArrestJail`, nativo
+>    `blackthorn_action` Arrest). Consecuencias (minuto de despertar = `minuto_inicial mod 20`, el día del calendario, el re-roll del
+>    Shadowlord a medianoche, antorchas y luz, mes/año y `monthsAtInn`) registradas como **D-95** en `ALPHA4_UI.md` §16.13; NO se
+>    corrigen en A4-PARITY2.
+
 ## 6. Veneno de pantano — OUTSUBS.OVL:0x5FC
 
 Al TERMINAR un paso sobre tile 4 a pie (llamado desde MAINOUT:0xC71):
