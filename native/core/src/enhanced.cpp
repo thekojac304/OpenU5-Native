@@ -336,7 +336,8 @@ CheatResult apply_cheat(GameState &g, CheatKind kind, int32_t amount, bool in_co
     case CheatKind::MaxTorches:
     case CheatKind::MaxGems: {
         // Up to the cap every writer keeps; a value already above it (a
-        // Developer preset, crops picked at 9999) is left alone.
+        // Developer preset or an edited save) is left alone. (Since A4-PARITY2 D-87
+        // a crop picked at 9999 no longer reaches 10000: SJOG counter_add caps at 9999.)
         const char *what = kCheatNames[unsigned(kind)] + 4; // "Food", "Keys", ...
         const bool food = kind == CheatKind::MaxFood;
         int32_t &count = kind == CheatKind::MaxKeys ? g.keys : kind == CheatKind::MaxGems ? g.gems : g.torches;

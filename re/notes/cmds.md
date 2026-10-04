@@ -480,3 +480,6 @@ magic-scope; Yell-tierra 0x1202/0x12c8 = 3.8; 0x17EC `combat_escape_check` =
   redraw del panel; `g_unk_594f`(/5950/5951) = tracker de la puerta abierta para
   auto-cierre (+ timer [0x5952]=4); `g_unk_588c` = cooldown de curación de Camp
   (recarga 0x0E, decrementa 1/hora).
+
+
+> **A4-PARITY2 D-87 (2026-10-03) — closed.** Re-disassembled: the crop `0x2D` and the plate `0x9A` (call `0x1A50`) and the plates `0x9B` / `0x9C` (call `0x1ABE`) all end in `counter_add(&food, 1, 9999)` (ULTIMA.EXE `0x3F14`: `s = int16(old+1)`, stores 9999 when `s >= 9999`, else `old+1`) — it clamps a value above the cap DOWN to 9999, never refuses, and nothing after the call reads its result (the tile, the text and the karma are unconditional). The arena `G` runs the same SJOG routine through thunk `0x7E06` (COMBAT.OVL base `0xA290`, not `0xBFEC`); there is no separate arena routine. Both ports now cap (reference `addWordCapped`, native `std::min(9999, food+1)`); `native/core/a4-parity2-findings/D87-FINAL.md`.

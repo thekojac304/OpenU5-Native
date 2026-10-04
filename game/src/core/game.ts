@@ -139,6 +139,7 @@ import * as shrineCer from "./world/shrine-ceremonies.js";
 import * as useTools from "./endgame/use-tools.js";
 import * as bcapture from "./world/blackthorn-capture.js";
 import * as guards from "./world/guard-encounters.js";
+import { addWordCapped } from "./counters.js";
 import { rescueLordBritish } from "./quest/lordbritish.js";
 import { buildEndgameScript, type EndgameScript, type EndgameText } from "./endgame/sequence.js";
 import { sfxEvent, type SfxCue } from "./sfx.js";
@@ -6093,7 +6094,7 @@ export class Game {
       // tile_addr — SJOG 0x1a76/0x1a9e `mov byte [bx],0x95`, 0x1ae8 `…,0x9B`, 0x1afc
       // `…,0x9A`, todas tras su `call 0x8482` ⇒ búfer de terreno, no capa persistida.
       this.setVolatileTerrain(nx, ny, newTile);
-      this.state.food++;
+      this.state.food = addWordCapped(this.state.food, 1); // A4-PARITY2 D-87: SJOG 0x1A50 / 0x1ABE counter_add(&food, 1, 9999)
       this.state.karma = Math.max(0, this.state.karma - 1);
       // "Mmmmm...!" = DS 0x8e04 / 0x8e24 / 0x8e58 (las tres ramas de éxito imprimen el
       // MISMO string; resueltos en DATA.OVL con `fileoff = DS + 0x10`, la convención de
@@ -6159,7 +6160,7 @@ export class Game {
       // TERRENO VOLÁTIL (#119 tanda 3): 0x1a30 `call 0x8482` → 0x1a35
       // `mov byte [bx],0x2c`. El trigo REBROTA al recargar el mapa.
       this.setVolatileTerrain(nx, ny, PLOWED);
-      this.state.food++;
+      this.state.food = addWordCapped(this.state.food, 1); // A4-PARITY2 D-87: SJOG 0x1A50 / 0x1ABE counter_add(&food, 1, 9999)
       this.state.karma = Math.max(0, this.state.karma - 1);
       events.push({ kind: "message", text: "Crops picked!" });
     } else {

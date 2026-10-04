@@ -57,6 +57,12 @@ GROUPS = {
         vitest=['tests/a4-parity2-d86-dungeon-digit.test.ts', 'tests/game.test.ts'],
         generators=[],
     ),
+    'D87': dict(
+        native_targets=['a4_parity2_d87_crop_food_cap', 'gameplay_driver', 'quest_driver', 'a4_enh2_rules'],
+        native_tests=['a4_parity2_d87_crop_food_cap', 'gameplay_parity', 'quest_parity', 'a4_enh2_rules'],
+        vitest=['tests/a4-parity2-d87-crop-cap.test.ts', 'tests/get-plates-direction-gate.test.ts', 'tests/get-torch-arena-375.test.ts'],
+        generators=[],
+    ),
 }
 
 MUTANTS = {
@@ -190,6 +196,35 @@ MUTANTS = {
             'if (this.state.position.location === 0 && !this.dungeonState) {', 'if (false) {')]),
     'T42': ('D86', 'reference: the town gains a turn for an invalid digit', [(TS + 'game.ts',
             'if (this.state.position.location === 0 && !this.dungeonState) {', 'if (!this.dungeonState) {')]),
+    # ---------------------------------------------------------------- D-87 native
+    'N50': ('D87', 'a crop / plate adds food with no cap again', [(SRC + 'quest_search.cpp',
+            'c.game.food=uint16_t(std::min<int32_t>(9999,int32_t(c.game.food)+1));', '++c.game.food;')]),
+    'N51': ('D87', 'a value above the cap is left alone instead of clamped down', [(SRC + 'quest_search.cpp',
+            'c.game.food=uint16_t(std::min<int32_t>(9999,int32_t(c.game.food)+1));', 'if(c.game.food<9999)++c.game.food;')]),
+    'N52': ('D87', 'the cap is 10000', [(SRC + 'quest_search.cpp',
+            'std::min<int32_t>(9999,int32_t(c.game.food)+1)', 'std::min<int32_t>(10000,int32_t(c.game.food)+1)')]),
+    'N53': ('D87', 'the cap only applies at 9999 (not above)', [(SRC + 'quest_search.cpp',
+            'c.game.food=uint16_t(std::min<int32_t>(9999,int32_t(c.game.food)+1));',
+            'c.game.food=c.game.food>=9999&&c.game.food<10000?uint16_t(9999):uint16_t(c.game.food+1);')]),
+    'N54': ('D87', 'the crop is refused at the cap (no tile change)', [(SRC + 'quest_search.cpp',
+            'if(!s->volatile_tile)return {CommandStatus::InvalidContext};\n        const int next=tile==45?44',
+            'if(!s->volatile_tile)return {CommandStatus::InvalidContext};\n        if(c.game.food>=9999)return {};\n        const int next=tile==45?44')]),
+    'N55': ('D87', 'the karma is skipped when the food reaches the cap', [(SRC + 'quest_search.cpp',
+            'c.game.karma=uint8_t(c.game.karma?c.game.karma-1:0);emit(sink,GameEventKind::Message,tile==45',
+            'if(c.game.food<9999)c.game.karma=uint8_t(c.game.karma?c.game.karma-1:0);emit(sink,GameEventKind::Message,tile==45')]),
+    # ---------------------------------------------------------------- D-87 reference
+    'T50': ('D87', 'reference: the wheat branch adds food with no cap again', [(TS + 'game.ts',
+            'this.setVolatileTerrain(nx, ny, PLOWED);\n      this.state.food = addWordCapped(this.state.food, 1); // A4-PARITY2 D-87: SJOG 0x1A50 / 0x1ABE counter_add(&food, 1, 9999)',
+            'this.setVolatileTerrain(nx, ny, PLOWED);\n      this.state.food++;')]),
+    'T51': ('D87', 'reference: the wheat branch leaves a value above the cap alone', [(TS + 'game.ts',
+            'this.setVolatileTerrain(nx, ny, PLOWED);\n      this.state.food = addWordCapped(this.state.food, 1); // A4-PARITY2 D-87: SJOG 0x1A50 / 0x1ABE counter_add(&food, 1, 9999)',
+            'this.setVolatileTerrain(nx, ny, PLOWED);\n      if (this.state.food < 9999) this.state.food++;')]),
+    'T52': ('D87', 'reference: the plates add food with no cap again', [(TS + 'game.ts',
+            'this.setVolatileTerrain(nx, ny, newTile);\n      this.state.food = addWordCapped(this.state.food, 1); // A4-PARITY2 D-87: SJOG 0x1A50 / 0x1ABE counter_add(&food, 1, 9999)',
+            'this.setVolatileTerrain(nx, ny, newTile);\n      this.state.food++;')]),
+    'T53': ('D87', 'reference: the plates cap at 10000', [(TS + 'game.ts',
+            'this.setVolatileTerrain(nx, ny, newTile);\n      this.state.food = addWordCapped(this.state.food, 1); // A4-PARITY2 D-87: SJOG 0x1A50 / 0x1ABE counter_add(&food, 1, 9999)',
+            'this.setVolatileTerrain(nx, ny, newTile);\n      this.state.food = addWordCapped(this.state.food, 1, 10000);')]),
 }
 
 ENV = dict(os.environ, PATH=BIN + os.pathsep + os.environ['PATH'])

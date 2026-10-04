@@ -1,0 +1,3 @@
+for(let i=0;i<actual.length;i++){for(const step of actual[i]){step.state=projection(step.state);step.events=step.events.filter((e:any)=>!(e.kind==='sfx'&&nativeOnlyAudioHooks.has(e.text)));}if(!isDeepStrictEqual(actual[i],expected[i])){writeFileSync(dir+'/mismatch.json',JSON.stringify({i,input:inputs[i],actual:actual[i],expected:expected[i]},null,2));throw Error(`Gameplay mismatch ${i}`);}}
+Error: Gameplay mismatch 4902
+0% tests passed, 1 tests failed out of 1

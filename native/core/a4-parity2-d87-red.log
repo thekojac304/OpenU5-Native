@@ -1,0 +1,6 @@
+RED C1 a crop at food 0 / 9997 / 9998 / 9999 / 10000 / 12345 / 32766 gives 1 / 9998 / 9999 / 9999 / 9999 / 9999 / 9999, tile 44, "Crops picked!", karma 49, Success, a turn -- wrong: 9999->10000 10000->10001 12345->12346 
+RED C2 the plates 0x9A / 0x9B / 0x9C (every valid direction) at food 9998 / 9999 / 10000 all end at 9999 with the same tile, "Mmmmm...!", karma 49 and a turn -- wrong: tile 154 food 9999->10000 tile 154 food 10000->10001
+GREEN C3 a plate from the wrong side: "Can't reach plate!", food, tile, karma and the turn untouched at 9999 and at 10000
+RED C4 at the cap the crop is still consumed (tile 44), still says "Crops picked!", karma 0 stays 0, the turn passes
+GREEN C5 the arena twin: a crop and a plate at 9998 / 9999 / 10000 end at 9999, the tile is consumed, karma 49
+5 checks, 3 failures

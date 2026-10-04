@@ -145,6 +145,11 @@ for(const under of [false,true])for(const status of ['G','P','S','D'])for(const 
 for(const spell of ['T','Q'])for(const digit of [0,2,5])add(7,68,s=>{s.timeSpell=spell;s.characters.push({...s.characters[0],name:'Shamino'});s.partySize=2;},false,'flee',{dungeon:{location:33,cells:Array(512).fill(0)},actions:[{kind:'active',member:digit}]});
 for(const digit of [6,7,8,9])add(7,68,s=>{for(const name of ['B','C','D','E','F'])s.characters.push({...s.characters[0],name});s.partySize=6;},false,'flee',{dungeon:{location:33,cells:Array(512).fill(0)},actions:[{kind:'active',member:digit}]});
 for(const digit of [3,4])add(7,68,s=>{s.characters.push({...s.characters[0],name:'Inn1'},{...s.characters[0],name:'Inn2'},{...s.characters[0],name:'Inn3'});s.partySize=2;},false,'flee',{dungeon:{location:33,cells:Array(512).fill(0)},actions:[{kind:'active',member:digit}]});
+// A4-PARITY2 D-87 (appended LAST): crops and table plates cap food at 9999 (SJOG 0x1A50/0x1ABE: counter_add(&food,1,9999)).
+// Both ports computed the same wrong value (no cap), so these rows only go RED when ONE port is fixed first; the binary's own
+// values are pinned by absolute assertions in a4-parity2-d87-crop-cap.test.ts and a4_parity2_d87_crop_food_cap. Every direction
+// (valid and refused), two gets per row, so the second get sees the consumed cell.
+for(const food of [9997,9998,9999,10000])for(const tile of [45,154,155,156])for(let dir=0;dir<4;dir++){const [dx,dy]=([[0,-1],[0,1],[1,0],[-1,0]] as const)[dir]!;add(7,68,s=>{s.food=food;},false,'flee',{inspect:true,inspectCoords:[[10+dx,10+dy]],edits:[[10+dx,10+dy,tile]],actions:[{kind:'get',dir},{kind:'get',dir}]});}
 // The dungeon-context Camp cases also enter the original CMDS Camp loop.
 // The shipped-pack H-171 runtime fixture is the oracle for that loop.
 const totalSequences=inputs.length;const realCoverage={townHourSequences:inputs.filter(q=>q.small).length,signSequences:inputs.filter(q=>q.sign).length,dungeonRoomSequences:inputs.filter(q=>q.room).length,corridorSequences:inputs.filter(q=>q.dungeon?.wanderer).length};

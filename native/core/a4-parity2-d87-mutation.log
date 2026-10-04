@@ -1,0 +1,24 @@
+N50  KILLED   [D87] a crop / plate adds food with no cap again
+     2/4 Test #122: a4_parity2_d87_crop_food_cap .....***Failed    0.09 sec | 3/4 Test #170: gameplay_parity ..................***Failed   10.30 sec | 122 - a4_parity2_d87_crop_food_cap (Failed) | 170 - gameplay_parity (Failed)
+N51  KILLED   [D87] a value above the cap is left alone instead of clamped down
+     2/4 Test #122: a4_parity2_d87_crop_food_cap .....***Failed    0.13 sec | 3/4 Test #170: gameplay_parity ..................***Failed   10.18 sec | 122 - a4_parity2_d87_crop_food_cap (Failed) | 170 - gameplay_parity (Failed)
+N52  KILLED   [D87] the cap is 10000
+     2/4 Test #122: a4_parity2_d87_crop_food_cap .....***Failed    0.10 sec | 3/4 Test #170: gameplay_parity ..................***Failed   10.20 sec | 122 - a4_parity2_d87_crop_food_cap (Failed) | 170 - gameplay_parity (Failed)
+N53  KILLED   [D87] the cap only applies at 9999 (not above)
+     2/4 Test #122: a4_parity2_d87_crop_food_cap .....***Failed    0.10 sec | 3/4 Test #170: gameplay_parity ..................***Failed   10.01 sec | 122 - a4_parity2_d87_crop_food_cap (Failed) | 170 - gameplay_parity (Failed)
+N54  KILLED   [D87] the crop is refused at the cap (no tile change)
+     2/4 Test #122: a4_parity2_d87_crop_food_cap .....***Failed    0.09 sec | 3/4 Test #170: gameplay_parity ..................***Failed   10.02 sec | 122 - a4_parity2_d87_crop_food_cap (Failed) | 170 - gameplay_parity (Failed)
+N55  KILLED   [D87] the karma is skipped when the food reaches the cap
+     2/4 Test #122: a4_parity2_d87_crop_food_cap .....***Failed    0.11 sec | 3/4 Test #170: gameplay_parity ..................***Failed   10.17 sec | 122 - a4_parity2_d87_crop_food_cap (Failed) | 170 - gameplay_parity (Failed)
+T50  KILLED   [D87] reference: the wheat branch adds food with no cap again
+     vitest | 170 - gameplay_parity (Failed)
+T51  KILLED   [D87] reference: the wheat branch leaves a value above the cap alone
+     vitest | 170 - gameplay_parity (Failed)
+T52  KILLED   [D87] reference: the plates add food with no cap again
+     vitest | 170 - gameplay_parity (Failed)
+T53  KILLED   [D87] reference: the plates cap at 10000
+     vitest | 170 - gameplay_parity (Failed)
+restored tree [D87]: native GREEN ; reference GREEN 
+
+A4-PARITY2 mutations: 10/10 killed
+ALL DONE

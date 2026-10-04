@@ -1,0 +1,8 @@
+ ❯ tests/a4-parity2-d87-crop-cap.test.ts (6 tests | 2 failed) 49ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/a4-parity2-d87-crop-cap.test.ts > D-87 the food cap on a crop and on the plates (SJOG 0x1A50 / 0x1ABE: counter_add(&food,1,9999)) > a crop: food 0 / 9997 / 9998 / 9999 / 10000 / 12345 / 32766 -> 1 / 9998 / 9999 / 9999
+AssertionError: expected [ 1, 9998, 9999, 10000, 10001, …(2) ] to deeply equal [ 1, 9998, 9999, 9999, 9999, …(2) ]
+ FAIL  tests/a4-parity2-d87-crop-cap.test.ts > D-87 the food cap on a crop and on the plates (SJOG 0x1A50 / 0x1ABE: counter_add(&food,1,9999)) > the plates (0x9A south, 0x9B north, 0x9C south and north) end at 9999 from 9998 / 999
+AssertionError: expected { tile: 154, dir: 'south', …(5) } to deeply equal { tile: 154, dir: 'south', …(5) }
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)

@@ -53,7 +53,7 @@ QuestCommandResult get_quest_object(CommandContext &c,Direction dir,EventSink si
         const auto d=direction_delta(dir);bool reachable=tile==154?d.dy==1:tile==155?d.dy==-1:tile==156?d.dx==0:true;
         if(!reachable){emit(sink,GameEventKind::Message,"Can't reach plate!");return {};}
         if(!s->volatile_tile)return {CommandStatus::InvalidContext};
-        const int next=tile==45?44:tile==156?(d.dy==1?155:154):149;s->volatile_tile(s->context,x,y,next);++c.game.food;c.game.karma=uint8_t(c.game.karma?c.game.karma-1:0);emit(sink,GameEventKind::Message,tile==45?"Crops picked!":"Mmmmm...!");return {CommandStatus::Success,true};
+        const int next=tile==45?44:tile==156?(d.dy==1?155:154):149;s->volatile_tile(s->context,x,y,next);c.game.food=uint16_t(std::min<int32_t>(9999,int32_t(c.game.food)+1)); /* A4-PARITY2 D-87: SJOG 0x1A50/0x1ABE counter_add(&food,1,9999) -- clamps DOWN too */c.game.karma=uint8_t(c.game.karma?c.game.karma-1:0);emit(sink,GameEventKind::Message,tile==45?"Crops picked!":"Mmmmm...!");return {CommandStatus::Success,true};
     }
     emit(sink,GameEventKind::Message,"Nothing to get!");return {};
 }

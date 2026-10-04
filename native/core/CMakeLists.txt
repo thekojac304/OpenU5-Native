@@ -2225,6 +2225,11 @@ if(BUILD_TESTING)
   target_link_libraries(a4_parity2_d85_trapdoor_party PRIVATE openu5_core)
   target_compile_features(a4_parity2_d85_trapdoor_party PRIVATE cxx_std_17)
   add_test(NAME a4_parity2_d85_trapdoor_party COMMAND a4_parity2_d85_trapdoor_party)
+  # A4-PARITY2 D-87: crops and table plates cap food at 9999 (SJOG 0x18CE -> counter_add(&food,1,9999)).
+  add_executable(a4_parity2_d87_crop_food_cap tests/a4_parity2_d87_crop_food_cap_test.cpp)
+  target_link_libraries(a4_parity2_d87_crop_food_cap PRIVATE openu5_core)
+  target_compile_features(a4_parity2_d87_crop_food_cap PRIVATE cxx_std_17)
+  add_test(NAME a4_parity2_d87_crop_food_cap COMMAND a4_parity2_d87_crop_food_cap)
   # Its device half: the REAL AlphaRuntime starving on the overworld, then in
   # Deceit through the live dungeon turn (wanderers, corridor fights), Alt+S/L.
   add_executable(a4_enh2_preservation_runtime
