@@ -1,0 +1,25 @@
+N30  KILLED   [D85] the kill loop runs over the roster again
+     4/4 Test #121: a4_parity2_d85_trapdoor_party ....***Failed    0.06 sec | 121 - a4_parity2_d85_trapdoor_party (Failed)
+N31  KILLED   [D85] the kill loop overshoots the party by one
+     4/4 Test #121: a4_parity2_d85_trapdoor_party ....***Failed    0.07 sec | 121 - a4_parity2_d85_trapdoor_party (Failed)
+N32  KILLED   [D85] the kill loop stops one member short
+     4/4 Test #121: a4_parity2_d85_trapdoor_party ....***Failed    0.06 sec | 121 - a4_parity2_d85_trapdoor_party (Failed)
+N33  KILLED   [D85] an already dead member is skipped (the original rewrites it)
+     4/4 Test #121: a4_parity2_d85_trapdoor_party ....***Failed    0.06 sec | 121 - a4_parity2_d85_trapdoor_party (Failed)
+N34  KILLED   [D85] the kill loop is capped at six
+     4/4 Test #121: a4_parity2_d85_trapdoor_party ....***Failed    0.07 sec | 121 - a4_parity2_d85_trapdoor_party (Failed)
+N35  KILLED   [D85] the device counts the roster's bursts again
+     3/4 Test  #89: a3_03_sfx_runtime ................***Failed    0.70 sec | 89 - a3_03_sfx_runtime (Failed)
+T30  KILLED   [D85] reference: the wipe runs over the roster again
+     vitest
+T31  KILLED   [D85] reference: the wipe overshoots the party by one
+     vitest
+T32  KILLED   [D85] reference: an already dead member is skipped
+     vitest
+T33  SURVIVED [D85] reference: the wipe is capped at six
+     
+restored tree [D85]: native GREEN ; reference GREEN 
+
+A4-PARITY2 mutations: 9/10 killed
+
+Note (A4-PARITY2 review): the first run left T33 (reference: the wipe capped at six) SURVIVED -- a party never exceeds six, so only a synthetic party size above six can tell. The test 'no cap at six' was added (party size 8 of 16 kills eight) and `a4_parity2_mutation_check.py build-a4-parity2 T33` re-run: T33 KILLED, restored tree GREEN. Final: 10 / 10.

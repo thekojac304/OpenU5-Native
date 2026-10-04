@@ -1,0 +1,9 @@
+RED D1 party 2 of a roster of 5: the party dies; the three inn companions are byte-identical (statuses now DDD, want GSP)
+RED D2 the stock save shape (party 3, roster 16): 16 dead, 0 alive (want 3 / 13)
+RED D3 party == roster: all three die; a party of 6 in a roster of 16 kills exactly six (16)
+RED D4 'S', 'P' and a dead member with HP 7 inside the party all end HP 0 / 'D'; an outside 'S' is untouched
+GREEN D5 only HP and status are written: max HP, MP, experience and level are untouched
+RED D6 party size 0 writes nothing; party 6 over a roster of 2 and party 17 over 16 are clamped (no out-of-bounds write)
+GREEN D7 the whole 32x32 map becomes lava (143), the objects of this floor are erased, one MapChanged + one PartyChanged, PartyKilled
+GREEN D8 control: another location kills nobody
+8 checks, 5 failures

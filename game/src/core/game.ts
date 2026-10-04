@@ -2664,8 +2664,10 @@ export class Game {
    *
    *  · **Stonegate (0x1D) → TPK** (0x0fa0-0x1037): el mapa 32×32 ENTERO a lava
    *    (`repne stosb` de 0x400 bytes de 0x8F en 0x6608), la tabla de objetos/actores a
-   *    cero (0x100 bytes en 0x5c5a) y TODO el roster a HP 0 / estado 'D'
-   *    (`[0x55b8+i*0x20]=0` y `[0x55b3+i*0x20]=0x44`, stride 0x20).
+   *    cero (0x100 bytes en 0x5c5a) y el PARTY (índices 0 .. g_party_size-1; A4-PARITY2 D-85,
+   *    antes el roster entero) a HP 0 / estado 'D' (`[0x55b8+i*0x20]=0` y `[0x55b3+i*0x20]=0x44`,
+   *    stride 0x20). El bucle 0x0ff9-0x103a lee el BYTE [0x585b] en cada vuelta: los compañeros
+   *    aparcados en una posada (índice >= g_party_size) ni se leen ni se escriben.
    *    ★ Por qué Stonegate y no otra: es la ÚNICA localización con trampillas que tiene
    *    UNA SOLA planta (medido sobre smallmaps.json: z=[0], frente a z=[-1,0] en Yew,
    *    z=[-1..3] en Blackthorn y z=[-1,0,1] en Serpent's Hold). No hay dónde caer, y la
@@ -2674,7 +2676,12 @@ export class Game {
    *  · **resto → bajar una planta** (0x103c `dec [g_floor]` + recarga 0x1044). El
    *    `dec` es de BYTE y sin comprobación: 0 → 0xFF, que es el z = −1 de los sótanos.
    *
-   * En toda la rama NO hay una sola tirada de RNG.
+   * La cola del TPK (0x0fa0-0x1037) no tira RNG. ⚠ A4-PARITY2 (2026-10-03): la frase anterior
+   * «en toda la rama no hay RNG» era FALSA para el binario: ANTES de la comparación con la
+   * localización 0x1d, TODA trampilla (cada vuelta de una caída encadenada y también Stonegate)
+   * corre K:0x5910 (redibujo del visor + tirada de viento) y K:0x2AA8 (`party_random_damage`:
+   * rand(1,8) a cada miembro vivo), que este puerto aún omite. Registrado como D-90, NO corregido
+   * aquí (ver native/core/a4-parity2-findings/D85-FINAL.md §2.2).
    */
   private fallThroughTrapdoor(events: GameEvent[]): "fell" | "tpk" | "none" {
     const loc = this.state.position.location;
@@ -2719,8 +2726,11 @@ export class Game {
     this.state.worldObjects = (this.state.worldObjects ?? []).filter(
       (o) => o.location !== location || o.floor !== floor,
     );
-    // 0x0ff6-0x1037: HP 0 y estado 'D' a TODO el roster (no sólo al party).
-    for (const ch of this.state.characters) {
+    // 0x0ff9-0x103a: HP 0 y estado 'D' a los `g_party_size` primeros (el byte [0x585b] se relee en
+    // cada vuelta; sin tope de 6; sin filtro de estado: 'S', 'P' y un 'D' con HP también). Los
+    // compañeros del roster fuera del grupo NO se tocan. A4-PARITY2 D-85: antes recorría el roster
+    // entero. Escritura directa (no `applyDamage`): el original es un guion, no daño.
+    for (const ch of this.state.characters.slice(0, this.state.partySize)) {
       ch.currentHp = 0;
       ch.status = "D";
     }

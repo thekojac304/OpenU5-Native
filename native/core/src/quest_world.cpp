@@ -232,7 +232,10 @@ TrapdoorOutcome quest_trapdoor(CommandContext &c,EventSink sink){
         for(int y=0;y<32;++y)for(int x=0;x<32;++x)s->volatile_tile(s->context,x,y,143);
         if(c.terrain){c.terrain->wiped=true;c.terrain->wipe_map=g.position.map;c.terrain->wipe_tile=143;}
         for(size_t i=s->count(s->context);i>0;--i)if(here(s->read(s->context,i-1),g))s->erase(s->context,i-1);
-        for(int i=0;i<g.party.character_count;++i){g.party.characters[i].current_hp=0;g.party.characters[i].status='D';}
+        // A4-PARITY2 D-85: TOWN 0x0ff9-0x103a loops over the BYTE [0x585b] (party size), re-read each pass: roster indices 0 .. party_size-1
+        // only, no status filter, no cap at 6. Inn companions beyond the party are not read or written. (The clamp to character_count guards a short
+        // synthetic roster / a corrupt party_size; the original has none.)
+        for(int i=0;i<g.party.party_size && i<g.party.character_count;++i){g.party.characters[i].current_hp=0;g.party.characters[i].status='D';}
         event(sink,GameEventKind::MapChanged);event(sink,GameEventKind::PartyChanged);return TrapdoorOutcome::PartyKilled;
     }
     auto below=g.position.map;--below.floor;if(!floor_exists(c.world,below))return TrapdoorOutcome::None;

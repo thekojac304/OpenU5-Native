@@ -45,6 +45,12 @@ GROUPS = {
         generators=[('generate-shop-fixtures.ts', ['--check']), ('generate-shop-flow-fixtures.ts', ['--check']),
                     ('generate-magic-fixtures.ts', ['--check'])],
     ),
+    'D85': dict(
+        native_targets=['a4_parity2_d85_trapdoor_party', 'a3_03_sfx_runtime', 'turn_parity_tests', 'command_parity_tests'],
+        native_tests=['a4_parity2_d85_trapdoor_party', 'a3_03_sfx_runtime', 'turn_parity', 'command_parity'],
+        vitest=['tests/a4-parity2-d85-trapdoor-party.test.ts', 'tests/trapdoor-fall.test.ts'],
+        generators=[('generate-turn-fixtures.ts', ['--check'])],
+    ),
 }
 
 MUTANTS = {
@@ -134,6 +140,33 @@ MUTANTS = {
             'const n = state.partySize ?? state.characters.length;\n  let revived = 0;', 'const n = state.characters.length;\n  let revived = 0;')]),
     'T16': ('D83', 'reference: the threshold is karma < 99', [(TS + 'magic/cast.ts', '  if (karma < 98) {\n    target.exp', '  if (karma < 99) {\n    target.exp')]),
     'T17': ('D83', 'reference: the cut rounds', [(TS + 'magic/cast.ts', 'Math.floor((target.exp * karma) / 100)', 'Math.round((target.exp * karma) / 100)')]),
+    # ---------------------------------------------------------------- D-85 native
+    'N30': ('D85', 'the kill loop runs over the roster again', [(SRC + 'quest_world.cpp',
+            'for(int i=0;i<g.party.party_size && i<g.party.character_count;++i){g.party.characters[i].current_hp=0;',
+            'for(int i=0;i<g.party.character_count;++i){g.party.characters[i].current_hp=0;')]),
+    'N31': ('D85', 'the kill loop overshoots the party by one', [(SRC + 'quest_world.cpp',
+            'for(int i=0;i<g.party.party_size && i<g.party.character_count;++i){g.party.characters[i].current_hp=0;',
+            'for(int i=0;i<=g.party.party_size && i<g.party.character_count;++i){g.party.characters[i].current_hp=0;')]),
+    'N32': ('D85', 'the kill loop stops one member short', [(SRC + 'quest_world.cpp',
+            'for(int i=0;i<g.party.party_size && i<g.party.character_count;++i){g.party.characters[i].current_hp=0;',
+            'for(int i=0;i<g.party.party_size-1 && i<g.party.character_count;++i){g.party.characters[i].current_hp=0;')]),
+    'N33': ('D85', 'an already dead member is skipped (the original rewrites it)', [(SRC + 'quest_world.cpp',
+            '{g.party.characters[i].current_hp=0;g.party.characters[i].status=\'D\';}\n        event(sink,GameEventKind::MapChanged)',
+            '{if(g.party.characters[i].status==\'D\')continue;g.party.characters[i].current_hp=0;g.party.characters[i].status=\'D\';}\n        event(sink,GameEventKind::MapChanged)')]),
+    'N34': ('D85', 'the kill loop is capped at six', [(SRC + 'quest_world.cpp',
+            'for(int i=0;i<g.party.party_size && i<g.party.character_count;++i){g.party.characters[i].current_hp=0;',
+            'for(int i=0;i<g.party.party_size && i<6 && i<g.party.character_count;++i){g.party.characters[i].current_hp=0;')]),
+    'N35': ('D85', "the device counts the roster's bursts again", [('native/targets/tdeck/main/alpha_runtime.cpp',
+            'int32_t(game_.party.party_size)); // A4-PARITY2 D-85', 'int32_t(game_.party.character_count)); // A4-PARITY2 D-85')]),
+    # ---------------------------------------------------------------- D-85 reference
+    'T30': ('D85', 'reference: the wipe runs over the roster again', [(TS + 'game.ts',
+            'for (const ch of this.state.characters.slice(0, this.state.partySize)) {\n      ch.currentHp = 0;', 'for (const ch of this.state.characters) {\n      ch.currentHp = 0;')]),
+    'T31': ('D85', 'reference: the wipe overshoots the party by one', [(TS + 'game.ts',
+            'this.state.characters.slice(0, this.state.partySize)) {\n      ch.currentHp = 0;', 'this.state.characters.slice(0, this.state.partySize + 1)) {\n      ch.currentHp = 0;')]),
+    'T32': ('D85', 'reference: an already dead member is skipped', [(TS + 'game.ts',
+            'this.state.characters.slice(0, this.state.partySize)) {\n      ch.currentHp = 0;', 'this.state.characters.slice(0, this.state.partySize)) {\n      if (ch.status === "D") continue;\n      ch.currentHp = 0;')]),
+    'T33': ('D85', 'reference: the wipe is capped at six', [(TS + 'game.ts',
+            'this.state.characters.slice(0, this.state.partySize)) {\n      ch.currentHp = 0;', 'this.state.characters.slice(0, Math.min(6, this.state.partySize))) {\n      ch.currentHp = 0;')]),
 }
 
 ENV = dict(os.environ, PATH=BIN + os.pathsep + os.environ['PATH'])

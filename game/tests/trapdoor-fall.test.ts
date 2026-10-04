@@ -172,7 +172,7 @@ describeConAssets([DS_STRINGS], "trampilla en STONEGATE: el TPK (TOWN 0x0fa0-0x1
     }
   });
 
-  it("★ TODO el roster queda a HP 0 y estado 'D' (0x0ff6-0x1037)", () => {
+  it("★ TODO el PARTY queda a HP 0 y estado 'D' (0x0ff9-0x103a; el roster fuera del grupo NO: a4-parity2-d85-trapdoor-party.test.ts)", () => {
     const { game, state } = townGame(STONEGATE, [0], [{ z: 0, x: 10, y: 10 }]);
     game.pass();
     for (const ch of state.characters) {

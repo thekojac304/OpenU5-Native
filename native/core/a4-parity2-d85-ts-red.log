@@ -1,0 +1,14 @@
+ ❯ tests/a4-parity2-d85-trapdoor-party.test.ts (7 tests | 5 failed) 12ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/a4-parity2-d85-trapdoor-party.test.ts > D-85: the Stonegate trapdoor kills indices 0 .. party_size-1 only (TOWN 0x0ff9-0x103a) > party 2 of a roster of 5: the party dies, the three inn companions are byte-id
+AssertionError: expected '[{"name":"Inn1","gender":11,"class":"…' to be '[{"name":"Inn1","gender":11,"class":"…' // Object.is equality
+ FAIL  tests/a4-parity2-d85-trapdoor-party.test.ts > D-85: the Stonegate trapdoor kills indices 0 .. party_size-1 only (TOWN 0x0ff9-0x103a) > the stock save shape: party 3, roster 16 -> records 3..15 stay alive
+AssertionError: expected false to be true // Object.is equality
+ FAIL  tests/a4-parity2-d85-trapdoor-party.test.ts > D-85: the Stonegate trapdoor kills indices 0 .. party_size-1 only (TOWN 0x0ff9-0x103a) > party == roster: everyone dies (no under-kill); a party of 6 in a roster of 16
+AssertionError: expected 'DDDDDDDDDDDDDDDD' to be 'DDDDDDGGGGGGGGGG' // Object.is equality
+ FAIL  tests/a4-parity2-d85-trapdoor-party.test.ts > D-85: the Stonegate trapdoor kills indices 0 .. party_size-1 only (TOWN 0x0ff9-0x103a) > party 1 of 3: member 0 dies, the companions live
+AssertionError: expected 'DDD' to be 'DGG' // Object.is equality
+ FAIL  tests/a4-parity2-d85-trapdoor-party.test.ts > D-85: the Stonegate trapdoor kills indices 0 .. party_size-1 only (TOWN 0x0ff9-0x103a) > no status filter inside the party: 'S', 'P' and an already dead member with HP
+AssertionError: expected [ 'D', +0 ] to deeply equal [ 'S', 50 ]
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)

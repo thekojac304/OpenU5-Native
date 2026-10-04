@@ -3801,7 +3801,7 @@ void AlphaRuntime::present_audio(const openu5::GameEvent &e){
         // TOWN 0x0f96: only location 0x1d's trapdoor plays the falling ramp,
         // then one burst per member as it dies ([0x585b] members).
         if(e.text&&std::strcmp(e.text,"A TRAPDOOR!")==0&&game_.position.map.location==29)
-            audio_.play_sfx(openu5::SfxId::TrapdoorFall,int32_t(game_.party.character_count));
+            audio_.play_sfx(openu5::SfxId::TrapdoorFall,int32_t(game_.party.party_size)); // A4-PARITY2 D-85: [0x585b], not the roster
         return;
     }
     if(e.kind!=openu5::GameEventKind::Sfx)return;

@@ -2220,6 +2220,11 @@ if(BUILD_TESTING)
   target_link_libraries(a4_parity2_d83_d84_resurrect PRIVATE openu5_core)
   target_compile_features(a4_parity2_d83_d84_resurrect PRIVATE cxx_std_17)
   add_test(NAME a4_parity2_d83_d84_resurrect COMMAND a4_parity2_d83_d84_resurrect)
+  # A4-PARITY2 D-85: the location-29 trapdoor kills indices 0 .. party_size-1, not the roster.
+  add_executable(a4_parity2_d85_trapdoor_party tests/a4_parity2_d85_trapdoor_party_test.cpp)
+  target_link_libraries(a4_parity2_d85_trapdoor_party PRIVATE openu5_core)
+  target_compile_features(a4_parity2_d85_trapdoor_party PRIVATE cxx_std_17)
+  add_test(NAME a4_parity2_d85_trapdoor_party COMMAND a4_parity2_d85_trapdoor_party)
   # Its device half: the REAL AlphaRuntime starving on the overworld, then in
   # Deceit through the live dungeon turn (wanderers, corridor fights), Alt+S/L.
   add_executable(a4_enh2_preservation_runtime

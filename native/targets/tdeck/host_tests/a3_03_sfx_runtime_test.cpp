@@ -811,6 +811,16 @@ int main(int argc, char **argv) {
         h.message("A TRAPDOOR!");
         const bool trap = synth.count(SfxId::TrapdoorFall) == 1 && synth.subs.back().param == 2;
         check(trap, "W1 location 29's trapdoor (TOWN 0x0f96) plays the 28 s fall and a burst per member");
+        {
+            // A4-PARITY2 D-85: the bursts follow [0x585b] (the party), not the roster -- two inn companions
+            // parked beyond the party get none (TOWN 0x1012 sits inside the party-bounded loop).
+            auto &g2 = h.rt->game();
+            g2.party.character_count = 5;
+            g2.party.party_size = 2;
+            h.message("A TRAPDOOR!");
+            check(synth.count(SfxId::TrapdoorFall) == 2 && synth.subs.back().param == 2,
+                  "W1b the trapdoor's bursts count the party (2 of a roster of 5), not the roster");
+        }
         ShopSession healer{};
         healer.type = ShopType::Healer;
         ShopResult done{true, "It is done."}, need{false, "Thou hast no need of this art!"};

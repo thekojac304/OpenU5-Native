@@ -1,0 +1,4 @@
+GREEN W1 world messages sound where the binary does, and only there (Docked!, the potion's Poof!, a plain trapdoor: mute)
+GREEN W1 location 29's trapdoor (TOWN 0x0f96) plays the 28 s fall and a burst per member
+RED W1b the trapdoor's bursts count the party (2 of a roster of 5), not the roster
+A3-03 sfx runtime: 46/47 checks

@@ -113,6 +113,11 @@ Efectos por turno consumido (antes del housekeeping 0x10D0), en orden:
   ==0xF (1/16) → despierta ('S'→'G'). Una tirada por cada 'S', no sólo el miembro 0.
 - **Tile de daño** 0x8C (Blackthorn exec) / 0xBC / 0x8F: corre un tick de viento
   KERNEL 0x5910 extra (@0x0F8A/0x10BA) + `party_random_damage`.
+  > **A4-PARITY2 D-85 (2026-10-03) — relabel and completion.** Disassembled again: tile **0x8C is the TRAPDOOR** (`cmp ax,0x8c` @0x0F63), not a
+  > "damage tile"; the prologue @0x0F8A `call K:0x5910` + @0x0F8D `call K:0x2AA8` (`party_random_damage`) runs for EVERY trapdoor, before the
+  > `cmp [g_location],0x1d` test at 0x0F96, and the Burning twin (tiles 0xBC / 0x8F, @0x10BA/0x10C4) has the order wind, message, damage. The ports
+  > omit the prologue (recorded as D-90, not fixed). The location-29 kill loop @0x0FF9-0x103A is bounded by the BYTE [0x585b] (party size), not the
+  > roster: indices 0..party_size-1, HP := 0 and status := 'D', no status filter, no cap (fixed by D-85). `native/core/a4-parity2-findings/D85-FINAL.md`.
 - **Pantano de pueblo** (tile 4) a pie (0x1050/0x1056): por miembro no-'D'/'P'
   `rand(0,29)` @0x108D; si `> DEX` → 'P'. ⚠️ **RANGO DISTINTO del exterior**
   (`rand(1,30)`): span 30 empezando en 0, no en 1 → función aparte `townSwampPoison`,
