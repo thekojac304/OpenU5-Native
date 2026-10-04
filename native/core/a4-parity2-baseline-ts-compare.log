@@ -1,0 +1,24 @@
+{'numTotalTests': 7735, 'numPassedTests': 7532, 'numFailedTests': 97, 'numPendingTests': 106, 'numTodoTests': 0}
+assertion-level fails: RC1 97 | baseline 97
+only in baseline []
+only in RC1 []
+assertion-level FAIL set: IDENTICAL
+suites that fail to load (18, not in the saved baseline):
+  /tests/censo-sombra-mercader.test.ts :: <FILE-LEVEL FAILURE> Invalid or unexpected token
+  /tests/espejo-anchors.test.ts :: <FILE-LEVEL FAILURE> Invalid or unexpected token
+  /tests/espejo-clasif-discrepan.test.ts :: <FILE-LEVEL FAILURE> Invalid or unexpected token
+  /tests/espejo-costura-interna-banner.test.ts :: <FILE-LEVEL FAILURE> ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Nativ
+  /tests/espejo-dedupe-desmonte.test.ts :: <FILE-LEVEL FAILURE> Invalid or unexpected token
+  /tests/espejo-desfase-derivador.test.ts :: <FILE-LEVEL FAILURE> Invalid or unexpected token
+  /tests/espejo-dungeon-filter.test.ts :: <FILE-LEVEL FAILURE> Invalid or unexpected token
+  /tests/espejo-dungeon-ops.test.ts :: <FILE-LEVEL FAILURE> Invalid or unexpected token
+  /tests/espejo-int-loc2.test.ts :: <FILE-LEVEL FAILURE> ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Nativ
+  /tests/espejo-int-resto.test.ts :: <FILE-LEVEL FAILURE> ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Nativ
+  /tests/espejo-latentes-e2.test.ts :: <FILE-LEVEL FAILURE> Invalid or unexpected token
+  /tests/espejo-tecleos-parciales.test.ts :: <FILE-LEVEL FAILURE> Invalid or unexpected token
+  /tests/espejo-underworld-exit.test.ts :: <FILE-LEVEL FAILURE> Invalid or unexpected token
+  /tests/f6-ventana24-predicados.test.ts :: <FILE-LEVEL FAILURE> Invalid or unexpected token
+  /tests/intro-sonidos-220.test.ts :: <FILE-LEVEL FAILURE> ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Nativ
+  /tests/lighthouse-beam.test.ts :: <FILE-LEVEL FAILURE> ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Nativ
+  /tests/overworld-ai-replay.test.ts :: <FILE-LEVEL FAILURE> ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Nativ
+  /tests/ranged-room-drive-r15.test.ts :: <FILE-LEVEL FAILURE> ENOENT: no such file or directory, open 'C:\Dev\OpenU5-Nativ

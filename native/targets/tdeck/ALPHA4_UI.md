@@ -3555,3 +3555,36 @@ Not flashed, not tagged, not pushed. **This is the image for the §15.10 retest*
 - Commit 1 `6b6ab8a4`: the fix, `a4_rc3_dungeon_music_runtime` and its CMake target, `PROJECT_VER`, §15, the host logs (`native/core/a4-rc3-{host-build,host-ctest,red-first,green}.log`).
 - Commit 2: the RC3 build, packaging, guard, size and identity logs (`native/core/a4-rc3-{fw-*,pre-fw-*,elf-checks,pre-elf-checks,package,identity}.log`), §15.12 – §15.13, the RC3 rows of `ALPHA4.md` and `LAUNCHER.md`.
 - Not tagged, not pushed, not flashed.
+
+## 16. A4-PARITY2 — the post-Alpha-4 parity cleanup (2026-10-03)
+
+One consolidated parity batch for the divergences carried forward in §14.5: D-89, D-83 / D-84, D-85, D-86, D-87, D-88, D-82 and the two small §11.15 items. **Parity only**: no feature, cheat, difficulty option or presentation change. Each fix is proven from the 1988 binary first, made in the TypeScript reference first where the reference is wrong, then in native, with RED-first tests, a mutation campaign and a token-level account of every corpus that moves. Order is §14.5's own: D-89, D-83 / D-84, D-85, D-86, D-87, D-88, D-82, then the small items. One logical commit each; nothing is pushed.
+
+### 16.1 Baseline (before any production change)
+
+| | |
+|---|---|
+| **HEAD** | `1783256f2af85136c183434388cbab98262b440e` (Alpha 4 RC3 records; RC3 image `4.0.0-alpha4-rc3-debug`, `Git 6b6ab8a4c378`, SHA-256 `9fd7fc8b…d542`) |
+| **Tags at HEAD** | none (the Alpha 4 tags are `alpha4-ui2-hardware-validated`, `alpha4-end1-hardware-validated`; RC2 / RC3 are untagged by decision) |
+| **Working tree** | clean except the untracked `native/core/a4-release-ctest.log` — a **truncated** earlier release-ctest run (it stops at test 182 of 192). Left untouched, as instructed; it is not evidence of anything |
+| **Host suite** | fresh configure + build in `native/core/build-a4-parity2-baseline` (1,596 steps, 1 warning line: the known GCC 16 `-Wstringop-overflow` false positive in w64devkit's own header), then serial `ctest`: **192 / 192 passed, 265.93 s** (`native/core/a4-parity2-baseline-{configure,build,ctest}.log`) |
+| **TypeScript** | `tsc --noEmit` clean (`a4-parity2-baseline-tsc.log`); the vitest baseline is in §16.2 |
+| **Release candidate** | RC3 is the current Alpha 4 candidate (§15.12); its hardware status is unchanged by this batch until a new image is built and run (§16.12) |
+
+The baseline build directory is kept pristine at HEAD so that every RED-first claim below can be re-run against it.
+
+### 16.2 TypeScript baseline
+
+`tsc --noEmit` clean. The whole `game/` vitest run (`npx vitest run`, 7,735 tests: 7,532 passed, **97 failed**, 106 pending) has the **identical FAIL set** to the saved A3-HF10 baseline (97 assertion-level failures, the environment-bound set the toolchain memory warns about; `a4-parity2-baseline-ts-compare.log`, set saved as `native/core/a4-parity2-baseline-ts-fails.txt`) plus the same 18 suites that fail to *load* (a missing git-ignored input or an unparsable generated file). Every later TypeScript comparison in this section compares **that set**, never a total.
+
+### 16.3 The investigation (read-only, before any change)
+
+Nine reconciled derivations, one per item, sit in `native/core/a4-parity2-findings/` (`*-FINAL.md`, with the two or three independent blind reports each was reconciled from, `*-A/B/C.md`). Every binary fact in this section was re-disassembled by the reconciler of its item with `re/tools/dis16.py`, with positive controls, and the three most consequential agreed claims of each were attacked directly. They are the evidence basis of §16.4 onward; each item's section below quotes only what its fix depends on.
+
+**Tooling correction found by all nine.** The overlay near-call base table in `re/tools/callers_banda.py` — and the table quoted in this batch's brief — is **wrong for 10 to 15 overlays**. Fitted by the kernel-prologue landing test (and confirmed by the kernel thunk targets), the bases are: TOWN, MAINOUT, **DUNGEON 0x81D0**; INTRO 0x81C0; **OUTSUBS**, NPC, SHOPPES, **COMBAT**, **BLCKTHRN**, ENDGAME, LOOKOBJ, DNGLOOK 0xA290; CMDS, SJOG, TALK, **CAST 0xBF80**; CAST2, ZSTATS, FONT, **COMSUBS, SHOPPES2, SHOPPES3 0xE1E0**. The stock tool therefore misses most callers of a kernel routine (`callers_banda.py 0x7ef6` prints one of the four callers of `resurrect_apply`). The tool is **not changed** by this batch (it is not production code and the brief said to record, not fold in); every census below was redone with fitted bases. Recorded as D-97 (§16.13).
+
+**Evidence provenance caveat (D-82).** The tree's `original/` set is *The Exodus Project "Ultima V Upgrade 1.0" (2001)*: `FONT`, `INTRO`, `MAINOUT`, `TOWN`, `DUNGEON`, `ENDGAME` and `ULTIMA.EXE` are the patched files (`Files.txt`, `History.txt`: music changes only), `OUTSUBS`, `CAST2`, `CMDS`, `SJOG` are the 1996 originals. Everything below that depends on those files is a derivation from the Upgrade's code; `History.txt` documents no save or object-table change, so it is almost certainly the 1988 logic, but a pristine-1988 diff is impossible here.
+
+### 16.4 Scope discipline: what this batch does and does not fix
+
+The investigations found, besides the scoped items, further divergences. **None is fixed here** (they would widen the batch, move other corpora, or need a decision); each is recorded in §16.13 as its own row with its evidence, and none changes what an Original-mode player sees unless its own batch is run. The only exceptions are changes a scoped item *directly requires*, listed per item.
