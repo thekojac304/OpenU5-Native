@@ -1,0 +1,24 @@
+== a4_enh1_preservation_runtime: pre-fix HEAD binary (built from 1783256f, build-a4-parity2-baseline; the old goldens)
+golden walk=0x95f112a8ec6bde80 fights=3 combat_steps=207 poisoned_hp=378 turns=26
+golden save_load=0x896002146cbe321e food=60
+== a4_enh1_preservation_runtime: tree with D-88, re-recorded goldens
+golden walk=0xaabf7bf7439a13e4 fights=3 combat_steps=207 poisoned_hp=378 turns=26
+golden save_load=0xbcbc27045634fa0b food=60
+GREEN P1 the night walk meets at least one encounter (the live spawn path ran)
+GREEN P2 the poisoned ally lost HP on the walk (the poison tick ran)
+GREEN P3 Original: the night walk == pre-A4-ENH1 bit for bit
+GREEN P4 Original: Alt+S / Alt+L / the next step == pre-A4-ENH1
+== a4_enh2_preservation_runtime: pre-fix HEAD binary (built from 1783256f, build-a4-parity2-baseline; the old goldens)
+golden walk=0xc1145ddbc397daaf avatar_hp_lost=49 turns=210
+golden dungeon=0xbe4274230b91b8c0 entered=1 fights=2 combat_steps=759 floor=3 food=0
+golden save_load=0x272ed77a587912fb
+== a4_enh2_preservation_runtime: tree with D-88, re-recorded goldens
+golden walk=0x6f389ff229d27700 avatar_hp_lost=50 turns=256
+golden dungeon=0x52a4fd17753c2a5a entered=1 fights=2 combat_steps=437 floor=3 food=0
+golden save_load=0xa7dae91af4c0b9de
+GREEN W1 the starving walk took HP (the live starvation path ran)
+GREEN D1 the party entered Deceit through its entrance
+GREEN D2 a wanderer ambushed the party (the live re-arm, walk and corridor fight ran)
+GREEN W2 Original: the starving overworld walk == pre-A4-ENH2 bit for bit
+GREEN D3 Original: the dungeon walk, its wanderer and fights == pre-A4-ENH2 bit for bit
+GREEN S1 Original: Alt+S / Alt+L / the next step == pre-A4-ENH2

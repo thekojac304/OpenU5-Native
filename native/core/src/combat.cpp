@@ -242,6 +242,19 @@ struct Engine {
         if (inside(a.position.x, a.position.y))
             s.loot[a.position.y * 11 + a.position.x] = 30;
     }
+    // A4-PARITY2 D-88. COMBAT.OVL 0x0c64-0x0c76: `inc byte [0x5882]; cmp byte [0x5882],0xa; jne` and, at 10, the byte is zeroed
+    // BEFORE the call and advance_clock(1) (kernel 0x4f7c) runs -- at the START of the activation (after the countdown reload,
+    // before the unit acts). The byte is SAVED.GAM +0x2DC (TurnState::combat_clock): nothing resets it at combat entry or exit.
+    // Equality with 8-bit wrap. Plain clock only: no world turn, no housekeeping, so no meal / starvation / poison in a fight.
+    // Inside an arena g_location is 0xFF: no sky context (the moon latch is skipped) and the midnight Shadowlord re-roll excludes
+    // no town; its draws come from the fight's own stream, in place in this stream's order.
+    void tick_combat_clock() {
+        if (++c.turn.combat_clock != 10)
+            return;
+        c.turn.combat_clock = 0;
+        Rand arena_rand{this, [](void *p, int32_t lo, int32_t hi) -> int32_t { return static_cast<Engine *>(p)->rand(lo, hi); }};
+        advance_clock(g, c.turn, 1, &arena_rand, nullptr, 0xFF);
+    }
     CombatActor *current() {
         if (combat_over(s))
             return nullptr;
@@ -263,6 +276,7 @@ struct Engine {
                 continue;
             a.counter = uint8_t(36 - a.speed);
             ++s.action_count;
+            tick_combat_clock();
             bool skip = false;
             if (player(a) && g.party.active_character != 255 &&
                 a.member != g.party.active_character)

@@ -68,6 +68,7 @@ const NPC_MET_OFFSET = 0x634;
 // y que TIENEN hueco en SAVED.GAM (se escriben a byte real, no al sidecar).
 const TRANSPORT_TILE_OFFSET = 0x2d6; // g_transport_tile (0x1C = a pie)
 const PREV_HOUR_OFFSET = 0x2da; // g_prev_hour (snapshot de hora)
+const COMBAT_CLOCK_OFFSET = 0x2dc; // g_cmb_action_count DS:0x5882 (A4-PARITY2 D-88: persistente, no local al combate)
 // ★ #176 — LATCH de fases lunares. `docs/formats/tlk-npc-dataovl-gam.md:172` declara que
 // DS:0x55A6 ES la imagen en RAM de SAVED.GAM (0x1060 B), luego el offset de fichero de
 // cualquier global de esa ventana es `addr - 0x55A6`: g_felucca_phase DS:0x5885 → +0x2DF y
@@ -978,6 +979,7 @@ export function exportNativeSave(
   // Campos con hueco en SAVED.GAM que el parser del extractor no lee (se escriben a byte real):
   if (state.transportTile !== undefined) gam[TRANSPORT_TILE_OFFSET] = state.transportTile & 0xff;
   if (state.prevHour !== undefined) gam[PREV_HOUR_OFFSET] = state.prevHour & 0xff;
+  if (state.combatClock !== undefined) gam[COMBAT_CLOCK_OFFSET] = state.combatClock & 0xff;
   if (state.feluccaPhase !== undefined) gam[FELUCCA_PHASE_OFFSET] = state.feluccaPhase & 0xff;
   if (state.trammelPhase !== undefined) gam[TRAMMEL_PHASE_OFFSET] = state.trammelPhase & 0xff;
   if (state.shrineQuestBitmap !== undefined) gam[SHRINE_QUEST_OFFSET] = state.shrineQuestBitmap & 0xff;
@@ -1067,6 +1069,8 @@ export function importNativeSave(gam: Uint8Array, sidecar: SaveSidecar): GameSta
   // Extras con hueco en SAVED.GAM (el parser de la ventana no los lee).
   state.transportTile = gam[TRANSPORT_TILE_OFFSET]!;
   state.prevHour = gam[PREV_HOUR_OFFSET]!;
+  // Sólo un byte NO nulo es estado (A4-PARITY2 D-88): `undefined` ≡ 0, igual que el documento nativo, que omite el cero.
+  if (gam[COMBAT_CLOCK_OFFSET]) state.combatClock = gam[COMBAT_CLOCK_OFFSET]!;
   // ★ #176: sólo se adopta un latch con byte de fase VÁLIDO ('0'..'7'). Un save cuyos dos
   // bytes valgan 0 —como `init.gam`, medido— no ha latcheado nunca: dejar los campos
   // `undefined` hace que los lectores caigan al cálculo por día en vez de propagar un

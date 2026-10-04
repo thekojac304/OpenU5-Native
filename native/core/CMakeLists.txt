@@ -2230,6 +2230,15 @@ if(BUILD_TESTING)
   target_link_libraries(a4_parity2_d87_crop_food_cap PRIVATE openu5_core)
   target_compile_features(a4_parity2_d87_crop_food_cap PRIVATE cxx_std_17)
   add_test(NAME a4_parity2_d87_crop_food_cap COMMAND a4_parity2_d87_crop_food_cap)
+  # A4-PARITY2 D-88: the combat clock -- one minute per ten unit activations (COMBAT 0x0C64-0x0C76), a counter that lives
+  # in SAVED.GAM (+0x2DC) and is not combat-local.
+  add_executable(a4_parity2_d88_combat_clock tests/a4_parity2_d88_combat_clock_test.cpp)
+  target_link_libraries(a4_parity2_d88_combat_clock PRIVATE openu5_core)
+  target_compile_features(a4_parity2_d88_combat_clock PRIVATE cxx_std_17)
+  add_test(NAME a4_parity2_d88_combat_clock COMMAND a4_parity2_d88_combat_clock
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../game/assets/init.gam"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../original/u5/ultima5/SAVED.GAM"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../original/u5/ultima5/SAVED.OOL")
   # Its device half: the REAL AlphaRuntime starving on the overworld, then in
   # Deceit through the live dungeon turn (wanderers, corridor fights), Alt+S/L.
   add_executable(a4_enh2_preservation_runtime

@@ -17,6 +17,10 @@ struct TurnState {
     int32_t skull_tree_day = 0;
     std::array<int32_t, 3> reagent_days{};
     int32_t felucca_phase = 0x30, trammel_phase = 0x30;
+    // A4-PARITY2 D-88: g_cmb_action_count, DS:0x5882 = SAVED.GAM +0x2DC (u8). COMBAT.OVL 0x0C64-0x0C76 counts every unit
+    // ACTIVATION and at 10 zeroes it and calls advance_clock(1). NOT combat-local: nothing initialises it at combat entry
+    // or exit; it lives in the saved window and survives fights, saves and loads (only a fresh INIT.GAM starts at 0).
+    uint8_t combat_clock = 0;
 };
 struct Rand {
     void *context;
@@ -76,7 +80,10 @@ struct TownTurnContext {
     TrapdoorOutcome (*on_trapdoor)(void *) = nullptr;
 };
 bool refresh_moon_phase_latch(GameState &, TurnState &, const SkyRefresh &, bool hour_changed);
-void advance_clock(GameState &, TurnState &, int32_t minutes, const Rand *rand = nullptr, const SkyRefresh *sky = nullptr);
+// `party_location` is g_location as the midnight Shadowlord re-roll sees it (0x5011): INT32_MIN = the live position;
+// inside an arena the binary has 0xFF there (A4-PARITY2 D-88), so no town is excluded.
+void advance_clock(GameState &, TurnState &, int32_t minutes, const Rand *rand = nullptr, const SkyRefresh *sky = nullptr,
+                   int32_t party_location = INT32_MIN);
 void apply_damage(GameState &, int32_t index, int32_t amount);
 // A4-ENH2: `starvation` -- the hunger site only -- scales each HP loss by the
 // difficulty's starvation share (rules_starvation_damage); the draws are the same.

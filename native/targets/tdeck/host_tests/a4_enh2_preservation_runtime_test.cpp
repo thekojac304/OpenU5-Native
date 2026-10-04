@@ -202,9 +202,9 @@ int main(int argc, char **argv) {
         arenas.push_back({owners.combat_map_views[i], owners.combat_sprites + i * 16});
 
     // Recorded on the unmodified tree (5e0a16eb), see the header comment.
-    constexpr uint64_t kWalk = 0xc1145ddbc397daafULL;
-    constexpr uint64_t kDungeon = 0xbe4274230b91b8c0ULL;
-    constexpr uint64_t kSaveLoad = 0x272ed77a587912fbULL;
+    constexpr uint64_t kWalk = 0x6f389ff229d27700ULL; // A4-PARITY2 D-88: re-recorded (was 0xc1145ddbc397daaf): fights in the overworld walk advance the clock, which moves the hourly starvation draws
+    constexpr uint64_t kDungeon = 0x52a4fd17753c2a5aULL; // A4-PARITY2 D-88: re-recorded (was 0xbe4274230b91b8c0): the dungeon section is re-seeded (see above) and its fights advance the clock
+    constexpr uint64_t kSaveLoad = 0xa7dae91af4c0b9deULL; // A4-PARITY2 D-88: re-recorded (was 0x272ed77a587912fb): same journey, same reason
 
     Run r;
     // W. A starving daytime walk: 2 minutes a step, an hour every 30 steps.
@@ -224,6 +224,10 @@ int main(int argc, char **argv) {
     // the same inputs.
     Fnv dng;
     r.g().food = 2;
+    // A4-PARITY2 D-88 (2026-10-03): fights advance the clock now, which moved the overworld walk's stream and with it the
+    // stream the dungeon section inherited; this scenario no longer met its wanderer (D2 red). Re-seeded here so it does (the
+    // seed was chosen by trying 3, 5, 7, 11, ...: 3 and 5 ambush twice, as the original did).
+    r.g().rng.seed(3);
     r.g().position.map = {0, 0};
     r.g().position.xy = {pack->location_x[kDeceit - 1], pack->location_y[kDeceit - 1]};
     set_quest_flag(r.g().quest, QuestFlag::Word33);

@@ -1,0 +1,8 @@
+RED K1 9 activations: 12:30 counter 0; the 10th: 12:30, counter 0, torch 50 (want 12:30 / 9 and 12:31 / 0 / torch 49); the tick is already done when the 10th unit is handed over, before it acts
+RED K2 11 / 19 / 20 / 21 / 30 activations: 12:31 / 12:31 / 12:32 / 12:32 / 12:33 and counter 1 / 9 / 0 / 1 / 0 -- wrong: 11->12:30/0 19->12:30/0 20->12:30/0 21->12:30/0 30->12:30/0; counter == activations mod 10 over 45 (12:30)
+RED K3 the counter survives a fight (9, then the next fight's first activation ticks); a loaded 7 ticks after 3; a loaded 255 wraps to 0 with no tick and ticks on the 11th; a loaded 12 ticks only at the 254th
+RED K4 12:59 -> 13:00 keeps prev_hour 12, torch and light -1; 100 activations at food 0 with a poisoned member change no food / HP / status / turn counter (ten minutes pass); the 06:00 crossed by a tick is swallowed by the next world advance, a 05:58 start sti
+RED K5 Time Stop: the tick only snapshots prev_hour (a pending flank is discarded), no minute, no torch; Quickness: 1 minute, not 0
+RED K6 the midnight Shadowlord re-roll draws from the fight's stream (the live seed is untouched) and absent slots draw nothing; with the live location 5 a first draw of 5 is rejected, and with g_location 0xFF (the arena) it is accepted
+RED K7 init.gam starts at 0; the byte is written to SAVED.GAM +0x2DC (0) and a load gives it back (0)
+7 checks, 7 failures

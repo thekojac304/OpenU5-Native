@@ -251,6 +251,8 @@ export type RuntimeNumberField =
   | "lightSpellMins"
   | "timeSpellTurns"
   | "prevHour"
+  /** A4-PARITY2 D-88 — g_cmb_action_count (.GAM +0x2DC): unit activations since the last combat-clock minute. */
+  | "combatClock"
   | "skullTreeFoundDay"
   /** ★ #176 — latch de fases lunares, BYTE CRUDO 0x30..0x37 (.GAM +0x2DF / +0x2E0). */
   | "feluccaPhase"

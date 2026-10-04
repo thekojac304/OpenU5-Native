@@ -22,7 +22,7 @@ bool refresh_moon_phase_latch(GameState &g, TurnState &s, const SkyRefresh &sky,
     s.felucca_phase = phase(i); s.trammel_phase = phase(i + 1);
     return true;
 }
-void advance_clock(GameState &g, TurnState &s, int32_t minutes, const Rand *rand, const SkyRefresh *sky) {
+void advance_clock(GameState &g, TurnState &s, int32_t minutes, const Rand *rand, const SkyRefresh *sky, int32_t party_location) {
     if (minutes == 0) {
         if (sky) refresh_moon_phase_latch(g, s, *sky, g.time.hour != s.prev_hour);
         return;
@@ -45,7 +45,7 @@ void advance_clock(GameState &g, TurnState &s, int32_t minutes, const Rand *rand
                     if (loc >= 128 || loc < 0) continue; // -1 encodes absent array entry.
                     int32_t next;
                     do { next = (*rand)(1,8); }
-                    while (next == g.position.map.location || std::find(s.shadowlord_locations.begin(), s.shadowlord_locations.end(), next) != s.shadowlord_locations.end());
+                    while (next == (party_location == INT32_MIN ? g.position.map.location : party_location) || std::find(s.shadowlord_locations.begin(), s.shadowlord_locations.end(), next) != s.shadowlord_locations.end());
                     loc = next;
                 }
             }

@@ -201,10 +201,15 @@ function clamp0(n: number): number {
  * El bucle EXTERIOR sí está acotado a 3 (0x504b `cmp [bp-4],3`); lo ilimitado es
  * el re-sorteo de cada ranura.
  */
-export function relocateShadowlordsAtMidnight(state: GameState, rand: RandFn): void {
+export function relocateShadowlordsAtMidnight(
+  state: GameState,
+  rand: RandFn,
+  /** g_location tal como lo ve 0x5011 `cmp [0x5893],di`. Dentro de un arena vale 0xFF (A4-PARITY2 D-88). */
+  partyLocation: number = state.position.location,
+): void {
   const locs = state.shadowlordLocs;
   if (!locs) return;
-  const party = state.position.location;
+  const party = partyLocation;
   for (let i = 0; i < 3; i++) {
     const cur = locs[i];
     if (cur === undefined || cur >= 0x80) continue; // 0x4ffd/0x5002: ausente/destruido
@@ -300,6 +305,8 @@ export function advanceClock(
   minutes: number,
   rand?: RandFn,
   sky?: SkyRefreshCtx,
+  /** g_location para la exclusión del re-sorteo de medianoche (por defecto la posición viva; 0xFF en un arena). */
+  partyLocation?: number,
 ): void {
   if (minutes === 0) {
     // ★ #184 — CALCO del cero. El binario NO retorna: `0x4f84 cmp word ptr [bp+4],0 /
@@ -345,7 +352,7 @@ export function advanceClock(
       t.hour = 0;
       // 0x4FF5: re-sorteo de Shadowlords a medianoche. Sólo con el rand vivo
       // presente (los callers puros deterministas no lo pasan → sin re-roll).
-      if (rand) relocateShadowlordsAtMidnight(state, rand);
+      if (rand) relocateShadowlordsAtMidnight(state, rand, partyLocation);
       t.day++;
       if (t.day > 28) {
         t.day = 1;

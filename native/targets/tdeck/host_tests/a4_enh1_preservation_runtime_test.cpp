@@ -176,8 +176,8 @@ int main(int argc, char **argv) {
     pack = &owners;
 
     // Recorded on the unmodified tree (aae348ac), see the header comment.
-    constexpr uint64_t kWalk = 0x95f112a8ec6bde80ULL;
-    constexpr uint64_t kSaveLoad = 0x896002146cbe321eULL;
+    constexpr uint64_t kWalk = 0xaabf7bf7439a13e4ULL; // A4-PARITY2 D-88: re-recorded (was 0x95f112a8ec6bde80): fights now advance the clock; fights / combat steps / poisoned HP / turns are unchanged, the hash holds the clock minute
+    constexpr uint64_t kSaveLoad = 0xbcbc27045634fa0bULL; // A4-PARITY2 D-88: re-recorded (was 0x896002146cbe321e): same walk, same reason
 
     Run r;
     Fnv walk;

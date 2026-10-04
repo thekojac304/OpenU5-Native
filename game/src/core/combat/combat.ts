@@ -35,7 +35,7 @@ import { tileInfo } from "../tiles.js";
 // (ALWAYS_OPAQUE ya no se usa aquí: el LOS de proyectil pasó a 0x6a14 — ver isRangedPathClear)
 import type { Point } from "../world/pathfind.js";
 import { OriginalRng } from "../rng-original.js";
-import { RING_OF_REGENERATION, ringRegenSweep } from "../world/survival.js";
+import { RING_OF_REGENERATION, advanceClock, ringRegenSweep } from "../world/survival.js";
 import type { RandFn } from "../world/survival.js";
 import {
   chestTrap,
@@ -1200,7 +1200,8 @@ export class Combat {
       c.counter = (c.counter - 1) & 0xff;
       if (c.counter !== 0) continue;
       c.counter = initiativeReset(c.speed);
-      this.actionCount++; // g_5882: 1 minuto de juego cada 10 acciones (0c64)
+      this.actionCount++; // contador POR COMBATE que leen los generadores de fixtures (no es g_5882)
+      this.tickCombatClock(); // g_5882: 1 minuto de juego cada 10 activaciones (COMBAT 0x0c64-0x0c76)
       // Set Active Player en combate (COMBAT:0x063E 0666-067f): con g_active_char
       // != 0xFF, el turno de todo PJ que NO sea el activo se AUTO-PASA (call 0xda86;
       // ret) — sólo el miembro seleccionado es interpelado cada ronda. El countdown
@@ -1225,6 +1226,28 @@ export class Combat {
    * si g_active_char quedara apuntando a un ausente (el binario lo limpia al morir
    * el activo, 0x1574; aquí se replica en `kill`, y esto es defensa adicional).
    */
+  /**
+   * A4-PARITY2 D-88. COMBAT.OVL 0x0c64-0x0c76: `inc byte [0x5882]; cmp byte [0x5882],0xa; jne` y, al llegar a
+   * 10, `mov [0x5882],al (=0)` ANTES de la llamada y `advance_clock(1)` (kernel 0x4F7C). Corre al INICIO de la
+   * activación (tras recargar la cuenta atrás, antes de que la unidad actúe: sin texto, sin prompt, sin RNG de
+   * esa unidad). El byte es de SAVED.GAM (+0x2DC): NO se inicializa al entrar ni al salir del combate, sobrevive
+   * a los combates y a guardar/cargar; la comparación es por IGUALDAD con vuelta de 8 bits (un 11..255 cargado
+   * no marca hasta dar la vuelta). Es el reloj a secas: ni turno de mundo ni housekeeping, así que ninguna
+   * comida, inanición ni veneno ocurre dentro de un combate; la hora cruzada se cobra (o se traga) luego por
+   * el flanco `prevHour`. Dentro del arena g_location vale 0xFF: el re-sorteo de Shadowlords de medianoche no
+   * excluye ningún pueblo y el latch lunar no se refresca (sin `sky`). Sin `state.time` (arneses de fixtures
+   * mínimos) el gancho es inerte.
+   */
+  private tickCombatClock(): void {
+    const st = this.opts.state;
+    if (!st.time) return;
+    st.combatClock = ((st.combatClock ?? 0) + 1) & 0xff;
+    if (st.combatClock === 10) {
+      st.combatClock = 0;
+      advanceClock(st, 1, (lo, hi) => this.crng.randRange(lo, hi), undefined, 0xff);
+    }
+  }
+
   private skipsForActiveChar(c: Combatant): boolean {
     if (c.kind !== "player") return false; // enemigos actúan siempre
     const active = this.opts.state.activeCharacter;

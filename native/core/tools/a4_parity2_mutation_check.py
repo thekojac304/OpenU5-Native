@@ -63,6 +63,14 @@ GROUPS = {
         vitest=['tests/a4-parity2-d87-crop-cap.test.ts', 'tests/get-plates-direction-gate.test.ts', 'tests/get-torch-arena-375.test.ts'],
         generators=[],
     ),
+    'D88': dict(
+        native_targets=['a4_parity2_d88_combat_clock', 'gameplay_driver', 'quest_driver', 'persistence_driver', 'a4_enh1_preservation',
+                        'a4_enh2_preservation', 'a4_enh1_preservation_runtime', 'a4_enh2_preservation_runtime', 'a4_save3_pc_bridge_runtime'],
+        native_tests=['a4_parity2_d88_combat_clock', 'gameplay_parity', 'quest_parity', 'persistence_parity', 'a4_enh1_preservation',
+                      'a4_enh2_preservation', 'a4_enh1_preservation_runtime', 'a4_enh2_preservation_runtime', 'a4_save3_pc_bridge_runtime'],
+        vitest=['tests/a4-parity2-d88-combat-clock.test.ts'],
+        generators=[('generate-combat-fixtures.ts', ['--check']), ('generate-advanced-combat-fixtures.ts', ['--check'])],
+    ),
 }
 
 MUTANTS = {
@@ -225,6 +233,42 @@ MUTANTS = {
     'T53': ('D87', 'reference: the plates cap at 10000', [(TS + 'game.ts',
             'this.setVolatileTerrain(nx, ny, newTile);\n      this.state.food = addWordCapped(this.state.food, 1); // A4-PARITY2 D-87: SJOG 0x1A50 / 0x1ABE counter_add(&food, 1, 9999)',
             'this.setVolatileTerrain(nx, ny, newTile);\n      this.state.food = addWordCapped(this.state.food, 1, 10000);')]),
+    # ---------------------------------------------------------------- D-88 native
+    'N60': ('D88', 'the clock ticks at the 9th activation', [(SRC + 'combat.cpp', 'if (++c.turn.combat_clock != 10)', 'if (++c.turn.combat_clock != 9)')]),
+    'N61': ('D88', 'the clock ticks at the 11th activation', [(SRC + 'combat.cpp', 'if (++c.turn.combat_clock != 10)', 'if (++c.turn.combat_clock != 11)')]),
+    'N62': ('D88', 'a modulo test instead of equality with a reset (a loaded 12 ticks at the 8th activation, not the 254th)', [(SRC + 'combat.cpp',
+            'if (++c.turn.combat_clock != 10)', 'if (++c.turn.combat_clock % 10 != 0)')]),
+    'N63': ('D88', 'two minutes per tick', [(SRC + 'combat.cpp', 'advance_clock(g, c.turn, 1, &arena_rand, nullptr, 0xFF);', 'advance_clock(g, c.turn, 2, &arena_rand, nullptr, 0xFF);')]),
+    'N64': ('D88', 'the tick runs the housekeeping too (meals, starvation, poison in a fight)', [(SRC + 'combat.cpp',
+            'advance_clock(g, c.turn, 1, &arena_rand, nullptr, 0xFF);', 'advance_clock(g, c.turn, 1, &arena_rand, nullptr, 0xFF);\n        turn_housekeeping(g, c.turn, arena_rand);')]),
+    'N65': ('D88', 'the re-roll excludes the live location (g_location is not 0xFF in the arena)', [(SRC + 'combat.cpp',
+            'advance_clock(g, c.turn, 1, &arena_rand, nullptr, 0xFF);', 'advance_clock(g, c.turn, 1, &arena_rand, nullptr);')]),
+    'N66': ('D88', "the re-roll draws from the live stream, not the fight's", [(SRC + 'combat.cpp',
+            'return static_cast<Engine *>(p)->rand(lo, hi); }};', 'return static_cast<Engine *>(p)->g.rng.next(lo, hi).value; }};')]),
+    'N67': ('D88', 'only the player\'s activations are counted', [(SRC + 'combat.cpp', '            tick_combat_clock();\n', '            if (player(a)) tick_combat_clock();\n')]),
+    'N68': ('D88', 'combat entry resets the counter (it is not combat-local)', [(SRC + 'combat.cpp',
+            '    CombatActor *current() {\n        if (combat_over(s))', '    CombatActor *current() {\n        if (s.current < 0 && s.scan == 0 && s.action_count == 0) c.turn.combat_clock = 0;\n        if (combat_over(s))')]),
+    'N69': ('D88', 'the .GAM byte +0x2DC is never written', [(SRC + 'persistence.cpp',
+            '    put(b, 0x2dc, s.has("combatClock") ? s["combatClock"].integer() : 0);', '    (void)0;')]),
+    'N70': ('D88', 'an absent key leaves the template byte (it must write 0)', [(SRC + 'persistence.cpp',
+            '    put(b, 0x2dc, s.has("combatClock") ? s["combatClock"].integer() : 0);', '    if (s.has("combatClock")) put(b, 0x2dc, s["combatClock"].integer());')]),
+    'N71': ('D88', 'a load does not read the counter back', [(SRC + 'persistence.cpp',
+            'if (b[0x2dc])\n', 'if (false && b[0x2dc])\n')]),
+    'N72': ('D88', 'the document never carries the counter (restore ignores it)', [(SRC + 'save_core.cpp',
+            't.combat_clock = s.has("combatClock") ? uint8_t(s["combatClock"].integer()) : uint8_t(0);', 't.combat_clock = 0;')]),
+    # ---------------------------------------------------------------- D-88 reference
+    'T60': ('D88', 'reference: the clock ticks at the 9th activation', [(TS + 'combat/combat.ts', 'if (st.combatClock === 10) {', 'if (st.combatClock === 9) {')]),
+    'T61': ('D88', 'reference: the counter has no 8-bit wrap', [(TS + 'combat/combat.ts',
+            'st.combatClock = ((st.combatClock ?? 0) + 1) & 0xff;', 'st.combatClock = (st.combatClock ?? 0) + 1;')]),
+    'T62': ('D88', 'reference: two minutes per tick', [(TS + 'combat/combat.ts', 'advanceClock(st, 1, (lo, hi) =>', 'advanceClock(st, 2, (lo, hi) =>')]),
+    'T63': ('D88', 'reference: the re-roll excludes the live location', [(TS + 'combat/combat.ts',
+            'this.crng.randRange(lo, hi), undefined, 0xff);', 'this.crng.randRange(lo, hi), undefined);')]),
+    'T64': ('D88', 'reference: the counter is never written to SAVED.GAM', [(TS + 'saveNative.ts',
+            '  if (state.combatClock !== undefined) gam[COMBAT_CLOCK_OFFSET] = state.combatClock & 0xff;\n', '')]),
+    'T65': ('D88', 'reference: a load does not read the counter', [(TS + 'saveNative.ts',
+            '  if (gam[COMBAT_CLOCK_OFFSET]) state.combatClock = gam[COMBAT_CLOCK_OFFSET]!;\n', '')]),
+    'T66': ('D88', 'reference: the clock hook counts nothing without time-state guard (runs the tick before the count)', [(TS + 'combat/combat.ts',
+            '    st.combatClock = ((st.combatClock ?? 0) + 1) & 0xff;\n    if (st.combatClock === 10) {', '    if (st.combatClock === 10) {')]),
 }
 
 ENV = dict(os.environ, PATH=BIN + os.pathsep + os.environ['PATH'])

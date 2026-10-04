@@ -173,6 +173,12 @@ void capture_core(const GameState &g, const TurnState &t, Json &s) {
     }
 #define F(key, field) s[key] = J(t.field)
     F("prevHour", prev_hour);
+    // A4-PARITY2 D-88: written only when it differs from the default 0, so every Original document (no fight has ticked) stays
+    // byte-identical to the pre-D-88 one (the A4-ENH1 / ENH2 preservation goldens); the .GAM byte +0x2DC is always written.
+    if (t.combat_clock)
+        s["combatClock"] = J(int(t.combat_clock));
+    else
+        s.erase("combatClock");
     F("lightSpellMins", light_spell_minutes);
     F("drunkTurns", drunk_turns);
     F("transportTile", transport_tile);
@@ -235,6 +241,8 @@ Error restore_core(const Json &s, GameState &game, TurnState &turn) {
     for (auto key : {"feluccaPhase", "trammelPhase", "timeSpellTurns"})
         if (s.has(key) && !fits(s[key], 0, INT32_MAX))
             return Error::NativeDomain;
+    if (s.has("combatClock") && !fits(s["combatClock"], 0, 255)) // A4-PARITY2 D-88: one saved byte
+        return Error::NativeDomain;
     for (auto key : {"spellQuantities", "scrollQuantities", "potionQuantities", "reagentQuantities"}) {
         const size_t count = std::strcmp(key, "spellQuantities") == 0 ? 48 : 8;
         if (s[key].kind != J::Array || s[key].values.size() != count)
@@ -405,6 +413,7 @@ Error restore_core(const Json &s, GameState &game, TurnState &turn) {
         }
 #define F(key, field) t.field = int32_t(s[key].integer())
     F("prevHour", prev_hour);
+    t.combat_clock = s.has("combatClock") ? uint8_t(s["combatClock"].integer()) : uint8_t(0); // A4-PARITY2 D-88
     F("lightSpellMins", light_spell_minutes);
     F("drunkTurns", drunk_turns);
     F("transportTile", transport_tile);

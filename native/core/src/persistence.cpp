@@ -330,6 +330,10 @@ Error import_native(const uint8_t *b, size_t len, const J &side, J &out, bool ga
     for (auto f : optional_bytes)
         if (f.offset != 0x2df && f.offset != 0x2e0)
             s[f.name] = J(int(b[f.offset]));
+    // A4-PARITY2 D-88: g_cmb_action_count, DS:0x5882 = +0x2DC. A document key only when non-zero: capture_core omits the zero too,
+    // so capture(restore(document)) == document and every Original document stays byte-identical to the pre-D-88 one.
+    if (b[0x2dc])
+        s["combatClock"] = J(int(b[0x2dc]));
     if (b[0x2df] >= 0x30 && b[0x2df] <= 0x37 && b[0x2e0] >= 0x30 && b[0x2e0] <= 0x37) {
         s["feluccaPhase"] = J(int(b[0x2df]));
         s["trammelPhase"] = J(int(b[0x2e0]));
@@ -445,6 +449,7 @@ Error export_native(const J &s, const uint8_t *base, size_t length, Gam &out, J 
     for (auto f : optional_bytes)
         if (s.has(f.name))
             put(b, f.offset, s[f.name].integer());
+    put(b, 0x2dc, s.has("combatClock") ? s["combatClock"].integer() : 0); // A4-PARITY2 D-88: absent = 0, never the template's byte
     for (auto f : optional_arrays)
         if (s.has(f.name))
             for (size_t i = 0; i < f.count; ++i)

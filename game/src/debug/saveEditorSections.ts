@@ -87,6 +87,8 @@ export function worldTimeExtraFields(api: DebugApi): DebugField[] {
     // Label deliberately avoids the word "Hour": the clock test's hasText:"Hour" filter is
     // substring/case-insensitive and would collide with it (regression avoided).
     rnum("Pre-tick clock byte (raw, internal)", "prevHour", 23),
+    // A4-PARITY2 D-88: g_cmb_action_count (SAVED.GAM +0x2DC): unit activations since the last combat-clock minute.
+    rnum("Combat clock counter (raw, 0-255)", "combatClock", 255),
     // ★ #176 — el LATCH de fases lunares. Bytes CRUDOS de la tabla MOON_PHASES: 0x30..0x37
     // ('0'..'7'), no la fase 0..7. Fuera de ese rango cuentan como «sin latchear» y los
     // lectores caen al cálculo por día. Editarlos cambia adónde te manda una moongate.
@@ -266,7 +268,7 @@ export const COVERED_STATE_KEYS: ReadonlySet<string> = new Set([
   "moonstones",
   // Mundo / tiempo
   "time", "turnsSinceStart", "torchTurns", "transport", "wind",
-  "timeSpell", "timeSpellTurns", "lightSpellMins", "prevHour",
+  "timeSpell", "timeSpellTurns", "lightSpellMins", "prevHour", "combatClock",
   "feluccaPhase", "trammelPhase",
   // Posición (sección Teletransporte + picker)
   "position",

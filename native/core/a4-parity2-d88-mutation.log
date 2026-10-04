@@ -1,0 +1,44 @@
+N60  KILLED   [D88] the clock ticks at the 9th activation
+     3/9 Test #115: a4_enh1_preservation_runtime .....***Failed    0.31 sec | 5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.11 sec | 6/9 Test #124: a4_enh2_preservation_runtime .....***Failed    0.63 sec | 7/9 Test #171: gameplay_parity ..................***Failed   10.01 sec | 8/9 Test #175: quest_parity .....................***Failed    5.19 sec | 115 - a4_enh1_preservation_runtime (Failed) | 123 - a4_parity2_d88_combat_clock (Failed) | 124 - a4_enh2_preservation_runtime (Failed)
+N61  KILLED   [D88] the clock ticks at the 11th activation
+     3/9 Test #115: a4_enh1_preservation_runtime .....***Failed    0.33 sec | 5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.12 sec | 6/9 Test #124: a4_enh2_preservation_runtime .....***Failed    0.63 sec | 7/9 Test #171: gameplay_parity ..................***Failed   10.77 sec | 8/9 Test #175: quest_parity .....................***Failed    5.28 sec | 115 - a4_enh1_preservation_runtime (Failed) | 123 - a4_parity2_d88_combat_clock (Failed) | 124 - a4_enh2_preservation_runtime (Failed)
+N62  KILLED   [D88] a modulo test instead of equality with a reset (a loaded 12 ticks at the 8th activation, not the 254th)
+     5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.11 sec | 123 - a4_parity2_d88_combat_clock (Failed)
+N63  KILLED   [D88] two minutes per tick
+     3/9 Test #115: a4_enh1_preservation_runtime .....***Failed    0.30 sec | 5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.08 sec | 6/9 Test #124: a4_enh2_preservation_runtime .....***Failed    0.60 sec | 7/9 Test #171: gameplay_parity ..................***Failed    9.99 sec | 8/9 Test #175: quest_parity .....................***Failed    5.22 sec | 115 - a4_enh1_preservation_runtime (Failed) | 123 - a4_parity2_d88_combat_clock (Failed) | 124 - a4_enh2_preservation_runtime (Failed)
+N64  KILLED   [D88] the tick runs the housekeeping too (meals, starvation, poison in a fight)
+     3/9 Test #115: a4_enh1_preservation_runtime .....***Failed    0.31 sec | 5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.08 sec | 6/9 Test #124: a4_enh2_preservation_runtime .....***Failed    0.60 sec | 7/9 Test #171: gameplay_parity ..................***Failed    9.86 sec | 8/9 Test #175: quest_parity .....................***Failed    5.03 sec | 115 - a4_enh1_preservation_runtime (Failed) | 123 - a4_parity2_d88_combat_clock (Failed) | 124 - a4_enh2_preservation_runtime (Failed)
+N65  KILLED   [D88] the re-roll excludes the live location (g_location is not 0xFF in the arena)
+     5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.11 sec | 123 - a4_parity2_d88_combat_clock (Failed)
+N66  KILLED   [D88] the re-roll draws from the live stream, not the fight's
+     5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.08 sec | 123 - a4_parity2_d88_combat_clock (Failed)
+N67  KILLED   [D88] only the player's activations are counted
+     3/9 Test #115: a4_enh1_preservation_runtime .....***Failed    0.34 sec | 5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.12 sec | 6/9 Test #124: a4_enh2_preservation_runtime .....***Failed    0.64 sec | 7/9 Test #171: gameplay_parity ..................***Failed   10.25 sec | 8/9 Test #175: quest_parity .....................***Failed    5.42 sec | 115 - a4_enh1_preservation_runtime (Failed) | 123 - a4_parity2_d88_combat_clock (Failed) | 124 - a4_enh2_preservation_runtime (Failed)
+N68  KILLED   [D88] combat entry resets the counter (it is not combat-local)
+     3/9 Test #115: a4_enh1_preservation_runtime .....***Failed    0.30 sec | 5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.16 sec | 6/9 Test #124: a4_enh2_preservation_runtime .....***Failed    0.67 sec | 115 - a4_enh1_preservation_runtime (Failed) | 123 - a4_parity2_d88_combat_clock (Failed) | 124 - a4_enh2_preservation_runtime (Failed)
+N69  KILLED   [D88] the .GAM byte +0x2DC is never written
+     5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.11 sec | 123 - a4_parity2_d88_combat_clock (Failed)
+N70  KILLED   [D88] an absent key leaves the template byte (it must write 0)
+     5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.12 sec | 123 - a4_parity2_d88_combat_clock (Failed)
+N71  KILLED   [D88] a load does not read the counter back
+     5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.11 sec | 9/9 Test #181: persistence_parity ...............***Failed    0.96 sec | 123 - a4_parity2_d88_combat_clock (Failed) | 181 - persistence_parity (Failed)
+N72  KILLED   [D88] the document never carries the counter (restore ignores it)
+     5/9 Test #123: a4_parity2_d88_combat_clock ......***Failed    0.09 sec | 7/9 Test #171: gameplay_parity ..................***Failed    2.74 sec | 9/9 Test #181: persistence_parity ...............***Failed    1.12 sec | 123 - a4_parity2_d88_combat_clock (Failed) | 171 - gameplay_parity (Failed) | 181 - persistence_parity (Failed)
+T60  KILLED   [D88] reference: the clock ticks at the 9th activation
+     vitest | 171 - gameplay_parity (Failed) | 175 - quest_parity (Failed)
+T61  KILLED   [D88] reference: the counter has no 8-bit wrap
+     vitest | 171 - gameplay_parity (Failed)
+T62  KILLED   [D88] reference: two minutes per tick
+     vitest | 171 - gameplay_parity (Failed) | 175 - quest_parity (Failed)
+T63  KILLED   [D88] reference: the re-roll excludes the live location
+     vitest | 171 - gameplay_parity (Failed)
+T64  KILLED   [D88] reference: the counter is never written to SAVED.GAM
+     vitest | 171 - gameplay_parity (Failed)
+T65  KILLED   [D88] reference: a load does not read the counter
+     vitest | 171 - gameplay_parity (Failed)
+T66  KILLED   [D88] reference: the clock hook counts nothing without time-state guard (runs the tick before the count)
+     vitest | 171 - gameplay_parity (Failed) | 175 - quest_parity (Failed)
+restored tree [D88]: native GREEN ; reference GREEN 
+
+A4-PARITY2 mutations: 20/20 killed
+ALL DONE

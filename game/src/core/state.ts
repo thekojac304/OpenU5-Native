@@ -216,6 +216,14 @@ export interface GameState {
   /** Snapshot de la hora para detectar cambio de hora (g_prev_hour DS:0x5880). */
   prevHour?: number;
   /**
+   * A4-PARITY2 D-88: g_cmb_action_count, DS:0x5882 = SAVED.GAM +0x2DC (u8). COMBAT.OVL 0x0C64-0x0C76
+   * lo incrementa en CADA activación de unidad (no en cada acción del jugador) y al llegar a 10 lo
+   * pone a 0 y llama `advance_clock(1)`. NO es local al combate: nada lo inicializa al entrar ni al
+   * salir; vive en la ventana de 0x1060 bytes de SAVED.GAM y sobrevive a combates, guardados y cargas.
+   * `undefined` ≡ 0 (un save anterior / un estado de arnés).
+   */
+  combatClock?: number;
+  /**
    * ★ #176 — LATCH de la fase de FELUCCA: `g_felucca_phase` DS:0x5885, save **+0x2DF**.
    * BYTE CRUDO de la tabla MOON_PHASES, o sea la fase real **+0x30** (`'0'..'7'`); el
    * consumidor le resta 0x30 (`moongate_enter` 0x4973 `sub ax,0x30`). Usa
@@ -783,6 +791,10 @@ export const SAVE_OPTIONALS_ABSENCE_MEANS: readonly SaveOptionalKey[] = [
    *  npc_activate_all 0x00D6. Un default sintético ({location:…}) rehidrataría posiciones
    *  inventadas. */
   "npcWalk",
+  /** +0x2DC (A4-PARITY2 D-88, g_cmb_action_count DS:0x5882). `undefined` ≡ 0 y el cero NO se escribe en el
+   *  documento (el lado nativo tampoco): un save de Original sin combates sigue siendo byte a byte el de antes.
+   *  Un default 0 lo escribiría siempre y movería esos documentos. El gancho de combate lee `?? 0`. */
+  "combatClock",
 ];
 
 export function deserialize(json: string): GameState {
