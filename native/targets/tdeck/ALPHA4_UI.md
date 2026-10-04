@@ -2,6 +2,8 @@
 
 Alpha 4 is a UI/presentation track on top of the released Alpha 3 (`alpha3-release`, `eb1bf5e7`). Each batch keeps its own section; a finding is recorded where it was made and not merged into an earlier batch's conclusion.
 
+> **RC5 hotfix (2026-10-04) — read §17 first.** The user's RC4 hardware pass (R4-1/2/3/6 PASS, R4-7 not tested) failed two items: the healer's `R` did nothing (fixed: the shop key map never produced `Resurrect`; §17.2) and a living target of the In Mani Corp scroll showed only `Failed!` (investigated, **not reproduced**, route now pinned by real-runtime tests; §17.3). The candidate image is now **RC5** (`4.0.0-alpha4-rc5-debug`, §17.6; `Git 59c14b907399`, SHA-256 `363a8fda…7210`): host suite 201 / 201, guards GREEN, **three-check retest owed** (§17.7). RC4's record below is unchanged.
+>
 > **A4-PARITY2 (2026-10-04) — read §16 first.** The post-Alpha-4 parity cleanup fixed D-82, D-83, D-84, D-85, D-86, D-87, D-88 and D-89 (reference first, native second, RED-first, 110 / 110 mutants killed), the In Mani Corp living-target text, and corrected the jail / inn note; fourteen newly found divergences (D-90 … D-103) are recorded, not fixed (§16.13). The candidate image is now **RC4** (`4.0.0-alpha4-rc4-debug`, §16.15; `Git 859f1605b974`): host suite 200 / 200, guards GREEN, **not yet hardware-tested** (minimal checklist §16.16). RC3's record (§15) is unchanged.
 >
 > **RC3 hotfix (2026-10-03) — read §15 first.** The RC2 hardware session found that a dungeon played the surface's music (every entry, not only Developer teleport): fixed in one block of `sync_music()`, host-verified (192 / 192), **not yet hardware-tested**. RC2 (§14.9) is superseded by RC3 (`4.0.0-alpha4-rc3-debug`); §14's records are kept as written.
@@ -3809,3 +3811,87 @@ Only what the host genuinely cannot show (the real TFT, keys, SD card and Board)
 **Open, recorded, not fixed (§16.13; ledger rows D-90 … D-103):** the two derivation by-products the brief asked to keep out of production — D-92 (a blocked rowed step still ticks the clock) and D-97 (`callers_banda.py` overlay bases) — plus D-90 (every trapdoor's damage and wind roll), D-91 (the dungeon loop-minute class), D-93, D-94 (town invalid digit), D-95 (the jail clock), D-96 (the inn wake-up order), D-98 (loot cap above 9999), D-99 (bridge-troll / dungeon order), D-100 (scheduler skip), D-101 (In Mani Corp ceremony, turn and cancel-refund), D-102 (PC import drops the bodies), D-103 (stale comments and notes). Biggest in cost: D-91 (many dungeon fixtures) and D-90 / D-92 / D-95 (RNG streams and corpora). Every statement is **static**: no derivation was confirmed in a DOS run.
 
 **State for the next step.** RC4 is built, verified and ready for the minimal hardware pass above; it is not RC-ready by that measure until the pass is run (and the owed RC3 retest and RC heap capture are recorded). Nothing is tagged or pushed; the publication recommendation is to **hold** until R4-1 … R4-6 pass, because D-83, D-84 and D-88 change Original behaviour on purpose and have never been seen on the device.
+
+---
+
+## 17. The RC4 hardware report and the RC5 hotfix (2026-10-04)
+
+A targeted follow-up, not another parity sweep. RC4 (§16.15) was flashed and the minimal checklist (§16.16) run by the user; two items failed. This section records the report exactly, the investigation, the one production fix, and the three-step retest. §16 and the RC4 record are unchanged.
+
+### 17.1 RC4 hardware result (user report, 2026-10-04)
+
+A **written user hardware report** — no serial capture, no photograph, no log was supplied, and none is claimed. Image: `FW 4.0.0-alpha4-rc4-debug`, `Git 859f1605b974`, SHA-256 `49e3962f…4414`.
+
+| # | Result | What the user reported |
+|---|---|---|
+| R4-1 | **PASS** | identity as expected |
+| R4-2 | **PASS** | New Journey: the underworld skiff and the four bodies (D-82) |
+| R4-3 | **PASS** | save / power-cycle / Journey Onward |
+| R4-4 | **FAIL** | (U)se In Mani Corp scroll on a **living** member showed only `Failed!`; `Not dead!` was missing |
+| R4-5 | **FAIL** | in a working healer shop `H` (Heal) and `C` (Cure) worked; **`R` (Resurrect) did nothing** |
+| R4-6 | **PASS** | combat clock (D-88) |
+| R4-7 | **NOT TESTED** | naval cactus; optional, unreachable on shipped data (§16.5) |
+
+D-82 and D-88 are therefore hardware-confirmed. Nothing else of PARITY2 is reopened; D-90 … D-103 stay recorded, not fixed.
+
+### 17.2 R4-5 — the healer's `R` did nothing: root cause and fix
+
+**Root cause (a UI key map, not the shop or the resurrection).** `UiSession::handle_shop` (`ui_session.cpp`) turned a raw `r` into `ShopAction::Rations` at a Barkeeper and **`ShopAction::Rest` everywhere else**. The healer's prompt accepts `Heal`, `Cure` and **`Resurrect`** (`shop_orchestration.cpp`, `HealerNeed` / healer `Menu`); `ShopAction::Resurrect` appeared nowhere else in the tree, so **no key could ever produce it**. A `Rest` at a healer is not a legal action in any healer phase and is dropped without a word — exactly "R does nothing". `h` and `c` were mapped, which is why Heal and Cure worked. The context bar (`H Heal|C Cure|R Raise`) and the prompt (`H Heal  C Cure  R Resurrect`) advertised a key the map never honoured.
+
+**Why nothing caught it.** Every healer test — `shop_flow` (98 sequences), `shop_parity`, the PARITY2 `a4_parity2_d83_d84_resurrect` — drives `ShopAction::Resurrect` **directly** into `execute_shop`; none sends the player's `r`. The UiSession key map and the shop service were each right on their own side of an untested seam (the same class as *Host fixture copies hide device wiring* / *Parity harnesses bind what the device does not*). The bug is older than PARITY2: `r` was never Resurrect on the device (the PARITY2 change, `resurrect_apply`, is innocent and is reached once the key is routed).
+
+**Fix (the key map, one line):** `case 'r'` → `Rations` at a Barkeeper, **`Resurrect` at a Healer** (SHOPPES 0x16b5: the original's R is Resurrect), `Rest` otherwise (the innkeeper's `R Rest` is untouched). No `if (key == 'R')` was added at any other layer.
+
+### 17.3 R4-4 — the In Mani Corp scroll on a living member: investigated, **not reproduced**
+
+The whole device path was traced and then driven for real: `(U)se` → item picker → In Mani Corp Scroll (id 6) → "Use on whom?" `PartySelection` → `AlphaRuntime::modal` (`UseItem`, `member`) → `commands.cpp` / `dungeon_orchestration.cpp` → `world_magic` case 6 → `Message` events → `UiSession::consume` → transcript → the console the Board paints.
+
+- **The native core emits both lines** (`world_magic.cpp`: `Resurrection!`, then on `!apply_target_spell(... Resurrect ...)` `Not dead!` and `Failed!`), and nothing between the core and the transcript rewrites, merges or drops them.
+- **The shipped RC4 binary has it:** in `openu5_tdeck.elf` the only reference to the `"Not dead!"` literal (`0x3c0cbddc`) is an `l32r` at `0x42076d24` **inside `world_magic`**, right after the `apply_target_spell` call and immediately followed by the `"Failed!"` literal and two calls to the `say` lambda. The flashed code is the PARITY2 code.
+- **The parity test was not the device route** — the PARITY2 test (`a4_parity2_mani_not_dead`) calls `world_magic()` with a hand-built `Command` — so a real-runtime test was added (§17.4, group **U**). **It is GREEN against RC4 production, not RED:** with raw keys through the real `AlphaRuntime` and Board, the living target reads `Use item` / `Scroll` / `Resurrection!` / `Not dead!` / `Failed!` on the overworld, in two towns, inside a dungeon, with scenes paced, with the audio pack mounted, and in the checklist's literal *use, then cancel at "On who"* order (and the reverse); the rendered console (a PNG dump) shows both lines; a cancel prints neither and spends nothing; a dead target is revived silently.
+- **What does read exactly "Failed!" only** is the **spell** form: `(C)ast` In Mani Corp on a living member prints `Cast...` / `Failed!` — correct, the binary's spell is silent and prints only the Cast tail's `Failed!` (`MANI-FINAL.md` §1; test U7). That is precisely the reported symptom, and the Developer screen's *Spells* and *Scrolls* rows share one index field and sit one row apart. **This is a hypothesis about what happened on the device, not a finding;** nothing in the report can distinguish it from an unknown device-only cause.
+- The §16.16 R4-4 row also listed an `On who: <Name>` line. **The native port has never printed it** (`MANI-FINAL.md` §7.5; the device uses a `PartySelection` modal instead), so that expectation was wrong; RC5-2 below drops it.
+
+**Verdict for R4-4: no production defect was found, none was changed.** The route is now pinned by 16 real-runtime checks so a regression cannot pass unseen, and RC5-2 is written so that a second failure is self-diagnosing (it asks for the whole console, whether `Cast...` is above `Failed!`, and whether the scroll count dropped). If RC5-2 fails the same way **with `Scroll` / `Resurrection!` above it and a scroll spent**, that is a genuine device-only defect and the Alpha 4 publication blocker it was reported as.
+
+### 17.4 Do the two failures share a cause? No
+
+R4-5 is a missing key-map entry in `UiSession`'s shop mapping; R4-4 involves a different mode (the item and party pickers), a different command (`UseItem`) and no key-map defect. Target-selection routing, member-status filtering, the modal-to-core conversion and transcript handling were each exercised end to end for both and behave. They were kept separate, with no shared abstraction.
+
+### 17.5 Tests and mutation proof
+
+- **`a4_rc5_hotfix_runtime`** (`targets/tdeck/host_tests/a4_rc5_hotfix_runtime_test.cpp`; REAL `AlphaRuntime`, real `tdeck_board.cpp` over the fake ST7789, the `a4_ui2` harness; 37 checks; arguments: the resource pack and the audio pack). Group **U** — the (U)se route (above). Group **H** — the healer, reached by *Talking to East Britanny's keeper* with real keys: `H0` the shop opens; `H2a/b` **H** heals and **C** cures and each charges; `H1` **R opens the member list** like H and C; `H3` the dead companion is selectable, the deal quotes a price, and Y raises it — at **karma 50** XP 1000 → 500, level 4, max HP 120, HP = 120, and at **karma 99** no cut, level 5, max HP 150 (the binary-derived rule, computed independently in the test, with the quoted price charged exactly, the living Avatar and Shamino byte-identical, the shop still open); `H5` a living member is refused ("Thou hast no need of this art!"), nothing charged; `H6` **Mic** from the list and from the deal returns to "Anything else?" charging nothing and the shop still answers; `H7` too little gold raises nobody; `H8` the controls: `R` still asks to **Rest** at an innkeeper and for **Rations** at a tavern.
+- **RED against RC4 production** (`a4-rc5-red-vs-rc4.log`, the final test with only the one-line fix reverted): `H1/50`, `H1/99` (R opens no list: the phase stays at the Heal/Cure/Resurrect prompt), `H6`, `H6b` — 27 checks ran, 4 RED. GREEN with the fix: **37 / 37**. Group U is GREEN on both (§17.3).
+- **Mutation** (`native/core/tools/a4_rc5_mutation_check.py`, logs `a4-rc5-mutation.log`, `a4-rc5-mutation-rerun.log`): **19 / 19 killed**, restored tree GREEN. H1 `R` is Rest again (RC4) · H2 R is Cure · H3 R is Heal · H4 R is Resurrect in every shop (the inn loses Rest) · H5 the Barkeeper loses Rations · H6 the service maps Resurrect to Cure · H7 the deal skips `resurrect_apply` · H8 a fixed karma 99 · H9 HP left at 1 · H10 a living member is raised · H11 the raise is free · M1 only `Failed!` · M2 only `Not dead!` · M3 swapped · M4 printed for a dead target · M5 scroll not consumed · M6 the device skips the "Use on whom?" pick · M7 the pick always goes to member 0 · M8 the spell form also prints `Not dead!`. The first pass left three survivors — H4, H5 (the inn / tavern `R` were not pinned through real keys: gap, closed by `H8`) and an *equivalent* mutant (a cancelled pick dispatches nothing, so a stale pending item has no consumer; replaced by M8) — all three then killed.
+- **Host suite:** serial `ctest` **201 / 201** (`a4-rc5-ctest.log`, 148.2 s; 200 + `a4_rc5_hotfix_runtime`). The TypeScript reference and the corpora were **not touched** (no reference code changed), so no vitest or generator re-run was needed.
+
+### 17.6 The RC5 candidate and the firmware
+
+**Production changed after RC4, so the identity moved:** `PROJECT_VER` `4.0.0-alpha4-rc4-debug` → **`4.0.0-alpha4-rc5-debug`** (commit `59c14b90`, after the fix `e7d4162f`). **RC4's image, filename, SHA and §16 record are preserved unchanged** (re-hashed after the RC5 build: `49e3962f…4414`; RC3 `9fd7fc8b…d542`; RC2 `608eb700…1e95` — `a4-rc5-identity.log`).
+
+Fresh `--no-ccache` ESP-IDF 6.1 (`idf.py --no-ccache -B build-a4-rc5 reconfigure`, `ninja -C build-a4-rc5 -j 4 all`), 1,182 steps, run alone (no `ctest` during the build), **first attempt clean, 0 warnings** (`a4-rc5-fw-{configure,build}.log`). Guards (`a4-rc5-elf-checks.log`): `a3_04a_hotpath_check` **GREEN**, `a3_04b_iram_check` **GREEN**, `a3_04f_image_check` **GREEN**, `check_app_budget` OK.
+
+| | |
+|---|---|
+| **File** | `native/targets/tdeck/build-a4-rc5/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC5-Debug-Launcher.bin` (byte-identical to `build-a4-rc5/openu5_tdeck.bin`) |
+| **Size** | **1,047,408 B (`0xffb70`)** — the same size as RC4 |
+| **SHA-256** | **`363a8fdae6eb714058a4545bad880e05c4d52919e9afd41de8d61e45cfa67210`** |
+| **Identity** | `FW 4.0.0-alpha4-rc5-debug`, **`Git 59c14b907399`** (HEAD `59c14b907399be8e8796dcd84946a60c942731c1`, **no `-dirty`**: the only `-dirty` strings in the image are the unrelated `value-dirty` / `input-dirty` log tags) |
+| **App partition** | 1,310,720 B (`0x140000`): **263,312 B (20.1 %) free**; `check_app_budget.py` OK |
+| **Launcher allocation** | 1,048,576 B (1,024 KiB); the next 64 KiB step is still **1,169 B away** |
+| **Sections vs RC4** | flash `.text` **−4 B**; everything else unchanged (`a4-rc5-fw-size-diff.log`) |
+| **Packs** | the SD resource pack and the audio pack are unchanged — no SD recopy |
+
+### 17.7 The RC5 hardware retest — three checks, nothing else
+
+Flash RC5, keep the SD pack. Do **not** repeat the underworld objects, save / Continue, combat clock, music, crown, well, UI, cheats or the ending; the naval cactus stays optional and unrun.
+
+| # | Do | Expect | PASS |
+|---|---|---|---|
+| RC5-1 | Boot, open the Developer screen | `FW 4.0.0-alpha4-rc5-debug`, `Git 59c14b907399` | |
+| RC5-2 | Give the party **one In Mani Corp *Scroll*** (Developer menu (Alt+D) → Inventory: set the item index to **6**, and set the **Scrolls** quantity — not Spells). On the map: **(U)se** → *In Mani Corp Scroll* → pick a **living** member | the console reads, in order, `Scroll` / `Resurrection!` / **`Not dead!`** / **`Failed!`**; the member is unchanged; the scroll count drops by one. **If you see only `Failed!`, report the whole console** — in particular whether `Cast...` is above it (the spell was used) or `Scroll` / `Resurrection!` are, and whether the scroll count dropped | |
+| RC5-3 | A dead companion, **karma below 98** (e.g. 50), a companion with a few hundred XP, enough gold (the quote at East Britanny is 237 gp). Enter a **healer**, press **R**, choose the dead companion, answer **Y** | the member list opens; the companion returns **alive** (`G`); **XP is cut to karma %** (1000 XP at karma 50 → 500), level and max HP follow the new XP (level = 1 + bit-length of XP/100; max HP = 30 × level), HP = the new max; gold falls by the quoted price; "Anything else?" **Y** and **H** still work | |
+
+### 17.8 Does anything besides the retest remain before publication?
+
+No **new** blocker comes out of this investigation: the healer defect is fixed and pinned, and the In Mani Corp route is verified correct on every path the host can drive. **If RC5-1 … RC5-3 pass, nothing in this follow-up blocks Alpha 4 publication**, and the known divergences D-90 … D-103 do not gate it. Two caveats stay honest: (1) **R4-4 is unexplained** — it passes the retest or it becomes a real, device-only defect (§17.3); (2) the items the project's own records already list as owed from earlier candidates — the RC3 dungeon-music retest (§15.10) and the Alpha 4 RC heap capture (§14.7) — are not part of this hotfix and were not re-asked of the user; they are prior bookkeeping, not defects found here. Nothing is tagged or pushed.

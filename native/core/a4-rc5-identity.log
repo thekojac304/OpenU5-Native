@@ -1,0 +1,13 @@
+# A4 RC5 identity
+HEAD 59c14b907399be8e8796dcd84946a60c942731c1
+4.0.0-alpha4-rc5-debug 1
+59c14b907399 1
+-dirty 2
+4.0.0-alpha4-rc4-debug 0
+859f1605b974 0
+4.0.0-alpha4-rc3-debug 0
+-dirty contexts: ['input-dirty', 'value-dirty']
+--- earlier images re-hashed
+49e3962f367cb85650ae548463fefbf0ef2f4bbaf5d567679422a0d141674414 *build-a4-rc4/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC4-Debug-Launcher.bin
+9fd7fc8b5669c206efdc43d9588fe845c9c63f233c74e54c4e89f15803c9d542 *build-a4-rc3/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC3-Debug-Launcher.bin
+608eb7005dcc88cab6ed8c020e3ad7050c9a711406650492407c7bb760801e95 *build-a4-rc2/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC2-Debug-Launcher.bin

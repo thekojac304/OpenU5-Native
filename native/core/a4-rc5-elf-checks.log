@@ -1,0 +1,97 @@
+# A4 RC5 firmware ELF guards (build-a4-rc5, post-commit 59c14b90)
+== a3_04a_hotpath_check.py (build-a4-rc5)
+# A3-04A firmware hot-path check: C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-rc5\openu5_tdeck.elf
+
+generate(): 483 instructions, 3 call sites: openu5::OplEmulator::Operator::envelope_step(unsigned long, unsigned char), openu5::OplEmulator::refresh_vibrato()
+functions reachable from generate(): 3
+    openu5::OplEmulator::Operator::envelope_step(unsigned long,     59 instructions
+    openu5::OplEmulator::Operator::refresh_envelope(unsigned cha    51 instructions
+    openu5::OplEmulator::refresh_vibrato()                          71 instructions
+
+GREEN no guard, lock, allocation, log or delay is reachable from the per-sample path
+
+exit 0
+== a3_04b_iram_check.py (build-a4-rc5)
+# A3-04B firmware IRAM check: C:\Dev\OpenU5-Native\native\targets\tdeck\build-a4-rc5\openu5_tdeck.elf
+
+functions reached from render_block(): 25
+    403832a4 IRAM    20 insns  openu5::apply_gain_q15(short, unsigned short)
+    403832dc IRAM   118 insns  openu5::AudioRingPump::render_block(unsigned short, unsigned short)
+    40383414 IRAM    84 insns  openu5::AudioPerfCounters::on_render(unsigned long, unsigned long, unsigned long, unsigned
+    403834f4 IRAM    71 insns  openu5::OplEmulator::refresh_vibrato()
+    403835bc IRAM    59 insns  openu5::OplEmulator::Operator::envelope_step(unsigned long, unsigned char)
+    40383658 IRAM    51 insns  openu5::OplEmulator::Operator::refresh_envelope(unsigned char)
+    403836e0 IRAM   483 insns  openu5::OplEmulator::generate(float*, float*, unsigned int, unsigned int)
+    40383bec IRAM   289 insns  openu5::MusicSongPlayer::render(short*, unsigned int, unsigned long, unsigned short)
+    40383ef0 IRAM   147 insns  openu5::MusicSongPlayer::fill_chip(float*, float*, unsigned int, unsigned int)
+    40384070 IRAM    26 insns  openu5::OplEmulator::sounding_channels() const
+    403840b8 IRAM    25 insns  openu5::OplVoiceAllocator::active_voices() const
+    403840fc IRAM   110 insns  openu5::SpeakerVoice::fine_level()
+    40384238 IRAM    73 insns  openu5::SpeakerVoice::begin_segment()
+    40384308 IRAM    92 insns  openu5::SpeakerVoice::begin_iteration()
+    40384410 IRAM   182 insns  openu5::SpeakerVoice::render(long*, unsigned int)
+    40384600 IRAM    12 insns  openu5::(anonymous namespace)::pit_divisor(unsigned long)
+    40384624 IRAM    10 insns  openu5::(anonymous namespace)::pit_phase_inc(unsigned long)
+    40384640 IRAM    16 insns  openu5::speaker_noise_draw(unsigned short&, unsigned short)
+    4038466c IRAM    14 insns  openu5::speaker_noise_next(unsigned short)
+    40384694 IRAM    16 insns  openu5::speaker_rumble_draw(unsigned short&, unsigned short, unsigned short)
+    403846c0 IRAM    16 insns  openu5::speaker_segment_frames(openu5::SpeakerSegment const&)
+    403846ec IRAM    71 insns  openu5::SfxPlayer::render(short*, unsigned int, unsigned short)
+    420aab14 FLASH   66 insns  _ZN6openu515MusicSongPlayer15ensure_capacityEj$part$0  (allowed: once per song size: the chip buffer)
+    420ad258 FLASH   68 insns  openu5::MusicSongPlayer::dispatch(openu5::MusicEvent const&)  (allowed: per MIDI event (the voice allocator))
+    420ae944 FLASH   29 insns  openu5::SfxPlayer::start_next()  (allowed: per cue start (compile_sfx, queue))
+
+per-sample openu5::OplEmulator::generate(float*, float*, unsigned int,  IRAM
+per-sample openu5::MusicSongPlayer::render(short*, unsigned int, unsign IRAM
+per-sample openu5::SfxPlayer::render(short*, unsigned int, unsigned sho IRAM
+
+
+GREEN the per-sample audio path runs from IRAM/ROM and reads no flash .rodata; 3 per-event/one-time/per-block function(s) stay in flash by design
+
+exit 0
+== a3_04f_image_check.py (build-a4-rc5)
+image: build-a4-rc5/openu5_tdeck.elf
+
+_ZN6openu512_GLOBAL__N_1L11crc32_u16leEPKtj  @ 0x42071290, 70 bytes
+  loop 0x4207129c..0x420712cc (bltu a11, a3, 4207129c): body 18 instructions
+  innermost loop body:
+    0x4207129c: addx2 a8, a11, a2
+    0x4207129f: l16ui a8, a8, 0
+    0x420712a2: xor a10, a9, a8
+    0x420712a5: extui a10, a10, 0, 8
+    0x420712a8: l32r a12, 42042ac0
+    0x420712ab: addx4 a10, a10, a12
+    0x420712ae: l32i.n a10, a10, 0
+    0x420712b0: srli a9, a9, 8
+    0x420712b3: xor a10, a10, a9
+    0x420712b6: srli a8, a8, 8
+    0x420712b9: xor a8, a8, a10
+    0x420712bc: extui a8, a8, 0, 8
+    0x420712bf: addx4 a8, a8, a12
+    0x420712c2: l32i.n a9, a8, 0
+    0x420712c4: srli a10, a10, 8
+    0x420712c7: xor a9, a9, a10
+    0x420712ca: addi.n a11, a11, 1
+    0x420712cc: bltu a11, a3, 4207129c
+  per frame (176x176): the innermost body 18 x 30,976 pixels = 557,568 instructions = 2.3 ms at 240 MHz, 1 instruction/cycle
+  C1 no per-bit loop (table-driven): GREEN
+  C2 innermost loop body <= 24 instructions: GREEN (18)
+
+_ZN6openu512_GLOBAL__N_1L11expand_tileERA128_KhRA16_KtPtii  @ 0x420a093c, 92 bytes
+  loop 0x420a0960..0x420a098c (blti a9, 8, 420a0960): body 17 instructions
+  loop 0x420a094a..0x420a0993 (bge a8, a12, 420a094a): body 28 instructions
+
+_ZN6openu515render_snapshotERKNS_21PresentationTileCacheERKNS_20PresentationSnapshotEmxPtjRNS_12RenderReportE  @ 0x4207236c, 875 bytes
+  loop 0x420723ad..0x420723b4 (bne a10, a8, 420723ad): body 4 instructions
+  loop 0x420723ec..0x42072444 (bge a8, a2, 420723ec): body 33 instructions
+  loop 0x4207248c..0x420724c4 (bge a8, a7, 4207248c): body 20 instructions
+  loop 0x420724c0..0x420724cb (bge a8, a5, 420724c0): body 6 instructions
+  loop 0x42072460..0x420724d3 (bltu a2, a8, 42072460): body 43 instructions
+  loop 0x4207250c..0x42072586 (bge a8, a7, 4207250c): body 41 instructions
+
+A3-04F image check: GREEN
+exit 0
+== check_app_budget (build-a4-rc5)
+OpenU5 app budget: image 1047408 B (0xffb70), app partition 1310720 B (0x140000), free 263312 B (20.1 %)
+OpenU5 Launcher allocation: 1048576 B (1024 KiB, the image rounded up to 64 KiB); the next 64 KiB step is 1169 B away
+exit 0
