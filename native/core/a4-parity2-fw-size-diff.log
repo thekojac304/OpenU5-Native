@@ -1,0 +1,8 @@
+# A4-PARITY2 / RC4 size diff vs RC3 (esp_idf_size on the two .map files, from a4-parity2-identity.log)
+flash .text   715510 -> 716578  (+1068)
+flash .rodata 231372 -> 231420  (+48)
+DIRAM total   136054 -> 136054  (0); .text 60683, .bss 53456, .data 21915 unchanged
+IRAM          16384 / 15356 text unchanged
+image         1046288 (0xff710) -> 1047408 (0xffb70)  (+1120)
+app partition 1310720 B: free 264432 -> 263312 (20.2 % -> 20.1 %)
+Launcher allocation 1048576 B (1024 KiB): next 64 KiB step 2289 B -> 1169 B away

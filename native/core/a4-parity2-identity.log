@@ -1,0 +1,65 @@
+# A4-PARITY2 / RC4 identity
+HEAD 859f1605b974c0d0d3c2fe38eea281f53ea3877f
+tracked changes at identity time:
+ M ALPHA2_PRESERVATION_LEDGER.md
+4.0.0-alpha4-rc4-debug 1
+859f1605b974 1
+-dirty 2
+4.0.0-alpha4-rc3-debug 0
+6b6ab8a4c378 0
+--- earlier images re-hashed
+9fd7fc8b5669c206efdc43d9588fe845c9c63f233c74e54c4e89f15803c9d542 *build-a4-rc3/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC3-Debug-Launcher.bin
+608eb7005dcc88cab6ed8c020e3ad7050c9a711406650492407c7bb760801e95 *build-a4-rc2/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC2-Debug-Launcher.bin
+67100a519f833def372227ec7274305ecb7c4976de2ea75b9d76e3d0dbf8145a *build-a4-rc1/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC1-Debug-Launcher.bin
+--- sections RC3 -> RC4 (esp_idf_size on the two .map files)
+Memory Type Usage Summary
++--------------------------------------------------------------------------------+
+| Memory Type/Section | Used [bytes] | Used [%] | Remain [bytes] | Total [bytes] |
+|---------------------+--------------+----------+----------------+---------------|
+| Flash Code          |       715510 |          |                |               |
+|    .text            |       715510 |          |                |               |
+| Flash Data          |       231644 |          |                |               |
+|    .rodata          |       231372 |          |                |               |
+|    .appdesc         |          256 |          |                |               |
+|    .tdata           |           16 |          |                |               |
+| DIRAM               |       136054 |    39.81 |         205706 |        341760 |
+|    .text            |        60683 |    17.76 |                |               |
+|    .bss             |        53456 |    15.64 |                |               |
+|    .data            |        21915 |     6.41 |                |               |
+| IRAM                |        16384 |    100.0 |              0 |         16384 |
+|    .text            |        15356 |    93.73 |                |               |
+|    .vectors         |         1028 |     6.27 |                |               |
+| RTC SLOW            |           48 |     0.59 |           8144 |          8192 |
+|    .force_slow      |           36 |     0.44 |                |               |
+|    .rtc_noinit      |           12 |     0.15 |                |               |
+| RTC FAST            |           24 |     0.29 |           8168 |          8192 |
+|    .rtc_reserved    |           24 |     0.29 |                |               |
++--------------------------------------------------------------------------------+
+Total image size: 1046172 bytes (.bin may be padded larger)
+Note: The reported total sizes may be smaller than those in the technical reference manual due to reserved memory and application configuration. The total flash size available for the application is not included by default, as it cannot be reliably determined due to the presence of other data like the bootloader, partition table, and application partition size.
+=== RC4
+Memory Type Usage Summary
++--------------------------------------------------------------------------------+
+| Memory Type/Section | Used [bytes] | Used [%] | Remain [bytes] | Total [bytes] |
+|---------------------+--------------+----------+----------------+---------------|
+| Flash Code          |       716578 |          |                |               |
+|    .text            |       716578 |          |                |               |
+| Flash Data          |       231692 |          |                |               |
+|    .rodata          |       231420 |          |                |               |
+|    .appdesc         |          256 |          |                |               |
+|    .tdata           |           16 |          |                |               |
+| DIRAM               |       136054 |    39.81 |         205706 |        341760 |
+|    .text            |        60683 |    17.76 |                |               |
+|    .bss             |        53456 |    15.64 |                |               |
+|    .data            |        21915 |     6.41 |                |               |
+| IRAM                |        16384 |    100.0 |              0 |         16384 |
+|    .text            |        15356 |    93.73 |                |               |
+|    .vectors         |         1028 |     6.27 |                |               |
+| RTC SLOW            |           48 |     0.59 |           8144 |          8192 |
+|    .force_slow      |           36 |     0.44 |                |               |
+|    .rtc_noinit      |           12 |     0.15 |                |               |
+| RTC FAST            |           24 |     0.29 |           8168 |          8192 |
+|    .rtc_reserved    |           24 |     0.29 |                |               |
++--------------------------------------------------------------------------------+
+Total image size: 1047288 bytes (.bin may be padded larger)
+Note: The reported total sizes may be smaller than those in the technical reference manual due to reserved memory and application configuration. The total flash size available for the application is not included by default, as it cannot be reliably determined due to the presence of other data like the bootloader, partition table, and application partition size.

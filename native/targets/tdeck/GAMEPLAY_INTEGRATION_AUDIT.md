@@ -8808,3 +8808,13 @@ A documentation and release-engineering batch on `b242735f`. The full write-up i
 - E-8 – E-13: hardware PASS / accepted (ledger §3). D-2, D-53 struck; D-76 annotated.
 - D-50, D-78 – D-81 (and D-4): software fixed, hardware pending (the RC2 session).
 - D-82 – D-89: open, non-blocking, unchanged.
+
+## Alpha 4 A4-PARITY2 (2026-10-04) — what the parity cleanup changes in this audit
+
+Source: `ALPHA4_UI.md` §16, ledger rows D-82 … D-103. Rows below supersede the earlier grades they name; nothing else here moves.
+
+- **§S Resurrection (In Mani Corp, healer, ankh / Refuge) was graded G; the grade is amended.** The healer (D-83) and the Refuge (D-84) did not run the original's shared `resurrect_apply` (MP by class, the karma < 98 experience cut, level and max HP); both now do, reference first, native second (**changes Original on purpose**, software fixed, hardware pending). In Mani Corp's scroll on a **living** target now prints `Resurrection!` / `On who: <Name>` / `Not dead!` / `Failed!` (§16.12; the spell stays silent apart from its own `Failed!`). The remaining differences (the ceremony inside the routine, the world turn of (U)se / (C)ast, the cancel refund) are D-101, open.
+- **Hunger / clock:** the combat clock (D-88: one minute per ten unit activations, a persisted counter at SAVED.GAM `+0x2DC`) and the crop / plate food cap (D-87) are fixed; the dungeon loop-minute class (D-91), the jail clock (D-95) and the inn wake-up order (D-96) are open rows, and the claim that the jail / inn wait runs the meal housekeeping was wrong (`re/notes/kernel-survival.md` corrected; both ports already omitted it).
+- **Movement / transport:** the naval OUCH now hurts the whole party (D-89); a blocked rowed step still ticks the clock (D-92, open).
+- **World objects:** a New Journey now carries the underworld skiff and four bodies (D-82); the PC bridge's import still drops the bodies (D-102, open).
+- **Hardware transcript H-46 / item 33as:** a living target for the In Mani Corp scroll now shows the two extra lines above; see `ALPHA4_UI.md` §16.16 R4-4.
