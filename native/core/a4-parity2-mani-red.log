@@ -1,0 +1,30 @@
+RED M1 status 0x71: m:Scroll|m:Resurrection!
+GREEN M1 status 0x71: scroll consumed, the record untouched, no RNG draw (0)
+RED M1 status 0x80: m:Scroll|m:Resurrection!
+GREEN M1 status 0x80: scroll consumed, the record untouched, no RNG draw (0)
+RED M1 status 0x83: m:Scroll|m:Resurrection!
+GREEN M1 status 0x83: scroll consumed, the record untouched, no RNG draw (0)
+RED M1 status 0x88: m:Scroll|m:Resurrection!
+GREEN M1 status 0x88: scroll consumed, the record untouched, no RNG draw (0)
+RED M1 status 0x0: m:Scroll|m:Resurrection!
+GREEN M1 status 0x0: scroll consumed, the record untouched, no RNG draw (0)
+RED M1 status 0x67: m:Scroll|m:Resurrection!
+GREEN M1 status 0x67: scroll consumed, the record untouched, no RNG draw (0)
+RED M1 status 0x69: m:Scroll|m:Resurrection!
+GREEN M1 status 0x69: scroll consumed, the record untouched, no RNG draw (0)
+RED M2 location 1: m:Scroll|m:Resurrection!
+RED M2 location 5: m:Scroll|m:Resurrection!
+RED M2 location 29: m:Scroll|m:Resurrection!
+GREEN M3 a dead target prints neither line: m:Scroll|m:Resurrection!
+GREEN M3 ... and is revived (G, HP 1), the scroll consumed
+GREEN M4 member -1: m:Scroll|m:Resurrection!
+GREEN M4 member 1: m:Scroll|m:Resurrection!
+GREEN M4 member 7: m:Scroll|m:Resurrection!
+GREEN M5 scroll 0 never prints Not dead!
+GREEN M5 scroll 1 never prints Not dead!
+GREEN M5 scroll 2 never prints Not dead!
+GREEN M5 scroll 3 never prints Not dead!
+GREEN M5 scroll 4 never prints Not dead!
+GREEN M5 scroll 5 never prints Not dead!
+GREEN M5 scroll 7 never prints Not dead!
+A4-PARITY2 MANI: 19/29 checks

@@ -41,6 +41,14 @@ Jump-table (verificada leyendo el binario, `-0xBF80`): idx0→0x120a, 1→0x1222
 | 4 | In Quas Wis | 0x46a5 "View!\n" | reveal: overworld(CAST2 ov#9) si loc<0x21, town(ov#10) si 0x21-0x7f; anim(4) | `loc>0x7f`(combate)→"Not here!\n" (0x46ac) |
 | 5 | Kal Xen Corp | 0x46b7 "Summon Daemon!\n" | summon daemon (monstruo 0x26) CAST2 0x04c2 | `loc<=0x7f`(no combate)→"Not here!\n" (0x46c7) |
 | 6 | In Mani Corp | 0x46d2 "Resurrection!\n" | selChar + `applyResurrect` (CAST2 0x05e0) + sfx | `loc>=0x80`(combate)→"Not here!\n" (0x46e1) |
+
+> **Fila 6, corrección (2026-10-04, A4-PARITY2 §16.12, `MANI-FINAL.md`).** El lector empuja `resurrect_apply` con flag **1**
+> (CAST.OVL 0x12ea). Con un objetivo cuyo status no es 'D' (compara el BYTE contra 0x44: G, P, S y cualquier otro) y flag != 0
+> la rutina imprime «Not dead!» (DS 0x953c, CAST2.OVL 0x060a) y devuelve 0; el lector devuelve 0 y el epílogo de (U)se
+> (CAST.OVL 0x1b8a-0x1b94) imprime «Failed!» (DS 0x4a7b) y el glide. Transcripción: `Scroll` / `Resurrection!` / `On who: <Nombre>` /
+> `Not dead!` / `Failed!`; el pergamino se gasta primero (0x11ec), sin RNG. Un 'D' revive en silencio y un picker cancelado
+> (`None!`) no añade nada. El HECHIZO (flag 0) es silencioso y su cola imprime sólo «Failed!». En el arena: `Resurrection!`,
+> `Not here!`, sin «Failed!». Los dos puertos descartaban el booleano; ahora lo usan (`main.ts`, `world_magic.cpp` caso 6).
 | 7 | An Tym | 0x46f8 "Negate time!\n" | `g_time_spell='T'(0x54)`, `turns=0x14` (20); anim(7) | `loc∈{0x1d,0x28}`→"No effect!\n" (0x46ec)+beep |
 
 **Magnitudes DISTINTAS del Cast** (el scroll no es "castear sin maná"): luz 240 vs

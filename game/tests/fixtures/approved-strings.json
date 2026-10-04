@@ -582,6 +582,7 @@
   "North Winds": "[D] banda de vientos (piel fiel): <dir campo 5, DATA.OVL 0x556c> + « Winds» (0x558a); espejo de WIND_BAND_LABELS (core/world/wind.ts) / skin.ts",
   "Nosfentor": "[D] DS 0x486a — SHADOWLORD_NAME[2] (ritual, F1.10-T5)",
   "Not climbable!": "[D] re/notes/cmds.md, town-klimb.md — Klimb derivado",
+  "Not dead!": "[D] DATA.OVL DS 0x953c (file 0x954c) — resurrect_apply CAST2.OVL 0x060a, sólo con flag != 0 (pergamino In Mani Corp CAST.OVL 0x12ea, objetivo no muerto); el 'Failed!' lo pone el epílogo de (U)se 0x1b90 (A4-PARITY2 §16.12)",
   "Not here!": "[D] re/notes/cmds.md — DS 0x4909 (gate de mazmorra del U-Skull Key) / magic.md",
   "Not here!\n": "[D] DS 0x8dda (fileoff 0x8dea) — get_dungeon sin cofre, SJOG 0x18c0",
   "Not in doorway!\n": "[D] DS 0x2cc9 y 0x2cef (DOS copias, fileoff 0x2cd9/0x2cff) — gate de giro L/R sobre puerta 0xE0, DUNGEON 0x0628/0x065a (el giro NO se ejecuta)",

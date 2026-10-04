@@ -2973,6 +2973,11 @@ if(BUILD_TESTING)
   add_executable(batch13_tests tests/batch13_test.cpp)
   target_link_libraries(batch13_tests PRIVATE openu5_core)
   add_test(NAME batch13 COMMAND batch13_tests)
+  # A4-PARITY2 small item (ALPHA4_UI.md section 16.12): In Mani Corp's scroll on a living target prints "Not dead!" then "Failed!"
+  # (CAST2.OVL 0x060a, CAST.OVL 0x1b90), nothing consumed twice, no RNG.
+  add_executable(a4_parity2_mani_not_dead tests/a4_parity2_mani_not_dead_test.cpp)
+  target_link_libraries(a4_parity2_mani_not_dead PRIVATE openu5_core)
+  add_test(NAME a4_parity2_mani_not_dead COMMAND a4_parity2_mani_not_dead)
 
   # Batch 14 / R-22 -- the (Z)-stats presentation model: the page axis, the
   # per-member stats and arms pages, provisions, and the four item lists.

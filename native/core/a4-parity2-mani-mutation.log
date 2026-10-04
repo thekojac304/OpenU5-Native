@@ -1,0 +1,26 @@
+N100 KILLED   [MANI] only "Failed!" is printed
+     4/5 Test #163: a4_parity2_mani_not_dead .........***Failed    0.12 sec | 5/5 Test #173: gameplay_parity ..................***Failed   10.29 sec | 163 - a4_parity2_mani_not_dead (Failed) | 173 - gameplay_parity (Failed)
+N101 KILLED   [MANI] only "Not dead!" is printed
+     4/5 Test #163: a4_parity2_mani_not_dead .........***Failed    0.12 sec | 5/5 Test #173: gameplay_parity ..................***Failed   10.14 sec | 163 - a4_parity2_mani_not_dead (Failed) | 173 - gameplay_parity (Failed)
+N102 KILLED   [MANI] the two lines are swapped
+     4/5 Test #163: a4_parity2_mani_not_dead .........***Failed    0.12 sec | 5/5 Test #173: gameplay_parity ..................***Failed   10.64 sec | 163 - a4_parity2_mani_not_dead (Failed) | 173 - gameplay_parity (Failed)
+N103 KILLED   [MANI] the lines print on a DEAD target instead
+     4/5 Test #163: a4_parity2_mani_not_dead .........***Failed    0.14 sec | 5/5 Test #173: gameplay_parity ..................***Failed   10.31 sec | 163 - a4_parity2_mani_not_dead (Failed) | 173 - gameplay_parity (Failed)
+N104 KILLED   [MANI] only a Good target is "not dead" (poisoned / asleep must print too)
+     4/5 Test #163: a4_parity2_mani_not_dead .........***Failed    0.13 sec | 5/5 Test #173: gameplay_parity ..................***Failed   10.89 sec | 163 - a4_parity2_mani_not_dead (Failed) | 173 - gameplay_parity (Failed)
+N105 KILLED   [MANI] the lines print with no target too
+     4/5 Test #163: a4_parity2_mani_not_dead .........***Failed    0.11 sec | 5/5 Test #173: gameplay_parity ..................***Failed   10.50 sec | 163 - a4_parity2_mani_not_dead (Failed) | 173 - gameplay_parity (Failed)
+N106 KILLED   [MANI] the failure path draws from the RNG
+     4/5 Test #163: a4_parity2_mani_not_dead .........***Failed    0.11 sec | 5/5 Test #173: gameplay_parity ..................***Failed    9.99 sec | 163 - a4_parity2_mani_not_dead (Failed) | 173 - gameplay_parity (Failed)
+T100 KILLED   [MANI] reference: only "Failed!" is printed
+     vitest | 173 - gameplay_parity (Failed)
+T101 KILLED   [MANI] reference: the two lines are swapped
+     vitest | 173 - gameplay_parity (Failed)
+T102 KILLED   [MANI] reference: the lines print on a DEAD target
+     vitest | 173 - gameplay_parity (Failed)
+T103 KILLED   [MANI] the replica (gameplay_parity oracle) prints nothing
+     vitest | 173 - gameplay_parity (Failed)
+restored tree [MANI]: native GREEN ; reference GREEN 
+
+A4-PARITY2 mutations: 11/11 killed
+ALL DONE

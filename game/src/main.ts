@@ -4889,9 +4889,15 @@ async function boot(): Promise<void> {
               // Rel Hur: getdir (silencioso, señalado por el cursor) → viento si overworld.
               pendingScrollWind = { location: game.state.position.location };
             } else if (fu.kind === "resurrect") {
-              // In Mani Corp: elige PJ y resucita (sin Success/Failed; el eco es "Resurrection!").
+              // In Mani Corp: elige PJ y resucita. El lector empuja flag 1 (CAST.OVL 0x12ea), así que `resurrect_apply`
+              // (CAST2.OVL 0x05e0) imprime «Not dead!» (DS 0x953c, 0x060a) con cualquier status != 'D' y devuelve 0; el lector
+              // devuelve 0 y el epílogo de (U)se (CAST.OVL 0x1b90) imprime «Failed!» (DS 0x4a7b). Un 'D' revive en silencio y un
+              // picker cancelado (None!) no llega aquí. A4-PARITY2 §16.12.
               pickCastTarget((i) => {
-                applyResurrect(game.state.characters[i]!, game.state.karma);
+                if (!applyResurrect(game.state.characters[i]!, game.state.karma)) {
+                  hud.message("Not dead!");
+                  hud.message("Failed!");
+                }
               });
             }
             // reveal (In Quas Wis) = cosmético Clase-C; summonDaemon inalcanzable vía (U)se.

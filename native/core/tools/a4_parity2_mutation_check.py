@@ -77,6 +77,13 @@ GROUPS = {
         vitest=['tests/a4-parity2-d82-underworld-seed.test.ts'],
         generators=[],
     ),
+    'MANI': dict(
+        native_targets=['a4_parity2_mani_not_dead', 'gameplay_driver', 'batch13_tests', 'magic_parity_tests', 'batch18_well_ceremony_regression'],
+        native_tests=['a4_parity2_mani_not_dead', 'gameplay_parity', 'batch13', 'magic_parity', 'batch18_well_ceremony'],
+        vitest=['tests/a4-parity2-mani-not-dead.test.ts', 'tests/cast-onwho-consumidores.test.ts', 'tests/use-scroll.test.ts',
+                'tests/string-manifest.test.ts'],
+        generators=[('generate-magic-fixtures.ts', ['--check'])],
+    ),
 }
 
 MUTANTS = {
@@ -104,6 +111,23 @@ MUTANTS = {
     'T83': ('D82', 'reference: an unknown class byte is placed as a prop', [(TS + 'state.ts', 'report.unknown.push(b);',
             '(state.worldObjects ??= []).push({ location: 0, floor, x, y, tile, kind: "prop", slot }); report.unknown.push(b);')]),
     'T84': ('D82', 'reference: a frigate loses its hull', [(TS + 'state.ts', 'hull: ool[o + 5]!, ', 'hull: 0, ')]),
+    # ---------------------------------------------------------------- MANI native
+    'N100': ('MANI', 'only "Failed!" is printed', [(SRC + 'world_magic.cpp', 'say("Not dead!");say("Failed!");', 'say("Failed!");')]),
+    'N101': ('MANI', 'only "Not dead!" is printed', [(SRC + 'world_magic.cpp', 'say("Not dead!");say("Failed!");', 'say("Not dead!");')]),
+    'N102': ('MANI', 'the two lines are swapped', [(SRC + 'world_magic.cpp', 'say("Not dead!");say("Failed!");', 'say("Failed!");say("Not dead!");')]),
+    'N103': ('MANI', 'the lines print on a DEAD target instead', [(SRC + 'world_magic.cpp',
+            'if(!apply_target_spell(*p,MagicEffect::Resurrect,g.karma,rand)){say("Not dead!")', 'if(apply_target_spell(*p,MagicEffect::Resurrect,g.karma,rand)){say("Not dead!")')]),
+    'N104': ('MANI', 'only a Good target is "not dead" (poisoned / asleep must print too)', [(SRC + 'world_magic.cpp',
+            'if(!apply_target_spell(*p,MagicEffect::Resurrect,g.karma,rand)){say("Not dead!")', 'if(!apply_target_spell(*p,MagicEffect::Resurrect,g.karma,rand)&&p->status==\'G\'){say("Not dead!")')]),
+    'N105': ('MANI', 'the lines print with no target too', [(SRC + 'world_magic.cpp',
+            'case 6:say("Resurrection!");if(auto *p=target()){', 'case 6:say("Resurrection!");if(!target()){say("Not dead!");say("Failed!");}if(auto *p=target()){')]),
+    'N106': ('MANI', 'the failure path draws from the RNG', [(SRC + 'world_magic.cpp', 'say("Not dead!");say("Failed!");', 'say("Not dead!");say("Failed!");rand(1,2);')]),
+    # ---------------------------------------------------------------- MANI reference
+    'T100': ('MANI', 'reference: only "Failed!" is printed', [(TS + '../main.ts', '                  hud.message("Not dead!");\n', '')]),
+    'T101': ('MANI', 'reference: the two lines are swapped', [(TS + '../main.ts', '                  hud.message("Not dead!");\n                  hud.message("Failed!");\n',
+            '                  hud.message("Failed!");\n                  hud.message("Not dead!");\n')]),
+    'T102': ('MANI', 'reference: the lines print on a DEAD target', [(TS + '../main.ts', 'if (!applyResurrect(game.state.characters[i]!, game.state.karma)) {', 'if (applyResurrect(game.state.characters[i]!, game.state.karma)) {')]),
+    'T103': ('MANI', 'the replica (gameplay_parity oracle) prints nothing', [('native/core/tools/check-gameplay.ts', "{msg('Not dead!');msg('Failed!');}", '{}')]),
     # ---------------------------------------------------------------- D-89 native
     'N1': ('D89', 'naval OUCH rolls once on the active member again', [(SRC + 'commands.cpp',
            '            party_random_damage(c.game, rand);\n            event(GameEventKind::PartyChanged); // K:2A52',

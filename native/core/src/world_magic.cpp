@@ -32,7 +32,7 @@ WorldCommandResult world_magic(CommandContext &c,Command cmd,const ActiveMap &ma
         case 3:t.time_spell='N';t.spell_turns=20;say("Negate magic!");break;
         case 4:say("View!");if(location>127)say("Not here!");else emit(GameEventKind::MapReveal);break;
         case 5:say("Summon Daemon!");say("Not here!");break;
-        case 6:say("Resurrection!");if(auto *p=target())apply_target_spell(*p,MagicEffect::Resurrect,g.karma,rand);break;
+        case 6:say("Resurrection!");if(auto *p=target()){if(!apply_target_spell(*p,MagicEffect::Resurrect,g.karma,rand)){say("Not dead!");say("Failed!");}}break; // CAST2.OVL 0x060a + CAST.OVL 0x1b90
         case 7:if(location==29||location==40)say("No effect!");else{t.time_spell='T';t.spell_turns=20;say("Negate time!");}break;
         }static constexpr int8_t indices[8]={0,-1,2,3,4,-1,-1,7};if(indices[cmd.item]>=0&&!(cmd.item==4&&location>127)&&!(cmd.item==7&&(location==29||location==40)))ceremony(indices[cmd.item],"scroll-used");return {};
     }
