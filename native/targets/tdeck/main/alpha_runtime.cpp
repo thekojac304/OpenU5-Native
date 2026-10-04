@@ -3855,6 +3855,15 @@ void AlphaRuntime::sync_music(){
     pos.location=uint8_t(game_.position.map.location);
     pos.floor=uint8_t(game_.position.map.floor);
     pos.transport_tile=uint8_t(turn_.transport_tile);
+    // A4 RC3 (ALPHA4_UI.md section 15). A dungeon session never rewrites
+    // GameState::position -- it keeps the SURFACE return cell -- so the
+    // underground party's location is the session's own dungeon id (33..40, the
+    // original's g_location 0x21..0x28), the same identity the HUD caption reads
+    // (hud_dungeon_bands). Read from the surface position alone, the entry
+    // cell's song played all the way down and came back after every battle.
+    // A dungeon has no ship: the stale surface transport tile is not read.
+    const auto dungeon_bands=openu5::hud_dungeon_bands(dungeon_,context_.dungeon);
+    if(dungeon_bands.active){pos.location=dungeon_bands.dungeon_id;pos.floor=0;pos.transport_tile=0;}
     pos.in_combat=ui_&&ui_->base_mode()==openu5::UiMode::Combat;
     pos.combat_victory=combat_.victory;
     audio_.play_music(openu5::music_context_for_location(pos));

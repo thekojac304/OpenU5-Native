@@ -2411,6 +2411,15 @@ if(BUILD_TESTING)
   add_test(NAME a4_parity1_runtime COMMAND a4_parity1_runtime
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin")
+  # Alpha 4 RC3 hotfix (ALPHA4_UI.md section 15): the music a dungeon plays. The
+  # selector read only the surface position, which a dungeon session never
+  # rewrites; Developer teleport, normal entry, the combat round trip, mute,
+  # Music Volume 0 %, a stock pack and a repeated teleport, through raw keys.
+  openu5_a4_ui2_runtime(a4_rc3_dungeon_music_runtime)
+  add_test(NAME a4_rc3_dungeon_music_runtime COMMAND a4_rc3_dungeon_music_runtime
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin"
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/a3-01-audio-stock.bin")
   # Alpha 3 A3-05 -- the audio finalization controls through the REAL
   # AlphaRuntime: Alt+Shift+M / Alt+Shift+S mutes by raw keys, the Settings
   # rows while muted, stock vs patched assets, and a kill's single hit burst.

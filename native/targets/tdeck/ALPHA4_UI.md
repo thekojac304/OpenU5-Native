@@ -2,6 +2,8 @@
 
 Alpha 4 is a UI/presentation track on top of the released Alpha 3 (`alpha3-release`, `eb1bf5e7`). Each batch keeps its own section; a finding is recorded where it was made and not merged into an earlier batch's conclusion.
 
+> **RC3 hotfix (2026-10-03) — read §15 first.** The RC2 hardware session found that a dungeon played the surface's music (every entry, not only Developer teleport): fixed in one block of `sync_music()`, host-verified (192 / 192), **not yet hardware-tested**. RC2 (§14.9) is superseded by RC3 (`4.0.0-alpha4-rc3-debug`); §14's records are kept as written.
+>
 > **Current state (A4-CLOSE1, 2026-10-02) — read §14 first.** Alpha 4's implementation is complete and host-verified (every track, §14.4). The final candidate image is **RC2** (`4.0.0-alpha4-rc2-debug`, A4-POLISH3's source with a new version line; image in §14.9). Known parity divergences (D-82 – D-89 and the older open rows) are tracked separately (§14.5) and are not unfinished Alpha 4 work. What remains before Alpha 4 can be called RC-ready is **one hardware session on the RC2 image** (§14.7): the PARITY1 fixes, the SAVE2 / UI3 slot pages, SAVE3 on the device and the RC heap capture have never been run on a T-Deck. Every "pending" in §2 – §13 is the status as that batch wrote it; §14.3 classifies each one.
 
 ## 1. UI Batch 1 (A4-UI1) — the "More Ultima V" chrome
@@ -3431,3 +3433,98 @@ Not flashed, not tagged. This is the image for the §14.7 session.
 | Release readiness | **not yet RC-ready**: software, preservation and build complete; required hardware checks never run (§14.11). RC2 is the candidate image for that session |
 | Hardware still owed | one RC2 session (§14.7): PARITY1, SAVE2 / UI3, SAVE3 on the device, the heap capture |
 | Commit / tag / push | committed; not tagged, not pushed, not flashed |
+
+## 15. A4-RC3 hotfix — the music a dungeon plays (2026-10-03)
+
+Found on hardware during the RC2 session, while setting up the dungeon part of §9.18 part 3. A hotfix: nothing outside the music selector's input changed.
+
+### 15.1 Baseline
+
+HEAD `f5dfd6e5` (A4-CLOSE1 RC2 build evidence), tree clean; `PROJECT_VER` `4.0.0-alpha4-rc2-debug`; the A4-CLOSE1 records (§14) and A4-POLISH3's production tree present. Relevant tests green before any edit (`a3_04_music_runtime`, `a3_01_audio_*`, `a3_05_*`, `a4_ui2_death_music_runtime`, `a3_04a/b`, `a3_hf9_*`: 13 / 13).
+
+### 15.2 The hardware observation (RC2, recorded as reported)
+
+Developer teleport into Deceit left the source location's music playing indefinitely. Normal dungeon actions did not correct it. A battle room correctly started the combat song, and leaving the combat restored the stale source music. Leaving the dungeon normally restored the right overworld music; Developer-teleporting back into the dungeon left that overworld music playing again. Separate from A4-PARITY1's D-81: the dungeon command-key behaviour itself passed on hardware.
+
+### 15.3 Root cause
+
+It is **not** a Developer-teleport defect, and not a missing `sync_music()` call (unlike the Refuge defect of §2.2). The tail of `AlphaRuntime::handle()` already calls `sync_music()` after a teleport (`synchronize_after_debug`, then the tail). What it computed was wrong:
+
+- `sync_music()` built its `LocationMusicInput` from `game_.position` alone;
+- a dungeon session never rewrites `GameState::position` — it keeps the **surface return cell** by design (`dungeon_input_test` D-LOC-2c; `EnterDungeon` in `dungeon_orchestration.cpp` sets `DungeonState` and leaves `position` alone), and the HUD caption already reads the session instead (`hud_dungeon_bands`);
+- so an underground party "stood" at its entry cell: Britannia gives Britannic Lands, a castle gives The Missing Monarch, and the dungeon range (locations 0x21 – 0x28 → Halls of Doom) was never reached;
+- combat does not save a music context: `pos.in_combat` wins while the arena is up, and afterwards the **same derivation** runs again, so the battle exit restored the stale surface song for the same reason.
+
+Why nothing caught it: A3-04's location test G5 ("a dungeon (loc 0x21) → Halls of Doom") sets `position.map = 0x21` by hand — a state the game never produces — so the pure rule was proven and the wiring was not (the "test builds the state instead of reaching it" class).
+
+Scope: **every** way into a dungeon (normal Enter, Developer teleport, loading a dungeon save), not only the Developer route. The user's report only exercised the Developer route; the new test's N-series shows the normal entry fails identically on RC2.
+
+### 15.4 Normal path vs Developer teleport
+
+| Path | Position the selector read (RC2) | Music |
+|---|---|---|
+| surface → dungeon, normal (E) | surface cell, stale | surface song (wrong) |
+| surface → dungeon, Developer | surface cell, stale | surface song (wrong) |
+| dungeon → surface, normal (klimb) | `exit_dungeon` writes the surface position | correct |
+| dungeon → surface, Developer | the destination | correct |
+| town / castle / underworld teleport | the destination | correct |
+| load of a dungeon save | the surface cell of the save | surface song (wrong) |
+| dungeon combat exit | the surface cell | surface song (wrong) |
+
+Developer teleport takes the same `handle()` tail as every key; no teleport-specific music path exists or was added.
+
+### 15.5 The fix
+
+One block in `AlphaRuntime::sync_music()` (`alpha_runtime.cpp`): when `hud_dungeon_bands(dungeon_, context_.dungeon)` is active, the location is the session's own dungeon id (33 – 40) and the transport tile is ignored (a dungeon has no ship; a Developer teleport off a frigate must not carry the ship's song in). Everything else is untouched: the priority list, the combat / victory branch, the de-duplication in `AudioService::sync_music()` (a repeated request never restarts a song), mute and volume 0 %. No hard-coded Deceit / dungeon selector; the destination is read by `music_context_for_location` like any other.
+
+### 15.6 Tests
+
+New `a4_rc3_dungeon_music_runtime` (34 checks; the A4-UI2 harness: real `AlphaRuntime` on the real Board, the real audio pack, a recording backend; **raw keys only, including the Developer menu**):
+
+| Series | Covers |
+|---|---|
+| N | normal Enter into Deceit, ordinary actions, Alt+S, climb out, Alt+L back into the dungeon save |
+| T | Developer teleport surface → dungeon, dungeon → Britannia / Underworld, → castle → city → Britannia, back into the dungeon; exactly one start, while the menu is still open |
+| C | **the hardware sequence**: surface song → teleport → Halls of Doom → real Deceit room fight (Engagement) → leave by the board edge → Halls of Doom, never the surface song |
+| S | Deceit → Deceit → Despise starts nothing (same effective context); a frigate source |
+| A | muted (silent, context follows, unmute plays the destination); Music Volume 0 % (same, raised from the System Menu); a stock pack (no `start_music` / `stop_music`, context still follows) |
+
+- **RED-first, against the unmodified RC2 `alpha_runtime.cpp`: 18 / 34, 16 RED** — N2, N3, N5, T2, T3, T5, C1, C4, C5, S1, S3, A1 – A4, A6: every step of the hardware report, plus the normal entry and the load.
+- **GREEN with the fix: 34 / 34.**
+- Mutation: removing only the `transport_tile = 0` guard fails S3 alone (33 / 34).
+- The test's Britannia teleport enters at explicit grass coordinates: the picker's default entrance for Britannia is the sea at (0,0), which it refuses (existing picker behaviour, not changed here).
+
+### 15.7 Regressions and host suite
+
+- Audio set unchanged and green: `a3_01_audio_contract`, `a3_01_audio_runtime`, `a3_04_music_runtime` (G5 still passes: the pure rule is unchanged), `a3_04b_perf_runtime`, `a3_05_audio_mute`, `a3_05_audio_controls`, `a4_ui2_death_music_runtime`, `a3_hf9_refuge_cadence_runtime`, `a4_end1_ending_runtime`.
+- **Full suite: 192 / 192, serial, 156.06 s** (`native/core/a4-rc3-host-ctest.log`; host tree `build-a4-close1` rebuilt, 146 steps, 0 warnings, 0 errors). 191 + the new target. No expectation was changed.
+- Not run: the mutation campaigns of earlier batches (the only production file touched is `alpha_runtime.cpp`, one block) and the `game/` vitest run (`game/` unchanged).
+
+### 15.8 What did not change
+
+Normal dungeon exit, combat music selection, death / Refuge music, the ending, save / load formats, SFX, mute and volume behaviour, gameplay and parity rules. The change turns the dungeon's song on where the selector's own table always said it should be (ALPHA3_AUDIO.md §17: "Dungeon entry/exit — a location range change"; checklist E "Enter any dungeon: Halls of Doom plays").
+
+### 15.9 Hardware status
+
+**The pre-fix observation is recorded in §15.2. The fix is NOT hardware-tested; do not mark it PASS until the RC3 image is.** User-reported acceptance (not itemised; no serial timing or heap values were captured): A4-SAVE2 / A4-UI3 slot behaviour, A4-SAVE3 device import / export, power-cycle Continue and general smoke. The real-DOS SAVE3 round trip stays optional.
+
+- **Alpha 4 RC heap capture: none exists** in the tree (only Alpha 3's `a3-rc1-hw-capture.log`). It remains the one open evidence item. After flashing RC3: `python -m esp_idf_monitor -p COMx -b 115200 --no-reset 2>&1 | Tee-Object -FilePath a4-rc3-capture.log`, run §14.7 part 6 (walk / bump with music, volumes and mutes, one fight, Mix, Alt+S / Alt+L, System Menu x10, New Journey and Continue, Developer > Diagnostics > Audio/render stats `und=0 hw=0 miss=0`), stop, then `python native/core/tools/a3_04g_hw_closeout.py a4-rc3-capture.log`.
+- A4-PARITY1's crown (D-78, D-79) and well (D-50) fixes were not among the items reported exercised: still unrecorded on hardware. D-81 (dungeon command keys) PASSED.
+
+### 15.10 Targeted hardware retest
+
+1. Start on the surface with identifiable surface / location music.
+2. Developer teleport > Deceit: dungeon music begins immediately.
+3. Several ordinary dungeon actions: it stays.
+4. Enter a dungeon battle room: combat music starts.
+5. Leave the combat: dungeon music returns, not the old surface track.
+6. Leave the dungeon normally: the correct surface music starts.
+7. Developer teleport back into the dungeon: dungeon music starts immediately again.
+8. Repeat one teleport while music is muted (Alt+Shift+M): silence stays; unmute gives the destination's music.
+9. Repeat at Music Volume 0 %: raising the volume gives the destination's music.
+
+Also worth one try: (E)nter Deceit from its mouth in Britannia — the same defect, no Developer menu.
+
+### 15.11 Candidate
+
+RC2 (§14.9) is **superseded by RC3** (`4.0.0-alpha4-rc3-debug`): RC2 plus this one fix. RC2's records are unchanged. The RC3 image identity is in §15.12.

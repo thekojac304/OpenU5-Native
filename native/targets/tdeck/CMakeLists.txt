@@ -29,8 +29,11 @@ endif()
 # backlight setting, section 13) set 4.0.0-alpha4-polish3-debug. The Alpha 4
 # closeout (A4-CLOSE1, section 14) sets 4.0.0-alpha4-rc2-debug: the final
 # Alpha 4 release CANDIDATE (A4-POLISH3's source, version line only), so it
-# never shares a name or an FW line with the superseded RC1 image.
-set(PROJECT_VER "4.0.0-alpha4-rc2-debug")
+# never shares a name or an FW line with the superseded RC1 image. The RC3
+# hotfix (a dungeon played the surface's music, section 15) sets
+# 4.0.0-alpha4-rc3-debug: RC2 plus that one fix, so it never shares a name or an
+# FW line with the superseded RC2 image.
+set(PROJECT_VER "4.0.0-alpha4-rc3-debug")
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(openu5_tdeck)
 
