@@ -826,6 +826,7 @@ of the clone.
   over the **active character**; the original calls 0xA8D8 (outside the OVL, without measuring whether
   it distributes to the whole party or to one). Minor Class C — measure with a BP at 0xA8D8. Citation:
   `re/notes/transport.md §2`.
+  *(A4-PARITY2 D-89, 2026-10-03: MEASURED and CLOSED. MAINOUT 0x0336 `call 0xffffa8d8` is K:2AA8 party_random_damage: one rand(1,8) per living member (slot order, no draw for a dead one), the whole party, for foot, horse, carpet, skiff and a rowed frigate alike. The reference's naval path and native's `naval_step` both called it wrongly (one roll on the active member) and are fixed; the foot paths were already right. `native/core/a4-parity2-findings/D89-FINAL.md`.)*
 - **Guard `floorExists` in the town stairs/ladders transition** (Phase 1.11,
   fix #46, `game.ts` `applyStairStep`/`klimbLadder`): the binary TOWN 0x052E does
   `inc`/`dec g_floor` UNCONDITIONALLY (0x0548/0x0566) — it does NOT check that the destination

@@ -101,6 +101,8 @@ tile destino 3 → "BREAKING UP!"; 0x47 → "Docked!" + **transport += 4** (auto
 velas 0x20→0x24); otro → "COLLISION!" + daño de casco; g_sail_dir=0. Bloqueado sin
 navegar (skiff/rema) → "Blocked!"; cactus 0x2F → "OUCH!" + rand(1,8) daño party.
 
+> **A4-PARITY2 D-89 (2026-10-03):** el daño del cactus ES `party_random_damage` (K:2AA8, MAINOUT 0x0336): un `rand(1,8)` POR MIEMBRO vivo (sin tirada para un 'D'), no al personaje activo; los puertos (referencia y nativo) lo tiraban una sola vez al activo y se corrigieron. El naval no tiene rutina propia: la cola 0x0312-0x0347 es común a pie y vehículo (`re/notes/cactus-ouch-acta.md`).
+
 ## 3. Deriva del barco por viento (MAINOUT 0x0598/0x0619) — SIN RNG
 
 `tick_and_getkey()` MAINOUT 0x0598 corre 1×/iteración del bucle exterior. Con

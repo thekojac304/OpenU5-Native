@@ -1,0 +1,11 @@
+RED N1 3 members, active 1: HP 100 96 100 (want 96 92 97 = draws 4, 8, 3), Blocked! then OUCH!, no beep
+RED N2 a dead member is skipped with NO draw: slot 2 takes the SECOND draw (HP 96 0 100 want 96 0 92)
+RED N3 'S' and 'P' are damaged and keep their status (HP 96 99 100 ; the adjacent turn's poison tick is 1)
+RED N4 HP == damage kills (4 vs 4 -> 0 'D'; 9 vs 8 -> 1); the active member dying clears the active index, another one dying does not
+RED N5 active 255 still damages everyone; party_size 2 of 4 records -> two draws; six members -> six draws (4 8 3 8 5 3)
+RED N6 God Mode: no HP written, the same draws (seed identical to the unprotected run)
+RED N7 a rowed frigate: Rowing!, Blocked!, OUCH! in that order; the party is damaged, the hull is not
+GREEN N8 controls: grass is Blocked! + beep with no OUCH and no damage; a sailing ship into a cactus never reaches OUCH (its hull takes the hit)
+RED N9 naval / foot equivalence: the same party and seed lose the same HP by boat and on foot (96 100 100 )
+RED N10 exactly one PartyChanged, after OUCH! (K:2A52 ends in the K:2900 panel redraw), as on foot
+10 checks, 9 failures

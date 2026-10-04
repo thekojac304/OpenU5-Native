@@ -1,0 +1,24 @@
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/a4-parity2-d89-naval-ouch.test.ts > D-89 naval OUCH = party_random_damage (MAINOUT 0x0336 -> K:2AA8) > 3 members, active 1: every living member takes its own rand(1,8) in slot order (RED before the fix)
+AssertionError: expected [ 100, 96, 100 ] to deeply equal [ 96, 92, 97 ]
+ FAIL  tests/a4-parity2-d89-naval-ouch.test.ts > D-89 naval OUCH = party_random_damage (MAINOUT 0x0336 -> K:2AA8) > a dead member is skipped WITHOUT a draw: slot 2 gets the SECOND draw
+AssertionError: expected [ 96, +0, 100 ] to deeply equal [ 96, +0, 92 ]
+ FAIL  tests/a4-parity2-d89-naval-ouch.test.ts > D-89 naval OUCH = party_random_damage (MAINOUT 0x0336 -> K:2AA8) > asleep and poisoned members ARE damaged and keep their status
+AssertionError: expected [ 96, 99, 100 ] to deeply equal [ 96, 92, 97 ]
+ FAIL  tests/a4-parity2-d89-naval-ouch.test.ts > D-89 naval OUCH = party_random_damage (MAINOUT 0x0336 -> K:2AA8) > lethal boundary: HP == damage kills (HP 0, 'D'); HP damage+1 survives
+AssertionError: expected [ +0, 9 ] to deeply equal [ +0, 1 ]
+ FAIL  tests/a4-parity2-d89-naval-ouch.test.ts > D-89 naval OUCH = party_random_damage (MAINOUT 0x0336 -> K:2AA8) > the active member dying clears activeCharacter (0xFF); another member dying leaves it
+AssertionError: expected 'G' to be 'D' // Object.is equality
+ FAIL  tests/a4-parity2-d89-naval-ouch.test.ts > D-89 naval OUCH = party_random_damage (MAINOUT 0x0336 -> K:2AA8) > the active index is irrelevant: 0xFF (nobody selected) still damages everyone
+AssertionError: expected [ 96, 100 ] to deeply equal [ 96, 92 ]
+ FAIL  tests/a4-parity2-d89-naval-ouch.test.ts > D-89 naval OUCH = party_random_damage (MAINOUT 0x0336 -> K:2AA8) > party_size bounds the loop: a 4-record roster with partySize 2 damages two members
+AssertionError: expected [ 96, 100, 100, 100 ] to deeply equal [ 96, 92, 100, 100 ]
+ FAIL  tests/a4-parity2-d89-naval-ouch.test.ts > D-89 naval OUCH = party_random_damage (MAINOUT 0x0336 -> K:2AA8) > a full party of six takes six draws (4, 8, 3, 8, 5, 3)
+AssertionError: expected [ 96, 100, 100, 100, 100, 100 ] to deeply equal [ 96, 92, 97, 92, 95, 97 ]
+ FAIL  tests/a4-parity2-d89-naval-ouch.test.ts > D-89 naval OUCH = party_random_damage (MAINOUT 0x0336 -> K:2AA8) > a rowed frigate (0x25) says Rowing!, Blocked!, OUCH! in that order and damages the party
+AssertionError: expected [ 96, 100 ] to deeply equal [ 96, 92 ]
+ FAIL  tests/a4-parity2-d89-naval-ouch.test.ts > D-89 naval OUCH = party_random_damage (MAINOUT 0x0336 -> K:2AA8) > naval/foot equivalence: the same party and seed lose the same HP on foot and in a skiff
+AssertionError: expected [ 96, 100, 100 ] to deeply equal [ 96, 92, 97 ]
+ FAIL  tests/a4-parity2-d89-naval-ouch.test.ts > D-89 naval OUCH = party_random_damage (MAINOUT 0x0336 -> K:2AA8) > the party panel is told (party-changed) exactly once after OUCH!, as on foot (K:2A52 ends in K:2900)
+AssertionError: expected +0 to be 1 // Object.is equality
+      Tests  11 failed | 1 passed (12)

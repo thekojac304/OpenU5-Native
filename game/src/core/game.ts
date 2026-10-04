@@ -1927,9 +1927,12 @@ export class Game {
       this.state.shipHull = Math.max(0, (this.state.shipHull ?? HULL_MAX) - res.hullDamage);
     }
     if (res.partyDamageRoll) {
-      const dmg = this.rand(1, 8); // cactus 0x01FE/0xA8D8: rand(1,8) al party
-      const active = this.state.characters[this.state.activeCharacter] ?? this.state.characters[0];
-      if (active) active.currentHp = Math.max(0, active.currentHp - dmg);
+      // A4-PARITY2 D-89: MAINOUT 0x0336 `call 0xffffa8d8` = K:2AA8 party_random_damage(): ONE
+      // rand(1,8) per living member (slot order, no draw for 'D'), each followed by apply_damage
+      // (K:2A52, which ends in the K:2900 party-panel redraw). The old inline roll hit the active
+      // member only and neither killed ('D'), cleared the active character nor skipped the dead.
+      partyRandomDamage(this.state, this.rand);
+      events.push({ kind: "party-changed" });
     }
     if (res.transportTile !== tile) this.syncTransportFromTile(res.transportTile);
     // Atraque y colisión/breakup detienen la navegación (g_sail_dir=0, MAINOUT 0x0306).

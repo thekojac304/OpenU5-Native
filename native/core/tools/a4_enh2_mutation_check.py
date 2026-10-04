@@ -181,8 +181,11 @@ MUTANTS = [
      '        std::snprintf(r.text, sizeof(r.text), "Reagents: %d each", int(kCounterCap));',
      '        g.skull_keys = kCounterCap;\n        std::snprintf(r.text, sizeof(r.text), "Reagents: %d each", int(kCounterCap));',
      ['rules2']),
-    ('X7', 'God Mode misses the naval OUCH again', COMMANDS,
-     'if (i < c.game.party.character_count && !party_damage_blocked(c.game)) {', 'if (i < c.game.party.character_count) {',
+    ('X7', 'God Mode misses the naval OUCH again (retargeted by A4-PARITY2 D-89: the naval OUCH is party_random_damage now)',
+     COMMANDS,
+     '            party_random_damage(c.game, rand);\n            event(GameEventKind::PartyChanged); // K:2A52',
+     '            { const bool god = c.game.enhanced.god_mode; c.game.enhanced.god_mode = false; party_random_damage(c.game, rand); '
+     'c.game.enhanced.god_mode = god; }\n            event(GameEventKind::PartyChanged); // K:2A52',
      ['rules2']),
     ('X8', 'a group row applies the cheat of its index, not its own', MENU,
      'pending_.kind=SystemMenuIntentKind::Cheat;pending_.cheat=k;', 'pending_.kind=SystemMenuIntentKind::Cheat;pending_.cheat=CheatKind(cursor_);',

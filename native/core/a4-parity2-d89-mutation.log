@@ -1,0 +1,32 @@
+N1   KILLED   [D89] naval OUCH rolls once on the active member again
+     4/7 Test #118: a4_enh2_rules ....................***Failed    0.24 sec | 5/7 Test #119: a4_parity2_d89_naval_ouch ........***Failed    0.08 sec | 118 - a4_enh2_rules (Failed) | 119 - a4_parity2_d89_naval_ouch (Failed)
+N2   KILLED   [D89] naval OUCH does not tell the party panel
+     1/7 Test  #12: movement_flow_parity .............***Failed    0.17 sec | 5/7 Test #119: a4_parity2_d89_naval_ouch ........***Failed    0.09 sec | 12 - movement_flow_parity (Failed) | 119 - a4_parity2_d89_naval_ouch (Failed)
+N3   KILLED   [D89] the helper draws BEFORE it skips a dead member
+     2/7 Test  #31: turn_parity ......................***Failed    0.04 sec | 5/7 Test #119: a4_parity2_d89_naval_ouch ........***Failed    0.14 sec | 31 - turn_parity (Failed) | 119 - a4_parity2_d89_naval_ouch (Failed)
+N4   KILLED   [D89] the helper stops at five members
+     2/7 Test  #31: turn_parity ......................***Failed    0.04 sec | 5/7 Test #119: a4_parity2_d89_naval_ouch ........***Failed    0.08 sec | 31 - turn_parity (Failed) | 119 - a4_parity2_d89_naval_ouch (Failed)
+N5   KILLED   [D89] God Mode gates the naval OUCH before the draws
+     4/7 Test #118: a4_enh2_rules ....................***Failed    0.27 sec | 5/7 Test #119: a4_parity2_d89_naval_ouch ........***Failed    0.09 sec | 118 - a4_enh2_rules (Failed) | 119 - a4_parity2_d89_naval_ouch (Failed)
+N6   KILLED   [D89] the cactus also beeps (the beep is the else branch)
+     1/7 Test  #12: movement_flow_parity .............***Failed    0.16 sec | 5/7 Test #119: a4_parity2_d89_naval_ouch ........***Failed    0.08 sec | 12 - movement_flow_parity (Failed) | 119 - a4_parity2_d89_naval_ouch (Failed)
+N7   KILLED   [D89] HP == damage no longer kills
+     2/7 Test  #31: turn_parity ......................***Failed    0.04 sec | 5/7 Test #119: a4_parity2_d89_naval_ouch ........***Failed    0.09 sec | 6/7 Test #166: gameplay_parity ..................***Failed    9.16 sec | 31 - turn_parity (Failed) | 119 - a4_parity2_d89_naval_ouch (Failed) | 166 - gameplay_parity (Failed)
+N8   KILLED   [D89] a dying active member stays selected
+     2/7 Test  #31: turn_parity ......................***Failed    0.04 sec | 5/7 Test #119: a4_parity2_d89_naval_ouch ........***Failed    0.10 sec | 6/7 Test #166: gameplay_parity ..................***Failed    9.21 sec | 31 - turn_parity (Failed) | 119 - a4_parity2_d89_naval_ouch (Failed) | 166 - gameplay_parity (Failed)
+N9   KILLED   [D89] the helper loops over the roster, not the party
+     2/7 Test  #31: turn_parity ......................***Failed    0.04 sec | 5/7 Test #119: a4_parity2_d89_naval_ouch ........***Failed    0.09 sec | 31 - turn_parity (Failed) | 119 - a4_parity2_d89_naval_ouch (Failed)
+T1   KILLED   [D89] reference: the naval OUCH rolls once on the active member again
+     vitest
+T2   KILLED   [D89] reference: the naval OUCH does not tell the party panel
+     vitest | generate-movement-flow-fixtures.ts --check
+T3   KILLED   [D89] reference: the helper draws before it skips the dead
+     vitest | generate-turn-fixtures.ts --check
+T4   KILLED   [D89] reference: the helper stops at five members
+     vitest | generate-turn-fixtures.ts --check
+T5   KILLED   [D89] reference: HP == damage no longer kills
+     vitest | generate-turn-fixtures.ts --check | 166 - gameplay_parity (Failed)
+restored tree [D89]: native GREEN ; reference GREEN 
+
+A4-PARITY2 mutations: 14/14 killed
+MUT DONE rc=0

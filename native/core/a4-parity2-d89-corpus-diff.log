@@ -1,0 +1,4 @@
+native/core/fixtures/movement-flow.txt: lines 36793 -> 36793
+rows differing: 56; tokens differing: 187 of 257544; rows with a changed width: 0
+changed token columns (column: count): {3: 52, 4: 51, 5: 32, 6: 52}
+first rows: [12647, 14691, 16735, 18779, 20816, 20817, 20818, 20819] ... last rows: [35129, 35130, 35131]

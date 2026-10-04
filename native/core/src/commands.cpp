@@ -372,13 +372,11 @@ struct Runner {
         message("Blocked!");
         if (dest == 0x2f) {
             message("OUCH!");
-            const auto damage = rand(1, 8);
-            auto i = c.game.party.active_character;
-            if (i >= c.game.party.character_count) i = 0;
-            if (i < c.game.party.character_count && !party_damage_blocked(c.game)) { // A4-ENH2: God Mode here too
-                auto &hp = c.game.party.characters[i].current_hp;
-                hp = uint16_t(hp > damage ? hp - damage : 0);
-            }
+            // A4-PARITY2 D-89: MAINOUT 0x0336 `call 0xffffa8d8` = K:2AA8 party_random_damage -- the whole
+            // party (one rand(1,8) per living member, slot order), the same call as the foot path below;
+            // God Mode skips only the HP write after each draw (apply_damage), as everywhere.
+            party_random_damage(c.game, rand);
+            event(GameEventKind::PartyChanged); // K:2A52 ends in the K:2900 party-panel redraw
         } else event(GameEventKind::Sfx, "move-blocked");
     }
     void naval_turn(int32_t drift = 0) {

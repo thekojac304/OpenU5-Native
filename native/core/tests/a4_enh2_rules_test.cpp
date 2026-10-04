@@ -651,8 +651,9 @@ void test_cheats() {
               !q.grapple && q.keys == 0,
           "X5", "Give Reagents: the eight to 99 (120 kept); then \"Reagents already full\"; nothing else in the pack moves");
     // X6. God Mode at the naval "OUCH!" -- a skiff rowed into a cactus takes
-    // rand(1,8) from the active member: the sixth party HP-loss site, which
-    // A4-ENH1 missed. The draw still happens; only the HP write is skipped.
+    // rand(1,8) per living member (party_random_damage, MAINOUT 0x0336; the
+    // one-member party here makes that one draw): the sixth party HP-loss site,
+    // which A4-ENH1 missed. The draw still happens; only the HP write is skipped.
     auto ouch = [](bool god, uint32_t &seed) {
         GameState s;
         TurnState t;

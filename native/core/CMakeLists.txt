@@ -2208,6 +2208,12 @@ if(BUILD_TESTING)
   target_compile_features(a4_enh2_rules PRIVATE cxx_std_17)
   add_test(NAME a4_enh2_rules COMMAND a4_enh2_rules
     "${CMAKE_CURRENT_SOURCE_DIR}/../../game/assets/init.gam")
+  # A4-PARITY2 D-89 (ALPHA4_UI.md section 16): the naval "OUCH!" is party_random_damage
+  # (MAINOUT 0x0336 -> K:2AA8), the whole party, not the active member.
+  add_executable(a4_parity2_d89_naval_ouch tests/a4_parity2_d89_naval_ouch_test.cpp)
+  target_link_libraries(a4_parity2_d89_naval_ouch PRIVATE openu5_core)
+  target_compile_features(a4_parity2_d89_naval_ouch PRIVATE cxx_std_17)
+  add_test(NAME a4_parity2_d89_naval_ouch COMMAND a4_parity2_d89_naval_ouch)
   # Its device half: the REAL AlphaRuntime starving on the overworld, then in
   # Deceit through the live dungeon turn (wanderers, corridor fights), Alt+S/L.
   add_executable(a4_enh2_preservation_runtime

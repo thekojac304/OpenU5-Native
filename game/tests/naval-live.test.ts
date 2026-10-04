@@ -295,7 +295,7 @@ describe("Game.move naval (rama skiff/ship — MAINOUT 0x0490/0x01FE)", () => {
     const events = g.move("south");
     expect(events.some((e) => e.text === "OUCH!")).toBe(true);
     expect(st.position.y).toBe(100); // no avanza
-    expect(st.characters[0]!.currentHp).toBeLessThan(50); // rand(1,8) al party activo
+    expect(st.characters[0]!.currentHp).toBeLessThan(50); // party_random_damage: rand(1,8) a CADA miembro vivo (A4-PARITY2 D-89; a4-parity2-d89-naval-ouch.test.ts)
   });
 
   // #216 — la cola de bloqueo MAINOUT 0x0312-0x0347 la COMPARTEN pie y vehículo, y el
