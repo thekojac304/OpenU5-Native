@@ -3528,3 +3528,28 @@ Also worth one try: (E)nter Deceit from its mouth in Britannia — the same defe
 ### 15.11 Candidate
 
 RC2 (§14.9) is **superseded by RC3** (`4.0.0-alpha4-rc3-debug`): RC2 plus this one fix. RC2's records are unchanged. The RC3 image identity is in §15.12.
+
+### 15.12 The RC3 candidate image
+
+Built after commit `6b6ab8a4` (the fix, the test, `PROJECT_VER`, §15) from a fresh `--no-ccache` directory: `idf.py --no-ccache -B build-a4-rc3 reconfigure`, then `ninja -C build-a4-rc3 -j 4 all`, first attempt clean (1,182 steps), 0 project warnings (`native/core/a4-rc3-fw-{configure,build}.log`); packaged by `python package_launcher.py --build-dir build-a4-rc3` (`a4-rc3-package.log`). A pre-commit build of the same tree (`build-a4-rc3-pre`, `a4-rc3-pre-fw-*.log`) hit one GCC internal compiler error (segmentation fault) inside ESP-IDF's own `esp_lcd_panel_rgb.c` on its first attempt — the known third-party toolchain flake (`a4-rc3-pre-fw-build-attempt1-gcc-segfault.log`); resuming the same directory completed. That image is not the candidate.
+
+| | |
+|---|---|
+| **File** | `native/targets/tdeck/build-a4-rc3/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC3-Debug-Launcher.bin` (byte-identical to `build-a4-rc3/openu5_tdeck.bin`) |
+| **Size** | **1,046,288 B (`0xff710`)** — RC2 + 48 B |
+| **SHA-256** | **`9fd7fc8b5669c206efdc43d9588fe845c9c63f233c74e54c4e89f15803c9d542`** |
+| **Identity** | `FW 4.0.0-alpha4-rc3-debug`, **`Git 6b6ab8a4c378`** (HEAD `6b6ab8a4c3787bd1d6f1781858a37c2f4b0c6c11`; no tracked change; no `-dirty` anywhere in the image) |
+| **App partition** | 1,310,720 B (`0x140000`, 1.25 MiB): **264,432 B (20.2 %) free**; `check_app_budget.py` OK |
+| **Launcher allocation** | 1,048,576 B (1,024 KiB); the next 64 KiB step is 2,289 B away |
+| **Firmware guards** | `a3_04a_hotpath_check` **GREEN**, `a3_04b_iram_check` **GREEN**, `a3_04f_image_check` **GREEN**, `check_app_budget` OK (`a4-rc3-elf-checks.log`, all exit 0) |
+| **Sections vs RC2** | flash `.text` +44 B only; `.rodata`, IRAM, internal `.data` / `.bss` and PSRAM unchanged (`a4-rc3-fw-size-diff.log`) — the +1,776 B internal RAM across Alpha 4 that the heap capture must account for (§14.9) is unchanged |
+| **Packs** | unchanged since A4-END1: no SD recopy from RC2 |
+| **Earlier images** | re-hashed after the build, all unchanged: RC2 `608eb700…1e95`, RC1 `67100a51…145a`, A4-POLISH3 `40154109…b6ca` (`a4-rc3-identity.log`) |
+
+Not flashed, not tagged, not pushed. **This is the image for the §15.10 retest**; if it passes, RC3 replaces RC2 as the image for the remaining §14.7 items (the RC heap capture, and the PARITY1 crown / well steps not yet recorded, §15.9).
+
+### 15.13 Evidence and commits
+
+- Commit 1 `6b6ab8a4`: the fix, `a4_rc3_dungeon_music_runtime` and its CMake target, `PROJECT_VER`, §15, the host logs (`native/core/a4-rc3-{host-build,host-ctest,red-first,green}.log`).
+- Commit 2: the RC3 build, packaging, guard, size and identity logs (`native/core/a4-rc3-{fw-*,pre-fw-*,elf-checks,pre-elf-checks,package,identity}.log`), §15.12 – §15.13, the RC3 rows of `ALPHA4.md` and `LAUNCHER.md`.
+- Not tagged, not pushed, not flashed.

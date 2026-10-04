@@ -1,4 +1,9 @@
-# OpenU5 T-Deck Plus — Alpha 4 (RC2 candidate image)
+# OpenU5 T-Deck Plus — Alpha 4 (RC3 candidate image; RC2 superseded)
+
+**RC3 hotfix (2026-10-03):** the RC2 hardware session found that a dungeon played the surface's music (every way in, not only Developer teleport). Fixed in one block of the music selector; host-verified (192 / 192); **not yet hardware-tested**.
+- **Candidate image:** `OpenU5-TDeck-Alpha4.0.0-alpha4-RC3-Debug-Launcher.bin`, `FW 4.0.0-alpha4-rc3-debug` — 1,046,288 B (`0xff710`), SHA-256 `9fd7fc8b5669c206efdc43d9588fe845c9c63f233c74e54c4e89f15803c9d542`, embedded `Git 6b6ab8a4c378` (no `-dirty`); 264,432 B (20.2 %) free in the 1.25 MiB app partition. RC2 plus that one fix (`ALPHA4_UI.md` §15).
+- **Still owed:** the §15.10 retest on this image; the Alpha 4 RC heap capture (none exists); PARITY1's crown and well steps were not among the items the user reported exercised. User-reported (not itemised, nothing captured): SAVE2 / UI3 slots, SAVE3 import / export, power-cycle Continue and smoke acceptable; D-81 dungeon keys passed.
+- The RC2 text below is kept as written; RC2 (`608eb700…1e95`) is **superseded by RC3**.
 
 **Status: ALPHA 4 RC2 BUILT — NOT YET RC-READY: ONE REQUIRED HARDWARE SESSION OWED (2026-10-02).** Software, preservation and build are complete; known parity divergences are tracked separately and do not gate it. Not a release.
 - **Candidate image:** `OpenU5-TDeck-Alpha4.0.0-alpha4-RC2-Debug-Launcher.bin`, `FW 4.0.0-alpha4-rc2-debug` — 1,046,240 B (`0xff6e0`), SHA-256 `608eb7005dcc88cab6ed8c020e3ad7050c9a711406650492407c7bb760801e95`, embedded `Git 24c666e1ba13`; 264,480 B (20.2 %) free in the 1.25 MiB app partition; Launcher allocation 1,024 KiB.

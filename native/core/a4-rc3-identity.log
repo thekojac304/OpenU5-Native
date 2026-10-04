@@ -1,0 +1,16 @@
+# A4-RC3 identity (post-commit build, 2026-10-03)
+HEAD 6b6ab8a4c3787bd1d6f1781858a37c2f4b0c6c11
+git describe --dirty: alpha4-end1-hardware-validated-25-g6b6ab8a4
+tracked changes: 0
+9fd7fc8b5669c206efdc43d9588fe845c9c63f233c74e54c4e89f15803c9d542 *build-a4-rc3/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC3-Debug-Launcher.bin
+9fd7fc8b5669c206efdc43d9588fe845c9c63f233c74e54c4e89f15803c9d542 *build-a4-rc3/openu5_tdeck.bin
+1046288 build-a4-rc3/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC3-Debug-Launcher.bin
+-- embedded identity strings
+-- earlier images, re-hashed
+608eb7005dcc88cab6ed8c020e3ad7050c9a711406650492407c7bb760801e95 *build-a4-rc2/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC2-Debug-Launcher.bin
+67100a519f833def372227ec7274305ecb7c4976de2ea75b9d76e3d0dbf8145a *build-a4-rc1/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC1-Debug-Launcher.bin
+401541093fe645de03d4ff89ebb555b004f741cd47e4ac58fe08f342b717b6ca *build-a4-polish3/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-polish3-Debug-Launcher.bin
+-- embedded identity strings (python scan)
+6b6ab8a4[0-9a-f]*(?:-dirty)? -> ['6b6ab8a4c378']
+4\.0\.0-alpha4-rc3-debug -> ['4.0.0-alpha4-rc3-debug']
+[0-9a-f]{12}-dirty -> []
