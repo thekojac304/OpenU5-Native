@@ -4,7 +4,7 @@ Ultima V Native v0.4.0 is the first public pre-1.0 release of a complete, playab
 
 **Firmware:** `UltimaV-Native-v0.4.0-TDeck.bin` — 1,047,408 bytes
 **SHA-256:** `363a8fdae6eb714058a4545bad880e05c4d52919e9afd41de8d61e45cfa67210`
-**Firmware provenance.** v0.4.0 uses the exact hardware-validated firmware previously developed as RC5; the binary was not rebuilt for the public versioning cleanup, and the internal version string is retained because those exact bytes were physically validated. The boot identity screen reads `FW 4.0.0-alpha4-rc5-debug` and `Git 59c14b907399`. That is correct: the hardware-tested "RC5" build *is* the Alpha 4 release, byte for byte.
+**Firmware provenance.** v0.4.0 uses the exact hardware-validated firmware previously developed as RC5; the binary was not rebuilt for the public versioning cleanup, and the internal version string is retained because those exact bytes were physically validated. The boot identity screen reads `FW 4.0.0-alpha4-rc5-debug` and `Git 59c14b907399`. That is correct: the hardware-tested RC5 build is the exact firmware published as v0.4.0.
 
 ## You must supply your own Ultima V files
 
