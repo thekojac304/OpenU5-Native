@@ -1,6 +1,5 @@
-# Draft — destino final: .github/ISSUE_TEMPLATE/config.yml del repo público.
 blank_issues_enabled: true
 contact_links:
   - name: Questions & ideas
-    url: https://github.com/kokoima/openu5/discussions
+    url: https://github.com/thekojac304/ultima-v-native/discussions
     about: For anything that isn't a bug or a fidelity divergence — Discussions is open.
