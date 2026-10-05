@@ -208,8 +208,11 @@ a dry run unless told otherwise:
 ```sh
 python native/tools/cleanup_builds.py                           # report everything
 python native/tools/cleanup_builds.py --group host-historical   # still a dry run
-# groups: host-historical, tdeck-historical, trivial-cache, backup-required
+# groups: host-historical, tdeck-historical, closeout, trivial-cache, backup-required
 ```
+
+The historical build sprawl has been reclaimed; a clean dry run reports only KEEP
+trees (missing historical paths are expected).
 
 Deleting needs `--delete --yes-really` plus an explicit `--group`, a tree with no
 tracked changes, and (for `backup-required`) a verified backup marker; see the

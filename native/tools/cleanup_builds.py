@@ -10,6 +10,10 @@ the CLEAN3A census); nothing is discovered by globbing.
     python native/tools/cleanup_builds.py --check PATH          # classify one path
     python native/tools/cleanup_builds.py --group tdeck-historical --delete --yes-really
 
+Steady state (after CLEAN3): only KEEP trees exist; the DELETE/BACKUP_REQUIRED entries
+are kept so a stale or regenerated historical tree is recognised (missing paths
+are normal).
+
 Deleting needs BOTH --delete and --yes-really, and at least one explicit --group.
 The backup-required group additionally needs a backup marker per entry:
     <backup-dir>/<dirname>.sha256       sha256sum-format lines "<hash> *<relpath>"
@@ -50,6 +54,7 @@ PROTECTED = [
 
 # (relpath, class, group, reason)
 MANIFEST = [
+    (CORE + "build", KEEP, "canonical", "canonical ordinary host build (configure per native/core/README.md)"),
     (CORE + "build-quests", KEEP, "specialized", "parity workspace: check-quests.ts output read by a4_parity2_quest_diff.py; needs EA assets"),
     (CORE + "build-gameplay", KEEP, "specialized", "parity workspace: check-gameplay.ts output; needs EA assets"),
     (CORE + "build-shops", KEEP, "specialized", "CMake tests shop_flow/shop_parity read flow.txt/helpers.txt here"),
@@ -59,7 +64,7 @@ MANIFEST = [
     (CORE + "build-dungeon", KEEP, "specialized", "specialized dungeon workspace (absent at CLEAN3A; protected if it appears)"),
     (CORE + "build-tools", KEEP, "toolchain", "portable Zig toolchain; re-bootstrap needs a download"),
     (CORE + "build-zig", KEEP, "toolchain", "Zig example/build referenced by check-*.ts and docs"),
-    (CORE + "build-a4-close1", KEEP, "provisional", "PROVISIONAL: newest host tree; keep until a canonical native/core/build exists"),
+    (CORE + "build-a4-close1", DELETE, "closeout", "superseded by the canonical native/core/build (201/201 validated; identical test names); no unique files"),
     (TDECK + "build-core", KEEP, "canonical", "canonical current T-Deck build (also holds older launcher .bin files)"),
     (TDECK + "build-a3-rc1-post", KEEP, "release", "Alpha 3 RC1 release tree (artifacts also preserved out of tree)"),
     (TDECK + "build-a4-rc5", KEEP, "release", "Alpha 4 RC5 release tree (artifacts also preserved out of tree)"),
@@ -296,7 +301,7 @@ def build_rows(groups):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--group", action="append", help="host-historical, tdeck-historical, trivial-cache, backup-required (repeatable)")
+    ap.add_argument("--group", action="append", help="host-historical, tdeck-historical, closeout, trivial-cache, backup-required (repeatable)")
     ap.add_argument("--check", metavar="PATH", help="classify one path and exit (never deletes)")
     ap.add_argument("--delete", action="store_true")
     ap.add_argument("--yes-really", action="store_true")
