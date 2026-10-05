@@ -132,8 +132,8 @@ Then copy both packs to `/ultima5/` on the SD card.
   There was no crash, lock, stale-resource refusal or input-mode corruption.
 
 Details:
-- [`native/targets/tdeck/ALPHA2_HARDWARE_CHECKLIST.md`](native/targets/tdeck/ALPHA2_HARDWARE_CHECKLIST.md) (Batch 54 and 55 sections);
-- [`native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md`](native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md) (§14 "Batch 55").
+- [`native/targets/tdeck/ALPHA2_HARDWARE_CHECKLIST.md`](../../../native/targets/tdeck/ALPHA2_HARDWARE_CHECKLIST.md) (Batch 54 and 55 sections);
+- [`native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md`](../../../native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md) (§14 "Batch 55").
 
 ## Known issues (non-blocking)
 
@@ -158,7 +158,7 @@ None of these locks the game, loses state or hides a control.
 - **Debug logging is kept on purpose.** The image logs input and object traces to serial and SD.
 - **Not a bug:** stepping back onto the gate you arrived by keeps you there. This is the original's behaviour: every gate leads to the current lunar phase's stone.
 
-Every knowing difference from the original is listed, with its reason, in [`native/targets/tdeck/ALPHA2_PRESERVATION_LEDGER.md`](native/targets/tdeck/ALPHA2_PRESERVATION_LEDGER.md). The original's own defects, which the port reproduces on purpose, are in [`docs/bugs-del-original.md`](docs/bugs-del-original.md).
+Every knowing difference from the original is listed, with its reason, in [`native/targets/tdeck/ALPHA2_PRESERVATION_LEDGER.md`](../../../native/targets/tdeck/ALPHA2_PRESERVATION_LEDGER.md). The original's own defects, which the port reproduces on purpose, are in [`docs/bugs-del-original.md`](../../bugs-del-original.md).
 
 ## Alpha 3 handoff
 
@@ -166,7 +166,7 @@ Alpha 2 is closed. The Alpha 3 tracks below are defined. Each starts only when i
 
 *Pre-RC reconciliation (2026-09-28): this handoff is superseded as a status. The audio track is closed, and the presentation track's H-183 – H-186 were done in A3-HF6 – A3-HF9. The Alpha 3 scope, what it defers (the UI track, D-54, D-56, D-57 and the rest) and its status are in [`ALPHA3.md`](ALPHA3.md). The lists below stay as written.*
 
-**1. Audio / music** — **A3-01 done** (tag `alpha3-a3-01-audio-architecture`). This is architecture, not an Alpha 3 release. The reference is [`native/targets/tdeck/ALPHA3_AUDIO.md`](native/targets/tdeck/ALPHA3_AUDIO.md).
+**1. Audio / music** — **A3-01 done** (tag `alpha3-a3-01-audio-architecture`). This is architecture, not an Alpha 3 release. The reference is [`native/targets/tdeck/ALPHA3_AUDIO.md`](../../../native/targets/tdeck/ALPHA3_AUDIO.md).
 - Done in A3-01:
   - the T-Deck I2S speaker path;
   - the semantic SFX vocabulary and the audio service;

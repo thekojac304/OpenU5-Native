@@ -1,6 +1,6 @@
 # OpenU5 Browser Port Roadmap
 
-> **This document belongs to the OpenU5 browser/reference implementation included in this repository. It is not the roadmap for Ultima V Native** (see [`ROADMAP.md`](ROADMAP.md)).
+> **This document belongs to the OpenU5 browser/reference implementation included in this repository. It is not the roadmap for Ultima V Native** (see [`ROADMAP.md`](../../ROADMAP.md)).
 > References below to shipped browser features, `openu5.org`, mobile/touch UI, skins, localization and browser milestones describe OpenU5 only.
 
 # Roadmap
@@ -44,7 +44,7 @@ the endgame at Doom — with real keystrokes, twice, byte-identically.
 ## Honest open items (deliberate, catalogued)
 
 These are not bugs; each is documented in
-[`deliberate-divergences.md`](re/deliberate-divergences.md) with its class and
+[`deliberate-divergences.md`](../../re/deliberate-divergences.md) with its class and
 its path to closure:
 
 - **Class A** — rules verified by model↔engine stream parity but not yet

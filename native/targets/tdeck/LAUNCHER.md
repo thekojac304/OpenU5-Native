@@ -16,18 +16,18 @@
 > - The final tested Alpha 3 artifact: `OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin` (`3.0.0-alpha3-rc1-debug`), at `native/targets/tdeck/build-a3-rc1-post/launcher/OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin`: 988,320 B (`0xf14a0`), 60,256 B (5.7 %) free, SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`, embedded `Git f85575b96f05` (`f85575b96f05bd7250ef41347f858bfc954e276b`, annotated tag `alpha3-rc1`).
 > - It is A3-HF10's firmware with a new version string: every memory section equal, all three image guards GREEN. The `rc1` in `FW 3.0.0-alpha3-rc1-debug` is kept on purpose.
 > - An Alpha 3 image needs the whole 1 MiB app allocation: the packager reports its minimum as 1,048,576 B; Alpha 2 needed 896 KiB.
-> - Release notes and install instructions: [`../../../ALPHA3.md`](../../../ALPHA3.md). Heap verdict: RC1 heap gate PASSED, A3-04H deferred (`ALPHA3_AUDIO.md` §37).
+> - Release notes and install instructions: [`../../../ALPHA3.md`](../../../docs/history/alpha/ALPHA3.md). Heap verdict: RC1 heap gate PASSED, A3-04H deferred (`ALPHA3_AUDIO.md` §37).
 
-> **Alpha 4 RC5 — candidate image (supersedes RC4); the healer R-key hotfix, awaiting a three-check hardware retest** (2026-10-04; `ALPHA4_UI.md` §17, [`../../../ALPHA4.md`](../../../ALPHA4.md)). Not a release.
+> **Alpha 4 RC5 — candidate image (supersedes RC4); the healer R-key hotfix, awaiting a three-check hardware retest** (2026-10-04; `ALPHA4_UI.md` §17, [`../../../ALPHA4.md`](../../../docs/history/alpha/ALPHA4.md)). Not a release.
 > - `build-a4-rc5/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC5-Debug-Launcher.bin` (`4.0.0-alpha4-rc5-debug`): 1,047,408 B (`0xffb70`), 263,312 B (20.1 %) free in the 1.25 MiB app partition, **Launcher allocation 1,024 KiB (the next 64 KiB step is still 1,169 B away)**, SHA-256 `363a8fdae6eb714058a4545bad880e05c4d52919e9afd41de8d61e45cfa67210`, embedded `Git 59c14b907399`. RC4 plus one line in `UiSession`'s shop key map (`R` = Resurrect at a healer); flash `.text` −4 B, RAM unchanged. Same packs.
 >
-> **Alpha 4 RC4 — superseded by RC5 (record kept as written); the A4-PARITY2 parity fixes; R4-1/2/3/6 PASS, R4-4/5 failed on the device (`ALPHA4_UI.md` §17.1)** (2026-10-04; `ALPHA4_UI.md` §16.15 – §16.16, [`../../../ALPHA4.md`](../../../ALPHA4.md)). Not a release.
+> **Alpha 4 RC4 — superseded by RC5 (record kept as written); the A4-PARITY2 parity fixes; R4-1/2/3/6 PASS, R4-4/5 failed on the device (`ALPHA4_UI.md` §17.1)** (2026-10-04; `ALPHA4_UI.md` §16.15 – §16.16, [`../../../ALPHA4.md`](../../../docs/history/alpha/ALPHA4.md)). Not a release.
 > - `build-a4-rc4/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC4-Debug-Launcher.bin` (`4.0.0-alpha4-rc4-debug`): 1,047,408 B (`0xffb70`), 263,312 B (20.1 %) free in the 1.25 MiB app partition, **Launcher allocation 1,024 KiB (the next 64 KiB step is 1,169 B away)**, SHA-256 `49e3962f367cb85650ae548463fefbf0ef2f4bbaf5d567679422a0d141674414`, embedded `Git 859f1605b974`. RC3 plus D-82 … D-89 and the In Mani Corp text; flash `.text` +1,068 B, `.rodata` +48 B, RAM unchanged. Same packs.
 >
-> **Alpha 4 RC3 — superseded by RC4 (record kept as written); music hotfix awaiting its hardware retest** (2026-10-03; `ALPHA4_UI.md` §15, [`../../../ALPHA4.md`](../../../ALPHA4.md)). Not a release.
+> **Alpha 4 RC3 — superseded by RC4 (record kept as written); music hotfix awaiting its hardware retest** (2026-10-03; `ALPHA4_UI.md` §15, [`../../../ALPHA4.md`](../../../docs/history/alpha/ALPHA4.md)). Not a release.
 > - `build-a4-rc3/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC3-Debug-Launcher.bin` (`4.0.0-alpha4-rc3-debug`): 1,046,288 B (`0xff710`), 264,432 B (20.2 %) free in the 1.25 MiB app partition, **Launcher allocation 1,024 KiB**, SHA-256 `9fd7fc8b5669c206efdc43d9588fe845c9c63f233c74e54c4e89f15803c9d542`, embedded `Git 6b6ab8a4c378`. RC2 plus one fix: a dungeon now plays the dungeon's music. Same packs.
 >
-> **Alpha 4 RC2 — superseded by RC3 (record kept as written); required hardware session owed before it is called RC-ready** (A4-CLOSE1, 2026-10-02; `ALPHA4_UI.md` §14, [`../../../ALPHA4.md`](../../../ALPHA4.md)). Not a release.
+> **Alpha 4 RC2 — superseded by RC3 (record kept as written); required hardware session owed before it is called RC-ready** (A4-CLOSE1, 2026-10-02; `ALPHA4_UI.md` §14, [`../../../ALPHA4.md`](../../../docs/history/alpha/ALPHA4.md)). Not a release.
 > - `build-a4-rc2/launcher/OpenU5-TDeck-Alpha4.0.0-alpha4-RC2-Debug-Launcher.bin` (`4.0.0-alpha4-rc2-debug`): 1,046,240 B (`0xff6e0`), 264,480 B (20.2 %) free in the 1.25 MiB app partition, **Launcher allocation 1,024 KiB**, SHA-256 `608eb7005dcc88cab6ed8c020e3ad7050c9a711406650492407c7bb760801e95`, embedded `Git 24c666e1ba13`. A4-POLISH3's firmware with a new version line.
 > - Needs the A4-END1 resource pack (2,266,819 B, CRC32 `5c0d175d`).
 > - Alpha 4 RC1 (`OpenU5-TDeck-Alpha4.0.0-alpha4-RC1-Debug-Launcher.bin`, SHA-256 `67100a51…145a`, `Git aae348ac32d3`) is superseded; its hardware session never ran.
@@ -96,6 +96,6 @@ release candidate never shares a name with an ordinary batch image:
 - The image SHA-256 and its embedded `Git` hash are recorded in the annotated tag `alpha2-batch54-rc1`.
 - Required SD resource pack: 2,041,466 B, CRC32 `26f75ae6` (unchanged since Batch 53)
 
-Release notes and install instructions: [`../../../ALPHA2.md`](../../../ALPHA2.md).
+Release notes and install instructions: [`../../../ALPHA2.md`](../../../docs/history/alpha/ALPHA2.md).
 The Alpha 2.0.0 packaging record (779,680 B, SHA-256 `895f7099…0cbe`) is in the
 git history of this file and in [ALPHA20_FRONTEND_NEW_GAME.md](ALPHA20_FRONTEND_NEW_GAME.md).

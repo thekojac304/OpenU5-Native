@@ -27,7 +27,7 @@
 
 > ### PRIOR STATE (Alpha 3 release, 2026-09-28) — ALPHA 3 RELEASED; the RC1 image promoted byte for byte; RC1 heap gate PASSED, A3-04H deferred; no code changed; 0 release blockers — **superseded as the current state by the Alpha 4 closeout block above; kept as history**
 >
-> **The closeout batch: documents and evidence only.** Phase A3-RC1 passed on the device and the RC heap capture was adjudicated, so the RC1 image is the Alpha 3 release (tag **`alpha3-release`**; `alpha3-rc1` stays on the source commit `f85575b96f05`). Release notes: [`../../../ALPHA3.md`](../../../ALPHA3.md). No deferred parity row was reopened.
+> **The closeout batch: documents and evidence only.** Phase A3-RC1 passed on the device and the RC heap capture was adjudicated, so the RC1 image is the Alpha 3 release (tag **`alpha3-release`**; `alpha3-rc1` stays on the source commit `f85575b96f05`). Release notes: [`../../../ALPHA3.md`](../../../docs/history/alpha/ALPHA3.md). No deferred parity row was reopened.
 >
 > | | |
 > |---|---|
@@ -55,7 +55,7 @@
 >
 > ### PRIOR STATE (Alpha 3 pre-RC reconciliation, 2026-09-28) — no code changed; the Alpha 3 scope, deferrals and RC procedure are written down; the four hardware checks between A3-HF10 and RC1 have PASSED (2026-09-28); Alpha 2 remains the released build; **superseded as the current state by the RC1 block above**
 >
-> **A documentation batch, not a release** (`ALPHA3.md` at the repository root, a pre-release draft). The code is A3-HF10's (`028269fe`, tag `alpha3-hf10-mix-parity`). No production code, test, `PROJECT_VER`, firmware or tag changed.
+> **A documentation batch, not a release** (`docs/history/alpha/ALPHA3.md`, a pre-release draft). The code is A3-HF10's (`028269fe`, tag `alpha3-hf10-mix-parity`). No production code, test, `PROJECT_VER`, firmware or tag changed.
 > - **Tracker corrections, each backed by a recorded result.**
 >   - H-206 PASS (the user) is recorded.
 >   - H-207's PASS is carried onto ledger D-41.
@@ -343,7 +343,7 @@
 
 > ### CURRENT STATE (Batch 55) — **the Alpha 2 release record; superseded as the current state by A3-01 above.** ALPHA 2 RELEASED / CLOSED
 >
-> **Phase 8, the RC1 hardware smoke, PASSED on the device (steps 1–8).** RC1 is promoted **byte for byte** to the final Alpha 2 release: tag **`alpha2-batch55-release`**. Alpha 2 hardware validation is complete, and no Alpha 2 row is open as a blocker. See §14 "Batch 55" and [`../../../ALPHA2.md`](../../../ALPHA2.md).
+> **Phase 8, the RC1 hardware smoke, PASSED on the device (steps 1–8).** RC1 is promoted **byte for byte** to the final Alpha 2 release: tag **`alpha2-batch55-release`**. Alpha 2 hardware validation is complete, and no Alpha 2 row is open as a blocker. See §14 "Batch 55" and [`../../../ALPHA2.md`](../../../docs/history/alpha/ALPHA2.md).
 >
 > | | |
 > |---|---|
@@ -356,7 +356,7 @@
 
 > ### CURRENT STATE (Batch 54) — **SUPERSEDED by the Batch 55 block above; kept as history.** ALPHA 2 RC READY — HARDWARE SMOKE PENDING
 >
-> **Phase 7E is complete; RB-1 … RB-4 are HARDWARE PASS.** A fresh blocker sweep found **zero active Alpha 2 release blockers**: **ALPHA 2 READY FOR RELEASE CANDIDATE**. The Alpha 2 release candidate (**RC1**) is packaged. See §14 "Batch 54" and the release notes [`../../../ALPHA2.md`](../../../ALPHA2.md).
+> **Phase 7E is complete; RB-1 … RB-4 are HARDWARE PASS.** A fresh blocker sweep found **zero active Alpha 2 release blockers**: **ALPHA 2 READY FOR RELEASE CANDIDATE**. The Alpha 2 release candidate (**RC1**) is packaged. See §14 "Batch 54" and the release notes [`../../../ALPHA2.md`](../../../docs/history/alpha/ALPHA2.md).
 >
 > | | |
 > |---|---|
@@ -7462,7 +7462,7 @@ No flash, no firmware build. No Phase 7E-D … H, no Batch 54, no RC packaging, 
 
 ## Batch 54 — Alpha 2 release candidate (RC1): Phase 7E closeout, final sweep, packaging
 
-**Verdict: ALPHA 2 READY FOR RELEASE CANDIDATE → ALPHA 2 RC READY — HARDWARE SMOKE PENDING.** Phase 7E is complete, and zero Alpha 2 release blockers remain. The batch changes only RC identity: the firmware version string and the Launcher file name. There is no gameplay, save, pack or UI change. Release notes: [`../../../ALPHA2.md`](../../../ALPHA2.md).
+**Verdict: ALPHA 2 READY FOR RELEASE CANDIDATE → ALPHA 2 RC READY — HARDWARE SMOKE PENDING.** Phase 7E is complete, and zero Alpha 2 release blockers remain. The batch changes only RC identity: the firmware version string and the Launcher file name. There is no gameplay, save, pack or UI change. Release notes: [`../../../ALPHA2.md`](../../../docs/history/alpha/ALPHA2.md).
 
 ### 1. Baseline (Phase 54A)
 

@@ -1,6 +1,6 @@
 # Ultima V Native Roadmap
 
-This is the roadmap for **Ultima V Native**, the C++ native implementation. It is not the roadmap of the separate OpenU5 browser/reference implementation, which is kept in [`OPENU5_BROWSER_ROADMAP.md`](OPENU5_BROWSER_ROADMAP.md). No dates are promised.
+This is the roadmap for **Ultima V Native**, the C++ native implementation. It is not the roadmap of the separate OpenU5 browser/reference implementation, which is kept in [`OPENU5_BROWSER_ROADMAP.md`](docs/browser/OPENU5_BROWSER_ROADMAP.md). No dates are promised.
 
 ## Current release
 

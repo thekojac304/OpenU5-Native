@@ -1072,4 +1072,4 @@ The development milestone Alpha 4 was publicly normalised to **v0.4.0**. `alpha4
 
 ## Addendum: OpenU5 and Ultima V Native are separate implementations
 
-OpenU5 and Ultima V Native share repository history and reverse-engineering/reference material, but they are separate implementations. From the Ultima V Native public rebrand onward, browser-specific features and roadmap items are tracked separately (see [`OPENU5_BROWSER_ROADMAP.md`](OPENU5_BROWSER_ROADMAP.md) and [`ROADMAP.md`](ROADMAP.md)). Earlier entries are not rewritten.
+OpenU5 and Ultima V Native share repository history and reverse-engineering/reference material, but they are separate implementations. From the Ultima V Native public rebrand onward, browser-specific features and roadmap items are tracked separately (see [`OPENU5_BROWSER_ROADMAP.md`](../browser/OPENU5_BROWSER_ROADMAP.md) and [`ROADMAP.md`](../../ROADMAP.md)). Earlier entries are not rewritten.

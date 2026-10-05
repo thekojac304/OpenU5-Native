@@ -56,7 +56,7 @@ Not every presentation change can be switched off: the device front end, save ma
 - Optional music when community music-patched game files are supplied, including a dungeon-music fix
 - A broad preservation / parity cleanup against the original: palace crown gate, worn crown, Negate against enemy magic, dungeon command keys, the wishing well, the combat clock, healer and Refuge resurrection, new-game underworld skiff and bodies, and more
 
-Full list: [`RELEASE_NOTES_v0.4.0.md`](RELEASE_NOTES_v0.4.0.md). Engineering history: [`ALPHA4.md`](ALPHA4.md) and [`native/targets/tdeck/ALPHA4_UI.md`](native/targets/tdeck/ALPHA4_UI.md).
+Full list: [`RELEASE_NOTES_v0.4.0.md`](RELEASE_NOTES_v0.4.0.md). Engineering history: [`ALPHA4.md`](docs/history/alpha/ALPHA4.md) and [`native/targets/tdeck/ALPHA4_UI.md`](native/targets/tdeck/ALPHA4_UI.md).
 
 ## Relationship to OpenU5
 
@@ -68,7 +68,7 @@ Ultima V Native was built with substantial help from the OpenU5 codebase. OpenU5
 
 OpenU5 was not treated as infallible. When OpenU5, the native implementation, documentation, or observed behavior disagreed, the original DOS executable was reverse-engineered to adjudicate the difference. In some cases that led to corrections in both the native implementation and the reference behavior.
 
-Ultima V Native is therefore not a straight port of OpenU5 and should not be described as an independent clean-room reconstruction. It is a native reimplementation that relied heavily on OpenU5 as a reference implementation, alongside direct reverse engineering of the original game; native work drew on four sources (OpenU5 behavior, DOS-binary reverse engineering, independent native tests, hardware results), and the DOS binary wins when they disagree. See [`PROJECT_HISTORY.md`](PROJECT_HISTORY.md) for the lineage.
+Ultima V Native is therefore not a straight port of OpenU5 and should not be described as an independent clean-room reconstruction. It is a native reimplementation that relied heavily on OpenU5 as a reference implementation, alongside direct reverse engineering of the original game; native work drew on four sources (OpenU5 behavior, DOS-binary reverse engineering, independent native tests, hardware results), and the DOS binary wins when they disagree. See [`PROJECT_HISTORY.md`](docs/history/PROJECT_HISTORY.md) for the lineage.
 
 ## How it was built: AI-assisted development
 
@@ -158,7 +158,7 @@ This is not a claim of perfect parity. Known, non-blocking discrepancies remain 
 - reuse the native core where practical
 - continue preservation and parity cleanup
 
-No dates are promised. Broader portability to other platforms is a possible long-term direction, nothing more. The full roadmap is [`ROADMAP.md`](ROADMAP.md); the separate OpenU5 browser roadmap is [`OPENU5_BROWSER_ROADMAP.md`](OPENU5_BROWSER_ROADMAP.md).
+No dates are promised. Broader portability to other platforms is a possible long-term direction, nothing more. The full roadmap is [`ROADMAP.md`](ROADMAP.md); the separate OpenU5 browser roadmap is [`OPENU5_BROWSER_ROADMAP.md`](docs/browser/OPENU5_BROWSER_ROADMAP.md).
 
 ## Known limitations
 
@@ -169,7 +169,7 @@ No dates are promised. Broader portability to other platforms is a possible long
 - PC save transfer has the edge cases listed above.
 - Music depends on supplied assets.
 
-Exhaustive detail: [`RELEASE_NOTES_v0.4.0.md`](RELEASE_NOTES_v0.4.0.md) (Known limitations) and [`ALPHA4.md`](ALPHA4.md).
+Exhaustive detail: [`RELEASE_NOTES_v0.4.0.md`](RELEASE_NOTES_v0.4.0.md) (Known limitations) and [`ALPHA4.md`](docs/history/alpha/ALPHA4.md).
 
 ## Reporting bugs and contributing
 
@@ -184,7 +184,7 @@ Use the issue templates in [`.github/ISSUE_TEMPLATE`](.github/ISSUE_TEMPLATE) an
 
 ## Included reference implementation: OpenU5
 
-The repository also contains the separate **OpenU5** browser/reference implementation (TypeScript + PixiJS), which re-derived the game's rules from the binary with the assembly cited next to the code. This subtree is retained because it is an important reference implementation and historical source of parity expectations; it has its own lifecycle and features, and its roadmap is in [`OPENU5_BROWSER_ROADMAP.md`](OPENU5_BROWSER_ROADMAP.md). Nothing in this section describes Ultima V Native. About OpenU5:
+The repository also contains the separate **OpenU5** browser/reference implementation (TypeScript + PixiJS), which re-derived the game's rules from the binary with the assembly cited next to the code. This subtree is retained because it is an important reference implementation and historical source of parity expectations; it has its own lifecycle and features, and its roadmap is in [`OPENU5_BROWSER_ROADMAP.md`](docs/browser/OPENU5_BROWSER_ROADMAP.md). Nothing in this section describes Ultima V Native. About OpenU5:
 
 - the `ULTIMA.EXE` kernel and its 24 overlays were disassembled, and the coverage ledger justifies 202,800 / 202,800 bytes
 - hundreds of parity tests compare the re-derived model with the engine, plus runtime checks against the real binary in headless DOSBox-X

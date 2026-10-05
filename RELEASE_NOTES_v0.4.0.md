@@ -38,7 +38,7 @@ This project distributes **no** Ultima V game data, art, music, text or maps —
    - `npm run pack:native` → `native/assets/openu5-assets.bin` (needs `TILES.16`, `BRIT.DAT`, `DATA.OVL`, `INIT.GAM`, `DWELLING.DAT`)
    - `npm run pack:alpha1` → `native/assets/openu5-alpha1-resources.bin` (**2,266,819 bytes** for v0.4.0 — the firmware refuses any other resource pack)
    - optional music: `npm run pack:audio` → `native/assets/openu5-audio.bin`
-   The exact file requirements and identities are in [`native/ASSETS.md`](native/ASSETS.md) and [`ALPHA4.md`](ALPHA4.md) §4 – §5.
+   The exact file requirements and identities are in [`native/ASSETS.md`](native/ASSETS.md) and [`ALPHA4.md`](docs/history/alpha/ALPHA4.md) §4 – §5.
 3. **SD layout:**
    ```text
    /
@@ -77,4 +77,4 @@ Open an issue on the project's GitHub page with: what you did, what you expected
 
 ## For engineers
 
-The detailed record — every batch, test, mutation proof, hardware report and the known-divergence ledger — is in [`ALPHA4.md`](ALPHA4.md), [`native/targets/tdeck/ALPHA4_UI.md`](native/targets/tdeck/ALPHA4_UI.md) (§18 is the release record) and [`PROJECT_HISTORY.md`](PROJECT_HISTORY.md).
+The detailed record — every batch, test, mutation proof, hardware report and the known-divergence ledger — is in [`ALPHA4.md`](docs/history/alpha/ALPHA4.md), [`native/targets/tdeck/ALPHA4_UI.md`](native/targets/tdeck/ALPHA4_UI.md) (§18 is the release record) and [`PROJECT_HISTORY.md`](docs/history/PROJECT_HISTORY.md).

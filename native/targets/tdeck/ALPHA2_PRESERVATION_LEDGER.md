@@ -377,7 +377,7 @@ Every row checked against the Phase 6T–7D hardware results and the Batch 52 au
   - D-40 – D-43, D-50 – D-52, D-38's NPC pose;
   - the Batch 52 open decisions, questions and Alpha 3 items.
 
-  The Alpha 2 release notes (`ALPHA2.md`, repository root) list them for testers.
+  The Alpha 2 release notes (`docs/history/alpha/ALPHA2.md`) list them for testers.
 
 **Batch 55 status (Alpha 2 released / closed).** The Phase 8 RC1 hardware smoke passed on the device: steps 1–8 PASS on `Git 211c676a1dca`, `RES … CRC 26f75ae6`, `ASSET … CRC 933c9b82` (checklist, Batch 55 section).
 - RC1 is promoted byte for byte to the final Alpha 2 release, tag `alpha2-batch55-release`.

@@ -1033,7 +1033,7 @@ This smoke test looks for catastrophic regressions only; it is not another valid
   - Save, Load and Continue restore the saved state;
   - the dungeon, combat and rest loops return to play.
 - **FAIL:** report the step, what the screen showed, the `Git` line and, if you have it, `/ultima5/logs/` from the SD card.
-- *Known, do not file:* the "Known issues" list in `ALPHA2.md` at the repository root. It covers no audio, no moongate or ending animation, the two `victory` lines after the ending text (H-194), D-58 / D-59, and the Alpha 3 scene-fidelity rows H-183 – H-186.
+- *Known, do not file:* the "Known issues" list in `docs/history/alpha/ALPHA2.md`. It covers no audio, no moongate or ending animation, the two `victory` lines after the ending text (H-194), D-58 / D-59, and the Alpha 3 scene-fidelity rows H-183 – H-186.
 
 **Report back:** the `FW` and `Git` lines, then PASS / FAIL for steps 1–8.
 
@@ -1558,7 +1558,7 @@ Report a failure with the `FW` / `Git` lines.
 
 ## Alpha 3 pre-RC reconciliation (2026-09-28)
 
-Documentation only. No production code, test, version or firmware changed, and no image was built. The current code is A3-HF10 (`Git 028269fec0c5`, tag `alpha3-hf10-mix-parity`). The Alpha 3 scope, its deferrals, the RC procedure and the resource baseline are in `ALPHA3.md` at the repository root.
+Documentation only. No production code, test, version or firmware changed, and no image was built. The current code is A3-HF10 (`Git 028269fec0c5`, tag `alpha3-hf10-mix-parity`). The Alpha 3 scope, its deferrals, the RC procedure and the resource baseline are in `docs/history/alpha/ALPHA3.md`.
 
 ### Alpha 3 physical phases — authoritative status
 
