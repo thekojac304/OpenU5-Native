@@ -194,6 +194,28 @@ cmake --build native/core/build --config Release --target host-test
 - Batch-named trees (`build-a3-*`, `build-a4-*`, `build-batch*`, `build-hf*`) are
   archived working builds from past batches, not the current convention.
 
+### Build hygiene
+
+Ignored does not mean disposable. Canonical builds are `native/core/build` (host)
+and `native/targets/tdeck/build-core` (T-Deck). The specialized parity workspaces,
+the Zig toolchain trees, the release trees (`build-a3-rc1-post`, `build-a4-rc5`)
+and all EA-derived data (`original/`, `game/assets/`, `native/assets/`,
+`native/core/fixtures/`) are protected and are never cleanup targets.
+
+Historical named trees are reclaimed only through the manifest-based tool, which is
+a dry run unless told otherwise:
+
+```sh
+python native/tools/cleanup_builds.py                           # report everything
+python native/tools/cleanup_builds.py --group host-historical   # still a dry run
+# groups: host-historical, tdeck-historical, trivial-cache, backup-required
+```
+
+Deleting needs `--delete --yes-really` plus an explicit `--group`, a tree with no
+tracked changes, and (for `backup-required`) a verified backup marker; see the
+docstring of `native/tools/cleanup_builds.py`. Run its tests with
+`python native/tools/test_cleanup_builds.py`.
+
 Host CTest runs compiled parity tests, the pre-existing movement and input
 regression harnesses, and live TypeScript fixture drift detection when Node is
 available. The input harness uses C++20; the core itself requires C++17.

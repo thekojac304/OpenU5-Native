@@ -148,26 +148,20 @@ game/src/i18n/*.claro.json
 game/tools/careo-visual/compases-*.json
 game/tools/careo-visual/_out
 
-# Generated configuration and build outputs for the isolated ESP-IDF target.
-/native/targets/tdeck/build/
+# Generated configuration for the isolated ESP-IDF target. Its build trees are ignored by
+# native/targets/tdeck/.gitignore; host build trees by native/core/.gitignore.
 /native/assets/
 /native/targets/tdeck/sdkconfig
 /native/targets/tdeck/sdkconfig.old
 
 # Native real-data transports and generated item names (regenerate from user assets).
-/native/core/build-persistence/
+# (The build-persistence/-dungeon/-dialogue/-shops workspaces are covered by
+# native/core/.gitignore `/build*/`; they are ignored but NOT disposable.)
 /native/core/fixtures/dungeon-maps.txt
 /native/core/fixtures/dungeon-locations.txt
 /native/core/fixtures/fixed-maps.txt
 /native/core/fixtures/fixed-enemies.txt
 /native/core/src/loot_names.inc
-/native/core/build-dungeon/
-/native/core/build-dialogue/
-/native/core/build-dialogue/
-
-native/targets/tdeck/build/
-native/targets/tdeck/build-*/
-/native/core/build-shops/
 
 # Scratch build/ctest/export logs from before the evidence-log convention settled (Batches
 # 5-19, 21A.3, 21B), never committed. Listed by batch on purpose: Batches 20-23 commit their

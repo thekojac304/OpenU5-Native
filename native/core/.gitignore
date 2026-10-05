@@ -1,2 +1,8 @@
+# Ignored != safe to delete. `/build*/` intentionally covers ordinary CMake builds
+# (build/), historical batch/Alpha trees (build-a3-*, build-a4-*, build-batch*, build-hf*),
+# the specialized parity/generator workspaces (build-quests, build-gameplay, build-shops,
+# build-real-arenas, build-dialogue, build-persistence, build-dungeon: some CMake tests and
+# generators read fixtures from them) and the local Zig toolchain trees (build-tools,
+# build-zig). Which of them may be reclaimed is decided by native/tools/cleanup_builds.py, not here.
 /build*/
 /fixtures/*.local.json

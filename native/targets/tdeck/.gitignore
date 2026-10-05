@@ -1,1 +1,7 @@
+# build-core is the canonical current project build. Plain `idf.py build` writes build/.
+# Historical batch/Alpha/RC trees (build-a3-*, build-a4-*, build-batch*) stay ignored too,
+# but a release tree (build-a3-rc1-post, build-a4-rc5) can hold artifacts that matter:
+# ignored != safe to delete. Cleanup policy lives in native/tools/cleanup_builds.py.
+/build/
+/build-*/
 /build-core/
