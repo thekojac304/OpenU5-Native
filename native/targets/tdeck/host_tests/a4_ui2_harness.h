@@ -38,6 +38,11 @@ inline std::string n(long long v) { return std::to_string(v); }
 inline const tdeck::AlphaResourceOwners *pack = nullptr;
 inline size_t g_dungeon_count = 0;
 inline const char *g_dump = nullptr;
+// Screenshot capture: the production art. Null (the default) keeps every existing test on
+// its synthetic tiles; a capture driver sets all three through load_real_art().
+inline openu5::AssetPackReader *g_real_tiles = nullptr;
+inline const openu5::AssetPackReport *g_real_tile_report = nullptr;
+inline const tdeck::AlphaResourcePack *g_art_source = nullptr;
 // A4-END1: the dungeon rooms' arenas (combat map + sprites), for a test that
 // fights in a dungeon room. Null keeps the fixture without them, as before.
 inline const DungeonArena *g_arenas = nullptr;
@@ -53,7 +58,17 @@ inline bool load_pack(const char *path) {
     tdeck::AlphaResourceReport report{};
     if (source.open(path, report) != ESP_OK || source.load(owners, report) != ESP_OK || !owners.ibm_font) return false;
     pack = &owners;
+    g_art_source = &source;
     g_dungeon_count = report.dungeon_count;
+    return true;
+}
+/** Opens openu5-assets.bin so Run draws with the device's own tile art (needs load_pack first). */
+inline bool load_real_art(const char *assets_path) {
+    static openu5::AssetPackReader reader;
+    static openu5::AssetPackReport report{};
+    if (reader.open(assets_path, report) != ESP_OK) return false;
+    g_real_tiles = &reader;
+    g_real_tile_report = &report;
     return true;
 }
 
@@ -211,6 +226,9 @@ struct Run {
         f.arena_count = g_arena_count;
         f.render_pixels = true;
         f.patterned_test_tiles = patterned;
+        f.real_tiles = g_real_tiles;
+        f.real_tile_report = g_real_tile_report;
+        f.dungeon_art_source = g_real_tiles ? g_art_source : nullptr;
         f.paced_scenes = paced;
         rt->attach_host_test_fixture(f);
         if (sound) rt->configure_audio(*sound, &audio);

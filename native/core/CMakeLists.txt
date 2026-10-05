@@ -15,6 +15,7 @@ else()
 endif()
 include(CTest)
 option(OPENU5_REAL_ARENAS "Validate extracted original combat arenas (requires user assets and Node)" OFF)
+option(OPENU5_BUILD_CAPTURE "Build native_capture_runtime, the screenshot capture tool (not a test; needs user assets to run)" OFF)
 if(BUILD_TESTING)
   # The Ultima V map fixtures are NOT distributed. dungeon-maps.txt, fixed-maps.txt,
   # dungeon-locations.txt and fixed-enemies.txt are derived from the user's own game
@@ -2559,6 +2560,11 @@ if(BUILD_TESTING)
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-alpha1-resources.bin"
     "${CMAKE_CURRENT_SOURCE_DIR}/../assets/openu5-audio.bin"
     "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/a3-01-audio-stock.bin")
+  # Screenshot capture tool, not a test (no ctest entry): the real runtime/Board over the fake panel with the
+  # device's own tile art. Off by default so the suite's build does not compile it.
+  if(OPENU5_BUILD_CAPTURE)
+    openu5_a4_ui2_runtime(native_capture_runtime)
+  endif()
   # A4-PARITY2 D-86 (ALPHA4_UI.md section 16): a dungeon digit naming an invalid member passes no world turn
   # (DUNGEON 0x07c8-0x07d1), through the REAL AlphaRuntime and raw keys.
   openu5_a4_ui2_runtime(a4_parity2_d86_dungeon_digit_runtime)

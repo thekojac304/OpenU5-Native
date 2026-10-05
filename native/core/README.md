@@ -179,6 +179,20 @@ ctest --test-dir native/core/build -C Release --output-on-failure
 cmake --build native/core/build --config Release --target host-test
 ```
 
+### Screenshot capture tool (host only, not a test)
+
+`-DOPENU5_BUILD_CAPTURE=ON` (default OFF) builds `native_capture_runtime`, which drives the real
+`AlphaRuntime` and `tdeck_board.cpp` over the fake panel with the device's tile art and dumps the
+native 320x240 frames as PNGs. It has no CTest entry and needs the locally generated assets:
+
+```sh
+cmake -S native/core -B native/core/build-capture -DOPENU5_BUILD_CAPTURE=ON
+cmake --build native/core/build-capture --target native_capture_runtime
+native/core/build-capture/native_capture_runtime native/assets/openu5-alpha1-resources.bin   native/assets/openu5-assets.bin native/assets/openu5-audio.bin --dump <dir> [--scene <name>]
+```
+
+Keep the output outside the repository.
+
 `native/core/build` is the recommended ordinary host build directory (any
 `native/core/build*/` is gitignored). Other `build-*` directories under
 `native/core/` are not interchangeable with it:

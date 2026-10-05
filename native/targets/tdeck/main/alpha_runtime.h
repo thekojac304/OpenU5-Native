@@ -190,6 +190,13 @@ class AlphaRuntime {
         // set_unit_ms(0)); `true` is the device's real cadence, driven by the
         // host esp_timer shim's virtual clock.
         bool paced_scenes = false;
+        // Screenshot capture only: an open asset pack and its report, so the host
+        // runs initialize()'s own tile-cache load (and avatar tile) instead of a
+        // synthetic cache; and an open resource pack for initialize()'s own
+        // dungeon-art load. Null keeps the previous behaviour.
+        openu5::AssetPackReader *real_tiles = nullptr;
+        const openu5::AssetPackReport *real_tile_report = nullptr;
+        const AlphaResourcePack *dungeon_art_source = nullptr;
     };
     void attach_host_test_fixture(const HostTestFixture &);
     // Batch 51 read-only windows on the scene pacers, for timing assertions.

@@ -61,6 +61,14 @@ void AlphaRuntime::attach_host_test_fixture(const HostTestFixture &fixture) {
         }
     }
 
+    if (fixture.real_tiles && fixture.real_tile_report && fixture.render_pixels) {
+        tiles_ = fixture.real_tiles;
+        tile_report_ = *fixture.real_tile_report;
+        openu5::initialize_tile_cache(*fixture.real_tiles, *fixture.real_tile_report, tile_cache_storage_,
+                                      openu5::kCachedTileBytes, tile_cache_);
+    }
+    if (fixture.dungeon_art_source) dungeon_art_.load(*fixture.dungeon_art_source);
+
     transcript_ = new openu5::UiTextBlock[kHostTestTranscriptBlocks]();
     // A3-04B: the two PSRAM buffers initialize() gives the Developer screen
     // (its view and the perf report's rows), so a host test can render with
