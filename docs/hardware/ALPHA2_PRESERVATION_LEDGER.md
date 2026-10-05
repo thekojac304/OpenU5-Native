@@ -1,9 +1,9 @@
 # Alpha 2 — Preservation vs. Modernization Ledger
 
 **Created:** Batch 18 (2026-09-21) · **Scope:** the native T-Deck port, `native/`
-**Companion documents:** [`GAMEPLAY_INTEGRATION_AUDIT.md`](GAMEPLAY_INTEGRATION_AUDIT.md) (the finding matrix),
-[`../../../docs/FIDELITY-CONTRACT.md`](../../../docs/FIDELITY-CONTRACT.md) (how "faithful" is decided),
-[`../../../docs/bugs-del-original.md`](../../../docs/bugs-del-original.md) (the register of the *original's* defects).
+**Companion documents:** [`GAMEPLAY_INTEGRATION_AUDIT.md`](../../native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md) (the finding matrix),
+[`../../../docs/FIDELITY-CONTRACT.md`](../FIDELITY-CONTRACT.md) (how "faithful" is decided),
+[`../../../docs/bugs-del-original.md`](../bugs-del-original.md) (the register of the *original's* defects).
 
 ## Why this file exists
 

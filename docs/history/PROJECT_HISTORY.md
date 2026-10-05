@@ -1010,7 +1010,7 @@ The Batch 23 self-misidentification, the Batch 50 stale image, the Batch 54 file
 |---|---|---|
 | History | `git log --reverse --date=iso --format=fuller` (152 commits through `alpha3-release`); `git for-each-ref refs/tags` (90 annotated tags); `git reflog` (the 2026-09-14 clone and branch creation) | ordering, dates, tag receipts (image, SHA-256, host totals, hardware status) |
 | Release docs | `ALPHA2.md`, `ALPHA3.md`, `native/targets/tdeck/LAUNCHER.md`, `native/targets/tdeck/README.md` | release scope, files, validation, handoff |
-| Early docs | `ALPHA1.md`, `ALPHA12.md`, `ALPHA13.md`, `ALPHA14.md`, `ALPHA14_ALPHA2.md`, `native/targets/tdeck/ALPHA20_*.md`, `MILESTONE5.md`, `DEBUG51.md`, `STACK51.md`, `DEVICE_INTEGRATION_AUDIT.md`, `native/core/VALIDATION.md` | milestone and Alpha 1.x era |
+| Early docs | `ALPHA1.md`, `ALPHA12.md`, `ALPHA13.md`, `ALPHA14.md`, `ALPHA14_ALPHA2.md`, `docs/history/tdeck/ALPHA20_*.md`, `MILESTONE5.md`, `DEBUG51.md`, `STACK51.md`, `DEVICE_INTEGRATION_AUDIT.md`, `native/core/VALIDATION.md` | milestone and Alpha 1.x era |
 | Audit | `native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md` (1,221 lines at `cfd42139`; 8,489 at `alpha3-release`), `ALPHA20_BATCH4_ADJUDICATION.md` | audit method, batches 1–55, Alpha 3 hotfix blocks |
 | Ledger and checklist | `ALPHA2_PRESERVATION_LEDGER.md` (D-, A-, E- rows), `ALPHA2_HARDWARE_CHECKLIST.md` (H- rows, phases, identity gate) | classification, hardware results |
 | Audio | `native/targets/tdeck/ALPHA3_AUDIO.md` (5,335 lines) §1–§37 | A3-01…A3-05, HF2–HF10, storage and heap |

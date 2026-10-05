@@ -1,7 +1,7 @@
 # Alpha 2 — Consolidated Physical T-Deck Checklist
 
 **Created:** Batch 18 (2026-09-21) · **Supersedes** the per-batch phase lists in
-[`GAMEPLAY_INTEGRATION_AUDIT.md`](GAMEPLAY_INTEGRATION_AUDIT.md) §16 for *execution* purposes.
+[`GAMEPLAY_INTEGRATION_AUDIT.md`](../../native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md) §16 for *execution* purposes.
 §16 stays as the archaeology — it records which batch owed which step and why.
 **This file is the single list to run in one device session.**
 

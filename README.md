@@ -106,7 +106,7 @@ Typical work on a behavior follows this loop:
 9. Validate on physical hardware.
 10. Document the evidence and the release candidate.
 
-Known discrepancies are tracked rather than hidden. See the [preservation ledger](native/targets/tdeck/ALPHA2_PRESERVATION_LEDGER.md), the [gameplay integration audit](native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md), the [deliberate divergences](re/deliberate-divergences.md) and the [fidelity docs](docs/FIDELITY.md).
+Known discrepancies are tracked rather than hidden. See the [preservation ledger](docs/hardware/ALPHA2_PRESERVATION_LEDGER.md), the [gameplay integration audit](native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md), the [deliberate divergences](re/deliberate-divergences.md) and the [fidelity docs](docs/FIDELITY.md).
 
 ## Platform and hardware
 

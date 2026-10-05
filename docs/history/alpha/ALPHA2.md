@@ -132,7 +132,7 @@ Then copy both packs to `/ultima5/` on the SD card.
   There was no crash, lock, stale-resource refusal or input-mode corruption.
 
 Details:
-- [`native/targets/tdeck/ALPHA2_HARDWARE_CHECKLIST.md`](../../../native/targets/tdeck/ALPHA2_HARDWARE_CHECKLIST.md) (Batch 54 and 55 sections);
+- [`docs/hardware/ALPHA2_HARDWARE_CHECKLIST.md`](../../hardware/ALPHA2_HARDWARE_CHECKLIST.md) (Batch 54 and 55 sections);
 - [`native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md`](../../../native/targets/tdeck/GAMEPLAY_INTEGRATION_AUDIT.md) (§14 "Batch 55").
 
 ## Known issues (non-blocking)
@@ -158,7 +158,7 @@ None of these locks the game, loses state or hides a control.
 - **Debug logging is kept on purpose.** The image logs input and object traces to serial and SD.
 - **Not a bug:** stepping back onto the gate you arrived by keeps you there. This is the original's behaviour: every gate leads to the current lunar phase's stone.
 
-Every knowing difference from the original is listed, with its reason, in [`native/targets/tdeck/ALPHA2_PRESERVATION_LEDGER.md`](../../../native/targets/tdeck/ALPHA2_PRESERVATION_LEDGER.md). The original's own defects, which the port reproduces on purpose, are in [`docs/bugs-del-original.md`](../../bugs-del-original.md).
+Every knowing difference from the original is listed, with its reason, in [`docs/hardware/ALPHA2_PRESERVATION_LEDGER.md`](../../hardware/ALPHA2_PRESERVATION_LEDGER.md). The original's own defects, which the port reproduces on purpose, are in [`docs/bugs-del-original.md`](../../bugs-del-original.md).
 
 ## Alpha 3 handoff
 

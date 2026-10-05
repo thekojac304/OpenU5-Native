@@ -5,8 +5,8 @@
 **Method:** input→adapter→UI→core→state→renderer→feedback→mode-return→persistence tracing, static reachability sweeps, reference (`game/src`, `re/`, `extractor/`) adjudication, host test-suite execution, and one purpose-built core probe.
 **Commit audited:** `c18f5b64` (branch `main`, clean tree).
 **Last comprehensive reconciliation:** **Batch 18**, from `83b2ed56` — see §14 Batch 18 for the authoritative current state, and the two documents it produced:
-[`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
-[`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
+[`ALPHA2_HARDWARE_CHECKLIST.md`](../../../docs/hardware/ALPHA2_HARDWARE_CHECKLIST.md) (the one device list to run) and
+[`ALPHA2_PRESERVATION_LEDGER.md`](../../../docs/hardware/ALPHA2_PRESERVATION_LEDGER.md) (every knowing divergence from the reference).
 
 
 > **Alpha 4 release closeout (2026-10-04).** Alpha 4 is released with RC5 (`FW 4.0.0-alpha4-rc5-debug`, `Git 59c14b907399`, SHA-256 `363a8fda…7210`) as the hardware-validated image; host suite 201 / 201. Statements further down that call RC3's music retest, the RC heap capture, PARITY1's checks or RC5's hardware retest "owed" or "pending" are superseded by `ALPHA4_UI.md` §18 (the heap capture was waived by the user). No gameplay row changed in the closeout; D-90 – D-103 remain future work.
@@ -461,7 +461,7 @@ The remaining failures are almost entirely in the **glue layer**: `native/target
 
 **The remaining risk list, reconciled at Batch 19, is shorter:**
 
-1. **141 of 145 hardware rows have never been run** ([`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md)). This is now the **only** Alpha 2 blocker.
+1. **141 of 145 hardware rows have never been run** ([`ALPHA2_HARDWARE_CHECKLIST.md`](../../../docs/hardware/ALPHA2_HARDWARE_CHECKLIST.md)). This is now the **only** Alpha 2 blocker.
 2. ~~**R-25 — the crystal ball is 100 % non-functional** and its prompt is fabricated.~~ **RESOLVED in Batch 19.** Kernel `0x4988` is now the shared seam `openu5/command_char.h`, and the crystal ball, `(S)earch` and `(C)ast` all resolve through it. Host-verified; device rows H-50 and H-141 – H-145 remain. See §14 Batch 19.
 3. **Y-32 — the Blackthorn scene's pacing has no reference witness.** Not fixable until someone records original footage; see the ledger D-10. This is a missing *oracle*, not a known defect.
 
@@ -3539,8 +3539,8 @@ the time is preserved.
 
 This is the first whole-project audit since the parity, dungeon, magic, UI, Blackthorn, save/load and harness-cleanup batches. Its deliverable is not code — it is an authoritative, contradiction-free answer to *what remains before Alpha 2 can be declared complete*. Two new sibling documents carry the parts that were previously scattered:
 
-* **[`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md)** — one deduplicated 140-row device list, executable in a single session. §16 below stays as the archaeology of which batch owed which step.
-* **[`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md)** — every knowing divergence from the reference, split into T-Deck adaptations, deliberate enhancements, and unresolved divergences, with a toggle-feasibility assessment for a future preservation profile. **No enhancement was reverted and no toggle was implemented.**
+* **[`ALPHA2_HARDWARE_CHECKLIST.md`](../../../docs/hardware/ALPHA2_HARDWARE_CHECKLIST.md)** — one deduplicated 140-row device list, executable in a single session. §16 below stays as the archaeology of which batch owed which step.
+* **[`ALPHA2_PRESERVATION_LEDGER.md`](../../../docs/hardware/ALPHA2_PRESERVATION_LEDGER.md)** — every knowing divergence from the reference, split into T-Deck adaptations, deliberate enhancements, and unresolved divergences, with a toggle-feasibility assessment for a future preservation profile. **No enhancement was reverted and no toggle was implemented.**
 
 ---
 
@@ -3692,7 +3692,7 @@ Re-adjudicated against the current tree rather than the Batch 4 note, and its se
 
 #### 6. Intentional divergences
 
-Now enumerated in one place for the first time: **[`ALPHA2_PRESERVATION_LEDGER.md`](ALPHA2_PRESERVATION_LEDGER.md)**. Counts: **14 T-Deck adaptations** (A-1 – A-14), **4 deliberate enhancements** (E-1 – E-4), **18 unresolved divergences** (D-1 – D-18, of which exactly one — D-11 — is a live production defect, R-25).
+Now enumerated in one place for the first time: **[`ALPHA2_PRESERVATION_LEDGER.md`](../../../docs/hardware/ALPHA2_PRESERVATION_LEDGER.md)**. Counts: **14 T-Deck adaptations** (A-1 – A-14), **4 deliberate enhancements** (E-1 – E-4), **18 unresolved divergences** (D-1 – D-18, of which exactly one — D-11 — is a live production defect, R-25).
 
 Nothing was reverted. The ledger's purpose is to make a future preservation profile possible, and it records per row whether the difference is already isolated enough to become a compatibility toggle. Seven adaptations and two enhancements are assessed as isolated; A-1 – A-5, A-13 and A-14 are **not restorable**, because hardware and not preference forced them.
 
@@ -3702,7 +3702,7 @@ Nothing was reverted. The ledger's purpose is to make a future preservation prof
 
 **None were performed. No physical T-Deck was available in this session, and no hardware evidence is claimed.**
 
-All still-relevant device steps from every prior batch are consolidated and deduplicated into **[`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md)**: **140 rows**, each with setup, exact input, expected visible result, expected state change, cancel-path expectation, SD-refresh requirement and a PASS/FAIL/UNTESTED field.
+All still-relevant device steps from every prior batch are consolidated and deduplicated into **[`ALPHA2_HARDWARE_CHECKLIST.md`](../../../docs/hardware/ALPHA2_HARDWARE_CHECKLIST.md)**: **140 rows**, each with setup, exact input, expected visible result, expected state change, cancel-path expectation, SD-refresh requirement and a PASS/FAIL/UNTESTED field.
 
 * **4 rows carry real PASS evidence** and are marked as such: H-48 (Batch 5's three world-cast checks) and H-85/H-86/H-88 (the Batch 9B dungeon-runtime gate).
 * **136 rows are UNTESTED.**
@@ -3763,7 +3763,7 @@ Run as a sweep, not a sample. What it found:
 
 **Test/harness (2):** `native/targets/tdeck/host_tests/batch18_well_ceremony_test.cpp` (new, 19 checks), `native/core/CMakeLists.txt` (the new target).
 
-**Documentation (3):** `native/targets/tdeck/ALPHA2_HARDWARE_CHECKLIST.md` (new), `native/targets/tdeck/ALPHA2_PRESERVATION_LEDGER.md` (new), this document (§1, §3 R-25/R-26/R-34, §5, §7, §8, §14, §16).
+**Documentation (3):** `docs/hardware/ALPHA2_HARDWARE_CHECKLIST.md` (new), `docs/hardware/ALPHA2_PRESERVATION_LEDGER.md` (new), this document (§1, §3 R-25/R-26/R-34, §5, §7, §8, §14, §16).
 
 #### RED → GREEN evidence
 
@@ -3967,7 +3967,7 @@ Checklist impact, 140 rows → **145**:
 
 ## 16. PHYSICAL T-DECK CERTIFICATION PLAN
 
-> **Superseded for execution by [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md) (Batch 18).** That file is the deduplicated 140-row list to actually run, in one session, with a PASS/FAIL/UNTESTED field per row. **This section is kept as archaeology** — it records which batch owed which step and why, which the flat checklist deliberately does not. If the two ever disagree about an expectation, this section is the derivation and the checklist is the instruction; fix the checklist.
+> **Superseded for execution by [`ALPHA2_HARDWARE_CHECKLIST.md`](../../../docs/hardware/ALPHA2_HARDWARE_CHECKLIST.md) (Batch 18).** That file is the deduplicated 140-row list to actually run, in one session, with a PASS/FAIL/UNTESTED field per row. **This section is kept as archaeology** — it records which batch owed which step and why, which the flat checklist deliberately does not. If the two ever disagree about an expectation, this section is the derivation and the checklist is the instruction; fix the checklist.
 >
 > **Current tally: 4 PASS, 0 FAIL, 136 UNTESTED.** The only hardware evidence on record anywhere in this project is Batch 5's three world-cast checks and Batch 9B's three dungeon-runtime checks.
 
@@ -4229,7 +4229,7 @@ See §14 Batch 17.
 
 Flash `build-batch18/openu5_tdeck.bin`. **Do not touch the card** — Batch 18 changes no resource file.
 
-The executable rows are **H-17 – H-23** in [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md). In summary:
+The executable rows are **H-17 – H-23** in [`ALPHA2_HARDWARE_CHECKLIST.md`](../../../docs/hardware/ALPHA2_HARDWARE_CHECKLIST.md). In summary:
 
 * **The well (R-26).** `L`ook at a well: the transcript must read `a well.` and the prompt `Drop a coin?`. `N` echoes **`No`**; **the Mic/Cancel key must do the same** — before this build it was simply ignored and the prompt stayed open. `Y` with gold echoes `Yes` and opens a row prompted **`Thy wish?`** (not "What dost thou wish?"). `Y` with **zero** gold echoes `Yes` and stops **silently** — there is no `Thou hast no coin!` in the binary, and printing one would be the regression.
 * **Chained modals (R-34) — the general check, and the one that matters most.** Any modal whose answer opens another modal must now show the second modal's prompt text: the shrine's `Virtue?` then `Mantra?`, a Blackthorn interrogation round's `Your response?`, the Rel Hur/skull-key `Direction?` row, and the `(U)se`-a-potion `On whom?` picker. **Before this build every one of those rendered with an empty prompt row.** If any still does, the flashed image is not this build.
@@ -4242,7 +4242,7 @@ The executable rows are **H-17 – H-23** in [`ALPHA2_HARDWARE_CHECKLIST.md`](AL
 
 Flash `build-batch19/openu5_tdeck.bin`. **Do not touch the card** — Batch 19 changes no resource file.
 
-The executable rows are **H-50** (rewritten) and **H-141 – H-145** in [`ALPHA2_HARDWARE_CHECKLIST.md`](ALPHA2_HARDWARE_CHECKLIST.md). In summary:
+The executable rows are **H-50** (rewritten) and **H-141 – H-145** in [`ALPHA2_HARDWARE_CHECKLIST.md`](../../../docs/hardware/ALPHA2_HARDWARE_CHECKLIST.md). In summary:
 
 * **The crystal ball works at all (R-25).** `L`ook at a crystal ball with no active player and two or more healthy members: a **`Player: `** roster picker opens. The old `Peer into it?` yes/no is deleted — if it still appears, the flashed image is not this build. Picking a high-INT member gives `Strange vision!` and the 32×32 gem map; **the gem count must not change and closing must charge no turn**. A low-INT member gives `Death vision!` and **exactly 1 HP off that member** — not member 0, and not the active player if they differ.
 * **The branches that must NOT ask.** With an active player set, or with exactly one `G`/`P` member left, the vision fires **immediately, with no prompt**. With zero `G`/`P` members the transcript reads **`None!`** and nothing else happens.

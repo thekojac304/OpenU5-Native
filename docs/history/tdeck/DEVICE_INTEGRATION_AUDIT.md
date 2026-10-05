@@ -132,6 +132,6 @@ scan for flashing, clipping, weak reticles, and layout instability.
 
 ## 20. Future roadmap
 
-See `native/targets/tdeck/FRONTEND_ROADMAP.md` for the original-style intro/menu, settings, main UI,
+See `docs/history/tdeck/FRONTEND_ROADMAP.md` for the original-style intro/menu, settings, main UI,
 future semantic touch buttons, and audio architecture. Those features were intentionally not
 implemented in this audit.

@@ -174,7 +174,7 @@ The firmware refuses to start with any other resource pack. The image is a Debug
 
 **Release tree (closeout, 2026-09-28).** No source, test or build changed after RC1 (the diff against `alpha3-rc1`, excluding `*.md` and `*.log`, is empty). The existing `native/core/build-a3-rc1` was run again, serially and without a rebuild: **162 / 162, 134.68 s** (`native/core/a3-release-ctest.log`). No firmware was rebuilt.
 
-**Hardware.** Every phase is in `native/targets/tdeck/ALPHA2_HARDWARE_CHECKLIST.md`.
+**Hardware.** Every phase is in `docs/hardware/ALPHA2_HARDWARE_CHECKLIST.md`.
 
 | Check | Covers | Status |
 |---|---|---|
@@ -241,7 +241,7 @@ The deferred items of §2 are the known differences. These points are not bugs:
 - **Debug logging is kept on purpose**, on serial. SD logging is off until the Developer switch turns it on.
 - **Free internal RAM moves with the save document.** A save rewrites the live document in place, so free internal RAM can change by tens of KB across a save and comes back when a load or New Journey replaces the document. The RC heap capture found no leak (`ALPHA3_AUDIO.md` §37); the placement / fragmentation watch stays a known trait, and its remedy, A3-04H, is post-Alpha-3 work.
 
-Every knowing difference from the original is in [`native/targets/tdeck/ALPHA2_PRESERVATION_LEDGER.md`](../../../native/targets/tdeck/ALPHA2_PRESERVATION_LEDGER.md). The original's own defects, which the port keeps, are in [`docs/bugs-del-original.md`](../../bugs-del-original.md).
+Every knowing difference from the original is in [`docs/hardware/ALPHA2_PRESERVATION_LEDGER.md`](../../hardware/ALPHA2_PRESERVATION_LEDGER.md). The original's own defects, which the port keeps, are in [`docs/bugs-del-original.md`](../../bugs-del-original.md).
 
 **Not reopened for Alpha 3** (decisions, recorded so they are not re-litigated):
 - Audio is closed. Music is closed. The volume curve is final.

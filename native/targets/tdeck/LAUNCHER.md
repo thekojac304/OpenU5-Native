@@ -98,4 +98,4 @@ release candidate never shares a name with an ordinary batch image:
 
 Release notes and install instructions: [`../../../ALPHA2.md`](../../../docs/history/alpha/ALPHA2.md).
 The Alpha 2.0.0 packaging record (779,680 B, SHA-256 `895f7099…0cbe`) is in the
-git history of this file and in [ALPHA20_FRONTEND_NEW_GAME.md](ALPHA20_FRONTEND_NEW_GAME.md).
+git history of this file and in [ALPHA20_FRONTEND_NEW_GAME.md](../../../docs/history/tdeck/ALPHA20_FRONTEND_NEW_GAME.md).

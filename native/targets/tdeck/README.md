@@ -21,7 +21,7 @@ the preserved baseline.
 The current build is `0.5.1-input-final`. Trackball is the sole directional
 movement input. Raw keyboard characters, modifiers, matrix positions and
 press/release edges remain available for the future command/text layer. See
-[STACK51.md](STACK51.md) for the retained stack-overflow correction.
+[STACK51.md](../../../docs/history/tdeck/STACK51.md) for the retained stack-overflow correction.
 
 Standalone ESP-IDF firmware for the LilyGO T-Deck Plus (ESP32-S3, 16 MiB
 flash, 8 MiB octal PSRAM). Milestone 5 preserves the hardware-verified display,
@@ -29,7 +29,7 @@ microSD, shared-SPI, asset validation, and Launcher packaging, and renders the
 initial 11x11 Iolo's Hut viewport selected by INIT.GAM. Pack generation
 and format details are in [../../ASSETS.md](../../ASSETS.md). The web/TypeScript
 runtime is independent and unchanged. Directional input, movement scope, and
-intentional deferrals are documented in [MILESTONE5.md](MILESTONE5.md).
+intentional deferrals are documented in [MILESTONE5.md](../../../docs/history/tdeck/MILESTONE5.md).
 
 No full command, animation, NPC-turn, combat, dialogue, audio, save, or turn logic
 is included. Launcher app-only packaging remains available in
