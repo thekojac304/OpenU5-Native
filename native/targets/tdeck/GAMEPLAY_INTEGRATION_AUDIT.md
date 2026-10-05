@@ -1,4 +1,4 @@
-# OpenU5-Native — Whole-Project Gameplay Integration Audit
+# Ultima V Native — Whole-Project Gameplay Integration Audit
 
 **Target:** LilyGO T-Deck Plus · ESP32-S3 · ESP-IDF 6.1 · 16 MiB flash · 8 MiB PSRAM · 320x240 ST7789 · physical keyboard · trackball · GT911 · microSD
 **Scope:** end-to-end playability, not code presence.

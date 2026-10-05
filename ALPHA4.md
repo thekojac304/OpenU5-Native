@@ -1,4 +1,4 @@
-# OpenU5 T-Deck Plus — Alpha 4 (released; RC5 is the release image)
+# Ultima V Native — T-Deck Plus — Alpha 4 (released; RC5 is the release image)
 
 **Status: ALPHA 4 RELEASED (2026-10-04).** Alpha 4 is release-ready, with **RC5 as the hardware-validated firmware image**. No release blockers. Nothing is pushed; no GitHub Release has been created.
 

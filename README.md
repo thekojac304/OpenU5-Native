@@ -6,10 +6,10 @@
 |---|---|
 | **Current public milestone** | Alpha 4 (tag `alpha4-release`, 2026-10-04), a pre-1.0 public release |
 | **Platform** | LilyGO T-Deck Plus (ESP32-S3), installed through the T-Deck Launcher |
-| **Firmware** | Download from [GitHub Releases](https://github.com/thekojac304/OpenU5-Native/releases) |
+| **Firmware** | Download from [GitHub Releases](https://github.com/thekojac304/ultima-v-native/releases) |
 | **Game data** | Bring your own copy of Ultima V; nothing from the original game is distributed |
 
-Alpha 4 is complete enough to play from character creation through the ending. This repository (also known as OpenU5 Native) additionally contains the original OpenU5 browser port, described [below](#the-browser-port-openu5).
+Alpha 4 is the project's current milestone name. The software is a pre-1.0 public release, complete and playable from character creation through the ending, with documented non-blocking discrepancies still under active preservation work. The repository also contains the OpenU5 browser port that served as a reference implementation, described [below](#the-browser-port-openu5).
 
 ## Screenshots
 
@@ -58,9 +58,24 @@ Not every presentation change can be switched off: the device front end, save ma
 
 Full list: [`ALPHA4_RELEASE_NOTES.md`](ALPHA4_RELEASE_NOTES.md). Engineering history: [`ALPHA4.md`](ALPHA4.md) and [`native/targets/tdeck/ALPHA4_UI.md`](native/targets/tdeck/ALPHA4_UI.md).
 
+## Relationship to OpenU5
+
+Ultima V Native was built with substantial help from the OpenU5 codebase. OpenU5's TypeScript implementation served as a major behavioral reference during development, and much of the native parity work compared the C++ implementation against that reference.
+
+OpenU5 was not treated as infallible. When OpenU5, the native implementation, documentation, or observed behavior disagreed, the original DOS executable was reverse-engineered to adjudicate the difference. In some cases that led to corrections in both the native implementation and the reference behavior.
+
+Ultima V Native is therefore not a straight port of OpenU5 and should not be described as an independent clean-room reconstruction. It is a native reimplementation that relied heavily on OpenU5 as a reference implementation, alongside direct reverse engineering of the original game. See [`PROJECT_HISTORY.md`](PROJECT_HISTORY.md) for the lineage.
+
 ## How it was built: AI-assisted development
 
-This project was developed heavily with AI coding agents, or informally, "vibe coded." AI wrote a substantial amount of the implementation. Its output was not accepted blindly: changes were repeatedly checked against the original DOS executable, a reference implementation, parity corpora, regression and golden tests, mutation testing, clean firmware builds and a physical T-Deck.
+This project was developed heavily with AI coding agents, or informally, "vibe coded." AI wrote a substantial amount of the implementation. Its output was not accepted blindly. The agents typically worked by triangulating four evidence sources:
+
+1. OpenU5 / TypeScript reference behavior
+2. reverse engineering of the original DOS binary
+3. native runtime behavior (host tests and the real device code paths)
+4. physical T-Deck hardware results
+
+When the sources disagreed, the DOS binary decided. Changes were also checked against parity corpora, regression and golden tests, mutation testing and clean firmware builds.
 
 Confidence in the result comes from that evidence, not from who or what wrote the code. For Alpha 4 that includes:
 
@@ -95,7 +110,7 @@ The supported native platform is the **LilyGO T-Deck Plus (ESP32-S3, 16 MB flash
 
 ## Installing (overview)
 
-1. Download the current firmware (`OpenU5-TDeck-Alpha4.0.0-alpha4-RC5-Debug-Launcher.bin`) from [GitHub Releases](https://github.com/thekojac304/OpenU5-Native/releases).
+1. Download the current firmware (`OpenU5-TDeck-Alpha4.0.0-alpha4-RC5-Debug-Launcher.bin`) from [GitHub Releases](https://github.com/thekojac304/ultima-v-native/releases).
 2. Install it on the T-Deck through the Launcher's SD installer.
 3. Supply your own Ultima V files and generate the SD resource packs from them on your own machine (`npm run pack:native`, `npm run pack:alpha1`, optionally `npm run pack:audio`).
 4. Put the packs under `/ultima5/` on a FAT-formatted microSD card.
@@ -187,12 +202,17 @@ Some host parity tests (`native/core`) read local fixtures generated from your o
 
 ## Credits
 
+- **OpenU5**, a major reference implementation for this project (see [Relationship to OpenU5](#relationship-to-openu5))
+- The reverse-engineering work on the original DOS executable and overlays, recorded in [`re/`](re/)
 - Origin Systems and the original Ultima V creators
-- The OpenU5 reference lineage: the TypeScript port in this repository, which serves as the reference implementation
 - [Ultima5Redux](https://github.com/bradhannah/Ultima5Redux) (MIT), source of tile metadata; see [`NOTICE`](NOTICE)
 - LilyGO and the T-Deck ecosystem and reference code
 - bmorcelli's Launcher, the SD installer used for firmware installation
 - The community Exodus *Ultima V Upgrade* music patch (not distributed here)
+
+## Legacy `openu5` names
+
+Some internal identifiers and asset filenames still use the historical `openu5` name for compatibility and to avoid unnecessary churn in the released firmware and tooling (for example `openu5-assets.bin`, `openu5-alpha1-resources.bin`, `openu5-audio.bin`, the `openu5_tdeck` build target and the C++ `openu5` namespace). They are technical identifiers, not the current project name. A future migration is planned in [`docs/INTERNAL_RENAME_PLAN.md`](docs/INTERNAL_RENAME_PLAN.md).
 
 ## Copyright and assets
 

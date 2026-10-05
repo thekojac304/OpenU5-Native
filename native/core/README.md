@@ -1,4 +1,4 @@
-# Native OpenU5 core: semantic commands and world simulation
+# Ultima V Native core: semantic commands and world simulation
 
 ## Current gameplay status
 

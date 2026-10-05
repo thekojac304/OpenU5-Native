@@ -1,4 +1,4 @@
-# OpenU5 T-Deck Plus — Alpha 3 (released)
+# Ultima V Native — T-Deck Plus — Alpha 3 (released)
 
 **Status: ALPHA 3 RELEASED (2026-09-28).** The hardware-tested RC1 image is the final Alpha 3 firmware, byte for byte.
 - **Release image:** `OpenU5-TDeck-Alpha3.0.0-alpha3-RC1-Debug-Launcher.bin` — 988,320 B (`0xf14a0`), 60,256 B (5.7 %) free in the 1 MiB app partition, SHA-256 `4b5b9d1f5cb5c14fc2628da6c5ce2befb18f4c81daaa5bfd04821e1ee63353b1`, `FW 3.0.0-alpha3-rc1-debug`, embedded `Git f85575b96f05`.

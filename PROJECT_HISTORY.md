@@ -1,4 +1,4 @@
-# OpenU5-Native — Project History
+# Ultima V Native — Project History
 
 *From the first commit to the Alpha 3 release, reconstructed from the repository itself.*
 
@@ -19,7 +19,7 @@
 
 ## 1. The project in one page
 
-OpenU5-Native is a native C++ implementation of *Ultima V: Warriors of Destiny* (Origin Systems, 1988), built to run on the LilyGO **T-Deck Plus** (ESP32-S3, 16 MiB flash, 8 MiB octal PSRAM, a 320×240 ST7789 panel, a physical keyboard and a trackball). It reads the user's own copy of the original game data from an SD card; the repository and the firmware contain no game data.
+Ultima V Native (formerly published as OpenU5-Native) is a native C++ implementation of *Ultima V: Warriors of Destiny* (Origin Systems, 1988), built to run on the LilyGO **T-Deck Plus** (ESP32-S3, 16 MiB flash, 8 MiB octal PSRAM, a 320×240 ST7789 panel, a physical keyboard and a trackball). It reads the user's own copy of the original game data from an SD card; the repository and the firmware contain no game data.
 
 The repository sits on top of an imported upstream project, a TypeScript/PixiJS browser port whose method was to disassemble `ULTIMA.EXE` and its 24 overlays and cite the assembly for every rule. The native project inherited that method (and 516 reverse-engineering notes) and turned it on what the browser port had not needed: what the *device* runs, how long the original *waits*, and what it *sounds* like. The binary decides: the TypeScript reference is a cross-check (`ALPHA3.md` §1), and when native, the reference and the binary disagree, native — or the reference — is corrected, never the binary.
 

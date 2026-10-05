@@ -1,6 +1,6 @@
-# OpenU5 T-Deck Plus — Alpha 4
+# Ultima V Native — T-Deck Plus — Alpha 4
 
-Alpha 4 is a complete, playable *Ultima V: Warriors of Destiny* for the LilyGO T-Deck Plus, from character creation to the ending, with a finished front end, real save management and optional conveniences. It is an alpha: the game is complete, but expect rough edges (see *Known limitations*).
+Alpha 4 is a complete, playable *Ultima V: Warriors of Destiny* for the LilyGO T-Deck Plus, from character creation to the ending, with a finished front end, real save management and optional conveniences. It is a pre-1.0 public release: the game is complete, with documented non-blocking discrepancies still under active preservation work (see *Known limitations*).
 
 **Firmware:** `OpenU5-TDeck-Alpha4.0.0-alpha4-RC5-Debug-Launcher.bin` — 1,047,408 bytes
 **SHA-256:** `363a8fdae6eb714058a4545bad880e05c4d52919e9afd41de8d61e45cfa67210`
@@ -59,13 +59,17 @@ Coming from Alpha 3: flash the image and copy the new 2,266,819-byte resource pa
 
 ## Known limitations
 
-- Alpha software: the game is complete, but this is a Debug build (includes the Developer menu and verbose logging).
+- Pre-1.0 release: the game is complete, but this is a Debug build (includes the Developer menu and verbose logging).
 - Fourteen small known divergences from the original (ledger rows D-90 – D-103) are recorded and not fixed.
 - Real heap/memory figures for Alpha 4 were not captured; no memory problem was observed.
 - The PC save bridge was tested against the host and the device, not against a real DOS install.
 - The naval cactus check was not run.
 - Some host parity tests need numeric fixtures generated from your own Ultima V files (the repository ships none); without them those tests are skipped. See `native/core/README.md`, "Local map fixtures".
 - Music requires music-patched game files and the optional audio pack.
+
+## Relationship to OpenU5
+
+Ultima V Native was built with substantial help from the OpenU5 codebase: OpenU5's TypeScript implementation was a major behavioral reference, and the original DOS executable was reverse-engineered to settle disagreements. It is not a straight port of OpenU5 and not an independent clean-room reconstruction. File names that still say `openu5` are legacy technical identifiers kept for compatibility.
 
 ## Reporting bugs
 

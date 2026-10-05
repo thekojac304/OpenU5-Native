@@ -1,4 +1,4 @@
-# OpenU5 T-Deck Plus — Alpha 2
+# Ultima V Native — T-Deck Plus — Alpha 2
 
 **Status: ALPHA 2 RELEASED / CLOSED (2026-09-26, Batch 55).**
 - Release tag: `alpha2-batch55-release`.
@@ -9,7 +9,7 @@
 
 ## What Alpha 2 is
 
-Alpha 2 runs the native OpenU5 port of *Ultima V: Warriors of Destiny* (Origin Systems, 1988) on the LilyGO T-Deck Plus. The game can be played from character creation to the ending. Its rules come from the original binary, and the browser/TypeScript reference port is used as a cross-check. You need your own copy of the original game data; nothing from it ships in the firmware.
+Alpha 2 runs the native Ultima V Native port of *Ultima V: Warriors of Destiny* (Origin Systems, 1988) on the LilyGO T-Deck Plus. The game can be played from character creation to the ending. Its rules come from the original binary, and the browser/TypeScript reference port is used as a cross-check. You need your own copy of the original game data; nothing from it ships in the firmware.
 
 - **The whole game loop on the device:**
   - Britannia and the Underworld, towns, castles and keeps;
