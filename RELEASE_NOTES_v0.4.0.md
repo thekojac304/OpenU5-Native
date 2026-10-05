@@ -69,7 +69,7 @@ Coming from the Alpha 3 development build: flash the image and copy the new 2,26
 
 ## Relationship to OpenU5
 
-Ultima V Native was built with substantial help from the OpenU5 codebase: OpenU5's TypeScript implementation was a major behavioral reference, and the original DOS executable was reverse-engineered to settle disagreements. It is not a straight port of OpenU5 and not an independent clean-room reconstruction. File names that still say `openu5` are legacy technical identifiers kept for compatibility.
+Ultima V Native was built with substantial help from the OpenU5 codebase: OpenU5's TypeScript implementation was a major behavioral reference, and the original DOS executable was reverse-engineered to settle disagreements. OpenU5 is a separate browser/reference implementation; none of its browser, website or mobile features are part of this T-Deck release. Ultima V Native is not a straight port of OpenU5 and not an independent clean-room reconstruction. File names that still say `openu5` are legacy technical identifiers kept for compatibility.
 
 ## Reporting bugs
 

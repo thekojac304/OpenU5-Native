@@ -6,6 +6,8 @@ body:
   - type: markdown
     attributes:
       value: |
+        **Which project?** This tracker covers Ultima V Native (T-Deck / native) and the included OpenU5 browser/reference implementation. Please say which one you are using. The fields below were written for the OpenU5 browser build; for Ultima V Native include the release version (e.g. v0.4.0), the firmware identity (`FW ...` / `Git ...`), Original or Enhanced mode, and your save slot instead.
+
         Thanks for reporting! A report with an **exported save + RNG seed** is
         reproducible in minutes and is the single most valuable contribution.
   - type: textarea

@@ -1,3 +1,5 @@
+> *Scope: these controls describe the OpenU5 browser implementation. For Ultima V Native on the T-Deck, see the release notes.*
+
 # Controls
 
 The port implements the full keyboard of the DOS original (as specified by the

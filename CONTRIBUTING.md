@@ -1,5 +1,7 @@
 # Contributing
 
+> **Scope.** This repository holds three kinds of material: **Ultima V Native** (the C++ T-Deck / native implementation, under `native/`), the separate **OpenU5** browser/reference implementation (`game/`, `demo-byo/`, `extractor/`), and **shared reverse-engineering material** (`re/`, `docs/`). Say which one your issue or PR concerns. The setup, test tiers and layer rules below describe the OpenU5 browser workflow; for Native, see [`native/core/README.md`](native/core/README.md) and [`native/targets/tdeck/README.md`](native/targets/tdeck/README.md). The provenance rule (no gameplay change without an assembly citation or parity evidence) applies to both.
+
 Thanks for your interest! This project has one non-negotiable rule that shapes
 everything else:
 

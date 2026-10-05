@@ -60,11 +60,15 @@ Full list: [`RELEASE_NOTES_v0.4.0.md`](RELEASE_NOTES_v0.4.0.md). Engineering his
 
 ## Relationship to OpenU5
 
+OpenU5 and Ultima V Native are separate implementations that share reverse-engineering lineage and live in the same repository.
+
+OpenU5 is the TypeScript/browser reference implementation. Ultima V Native is the C++ native implementation targeting T-Deck today and Windows next. Ultima V Native is not the browser build. OpenU5 was heavily used as a behavioral reference and parity oracle during Native development, but OpenU5-specific features, releases, roadmaps, websites and UI work (its website, browser demo, skins, localization and mobile UI) do not represent Ultima V Native.
+
 Ultima V Native was built with substantial help from the OpenU5 codebase. OpenU5's TypeScript implementation served as a major behavioral reference during development, and much of the native parity work compared the C++ implementation against that reference.
 
 OpenU5 was not treated as infallible. When OpenU5, the native implementation, documentation, or observed behavior disagreed, the original DOS executable was reverse-engineered to adjudicate the difference. In some cases that led to corrections in both the native implementation and the reference behavior.
 
-Ultima V Native is therefore not a straight port of OpenU5 and should not be described as an independent clean-room reconstruction. It is a native reimplementation that relied heavily on OpenU5 as a reference implementation, alongside direct reverse engineering of the original game. See [`PROJECT_HISTORY.md`](PROJECT_HISTORY.md) for the lineage.
+Ultima V Native is therefore not a straight port of OpenU5 and should not be described as an independent clean-room reconstruction. It is a native reimplementation that relied heavily on OpenU5 as a reference implementation, alongside direct reverse engineering of the original game; native work drew on four sources (OpenU5 behavior, DOS-binary reverse engineering, independent native tests, hardware results), and the DOS binary wins when they disagree. See [`PROJECT_HISTORY.md`](PROJECT_HISTORY.md) for the lineage.
 
 ## How it was built: AI-assisted development
 
@@ -154,7 +158,7 @@ This is not a claim of perfect parity. Known, non-blocking discrepancies remain 
 - reuse the native core where practical
 - continue preservation and parity cleanup
 
-No dates are promised. Broader portability to other platforms is a possible long-term direction, nothing more. The older browser-port roadmap is in [`ROADMAP.md`](ROADMAP.md).
+No dates are promised. Broader portability to other platforms is a possible long-term direction, nothing more. The full roadmap is [`ROADMAP.md`](ROADMAP.md); the separate OpenU5 browser roadmap is [`OPENU5_BROWSER_ROADMAP.md`](OPENU5_BROWSER_ROADMAP.md).
 
 ## Known limitations
 
@@ -178,16 +182,16 @@ A useful bug report includes:
 
 Use the issue templates in [`.github/ISSUE_TEMPLATE`](.github/ISSUE_TEMPLATE) and read [`CONTRIBUTING.md`](CONTRIBUTING.md). The project's rule: no gameplay change is accepted without provenance (an assembly citation or a parity scenario).
 
-## The browser port (OpenU5)
+## Included reference implementation: OpenU5
 
-The repository also holds the original **OpenU5**, a byte-exact browser port of the game (TypeScript + PixiJS) whose rules were re-derived from the binary, with the assembly cited next to the code. Highlights:
+The repository also contains the separate **OpenU5** browser/reference implementation (TypeScript + PixiJS), which re-derived the game's rules from the binary with the assembly cited next to the code. This subtree is retained because it is an important reference implementation and historical source of parity expectations; it has its own lifecycle and features, and its roadmap is in [`OPENU5_BROWSER_ROADMAP.md`](OPENU5_BROWSER_ROADMAP.md). Nothing in this section describes Ultima V Native. About OpenU5:
 
 - the `ULTIMA.EXE` kernel and its 24 overlays were disassembled, and the coverage ledger justifies 202,800 / 202,800 bytes
 - hundreds of parity tests compare the re-derived model with the engine, plus runtime checks against the real binary in headless DOSBox-X
 - the original add/rotate/xor RNG is reimplemented bit-exactly
-- a full-game "Grand Tour" playthrough test
+- a full-game "Grand Tour" playthrough test (OpenU5's browser test suite)
 
-Run it locally with your own files in `original/u5/ultima5/`:
+Run OpenU5 locally with your own files in `original/u5/ultima5/`:
 
 ```bash
 npm install
@@ -195,7 +199,7 @@ npm run extract        # or: npm run extract -- --src /path/to/your/ultima5
 npm run dev
 ```
 
-Controls: [`docs/controls.md`](docs/controls.md). Method: [`docs/methodology.md`](docs/methodology.md). A browser "bring your own files" demo is at [openu5.org](https://openu5.org); extraction runs client-side and nothing is uploaded.
+Controls: [`docs/controls.md`](docs/controls.md). Method: [`docs/methodology.md`](docs/methodology.md). The OpenU5 browser implementation has its own bring-your-own-files demo at [openu5.org](https://openu5.org); extraction runs client-side and nothing is uploaded. That site is OpenU5's, not Ultima V Native's.
 
 Some host parity tests (`native/core`) read local fixtures generated from your own game files; they are gitignored and skipped when absent. See "Local map fixtures" in [`native/core/README.md`](native/core/README.md).
 

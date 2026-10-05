@@ -1,3 +1,5 @@
+> *Scope: this method document comes from the OpenU5 browser/reference implementation and its reverse-engineering corpus, which Ultima V Native also draws on. Test commands here refer to OpenU5.*
+
 # Methodology — how the original engine was re-derived
 
 This document describes how every gameplay rule in this port was recovered from
