@@ -33,6 +33,8 @@ node_modules
 extractor/vendor/*.sf2
 game/playwright-report/
 game/test-results/
+# Playwright run from the repo root writes here; screenshots can contain game art.
+/test-results/
 .superpowers/soak/
 capture/
 game/dist/
