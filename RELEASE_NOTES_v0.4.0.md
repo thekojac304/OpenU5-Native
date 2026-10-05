@@ -1,10 +1,10 @@
-# Ultima V Native — T-Deck Plus — Alpha 4
+# Ultima V Native v0.4.0
 
-Alpha 4 is a complete, playable *Ultima V: Warriors of Destiny* for the LilyGO T-Deck Plus, from character creation to the ending, with a finished front end, real save management and optional conveniences. It is a pre-1.0 public release: the game is complete, with documented non-blocking discrepancies still under active preservation work (see *Known limitations*).
+Ultima V Native v0.4.0 is the first public pre-1.0 release of a complete, playable *Ultima V: Warriors of Destiny* for the LilyGO T-Deck Plus, from character creation to the ending, with a finished front end, real save management and optional conveniences. It is a pre-1.0 public release: the game is complete, with documented non-blocking discrepancies still under active preservation work (see *Known limitations*).
 
-**Firmware:** `OpenU5-TDeck-Alpha4.0.0-alpha4-RC5-Debug-Launcher.bin` — 1,047,408 bytes
+**Firmware:** `UltimaV-Native-v0.4.0-TDeck.bin` — 1,047,408 bytes
 **SHA-256:** `363a8fdae6eb714058a4545bad880e05c4d52919e9afd41de8d61e45cfa67210`
-The boot identity screen reads `FW 4.0.0-alpha4-rc5-debug` and `Git 59c14b907399`. That is correct: the hardware-tested "RC5" build *is* the Alpha 4 release, byte for byte.
+**Firmware provenance.** v0.4.0 uses the exact hardware-validated firmware previously developed as RC5; the binary was not rebuilt for the public versioning cleanup, and the internal version string is retained because those exact bytes were physically validated. The boot identity screen reads `FW 4.0.0-alpha4-rc5-debug` and `Git 59c14b907399`. That is correct: the hardware-tested "RC5" build *is* the Alpha 4 release, byte for byte.
 
 ## You must supply your own Ultima V files
 
@@ -12,7 +12,7 @@ This project distributes **no** Ultima V game data, art, music, text or maps —
 
 **Music is asset-dependent.** The stock DOS game has **no music**, so a stock install plays all the sound effects (synthesized on the device) but no songs. Community music-patched game files (the Exodus *Ultima V Upgrade* 1.0 patch) can provide music; if you install that patch, the optional audio pack carries its songs. Without it the game is complete, just without music, and Settings tells you why.
 
-## What's new in Alpha 4
+## What's in v0.4.0
 
 - **A new interface.** The "More Ultima V" look in the original's EGA colours and font, a centred title with credits, a console with the original's bullets and cursor, reverse-video lists, the moongate transit and the original's console echoes.
 - **Save slots.** Three manual slots, each with a backup generation that is never overwritten by the one you just loaded; two-row slot pages marked CURRENT / LATEST / RECOVERED; Continue loads the slot you saved last.
@@ -36,13 +36,13 @@ This project distributes **no** Ultima V game data, art, music, text or maps —
 2. **Resource files.** From the repository, with your Ultima V files in `original/u5/ultima5/`:
    - `npm install`
    - `npm run pack:native` → `native/assets/openu5-assets.bin` (needs `TILES.16`, `BRIT.DAT`, `DATA.OVL`, `INIT.GAM`, `DWELLING.DAT`)
-   - `npm run pack:alpha1` → `native/assets/openu5-alpha1-resources.bin` (**2,266,819 bytes** for Alpha 4 — the firmware refuses any other resource pack)
+   - `npm run pack:alpha1` → `native/assets/openu5-alpha1-resources.bin` (**2,266,819 bytes** for v0.4.0 — the firmware refuses any other resource pack)
    - optional music: `npm run pack:audio` → `native/assets/openu5-audio.bin`
    The exact file requirements and identities are in [`native/ASSETS.md`](native/ASSETS.md) and [`ALPHA4.md`](ALPHA4.md) §4 – §5.
 3. **SD layout:**
    ```text
    /
-   |-- OpenU5-TDeck-Alpha4.0.0-alpha4-RC5-Debug-Launcher.bin   (location not significant)
+   |-- UltimaV-Native-v0.4.0-TDeck.bin   (location not significant)
    `-- ultima5/
        |-- openu5-assets.bin
        |-- openu5-alpha1-resources.bin
@@ -55,13 +55,13 @@ This project distributes **no** Ultima V game data, art, music, text or maps —
    ```
 4. **Saves and settings** live under `/ultima5/` (`saves/`, `settings.json`). Back up that folder before the first boot of any new image. Alpha 3 saves load as Slot 1.
 
-Coming from Alpha 3: flash the image and copy the new 2,266,819-byte resource pack. Coming from an earlier Alpha 4 test image from the ending batch onwards: flash only.
+Coming from the Alpha 3 development build: flash the image and copy the new 2,266,819-byte resource pack. Coming from an earlier development test image from the ending batch onwards: flash only.
 
 ## Known limitations
 
 - Pre-1.0 release: the game is complete, but this is a Debug build (includes the Developer menu and verbose logging).
 - Fourteen small known divergences from the original (ledger rows D-90 – D-103) are recorded and not fixed.
-- Real heap/memory figures for Alpha 4 were not captured; no memory problem was observed.
+- Real heap/memory figures for v0.4.0 were not captured; no memory problem was observed.
 - The PC save bridge was tested against the host and the device, not against a real DOS install.
 - The naval cactus check was not run.
 - Some host parity tests need numeric fixtures generated from your own Ultima V files (the repository ships none); without them those tests are skipped. See `native/core/README.md`, "Local map fixtures".

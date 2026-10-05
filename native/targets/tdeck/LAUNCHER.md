@@ -6,6 +6,8 @@
 > commit, and its embedded `Git`, is `211c676a1dca` (`alpha2-batch54-rc1`).
 > SHA-256 `ff3dfe193973547db2648c5f486aa381086505eb80b5f2dadec7432194fb5828`.
 >
+> **Public naming:** this image is published as v0.4.0 under the file name `UltimaV-Native-v0.4.0-TDeck.bin` (same bytes). The record below is historical.
+>
 > **Alpha 4 final is the RC5 image, byte for byte — ALPHA 4 RELEASED** (2026-10-04). It passed the RC5 retest on the device (identity, the In Mani Corp scroll, the healer's `R`) after the RC3 / RC4 sessions. No final-version image is built: a rebuild would be a new, untested image. The release tag is `alpha4-release` (on the documents-only closeout commit); the firmware's source commit, and its embedded `Git`, is `59c14b907399` (`59c14b907399be8e8796dcd84946a60c942731c1`).
 > - The final tested Alpha 4 artifact: `OpenU5-TDeck-Alpha4.0.0-alpha4-RC5-Debug-Launcher.bin` (`4.0.0-alpha4-rc5-debug`), at `native/targets/tdeck/build-a4-rc5/launcher/`: 1,047,408 B (`0xffb70`), 263,312 B (20.1 %) free in the 1.25 MiB app partition, SHA-256 `363a8fdae6eb714058a4545bad880e05c4d52919e9afd41de8d61e45cfa67210`.
 > - Launcher allocation 1,024 KiB (the packager rounds the image up to 64 KiB); the next 64 KiB boundary is close — informational only. Record: `ALPHA4_UI.md` §18.

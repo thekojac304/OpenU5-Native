@@ -4,12 +4,12 @@
 
 | | |
 |---|---|
-| **Current public milestone** | Alpha 4 (tag `alpha4-release`, 2026-10-04), a pre-1.0 public release |
+| **Current release** | [v0.4.0](https://github.com/thekojac304/ultima-v-native/releases/tag/v0.4.0) (2026-10-04), a pre-1.0 public release |
 | **Platform** | LilyGO T-Deck Plus (ESP32-S3), installed through the T-Deck Launcher |
 | **Firmware** | Download from [GitHub Releases](https://github.com/thekojac304/ultima-v-native/releases) |
 | **Game data** | Bring your own copy of Ultima V; nothing from the original game is distributed |
 
-Alpha 4 is the project's current milestone name. The software is a pre-1.0 public release, complete and playable from character creation through the ending, with documented non-blocking discrepancies still under active preservation work. The repository also contains the OpenU5 browser port that served as a reference implementation, described [below](#the-browser-port-openu5).
+v0.4.0 is a pre-1.0 public release, complete and playable from character creation through the ending, with documented non-blocking discrepancies still under active preservation work. It was developed internally as the Alpha 4 / RC5 milestone. The repository also contains the OpenU5 browser port that served as a reference implementation, described [below](#the-browser-port-openu5).
 
 ## Screenshots
 
@@ -42,7 +42,7 @@ There are two goals, kept separate:
 
 Not every presentation change can be switched off: the device front end, save management and Developer-menu layout are part of the T-Deck build in both modes. The rules-affecting options (difficulty, cheats, World toggles) are what Original mode leaves untouched.
 
-## Alpha 4 highlights
+## v0.4.0 highlights
 
 - Native T-Deck gameplay from character creation to the ending, including the original's full ending sequence
 - A new front end in the original's EGA colours and font: centred title with credits, console, reverse-video lists, moongate transit
@@ -56,7 +56,7 @@ Not every presentation change can be switched off: the device front end, save ma
 - Optional music when community music-patched game files are supplied, including a dungeon-music fix
 - A broad preservation / parity cleanup against the original: palace crown gate, worn crown, Negate against enemy magic, dungeon command keys, the wishing well, the combat clock, healer and Refuge resurrection, new-game underworld skiff and bodies, and more
 
-Full list: [`ALPHA4_RELEASE_NOTES.md`](ALPHA4_RELEASE_NOTES.md). Engineering history: [`ALPHA4.md`](ALPHA4.md) and [`native/targets/tdeck/ALPHA4_UI.md`](native/targets/tdeck/ALPHA4_UI.md).
+Full list: [`RELEASE_NOTES_v0.4.0.md`](RELEASE_NOTES_v0.4.0.md). Engineering history: [`ALPHA4.md`](ALPHA4.md) and [`native/targets/tdeck/ALPHA4_UI.md`](native/targets/tdeck/ALPHA4_UI.md).
 
 ## Relationship to OpenU5
 
@@ -77,13 +77,13 @@ This project was developed heavily with AI coding agents, or informally, "vibe c
 
 When the sources disagreed, the DOS binary decided. Changes were also checked against parity corpora, regression and golden tests, mutation testing and clean firmware builds.
 
-Confidence in the result comes from that evidence, not from who or what wrote the code. For Alpha 4 that includes:
+Confidence in the result comes from that evidence, not from who or what wrote the code. For v0.4.0 that includes:
 
 - 201 / 201 host tests passing on the release tree
 - extensive mutation testing of the parity fixes (for example 110 / 110 mutants killed in the final parity batch)
 - binary-level reverse-engineering notes for the original executable and overlays
 - repeated testing on physical T-Deck hardware
-- a hardware-validated firmware image, RC5, promoted byte for byte as the Alpha 4 release
+- a hardware-validated firmware image, the exact image developed as RC5, promoted byte for byte as v0.4.0
 
 This is not a claim of formal verification.
 
@@ -110,12 +110,12 @@ The supported native platform is the **LilyGO T-Deck Plus (ESP32-S3, 16 MB flash
 
 ## Installing (overview)
 
-1. Download the current firmware (`OpenU5-TDeck-Alpha4.0.0-alpha4-RC5-Debug-Launcher.bin`) from [GitHub Releases](https://github.com/thekojac304/ultima-v-native/releases).
+1. Download the current firmware (`UltimaV-Native-v0.4.0-TDeck.bin`) from [GitHub Releases](https://github.com/thekojac304/ultima-v-native/releases).
 2. Install it on the T-Deck through the Launcher's SD installer.
 3. Supply your own Ultima V files and generate the SD resource packs from them on your own machine (`npm run pack:native`, `npm run pack:alpha1`, optionally `npm run pack:audio`).
 4. Put the packs under `/ultima5/` on a FAT-formatted microSD card.
 
-The original game's data, maps and assets are not distributed by this project, and the generated packs and local test fixtures derived from your files are not committed. Exact file requirements, sizes and the SD layout: [`ALPHA4_RELEASE_NOTES.md`](ALPHA4_RELEASE_NOTES.md), [`native/ASSETS.md`](native/ASSETS.md).
+The original game's data, maps and assets are not distributed by this project, and the generated packs and local test fixtures derived from your files are not committed. Exact file requirements, sizes and the SD layout: [`RELEASE_NOTES_v0.4.0.md`](RELEASE_NOTES_v0.4.0.md), [`native/ASSETS.md`](native/ASSETS.md).
 
 ## Music
 
@@ -123,7 +123,7 @@ The stock DOS Ultima V has **no music**, and this project does not synthesize mu
 
 ## Saves and PC compatibility
 
-Alpha 4 has multiple native save slots, Continue, save recovery and PC save import / export.
+v0.4.0 has multiple native save slots, Continue, save recovery and PC save import / export.
 
 PC save import/export is supported, with a few documented edge cases around transient town state, dungeon saves, and certain world objects:
 
@@ -137,9 +137,8 @@ Import and export were tested on the host and on the T-Deck's own import / expor
 
 ## Project status
 
-- **Current milestone:** Alpha 4, a pre-1.0 public release
-- **Release tag:** `alpha4-release`
-- **Firmware:** RC5, hardware-validated and promoted unchanged as the release image
+- **Current release:** v0.4.0, a pre-1.0 public release (tag `v0.4.0`)
+- **Firmware:** hardware-validated; the exact RC5 bytes, unchanged (internal identity `FW 4.0.0-alpha4-rc5-debug`, `Git 59c14b907399`). The historical development tag `alpha4-release` is kept.
 - **Host suite:** 201 / 201 passing
 - **Playable:** the game is substantially complete and playable through the ending
 
@@ -159,14 +158,14 @@ No dates are promised. Broader portability to other platforms is a possible long
 
 ## Known limitations
 
-- Pre-1.0 software; the Alpha 4 firmware is a Debug build that includes the Developer menu.
+- Pre-1.0 software; the v0.4.0 firmware is a Debug build that includes the Developer menu.
 - Some documented, non-blocking parity differences remain.
-- Some rare edge cases have no physical-hardware coverage, and real heap figures for Alpha 4 were not captured (no memory problem was observed).
+- Some rare edge cases have no physical-hardware coverage, and real heap figures for v0.4.0 were not captured (no memory problem was observed).
 - You must supply your own game files.
 - PC save transfer has the edge cases listed above.
 - Music depends on supplied assets.
 
-Exhaustive detail: [`ALPHA4_RELEASE_NOTES.md`](ALPHA4_RELEASE_NOTES.md) (Known limitations) and [`ALPHA4.md`](ALPHA4.md).
+Exhaustive detail: [`RELEASE_NOTES_v0.4.0.md`](RELEASE_NOTES_v0.4.0.md) (Known limitations) and [`ALPHA4.md`](ALPHA4.md).
 
 ## Reporting bugs and contributing
 

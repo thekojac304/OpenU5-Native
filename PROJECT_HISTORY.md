@@ -1065,3 +1065,7 @@ Grouped by kind. None has been resolved by editing the source documents. Each en
 28. The committed record does not formalise a five-way classification or a rule to stop following new identifiers (§18.4). That is a statement about the repository, not about the sessions that produced it.
 
 **What was not verified.** This document was assembled from the repository's own text plus the measurements listed in Appendix A. No build or test was run, and no firmware was flashed.
+
+## Addendum (2026-10-05): public version normalised to v0.4.0
+
+The development milestone Alpha 4 was publicly normalised to **v0.4.0**. `alpha4-release` remains as a historical tag; `v0.4.0` is the public release tag and the GitHub Release is titled "Ultima V Native v0.4.0". The firmware bytes were not changed: the public file `UltimaV-Native-v0.4.0-TDeck.bin` is the RC5 image (SHA-256 `363a8fdae6eb714058a4545bad880e05c4d52919e9afd41de8d61e45cfa67210`), and its RC5 internal identity is retained as provenance. Earlier entries are not rewritten.

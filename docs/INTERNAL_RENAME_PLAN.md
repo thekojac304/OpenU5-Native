@@ -26,3 +26,7 @@ The browser port in this repository is OpenU5 itself and keeps its name; it is c
 2. Anything a user's SD card or save depends on gets a fallback to the old name.
 3. Rename in separate, mechanical commits; never mix with behavior changes.
 4. Historical records (logs, tags, past release notes) keep the names they were written with.
+
+## Public version policy
+
+From v0.4.0 on, public releases use `v0.x.y` versions. Public release titles and asset names carry no "Alpha N", "RC N" or "Debug"; internal candidates may still use RC identifiers. v0.4.0 itself reuses the hardware-validated RC5 bytes, so its embedded identity (`FW 4.0.0-alpha4-rc5-debug`, `Git 59c14b907399`) is deliberately unchanged. At the next firmware-building release, change the embedded version string to the clean public version instead of carrying the Alpha scheme forward. The old git tag `alpha4-release` is kept as the historical internal release tag; the public tag is `v0.4.0`.
