@@ -2,7 +2,7 @@
 
 *From the first commit to the Alpha 3 release, reconstructed from the repository itself.*
 
-> **Status of this document.** Draft for review, not yet committed. It covers the repository from its first commit (`1225f9ac`, 2026-08-25) through the Alpha 3 closeout commit `eb1bf5e7` (tag `alpha3-release`, 2026-09-28). It is a historical document: nothing here changes code, tests, versions or tags, and no defect listed as deferred is reopened by being described.
+> **Status of this document.** Historical project record. It covers the repository from its first commit (`1225f9ac`, 2026-08-25) through the Alpha 3 closeout commit `eb1bf5e7` (tag `alpha3-release`, 2026-09-28). It is a historical document: nothing here changes code, tests, versions or tags, and no defect listed as deferred is reopened by being described.
 
 ## How to read this document
 

@@ -1,4 +1,10 @@
-# OpenU5-TDeck: Milestone 5 native movement
+# Ultima V Native — T-Deck target
+
+ESP-IDF firmware target of Ultima V Native for the LilyGO T-Deck Plus (ESP32-S3,
+16 MiB flash, 8 MiB octal PSRAM): display, keyboard/trackball input, microSD and
+Launcher packaging around the shared native core in [../../core](../../core/README.md).
+The text from "The foundational native core" down is the preserved Milestone 5
+record; current release information is in the blocks above and the linked documents.
 
 > **Current public release: v0.4.0 (2026-10-04; developed internally as Alpha 4, historical tag `alpha4-release`; public file `UltimaV-Native-v0.4.0-TDeck.bin`, identical bytes).** It is the hardware-validated RC5 image, promoted byte for byte; its identity screen reads `FW 4.0.0-alpha4-rc5-debug`, `Git 59c14b907399` (`OpenU5-TDeck-Alpha4.0.0-alpha4-RC5-Debug-Launcher.bin`, 1,047,408 B, SHA-256 `363a8fdae6eb714058a4545bad880e05c4d52919e9afd41de8d61e45cfa67210`). Release notes: [`../../../RELEASE_NOTES_v0.4.0.md`](../../../RELEASE_NOTES_v0.4.0.md); engineering record: [`../../../ALPHA4.md`](../../../docs/history/alpha/ALPHA4.md) and [ALPHA4_UI.md](ALPHA4_UI.md) §18.
 > The Alpha 3 block below is the previous release, kept as written.
@@ -70,14 +76,18 @@ ESP-IDF v6.1 is the validated environment. In an activated ESP-IDF shell:
 
 ```sh
 cd native/targets/tdeck
-idf.py set-target esp32s3
-idf.py build
-idf.py size
-python package_launcher.py
+idf.py -B build-core set-target esp32s3
+idf.py -B build-core build
+idf.py -B build-core size
+python package_launcher.py --build-dir build-core
 ```
 
-Normal build output remains `build/openu5_tdeck.bin`; the package step only
-validates and copies that app image. `sdkconfig.defaults` selects 16 MiB QIO
+`build-core` is the project's recommended development and packaging build
+directory (gitignored). Plain `idf.py build` writes to `build/`, ESP-IDF's
+default; it works but is not the project convention. Historical `build-a3-*`,
+`build-a4-*`, `build-batch*`, `build-m5` and release-candidate directories are
+archived working build trees, not current build locations. The package step only
+validates and copies the app image. `sdkconfig.defaults` selects 16 MiB QIO
 flash, 8 MiB OPI PSRAM, USB Serial/JTAG console, and 240 MHz CPU operation.
 
 ## Boot behavior

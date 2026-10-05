@@ -83,7 +83,7 @@ When the sources disagreed, the DOS binary decided. Changes were also checked ag
 
 Confidence in the result comes from that evidence, not from who or what wrote the code. For v0.4.0 that includes:
 
-- 201 / 201 host tests passing on the release tree
+- 201 / 201 host tests passing on the release tree (in the fully provisioned development checkout; see Project status for a clean clone)
 - extensive mutation testing of the parity fixes (for example 110 / 110 mutants killed in the final parity batch)
 - binary-level reverse-engineering notes for the original executable and overlays
 - repeated testing on physical T-Deck hardware
@@ -143,7 +143,7 @@ Import and export were tested on the host and on the T-Deck's own import / expor
 
 - **Current release:** v0.4.0, a pre-1.0 public release (tag `v0.4.0`)
 - **Firmware:** hardware-validated; the exact RC5 bytes, unchanged (internal identity `FW 4.0.0-alpha4-rc5-debug`, `Git 59c14b907399`). The historical development tag `alpha4-release` is kept.
-- **Host suite:** 201 / 201 passing
+- **Host suite:** Alpha 4 / v0.4.0 was validated at 201 / 201 in the fully provisioned development checkout. A clean public checkout registers 193 host tests; the other eight (`dungeon_parity`, `dungeon_flow_parity`, `world_flow_parity`, `dungeon_view_regression`, `dungeon_combat_regression` and three `typescript_*_fixture_drift` checks) appear once you generate the local map fixtures from your own Ultima V files (see [`native/core/README.md`](native/core/README.md), "Local map fixtures")
 - **Playable:** the game is substantially complete and playable through the ending
 
 This is not a claim of perfect parity. Known, non-blocking discrepancies remain documented in the ledgers above.

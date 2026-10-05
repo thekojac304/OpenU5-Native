@@ -64,7 +64,7 @@ Coming from the Alpha 3 development build: flash the image and copy the new 2,26
 - Real heap/memory figures for v0.4.0 were not captured; no memory problem was observed.
 - The PC save bridge was tested against the host and the device, not against a real DOS install.
 - The naval cactus check was not run.
-- Some host parity tests need numeric fixtures generated from your own Ultima V files (the repository ships none); without them those tests are skipped. See `native/core/README.md`, "Local map fixtures".
+- Some host parity tests need numeric fixtures generated from your own Ultima V files (the repository ships none); without them those tests are not registered (a clean checkout registers 193 of the 201 host tests the release was validated with). See `native/core/README.md`, "Local map fixtures".
 - Music requires music-patched game files and the optional audio pack.
 
 ## Relationship to OpenU5

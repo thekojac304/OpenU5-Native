@@ -1,5 +1,5 @@
 // Batch 4 GROUP B -- RED tests for R-10 (NPC-initiated Talk / Shop). See
-// native/targets/tdeck/ALPHA20_BATCH4_ADJUDICATION.md.
+// docs/history/tdeck/ALPHA20_BATCH4_ADJUDICATION.md.
 //
 // Architecture fact from the adjudication (section C/D): NPC-initiated Talk
 // AND Shop both ultimately reuse the SAME CommandKind::BeginConversation

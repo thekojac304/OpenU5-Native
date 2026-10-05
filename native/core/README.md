@@ -62,7 +62,9 @@ Then re-run CMake configure. Without the fixtures, configure prints a status lin
 and does not register `dungeon_parity`, `dungeon_flow_parity`, `world_flow_parity`,
 `dungeon_view_regression`, `dungeon_combat_regression` and the three matching
 `typescript_*_fixture_drift` checks; `game/tests/b21a2-door-adjacency.test.ts` skips
-itself. Everything else runs without any original game files.
+itself. Everything else runs without any original game files. A clean public
+checkout therefore registers 193 host tests; generating these fixtures adds the
+eight listed above, for the 201 the Alpha 4 release was validated with.
 
 The preceding combat magic and advanced generic combat batch reached **609,373 total parity
 snapshots**, including all 128 real arenas in four directions. See
@@ -170,12 +172,27 @@ and renderer slice.
 With a host C++ compiler and CMake available, from the repository root:
 
 ```sh
-cmake -S native/core -B native/core/build-host -DCMAKE_BUILD_TYPE=Release
-cmake --build native/core/build-host --config Release
-ctest --test-dir native/core/build-host -C Release --output-on-failure
+cmake -S native/core -B native/core/build -DCMAKE_BUILD_TYPE=Release
+cmake --build native/core/build --config Release
+ctest --test-dir native/core/build -C Release --output-on-failure
 # Alternatively, after configuration:
-cmake --build native/core/build-host --config Release --target host-test
+cmake --build native/core/build --config Release --target host-test
 ```
+
+`native/core/build` is the recommended ordinary host build directory (any
+`native/core/build*/` is gitignored). Other `build-*` directories under
+`native/core/` are not interchangeable with it:
+
+- `build-quests`, `build-gameplay`, `build-shops`, `build-real-arenas`,
+  `build-dialogue`, `build-persistence` and `build-dungeon` are specialized
+  parity/generator working directories. Generators and some CMake tests read
+  fixtures from them (for example `build-shops/flow.txt` and
+  `build-real-arenas/*.txt`), so do not delete or reuse them as ordinary build
+  output unless their fixtures have been regenerated or backed up.
+- `build-tools` holds the optional portable Zig compiler; `build-zig` is the
+  Zig example below.
+- Batch-named trees (`build-a3-*`, `build-a4-*`, `build-batch*`, `build-hf*`) are
+  archived working builds from past batches, not the current convention.
 
 Host CTest runs compiled parity tests, the pre-existing movement and input
 regression harnesses, and live TypeScript fixture drift detection when Node is
@@ -227,6 +244,8 @@ The shared production source list is compiled by IDF; host tests and fixtures
 are never linked into firmware. Unused translated routines are linker-stripped.
 Launcher packaging and project version/naming are preserved. `build-m5` remains
 the previous baseline; the new package is under `build-core/launcher/`.
+`build-core` is the project's recommended T-Deck build directory; see
+[`../targets/tdeck/README.md`](../targets/tdeck/README.md), "Build".
 
 ## Memory and representation
 

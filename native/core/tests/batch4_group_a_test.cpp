@@ -1,6 +1,6 @@
 // Batch 4 GROUP A -- RED tests for R-09 (Blackthorn/guard modal handling and
 // FountainDrink presentation). See
-// native/targets/tdeck/ALPHA20_BATCH4_ADJUDICATION.md.
+// docs/history/tdeck/ALPHA20_BATCH4_ADJUDICATION.md.
 //
 // These tests drive the REAL production town-turn -> blackthorn_turn_effect
 // trigger (native/core/src/blackthorn.cpp, reached from the real town-turn
