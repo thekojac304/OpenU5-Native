@@ -350,9 +350,11 @@ int main(int argc, char **argv) {
     // rectangle's width, so the frame sides (one chunk per row up to A3-HF2.1:
     // 5+5 and 1+1+1+1 pauses) no longer reach a 32nd chunk and the right-panel
     // reflow is 104 chunks, not 240. A3-04D's image slept 37 times here.
-    check(legacy.full_sleeps == 19 && legacy.full_yields == 0,
+    // A4-UI5: the frame's glass below the map (a 181 x 60 black fill), its cut corners and its
+    // header rule add chunks to the repaint: one more pause point (19 -> 20).
+    check(legacy.full_sleeps == 20 && legacy.full_yields == 0,
           "Y1 legacy: the repaint on leaving the Developer screen sleeps to the next tick " +
-              std::to_string(legacy.full_sleeps) + " times (full clear 7, viewport 9, right-panel reflow 3; the "
+              std::to_string(legacy.full_sleeps) + " times (full clear 7, viewport 9, right-panel reflow 3, A4-UI5 glass and corners 1; the "
               "frame lines no longer pause -- A3-04D, one transaction per 2 px row: 37)");
     check(legacy.step_sleeps == 9 && legacy.step_yields == 0,
           "Y2 legacy: a walking step sleeps " + std::to_string(legacy.step_sleeps) +

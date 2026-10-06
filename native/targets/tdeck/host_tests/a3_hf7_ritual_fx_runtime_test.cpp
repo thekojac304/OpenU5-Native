@@ -441,7 +441,8 @@ void test_region() {
     check(sky.mask == 0 && wind.mask == 0, "N2.3",
           "the device's sky and wind strips are not inverted (modes " + n(sky.mask) + ", " + n(wind.mask) + ")");
     // Alpha 4 UI Batch 1: the area below the viewport is the frame band
-    // (#0000AA, not a palette index -- xor_mode() would count nothing there).
+    // (#0000AA, not a palette index -- xor_mode() would count nothing there);
+    // since A4-UI5 it is black glass, which is no palette index of the ritual either.
     // Not inverted = byte for byte the same mid-sweep as restored.
     size_t touch_differ = 0;
     for (int y = kHudTouchY; y < kH; ++y)

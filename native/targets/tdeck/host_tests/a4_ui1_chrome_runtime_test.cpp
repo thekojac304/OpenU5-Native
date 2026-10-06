@@ -65,6 +65,7 @@ constexpr uint16_t kBlack = 0x0000, kWhite = 0xffff, kCyan = 0x07ff, kGreen = 0x
 // The approved palette: the original's own EGA indices (web port frame.ts).
 constexpr uint16_t kBand = 0x0015;  // EGA 1, #0000AA -- the frame
 constexpr uint16_t kDim = 0xad55;   // EGA 7, #AAAAAA -- footers
+constexpr uint16_t kFaint = 0x52aa; // EGA 8, #555555 -- A4-UI5's header rules
 constexpr int64_t kClockStartUs = 5'000'000;
 
 const tdeck::AlphaResourceOwners *pack = nullptr;
@@ -366,8 +367,16 @@ void test_gameplay() {
     const Probe probes[] = {
         {1, 100, kBand, "left frame band"},          {3, 100, kWhite, "play-window rule, left"},
         {180, 100, kWhite, "play-window rule, right"}, {181, 100, kBand, "separator band"},
-        {90, 2, kBand, "top frame band"},            {90, 182, kBand, "frame band under the wind strip"},
-        {90, 210, kBand, "touch reserve (frame band)"}, {10, 239, kBand, "touch reserve, bottom"},
+        {90, 2, kBand, "top frame band"},            {6, 175, kBand, "wind strip band"},
+        // A4-UI5: the frame ends under the map (its last row is y=179); below it is glass, but the
+        // console's left band (x=181) still runs to the bottom.
+        {6, 179, kBand, "frame's last row"},        {90, 180, kBlack, "glass below the frame"},
+        {90, 210, kBlack, "touch reserve (glass)"},  {10, 239, kBlack, "touch reserve, bottom"},
+        {181, 210, kBand, "console-side band to the glass"}, {181, 239, kBand, "console-side band, bottom"},
+        {0, 0, kBlack, "cut top-left corner"},       {3, 0, kBlack, "cut top-left corner, top row"},
+        {4, 0, kBand, "top band past the cut"},      {0, 8, kBand, "left band below the taper"},
+        {0, 179, kBlack, "cut bottom-left corner"},  {319, 0, kBlack, "cut top-right corner"},
+        {250, 66, kFaint, "status header rule"},
         {250, 0, kBand, "band above the boxes"},     {319, 40, kBand, "band right of the boxes"},
         {250, 54, kBand, "blue bar between roster and status boxes"},
         {250, 2, kWhite, "roster box top rule"},     {182, 30, kWhite, "roster box left rule"},
@@ -424,7 +433,7 @@ void test_gameplay() {
     check(date_bad == 0, "S2 the date 4-5-139 (month-day-year) with the digital time 06:40 kept on the right, IBM.CH at "
                          "y=78 (" + n(date_bad) + " pixels differ)");
     const std::string here = tdeck::hud_location_caption(g.position.map.location, g.position.map.floor, false, 0);
-    const std::string occ = compact_occupancy(184, 58, 22);
+    const std::string occ = compact_occupancy(186, 58, 22);
     check(occ == expected_occupancy(here, 22), "S3 the location caption (\"" + here + "\") keeps its compact font at y=58 (" +
                                                    occ + ")");
 
@@ -438,7 +447,7 @@ void test_gameplay() {
         std::snprintf(want, sizeof(want), "%-17.17s MOVE", name.c_str());
         direct(h, copy, true);
         uint16_t seen[22]{};
-        const std::string lit = compact_occupancy(184, 58, 22, seen);
+        const std::string lit = compact_occupancy(186, 58, 22, seen);
         bool colours = true;
         for (size_t i = 0; i < 22; ++i)
             if (lit[i] == '#') colours = colours && seen[i] == (i >= 18 ? kGreen : kCyan);
@@ -447,7 +456,7 @@ void test_gameplay() {
                   want + "\" -- clipped to 17, one blank cell, MOVE in green (" + lit + ")");
         state(location == 17 ? "move-lord-british" : "move-blackthorn");
         direct(h, copy, false);
-        const std::string whole = compact_occupancy(184, 58, 22);
+        const std::string whole = compact_occupancy(186, 58, 22);
         check(whole == expected_occupancy(name, 22), std::string("S") + (location == 17 ? "6" : "7") +
                                                          " out of Movement Mode the whole name shows (" + whole + ")");
     }

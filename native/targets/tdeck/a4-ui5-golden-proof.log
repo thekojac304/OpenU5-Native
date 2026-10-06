@@ -1,0 +1,22 @@
+A4-UI5 visual polish: golden re-record proof
+Change (tdeck_board.cpp, draw-only): glass below the map frame (x<181, y>=180); cut outer corners
+  (left taper x<4: y 0..7 and y 172..179; top-right x>=316, y<2); location caption text x 184 -> 186;
+  status header rule y=66 (x 183..317); context bar separator white (y=215) + faint rule (y=227), x 183..317.
+Method: both goldens' pixel hash temporarily masked over exactly those regions, recorded on the HEAD
+  Board (git show HEAD:tdeck_board.cpp) and on the new Board, byte-compared.
+  Masked set: (x<4&&y<8)||(x<4&&172<=y<180)||(x>=316&&y<2)||(x<181&&y>=180)||(184<=x<318&&58<=y<66)||
+              (183<=x<318&&y==66)||(182<=x<319&&(y==215||y==227))
+Result: a3_04f_render_runtime --record  masked HEAD vs new: IDENTICAL (301 states, 2766 renders)
+        a4_ui1_chrome_runtime --record  masked HEAD vs new: IDENTICAL (8 states)
+Caveat: y=227 (x 182..318) is also a console text row when no context bar is up, so that one pixel
+  row of console glyphs is outside this proof; the capture-scene diff (all pixels, 14 scenes) covers it.
+The masking instrument was temporary and is not in the tree.
+
+Hardware validation (2026-10-06, owner-reported PASS; the T-Deck ran the UI5 tree together with BOOT2 47af01d3):
+  Approved design: black glass below the map instead of the solid-blue reserve; thin blue console-side band kept;
+  stronger chamfered frame corners; location caption at x=186; subtle location/status header rule; brighter context
+  separator; subtle action-row separator. No logical HUD geometry change.
+  Reported checked and passing: overworld, town, dialogue/transcript, dungeon, combat, shop, party/stats, context bar,
+  menu <-> gameplay transitions, repaint/invalidation behaviour; no broken corners or rules; no transcript, menu or
+  input regression observed. This is a manual visual pass, not an automated one.
+Final-tree validation (UI5 on top of committed BOOT2 47af01d3): host suite 202/202 serial; firmware idf.py -B build-core build -Werror clean, 1,049,520 B (0x1003b0), 261,200 B (19.9 %) free.

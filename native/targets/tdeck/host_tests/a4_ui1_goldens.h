@@ -8,13 +8,16 @@ namespace a4_ui1_goldens {
 constexpr size_t kCount = 8;
 constexpr const char *kName[8] = {"gameplay", "move-lord-british", "move-blackthorn", "dungeon-bands", "settings", "settings-large", "system-menu", "main-menu"};
 constexpr uint64_t kScreen[8] = {
+    // Alpha 4 A4-UI5 (visual polish): the four gameplay states re-recorded for the frame's new skin
+    // (glass below the map, cut corners, caption indent, status header rule); with those regions masked
+    // all eight states equal the HEAD recording (a4-ui5-golden-proof.log). The other four are unchanged.
     // Alpha 4 A4-UI4 (ALPHA4_UI.md section 8.20): the four gameplay states re-recorded for the
     // console package's live prompt row -- its bullet and the wave cursor, the only 42 pixels that
     // changed (x 184..195, y 232..239; a4-ui4-console-golden-proof.log).
-    0xc4cad6349313aad7ull, // gameplay
-    0x1e01bd0524dc02faull, // move-lord-british
-    0x565de9b6a2d7d312ull, // move-blackthorn
-    0x21ea0f6bf5e14e1cull, // dungeon-bands
+    0xdca195b5c93ab24bull, // gameplay
+    0xf61a4ba8c7f0ec12ull, // move-lord-british
+    0x07c8043194a5651aull, // move-blackthorn
+    0x46371c6dcac9013cull, // dungeon-bands
     // Alpha 4 A4-ENH1 (ALPHA4_UI.md section 10): the two Settings states re-recorded for the
     // trackball row's new text ("Trackball speed: 10/10"); only that row's pixels changed
     // (a4-enh1-p2-golden-proof.log). Then again for the removed "Developer: Hidden" row, the

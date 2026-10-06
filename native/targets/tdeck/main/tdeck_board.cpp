@@ -83,6 +83,22 @@ const char *console_row_text(const openu5::UiRenderedLine &line, char (&out)[ope
 }
 // roster.ts: the roster row is 15 IBM.CH cells; they start 4 px into the row.
 constexpr int kRosterTextX = 188;
+// A4-UI5 (visual polish): the native-only location caption was the one status
+// row that touched its box's rule (text at x=184, the rule is x=182). Two px in
+// keeps a 22-cell caption inside the row's 134 px window (186 + 22 * 6 = 318).
+constexpr int kCompactTextX = 186;
+// A4-UI5: the original frame's outer corners are cut. Black stair-steps, one
+// entry per row from the corner inward (px of black from the outer edge). The
+// left corners taper over 8 rows (two rows per step) inside the 4 px band (x < 4,
+// the strips start at x=4); the top-right is two rows only: the roster box's top
+// rule starts at y=2.
+constexpr uint8_t kCornerCutTaper[4] = {4, 3, 2, 1};
+constexpr uint8_t kCornerCutSmall[2] = {3, 1};
+// EGA 8 (#555555): a rule one step below the white box rules.
+constexpr uint16_t kChromeFaint = 0x52AA;
+// The first row below the play window (the wind strip's last row is y=179).
+constexpr int kFrameEndY = openu5::kHudViewportY + openu5::kHudViewportH;
+constexpr int kStatusHeaderRuleY = 66; // blank in both neighbouring rows' draw windows (58..65, 68..75)
 
 // Left part at cell 0, right part right-aligned to cell `cells`, spaces between.
 void split_cells(char *out, size_t cap, const char *left, const char *right, size_t cells) {
@@ -811,7 +827,7 @@ esp_err_t Board::draw_panel_row(size_t slot,int y,const char *text,uint16_t colo
     // Alpha 4 UI Batch 1: 134 px, one short of kHudRightW -- the 135th column
     // (x=318) is the boxes' right rule, which every row used to paint black.
     ESP_RETURN_ON_ERROR(draw_cells(openu5::kHudRightX,y,openu5::kHudRightW-1,8,
-                                   font==ChromeFont::Ibm?kRosterTextX:openu5::kHudRightX,text,color,
+                                   font==ChromeFont::Ibm?kRosterTextX:kCompactTextX,text,color,
                                    accent_from,accent,invert,font),kTag,"draw panel row");
     std::snprintf(cached.text,sizeof(cached.text),"%s",text);cached.color=color;cached.invert=invert;cached.valid=true;
     return ESP_OK;
@@ -1035,10 +1051,24 @@ esp_err_t Board::show_alpha(const uint16_t *pixels,const openu5::UiSession &ui,
                 {{box_right,status_top,1,openu5::kHudTranscriptSeparatorY-status_top}},
                 {{openu5::kHudPartyFrameX,openu5::kHudTranscriptSeparatorY,1,kDisplayHeight-openu5::kHudTranscriptSeparatorY}}}})
             ESP_RETURN_ON_ERROR(fill_rect(r[0],r[1],r[2],r[3],kChromeRule),kTag,"draw box rule");
+        // A4-UI5: the frame ends under the map, as the original's does; the touch
+        // reserve below it is glass. x=181 stays band: it is the console's left edge.
+        // Drawn with the rules: whatever repaints the frame invalidates this cache.
+        ESP_RETURN_ON_ERROR(fill_rect(0,kFrameEndY,openu5::kHudPartyFrameX-1,kDisplayHeight-kFrameEndY,kBlack),kTag,"glass below the frame");
+        // The cut outer corners (top-left, bottom-left, top-right).
+        for(int step=0;step<4;++step){
+            ESP_RETURN_ON_ERROR(fill_rect(0,2*step,kCornerCutTaper[step],2,kBlack),kTag,"cut top-left corner");
+            ESP_RETURN_ON_ERROR(fill_rect(0,kFrameEndY-2-2*step,kCornerCutTaper[step],2,kBlack),kTag,"cut bottom-left corner");
+        }
+        for(int row=0;row<2;++row)
+            ESP_RETURN_ON_ERROR(fill_rect(kDisplayWidth-kCornerCutSmall[row],row,kCornerCutSmall[row],1,kBlack),kTag,"cut top-right corner");
+        // The location caption is the status box's header: a faint rule under it.
+        ESP_RETURN_ON_ERROR(fill_rect(openu5::kHudWorldFrameX+1,kStatusHeaderRuleY,openu5::kHudWorldFrameW-2,1,kChromeFaint),kTag,"status header rule");
     }
     auto draw_context_bar=[&](const DeviceContextActionBar &bar,int x,int width,bool first)->esp_err_t{
         if(first||!context_cache_valid_){
-            ESP_RETURN_ON_ERROR(fill_rect(x,kContextBarTop,width,1,kChromeDim),kTag,"context action separator");
+            ESP_RETURN_ON_ERROR(fill_rect(x+1,kContextBarTop,width-2,1,kChromeRule),kTag,"context action separator");
+            ESP_RETURN_ON_ERROR(fill_rect(x+1,kContextBarActionsY-2,width-2,1,kChromeFaint),kTag,"context action row rule");
         }
         if(first||!context_cache_valid_||std::strcmp(context_cache_.status,bar.status)!=0)
             ESP_RETURN_ON_ERROR(draw_text_box(x+2,kContextBarStatusY,width-4,kContextBarStatusH,bar.status,kCyan),kTag,"context active status");
