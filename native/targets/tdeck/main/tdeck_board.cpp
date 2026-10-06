@@ -1,5 +1,6 @@
 #include "tdeck_board.h"
 #include "boot_trace.h"
+#include "sd_clock_policy.h"
 
 #include <algorithm>
 #include <array>
@@ -40,8 +41,7 @@ constexpr char kTestPayload[] = "OpenU5-TDeck Milestone 2 shared SPI test\n";
 constexpr int kDisplayWidth = 320;
 constexpr int kDisplayHeight = 240;
 constexpr int kTftClockHz = 40 * 1000 * 1000;
-// LilyGO's factory UnitTest uses 800 kHz for the shared-bus SD path.
-constexpr int kSdClockKhz = 800;
+// BOOT2: the SD clock (a fast preferred clock, an 800 kHz fallback) is sd_clock_policy.h's.
 constexpr uint16_t kBlack = 0x0000;
 constexpr uint16_t kWhite = 0xFFFF;
 constexpr uint16_t kCyan = 0x07FF;
@@ -1618,9 +1618,49 @@ esp_err_t Board::draw_shared_bus_marker(int pass)
     return fill_rect(286 + pass * 8, 220, 6, 6, color);
 }
 
+void Board::unmount_sd()
+{
+    if (sd_card_ == nullptr) return;
+    esp_vfs_fat_sdcard_unmount(kMountPoint, static_cast<sdmmc_card_t *>(sd_card_));
+    sd_card_ = nullptr;
+}
+
 SdStatus Board::initialize_and_test_sd()
 {
     debug51::stage(5, "sd-initialize-entry");
+    int khz = openu5::kSdFastKhz;
+    SdStatus status = mount_and_test_sd(khz);
+    // The card did not mount, or failed the read/write/read-back test, at the
+    // preferred clock: remount at the conservative one rather than stay down.
+    while (!status.ok) {
+        const int next = openu5::sd_fallback_khz(khz);
+        if (next == 0) break;
+        ESP_LOGW(kTag, "SD_CLOCK fallback: %d kHz failed (%s); remounting at %d kHz", khz,
+                 esp_err_to_name(status.error), next);
+        unmount_sd();
+        khz = next;
+        status = mount_and_test_sd(khz);
+    }
+    ESP_LOGI(kTag, "SD_CLOCK result=%s clock=%d kHz (preferred %d, safe %d)", status.ok ? "ok" : "FAILED",
+             sd_clock_khz_, openu5::kSdFastKhz, openu5::kSdSafeKhz);
+    return status;
+}
+
+// Called by startup when a resource pack failed to validate on a fast clock:
+// a marginal card can pass the mount test and still corrupt a long read.
+bool Board::fall_back_sd_clock()
+{
+    const int next = openu5::sd_fallback_khz(sd_clock_khz_);
+    if (next == 0) return false;
+    ESP_LOGW(kTag, "SD_CLOCK fallback: pack validation failed at %d kHz; remounting at %d kHz", sd_clock_khz_, next);
+    unmount_sd();
+    const SdStatus status = mount_and_test_sd(next);
+    ESP_LOGI(kTag, "SD_CLOCK result=%s clock=%d kHz", status.ok ? "ok" : "FAILED", sd_clock_khz_);
+    return status.ok;
+}
+
+SdStatus Board::mount_and_test_sd(int khz)
+{
     SdStatus status{};
     if (!shared_spi_initialized_) {
         status.error = ESP_ERR_INVALID_STATE;
@@ -1629,7 +1669,8 @@ SdStatus Board::initialize_and_test_sd()
 
     sdmmc_host_t host = SDSPI_HOST_DEFAULT();
     host.slot = pins::kSharedSpiHost;
-    host.max_freq_khz = kSdClockKhz;
+    host.max_freq_khz = khz;
+    sd_clock_khz_ = khz;
     const sdspi_device_config_t slot_config = {
         .host_id = pins::kSharedSpiHost,
         .gpio_cs = pins::kSdChipSelect,
@@ -1653,9 +1694,10 @@ SdStatus Board::initialize_and_test_sd()
     status.error = esp_vfs_fat_sdspi_mount(kMountPoint, &host, &slot_config,
                                            &mount_config, &card);
     if (status.error != ESP_OK) {
-        ESP_LOGE(kTag, "SD initialization/mount failed: %s", esp_err_to_name(status.error));
+        ESP_LOGE(kTag, "SD initialization/mount failed at %d kHz: %s", khz, esp_err_to_name(status.error));
         return status;
     }
+    sd_card_ = card;
 
     status.capacity_bytes = static_cast<uint64_t>(card->csd.capacity) * card->csd.sector_size;
     status.type = card->is_mmc ? "MMC" : ((card->ocr & SD_OCR_SDHC_CAP) ? "SDHC/SDXC" : "SDSC");

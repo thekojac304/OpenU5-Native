@@ -80,6 +80,10 @@ public:
     void set_release_label(const char *label) { release_label_ = label; }
     esp_err_t initialize_display();
     SdStatus initialize_and_test_sd();
+    // BOOT2: the clock the card is mounted at (kHz), and a one-shot retreat to the
+    // safe clock for a pack that failed to validate on the fast one.
+    int sd_clock_khz() const { return sd_clock_khz_; }
+    bool fall_back_sd_clock();
     void show_diagnostics(bool sd_ok);
     void show_runtime_identity(const char *firmware, const char *git_commit,
                                const char *build_timestamp, const char *alpha_identity,
@@ -298,6 +302,10 @@ private:
     int16_t window_x_ = 0, window_y_ = 0, window_w_ = 0, window_h_ = 0, cursor_x_ = 0, cursor_y_ = 0;
     int endgame_page_key_ = -1;
     bool shared_spi_initialized_ = false;
+    SdStatus mount_and_test_sd(int khz);
+    void unmount_sd();
+    void *sd_card_ = nullptr; // sdmmc_card_t *, owned by the VFS mount
+    int sd_clock_khz_ = 0;
     bool display_initialized_ = false;
     bool backlight_pwm_initialized_ = false;
     bool alpha_drawn_ = false;

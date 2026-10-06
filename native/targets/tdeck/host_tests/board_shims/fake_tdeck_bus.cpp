@@ -264,8 +264,31 @@ esp_err_t spi_device_transmit(spi_device_handle_t handle, spi_transaction_t *t) 
     return ESP_OK;
 }
 
-esp_err_t esp_vfs_fat_sdspi_mount(const char *, const sdmmc_host_t *, const sdspi_device_config_t *,
-                                  const esp_vfs_fat_sdmmc_mount_config_t *, sdmmc_card_t **) {
-    return ESP_FAIL;
+namespace {
+bool g_sd_mount_ok = false;
+std::vector<int> g_sd_mount_khz;
+int g_sd_unmounts = 0;
+sdmmc_card_t g_sd_card{};
+} // namespace
+namespace openu5_host_bus {
+void sd_reset(bool mount_ok) {
+    g_sd_mount_ok = mount_ok;
+    g_sd_mount_khz.clear();
+    g_sd_unmounts = 0;
+}
+const std::vector<int> &sd_mount_khz() { return g_sd_mount_khz; }
+int sd_unmounts() { return g_sd_unmounts; }
+} // namespace openu5_host_bus
+
+esp_err_t esp_vfs_fat_sdspi_mount(const char *, const sdmmc_host_t *host, const sdspi_device_config_t *,
+                                  const esp_vfs_fat_sdmmc_mount_config_t *, sdmmc_card_t **card) {
+    g_sd_mount_khz.push_back(host->max_freq_khz);
+    if (!g_sd_mount_ok) return ESP_FAIL;
+    *card = &g_sd_card;
+    return ESP_OK;
+}
+esp_err_t esp_vfs_fat_sdcard_unmount(const char *, sdmmc_card_t *) {
+    ++g_sd_unmounts;
+    return ESP_OK;
 }
 void sdmmc_card_print_info(FILE *, const sdmmc_card_t *) {}

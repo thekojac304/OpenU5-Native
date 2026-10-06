@@ -103,4 +103,12 @@ const volatile uint32_t *idle_passes();
 /** main.cpp's idle wait timing out: blocked until the next tick. */
 void idle_wait_one_tick();
 
+/** BOOT2: the SD mount seam. With ok=false (the default) every mount fails; with ok=true the
+ *  mount hands back a card (the read-back test then fails on the host: there is no /sd). */
+void sd_reset(bool mount_ok = false);
+/** max_freq_khz of every esp_vfs_fat_sdspi_mount call since sd_reset(). */
+const std::vector<int> &sd_mount_khz();
+/** esp_vfs_fat_sdcard_unmount calls since sd_reset(). */
+int sd_unmounts();
+
 } // namespace openu5_host_bus

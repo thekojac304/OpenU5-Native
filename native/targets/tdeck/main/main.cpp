@@ -41,7 +41,13 @@ constexpr uint32_t kInternal=MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT,kPsram=MALLOC_C
 
 extern "C" void app_main(void) {
     const bool sd_log_capture=tdeck::sdlog::begin_capture();
-    debug51::begin();vTaskDelay(pdMS_TO_TICKS(1500));debug51::stage(2,"serial-ready-ALPHA1");
+    debug51::begin();
+    {
+        // Time for a serial monitor to attach; it was 1500 ms (BOOT2).
+        debug51::Step trace("serial-ready-delay");
+        vTaskDelay(pdMS_TO_TICKS(300));
+    }
+    debug51::stage(2,"serial-ready-ALPHA1");
     ESP_LOGI(kTag,"========================================");
     ESP_LOGI(kTag,"OpenU5-TDeck | Alpha 2.0 alpha2 Hardware-Truth Frontend Debug");
     ESP_LOGI(kTag,"HOST-BUILT: physical hardware validation pending");
@@ -56,14 +62,45 @@ extern "C" void app_main(void) {
     static tdeck::Board board;debug51::stage(3,"board-construction");
     // Alpha 4 A4-UI4: the boot screens name this image's release.
     {const auto *app=esp_app_get_description();board.set_release_label(tdeck::firmware_release_label(app?app->version:nullptr));}
-    const esp_err_t display=board.initialize_display();debug51::stack_checkpoint("after-board-display-init");
-    const tdeck::SdStatus sd=board.initialize_and_test_sd();debug51::stack_checkpoint("after-sd-init");board.show_diagnostics(sd.ok);
-    const bool sd_log_ready=sd.ok&&sd_log_capture&&tdeck::sdlog::initialize_storage();
+    // BOOT2: Board::initialize_shared_spi() raises the peripheral rail (GPIO 10) at the
+    // start of initialize_display(); the keyboard's coprocessor is powered by it.
+    const int64_t rail_enable_us=esp_timer_get_time();
+    esp_err_t display=ESP_FAIL;
+    {
+        debug51::Step trace("display-initialize");
+        display=board.initialize_display();
+    }
+    debug51::stack_checkpoint("after-board-display-init");
+    tdeck::SdStatus sd{};
+    {
+        debug51::Step trace("sd-mount-and-test");
+        sd=board.initialize_and_test_sd();
+    }
+    debug51::stack_checkpoint("after-sd-init");
+    {
+        debug51::Step trace("diagnostics-screen-draw");
+        board.show_diagnostics(sd.ok);
+    }
+    bool sd_log_ready=false;
+    {
+        debug51::Step trace("sd-log-storage-init");
+        sd_log_ready=sd.ok&&sd_log_capture&&tdeck::sdlog::initialize_storage();
+    }
     // A3-04D: available, not running -- off at boot; Developer > Diagnostics > "Probe: SD diag logging".
     if(sd_log_ready)ESP_LOGI(kTag,"SD diag logging available: %s (buffered, 512 KiB cap; off until switched on)",tdeck::sdlog::kCardLogPath);
     else ESP_LOGW(kTag,"SD logging initialization failed; serial logging remains active");
     static tdeck::InputHardware input;
     esp_err_t input_result=ESP_FAIL;
+    {
+        // The keyboard coprocessor needs ~1.7 s after the rail comes up. Up to Alpha 4 the
+        // 800 kHz SD mount made that so by accident; at the fast SD clock keyboard init came
+        // ~1.25 s in and 6 of 20 boots logged KEYBOARD_ERROR initial_snapshot (recovered by
+        // the existing recovery, but a boot should not lean on it). Wait only the remainder.
+        constexpr int64_t kKeyboardRailSettleUs=1700000;
+        debug51::Step trace("keyboard-rail-settle");
+        const int64_t since_us=esp_timer_get_time()-rail_enable_us;
+        if(since_us<kKeyboardRailSettleUs)vTaskDelay(pdMS_TO_TICKS((kKeyboardRailSettleUs-since_us+999)/1000));
+    }
     {
         debug51::Step trace("keyboard-initialize");
         input_result=input.initialize();
@@ -84,6 +121,14 @@ extern "C" void app_main(void) {
         esp_err_t alpha=ESP_FAIL;
         {
             debug51::Step trace("alpha-resource-open-validate");
+            alpha=alpha_pack.open(tdeck::kAlphaResourcePath,alpha_report);
+        }
+        // BOOT2: a marginal card can mount and pass the read-back test at the fast
+        // clock and still corrupt a long read. A pack that fails to validate there
+        // is validated once more at the safe clock; it is never accepted unvalidated.
+        if((tiles!=ESP_OK||alpha!=ESP_OK)&&board.fall_back_sd_clock()){
+            debug51::Step trace("pack-revalidate-at-safe-clock");
+            tiles=tile_pack.open(openu5::kAssetPackPath,tile_report);
             alpha=alpha_pack.open(tdeck::kAlphaResourcePath,alpha_report);
         }
         if(tiles!=ESP_OK)ESP_LOGE(kTag,"Tile pack unavailable at %s: %s",openu5::kAssetPackPath,esp_err_to_name(tiles));
@@ -113,10 +158,8 @@ extern "C" void app_main(void) {
             board.show_runtime_identity(firmware,git,build,alpha_id,asset_id,packs_match);
         }
         if(packs_match){
-            {
-                debug51::Step trace("identity-screen-hold");
-                vTaskDelay(pdMS_TO_TICKS(1800));
-            }
+            // BOOT2: no fixed hold here (it was 1800 ms). The identity screen stays up
+            // for the runtime initialization below, which is real work.
             esp_err_t initialized=ESP_FAIL;
             {
                 debug51::Step trace("alpha-runtime-initialize");
@@ -187,6 +230,10 @@ extern "C" void app_main(void) {
         runtime.render(board,true);
         debug51::stack_checkpoint("after-alpha-render");
     }
+    // Boot timing: microseconds since esp_timer started (the bootloader and any
+    // Launcher before this image are not counted). Every Step above is logged
+    // as BOOT_TRACE step=<name> enter_us/exit_us/elapsed_us.
+    ESP_LOGI("M51","BOOT_SUMMARY first_frame_us=%lld ready=%d",(long long)esp_timer_get_time(),ready);
     // A3-04E.1 (ALPHA3_AUDIO.md section 23): watch core 0's idle loop -- the
     // pass that feeds the task watchdog -- and make the game thread block for it
     // whenever it has not run for 200 ms (draw-loop pauses, the end of a pass).

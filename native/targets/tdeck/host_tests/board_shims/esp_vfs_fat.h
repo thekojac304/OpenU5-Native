@@ -31,6 +31,7 @@ typedef struct {
 esp_err_t esp_vfs_fat_sdspi_mount(const char *base_path, const sdmmc_host_t *host,
                                   const sdspi_device_config_t *slot, const esp_vfs_fat_sdmmc_mount_config_t *config,
                                   sdmmc_card_t **card);
+esp_err_t esp_vfs_fat_sdcard_unmount(const char *base_path, sdmmc_card_t *card);
 void sdmmc_card_print_info(FILE *stream, const sdmmc_card_t *card);
 
 #if defined(_WIN32)

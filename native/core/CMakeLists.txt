@@ -2343,6 +2343,23 @@ if(BUILD_TESTING)
   target_include_directories(a4_polish3_keyboard_light PRIVATE ../targets/tdeck/main)
   target_compile_features(a4_polish3_keyboard_light PRIVATE cxx_std_17)
   add_test(NAME a4_polish3_keyboard_light COMMAND a4_polish3_keyboard_light)
+  # BOOT2 -- the SD clock policy (main/sd_clock_policy.h) and the REAL Board's mount /
+  # fallback loop, against the fake bus's mount seam.
+  add_executable(boot2_sd_clock_runtime
+    ../targets/tdeck/host_tests/boot2_sd_clock_runtime_test.cpp
+    ../targets/tdeck/host_tests/board_shims/fake_tdeck_bus.cpp
+    ../targets/tdeck/main/tdeck_board.cpp
+    ../targets/tdeck/main/idle_service.cpp
+    ../targets/tdeck/main/asset_pack.cpp
+    ../targets/tdeck/main/native_renderer.cpp)
+  target_link_libraries(boot2_sd_clock_runtime PRIVATE openu5_core)
+  target_include_directories(boot2_sd_clock_runtime PRIVATE
+    ../targets/tdeck/host_tests/board_shims
+    ../targets/tdeck/host_tests/esp_shims
+    ../targets/tdeck/host_tests
+    ../targets/tdeck/main)
+  target_compile_features(boot2_sd_clock_runtime PRIVATE cxx_std_20)
+  add_test(NAME boot2_sd_clock_runtime COMMAND boot2_sd_clock_runtime)
   # Its device half: the REAL AlphaRuntime with a recorder bound where main.cpp
   # binds InputHardware -- boot, every Settings change, nothing else.
   add_executable(a4_polish3_keyboard_light_runtime
