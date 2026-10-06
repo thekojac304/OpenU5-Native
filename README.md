@@ -11,12 +11,22 @@
 
 v0.4.0 is a pre-1.0 public release, complete and playable from character creation through the ending, with documented non-blocking discrepancies still under active preservation work. It was developed internally as the Alpha 4 / RC5 milestone. The repository also contains the OpenU5 browser port that served as a reference implementation, described [below](#the-browser-port-openu5).
 
+![Ultima V Native title screen on the T-Deck](docs/images/screenshots/title-screen.png)
+
 ## Screenshots
 
-<!-- Screenshots will be added here. Planned, non-violent where possible:
-     title screen, overworld, dungeon, save/load slots, Settings / Difficulty, Cheats (Enhanced mode). -->
+Captured from the Ultima V Native T-Deck rendering path at the device's native 320×240 resolution. These are Ultima V Native captures, not OpenU5 browser screenshots.
 
-*Screenshots are not in the repository yet.* Photos or captures of the title screen, overworld, dungeon, save/load UI, Settings / Difficulty and Cheats screens are planned.
+| | |
+|---|---|
+| ![Britannia overworld](docs/images/screenshots/hero-britannia-coast.png) | ![Britain](docs/images/screenshots/town-britain.png) |
+| Britannia overworld | Britain |
+| ![Hythloth](docs/images/screenshots/dungeon-hythloth.png) | ![Surface combat](docs/images/screenshots/combat-britannia.png) |
+| Hythloth | Surface combat |
+| ![Lord British's Castle](docs/images/screenshots/castle-dialogue.png) | ![Alchemist shop](docs/images/screenshots/shop-alchemist.png) |
+| Lord British's Castle | Alchemist shop |
+
+*The screenshots were rendered using user-supplied Ultima V game data; this project does not distribute original game assets. Ultima V and its artwork remain the property of their respective rights holders.*
 
 ## What this project is
 
